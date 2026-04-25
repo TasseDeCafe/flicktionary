@@ -14,7 +14,7 @@
     "lingui:extract": "bash -lc 'cd ../.. && lingui extract'",
     "lingui:watch": "bash -lc 'cd ../.. && lingui extract --watch'",
     "lingui:compile": "bash -lc 'cd ../.. && lingui compile'",
-    "translate": "doppler run -- node scripts/translate-missing.mjs"
+    "translate": "doppler run --project backend --config dev_personal -- node scripts/translate-missing.mjs"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "catalog:",
