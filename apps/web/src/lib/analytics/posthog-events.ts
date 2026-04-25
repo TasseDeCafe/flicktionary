@@ -1,7 +1,7 @@
 import posthog from 'posthog-js'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 
-import { PlanType } from '@template-app/api-client/orpc-contracts/billing-contract'
+import { PlanType } from '@flicktionary/api-client/orpc-contracts/billing-contract'
 
 const defaultProperties = () => ({
   href: window.location.href,

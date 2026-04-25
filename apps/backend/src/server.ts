@@ -1,6 +1,6 @@
 import './transport/third-party/sentry/sentry-initializer'
 import * as Sentry from '@sentry/node'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from './config/environment-config'
 import { buildApp } from './app'
 import { getEnvironmentName } from './utils/environment-utils'

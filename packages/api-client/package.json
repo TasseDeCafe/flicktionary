@@ -1,5 +1,5 @@
 {
-  "name": "@template-app/api-client",
+  "name": "@flicktionary/api-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@orpc/contract": "catalog:",
-    "@template-app/core": "workspace:*",
+    "@flicktionary/core": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@template-app/typescript-config": "workspace:*",
+    "@flicktionary/typescript-config": "workspace:*",
     "typescript": "catalog:",
     "tsc-alias": "catalog:"
   }

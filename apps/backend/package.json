@@ -1,5 +1,5 @@
 {
-  "name": "@template-app/backend",
+  "name": "@flicktionary/backend",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "description": "",
@@ -44,8 +44,8 @@
     "@sentry/node": "catalog:",
     "@sentry/profiling-node": "catalog:",
     "@supabase/supabase-js": "catalog:",
-    "@template-app/api-client": "workspace:*",
-    "@template-app/core": "workspace:*",
+    "@flicktionary/api-client": "workspace:*",
+    "@flicktionary/core": "workspace:*",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "@typescript-eslint/parser": "catalog:",
     "axios": "catalog:",
@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@react-email/preview-server": "catalog:",
-    "@template-app/typescript-config": "workspace:*",
+    "@flicktionary/typescript-config": "workspace:*",
     "@types/cors": "catalog:",
     "@types/express": "catalog:",
     "@types/jsonwebtoken": "catalog:",

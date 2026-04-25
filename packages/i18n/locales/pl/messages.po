@@ -652,12 +652,12 @@ msgid "How your free trial works"
 msgstr "Jak działa Twój okres próbny"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
-msgid "If you have any questions about these Terms of Service, please contact us via email contact@app-monorepo-template.dev"
-msgstr "Jeśli masz pytania dotyczące niniejszych Warunków świadczenia usług, skontaktuj się z nami pod adresem contact@app-monorepo-template.dev"
+msgid "If you have any questions about these Terms of Service, please contact us via email contact@flictionary.app"
+msgstr "Jeśli masz pytania dotyczące niniejszych Warunków świadczenia usług, skontaktuj się z nami pod adresem contact@flictionary.app"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
-msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@app-monorepo-template.dev"
-msgstr "Jeśli masz pytania dotyczące niniejszej Polityki prywatności, napisz do nas na adres contact@app-monorepo-template.dev"
+msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@flictionary.app"
+msgstr "Jeśli masz pytania dotyczące niniejszej Polityki prywatności, napisz do nas na adres contact@flictionary.app"
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
@@ -1015,8 +1015,8 @@ msgid "The content, features, and functionality of our services, including but n
 msgstr "Treści, funkcje i funkcjonalności naszych usług, w tym m.in. teksty, grafiki, logotypy, obrazy oraz ich projekt, dobór i układ, stanowią i pozostaną wyłączną własność TemplateApp.com i jego licencjodawców. Podlegają ochronie prawa autorskiego, znaków towarowych i innych przepisów o własności intelektualnej."
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:17
-msgid "the creators of app-monorepo-template.dev here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
-msgstr "to twórcy app-monorepo-template.dev. Wkładamy całe serce w rozwój wersji beta aplikacji i Twoja opinia jest dla nas kluczowa. Już wkrótce wprowadzimy nowe funkcje i stale szukamy sposobów na udoskonalenia."
+msgid "the creators of flictionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+msgstr "to twórcy flictionary.app. Wkładamy całe serce w rozwój wersji beta aplikacji i Twoja opinia jest dla nas kluczowa. Już wkrótce wprowadzimy nowe funkcje i stale szukamy sposobów na udoskonalenia."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
 msgid "The data we collect serves several purposes:"
@@ -1041,8 +1041,8 @@ msgid "This action cannot be undone. This will permanently delete your account a
 msgstr "Tej akcji nie można cofnąć. Spowoduje to trwałe usunięcie Twojego konta i powiązanych danych z naszych serwerów."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
-msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@app-monorepo-template.dev to process your requests with the same level of immediacy and thoroughness."
-msgstr "Ten zautomatyzowany system usuwania jest dostępny 24/7 z poziomu bezpiecznego panelu konta. Jeśli potrzebujesz dodatkowej pomocy, nasz dedykowany zespół ds. prywatności pod adresem contact@app-monorepo-template.dev zajmie się Twoją prośbą z taką samą szybkością i starannością."
+msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flictionary.app to process your requests with the same level of immediacy and thoroughness."
+msgstr "Ten zautomatyzowany system usuwania jest dostępny 24/7 z poziomu bezpiecznego panelu konta. Jeśli potrzebujesz dodatkowej pomocy, nasz dedykowany zespół ds. prywatności pod adresem contact@flictionary.app zajmie się Twoją prośbą z taką samą szybkością i starannością."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
 #: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:53

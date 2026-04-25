@@ -1,11 +1,11 @@
 {
-  "extends": "@template-app/typescript-config/library.json",
+  "extends": "@flicktionary/typescript-config/library.json",
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./dist",
     "paths": {
-      "@template-app/core/*": ["../../packages/core/src/*"],
-      "@template-app/api-client/*": ["../../packages/api-client/src/*"]
+      "@flicktionary/core/*": ["../../packages/core/src/*"],
+      "@flicktionary/api-client/*": ["../../packages/api-client/src/*"]
     }
   },
   "include": ["."],

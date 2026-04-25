@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { implement } from '@orpc/server'
-import { contactEmailContract } from '@template-app/api-client/orpc-contracts/contact-email-contract'
+import { contactEmailContract } from '@flicktionary/api-client/orpc-contracts/contact-email-contract'
 import { ResendApi } from '../../transport/third-party/resend/resend-api'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'

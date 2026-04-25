@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { calculateStripePricingDetails } from './billing-service-utils'
-import { referralToDiscount } from '@template-app/core/constants/referral-constants'
-import { Discounts } from '@template-app/core/constants/discount-types'
+import { referralToDiscount } from '@flicktionary/core/constants/referral-constants'
+import { Discounts } from '@flicktionary/core/constants/discount-types'
 
 describe('calculatePricingDetails', () => {
   const tiengosActiveDiscountsAsMap: Record<string, Discounts> = {

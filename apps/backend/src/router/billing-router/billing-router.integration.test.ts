@@ -8,7 +8,7 @@ import {
 } from '../../test/test-utils'
 import request from 'supertest'
 import { __deleteAllHandledStripeEvents } from '../../transport/database/webhook-events/handled-stripe-events-repository'
-import { GetSubscriptionInfoResponse } from '@template-app/api-client/orpc-contracts/billing-contract'
+import { GetSubscriptionInfoResponse } from '@flicktionary/api-client/orpc-contracts/billing-contract'
 
 describe('billing-router', () => {
   beforeEach(async () => {

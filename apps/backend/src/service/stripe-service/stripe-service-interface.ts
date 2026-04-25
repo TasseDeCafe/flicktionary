@@ -1,5 +1,5 @@
 import { StripeCustomerId } from '../../transport/third-party/stripe/stripe-api'
-import { PlanInterval } from '@template-app/core/constants/pricing-constants'
+import { PlanInterval } from '@flicktionary/core/constants/pricing-constants'
 
 export interface StripeServiceInterface {
   createCheckoutSession: (

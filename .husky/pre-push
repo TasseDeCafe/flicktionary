@@ -101,7 +101,7 @@ fi
 
 # Translate missing translations using AI
 echo "🤖 Translating missing translations with Claude..."
-if pnpm --filter @template-app/i18n translate; then
+if pnpm --filter @flicktionary/i18n translate; then
   echo "✅ Translation check completed"
 else
   echo "❌ Translation failed"

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 
 const sentrySampleRate = z.number().min(0).max(1)
 
@@ -23,7 +23,6 @@ export const environmentConfigSchema = z.object({
   apiHost: z.url(),
   webUrl: z.url(),
   domain: z.string(),
-  landingPageUrl: z.url(),
   supabaseProjectUrl: z.url(),
   supabasePublishableKey: z.string().min(1),
   sentry: sentrySchema,

@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics'
 import { Button } from '@/components/ui/button'
 import { useSendContactEmail } from '@/features/contact/api/contact-hooks'
 import { useAuthStore } from '@/stores/auth-store'
-import { formSchema } from '@template-app/api-client/orpc-contracts/contact-email-contract'
+import { formSchema } from '@flicktionary/api-client/orpc-contracts/contact-email-contract'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLingui } from '@lingui/react/macro'
 

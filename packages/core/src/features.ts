@@ -1,8 +1,8 @@
 export const FEATURES = {
-  SENTRY: true,
-  POSTHOG: true,
-  STRIPE: true,
-  REVENUECAT: true,
+  SENTRY: false,
+  POSTHOG: false,
+  STRIPE: false,
+  REVENUECAT: false,
   GOOGLE_AUTH: true,
-  APPLE_AUTH: true,
+  APPLE_AUTH: false,
 } as const

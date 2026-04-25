@@ -652,12 +652,12 @@ msgid "How your free trial works"
 msgstr "Comment fonctionne votre essai gratuit"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
-msgid "If you have any questions about these Terms of Service, please contact us via email contact@app-monorepo-template.dev"
-msgstr "Si vous avez des questions concernant ces Conditions d'utilisation, veuillez nous contacter par e-mail contact@app-monorepo-template.dev"
+msgid "If you have any questions about these Terms of Service, please contact us via email contact@flictionary.app"
+msgstr "Si vous avez des questions concernant ces Conditions d'utilisation, veuillez nous contacter par e-mail contact@flictionary.app"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
-msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@app-monorepo-template.dev"
-msgstr "Si vous avez des questions concernant cette Politique de confidentialité, veuillez nous contacter par e-mail : contact@app-monorepo-template.dev"
+msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@flictionary.app"
+msgstr "Si vous avez des questions concernant cette Politique de confidentialité, veuillez nous contacter par e-mail : contact@flictionary.app"
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
@@ -1015,8 +1015,8 @@ msgid "The content, features, and functionality of our services, including but n
 msgstr "Le contenu, les fonctionnalités et les capacités de nos services, y compris mais sans s'y limiter le texte, les graphiques, les logos, les images, ainsi que la conception, la sélection et l'agencement de ceux-ci, sont et resteront la propriété exclusive de TemplateApp.com et de ses concédants de licence. Ceux-ci sont protégés par les lois sur le droit d'auteur, les marques de commerce et autres droits de propriété intellectuelle ou propriétaires."
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:17
-msgid "the creators of app-monorepo-template.dev here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
-msgstr "les créateurs de app-monorepo-template.dev. Nous mettons tout notre cœur dans le développement de la version bêta de l'application et vos retours sont essentiels pour nous. Nous sommes impatients de déployer de nouvelles fonctionnalités bientôt, et nous cherchons toujours des moyens d'améliorer l'application."
+msgid "the creators of flictionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+msgstr "les créateurs de flictionary.app. Nous mettons tout notre cœur dans le développement de la version bêta de l'application et vos retours sont essentiels pour nous. Nous sommes impatients de déployer de nouvelles fonctionnalités bientôt, et nous cherchons toujours des moyens d'améliorer l'application."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
 msgid "The data we collect serves several purposes:"
@@ -1041,8 +1041,8 @@ msgid "This action cannot be undone. This will permanently delete your account a
 msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
-msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@app-monorepo-template.dev to process your requests with the same level of immediacy and thoroughness."
-msgstr "Ce système de suppression automatisé est accessible 24h/24 et 7j/7 via votre tableau de bord de compte sécurisé. Pour une assistance supplémentaire, notre équipe dédiée à la confidentialité est disponible à contact@app-monorepo-template.dev pour traiter vos demandes avec le même niveau d'immédiateté et de minutie."
+msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flictionary.app to process your requests with the same level of immediacy and thoroughness."
+msgstr "Ce système de suppression automatisé est accessible 24h/24 et 7j/7 via votre tableau de bord de compte sécurisé. Pour une assistance supplémentaire, notre équipe dédiée à la confidentialité est disponible à contact@flictionary.app pour traiter vos demandes avec le même niveau d'immédiateté et de minutie."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
 #: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:53

@@ -3,10 +3,10 @@ builder = "railpack"
 buildCommand = """
 pnpm install --frozen-lockfile && \
 if [ "$RAILWAY_ENVIRONMENT_NAME" != "production" ] && [ -n "$RAILWAY_ENVIRONMENT_NAME" ]; then \
-  export VITE_API_HOST="https://template-appbackend-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app"; \
+  export VITE_API_HOST="https://flicktionarybackend-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app"; \
   echo "Preview build: VITE_API_HOST=$VITE_API_HOST"; \
 fi && \
-pnpm turbo run build --filter=@template-app/web
+pnpm turbo run build --filter=@flicktionary/web
 """
 
 [deploy]

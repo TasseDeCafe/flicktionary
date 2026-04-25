@@ -5,7 +5,7 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { getSupabase } from '../../transport/database/supabase'
 import { getConfig } from '../../config/environment-config'
-import { authenticationContract } from '@template-app/api-client/orpc-contracts/authentication-contract'
+import { authenticationContract } from '@flicktionary/api-client/orpc-contracts/authentication-contract'
 import NodeCache from 'node-cache'
 
 // Create rate limit caches outside the function so they persist across requests

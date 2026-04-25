@@ -1,5 +1,5 @@
 {
-  "name": "@template-app/i18n",
+  "name": "@flicktionary/i18n",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -27,14 +27,14 @@
     "gettext-parser": "catalog:",
     "tsc-alias": "catalog:",
     "typescript": "catalog:",
-    "@template-app/typescript-config": "workspace:*",
+    "@flicktionary/typescript-config": "workspace:*",
     "vite": "catalog:",
     "vitest": "catalog:",
     "zod": "catalog:"
   },
   "dependencies": {
     "@lingui/core": "catalog:",
-    "@template-app/api-client": "workspace:*",
-    "@template-app/core": "workspace:*"
+    "@flicktionary/api-client": "workspace:*",
+    "@flicktionary/core": "workspace:*"
   }
 }

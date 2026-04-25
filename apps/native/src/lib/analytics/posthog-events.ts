@@ -1,5 +1,5 @@
-import { PlanType } from '@template-app/api-client/orpc-contracts/billing-contract'
-import { FEATURES } from '@template-app/core/features'
+import { PlanType } from '@flicktionary/api-client/orpc-contracts/billing-contract'
+import { FEATURES } from '@flicktionary/core/features'
 import { Platform } from 'react-native'
 import { posthog } from '@/lib/analytics/posthog'
 

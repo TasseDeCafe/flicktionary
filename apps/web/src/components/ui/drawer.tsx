@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Drawer as DrawerPrimitive } from 'vaul'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 const Drawer = ({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root data-slot='drawer' {...props} />

@@ -4,7 +4,7 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { logMessage } from '../../transport/third-party/sentry/error-monitoring'
 import type { BillingServiceInterface } from '../../service/get-subscription-account-data-service/billing-service'
-import { billingContract, GetSubscriptionInfoResponse } from '@template-app/api-client/orpc-contracts/billing-contract'
+import { billingContract, GetSubscriptionInfoResponse } from '@flicktionary/api-client/orpc-contracts/billing-contract'
 
 export const BillingRouter = (billingService: BillingServiceInterface, usersWithFreeAccess: string[]): Router => {
   const implementer = implement(billingContract).$context<OrpcContext>()

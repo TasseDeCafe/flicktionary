@@ -1,4 +1,4 @@
-# app-monorepo-template.dev backend
+# flictionary.app backend
 
 ## run
 

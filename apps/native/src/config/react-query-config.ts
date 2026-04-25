@@ -4,15 +4,15 @@ import { logWithSentry } from '@/lib/analytics/log-with-sentry'
 import {
   ERROR_CODE_FOR_INVALID_TOKEN,
   ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED,
-} from '@template-app/api-client/key-generation/frontend-api-key-constants'
+} from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 import { ORPCError } from '@orpc/contract'
-import { buildOrpcErrorContext } from '@template-app/api-client/utils/backend-error-utils'
+import { buildOrpcErrorContext } from '@flicktionary/api-client/utils/backend-error-utils'
 import {
   getBackendErrorCode,
   getBackendErrorMessage,
   isExpectedValidationError,
   queryRetryHandler,
-} from '@template-app/api-client/utils/orpc-error-utils'
+} from '@flicktionary/api-client/utils/orpc-error-utils'
 import RevenueCatUI from 'react-native-purchases-ui'
 import { QueryMeta } from '@/types/hook-types'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'

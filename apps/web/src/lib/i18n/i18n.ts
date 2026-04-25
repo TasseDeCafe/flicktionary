@@ -1,10 +1,10 @@
 import type { Messages } from '@lingui/core'
 import { i18n } from '@lingui/core'
-import { ENGLISH_LOCALE, FRENCH_LOCALE, Locale, POLISH_LOCALE, SPANISH_LOCALE } from '@template-app/i18n/i18n-config'
-import { messages as enMessages } from '@template-app/i18n/locales/en/messages.po'
-import { messages as esMessages } from '@template-app/i18n/locales/es/messages.po'
-import { messages as frMessages } from '@template-app/i18n/locales/fr/messages.po'
-import { messages as plMessages } from '@template-app/i18n/locales/pl/messages.po'
+import { ENGLISH_LOCALE, FRENCH_LOCALE, Locale, POLISH_LOCALE, SPANISH_LOCALE } from '@flicktionary/i18n/i18n-config'
+import { messages as enMessages } from '@flicktionary/i18n/locales/en/messages.po'
+import { messages as esMessages } from '@flicktionary/i18n/locales/es/messages.po'
+import { messages as frMessages } from '@flicktionary/i18n/locales/fr/messages.po'
+import { messages as plMessages } from '@flicktionary/i18n/locales/pl/messages.po'
 
 const catalogs: Record<Locale, Messages> = {
   [ENGLISH_LOCALE]: enMessages,

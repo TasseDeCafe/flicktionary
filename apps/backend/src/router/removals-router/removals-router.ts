@@ -8,7 +8,7 @@ import type { AuthUsersRepository } from '../../transport/database/auth-users/au
 import { StripeApi } from '../../transport/third-party/stripe/stripe-api'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { StripeSubscriptionsRepositoryInterface } from '../../transport/database/stripe-subscriptions/stripe-subscriptions-repository'
-import { removalsContract } from '@template-app/api-client/orpc-contracts/removals-contract'
+import { removalsContract } from '@flicktionary/api-client/orpc-contracts/removals-contract'
 import { CrypticCodeConstants } from '../../constants/cryptic-code-constants'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'

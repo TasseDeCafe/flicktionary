@@ -33,18 +33,18 @@ const getAppName = () => {
 
 const getAppHost = () => {
   if (IS_DEV) {
-    return '*.app-monorepo-template.dev'
+    return '*.flictionary.app'
   }
-  return 'app.app-monorepo-template.dev'
+  return 'app.flictionary.app'
 }
 
 const getAssociatedDomains = () => {
-  const productionDomains = ['applinks:app.app-monorepo-template.dev']
+  const productionDomains = ['applinks:app.flictionary.app']
   if (IS_DEV) {
     return [
       ...productionDomains,
-      'applinks:web-kamil.app-monorepo-template.dev',
-      'applinks:web-sebastien.app-monorepo-template.dev',
+      'applinks:web-kamil.flictionary.app',
+      'applinks:web-sebastien.flictionary.app',
     ]
   }
   return productionDomains
@@ -63,14 +63,13 @@ const getGoogleIosUrlScheme = () => {
 const config = {
   expo: {
     name: getAppName(),
-    owner: 'template-organization',
-    slug: 'template-app',
+    owner: 'fluencist',
+    slug: 'flicktionary',
     version: '0.0.3',
     orientation: 'portrait',
     icon: './src/assets/images/icon.png',
-    scheme: 'template-app',
+    scheme: 'flicktionary',
     userInterfaceStyle: 'automatic',
-    buildCacheProvider: 'eas',
     ios: {
       usesAppleSignIn: true,
       supportsTablet: false,
@@ -175,14 +174,6 @@ const config = {
         },
       ],
       ['expo-apple-authentication'],
-      [
-        '@sentry/react-native/expo',
-        {
-          url: 'https://sentry.io/',
-          project: 'native',
-          organization: 'template-organization',
-        },
-      ],
       ['expo-font'],
       ['expo-localization'],
     ],
@@ -191,18 +182,9 @@ const config = {
       autolinkingModuleResolution: true,
       reactCompiler: true,
     },
-    updates: {
-      url: 'https://u.expo.dev/20a5774f-5cfd-48ad-b277-50d9d02a2e58',
-    },
-    runtimeVersion: {
-      policy: 'appVersion',
-    },
     extra: {
       router: {
         origin: false,
-      },
-      eas: {
-        projectId: '20a5774f-5cfd-48ad-b277-50d9d02a2e58',
       },
     },
   },

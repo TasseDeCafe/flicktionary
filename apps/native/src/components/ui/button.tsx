@@ -1,5 +1,5 @@
 import { ActivityIndicator, Text, TouchableOpacity, TouchableOpacityProps, View } from 'react-native'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { colors } from '@/constants/colors'
 import { ReactNode } from 'react'
 

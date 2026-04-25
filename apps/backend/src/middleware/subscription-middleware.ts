@@ -4,7 +4,7 @@ import { logCustomErrorMessageAndError } from '../transport/third-party/sentry/e
 import { getConfig } from '../config/environment-config'
 import { AccessCacheServiceInterface } from '../service/long-running/subscription-cache-service/access-cache-service'
 import { ORPCError } from '@orpc/server'
-import { ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED } from '@template-app/api-client/key-generation/frontend-api-key-constants'
+import { ERROR_CODE_FOR_SUBSCRIPTION_REQUIRED } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 
 export const subscriptionMiddleware = (accessCache: AccessCacheServiceInterface, usersWithFreeAccess: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {

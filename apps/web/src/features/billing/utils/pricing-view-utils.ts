@@ -2,8 +2,8 @@ import {
   NUMBER_OF_DAYS_IN_FREE_TRIAL,
   STRIPE_MONTHLY_PRICE_IN_EUR,
   STRIPE_YEARLY_PRICE_IN_EUR,
-} from '@template-app/core/constants/pricing-constants.ts'
-import { PlanType, UserStripePricingDetails } from '@template-app/api-client/orpc-contracts/billing-contract'
+} from '@flicktionary/core/constants/pricing-constants.ts'
+import { PlanType, UserStripePricingDetails } from '@flicktionary/api-client/orpc-contracts/billing-contract'
 import { t } from '@lingui/core/macro'
 
 export type PlanOption = {

@@ -10,7 +10,7 @@ import {
 import { isStripeSubscriptionActive } from './stripe-subscription.utils'
 import { UsersRepositoryInterface } from '../../../transport/database/users/users-repository'
 import { getConfig } from '../../../config/environment-config'
-import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@template-app/core/constants/pricing-constants'
+import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@flicktionary/core/constants/pricing-constants'
 
 export interface AccessCacheServiceInterface {
   hasUserId: (userId: string) => boolean

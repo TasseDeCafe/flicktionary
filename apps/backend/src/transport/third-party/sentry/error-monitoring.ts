@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import * as Sentry from '@sentry/node'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { logMessageWithSentry } from './log-message-with-sentry'
 import { _sanitizeEmails } from './sentry-utils'
 import { getRequestContextUserId } from '../../../context/request-context'

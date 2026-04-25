@@ -1,5 +1,5 @@
 {
-  "name": "@template-app/native",
+  "name": "@flicktionary/native",
   "main": "expo-router/entry",
   "version": "0.0.3",
   "scripts": {
@@ -51,9 +51,9 @@
     "@shopify/react-native-skia": "catalog:",
     "@supabase/supabase-js": "catalog:",
     "@tanstack/react-query": "catalog:",
-    "@template-app/api-client": "workspace:*",
-    "@template-app/core": "workspace:*",
-    "@template-app/i18n": "workspace:*",
+    "@flicktionary/api-client": "workspace:*",
+    "@flicktionary/core": "workspace:*",
+    "@flicktionary/i18n": "workspace:*",
     "babel-preset-expo": "catalog:",
     "class-variance-authority": "catalog:",
     "dayjs": "catalog:",

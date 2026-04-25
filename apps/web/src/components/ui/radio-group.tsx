@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
 import { CircleIcon } from 'lucide-react'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 const RadioGroup = ({ className, ...props }: React.ComponentProps<typeof RadioGroupPrimitive.Root>) => (
   <RadioGroupPrimitive.Root data-slot='radio-group' className={cn('grid gap-3', className)} {...props} />

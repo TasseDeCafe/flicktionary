@@ -1,11 +1,11 @@
 {
-  "extends": "@template-app/typescript-config/vite.json",
+  "extends": "@flicktionary/typescript-config/vite.json",
   "compilerOptions": {
     "paths": {
-      "@template-app/api-client/*": ["../../packages/api-client/src/*"],
-      "@template-app/core/*": ["../../packages/core/src/*"],
-      "@template-app/i18n/locales/*": ["../../packages/i18n/locales/*"],
-      "@template-app/i18n/*": ["../../packages/i18n/src/*"],
+      "@flicktionary/api-client/*": ["../../packages/api-client/src/*"],
+      "@flicktionary/core/*": ["../../packages/core/src/*"],
+      "@flicktionary/i18n/locales/*": ["../../packages/i18n/locales/*"],
+      "@flicktionary/i18n/*": ["../../packages/i18n/src/*"],
       "@/*": ["./src/*"]
     }
   },
