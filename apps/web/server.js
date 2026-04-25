@@ -16,23 +16,23 @@ app.get('/.well-known/apple-app-site-association', (req, res) => {
     applinks: {
       apps: [],
       details: [
-        { appID: 'NPWJ2C5977.com.app-monorepo-template.ios', paths: ['*'] },
-        { appID: 'NPWJ2C5977.com.app-monorepo-template.ios.preview', paths: ['*'] },
-        { appID: 'NPWJ2C5977.com.app-monorepo-template.ios.dev', paths: ['*'] },
+        { appID: 'NPWJ2C5977.com.flicktionary.ios', paths: ['*'] },
+        { appID: 'NPWJ2C5977.com.flicktionary.ios.preview', paths: ['*'] },
+        { appID: 'NPWJ2C5977.com.flicktionary.ios.dev', paths: ['*'] },
       ],
     },
     activitycontinuation: {
       apps: [
-        'NPWJ2C5977.com.app-monorepo-template.ios',
-        'NPWJ2C5977.com.app-monorepo-template.ios.preview',
-        'NPWJ2C5977.com.app-monorepo-template.ios.dev',
+        'NPWJ2C5977.com.flicktionary.ios',
+        'NPWJ2C5977.com.flicktionary.ios.preview',
+        'NPWJ2C5977.com.flicktionary.ios.dev',
       ],
     },
     webcredentials: {
       apps: [
-        'NPWJ2C5977.com.app-monorepo-template.ios',
-        'NPWJ2C5977.com.app-monorepo-template.ios.preview',
-        'NPWJ2C5977.com.app-monorepo-template.ios.dev',
+        'NPWJ2C5977.com.flicktionary.ios',
+        'NPWJ2C5977.com.flicktionary.ios.preview',
+        'NPWJ2C5977.com.flicktionary.ios.dev',
       ],
     },
   })

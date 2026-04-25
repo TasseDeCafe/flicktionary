@@ -3,7 +3,7 @@
 module.exports = {
   apps: [
     {
-      name: 'app-monorepo-template',
+      name: 'flicktionary',
       script: './dist/apps/backend/src/index.js',
       instances: 2,
       exec_mode: 'cluster',

@@ -1,4 +1,4 @@
-# flictionary.app backend
+# flicktionary.app backend
 
 ## run
 

@@ -54,7 +54,7 @@ export const ContactUsOverlayContent = () => {
   return (
     <OverlayContent>
       <OverlayHeader>
-        <OverlayTitle>{t`Help us improve TemplateApp`}</OverlayTitle>
+        <OverlayTitle>{t`Help us improve Flicktionary`}</OverlayTitle>
         <p className='text-sm text-gray-500'>{t`Share your feedback or suggest improvements to the founders. We read and reply to every submission!`}</p>
         <OverlayDescription className='hidden'></OverlayDescription>
       </OverlayHeader>

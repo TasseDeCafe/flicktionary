@@ -76,7 +76,7 @@ export const ContactUsSheetContent = ({ close }: ContactUsSheetContentProps) => 
       contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) }}
       keyboardShouldPersistTaps='handled'
     >
-      <Text className='mb-2 text-center text-2xl font-semibold'>{t`Help us improve TemplateApp`}</Text>
+      <Text className='mb-2 text-center text-2xl font-semibold'>{t`Help us improve Flicktionary`}</Text>
       <Text className='mb-6 text-center text-gray-500'>{t`Share your feedback or suggest improvements to the founders. We read and reply to every submission!`}</Text>
       <Text className='mb-1 text-sm font-medium text-gray-700'>{t`Message to the founders`}</Text>
       <Controller

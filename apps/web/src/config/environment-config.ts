@@ -9,8 +9,8 @@ export type EnvironmentConfig = z.infer<typeof environmentConfigSchema>
 const getProductionConfig = (): EnvironmentConfig => ({
   environmentName: 'production',
   apiHost: import.meta.env.VITE_API_HOST,
-  webUrl: 'https://app.flictionary.app',
-  domain: 'flictionary.app',
+  webUrl: 'https://app.flicktionary.app',
+  domain: 'flicktionary.app',
   supabaseProjectUrl: import.meta.env.VITE_SUPABASE_PROJECT_URL,
   supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   sentry: FEATURES.SENTRY
@@ -95,7 +95,7 @@ const getDevelopmentConfig = (): EnvironmentConfig => ({
 const getDevelopmentTunnelConfig = (): EnvironmentConfig => ({
   ...getDevelopmentConfig(),
   webUrl: import.meta.env.VITE_WEB_URL,
-  domain: 'flictionary.app',
+  domain: 'flicktionary.dev',
   environmentName: 'development-tunnel',
   apiHost: import.meta.env.VITE_API_HOST,
   supabaseProjectUrl: import.meta.env.VITE_SUPABASE_PROJECT_URL,

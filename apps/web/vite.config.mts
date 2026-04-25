@@ -46,7 +46,7 @@ export default defineConfig({
     },
   },
   server: {
-    // Necessary to make sure that flictionary.app is allowed
+    // Necessary to make sure that flicktionary.app is allowed
     // when false, only localhost is allowed
     allowedHosts: true,
   },

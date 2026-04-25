@@ -24,7 +24,7 @@ export const MagicLinkEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Sign in to TemplateApp</Preview>
+      <Preview>Sign in to Flicktionary</Preview>
       <Tailwind
         config={{
           presets: [pixelBasedPreset],
@@ -40,7 +40,7 @@ export const MagicLinkEmail = ({
         <Body className='bg-gray-100 font-sans'>
           <Container className='mx-auto mb-16 bg-white px-0 py-5'>
             <Heading className='my-10 px-0 text-center text-2xl font-bold text-gray-800'>
-              Welcome to TemplateApp!
+              Welcome to Flicktionary!
             </Heading>
 
             <Text className='px-10 text-center text-base leading-relaxed text-gray-800'>

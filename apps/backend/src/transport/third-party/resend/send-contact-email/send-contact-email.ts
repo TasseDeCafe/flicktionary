@@ -12,8 +12,8 @@ export const sendContactEmail = async (
   try {
     const nameDisplay = username ? `<p><strong>Name:</strong> ${username}</p>` : ''
     await resend.emails.send({
-      from: 'TemplateApp <support@flictionary.app>',
-      to: ['support@flictionary.app'],
+      from: 'Flicktionary <support@flicktionary.app>',
+      to: ['support@flicktionary.app'],
       replyTo: [email],
       subject: 'New message from your contact form',
       html: `

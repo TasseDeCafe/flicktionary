@@ -1,6 +1,6 @@
 set -e
 
-PROCESS_NAME="flictionary.app"
+PROCESS_NAME="flicktionary.app"
 CONFIG_PATH="ecosystem.config.cjs"
 
 export NODE_ENV=production

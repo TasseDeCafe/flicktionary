@@ -1,6 +1,6 @@
 export const EXTERNAL_LINKS = {
-  TERMS_OF_SERVICE_URL: 'https://www.flictionary.app/terms-and-conditions',
-  PRIVACY_POLICY_URL: 'https://flictionary.app/privacy-policy',
+  TERMS_OF_SERVICE_URL: 'https://www.flicktionary.app/terms-and-conditions',
+  PRIVACY_POLICY_URL: 'https://flicktionary.app/privacy-policy',
   REFUND_POLICY: 'https://www.notion.so/grammarians/Refund-Policy-30766e3ac30643198738bf14812c01a3',
   IOS_APP_STORE_URL: 'https://apps.apple.com/us/app/flicktionary/id6741498422',
   IOS_APP_STORE_URL_WITH_PROVIDER_TOKEN_AND_MEDIUM_TYPE:

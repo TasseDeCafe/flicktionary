@@ -3,12 +3,12 @@ const IS_PREVIEW = process.env.APP_VARIANT === 'preview'
 
 export const getUniqueIosIdentifier = () => {
   if (IS_DEV) {
-    return 'com.app-monorepo-template.ios.dev'
+    return 'com.flicktionary.ios.dev'
   }
   if (IS_PREVIEW) {
-    return 'com.app-monorepo-template.ios.preview'
+    return 'com.flicktionary.ios.preview'
   }
-  return 'com.app-monorepo-template.ios'
+  return 'com.flicktionary.ios'
 }
 
 export const getUniqueAndroidIdentifier = () => {
@@ -23,28 +23,28 @@ export const getUniqueAndroidIdentifier = () => {
 
 const getAppName = () => {
   if (IS_DEV) {
-    return 'DEV - TemplateApp'
+    return 'DEV - Flicktionary'
   }
   if (IS_PREVIEW) {
-    return 'PREVIEW - TemplateApp'
+    return 'PREVIEW - Flicktionary'
   }
-  return 'TemplateApp'
+  return 'Flicktionary'
 }
 
 const getAppHost = () => {
   if (IS_DEV) {
-    return '*.flictionary.app'
+    return '*.flicktionary.dev'
   }
-  return 'app.flictionary.app'
+  return 'app.flicktionary.app'
 }
 
 const getAssociatedDomains = () => {
-  const productionDomains = ['applinks:app.flictionary.app']
+  const productionDomains = ['applinks:app.flicktionary.app']
   if (IS_DEV) {
     return [
       ...productionDomains,
-      'applinks:web-kamil.flictionary.app',
-      'applinks:web-sebastien.flictionary.app',
+      'applinks:web-kamil.flicktionary.dev',
+      'applinks:web-sebastien.flicktionary.dev',
     ]
   }
   return productionDomains

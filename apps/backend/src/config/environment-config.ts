@@ -15,12 +15,12 @@ const productionConfig: EnvironmentConfig = {
   environmentName: 'production',
   // Railway injects PORT env var, fallback to 4004 for other deployments
   port: parseInt(process.env.PORT || '4004', 10),
-  webUrl: 'https://app.flictionary.app',
+  webUrl: 'https://app.flicktionary.app',
   shouldLogRequests: false,
   allowedCorsOrigins: [
-    'https://flictionary.app',
-    'https://www.flictionary.app',
-    'https://app.flictionary.app',
+    'https://flicktionary.app',
+    'https://www.flicktionary.app',
+    'https://app.flicktionary.app',
     /https:\/\/.*-fluencist\.vercel\.app(\/.*)?/, // Vercel Preview URLs
     /https:\/\/.*\.up\.railway\.app(\/.*)?/, // Railway Preview URLs
   ],
@@ -36,7 +36,7 @@ const productionConfig: EnvironmentConfig = {
           maxValueLength: 8192,
           tracesSampleRate: 1.0,
           profilesSampleRate: 1.0,
-          tracePropagationTargets: ['https://app.flictionary.app', 'https://api.flictionary.app'],
+          tracePropagationTargets: ['https://app.flicktionary.app', 'https://api.flicktionary.app'],
         },
       }
     : {
