@@ -1,7 +1,7 @@
 {
   "name": "@flicktionary/native",
   "main": "expo-router/entry",
-  "version": "0.0.3",
+  "version": "0.0.1",
   "scripts": {
     "test": "jest",
     "dev:tunnel": "APP_VARIANT=development doppler run -- expo start",
@@ -25,6 +25,9 @@
     "@babel/plugin-transform-react-jsx": "catalog:",
     "@expo/metro-runtime": "catalog:",
     "@expo/vector-icons": "catalog:",
+    "@flicktionary/api-client": "workspace:*",
+    "@flicktionary/core": "workspace:*",
+    "@flicktionary/i18n": "workspace:*",
     "@formatjs/intl-locale": "catalog:",
     "@formatjs/intl-pluralrules": "catalog:",
     "@gorhom/bottom-sheet": "catalog:",
@@ -51,9 +54,6 @@
     "@shopify/react-native-skia": "catalog:",
     "@supabase/supabase-js": "catalog:",
     "@tanstack/react-query": "catalog:",
-    "@flicktionary/api-client": "workspace:*",
-    "@flicktionary/core": "workspace:*",
-    "@flicktionary/i18n": "workspace:*",
     "babel-preset-expo": "catalog:",
     "class-variance-authority": "catalog:",
     "dayjs": "catalog:",
