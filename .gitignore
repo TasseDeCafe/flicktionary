@@ -1,0 +1,82 @@
+node_modules
+dist
+copied-dist
+
+.idea
+.DS_store
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.vite
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+*.pem
+
+# local env files
+.env*.local
+apps/landing-page/.env.sentry-build-plugin
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+.turbo
+
+# Generated files
+ **/*.js
+ **/*.js.map
+ **/*.d.ts
+ **/*.d.ts.map
+
+# specstory, extension to store cursor chat history
+/.specstory/
+
+# Local commit message template
+gitmessage
+
+/docs
+
+# Lingui
+/packages/i18n/locales/**/*.ts
+/nextjs-babel/
+
+# bulletproof-react
+/bulletproof-react

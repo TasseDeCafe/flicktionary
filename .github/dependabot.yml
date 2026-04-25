@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Root workspace - manages pnpm catalog dependencies in pnpm-workspace.yaml
+  # Runs monthly with all updates grouped into a single PR
+  # All workspace packages use "catalog:" references, so this updates everything
+  # We could have a more refined strategy, but this is a simple solution
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+    open-pull-requests-limit: 1
+    groups:
+      # Group all dependency updates into one PR
+      all-updates:
+        patterns:
+          - "*"
+        update-types: ["major", "minor", "patch"]
+    # Pull PR locally and revert specific changes if needed (e.g., native deps)
+    labels:
+      - "dependencies"
+      - "catalog-update"

@@ -1,0 +1,67 @@
+#!/bin/bash
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+# This script automatically detects which project directories have changes in a Git commit.
+# It then modifies the commit message to include these directories as a scope.
+
+dir_has_changes() {
+    local changes=$(git diff --cached --name-only | grep "apps/$1/")
+    [ -n "$changes" ]
+    return $?
+}
+
+has_root_changes() {
+    local changes=$(git diff --cached --name-only | grep -v "^apps/" | grep -v "^packages/")
+    [ -n "$changes" ]
+    return $?
+}
+
+has_package_changes() {
+    local changes=$(git diff --cached --name-only | grep "^packages/")
+    [ -n "$changes" ]
+    return $?
+}
+
+commit_msg=$(cat "$COMMIT_MSG_FILE")
+
+areas=""
+if dir_has_changes "web"; then
+    areas="${areas}web,"
+fi
+if dir_has_changes "landing-page"; then
+    areas="${areas}landing-page,"
+fi
+if dir_has_changes "backend"; then
+    areas="${areas}backend,"
+fi
+if dir_has_changes "native"; then
+    areas="${areas}native,"
+fi
+if has_root_changes; then
+    areas="${areas}root,"
+fi
+if has_package_changes; then
+    areas="${areas}packages,"
+fi
+
+# Remove trailing comma
+areas=${areas%,}
+
+# If areas is not empty, add it to the commit message
+if [ -n "$areas" ]; then
+    # Check if the commit message already contains a scope
+    if echo "$commit_msg" | grep -q "^[^:]\+([^)]\+):"; then
+        # If it does, replace the existing scope
+        new_msg=$(echo "$commit_msg" | sed "s/^([^)]\+)/($areas)/")
+    elif echo "$commit_msg" | grep -q ":"; then
+        # If it contains a colon but no scope, insert the scope before the first colon
+        new_msg=$(echo "$commit_msg" | sed "s/:/($areas):/")
+    else
+        # If it doesn't contain a colon, add the scope at the beginning
+        new_msg="($areas): $commit_msg"
+    fi
+    echo "$new_msg" > "$COMMIT_MSG_FILE"
+fi

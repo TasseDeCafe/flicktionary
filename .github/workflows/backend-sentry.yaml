@@ -1,0 +1,38 @@
+name: Backend - Upload Sentry Source Maps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/backend/**'
+      - 'packages/core/**'
+      - 'packages/api-client/**'
+      - '.github/workflows/backend-sentry.yaml'
+
+jobs:
+  upload-sourcemaps:
+    runs-on: ubuntu-latest
+    env:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for sentry-cli to get commit info
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend
+        run: pnpm prod:backend:build
+
+      - name: Upload source maps to Sentry
+        run: SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }} pnpm prod:backend:sentry

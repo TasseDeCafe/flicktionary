@@ -1,0 +1,40 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+build-*.aab
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+google-play-eas-service-account-file.json
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+
+# macOS
+.DS_Store
+*.pem
+
+# typescript
+*.tsbuildinfo
+/android/
+/ios/
+
+# scripts
+.env.doppler
+eas-service-account-key-google-play.json
+

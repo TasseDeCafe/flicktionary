@@ -1,0 +1,17 @@
+{
+  "extends": "@template-app/typescript-config/library.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "paths": {
+      "@template-app/core/*": ["../../packages/core/src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../core" }],
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "verbose": false
+  }
+}

@@ -1,0 +1,17 @@
+[build]
+builder = "railpack"
+buildCommand = """
+pnpm install --frozen-lockfile && \
+if [ "$RAILWAY_ENVIRONMENT_NAME" != "production" ] && [ -n "$RAILWAY_ENVIRONMENT_NAME" ]; then \
+  export VITE_API_HOST="https://template-appbackend-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app"; \
+  echo "Preview build: VITE_API_HOST=$VITE_API_HOST"; \
+fi && \
+pnpm turbo run build --filter=@template-app/web
+"""
+
+[deploy]
+startCommand = "node apps/web/server.js"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5

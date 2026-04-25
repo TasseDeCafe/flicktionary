@@ -1,0 +1,24 @@
+{
+  "name": "@template-app/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "build": "tsc && tsc-alias --project tsconfig.json",
+    "check:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "catalog:",
+    "tailwind-merge": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@template-app/typescript-config": "workspace:*",
+    "typescript": "catalog:",
+    "tsc-alias": "catalog:",
+    "vitest": "catalog:"
+  }
+}

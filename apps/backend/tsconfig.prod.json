@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["**/*.test.ts"],
+  "include": [
+    "src",
+    "types/**/*",
+    "../../packages/api-client/src/**/*",
+    "../../packages/core/src/**/*",
+    "../../packages/i18n/src/**/*"
+  ]
+}

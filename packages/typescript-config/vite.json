@@ -1,0 +1,8 @@
+{
+  "extends": "./react-app.json",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    "useDefineForClassFields": true,
+    "allowImportingTsExtensions": true
+  }
+}

@@ -1,0 +1,60 @@
+name: PR Rebase Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  push:
+    branches:
+      - main
+
+jobs:
+  check-rebase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if PR is rebased
+        run: |
+          # Get the merge base between the PR branch and main
+          MERGE_BASE=$(git merge-base HEAD origin/main)
+
+          # Get the latest commit on main
+          MAIN_HEAD=$(git rev-parse origin/main)
+
+          # Check if the merge base is the same as main's HEAD
+          # If they're the same, the PR is rebased
+          if [ "$MERGE_BASE" = "$MAIN_HEAD" ]; then
+            echo "✅ PR is properly rebased on main"
+            exit 0
+          else
+            echo "❌ PR is not rebased on main"
+            echo "Merge base: $MERGE_BASE"
+            echo "Main HEAD:  $MAIN_HEAD"
+            echo ""
+            echo "Please rebase your branch on main before merging:"
+            echo "git checkout main"
+            echo "git pull origin main"
+            echo "git checkout your-branch"
+            echo "git rebase main"
+            echo "git push --force-with-lease origin your-branch"
+            exit 1
+          fi

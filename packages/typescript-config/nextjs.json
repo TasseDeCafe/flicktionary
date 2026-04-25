@@ -1,0 +1,16 @@
+{
+  "extends": "./react-app.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "target": "ES2017",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": false
+  }
+}

@@ -1,0 +1,1245 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2025-11-12 23:48+0100\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: fr\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
+msgid "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
+msgstr "- Accéder au service à des fins illégales ou en violation de toute loi locale, étatique, nationale ou internationale."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:64
+msgid "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our resources."
+msgstr "- Tenter de copier, dupliquer, reproduire, vendre, échanger ou revendre nos ressources."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:79
+msgid "- Attempting to hack, destabilize, or introduce malicious software to our website, or to compromise the security of our services in any way."
+msgstr "- Tenter de pirater, déstabiliser ou introduire des logiciels malveillants sur notre site web, ou de compromettre la sécurité de nos services de quelque manière que ce soit."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:73
+msgid "- Conducting any unauthorized activity that involves the service, including but not limited to data theft, providing malware or spyware, phishing, and other fraudulent activities."
+msgstr "- Mener toute activité non autorisée impliquant le service, y compris mais sans s'y limiter le vol de données, la fourniture de logiciels malveillants ou espions, le phishing et autres activités frauduleuses."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:151
+msgid "- Continuous security monitoring and automated threat detection systems"
+msgstr "- Surveillance continue de la sécurité et systèmes automatisés de détection des menaces"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:50
+msgid "- Cookies and Tracking Technologies: We use cookies and similar technologies to monitor and analyze service usage and to enhance user experience. You may control the use of these technologies through your browser settings."
+msgstr "- Cookies et technologies de suivi : Nous utilisons des cookies et des technologies similaires pour surveiller et analyser l'utilisation du service et améliorer l'expérience utilisateur. Vous pouvez contrôler l'utilisation de ces technologies via les paramètres de votre navigateur."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:59
+msgid "- Engaging in any activity that disrupts or interferes with our resources, including servers and networks."
+msgstr "- S'engager dans toute activité qui perturbe ou interfère avec nos ressources, y compris les serveurs et les réseaux."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:136
+msgid "- Enterprise-grade encryption protocols for data transmission and storage"
+msgstr "- Protocoles de chiffrement de niveau entreprise pour la transmission et le stockage des données"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:57
+msgid "- Google/Apple/Email Authentication: We integrate industry standards to streamline your sign-in process and enhance account security. We might use your email address to send you notifications and emails, from which you can always unsubscribe. We do not sell your email address. We also do not share your email address with any third parties if it's not strictly related to the basic functioning of our webapp."
+msgstr "- Authentification Google/Apple/Email : Nous intégrons les standards de l'industrie pour simplifier votre processus de connexion et renforcer la sécurité de votre compte. Nous pouvons utiliser votre adresse e-mail pour vous envoyer des notifications et des e-mails, dont vous pouvez toujours vous désabonner. Nous ne vendons pas votre adresse e-mail. Nous ne partageons pas non plus votre adresse e-mail avec des tiers si ce n'est pas strictement lié au fonctionnement de base de notre application web."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:142
+msgid "- Implementation of trusted, industry-standard security libraries and frameworks, avoiding custom security implementations"
+msgstr "- Mise en œuvre de bibliothèques et frameworks de sécurité de confiance et conformes aux standards de l'industrie, en évitant les implémentations de sécurité personnalisées"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:120
+msgid "- Legal Requirements: We may disclose your data if required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency)."
+msgstr "- Exigences légales : Nous pouvons divulguer vos données si la loi l'exige ou en réponse à des demandes valides d'autorités publiques (par exemple, un tribunal ou une agence gouvernementale)."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:34
+msgid "- Personal Information: We collect personal data such as your name, email address, and other contact details when you register, subscribe to our services, fill out forms, or interact with our platform in other ways that require personal identification."
+msgstr "- Informations personnelles : Nous collectons des données personnelles telles que votre nom, votre adresse e-mail et d'autres coordonnées lorsque vous vous inscrivez, vous abonnez à nos services, remplissez des formulaires ou interagissez avec notre plateforme d'autres manières nécessitant une identification personnelle."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:56
+msgid "- Prohibited Activities: Users are prohibited from:"
+msgstr "- Activités interdites : Il est interdit aux utilisateurs de :"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:154
+msgid "- Regular security training for our development and operations teams"
+msgstr "- Formation régulière en sécurité pour nos équipes de développement et d'exploitation"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:139
+msgid "- Regular third-party security audits and penetration testing by certified specialists"
+msgstr "- Audits de sécurité tiers réguliers et tests d'intrusion par des spécialistes certifiés"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:148
+msgid "- Strict access controls and authentication mechanisms following OWASP security guidelines"
+msgstr "- Contrôles d'accès stricts et mécanismes d'authentification conformes aux directives de sécurité OWASP"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:83
+msgid "- To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the service, and for marketing and promotional purposes"
+msgstr "- Pour communiquer avec vous, directement ou par l'intermédiaire de l'un de nos partenaires, notamment pour le service client, pour vous fournir des mises à jour et d'autres informations relatives au service, et à des fins de marketing et de promotion"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:81
+msgid "- To develop new products, services, features, and functionality"
+msgstr "- Pour développer de nouveaux produits, services, fonctionnalités et capacités"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:76
+msgid "- To improve, personalize, and expand our services"
+msgstr "- Pour améliorer, personnaliser et étendre nos services"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:73
+msgid "- To provide, operate, and maintain our services"
+msgstr "- Pour fournir, exploiter et maintenir nos services"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:90
+msgid "- To send you emails and notifications"
+msgstr "- Pour vous envoyer des e-mails et des notifications"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:79
+msgid "- To understand and analyze how you use our services"
+msgstr "- Pour comprendre et analyser comment vous utilisez nos services"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:45
+msgid "- Voice Recording: Users may not use the service to replicate or clone voices of any individuals other than"
+msgstr "- Enregistrement vocal : Les utilisateurs ne peuvent pas utiliser le service pour reproduire ou cloner les voix d'autres personnes que"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:41
+msgid "- Voice Recordings: To assist in pronunciation improvement, we collect and analyze recordings of your voice. These are used to create personalized voice clones. - App data: We collect and store data that you input into the app for language learning purposes. This includes your learning progress, custom settings, and interactions within the app. This data is utilized to tailor and enhance your learning experience, enabling personalized language learning pathways and recommendations."
+msgstr "- Enregistrements vocaux : Pour vous aider à améliorer votre prononciation, nous collectons et analysons des enregistrements de votre voix. Ceux-ci sont utilisés pour créer des clones vocaux personnalisés. - Données de l'application : Nous collectons et stockons les données que vous saisissez dans l'application à des fins d'apprentissage des langues. Cela inclut votre progression d'apprentissage, vos paramètres personnalisés et vos interactions au sein de l'application. Ces données sont utilisées pour adapter et améliorer votre expérience d'apprentissage, en permettant des parcours et recommandations d'apprentissage linguistique personnalisés."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
+msgid "(Current)"
+msgstr "(Actuel)"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
+msgid "(Expired)"
+msgstr "(Expiré)"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:127
+msgid "(i) your access to or use of or inability to access or use the service;"
+msgstr "(i) votre accès ou utilisation du service ou votre incapacité à accéder ou à utiliser le service ;"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:130
+msgid "(ii) any conduct or content of any third party on the service;"
+msgstr "(ii) tout comportement ou contenu de tiers sur le service ;"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:133
+msgid "(iii) any content obtained from the service; and"
+msgstr "(iii) tout contenu obtenu à partir du service ; et"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:136
+msgid "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
+msgstr "(iv) l'accès, l'utilisation ou la modification non autorisés de vos transmissions ou contenus, que ce soit sur la base d'une garantie, d'un contrat, d'un délit (y compris la négligence) ou de toute autre théorie juridique, que nous ayons été informés ou non de la possibilité de tels dommages."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:188
+msgid "{discount}% off with your referral for {durationLimit} months!"
+msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} mois !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:210
+msgid "{discount}% off with your referral for {durationLimit} years!"
+msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} ans !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:186
+msgid "{discount}% off with your referral for 1 month!"
+msgstr "{discount}% de réduction avec votre parrainage pendant 1 mois !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:208
+msgid "{discount}% off with your referral for 1 year!"
+msgstr "{discount}% de réduction avec votre parrainage pendant 1 an !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:183
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:205
+msgid "{discount}% off with your referral forever!"
+msgstr "{discount}% de réduction avec votre parrainage à vie !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:175
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:197
+msgid "{discountPercentage}% off thanks to your past referral!"
+msgstr "{discountPercentage} % de réduction grâce à votre ancien parrainage !"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:143
+msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with your referral!"
+msgstr "{monthlyDiscountPercentage}% de réduction pendant {monthlyDurationLimit} mois avec votre parrainage !"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:141
+msgid "{monthlyDiscountPercentage}% off for 1 month with your referral!"
+msgstr "{monthlyDiscountPercentage}% de réduction pendant 1 mois avec votre parrainage !"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:140
+msgid "{monthlyDiscountPercentage}% off with your referral!"
+msgstr "{monthlyDiscountPercentage}% de réduction avec votre parrainage !"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:56
+msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
+msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
+msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
+msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:125
+msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
+msgstr "{yearlyDiscountPercentage}% de réduction pendant {yearlyDurationLimit} ans avec votre parrainage !"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:123
+msgid "{yearlyDiscountPercentage}% off for 1 year with your referral!"
+msgstr "{yearlyDiscountPercentage}% de réduction pendant 1 an avec votre parrainage !"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:122
+msgid "{yearlyDiscountPercentage}% off with your referral!"
+msgstr "{yearlyDiscountPercentage}% de réduction avec votre parrainage !"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:194
+msgid "• All personal account information and system preferences"
+msgstr "• Toutes les informations de compte personnel et les préférences système"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:191
+msgid "• Complete learning history and all accumulated progress data"
+msgstr "• Historique d'apprentissage complet et toutes les données de progression accumulées"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:188
+msgid "• Every voice recording and associated voice clone, without exception"
+msgstr "• Tous les enregistrements vocaux et clones vocaux associés, sans exception"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:197
+msgid "• Full communication records and interaction history"
+msgstr "• Registres complets de communication et historique des interactions"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:135
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:73
+msgid "€{monthlyPriceFormatted}/month"
+msgstr "{monthlyPriceFormatted} €/mois"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:117
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:65
+msgid "€{yearlyPricePerMonth}/month"
+msgstr "{yearlyPricePerMonth} €/mois"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:21
+msgid "1. Agreement to Terms"
+msgstr "1. Acceptation des conditions"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:21
+msgid "1. Introduction"
+msgstr "1. Introduction"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:208
+msgid "10. Contact Us"
+msgstr "10. Nous contacter"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:30
+msgid "2. Information Collection"
+msgstr "2. Collecte d'informations"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:30
+msgid "2. Intellectual Property Rights"
+msgstr "2. Droits de propriété intellectuelle"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:66
+msgid "3. Use of Information"
+msgstr "3. Utilisation des informations"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:41
+msgid "3. User Responsibilities"
+msgstr "3. Responsabilités de l'utilisateur"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:94
+msgid "4. Transfer of Data"
+msgstr "4. Transfert de données"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:86
+msgid "4. User Content"
+msgstr "4. Contenu utilisateur"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:97
+msgid "5. Account Termination"
+msgstr "5. Résiliation du compte"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:104
+msgid "5. Third-Party Services:"
+msgstr "5. Services tiers :"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:107
+msgid "6. Disclaimer of Warranties"
+msgstr "6. Exclusion de garanties"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:117
+msgid "6. Disclosure of Data"
+msgstr "6. Divulgation de données"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:155
+msgid "7 days free"
+msgstr "7 jours gratuits"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:118
+msgid "7. Limitation of Liability"
+msgstr "7. Limitation de responsabilité"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:126
+msgid "7. Security of Data"
+msgstr "7. Sécurité des données"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:144
+msgid "8. Contact Us"
+msgstr "8. Nous contacter"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:167
+msgid "8. Data Retention"
+msgstr "8. Conservation des données"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:177
+msgid "9. Your Rights"
+msgstr "9. Vos droits"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:104
+msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
+msgstr "Une version plus récente de l'application est requise pour continuer. Veuillez mettre à jour vers la dernière version pour accéder à toutes les fonctionnalités et améliorations."
+
+#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:25
+msgid "About"
+msgstr "À propos"
+
+#: apps/landing-page/src/app/[lang]/about/page.tsx:15
+msgid "About | TemplateApp"
+msgstr "À propos | TemplateApp"
+
+#: apps/landing-page/src/app/[lang]/about/page.tsx:38
+msgid "About Us"
+msgstr "À propos de nous"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:36
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:33
+msgid "Access exclusive premium features available to subscribers."
+msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les abonnés."
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:16
+#: apps/web/src/features/auth/components/account-removed-view.tsx:29
+msgid "Account Removed"
+msgstr "Compte supprimé"
+
+#: apps/native/src/features/profile/components/danger-zone-view.tsx:32
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:33
+msgid "Actions in this section can lead to permanent data loss."
+msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:58
+#: apps/native/src/features/profile/components/profile-view.tsx:143
+#: apps/web/src/features/profile/components/profile-view.tsx:130
+msgid "Admin Settings"
+msgstr "Paramètres Administrateur"
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:65
+msgid "An error occurred while attempting to manage your subscription."
+msgstr "Une erreur est survenue lors de la gestion de votre abonnement."
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:146
+#: apps/native/src/features/removals/api/removals-hooks.ts:14
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:126
+#: apps/web/src/features/removals/api/removals-hooks.ts:17
+msgid "An error occurred. Please try again."
+msgstr "Une erreur s'est produite. Veuillez réessayer."
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:49
+msgid "An unexpected error occurred"
+msgstr "Une erreur inattendue s'est produite"
+
+#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:13
+msgid "Android App"
+msgstr "App Android"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:27
+msgid "App Store"
+msgstr "App Store"
+
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
+msgid "Are you absolutely sure?"
+msgstr "Êtes-vous absolument sûr ?"
+
+#: apps/web/src/features/auth/components/login-view.tsx:48
+#: apps/web/src/features/auth/components/login-view.tsx:60
+msgid "Authentication failed"
+msgstr "Échec de l'authentification"
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:77
+msgid "Back to login"
+msgstr "Retour à la connexion"
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:29
+msgid "Back to Login"
+msgstr "Retour à la connexion"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:67
+msgid "best value"
+msgstr "meilleur rapport qualité-prix"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:129
+msgid "Best Value"
+msgstr "Meilleur rapport qualité-prix"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:68
+msgid "Billed yearly at €{yearlyPriceTotal}"
+msgstr "Facturé annuellement à {yearlyPriceTotal} €"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:130
+msgid "Billed yearly: €{yearlyPriceFormatted}"
+msgstr "Facturé annuellement : {yearlyPriceFormatted} €"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
+msgid "By accessing and using our website, TemplateApp.com, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
+msgstr "En accédant et en utilisant notre site web, TemplateApp.com, et tous les services associés, vous acceptez d'être lié par ces Conditions d'utilisation (« Conditions »)."
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:66
+msgid "Cancel"
+msgstr "Annuler"
+
+#: apps/landing-page/src/app/[lang]/layout.tsx:50
+msgid "Category of the app"
+msgstr "Catégorie de l'application"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:19
+msgid "Check your email"
+msgstr "Vérifiez votre e-mail"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:76
+msgid "Checking app version..."
+msgstr "Vérification de la version de l'application..."
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:103
+msgid "Choose a plan to unlock all features"
+msgstr "Choisissez un plan pour débloquer toutes les fonctionnalités"
+
+#: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
+msgid "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
+msgstr "Choisissez le plan parfait pour votre parcours d'entraînement à l'accent. Options de tarification flexibles pour vous aider à atteindre votre accent parfait grâce à l'entraînement vocal propulsé par l'IA."
+
+#: apps/web/src/features/billing/components/pricing-view.tsx:140
+msgid "Choose your plan"
+msgstr "Choisissez votre forfait"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:177
+msgid "Choose Your Plan"
+msgstr "Choisissez votre formule"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
+msgid "Click the link in the email to continue."
+msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
+
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:63
+msgid "Confirm deletion"
+msgstr "Confirmer la suppression"
+
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:84
+#: apps/web/src/features/contact/components/contact-us-button.tsx:19
+msgid "Contact Us"
+msgstr "Contact"
+
+#: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:36
+#: apps/native/src/features/auth/components/login-email-view.tsx:94
+#: apps/web/src/features/auth/components/login-email-view.tsx:86
+msgid "Continue"
+msgstr "Continuer"
+
+#: apps/web/src/features/auth/components/login-view.tsx:96
+msgid "Continue with Apple"
+msgstr "Continuer avec Apple"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:68
+#: apps/native/src/features/auth/components/login-view.tsx:39
+#: apps/web/src/features/auth/components/login-view.tsx:85
+msgid "Continue with Email"
+msgstr "Continuer avec l'adresse e-mail"
+
+#: apps/native/src/features/auth/components/login-view.tsx:51
+#: apps/web/src/features/auth/components/login-view.tsx:90
+msgid "Continue with Google"
+msgstr "Continuer avec Google"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:29
+msgid "Copied!"
+msgstr "Copié !"
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:60
+msgid "Could not display payment options at this time."
+msgstr "Impossible d'afficher les options de paiement en ce moment."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:37
+msgid "Could not load payment options at this time (no offerings)."
+msgstr "Impossible de charger les options de paiement en ce moment (aucune offre)."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:45
+msgid "Could not load payment options. Please try again later."
+msgstr "Impossible de charger les options de paiement. Veuillez réessayer plus tard."
+
+#: apps/web/src/features/profile/components/profile-view.tsx:78
+msgid "Could not open billing settings."
+msgstr "Impossible d'ouvrir les paramètres de facturation."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:61
+msgid "Could not open customer center."
+msgstr "Impossible d'ouvrir le centre client."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:86
+msgid "Could not open the link. Please visit our website to manage your subscription."
+msgstr "Impossible d'ouvrir le lien. Veuillez visiter notre site web pour gérer votre abonnement."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:71
+msgid "Could not open upgrade screen."
+msgstr "Impossible d'ouvrir l'écran de mise à niveau."
+
+#: apps/native/src/features/auth/components/user-setup-gate.tsx:79
+msgid "Could not set up your account. Please try restarting the app."
+msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'application."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:109
+msgid ""
+"Current version: {currentVersion}\n"
+"Required version: {requiredVersion}"
+msgstr "Version actuelle : {currentVersion}\\nVersion requise : {requiredVersion}"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:102
+#: apps/native/src/features/profile/components/profile-view.tsx:120
+msgid "Customer Center"
+msgstr "Centre Client"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:146
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:25
+#: apps/web/src/features/profile/components/profile-view.tsx:121
+msgid "Danger Zone"
+msgstr "Zone Dangereuse"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:30
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:99
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:44
+#: apps/web/src/features/navigation/components/tabs-layout.tsx:45
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+#: apps/native/src/features/profile/components/danger-zone-view.tsx:38
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:39
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:44
+msgid "Delete my account"
+msgstr "Supprimer mon compte"
+
+#: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:17
+msgid "Download our mobile app to start perfecting your accent with AI voice training"
+msgstr "Téléchargez notre application mobile pour commencer à perfectionner votre accent avec l'entraînement vocal par IA"
+
+#: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:16
+msgid "Download TemplateApp - TemplateApp - Perfect Your Accent with AI Voice Training"
+msgstr "Télécharger TemplateApp - TemplateApp - Perfectionnez votre accent avec l'entraînement vocal par IA"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:23
+msgid "Download the App"
+msgstr "Télécharger l'app"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:99
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:85
+msgid "Email"
+msgstr "Email"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:74
+#: apps/web/src/features/auth/components/login-email-view.tsx:78
+msgid "Email address"
+msgstr "Adresse email"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:62
+msgid "Email link is invalid or has expired"
+msgstr "Le lien n'est pas valide ou a expiré"
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:34
+msgid "Email Verification Sent"
+msgstr "Email de Vérification Envoyé"
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:29
+msgid "Enjoy unlimited access to all our premium features and content."
+msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus premium."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:70
+#: apps/native/src/features/billing/hooks/use-paywall.ts:65
+msgid "Error"
+msgstr "Erreur"
+
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:24
+msgid "error code: {userFacingErrorCode}"
+msgstr "code d'erreur : {userFacingErrorCode}"
+
+#: apps/native/src/features/auth/components/user-setup-gate.tsx:83
+msgid "Error setting up account..."
+msgstr "Erreur lors de la configuration du compte..."
+
+#: apps/native/src/features/user/api/user-hooks.ts:12
+#: apps/web/src/features/user/api/user-hooks.ts:27
+msgid "Error setting up user data"
+msgstr "Erreur lors de la configuration des données utilisateur"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:61
+msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
+msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement inconditionnel. Il suffit de nous le faire savoir en cliquant sur le bouton « Nous contacter » ci-dessus."
+
+#: apps/web/src/features/checkout/api/checkout-hooks.ts:20
+msgid "Failed to create checkout session"
+msgstr "Échec de la création de la session de paiement"
+
+#: apps/native/src/features/billing/api/billing-hooks.ts:11
+#: apps/web/src/features/billing/api/billing-hooks.ts:12
+msgid "Failed to fetch subscription details"
+msgstr "Échec de la récupération des détails de l'abonnement"
+
+#: apps/native/src/features/auth/components/revenuecat-initializer.tsx:38
+msgid "Failed to initialize payment system. Please restart the app."
+msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer l'application."
+
+#: apps/native/src/features/contact/api/contact-hooks.ts:16
+#: apps/web/src/features/contact/api/contact-hooks.ts:16
+msgid "Failed to send feedback. Please try again."
+msgstr "Impossible d'envoyer le retour. Veuillez réessayer."
+
+#: apps/native/src/features/admin/api/sentry-debug-hooks.ts:11
+#: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
+msgid "Failed to trigger Sentry message"
+msgstr "Échec du déclenchement du message Sentry"
+
+#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:19
+#: apps/landing-page/src/app/[lang]/features/page.tsx:13
+msgid "Features"
+msgstr "Fonctionnalités"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:83
+msgid "Free for {NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
+msgstr "Gratuit pendant {NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:152
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
+msgid "Free Trial"
+msgstr "Essai gratuit"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:45
+msgid "Get Started"
+msgstr "C'est parti !"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:24
+msgid "Get the App"
+msgstr "Obtenir l'App"
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:41
+#: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:58
+msgid "Go Back"
+msgstr "Retour"
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
+msgid "Go to Dashboard"
+msgstr "Aller au tableau de bord"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:79
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:57
+msgid "Help us improve TemplateApp"
+msgstr "Aidez-nous à améliorer TemplateApp"
+
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:92
+#: apps/web/src/features/navigation/components/tabs-layout.tsx:44
+msgid "Home"
+msgstr "Accueil"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
+msgid "How your free trial works"
+msgstr "Comment fonctionne votre essai gratuit"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
+msgid "If you have any questions about these Terms of Service, please contact us via email contact@app-monorepo-template.dev"
+msgstr "Si vous avez des questions concernant ces Conditions d'utilisation, veuillez nous contacter par e-mail contact@app-monorepo-template.dev"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
+msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@app-monorepo-template.dev"
+msgstr "Si vous avez des questions concernant cette Politique de confidentialité, veuillez nous contacter par e-mail : contact@app-monorepo-template.dev"
+
+#: apps/web/src/features/auth/components/account-removed-view.tsx:33
+msgid "If you'd like to create a new account, sign up again below."
+msgstr "Si vous souhaitez créer un nouveau compte, inscrivez-vous à nouveau ci-dessous."
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:25
+msgid "If you'd like to create a new account, you can sign up again."
+msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à nouveau."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
+msgid "In no event shall TemplateApp.com, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
+msgstr "En aucun cas TemplateApp.com, ni ses directeurs, employés, partenaires, agents, fournisseurs ou affiliés, ne pourront être tenus responsables de dommages indirects, accessoires, spéciaux, consécutifs ou punitifs, y compris, sans s'y limiter, la perte de profits, de données, d'utilisation, de fonds de commerce ou d'autres pertes intangibles, résultant de :"
+
+#: apps/landing-page/src/app/[lang]/layout.tsx:51
+msgid "In-App Purchases"
+msgstr "Achats intégrés"
+
+#: apps/native/src/features/auth/components/revenuecat-initializer.tsx:48
+msgid "Initializing payments..."
+msgstr "Initialisation des paiements..."
+
+#: apps/native/src/features/auth/components/session-initializer.tsx:27
+msgid "Initializing..."
+msgstr "Initialisation..."
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
+msgid "Introduce your card details and get instant access"
+msgstr "Introduisez les détails de votre carte et obtenez accès instantané"
+
+#: apps/native/src/config/react-query-config.ts:77
+msgid "Invalid token. Please sign in again."
+msgstr "Jeton invalide. Veuillez vous reconnecter."
+
+#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:13
+msgid "iOS App"
+msgstr "App iOS"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:57
+msgid "Last day to cancel before first charge"
+msgstr "Dernier jour pour annuler avant le premier prélèvement"
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:75
+msgid "Link expired or invalid"
+msgstr "Lien expiré ou invalide"
+
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:31
+msgid "Loading subscription status..."
+msgstr "Chargement du statut d'abonnement..."
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:31
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:102
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:108
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:38
+#: apps/web/src/features/profile/components/profile-view.tsx:83
+msgid "Loading..."
+msgstr "Chargement..."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:122
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:104
+#: apps/web/src/features/profile/components/profile-view.tsx:85
+msgid "Manage Subscription"
+msgstr "Gérer l'Abonnement"
+
+#: apps/landing-page/src/app/[lang]/page.tsx:18
+msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
+msgstr "Maîtrisez une prononciation parfaite grâce au clonage vocal propulsé par l'IA. Pratiquez la parole dans votre langue cible avec votre propre voix. Essayez notre essai gratuit aujourd'hui !"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:134
+msgid "Maybe later"
+msgstr "Peut-être plus tard"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:81
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:68
+msgid "Message to the founders"
+msgstr "Message pour les fondateurs"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:133
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
+msgid "Monthly"
+msgstr "Mensuel"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
+msgid "Name (optional)"
+msgstr "Nom (optionnel)"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
+msgid "No Card Required"
+msgstr "Aucune carte requise"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:65
+#: apps/native/src/components/gates/force-update-gate.tsx:70
+msgid "OK"
+msgstr "OK"
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:43
+msgid "Open Mail App"
+msgstr "Ouvrir l'Application Mail"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:26
+msgid "or copy links to"
+msgstr "ou copier les liens vers"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
+msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
+msgstr "Notre infrastructure de sécurité est continuellement surveillée, évaluée et améliorée pour répondre aux défis évolutifs de la cybersécurité. Nous maintenons des normes rigoureuses en matière de protection des données et suivons les meilleures pratiques de sécurité recommandées par les principales organisations de sécurité technologique. Pour une transparence totale, nous reconnaissons que tous les systèmes numériques nécessitent une vigilance constante, c'est pourquoi nous avons mis en place des protocoles de surveillance complets et de réponse rapide."
+
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:40
+msgid "Permanently delete your account and all associated data"
+msgstr "Supprimer définitivement votre compte et toutes les données associées"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:28
+msgid "Play Store"
+msgstr "Play Store"
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:40
+msgid "Please check your inbox and click on the link to continue"
+msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour continuer"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:89
+#: apps/web/src/features/auth/components/login-email-view.tsx:47
+#: apps/web/src/features/auth/components/login-email-view.tsx:83
+msgid "Please enter a valid email address"
+msgstr "Veuillez entrer une adresse email valide"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:82
+msgid "Please manage your subscription on our website: {webAccountUrl}"
+msgstr "Veuillez gérer votre abonnement sur notre site web : {webAccountUrl}"
+
+#: apps/web/src/features/profile/components/profile-view.tsx:74
+msgid "Please manage your subscription through the App Store or Google Play."
+msgstr "Veuillez gérer votre abonnement via l'App Store ou Google Play."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:64
+msgid "Please manually update the app through your device's app store."
+msgstr "Veuillez mettre à jour manuellement l'application via le magasin d'applications de votre appareil."
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:76
+msgid "Please request a new verification link."
+msgstr "Veuillez demander un nouveau lien de vérification."
+
+#: apps/web/src/config/react-query-config.ts:36
+msgid "Please try again or refresh the page."
+msgstr "Veuillez réessayer ou actualiser la page."
+
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:60
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:48
+msgid "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
+msgstr "Veuillez saisir \"{EXPECTED_CONFIRMATION_TEXT}\""
+
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:26
+msgid "Premium"
+msgstr "Premium"
+
+#: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:44
+msgid "Premium Demo"
+msgstr "Démo Premium"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:36
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:27
+#: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:51
+msgid "Premium Features"
+msgstr "Fonctionnalités Premium"
+
+#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:22
+#: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:80
+msgid "Pricing"
+msgstr "Tarifs"
+
+#: apps/landing-page/src/app/[lang]/pricing/page.tsx:14
+msgid "Pricing | TemplateApp"
+msgstr "Tarifs | TemplateApp"
+
+#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:21
+msgid "Privacy Policy"
+msgstr "Politique de Confidentialité"
+
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:106
+#: apps/web/src/features/navigation/components/tabs-layout.tsx:46
+msgid "Profile"
+msgstr "Profil"
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:33
+msgid "Redirecting..."
+msgstr "Redirection..."
+
+#: apps/web/src/config/react-query-config.ts:38
+#: apps/web/src/features/overlay/components/refresh-button.tsx:17
+msgid "Refresh"
+msgstr "Actualiser"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:75
+msgid "Return to Login"
+msgstr "Retour à la connexion"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:25
+msgid "Scan the QR code to download the app"
+msgstr "Scannez le code QR pour télécharger l'app"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:147
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:130
+msgid "Send Message"
+msgstr "Envoyer le message"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:94
+msgid "Sending an email"
+msgstr "Envoi de l'email"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:142
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:77
+#: apps/web/src/features/auth/components/login-email-view.tsx:86
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:123
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:63
+msgid "Sending..."
+msgstr "Envoi en cours..."
+
+#: apps/native/src/features/auth/components/user-setup-gate.tsx:75
+msgid "Setting up account..."
+msgstr "Configuration du compte..."
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
+msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
+msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous lisons et répondons à chaque message !"
+
+#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:35
+#: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:118
+msgid "Sign in"
+msgstr "Se connecter"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:155
+#: apps/web/src/features/billing/components/pricing-view.tsx:181
+#: apps/web/src/features/profile/components/profile-view.tsx:139
+msgid "Sign out"
+msgstr "Déconnexion"
+
+#: apps/web/src/features/billing/components/pricing-view.tsx:114
+#: apps/web/src/features/profile/components/profile-view.tsx:42
+msgid "Sign out success"
+msgstr "Déconnexion réussie"
+
+#: apps/web/src/features/auth/components/account-removed-view.tsx:35
+msgid "Sign up"
+msgstr "S'inscrire"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:16
+msgid "Some super cool text!"
+msgstr "Un texte super cool !"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:13
+msgid "Some super cool title!"
+msgstr "Un titre super cool !"
+
+#: apps/native/src/features/home/components/home-view.tsx:21
+#: apps/web/src/features/home/components/home-view.tsx:9
+msgid "Some text for the Home tab"
+msgstr "Du texte pour l'onglet Accueil"
+
+#: apps/native/src/config/react-query-config.ts:24
+msgid "Something went wrong"
+msgstr "Une erreur s'est produite"
+
+#: apps/web/src/config/react-query-config.ts:30
+msgid "Something went wrong."
+msgstr "Une erreur s'est produite."
+
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:23
+msgid "Something went wrong. Please refresh the page and try again."
+msgstr "Une erreur est survenue. Veuillez actualiser la page et réessayer."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:142
+msgid "Start"
+msgstr "Commencer"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:91
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:111
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:113
+msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
+msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:166
+msgid "Start Free Trial"
+msgstr "Commencer l'essai gratuit"
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:168
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:39
+msgid "Subscribe Now"
+msgstr "S'abonner maintenant"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:102
+msgid "Subscribe to access premium features"
+msgstr "S'abonner pour accéder aux fonctionnalités premium"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:37
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:34
+msgid "Subscribe to unlock premium features and get the most out of the app."
+msgstr "Abonnez-vous pour débloquer les fonctionnalités premium et tirer le meilleur parti de l'application."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:37
+#: apps/native/src/features/billing/hooks/use-paywall.ts:45
+#: apps/native/src/features/billing/hooks/use-paywall.ts:60
+msgid "Subscription Required"
+msgstr "Abonnement Requis"
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:25
+msgid "Subscription Successful!"
+msgstr "Abonnement réussi !"
+
+#: apps/native/src/config/react-query-config.ts:114
+#: apps/web/src/config/react-query-config.ts:125
+msgid "Success!"
+msgstr "Succès !"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:90
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:72
+msgid "Tell us what you think or describe any issues you encountered..."
+msgstr "Dites-nous ce que vous pensez ou décrivez tout problème rencontré..."
+
+#: apps/landing-page/src/app/[lang]/layout.tsx:49
+msgid "TemplateApp"
+msgstr "TemplateApp"
+
+#: apps/landing-page/src/app/[lang]/page.tsx:16
+msgid "TemplateApp - Perfect Your Accent with AI Voice Training"
+msgstr "TemplateApp - Perfectionnez votre accent avec l'entraînement vocal par IA"
+
+#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:24
+msgid "Terms and Conditions"
+msgstr "Conditions d'Utilisation"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:67
+msgid "Test Backend Sentry Message"
+msgstr "Tester le message Sentry backend"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:65
+msgid "Test Frontend Sentry Log"
+msgstr "Tester le journal Sentry Frontend"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:66
+msgid "Test Frontend Unhandled Error"
+msgstr "Tester l'erreur frontend non gérée"
+
+#: apps/native/src/features/contact/api/contact-hooks.ts:15
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:144
+#: apps/web/src/features/contact/api/contact-hooks.ts:15
+msgid "Thank you for your feedback!"
+msgstr "Merci pour votre retour !"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
+msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of TemplateApp.com and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
+msgstr "Le contenu, les fonctionnalités et les capacités de nos services, y compris mais sans s'y limiter le texte, les graphiques, les logos, les images, ainsi que la conception, la sélection et l'agencement de ceux-ci, sont et resteront la propriété exclusive de TemplateApp.com et de ses concédants de licence. Ceux-ci sont protégés par les lois sur le droit d'auteur, les marques de commerce et autres droits de propriété intellectuelle ou propriétaires."
+
+#: apps/landing-page/src/app/[lang]/about/page.tsx:17
+msgid "the creators of app-monorepo-template.dev here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+msgstr "les créateurs de app-monorepo-template.dev. Nous mettons tout notre cœur dans le développement de la version bêta de l'application et vos retours sont essentiels pour nous. Nous sommes impatients de déployer de nouvelles fonctionnalités bientôt, et nous cherchons toujours des moyens d'améliorer l'application."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
+msgid "The data we collect serves several purposes:"
+msgstr "Les données que nous collectons servent plusieurs objectifs :"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:51
+msgid "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
+msgstr "eux-mêmes. Chaque utilisateur doit avoir le droit légal d'utiliser toutes les données vocales qu'il télécharge sur notre plateforme."
+
+#: apps/native/src/features/auth/api/authentication-hooks.ts:15
+#: apps/web/src/features/auth/api/authentication-hooks.ts:16
+msgid "There was an error sending the verification email. Please try again."
+msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. Veuillez réessayer."
+
+#: apps/web/src/features/billing/components/pricing-view.tsx:91
+msgid "There was an error. Please contact support."
+msgstr "Il y a eu une erreur. Veuillez contacter le support."
+
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:58
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:43
+msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
+msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
+msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@app-monorepo-template.dev to process your requests with the same level of immediacy and thoroughness."
+msgstr "Ce système de suppression automatisé est accessible 24h/24 et 7j/7 via votre tableau de bord de compte sécurisé. Pour une assistance supplémentaire, notre équipe dédiée à la confidentialité est disponible à contact@app-monorepo-template.dev pour traiter vos demandes avec le même niveau d'immédiateté et de minutie."
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
+#: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:53
+msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
+msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous pouvez présenter les fonctionnalités premium ici."
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:41
+#: apps/web/src/features/billing/components/pricing-view.tsx:40
+msgid "To change your current plan type, please click on \"Manage Subscription\"."
+msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer l'Abonnement\"."
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
+msgid "Today"
+msgstr "Aujourd'hui"
+
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:32
+msgid "Too Many Requests"
+msgstr "Trop de Requêtes"
+
+#: apps/native/src/config/react-query-config.ts:69
+msgid "Too many requests. Please try again later."
+msgstr "Trop de requêtes. Veuillez réessayer plus tard."
+
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:36
+msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
+msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet et appareil à la fois et réessayer."
+
+#: apps/web/src/features/billing/api/portal-session-hooks.ts:14
+msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
+msgstr "Impossible d'accéder à votre section de facturation en ce moment. Veuillez réessayer plus tard ou contacter le support si le problème persiste."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:64
+msgid "Unable to open app store"
+msgstr "Impossible d'ouvrir le magasin d'applications"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:70
+msgid "Unable to open app store. Please manually update the app."
+msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour manuellement l'application."
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:27
+msgid "Unlock Premium"
+msgstr "Débloquer Premium"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:117
+msgid "Update Now"
+msgstr "Mettre à jour maintenant"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:101
+msgid "Update Required"
+msgstr "Mise à jour requise"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:113
+#: apps/web/src/features/profile/components/profile-view.tsx:84
+msgid "Upgrade to Premium"
+msgstr "Passer à Premium"
+
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:33
+#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:38
+msgid "Use on Web"
+msgstr "Utiliser sur Web"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:62
+msgid "Use these options to test Sentry error reporting in your environment."
+msgstr "Utilisez ces options pour tester le rapport d'erreurs Sentry dans votre environnement."
+
+#: apps/native/src/features/user/api/user-hooks.ts:11
+#: apps/web/src/features/user/api/user-hooks.ts:26
+msgid "User setup complete"
+msgstr "Configuration de l'utilisateur terminée"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:89
+msgid "Users retain all rights to any content they upload, submit, post, or display on or through the service. By uploading this content, users grant us a permission to use, reproduce, modify, publish, and display this content in connection with the service. In particular, this content will neither be sold or traded with any external service provider nor made public without user\"s explicit consent"
+msgstr "Les utilisateurs conservent tous les droits sur tout contenu qu'ils téléchargent, soumettent, publient ou affichent sur ou via le service. En téléchargeant ce contenu, les utilisateurs nous accordent la permission d'utiliser, reproduire, modifier, publier et afficher ce contenu en lien avec le service. En particulier, ce contenu ne sera ni vendu ni échangé avec un prestataire de services externe, ni rendu public sans le consentement explicite de l'utilisateur"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:81
+msgid "Verification successful! Redirecting..."
+msgstr "Vérification réussie ! Redirection en cours..."
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
+msgid "Verify"
+msgstr "Vérifier"
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:81
+msgid "Verify your email"
+msgstr "Vérifiez votre adresse e-mail"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:62
+msgid "Verify Your Email"
+msgstr "Vérifiez Votre Email"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:69
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
+msgid "Verifying..."
+msgstr "Vérification..."
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
+#: apps/web/src/features/dashboard/components/dashboard-view.tsx:39
+msgid "View Premium Demo"
+msgstr "Voir la démo Premium"
+
+#: apps/native/src/features/profile/components/danger-zone-view.tsx:31
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:32
+msgid "Warning"
+msgstr "Attention"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:107
+msgid "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
+msgstr "Nous collaborons avec des entreprises tierces réputées pour faciliter nos services (« Prestataires de services »), fournir le service en notre nom, effectuer des services liés au service et nous aider à analyser comment notre service est utilisé. Ces tiers sont soigneusement sélectionnés et n'ont accès à vos Données personnelles que pour effectuer des tâches spécifiques en notre nom. Ils sont contractuellement tenus de maintenir la confidentialité de vos informations et s'engagent à se conformer aux lois applicables en matière de confidentialité, garantissant que vos données sont traitées de manière sécurisée et responsable."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:180
+msgid "We guarantee absolute control over your personal data through our automated account management system. Our platform provides a dedicated one-click deletion feature that ensures immediate and irreversible removal of all your data from our systems. When activated, this automated process permanently erases:"
+msgstr "Nous garantissons un contrôle absolu sur vos données personnelles grâce à notre système automatisé de gestion de compte. Notre plateforme fournit une fonctionnalité de suppression en un clic dédiée qui garantit la suppression immédiate et irréversible de toutes vos données de nos systèmes. Lorsqu'elle est activée, ce processus automatisé efface définitivement :"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:129
+msgid "We implement and maintain robust security measures aligned with industry best practices to protect your Personal Data. Our security infrastructure includes:"
+msgstr "Nous mettons en œuvre et maintenons des mesures de sécurité robustes conformes aux meilleures pratiques de l'industrie pour protéger vos Données personnelles. Notre infrastructure de sécurité comprend :"
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:100
+msgid "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the service will cease immediately."
+msgstr "Nous pouvons résilier ou suspendre votre compte immédiatement, sans préavis ni responsabilité, pour quelque raison que ce soit, y compris, sans s'y limiter, si vous violez ces Conditions. Dès la résiliation, votre droit d'utiliser le service cessera immédiatement."
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:170
+msgid "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
+msgstr "Nous ne conserverons vos Données personnelles que le temps nécessaire aux fins énoncées dans cette Politique de confidentialité. Nous conserverons et utiliserons vos Données personnelles dans la mesure nécessaire pour nous conformer à nos obligations légales, résoudre les litiges et faire appliquer nos accords et politiques juridiques."
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:19
+#: apps/web/src/features/auth/components/account-removed-view.tsx:32
+msgid "We're sorry to see you go. Your account has been successfully removed."
+msgstr "Nous sommes désolés de vous voir partir. Votre compte a été supprimé avec succès."
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:37
+msgid "We've sent a verification email to:"
+msgstr "Nous avons envoyé un email de vérification à :"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:20
+msgid "We've sent a verification link to:"
+msgstr "Nous avons envoyé un lien de vérification à :"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
+msgid "Welcome to TemplateApp.com. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
+msgstr "Bienvenue sur TemplateApp.com. Nous nous engageons à protéger votre vie privée. Cette Politique de confidentialité décrit comment nous collectons, traitons, stockons et protégeons vos données personnelles lorsque vous interagissez avec nos services."
+
+#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:115
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
+msgid "Yearly"
+msgstr "Annuel"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:105
+#: apps/web/src/features/profile/components/profile-view.tsx:57
+msgid "You are a special user with free access. You have no active subscription."
+msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez pas d'abonnement actif."
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:26
+msgid "You are now subscribed to Premium!"
+msgstr "Vous êtes maintenant abonné à Premium !"
+
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:38
+msgid "You can try again in {countdown} seconds"
+msgstr "Vous pourrez réessayer dans {countdown} secondes"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
+#: apps/web/src/features/billing/components/pricing-view.tsx:38
+msgid "You have already used your free trial."
+msgstr "Vous avez déjà utilisé votre essai gratuit."
+
+#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:110
+msgid "You understand and agree that your use of our service is at your sole risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. We expressly disclaim all warranties, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
+msgstr "Vous comprenez et acceptez que votre utilisation de notre service se fait à vos seuls risques. Le service est fourni « TEL QUEL » et « SELON DISPONIBILITÉ ». Nous déclinons expressément toutes garanties, expresses ou implicites, y compris, mais sans s'y limiter, les garanties implicites de qualité marchande, d'adéquation à un usage particulier et de non-contrefaçon."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:96
+msgid "You used your free trial"
+msgstr "Vous avez déjà utilisé votre essai gratuit"
+
+#: apps/native/src/features/removals/api/removals-hooks.ts:13
+#: apps/web/src/features/removals/api/removals-hooks.ts:16
+msgid "Your account has been deleted successfully."
+msgstr "Votre compte a été supprimé avec succès."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:94
+msgid "Your current plan"
+msgstr "Votre forfait actuel"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:10
+msgid "your email address"
+msgstr "votre adresse e-mail"
+
+#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:98
+msgid "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
+msgstr "Vos informations, y compris les Données personnelles, peuvent être transférées et conservées sur des ordinateurs situés en dehors de votre juridiction où les lois sur la protection des données peuvent différer de celles de votre juridiction."
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:126
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:101
+msgid "Your name"
+msgstr "Votre nom"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:108
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:87
+msgid "your@email.com"
+msgstr "votre@email.com"

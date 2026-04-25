@@ -1,0 +1,46 @@
+{
+  "name": "app-monorepo-template.dev",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:tunnel": "scripts/dev-tunnel.sh",
+    "start-tunnels": "scripts/start-tunnels.sh",
+    "prod:backend:sentry": "turbo run sentry:prod --filter=@template-app/backend",
+    "prod:backend:build": "turbo run build --filter=@template-app/backend",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "check:types": "turbo run check:types",
+    "test": "turbo run test",
+    "test:run": "turbo run test:run",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "translate": "pnpm --filter @template-app/i18n translate",
+    "sync-env": "./apps/native/scripts/sync-env-if-changed.sh",
+    "sync-env:force": "pnpm --filter native sync-env",
+    "prepare": "husky",
+    "generate:logos": "scripts/generate-logos.sh"
+  },
+  "devDependencies": {
+    "@lingui/cli": "catalog:",
+    "@lingui/format-po": "catalog:",
+    "@react-email/components": "catalog:",
+    "@typescript-eslint/eslint-plugin": "catalog:",
+    "@typescript-eslint/parser": "catalog:",
+    "concurrently": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-prettier": "catalog:",
+    "husky": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:",
+    "react-email": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "vite-tsconfig-paths": "catalog:"
+  }
+}

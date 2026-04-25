@@ -1,0 +1,23 @@
+{
+  "name": "@template-app/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "build": "tsc && tsc-alias --project tsconfig.json",
+    "check:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@orpc/contract": "catalog:",
+    "@template-app/core": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@template-app/typescript-config": "workspace:*",
+    "typescript": "catalog:",
+    "tsc-alias": "catalog:"
+  }
+}

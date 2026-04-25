@@ -1,0 +1,3 @@
+export const TAB_BAR_PADDING_ABOVE_INSET = 10
+export const TAB_BAR_CONTENT_AREA_HEIGHT = 40
+export const TAB_BAR_PADDING_TOP = 10

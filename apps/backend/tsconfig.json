@@ -1,0 +1,37 @@
+{
+  "extends": "@template-app/typescript-config/node.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "outDir": "./dist",
+    "noImplicitAny": false,
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+      "@template-app/api-client/*": ["../../packages/api-client/src/*"],
+      "@template-app/core/*": ["../../packages/core/src/*"]
+    },
+    // Set `sourceRoot` to  "/" to strip the build path prefix
+    // from generated source code references.
+    // This improves issue grouping in Sentry.
+    "sourceRoot": "/",
+    "composite": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": false
+  },
+  "compileOnSave": true,
+  "include": [
+    "src",
+    "types/**/*",
+    "../../packages/api-client/src/**/*",
+    "../../packages/core/src/**/*",
+    "scripts/**/*",
+    "emails/**/*"
+  ],
+  "references": [{ "path": "../../packages/api-client" }, { "path": "../../packages/core" }],
+  "tsc-alias": {
+    "resolveFullPaths": true,
+    "verbose": false
+  }
+}

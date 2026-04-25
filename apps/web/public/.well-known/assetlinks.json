@@ -1,0 +1,32 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.app.monorepo.template.android",
+      "sha256_cert_fingerprints": [
+        "D5:56:68:24:01:5A:A1:DB:85:96:FB:54:13:05:7B:EA:47:99:C7:EC:AE:7E:95:75:63:7F:B7:FD:D8:FE:8B:64"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.app.monorepo.template.android.preview",
+      "sha256_cert_fingerprints": [
+        "D5:56:68:24:01:5A:A1:DB:85:96:FB:54:13:05:7B:EA:47:99:C7:EC:AE:7E:95:75:63:7F:B7:FD:D8:FE:8B:64"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.app.monorepo.template.android.dev",
+      "sha256_cert_fingerprints": [
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"
+      ]
+    }
+  }
+]

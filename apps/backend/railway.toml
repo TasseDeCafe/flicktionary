@@ -1,0 +1,11 @@
+[build]
+builder = "railpack"
+buildCommand = "pnpm install --frozen-lockfile && pnpm turbo run build --filter=@template-app/backend"
+
+[deploy]
+# For PR previews, WEB_URL is set dynamically. For production, set via Doppler.
+startCommand = "sh -c 'export SENTRY_RELEASE=\"$RAILWAY_GIT_COMMIT_SHA\" && if [ \"$RAILWAY_ENVIRONMENT_NAME\" != \"production\" ] && [ -n \"$RAILWAY_ENVIRONMENT_NAME\" ]; then export WEB_URL=\"https://template-appweb-${RAILWAY_ENVIRONMENT_NAME}.up.railway.app\"; fi && NODE_ENV=production node --enable-source-maps apps/backend/dist/apps/backend/src/index.js'"
+healthcheckPath = "/api/v1/health-check"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": ["COREPACK_HOME"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:tunnel": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:without-third-parties": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:without-third-parties:tunnel": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "build/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test:run": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "lint": {
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    },
+    "install:ffmpeg": {
+      "cache": false
+    },
+    "sentry:prod": {
+      "cache": false,
+      "env": ["SENTRY_AUTH_TOKEN"],
+      "dependsOn": ["build"]
+    },
+    "prod": {
+      "cache": false,
+      "dependsOn": ["build"]
+    },
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
+    "check:types": {
+      "dependsOn": ["^topo", "^build"],
+      "outputs": []
+    },
+    "check:changes": {
+      "cache": false,
+      "outputs": []
+    },
+    "native:start": {
+      "cache": false,
+      "persistent": true
+    },
+    "native:android": {
+      "cache": false,
+      "persistent": true
+    },
+    "native:ios": {
+      "cache": false,
+      "persistent": true
+    },
+    "native:build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    }
+  }
+}

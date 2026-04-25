@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /template-app-admin
+Disallow: /template-app-admin/clear-data

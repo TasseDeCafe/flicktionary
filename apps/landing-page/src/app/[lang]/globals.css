@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+@theme {
+  --breakpoint-xs: 475px;
+  --breakpoint-3xl: 1600px;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
