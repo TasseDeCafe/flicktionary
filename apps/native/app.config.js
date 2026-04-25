@@ -41,11 +41,7 @@ const getAppHost = () => {
 const getAssociatedDomains = () => {
   const productionDomains = ['applinks:app.flicktionary.app']
   if (IS_DEV) {
-    return [
-      ...productionDomains,
-      'applinks:web-kamil.flicktionary.dev',
-      'applinks:web-sebastien.flicktionary.dev',
-    ]
+    return [...productionDomains, 'applinks:web-kamil.flicktionary.dev', 'applinks:web-sebastien.flicktionary.dev']
   }
   return productionDomains
 }
