@@ -1,8 +1,11 @@
-export const FEATURES = {
+export const FEATURES: Record<
+  'SENTRY' | 'POSTHOG' | 'STRIPE' | 'REVENUECAT' | 'GOOGLE_AUTH' | 'APPLE_AUTH',
+  boolean
+> = {
   SENTRY: false,
   POSTHOG: false,
   STRIPE: false,
   REVENUECAT: false,
   GOOGLE_AUTH: true,
   APPLE_AUTH: false,
-} as const
+}
