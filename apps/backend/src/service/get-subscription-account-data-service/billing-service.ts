@@ -1,5 +1,5 @@
 import { calculateStripePricingDetails } from './billing-service-utils'
-import { referralToDiscount } from '@template-app/core/constants/referral-constants'
+import { referralToDiscount } from '@flicktionary/core/constants/referral-constants'
 import { isStripeSubscriptionActive } from '../long-running/subscription-cache-service/stripe-subscription.utils'
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import {
@@ -8,13 +8,13 @@ import {
 } from '../../transport/database/stripe-subscriptions/stripe-subscriptions-repository'
 import { RevenuecatSubscriptionsRepositoryInterface } from '../../transport/database/revenuecat-subscriptions/revenuecat-subscriptions-repository'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
-import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@template-app/core/constants/pricing-constants'
+import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@flicktionary/core/constants/pricing-constants'
 import {
   GetSubscriptionInfoResponse,
   PlanType,
   SupportedBillingPlatform,
   UserStripePricingDetails,
-} from '@template-app/api-client/orpc-contracts/billing-contract'
+} from '@flicktionary/api-client/orpc-contracts/billing-contract'
 import { getConfig } from '../../config/environment-config'
 import { RevenuecatServiceInterface } from '../revenuecat-service/revenuecat-service-interface'
 

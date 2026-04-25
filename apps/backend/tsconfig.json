@@ -1,5 +1,5 @@
 {
-  "extends": "@template-app/typescript-config/node.json",
+  "extends": "@flicktionary/typescript-config/node.json",
   "compilerOptions": {
     "rootDir": "../..",
     "outDir": "./dist",
@@ -8,8 +8,8 @@
     "declaration": true,
     "declarationMap": true,
     "paths": {
-      "@template-app/api-client/*": ["../../packages/api-client/src/*"],
-      "@template-app/core/*": ["../../packages/core/src/*"]
+      "@flicktionary/api-client/*": ["../../packages/api-client/src/*"],
+      "@flicktionary/core/*": ["../../packages/core/src/*"]
     },
     // Set `sourceRoot` to  "/" to strip the build path prefix
     // from generated source code references.

@@ -1,5 +1,5 @@
 {
-  "name": "@template-app/i18n",
+  "name": "@flicktionary/i18n",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "lingui:extract": "bash -lc 'cd ../.. && lingui extract'",
     "lingui:watch": "bash -lc 'cd ../.. && lingui extract --watch'",
     "lingui:compile": "bash -lc 'cd ../.. && lingui compile'",
-    "translate": "doppler run -- node scripts/translate-missing.mjs"
+    "translate": "doppler run --project backend --config dev_personal -- node scripts/translate-missing.mjs"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "catalog:",
@@ -27,14 +27,14 @@
     "gettext-parser": "catalog:",
     "tsc-alias": "catalog:",
     "typescript": "catalog:",
-    "@template-app/typescript-config": "workspace:*",
+    "@flicktionary/typescript-config": "workspace:*",
     "vite": "catalog:",
     "vitest": "catalog:",
     "zod": "catalog:"
   },
   "dependencies": {
     "@lingui/core": "catalog:",
-    "@template-app/api-client": "workspace:*",
-    "@template-app/core": "workspace:*"
+    "@flicktionary/api-client": "workspace:*",
+    "@flicktionary/core": "workspace:*"
   }
 }

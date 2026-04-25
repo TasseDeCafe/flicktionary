@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '../../../config/environment-config'
 
 export const client = FEATURES.REVENUECAT

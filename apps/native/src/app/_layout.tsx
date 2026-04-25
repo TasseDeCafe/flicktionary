@@ -20,7 +20,7 @@ import { SessionInitializer } from '@/features/auth/components/session-initializ
 import { EasUpdateGate } from '@/components/gates/eas-update-gate'
 import { useBottomSheetStore } from '@/features/sheets/stores/bottom-sheet-store'
 import { UserSetupGate } from '@/features/auth/components/user-setup-gate'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { PostHogProvider } from 'posthog-react-native'
 import { posthog } from '@/lib/analytics/posthog'
 

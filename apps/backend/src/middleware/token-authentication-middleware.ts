@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
-import { ERROR_CODE_FOR_INVALID_TOKEN } from '@template-app/api-client/key-generation/frontend-api-key-constants'
+import { ERROR_CODE_FOR_INVALID_TOKEN } from '@flicktionary/api-client/key-generation/frontend-api-key-constants'
 import { ORPCError } from '@orpc/server'
 import { setRequestContext } from '../context/request-context'
 import { verifySupabaseToken } from '../utils/jwt-verification-utils'

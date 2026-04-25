@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '@/config/environment-config.ts'
 
 const getSentryEnvironment = (configEnvironment: string): string => {

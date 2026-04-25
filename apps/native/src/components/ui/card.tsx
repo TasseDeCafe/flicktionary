@@ -1,5 +1,5 @@
 import { View, ViewProps } from 'react-native'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ReactNode } from 'react'
 
 interface CardProps extends ViewProps {

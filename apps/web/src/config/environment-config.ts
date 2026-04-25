@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getModeName, isDevelopment, isDevelopmentTunnel, isProduction, isTest } from './environment-utils.ts'
 import { environmentConfigSchema } from './environment-config-schema.ts'
 import { parseHashedEmails } from './environment-config-utils.ts'
@@ -9,9 +9,8 @@ export type EnvironmentConfig = z.infer<typeof environmentConfigSchema>
 const getProductionConfig = (): EnvironmentConfig => ({
   environmentName: 'production',
   apiHost: import.meta.env.VITE_API_HOST,
-  webUrl: 'https://app.app-monorepo-template.dev',
-  domain: 'app-monorepo-template.dev',
-  landingPageUrl: import.meta.env.VITE_LANDING_PAGE_URL,
+  webUrl: 'https://app.flicktionary.app',
+  domain: 'flicktionary.app',
   supabaseProjectUrl: import.meta.env.VITE_SUPABASE_PROJECT_URL,
   supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   sentry: FEATURES.SENTRY
@@ -54,7 +53,6 @@ const getDevelopmentConfig = (): EnvironmentConfig => ({
   apiHost: 'http://localhost:4003',
   webUrl: 'http://localhost:5174',
   domain: 'localhost',
-  landingPageUrl: 'http://localhost:3000',
   // shown by `supabase start` command
   supabaseProjectUrl: 'http://127.0.0.1:54321',
   // shown by `supabase start` command
@@ -97,10 +95,9 @@ const getDevelopmentConfig = (): EnvironmentConfig => ({
 const getDevelopmentTunnelConfig = (): EnvironmentConfig => ({
   ...getDevelopmentConfig(),
   webUrl: import.meta.env.VITE_WEB_URL,
-  domain: 'app-monorepo-template.dev',
+  domain: 'flicktionary.dev',
   environmentName: 'development-tunnel',
   apiHost: import.meta.env.VITE_API_HOST,
-  landingPageUrl: import.meta.env.VITE_LANDING_PAGE_URL,
   supabaseProjectUrl: import.meta.env.VITE_SUPABASE_PROJECT_URL,
 })
 
@@ -109,7 +106,6 @@ const getTestConfig = (): EnvironmentConfig => ({
   apiHost: 'no-host-because-it-is-a-test',
   webUrl: 'no-web-url-because-it-is-a-test',
   domain: 'some-domain',
-  landingPageUrl: 'some-landing-page-url',
   supabaseProjectUrl: 'dummy-supabase-project-url',
   supabasePublishableKey: 'dummy-supabase-project-key',
   sentry: {

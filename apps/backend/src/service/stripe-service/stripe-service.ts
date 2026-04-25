@@ -1,8 +1,8 @@
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { StripeApi, StripeCustomerId } from '../../transport/third-party/stripe/stripe-api'
 import { getConfig } from '../../config/environment-config'
-import { getDiscountsForReferral } from '@template-app/core/constants/referral-constants'
-import { NUMBER_OF_DAYS_IN_FREE_TRIAL, PlanInterval } from '@template-app/core/constants/pricing-constants'
+import { getDiscountsForReferral } from '@flicktionary/core/constants/referral-constants'
+import { NUMBER_OF_DAYS_IN_FREE_TRIAL, PlanInterval } from '@flicktionary/core/constants/pricing-constants'
 import { StripeServiceInterface } from './stripe-service-interface'
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 

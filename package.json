@@ -1,5 +1,5 @@
 {
-  "name": "app-monorepo-template.dev",
+  "name": "flicktionary.app",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -10,8 +10,8 @@
     "dev": "turbo run dev",
     "dev:tunnel": "scripts/dev-tunnel.sh",
     "start-tunnels": "scripts/start-tunnels.sh",
-    "prod:backend:sentry": "turbo run sentry:prod --filter=@template-app/backend",
-    "prod:backend:build": "turbo run build --filter=@template-app/backend",
+    "prod:backend:sentry": "turbo run sentry:prod --filter=@flicktionary/backend",
+    "prod:backend:build": "turbo run build --filter=@flicktionary/backend",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "check:types": "turbo run check:types",
@@ -19,7 +19,7 @@
     "test:run": "turbo run test:run",
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "translate": "pnpm --filter @template-app/i18n translate",
+    "translate": "pnpm --filter @flicktionary/i18n translate",
     "sync-env": "./apps/native/scripts/sync-env-if-changed.sh",
     "sync-env:force": "pnpm --filter native sync-env",
     "prepare": "husky",

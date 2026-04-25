@@ -22,7 +22,7 @@ export default defineConfig({
     }),
     lingui(),
     sentryVitePlugin({
-      org: 'template-organization',
+      org: 'fluencist',
       project: 'web',
       authToken: process.env.SENTRY_AUTH_TOKEN,
       release: {
@@ -46,7 +46,7 @@ export default defineConfig({
     },
   },
   server: {
-    // Necessary to make sure that app-monorepo-template.dev is allowed
+    // Necessary to make sure that flicktionary.app is allowed
     // when false, only localhost is allowed
     allowedHosts: true,
   },

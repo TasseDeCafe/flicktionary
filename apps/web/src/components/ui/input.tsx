@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 const Input = ({ className, type, ...props }: React.ComponentProps<'input'>) => (
   <input

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { ALLOWED_REFERRALS } from '@template-app/core/constants/referral-constants'
+import { ALLOWED_REFERRALS } from '@flicktionary/core/constants/referral-constants'
 
 type TrackingParams = {
   referral: string | null

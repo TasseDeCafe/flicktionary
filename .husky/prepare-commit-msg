@@ -31,9 +31,6 @@ areas=""
 if dir_has_changes "web"; then
     areas="${areas}web,"
 fi
-if dir_has_changes "landing-page"; then
-    areas="${areas}landing-page,"
-fi
 if dir_has_changes "backend"; then
     areas="${areas}backend,"
 fi

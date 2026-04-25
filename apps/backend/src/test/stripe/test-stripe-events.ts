@@ -1,5 +1,5 @@
 import { __generateUniqueId } from '../test-utils'
-import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@template-app/core/constants/pricing-constants'
+import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@flicktionary/core/constants/pricing-constants'
 
 export type EventType =
   | 'customer.subscription.created'

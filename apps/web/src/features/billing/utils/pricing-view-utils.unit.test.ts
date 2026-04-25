@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { i18n } from '@lingui/core'
 import { getPricingViewConfig } from './pricing-view-utils.ts'
-import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@template-app/core/constants/pricing-constants.ts'
+import { NUMBER_OF_DAYS_IN_FREE_TRIAL } from '@flicktionary/core/constants/pricing-constants.ts'
 
 i18n.load('en', {})
 i18n.activate('en')

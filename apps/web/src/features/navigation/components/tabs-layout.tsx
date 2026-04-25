@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ContactUsButton } from '@/features/contact/components/contact-us-button'
 import { Home, Dumbbell, CircleUserRound, type LucideIcon } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'

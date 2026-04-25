@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { z } from 'zod'
-import { PLAN_INTERVALS } from '@template-app/core/constants/pricing-constants'
+import { PLAN_INTERVALS } from '@flicktionary/core/constants/pricing-constants'
 import { Route as dashboardRoute } from '@/app/routes/_authenticated/_tabs/dashboard'
 import { Route as redirectToCheckoutRoute } from '@/app/routes/_authenticated/redirect-to-check-out/$planInterval'
 

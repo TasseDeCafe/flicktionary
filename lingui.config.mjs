@@ -11,12 +11,7 @@ export default defineConfig({
   catalogs: [
     {
       path: '<rootDir>/packages/i18n/locales/{locale}/messages',
-      include: [
-        '<rootDir>/apps/web/src',
-        '<rootDir>/apps/native/src',
-        '<rootDir>/packages/i18n/src',
-        '<rootDir>/apps/landing-page/src',
-      ],
+      include: ['<rootDir>/apps/web/src', '<rootDir>/apps/native/src', '<rootDir>/packages/i18n/src'],
       exclude: ['**/node_modules/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     },
   ],

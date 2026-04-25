@@ -1,6 +1,6 @@
 set -e
 
-PROCESS_NAME="app-monorepo-template.dev"
+PROCESS_NAME="flicktionary.app"
 CONFIG_PATH="ecosystem.config.cjs"
 
 export NODE_ENV=production

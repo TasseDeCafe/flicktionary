@@ -8,7 +8,7 @@ import { AppDependencies, buildApp } from '../app'
 import { MockStripeApi, StripeApi } from '../transport/third-party/stripe/stripe-api'
 import { MockResendApi } from '../transport/third-party/resend/resend-api'
 import { MockRevenuecatApi } from '../transport/third-party/revenuecat/revenuecat-api'
-import { NUMBER_OF_DAYS_IN_FREE_TRIAL, PlanInterval } from '@template-app/core/constants/pricing-constants'
+import { NUMBER_OF_DAYS_IN_FREE_TRIAL, PlanInterval } from '@flicktionary/core/constants/pricing-constants'
 import { __simulateStripeSubscriptionCreatedEvent } from './stripe/stripe-test-utils'
 import { DbInterval } from '../transport/database/stripe-subscriptions/stripe-subscriptions-repository'
 

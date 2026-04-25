@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { USER_FACING_ERROR_CODE } from '@template-app/core/constants/user-facing-error-code'
+import { USER_FACING_ERROR_CODE } from '@flicktionary/core/constants/user-facing-error-code'
 import { OverlayId } from '@/components/ui/overlay-ids'
 
 type OverlayStore = {

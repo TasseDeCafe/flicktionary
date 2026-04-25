@@ -2,7 +2,7 @@ import * as PopoverPrimitive from '@rn-primitives/popover'
 import * as React from 'react'
 import { Platform, StyleSheet } from 'react-native'
 import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { TextClassContext } from './react-native-reusables/text'
 
 const Popover = PopoverPrimitive.Root

@@ -1,10 +1,10 @@
 {
-  "extends": "@template-app/typescript-config/library.json",
+  "extends": "@flicktionary/typescript-config/library.json",
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./dist",
     "paths": {
-      "@template-app/core/*": ["../../packages/core/src/*"]
+      "@flicktionary/core/*": ["../../packages/core/src/*"]
     }
   },
   "include": ["."],

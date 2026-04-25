@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node'
 import { nodeProfilingIntegration } from '@sentry/profiling-node'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '../../../config/environment-config'
 
 const globalWithDebugFlag = globalThis as typeof globalThis & {

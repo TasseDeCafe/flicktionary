@@ -2,7 +2,7 @@
 import './instrument'
 import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/react'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { logWithSentry } from '@/lib/analytics/log-with-sentry'
 import { App } from './provider'
 import './index.css'

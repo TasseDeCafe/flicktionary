@@ -16,7 +16,7 @@ export const isFacebookNativeWebviewApp = () => {
 
 export const isInstagramWebviewNativeApp = () => {
   const userAgentLowered = navigator.userAgent.toLowerCase()
-  // I got this by going to kamil-landing.template-app.dev/yba-admin from the native instagram app and copying the value of navigator.userAgent
+  // I got this by going to kamil-landing.flicktionary.dev/yba-admin from the native instagram app and copying the value of navigator.userAgent
   // test on iphone 12 pro max on 2024.10.27:
   // "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/21F90 Instagram 354.0.0.29.90 (iPhone13,4; iOS 17_5_1; en_ES; en-GB; scale=3.00; 1284x2778; 654111336; IABMV/1)"
   // the above string contains the word Instagram, that's why it works
@@ -28,7 +28,7 @@ export const isInstagramWebviewNativeApp = () => {
 
 export const isLinkedInWebviewOnIosNativeApp = () => {
   const userAgentLowered = navigator.userAgent.toLowerCase()
-  // I got this by going to kamil-landing.template-app.dev/yba-admin and copying the value of navigator.userAgent
+  // I got this by going to kamil-landing.flicktionary.dev/yba-admin and copying the value of navigator.userAgent
   // tested on iphone 12 pro max on 2024.10.27:
   // "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [LinkedInApp]/9.30.3422"
   // the above string contains the word LinkedIn, that's why it works

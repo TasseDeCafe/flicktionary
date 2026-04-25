@@ -3,7 +3,7 @@ import { implement } from '@orpc/server'
 import { getConfig } from '../../config/environment-config'
 import { StripeApi } from '../../transport/third-party/stripe/stripe-api'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { portalSessionContract } from '@template-app/api-client/orpc-contracts/portal-session-contract'
+import { portalSessionContract } from '@flicktionary/api-client/orpc-contracts/portal-session-contract'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 

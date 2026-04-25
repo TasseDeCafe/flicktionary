@@ -2,7 +2,6 @@ This turborepo monorepo is an attempt at creating a template for quick SaaS iter
 
 The following stack is used:
 
-- Landing page: Typescript React Next.js
 - Web: TypeScript React single-page application built with Vite.
 - Backend: TypeScript on Node.js backend with Express framework.
 - Native: Typescript Expo-managed React Native app with Expo Router.
@@ -27,7 +26,7 @@ The template is built so that it's easy to deploy this stack, and also have usef
 
 # Conventions:
 
-TS across all the apps: web, landing-page, backend, native. It's important for you to follow those conventions:
+TS across all the apps: web, backend, native. It's important for you to follow those conventions:
 
 - use const for functions, don't use the "function" keyword
 - use ESM when possible.

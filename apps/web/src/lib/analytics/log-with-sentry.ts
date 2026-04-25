@@ -1,8 +1,8 @@
 import { getConfig } from '@/config/environment-config.ts'
 import * as Sentry from '@sentry/react'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { ORPCError } from '@orpc/contract'
-import { buildOrpcErrorContext } from '@template-app/api-client/utils/backend-error-utils'
+import { buildOrpcErrorContext } from '@flicktionary/api-client/utils/backend-error-utils'
 
 type Stringifiable = string | number | boolean | null | undefined | { toString(): string }
 

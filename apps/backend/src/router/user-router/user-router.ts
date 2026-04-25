@@ -4,7 +4,7 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processReferral } from './user-router-utils'
-import { userContract } from '@template-app/api-client/orpc-contracts/user-contract'
+import { userContract } from '@flicktionary/api-client/orpc-contracts/user-contract'
 
 export const UserRouter = (usersRepository: UsersRepositoryInterface): Router => {
   const implementer = implement(userContract).$context<OrpcContext>()

@@ -12,8 +12,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { z } from 'zod'
-import { cn } from '@template-app/core/utils/tailwind-utils'
-import { formSchema } from '@template-app/api-client/orpc-contracts/contact-email-contract'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { formSchema } from '@flicktionary/api-client/orpc-contracts/contact-email-contract'
 import { useSendContactEmail } from '@/features/contact/api/contact-hooks'
 import { useLingui } from '@lingui/react/macro'
 import { useAuthStore, getUserEmail, getUserName } from '@/stores/auth-store'
@@ -54,7 +54,7 @@ export const ContactUsOverlayContent = () => {
   return (
     <OverlayContent>
       <OverlayHeader>
-        <OverlayTitle>{t`Help us improve TemplateApp`}</OverlayTitle>
+        <OverlayTitle>{t`Help us improve Flicktionary`}</OverlayTitle>
         <p className='text-sm text-gray-500'>{t`Share your feedback or suggest improvements to the founders. We read and reply to every submission!`}</p>
         <OverlayDescription className='hidden'></OverlayDescription>
       </OverlayHeader>

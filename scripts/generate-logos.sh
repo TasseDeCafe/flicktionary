@@ -11,8 +11,6 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 WEB_PUBLIC="$ROOT_DIR/apps/web/public"
 NATIVE_ASSETS="$ROOT_DIR/apps/native/src/assets/images"
-LANDING_APP="$ROOT_DIR/apps/landing-page/src/app"
-LANDING_PUBLIC="$ROOT_DIR/apps/landing-page/public/images"
 
 # Determine source image
 if [ -n "$1" ]; then
@@ -73,30 +71,6 @@ echo "Created: icon.png (264x264)"
 # splash-icon.png (1024x1024) - Splash screen icon
 magick "$WEB_PUBLIC/logo.png" -resize 1024x1024 "$NATIVE_ASSETS/splash-icon.png"
 echo "Created: splash-icon.png (1024x1024)"
-
-# Generate landing page images
-echo ""
-echo "=== Landing Page ==="
-
-# apple-icon.png (180x180) - Apple touch icon standard
-magick "$WEB_PUBLIC/logo.png" -resize 180x180 "$LANDING_APP/apple-icon.png"
-echo "Created: apple-icon.png (180x180)"
-
-# favicon.ico (48x48) - Favicon for browsers
-magick "$WEB_PUBLIC/logo.png" -resize 48x48 "$LANDING_APP/favicon.ico"
-echo "Created: favicon.ico (48x48)"
-
-# favicon.png (32x32) - Standard favicon
-magick "$WEB_PUBLIC/logo.png" -resize 32x32 "$LANDING_APP/favicon.png"
-echo "Created: favicon.png (32x32)"
-
-# icon.png (512x512) - PWA icon
-magick "$WEB_PUBLIC/logo.png" -resize 512x512 "$LANDING_APP/icon.png"
-echo "Created: icon.png (512x512)"
-
-# logo-full.png (512x512) - Full logo for display
-magick "$WEB_PUBLIC/logo.png" -resize 512x512 "$LANDING_PUBLIC/logo-full.png"
-echo "Created: logo-full.png (512x512)"
 
 echo ""
 echo "All logos generated successfully!"

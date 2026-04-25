@@ -15,7 +15,6 @@
  *
  * If no directory is specified, defaults to apps/native/src
  * For web app: node detect-raw-strings.mjs apps/web/src
- * For landing page: node detect-raw-strings.mjs apps/landing-page/src
  */
 
 import fs from 'node:fs/promises'
@@ -71,7 +70,7 @@ const EXCLUDE_PATTERNS = [
   /^[a-z_\-]+$/i, // Single lowercase words (likely identifiers)
   /^[A-Z_]+$/, // All caps (likely constants)
   /discord/i, // Service names
-  /template-app\.com/i,
+  /flicktionary\.com/i,
   /supabase/i,
   /github/i,
   /google/i,
@@ -670,7 +669,6 @@ async function main() {
     console.error('Examples:')
     console.error('  node detect-raw-strings.mjs apps/native/src')
     console.error('  node detect-raw-strings.mjs apps/web/src')
-    console.error('  node detect-raw-strings.mjs apps/landing-page/src')
     process.exit(1)
   }
 

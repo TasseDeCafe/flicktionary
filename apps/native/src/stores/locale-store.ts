@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import * as Localization from 'expo-localization'
 import { AppState, AppStateStatus } from 'react-native'
-import { ENGLISH_LOCALE, FRENCH_LOCALE, Locale, POLISH_LOCALE, SPANISH_LOCALE } from '@template-app/i18n/i18n-config'
+import { ENGLISH_LOCALE, FRENCH_LOCALE, Locale, POLISH_LOCALE, SPANISH_LOCALE } from '@flicktionary/i18n/i18n-config'
 
 type LocaleStore = {
   locale: Locale

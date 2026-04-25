@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
-import { sentryDebugContract } from '@template-app/api-client/orpc-contracts/sentry-debug-contract'
+import { sentryDebugContract } from '@flicktionary/api-client/orpc-contracts/sentry-debug-contract'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 
 export const SentryDebugRouter = (): Router => {

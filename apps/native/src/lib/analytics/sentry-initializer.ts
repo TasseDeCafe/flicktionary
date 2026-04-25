@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native'
 import Constants, { ExecutionEnvironment } from 'expo-constants'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '@/config/environment-config'
 
 export const navigationIntegration = Sentry.reactNavigationIntegration({

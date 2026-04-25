@@ -1,5 +1,5 @@
 import { PostHog } from 'posthog-react-native'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '@/config/environment-config'
 
 // https://posthog.com/docs/libraries/react-native

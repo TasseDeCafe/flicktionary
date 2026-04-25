@@ -3,7 +3,7 @@ import morgan from 'morgan'
 import helmet from 'helmet'
 import cors from 'cors'
 
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { HealthCheckRouter } from './router/health-check-router/health-check-router'
 import { SentryDebugRouter } from './router/sentry-debug-router/sentry-debug-router'
 import { getConfig } from './config/environment-config'

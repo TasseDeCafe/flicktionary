@@ -4,7 +4,7 @@ import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { sql } from '../../transport/database/postgres-client'
-import { healthCheckContract } from '@template-app/api-client/orpc-contracts/health-check-contract'
+import { healthCheckContract } from '@flicktionary/api-client/orpc-contracts/health-check-contract'
 
 const getGitCommit = (): string => {
   try {

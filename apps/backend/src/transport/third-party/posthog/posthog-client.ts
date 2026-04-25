@@ -1,5 +1,5 @@
 import { PostHog } from 'posthog-node'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '../../../config/environment-config'
 
 const POSTHOG_HOST = 'https://eu.i.posthog.com'

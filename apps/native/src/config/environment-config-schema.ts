@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 
 const sentrySampleRate = z.number().min(0).max(1)
 

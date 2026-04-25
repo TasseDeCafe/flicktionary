@@ -3,12 +3,12 @@ const IS_PREVIEW = process.env.APP_VARIANT === 'preview'
 
 export const getUniqueIosIdentifier = () => {
   if (IS_DEV) {
-    return 'com.app-monorepo-template.ios.dev'
+    return 'com.flicktionary.ios.dev'
   }
   if (IS_PREVIEW) {
-    return 'com.app-monorepo-template.ios.preview'
+    return 'com.flicktionary.ios.preview'
   }
-  return 'com.app-monorepo-template.ios'
+  return 'com.flicktionary.ios'
 }
 
 export const getUniqueAndroidIdentifier = () => {
@@ -23,29 +23,25 @@ export const getUniqueAndroidIdentifier = () => {
 
 const getAppName = () => {
   if (IS_DEV) {
-    return 'DEV - TemplateApp'
+    return 'DEV - Flicktionary'
   }
   if (IS_PREVIEW) {
-    return 'PREVIEW - TemplateApp'
+    return 'PREVIEW - Flicktionary'
   }
-  return 'TemplateApp'
+  return 'Flicktionary'
 }
 
 const getAppHost = () => {
   if (IS_DEV) {
-    return '*.app-monorepo-template.dev'
+    return '*.flicktionary.dev'
   }
-  return 'app.app-monorepo-template.dev'
+  return 'app.flicktionary.app'
 }
 
 const getAssociatedDomains = () => {
-  const productionDomains = ['applinks:app.app-monorepo-template.dev']
+  const productionDomains = ['applinks:app.flicktionary.app']
   if (IS_DEV) {
-    return [
-      ...productionDomains,
-      'applinks:web-kamil.app-monorepo-template.dev',
-      'applinks:web-sebastien.app-monorepo-template.dev',
-    ]
+    return [...productionDomains, 'applinks:web-kamil.flicktionary.dev', 'applinks:web-sebastien.flicktionary.dev']
   }
   return productionDomains
 }
@@ -63,14 +59,13 @@ const getGoogleIosUrlScheme = () => {
 const config = {
   expo: {
     name: getAppName(),
-    owner: 'template-organization',
-    slug: 'template-app',
-    version: '0.0.3',
+    owner: 'fluencist',
+    slug: 'flicktionary',
+    version: '0.0.1',
     orientation: 'portrait',
     icon: './src/assets/images/icon.png',
-    scheme: 'template-app',
+    scheme: 'flicktionary',
     userInterfaceStyle: 'automatic',
-    buildCacheProvider: 'eas',
     ios: {
       usesAppleSignIn: true,
       supportsTablet: false,
@@ -175,14 +170,6 @@ const config = {
         },
       ],
       ['expo-apple-authentication'],
-      [
-        '@sentry/react-native/expo',
-        {
-          url: 'https://sentry.io/',
-          project: 'native',
-          organization: 'template-organization',
-        },
-      ],
       ['expo-font'],
       ['expo-localization'],
     ],
@@ -191,18 +178,9 @@ const config = {
       autolinkingModuleResolution: true,
       reactCompiler: true,
     },
-    updates: {
-      url: 'https://u.expo.dev/20a5774f-5cfd-48ad-b277-50d9d02a2e58',
-    },
-    runtimeVersion: {
-      policy: 'appVersion',
-    },
     extra: {
       router: {
         origin: false,
-      },
-      eas: {
-        projectId: '20a5774f-5cfd-48ad-b277-50d9d02a2e58',
       },
     },
   },

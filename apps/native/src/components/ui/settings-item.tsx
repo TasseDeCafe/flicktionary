@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native'
-import { cn } from '@template-app/core/utils/tailwind-utils'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ChevronRight } from 'lucide-react-native'
 import { ReactNode } from 'react'
 import { colors } from '@/constants/colors'

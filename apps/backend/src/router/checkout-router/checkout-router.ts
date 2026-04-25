@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { implement } from '@orpc/server'
-import { checkoutContract } from '@template-app/api-client/orpc-contracts/checkout-contract'
+import { checkoutContract } from '@flicktionary/api-client/orpc-contracts/checkout-contract'
 import { StripeServiceInterface } from '../../service/stripe-service/stripe-service-interface'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'

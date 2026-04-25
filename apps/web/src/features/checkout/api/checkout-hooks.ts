@@ -1,4 +1,4 @@
-import { USER_FACING_ERROR_CODE } from '@template-app/core/constants/user-facing-error-code'
+import { USER_FACING_ERROR_CODE } from '@flicktionary/core/constants/user-facing-error-code'
 import { useMutation } from '@tanstack/react-query'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useLingui } from '@lingui/react/macro'

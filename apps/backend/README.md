@@ -1,4 +1,4 @@
-# app-monorepo-template.dev backend
+# flicktionary.app backend
 
 ## run
 

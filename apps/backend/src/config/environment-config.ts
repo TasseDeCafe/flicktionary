@@ -7,7 +7,7 @@ import {
   isProduction,
   isTest,
 } from '../utils/environment-utils'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { parseEmails } from './environment-config-utils'
 import { EnvironmentConfig } from './environment-config-schema'
 
@@ -15,13 +15,13 @@ const productionConfig: EnvironmentConfig = {
   environmentName: 'production',
   // Railway injects PORT env var, fallback to 4004 for other deployments
   port: parseInt(process.env.PORT || '4004', 10),
-  webUrl: 'https://app.app-monorepo-template.dev',
+  webUrl: 'https://app.flicktionary.app',
   shouldLogRequests: false,
   allowedCorsOrigins: [
-    'https://app-monorepo-template.dev',
-    'https://www.app-monorepo-template.dev',
-    'https://app.app-monorepo-template.dev',
-    /https:\/\/.*-template-organization\.vercel\.app(\/.*)?/, // Vercel Preview URLs
+    'https://flicktionary.app',
+    'https://www.flicktionary.app',
+    'https://app.flicktionary.app',
+    /https:\/\/.*-fluencist\.vercel\.app(\/.*)?/, // Vercel Preview URLs
     /https:\/\/.*\.up\.railway\.app(\/.*)?/, // Railway Preview URLs
   ],
   resendApiKey: process.env.RESEND_API_KEY || '',
@@ -36,7 +36,7 @@ const productionConfig: EnvironmentConfig = {
           maxValueLength: 8192,
           tracesSampleRate: 1.0,
           profilesSampleRate: 1.0,
-          tracePropagationTargets: ['https://app.app-monorepo-template.dev', 'https://api.app-monorepo-template.dev'],
+          tracePropagationTargets: ['https://app.flicktionary.app', 'https://api.flicktionary.app'],
         },
       }
     : {

@@ -304,8 +304,8 @@ msgid "About"
 msgstr "About"
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:15
-msgid "About | TemplateApp"
-msgstr "About | TemplateApp"
+msgid "About | Flicktionary"
+msgstr "About | Flicktionary"
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:38
 msgid "About Us"
@@ -390,8 +390,8 @@ msgid "Billed yearly: €{yearlyPriceFormatted}"
 msgstr "Billed yearly: €{yearlyPriceFormatted}"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
-msgid "By accessing and using our website, TemplateApp.com, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
-msgstr "By accessing and using our website, TemplateApp.com, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
+msgid "By accessing and using our website, Flicktionary.com, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
+msgstr "By accessing and using our website, Flicktionary.com, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
@@ -534,8 +534,8 @@ msgid "Download our mobile app to start perfecting your accent with AI voice tra
 msgstr "Download our mobile app to start perfecting your accent with AI voice training"
 
 #: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:16
-msgid "Download TemplateApp - TemplateApp - Perfect Your Accent with AI Voice Training"
-msgstr "Download TemplateApp - TemplateApp - Perfect Your Accent with AI Voice Training"
+msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
+msgstr "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:23
 msgid "Download the App"
@@ -641,8 +641,8 @@ msgstr "Go to Dashboard"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:79
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:57
-msgid "Help us improve TemplateApp"
-msgstr "Help us improve TemplateApp"
+msgid "Help us improve Flicktionary"
+msgstr "Help us improve Flicktionary"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:92
 #: apps/web/src/features/navigation/components/tabs-layout.tsx:44
@@ -654,12 +654,12 @@ msgid "How your free trial works"
 msgstr "How your free trial works"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
-msgid "If you have any questions about these Terms of Service, please contact us via email contact@app-monorepo-template.dev"
-msgstr "If you have any questions about these Terms of Service, please contact us via email contact@app-monorepo-template.dev"
+msgid "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
+msgstr "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
-msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@app-monorepo-template.dev"
-msgstr "If you have any questions about this Privacy Policy, please contact us via email: contact@app-monorepo-template.dev"
+msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
+msgstr "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
@@ -670,8 +670,8 @@ msgid "If you'd like to create a new account, you can sign up again."
 msgstr "If you'd like to create a new account, you can sign up again."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
-msgid "In no event shall TemplateApp.com, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
-msgstr "In no event shall TemplateApp.com, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
+msgid "In no event shall Flicktionary.com, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
+msgstr "In no event shall Flicktionary.com, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
 
 #: apps/landing-page/src/app/[lang]/layout.tsx:51
 msgid "In-App Purchases"
@@ -832,8 +832,8 @@ msgid "Pricing"
 msgstr "Pricing"
 
 #: apps/landing-page/src/app/[lang]/pricing/page.tsx:14
-msgid "Pricing | TemplateApp"
-msgstr "Pricing | TemplateApp"
+msgid "Pricing | Flicktionary"
+msgstr "Pricing | Flicktionary"
 
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:21
 msgid "Privacy Policy"
@@ -983,12 +983,12 @@ msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Tell us what you think or describe any issues you encountered..."
 
 #: apps/landing-page/src/app/[lang]/layout.tsx:49
-msgid "TemplateApp"
-msgstr "TemplateApp"
+msgid "Flicktionary"
+msgstr "Flicktionary"
 
 #: apps/landing-page/src/app/[lang]/page.tsx:16
-msgid "TemplateApp - Perfect Your Accent with AI Voice Training"
-msgstr "TemplateApp - Perfect Your Accent with AI Voice Training"
+msgid "Flicktionary - Perfect Your Accent with AI Voice Training"
+msgstr "Flicktionary - Perfect Your Accent with AI Voice Training"
 
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:24
 msgid "Terms and Conditions"
@@ -1013,12 +1013,12 @@ msgid "Thank you for your feedback!"
 msgstr "Thank you for your feedback!"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
-msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of TemplateApp.com and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
-msgstr "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of TemplateApp.com and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
+msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of Flicktionary.com and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
+msgstr "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of Flicktionary.com and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:17
-msgid "the creators of app-monorepo-template.dev here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
-msgstr "the creators of app-monorepo-template.dev here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+msgid "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+msgstr "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
 msgid "The data we collect serves several purposes:"
@@ -1043,8 +1043,8 @@ msgid "This action cannot be undone. This will permanently delete your account a
 msgstr "This action cannot be undone. This will permanently delete your account and related data from our servers."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
-msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@app-monorepo-template.dev to process your requests with the same level of immediacy and thoroughness."
-msgstr "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@app-monorepo-template.dev to process your requests with the same level of immediacy and thoroughness."
+msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
+msgstr "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
 #: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:53
@@ -1185,8 +1185,8 @@ msgid "We've sent a verification link to:"
 msgstr "We've sent a verification link to:"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
-msgid "Welcome to TemplateApp.com. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
-msgstr "Welcome to TemplateApp.com. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
+msgid "Welcome to Flicktionary.com. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
+msgstr "Welcome to Flicktionary.com. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:115
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:63

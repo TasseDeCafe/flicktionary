@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { FreeTrialExplanationView } from '@/features/billing/components/free-trial-explanation-view.tsx'
 import { z } from 'zod'
-import { PLAN_INTERVALS } from '@template-app/core/constants/pricing-constants'
+import { PLAN_INTERVALS } from '@flicktionary/core/constants/pricing-constants'
 
 const freeTrialExplanationSearchSchema = z.object({
   planInterval: z.enum(PLAN_INTERVALS),

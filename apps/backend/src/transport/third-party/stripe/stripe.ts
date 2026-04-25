@@ -1,5 +1,5 @@
 import Stripe from 'stripe'
-import { FEATURES } from '@template-app/core/features'
+import { FEATURES } from '@flicktionary/core/features'
 import { getConfig } from '../../../config/environment-config'
 
 export const stripe = FEATURES.STRIPE
