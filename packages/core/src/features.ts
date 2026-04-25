@@ -4,8 +4,8 @@ export const FEATURES: Record<
 > = {
   SENTRY: false,
   POSTHOG: false,
-  STRIPE: false,
-  REVENUECAT: false,
+  STRIPE: true,
+  REVENUECAT: true,
   GOOGLE_AUTH: true,
   APPLE_AUTH: false,
 }
