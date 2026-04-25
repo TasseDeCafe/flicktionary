@@ -38,8 +38,8 @@ const startServer = async () => {
           accessCache,
           usersWithFreeAccess: getConfig().usersWithFreeAccess,
           resendApi: RealResendApi,
-          ...(FEATURES.STRIPE && { stripeApi: RealStripeApi }),
-          ...(FEATURES.REVENUECAT && { revenuecatApi: RealRevenuecatApi }),
+          ...(FEATURES.STRIPE ? { stripeApi: RealStripeApi } : {}),
+          ...(FEATURES.REVENUECAT ? { revenuecatApi: RealRevenuecatApi } : {}),
         })
 
     if (FEATURES.SENTRY) {
