@@ -390,8 +390,8 @@ msgid "Billed yearly: €{yearlyPriceFormatted}"
 msgstr "Facturado anualmente: {yearlyPriceFormatted} €"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
-msgid "By accessing and using our website, Flicktionary.com, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
-msgstr "Al acceder y usar nuestro sitio web, Flicktionary.com, y cualquier servicio asociado, aceptas estar sujeto a estos Términos de Servicio (\"Términos\")."
+msgid "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
+msgstr "Al acceder y usar nuestro sitio web, flicktionary.app, y cualquier servicio asociado, aceptas estar sujeto a estos Términos de Servicio (\"Términos\")."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
@@ -670,8 +670,8 @@ msgid "If you'd like to create a new account, you can sign up again."
 msgstr "Si deseas crear una nueva cuenta, puedes registrarte nuevamente."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
-msgid "In no event shall Flicktionary.com, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
-msgstr "En ningún caso Flicktionary.com, ni sus directores, empleados, socios, agentes, proveedores o afiliados, serán responsables de ningún daño indirecto, incidental, especial, consecuente o punitivo, incluyendo sin limitación, pérdida de beneficios, datos, uso, buena voluntad u otras pérdidas intangibles, resultantes de:"
+msgid "In no event shall flicktionary.app, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
+msgstr "En ningún caso flicktionary.app, ni sus directores, empleados, socios, agentes, proveedores o afiliados, serán responsables de ningún daño indirecto, incidental, especial, consecuente o punitivo, incluyendo sin limitación, pérdida de beneficios, datos, uso, buena voluntad u otras pérdidas intangibles, resultantes de:"
 
 #: apps/landing-page/src/app/[lang]/layout.tsx:51
 msgid "In-App Purchases"
@@ -1013,8 +1013,8 @@ msgid "Thank you for your feedback!"
 msgstr "¡Gracias por tus comentarios!"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
-msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of Flicktionary.com and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
-msgstr "El contenido, las funciones y la funcionalidad de nuestros servicios, incluyendo pero no limitado a texto, gráficos, logotipos, imágenes, así como el diseño, selección y disposición de los mismos, son y seguirán siendo propiedad exclusiva de Flicktionary.com y sus licenciatarios. Estos están protegidos por derechos de autor, marcas registradas y otras leyes de propiedad intelectual o derechos de propiedad."
+msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
+msgstr "El contenido, las funciones y la funcionalidad de nuestros servicios, incluyendo pero no limitado a texto, gráficos, logotipos, imágenes, así como el diseño, selección y disposición de los mismos, son y seguirán siendo propiedad exclusiva de flicktionary.app y sus licenciatarios. Estos están protegidos por derechos de autor, marcas registradas y otras leyes de propiedad intelectual o derechos de propiedad."
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:17
 msgid "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
@@ -1185,8 +1185,8 @@ msgid "We've sent a verification link to:"
 msgstr "Hemos enviado un enlace de verificación a:"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
-msgid "Welcome to Flicktionary.com. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
-msgstr "Bienvenido a Flicktionary.com. Estamos comprometidos a proteger tu privacidad. Esta Política de Privacidad describe cómo recopilamos, manejamos, almacenamos y protegemos tus datos personales mientras interactúas con nuestros servicios."
+msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
+msgstr "Bienvenido a flicktionary.app. Estamos comprometidos a proteger tu privacidad. Esta Política de Privacidad describe cómo recopilamos, manejamos, almacenamos y protegemos tus datos personales mientras interactúas con nuestros servicios."
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:115
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
