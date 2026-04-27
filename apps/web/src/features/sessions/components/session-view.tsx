@@ -61,17 +61,39 @@ export const SessionView = () => {
     }
   }, [session?.status, sessionId, navigate])
 
+  // Auto-open the tap-to-translate overlay when the user finishes a selection
+  // (mouseup / touchend). The button click is preserved as a fallback for the
+  // toggle-off path; in the toggle-on path the button is hidden.
+  useEffect(() => {
+    if (!tapToTranslateEnabled) return
+    const handleEnd = () => {
+      // Defer one tick so the browser has finalised window.getSelection().
+      setTimeout(() => {
+        if (tapToTranslateOpen) return
+        const sel = readCurrentSelection()
+        if (!sel) return
+        setPendingSelection(sel)
+        setTapToTranslateOpen(true)
+        // Clear the native selection so a stray subsequent mouseup with the same
+        // range can't re-trigger the overlay.
+        window.getSelection()?.removeAllRanges()
+      }, 30)
+    }
+    document.addEventListener('mouseup', handleEnd)
+    document.addEventListener('touchend', handleEnd)
+    return () => {
+      document.removeEventListener('mouseup', handleEnd)
+      document.removeEventListener('touchend', handleEnd)
+    }
+  }, [tapToTranslateEnabled, tapToTranslateOpen])
+
   const isProcessedOrExported = session?.status === 'processed' || session?.status === 'exported'
 
   const handleHighlightClick = () => {
     const sel = readCurrentSelection()
     if (!sel) return
     setPendingSelection(sel)
-    if (tapToTranslateEnabled) {
-      setTapToTranslateOpen(true)
-    } else {
-      setSheetOpen(true)
-    }
+    setSheetOpen(true)
   }
 
   if (isSessionLoading) {
@@ -104,10 +126,12 @@ export const SessionView = () => {
             </div>
           </div>
           <div className='ml-auto flex gap-2'>
-            <Button variant='secondary' size='sm' onClick={handleHighlightClick}>
-              <Highlighter className='mr-1 h-4 w-4' />
-              {t`Highlight selection`}
-            </Button>
+            {!tapToTranslateEnabled && (
+              <Button variant='secondary' size='sm' onClick={handleHighlightClick}>
+                <Highlighter className='mr-1 h-4 w-4' />
+                {t`Highlight selection`}
+              </Button>
+            )}
             {isProcessedOrExported && (
               <Button variant='outline' size='sm' asChild>
                 <Link to='/sessions/$sessionId/review' params={{ sessionId }}>

@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  ResponsiveOverlay,
+  OverlayContent,
+  OverlayHeader,
+  OverlayTitle,
+  OverlayFooter,
+} from '@/components/ui/responsive-overlay'
 import { useCreateHighlight, useFastGloss } from '../api/sessions-hooks'
 import { useTapToTranslate } from '../hooks/use-tap-to-translate'
 import type { SelectionResult } from '../hooks/use-text-selection'
@@ -93,18 +99,18 @@ export const TapToTranslateSheet = ({ open, sessionId, selection, onClose }: Pro
   }, [open, selection?.selectionText, selection?.startSegmentId, selection?.endSegmentId])
 
   return (
-    <Dialog
+    <ResponsiveOverlay
       open={open}
       onOpenChange={(next) => {
         if (!next) onClose()
       }}
     >
-      <DialogContent className='max-w-md'>
-        <DialogHeader>
-          <DialogTitle>{t`Quick gloss`}</DialogTitle>
-        </DialogHeader>
+      <OverlayContent className='max-w-md'>
+        <OverlayHeader>
+          <OverlayTitle>{t`Quick gloss`}</OverlayTitle>
+        </OverlayHeader>
         {selection ? (
-          <div className='flex flex-col gap-3'>
+          <div className='flex flex-col gap-3 pb-2'>
             <div className='rounded-md border bg-yellow-50 p-3 text-sm'>“{selection.selectionText}”</div>
             {state.kind === 'loading' && <p className='text-muted-foreground text-sm'>{t`Glossing…`}</p>}
             {state.kind === 'error' && (
@@ -128,10 +134,10 @@ export const TapToTranslateSheet = ({ open, sessionId, selection, onClose }: Pro
         ) : (
           <p className='text-muted-foreground text-sm'>{t`No text selected.`}</p>
         )}
-        <DialogFooter>
+        <OverlayFooter>
           <Button onClick={onClose}>{t`Done`}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </OverlayFooter>
+      </OverlayContent>
+    </ResponsiveOverlay>
   )
 }
