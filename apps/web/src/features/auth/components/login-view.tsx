@@ -1,7 +1,7 @@
 import { supabaseClient } from '@/lib/transport/supabase-client.ts'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { Route as dashboardRoute } from '@/app/routes/_authenticated/_tabs/dashboard'
+import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
 import { Route as loginEmailRoute } from '@/app/routes/login/email/index'
 import { Route as loginRoute } from '@/app/routes/login/index'
 import { AuthError } from '@supabase/supabase-js'
@@ -21,7 +21,7 @@ export const LoginView = () => {
 
   const { redirect } = loginRoute.useSearch()
   const navigate = useNavigate()
-  const redirectTo = redirect || dashboardRoute.to
+  const redirectTo = redirect || sessionsRoute.to
   const isSignedIn = useAuthStore(getIsSignedIn)
 
   useEffect(() => {

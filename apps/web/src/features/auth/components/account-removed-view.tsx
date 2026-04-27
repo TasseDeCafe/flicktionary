@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Route as dashboardRoute } from '@/app/routes/_authenticated/_tabs/dashboard'
+import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
 import { Route as loginRoute } from '@/app/routes/login/index'
 import { useAuthStore, getIsSignedIn } from '@/stores/auth-store'
 import { Button } from '@/components/ui/button.tsx'
@@ -14,7 +14,7 @@ export const AccountRemovedView = () => {
 
   useEffect(() => {
     if (isSignedIn) {
-      navigate({ to: dashboardRoute.to })
+      navigate({ to: sessionsRoute.to })
     }
   }, [isSignedIn, navigate])
 

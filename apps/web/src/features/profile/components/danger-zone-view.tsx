@@ -1,7 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
-import { Route as profileRoute } from '@/app/routes/_authenticated/_tabs/profile'
+import { Route as profileRoute } from '@/app/routes/_authenticated/_app/profile'
 import { ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

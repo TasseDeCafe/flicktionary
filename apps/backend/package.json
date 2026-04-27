@@ -36,6 +36,9 @@
   },
   "author": "TasseDeCafe",
   "dependencies": {
+    "@anthropic-ai/sdk": "catalog:",
+    "@flicktionary/api-client": "workspace:*",
+    "@flicktionary/core": "workspace:*",
     "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
@@ -44,8 +47,6 @@
     "@sentry/node": "catalog:",
     "@sentry/profiling-node": "catalog:",
     "@supabase/supabase-js": "catalog:",
-    "@flicktionary/api-client": "workspace:*",
-    "@flicktionary/core": "workspace:*",
     "@typescript-eslint/eslint-plugin": "catalog:",
     "@typescript-eslint/parser": "catalog:",
     "axios": "catalog:",
@@ -75,8 +76,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@react-email/preview-server": "catalog:",
     "@flicktionary/typescript-config": "workspace:*",
+    "@react-email/preview-server": "catalog:",
     "@types/cors": "catalog:",
     "@types/express": "catalog:",
     "@types/jsonwebtoken": "catalog:",

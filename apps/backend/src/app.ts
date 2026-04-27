@@ -43,6 +43,24 @@ import {
 import { configRouter } from './router/config-router/config-router'
 import { RevenuecatService } from './service/revenuecat-service/revenuecat-service'
 import { orpcRelativePaths } from './router/orpc/orpc-paths'
+import { ContentSourcesRouter } from './router/content-sources-router/content-sources-router'
+import { TextTracksRouter } from './router/text-tracks-router/text-tracks-router'
+import { TextSegmentsRouter } from './router/text-segments-router/text-segments-router'
+import { StudySessionsRouter } from './router/study-sessions-router/study-sessions-router'
+import { HighlightsRouter } from './router/highlights-router/highlights-router'
+import { CardsRouter } from './router/cards-router/cards-router'
+import { CardChatRouter } from './router/card-chat-router/card-chat-router'
+import { UserPrefsRouter } from './router/user-prefs-router/user-prefs-router'
+import { ContentSourcesRepository } from './transport/database/content-sources/content-sources-repository'
+import { TextTracksRepository } from './transport/database/text-tracks/text-tracks-repository'
+import { TextSegmentsRepository } from './transport/database/text-segments/text-segments-repository'
+import { StudySessionsRepository } from './transport/database/study-sessions/study-sessions-repository'
+import { HighlightsRepository } from './transport/database/highlights/highlights-repository'
+import { CardsRepository } from './transport/database/cards/cards-repository'
+import { CardChatMessagesRepository } from './transport/database/card-chat-messages/card-chat-messages-repository'
+import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import { L1InterferenceNotesRepository } from './transport/database/l1-interference-notes/l1-interference-notes-repository'
+import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
 
 export type AppDependencies = {
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
@@ -194,6 +212,59 @@ export const buildApp = ({
     app.use(API_V1, PortalSessionRouter(usersRepository, stripeApi))
     app.use(API_V1, CheckoutRouter(stripeService))
   }
+
+  const contentSourcesRepository = ContentSourcesRepository()
+  const textTracksRepository = TextTracksRepository()
+  const textSegmentsRepository = TextSegmentsRepository()
+  const studySessionsRepository = StudySessionsRepository()
+  const highlightsRepository = HighlightsRepository()
+  const cardsRepository = CardsRepository()
+  const cardChatMessagesRepository = CardChatMessagesRepository()
+  const userTargetLanguagePrefsRepository = UserTargetLanguagePrefsRepository()
+  const l1InterferenceNotesRepository = L1InterferenceNotesRepository()
+  const userLookupsRepository = UserLookupsRepository()
+
+  const processingDependencies = {
+    contentSourcesRepository,
+    textTracksRepository,
+    textSegmentsRepository,
+    studySessionsRepository,
+    highlightsRepository,
+    cardsRepository,
+    l1InterferenceNotesRepository,
+    userLookupsRepository,
+  }
+
+  const exportDependencies = {
+    cardsRepository,
+    textSegmentsRepository,
+    studySessionsRepository,
+    userLookupsRepository,
+  }
+
+  const chatDependencies = {
+    cardsRepository,
+    cardChatMessagesRepository,
+    studySessionsRepository,
+    textSegmentsRepository,
+    l1InterferenceNotesRepository,
+  }
+
+  app.use(API_V1, ContentSourcesRouter(contentSourcesRepository))
+  app.use(
+    API_V1,
+    TextTracksRouter({
+      contentSourcesRepository,
+      textTracksRepository,
+      textSegmentsRepository,
+    })
+  )
+  app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository))
+  app.use(API_V1, StudySessionsRouter(studySessionsRepository, processingDependencies))
+  app.use(API_V1, HighlightsRouter(highlightsRepository, studySessionsRepository, textSegmentsRepository))
+  app.use(API_V1, CardsRouter(cardsRepository, studySessionsRepository, exportDependencies))
+  app.use(API_V1, CardChatRouter(cardChatMessagesRepository, cardsRepository, chatDependencies))
+  app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
 
   const subscriptionMiddlewareInstance = subscriptionMiddleware(accessCache, usersWithFreeAccess)
   app.use(subscriptionMiddlewareInstance)

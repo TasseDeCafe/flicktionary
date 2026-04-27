@@ -21,6 +21,10 @@ export const environmentConfigSchema = z.object({
   allowedCorsOrigins: z.array(z.union([z.string(), z.instanceof(RegExp)])).min(1),
   // https://resend.com/api-keys
   resendApiKey: z.string().min(1),
+  anthropicApiKey: z.string().min(1),
+  tmdbApiKey: z.string().min(1),
+  openSubtitlesApiKey: z.string().min(1),
+  openSubtitlesUserAgent: z.string().min(1),
   stripeSecretKey: FEATURES.STRIPE ? z.string().min(1) : z.string(),
   stripeWebhookSecret: FEATURES.STRIPE ? z.string().min(1) : z.string(),
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? z.string().min(1) : z.string(),

@@ -2,7 +2,7 @@ import { CheckCircle } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Route as dashboardRoute } from '@/app/routes/_authenticated/_tabs/dashboard'
+import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,8 +29,8 @@ export const CheckoutSuccessView = () => {
           <p className='text-muted-foreground'>{t`Enjoy unlimited access to all our premium features and content.`}</p>
         </CardContent>
         <CardFooter>
-          <Button className='w-full' onClick={() => navigate({ to: dashboardRoute.to })}>
-            {t`Go to Dashboard`}
+          <Button className='w-full' onClick={() => navigate({ to: sessionsRoute.to })}>
+            {t`Go to Sessions`}
           </Button>
         </CardFooter>
       </Card>

@@ -118,6 +118,54 @@ const retrieveAllUsersCreatedLessThanNDaysAgo = async (days: number): Promise<st
   }
 }
 
+const getNativeLanguage = async (userId: string): Promise<string | null> => {
+  try {
+    const result = (await sql`
+      SELECT native_language FROM public.users WHERE id = ${userId}
+    `) as { native_language: string | null }[]
+    return result[0]?.native_language ?? null
+  } catch (e) {
+    logCustomErrorMessageAndError(`getNativeLanguage, userId = ${userId}`, e)
+    return null
+  }
+}
+
+const setNativeLanguage = async (userId: string, nativeLanguage: string): Promise<boolean> => {
+  try {
+    const result = await sql`
+      UPDATE public.users SET native_language = ${nativeLanguage} WHERE id = ${userId}
+    `
+    return result.count === 1
+  } catch (e) {
+    logCustomErrorMessageAndError(`setNativeLanguage, userId = ${userId}`, e)
+    return false
+  }
+}
+
+const getTapToTranslateEnabled = async (userId: string): Promise<boolean> => {
+  try {
+    const result = (await sql`
+      SELECT tap_to_translate_enabled FROM public.users WHERE id = ${userId}
+    `) as { tap_to_translate_enabled: boolean }[]
+    return result[0]?.tap_to_translate_enabled ?? false
+  } catch (e) {
+    logCustomErrorMessageAndError(`getTapToTranslateEnabled, userId = ${userId}`, e)
+    return false
+  }
+}
+
+const setTapToTranslateEnabled = async (userId: string, enabled: boolean): Promise<boolean> => {
+  try {
+    const result = await sql`
+      UPDATE public.users SET tap_to_translate_enabled = ${enabled} WHERE id = ${userId}
+    `
+    return result.count === 1
+  } catch (e) {
+    logCustomErrorMessageAndError(`setTapToTranslateEnabled, userId = ${userId}`, e)
+    return false
+  }
+}
+
 export interface UsersRepositoryInterface {
   insertUser: (
     id: string,
@@ -135,6 +183,10 @@ export interface UsersRepositoryInterface {
   updateUserStripeCustomerId: (userId: string, stripeCustomerId: string) => Promise<boolean>
   updateStripeCustomerId: (userId: string, stripeCustomerId: string | null) => Promise<boolean>
   retrieveAllUsersCreatedLessThanNDaysAgo: (days: number) => Promise<string[]>
+  getNativeLanguage: (userId: string) => Promise<string | null>
+  setNativeLanguage: (userId: string, nativeLanguage: string) => Promise<boolean>
+  getTapToTranslateEnabled: (userId: string) => Promise<boolean>
+  setTapToTranslateEnabled: (userId: string, enabled: boolean) => Promise<boolean>
 }
 
 export const UsersRepository = (): UsersRepositoryInterface => {
@@ -145,5 +197,9 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     updateUserStripeCustomerId,
     updateStripeCustomerId,
     retrieveAllUsersCreatedLessThanNDaysAgo,
+    getNativeLanguage,
+    setNativeLanguage,
+    getTapToTranslateEnabled,
+    setTapToTranslateEnabled,
   }
 }

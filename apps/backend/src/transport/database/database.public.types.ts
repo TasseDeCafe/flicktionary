@@ -28,6 +28,135 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_chat_messages: {
+        Row: {
+          card_id: string
+          content: string
+          created_at: string
+          id: string
+          role: Database['public']['Enums']['card_chat_role']
+        }
+        Insert: {
+          card_id: string
+          content: string
+          created_at?: string
+          id?: string
+          role: Database['public']['Enums']['card_chat_role']
+        }
+        Update: {
+          card_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          role?: Database['public']['Enums']['card_chat_role']
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'card_chat_messages_card_id_fkey'
+            columns: ['card_id']
+            isOneToOne: false
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      cards: {
+        Row: {
+          back_override: string | null
+          created_at: string
+          front_override: string | null
+          full_exploration: Json
+          headword: string
+          highlight_id: string | null
+          id: string
+          segment_id: string
+          status: Database['public']['Enums']['card_status']
+          study_session_id: string
+          surface_form: string
+          updated_at: string
+        }
+        Insert: {
+          back_override?: string | null
+          created_at?: string
+          front_override?: string | null
+          full_exploration?: Json
+          headword: string
+          highlight_id?: string | null
+          id?: string
+          segment_id: string
+          status?: Database['public']['Enums']['card_status']
+          study_session_id: string
+          surface_form: string
+          updated_at?: string
+        }
+        Update: {
+          back_override?: string | null
+          created_at?: string
+          front_override?: string | null
+          full_exploration?: Json
+          headword?: string
+          highlight_id?: string | null
+          id?: string
+          segment_id?: string
+          status?: Database['public']['Enums']['card_status']
+          study_session_id?: string
+          surface_form?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'cards_highlight_id_fkey'
+            columns: ['highlight_id']
+            isOneToOne: false
+            referencedRelation: 'highlights'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cards_segment_id_fkey'
+            columns: ['segment_id']
+            isOneToOne: false
+            referencedRelation: 'text_segments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'cards_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      content_sources: {
+        Row: {
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          language: string
+          metadata: Json
+          title: string
+          type: Database['public']['Enums']['content_source_type']
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          language: string
+          metadata?: Json
+          title: string
+          type: Database['public']['Enums']['content_source_type']
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          language?: string
+          metadata?: Json
+          title?: string
+          type?: Database['public']['Enums']['content_source_type']
+        }
+        Relationships: []
+      }
       handled_revenuecat_events: {
         Row: {
           created_at: string
@@ -61,6 +190,94 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: number
+        }
+        Relationships: []
+      }
+      highlights: {
+        Row: {
+          created_at: string
+          end_offset: number
+          end_segment_id: string
+          fast_gloss: string | null
+          id: string
+          note: string | null
+          preset_tags: string[]
+          selection_text: string
+          start_offset: number
+          start_segment_id: string
+          study_session_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_offset: number
+          end_segment_id: string
+          fast_gloss?: string | null
+          id?: string
+          note?: string | null
+          preset_tags?: string[]
+          selection_text: string
+          start_offset: number
+          start_segment_id: string
+          study_session_id: string
+        }
+        Update: {
+          created_at?: string
+          end_offset?: number
+          end_segment_id?: string
+          fast_gloss?: string | null
+          id?: string
+          note?: string | null
+          preset_tags?: string[]
+          selection_text?: string
+          start_offset?: number
+          start_segment_id?: string
+          study_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'highlights_end_segment_id_fkey'
+            columns: ['end_segment_id']
+            isOneToOne: false
+            referencedRelation: 'text_segments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'highlights_start_segment_id_fkey'
+            columns: ['start_segment_id']
+            isOneToOne: false
+            referencedRelation: 'text_segments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'highlights_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      l1_interference_notes: {
+        Row: {
+          created_at: string
+          l1_language: string
+          notes: string
+          target_language: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          l1_language: string
+          notes: string
+          target_language: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          l1_language?: string
+          notes?: string
+          target_language?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -214,12 +431,209 @@ export type Database = {
         }
         Relationships: []
       }
+      study_sessions: {
+        Row: {
+          cefr_level: string
+          content_source_id: string
+          context_blob: string | null
+          created_at: string
+          id: string
+          native_language: string
+          processed_at: string | null
+          processing_warnings: string[]
+          status: Database['public']['Enums']['study_session_status']
+          target_language: string
+          text_track_id: string
+          user_id: string
+        }
+        Insert: {
+          cefr_level: string
+          content_source_id: string
+          context_blob?: string | null
+          created_at?: string
+          id?: string
+          native_language: string
+          processed_at?: string | null
+          processing_warnings?: string[]
+          status?: Database['public']['Enums']['study_session_status']
+          target_language: string
+          text_track_id: string
+          user_id: string
+        }
+        Update: {
+          cefr_level?: string
+          content_source_id?: string
+          context_blob?: string | null
+          created_at?: string
+          id?: string
+          native_language?: string
+          processed_at?: string | null
+          processing_warnings?: string[]
+          status?: Database['public']['Enums']['study_session_status']
+          target_language?: string
+          text_track_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'study_sessions_content_source_id_fkey'
+            columns: ['content_source_id']
+            isOneToOne: false
+            referencedRelation: 'content_sources'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'study_sessions_text_track_id_fkey'
+            columns: ['text_track_id']
+            isOneToOne: false
+            referencedRelation: 'text_tracks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      text_segments: {
+        Row: {
+          end_ms: number | null
+          id: string
+          index: number
+          start_ms: number | null
+          text: string
+          text_track_id: string
+          tsv: unknown
+        }
+        Insert: {
+          end_ms?: number | null
+          id?: string
+          index: number
+          start_ms?: number | null
+          text: string
+          text_track_id: string
+          tsv?: unknown
+        }
+        Update: {
+          end_ms?: number | null
+          id?: string
+          index?: number
+          start_ms?: number | null
+          text?: string
+          text_track_id?: string
+          tsv?: unknown
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'text_segments_text_track_id_fkey'
+            columns: ['text_track_id']
+            isOneToOne: false
+            referencedRelation: 'text_tracks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      text_tracks: {
+        Row: {
+          content_source_id: string
+          created_at: string
+          external_id: string | null
+          hash: string
+          id: string
+          language: string
+          source: Database['public']['Enums']['text_track_source']
+        }
+        Insert: {
+          content_source_id: string
+          created_at?: string
+          external_id?: string | null
+          hash: string
+          id?: string
+          language: string
+          source: Database['public']['Enums']['text_track_source']
+        }
+        Update: {
+          content_source_id?: string
+          created_at?: string
+          external_id?: string | null
+          hash?: string
+          id?: string
+          language?: string
+          source?: Database['public']['Enums']['text_track_source']
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'text_tracks_content_source_id_fkey'
+            columns: ['content_source_id']
+            isOneToOne: false
+            referencedRelation: 'content_sources'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      user_lookups: {
+        Row: {
+          count: number
+          exported_at: string | null
+          first_card_id: string | null
+          headword: string
+          target_language: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          exported_at?: string | null
+          first_card_id?: string | null
+          headword: string
+          target_language: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          exported_at?: string | null
+          first_card_id?: string | null
+          headword?: string
+          target_language?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_lookups_first_card_id_fkey'
+            columns: ['first_card_id']
+            isOneToOne: false
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      user_target_language_prefs: {
+        Row: {
+          cefr_level: string
+          created_at: string
+          target_language: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cefr_level: string
+          created_at?: string
+          target_language: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cefr_level?: string
+          created_at?: string
+          target_language?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
           id: string
+          native_language: string | null
           referral: string | null
           stripe_customer_id: string | null
+          tap_to_translate_enabled: boolean
           utm_campaign: string | null
           utm_content: string | null
           utm_medium: string | null
@@ -229,8 +643,10 @@ export type Database = {
         Insert: {
           created_at?: string
           id: string
+          native_language?: string | null
           referral?: string | null
           stripe_customer_id?: string | null
+          tap_to_translate_enabled?: boolean
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
@@ -240,8 +656,10 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          native_language?: string | null
           referral?: string | null
           stripe_customer_id?: string | null
+          tap_to_translate_enabled?: boolean
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
@@ -258,6 +676,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      card_chat_role: 'user' | 'assistant'
+      card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
+      content_source_type: 'movie' | 'book' | 'article' | 'text'
       revenuecat_auto_renewal_status:
         | 'will_renew'
         | 'will_not_renew'
@@ -292,7 +713,9 @@ export type Database = {
         | 'incomplete_expired'
         | 'incomplete'
         | 'paused'
+      study_session_status: 'active' | 'processing' | 'processed' | 'exported' | 'failed'
       subscription_interval: 'month' | 'year'
+      text_track_source: 'opensubtitles' | 'upload' | 'paste' | 'url'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -536,6 +959,9 @@ export const Constants = {
   },
   public: {
     Enums: {
+      card_chat_role: ['user', 'assistant'],
+      card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
+      content_source_type: ['movie', 'book', 'article', 'text'],
       revenuecat_auto_renewal_status: [
         'will_renew',
         'will_not_renew',
@@ -574,7 +1000,9 @@ export const Constants = {
         'incomplete',
         'paused',
       ],
+      study_session_status: ['active', 'processing', 'processed', 'exported', 'failed'],
       subscription_interval: ['month', 'year'],
+      text_track_source: ['opensubtitles', 'upload', 'paste', 'url'],
     },
   },
   storage: {

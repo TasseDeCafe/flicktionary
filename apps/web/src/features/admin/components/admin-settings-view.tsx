@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button.tsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx'
 import { logWithSentry } from '@/lib/analytics/log-with-sentry.ts'
 import { useTriggerSentryMessageMutation } from '@/features/admin/api/sentry-debug-hooks.ts'
-import { Route as profileRoute } from '@/app/routes/_authenticated/_tabs/profile'
+import { Route as profileRoute } from '@/app/routes/_authenticated/_app/profile'
 
 export const AdminSettingsView = () => {
   const navigate = useNavigate()

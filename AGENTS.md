@@ -1,4 +1,4 @@
-This turborepo monorepo is an attempt at creating a template for quick SaaS iteration. This is a work in progress, don't treat it like a polished product.
+This turborepo monorepo is the repo of Flicktionary.app. This is a work in progress, don't treat it like a polished product.
 
 The following stack is used:
 
@@ -23,6 +23,8 @@ The template is built so that it's easy to deploy this stack, and also have usef
 - Error monitoring with Sentry
 - Analytics with Posthog
 - Doppler for secrets management and injection.
+
+Not all those features are enable. See packages/core/src/features.tsx for the list of enable features. Also see DISABLED.md
 
 # Conventions:
 
@@ -51,7 +53,7 @@ For our react code style:
 - If you think that a critical file or some context is missing, try to find it yourself, or ask for it to the user.
 - Try not to apply "band-aid" solutions: try to fix the root cause of the problem.
 - Do not hesitate to refactor the code if it fixes the root cause or simplify the code without changing the functionality.
-- Do not write code that is backwards compatible unless explicitly asked to do so. Assume that the code is not yet in production.
+- Do not write code that is backwards compatible unless explicitly asked to do so. Assume that the code is a greenfield project.
 
 ## Localization pattern (Lingui)
 
