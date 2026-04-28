@@ -7,6 +7,8 @@ import { useUpdateHighlightNoteAndTags } from '../api/sessions-hooks'
 
 const PRESET_TAGS = ['explain', '3_examples', 'synonyms', 'etymology', 'why_this_form'] as const
 
+type PresetTag = (typeof PRESET_TAGS)[number]
+
 type EditableHighlight = {
   id: string
   selectionText: string
@@ -21,26 +23,19 @@ type Props = {
   onClose: () => void
 }
 
-const presetLabel = (
-  tag: (typeof PRESET_TAGS)[number],
-  t: (s: TemplateStringsArray, ...args: unknown[]) => string
-): string => {
-  switch (tag) {
-    case 'explain':
-      return t`Explain`
-    case '3_examples':
-      return t`3 examples`
-    case 'synonyms':
-      return t`Synonyms`
-    case 'etymology':
-      return t`Etymology`
-    case 'why_this_form':
-      return t`Why this form?`
-  }
-}
-
 export const HighlightSheet = ({ open, sessionId, highlight, onClose }: Props) => {
   const { t } = useLingui()
+  // Inlined here so the Lingui babel macro picks up the t reference from
+  // useLingui(); when t is forwarded as a function param to a module-level
+  // helper, the template literals don't get transformed and the labels render
+  // empty.
+  const presetLabels: Record<PresetTag, string> = {
+    explain: t`Explain`,
+    '3_examples': t`3 examples`,
+    synonyms: t`Synonyms`,
+    etymology: t`Etymology`,
+    why_this_form: t`Why this form?`,
+  }
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const { mutate: update, isPending } = useUpdateHighlightNoteAndTags(sessionId)
@@ -101,7 +96,7 @@ export const HighlightSheet = ({ open, sessionId, highlight, onClose }: Props) =
                       : 'rounded-full border px-3 py-1 text-xs hover:bg-gray-50'
                   }
                 >
-                  {presetLabel(tag, t)}
+                  {presetLabels[tag]}
                 </button>
               ))}
             </div>
