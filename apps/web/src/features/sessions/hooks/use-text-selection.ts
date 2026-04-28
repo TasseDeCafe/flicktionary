@@ -14,9 +14,18 @@ const findSegmentAncestor = (node: Node | null): HTMLElement | null => {
   return cur as HTMLElement | null
 }
 
-// Reads window.getSelection() and maps it to segment IDs + char offsets relative
-// to each segment's text. Returns null if selection is empty or escapes the
-// segment-id-tagged region.
+// Segment text may be split across multiple span children (so existing
+// highlights can paint partial ranges), so range.startOffset is relative to
+// whichever text node the boundary lands in. To get the offset relative to the
+// whole segment, count the characters from the segment root up to the
+// boundary using a temporary Range.
+const offsetWithinSegment = (segmentEl: HTMLElement, container: Node, offsetInContainer: number): number => {
+  const r = document.createRange()
+  r.selectNodeContents(segmentEl)
+  r.setEnd(container, offsetInContainer)
+  return r.toString().length
+}
+
 export const readCurrentSelection = (): SelectionResult | null => {
   const sel = window.getSelection()
   if (!sel || sel.rangeCount === 0) return null
@@ -31,11 +40,8 @@ export const readCurrentSelection = (): SelectionResult | null => {
   const startSegmentId = startEl.dataset.segmentId!
   const endSegmentId = endEl.dataset.segmentId!
 
-  // The text container's first text-node child is the segment's text. The Range
-  // offsets are character offsets into that text node when the container is the
-  // text node itself, which is the case in segment-row.
-  const startOffset = range.startOffset
-  const endOffset = range.endOffset
+  const startOffset = offsetWithinSegment(startEl, range.startContainer, range.startOffset)
+  const endOffset = offsetWithinSegment(endEl, range.endContainer, range.endOffset)
 
   return {
     startSegmentId,

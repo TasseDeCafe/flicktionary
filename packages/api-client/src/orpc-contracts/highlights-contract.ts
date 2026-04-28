@@ -46,4 +46,29 @@ export const highlightsContract = {
         }),
       })
     ),
+
+  updateNoteAndTags: oc
+    .route({ method: 'PUT', path: '/study-sessions/{sessionId}/highlights/{highlightId}/note', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        highlightId: z.string().uuid(),
+        note: z.string().nullable(),
+        presetTags: z.array(z.string()).default([]),
+      })
+    )
+    .output(z.object({ data: HighlightSchema })),
+
+  delete: oc
+    .route({ method: 'DELETE', path: '/study-sessions/{sessionId}/highlights/{highlightId}', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), highlightId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ id: z.string().uuid() }) })),
 } as const

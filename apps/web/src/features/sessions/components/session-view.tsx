@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
-import { Highlighter, ListChecks } from 'lucide-react'
+import { ListChecks } from 'lucide-react'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   useGetStudySession,
@@ -10,13 +10,24 @@ import {
   useListSegmentsByTrack,
   useSearchSegments,
   useListHighlightsBySession,
+  useCreateHighlight,
+  useDeleteHighlight,
 } from '../api/sessions-hooks'
 import { readCurrentSelection, SelectionResult } from '../hooks/use-text-selection'
+import { buildSegmentRanges } from '../utils/build-segment-ranges'
 import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { HighlightSheet } from './highlight-sheet'
 import { TapToTranslateSheet } from './tap-to-translate-sheet'
+import { HighlightActionMenu } from './highlight-action-menu'
 import { ProcessButton } from './process-button'
+
+type Highlight = {
+  id: string
+  selectionText: string
+  note: string | null
+  presetTags: string[]
+}
 
 export const SessionView = () => {
   const { t } = useLingui()
@@ -38,22 +49,27 @@ export const SessionView = () => {
   const tapToTranslateEnabled = prefs?.tapToTranslateEnabled ?? false
 
   const { data: highlights } = useListHighlightsBySession(sessionId)
-  const highlightedSegmentIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const h of highlights ?? []) {
-      ids.add(h.startSegmentId)
-      ids.add(h.endSegmentId)
-    }
-    return ids
-  }, [highlights])
+  const rangesBySegmentId = useMemo(
+    () => buildSegmentRanges(highlights ?? [], visibleSegments),
+    [highlights, visibleSegments]
+  )
+
+  const { mutate: createHighlight } = useCreateHighlight(sessionId)
+  const { mutate: deleteHighlight } = useDeleteHighlight(sessionId)
 
   const [pendingSelection, setPendingSelection] = useState<SelectionResult | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingHighlight, setEditingHighlight] = useState<Highlight | null>(null)
   const [tapToTranslateOpen, setTapToTranslateOpen] = useState(false)
 
-  // Only redirect away from the subtitles UI while the pipeline is in flight or
-  // has crashed — processed/exported sessions stay browsable so users can add
-  // missed highlights and re-run the pass.
+  // Action menu state for clicks on existing highlights.
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
+  const [menuHighlightId, setMenuHighlightId] = useState<string | null>(null)
+
+  // Guards against the click event that follows mouseup-with-selection from
+  // re-opening the action menu when the selection happened to land on an
+  // existing highlight span.
+  const lastSelectionAtRef = useRef(0)
+
   useEffect(() => {
     const status = session?.status
     if (status === 'processing' || status === 'failed') {
@@ -61,21 +77,31 @@ export const SessionView = () => {
     }
   }, [session?.status, sessionId, navigate])
 
-  // Auto-open the tap-to-translate overlay when the user finishes a selection
-  // (mouseup / touchend). The button click is preserved as a fallback for the
-  // toggle-off path; in the toggle-on path the button is hidden.
+  // Selection finished → either gloss it (tap-to-translate) or auto-create a
+  // bare highlight. The action menu opens on click of an existing highlight,
+  // not from selection.
   useEffect(() => {
-    if (!tapToTranslateEnabled) return
     const handleEnd = () => {
-      // Defer one tick so the browser has finalised window.getSelection().
       setTimeout(() => {
-        if (tapToTranslateOpen) return
         const sel = readCurrentSelection()
         if (!sel) return
-        setPendingSelection(sel)
-        setTapToTranslateOpen(true)
-        // Clear the native selection so a stray subsequent mouseup with the same
-        // range can't re-trigger the overlay.
+        lastSelectionAtRef.current = Date.now()
+        if (tapToTranslateEnabled) {
+          if (tapToTranslateOpen) return
+          setPendingSelection(sel)
+          setTapToTranslateOpen(true)
+        } else {
+          createHighlight({
+            sessionId,
+            startSegmentId: sel.startSegmentId,
+            endSegmentId: sel.endSegmentId,
+            startOffset: sel.startOffset,
+            endOffset: sel.endOffset,
+            selectionText: sel.selectionText,
+            note: null,
+            presetTags: [],
+          })
+        }
         window.getSelection()?.removeAllRanges()
       }, 30)
     }
@@ -85,15 +111,44 @@ export const SessionView = () => {
       document.removeEventListener('mouseup', handleEnd)
       document.removeEventListener('touchend', handleEnd)
     }
-  }, [tapToTranslateEnabled, tapToTranslateOpen])
+  }, [tapToTranslateEnabled, tapToTranslateOpen, createHighlight, sessionId])
 
   const isProcessedOrExported = session?.status === 'processed' || session?.status === 'exported'
 
-  const handleHighlightClick = () => {
-    const sel = readCurrentSelection()
-    if (!sel) return
-    setPendingSelection(sel)
-    setSheetOpen(true)
+  const handleSegmentListClick = (e: React.MouseEvent) => {
+    // Suppress the click that closes a freshly-completed selection.
+    if (Date.now() - lastSelectionAtRef.current < 250) return
+    const target = e.target instanceof Element ? e.target.closest('[data-highlight-id]') : null
+    if (!(target instanceof HTMLElement) || !target.dataset.highlightId) return
+    setMenuAnchorEl(target)
+    setMenuHighlightId(target.dataset.highlightId)
+  }
+
+  const closeMenu = () => {
+    setMenuAnchorEl(null)
+    setMenuHighlightId(null)
+  }
+
+  const menuHighlight = useMemo(() => {
+    if (!menuHighlightId) return null
+    return highlights?.find((h) => h.id === menuHighlightId) ?? null
+  }, [menuHighlightId, highlights])
+
+  const handleEditNote = () => {
+    if (!menuHighlight) return
+    setEditingHighlight({
+      id: menuHighlight.id,
+      selectionText: menuHighlight.selectionText,
+      note: menuHighlight.note,
+      presetTags: menuHighlight.presetTags,
+    })
+    closeMenu()
+  }
+
+  const handleRemove = () => {
+    if (!menuHighlightId) return
+    deleteHighlight({ sessionId, highlightId: menuHighlightId })
+    closeMenu()
   }
 
   if (isSessionLoading) {
@@ -126,12 +181,6 @@ export const SessionView = () => {
             </div>
           </div>
           <div className='ml-auto flex gap-2'>
-            {!tapToTranslateEnabled && (
-              <Button variant='secondary' size='sm' onClick={handleHighlightClick}>
-                <Highlighter className='mr-1 h-4 w-4' />
-                {t`Highlight selection`}
-              </Button>
-            )}
             {isProcessedOrExported && (
               <Button variant='outline' size='sm' asChild>
                 <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
@@ -147,12 +196,12 @@ export const SessionView = () => {
         </div>
       </div>
 
-      <div className='flex-1 overflow-y-auto px-4 py-3'>
+      <div className='flex-1 overflow-y-auto px-4 py-3' onClick={handleSegmentListClick}>
         <div className='mx-auto max-w-4xl'>
           {isSegmentsLoading ? (
             <p className='text-sm text-gray-500'>{t`Loading segments…`}</p>
           ) : (
-            <SegmentList segments={visibleSegments} highlightedSegmentIds={highlightedSegmentIds} />
+            <SegmentList segments={visibleSegments} rangesBySegmentId={rangesBySegmentId} />
           )}
         </div>
       </div>
@@ -167,10 +216,10 @@ export const SessionView = () => {
       />
 
       <HighlightSheet
-        open={sheetOpen}
+        open={!!editingHighlight}
         sessionId={sessionId}
-        selection={pendingSelection}
-        onClose={() => setSheetOpen(false)}
+        highlight={editingHighlight}
+        onClose={() => setEditingHighlight(null)}
       />
 
       <TapToTranslateSheet
@@ -178,6 +227,13 @@ export const SessionView = () => {
         sessionId={sessionId}
         selection={pendingSelection}
         onClose={() => setTapToTranslateOpen(false)}
+      />
+
+      <HighlightActionMenu
+        anchorEl={menuAnchorEl}
+        onEdit={handleEditNote}
+        onRemove={handleRemove}
+        onClose={closeMenu}
       />
     </div>
   )

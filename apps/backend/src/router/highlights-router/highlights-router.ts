@@ -81,6 +81,52 @@ export const HighlightsRouter = (
       return { data: toHighlightDto(inserted) }
     }),
 
+    updateNoteAndTags: implementer.updateNoteAndTags.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      const existing = await highlightsRepository.findById(input.highlightId)
+      if (!existing || existing.study_session_id !== input.sessionId) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Highlight not found' }] },
+        })
+      }
+      const updated = await highlightsRepository.updateNoteAndTags(input.highlightId, input.note, input.presetTags)
+      if (!updated) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to update highlight' }] },
+        })
+      }
+      return { data: toHighlightDto(updated) }
+    }),
+
+    delete: implementer.delete.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      const existing = await highlightsRepository.findById(input.highlightId)
+      if (!existing || existing.study_session_id !== input.sessionId) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Highlight not found' }] },
+        })
+      }
+      const ok = await highlightsRepository.deleteById(input.highlightId)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to delete highlight' }] },
+        })
+      }
+      return { data: { id: input.highlightId } }
+    }),
+
     fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)

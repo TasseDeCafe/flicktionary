@@ -75,6 +75,35 @@ const updateFastGloss = async (id: string, fastGloss: string): Promise<boolean> 
   }
 }
 
+const updateNoteAndTags = async (
+  id: string,
+  note: string | null,
+  presetTags: string[]
+): Promise<DbHighlight | null> => {
+  try {
+    const result = (await sql`
+      UPDATE public.highlights
+      SET note = ${note}, preset_tags = ${presetTags}
+      WHERE id = ${id}
+      RETURNING *
+    `) as DbHighlight[]
+    return result[0] ?? null
+  } catch (e) {
+    logCustomErrorMessageAndError(`highlights.updateNoteAndTags, id = ${id}`, e)
+    return null
+  }
+}
+
+const deleteById = async (id: string): Promise<boolean> => {
+  try {
+    const result = await sql`DELETE FROM public.highlights WHERE id = ${id}`
+    return result.count === 1
+  } catch (e) {
+    logCustomErrorMessageAndError(`highlights.deleteById, id = ${id}`, e)
+    return false
+  }
+}
+
 export interface HighlightsRepositoryInterface {
   insertHighlight: (params: {
     studySessionId: string
@@ -89,6 +118,8 @@ export interface HighlightsRepositoryInterface {
   listBySessionId: (studySessionId: string) => Promise<DbHighlight[]>
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<boolean>
+  updateNoteAndTags: (id: string, note: string | null, presetTags: string[]) => Promise<DbHighlight | null>
+  deleteById: (id: string) => Promise<boolean>
 }
 
 export const HighlightsRepository = (): HighlightsRepositoryInterface => {
@@ -97,5 +128,7 @@ export const HighlightsRepository = (): HighlightsRepositoryInterface => {
     listBySessionId,
     findById,
     updateFastGloss,
+    updateNoteAndTags,
+    deleteById,
   }
 }

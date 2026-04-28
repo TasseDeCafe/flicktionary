@@ -1,4 +1,4 @@
-import { SegmentRow } from './segment-row'
+import { SegmentRow, SegmentHighlightRange } from './segment-row'
 
 type Segment = {
   id: string
@@ -8,20 +8,14 @@ type Segment = {
 
 type Props = {
   segments: Segment[]
-  highlightedSegmentIds?: Set<string>
+  rangesBySegmentId?: Map<string, SegmentHighlightRange[]>
 }
 
-export const SegmentList = ({ segments, highlightedSegmentIds }: Props) => {
+export const SegmentList = ({ segments, rangesBySegmentId }: Props) => {
   return (
     <div className='flex flex-col divide-y'>
       {segments.map((s) => (
-        <SegmentRow
-          key={s.id}
-          id={s.id}
-          text={s.text}
-          startMs={s.startMs}
-          isHighlighted={highlightedSegmentIds?.has(s.id)}
-        />
+        <SegmentRow key={s.id} id={s.id} text={s.text} startMs={s.startMs} ranges={rangesBySegmentId?.get(s.id)} />
       ))}
     </div>
   )

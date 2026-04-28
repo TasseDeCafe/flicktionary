@@ -183,7 +183,6 @@ export const useCreateHighlight = (sessionId: string) => {
         })
       },
       meta: {
-        successMessage: t`Highlight saved`,
         errorMessage: t`Failed to save highlight`,
       },
     })
@@ -250,6 +249,41 @@ export const useFastGloss = () => {
     orpcQuery.highlights.fastGloss.mutationOptions({
       meta: {
         errorMessage: t`Quick gloss failed`,
+      },
+    })
+  )
+}
+
+export const useUpdateHighlightNoteAndTags = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.highlights.updateNoteAndTags.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
+        })
+      },
+      meta: {
+        successMessage: t`Note saved`,
+        errorMessage: t`Failed to update highlight`,
+      },
+    })
+  )
+}
+
+export const useDeleteHighlight = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.highlights.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
+        })
+      },
+      meta: {
+        errorMessage: t`Failed to remove highlight`,
       },
     })
   )

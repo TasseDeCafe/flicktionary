@@ -1,19 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
-import { useCreateHighlight } from '../api/sessions-hooks'
-import type { SelectionResult } from '../hooks/use-text-selection'
+import { useUpdateHighlightNoteAndTags } from '../api/sessions-hooks'
 
 const PRESET_TAGS = ['explain', '3_examples', 'synonyms', 'etymology', 'why_this_form'] as const
+
+type EditableHighlight = {
+  id: string
+  selectionText: string
+  note: string | null
+  presetTags: string[]
+}
 
 type Props = {
   open: boolean
   sessionId: string
-  selection: SelectionResult | null
+  highlight: EditableHighlight | null
   onClose: () => void
-  onSaved?: () => void
 }
 
 const presetLabel = (
@@ -34,37 +39,29 @@ const presetLabel = (
   }
 }
 
-export const HighlightSheet = ({ open, sessionId, selection, onClose, onSaved }: Props) => {
+export const HighlightSheet = ({ open, sessionId, highlight, onClose }: Props) => {
   const { t } = useLingui()
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const { mutate: createHighlight, isPending } = useCreateHighlight(sessionId)
+  const { mutate: update, isPending } = useUpdateHighlightNoteAndTags(sessionId)
 
-  const reset = () => {
-    setNote('')
-    setTags([])
-  }
+  // Re-prime the form whenever the editor opens with a different highlight.
+  useEffect(() => {
+    if (!open || !highlight) return
+    setNote(highlight.note ?? '')
+    setTags(highlight.presetTags)
+  }, [open, highlight?.id])
 
   const handleSave = () => {
-    if (!selection) return
-    createHighlight(
+    if (!highlight) return
+    update(
       {
         sessionId,
-        startSegmentId: selection.startSegmentId,
-        endSegmentId: selection.endSegmentId,
-        startOffset: selection.startOffset,
-        endOffset: selection.endOffset,
-        selectionText: selection.selectionText,
+        highlightId: highlight.id,
         note: note.trim() || null,
         presetTags: tags,
       },
-      {
-        onSuccess: () => {
-          reset()
-          onSaved?.()
-          onClose()
-        },
-      }
+      { onSuccess: onClose }
     )
   }
 
@@ -76,19 +73,16 @@ export const HighlightSheet = ({ open, sessionId, selection, onClose, onSaved }:
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) {
-          reset()
-          onClose()
-        }
+        if (!next) onClose()
       }}
     >
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>{t`Save highlight`}</DialogTitle>
+          <DialogTitle>{t`Note & tags`}</DialogTitle>
         </DialogHeader>
-        {selection ? (
+        {highlight ? (
           <div className='flex flex-col gap-4'>
-            <div className='rounded-md border bg-yellow-50 p-3 text-sm'>“{selection.selectionText}”</div>
+            <div className='rounded-md border bg-yellow-50 p-3 text-sm'>“{highlight.selectionText}”</div>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -113,11 +107,11 @@ export const HighlightSheet = ({ open, sessionId, selection, onClose, onSaved }:
             </div>
           </div>
         ) : (
-          <p className='text-muted-foreground text-sm'>{t`No text selected.`}</p>
+          <p className='text-muted-foreground text-sm'>{t`No highlight selected.`}</p>
         )}
         <DialogFooter>
           <Button variant='outline' onClick={onClose}>{t`Cancel`}</Button>
-          <Button disabled={!selection || isPending} onClick={handleSave}>
+          <Button disabled={!highlight || isPending} onClick={handleSave}>
             {isPending ? t`Saving…` : t`Save`}
           </Button>
         </DialogFooter>

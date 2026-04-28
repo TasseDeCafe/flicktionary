@@ -10,20 +10,66 @@ const formatTimestamp = (ms: number | null): string => {
   return hh > 0 ? `${pad(hh)}:${pad(mm)}:${pad(ss)}` : `${pad(mm)}:${pad(ss)}`
 }
 
+export type SegmentHighlightRange = {
+  highlightId: string
+  start: number
+  end: number
+}
+
 type Props = {
   id: string
   text: string
   startMs: number | null
-  isHighlighted?: boolean
+  ranges?: SegmentHighlightRange[]
 }
 
-export const SegmentRow = ({ id, text, startMs, isHighlighted }: Props) => {
+type SpanPart = { text: string; highlightId: string | null }
+
+// Splits the segment text into a sequence of consecutive runs, each tagged with
+// either a highlight id or null. Runs of overlapping highlights collapse to the
+// last id (last write wins), which is fine for the rare overlap case.
+const buildSpans = (text: string, ranges: SegmentHighlightRange[]): SpanPart[] => {
+  if (ranges.length === 0) return [{ text, highlightId: null }]
+  const len = text.length
+  const marks: (string | null)[] = new Array(len).fill(null)
+  for (const r of ranges) {
+    const s = Math.max(0, Math.min(len, r.start))
+    const e = Math.max(0, Math.min(len, r.end))
+    for (let i = s; i < e; i++) marks[i] = r.highlightId
+  }
+  const parts: SpanPart[] = []
+  let i = 0
+  while (i < len) {
+    const cur = marks[i]
+    let j = i + 1
+    while (j < len && marks[j] === cur) j++
+    parts.push({ text: text.slice(i, j), highlightId: cur })
+    i = j
+  }
+  return parts
+}
+
+export const SegmentRow = ({ id, text, startMs, ranges }: Props) => {
   const ts = useMemo(() => formatTimestamp(startMs), [startMs])
+  const spans = useMemo(() => buildSpans(text, ranges ?? []), [text, ranges])
+
   return (
     <div className='flex items-start gap-3 py-1'>
       <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
-      <span data-segment-id={id} className={isHighlighted ? 'flex-1 rounded bg-yellow-100 px-1' : 'flex-1'}>
-        {text}
+      <span data-segment-id={id} className='flex-1'>
+        {spans.map((part, idx) =>
+          part.highlightId ? (
+            <span
+              key={idx}
+              data-highlight-id={part.highlightId}
+              className='cursor-pointer rounded bg-yellow-200 px-0.5 hover:bg-yellow-300'
+            >
+              {part.text}
+            </span>
+          ) : (
+            <span key={idx}>{part.text}</span>
+          )
+        )}
       </span>
     </div>
   )
