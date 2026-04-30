@@ -31,8 +31,10 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
 
   const { mutate: importFromOs, isPending: isImporting } = useImportFromOpenSubtitles()
   const { mutate: uploadSrt, isPending: isUploading } = useUploadSrt()
+  const [importingFileId, setImportingFileId] = useState<number | null>(null)
 
   const handleImportOs = (fileId: number, trackLanguage: string) => {
+    setImportingFileId(fileId)
     importFromOs(
       { contentSourceId, fileId, language: trackLanguage },
       {
@@ -42,6 +44,9 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
             language: response.data.track.language,
             segmentCount: response.data.segmentCount,
           })
+        },
+        onSettled: () => {
+          setImportingFileId(null)
         },
       }
     )
@@ -103,16 +108,21 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
           <ul className='divide-y rounded-md border'>
             {(opensubtitlesResults ?? []).slice(0, 8).map((track) => (
               <li key={track.fileId} className='flex items-start gap-3 p-3'>
-                <div className='flex-1 text-sm'>
-                  <div className='font-medium'>{track.release}</div>
+                <div className='min-w-0 flex-1 text-sm'>
+                  <div className='font-medium break-all'>{track.release}</div>
                   <div className='text-muted-foreground text-xs'>
                     {track.language} · {track.downloadCount} {t`downloads`}
                     {track.uploaderName ? ` · ${track.uploaderName}` : ''}
                     {track.hearingImpaired ? ` · ${t`HI`}` : ''}
                   </div>
                 </div>
-                <Button size='sm' disabled={isImporting} onClick={() => handleImportOs(track.fileId, track.language)}>
-                  {isImporting ? t`Importing…` : t`Use`}
+                <Button
+                  size='sm'
+                  className='shrink-0'
+                  disabled={isImporting}
+                  onClick={() => handleImportOs(track.fileId, track.language)}
+                >
+                  {importingFileId === track.fileId ? t`Importing…` : t`Use`}
                 </Button>
               </li>
             ))}

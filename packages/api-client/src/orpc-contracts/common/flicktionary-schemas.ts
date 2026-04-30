@@ -45,9 +45,14 @@ export type Highlight = z.infer<typeof HighlightSchema>
 export const FullExplorationSchema = z.object({
   headword: z.string(),
   surface_form: z.string(),
+  sense: z.string(),
   context_segment: z.string(),
   definition: z.string(),
   examples: z.array(z.string()),
+  context_example: z.object({
+    target: z.string(),
+    native: z.string(),
+  }),
   ipa: z.string(),
   frequency: z.enum(['high', 'medium', 'low']),
   more_frequent_synonym: z.string().nullable(),
@@ -74,6 +79,7 @@ export const CardSchema = z.object({
   highlightId: z.string().uuid().nullable(),
   segmentId: z.string().uuid(),
   headword: z.string(),
+  sense: z.string(),
   surfaceForm: z.string(),
   fullExploration: z.record(z.string(), z.unknown()),
   status: CardStatusSchema,

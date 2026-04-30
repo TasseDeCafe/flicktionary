@@ -70,6 +70,7 @@ export type Database = {
           highlight_id: string | null
           id: string
           segment_id: string
+          sense: string
           status: Database['public']['Enums']['card_status']
           study_session_id: string
           surface_form: string
@@ -84,6 +85,7 @@ export type Database = {
           highlight_id?: string | null
           id?: string
           segment_id: string
+          sense?: string
           status?: Database['public']['Enums']['card_status']
           study_session_id: string
           surface_form: string
@@ -98,6 +100,7 @@ export type Database = {
           highlight_id?: string | null
           id?: string
           segment_id?: string
+          sense?: string
           status?: Database['public']['Enums']['card_status']
           study_session_id?: string
           surface_form?: string
@@ -573,6 +576,7 @@ export type Database = {
           exported_at: string | null
           first_card_id: string | null
           headword: string
+          sense: string
           target_language: string
           user_id: string
         }
@@ -581,6 +585,7 @@ export type Database = {
           exported_at?: string | null
           first_card_id?: string | null
           headword: string
+          sense?: string
           target_language: string
           user_id: string
         }
@@ -589,6 +594,7 @@ export type Database = {
           exported_at?: string | null
           first_card_id?: string | null
           headword?: string
+          sense?: string
           target_language?: string
           user_id?: string
         }

@@ -1,4 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
+import { getLanguageInstructions } from './language-instructions'
 
 // Static methodology preamble — applies to every pipeline pass and per-card chat turn.
 // Stable across all sessions and users; first cacheable layer.
@@ -60,10 +61,14 @@ ${l1InterferenceNotes}`
   const contextBlock = `Source context (subtitles for this session):
 ${movieContextBlob}`
 
-  return [
-    { type: 'text', text: METHODOLOGY_PREAMBLE },
-    { type: 'text', text: userProfile },
-    { type: 'text', text: l1Block },
-    { type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } },
-  ]
+  const languageInstructions = getLanguageInstructions(targetLanguage)
+
+  const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
+  if (languageInstructions) {
+    blocks.push({ type: 'text', text: languageInstructions })
+  }
+  blocks.push({ type: 'text', text: userProfile })
+  blocks.push({ type: 'text', text: l1Block })
+  blocks.push({ type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } })
+  return blocks
 }

@@ -118,7 +118,10 @@ export const processSession = async (
     }
 
     // 3. Difficult-words pass — produces ~25 chunks, with belowCefr flagged for auto-rejection.
-    const excludedHeadwords = await userLookupsRepository.listHeadwordsForLanguage(userId, session.target_language)
+    const excludedHeadwordSenses = await userLookupsRepository.listHeadwordSensesForLanguage(
+      userId,
+      session.target_language
+    )
     const segmentInputs = segments.map((s) => ({ id: s.id, index: s.index, text: s.text }))
     const segmentIdSet = new Set(segments.map((s) => s.id))
 
@@ -128,7 +131,7 @@ export const processSession = async (
         difficultChunks = await difficultWordsPass({
           ...baseMethodologyArgs,
           segments: segmentInputs,
-          excludedHeadwords,
+          excludedHeadwordSenses,
         })
       } catch (e) {
         logCustomErrorMessageAndError(`difficultWordsPass failed, sessionId = ${sessionId}`, e)
@@ -150,6 +153,7 @@ export const processSession = async (
         highlightId: null,
         segmentId: chunk.segmentId,
         headword: chunk.headword,
+        sense: chunk.sense,
         surfaceForm: chunk.surfaceForm,
         fullExploration: {},
         status: chunk.belowCefr ? 'auto_rejected' : 'pending',
@@ -180,6 +184,7 @@ export const processSession = async (
           highlightId: highlight.id,
           segmentId: highlight.start_segment_id,
           headword: exploration.headword || highlight.selection_text,
+          sense: exploration.sense ?? '',
           surfaceForm: exploration.surface_form || highlight.selection_text,
           fullExploration: exploration as unknown as CardFullExplorationJson,
           status: 'pending',

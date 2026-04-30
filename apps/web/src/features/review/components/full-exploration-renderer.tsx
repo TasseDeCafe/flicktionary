@@ -48,6 +48,10 @@ export const FullExplorationRenderer = ({ exploration }: Props) => {
   const notes = asString(exploration.notes)
   const translation = asString(exploration.translation)
   const contextSegment = asString(exploration.context_segment)
+  const sense = asString(exploration.sense)
+  const contextExample = exploration.context_example as { target?: unknown; native?: unknown } | undefined
+  const contextExampleTarget = typeof contextExample?.target === 'string' ? contextExample.target : null
+  const contextExampleNative = typeof contextExample?.native === 'string' ? contextExample.native : null
 
   return (
     <div className='flex flex-col'>
@@ -56,9 +60,16 @@ export const FullExplorationRenderer = ({ exploration }: Props) => {
           <p className='italic'>{contextSegment}</p>
         </Section>
       )}
+      {sense && <Section label={t`Sense`}>{sense}</Section>}
       {definition && <Section label={t`Definition`}>{definition}</Section>}
       {translation && <Section label={t`Translation`}>{translation}</Section>}
-      {examplesNode && <Section label={t`Examples`}>{examplesNode}</Section>}
+      {(contextExampleTarget || contextExampleNative) && (
+        <Section label={t`Example`}>
+          {contextExampleTarget && <p>{contextExampleTarget}</p>}
+          {contextExampleNative && <p className='text-muted-foreground'>{contextExampleNative}</p>}
+        </Section>
+      )}
+      {examplesNode && <Section label={t`More examples`}>{examplesNode}</Section>}
       {ipa && <Section label={t`IPA`}>{ipa}</Section>}
       {frequency && <Section label={t`Frequency`}>{frequency}</Section>}
       {register && <Section label={t`Register`}>{register}</Section>}

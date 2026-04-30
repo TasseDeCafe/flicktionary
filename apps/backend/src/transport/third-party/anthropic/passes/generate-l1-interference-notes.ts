@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_SONNET } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 
 type GenerateL1InterferenceNotesArgs = {
   nativeLanguage: string
@@ -20,7 +20,7 @@ export const generateL1InterferenceNotes = async ({
 Target language: ${targetLanguage}`
 
   const response = await getAnthropicClient().messages.create({
-    model: MODEL_SONNET,
+    model: MODEL_OPUS,
     max_tokens: 1200,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],

@@ -14,12 +14,16 @@ import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
 const computeDefaults = (card: Card): { front: string; back: string } => {
   const surface = card.surfaceForm
   const headword = card.headword
-  const definition = (card.fullExploration?.definition as string | undefined) ?? ''
   const translation = (card.fullExploration?.translation as string | undefined) ?? ''
+  const contextExample = card.fullExploration?.context_example as { target?: unknown; native?: unknown } | undefined
+  const targetExample = typeof contextExample?.target === 'string' ? contextExample.target : ''
+  const nativeExample = typeof contextExample?.native === 'string' ? contextExample.native : ''
+  // Backward-compat for cards processed before context_example existed.
   const examples = card.fullExploration?.examples
-  const firstExample = Array.isArray(examples) && typeof examples[0] === 'string' ? (examples[0] as string) : ''
-  const front = surface || headword
-  const back = [definition, translation, firstExample].filter((s) => s && s.trim().length > 0).join('\n\n')
+  const fallbackTarget =
+    targetExample || (Array.isArray(examples) && typeof examples[0] === 'string' ? (examples[0] as string) : '')
+  const front = headword || surface
+  const back = [translation, fallbackTarget, nativeExample].filter((s) => s && s.trim().length > 0).join('\n\n')
   return { front, back }
 }
 

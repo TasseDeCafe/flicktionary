@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_SONNET } from '../../transport/third-party/anthropic/anthropic-client'
+import { getAnthropicClient, MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
 import { buildPromptContext } from '../processing/build-prompt-context'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
@@ -110,7 +110,7 @@ export const runCardChat = async (
   ]
 
   const response = await getAnthropicClient().messages.create({
-    model: MODEL_SONNET,
+    model: MODEL_OPUS,
     max_tokens: 1500,
     system: promptContext.systemBlocks,
     messages,

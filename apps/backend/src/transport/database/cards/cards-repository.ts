@@ -13,6 +13,7 @@ export type CardInsertInput = {
   highlightId: string | null
   segmentId: string
   headword: string
+  sense: string
   surfaceForm: string
   fullExploration: CardFullExplorationJson
   status: CardStatus
@@ -23,13 +24,14 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard | null> => {
     const result = (await sql`
       INSERT INTO public.cards (
         study_session_id, highlight_id, segment_id,
-        headword, surface_form, full_exploration, status
+        headword, sense, surface_form, full_exploration, status
       )
       VALUES (
         ${params.studySessionId},
         ${params.highlightId},
         ${params.segmentId},
         ${params.headword},
+        ${params.sense},
         ${params.surfaceForm},
         ${sql.json(params.fullExploration)},
         ${params.status}

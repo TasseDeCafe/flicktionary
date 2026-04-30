@@ -1,4 +1,4 @@
-import { getAnthropicClient, MODEL_SONNET } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 
 type GenerateContextBlobArgs = {
   contentTitle: string
@@ -27,7 +27,7 @@ Subtitle excerpts:
 ${segmentSample}`
 
   const response = await getAnthropicClient().messages.create({
-    model: MODEL_SONNET,
+    model: MODEL_OPUS,
     max_tokens: 800,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],

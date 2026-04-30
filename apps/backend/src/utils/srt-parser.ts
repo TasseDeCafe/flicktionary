@@ -1,3 +1,5 @@
+import { stripSrtMarkup } from '@flicktionary/core/utils/srt-markup'
+
 export type ParsedSrtSegment = {
   index: number
   text: string
@@ -34,7 +36,7 @@ export const parseSrt = (raw: string): ParsedSrtSegment[] => {
     const startMs = toMs(match[1]!, match[2]!, match[3]!, match[4]!)
     const endMs = toMs(match[5]!, match[6]!, match[7]!, match[8]!)
     const textLines = lines.slice(timestampLineIndex + 1)
-    const text = textLines.join(' ').trim()
+    const text = stripSrtMarkup(textLines.join(' ')).replace(/\s+/g, ' ').trim()
     if (!text) continue
 
     segments.push({ index: nextIndex, text, startMs, endMs })

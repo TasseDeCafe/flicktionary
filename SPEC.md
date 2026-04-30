@@ -46,9 +46,10 @@ highlights that already have a card. Only `processing` rejects (in-flight). Pipe
    - Output ~500 tokens: false friends, structural transfers, tense/aspect mismatches, register conventions.
    - Generated lazily on first session for that pair, then reused for all users.
 3. **Difficult-words pass** — one call per session.
-   - Input: full SRT (segment list), movie context blob, CEFR level, user's already-seen headwords from `user_lookup` for this `target_language`.
-   - Output: 20–40 suggested chunks, each with normalized `headword`, `surface_form`, and source `segment_id`.
-   - LLM auto-rejects chunks below the user's CEFR level (status `auto_rejected`); user can override per chunk.
+   - Input: full SRT (segment list), movie context blob, CEFR level, user's already-seen `(headword, sense)` pairs from `user_lookup` for this `target_language`.
+   - Output: ~20–40 suggested chunks (target scales with CEFR — A1/A2=20, B1/B2=25, C1=35, C2=40), each with normalized `headword`, `sense` (1-5 word disambiguator), `surface_form`, and source `segment_id`.
+   - **Hard CEFR floor**: only chunks at or above the user's level. The LLM is told to skip common B-level filler even when frequent in the source, and to **prioritize regional / dialectal / colloquial chunks** when the movie context blob signals that register (e.g. rioplatense voseo, peninsular slang, mexicanismos) over neutral pan-language equivalents.
+   - Below-level chunks that slip through are flagged `below_cefr=true` and stored with status `auto_rejected`; user can override per chunk.
 4. **Per-chunk Full exploration** — one call per chunk (user-highlighted + LLM-suggested), batched where the model allows.
    - Input: chunk + 10 surrounding segments + movie context blob + L1-interference notes + user's note + preset tags + methodology prompt.
    - Output: structured Full exploration (see template below).
@@ -81,8 +82,8 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context b
 
 ### Cross-source dedup
 
-- `user_lookup(user_id, target_language, headword)` is the canonical "user has already studied this" table.
-- Difficult-words pass excludes any headword already in `user_lookup` for that user + language.
+- `user_lookup(user_id, target_language, headword, sense)` is the canonical "user has already studied this" table. The composite PK lets the same headword be studied in multiple distinct senses (polysemy on bare lemmas — `correr | race` and `correr | spread (news)` are two rows).
+- Difficult-words pass receives the user's `(headword, sense)` list as exclusion context and is told **same headword + clearly distinct sense should still be included as a new entry**. The judgment is LLM-based; the only programmatic gate is the composite PK at write time, which lets `ON CONFLICT` increment `count` rather than create a duplicate.
 - Designed so future content sources (books, articles) feed the same dedup table — a chunk learned from a movie won't resurface in a book.
 
 ## Settings (per user)
@@ -155,7 +156,8 @@ card
   study_session_id    uuid
   highlight_id        uuid?         -- null for LLM-suggested chunks
   segment_id          uuid -> text_segment.id    -- where it appears in source
-  headword            text          -- LLM-normalized
+  headword            text          -- LLM-normalized, dictionary citation form
+  sense               text          -- 1-5 word sense disambiguator, '' for unprocessed cards
   surface_form        text
   full_exploration    jsonb         -- the structured output (see template)
   status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
@@ -175,10 +177,11 @@ user_lookup                          -- cross-source dedup
   user_id             uuid
   target_language     text
   headword            text
+  sense               text          -- 1-5 word disambiguator; '' for legacy rows
   first_card_id       uuid?
   exported_at         timestamptz?
   count               int default 1
-  primary key (user_id, target_language, headword)
+  primary key (user_id, target_language, headword, sense)
 
 l1_interference_notes                -- shared across users
   l1_language         text
@@ -194,7 +197,7 @@ Notes:
 
 ## LLM methodology prompt
 
-Used as the system prompt for both per-chunk Full exploration generation and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{movie_context_blob}`, `{l1_interference_notes}`.
+Used as the system prompt for every heavy pass (context blob, L1 notes, difficult-words, full-exploration) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{movie_context_blob}`, `{l1_interference_notes}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`, e.g. Spanish-specific guidance for rioplatense / peninsular / Mexican variants and pronominal-verb headword rules). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
 
 ```
 You are a linguistic co-pilot for a language learner. Methodology: lexical approach.
@@ -245,9 +248,14 @@ Stored in `card.full_exploration` as JSON. The focus view renders each field as 
 {
   "headword": "string",
   "surface_form": "string",
+  "sense": "1-5 word disambiguator (NOT a definition); used for cross-session dedup",
   "context_segment": "string with the chunk **bolded**",
   "definition": "contextual, not dictionary-generic",
   "examples": ["string", "string", "string"],
+  "context_example": {
+    "target": "self-contained example sentence in target_language, inspired by but not equal to the source line",
+    "native": "natural translation of context_example.target into native_language"
+  },
   "ipa": "string",
   "frequency": "high | medium | low",
   "more_frequent_synonym": "string | null",
@@ -266,8 +274,8 @@ Stored in `card.full_exploration` as JSON. The focus view renders each field as 
 ```
 
 Default card front/back at export time:
-- `front` = `surface_form` (or `headword`, controllable per-export later)
-- `back` = `definition` + blank line + `translation` + blank line + `examples[0]`
+- `front` = `headword` (dictionary form; falls through to `surface_form` when missing)
+- `back` = `translation` + blank line + `context_example.target` + blank line + `context_example.native`. Cards processed before `context_example` existed fall back to `examples[0]` for the target sentence.
 - `front_override` / `back_override` on `card` win when present.
 
 ## Tap-to-translate (fast path)
@@ -331,6 +339,6 @@ cached result instantly.
 - Cross-source personal vocabulary corpus screen.
 - `.apkg` Anki export with audio + images.
 - Inline subtitle player with sync, for users who actually want it.
-- User-customizable methodology prompt for advanced users (the gf use case).
+- User-customizable methodology prompt for advanced users (the gf use case). The MVP already has per-target-language instructions hardcoded in `language-instructions.ts` — v2 promotes them to a DB-backed, per-user editable field.
 - Multi-deck organization (per language pair, or by tag).
 - Spaced-repetition history pulled back from Anki to close the loop.

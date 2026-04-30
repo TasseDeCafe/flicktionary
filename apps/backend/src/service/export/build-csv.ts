@@ -28,13 +28,21 @@ const renderRow = (cells: readonly string[]): string => cells.map(escapeCell).jo
 
 const computeDefaults = (card: DbCard): { front: string; back: string } => {
   const exploration = (card.full_exploration ?? {}) as Record<string, unknown>
-  const definition = typeof exploration.definition === 'string' ? exploration.definition : ''
   const translation = typeof exploration.translation === 'string' ? exploration.translation : ''
-  const examples = exploration.examples
-  const firstExample = Array.isArray(examples) && typeof examples[0] === 'string' ? (examples[0] as string) : ''
 
-  const front = card.surface_form || card.headword
-  const back = [definition, translation, firstExample].filter((s) => s.trim().length > 0).join('\n\n')
+  const contextExample = exploration.context_example as { target?: unknown; native?: unknown } | undefined
+  const targetExample = typeof contextExample?.target === 'string' ? contextExample.target : ''
+  const nativeExample = typeof contextExample?.native === 'string' ? contextExample.native : ''
+
+  // Backward-compat: cards processed before context_example existed only carry
+  // examples[]. Fall back to examples[0] for the target example so old exports
+  // keep working until those sessions are reprocessed.
+  const examples = exploration.examples
+  const fallbackTarget =
+    targetExample || (Array.isArray(examples) && typeof examples[0] === 'string' ? (examples[0] as string) : '')
+
+  const front = card.headword || card.surface_form
+  const back = [translation, fallbackTarget, nativeExample].filter((s) => s.trim().length > 0).join('\n\n')
   return { front, back }
 }
 

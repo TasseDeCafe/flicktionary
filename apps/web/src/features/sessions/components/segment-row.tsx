@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { stripSrtMarkupWithMap } from '@flicktionary/core/utils/srt-markup'
 
 const formatTimestamp = (ms: number | null): string => {
   if (ms === null) return ''
@@ -51,7 +52,17 @@ const buildSpans = (text: string, ranges: SegmentHighlightRange[]): SpanPart[] =
 
 export const SegmentRow = ({ id, text, startMs, ranges }: Props) => {
   const ts = useMemo(() => formatTimestamp(startMs), [startMs])
-  const spans = useMemo(() => buildSpans(text, ranges ?? []), [text, ranges])
+  const { displayText, displayRanges } = useMemo(() => {
+    const { stripped, map } = stripSrtMarkupWithMap(text)
+    if (stripped === text) return { displayText: text, displayRanges: ranges ?? [] }
+    const remapped = (ranges ?? []).map((r) => ({
+      highlightId: r.highlightId,
+      start: map[Math.max(0, Math.min(text.length, r.start))]!,
+      end: map[Math.max(0, Math.min(text.length, r.end))]!,
+    }))
+    return { displayText: stripped, displayRanges: remapped }
+  }, [text, ranges])
+  const spans = useMemo(() => buildSpans(displayText, displayRanges), [displayText, displayRanges])
 
   return (
     <div className='flex items-start gap-3 py-1'>

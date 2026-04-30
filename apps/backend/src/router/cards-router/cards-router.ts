@@ -14,6 +14,7 @@ const toCardDto = (row: DbCard) => ({
   highlightId: row.highlight_id,
   segmentId: row.segment_id,
   headword: row.headword,
+  sense: row.sense ?? '',
   surfaceForm: row.surface_form,
   fullExploration: (row.full_exploration ?? {}) as Record<string, unknown>,
   status: row.status,

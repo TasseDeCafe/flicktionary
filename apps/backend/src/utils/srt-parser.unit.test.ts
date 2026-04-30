@@ -48,4 +48,18 @@ B`
 Dot ms`
     expect(parseSrt(srt)).toEqual([{ index: 0, text: 'Dot ms', startMs: 1250, endMs: 2000 }])
   })
+
+  it('strips inline markup (italic, bold, font tags) and collapses leftover whitespace', () => {
+    const srt = `1
+00:00:01,000 --> 00:00:02,000
+<i>Congratulations, Hudson High Class of 2004.</i>
+
+2
+00:00:03,000 --> 00:00:04,000
+Hi <b>Bob</b>, <font color="red">welcome</font> back.`
+    expect(parseSrt(srt)).toEqual([
+      { index: 0, text: 'Congratulations, Hudson High Class of 2004.', startMs: 1000, endMs: 2000 },
+      { index: 1, text: 'Hi Bob, welcome back.', startMs: 3000, endMs: 4000 },
+    ])
+  })
 })

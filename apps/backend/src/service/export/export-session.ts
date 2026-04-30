@@ -28,6 +28,7 @@ export const exportSession = async (
         userId,
         targetLanguage: session.target_language,
         headword: card.headword,
+        sense: card.sense ?? '',
         firstCardId: card.id,
       })
     )

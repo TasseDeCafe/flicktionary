@@ -16,8 +16,10 @@ export const ProcessButton = ({ sessionId, status, highlightCount, onProcessed }
   // The orchestrator is idempotent: re-running on a processed/exported session
   // only hits the per-highlight pass for highlights that don't yet have a card,
   // so this same button doubles as "process new highlights" after the first run.
+  // First-pass with zero highlights is allowed — the difficult-words pass will
+  // surface LLM-suggested chunks based on the user's CEFR.
   const isReprocess = status === 'processed' || status === 'exported'
-  const canTrigger = (status === 'active' || isReprocess) && highlightCount > 0
+  const canTrigger = status === 'active' || (isReprocess && highlightCount > 0)
   const showFooter = status === 'active' || isReprocess
 
   if (!showFooter) {
@@ -25,7 +27,9 @@ export const ProcessButton = ({ sessionId, status, highlightCount, onProcessed }
   }
 
   const hint = (() => {
-    if (highlightCount === 0) return t`Highlight at least one chunk to process.`
+    if (status === 'active' && highlightCount === 0) {
+      return t`No highlights — the LLM will suggest chunks based on your level.`
+    }
     if (isReprocess) return t`${highlightCount} highlight(s) total. Already-processed ones are skipped.`
     return t`${highlightCount} highlight(s) ready.`
   })()
