@@ -1,7 +1,19 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type { CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import {
+  cancelCardCaches,
+  getCardDetailKey,
+  getSessionCardsKey,
+  invalidateCardEverywhere,
+  restoreCardCaches,
+  reviewCardCacheStaleTimeMs,
+  setCardEverywhere,
+  setCardStatusEverywhere,
+  snapshotCardCaches,
+  type CardCacheSnapshot,
+} from './card-cache'
 
 export const useListCardsBySession = (sessionId: string) => {
   const { t } = useLingui()
@@ -14,11 +26,18 @@ export const useListCardsBySession = (sessionId: string) => {
   )
 }
 
-export const useGetCard = (cardId: string) => {
+export const useGetCard = (cardId: string, initialCard?: Card, initialCardUpdatedAt?: number) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.cards.get.queryOptions({
       input: { cardId },
+      staleTime: reviewCardCacheStaleTimeMs,
+      ...(initialCard
+        ? {
+            initialData: { data: initialCard },
+            initialDataUpdatedAt: initialCardUpdatedAt,
+          }
+        : {}),
       select: (response) => response.data,
       meta: { errorMessage: t`Failed to load card` },
     })
@@ -31,51 +50,16 @@ export const useUpdateCardStatus = (sessionId: string) => {
   return useMutation(
     orpcQuery.cards.updateStatus.mutationOptions({
       onMutate: async (variables: { cardId: string; status: CardStatus }) => {
-        const listKey = orpcQuery.cards.listBySession.key({ input: { sessionId } })
-        const cardKey = orpcQuery.cards.get.key({ input: { cardId: variables.cardId } })
-        await Promise.all([
-          queryClient.cancelQueries({ queryKey: listKey }),
-          queryClient.cancelQueries({ queryKey: cardKey }),
-        ])
-        const previousList = queryClient.getQueryData(listKey)
-        const previousCard = queryClient.getQueryData(cardKey)
-        queryClient.setQueriesData({ queryKey: listKey }, (data: unknown) => {
-          if (!data || typeof data !== 'object') return data
-          const cast = data as { data: Array<{ id: string; status: string }> }
-          return {
-            ...cast,
-            data: cast.data.map((c) => (c.id === variables.cardId ? { ...c, status: variables.status } : c)),
-          }
-        })
-        queryClient.setQueriesData({ queryKey: cardKey }, (data: unknown) => {
-          if (!data || typeof data !== 'object') return data
-          const cast = data as { data: { id: string; status: string } }
-          if (!cast.data || cast.data.id !== variables.cardId) return data
-          return { ...cast, data: { ...cast.data, status: variables.status } }
-        })
-        return { previousList, previousCard, listKey, cardKey }
+        await cancelCardCaches(queryClient, { sessionId, cardId: variables.cardId })
+        const snapshot = snapshotCardCaches(queryClient, { sessionId, cardId: variables.cardId })
+        setCardStatusEverywhere(queryClient, { sessionId, cardId: variables.cardId, status: variables.status })
+        return snapshot
       },
       onError: (_error, _variables, context) => {
-        const ctx = context as
-          | {
-              previousList: unknown
-              previousCard: unknown
-              listKey: readonly unknown[]
-              cardKey: readonly unknown[]
-            }
-          | undefined
-        if (ctx?.previousList !== undefined) {
-          queryClient.setQueryData(ctx.listKey, ctx.previousList)
-        }
-        if (ctx?.previousCard !== undefined) {
-          queryClient.setQueryData(ctx.cardKey, ctx.previousCard)
-        }
+        restoreCardCaches(queryClient, context as CardCacheSnapshot | undefined)
       },
-      onSettled: (_data, _error, variables) => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key({ input: { sessionId } }) })
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.cards.get.key({ input: { cardId: variables.cardId } }),
-        })
+      onSuccess: (response) => {
+        setCardEverywhere(queryClient, response.data)
       },
       meta: { errorMessage: t`Failed to update card status` },
     })
@@ -93,7 +77,7 @@ export const useListChatForCard = (cardId: string) => {
   )
 }
 
-export const useSendChatMessage = (cardId: string) => {
+export const useSendChatMessage = (cardId: string, sessionId?: string) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
@@ -102,35 +86,27 @@ export const useSendChatMessage = (cardId: string) => {
         queryClient.invalidateQueries({
           queryKey: orpcQuery.cardChat.listForCard.key({ input: { cardId } }),
         })
-        // The chat handler may have called update_card_fields server-side,
-        // so the card data on disk may have shifted — refetch.
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.cards.get.key({ input: { cardId } }),
-        })
+        if (sessionId) {
+          // The chat handler may have called update_card_fields server-side,
+          // so the card data on disk may have shifted — refetch both card caches.
+          invalidateCardEverywhere(queryClient, { sessionId, cardId })
+          return
+        }
+
+        queryClient.invalidateQueries({ queryKey: getCardDetailKey(cardId) })
       },
       meta: { errorMessage: t`Failed to send chat message` },
     })
   )
 }
 
-export const useExploreCard = (sessionId: string) => {
+export const useExploreCard = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.cards.explore.mutationOptions({
-      onSuccess: (response, variables) => {
-        // Prime the cache, then force-refetch the active get query — setQueryData
-        // alone doesn't reliably propagate to consumers that wrap the query with
-        // a `select` projection in this codebase; invalidate is the source of truth.
-        queryClient.setQueryData(orpcQuery.cards.get.key({ input: { cardId: response.data.id } }), {
-          data: response.data,
-        })
-        void queryClient.invalidateQueries({
-          queryKey: orpcQuery.cards.get.key({ input: { cardId: variables.cardId } }),
-        })
-        void queryClient.invalidateQueries({
-          queryKey: orpcQuery.cards.listBySession.key({ input: { sessionId } }),
-        })
+      onSuccess: (response) => {
+        setCardEverywhere(queryClient, response.data)
       },
       meta: { errorMessage: t`Failed to generate exploration` },
     })
@@ -155,12 +131,7 @@ export const useUpdateCardFields = () => {
   return useMutation(
     orpcQuery.cards.updateFields.mutationOptions({
       onSuccess: (response) => {
-        queryClient.setQueryData(orpcQuery.cards.get.key({ input: { cardId: response.data.id } }), {
-          data: response.data,
-        })
-        void queryClient.invalidateQueries({
-          queryKey: orpcQuery.cards.get.key({ input: { cardId: response.data.id } }),
-        })
+        setCardEverywhere(queryClient, response.data)
       },
       meta: { errorMessage: t`Failed to update card fields` },
     })
@@ -178,6 +149,9 @@ export const useExportSessionCsv = () => {
         })
         queryClient.invalidateQueries({
           queryKey: orpcQuery.studySessions.list.key(),
+        })
+        queryClient.invalidateQueries({
+          queryKey: getSessionCardsKey(variables.sessionId),
         })
       },
       meta: { errorMessage: t`Failed to export CSV` },

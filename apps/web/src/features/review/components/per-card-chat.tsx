@@ -7,12 +7,13 @@ import { useListChatForCard, useSendChatMessage } from '../api/review-hooks'
 
 type Props = {
   cardId: string
+  sessionId: string
 }
 
-export const PerCardChat = ({ cardId }: Props) => {
+export const PerCardChat = ({ cardId, sessionId }: Props) => {
   const { t } = useLingui()
   const { data: messages, isLoading } = useListChatForCard(cardId)
-  const { mutate: sendMessage, isPending } = useSendChatMessage(cardId)
+  const { mutate: sendMessage, isPending } = useSendChatMessage(cardId, sessionId)
 
   const [draft, setDraft] = useState('')
   const [optimisticUserContent, setOptimisticUserContent] = useState<string | null>(null)

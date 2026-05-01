@@ -68,11 +68,12 @@ export const FocusView = () => {
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
 
-  const { data: card, isLoading } = useGetCard(cardId)
-  const { data: cards } = useListCardsBySession(sessionId)
+  const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId)
+  const initialCard = useMemo(() => cards?.find((listCard) => listCard.id === cardId), [cards, cardId])
+  const { data: card, isLoading } = useGetCard(cardId, initialCard, cardsUpdatedAt)
   const { data: session } = useGetStudySession(sessionId)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
-  const { mutate: exploreCard, isPending: isExploring } = useExploreCard(sessionId)
+  const { mutate: exploreCard, isPending: isExploring } = useExploreCard()
 
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
@@ -198,7 +199,7 @@ export const FocusView = () => {
 
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Chat`}</h2>
-            <PerCardChat key={card.id} cardId={card.id} />
+            <PerCardChat key={card.id} cardId={card.id} sessionId={sessionId} />
           </section>
         </div>
       </div>
