@@ -31,14 +31,22 @@ const insertTextTrack = async (params: {
   }
 }
 
-const findByHash = async (hash: string): Promise<DbTextTrack | null> => {
+const findByContentSourceLanguageAndHash = async (params: {
+  contentSourceId: string
+  language: string
+  hash: string
+}): Promise<DbTextTrack | null> => {
   try {
     const result = (await sql`
-      SELECT * FROM public.text_tracks WHERE hash = ${hash}
+      SELECT *
+      FROM public.text_tracks
+      WHERE content_source_id = ${params.contentSourceId}
+        AND language = ${params.language}
+        AND hash = ${params.hash}
     `) as DbTextTrack[]
     return result[0] ?? null
   } catch (e) {
-    logCustomErrorMessageAndError(`textTracks.findByHash, hash = ${hash}`, e)
+    logCustomErrorMessageAndError(`textTracks.findByContentSourceLanguageAndHash, hash = ${params.hash}`, e)
     return null
   }
 }
@@ -63,14 +71,18 @@ export interface TextTracksRepositoryInterface {
     externalId: string | null
     hash: string
   }) => Promise<DbTextTrack | null>
-  findByHash: (hash: string) => Promise<DbTextTrack | null>
+  findByContentSourceLanguageAndHash: (params: {
+    contentSourceId: string
+    language: string
+    hash: string
+  }) => Promise<DbTextTrack | null>
   findById: (id: string) => Promise<DbTextTrack | null>
 }
 
 export const TextTracksRepository = (): TextTracksRepositoryInterface => {
   return {
     insertTextTrack,
-    findByHash,
+    findByContentSourceLanguageAndHash,
     findById,
   }
 }

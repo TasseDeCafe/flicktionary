@@ -43,7 +43,11 @@ export const importSrt = async (
 
   const hash = createHash('sha256').update(normalizeForHash(parsed)).digest('hex')
 
-  const existing = await textTracksRepository.findByHash(hash)
+  const existing = await textTracksRepository.findByContentSourceLanguageAndHash({
+    contentSourceId: input.contentSourceId,
+    language: input.language,
+    hash,
+  })
   if (existing) {
     return { ok: true, track: existing, segmentCount: parsed.length, deduped: true }
   }

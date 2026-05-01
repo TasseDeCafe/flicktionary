@@ -8,6 +8,7 @@ import {
   DbTextSegment,
 } from '../../transport/database/text-segments/text-segments-repository'
 import { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
+import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 
 const toSegmentDto = (row: DbTextSegment) => ({
   id: row.id,
@@ -19,20 +20,38 @@ const toSegmentDto = (row: DbTextSegment) => ({
 
 export const TextSegmentsRouter = (
   textTracksRepository: TextTracksRepositoryInterface,
-  textSegmentsRepository: TextSegmentsRepositoryInterface
+  textSegmentsRepository: TextSegmentsRepositoryInterface,
+  studySessionsRepository: StudySessionsRepositoryInterface
 ): Router => {
   const implementer = implement(textSegmentsContract).$context<OrpcContext>()
 
+  const assertUserCanReadTrack = async (textTrackId: string, userId: string, throwNotFound: () => never) => {
+    const canRead = await studySessionsRepository.hasTextTrackForUser(textTrackId, userId)
+    if (!canRead) {
+      throwNotFound()
+    }
+  }
+
   const router = implementer.router({
-    listByTrack: implementer.listByTrack.handler(async ({ input }) => {
+    listByTrack: implementer.listByTrack.handler(async ({ input, context, errors }) => {
+      await assertUserCanReadTrack(input.textTrackId, context.res.locals.userId, () => {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Text track not found' }] },
+        })
+      })
       const segments = await textSegmentsRepository.listByTrackId(input.textTrackId)
       return { data: segments.map(toSegmentDto) }
     }),
 
-    search: implementer.search.handler(async ({ input, errors }) => {
+    search: implementer.search.handler(async ({ input, context, errors }) => {
+      await assertUserCanReadTrack(input.textTrackId, context.res.locals.userId, () => {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Text track not found' }] },
+        })
+      })
       const track = await textTracksRepository.findById(input.textTrackId)
       if (!track) {
-        throw errors.INTERNAL_SERVER_ERROR({
+        throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Text track not found' }] },
         })
       }
@@ -40,10 +59,15 @@ export const TextSegmentsRouter = (
       return { data: segments.map(toSegmentDto) }
     }),
 
-    getWindow: implementer.getWindow.handler(async ({ input, errors }) => {
+    getWindow: implementer.getWindow.handler(async ({ input, context, errors }) => {
+      await assertUserCanReadTrack(input.textTrackId, context.res.locals.userId, () => {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Text track not found' }] },
+        })
+      })
       const center = await textSegmentsRepository.findById(input.segmentId)
       if (!center || center.text_track_id !== input.textTrackId) {
-        throw errors.INTERNAL_SERVER_ERROR({
+        throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Segment not found in track' }] },
         })
       }

@@ -26,13 +26,18 @@ const insertStudySession = async (params: {
         user_id, content_source_id, text_track_id,
         native_language, target_language, cefr_level
       )
-      VALUES (
+      SELECT
         ${params.userId},
         ${params.contentSourceId},
         ${params.textTrackId},
         ${params.nativeLanguage},
         ${params.targetLanguage},
         ${params.cefrLevel}
+      WHERE EXISTS (
+        SELECT 1
+        FROM public.text_tracks
+        WHERE id = ${params.textTrackId}
+          AND content_source_id = ${params.contentSourceId}
       )
       RETURNING *
     `) as DbStudySession[]
@@ -91,6 +96,22 @@ const findByIdForUser = async (sessionId: string, userId: string): Promise<DbStu
   } catch (e) {
     logCustomErrorMessageAndError(`studySessions.findByIdForUser, sessionId = ${sessionId}`, e)
     return null
+  }
+}
+
+const hasTextTrackForUser = async (textTrackId: string, userId: string): Promise<boolean> => {
+  try {
+    const result = await sql`
+      SELECT 1
+      FROM public.study_sessions
+      WHERE text_track_id = ${textTrackId}
+        AND user_id = ${userId}
+      LIMIT 1
+    `
+    return result.length > 0
+  } catch (e) {
+    logCustomErrorMessageAndError(`studySessions.hasTextTrackForUser, textTrackId = ${textTrackId}`, e)
+    return false
   }
 }
 
@@ -189,6 +210,7 @@ export interface StudySessionsRepositoryInterface {
   }) => Promise<DbStudySession | null>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
+  hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
   listByUserId: (userId: string) => Promise<DbStudySession[]>
   listByUserIdWithSource: (userId: string) => Promise<DbStudySessionWithSource[]>
   updateStatus: (sessionId: string, userId: string, status: StudySessionStatus) => Promise<boolean>
@@ -203,6 +225,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     insertStudySession,
     findByIdForUser,
     findByIdForUserWithSource,
+    hasTextTrackForUser,
     listByUserId,
     listByUserIdWithSource,
     updateStatus,
