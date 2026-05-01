@@ -9,6 +9,7 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 type UserPrefsResponse = {
   nativeLanguage: string | null
   tapToTranslateEnabled: boolean
+  llmHighlightsEnabled: boolean
   targetLanguagePrefs: { targetLanguage: string; cefrLevel: string }[]
 }
 
@@ -17,14 +18,16 @@ const buildPrefs = async (
   usersRepository: UsersRepositoryInterface,
   prefsRepository: UserTargetLanguagePrefsRepositoryInterface
 ): Promise<UserPrefsResponse> => {
-  const [nativeLanguage, tapToTranslateEnabled, targetPrefs] = await Promise.all([
+  const [nativeLanguage, tapToTranslateEnabled, llmHighlightsEnabled, targetPrefs] = await Promise.all([
     usersRepository.getNativeLanguage(userId),
     usersRepository.getTapToTranslateEnabled(userId),
+    usersRepository.getLlmHighlightsEnabled(userId),
     prefsRepository.listForUser(userId),
   ])
   return {
     nativeLanguage,
     tapToTranslateEnabled,
+    llmHighlightsEnabled,
     targetLanguagePrefs: targetPrefs.map((p) => ({
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
@@ -75,6 +78,18 @@ export const UserPrefsRouter = (
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to update tap-to-translate setting' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    setLlmHighlightsEnabled: implementer.setLlmHighlightsEnabled.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.setLlmHighlightsEnabled(userId, input.enabled)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to update LLM highlights setting' }] },
         })
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

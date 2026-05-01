@@ -27,29 +27,20 @@ const escapeCell = (value: string): string => {
 const renderRow = (cells: readonly string[]): string => cells.map(escapeCell).join(',')
 
 const computeDefaults = (card: DbCard): { front: string; back: string } => {
-  const exploration = (card.full_exploration ?? {}) as Record<string, unknown>
-  const translation = typeof exploration.translation === 'string' ? exploration.translation : ''
+  const headword = card.headword || card.surface_form
+  const targetExample = card.target_example ?? ''
+  const backFirstLine = card.translation || card.definition || ''
+  const nativeExample = card.native_example ?? ''
 
-  const contextExample = exploration.context_example as { target?: unknown; native?: unknown } | undefined
-  const targetExample = typeof contextExample?.target === 'string' ? contextExample.target : ''
-  const nativeExample = typeof contextExample?.native === 'string' ? contextExample.native : ''
-
-  // Backward-compat: cards processed before context_example existed only carry
-  // examples[]. Fall back to examples[0] for the target example so old exports
-  // keep working until those sessions are reprocessed.
-  const examples = exploration.examples
-  const fallbackTarget =
-    targetExample || (Array.isArray(examples) && typeof examples[0] === 'string' ? (examples[0] as string) : '')
-
-  const front = card.headword || card.surface_form
-  const back = [translation, fallbackTarget, nativeExample].filter((s) => s.trim().length > 0).join('\n\n')
+  const front = [headword, targetExample].filter((s) => s.trim().length > 0).join('\n\n')
+  const back = [backFirstLine, nativeExample].filter((s) => s.trim().length > 0).join('\n\n')
   return { front, back }
 }
 
 const extractContext = (card: DbCard, segmentText: string): string => {
-  const exploration = (card.full_exploration ?? {}) as Record<string, unknown>
-  if (typeof exploration.context_segment === 'string' && exploration.context_segment.trim().length > 0) {
-    return exploration.context_segment
+  const extras = (card.exploration_extras ?? {}) as Record<string, unknown>
+  if (typeof extras.context_segment === 'string' && extras.context_segment.trim().length > 0) {
+    return extras.context_segment
   }
   return segmentText
 }
@@ -68,9 +59,7 @@ export const buildCsv = async (sessionId: string, deps: BuildCsvDependencies): P
 
   const header = renderRow(CSV_COLUMNS)
   const rows = cards.map((card) => {
-    const defaults = computeDefaults(card)
-    const front = card.front_override ?? defaults.front
-    const back = card.back_override ?? defaults.back
+    const { front, back } = computeDefaults(card)
     const segmentText = segmentMap.get(card.segment_id)?.text ?? ''
     const context = extractContext(card, segmentText)
     const tags = 'flicktionary'

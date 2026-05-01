@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ListChecks } from 'lucide-react'
@@ -13,6 +13,7 @@ import {
   useCreateHighlight,
   useDeleteHighlight,
 } from '../api/sessions-hooks'
+import { useListCardsBySession } from '@/features/review/api/review-hooks'
 import { readCurrentSelection, SelectionResult } from '../hooks/use-text-selection'
 import { buildSegmentRanges } from '../utils/build-segment-ranges'
 import { SegmentList } from './segment-list'
@@ -33,9 +34,11 @@ export const SessionView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/' })
+  const { segment: targetSegmentId } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/' })
 
   const { data: session, isLoading: isSessionLoading } = useGetStudySession(sessionId)
   const trackId = session?.textTrackId ?? null
+  const [flashSegmentId, setFlashSegmentId] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search.trim(), 250)
@@ -49,6 +52,7 @@ export const SessionView = () => {
   const tapToTranslateEnabled = prefs?.tapToTranslateEnabled ?? false
 
   const { data: highlights } = useListHighlightsBySession(sessionId)
+  const { data: cards } = useListCardsBySession(sessionId)
   const rangesBySegmentId = useMemo(
     () => buildSegmentRanges(highlights ?? [], visibleSegments),
     [highlights, visibleSegments]
@@ -76,6 +80,27 @@ export const SessionView = () => {
       void navigate({ to: '/sessions/$sessionId/processing', params: { sessionId }, replace: true })
     }
   }, [session?.status, sessionId, navigate])
+
+  // Deep-link scroll + 1.5s flash. Wait one rAF for the segment list to render,
+  // then locate the row by data-segment-id and scroll it into view.
+  useEffect(() => {
+    if (!targetSegmentId) return
+    if (!allSegments || allSegments.length === 0) return
+    let raf: number | null = null
+    let timer: ReturnType<typeof setTimeout> | null = null
+    raf = requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-segment-id="${targetSegmentId}"]`)
+      if (el && 'scrollIntoView' in el) {
+        ;(el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+      setFlashSegmentId(targetSegmentId)
+      timer = setTimeout(() => setFlashSegmentId(null), 1500)
+    })
+    return () => {
+      if (raf !== null) cancelAnimationFrame(raf)
+      if (timer !== null) clearTimeout(timer)
+    }
+  }, [targetSegmentId, allSegments])
 
   // Selection finished → either gloss it (tap-to-translate) or auto-create a
   // bare highlight. The action menu opens on click of an existing highlight,
@@ -201,7 +226,11 @@ export const SessionView = () => {
           {isSegmentsLoading ? (
             <p className='text-sm text-gray-500'>{t`Loading segments…`}</p>
           ) : (
-            <SegmentList segments={visibleSegments} rangesBySegmentId={rangesBySegmentId} />
+            <SegmentList
+              segments={visibleSegments}
+              rangesBySegmentId={rangesBySegmentId}
+              flashSegmentId={flashSegmentId}
+            />
           )}
         </div>
       </div>
@@ -210,6 +239,7 @@ export const SessionView = () => {
         sessionId={sessionId}
         status={session.status}
         highlightCount={highlights?.length ?? 0}
+        cardCount={cards?.length ?? 0}
         onProcessed={() => {
           void navigate({ to: '/sessions/$sessionId/processing', params: { sessionId } })
         }}

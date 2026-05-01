@@ -62,48 +62,54 @@ export type Database = {
       }
       cards: {
         Row: {
-          back_override: string | null
           created_at: string
-          front_override: string | null
-          full_exploration: Json
+          definition: string | null
+          exploration_extras: Json
           headword: string
           highlight_id: string | null
           id: string
+          native_example: string | null
           segment_id: string
           sense: string
           status: Database['public']['Enums']['card_status']
           study_session_id: string
           surface_form: string
+          target_example: string | null
+          translation: string | null
           updated_at: string
         }
         Insert: {
-          back_override?: string | null
           created_at?: string
-          front_override?: string | null
-          full_exploration?: Json
+          definition?: string | null
+          exploration_extras?: Json
           headword: string
           highlight_id?: string | null
           id?: string
+          native_example?: string | null
           segment_id: string
           sense?: string
           status?: Database['public']['Enums']['card_status']
           study_session_id: string
           surface_form: string
+          target_example?: string | null
+          translation?: string | null
           updated_at?: string
         }
         Update: {
-          back_override?: string | null
           created_at?: string
-          front_override?: string | null
-          full_exploration?: Json
+          definition?: string | null
+          exploration_extras?: Json
           headword?: string
           highlight_id?: string | null
           id?: string
+          native_example?: string | null
           segment_id?: string
           sense?: string
           status?: Database['public']['Enums']['card_status']
           study_session_id?: string
           surface_form?: string
+          target_example?: string | null
+          translation?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -636,6 +642,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          llm_highlights_enabled: boolean
           native_language: string | null
           referral: string | null
           stripe_customer_id: string | null
@@ -649,6 +656,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id: string
+          llm_highlights_enabled?: boolean
           native_language?: string | null
           referral?: string | null
           stripe_customer_id?: string | null
@@ -662,6 +670,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          llm_highlights_enabled?: boolean
           native_language?: string | null
           referral?: string | null
           stripe_customer_id?: string | null

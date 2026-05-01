@@ -243,6 +243,22 @@ export const useSetTapToTranslateEnabled = () => {
   )
 }
 
+export const useSetLlmHighlightsEnabled = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.setLlmHighlightsEnabled.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to update LLM-highlights setting`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useFastGloss = () => {
   const { t } = useLingui()
   return useMutation(

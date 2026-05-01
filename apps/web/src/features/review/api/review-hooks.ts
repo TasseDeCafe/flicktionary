@@ -31,10 +31,15 @@ export const useUpdateCardStatus = (sessionId: string) => {
   return useMutation(
     orpcQuery.cards.updateStatus.mutationOptions({
       onMutate: async (variables: { cardId: string; status: CardStatus }) => {
-        const queryKey = orpcQuery.cards.listBySession.key({ input: { sessionId } })
-        await queryClient.cancelQueries({ queryKey })
-        const previous = queryClient.getQueryData(queryKey)
-        queryClient.setQueriesData({ queryKey }, (data: unknown) => {
+        const listKey = orpcQuery.cards.listBySession.key({ input: { sessionId } })
+        const cardKey = orpcQuery.cards.get.key({ input: { cardId: variables.cardId } })
+        await Promise.all([
+          queryClient.cancelQueries({ queryKey: listKey }),
+          queryClient.cancelQueries({ queryKey: cardKey }),
+        ])
+        const previousList = queryClient.getQueryData(listKey)
+        const previousCard = queryClient.getQueryData(cardKey)
+        queryClient.setQueriesData({ queryKey: listKey }, (data: unknown) => {
           if (!data || typeof data !== 'object') return data
           const cast = data as { data: Array<{ id: string; status: string }> }
           return {
@@ -42,33 +47,37 @@ export const useUpdateCardStatus = (sessionId: string) => {
             data: cast.data.map((c) => (c.id === variables.cardId ? { ...c, status: variables.status } : c)),
           }
         })
-        return { previous, queryKey }
+        queryClient.setQueriesData({ queryKey: cardKey }, (data: unknown) => {
+          if (!data || typeof data !== 'object') return data
+          const cast = data as { data: { id: string; status: string } }
+          if (!cast.data || cast.data.id !== variables.cardId) return data
+          return { ...cast, data: { ...cast.data, status: variables.status } }
+        })
+        return { previousList, previousCard, listKey, cardKey }
       },
       onError: (_error, _variables, context) => {
-        const ctx = context as { previous: unknown; queryKey: readonly unknown[] } | undefined
-        if (ctx?.previous !== undefined) {
-          queryClient.setQueryData(ctx.queryKey, ctx.previous)
+        const ctx = context as
+          | {
+              previousList: unknown
+              previousCard: unknown
+              listKey: readonly unknown[]
+              cardKey: readonly unknown[]
+            }
+          | undefined
+        if (ctx?.previousList !== undefined) {
+          queryClient.setQueryData(ctx.listKey, ctx.previousList)
+        }
+        if (ctx?.previousCard !== undefined) {
+          queryClient.setQueryData(ctx.cardKey, ctx.previousCard)
         }
       },
-      onSettled: () => {
+      onSettled: (_data, _error, variables) => {
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key({ input: { sessionId } }) })
-      },
-      meta: { errorMessage: t`Failed to update card status` },
-    })
-  )
-}
-
-export const useUpdateCardOverrides = () => {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  return useMutation(
-    orpcQuery.cards.updateOverrides.mutationOptions({
-      onSuccess: (response) => {
-        queryClient.setQueryData(orpcQuery.cards.get.key({ input: { cardId: response.data.id } }), {
-          data: response.data,
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.cards.get.key({ input: { cardId: variables.cardId } }),
         })
       },
-      meta: { errorMessage: t`Failed to save edits` },
+      meta: { errorMessage: t`Failed to update card status` },
     })
   )
 }
@@ -93,8 +102,67 @@ export const useSendChatMessage = (cardId: string) => {
         queryClient.invalidateQueries({
           queryKey: orpcQuery.cardChat.listForCard.key({ input: { cardId } }),
         })
+        // The chat handler may have called update_card_fields server-side,
+        // so the card data on disk may have shifted — refetch.
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.cards.get.key({ input: { cardId } }),
+        })
       },
       meta: { errorMessage: t`Failed to send chat message` },
+    })
+  )
+}
+
+export const useExploreCard = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.cards.explore.mutationOptions({
+      onSuccess: (response, variables) => {
+        // Prime the cache, then force-refetch the active get query — setQueryData
+        // alone doesn't reliably propagate to consumers that wrap the query with
+        // a `select` projection in this codebase; invalidate is the source of truth.
+        queryClient.setQueryData(orpcQuery.cards.get.key({ input: { cardId: response.data.id } }), {
+          data: response.data,
+        })
+        void queryClient.invalidateQueries({
+          queryKey: orpcQuery.cards.get.key({ input: { cardId: variables.cardId } }),
+        })
+        void queryClient.invalidateQueries({
+          queryKey: orpcQuery.cards.listBySession.key({ input: { sessionId } }),
+        })
+      },
+      meta: { errorMessage: t`Failed to generate exploration` },
+    })
+  )
+}
+
+export const useTextSegmentsWindow = (input: { textTrackId: string; segmentId: string; radius: number } | null) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.textSegments.getWindow.queryOptions({
+      input: input ?? { textTrackId: '', segmentId: '', radius: 0 },
+      enabled: !!input && !!input.textTrackId && !!input.segmentId,
+      select: (response) => response,
+      meta: { errorMessage: t`Failed to load surrounding context` },
+    })
+  )
+}
+
+export const useUpdateCardFields = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.cards.updateFields.mutationOptions({
+      onSuccess: (response) => {
+        queryClient.setQueryData(orpcQuery.cards.get.key({ input: { cardId: response.data.id } }), {
+          data: response.data,
+        })
+        void queryClient.invalidateQueries({
+          queryKey: orpcQuery.cards.get.key({ input: { cardId: response.data.id } }),
+        })
+      },
+      meta: { errorMessage: t`Failed to update card fields` },
     })
   )
 }

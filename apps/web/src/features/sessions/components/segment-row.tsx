@@ -22,6 +22,7 @@ type Props = {
   text: string
   startMs: number | null
   ranges?: SegmentHighlightRange[]
+  flash?: boolean
 }
 
 type SpanPart = { text: string; highlightId: string | null }
@@ -50,7 +51,7 @@ const buildSpans = (text: string, ranges: SegmentHighlightRange[]): SpanPart[] =
   return parts
 }
 
-export const SegmentRow = ({ id, text, startMs, ranges }: Props) => {
+export const SegmentRow = ({ id, text, startMs, ranges, flash }: Props) => {
   const ts = useMemo(() => formatTimestamp(startMs), [startMs])
   const { displayText, displayRanges } = useMemo(() => {
     const { stripped, map } = stripSrtMarkupWithMap(text)
@@ -65,7 +66,7 @@ export const SegmentRow = ({ id, text, startMs, ranges }: Props) => {
   const spans = useMemo(() => buildSpans(displayText, displayRanges), [displayText, displayRanges])
 
   return (
-    <div className='flex items-start gap-3 py-1'>
+    <div className={'flex items-start gap-3 py-1 transition-colors duration-700' + (flash ? ' bg-yellow-100' : '')}>
       <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
       <span data-segment-id={id} className='flex-1'>
         {spans.map((part, idx) =>

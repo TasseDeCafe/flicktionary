@@ -42,37 +42,11 @@ export const HighlightSchema = z.object({
 })
 export type Highlight = z.infer<typeof HighlightSchema>
 
-export const FullExplorationSchema = z.object({
-  headword: z.string(),
-  surface_form: z.string(),
-  sense: z.string(),
-  context_segment: z.string(),
-  definition: z.string(),
-  examples: z.array(z.string()),
-  context_example: z.object({
-    target: z.string(),
-    native: z.string(),
-  }),
-  ipa: z.string(),
-  frequency: z.enum(['high', 'medium', 'low']),
-  more_frequent_synonym: z.string().nullable(),
-  regionalism: z.string().nullable(),
-  register: z.string(),
-  register_alternatives: z.object({
-    more_formal: z.string().nullable(),
-    less_formal: z.string().nullable(),
-  }),
-  collocations: z.array(z.string()),
-  etymology: z.string(),
-  l1_notes: z.string().nullable(),
-  notes: z.string().nullable(),
-  translation: z.string(),
-})
-export type FullExploration = z.infer<typeof FullExplorationSchema>
+// Lenient on extras shape: the renderer/CSV code is per-field defensive, and LLMs
+// occasionally serialize one field oddly. One bad row should not brick the whole list.
+export const ExplorationExtrasSchema = z.record(z.string(), z.unknown())
+export type ExplorationExtras = z.infer<typeof ExplorationExtrasSchema>
 
-// Lenient on full_exploration shape: the renderer/CSV code is per-field defensive,
-// and LLMs occasionally serialize one field oddly (e.g. examples as a JSON string).
-// One bad row should not brick the whole list.
 export const CardSchema = z.object({
   id: z.string().uuid(),
   studySessionId: z.string().uuid(),
@@ -81,10 +55,12 @@ export const CardSchema = z.object({
   headword: z.string(),
   sense: z.string(),
   surfaceForm: z.string(),
-  fullExploration: z.record(z.string(), z.unknown()),
+  translation: z.string().nullable(),
+  definition: z.string().nullable(),
+  targetExample: z.string().nullable(),
+  nativeExample: z.string().nullable(),
+  explorationExtras: ExplorationExtrasSchema,
   status: CardStatusSchema,
-  frontOverride: z.string().nullable(),
-  backOverride: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

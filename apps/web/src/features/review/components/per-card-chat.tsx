@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -16,11 +16,6 @@ export const PerCardChat = ({ cardId }: Props) => {
 
   const [draft, setDraft] = useState('')
   const [optimisticUserContent, setOptimisticUserContent] = useState<string | null>(null)
-  const listEndRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    listEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, optimisticUserContent])
 
   const handleSend = () => {
     const content = draft.trim()
@@ -73,7 +68,6 @@ export const PerCardChat = ({ cardId }: Props) => {
         {isPending && (
           <div className='self-start rounded-lg bg-white px-3 py-2 text-sm text-gray-500 shadow-sm'>{t`Thinking…`}</div>
         )}
-        <div ref={listEndRef} />
       </div>
       <div className='flex items-end gap-2'>
         <Textarea

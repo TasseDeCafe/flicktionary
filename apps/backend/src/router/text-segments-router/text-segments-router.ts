@@ -39,6 +39,17 @@ export const TextSegmentsRouter = (
       const segments = await textSegmentsRepository.searchInTrack(input.textTrackId, track.language, input.q)
       return { data: segments.map(toSegmentDto) }
     }),
+
+    getWindow: implementer.getWindow.handler(async ({ input, errors }) => {
+      const center = await textSegmentsRepository.findById(input.segmentId)
+      if (!center || center.text_track_id !== input.textTrackId) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Segment not found in track' }] },
+        })
+      }
+      const segments = await textSegmentsRepository.listAroundIndex(input.textTrackId, center.index, input.radius)
+      return { data: segments.map(toSegmentDto), centerSegmentId: center.id }
+    }),
   })
 
   return createOrpcExpressRouter(router, { contract: textSegmentsContract })

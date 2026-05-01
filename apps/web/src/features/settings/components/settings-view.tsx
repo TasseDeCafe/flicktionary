@@ -4,6 +4,7 @@ import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { NativeLanguageSelector } from './native-language-selector'
 import { CefrPerLanguageList } from './cefr-per-language-list'
 import { TapToTranslateToggle } from './tap-to-translate-toggle'
+import { LlmHighlightsToggle } from './llm-highlights-toggle'
 
 export const SettingsView = () => {
   const { t } = useLingui()
@@ -38,6 +39,14 @@ export const SettingsView = () => {
             </CardHeader>
             <CardContent>
               <TapToTranslateToggle enabled={prefs.tapToTranslateEnabled} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>{t`Processing`}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LlmHighlightsToggle enabled={prefs.llmHighlightsEnabled} />
             </CardContent>
           </Card>
         </>

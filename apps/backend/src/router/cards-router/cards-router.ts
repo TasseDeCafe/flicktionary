@@ -6,6 +6,7 @@ import { cardsContract } from '@flicktionary/api-client/orpc-contracts/cards-con
 import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { exportSession, ExportSessionDependencies } from '../../service/export/export-session'
+import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 
 const toCardDto = (row: DbCard) => ({
@@ -16,10 +17,12 @@ const toCardDto = (row: DbCard) => ({
   headword: row.headword,
   sense: row.sense ?? '',
   surfaceForm: row.surface_form,
-  fullExploration: (row.full_exploration ?? {}) as Record<string, unknown>,
+  translation: row.translation,
+  definition: row.definition,
+  targetExample: row.target_example,
+  nativeExample: row.native_example,
+  explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
   status: row.status,
-  frontOverride: row.front_override,
-  backOverride: row.back_override,
   createdAt: new Date(row.created_at).toISOString(),
   updatedAt: new Date(row.updated_at).toISOString(),
 })
@@ -27,7 +30,8 @@ const toCardDto = (row: DbCard) => ({
 export const CardsRouter = (
   cardsRepository: CardsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface,
-  exportDependencies: ExportSessionDependencies
+  exportDependencies: ExportSessionDependencies,
+  exploreDependencies: ExploreCardDependencies
 ): Router => {
   const implementer = implement(cardsContract).$context<OrpcContext>()
 
@@ -72,7 +76,7 @@ export const CardsRouter = (
       return { data: toCardDto(updated) }
     }),
 
-    updateOverrides: implementer.updateOverrides.handler(async ({ input, context, errors }) => {
+    updateFields: implementer.updateFields.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const owned = await cardsRepository.findByIdForUser(input.cardId, userId)
       if (!owned) {
@@ -80,10 +84,19 @@ export const CardsRouter = (
           data: { errors: [{ message: 'Card not found' }] },
         })
       }
-      const updated = await cardsRepository.updateOverrides(input.cardId, input.frontOverride, input.backOverride)
+      const updated = await cardsRepository.updateFields(input.cardId, {
+        headword: input.patch.headword ?? null,
+        sense: input.patch.sense ?? null,
+        surfaceForm: input.patch.surfaceForm ?? null,
+        translation: input.patch.translation ?? null,
+        definition: input.patch.definition ?? null,
+        targetExample: input.patch.targetExample ?? null,
+        nativeExample: input.patch.nativeExample ?? null,
+        extrasPatch: input.patch.extrasPatch ?? null,
+      })
       if (!updated) {
         throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update card overrides' }] },
+          data: { errors: [{ message: 'Failed to update card fields' }] },
         })
       }
       return { data: toCardDto(updated) }
@@ -97,6 +110,7 @@ export const CardsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
+
       try {
         const result = await exportSession(input.sessionId, userId, exportDependencies)
         return { data: result }
@@ -106,6 +120,29 @@ export const CardsRouter = (
           data: { errors: [{ message: 'Failed to export session' }] },
         })
       }
+    }),
+
+    explore: implementer.explore.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await cardsRepository.findByIdForUser(input.cardId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Card not found' }] },
+        })
+      }
+      const outcome = await exploreCardIfMissing(input.cardId, userId, exploreDependencies)
+      if (outcome === 'failed') {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Exploration failed' }] },
+        })
+      }
+      const refreshed = await cardsRepository.findByIdForUser(input.cardId, userId)
+      if (!refreshed) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Card disappeared after exploration' }] },
+        })
+      }
+      return { data: toCardDto(refreshed) }
     }),
   })
 

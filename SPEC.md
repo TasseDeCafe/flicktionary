@@ -35,9 +35,12 @@ The app's value is **not** flashcard generation per se — it's the structured e
 
 Triggered when the user taps "Process" at end of viewing. Re-runnable: tapping
 Process again on a `processed` / `exported` / `failed` session is idempotent —
-the orchestrator skips the difficult-words pass when LLM-suggested cards
-already exist for the session, and skips per-highlight exploration for
-highlights that already have a card. Only `processing` rejects (in-flight). Pipeline runs server-side, async.
+the orchestrator skips the basic-data pass when LLM-suggested cards already
+exist AND every highlight already has a card; otherwise it runs the pass for
+the missing highlights only. Only `processing` rejects (in-flight). Pipeline
+runs server-side, async, streamed (Anthropic SDK requires streaming for any
+request whose worst-case duration exceeds 10 minutes — basic-data on long
+tracks does).
 
 1. **Movie context blob** — one call per `study_session`, persisted on the row.
    - Output ~300 tokens: genre, register, character list, plot sketch, tone, recurring vocabulary themes.
@@ -45,15 +48,45 @@ highlights that already have a card. Only `processing` rejects (in-flight). Pipe
 2. **L1-interference notes** — one call per `(L1, target_language)` pair, persisted globally and cached forever.
    - Output ~500 tokens: false friends, structural transfers, tense/aspect mismatches, register conventions.
    - Generated lazily on first session for that pair, then reused for all users.
-3. **Difficult-words pass** — one call per session.
-   - Input: full SRT (segment list), movie context blob, CEFR level, user's already-seen `(headword, sense)` pairs from `user_lookup` for this `target_language`.
-   - Output: ~20–40 suggested chunks (target scales with CEFR — A1/A2=20, B1/B2=25, C1=35, C2=40), each with normalized `headword`, `sense` (1-5 word disambiguator), `surface_form`, and source `segment_id`.
-   - **Hard CEFR floor**: only chunks at or above the user's level. The LLM is told to skip common B-level filler even when frequent in the source, and to **prioritize regional / dialectal / colloquial chunks** when the movie context blob signals that register (e.g. rioplatense voseo, peninsular slang, mexicanismos) over neutral pan-language equivalents.
-   - Below-level chunks that slip through are flagged `below_cefr=true` and stored with status `auto_rejected`; user can override per chunk.
-4. **Per-chunk Full exploration** — one call per chunk (user-highlighted + LLM-suggested), batched where the model allows.
-   - Input: chunk + 10 surrounding segments + movie context blob + L1-interference notes + user's note + preset tags + methodology prompt.
-   - Output: structured Full exploration (see template below).
-   - The LLM **normalizes the chunk**: it produces a `headword` that may differ from `selection_text`. Example: user highlights `out` inside `ran out of milk` → `headword = "run out of"`.
+3. **Basic-data pass** — one call per session, combining LLM chunk discovery and
+   per-highlight basic-data population.
+   - Input: full SRT (segment list), the user's highlights (so the model emits
+     one row per highlight too), movie context blob, CEFR level, user's
+     already-seen `(headword, sense)` pairs from `user_lookup`, and the
+     `llm_highlights_enabled` user pref.
+   - Output: one row per user highlight (always) plus, when LLM discovery is
+     enabled, ~20–40 LLM-suggested chunks (target scales with CEFR — A1/A2=20,
+     B1/B2=25, C1=35, C2=40). Each row has `source` (`'highlight'` or `'llm'`),
+     normalized `headword`, `sense` (1-5 word disambiguator), `surface_form`,
+     `segment_id`, and the **basic flashcard data** (`translation`,
+     `definition`, `target_example`, `native_example`).
+   - **Hard CEFR floor**: only LLM-discovered chunks at or above the user's
+     level. The LLM is told to skip common B-level filler even when frequent
+     in the source, and to **prioritize regional / dialectal / colloquial
+     chunks** when the movie context blob signals that register (e.g.
+     rioplatense voseo, peninsular slang, mexicanismos) over neutral
+     pan-language equivalents. Highlights bypass the CEFR floor — they always
+     produce a card.
+   - Below-level LLM chunks that slip through are flagged `below_cefr=true`
+     and stored with status `auto_rejected`; user can override per chunk.
+   - When `llm_highlights_enabled = false`, the prompt is shortened and the
+     model is told to emit only highlight rows. When the user has no new
+     highlights AND llm-highlights is off, the call is skipped entirely.
+   - The LLM **normalizes the chunk**: it produces a `headword` that may
+     differ from `selection_text`. Example: user highlights `out` inside
+     `ran out of milk` → `headword = "run out of"`.
+4. **Per-chunk Full exploration (deferred, on-demand)** — one call per card,
+   triggered manually by clicking `Generate full exploration` in the focus
+   view. Cards arrive from step 3 with only the basic data populated; this
+   pass adds the optional enrichment fields. NOT run automatically during
+   processing.
+   - Input: chunk + 10 surrounding segments + movie context blob + L1
+     notes + user's note + preset tags + methodology prompt.
+   - Output: refined basic columns (the model may revise them based on
+     deeper analysis) plus an `extras` bag containing optional fields (IPA,
+     frequency, register, register alternatives, collocations, etymology,
+     L1 notes, more frequent synonyms, regionalism, free-form notes,
+     bolded context segment).
 
 ### Review screen
 
@@ -67,12 +100,26 @@ Two-layer UI.
 - No chat here. This layer is for fast triage.
 
 **Layer 2 — Focus view (route push or full-screen drawer).**
-- Top: editable card front/back.
-- Middle: rendered Full exploration template (every section, no Short variant).
-- Bottom: per-card chat thread, scoped to that chunk.
+- Top: header with `Triage` back-link, `Open in subtitles` deep-link
+  (navigates to `/sessions/$id?segment=<id>` and flashes the source line),
+  prev/next, and keep/reject toggles.
+- Card section: each basic column gets its own labeled input — `Headword`,
+  `Target example`, plus `Translation` + `Native example` (and optional
+  `Definition`) when L1 ≠ L2, or just `Definition` when L1 = L2. Every input
+  debounces a partial PATCH to `cards.updateFields`; the basic columns are
+  the single source of truth (no more `front_override` / `back_override`).
+- Below the card: a collapsed `Context` block showing ±2 surrounding source
+  segments. Open it with the chevron when needed.
+- Full exploration: rendered when `exploration_extras` has data. Otherwise
+  shows a `Generate full exploration` button that triggers the on-demand
+  enrichment pass.
+- Per-card chat thread, scoped to that chunk. The chat tool can call
+  `update_card_fields` to patch any basic column or merge into
+  `exploration_extras` server-side; the assistant body gets a
+  `_Updated: …_` italic line and the focus view re-fetches the card.
 - Prev/next navigation through the kept set. Keyboard `j`/`k` and `←`/`→`.
 
-Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context blob (cached) + chunk + 10 surrounding segments + the already-shown structured output. The user's question is the only dynamic turn.
+Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + extras (if populated). The user's question is the only dynamic turn.
 
 ### Export
 
@@ -91,6 +138,10 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context b
 - Native language (single).
 - CEFR level per `target_language`. Asked once when starting a session in a new target language.
 - Tap-to-translate toggle (default off).
+- LLM-suggested chunks toggle (default on). When off, the basic-data pass
+  emits cards only for the user's manual highlights — no LLM chunk discovery.
+  The Process button is disabled when this pref is off and the user has zero
+  highlights.
 
 ## Data model
 
@@ -157,12 +208,18 @@ card
   highlight_id        uuid?         -- null for LLM-suggested chunks
   segment_id          uuid -> text_segment.id    -- where it appears in source
   headword            text          -- LLM-normalized, dictionary citation form
-  sense               text          -- 1-5 word sense disambiguator, '' for unprocessed cards
+  sense               text          -- 1-5 word sense disambiguator
   surface_form        text
-  full_exploration    jsonb         -- the structured output (see template)
+  -- basic data (populated by step-3 basic-data pass)
+  translation         text?         -- null on L1 = L2 sessions
+  definition          text?         -- target-lang paraphrase; back-of-card when L1 = L2
+  target_example      text?
+  native_example      text?         -- null on L1 = L2 sessions
+  -- enrichment (populated only on demand by Generate full exploration)
+  exploration_extras  jsonb         -- partial bag: ipa, frequency, register, register_alternatives,
+                                    -- collocations, etymology, l1_notes, notes, more_frequent_synonym,
+                                    -- regionalism, context_segment. Default '{}'.
   status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
-  front_override      text?         -- user-edited card front, null if untouched
-  back_override       text?
   created_at          timestamptz
   updated_at          timestamptz
 
@@ -188,12 +245,24 @@ l1_interference_notes                -- shared across users
   target_language     text
   notes               text
   primary key (l1_language, target_language)
+
+-- users (template table, extended with three Flicktionary prefs)
+users
+  id                       uuid pk
+  ...
+  native_language          text?
+  tap_to_translate_enabled boolean default false
+  llm_highlights_enabled   boolean default true
 ```
 
 Notes:
 - `highlight` uses `start_segment_id` + `end_segment_id` so multi-line selections work cleanly. Single-line is the case where they're equal.
 - `card` is split from `highlight` because LLM-suggested chunks have no highlight, and because regenerating a card shouldn't churn the original highlight metadata.
 - Foreign keys point to `text_segment.id` — the stable id, not `index`. We don't re-fetch SRTs in v1.
+- Card content is fully captured by the basic columns + `exploration_extras`.
+  There is no separate `front_override` / `back_override` — the front/back used
+  at export are computed from the basic columns and edits go directly into
+  those columns.
 
 ## LLM methodology prompt
 
@@ -240,22 +309,32 @@ lookups. Never offer multiple follow-up options at the end. If a clarifying
 question is needed, ask exactly one.
 ```
 
-## Full exploration output template
+## Card output template
 
-Stored in `card.full_exploration` as JSON. The focus view renders each field as a labeled section.
+Cards have two tiers of data:
+
+### Basic data (populated by step 3 — basic-data pass)
+
+Promoted to typed columns on `cards`. Every card has these populated after
+processing (except for `below_cefr=true` rows where the example/translation
+fields are skipped to save tokens — those land as `auto_rejected` and the
+user can override + click `Generate full exploration` to populate them).
+
+- `headword` — LLM-normalized dictionary citation form
+- `sense` — 1-5 word disambiguator (NOT a definition; used for cross-session dedup)
+- `surface_form` — literal form as it appears in the segment
+- `translation` — into native_language (null when L1 = L2)
+- `definition` — contextual paraphrase in target_language (back-of-card when L1 = L2; optional otherwise)
+- `target_example` — self-contained example sentence in target_language, inspired by but not equal to the source line
+- `native_example` — natural translation of `target_example` into native_language (null when L1 = L2)
+
+### Exploration extras (populated only by `Generate full exploration`)
+
+Stored in `card.exploration_extras` as a partial JSONB bag. The renderer
+iterates known keys; missing keys collapse silently.
 
 ```json
 {
-  "headword": "string",
-  "surface_form": "string",
-  "sense": "1-5 word disambiguator (NOT a definition); used for cross-session dedup",
-  "context_segment": "string with the chunk **bolded**",
-  "definition": "contextual, not dictionary-generic",
-  "examples": ["string", "string", "string"],
-  "context_example": {
-    "target": "self-contained example sentence in target_language, inspired by but not equal to the source line",
-    "native": "natural translation of context_example.target into native_language"
-  },
   "ipa": "string",
   "frequency": "high | medium | low",
   "more_frequent_synonym": "string | null",
@@ -269,14 +348,22 @@ Stored in `card.full_exploration` as JSON. The focus view renders each field as 
   "etymology": "brief origin or idiom story",
   "l1_notes": "false-friend / interference flags for this user's L1, or null",
   "notes": "anything else needed to master usage, or null",
-  "translation": "into native_language"
+  "context_segment": "string with the chunk wrapped in **double asterisks**"
 }
 ```
 
-Default card front/back at export time:
-- `front` = `headword` (dictionary form; falls through to `surface_form` when missing)
-- `back` = `translation` + blank line + `context_example.target` + blank line + `context_example.native`. Cards processed before `context_example` existed fall back to `examples[0]` for the target sentence.
-- `front_override` / `back_override` on `card` win when present.
+The enrichment pass is also allowed to refine the basic columns when its
+deeper analysis improves on the shallow basic-data pass.
+
+### Default card front/back at export time
+
+Computed from the basic columns. There are no overrides — the user edits the
+basic columns directly via the focus view's per-field inputs (or via chat
+through the `update_card_fields` tool), and those edits are what flow into
+the CSV.
+
+- `front` = `[headword, target_example]` joined by a blank line (skipping empty values)
+- `back`  = `[translation || definition, native_example]` joined by a blank line (skipping empty values)
 
 ## Tap-to-translate (fast path)
 

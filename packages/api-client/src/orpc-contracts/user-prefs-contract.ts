@@ -10,6 +10,7 @@ const TargetLanguagePrefSchema = z.object({
 const UserPrefsSchema = z.object({
   nativeLanguage: z.string().nullable(),
   tapToTranslateEnabled: z.boolean(),
+  llmHighlightsEnabled: z.boolean(),
   targetLanguagePrefs: z.array(TargetLanguagePrefSchema),
 })
 
@@ -33,6 +34,12 @@ export const userPrefsContract = {
 
   setTapToTranslateEnabled: oc
     .route({ method: 'PUT', path: '/user-prefs/tap-to-translate', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ enabled: z.boolean() }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  setLlmHighlightsEnabled: oc
+    .route({ method: 'PUT', path: '/user-prefs/llm-highlights', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({ enabled: z.boolean() }))
     .output(z.object({ data: UserPrefsSchema })),

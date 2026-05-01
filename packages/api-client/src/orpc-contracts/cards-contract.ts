@@ -33,21 +33,6 @@ export const cardsContract = {
     .input(z.object({ cardId: z.string().uuid(), status: CardStatusSchema }))
     .output(z.object({ data: CardSchema })),
 
-  updateOverrides: oc
-    .route({ method: 'PATCH', path: '/cards/{cardId}/overrides', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        cardId: z.string().uuid(),
-        frontOverride: z.string().nullable(),
-        backOverride: z.string().nullable(),
-      })
-    )
-    .output(z.object({ data: CardSchema })),
-
   exportCsv: oc
     .route({ method: 'POST', path: '/study-sessions/{sessionId}/export', successStatus: 200 })
     .errors({
@@ -63,4 +48,39 @@ export const cardsContract = {
         }),
       })
     ),
+
+  explore: oc
+    .route({ method: 'POST', path: '/cards/{cardId}/explore', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ cardId: z.string().uuid() }))
+    .output(z.object({ data: CardSchema })),
+
+  // Patch shape: null on a field means "leave unchanged" (COALESCE semantics).
+  // To clear a basic field, send an explicit empty string. extrasPatch is
+  // shallow-merged into exploration_extras via JSONB || on the server.
+  updateFields: oc
+    .route({ method: 'PATCH', path: '/cards/{cardId}/fields', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        cardId: z.string().uuid(),
+        patch: z.object({
+          headword: z.string().nullable().optional(),
+          sense: z.string().nullable().optional(),
+          surfaceForm: z.string().nullable().optional(),
+          translation: z.string().nullable().optional(),
+          definition: z.string().nullable().optional(),
+          targetExample: z.string().nullable().optional(),
+          nativeExample: z.string().nullable().optional(),
+          extrasPatch: z.record(z.string(), z.unknown()).nullable().optional(),
+        }),
+      })
+    )
+    .output(z.object({ data: CardSchema })),
 } as const

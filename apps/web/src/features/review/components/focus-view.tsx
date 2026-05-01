@@ -1,30 +1,66 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react'
-import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { useGetCard, useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Sparkles,
+  X,
+} from 'lucide-react'
+import {
+  useExploreCard,
+  useGetCard,
+  useListCardsBySession,
+  useTextSegmentsWindow,
+  useUpdateCardStatus,
+} from '../api/review-hooks'
+import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
-import { EditableFrontBack } from './editable-front-back'
+import { EditableCardFields } from './editable-card-fields'
 import { PerCardChat } from './per-card-chat'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
 import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
 
-const computeDefaults = (card: Card): { front: string; back: string } => {
-  const surface = card.surfaceForm
-  const headword = card.headword
-  const translation = (card.fullExploration?.translation as string | undefined) ?? ''
-  const contextExample = card.fullExploration?.context_example as { target?: unknown; native?: unknown } | undefined
-  const targetExample = typeof contextExample?.target === 'string' ? contextExample.target : ''
-  const nativeExample = typeof contextExample?.native === 'string' ? contextExample.native : ''
-  // Backward-compat for cards processed before context_example existed.
-  const examples = card.fullExploration?.examples
-  const fallbackTarget =
-    targetExample || (Array.isArray(examples) && typeof examples[0] === 'string' ? (examples[0] as string) : '')
-  const front = headword || surface
-  const back = [translation, fallbackTarget, nativeExample].filter((s) => s && s.trim().length > 0).join('\n\n')
-  return { front, back }
+type ContextWindowProps = {
+  textTrackId: string
+  segmentId: string
+}
+
+const SurroundingContextBlock = ({ textTrackId, segmentId }: ContextWindowProps) => {
+  const { t } = useLingui()
+  const [open, setOpen] = useState(false)
+  const { data } = useTextSegmentsWindow({ textTrackId, segmentId, radius: 2 })
+
+  return (
+    <div className='mb-3'>
+      <button
+        type='button'
+        onClick={() => setOpen((v) => !v)}
+        className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs font-semibold tracking-wide uppercase'
+      >
+        {open ? <ChevronDown className='h-3 w-3' /> : <ChevronRight className='h-3 w-3' />}
+        {t`Context`}
+      </button>
+      {open && data && (
+        <div className='border-muted bg-muted/30 mt-2 rounded-md border px-3 py-2 text-sm'>
+          {data.data.map((seg) => {
+            const isFocus = seg.id === data.centerSegmentId
+            return (
+              <div key={seg.id} className={isFocus ? 'font-medium' : 'text-muted-foreground'}>
+                {isFocus ? `> ${seg.text}` : seg.text}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export const FocusView = () => {
@@ -34,7 +70,9 @@ export const FocusView = () => {
 
   const { data: card, isLoading } = useGetCard(cardId)
   const { data: cards } = useListCardsBySession(sessionId)
+  const { data: session } = useGetStudySession(sessionId)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
+  const { mutate: exploreCard, isPending: isExploring } = useExploreCard(sessionId)
 
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
@@ -51,26 +89,47 @@ export const FocusView = () => {
   useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext })
 
   if (isLoading) {
-    return <div className='mx-auto max-w-3xl px-4 py-6 text-sm text-gray-500'>{t`Loading card…`}</div>
+    return <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Loading card…`}</div>
   }
   if (!card) {
-    return <div className='mx-auto max-w-3xl px-4 py-6 text-sm text-gray-500'>{t`Card not found.`}</div>
+    return <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Card not found.`}</div>
   }
 
-  const defaults = computeDefaults(card)
   const isKept = card.status === 'kept'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
+  const hasExtras = Object.keys(card.explorationExtras ?? {}).length > 0
+  const hasBasicData = !!(
+    (card.translation && card.translation.trim().length > 0) ||
+    (card.definition && card.definition.trim().length > 0) ||
+    (card.targetExample && card.targetExample.trim().length > 0)
+  )
+  const sameLanguage =
+    !!session && session.nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
 
   return (
     <div className='flex h-full flex-col'>
       <div className='border-b bg-white px-4 py-3'>
-        <div className='mx-auto flex max-w-3xl items-center gap-3'>
-          <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
-            <ArrowLeft className='h-4 w-4' />
+        <div className='mx-auto flex max-w-4xl items-center gap-3'>
+          <Button variant='outline' size='sm' asChild>
+            <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
+              <ChevronLeft className='mr-1 h-4 w-4' />
+              {t`Triage`}
+            </Link>
           </Button>
-          <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
-            <ArrowRight className='h-4 w-4' />
+          <Button variant='outline' size='sm' asChild>
+            <Link to='/sessions/$sessionId' params={{ sessionId }} search={{ segment: card.segmentId }}>
+              <ExternalLink className='mr-1 h-4 w-4' />
+              {t`Open in subtitles`}
+            </Link>
           </Button>
+          <div className='flex items-center gap-1'>
+            <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
+              <ArrowLeft className='h-4 w-4' />
+            </Button>
+            <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
+              <ArrowRight className='h-4 w-4' />
+            </Button>
+          </div>
           <div className='flex-1 text-sm text-gray-600'>
             {(() => {
               const position = cursor.index + 1
@@ -96,34 +155,44 @@ export const FocusView = () => {
               <X className='h-4 w-4' />
             </Button>
           </div>
-          <Button variant='ghost' asChild>
-            <Link to='/sessions/$sessionId/review' params={{ sessionId }}>{t`Back to triage`}</Link>
-          </Button>
         </div>
       </div>
 
       <div className='flex-1 overflow-y-auto px-4 py-4'>
-        <div className='mx-auto flex max-w-3xl flex-col gap-6'>
+        <div className='mx-auto flex max-w-4xl flex-col gap-6'>
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
-            <EditableFrontBack
-              key={card.id}
-              cardId={card.id}
-              defaultFront={defaults.front}
-              defaultBack={defaults.back}
-              initialFrontOverride={card.frontOverride}
-              initialBackOverride={card.backOverride}
-            />
+            {/* Remount when the card mutates server-side (e.g. chat called
+                update_card_fields) so the field useState picks up new values. */}
+            <EditableCardFields key={`${card.id}:${card.updatedAt}`} card={card} sameLanguage={sameLanguage} />
           </section>
 
           <section>
+            {session?.textTrackId && (
+              <SurroundingContextBlock textTrackId={session.textTrackId} segmentId={card.segmentId} />
+            )}
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
-            {Object.keys(card.fullExploration ?? {}).length === 0 ? (
-              <p className='text-muted-foreground text-sm'>
-                {t`No exploration yet — this card was suggested by the difficult-words pass and has not been deeply explored.`}
-              </p>
+            {hasExtras ? (
+              <FullExplorationRenderer card={card} />
             ) : (
-              <FullExplorationRenderer exploration={card.fullExploration ?? {}} />
+              <div className='flex flex-col items-start gap-3'>
+                <p className='text-muted-foreground text-sm'>
+                  {isExploring
+                    ? t`Generating full exploration… this takes a few seconds.`
+                    : hasBasicData
+                      ? t`Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more.`
+                      : t`This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it.`}
+                </p>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => exploreCard({ cardId: card.id })}
+                  disabled={isExploring}
+                >
+                  <Sparkles className='mr-1 h-4 w-4' />
+                  {isExploring ? t`Generating…` : t`Generate full exploration`}
+                </Button>
+              </div>
             )}
           </section>
 

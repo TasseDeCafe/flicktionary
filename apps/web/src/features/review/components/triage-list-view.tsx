@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from '@tanstack/react-router'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
+import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
 import { useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
@@ -19,12 +20,27 @@ const matchesSearch = (card: Card, q: string): boolean => {
 
 export const TriageListView = () => {
   const { t } = useLingui()
+  const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/' })
   const { data: cards, isLoading } = useListCardsBySession(sessionId)
+  const { data: session } = useGetStudySession(sessionId)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
+  const warnings = session?.processingWarnings ?? []
 
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search.trim(), 200)
+
+  const firstNavigableCardId = useMemo(() => {
+    return (cards ?? []).find((c) => c.status !== 'auto_rejected')?.id ?? null
+  }, [cards])
+
+  const handleReviewCards = () => {
+    if (!firstNavigableCardId) return
+    void navigate({
+      to: '/sessions/$sessionId/review/$cardId',
+      params: { sessionId, cardId: firstNavigableCardId },
+    })
+  }
 
   const grouped = useMemo(() => {
     const all = cards ?? []
@@ -54,18 +70,32 @@ export const TriageListView = () => {
             </Button>
             <h1 className='text-xl font-semibold'>{t`Triage`}</h1>
           </div>
-          <Input
-            type='search'
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t`Search…`}
-            className='max-w-xs'
-          />
+          <Button variant='outline' size='sm' onClick={handleReviewCards} disabled={!firstNavigableCardId}>
+            {t`Review cards`}
+            <ChevronRight className='ml-1 h-4 w-4' />
+          </Button>
+        </div>
+        <div className='mx-auto mt-3 max-w-4xl'>
+          <Input type='search' value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t`Search…`} />
         </div>
       </div>
 
       <div className='flex-1 overflow-y-auto px-4 py-4'>
         <div className='mx-auto max-w-4xl'>
+          {warnings.length > 0 && (
+            <div className='mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm'>
+              <div className='font-medium text-amber-800'>{t`Processing warnings`}</div>
+              <ul className='mt-1 list-disc pl-5 text-amber-700'>
+                {warnings.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+              <p className='text-muted-foreground mt-2 text-xs'>
+                {t`Go back to the subtitles view and click Retry processing to try again.`}
+              </p>
+            </div>
+          )}
+
           {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading cards…`}</p>}
 
           {!isLoading && (cards?.length ?? 0) === 0 && (

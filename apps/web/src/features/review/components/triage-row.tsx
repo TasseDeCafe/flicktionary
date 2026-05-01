@@ -5,11 +5,7 @@ import { Check, X } from 'lucide-react'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
-const getDefinition = (card: Card): string => {
-  const def = card.fullExploration?.definition
-  if (typeof def === 'string') return def
-  return ''
-}
+const getBackPreview = (card: Card): string => card.translation || card.definition || ''
 
 type Props = {
   sessionId: string
@@ -21,7 +17,7 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
   const { t } = useLingui()
   const isKept = card.status === 'kept'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
-  const definition = getDefinition(card)
+  const preview = getBackPreview(card)
 
   return (
     <div className='flex items-start gap-3 border-b py-3'>
@@ -31,12 +27,12 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
           params={{ sessionId, cardId: card.id }}
           className='text-base font-medium hover:underline'
         >
-          {card.surfaceForm}
+          {card.headword || card.surfaceForm}
         </Link>
-        {card.headword && card.headword !== card.surfaceForm && (
-          <span className='text-muted-foreground ml-2 text-sm'>({card.headword})</span>
+        {card.headword && card.surfaceForm && card.headword !== card.surfaceForm && (
+          <span className='text-muted-foreground ml-2 text-sm'>({card.surfaceForm})</span>
         )}
-        {definition && <p className='mt-1 line-clamp-2 text-sm'>{definition}</p>}
+        {preview && <p className='mt-1 text-sm'>{preview}</p>}
       </div>
       <div className='flex shrink-0 gap-1'>
         <Button

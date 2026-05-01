@@ -1,7 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import type { ReactNode } from 'react'
-
-type Exploration = Record<string, unknown>
+import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 const Section = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className='border-b py-3'>
@@ -27,31 +26,32 @@ const asString = (v: unknown): string | null => {
 }
 
 type Props = {
-  exploration: Exploration
+  card: Card
 }
 
-export const FullExplorationRenderer = ({ exploration }: Props) => {
+export const FullExplorationRenderer = ({ card }: Props) => {
   const { t } = useLingui()
-  const definition = asString(exploration.definition)
-  const examplesNode = renderInlineList(exploration.examples)
-  const ipa = asString(exploration.ipa)
-  const frequency = asString(exploration.frequency)
-  const moreFrequentSynonym = asString(exploration.more_frequent_synonym)
-  const regionalism = asString(exploration.regionalism)
-  const register = asString(exploration.register)
-  const registerAlternatives = exploration.register_alternatives as
+  const extras = card.explorationExtras ?? {}
+
+  const sense = asString(card.sense)
+  const definition = asString(card.definition)
+  const translation = asString(card.translation)
+  const targetExample = asString(card.targetExample)
+  const nativeExample = asString(card.nativeExample)
+
+  const ipa = asString(extras.ipa)
+  const frequency = asString(extras.frequency)
+  const moreFrequentSynonym = asString(extras.more_frequent_synonym)
+  const regionalism = asString(extras.regionalism)
+  const register = asString(extras.register)
+  const registerAlternatives = extras.register_alternatives as
     | { more_formal?: string | null; less_formal?: string | null }
     | undefined
-  const collocationsNode = renderInlineList(exploration.collocations)
-  const etymology = asString(exploration.etymology)
-  const l1Notes = asString(exploration.l1_notes)
-  const notes = asString(exploration.notes)
-  const translation = asString(exploration.translation)
-  const contextSegment = asString(exploration.context_segment)
-  const sense = asString(exploration.sense)
-  const contextExample = exploration.context_example as { target?: unknown; native?: unknown } | undefined
-  const contextExampleTarget = typeof contextExample?.target === 'string' ? contextExample.target : null
-  const contextExampleNative = typeof contextExample?.native === 'string' ? contextExample.native : null
+  const collocationsNode = renderInlineList(extras.collocations)
+  const etymology = asString(extras.etymology)
+  const l1Notes = asString(extras.l1_notes)
+  const notes = asString(extras.notes)
+  const contextSegment = asString(extras.context_segment)
 
   return (
     <div className='flex flex-col'>
@@ -63,13 +63,12 @@ export const FullExplorationRenderer = ({ exploration }: Props) => {
       {sense && <Section label={t`Sense`}>{sense}</Section>}
       {definition && <Section label={t`Definition`}>{definition}</Section>}
       {translation && <Section label={t`Translation`}>{translation}</Section>}
-      {(contextExampleTarget || contextExampleNative) && (
+      {(targetExample || nativeExample) && (
         <Section label={t`Example`}>
-          {contextExampleTarget && <p>{contextExampleTarget}</p>}
-          {contextExampleNative && <p className='text-muted-foreground'>{contextExampleNative}</p>}
+          {targetExample && <p>{targetExample}</p>}
+          {nativeExample && <p className='text-muted-foreground'>{nativeExample}</p>}
         </Section>
       )}
-      {examplesNode && <Section label={t`More examples`}>{examplesNode}</Section>}
       {ipa && <Section label={t`IPA`}>{ipa}</Section>}
       {frequency && <Section label={t`Frequency`}>{frequency}</Section>}
       {register && <Section label={t`Register`}>{register}</Section>}

@@ -166,6 +166,31 @@ const setTapToTranslateEnabled = async (userId: string, enabled: boolean): Promi
   }
 }
 
+const getLlmHighlightsEnabled = async (userId: string): Promise<boolean> => {
+  try {
+    const result = (await sql`
+      SELECT llm_highlights_enabled FROM public.users WHERE id = ${userId}
+    `) as { llm_highlights_enabled: boolean }[]
+    // Default true: existing users keep the prior behavior.
+    return result[0]?.llm_highlights_enabled ?? true
+  } catch (e) {
+    logCustomErrorMessageAndError(`getLlmHighlightsEnabled, userId = ${userId}`, e)
+    return true
+  }
+}
+
+const setLlmHighlightsEnabled = async (userId: string, enabled: boolean): Promise<boolean> => {
+  try {
+    const result = await sql`
+      UPDATE public.users SET llm_highlights_enabled = ${enabled} WHERE id = ${userId}
+    `
+    return result.count === 1
+  } catch (e) {
+    logCustomErrorMessageAndError(`setLlmHighlightsEnabled, userId = ${userId}`, e)
+    return false
+  }
+}
+
 export interface UsersRepositoryInterface {
   insertUser: (
     id: string,
@@ -187,6 +212,8 @@ export interface UsersRepositoryInterface {
   setNativeLanguage: (userId: string, nativeLanguage: string) => Promise<boolean>
   getTapToTranslateEnabled: (userId: string) => Promise<boolean>
   setTapToTranslateEnabled: (userId: string, enabled: boolean) => Promise<boolean>
+  getLlmHighlightsEnabled: (userId: string) => Promise<boolean>
+  setLlmHighlightsEnabled: (userId: string, enabled: boolean) => Promise<boolean>
 }
 
 export const UsersRepository = (): UsersRepositoryInterface => {
@@ -201,5 +228,7 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setNativeLanguage,
     getTapToTranslateEnabled,
     setTapToTranslateEnabled,
+    getLlmHighlightsEnabled,
+    setLlmHighlightsEnabled,
   }
 }

@@ -7,15 +7,14 @@ import { HighlightsRepositoryInterface } from '../../transport/database/highligh
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
 import { generateL1InterferenceNotes } from '../../transport/third-party/anthropic/passes/generate-l1-interference-notes'
-import { difficultWordsPass, DifficultChunk } from '../../transport/third-party/anthropic/passes/difficult-words-pass'
 import {
-  fullExplorationPass,
-  FullExploration,
-} from '../../transport/third-party/anthropic/passes/full-exploration-pass'
-import { CardFullExplorationJson } from '../../transport/database/cards/cards-repository'
-import { selectSurroundingSegments, formatSurroundingSegments } from './select-surrounding-segments'
+  basicDataPass,
+  BasicDataChunk,
+  HighlightInput,
+} from '../../transport/third-party/anthropic/passes/basic-data-pass'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -26,6 +25,7 @@ export type ProcessingDependencies = {
   cardsRepository: CardsRepositoryInterface
   l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  usersRepository: UsersRepositoryInterface
 }
 
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
@@ -44,6 +44,7 @@ export const processSession = async (
     cardsRepository,
     l1InterferenceNotesRepository,
     userLookupsRepository,
+    usersRepository,
   } = deps
 
   try {
@@ -61,13 +62,6 @@ export const processSession = async (
       cardsRepository.listBySessionId(sessionId),
     ])
 
-    // Idempotency markers — let users add new highlights to an already-processed
-    // session and re-run without duplicating work.
-    const hasLlmSuggestedCards = existingCards.some((c) => c.highlight_id === null)
-    const processedHighlightIds = new Set(
-      existingCards.filter((c) => c.highlight_id !== null).map((c) => c.highlight_id as string)
-    )
-
     if (!contentSource || !track || segments.length === 0) {
       await studySessionsRepository.markFailed(sessionId, userId)
       logWithSentry({
@@ -76,6 +70,16 @@ export const processSession = async (
       })
       return
     }
+
+    // Idempotency markers — let users add new highlights to an already-processed
+    // session and re-run without duplicating work. The basic-data pass is a
+    // no-op when LLM-suggested cards already exist AND every highlight has a card.
+    const hasLlmSuggestedCards = existingCards.some((c) => c.highlight_id === null)
+    const processedHighlightIds = new Set(
+      existingCards.filter((c) => c.highlight_id !== null).map((c) => c.highlight_id as string)
+    )
+    const allHighlightsCovered = highlights.every((h) => processedHighlightIds.has(h.id))
+    const skipBasicDataPass = hasLlmSuggestedCards && allHighlightsCovered
 
     // 1. Movie context blob — generate if missing.
     let contextBlob = session.context_blob
@@ -109,95 +113,105 @@ export const processSession = async (
       }
     }
 
-    const baseMethodologyArgs = {
-      nativeLanguage: session.native_language,
-      targetLanguage: session.target_language,
-      cefrLevel: session.cefr_level,
-      movieContextBlob: contextBlob,
-      l1InterferenceNotes: l1Row.notes,
-    }
+    const llmHighlightsEnabled = await usersRepository.getLlmHighlightsEnabled(userId)
 
-    // 3. Difficult-words pass — produces ~25 chunks, with belowCefr flagged for auto-rejection.
-    const excludedHeadwordSenses = await userLookupsRepository.listHeadwordSensesForLanguage(
-      userId,
-      session.target_language
-    )
-    const segmentInputs = segments.map((s) => ({ id: s.id, index: s.index, text: s.text }))
-    const segmentIdSet = new Set(segments.map((s) => s.id))
+    // When LLM discovery is off, the only point of running the pass is to
+    // populate basic data for any new user highlight. With no new highlights
+    // and no need to discover, there's nothing to do.
+    const newHighlights: HighlightInput[] = highlights
+      .filter((h) => !processedHighlightIds.has(h.id))
+      .map((h) => ({
+        highlightId: h.id,
+        segmentId: h.start_segment_id,
+        selectionText: h.selection_text,
+        note: h.note,
+        presetTags: h.preset_tags,
+      }))
 
-    let difficultChunks: DifficultChunk[] = []
-    if (!hasLlmSuggestedCards) {
+    const llmDiscoveryWanted = llmHighlightsEnabled && !hasLlmSuggestedCards
+    const shouldCallPass = !skipBasicDataPass && (llmDiscoveryWanted || newHighlights.length > 0)
+
+    if (shouldCallPass) {
+      const excludedHeadwordSenses = await userLookupsRepository.listHeadwordSensesForLanguage(
+        userId,
+        session.target_language
+      )
+      const segmentInputs = segments.map((s) => ({ id: s.id, index: s.index, text: s.text }))
+      const segmentIdSet = new Set(segments.map((s) => s.id))
+
+      let chunks: BasicDataChunk[] = []
       try {
-        difficultChunks = await difficultWordsPass({
-          ...baseMethodologyArgs,
+        chunks = await basicDataPass({
+          nativeLanguage: session.native_language,
+          targetLanguage: session.target_language,
+          cefrLevel: session.cefr_level,
+          movieContextBlob: contextBlob,
+          l1InterferenceNotes: l1Row.notes,
           segments: segmentInputs,
+          highlights: newHighlights,
           excludedHeadwordSenses,
+          llmDiscoveryEnabled: llmDiscoveryWanted,
         })
       } catch (e) {
-        logCustomErrorMessageAndError(`difficultWordsPass failed, sessionId = ${sessionId}`, e)
+        logCustomErrorMessageAndError(`basicDataPass failed, sessionId = ${sessionId}`, e)
         await studySessionsRepository.appendProcessingWarning(
           sessionId,
           userId,
-          `Difficult-words pass failed: ${e instanceof Error ? e.message : String(e)}`
+          `Basic-data pass failed: ${e instanceof Error ? e.message : String(e)}`
         )
       }
-    }
 
-    for (const chunk of difficultChunks) {
-      if (!segmentIdSet.has(chunk.segmentId)) {
-        // The model occasionally invents IDs; skip rather than violate FK.
-        continue
-      }
-      await cardsRepository.insertCard({
-        studySessionId: sessionId,
-        highlightId: null,
-        segmentId: chunk.segmentId,
-        headword: chunk.headword,
-        sense: chunk.sense,
-        surfaceForm: chunk.surfaceForm,
-        fullExploration: {},
-        status: chunk.belowCefr ? 'auto_rejected' : 'pending',
-      })
-    }
+      // Drop LLM-source rows on re-process (already-have-LLM-cards case) or
+      // when the user has turned off LLM discovery entirely.
+      const filteredChunks =
+        hasLlmSuggestedCards || !llmHighlightsEnabled ? chunks.filter((c) => c.source === 'highlight') : chunks
 
-    // 4. Per-highlight full exploration pass — one model call per highlight, with ±10 surrounding segments.
-    for (const highlight of highlights) {
-      if (processedHighlightIds.has(highlight.id)) continue
-      try {
-        const surrounding = await selectSurroundingSegments(
-          session.text_track_id,
-          highlight.start_segment_id,
-          textSegmentsRepository
-        )
-        const surroundingFormatted = formatSurroundingSegments(surrounding, highlight.start_segment_id)
+      // Track which highlights we've created cards for, so we can fall back to
+      // a minimal stub for any highlight the model dropped on the floor.
+      const coveredHighlightIds = new Set<string>()
 
-        const exploration: FullExploration = await fullExplorationPass({
-          ...baseMethodologyArgs,
-          surfaceForm: highlight.selection_text,
-          surroundingSegments: surroundingFormatted,
-          userNote: highlight.note,
-          presetTags: highlight.preset_tags,
-        })
+      for (const chunk of filteredChunks) {
+        if (!segmentIdSet.has(chunk.segmentId)) continue
+
+        if (chunk.source === 'highlight' && chunk.highlightId) {
+          if (processedHighlightIds.has(chunk.highlightId)) continue
+          coveredHighlightIds.add(chunk.highlightId)
+        }
 
         await cardsRepository.insertCard({
           studySessionId: sessionId,
-          highlightId: highlight.id,
-          segmentId: highlight.start_segment_id,
-          headword: exploration.headword || highlight.selection_text,
-          sense: exploration.sense ?? '',
-          surfaceForm: exploration.surface_form || highlight.selection_text,
-          fullExploration: exploration as unknown as CardFullExplorationJson,
+          highlightId: chunk.source === 'highlight' ? (chunk.highlightId ?? null) : null,
+          segmentId: chunk.segmentId,
+          headword: chunk.headword,
+          sense: chunk.sense,
+          surfaceForm: chunk.surfaceForm,
+          translation: chunk.translation,
+          definition: chunk.definition,
+          targetExample: chunk.targetExample,
+          nativeExample: chunk.nativeExample,
+          explorationExtras: {},
+          status: chunk.belowCefr && chunk.source !== 'highlight' ? 'auto_rejected' : 'pending',
+        })
+      }
+
+      // Fallback: if the model failed to emit a row for a highlight, insert a
+      // minimal stub so the highlight isn't silently dropped.
+      for (const highlight of newHighlights) {
+        if (coveredHighlightIds.has(highlight.highlightId)) continue
+        await cardsRepository.insertCard({
+          studySessionId: sessionId,
+          highlightId: highlight.highlightId,
+          segmentId: highlight.segmentId,
+          headword: highlight.selectionText,
+          sense: '',
+          surfaceForm: highlight.selectionText,
+          translation: null,
+          definition: null,
+          targetExample: null,
+          nativeExample: null,
+          explorationExtras: {},
           status: 'pending',
         })
-      } catch (e) {
-        logCustomErrorMessageAndError(`fullExplorationPass failed, highlightId = ${highlight.id}`, e)
-        await studySessionsRepository.appendProcessingWarning(
-          sessionId,
-          userId,
-          `Full exploration failed for highlight "${highlight.selection_text}": ${
-            e instanceof Error ? e.message : String(e)
-          }`
-        )
       }
     }
 

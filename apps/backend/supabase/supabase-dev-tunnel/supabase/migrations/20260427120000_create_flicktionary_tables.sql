@@ -21,7 +21,8 @@ CREATE TYPE card_chat_role AS ENUM ('user', 'assistant');
 
 ALTER TABLE public.users
   ADD COLUMN native_language TEXT NULL,
-  ADD COLUMN tap_to_translate_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+  ADD COLUMN tap_to_translate_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN llm_highlights_enabled BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- =========================================================================
 -- content_sources
@@ -183,6 +184,16 @@ ALTER TABLE public.highlights ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
 -- cards
+--
+-- Basic columns (headword, sense, surface_form, translation, definition,
+-- target_example, native_example) are populated by the Step-1 basic-data
+-- pass during processing. exploration_extras is a partial JSONB bag holding
+-- the optional enrichment fields (ipa, frequency, more_frequent_synonym,
+-- regionalism, register, register_alternatives, collocations, etymology,
+-- l1_notes, notes, context_segment) and is populated only when the user
+-- explicitly clicks "Generate full exploration".
+-- translation and native_example are nullable so L1 = L2 sessions can leave
+-- them empty and rely on definition instead.
 -- =========================================================================
 
 CREATE TABLE public.cards (
@@ -191,11 +202,14 @@ CREATE TABLE public.cards (
   highlight_id UUID NULL,
   segment_id UUID NOT NULL,
   headword TEXT NOT NULL,
+  sense TEXT NOT NULL DEFAULT '',
   surface_form TEXT NOT NULL,
-  full_exploration JSONB NOT NULL DEFAULT '{}'::jsonb,
+  translation TEXT NULL,
+  definition TEXT NULL,
+  target_example TEXT NULL,
+  native_example TEXT NULL,
+  exploration_extras JSONB NOT NULL DEFAULT '{}'::jsonb,
   status card_status NOT NULL DEFAULT 'pending',
-  front_override TEXT NULL,
-  back_override TEXT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   CONSTRAINT cards_pkey PRIMARY KEY (id),
@@ -232,17 +246,19 @@ CREATE INDEX idx_card_chat_messages_card_id_created ON public.card_chat_messages
 ALTER TABLE public.card_chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
--- user_lookups (cross-source dedup)
+-- user_lookups (cross-source dedup; sense disambiguator lets the same
+-- headword be studied in multiple distinct senses)
 -- =========================================================================
 
 CREATE TABLE public.user_lookups (
   user_id UUID NOT NULL,
   target_language TEXT NOT NULL,
   headword TEXT NOT NULL,
+  sense TEXT NOT NULL DEFAULT '',
   first_card_id UUID NULL,
   exported_at TIMESTAMP WITH TIME ZONE NULL,
   count INTEGER NOT NULL DEFAULT 1,
-  CONSTRAINT user_lookups_pkey PRIMARY KEY (user_id, target_language, headword),
+  CONSTRAINT user_lookups_pkey PRIMARY KEY (user_id, target_language, headword, sense),
   CONSTRAINT user_lookups_user_id_fkey FOREIGN KEY (user_id)
     REFERENCES auth.users (id) ON DELETE CASCADE,
   CONSTRAINT user_lookups_first_card_id_fkey FOREIGN KEY (first_card_id)

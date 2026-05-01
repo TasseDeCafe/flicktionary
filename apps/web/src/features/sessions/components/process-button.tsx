@@ -1,32 +1,48 @@
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
-import { useProcessStudySession } from '../api/sessions-hooks'
+import { useGetUserPrefs, useProcessStudySession } from '../api/sessions-hooks'
 
 type Props = {
   sessionId: string
   status: string
   highlightCount: number
+  cardCount: number
   onProcessed?: () => void
 }
 
-export const ProcessButton = ({ sessionId, status, highlightCount, onProcessed }: Props) => {
+export const ProcessButton = ({ sessionId, status, highlightCount, cardCount, onProcessed }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
+  const { data: prefs } = useGetUserPrefs()
+  const llmHighlightsEnabled = prefs?.llmHighlightsEnabled ?? true
 
   // The orchestrator is idempotent: re-running on a processed/exported session
-  // only hits the per-highlight pass for highlights that don't yet have a card,
+  // only hits the basic-data pass for highlights that don't yet have a card,
   // so this same button doubles as "process new highlights" after the first run.
-  // First-pass with zero highlights is allowed — the difficult-words pass will
-  // surface LLM-suggested chunks based on the user's CEFR.
+  // First-pass with zero highlights is allowed *only* when LLM-suggested chunks
+  // are enabled — otherwise there's literally nothing to process. Re-process is
+  // also allowed when zero cards exist (previous run failed silently — the user
+  // needs a way to retry).
   const isReprocess = status === 'processed' || status === 'exported'
-  const canTrigger = status === 'active' || (isReprocess && highlightCount > 0)
-  const showFooter = status === 'active' || isReprocess
+  const isFailed = status === 'failed'
+  const noPriorOutput = cardCount === 0
+  const hasSomethingToProcess = highlightCount > 0 || llmHighlightsEnabled
+  const canTrigger =
+    (status === 'active' && hasSomethingToProcess) ||
+    (isFailed && hasSomethingToProcess) ||
+    (isReprocess && (highlightCount > 0 || (noPriorOutput && hasSomethingToProcess)))
+  const showFooter = status === 'active' || isReprocess || isFailed
 
   if (!showFooter) {
     return null
   }
 
   const hint = (() => {
+    if (!hasSomethingToProcess) {
+      return t`LLM-suggested chunks are off. Highlight at least one chunk to process this session.`
+    }
+    if (isFailed) return t`Previous run failed. Click to retry.`
+    if (isReprocess && noPriorOutput) return t`Previous run produced no cards. Click to retry.`
     if (status === 'active' && highlightCount === 0) {
       return t`No highlights — the LLM will suggest chunks based on your level.`
     }
@@ -36,6 +52,7 @@ export const ProcessButton = ({ sessionId, status, highlightCount, onProcessed }
 
   const label = (() => {
     if (isPending) return t`Starting…`
+    if (isFailed || (isReprocess && noPriorOutput)) return t`Retry processing`
     if (isReprocess) return t`Process new highlights`
     return t`Process`
   })()

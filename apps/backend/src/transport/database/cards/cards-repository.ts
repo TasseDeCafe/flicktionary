@@ -6,7 +6,7 @@ import { Tables, Database } from '../database.public.types'
 export type DbCard = Tables<'cards'>
 export type CardStatus = Database['public']['Enums']['card_status']
 
-export type CardFullExplorationJson = { readonly [key: string]: postgres.JSONValue | undefined }
+export type ExplorationExtras = { readonly [key: string]: postgres.JSONValue | undefined }
 
 export type CardInsertInput = {
   studySessionId: string
@@ -15,7 +15,11 @@ export type CardInsertInput = {
   headword: string
   sense: string
   surfaceForm: string
-  fullExploration: CardFullExplorationJson
+  translation: string | null
+  definition: string | null
+  targetExample: string | null
+  nativeExample: string | null
+  explorationExtras: ExplorationExtras
   status: CardStatus
 }
 
@@ -24,7 +28,9 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard | null> => {
     const result = (await sql`
       INSERT INTO public.cards (
         study_session_id, highlight_id, segment_id,
-        headword, sense, surface_form, full_exploration, status
+        headword, sense, surface_form,
+        translation, definition, target_example, native_example,
+        exploration_extras, status
       )
       VALUES (
         ${params.studySessionId},
@@ -33,7 +39,11 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard | null> => {
         ${params.headword},
         ${params.sense},
         ${params.surfaceForm},
-        ${sql.json(params.fullExploration)},
+        ${params.translation},
+        ${params.definition},
+        ${params.targetExample},
+        ${params.nativeExample},
+        ${sql.json(params.explorationExtras)},
         ${params.status}
       )
       RETURNING *
@@ -104,21 +114,43 @@ const updateStatus = async (id: string, status: CardStatus): Promise<DbCard | nu
   }
 }
 
-const updateOverrides = async (
-  id: string,
-  frontOverride: string | null,
-  backOverride: string | null
-): Promise<DbCard | null> => {
+// Patch shape for partial updates. `null` on a field means "leave the column
+// unchanged" (handled via COALESCE on the SQL side). To clear a basic field,
+// pass an explicit empty string. `extrasPatch` is shallow-merged into
+// exploration_extras via `||` jsonb concat.
+export type CardFieldsPatch = {
+  headword?: string | null
+  sense?: string | null
+  surfaceForm?: string | null
+  translation?: string | null
+  definition?: string | null
+  targetExample?: string | null
+  nativeExample?: string | null
+  extrasPatch?: Record<string, unknown> | null
+}
+
+const updateFields = async (id: string, patch: CardFieldsPatch): Promise<DbCard | null> => {
   try {
+    const extras = patch.extrasPatch ?? null
+    const extrasJson = extras ? sql.json(extras as unknown as postgres.JSONValue) : null
     const result = (await sql`
       UPDATE public.cards
-      SET front_override = ${frontOverride}, back_override = ${backOverride}, updated_at = NOW()
+      SET
+        headword       = COALESCE(${patch.headword ?? null}, headword),
+        sense          = COALESCE(${patch.sense ?? null}, sense),
+        surface_form   = COALESCE(${patch.surfaceForm ?? null}, surface_form),
+        translation    = COALESCE(${patch.translation ?? null}, translation),
+        definition     = COALESCE(${patch.definition ?? null}, definition),
+        target_example = COALESCE(${patch.targetExample ?? null}, target_example),
+        native_example = COALESCE(${patch.nativeExample ?? null}, native_example),
+        exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb),
+        updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
     `) as DbCard[]
     return result[0] ?? null
   } catch (e) {
-    logCustomErrorMessageAndError(`cards.updateOverrides, id = ${id}`, e)
+    logCustomErrorMessageAndError(`cards.updateFields, id = ${id}`, e)
     return null
   }
 }
@@ -133,7 +165,7 @@ export interface CardsRepositoryInterface {
   findById: (id: string) => Promise<DbCard | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbCard | null>
   updateStatus: (id: string, status: CardStatus) => Promise<DbCard | null>
-  updateOverrides: (id: string, frontOverride: string | null, backOverride: string | null) => Promise<DbCard | null>
+  updateFields: (id: string, patch: CardFieldsPatch) => Promise<DbCard | null>
   listKeptForSession: (studySessionId: string) => Promise<DbCard[]>
 }
 
@@ -144,7 +176,7 @@ export const CardsRepository = (): CardsRepositoryInterface => {
     findById,
     findByIdForUser,
     updateStatus,
-    updateOverrides,
+    updateFields,
     listKeptForSession,
   }
 }

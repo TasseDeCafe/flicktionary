@@ -58,27 +58,149 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
   - **`sense` prompt tuning.** First pass had the LLM writing 11+ word definitions in `sense` for monosemous terms ("medical device that delivers an electric shock to restore heart rhythm"). Tightened in both passes to "1-5 words, NOT a definition, the definition belongs in `definition`" with a worked monosemous example (`desfibrilador` → `medical device`). Output is short paraphrases now. Cosmetically still looks gloss-like for monosemous terms but works fine for dedup.
   - **Model swap.** `MODEL_SONNET` was renamed to `MODEL_OPUS = 'claude-opus-4-7'` in `anthropic-client.ts` and all heavy-pass call sites. Haiku reserved for tap-to-translate. ~66¢/movie was observed (one full-SRT difficult-words pass + context-blob + L1 + per-highlight full-exploration calls). Token-cost diagnostic logger was added during this session and removed after measurement; the prompt-cache breakpoint on the methodology + language-instructions + L1 + context-blob prefix is working as designed (per-highlight full-exploration calls reuse the cached prefix within a session).
 
+- **Defer-full-exploration refactor (2026-05-01)** — Big architectural shift.
+  The previous pipeline ran a heavy per-highlight `full_exploration_pass` for
+  every card during processing, populating a single `full_exploration` JSONB
+  blob. We split that: cards now arrive from processing with **basic data
+  only** (`headword`, `sense`, `surface_form`, `translation`, `definition`,
+  `target_example`, `native_example`), and the deep enrichment is opt-in
+  per card via `Generate full exploration`. Don't re-introduce any of the
+  prior behavior.
+  - **Migration consolidation.** Both prior Flicktionary migrations
+    (`20260427120000_create_flicktionary_tables.sql` and
+    `20260430120000_sense_aware_dedup.sql`) collapsed into a single migration
+    with the final shape. Pre-launch, no production data — applied via
+    `supabase db reset` once, then later schema deltas applied as targeted
+    `ALTER`s on the running local DB (db reset is denied because it would
+    nuke local Flicktionary work).
+  - **`cards` shape.** `full_exploration jsonb` removed. Basic columns
+    promoted: `translation`, `definition`, `target_example`, `native_example`
+    (all nullable so L1 = L2 sessions can leave translation/native blank).
+    Optional enrichment lives in `exploration_extras jsonb DEFAULT '{}'`.
+    `front_override` / `back_override` columns dropped — see "Drop card
+    overrides" below.
+  - **Basic-data pass replaces difficult-words pass.**
+    `apps/backend/src/transport/third-party/anthropic/passes/basic-data-pass.ts`
+    is one Anthropic call that does both LLM chunk discovery AND emits one
+    row per user highlight. Each row has `source: 'llm' | 'highlight'` plus
+    the basic data populated. Streaming is mandatory (Anthropic SDK enforces
+    streaming for any request whose worst-case duration > 10 minutes — the
+    32k-token output ceiling on long English tracks crosses that). Uses
+    `messages.stream(...).finalMessage()`. The `llmDiscoveryEnabled` arg
+    flips the prompt to highlight-only mode when the user has the
+    LLM-suggested chunks pref off. `parseBasicDataChunks` is exported and
+    fixture-tested.
+  - **Enrichment pass** (renamed from `full-exploration-pass`):
+    `apps/backend/src/transport/third-party/anthropic/passes/enrichment-pass.ts`.
+    Required output keys are the basic columns (the model may refine them);
+    optional keys all live in an `extras` object that maps 1:1 onto
+    `cards.exploration_extras`. Triggered manually via
+    `cards.explore` from the focus view's `Generate full exploration`
+    button — no longer fires during processing.
+  - **`cards` repository: typed basic-data inserts + `updateFields`.**
+    `insertCard` takes the typed basic columns. `updateExploration` removed.
+    New `updateFields(cardId, patch)` uses `COALESCE` semantics — `null` on
+    a key means "leave column unchanged", explicit `''` clears, and
+    `extrasPatch` shallow-merges into `exploration_extras` via JSONB `||`.
+  - **Orchestrator:** `process-session.ts` now does the single combined pass
+    in step 3. Idempotent re-process: skips when LLM-suggested cards exist
+    AND every highlight has a card. When `llm_highlights_enabled = false`
+    and there are no new highlights, the call is skipped entirely. Falls
+    back to a minimal stub card if the model fails to emit a row for a
+    highlight (so the highlight is never silently dropped).
+  - **Card chat tool calls.** `run-card-chat.ts` got an `update_card_fields`
+    tool. When the LLM emits it, the server applies the patch via
+    `cardsRepository.updateFields` and appends `_Updated: <fields>_` italic
+    footer to the persisted assistant message. Chat seed prompt instructs
+    the model: "When the learner asks you to change something, call the
+    tool with only the fields that should change; confirm briefly." The
+    frontend `useSendChatMessage.onSuccess` invalidates `cards.get` so the
+    focus view's field inputs pick up the new values inline. (Prior version
+    cleared overrides on touched-side fields; that logic was removed when
+    overrides were dropped.)
+
+- **Drop card front/back overrides (2026-05-01).** The textarea-based front/back
+  with debounced override-save proved buggy (stale state autosave would
+  shadow chat-driven updates indefinitely). Refactored to **field-level
+  editing**: `EditableFrontBack` removed; new `EditableCardFields` renders
+  a labeled input per basic column with a 600ms debounced PATCH to
+  `cards.updateFields`. The basic columns are the single source of truth.
+  `front_override` / `back_override` columns dropped from the schema; the
+  `cards.updateOverrides` contract endpoint, repo method, hook, and
+  build-csv override fallback all removed. `EditableCardFields` is mounted
+  with `key={`${card.id}:${card.updatedAt}`}` so server-side mutations
+  (chat tool) remount it fresh — race-free.
+
+- **`llm_highlights_enabled` user pref (2026-05-01).** New boolean column on
+  `users`, default `true`. Toggle in Settings → Processing card. When off,
+  `basicDataPass` is told to emit only highlight rows; if there are zero
+  highlights the call is skipped entirely. `process-button.tsx` reads the
+  pref and disables the button (with explanatory copy) when both
+  `llm_highlights_enabled = false` AND `highlightCount === 0`. Backend
+  plumbing: `usersRepository.{get,set}LlmHighlightsEnabled`,
+  `userPrefs.setLlmHighlightsEnabled` contract, surfaced on `getPrefs`.
+  Frontend: `useSetLlmHighlightsEnabled`, `LlmHighlightsToggle` component
+  mirroring `TapToTranslateToggle`.
+
+- **Misc UX improvements (2026-05-01):**
+  - **Surrounding-context block** above the Full Exploration heading,
+    collapsed by default. Fetches ±2 segments from the new
+    `textSegments.getWindow({ trackId, segmentId, radius })` endpoint;
+    focus line marked with `>` and `font-medium`. Card section sits at the
+    top of the focus view so basic data is editable before scrolling.
+  - **`Open in subtitles` deep-link** in focus view header. Navigates to
+    `/sessions/$id?segment=<id>`; `session-view.tsx` reads the search param
+    via TanStack Router `validateSearch`, scrolls the segment row into view
+    on the next rAF, and applies a 1.5s yellow flash via a `flash` prop on
+    `SegmentRow`.
+  - **Triage row preview** uses `translation || definition` (no line-clamp).
+  - **Per-card chat no longer auto-scrolls** the focus view to the bottom
+    on mount or after each turn; the user keeps the card visible.
+  - **CSV export button disables** while any explore/chat mutation is in
+    flight, via `useIsMutating({ mutationKey: orpcQuery.cards.explore.key() })`.
+  - **`textSegments.getWindow.input.radius`** uses `z.coerce.number()`
+    because GET query params arrive as strings.
+  - **Process button retry path.** Allows re-process when the previous run
+    produced zero cards (silent failure case) or status is `failed`. Hint
+    + label switch to "Retry processing" / "Previous run produced no cards.
+    Click to retry." Reads `cardCount` from `useListCardsBySession`.
+  - **Processing warnings surfaced** in `triage-list-view.tsx` as an amber
+    banner above the list, so silent pass failures are visible to the user
+    instead of producing an unexplained empty triage.
+  - **`basic-data-pass` max_tokens** bumped to 32k (Opus 4.x native ceiling).
+    Error path emits `stop_reason` so future truncations show as
+    "output truncated at max_tokens" rather than an opaque parse error.
+
 **Remaining:**
 - Phase 10 — End-to-end verification (manual golden path + lint + types + vitest).
-- Apply the `20260430120000_sense_aware_dedup.sql` migration locally (and to any deployed env) before testing.
+- Pricing/limits decision (the LLM passes are not free; ~66¢ per movie).
 
 ## Known cosmetic issues (defer to Phase 10 cleanup unless raised earlier)
 
-- (None outstanding as of 2026-04-30. Past entry — SRT markup leaking into rendered cues — was fixed in the post-Phase 9 quality pass; see above.)
+- (None outstanding as of 2026-05-01.)
 
 ## How to continue
 
 1. Read `SPEC.md` and the plan file at `/Users/sebastien/.claude/plans/i-would-like-to-wild-codd.md`.
 2. Run `pnpm check:types` and `pnpm lint` from the repo root to confirm we're starting clean.
 3. Pick up Phase 10 — Verification.
-   - **Apply the `20260430120000_sense_aware_dedup.sql` migration locally first** (the ~Phase-9.5 sense-aware dedup work shipped in the previous session needs the schema in place before re-processing any session; see Post-Phase 9 quality pass notes above). After applying, regenerate types from `supabase-dev-tunnel/` to confirm the hand-edited `sense` columns match.
-   - **Vitest unit tests** to add: `select-surrounding-segments`, csv builder escaping, `buildPromptContext` snapshot. (`srt-parser` already has 6 passing tests including the new tag-stripping case.)
+   - The schema is consolidated into the single
+     `20260427120000_create_flicktionary_tables.sql` migration. Pre-launch,
+     so a fresh `supabase db reset` is safe in principle — but if you have
+     in-progress local cards you care about, prefer applying targeted
+     `ALTER`s and regenerating types with
+     `doppler run -- supabase gen types typescript --local > database.public.types.ts`
+     from `supabase-dev-tunnel/`.
+   - **Vitest unit tests** to add: `select-surrounding-segments`, csv builder escaping, `buildPromptContext` snapshot. (`parseBasicDataChunks` and `srt-parser` already have passing tests.)
    - **Manual golden-path run** per `SPEC.md` / plan §Phase 10. Things worth poking at specifically:
      - Tap-to-translate (Settings → toggle on → mid-watch selection → `TapToTranslateSheet` shows the gloss; second tap of the same selection should be instant from cache).
      - Re-process flow (process a session, return to subtitles via `← Subtitles` or by clicking the session card again, add more highlights, click `Process new highlights`, confirm only the new highlights produced cards and the difficult-words section did not duplicate); CSV export still includes the freshly-processed cards.
      - **Process with zero highlights** — first-pass should be allowed and surface LLM-suggested chunks only.
      - **Spanish session at C1** — pick a film with strong regional flavor (e.g. *El secreto de sus ojos* for rioplatense). Confirm the difficult-words pass biases toward voseo / lunfardo / regional collocations, that headwords are in dictionary form (`fundirse con`, not `se fundía con`), and that B-level filler (`nunca más`, `según su costumbre`) is excluded.
-     - **Card front/back** — front shows the headword (dictionary form); back is `translation` + target-language example sentence + native-language translation of that sentence. Verify CSV columns match.
+     - **Card front/back** — front = `headword` + blank line + `target_example`; back = `translation || definition` + blank line + `native_example`. Edits in the focus view's per-field inputs flow into the basic columns directly (no overrides). Verify CSV columns match.
+     - **LLM-highlights toggle** — Settings → Processing → On/Off. With it off and zero highlights, the Process button is disabled with explanatory copy. With it off and ≥1 highlight, processing produces only highlight-source cards.
+     - **Generate full exploration** — kept card → focus view → click `Generate full exploration`. The `exploration_extras` populates and the renderer shows the optional sections (etymology, register, IPA, …).
+     - **Chat tool calls** — ask the assistant in chat to "rewrite the example sentence" or "use a different translation". The basic columns update server-side, the field inputs remount with the new values, and the assistant body shows `_Updated: <fields>_`.
      - **Cross-session dedup** — export a Spanish session that includes a polysemous word (`correr` with one sense). Start a second Spanish session containing `correr` in a different sense and process. The new sense should appear as a new card; the same sense should be excluded. Inspect `user_lookups` to confirm the composite PK `(user, lang, headword, sense)` lets both rows coexist.
      - **SRT markup** — import a track with `<i>...</i>` cues. Confirm rendered segments show plain text (not raw tags), that highlighting still aligns to the right characters, and that the LLM passes do not see markup.
 4. The TanStack Router route tree (`apps/web/src/app/routeTree.gen.ts`) regenerates on Vite startup — if you delete or add route files and need it regen'd without running dev, run `pnpm exec vite build --mode development` in `apps/web` for ~3 seconds in the background, then kill it.
