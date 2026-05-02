@@ -48,12 +48,12 @@ export const CefrPerLanguageList = ({ prefs }: Props) => {
         {prefs.map((p) => {
           const isRowPending = isPending && variables?.targetLanguage === p.targetLanguage
           return (
-            <li key={p.targetLanguage} className='flex items-center justify-between rounded-md border p-3'>
-              <div className='flex flex-col'>
-                <span className='font-medium'>{getLanguageName(p.targetLanguage)}</span>
-                <span className='text-muted-foreground text-xs uppercase'>{p.targetLanguage}</span>
-              </div>
-              <div className='flex items-center gap-1'>
+            <li
+              key={p.targetLanguage}
+              className='flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between'
+            >
+              <span className='font-medium'>{getLanguageName(p.targetLanguage)}</span>
+              <div className='grid w-full grid-cols-6 gap-1 sm:flex sm:w-auto sm:items-center'>
                 {LEVELS.map((lvl) => {
                   const active = lvl === p.cefrLevel
                   return (
