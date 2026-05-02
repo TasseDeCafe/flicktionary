@@ -24,10 +24,11 @@ import { Route as AuthenticatedRedirectToCheckOutPlanIntervalRouteImport } from 
 import { Route as AuthenticatedProfileDangerZoneRouteImport } from './routes/_authenticated/profile/danger-zone'
 import { Route as AuthenticatedPricingFreeTrialExplanationRouteImport } from './routes/_authenticated/pricing/free-trial-explanation'
 import { Route as AuthenticatedPricingCheckoutSuccessRouteImport } from './routes/_authenticated/pricing/checkout-success'
-import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/_app/settings'
-import { Route as AuthenticatedAppProfileRouteImport } from './routes/_authenticated/_app/profile'
 import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
+import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
 import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authenticated/_app/sessions/new'
+import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_authenticated/_app/more/languages'
+import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
@@ -112,27 +113,34 @@ const AuthenticatedPricingCheckoutSuccessRoute =
     path: '/pricing/checkout-success',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAppSettingsRoute =
-  AuthenticatedAppSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
-const AuthenticatedAppProfileRoute = AuthenticatedAppProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
 const AuthenticatedAppSessionsIndexRoute =
   AuthenticatedAppSessionsIndexRouteImport.update({
     id: '/sessions/',
     path: '/sessions/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppMoreIndexRoute =
+  AuthenticatedAppMoreIndexRouteImport.update({
+    id: '/more/',
+    path: '/more/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsNewRoute =
   AuthenticatedAppSessionsNewRouteImport.update({
     id: '/sessions/new',
     path: '/sessions/new',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppMoreLanguagesRoute =
+  AuthenticatedAppMoreLanguagesRouteImport.update({
+    id: '/more/languages',
+    path: '/more/languages',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppMoreAccountRoute =
+  AuthenticatedAppMoreAccountRouteImport.update({
+    id: '/more/account',
+    path: '/more/account',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppSessionsSessionIdIndexRoute =
@@ -166,8 +174,6 @@ export interface FileRoutesByFullPath {
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
-  '/profile': typeof AuthenticatedAppProfileRoute
-  '/settings': typeof AuthenticatedAppSettingsRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -176,7 +182,10 @@ export interface FileRoutesByFullPath {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
+  '/more/account': typeof AuthenticatedAppMoreAccountRoute
+  '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/more/': typeof AuthenticatedAppMoreIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -189,8 +198,6 @@ export interface FileRoutesByTo {
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login': typeof LoginIndexRoute
-  '/profile': typeof AuthenticatedAppProfileRoute
-  '/settings': typeof AuthenticatedAppSettingsRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -199,7 +206,10 @@ export interface FileRoutesByTo {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/pricing': typeof AuthenticatedPricingIndexRoute
   '/login/email': typeof LoginEmailIndexRoute
+  '/more/account': typeof AuthenticatedAppMoreAccountRoute
+  '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/more': typeof AuthenticatedAppMoreIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -215,8 +225,6 @@ export interface FileRoutesById {
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
-  '/_authenticated/_app/profile': typeof AuthenticatedAppProfileRoute
-  '/_authenticated/_app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/_authenticated/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/_authenticated/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -225,7 +233,10 @@ export interface FileRoutesById {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/_authenticated/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
+  '/_authenticated/_app/more/account': typeof AuthenticatedAppMoreAccountRoute
+  '/_authenticated/_app/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/_authenticated/_app/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -240,8 +251,6 @@ export interface FileRouteTypes {
     | '/admin-settings'
     | '/account/removed'
     | '/login/'
-    | '/profile'
-    | '/settings'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -250,7 +259,10 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/pricing/'
     | '/login/email/'
+    | '/more/account'
+    | '/more/languages'
     | '/sessions/new'
+    | '/more/'
     | '/sessions/'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId/'
@@ -263,8 +275,6 @@ export interface FileRouteTypes {
     | '/admin-settings'
     | '/account/removed'
     | '/login'
-    | '/profile'
-    | '/settings'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -273,7 +283,10 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/pricing'
     | '/login/email'
+    | '/more/account'
+    | '/more/languages'
     | '/sessions/new'
+    | '/more'
     | '/sessions'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId'
@@ -288,8 +301,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin-settings'
     | '/account/removed'
     | '/login/'
-    | '/_authenticated/_app/profile'
-    | '/_authenticated/_app/settings'
     | '/_authenticated/pricing/checkout-success'
     | '/_authenticated/pricing/free-trial-explanation'
     | '/_authenticated/profile/danger-zone'
@@ -298,7 +309,10 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/_authenticated/pricing/'
     | '/login/email/'
+    | '/_authenticated/_app/more/account'
+    | '/_authenticated/_app/more/languages'
     | '/_authenticated/_app/sessions/new'
+    | '/_authenticated/_app/more/'
     | '/_authenticated/_app/sessions/'
     | '/_authenticated/_app/sessions/$sessionId/processing'
     | '/_authenticated/_app/sessions/$sessionId/'
@@ -424,20 +438,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPricingCheckoutSuccessRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_app/settings': {
-      id: '/_authenticated/_app/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/_app/profile': {
-      id: '/_authenticated/_app/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedAppProfileRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
     '/_authenticated/_app/sessions/': {
       id: '/_authenticated/_app/sessions/'
       path: '/sessions'
@@ -445,11 +445,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSessionsIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/more/': {
+      id: '/_authenticated/_app/more/'
+      path: '/more'
+      fullPath: '/more/'
+      preLoaderRoute: typeof AuthenticatedAppMoreIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/new': {
       id: '/_authenticated/_app/sessions/new'
       path: '/sessions/new'
       fullPath: '/sessions/new'
       preLoaderRoute: typeof AuthenticatedAppSessionsNewRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/more/languages': {
+      id: '/_authenticated/_app/more/languages'
+      path: '/more/languages'
+      fullPath: '/more/languages'
+      preLoaderRoute: typeof AuthenticatedAppMoreLanguagesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/more/account': {
+      id: '/_authenticated/_app/more/account'
+      path: '/more/account'
+      fullPath: '/more/account'
+      preLoaderRoute: typeof AuthenticatedAppMoreAccountRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/_app/sessions/$sessionId/': {
@@ -484,9 +505,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
-  AuthenticatedAppProfileRoute: typeof AuthenticatedAppProfileRoute
-  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
+  AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
   AuthenticatedAppSessionsNewRoute: typeof AuthenticatedAppSessionsNewRoute
+  AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -495,9 +517,10 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
-  AuthenticatedAppProfileRoute: AuthenticatedAppProfileRoute,
-  AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
+  AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,
+  AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
   AuthenticatedAppSessionsNewRoute: AuthenticatedAppSessionsNewRoute,
+  AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:
     AuthenticatedAppSessionsSessionIdProcessingRoute,

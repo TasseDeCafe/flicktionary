@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ListChecks } from 'lucide-react'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   useGetStudySession,
@@ -176,47 +177,56 @@ export const SessionView = () => {
     closeMenu()
   }
 
-  if (isSessionLoading) {
-    return <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Loading session…`}</div>
-  }
-  if (!session) {
-    return <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Session not found.`}</div>
+  const closeToSessions = () => {
+    void navigate({ to: '/sessions' })
   }
 
+  if (isSessionLoading) {
+    return (
+      <ModalScreen onClose={closeToSessions} title={t`Session`}>
+        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Loading session…`}</div>
+      </ModalScreen>
+    )
+  }
+  if (!session) {
+    return (
+      <ModalScreen onClose={closeToSessions} title={t`Session`}>
+        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Session not found.`}</div>
+      </ModalScreen>
+    )
+  }
+
+  const movieTitle = session.contentSourceTitle ?? t`Untitled`
+  const titleNode = (
+    <span className='flex min-w-0 flex-col leading-tight'>
+      <span className='truncate text-base font-semibold'>
+        {movieTitle}
+        {session.contentSourceYear ? ` (${session.contentSourceYear})` : ''}
+      </span>
+      <span className='text-muted-foreground truncate text-xs font-normal'>
+        {session.targetLanguage.toUpperCase()} · {session.cefrLevel} ·{' '}
+        <span className='uppercase'>{session.status}</span>
+      </span>
+    </span>
+  )
+
   return (
-    <div className='flex h-full flex-col'>
+    <ModalScreen
+      onClose={closeToSessions}
+      title={titleNode}
+      rightSlot={
+        isProcessedOrExported && (
+          <Button variant='outline' size='sm' asChild>
+            <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
+              <ListChecks className='mr-1 h-4 w-4' />
+              {t`Triage`}
+            </Link>
+          </Button>
+        )
+      }
+    >
       <div className='border-b bg-white px-4 py-3'>
-        <div className='mx-auto flex max-w-4xl items-center gap-3'>
-          {session.contentSourcePosterUrl && (
-            <img
-              src={session.contentSourcePosterUrl}
-              alt={session.contentSourceTitle ?? ''}
-              className='h-14 w-10 shrink-0 rounded object-cover'
-              loading='lazy'
-            />
-          )}
-          <div className='min-w-0'>
-            <h1 className='truncate text-lg font-semibold'>
-              {session.contentSourceTitle ?? t`Untitled`}
-              {session.contentSourceYear ? ` (${session.contentSourceYear})` : ''}
-            </h1>
-            <div className='text-muted-foreground text-xs'>
-              {session.targetLanguage.toUpperCase()} · {session.cefrLevel} ·{' '}
-              <span className='uppercase'>{session.status}</span>
-            </div>
-          </div>
-          <div className='ml-auto flex gap-2'>
-            {isProcessedOrExported && (
-              <Button variant='outline' size='sm' asChild>
-                <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
-                  <ListChecks className='mr-1 h-4 w-4' />
-                  {t`View triage`}
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
-        <div className='mx-auto mt-3 max-w-4xl'>
+        <div className='mx-auto max-w-4xl'>
           <TrackSearchBar value={search} onChange={setSearch} />
         </div>
       </div>
@@ -265,6 +275,6 @@ export const SessionView = () => {
         onRemove={handleRemove}
         onClose={closeMenu}
       />
-    </div>
+    </ModalScreen>
   )
 }

@@ -3,4 +3,5 @@ import { NewSessionWizard } from '@/features/sessions/components/new-session-wiz
 
 export const Route = createFileRoute('/_authenticated/_app/sessions/new')({
   component: NewSessionWizard,
+  staticData: { hideAppChrome: true },
 })

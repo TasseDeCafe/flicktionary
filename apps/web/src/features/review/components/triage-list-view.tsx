@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronRight, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
 import { useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
@@ -57,25 +58,31 @@ export const TriageListView = () => {
     updateStatus({ cardId, status })
   }
 
+  // Triage and Subtitles are sibling screens (neither is the parent of the other).
+  // The modal chevron means "close stack" → /sessions; the Subtitles cross-jump
+  // moves to the right slot as a forward link.
   return (
-    <div className='flex h-full flex-col'>
-      <div className='border-b bg-white px-4 py-3'>
-        <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
-          <div className='flex items-center gap-3'>
-            <Button variant='outline' size='sm' asChild>
-              <Link to='/sessions/$sessionId' params={{ sessionId }}>
-                <ChevronLeft className='mr-1 h-4 w-4' />
-                {t`Subtitles`}
-              </Link>
-            </Button>
-            <h1 className='text-xl font-semibold'>{t`Triage`}</h1>
-          </div>
+    <ModalScreen
+      onClose={() => navigate({ to: '/sessions' })}
+      closeIcon='chevron'
+      title={t`Triage`}
+      rightSlot={
+        <>
+          <Button variant='outline' size='sm' asChild>
+            <Link to='/sessions/$sessionId' params={{ sessionId }}>
+              <FileText className='mr-1 h-4 w-4' />
+              {t`Subtitles`}
+            </Link>
+          </Button>
           <Button variant='outline' size='sm' onClick={handleReviewCards} disabled={!firstNavigableCardId}>
-            {t`Review cards`}
+            {t`Review`}
             <ChevronRight className='ml-1 h-4 w-4' />
           </Button>
-        </div>
-        <div className='mx-auto mt-3 max-w-4xl'>
+        </>
+      }
+    >
+      <div className='border-b bg-white px-4 py-3'>
+        <div className='mx-auto max-w-4xl'>
           <Input type='search' value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t`Search…`} />
         </div>
       </div>
@@ -142,6 +149,6 @@ export const TriageListView = () => {
           <CsvExportButton sessionId={sessionId} keptCount={keptCount} />
         </div>
       </div>
-    </div>
+    </ModalScreen>
   )
 }

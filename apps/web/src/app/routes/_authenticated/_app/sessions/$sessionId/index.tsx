@@ -9,4 +9,5 @@ const sessionSearchSchema = z.object({
 export const Route = createFileRoute('/_authenticated/_app/sessions/$sessionId/')({
   validateSearch: sessionSearchSchema,
   component: SessionView,
+  staticData: { hideAppChrome: true },
 })

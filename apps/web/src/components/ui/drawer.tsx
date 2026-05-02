@@ -45,7 +45,9 @@ const DrawerContent = ({ className, children, ...props }: React.ComponentProps<t
       {...props}
     >
       <div className='bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block' />
-      <div className='flex flex-1 flex-col overflow-y-auto px-4'>{children}</div>
+      <div className='flex flex-1 flex-col overflow-y-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]'>
+        {children}
+      </div>
     </DrawerPrimitive.Content>
   </DrawerPortal>
 )

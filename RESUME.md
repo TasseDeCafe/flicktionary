@@ -11,7 +11,7 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
 - **Stack**: existing template — Vite + React 19 + TanStack Router (web), Express + oRPC + Postgres.js (backend), Supabase auth.
 - **Scope**: web only. Do not touch `apps/native`.
 - **LLM**: Anthropic via `@anthropic-ai/sdk`. `claude-opus-4-7` (`MODEL_OPUS`) for all heavy passes (context blob, L1, difficult-words, full-exploration, per-card chat); `claude-haiku-4-5-20251001` (`MODEL_HAIKU`) for tap-to-translate. Aggressive prompt caching with `cache_control: { type: 'ephemeral' }` on the stable methodology + language-instructions + L1 + context-blob prefix.
-- **Demo content**: home / dashboard / premium-demo tabs replaced with Flicktionary sidebar (Sessions / Settings / Profile). Stripe billing, danger-zone, profile, login flows kept untouched.
+- **Demo content**: home / dashboard / premium-demo tabs replaced with Flicktionary navigation (mobile bottom tab bar + desktop sidebar — Sessions / `+` / More; settings + profile consolidated under `/more` since 2026-05-02). Stripe billing, danger-zone, login flows kept untouched.
 - **Async pipeline**: fire-and-forget in-process. The `process` route flips status to `processing`, kicks off async work without `await`, returns 202. Frontend polls `getStatus`. No queue.
 - **TMDB / OpenSubtitles**: real APIs via Doppler-managed env vars (`TMDB_API_KEY`, `OPENSUBTITLES_API_KEY`, `OPENSUBTITLES_USER_AGENT`, `ANTHROPIC_API_KEY`). Local Doppler config is `dev_personal`.
 
@@ -170,6 +170,78 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
   - **`basic-data-pass` max_tokens** bumped to 32k (Opus 4.x native ceiling).
     Error path emits `stop_reason` so future truncations show as
     "output truncated at max_tokens" rather than an opaque parse error.
+
+- **Native-style chrome refactor (2026-05-02).** Web shell rebuilt around the
+  React-Navigation mental model — *root stack + tab navigator, modals
+  presented above tabs* — so the eventual native port is a translation, not
+  a redesign. Don't re-introduce the old burger / sidebar / Settings + Profile
+  separation.
+  - **Routing flag.** `apps/web/src/app/router.tsx` augments
+    `StaticDataRouteOption` with `hideAppChrome?: boolean`. New hook
+    `apps/web/src/features/navigation/hooks/use-is-modal-route.ts` reads
+    `useMatches()` and returns true when any matched leaf set the flag.
+    `AppShellLayout` early-returns `<Outlet />` when true (no sidebar, no
+    tab bar). Per-leaf granularity matters here: `/sessions` is a tab page
+    but `/sessions/$id` is a modal — both share the `_app` parent.
+  - **New navigation feature** under `apps/web/src/features/navigation/`:
+    `bottom-tab-bar.tsx` (mobile-only `md:hidden`, fixed bottom, three slots
+    with the central `+` as a 56×56 raised button), `sidebar-nav.tsx`
+    (desktop sidebar with `+ New` primary button at the top opening the
+    same overlay as the mobile `+`), `main-action-overlay.tsx` (built on
+    `ResponsiveOverlay`; one row "Start a movie session" → `/sessions/new`,
+    trivially extensible), and `modal-screen.tsx`
+    (`{ onClose, closeIcon: 'x' | 'chevron', title?, rightSlot?, children }`
+    wrapper — sticky `h-14` header on top of a `flex-1 overflow-hidden`
+    body, outer is `flex h-dvh flex-col`).
+  - **AppShellLayout rebuilt.** Burger button, mobile top header, and left
+    `Drawer` are gone. Mobile: bottom tab bar over the main column. Desktop:
+    left sidebar. The main column gets
+    `pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0` so content clears
+    the bottom bar.
+  - **Modal-flagged routes** (`staticData: { hideAppChrome: true }`):
+    `/sessions/new`, `/sessions/$sessionId`, `/sessions/$sessionId/processing`,
+    `/sessions/$sessionId/review`, `/sessions/$sessionId/review/$cardId`,
+    `/more/account`, `/more/languages`. The five session views were
+    rewrapped in `<ModalScreen>`. **Triage's chevron now closes to
+    `/sessions`** (closes the modal stack) — the previous `← Subtitles`
+    chevron was misleading (Subtitles is a sibling, not a parent); the
+    Subtitles cross-jump moved to the modal's right slot. **Focus view's**
+    keep/reject moved into the modal-header right slot; the previous
+    in-page header bar shrank to a compact body toolbar holding prev/next
+    arrows + `Open in subtitles`. **SessionView's** in-page poster row was
+    dropped — the movie title (with year + lang/CEFR/status subtitle) lives
+    in the modal header, `Triage` button in the right slot when
+    `processed`/`exported`. ALL modal close handlers call
+    `navigate({ to: parentPath })` rather than `history.back()` so deep
+    links (no history) close to a known parent.
+  - **`More` tab replaces `/settings` + `/profile`.** New feature
+    `apps/web/src/features/more/components/`: `more-tab-view.tsx` (sectioned
+    list — General → Account; Settings → Languages, Tap-to-translate,
+    LLM-suggested chunks; About → Contact us, Admin settings, Danger zone,
+    Sign out), reusable `more-list-section.tsx` + `more-list-row.tsx`
+    primitives (label + description + trailing slot + optional press
+    handler). Toggle rows mount the existing `Switch` directly in `trailing`
+    and call the same hooks (`useSetTapToTranslateEnabled`,
+    `useSetLlmHighlightsEnabled`) so settings persist identically. Sub-pages:
+    `account-page.tsx` (avatar/name/email + Manage Subscription via the
+    existing billing hooks; `chevron` close to `/more`), `languages-page.tsx`
+    (composes the existing `NativeLanguageSelector` +
+    `CefrPerLanguageList`; `chevron` close).
+  - **Deletions.** `_app/settings.tsx`, `_app/profile.tsx`,
+    `features/settings/components/settings-view.tsx`,
+    `features/profile/components/profile-view.tsx`,
+    `features/contact/components/contact-us-button.tsx` (orphan after the
+    More tab inlined the overlay-trigger logic). The `OverlayController`
+    URL-driven contact-us overlay is unchanged — the More row just toggles
+    the `overlay=contact-us` search param itself.
+  - **DangerZone + AdminSettings** wrapped in `<ModalScreen closeIcon='chevron'>`
+    so their headers match the new chrome. Both back buttons now navigate
+    to `/more`. DangerZone keeps its red-themed body but uses the standard
+    white modal header.
+  - **Drawer bottom inset.** `apps/web/src/components/ui/drawer.tsx` inner
+    container now has `pb-[max(1rem,env(safe-area-inset-bottom))]` so the
+    contact-us sheet, the `+` action sheet, and any future bottom drawer
+    respect the home-indicator on mobile.
 
 **Remaining:**
 - Phase 10 — End-to-end verification (manual golden path + lint + types + vitest).

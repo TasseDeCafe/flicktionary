@@ -2,17 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  Sparkles,
-  X,
-} from 'lucide-react'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Sparkles, X } from 'lucide-react'
 import {
   useExploreCard,
   useGetCard,
@@ -89,11 +80,23 @@ export const FocusView = () => {
   }
   useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext })
 
+  const closeToTriage = () => {
+    void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
+  }
+
   if (isLoading) {
-    return <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Loading card…`}</div>
+    return (
+      <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
+        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Loading card…`}</div>
+      </ModalScreen>
+    )
   }
   if (!card) {
-    return <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Card not found.`}</div>
+    return (
+      <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
+        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Card not found.`}</div>
+      </ModalScreen>
+    )
   }
 
   const isKept = card.status === 'kept'
@@ -106,54 +109,50 @@ export const FocusView = () => {
   )
   const sameLanguage =
     !!session && session.nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
+  const cardPosition = cursor.index + 1
+  const cardTotal = cursor.total
+  const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
 
   return (
-    <div className='flex h-full flex-col'>
-      <div className='border-b bg-white px-4 py-3'>
-        <div className='mx-auto flex max-w-4xl items-center gap-3'>
-          <Button variant='outline' size='sm' asChild>
-            <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
-              <ChevronLeft className='mr-1 h-4 w-4' />
-              {t`Triage`}
-            </Link>
+    <ModalScreen
+      onClose={closeToTriage}
+      closeIcon='chevron'
+      title={positionLabel}
+      rightSlot={
+        <>
+          <Button
+            size='icon-sm'
+            variant={isKept ? 'default' : 'outline'}
+            onClick={() => updateStatus({ cardId: card.id, status: isKept ? 'pending' : 'kept' })}
+            aria-label={t`Keep`}
+          >
+            <Check className='h-4 w-4' />
           </Button>
-          <Button variant='outline' size='sm' asChild>
-            <Link to='/sessions/$sessionId' params={{ sessionId }} search={{ segment: card.segmentId }}>
-              <ExternalLink className='mr-1 h-4 w-4' />
-              {t`Open in subtitles`}
-            </Link>
+          <Button
+            size='icon-sm'
+            variant={isRejected ? 'default' : 'outline'}
+            onClick={() => updateStatus({ cardId: card.id, status: isRejected ? 'pending' : 'rejected' })}
+            aria-label={t`Reject`}
+          >
+            <X className='h-4 w-4' />
           </Button>
-          <div className='flex items-center gap-1'>
-            <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
-              <ArrowLeft className='h-4 w-4' />
-            </Button>
-            <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
-              <ArrowRight className='h-4 w-4' />
-            </Button>
-          </div>
-          <div className='flex-1 text-sm text-gray-600'>
-            {(() => {
-              const position = cursor.index + 1
-              const total = cursor.total
-              return cursor.index >= 0 ? t`Card ${position} of ${total}` : t`Standalone`
-            })()}
-          </div>
-          <div className='flex gap-1'>
-            <Button
-              size='icon'
-              variant={isKept ? 'default' : 'outline'}
-              onClick={() => updateStatus({ cardId: card.id, status: isKept ? 'pending' : 'kept' })}
-              aria-label={t`Keep`}
-            >
-              <Check className='h-4 w-4' />
-            </Button>
-            <Button
-              size='icon'
-              variant={isRejected ? 'default' : 'outline'}
-              onClick={() => updateStatus({ cardId: card.id, status: isRejected ? 'pending' : 'rejected' })}
-              aria-label={t`Reject`}
-            >
-              <X className='h-4 w-4' />
+        </>
+      }
+    >
+      <div className='flex items-center gap-2 border-b bg-white px-4 py-2'>
+        <div className='mx-auto flex w-full max-w-4xl items-center gap-2'>
+          <Button variant='ghost' size='icon-sm' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
+            <ArrowLeft className='h-4 w-4' />
+          </Button>
+          <Button variant='ghost' size='icon-sm' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
+            <ArrowRight className='h-4 w-4' />
+          </Button>
+          <div className='ml-auto'>
+            <Button variant='outline' size='sm' asChild>
+              <Link to='/sessions/$sessionId' params={{ sessionId }} search={{ segment: card.segmentId }}>
+                <ExternalLink className='mr-1 h-4 w-4' />
+                {t`Open in subtitles`}
+              </Link>
             </Button>
           </div>
         </div>
@@ -203,6 +202,6 @@ export const FocusView = () => {
           </section>
         </div>
       </div>
-    </div>
+    </ModalScreen>
   )
 }

@@ -99,10 +99,12 @@ Two-layer UI.
 - Sticky footer: `Export N kept cards`.
 - No chat here. This layer is for fast triage.
 
-**Layer 2 — Focus view (route push or full-screen drawer).**
-- Top: header with `Triage` back-link, `Open in subtitles` deep-link
-  (navigates to `/sessions/$id?segment=<id>` and flashes the source line),
-  prev/next, and keep/reject toggles.
+**Layer 2 — Focus view (modal screen pushed above the tab navigator).**
+- Modal header: chevron-back to triage, position counter (`Card N of M`),
+  keep/reject toggles in the right slot.
+- Below the header: a compact toolbar with prev/next arrows and the
+  `Open in subtitles` deep-link (navigates to
+  `/sessions/$id?segment=<id>` and flashes the source line).
 - Card section: each basic column gets its own labeled input — `Headword`,
   `Target example`, plus `Translation` + `Native example` (and optional
   `Definition`) when L1 ≠ L2, or just `Definition` when L1 = L2. Every input
@@ -126,6 +128,15 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context b
 - CSV with columns: `front`, `back`, `context`, `tags`, `headword`, `surface_form`, `note`. Imports cleanly into Anki.
 - No `.apkg` for MVP.
 - Exporting a card upserts a row in `user_lookup`.
+
+### Navigation chrome
+
+Native-style shell so the eventual React Native port is a translation, not a redesign.
+
+- **Mobile** (`< 768px`): bottom tab bar with three slots — `Sessions` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (currently just `Start a movie session`; built to grow as more `content_source.type`s land).
+- **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay.
+- **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
+- **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus inline `Switch` rows for tap-to-translate and LLM-suggested chunks.
 
 ### Cross-source dedup
 
@@ -404,13 +415,13 @@ cached result instantly.
 4. Status flips to `processed`. On uncaught failure: `failed` (retryable from the polling page).
 
 **Review and export**
-1. Triage list — keep/reject across both sections. Header has a `← Subtitles` link back to the mid-watch view.
+1. Triage list — keep/reject across both sections. The modal-header chevron closes back to the sessions list; a `Subtitles` button in the right slot cross-jumps to the mid-watch view.
 2. Drill into focus view for any card. Edit front/back, chat to refine.
 3. Export CSV. Status flips to `exported`. `user_lookup` upserted.
 
 **Add more highlights after processing**
-1. From the triage list, tap `← Subtitles` (or open the session card again).
-2. The mid-watch UI is browsable on `processed` / `exported` sessions — `View triage` jumps back; `Highlight selection` still works.
+1. From the triage list, tap the `Subtitles` button (or open the session card again).
+2. The mid-watch UI is browsable on `processed` / `exported` sessions — `Triage` jumps back; `Highlight selection` still works.
 3. Tap `Process new highlights`. Only the newly-added highlights run the full-exploration pass; the difficult-words pass does not re-run.
 
 ## Open questions / TBD
