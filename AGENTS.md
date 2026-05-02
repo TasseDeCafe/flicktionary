@@ -82,6 +82,28 @@ Rules:
  export const initiateCancelCallViaTwilio = async (
 ```
 
+# Database Migrations
+
+There are four Supabase environment folders, each with their own `supabase/migrations/` directory:
+
+- `apps/backend/supabase/supabase-dev-tunnel/` — local dev (the one you reset and iterate against)
+- `apps/backend/supabase/supabase-dev/` — remote dev environment
+- `apps/backend/supabase/supabase-test/` — test environment
+- `apps/backend/supabase/supabase-prod/` — production
+
+All four must hold the **same** set of migration files. The workflow is:
+
+1. From `apps/backend/supabase/supabase-dev-tunnel/`, create the migration with the Supabase CLI so the timestamp prefix is correct:
+
+   ```bash
+   supabase migration new <name>
+   ```
+
+2. Edit the new file, then verify it applies cleanly with `supabase db reset --local`.
+3. Copy the exact same file into the `migrations/` directory of `supabase-dev`, `supabase-test`, and `supabase-prod`.
+
+Never hand-write the timestamp prefix or create the file with `touch` / `Write` directly — `supabase migration new` is the source of truth for ordering. Never let the four folders drift out of sync.
+
 # Database Types
 
 When the database schema changes (new tables, columns, enums, etc.), regenerate the TypeScript types to keep them in sync.
