@@ -6,11 +6,21 @@ type Props = {
   sessionId: string
   status: string
   highlightCount: number
+  unprocessedHighlightCount: number
   cardCount: number
   onProcessed?: () => void
+  onGoToTriage?: () => void
 }
 
-export const ProcessButton = ({ sessionId, status, highlightCount, cardCount, onProcessed }: Props) => {
+export const ProcessButton = ({
+  sessionId,
+  status,
+  highlightCount,
+  unprocessedHighlightCount,
+  cardCount,
+  onProcessed,
+  onGoToTriage,
+}: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
   const { data: prefs } = useGetUserPrefs()
@@ -27,6 +37,10 @@ export const ProcessButton = ({ sessionId, status, highlightCount, cardCount, on
   const isFailed = status === 'failed'
   const noPriorOutput = cardCount === 0
   const hasSomethingToProcess = highlightCount > 0 || llmHighlightsEnabled
+  // On a processed/exported session with cards already produced, "nothing new"
+  // means no highlights are waiting for a basic-data pass. The button degrades
+  // to a triage shortcut so the label doesn't claim there's work to do.
+  const isReprocessNothingNew = isReprocess && !noPriorOutput && unprocessedHighlightCount === 0
   const canTrigger =
     (status === 'active' && hasSomethingToProcess) ||
     (isFailed && hasSomethingToProcess) ||
@@ -46,25 +60,32 @@ export const ProcessButton = ({ sessionId, status, highlightCount, cardCount, on
     if (status === 'active' && highlightCount === 0) {
       return t`No highlights — the LLM will suggest chunks based on your level.`
     }
-    if (isReprocess) return t`${highlightCount} highlight(s) total. Already-processed ones are skipped.`
+    if (isReprocessNothingNew) return t`All highlights have been processed.`
+    if (isReprocess) return t`${unprocessedHighlightCount} new highlight(s) to process.`
     return t`${highlightCount} highlight(s) ready.`
   })()
 
   const label = (() => {
     if (isPending) return t`Starting…`
     if (isFailed || (isReprocess && noPriorOutput)) return t`Retry processing`
+    if (isReprocessNothingNew) return t`Go to triage`
     if (isReprocess) return t`Process new highlights`
     return t`Process`
   })()
+
+  const handleClick = () => {
+    if (isReprocessNothingNew) {
+      onGoToTriage?.()
+      return
+    }
+    mutate({ sessionId }, { onSuccess: () => onProcessed?.() })
+  }
 
   return (
     <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
       <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
         <span className='text-muted-foreground text-sm'>{hint}</span>
-        <Button
-          disabled={!canTrigger || isPending}
-          onClick={() => mutate({ sessionId }, { onSuccess: () => onProcessed?.() })}
-        >
+        <Button disabled={(!canTrigger && !isReprocessNothingNew) || isPending} onClick={handleClick}>
           {label}
         </Button>
       </div>

@@ -58,6 +58,11 @@ export const SessionView = () => {
     () => buildSegmentRanges(highlights ?? [], visibleSegments),
     [highlights, visibleSegments]
   )
+  const unprocessedHighlightCount = useMemo(() => {
+    if (!highlights) return 0
+    const processed = new Set((cards ?? []).map((c) => c.highlightId).filter((id): id is string => !!id))
+    return highlights.reduce((n, h) => (processed.has(h.id) ? n : n + 1), 0)
+  }, [highlights, cards])
 
   const { mutate: createHighlight } = useCreateHighlight(sessionId)
   const { mutate: deleteHighlight } = useDeleteHighlight(sessionId)
@@ -249,9 +254,13 @@ export const SessionView = () => {
         sessionId={sessionId}
         status={session.status}
         highlightCount={highlights?.length ?? 0}
+        unprocessedHighlightCount={unprocessedHighlightCount}
         cardCount={cards?.length ?? 0}
         onProcessed={() => {
           void navigate({ to: '/sessions/$sessionId/processing', params: { sessionId } })
+        }}
+        onGoToTriage={() => {
+          void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
         }}
       />
 
