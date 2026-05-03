@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { userPrefsContract } from '@flicktionary/api-client/orpc-contracts/user-prefs-contract'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
@@ -39,7 +40,7 @@ export const UserPrefsRouter = (
   usersRepository: UsersRepositoryInterface,
   prefsRepository: UserTargetLanguagePrefsRepositoryInterface
 ): Router => {
-  const implementer = implement(userPrefsContract).$context<OrpcContext>()
+  const implementer = implement(userPrefsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     getPrefs: implementer.getPrefs.handler(async ({ context }) => {
@@ -60,14 +61,9 @@ export const UserPrefsRouter = (
       return { data: prefs }
     }),
 
-    setCefrForLanguage: implementer.setCefrForLanguage.handler(async ({ input, context, errors }) => {
+    setCefrForLanguage: implementer.setCefrForLanguage.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const ok = await prefsRepository.upsertCefr(userId, input.targetLanguage, input.cefrLevel)
-      if (!ok) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to set CEFR level' }] },
-        })
-      }
+      await prefsRepository.upsertCefr(userId, input.targetLanguage, input.cefrLevel)
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
       return { data: prefs }
     }),

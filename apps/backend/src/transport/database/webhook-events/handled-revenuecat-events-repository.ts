@@ -1,4 +1,3 @@
-import { logWithSentry } from '../../third-party/sentry/error-monitoring'
 import { sql } from '../postgres-client'
 
 export interface HandledRevenuecatEventsRepository {
@@ -10,28 +9,23 @@ export const buildHandledRevenuecatEventsRepository = (): HandledRevenuecatEvent
     eventId: string,
     processingFunction: () => Promise<void>
   ): Promise<boolean> => {
-    try {
-      return await sql.begin(async (sql) => {
-        // todo: remove 'as any' when TransactionSql call signature is fixed: https://github.com/porsager/postgres/issues/1150
-        /* eslint-disable  @typescript-eslint/no-explicit-any */
-        const insertResult = await (sql as any)`
-          INSERT INTO handled_revenuecat_events (event_id)
-          VALUES (${eventId})
-          ON CONFLICT (event_id) DO NOTHING
-          RETURNING id
-        `
+    return await sql.begin(async (sql) => {
+      // todo: remove 'as any' when TransactionSql call signature is fixed: https://github.com/porsager/postgres/issues/1150
+      /* eslint-disable  @typescript-eslint/no-explicit-any */
+      const insertResult = await (sql as any)`
+        INSERT INTO handled_revenuecat_events (event_id)
+        VALUES (${eventId})
+        ON CONFLICT (event_id) DO NOTHING
+        RETURNING id
+      `
 
-        if (insertResult.count > 0) {
-          await processingFunction()
-          return true
-        }
+      if (insertResult.count > 0) {
+        await processingFunction()
+        return true
+      }
 
-        return false
-      })
-    } catch (error) {
-      logWithSentry({ message: 'Error processing Revenuecat event', params: { eventId }, error })
-      throw error
-    }
+      return false
+    })
   }
 
   return {

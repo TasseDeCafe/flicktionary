@@ -3,6 +3,6 @@ export const mockCreateBillingPortalUrl = async (
   customerId: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   returnUrl: string
-): Promise<string | null> => {
+): Promise<string> => {
   return 'some-billing-portal-url'
 }

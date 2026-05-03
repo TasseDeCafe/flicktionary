@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { highlightsContract } from '@flicktionary/api-client/orpc-contracts/highlights-contract'
 import { DbHighlight, HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
@@ -40,7 +41,7 @@ export const HighlightsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   textSegmentsRepository: TextSegmentsRepositoryInterface
 ): Router => {
-  const implementer = implement(highlightsContract).$context<OrpcContext>()
+  const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     listBySession: implementer.listBySession.handler(async ({ input, context, errors }) => {
@@ -73,11 +74,6 @@ export const HighlightsRouter = (
         note: input.note ?? null,
         presetTags: input.presetTags ?? [],
       })
-      if (!inserted) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to create highlight' }] },
-        })
-      }
       return { data: toHighlightDto(inserted) }
     }),
 
@@ -97,8 +93,8 @@ export const HighlightsRouter = (
       }
       const updated = await highlightsRepository.updateNoteAndTags(input.highlightId, input.note, input.presetTags)
       if (!updated) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update highlight' }] },
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Highlight not found' }] },
         })
       }
       return { data: toHighlightDto(updated) }
@@ -118,12 +114,7 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight not found' }] },
         })
       }
-      const ok = await highlightsRepository.deleteById(input.highlightId)
-      if (!ok) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to delete highlight' }] },
-        })
-      }
+      await highlightsRepository.deleteById(input.highlightId)
       return { data: { id: input.highlightId } }
     }),
 

@@ -65,36 +65,49 @@ export const stripeWebhookRouter =
       return
     }
 
-    const wasHandled: boolean = await handleEventIdempotently(event.id, async () => {
-      if (EVENTS_THAT_SHOULD_TRIGGER_SUBSCRIPTION_SYNC.includes(event.type)) {
-        const { customer: stripeCustomerId } = event?.data?.object as {
-          customer: string
+    // Top-level safety net: Stripe retries on 5xx, so any uncaught error from
+    // the idempotency wrapper, the sync service, or the DB must surface as a
+    // logged 200, not a 500. We've already validated the signature and
+    // event type above — beyond this point, anything thrown is our problem
+    // to record, not Stripe's to retry.
+    try {
+      const wasHandled: boolean = await handleEventIdempotently(event.id, async () => {
+        if (EVENTS_THAT_SHOULD_TRIGGER_SUBSCRIPTION_SYNC.includes(event.type)) {
+          const { customer: stripeCustomerId } = event?.data?.object as {
+            customer: string
+          }
+          if (!stripeCustomerId) {
+            logWithSentry({
+              message: 'stripeCustomerId is missing',
+              params: {
+                event,
+              },
+            })
+          }
+          const wasSyncingProcessedSuccessfully =
+            await webhookService.syncStripeSubscriptionWithOurDbAndCache(stripeCustomerId)
+          if (!wasSyncingProcessedSuccessfully) {
+            logWithSentry({
+              message: 'subscription was not synced successfully',
+              params: {
+                event,
+              },
+            })
+          }
         }
-        if (!stripeCustomerId) {
-          logWithSentry({
-            message: 'stripeCustomerId is missing',
-            params: {
-              event,
-            },
-          })
-        }
-        const wasSyncingProcessedSuccessfully =
-          await webhookService.syncStripeSubscriptionWithOurDbAndCache(stripeCustomerId)
-        if (!wasSyncingProcessedSuccessfully) {
-          logWithSentry({
-            message: 'subscription was not synced successfully',
-            params: {
-              event,
-            },
-          })
-        }
-      }
-    })
+      })
 
-    if (!wasHandled) {
+      if (!wasHandled) {
+        logWithSentry({
+          message: 'Duplicate event received and skipped',
+          params: { event },
+        })
+      }
+    } catch (error) {
       logWithSentry({
-        message: 'Duplicate event received and skipped',
+        message: 'Unhandled error processing Stripe webhook',
         params: { event },
+        error,
       })
     }
     res.status(200).send()

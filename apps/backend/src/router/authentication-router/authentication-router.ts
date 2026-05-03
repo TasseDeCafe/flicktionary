@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { getSupabase } from '../../transport/database/supabase'
 import { getConfig } from '../../config/environment-config'
@@ -13,7 +14,7 @@ const emailRateLimitCache10Min = new NodeCache({ stdTTL: 10 * 60 }) // 10 minute
 const emailRateLimitCacheDaily = new NodeCache({ stdTTL: 60 * 60 }) // 1 hour TTL
 
 export const authenticationRouter = (): Router => {
-  const implementer = implement(authenticationContract).$context<OrpcContext>()
+  const implementer = implement(authenticationContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const authRouter = implementer.router({
     sendEmailVerification: implementer.sendEmailVerification.handler(async ({ input, errors }) => {

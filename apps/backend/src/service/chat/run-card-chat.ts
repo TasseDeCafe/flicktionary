@@ -266,14 +266,12 @@ export const runCardChat = async (
     role: 'user',
     content: input.content,
   })
-  if (!userMessage) throw new Error('Failed to persist user message')
 
   const assistantMessage = await deps.cardChatMessagesRepository.insertMessage({
     cardId: input.cardId,
     role: 'assistant',
     content: finalAssistantBody,
   })
-  if (!assistantMessage) throw new Error('Failed to persist assistant message')
 
   return { userMessage, assistantMessage }
 }

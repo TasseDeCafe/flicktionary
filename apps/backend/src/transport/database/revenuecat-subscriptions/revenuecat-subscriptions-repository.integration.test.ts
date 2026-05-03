@@ -48,8 +48,7 @@ describe('RevenueCat Subscriptions Repository Integration Tests', () => {
       const { id: testUserId } = await __createUserInSupabaseAndGetHisIdAndToken()
       const testSubscription = createTestSubscription(testUserId)
 
-      const result = await repository.upsertSubscription(testSubscription)
-      expect(result).toBe(true)
+      await repository.upsertSubscription(testSubscription)
 
       const subscriptions = await __getRevenuecatSubscriptionsByUserId(testUserId)
       expect(subscriptions).toHaveLength(1)
@@ -77,8 +76,7 @@ describe('RevenueCat Subscriptions Repository Integration Tests', () => {
         current_period_ends_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date().toISOString(),
       }
-      const updateResult = await repository.upsertSubscription(updatedSubscription)
-      expect(updateResult).toBe(true)
+      await repository.upsertSubscription(updatedSubscription)
 
       const subscriptions = await __getRevenuecatSubscriptionsByUserId(testUserId)
       expect(subscriptions).toHaveLength(1)
@@ -104,8 +102,7 @@ describe('RevenueCat Subscriptions Repository Integration Tests', () => {
         management_url: null,
       })
 
-      const result = await repository.upsertSubscription(testSubscription)
-      expect(result).toBe(true)
+      await repository.upsertSubscription(testSubscription)
 
       const subscriptions = await __getRevenuecatSubscriptionsByUserId(testUserId)
       expect(subscriptions).toHaveLength(1)

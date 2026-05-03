@@ -1,5 +1,4 @@
 import { sql } from '../postgres-client'
-import { logCustomErrorMessageAndError, logWithSentry } from '../../third-party/sentry/error-monitoring'
 import { Tables } from '../database.public.types'
 
 export type DbUser = Tables<'users'>
@@ -14,181 +13,108 @@ const insertUser = async (
     utmTerm: string | null
     utmContent: string | null
   }
-): Promise<boolean> => {
-  try {
-    await sql`
-      INSERT INTO public.users (
-        id, 
-        referral,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        utm_term,
-        utm_content
-      )
-      VALUES (
-        ${id}, 
-        ${referral},
-        ${utmParams.utmSource},
-        ${utmParams.utmMedium},
-        ${utmParams.utmCampaign},
-        ${utmParams.utmTerm},
-        ${utmParams.utmContent}
-      )
-      ON CONFLICT (id) DO NOTHING
-    `
-    return true
-  } catch (e) {
-    logCustomErrorMessageAndError(`insertUser, userId = ${id}`, e)
-    return false
-  }
+): Promise<void> => {
+  await sql`
+    INSERT INTO public.users (
+      id,
+      referral,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_term,
+      utm_content
+    )
+    VALUES (
+      ${id},
+      ${referral},
+      ${utmParams.utmSource},
+      ${utmParams.utmMedium},
+      ${utmParams.utmCampaign},
+      ${utmParams.utmTerm},
+      ${utmParams.utmContent}
+    )
+    ON CONFLICT (id) DO NOTHING
+  `
 }
+
 const findUserByUserId = async (id: string): Promise<DbUser | null> => {
-  try {
-    const result: DbUser[] = await sql`SELECT * FROM public.users WHERE id = ${id}`
-    return result[0]
-  } catch (e) {
-    logCustomErrorMessageAndError(`findUser, userId = ${id}`, e)
-    return null
-  }
+  const result: DbUser[] = await sql`SELECT * FROM public.users WHERE id = ${id}`
+  return result[0] ?? null
 }
 
 const findUserByStripeCustomerId = async (stripeCustomerId: string): Promise<DbUser | null> => {
-  try {
-    const result = (await sql`SELECT * FROM public.users WHERE stripe_customer_id = ${stripeCustomerId}`) as DbUser[]
-    if (result.length === 0) {
-      return null
-    }
-    return result[0]
-  } catch (e) {
-    logCustomErrorMessageAndError(`findUserByStripeCustomerId, stripeCustomerId = ${stripeCustomerId}`, e)
-    return null
-  }
+  const result = (await sql`SELECT * FROM public.users WHERE stripe_customer_id = ${stripeCustomerId}`) as DbUser[]
+  return result[0] ?? null
 }
 
 const updateUserStripeCustomerId = async (userId: string, stripeCustomerId: string): Promise<boolean> => {
-  try {
-    await sql`
+  const result = await sql`
     UPDATE public.users
     SET stripe_customer_id = ${stripeCustomerId}
     WHERE id = ${userId}
   `
-    return true
-  } catch (e) {
-    logCustomErrorMessageAndError(
-      `updateUserStripeCustomerId, userId = ${userId}, stripeCustomerId = ${stripeCustomerId}`,
-      e
-    )
-    return false
-  }
+  return result.count === 1
 }
 
 const updateStripeCustomerId = async (userId: string, stripeCustomerId: string | null): Promise<boolean> => {
-  try {
-    const result = await sql`
-      UPDATE public.users
-      SET stripe_customer_id = ${stripeCustomerId}
-      WHERE id = ${userId}
-    `
-    return result.count === 1
-  } catch (e) {
-    logWithSentry({
-      message: 'error updating stripe customer id',
-      params: {
-        userId,
-        stripeCustomerId,
-      },
-      error: e,
-    })
-    return false
-  }
+  const result = await sql`
+    UPDATE public.users
+    SET stripe_customer_id = ${stripeCustomerId}
+    WHERE id = ${userId}
+  `
+  return result.count === 1
 }
 
 const retrieveAllUsersCreatedLessThanNDaysAgo = async (days: number): Promise<string[]> => {
-  try {
-    const result = await sql`
-      SELECT id
-      FROM public.users
-      WHERE created_at > NOW() - make_interval(days => ${days})
-    `
-    return result.map((row) => row.id)
-  } catch (error) {
-    logWithSentry({ message: 'Error retrieving recent users', params: { days }, error })
-    return []
-  }
+  const result = await sql`
+    SELECT id
+    FROM public.users
+    WHERE created_at > NOW() - make_interval(days => ${days})
+  `
+  return result.map((row) => row.id)
 }
 
 const getNativeLanguage = async (userId: string): Promise<string | null> => {
-  try {
-    const result = (await sql`
-      SELECT native_language FROM public.users WHERE id = ${userId}
-    `) as { native_language: string | null }[]
-    return result[0]?.native_language ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`getNativeLanguage, userId = ${userId}`, e)
-    return null
-  }
+  const result = (await sql`
+    SELECT native_language FROM public.users WHERE id = ${userId}
+  `) as { native_language: string | null }[]
+  return result[0]?.native_language ?? null
 }
 
 const setNativeLanguage = async (userId: string, nativeLanguage: string): Promise<boolean> => {
-  try {
-    const result = await sql`
-      UPDATE public.users SET native_language = ${nativeLanguage} WHERE id = ${userId}
-    `
-    return result.count === 1
-  } catch (e) {
-    logCustomErrorMessageAndError(`setNativeLanguage, userId = ${userId}`, e)
-    return false
-  }
+  const result = await sql`
+    UPDATE public.users SET native_language = ${nativeLanguage} WHERE id = ${userId}
+  `
+  return result.count === 1
 }
 
 const getTapToTranslateEnabled = async (userId: string): Promise<boolean> => {
-  try {
-    const result = (await sql`
-      SELECT tap_to_translate_enabled FROM public.users WHERE id = ${userId}
-    `) as { tap_to_translate_enabled: boolean }[]
-    return result[0]?.tap_to_translate_enabled ?? false
-  } catch (e) {
-    logCustomErrorMessageAndError(`getTapToTranslateEnabled, userId = ${userId}`, e)
-    return false
-  }
+  const result = (await sql`
+    SELECT tap_to_translate_enabled FROM public.users WHERE id = ${userId}
+  `) as { tap_to_translate_enabled: boolean }[]
+  return result[0]?.tap_to_translate_enabled ?? false
 }
 
 const setTapToTranslateEnabled = async (userId: string, enabled: boolean): Promise<boolean> => {
-  try {
-    const result = await sql`
-      UPDATE public.users SET tap_to_translate_enabled = ${enabled} WHERE id = ${userId}
-    `
-    return result.count === 1
-  } catch (e) {
-    logCustomErrorMessageAndError(`setTapToTranslateEnabled, userId = ${userId}`, e)
-    return false
-  }
+  const result = await sql`
+    UPDATE public.users SET tap_to_translate_enabled = ${enabled} WHERE id = ${userId}
+  `
+  return result.count === 1
 }
 
 const getLlmHighlightsEnabled = async (userId: string): Promise<boolean> => {
-  try {
-    const result = (await sql`
-      SELECT llm_highlights_enabled FROM public.users WHERE id = ${userId}
-    `) as { llm_highlights_enabled: boolean }[]
-    // Default true: existing users keep the prior behavior.
-    return result[0]?.llm_highlights_enabled ?? true
-  } catch (e) {
-    logCustomErrorMessageAndError(`getLlmHighlightsEnabled, userId = ${userId}`, e)
-    return true
-  }
+  const result = (await sql`
+    SELECT llm_highlights_enabled FROM public.users WHERE id = ${userId}
+  `) as { llm_highlights_enabled: boolean }[]
+  // Default true: existing users keep the prior behavior.
+  return result[0]?.llm_highlights_enabled ?? true
 }
 
 const setLlmHighlightsEnabled = async (userId: string, enabled: boolean): Promise<boolean> => {
-  try {
-    const result = await sql`
-      UPDATE public.users SET llm_highlights_enabled = ${enabled} WHERE id = ${userId}
-    `
-    return result.count === 1
-  } catch (e) {
-    logCustomErrorMessageAndError(`setLlmHighlightsEnabled, userId = ${userId}`, e)
-    return false
-  }
+  const result = await sql`
+    UPDATE public.users SET llm_highlights_enabled = ${enabled} WHERE id = ${userId}
+  `
+  return result.count === 1
 }
 
 export interface UsersRepositoryInterface {
@@ -202,7 +128,7 @@ export interface UsersRepositoryInterface {
       utmTerm: string | null
       utmContent: string | null
     }
-  ) => Promise<boolean>
+  ) => Promise<void>
   findUserByUserId: (id: string) => Promise<DbUser | null>
   findUserByStripeCustomerId: (stripeCustomerId: string) => Promise<DbUser | null>
   updateUserStripeCustomerId: (userId: string, stripeCustomerId: string) => Promise<boolean>

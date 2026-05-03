@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { studySessionsContract } from '@flicktionary/api-client/orpc-contracts/study-sessions-contract'
 import {
   DbStudySessionWithSource,
@@ -42,7 +43,7 @@ export const StudySessionsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   processingDependencies: ProcessingDependencies
 ): Router => {
-  const implementer = implement(studySessionsContract).$context<OrpcContext>()
+  const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     list: implementer.list.handler(async ({ context }) => {
@@ -73,8 +74,8 @@ export const StudySessionsRouter = (
         cefrLevel: input.cefrLevel,
       })
       if (!inserted) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to create study session' }] },
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Text track not found for content source' }] },
         })
       }
       // Re-fetch via the joined query so the returned DTO carries the source title

@@ -29,11 +29,24 @@ export const AccessCacheService = (
   let intervalId: NodeJS.Timeout | null = null
 
   const loadAllSubscriptions = async (): Promise<void> => {
-    const [stripeSubscriptions, activeRevenuecatSubscriptions]: [DbStripeSubscription[], DbRevenueCatSubscription[]] =
-      await Promise.all([
-        stripeSubscriptionsRepository.getAllSubscriptions(),
-        revenueCatSubscriptionsRepository.getAllActiveSubscriptions(),
-      ])
+    // Use allSettled so one bad source doesn't poison the whole cache rebuild —
+    // we'd rather merge what we got than skip a 15-minute window entirely.
+    const [stripeResult, revenuecatResult] = await Promise.allSettled([
+      stripeSubscriptionsRepository.getAllSubscriptions(),
+      revenueCatSubscriptionsRepository.getAllActiveSubscriptions(),
+    ])
+
+    const stripeSubscriptions: DbStripeSubscription[] =
+      stripeResult.status === 'fulfilled' ? stripeResult.value : []
+    const activeRevenuecatSubscriptions: DbRevenueCatSubscription[] =
+      revenuecatResult.status === 'fulfilled' ? revenuecatResult.value : []
+
+    if (stripeResult.status === 'rejected') {
+      logWithSentry({ message: 'loadAllSubscriptions: stripe fetch failed', error: stripeResult.reason })
+    }
+    if (revenuecatResult.status === 'rejected') {
+      logWithSentry({ message: 'loadAllSubscriptions: revenuecat fetch failed', error: revenuecatResult.reason })
+    }
 
     const activeStripeSubscriptions = stripeSubscriptions.filter(isStripeSubscriptionActive)
     const activeUserIds = new Set<string>()
@@ -47,10 +60,14 @@ export const AccessCacheService = (
     }
 
     if (!getConfig().featureFlags.isCreditCardRequiredForAll()) {
-      const recentUsers: string[] =
-        await usersRepository.retrieveAllUsersCreatedLessThanNDaysAgo(NUMBER_OF_DAYS_IN_FREE_TRIAL)
-      for (const userId of recentUsers) {
-        activeUserIds.add(userId)
+      try {
+        const recentUsers: string[] =
+          await usersRepository.retrieveAllUsersCreatedLessThanNDaysAgo(NUMBER_OF_DAYS_IN_FREE_TRIAL)
+        for (const userId of recentUsers) {
+          activeUserIds.add(userId)
+        }
+      } catch (error) {
+        logWithSentry({ message: 'loadAllSubscriptions: recent-users fetch failed', error })
       }
     }
 

@@ -7,7 +7,7 @@ import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { exportSession, ExportSessionDependencies } from '../../service/export/export-session'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 
 const toCardDto = (row: DbCard) => ({
   id: row.id,
@@ -33,7 +33,7 @@ export const CardsRouter = (
   exportDependencies: ExportSessionDependencies,
   exploreDependencies: ExploreCardDependencies
 ): Router => {
-  const implementer = implement(cardsContract).$context<OrpcContext>()
+  const implementer = implement(cardsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     listBySession: implementer.listBySession.handler(async ({ input, context, errors }) => {
@@ -69,8 +69,8 @@ export const CardsRouter = (
       }
       const updated = await cardsRepository.updateStatus(input.cardId, input.status)
       if (!updated) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update card status' }] },
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Card not found' }] },
         })
       }
       return { data: toCardDto(updated) }
@@ -95,8 +95,8 @@ export const CardsRouter = (
         extrasPatch: input.patch.extrasPatch ?? null,
       })
       if (!updated) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update card fields' }] },
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Card not found' }] },
         })
       }
       return { data: toCardDto(updated) }
@@ -111,15 +111,8 @@ export const CardsRouter = (
         })
       }
 
-      try {
-        const result = await exportSession(input.sessionId, userId, exportDependencies)
-        return { data: result }
-      } catch (e) {
-        logCustomErrorMessageAndError(`cards.exportCsv, sessionId = ${input.sessionId}`, e)
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to export session' }] },
-        })
-      }
+      const result = await exportSession(input.sessionId, userId, exportDependencies)
+      return { data: result }
     }),
 
     explore: implementer.explore.handler(async ({ input, context, errors }) => {

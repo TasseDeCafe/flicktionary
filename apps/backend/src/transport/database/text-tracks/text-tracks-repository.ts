@@ -1,5 +1,4 @@
 import { sql } from '../postgres-client'
-import { logCustomErrorMessageAndError } from '../../third-party/sentry/error-monitoring'
 import { Tables, Database } from '../database.public.types'
 
 export type DbTextTrack = Tables<'text_tracks'>
@@ -11,24 +10,19 @@ const insertTextTrack = async (params: {
   language: string
   externalId: string | null
   hash: string
-}): Promise<DbTextTrack | null> => {
-  try {
-    const result = (await sql`
-      INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
-      VALUES (
-        ${params.contentSourceId},
-        ${params.source},
-        ${params.language},
-        ${params.externalId},
-        ${params.hash}
-      )
-      RETURNING *
-    `) as DbTextTrack[]
-    return result[0] ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`insertTextTrack, hash = ${params.hash}`, e)
-    return null
-  }
+}): Promise<DbTextTrack> => {
+  const result = (await sql`
+    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+    VALUES (
+      ${params.contentSourceId},
+      ${params.source},
+      ${params.language},
+      ${params.externalId},
+      ${params.hash}
+    )
+    RETURNING *
+  `) as DbTextTrack[]
+  return result[0]!
 }
 
 const findByContentSourceLanguageAndHash = async (params: {
@@ -36,31 +30,21 @@ const findByContentSourceLanguageAndHash = async (params: {
   language: string
   hash: string
 }): Promise<DbTextTrack | null> => {
-  try {
-    const result = (await sql`
-      SELECT *
-      FROM public.text_tracks
-      WHERE content_source_id = ${params.contentSourceId}
-        AND language = ${params.language}
-        AND hash = ${params.hash}
-    `) as DbTextTrack[]
-    return result[0] ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`textTracks.findByContentSourceLanguageAndHash, hash = ${params.hash}`, e)
-    return null
-  }
+  const result = (await sql`
+    SELECT *
+    FROM public.text_tracks
+    WHERE content_source_id = ${params.contentSourceId}
+      AND language = ${params.language}
+      AND hash = ${params.hash}
+  `) as DbTextTrack[]
+  return result[0] ?? null
 }
 
 const findById = async (id: string): Promise<DbTextTrack | null> => {
-  try {
-    const result = (await sql`
-      SELECT * FROM public.text_tracks WHERE id = ${id}
-    `) as DbTextTrack[]
-    return result[0] ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`textTracks.findById, id = ${id}`, e)
-    return null
-  }
+  const result = (await sql`
+    SELECT * FROM public.text_tracks WHERE id = ${id}
+  `) as DbTextTrack[]
+  return result[0] ?? null
 }
 
 export interface TextTracksRepositoryInterface {
@@ -70,7 +54,7 @@ export interface TextTracksRepositoryInterface {
     language: string
     externalId: string | null
     hash: string
-  }) => Promise<DbTextTrack | null>
+  }) => Promise<DbTextTrack>
   findByContentSourceLanguageAndHash: (params: {
     contentSourceId: string
     language: string

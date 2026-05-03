@@ -115,7 +115,7 @@ describe('users-repository integration tests', () => {
   })
 
   test('should return false when updating stripe customer id for non-existent user', async () => {
-    const result = await updateStripeCustomerId('non-existent-user', 'test-stripe-customer-id')
+    const result = await updateStripeCustomerId('00000000-0000-4000-a000-000000000099', 'test-stripe-customer-id')
     expect(result).toBe(false)
   })
 

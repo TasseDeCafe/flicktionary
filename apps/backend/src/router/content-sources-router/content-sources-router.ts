@@ -2,13 +2,13 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { contentSourcesContract } from '@flicktionary/api-client/orpc-contracts/content-sources-contract'
 import {
   ContentSourcesRepositoryInterface,
   DbContentSource,
 } from '../../transport/database/content-sources/content-sources-repository'
 import { searchMovies } from '../../transport/third-party/tmdb/tmdb-client'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 
 const toContentSourceDto = (row: DbContentSource) => ({
   id: row.id,
@@ -21,22 +21,15 @@ const toContentSourceDto = (row: DbContentSource) => ({
 })
 
 export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRepositoryInterface): Router => {
-  const implementer = implement(contentSourcesContract).$context<OrpcContext>()
+  const implementer = implement(contentSourcesContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
-    searchTmdb: implementer.searchTmdb.handler(async ({ input, errors }) => {
-      try {
-        const movies = await searchMovies(input.query, input.year)
-        return { data: movies }
-      } catch (e) {
-        logCustomErrorMessageAndError(`contentSources.searchTmdb, query = ${input.query}`, e)
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'TMDB search failed' }] },
-        })
-      }
+    searchTmdb: implementer.searchTmdb.handler(async ({ input }) => {
+      const movies = await searchMovies(input.query, input.year)
+      return { data: movies }
     }),
 
-    createFromTmdb: implementer.createFromTmdb.handler(async ({ input, context, errors }) => {
+    createFromTmdb: implementer.createFromTmdb.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
       const existing = await contentSourcesRepository.findByTmdbId(input.tmdbId)
       if (existing) {
@@ -54,11 +47,6 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
         },
         createdByUserId: userId,
       })
-      if (!inserted) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to create content source' }] },
-        })
-      }
       return { data: toContentSourceDto(inserted) }
     }),
   })

@@ -1,6 +1,5 @@
 import postgres from 'postgres'
 import { sql } from '../postgres-client'
-import { logCustomErrorMessageAndError } from '../../third-party/sentry/error-monitoring'
 import { Tables, Database } from '../database.public.types'
 
 export type DbContentSource = Tables<'content_sources'>
@@ -14,50 +13,35 @@ const insertContentSource = async (params: {
   language: string
   metadata: ContentSourceMetadata
   createdByUserId: string | null
-}): Promise<DbContentSource | null> => {
-  try {
-    const result = (await sql`
-      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
-      VALUES (
-        ${params.type},
-        ${params.title},
-        ${params.language},
-        ${sql.json(params.metadata)},
-        ${params.createdByUserId}
-      )
-      RETURNING *
-    `) as DbContentSource[]
-    return result[0] ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`insertContentSource, title = ${params.title}`, e)
-    return null
-  }
+}): Promise<DbContentSource> => {
+  const result = (await sql`
+    INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
+    VALUES (
+      ${params.type},
+      ${params.title},
+      ${params.language},
+      ${sql.json(params.metadata)},
+      ${params.createdByUserId}
+    )
+    RETURNING *
+  `) as DbContentSource[]
+  return result[0]!
 }
 
 const findById = async (id: string): Promise<DbContentSource | null> => {
-  try {
-    const result = (await sql`
-      SELECT * FROM public.content_sources WHERE id = ${id}
-    `) as DbContentSource[]
-    return result[0] ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`contentSources.findById, id = ${id}`, e)
-    return null
-  }
+  const result = (await sql`
+    SELECT * FROM public.content_sources WHERE id = ${id}
+  `) as DbContentSource[]
+  return result[0] ?? null
 }
 
 const findByTmdbId = async (tmdbId: number): Promise<DbContentSource | null> => {
-  try {
-    const result = (await sql`
-      SELECT * FROM public.content_sources
-      WHERE type = 'movie' AND metadata->>'tmdbId' = ${String(tmdbId)}
-      LIMIT 1
-    `) as DbContentSource[]
-    return result[0] ?? null
-  } catch (e) {
-    logCustomErrorMessageAndError(`contentSources.findByTmdbId, tmdbId = ${tmdbId}`, e)
-    return null
-  }
+  const result = (await sql`
+    SELECT * FROM public.content_sources
+    WHERE type = 'movie' AND metadata->>'tmdbId' = ${String(tmdbId)}
+    LIMIT 1
+  `) as DbContentSource[]
+  return result[0] ?? null
 }
 
 export interface ContentSourcesRepositoryInterface {
@@ -67,7 +51,7 @@ export interface ContentSourcesRepositoryInterface {
     language: string
     metadata: ContentSourceMetadata
     createdByUserId: string | null
-  }) => Promise<DbContentSource | null>
+  }) => Promise<DbContentSource>
   findById: (id: string) => Promise<DbContentSource | null>
   findByTmdbId: (tmdbId: number) => Promise<DbContentSource | null>
 }

@@ -46,7 +46,9 @@ describe('portal-session-router', async () => {
 
   test('should return 500 when Stripe API fails to create a session', async () => {
     const partialStripeMock: Partial<StripeApi> = {
-      createBillingPortalUrl: async () => null,
+      createBillingPortalUrl: async () => {
+        throw new Error('Stripe billing portal session creation failed')
+      },
     }
 
     const stripeApi = {
@@ -64,7 +66,7 @@ describe('portal-session-router', async () => {
       .set(buildAuthorizationHeaders(token))
 
     expect(response.status).toBe(500)
-    expect(response.body.data.errors[0].message).toBe('Failed to create billing portal session url')
+    expect(response.body.data.errors[0].message).toBe('Internal server error')
   })
 
   test('should use the correct return URL', async () => {

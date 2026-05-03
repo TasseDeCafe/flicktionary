@@ -2,9 +2,9 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { textTracksContract } from '@flicktionary/api-client/orpc-contracts/text-tracks-contract'
 import { searchByTmdbId } from '../../transport/third-party/opensubtitles/opensubtitles-client'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { TextTracksRepositoryInterface, DbTextTrack } from '../../transport/database/text-tracks/text-tracks-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -28,23 +28,13 @@ export type TextTracksRouterDependencies = {
 }
 
 export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => {
-  const implementer = implement(textTracksContract).$context<OrpcContext>()
+  const implementer = implement(textTracksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
   const { contentSourcesRepository, textTracksRepository, textSegmentsRepository } = deps
 
   const router = implementer.router({
-    searchOpenSubtitles: implementer.searchOpenSubtitles.handler(async ({ input, errors }) => {
-      try {
-        const tracks = await searchByTmdbId(input.tmdbId, input.language)
-        return { data: tracks }
-      } catch (e) {
-        logCustomErrorMessageAndError(
-          `textTracks.searchOpenSubtitles, tmdbId = ${input.tmdbId}, language = ${input.language}`,
-          e
-        )
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'OpenSubtitles search failed' }] },
-        })
-      }
+    searchOpenSubtitles: implementer.searchOpenSubtitles.handler(async ({ input }) => {
+      const tracks = await searchByTmdbId(input.tmdbId, input.language)
+      return { data: tracks }
     }),
 
     importFromOpenSubtitles: implementer.importFromOpenSubtitles.handler(async ({ input, errors }) => {
@@ -57,16 +47,7 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
       const result = await importFromOpenSubtitles(input, textTracksRepository, textSegmentsRepository)
       if (!result.ok) {
         throw errors.INTERNAL_SERVER_ERROR({
-          data: {
-            errors: [
-              {
-                message:
-                  result.reason === 'parse_empty'
-                    ? 'Subtitle file did not contain any usable cues'
-                    : 'Failed to persist subtitle track',
-              },
-            ],
-          },
+          data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
         })
       }
       return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }
@@ -91,13 +72,8 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
         textSegmentsRepository
       )
       if (!result.ok) {
-        if (result.reason === 'parse_empty') {
-          throw errors.BAD_REQUEST({
-            data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
-          })
-        }
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to persist subtitle track' }] },
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
         })
       }
       return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }

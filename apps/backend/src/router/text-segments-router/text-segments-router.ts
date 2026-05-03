@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { textSegmentsContract } from '@flicktionary/api-client/orpc-contracts/text-segments-contract'
 import {
   TextSegmentsRepositoryInterface,
@@ -23,7 +24,7 @@ export const TextSegmentsRouter = (
   textSegmentsRepository: TextSegmentsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface
 ): Router => {
-  const implementer = implement(textSegmentsContract).$context<OrpcContext>()
+  const implementer = implement(textSegmentsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const assertUserCanReadTrack = async (textTrackId: string, userId: string, throwNotFound: () => never) => {
     const canRead = await studySessionsRepository.hasTextTrackForUser(textTrackId, userId)

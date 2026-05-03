@@ -12,6 +12,7 @@ import { removalsContract } from '@flicktionary/api-client/orpc-contracts/remova
 import { CrypticCodeConstants } from '../../constants/cryptic-code-constants'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 
 export const removalsRouter = (
   authUsersRepository: AuthUsersRepository,
@@ -38,7 +39,7 @@ export const removalsRouter = (
 
   expressRouter.use('/removals', conditionalRateLimitingMiddleware)
 
-  const implementer = implement(removalsContract).$context<OrpcContext>()
+  const implementer = implement(removalsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     postRemoval: implementer.postRemoval.handler(async ({ context, errors }) => {
@@ -54,22 +55,7 @@ export const removalsRouter = (
           },
         })
       }
-      let removalId: string | null
-
-      removalId = await insertRemoval(userId, userEmail, false)
-      if (!removalId) {
-        logWithSentry({ message: 'could not insert removal', params: { userId } })
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: {
-            errors: [
-              {
-                message: `Account removal was not initiated`,
-                code: CrypticCodeConstants.REMOVAL_ACCOUNT_NOT_INITIATED,
-              },
-            ],
-          },
-        })
-      }
+      const removalId = await insertRemoval(userId, userEmail, false)
 
       const subscriptions = await stripeSubscriptionsRepository.getSubscriptionsByUserId(userId)
       const latestSubscription = subscriptions.sort(
@@ -77,11 +63,16 @@ export const removalsRouter = (
       )[0]
 
       if (latestSubscription?.stripe_subscription_id) {
-        const isSuccessfullyCancelled = await stripeApi.cancelSubscription(latestSubscription.stripe_subscription_id)
-        if (!isSuccessfullyCancelled) {
+        // Per-step try/catch is deliberate: removals routes carry user-facing
+        // cryptic codes that the global error-boundary middleware would erase
+        // by collapsing every throw into a generic INTERNAL_SERVER_ERROR.
+        try {
+          await stripeApi.cancelSubscription(latestSubscription.stripe_subscription_id)
+        } catch (error) {
           logWithSentry({
             message: 'account removal: failed to cancel stripe subscription',
             params: { userId },
+            error,
           })
           throw errors.INTERNAL_SERVER_ERROR({
             data: {
@@ -108,23 +99,6 @@ export const removalsRouter = (
               {
                 message: 'account removal did not fully succeed',
                 code: CrypticCodeConstants.REMOVAL_ACCOUNT_AUTH_USERS_DELETE_FAILED,
-              },
-            ],
-          },
-        })
-      }
-
-      if (!removalId) {
-        logWithSentry({
-          message: 'removalId missing after processing removal request',
-          params: { userId, removalId },
-        })
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: {
-            errors: [
-              {
-                message: `Account removal did not fully succeed`,
-                code: CrypticCodeConstants.REMOVAL_UPDATE_SUCCESS_FAILED,
               },
             ],
           },

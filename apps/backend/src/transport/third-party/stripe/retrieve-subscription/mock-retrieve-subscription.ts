@@ -1,8 +1,6 @@
 import { RetrieveSubscriptionResponse } from '../stripe-api'
 
-export const mockRetrieveSubscription = async (
-  subscriptionId: string
-): Promise<RetrieveSubscriptionResponse | null> => {
+export const mockRetrieveSubscription = async (subscriptionId: string): Promise<RetrieveSubscriptionResponse> => {
   return {
     id: subscriptionId,
     status: 'active',

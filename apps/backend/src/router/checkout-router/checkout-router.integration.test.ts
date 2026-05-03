@@ -27,7 +27,7 @@ describe('Checkout Router', () => {
     const stripeApi = {
       ...MockStripeApi,
       createCheckoutSessionUrl: async () => {
-        return null
+        throw new Error('Stripe checkout session creation failed')
       },
     }
     const testApp = buildTestApp({ stripeApi })
@@ -36,8 +36,10 @@ describe('Checkout Router', () => {
     const checkoutSessionResponse = await __createCheckoutSessionWithOurApi(testApp, token)
 
     expect(checkoutSessionResponse.status).toBe(500)
+    // The boundary middleware genericizes uncaught throws to "Internal server
+    // error"; the underlying error is in Sentry. See error-boundary-middleware.ts.
     expect(checkoutSessionResponse.body.data).toEqual({
-      errors: [{ message: 'Failed to create checkout session' }],
+      errors: [{ message: 'Internal server error' }],
     })
   })
 

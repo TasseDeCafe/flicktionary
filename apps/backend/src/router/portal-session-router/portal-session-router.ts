@@ -6,9 +6,10 @@ import type { UsersRepositoryInterface } from '../../transport/database/users/us
 import { portalSessionContract } from '@flicktionary/api-client/orpc-contracts/portal-session-contract'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 
 export const PortalSessionRouter = (usersRepository: UsersRepositoryInterface, stripeApi: StripeApi): Router => {
-  const implementer = implement(portalSessionContract).$context<OrpcContext>()
+  const implementer = implement(portalSessionContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     createCustomerPortalSession: implementer.createCustomerPortalSession.handler(async ({ context, input, errors }) => {
@@ -29,14 +30,6 @@ export const PortalSessionRouter = (usersRepository: UsersRepositoryInterface, s
         user.stripe_customer_id,
         `${getConfig().webUrl}${returnPath}`
       )
-
-      if (!sessionUrl) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: {
-            errors: [{ message: 'Failed to create billing portal session url' }],
-          },
-        })
-      }
 
       return {
         data: {

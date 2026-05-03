@@ -1,6 +1,5 @@
 import { createHash } from 'crypto'
 import { parseSrt } from '../../utils/srt-parser'
-import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import { TextTracksRepositoryInterface, DbTextTrack } from '../../transport/database/text-tracks/text-tracks-repository'
 import {
   TextSegmentsRepositoryInterface,
@@ -18,9 +17,12 @@ export type ImportSrtInput = {
   srtContent: string
 }
 
+// `parse_empty` is the only legitimate domain failure (malformed/empty SRT —
+// the system is fine, the file isn't). Infra failures throw and propagate to
+// the boundary.
 export type ImportSrtOutput =
   | { ok: true; track: DbTextTrack; segmentCount: number; deduped: boolean }
-  | { ok: false; reason: 'parse_empty' | 'persist_failed' }
+  | { ok: false; reason: 'parse_empty' }
 
 const normalizeForHash = (segments: { text: string; startMs: number; endMs: number }[]): string =>
   segments.map((s) => `${s.startMs}-${s.endMs}|${s.text}`).join('\n')
@@ -33,8 +35,7 @@ export const importSrt = async (
   let parsed
   try {
     parsed = parseSrt(input.srtContent)
-  } catch (e) {
-    logCustomErrorMessageAndError(`importSrt parse, contentSourceId = ${input.contentSourceId}`, e)
+  } catch {
     return { ok: false, reason: 'parse_empty' }
   }
   if (parsed.length === 0) {
@@ -59,9 +60,6 @@ export const importSrt = async (
     externalId: input.externalId,
     hash,
   })
-  if (!track) {
-    return { ok: false, reason: 'persist_failed' }
-  }
 
   const segments: SegmentInsertInput[] = parsed.map((p) => ({
     index: p.index,
@@ -69,9 +67,6 @@ export const importSrt = async (
     startMs: p.startMs,
     endMs: p.endMs,
   }))
-  const inserted = await textSegmentsRepository.bulkInsertSegments(track.id, segments)
-  if (!inserted) {
-    return { ok: false, reason: 'persist_failed' }
-  }
+  await textSegmentsRepository.bulkInsertSegments(track.id, segments)
   return { ok: true, track, segmentCount: parsed.length, deduped: false }
 }
