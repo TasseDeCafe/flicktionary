@@ -33,4 +33,15 @@ export const contentSourcesContract = {
       })
     )
     .output(z.object({ data: ContentSourceSchema })),
+
+  createText: oc
+    .route({ method: 'POST', path: '/content-sources/text', successStatus: 201 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(
+      z.object({
+        title: z.string().min(1).max(200),
+        language: z.string().min(2).max(10),
+      })
+    )
+    .output(z.object({ data: ContentSourceSchema })),
 } as const

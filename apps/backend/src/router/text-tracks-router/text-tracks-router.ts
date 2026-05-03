@@ -10,6 +10,7 @@ import { TextTracksRepositoryInterface, DbTextTrack } from '../../transport/data
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { importSrt } from '../../service/text-tracks/import-srt'
 import { importFromOpenSubtitles } from '../../service/text-tracks/import-from-opensubtitles'
+import { importPastedText } from '../../service/text-tracks/import-pasted-text'
 
 const toTextTrackDto = (row: DbTextTrack) => ({
   id: row.id,
@@ -74,6 +75,22 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
       if (!result.ok) {
         throw errors.BAD_REQUEST({
           data: { errors: [{ message: 'Subtitle file did not contain any usable cues' }] },
+        })
+      }
+      return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }
+    }),
+
+    importFromPaste: implementer.importFromPaste.handler(async ({ input, errors }) => {
+      const contentSource = await contentSourcesRepository.findById(input.contentSourceId)
+      if (!contentSource) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Content source not found' }] },
+        })
+      }
+      const result = await importPastedText(input, textTracksRepository, textSegmentsRepository)
+      if (!result.ok) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Pasted text did not contain any usable lines' }] },
         })
       }
       return { data: { track: toTextTrackDto(result.track), segmentCount: result.segmentCount } }

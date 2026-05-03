@@ -3,27 +3,40 @@ import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 type GenerateContextBlobArgs = {
   contentTitle: string
   contentLanguage: string
+  contentType: string
   // A representative slice of segment text. Whole-track text is too large to send
   // verbatim; a sampled slice (e.g. first ~150 segments) gives the model enough
-  // signal for genre/tone/character estimation.
+  // signal for topic/tone/named-entity estimation.
   segmentSample: string
 }
 
-const SYSTEM_PROMPT = `You produce a short context blob (~300 tokens) about a piece of media,
-based on its subtitle excerpts. Output plain prose, no markdown, in this order:
-genre and tone, register (formal/conversational/literary/etc), main characters
-identifiable from dialogue, plot sketch in 2-3 sentences, recurring vocabulary
-themes the learner will encounter. Be terse and concrete.`
+const SYSTEM_PROMPT = `You produce a short context blob (~300 tokens) about a piece of source material
+the learner is studying. The material may be subtitles for a film, a news article,
+a forum comment, a book excerpt, or any other text. Output plain prose, no markdown,
+in this order: topic (for narrative material: genre + plot sketch in 2-3 sentences;
+for non-narrative: subject matter), register (formal / conversational / literary /
+journalistic / etc), tone, recurring vocabulary themes the learner will encounter,
+any named entities or recurring referents (characters, places, products) worth
+knowing. Be terse and concrete.`
+
+const labelForContentType = (contentType: string): string => {
+  if (contentType === 'movie') return 'Subtitle excerpts'
+  if (contentType === 'book') return 'Book excerpts'
+  if (contentType === 'article') return 'Article excerpts'
+  return 'Text excerpts'
+}
 
 export const generateContextBlob = async ({
   contentTitle,
   contentLanguage,
+  contentType,
   segmentSample,
 }: GenerateContextBlobArgs): Promise<string> => {
   const userMessage = `Title: ${contentTitle}
 Language: ${contentLanguage}
+Source type: ${contentType}
 
-Subtitle excerpts:
+${labelForContentType(contentType)}:
 ${segmentSample}`
 
   const response = await getAnthropicClient().messages.create({

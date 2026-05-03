@@ -6,8 +6,11 @@ export type StudySessionStatus = Database['public']['Enums']['study_session_stat
 
 // Joined shape used by the list/get views: every UI surface that shows a session
 // also wants the movie title and poster from content_sources.
+export type ContentSourceType = Database['public']['Enums']['content_source_type']
+
 export type DbStudySessionWithSource = DbStudySession & {
   content_source_title: string | null
+  content_source_type: ContentSourceType | null
   content_source_metadata: Record<string, unknown> | null
 }
 
@@ -46,6 +49,7 @@ const listByUserIdWithSource = async (userId: string): Promise<DbStudySessionWit
   return (await sql`
     SELECT s.*,
            cs.title AS content_source_title,
+           cs.type AS content_source_type,
            cs.metadata AS content_source_metadata
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
@@ -61,6 +65,7 @@ const findByIdForUserWithSource = async (
   const result = (await sql`
     SELECT s.*,
            cs.title AS content_source_title,
+           cs.type AS content_source_type,
            cs.metadata AS content_source_metadata
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id

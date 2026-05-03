@@ -53,4 +53,19 @@ export const textTracksContract = {
       })
     )
     .output(TrackImportResponseSchema),
+
+  importFromPaste: oc
+    .route({ method: 'POST', path: '/text-tracks/paste', successStatus: 201 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        contentSourceId: z.string().uuid(),
+        language: z.string(),
+        text: z.string().min(50).max(20_000),
+      })
+    )
+    .output(TrackImportResponseSchema),
 } as const

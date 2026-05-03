@@ -49,6 +49,18 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
       })
       return { data: toContentSourceDto(inserted) }
     }),
+
+    createText: implementer.createText.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const inserted = await contentSourcesRepository.insertContentSource({
+        type: 'text',
+        title: input.title,
+        language: input.language,
+        metadata: {},
+        createdByUserId: userId,
+      })
+      return { data: toContentSourceDto(inserted) }
+    }),
   })
 
   return createOrpcExpressRouter(router, { contract: contentSourcesContract })

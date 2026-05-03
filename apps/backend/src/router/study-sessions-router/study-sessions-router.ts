@@ -35,6 +35,7 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   createdAt: new Date(row.created_at).toISOString(),
   processedAt: row.processed_at ? new Date(row.processed_at).toISOString() : null,
   contentSourceTitle: row.content_source_title,
+  contentSourceType: row.content_source_type,
   contentSourcePosterUrl: readPosterUrl(row.content_source_metadata),
   contentSourceYear: readYear(row.content_source_metadata),
 })

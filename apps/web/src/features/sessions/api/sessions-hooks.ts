@@ -52,6 +52,18 @@ export const useCreateContentSourceFromTmdb = () => {
   )
 }
 
+export const useCreateContentSourceFromText = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.contentSources.createText.mutationOptions({
+      meta: {
+        errorMessage: t`Failed to register text`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useSearchOpenSubtitles = (input: { tmdbId: number; language: string } | null) => {
   const { t } = useLingui()
   return useQuery(
@@ -82,6 +94,18 @@ export const useUploadSrt = () => {
     orpcQuery.textTracks.uploadSrt.mutationOptions({
       meta: {
         errorMessage: t`Failed to upload subtitles`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
+export const useImportFromPaste = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.textTracks.importFromPaste.mutationOptions({
+      meta: {
+        errorMessage: t`Failed to import pasted text`,
         showErrorModal: true,
       },
     })

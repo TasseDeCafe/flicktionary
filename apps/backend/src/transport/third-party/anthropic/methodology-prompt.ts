@@ -58,7 +58,7 @@ export const buildMethodologySystem = ({
   const l1Block = `L1 interference notes (${nativeLanguage} -> ${targetLanguage}):
 ${l1InterferenceNotes}`
 
-  const contextBlock = `Source context (subtitles for this session):
+  const contextBlock = `Source context for this session:
 ${movieContextBlob}`
 
   const languageInstructions = getLanguageInstructions(targetLanguage)

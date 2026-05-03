@@ -111,6 +111,7 @@ export const StudySessionSchema = z.object({
   createdAt: z.string(),
   processedAt: z.string().nullable(),
   contentSourceTitle: z.string().nullable(),
+  contentSourceType: ContentSourceTypeSchema.nullable(),
   contentSourcePosterUrl: z.string().nullable(),
   contentSourceYear: z.number().int().nullable(),
 })

@@ -26,6 +26,7 @@ import { Route as AuthenticatedPricingFreeTrialExplanationRouteImport } from './
 import { Route as AuthenticatedPricingCheckoutSuccessRouteImport } from './routes/_authenticated/pricing/checkout-success'
 import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
 import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
+import { Route as AuthenticatedAppSessionsNewTextRouteImport } from './routes/_authenticated/_app/sessions/new-text'
 import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authenticated/_app/sessions/new'
 import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_authenticated/_app/more/languages'
 import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
@@ -125,6 +126,12 @@ const AuthenticatedAppMoreIndexRoute =
     path: '/more/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppSessionsNewTextRoute =
+  AuthenticatedAppSessionsNewTextRouteImport.update({
+    id: '/sessions/new-text',
+    path: '/sessions/new-text',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsNewRoute =
   AuthenticatedAppSessionsNewRouteImport.update({
     id: '/sessions/new',
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/more/': typeof AuthenticatedAppMoreIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/more': typeof AuthenticatedAppMoreIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/_authenticated/_app/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/_authenticated/_app/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/_authenticated/_app/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -262,6 +272,7 @@ export interface FileRouteTypes {
     | '/more/account'
     | '/more/languages'
     | '/sessions/new'
+    | '/sessions/new-text'
     | '/more/'
     | '/sessions/'
     | '/sessions/$sessionId/processing'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/more/account'
     | '/more/languages'
     | '/sessions/new'
+    | '/sessions/new-text'
     | '/more'
     | '/sessions'
     | '/sessions/$sessionId/processing'
@@ -312,6 +324,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/more/account'
     | '/_authenticated/_app/more/languages'
     | '/_authenticated/_app/sessions/new'
+    | '/_authenticated/_app/sessions/new-text'
     | '/_authenticated/_app/more/'
     | '/_authenticated/_app/sessions/'
     | '/_authenticated/_app/sessions/$sessionId/processing'
@@ -452,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMoreIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/sessions/new-text': {
+      id: '/_authenticated/_app/sessions/new-text'
+      path: '/sessions/new-text'
+      fullPath: '/sessions/new-text'
+      preLoaderRoute: typeof AuthenticatedAppSessionsNewTextRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/new': {
       id: '/_authenticated/_app/sessions/new'
       path: '/sessions/new'
@@ -508,6 +528,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
   AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
   AuthenticatedAppSessionsNewRoute: typeof AuthenticatedAppSessionsNewRoute
+  AuthenticatedAppSessionsNewTextRoute: typeof AuthenticatedAppSessionsNewTextRoute
   AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
@@ -520,6 +541,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,
   AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
   AuthenticatedAppSessionsNewRoute: AuthenticatedAppSessionsNewRoute,
+  AuthenticatedAppSessionsNewTextRoute: AuthenticatedAppSessionsNewTextRoute,
   AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:

@@ -81,7 +81,7 @@ export const processSession = async (
     const allHighlightsCovered = highlights.every((h) => processedHighlightIds.has(h.id))
     const skipBasicDataPass = hasLlmSuggestedCards && allHighlightsCovered
 
-    // 1. Movie context blob — generate if missing.
+    // 1. Source context blob — generate if missing.
     let contextBlob = session.context_blob
     if (!contextBlob) {
       const sample = segments
@@ -91,6 +91,7 @@ export const processSession = async (
       contextBlob = await generateContextBlob({
         contentTitle: contentSource.title,
         contentLanguage: contentSource.language,
+        contentType: contentSource.type,
         segmentSample: sample,
       })
       await studySessionsRepository.updateContextBlob(sessionId, userId, contextBlob)

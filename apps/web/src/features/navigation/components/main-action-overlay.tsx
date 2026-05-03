@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Clapperboard, type LucideIcon } from 'lucide-react'
+import { Clapperboard, FileText, type LucideIcon } from 'lucide-react'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -64,6 +64,14 @@ export const MainActionOverlay = ({ open, onOpenChange }: MainActionOverlayProps
       description: t`Pick a movie and load its subtitles`,
       onSelect: () => {
         void navigate({ to: '/sessions/new' })
+      },
+    },
+    {
+      icon: FileText,
+      label: t`Practice with a text`,
+      description: t`Paste an article, comment, or post`,
+      onSelect: () => {
+        void navigate({ to: '/sessions/new-text' })
       },
     },
   ]

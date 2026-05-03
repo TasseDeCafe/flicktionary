@@ -58,9 +58,9 @@ export const TriageListView = () => {
     updateStatus({ cardId, status })
   }
 
-  // Triage and Subtitles are sibling screens (neither is the parent of the other).
-  // The modal chevron means "close stack" → /sessions; the Subtitles cross-jump
-  // moves to the right slot as a forward link.
+  // Triage and the source view are sibling screens (neither is the parent of
+  // the other). The modal chevron means "close stack" → /sessions; the Source
+  // cross-jump moves to the right slot as a forward link.
   return (
     <ModalScreen
       onClose={() => navigate({ to: '/sessions' })}
@@ -71,7 +71,7 @@ export const TriageListView = () => {
           <Button variant='outline' size='sm' asChild>
             <Link to='/sessions/$sessionId' params={{ sessionId }}>
               <FileText className='mr-1 h-4 w-4' />
-              {t`Subtitles`}
+              {t`Source`}
             </Link>
           </Button>
           <Button variant='outline' size='sm' onClick={handleReviewCards} disabled={!firstNavigableCardId}>
@@ -98,7 +98,7 @@ export const TriageListView = () => {
                 ))}
               </ul>
               <p className='text-muted-foreground mt-2 text-xs'>
-                {t`Go back to the subtitles view and click Retry processing to try again.`}
+                {t`Go back to the source view and click Retry processing to try again.`}
               </p>
             </div>
           )}

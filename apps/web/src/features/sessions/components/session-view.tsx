@@ -201,11 +201,11 @@ export const SessionView = () => {
     )
   }
 
-  const movieTitle = session.contentSourceTitle ?? t`Untitled`
+  const sourceTitle = session.contentSourceTitle ?? t`Untitled`
   const titleNode = (
     <span className='flex min-w-0 flex-col leading-tight'>
       <span className='truncate text-base font-semibold'>
-        {movieTitle}
+        {sourceTitle}
         {session.contentSourceYear ? ` (${session.contentSourceYear})` : ''}
       </span>
       <span className='text-muted-foreground truncate text-xs font-normal'>
