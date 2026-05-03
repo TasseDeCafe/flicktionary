@@ -40,7 +40,12 @@ const headers = (): Record<string, string> => ({
 })
 
 export const searchByTmdbId = async (tmdbId: number, language: string): Promise<OpenSubtitlesTrack[]> => {
-  const params = new URLSearchParams({ tmdb_id: String(tmdbId), languages: language })
+  const params = new URLSearchParams({
+    tmdb_id: String(tmdbId),
+    languages: language,
+    order_by: 'download_count',
+    order_direction: 'desc',
+  })
   const url = `${OPENSUBTITLES_BASE_URL}/subtitles?${params.toString()}`
   const response = await fetch(url, { headers: headers() })
   if (!response.ok) {
@@ -58,6 +63,7 @@ export const searchByTmdbId = async (tmdbId: number, language: string): Promise<
       uploaderName: row.attributes.uploader?.name ?? null,
       downloadCount: row.attributes.download_count,
     }))
+    .sort((a, b) => b.downloadCount - a.downloadCount)
 }
 
 // Two-step download per OpenSubtitles API: request a short-lived URL via POST /download,
