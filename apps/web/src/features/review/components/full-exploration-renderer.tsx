@@ -33,7 +33,6 @@ export const FullExplorationRenderer = ({ card }: Props) => {
   const { t } = useLingui()
   const extras = card.explorationExtras ?? {}
 
-  const sense = asString(card.sense)
   const definition = asString(card.definition)
   const translation = asString(card.translation)
   const targetExample = asString(card.targetExample)
@@ -51,16 +50,9 @@ export const FullExplorationRenderer = ({ card }: Props) => {
   const etymology = asString(extras.etymology)
   const l1Notes = asString(extras.l1_notes)
   const notes = asString(extras.notes)
-  const contextSegment = asString(extras.context_segment)
 
   return (
     <div className='flex flex-col'>
-      {contextSegment && (
-        <Section label={t`Context`}>
-          <p className='italic'>{contextSegment}</p>
-        </Section>
-      )}
-      {sense && <Section label={t`Sense`}>{sense}</Section>}
       {definition && <Section label={t`Definition`}>{definition}</Section>}
       {translation && <Section label={t`Translation`}>{translation}</Section>}
       {(targetExample || nativeExample) && (

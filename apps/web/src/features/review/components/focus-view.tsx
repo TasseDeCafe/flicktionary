@@ -64,7 +64,8 @@ export const FocusView = () => {
   const { data: card, isLoading } = useGetCard(cardId, initialCard, cardsUpdatedAt)
   const { data: session } = useGetStudySession(sessionId)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
-  const { mutate: exploreCard, isPending: isExploring } = useExploreCard()
+  const { mutate: exploreCard, isPending: isExploringAny, variables: exploringVariables } = useExploreCard()
+  const isExploring = isExploringAny && exploringVariables?.cardId === cardId
 
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
