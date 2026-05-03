@@ -12,17 +12,27 @@ export type SegmentInsertInput = {
 }
 
 // Languages whose Postgres regconfigs we use for FTS query parsing.
-// The trigger keeps the in-row tsv aligned with the parent track's language;
-// keep this mirror narrow so unsupported languages still get exact-token search via 'simple'.
+// Limited to SUPPORTED_LANGUAGES entries that have a built-in Snowball stemmer
+// shipped with Postgres — see the authoritative list in the Postgres source:
+// https://github.com/postgres/postgres/blob/master/src/backend/snowball/Makefile
+// Languages outside this set (zh, bn, ur, ja, sw, mr, te, vi, ko) need external
+// tokenizer extensions and fall back to 'simple' so exact-token lookups still work.
+// To add support for a new language, update BOTH this map AND the
+// text_segments_set_tsv() trigger in the schema migration (they must mirror each
+// other exactly), then ship a migration that re-runs CREATE OR REPLACE FUNCTION
+// and rebuilds tsv for any pre-existing rows in the newly-supported language.
 const LANGUAGE_TO_REGCONFIG: Record<string, string> = {
   en: 'english',
-  fr: 'french',
-  de: 'german',
+  hi: 'hindi',
   es: 'spanish',
-  it: 'italian',
+  ar: 'arabic',
+  fr: 'french',
   pt: 'portuguese',
-  nl: 'dutch',
   ru: 'russian',
+  id: 'indonesian',
+  de: 'german',
+  tr: 'turkish',
+  ta: 'tamil',
 }
 
 const resolveRegconfig = (language: string): string => LANGUAGE_TO_REGCONFIG[language.toLowerCase()] ?? 'simple'

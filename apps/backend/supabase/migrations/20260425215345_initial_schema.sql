@@ -280,13 +280,16 @@ BEGIN
   SELECT language INTO v_language FROM public.text_tracks WHERE id = NEW.text_track_id;
   v_cfg := CASE LOWER(COALESCE(v_language, ''))
     WHEN 'en' THEN 'english'::regconfig
-    WHEN 'fr' THEN 'french'::regconfig
-    WHEN 'de' THEN 'german'::regconfig
+    WHEN 'hi' THEN 'hindi'::regconfig
     WHEN 'es' THEN 'spanish'::regconfig
-    WHEN 'it' THEN 'italian'::regconfig
+    WHEN 'ar' THEN 'arabic'::regconfig
+    WHEN 'fr' THEN 'french'::regconfig
     WHEN 'pt' THEN 'portuguese'::regconfig
-    WHEN 'nl' THEN 'dutch'::regconfig
     WHEN 'ru' THEN 'russian'::regconfig
+    WHEN 'id' THEN 'indonesian'::regconfig
+    WHEN 'de' THEN 'german'::regconfig
+    WHEN 'tr' THEN 'turkish'::regconfig
+    WHEN 'ta' THEN 'tamil'::regconfig
     ELSE 'simple'::regconfig
   END;
   NEW.tsv := to_tsvector(v_cfg, NEW.text);
