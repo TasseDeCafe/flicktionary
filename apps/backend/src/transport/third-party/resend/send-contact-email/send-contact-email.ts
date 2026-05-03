@@ -3,11 +3,7 @@ import { getConfig } from '../../../../config/environment-config'
 
 const resend: Resend = new Resend(getConfig().resendApiKey)
 
-export const sendContactEmail = async (
-  username: string | undefined,
-  email: string,
-  message: string
-): Promise<void> => {
+export const sendContactEmail = async (username: string | undefined, email: string, message: string): Promise<void> => {
   const nameDisplay = username ? `<p><strong>Name:</strong> ${username}</p>` : ''
   await resend.emails.send({
     from: 'Flicktionary <support@flicktionary.app>',

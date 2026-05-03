@@ -34,7 +34,7 @@ export const UserRouter = (usersRepository: UsersRepositoryInterface): Router =>
       }
     }),
 
-    putUser: implementer.putUser.handler(async ({ input, context, errors }) => {
+    putUser: implementer.putUser.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
       const { referral, utmSource, utmMedium, utmCampaign, utmTerm, utmContent } = input
 

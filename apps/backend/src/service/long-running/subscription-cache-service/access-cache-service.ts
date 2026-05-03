@@ -36,8 +36,7 @@ export const AccessCacheService = (
       revenueCatSubscriptionsRepository.getAllActiveSubscriptions(),
     ])
 
-    const stripeSubscriptions: DbStripeSubscription[] =
-      stripeResult.status === 'fulfilled' ? stripeResult.value : []
+    const stripeSubscriptions: DbStripeSubscription[] = stripeResult.status === 'fulfilled' ? stripeResult.value : []
     const activeRevenuecatSubscriptions: DbRevenueCatSubscription[] =
       revenuecatResult.status === 'fulfilled' ? revenuecatResult.value : []
 
