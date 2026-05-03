@@ -12,7 +12,6 @@
     "test:unit:run": "VITEST_ENV=unit vitest run",
     "test:integration": "VITEST_ENV=integration ./scripts/test--integration.sh",
     "test:integration:run": "VITEST_ENV=integration ./scripts/test--integration--run.sh",
-    "check-migrations": "node scripts/check-migrations.js",
     "check-templates": "node scripts/check-templates.js",
     "build-emails": "npx tsx scripts/build-email-templates.ts",
     "preview-emails": "email dev --dir emails",

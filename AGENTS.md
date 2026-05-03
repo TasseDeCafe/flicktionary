@@ -84,25 +84,26 @@ Rules:
 
 # Database Migrations
 
-There are four Supabase environment folders, each with their own `supabase/migrations/` directory:
+The canonical migrations directory is `apps/backend/supabase/migrations/`. The four Supabase environment folders each have a `supabase/migrations` symlink pointing to it:
 
-- `apps/backend/supabase/supabase-dev-tunnel/` — local dev (the one you reset and iterate against)
-- `apps/backend/supabase/supabase-dev/` — remote dev environment
-- `apps/backend/supabase/supabase-test/` — test environment
-- `apps/backend/supabase/supabase-prod/` — production
+- `apps/backend/supabase/supabase-dev-tunnel/supabase/migrations` → `../../migrations` (local dev — the one you reset and iterate against)
+- `apps/backend/supabase/supabase-dev/supabase/migrations` → `../../migrations` (remote dev)
+- `apps/backend/supabase/supabase-test/supabase/migrations` → `../../migrations` (test)
+- `apps/backend/supabase/supabase-prod/supabase/migrations` → `../../migrations` (production)
 
-All four must hold the **same** set of migration files. The workflow is:
+This means there's exactly one copy of each migration file on disk; the four envs cannot drift. The workflow is:
 
-1. From `apps/backend/supabase/supabase-dev-tunnel/`, create the migration with the Supabase CLI so the timestamp prefix is correct:
+1. From `apps/backend/supabase/supabase-dev-tunnel/`, create the migration with the Supabase CLI so the timestamp prefix is correct and the file lands in the symlinked directory (which resolves to the canonical location):
 
    ```bash
    supabase migration new <name>
    ```
 
-2. Edit the new file, then verify it applies cleanly with `supabase db reset --local`.
-3. Copy the exact same file into the `migrations/` directory of `supabase-dev`, `supabase-test`, and `supabase-prod`.
+2. Edit the new file, then verify it applies cleanly with `doppler run -- supabase db reset --local`.
 
-Never hand-write the timestamp prefix or create the file with `touch` / `Write` directly — `supabase migration new` is the source of truth for ordering. Never let the four folders drift out of sync.
+That's it — no copying, no sync step. Never hand-write the timestamp prefix or create the file with `touch` / `Write` directly; `supabase migration new` is the source of truth for ordering. Never replace any of the four `supabase/migrations` symlinks with a real directory.
+
+**Always prefix Supabase CLI commands with `doppler run --`** (e.g. `doppler run -- supabase db reset --local`, `doppler run -- supabase start`, `doppler run -- supabase stop`). Doppler injects the secrets the local stack needs (auth providers, etc.) — without it, the CLI runs against an unconfigured environment and either errors out or silently boots with wrong values.
 
 # Database Types
 

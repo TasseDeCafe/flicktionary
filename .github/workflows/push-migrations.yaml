@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - 'apps/backend/supabase/migrations/**'
       - 'apps/backend/supabase/supabase-prod/**'
       - '.github/**'
 jobs:
