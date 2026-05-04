@@ -2,9 +2,9 @@
 
 ## What it is
 
-A language-learning companion app. Pick a movie, fetch (or upload) its subtitles in a target language, watch the movie elsewhere, highlight chunks you don't understand inside the app, then process the session into structured, deep-dive cards informed by the lexical approach. Export the kept cards to CSV for Anki import.
+A language-learning companion app. Pick a movie (fetch or upload its subtitles in a target language) or paste a chunk of text in a target language — Reddit comment, news excerpt, Telegram post. Highlight chunks you don't understand inside the app, then process the session into structured, deep-dive cards informed by the lexical approach. Export the kept cards to CSV for Anki import.
 
-The app's value is **not** flashcard generation per se — it's the structured exploration of each chunk in the context of the movie, the user's L1, and the user's level. Card export is a side-effect of having explored well.
+The app's value is **not** flashcard generation per se — it's the structured exploration of each chunk in the context of the source, the user's L1, and the user's level. Card export is a side-effect of having explored well.
 
 ## What it isn't (non-goals for MVP)
 
@@ -12,21 +12,27 @@ The app's value is **not** flashcard generation per se — it's the structured e
 - Not a real-time companion. No auto-scroll, no audio fingerprinting, no clock sync.
 - Not a flashcard review system (no SRS). Cards leave Flicktionary as CSV; review happens in Anki.
 - Not a free-form chatbot. Per-card chat is scoped to refining understanding of one chunk.
-- Not multi-source. MVP only handles movie subtitles. The data model is generic so books/articles can plug in later without migration.
+- Not a books/articles reader. MVP handles movie subtitles and pasted text; books and articles are designed for in the data model but not yet implemented.
 
 ## Core decisions
 
-### Subtitle sources
+### Source content
 
-- **OpenSubtitles search.** Search by title; results filtered to the user's target language. The track's `language` must match the chosen study language — never inferred.
-- **Manual `.srt` upload.** First-class, not a fallback. User specifies the language at upload time.
-- On import, SRTs are normalized into per-line `text_segment` records and indexed for full-text search. The raw SRT is not preserved as a single blob.
-- All user content is RLS-scoped. Don't expose subtitle text publicly.
+Two source types in the MVP, both feeding the same `text_segment` table.
 
-### During the movie
+- **Movie subtitles.**
+  - **OpenSubtitles search.** Search by title; results filtered to the user's target language. The track's `language` must match the chosen study language — never inferred.
+  - **Manual `.srt` upload.** First-class, not a fallback. User specifies the language at upload time.
+  - On import, SRTs are normalized into per-line `text_segment` records (with `start_ms`/`end_ms`) and indexed for full-text search. The raw SRT is not preserved as a single blob.
+- **Pasted text.** First-class, not a fallback. The user pastes raw text (50–20,000 chars), provides a short title (auto-suggested from the first ~60 chars), and picks the language.
+  - Segmented one row per non-empty line (`\n`-split, trimmed). `start_ms`/`end_ms` are null.
+  - Same FTS / dedup-hash plumbing as subtitles.
+- All user content is RLS-scoped. Don't expose subtitle or paste text publicly.
+
+### During a session
 
 - No in-movie sync. The app is for triage and lookup, not playback.
-- The "watch" screen is a search bar over the track plus a scrollable list of timestamped lines. That is the entire mid-movie UI.
+- The mid-source screen is a search bar over the track plus a scrollable list of segments. Movie segments show a timestamp; text segments don't. That is the entire mid-source UI.
 - Selecting text in a line — single line or contiguous multi-line — creates a `highlight`. Default behaviour: silent. No inline translation, no inline gloss.
 - Optional **tap-to-translate** setting (off by default). When on, a selection opens a sheet with a fast one-line gloss + POS + register tag. Result cached on the highlight; re-tapping is instant.
 - Highlight sheet has: selection text, optional free-text note, preset chips (`Explain`, `3 examples`, `Synonyms`, `Etymology`, `Why this form?`). The note and tags are passed to the LLM at processing time.
@@ -42,8 +48,9 @@ runs server-side, async, streamed (Anthropic SDK requires streaming for any
 request whose worst-case duration exceeds 10 minutes — basic-data on long
 tracks does).
 
-1. **Movie context blob** — one call per `study_session`, persisted on the row.
-   - Output ~300 tokens: genre, register, character list, plot sketch, tone, recurring vocabulary themes.
+1. **Source context blob** — one call per `study_session`, persisted on the row.
+   - Output ~300 tokens: topic (genre + plot sketch for narrative material; subject matter for non-narrative), register, tone, recurring vocabulary themes, named entities or recurring referents the learner will encounter.
+   - Source-type-aware: prompt is the same but the user message labels the excerpts (`Subtitle excerpts` / `Article excerpts` / `Text excerpts` / `Book excerpts`) so the model knows what it's looking at.
    - Acts as a cacheable prompt prefix for every subsequent call related to this session.
 2. **L1-interference notes** — one call per `(L1, target_language)` pair, persisted globally and cached forever.
    - Output ~500 tokens: false friends, structural transfers, tense/aspect mismatches, register conventions.
@@ -63,7 +70,7 @@ tracks does).
    - **Hard CEFR floor**: only LLM-discovered chunks at or above the user's
      level. The LLM is told to skip common B-level filler even when frequent
      in the source, and to **prioritize regional / dialectal / colloquial
-     chunks** when the movie context blob signals that register (e.g.
+     chunks** when the source context blob signals that register (e.g.
      rioplatense voseo, peninsular slang, mexicanismos) over neutral
      pan-language equivalents. Highlights bypass the CEFR floor — they always
      produce a card.
@@ -80,7 +87,7 @@ tracks does).
    view. Cards arrive from step 3 with only the basic data populated; this
    pass adds the optional enrichment fields. NOT run automatically during
    processing.
-   - Input: chunk + 10 surrounding segments + movie context blob + L1
+   - Input: chunk + 10 surrounding segments + source context blob + L1
      notes + user's note + preset tags + methodology prompt.
    - Output: refined basic columns (the model may revise them based on
      deeper analysis) plus an `extras` bag containing optional fields (IPA,
@@ -121,7 +128,7 @@ Two-layer UI.
   `_Updated: …_` italic line and the focus view re-fetches the card.
 - Prev/next navigation through the kept set. Keyboard `j`/`k` and `←`/`→`.
 
-Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + extras (if populated). The user's question is the only dynamic turn.
+Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + extras (if populated). The user's question is the only dynamic turn.
 
 ### Export
 
@@ -133,8 +140,9 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + movie context b
 
 Native-style shell so the eventual React Native port is a translation, not a redesign.
 
-- **Mobile** (`< 768px`): bottom tab bar with three slots — `Sessions` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (currently just `Start a movie session`; built to grow as more `content_source.type`s land).
-- **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay.
+- **Mobile** (`< 768px`): bottom tab bar with three slots — `Sessions` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (`Start a movie session`, `Practice with a text`; designed to grow as more `content_source.type`s land).
+- **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
+- **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
 - **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus inline `Switch` rows for tap-to-translate and LLM-suggested chunks.
 
@@ -194,7 +202,7 @@ study_session
   native_language     text         -- snapshotted from user pref
   target_language     text
   cefr_level          text         -- snapshotted from user pref
-  context_blob        text?        -- movie context, populated at processing
+  context_blob        text?        -- source context, populated at processing
   status              'active' | 'processing' | 'processed' | 'exported' | 'failed'
   processing_warnings text[]       -- per-pass / per-highlight non-fatal failures
   created_at          timestamptz
@@ -277,7 +285,7 @@ Notes:
 
 ## LLM methodology prompt
 
-Used as the system prompt for every heavy pass (context blob, L1 notes, difficult-words, full-exploration) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{movie_context_blob}`, `{l1_interference_notes}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`, e.g. Spanish-specific guidance for rioplatense / peninsular / Mexican variants and pronominal-verb headword rules). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
+Used as the system prompt for every heavy pass (context blob, L1 notes, difficult-words, full-exploration) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{source_context_blob}`, `{l1_interference_notes}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`, e.g. Spanish-specific guidance for rioplatense / peninsular / Mexican variants and pronominal-verb headword rules). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
 
 ```
 You are a linguistic co-pilot for a language learner. Methodology: lexical approach.
@@ -310,8 +318,8 @@ User profile:
 L1 interference notes ({native_language} -> {target_language}):
 {l1_interference_notes}
 
-Source context (subtitles for this session):
-{movie_context_blob}
+Source context for this session:
+{source_context_blob}
 
 When asked to explore a chunk, output the Full exploration template (defined by
 the caller) and stop. For follow-up chat about an already-explored chunk, answer
@@ -396,12 +404,19 @@ cached result instantly.
 
 ## User flows
 
-**Start a session**
+**Start a movie session**
 1. Pick or search a movie (TMDB-backed metadata).
 2. Pick a subtitle track: OpenSubtitles search filtered to target language, or upload `.srt`.
 3. App verifies the chosen track's language matches target language; can't proceed otherwise.
 4. If first session in this target language: prompt for CEFR level.
 5. Session created, status `active`.
+
+**Start a text session**
+1. From the `+` overlay, pick `Practice with a text`.
+2. Paste the source text (50–20,000 chars). Title field auto-fills with the first ~60 chars (truncated at a word boundary); user can override.
+3. Pick the language of the text.
+4. If first session in this target language: prompt for CEFR level.
+5. Session created, status `active`. Same mid-session UI as movies, minus the timestamps.
 
 **Mid-watch**
 1. Open the session.
@@ -433,7 +448,7 @@ cached result instantly.
 
 ## v2 / out-of-scope ideas worth not forgetting
 
-- Books, articles, pasted text as additional `content_source.type`.
+- Books and articles as additional `content_source.type`s (pasted text already shipped — books/articles need their own ingestion path but reuse the rest of the pipeline).
 - Cross-source personal vocabulary corpus screen.
 - `.apkg` Anki export with audio + images.
 - Inline subtitle player with sync, for users who actually want it.
