@@ -87,11 +87,7 @@ const updateStatus = async (id: string, status: CardStatus): Promise<DbCard | nu
   return result[0] ?? null
 }
 
-const updateStatusBatch = async (
-  studySessionId: string,
-  cardIds: string[],
-  status: CardStatus
-): Promise<DbCard[]> => {
+const updateStatusBatch = async (studySessionId: string, cardIds: string[], status: CardStatus): Promise<DbCard[]> => {
   if (cardIds.length === 0) return []
   const result = (await sql`
     UPDATE public.cards

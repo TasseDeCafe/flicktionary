@@ -191,12 +191,7 @@ export const processSession = async (
           targetExample: chunk.targetExample,
           nativeExample: chunk.nativeExample,
           explorationExtras: {},
-          status:
-            chunk.source === 'highlight'
-              ? 'kept'
-              : chunk.belowCefr
-                ? 'auto_rejected'
-                : 'pending',
+          status: chunk.source === 'highlight' ? 'kept' : chunk.belowCefr ? 'auto_rejected' : 'pending',
         })
       }
 
