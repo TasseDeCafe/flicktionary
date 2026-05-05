@@ -212,6 +212,8 @@ below_cefr=true rows the translation/definition/example fields can be null
 (saves tokens — the user can override and request enrichment later).
 
 Selection criteria for LLM-discovered chunks — apply strictly:
+- Pick the most important chunks. There can be more than ${target} useful chunks
+  to learn, so go for the ones that are the most useful/frequent.
 - Only include items AT OR ABOVE ${cefrLevel}. Do not include items below
   ${cefrLevel} even if they appear frequently in the source. Common collocations
   like "durante el resto de su vida", "nunca más", "según su costumbre" are not

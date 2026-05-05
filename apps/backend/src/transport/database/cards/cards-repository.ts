@@ -87,6 +87,21 @@ const updateStatus = async (id: string, status: CardStatus): Promise<DbCard | nu
   return result[0] ?? null
 }
 
+const updateStatusBatch = async (
+  studySessionId: string,
+  cardIds: string[],
+  status: CardStatus
+): Promise<DbCard[]> => {
+  if (cardIds.length === 0) return []
+  const result = (await sql`
+    UPDATE public.cards
+    SET status = ${status}, updated_at = NOW()
+    WHERE study_session_id = ${studySessionId} AND id = ANY(${cardIds}::uuid[])
+    RETURNING *
+  `) as DbCard[]
+  return result
+}
+
 // Patch shape for partial updates. `null` on a field means "leave the column
 // unchanged" (handled via COALESCE on the SQL side). To clear a basic field,
 // pass an explicit empty string. `extrasPatch` is shallow-merged into
@@ -133,6 +148,7 @@ export interface CardsRepositoryInterface {
   findById: (id: string) => Promise<DbCard | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbCard | null>
   updateStatus: (id: string, status: CardStatus) => Promise<DbCard | null>
+  updateStatusBatch: (studySessionId: string, cardIds: string[], status: CardStatus) => Promise<DbCard[]>
   updateFields: (id: string, patch: CardFieldsPatch) => Promise<DbCard | null>
   listKeptForSession: (studySessionId: string) => Promise<DbCard[]>
 }
@@ -144,6 +160,7 @@ export const CardsRepository = (): CardsRepositoryInterface => {
     findById,
     findByIdForUser,
     updateStatus,
+    updateStatusBatch,
     updateFields,
     listKeptForSession,
   }

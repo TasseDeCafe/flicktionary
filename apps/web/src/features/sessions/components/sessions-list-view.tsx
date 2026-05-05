@@ -2,13 +2,17 @@ import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { useListStudySessions } from '../api/sessions-hooks'
 import { SessionCard } from './session-card'
+import { SessionRemoveDialog } from './session-remove-dialog'
 
 type Filter = 'all' | 'movie' | 'text'
+
+type RemoveTarget = { id: string; title: string }
 
 export const SessionsListView = () => {
   const { t } = useLingui()
   const { data, isLoading } = useListStudySessions()
   const [filter, setFilter] = useState<Filter>('all')
+  const [removeTarget, setRemoveTarget] = useState<RemoveTarget | null>(null)
 
   const filtered = useMemo(() => {
     const all = data ?? []
@@ -52,9 +56,22 @@ export const SessionsListView = () => {
           <p className='text-muted-foreground text-sm'>{t`No sessions in this filter.`}</p>
         )}
         {filtered.map((session) => (
-          <SessionCard key={session.id} session={session} />
+          <SessionCard
+            key={session.id}
+            session={session}
+            onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
+          />
         ))}
       </div>
+
+      <SessionRemoveDialog
+        open={removeTarget !== null}
+        sessionId={removeTarget?.id ?? null}
+        sessionTitle={removeTarget?.title ?? ''}
+        onOpenChange={(next) => {
+          if (!next) setRemoveTarget(null)
+        }}
+      />
     </div>
   )
 }

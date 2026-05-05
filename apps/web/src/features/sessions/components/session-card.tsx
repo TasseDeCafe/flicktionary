@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { FileText } from 'lucide-react'
+import { FileText, Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
@@ -18,9 +19,10 @@ type SessionRow = {
 
 type Props = {
   session: SessionRow
+  onRemove: (session: SessionRow) => void
 }
 
-export const SessionCard = ({ session }: Props) => {
+export const SessionCard = ({ session, onRemove }: Props) => {
   const { t } = useLingui()
   const title = session.contentSourceTitle ?? t`Untitled`
   const isText = session.contentSourceType === 'text'
@@ -29,9 +31,9 @@ export const SessionCard = ({ session }: Props) => {
   )
 
   return (
-    <Link to='/sessions/$sessionId' params={{ sessionId: session.id }} className='block'>
-      <Card className='transition-colors hover:border-yellow-300'>
-        <CardContent className='flex items-center gap-4 p-4'>
+    <Card className='relative transition-colors hover:border-yellow-300'>
+      <Link to='/sessions/$sessionId' params={{ sessionId: session.id }} className='block'>
+        <CardContent className='flex items-center gap-4 p-4 pr-14'>
           {session.contentSourcePosterUrl ? (
             <img
               src={session.contentSourcePosterUrl}
@@ -55,7 +57,20 @@ export const SessionCard = ({ session }: Props) => {
             {t`Status`}: {session.status}
           </span>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      <Button
+        variant='ghost'
+        size='icon'
+        aria-label={t`Remove session`}
+        className='text-muted-foreground hover:text-destructive absolute top-2 right-2 h-8 w-8'
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          onRemove(session)
+        }}
+      >
+        <Trash2 className='h-4 w-4' />
+      </Button>
+    </Card>
   )
 }

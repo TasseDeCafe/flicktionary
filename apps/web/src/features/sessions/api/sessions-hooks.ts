@@ -149,6 +149,50 @@ export const useGetStudySession = (sessionId: string) => {
   )
 }
 
+export const useGetSessionDeletePreview = (sessionId: string | null) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.studySessions.getDeletePreview.queryOptions({
+      input: { sessionId: sessionId ?? '' },
+      enabled: !!sessionId,
+      select: (response) => response.data,
+      meta: { errorMessage: t`Failed to load session counts` },
+    })
+  )
+}
+
+export const useRemoveStudySession = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.studySessions.remove.mutationOptions({
+      onMutate: async (variables: { sessionId: string }) => {
+        const listKey = orpcQuery.studySessions.list.key()
+        await queryClient.cancelQueries({ queryKey: listKey })
+        const previous = queryClient.getQueryData(listKey)
+        queryClient.setQueryData<{ data: Array<{ id: string }> }>(listKey, (cached) => {
+          if (!cached?.data) return cached
+          return { ...cached, data: cached.data.filter((s) => s.id !== variables.sessionId) }
+        })
+        return { listKey, previous }
+      },
+      onError: (_error, _variables, context) => {
+        if (!context) return
+        const ctx = context as { listKey: readonly unknown[]; previous: unknown }
+        if (ctx.previous !== undefined) queryClient.setQueryData(ctx.listKey, ctx.previous)
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.studySessions.list.key() })
+      },
+      meta: {
+        successMessage: t`Session removed`,
+        errorMessage: t`Failed to remove session`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useGetStudySessionStatus = (sessionId: string, refetchInterval?: number) => {
   const { t } = useLingui()
   return useQuery(

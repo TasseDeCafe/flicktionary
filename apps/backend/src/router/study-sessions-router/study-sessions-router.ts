@@ -136,6 +136,41 @@ export const StudySessionsRouter = (
         },
       }
     }),
+
+    getDeletePreview: implementer.getDeletePreview.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const preview = await studySessionsRepository.getDeletePreview(input.sessionId, userId)
+      if (!preview) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      return { data: preview }
+    }),
+
+    remove: implementer.remove.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      // Block while a pipeline run is in flight — yanking the row from under
+      // the orchestrator would leave inconsistent state.
+      if (session.status === 'processing') {
+        throw errors.CONFLICT({
+          data: { errors: [{ message: 'Session is processing — wait for it to finish before removing' }] },
+        })
+      }
+      const ok = await studySessionsRepository.softDelete(input.sessionId, userId)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to remove session' }] },
+        })
+      }
+      return { data: { ok: true as const } }
+    }),
   })
 
   return createOrpcExpressRouter(router, { contract: studySessionsContract })

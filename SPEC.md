@@ -103,6 +103,8 @@ Two-layer UI.
 - Two sections: "Your highlights" and "LLM-suggested chunks". Auto-rejected chunks collapsed under a `Show N filtered out` toggle.
 - Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, keep/reject toggle, tap target.
 - Filter, search, sort across both sections.
+- Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
+- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). LLM-suggested chunks land as `pending` and require explicit triage. Below-CEFR LLM chunks are still `auto_rejected`.
 - Sticky footer: `Export N kept cards`.
 - No chat here. This layer is for fast triage.
 
@@ -142,7 +144,7 @@ Native-style shell so the eventual React Native port is a translation, not a red
 
 - **Mobile** (`< 768px`): bottom tab bar with three slots — `Sessions` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (`Start a movie session`, `Practice with a text`; designed to grow as more `content_source.type`s land).
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
-- **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify.
+- **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
 - **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus inline `Switch` rows for tap-to-translate and LLM-suggested chunks.
 
@@ -207,6 +209,11 @@ study_session
   processing_warnings text[]       -- per-pass / per-highlight non-fatal failures
   created_at          timestamptz
   processed_at        timestamptz?
+  deleted_at          timestamptz? -- soft-delete; "Remove" hides the session from
+                                   -- the list. Cards / segments / content_source
+                                   -- stay so kept vocabulary keeps its source
+                                   -- back-link. Hard erasure happens via account
+                                   -- deletion (auth.users CASCADE).
 
 highlight
   id                  uuid pk

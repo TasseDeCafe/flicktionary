@@ -76,6 +76,18 @@ export const CardsRouter = (
       return { data: toCardDto(updated) }
     }),
 
+    updateStatusBatch: implementer.updateStatusBatch.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      const updated = await cardsRepository.updateStatusBatch(input.sessionId, input.cardIds, input.status)
+      return { data: updated.map(toCardDto) }
+    }),
+
     updateFields: implementer.updateFields.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const owned = await cardsRepository.findByIdForUser(input.cardId, userId)

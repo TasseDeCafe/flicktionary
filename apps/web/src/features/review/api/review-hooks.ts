@@ -8,11 +8,15 @@ import {
   getSessionCardsKey,
   invalidateCardEverywhere,
   restoreCardCaches,
+  restoreSessionCardsCache,
   reviewCardCacheStaleTimeMs,
   setCardEverywhere,
+  setCardStatusBatchEverywhere,
   setCardStatusEverywhere,
   snapshotCardCaches,
+  snapshotSessionCardsCache,
   type CardCacheSnapshot,
+  type CardListSnapshot,
 } from './card-cache'
 
 export const useListCardsBySession = (sessionId: string) => {
@@ -62,6 +66,34 @@ export const useUpdateCardStatus = (sessionId: string) => {
         setCardEverywhere(queryClient, response.data)
       },
       meta: { errorMessage: t`Failed to update card status` },
+    })
+  )
+}
+
+export const useUpdateCardStatusBatch = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.cards.updateStatusBatch.mutationOptions({
+      onMutate: async (variables: { sessionId: string; cardIds: string[]; status: CardStatus }) => {
+        await queryClient.cancelQueries({ queryKey: getSessionCardsKey(sessionId) })
+        const snapshot = snapshotSessionCardsCache(queryClient, sessionId)
+        setCardStatusBatchEverywhere(queryClient, {
+          sessionId,
+          cardIds: variables.cardIds,
+          status: variables.status,
+        })
+        return snapshot
+      },
+      onError: (_error, _variables, context) => {
+        restoreSessionCardsCache(queryClient, context as CardListSnapshot | undefined)
+      },
+      onSuccess: (response) => {
+        for (const card of response.data) {
+          setCardEverywhere(queryClient, card)
+        }
+      },
+      meta: { errorMessage: t`Failed to update card statuses` },
     })
   )
 }

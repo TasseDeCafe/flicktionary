@@ -318,6 +318,11 @@ CREATE TABLE public.study_sessions (
   processing_warnings TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   processed_at TIMESTAMP WITH TIME ZONE NULL,
+  -- Soft-delete: "Remove" hides the session from the user's list but keeps the
+  -- underlying content (cards, segments, content_source) so kept vocabulary
+  -- can still back-link to the source text. Hard erasure happens via account
+  -- deletion (auth.users CASCADE).
+  deleted_at TIMESTAMP WITH TIME ZONE NULL,
   CONSTRAINT study_sessions_pkey PRIMARY KEY (id),
   CONSTRAINT study_sessions_user_id_fkey FOREIGN KEY (user_id)
     REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -331,7 +336,9 @@ CREATE TABLE public.study_sessions (
     ON DELETE RESTRICT
 );
 
-CREATE INDEX idx_study_sessions_user_created ON public.study_sessions (user_id, created_at DESC);
+CREATE INDEX idx_study_sessions_user_created
+  ON public.study_sessions (user_id, created_at DESC)
+  WHERE deleted_at IS NULL;
 CREATE INDEX idx_study_sessions_text_track_id ON public.study_sessions (text_track_id);
 
 ALTER TABLE public.study_sessions ENABLE ROW LEVEL SECURITY;

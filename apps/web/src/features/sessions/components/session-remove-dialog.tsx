@@ -1,0 +1,74 @@
+import { useLingui } from '@lingui/react/macro'
+import { Button } from '@/components/ui/button'
+import {
+  ResponsiveOverlay,
+  OverlayContent,
+  OverlayHeader,
+  OverlayTitle,
+  OverlayDescription,
+  OverlayFooter,
+} from '@/components/ui/responsive-overlay'
+import { useGetSessionDeletePreview, useRemoveStudySession } from '../api/sessions-hooks'
+
+type Props = {
+  open: boolean
+  sessionId: string | null
+  sessionTitle: string
+  onOpenChange: (next: boolean) => void
+}
+
+export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChange }: Props) => {
+  const { t } = useLingui()
+  const { data: preview, isLoading } = useGetSessionDeletePreview(open ? sessionId : null)
+  const { mutate: removeSession, isPending } = useRemoveStudySession()
+
+  const isProcessing = preview?.status === 'processing'
+  const canConfirm = !!sessionId && !isLoading && !isPending && !isProcessing
+
+  const handleConfirm = () => {
+    if (!sessionId) return
+    removeSession(
+      { sessionId },
+      {
+        onSuccess: () => onOpenChange(false),
+      }
+    )
+  }
+
+  return (
+    <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
+      <OverlayContent>
+        <OverlayHeader>
+          <OverlayTitle>{t`Remove "${sessionTitle}"?`}</OverlayTitle>
+          <OverlayDescription>
+            {t`This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account.`}
+          </OverlayDescription>
+        </OverlayHeader>
+
+        <div className='px-4 pb-2 text-sm sm:px-0'>
+          {isLoading && <p className='text-muted-foreground'>{t`Loading…`}</p>}
+          {preview && (
+            <ul className='text-muted-foreground space-y-1'>
+              <li>{t`${preview.highlightCount} highlight(s)`}</li>
+              <li>{t`${preview.cardCount} card(s) — of which ${preview.keptCardCount} kept`}</li>
+            </ul>
+          )}
+          {isProcessing && (
+            <p className='mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800'>
+              {t`This session is processing — wait for it to finish before removing.`}
+            </p>
+          )}
+        </div>
+
+        <OverlayFooter>
+          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isPending}>
+            {t`Cancel`}
+          </Button>
+          <Button variant='destructive' onClick={handleConfirm} disabled={!canConfirm}>
+            {isPending ? t`Removing…` : t`Remove`}
+          </Button>
+        </OverlayFooter>
+      </OverlayContent>
+    </ResponsiveOverlay>
+  )
+}

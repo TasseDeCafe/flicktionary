@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
-import { useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
+import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
@@ -19,6 +19,40 @@ const matchesSearch = (card: Card, q: string): boolean => {
   return haystack.includes(q.toLowerCase())
 }
 
+type BulkActionsProps = {
+  cards: Card[]
+  disabled: boolean
+  onBulkStatusChange: (cards: Card[], status: CardStatus) => void
+}
+
+const BulkActions = ({ cards, disabled, onBulkStatusChange }: BulkActionsProps) => {
+  const { t } = useLingui()
+  const allKept = cards.every((c) => c.status === 'kept')
+  const allRejected = cards.every((c) => c.status === 'rejected')
+  return (
+    <div className='flex shrink-0 gap-1'>
+      <Button
+        variant='ghost'
+        size='sm'
+        className='h-7 text-xs'
+        disabled={disabled || allKept}
+        onClick={() => onBulkStatusChange(cards, 'kept')}
+      >
+        {t`Keep all`}
+      </Button>
+      <Button
+        variant='ghost'
+        size='sm'
+        className='h-7 text-xs'
+        disabled={disabled || allRejected}
+        onClick={() => onBulkStatusChange(cards, 'rejected')}
+      >
+        {t`Reject all`}
+      </Button>
+    </div>
+  )
+}
+
 export const TriageListView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -26,6 +60,7 @@ export const TriageListView = () => {
   const { data: cards, isLoading } = useListCardsBySession(sessionId)
   const { data: session } = useGetStudySession(sessionId)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
+  const { mutate: updateStatusBatch, isPending: isBatchPending } = useUpdateCardStatusBatch(sessionId)
   const warnings = session?.processingWarnings ?? []
 
   const [search, setSearch] = useState('')
@@ -56,6 +91,12 @@ export const TriageListView = () => {
 
   const handleStatusChange = (cardId: string, status: CardStatus) => {
     updateStatus({ cardId, status })
+  }
+
+  const handleBulkStatusChange = (sectionCards: Card[], status: CardStatus) => {
+    const cardIds = sectionCards.filter((c) => c.status !== status).map((c) => c.id)
+    if (cardIds.length === 0) return
+    updateStatusBatch({ sessionId, cardIds, status })
   }
 
   // Triage and the source view are sibling screens (neither is the parent of
@@ -111,9 +152,16 @@ export const TriageListView = () => {
 
           {grouped.yourHighlights.length > 0 && (
             <section className='mb-6'>
-              <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-                {t`Your highlights`} ({grouped.yourHighlights.length})
-              </h2>
+              <div className='flex items-center justify-between gap-2'>
+                <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
+                  {t`Your highlights`} ({grouped.yourHighlights.length})
+                </h2>
+                <BulkActions
+                  cards={grouped.yourHighlights}
+                  disabled={isBatchPending}
+                  onBulkStatusChange={handleBulkStatusChange}
+                />
+              </div>
               <div className='mt-2'>
                 {grouped.yourHighlights.map((card) => (
                   <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
@@ -124,9 +172,16 @@ export const TriageListView = () => {
 
           {grouped.llmSuggested.length > 0 && (
             <section className='mb-6'>
-              <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-                {t`LLM-suggested chunks`} ({grouped.llmSuggested.length})
-              </h2>
+              <div className='flex items-center justify-between gap-2'>
+                <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
+                  {t`LLM-suggested chunks`} ({grouped.llmSuggested.length})
+                </h2>
+                <BulkActions
+                  cards={grouped.llmSuggested}
+                  disabled={isBatchPending}
+                  onBulkStatusChange={handleBulkStatusChange}
+                />
+              </div>
               <div className='mt-2'>
                 {grouped.llmSuggested.map((card) => (
                   <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />

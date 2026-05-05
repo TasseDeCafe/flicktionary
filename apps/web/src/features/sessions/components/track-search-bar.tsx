@@ -13,7 +13,7 @@ export const TrackSearchBar = ({ value, onChange }: Props) => {
       type='search'
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder={t`Search the subtitle track…`}
+      placeholder={t`Search…`}
       className='w-full'
     />
   )
