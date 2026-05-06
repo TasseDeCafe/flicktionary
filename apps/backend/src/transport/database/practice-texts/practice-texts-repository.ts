@@ -13,6 +13,12 @@ export type PracticeAnnotation = {
   charEnd: number
 }
 
+export type PracticeSkippedChunk = {
+  headword: string
+  sense: string
+  reason: string
+}
+
 const insertPending = async (params: { practiceSessionId: string; ord: number }): Promise<DbPracticeText> => {
   const result = (await sql`
     INSERT INTO public.practice_texts (practice_session_id, ord, status)
@@ -34,6 +40,7 @@ const markReady = async (params: {
   id: string
   body: string
   annotations: PracticeAnnotation[]
+  skippedChunks: PracticeSkippedChunk[]
   generationWarning: string | null
 }): Promise<DbPracticeText | null> => {
   const annotationsJson = sql.json(
@@ -45,11 +52,13 @@ const markReady = async (params: {
       char_end: a.charEnd,
     })) as unknown as postgres.JSONValue
   )
+  const skippedJson = sql.json(params.skippedChunks as unknown as postgres.JSONValue)
   const result = (await sql`
     UPDATE public.practice_texts
     SET status = 'ready',
         body = ${params.body},
         annotations = ${annotationsJson}::jsonb,
+        skipped_chunks = ${skippedJson}::jsonb,
         generation_warning = ${params.generationWarning},
         ready_at = NOW()
     WHERE id = ${params.id}
@@ -168,6 +177,31 @@ const getCoveredHeadwordSenses = async (
   }))
 }
 
+// Returns how many times each (headword, sense) was reported in skipped_chunks
+// across all texts in this session. Used to detect "stubborn" chunks the LLM
+// can't fit in normal multi-chunk generation, which then get a one-shot
+// single-sentence rescue.
+const getSkippedChunkCountsForSession = async (
+  practiceSessionId: string
+): Promise<Array<{ headword: string; sense: string; count: number }>> => {
+  const result = await sql`
+    SELECT
+      sk->>'headword' AS headword,
+      COALESCE(sk->>'sense', '') AS sense,
+      COUNT(*)::int AS count
+    FROM public.practice_texts pt,
+         jsonb_array_elements(pt.skipped_chunks) AS sk
+    WHERE pt.practice_session_id = ${practiceSessionId}
+      AND pt.status IN ('ready', 'reading', 'done')
+    GROUP BY headword, sense
+  `
+  return result.map((row) => ({
+    headword: row.headword as string,
+    sense: (row.sense as string) ?? '',
+    count: row.count as number,
+  }))
+}
+
 export interface PracticeTextsRepositoryInterface {
   insertPending: (params: { practiceSessionId: string; ord: number }) => Promise<DbPracticeText>
   markGenerating: (id: string) => Promise<void>
@@ -175,6 +209,7 @@ export interface PracticeTextsRepositoryInterface {
     id: string
     body: string
     annotations: PracticeAnnotation[]
+    skippedChunks: PracticeSkippedChunk[]
     generationWarning: string | null
   }) => Promise<DbPracticeText | null>
   markFailed: (params: { id: string; warning: string }) => Promise<void>
@@ -189,6 +224,9 @@ export interface PracticeTextsRepositoryInterface {
   findCurrentReadable: (practiceSessionId: string) => Promise<DbPracticeText | null>
   getNextOrd: (practiceSessionId: string) => Promise<number>
   getCoveredHeadwordSenses: (practiceSessionId: string) => Promise<Array<{ headword: string; sense: string }>>
+  getSkippedChunkCountsForSession: (
+    practiceSessionId: string
+  ) => Promise<Array<{ headword: string; sense: string; count: number }>>
 }
 
 export const PracticeTextsRepository = (): PracticeTextsRepositoryInterface => {
@@ -205,5 +243,6 @@ export const PracticeTextsRepository = (): PracticeTextsRepositoryInterface => {
     findCurrentReadable,
     getNextOrd,
     getCoveredHeadwordSenses,
+    getSkippedChunkCountsForSession,
   }
 }

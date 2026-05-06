@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import {
   ResponsiveOverlay,
@@ -25,22 +24,19 @@ interface RateSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   chunk: RateSheetChunkContent | null
+  // Previously-submitted rating for this chunk in the current text, if any.
+  // Highlights that button instead of the default 'good' so the user sees
+  // what they last picked when re-opening a chunk.
+  currentRating?: RateValue | null
   isSubmitting?: boolean
   onSubmit: (rating: RateValue) => void
 }
 
-export const RateSheet = ({ open, onOpenChange, chunk, isSubmitting, onSubmit }: RateSheetProps) => {
+export const RateSheet = ({ open, onOpenChange, chunk, currentRating, isSubmitting, onSubmit }: RateSheetProps) => {
   const { t } = useLingui()
-  const [selected, setSelected] = useState<RateValue>('good')
 
   return (
-    <ResponsiveOverlay
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) setSelected('good')
-        onOpenChange(next)
-      }}
-    >
+    <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
       <OverlayContent>
         <OverlayHeader>
           <OverlayTitle>{chunk?.headword ?? t`Rate`}</OverlayTitle>
@@ -71,14 +67,7 @@ export const RateSheet = ({ open, onOpenChange, chunk, isSubmitting, onSubmit }:
           </div>
         )}
         <OverlayFooter>
-          <RateButtons
-            value={selected}
-            disabled={isSubmitting || !chunk}
-            onSelect={(rating) => {
-              setSelected(rating)
-              onSubmit(rating)
-            }}
-          />
+          <RateButtons value={currentRating ?? undefined} disabled={isSubmitting || !chunk} onSelect={onSubmit} />
         </OverlayFooter>
       </OverlayContent>
     </ResponsiveOverlay>

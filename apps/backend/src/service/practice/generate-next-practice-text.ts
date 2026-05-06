@@ -32,6 +32,13 @@ export type GenerateNextPracticeTextResult =
 
 const DEFAULT_CHUNKS_PER_TEXT = 7
 
+// Stubborn-chunk policy: a chunk skipped once gets a one-shot single-sentence
+// rescue. Skipped twice and we give up for the rest of the session — it stays
+// in user_lookups with its existing srs_due, so it'll resurface in a future
+// practice session.
+const RESCUE_THRESHOLD = 1
+const ABANDON_THRESHOLD = 2
+
 // Pulls the user's representative card for a given (headword, sense) so the
 // generation prompt has translation/example fields. Returns null if the
 // user_lookups row's first_card_id is missing or the card was deleted.
@@ -79,15 +86,24 @@ export const generateNextPracticeText = async (
   if (!nativeLanguage) return { ok: false, reason: 'no_native_language' }
 
   // Build the candidate pool: rows eligible for review, minus rows already
-  // covered by earlier texts in this session. We work in JS rather than SQL
-  // because the "already covered" set comes from JSONB annotations.
+  // covered by earlier texts in this session, minus chunks the LLM has
+  // abandoned (skipped twice). We work in JS rather than SQL because both
+  // "already covered" and "skip count" come from JSONB.
   const eligible = await deps.userLookupsRepository.listEligibleForLanguage({
     userId,
     targetLanguage: session.target_language,
   })
   const covered = await deps.practiceTextsRepository.getCoveredHeadwordSenses(practiceSessionId)
   const coveredKeys = new Set(covered.map((c) => `${c.headword}::${c.sense}`))
-  const remaining = eligible.filter((row) => !coveredKeys.has(`${row.headword}::${row.sense}`))
+  const skippedCounts = await deps.practiceTextsRepository.getSkippedChunkCountsForSession(practiceSessionId)
+  const skipCountByKey = new Map(skippedCounts.map((s) => [`${s.headword}::${s.sense}`, s.count]))
+
+  const remaining = eligible.filter((row) => {
+    const key = `${row.headword}::${row.sense ?? ''}`
+    if (coveredKeys.has(key)) return false
+    if ((skipCountByKey.get(key) ?? 0) >= ABANDON_THRESHOLD) return false
+    return true
+  })
 
   if (remaining.length === 0) {
     await deps.practiceSessionsRepository.markCompleted(practiceSessionId, userId)
@@ -108,8 +124,13 @@ export const generateNextPracticeText = async (
     )
   )
 
+  // Pick rescue-first: any remaining chunk that was skipped exactly once gets a
+  // single-sentence rescue text (much easier to fit than a 7-chunk paragraph).
+  // Otherwise, fall back to the normal multi-chunk text.
+  const stubborn = remaining.find((row) => (skipCountByKey.get(`${row.headword}::${row.sense ?? ''}`) ?? 0) === RESCUE_THRESHOLD)
+  const rescueMode = stubborn != null
   const chunksPerText = deps.chunksPerText ?? DEFAULT_CHUNKS_PER_TEXT
-  const picked = remaining.slice(0, chunksPerText)
+  const picked = rescueMode ? [stubborn!] : remaining.slice(0, chunksPerText)
   const enriched = await Promise.all(
     picked.map((row) =>
       fetchChunkContent(
@@ -155,12 +176,18 @@ export const generateNextPracticeText = async (
       cefrLevel,
       l1InterferenceNotes: l1Notes,
       chunks,
+      rescueMode,
     })
+    const annotatedWarning = rescueMode
+      ? [`Rescue: ${chunks[0]!.headword}|${chunks[0]!.sense}`, result.generationWarning].filter(Boolean).join(' / ') ||
+        null
+      : result.generationWarning
     const ready = await deps.practiceTextsRepository.markReady({
       id: pending.id,
       body: result.body,
       annotations: result.usedChunks,
-      generationWarning: result.generationWarning,
+      skippedChunks: result.skippedChunks.map((s) => ({ headword: s.headword, sense: s.sense, reason: s.reason })),
+      generationWarning: annotatedWarning,
     })
     if (!ready) {
       return { ok: false, reason: 'generation_failed', warning: 'practice_text disappeared after markReady' }

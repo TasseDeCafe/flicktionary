@@ -558,6 +558,12 @@ CREATE TABLE public.practice_texts (
   status practice_text_status NOT NULL DEFAULT 'pending',
   body TEXT NULL,
   annotations JSONB NOT NULL DEFAULT '[]'::jsonb,
+  -- Chunks the LLM declined to embed in this text. Element shape:
+  --   { headword, sense, reason }
+  -- Used by the next-text generator to detect "stubborn" chunks: if a chunk is
+  -- skipped once it gets a one-shot rescue (single-sentence text); skipped
+  -- twice and it's excluded from the rest of the session.
+  skipped_chunks JSONB NOT NULL DEFAULT '[]'::jsonb,
   generation_warning TEXT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   ready_at TIMESTAMP WITH TIME ZONE NULL,

@@ -24,8 +24,10 @@ export const PracticeSessionView = () => {
   const { mutate: rateChunk } = useRatePracticeChunk()
   const { mutate: finalizeText, isPending: isFinalizing } = useFinalizePracticeText(practiceSessionId)
 
-  // Local set of annotation indices the user has explicitly rated this text.
-  const [rated, setRated] = useState<Set<number>>(new Set())
+  // Per-text map of annotation index -> the rating the user submitted. Used
+  // both to mark already-rated chunks in the body and to pre-select the
+  // previous rating when the user re-opens a chunk.
+  const [ratings, setRatings] = useState<Map<number, RateValue>>(new Map())
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [done, setDone] = useState(false)
   // True from the moment Next is clicked until the new text lands in cache.
@@ -55,7 +57,7 @@ export const PracticeSessionView = () => {
 
   // Reset rated state when the text changes.
   useEffect(() => {
-    setRated(new Set())
+    setRatings(new Map())
     setOpenIndex(null)
   }, [currentTextId])
 
@@ -68,9 +70,9 @@ export const PracticeSessionView = () => {
       surfaceForm: a.surfaceForm,
       charStart: a.charStart,
       charEnd: a.charEnd,
-      rated: rated.has(i),
+      rated: ratings.has(i),
     }))
-  }, [currentText, rated])
+  }, [currentText, ratings])
 
   const openChunk: RateSheetChunkContent | null = useMemo(() => {
     if (openIndex == null || !currentText) return null
@@ -107,9 +109,9 @@ export const PracticeSessionView = () => {
       },
       {
         onSuccess: () => {
-          setRated((prev) => {
-            const next = new Set(prev)
-            next.add(openIndex)
+          setRatings((prev) => {
+            const next = new Map(prev)
+            next.set(openIndex, rating)
             return next
           })
           setOpenIndex(null)
@@ -187,7 +189,7 @@ export const PracticeSessionView = () => {
           <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
             <div className='mx-auto flex max-w-2xl items-center justify-between gap-3'>
               {(() => {
-                const ratedCount = rated.size
+                const ratedCount = ratings.size
                 const totalCount = annotations.length
                 return (
                   <span className='text-muted-foreground text-xs'>
@@ -210,6 +212,7 @@ export const PracticeSessionView = () => {
           if (!open) setOpenIndex(null)
         }}
         chunk={openChunk}
+        currentRating={openIndex != null ? (ratings.get(openIndex) ?? null) : null}
         onSubmit={handleRate}
       />
     </ModalScreen>

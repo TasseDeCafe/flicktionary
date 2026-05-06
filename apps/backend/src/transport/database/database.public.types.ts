@@ -379,6 +379,7 @@ export type Database = {
           practice_session_id: string
           read_at: string | null
           ready_at: string | null
+          skipped_chunks: Json
           status: Database['public']['Enums']['practice_text_status']
         }
         Insert: {
@@ -391,6 +392,7 @@ export type Database = {
           practice_session_id: string
           read_at?: string | null
           ready_at?: string | null
+          skipped_chunks?: Json
           status?: Database['public']['Enums']['practice_text_status']
         }
         Update: {
@@ -403,6 +405,7 @@ export type Database = {
           practice_session_id?: string
           read_at?: string | null
           ready_at?: string | null
+          skipped_chunks?: Json
           status?: Database['public']['Enums']['practice_text_status']
         }
         Relationships: [

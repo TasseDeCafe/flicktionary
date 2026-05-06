@@ -4,6 +4,39 @@ import { buildPracticeMethodologySystem } from '../methodology-prompt'
 
 const TOOL_NAME = 'submit_practice_text'
 
+// Concrete format directives the model picks from per call. Without this the
+// model defaults to a fairy-tale / short-story shape regardless of the chunk
+// mix. We pick one at random per generation to force genre variety across a
+// practice session.
+const TEXT_FORMATS = [
+  'A short passage from a news article — pick a paragraph from the middle of the story, not the lede. Neutral journalistic register.',
+  "A dialogue between two friends in a casual setting (café, bar, walking). Use the language's natural convention for speech (em-dashes, quote marks).",
+  'A text-message exchange between two friends. Each message on its own line; speaker label optional but consistent.',
+  'A mid-scene passage from a contemporary novel. No setup, no resolution — drop the reader into the middle of something.',
+  'An online comment in the style of a Reddit thread reply: opinionated, conversational, can be slightly ranty.',
+  'An online review of a restaurant, product, or movie. Glowing, scathing, or mixed — the writer has a clear take.',
+  'A diary entry — candid, first-person, reflecting on something mundane or absurd from the writer’s day.',
+  'An email — work message, friendly catch-up, or polite complaint. Use a salutation and sign-off if natural.',
+  'A social-media post (Instagram caption / X post). Punchy, self-contained, can be funny.',
+  'An opinion piece / editorial fragment. The writer takes a clear position on something current or evergreen.',
+  'A snippet from a podcast or interview transcript, with speaker labels (Q: / A: or names).',
+  'A forum post asking for advice or sharing a story (think r/relationships or a hobby forum).',
+  'A customer-support exchange — customer message plus agent reply, or just one side of one.',
+  'A travel-blog excerpt: a writer describing a place they visited, with personal observations.',
+  'A personal-essay fragment — a small observation about life, no plot, more vibe than story.',
+  'A voice-memo-style transcript: rambly, parentheticals, false starts, "anyway" and "so" allowed.',
+  'A group-chat scrollback with three or more participants reacting to the same thing. Short messages, fragments, jokes.',
+  'A humorous monologue or stand-up-bit fragment. Allowed to be silly.',
+  'A complaint letter — to a landlord, neighbor, airline, or company. Polite but pointed.',
+  'A how-to / explainer paragraph: someone walking the reader through a process or idea.',
+  'A confession or vent to a friend, in text or in person. Emotional, casual register.',
+  'An overheard-conversation snippet — what the writer caught a stranger saying on a bus, in a queue, at the next table.',
+  'A breakdown of something niche the writer is enthusiastic about (a hobby, a band, an obscure recipe).',
+  'A short pitch / blurb of the kind you’d find on a menu, packaging, or About page.',
+]
+
+const pickFormat = (): string => TEXT_FORMATS[Math.floor(Math.random() * TEXT_FORMATS.length)]!
+
 export type PracticeChunkInput = {
   headword: string
   sense: string
@@ -40,19 +73,23 @@ type GeneratePracticeTextArgs = {
   cefrLevel: string
   l1InterferenceNotes: string
   chunks: PracticeChunkInput[]
+  // Rescue mode: a stubborn chunk the LLM previously skipped in a multi-chunk
+  // text. Switches the prompt to "single short sentence containing this one
+  // chunk" — much easier to fit naturally than a 7-chunk paragraph.
+  rescueMode?: boolean
 }
 
 const buildTool = (): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
-    'Submit one short, self-contained text in the target language that naturally weaves in the requested chunks, plus the array of chunk annotations (where each chunk appears in the body). If a chunk does not fit naturally, omit it and add it to skipped_chunks rather than forcing it in.',
+    'Submit one short, self-contained text in the target language that naturally weaves in the requested chunks, plus the array of chunk annotations (where each chunk appears in the body). The format/genre is specified in the user message — match it. If a chunk does not fit naturally, omit it and add it to skipped_chunks rather than forcing it in.',
   input_schema: {
     type: 'object',
     properties: {
       body: {
         type: 'string',
         description:
-          'The generated text in the target language. Aim for ~80–120 words — a brief story / opinion / news snippet / dialogue / review. Surrounding language stays at B1–B2 grammar regardless of how advanced the requested chunks are; do not invent rare advanced vocabulary outside the requested chunks.',
+          'The generated text in the target language. Aim for ~80–120 words in the format specified by the user message. Surrounding language stays at B1–B2 grammar regardless of how advanced the requested chunks are; do not invent rare advanced vocabulary outside the requested chunks.',
       },
       used_chunks: {
         type: 'array',
@@ -99,24 +136,59 @@ const buildTool = (): Anthropic.Tool => ({
   },
 })
 
-const buildUserMessage = (args: {
-  targetLanguage: string
-  cefrLevel: string
-  chunks: PracticeChunkInput[]
-  sameLanguage: boolean
-}): string => {
-  const numbered = args.chunks
+const buildChunkBlock = (chunks: PracticeChunkInput[], sameLanguage: boolean): string => {
+  return chunks
     .map((c, i) => {
       const lines = [`${i + 1}. headword="${c.headword}" sense="${c.sense}"`]
       if (c.translation) lines.push(`   translation="${c.translation}"`)
       if (c.definition) lines.push(`   definition="${c.definition}"`)
       if (c.targetExample) lines.push(`   target_example="${c.targetExample}"`)
-      if (c.nativeExample && !args.sameLanguage) lines.push(`   native_example="${c.nativeExample}"`)
+      if (c.nativeExample && !sameLanguage) lines.push(`   native_example="${c.nativeExample}"`)
       return lines.join('\n')
     })
     .join('\n\n')
+}
 
-  return `Generate a short, self-contained ${args.targetLanguage} text (any genre — story fragment, opinion piece, news snippet, dialogue, review, etc.) that naturally incorporates ALL of the chunks below.
+const buildRescueUserMessage = (args: {
+  targetLanguage: string
+  cefrLevel: string
+  chunks: PracticeChunkInput[]
+  sameLanguage: boolean
+}): string => {
+  const numbered = buildChunkBlock(args.chunks, args.sameLanguage)
+  return `Write ONE short, natural ${args.targetLanguage} sentence (10–25 words) that uses the chunk below in its given sense. This is a "rescue" call: the chunk was skipped in a previous multi-chunk text because it didn't fit the surrounding context, so now you have full freedom to pick whatever context lets it land naturally.
+
+Hard rules:
+- Exactly one sentence. No multi-sentence body. No setup, no explanation.
+- Surrounding language stays at B1–B2 grammar regardless of how advanced the chunk is. Do not invent rare advanced vocabulary outside the chunk.
+- Use the chunk's stored MEANING. Inflect to fit (conjugate verbs, decline nouns, agree adjectives).
+- Do NOT gloss, define, or explain the chunk inline.
+- surface_form is the EXACT substring as it appears in body (matching casing and punctuation). The server finds the position — do not output character offsets.
+- If you genuinely cannot form a natural sentence with this chunk, put it in skipped_chunks. This should be very rare — you have full context freedom now.
+
+Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
+
+Chunk:
+
+${numbered}
+
+Call submit_practice_text with body, used_chunks, and skipped_chunks. Stop after the tool call.`
+}
+
+const buildUserMessage = (args: {
+  targetLanguage: string
+  cefrLevel: string
+  chunks: PracticeChunkInput[]
+  sameLanguage: boolean
+  format: string
+}): string => {
+  const numbered = buildChunkBlock(args.chunks, args.sameLanguage)
+
+  return `Generate a short ${args.targetLanguage} text in the following format, naturally incorporating ALL of the chunks below.
+
+FORMAT: ${args.format}
+
+Write in that format and only that format. Do NOT default to a fairy-tale or short-story shape unless the format above is itself a story passage. The text does not need a clear beginning, middle, and end — a fragment, a moment, a snippet is fine. Drop the reader in.
 
 Hard rules:
 - Length: ~80–120 words. Be concise. Pack the chunks in densely; this is a vocabulary review, not a narrative.
@@ -125,6 +197,7 @@ Hard rules:
 - Use each chunk's stored MEANING, not its example sentence verbatim. Inflect to fit (conjugate verbs, decline nouns, agree adjectives).
 - Discontinuous patterns (e.g. "ni … ni", "either … or", "más … que") must appear with both halves in correct grammatical relation. Use one annotation per half if needed.
 - Do NOT gloss, define, or explain chunks inline. They appear as natural language.
+- Tone is yours to pick — dry, warm, mocking, melancholic, enthusiastic, ranty, funny — match the chosen format. Humor is welcome.
 - For each used chunk, surface_form is the EXACT substring as it appears in body (matching casing and punctuation). The server finds the position — do not compute or output character offsets.
 - If a chunk does not fit naturally, omit it and add it to skipped_chunks rather than forcing it in.
 
@@ -234,7 +307,7 @@ export const parseToolResult = (
     sense: typeof c.sense === 'string' ? c.sense : '',
     surfaceForm: String(c.surface_form ?? ''),
   }))
-  const { kept, warning } = locateAnnotations(body, usedRaw, requested)
+  const { kept, warning: locatorWarning } = locateAnnotations(body, usedRaw, requested)
 
   const skippedChunks: GeneratedSkippedChunk[] = rawSkipped.map((s) => ({
     headword: String(s.headword ?? ''),
@@ -242,16 +315,38 @@ export const parseToolResult = (
     reason: String(s.reason ?? 'unspecified'),
   }))
 
+  const skippedSummary =
+    skippedChunks.length > 0
+      ? `LLM skipped ${skippedChunks.length} chunk(s): ${skippedChunks
+          .map((s) => `${s.headword}|${s.sense} (${s.reason})`)
+          .join('; ')}`
+      : null
+  const generationWarning = [locatorWarning, skippedSummary].filter((w): w is string => w !== null).join(' / ') || null
+
   return {
     body,
     usedChunks: kept,
     skippedChunks,
-    generationWarning: warning,
+    generationWarning,
   }
 }
 
 export const generatePracticeText = async (args: GeneratePracticeTextArgs): Promise<GeneratePracticeTextResult> => {
   const sameLanguage = args.nativeLanguage.trim().toLowerCase() === args.targetLanguage.trim().toLowerCase()
+  const userMessage = args.rescueMode
+    ? buildRescueUserMessage({
+        targetLanguage: args.targetLanguage,
+        cefrLevel: args.cefrLevel,
+        chunks: args.chunks,
+        sameLanguage,
+      })
+    : buildUserMessage({
+        targetLanguage: args.targetLanguage,
+        cefrLevel: args.cefrLevel,
+        chunks: args.chunks,
+        sameLanguage,
+        format: pickFormat(),
+      })
 
   // Streaming is optional for this output size (~300 words, ~600 tokens) but
   // we use it for consistency with basic-data-pass and to leave the door open
@@ -270,12 +365,7 @@ export const generatePracticeText = async (args: GeneratePracticeTextArgs): Prom
     messages: [
       {
         role: 'user',
-        content: buildUserMessage({
-          targetLanguage: args.targetLanguage,
-          cefrLevel: args.cefrLevel,
-          chunks: args.chunks,
-          sameLanguage,
-        }),
+        content: userMessage,
       },
     ],
   })

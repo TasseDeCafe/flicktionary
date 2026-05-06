@@ -365,14 +365,22 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     the same text after every Next click.
 
 **Remaining:**
-- Phase 10 — End-to-end verification (manual golden path + lint + types + vitest)
-  for the original Flicktionary build (Practice's golden path is also still in
-  progress — see Practice plan §Phase 6).
+- Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
+  end-to-end verification pass are paused while the feature surface is still
+  churning. Writing tests against a moving target produces churn, not safety:
+  every feature tweak rewrites the suite and the false-positive noise erodes
+  trust in it. Manual golden-path testing continues to fill the gap.
+  Unshelve when: feature churn slows AND/OR a short list of "things I keep
+  accidentally breaking" accumulates — those become the first integration
+  tests. The Phase 10 todo list (vitest units for `select-surrounding-segments`,
+  csv-builder escaping, `buildPromptContext` snapshot; manual golden-path
+  matrix below) stays parked here so it can be picked up wholesale when the
+  trigger hits.
 - Pricing/limits decision (the LLM passes are not free; ~66¢ per movie for the
   basic-data + enrichment passes; Practice adds ongoing per-text generation cost
   on Opus).
 
-## Known cosmetic issues (defer to Phase 10 cleanup unless raised earlier)
+## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
 
@@ -384,16 +392,21 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
    Practice tab plan at
    `/Users/sebastien/.claude/plans/we-are-working-on-shimmering-turtle.md`.
 2. Run `pnpm check:types` and `pnpm lint` from the repo root to confirm we're starting clean.
-3. Pick up Phase 10 — Verification (and finish the Practice golden path).
-   - The schema is consolidated into the single
-     `20260427120000_create_flicktionary_tables.sql` migration. Pre-launch,
-     so a fresh `supabase db reset` is safe in principle — but if you have
-     in-progress local cards you care about, prefer applying targeted
-     `ALTER`s and regenerating types with
-     `doppler run -- supabase gen types typescript --local > database.public.types.ts`
-     from `supabase-dev-tunnel/`.
-   - **Vitest unit tests** to add: `select-surrounding-segments`, csv builder escaping, `buildPromptContext` snapshot. (`parseBasicDataChunks` and `srt-parser` already have passing tests.)
-   - **Manual golden-path run** per `SPEC.md` / plan §Phase 10. Things worth poking at specifically:
+3. Phase 10 (verification + integration tests) is **shelved** — see Remaining
+   above. Continue with feature work; rely on manual testing of the golden
+   paths below until the unshelve trigger hits. The schema is consolidated
+   into the single `20260427120000_create_flicktionary_tables.sql` migration.
+   Pre-launch, so a fresh `supabase db reset` is safe in principle — but if
+   you have in-progress local cards you care about, prefer applying targeted
+   `ALTER`s and regenerating types with
+   `doppler run -- supabase gen types typescript --local > database.public.types.ts`
+   from `supabase-dev-tunnel/`.
+   - **Parked vitest unit tests** (write when Phase 10 unshelves):
+     `select-surrounding-segments`, csv builder escaping, `buildPromptContext`
+     snapshot. (`parseBasicDataChunks` and `srt-parser` already have passing
+     tests.)
+   - **Manual golden-path checklist** — the canonical regression matrix.
+     Run through it before any non-trivial release / large refactor:
      - Tap-to-translate (Settings → toggle on → mid-watch selection → `TapToTranslateSheet` shows the gloss; second tap of the same selection should be instant from cache).
      - Re-process flow (process a session, return to subtitles via `← Subtitles` or by clicking the session card again, add more highlights, click `Process new highlights`, confirm only the new highlights produced cards and the difficult-words section did not duplicate); CSV export still includes the freshly-processed cards.
      - **Process with zero highlights** — first-pass should be allowed and surface LLM-suggested chunks only.
