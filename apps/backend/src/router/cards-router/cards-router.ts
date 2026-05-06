@@ -7,6 +7,7 @@ import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { exportSession, ExportSessionDependencies } from '../../service/export/export-session'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
+import { setCardStatus, setCardStatusBatch, SetCardStatusDependencies } from '../../service/cards/set-card-status'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 
 const toCardDto = (row: DbCard) => ({
@@ -31,7 +32,8 @@ export const CardsRouter = (
   cardsRepository: CardsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface,
   exportDependencies: ExportSessionDependencies,
-  exploreDependencies: ExploreCardDependencies
+  exploreDependencies: ExploreCardDependencies,
+  setCardStatusDependencies: SetCardStatusDependencies
 ): Router => {
   const implementer = implement(cardsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -61,13 +63,7 @@ export const CardsRouter = (
 
     updateStatus: implementer.updateStatus.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const owned = await cardsRepository.findByIdForUser(input.cardId, userId)
-      if (!owned) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Card not found' }] },
-        })
-      }
-      const updated = await cardsRepository.updateStatus(input.cardId, input.status)
+      const updated = await setCardStatus(input.cardId, userId, input.status, setCardStatusDependencies)
       if (!updated) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Card not found' }] },
@@ -84,7 +80,13 @@ export const CardsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
-      const updated = await cardsRepository.updateStatusBatch(input.sessionId, input.cardIds, input.status)
+      const updated = await setCardStatusBatch(
+        input.sessionId,
+        input.cardIds,
+        userId,
+        input.status,
+        setCardStatusDependencies
+      )
       return { data: updated.map(toCardDto) }
     }),
 

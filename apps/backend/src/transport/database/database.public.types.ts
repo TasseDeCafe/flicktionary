@@ -290,6 +290,131 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_ratings: {
+        Row: {
+          headword: string
+          id: string
+          practice_text_id: string
+          rated_at: string
+          rating: Database['public']['Enums']['practice_rating']
+          sense: string
+          target_language: string
+          user_id: string
+          was_explicit: boolean
+        }
+        Insert: {
+          headword: string
+          id?: string
+          practice_text_id: string
+          rated_at?: string
+          rating: Database['public']['Enums']['practice_rating']
+          sense?: string
+          target_language: string
+          user_id: string
+          was_explicit?: boolean
+        }
+        Update: {
+          headword?: string
+          id?: string
+          practice_text_id?: string
+          rated_at?: string
+          rating?: Database['public']['Enums']['practice_rating']
+          sense?: string
+          target_language?: string
+          user_id?: string
+          was_explicit?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'practice_ratings_lookup_fkey'
+            columns: ['user_id', 'target_language', 'headword', 'sense']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['user_id', 'target_language', 'headword', 'sense']
+          },
+          {
+            foreignKeyName: 'practice_ratings_text_fkey'
+            columns: ['practice_text_id']
+            isOneToOne: false
+            referencedRelation: 'practice_texts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      practice_sessions: {
+        Row: {
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: Database['public']['Enums']['practice_session_status']
+          target_language: string
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: Database['public']['Enums']['practice_session_status']
+          target_language: string
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: Database['public']['Enums']['practice_session_status']
+          target_language?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      practice_texts: {
+        Row: {
+          annotations: Json
+          body: string | null
+          created_at: string
+          generation_warning: string | null
+          id: string
+          ord: number
+          practice_session_id: string
+          read_at: string | null
+          ready_at: string | null
+          status: Database['public']['Enums']['practice_text_status']
+        }
+        Insert: {
+          annotations?: Json
+          body?: string | null
+          created_at?: string
+          generation_warning?: string | null
+          id?: string
+          ord: number
+          practice_session_id: string
+          read_at?: string | null
+          ready_at?: string | null
+          status?: Database['public']['Enums']['practice_text_status']
+        }
+        Update: {
+          annotations?: Json
+          body?: string | null
+          created_at?: string
+          generation_warning?: string | null
+          id?: string
+          ord?: number
+          practice_session_id?: string
+          read_at?: string | null
+          ready_at?: string | null
+          status?: Database['public']['Enums']['practice_text_status']
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'practice_texts_session_fkey'
+            columns: ['practice_session_id']
+            isOneToOne: false
+            referencedRelation: 'practice_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       removals: {
         Row: {
           created_at: string
@@ -588,29 +713,53 @@ export type Database = {
       }
       user_lookups: {
         Row: {
+          added_to_practice_at: string | null
           count: number
           exported_at: string | null
           first_card_id: string | null
           headword: string
           sense: string
+          srs_difficulty: number | null
+          srs_due: string | null
+          srs_lapses: number
+          srs_last_review: string | null
+          srs_reps: number
+          srs_stability: number | null
+          srs_state: Database['public']['Enums']['srs_state'] | null
           target_language: string
           user_id: string
         }
         Insert: {
+          added_to_practice_at?: string | null
           count?: number
           exported_at?: string | null
           first_card_id?: string | null
           headword: string
           sense?: string
+          srs_difficulty?: number | null
+          srs_due?: string | null
+          srs_lapses?: number
+          srs_last_review?: string | null
+          srs_reps?: number
+          srs_stability?: number | null
+          srs_state?: Database['public']['Enums']['srs_state'] | null
           target_language: string
           user_id: string
         }
         Update: {
+          added_to_practice_at?: string | null
           count?: number
           exported_at?: string | null
           first_card_id?: string | null
           headword?: string
           sense?: string
+          srs_difficulty?: number | null
+          srs_due?: string | null
+          srs_lapses?: number
+          srs_last_review?: string | null
+          srs_reps?: number
+          srs_stability?: number | null
+          srs_state?: Database['public']['Enums']['srs_state'] | null
           target_language?: string
           user_id?: string
         }
@@ -704,6 +853,9 @@ export type Database = {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
       content_source_type: 'movie' | 'book' | 'article' | 'text'
+      practice_rating: 'again' | 'hard' | 'good' | 'easy'
+      practice_session_status: 'active' | 'completed' | 'abandoned'
+      practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
         | 'will_not_renew'
@@ -729,6 +881,7 @@ export type Database = {
         | 'paused'
         | 'unknown'
         | 'incomplete'
+      srs_state: 'new' | 'learning' | 'review' | 'relearning'
       stripe_subscription_status:
         | 'active'
         | 'trialing'
@@ -987,6 +1140,9 @@ export const Constants = {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
       content_source_type: ['movie', 'book', 'article', 'text'],
+      practice_rating: ['again', 'hard', 'good', 'easy'],
+      practice_session_status: ['active', 'completed', 'abandoned'],
+      practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
       revenuecat_auto_renewal_status: [
         'will_renew',
         'will_not_renew',
@@ -1015,6 +1171,7 @@ export const Constants = {
         'unknown',
         'incomplete',
       ],
+      srs_state: ['new', 'learning', 'review', 'relearning'],
       stripe_subscription_status: [
         'active',
         'trialing',

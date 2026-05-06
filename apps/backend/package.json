@@ -70,6 +70,7 @@
     "prettier-plugin-tailwindcss": "catalog:",
     "resend": "catalog:",
     "stripe": "catalog:",
+    "ts-fsrs": "catalog:",
     "turbo": "catalog:",
     "uuid": "catalog:",
     "zod": "catalog:"

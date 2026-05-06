@@ -116,3 +116,57 @@ export const StudySessionSchema = z.object({
   contentSourceYear: z.number().int().nullable(),
 })
 export type StudySession = z.infer<typeof StudySessionSchema>
+
+// =============================================================================
+// Practice tab — SRS through generated texts
+// =============================================================================
+
+export const PracticeRatingSchema = z.enum(['again', 'hard', 'good', 'easy'])
+export type PracticeRating = z.infer<typeof PracticeRatingSchema>
+
+export const PracticeSessionStatusSchema = z.enum(['active', 'completed', 'abandoned'])
+export type PracticeSessionStatus = z.infer<typeof PracticeSessionStatusSchema>
+
+export const PracticeTextStatusSchema = z.enum(['pending', 'generating', 'ready', 'reading', 'done', 'failed'])
+export type PracticeTextStatus = z.infer<typeof PracticeTextStatusSchema>
+
+export const PracticeAnnotationSchema = z.object({
+  headword: z.string(),
+  sense: z.string(),
+  surfaceForm: z.string(),
+  charStart: z.number().int(),
+  charEnd: z.number().int(),
+})
+export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
+
+export const PracticeTextSchema = z.object({
+  id: z.string().uuid(),
+  practiceSessionId: z.string().uuid(),
+  ord: z.number().int(),
+  status: PracticeTextStatusSchema,
+  body: z.string().nullable(),
+  annotations: z.array(PracticeAnnotationSchema),
+  generationWarning: z.string().nullable(),
+  createdAt: z.string(),
+  readyAt: z.string().nullable(),
+  readAt: z.string().nullable(),
+})
+export type PracticeText = z.infer<typeof PracticeTextSchema>
+
+export const PracticeSessionSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  targetLanguage: z.string(),
+  status: PracticeSessionStatusSchema,
+  startedAt: z.string(),
+  endedAt: z.string().nullable(),
+})
+export type PracticeSession = z.infer<typeof PracticeSessionSchema>
+
+export const PracticeDueSummaryEntrySchema = z.object({
+  targetLanguage: z.string(),
+  totalKept: z.number().int(),
+  dueCount: z.number().int(),
+  newCount: z.number().int(),
+})
+export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>

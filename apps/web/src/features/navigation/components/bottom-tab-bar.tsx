@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Clapperboard, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
+import { Brain, Clapperboard, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
 import { MainActionOverlay } from './main-action-overlay'
 
 type TabConfig = {
-  to: '/sessions' | '/more'
+  to: '/sessions' | '/practice' | '/more'
   label: string
   icon: LucideIcon
   matchPrefixes: string[]
@@ -35,6 +35,7 @@ export const BottomTabBar = () => {
 
   const tabs: TabConfig[] = [
     { to: '/sessions', label: t`Sessions`, icon: Clapperboard, matchPrefixes: ['/sessions'] },
+    { to: '/practice', label: t`Practice`, icon: Brain, matchPrefixes: ['/practice'] },
     { to: '/more', label: t`More`, icon: MoreHorizontal, matchPrefixes: ['/more'] },
   ]
 
@@ -48,6 +49,7 @@ export const BottomTabBar = () => {
         className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-white pb-[env(safe-area-inset-bottom)] md:hidden'
       >
         <TabLink tab={tabs[0]} isActive={isTabActive(tabs[0])} />
+        <TabLink tab={tabs[1]} isActive={isTabActive(tabs[1])} />
         <div className='relative flex flex-1 items-center justify-center'>
           <button
             type='button'
@@ -58,7 +60,7 @@ export const BottomTabBar = () => {
             <Plus className='h-6 w-6' strokeWidth={2.5} />
           </button>
         </div>
-        <TabLink tab={tabs[1]} isActive={isTabActive(tabs[1])} />
+        <TabLink tab={tabs[2]} isActive={isTabActive(tabs[2])} />
       </nav>
       <MainActionOverlay open={isActionOpen} onOpenChange={setIsActionOpen} />
     </>

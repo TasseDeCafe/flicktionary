@@ -63,6 +63,14 @@ CREATE TYPE card_status AS ENUM ('pending', 'kept', 'rejected', 'auto_rejected')
 
 CREATE TYPE card_chat_role AS ENUM ('user', 'assistant');
 
+CREATE TYPE practice_session_status AS ENUM ('active', 'completed', 'abandoned');
+
+CREATE TYPE practice_text_status AS ENUM ('pending', 'generating', 'ready', 'reading', 'done', 'failed');
+
+CREATE TYPE practice_rating AS ENUM ('again', 'hard', 'good', 'easy');
+
+CREATE TYPE srs_state AS ENUM ('new', 'learning', 'review', 'relearning');
+
 -- =========================================================================
 -- users (template + Flicktionary preferences)
 -- =========================================================================
@@ -448,6 +456,17 @@ CREATE TABLE public.user_lookups (
   first_card_id UUID NULL,
   exported_at TIMESTAMP WITH TIME ZONE NULL,
   count INTEGER NOT NULL DEFAULT 1,
+  -- FSRS state for the Practice tab. Null until the row enters its first
+  -- practice session. Stability/difficulty are FSRS-internal and only set
+  -- once srs_state is non-null (and after at least one rating).
+  srs_state srs_state NULL,
+  srs_due TIMESTAMP WITH TIME ZONE NULL,
+  srs_stability REAL NULL,
+  srs_difficulty REAL NULL,
+  srs_last_review TIMESTAMP WITH TIME ZONE NULL,
+  srs_reps INTEGER NOT NULL DEFAULT 0,
+  srs_lapses INTEGER NOT NULL DEFAULT 0,
+  added_to_practice_at TIMESTAMP WITH TIME ZONE NULL,
   CONSTRAINT user_lookups_pkey PRIMARY KEY (user_id, target_language, headword, sense),
   CONSTRAINT user_lookups_user_id_fkey FOREIGN KEY (user_id)
     REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -456,6 +475,9 @@ CREATE TABLE public.user_lookups (
 );
 
 CREATE INDEX idx_user_lookups_user_target ON public.user_lookups (user_id, target_language);
+CREATE INDEX idx_user_lookups_due
+  ON public.user_lookups (user_id, target_language, srs_due)
+  WHERE srs_state IS NOT NULL;
 
 ALTER TABLE public.user_lookups ENABLE ROW LEVEL SECURITY;
 
@@ -490,3 +512,94 @@ CREATE TABLE public.user_target_language_prefs (
 );
 
 ALTER TABLE public.user_target_language_prefs ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- practice_sessions (Practice tab — SRS reading sessions)
+--
+-- One row per sitting. Spans multiple practice_texts which together cover the
+-- user's due chunks for a target language. Status flows active -> completed
+-- when the orchestrator finds nothing else due, or active -> abandoned if the
+-- user explicitly ends the session early.
+-- =========================================================================
+
+CREATE TABLE public.practice_sessions (
+  id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  user_id UUID NOT NULL,
+  target_language TEXT NOT NULL,
+  status practice_session_status NOT NULL DEFAULT 'active',
+  started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  ended_at TIMESTAMP WITH TIME ZONE NULL,
+  CONSTRAINT practice_sessions_pkey PRIMARY KEY (id),
+  CONSTRAINT practice_sessions_user_id_fkey FOREIGN KEY (user_id)
+    REFERENCES auth.users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_practice_sessions_user_started
+  ON public.practice_sessions (user_id, target_language, started_at DESC);
+
+ALTER TABLE public.practice_sessions ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- practice_texts (LLM-generated short passages within a practice_session)
+--
+-- annotations is a JSONB array of:
+--   { headword, sense, surface_form, char_start, char_end }
+-- Server-validated: body.slice(char_start, char_end) === surface_form, and
+-- (headword, sense) was in the requested set. Bad rows dropped at validation.
+-- The status field supports the lean MVP (synchronous: pending -> ready) but
+-- also the v2 pre-generation path (pending -> generating -> ready -> reading
+-- -> done).
+-- =========================================================================
+
+CREATE TABLE public.practice_texts (
+  id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  practice_session_id UUID NOT NULL,
+  ord INTEGER NOT NULL,
+  status practice_text_status NOT NULL DEFAULT 'pending',
+  body TEXT NULL,
+  annotations JSONB NOT NULL DEFAULT '[]'::jsonb,
+  generation_warning TEXT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  ready_at TIMESTAMP WITH TIME ZONE NULL,
+  read_at TIMESTAMP WITH TIME ZONE NULL,
+  CONSTRAINT practice_texts_pkey PRIMARY KEY (id),
+  CONSTRAINT practice_texts_session_fkey FOREIGN KEY (practice_session_id)
+    REFERENCES public.practice_sessions (id) ON DELETE CASCADE,
+  CONSTRAINT practice_texts_session_ord_unique UNIQUE (practice_session_id, ord)
+);
+
+CREATE INDEX idx_practice_texts_session_ord
+  ON public.practice_texts (practice_session_id, ord);
+
+ALTER TABLE public.practice_texts ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- practice_ratings (audit log of rating events; was_explicit=false for the
+-- implicit-good ratings applied on Next-text advance)
+-- =========================================================================
+
+CREATE TABLE public.practice_ratings (
+  id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  practice_text_id UUID NOT NULL,
+  user_id UUID NOT NULL,
+  target_language TEXT NOT NULL,
+  headword TEXT NOT NULL,
+  sense TEXT NOT NULL DEFAULT '',
+  rating practice_rating NOT NULL,
+  was_explicit BOOLEAN NOT NULL DEFAULT FALSE,
+  rated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT practice_ratings_pkey PRIMARY KEY (id),
+  CONSTRAINT practice_ratings_text_fkey FOREIGN KEY (practice_text_id)
+    REFERENCES public.practice_texts (id) ON DELETE CASCADE,
+  CONSTRAINT practice_ratings_lookup_fkey
+    FOREIGN KEY (user_id, target_language, headword, sense)
+    REFERENCES public.user_lookups (user_id, target_language, headword, sense)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX idx_practice_ratings_lookup
+  ON public.practice_ratings (user_id, target_language, headword, sense);
+CREATE INDEX idx_practice_ratings_text
+  ON public.practice_ratings (practice_text_id);
+
+ALTER TABLE public.practice_ratings ENABLE ROW LEVEL SECURITY;

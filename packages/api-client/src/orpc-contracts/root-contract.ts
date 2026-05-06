@@ -16,6 +16,7 @@ import { highlightsContract } from './highlights-contract'
 import { cardsContract } from './cards-contract'
 import { cardChatContract } from './card-chat-contract'
 import { userPrefsContract } from './user-prefs-contract'
+import { practiceContract } from './practice-contract'
 
 export const rootOrpcContract = {
   authentication: authenticationContract,
@@ -36,4 +37,5 @@ export const rootOrpcContract = {
   cards: cardsContract,
   cardChat: cardChatContract,
   userPrefs: userPrefsContract,
+  practice: practiceContract,
 } as const

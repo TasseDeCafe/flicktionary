@@ -10,7 +10,7 @@ The app's value is **not** flashcard generation per se — it's the structured e
 
 - Not a video player. The app does not host or sync to movie playback.
 - Not a real-time companion. No auto-scroll, no audio fingerprinting, no clock sync.
-- Not a flashcard review system (no SRS). Cards leave Flicktionary as CSV; review happens in Anki.
+- Not a flashcard review app in the Anki sense. Cards still export to CSV for Anki users; **in-app review happens through the Practice tab — short LLM-generated texts that weave in the user's due chunks, with FSRS scheduling.** No isolated front/back flashcards in the app.
 - Not a free-form chatbot. Per-card chat is scoped to refining understanding of one chunk.
 - Not a books/articles reader. MVP handles movie subtitles and pasted text; books and articles are designed for in the data model but not yet implemented.
 
@@ -132,17 +132,30 @@ Two-layer UI.
 
 Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + extras (if populated). The user's question is the only dynamic turn.
 
+### Practice (in-app review through generated texts)
+
+A separate top-level destination from the per-session review flow. Practice is **cross-session** — its review pool is every kept card the user has accumulated, regardless of which study session it came from.
+
+- **Pool source.** Every card with `status='kept'` flows into `user_lookup` automatically (the keep transition writes the row). `user_lookup` is the canonical "user vocabulary" record; it carries FSRS state per `(user_id, target_language, headword, sense)`.
+- **Landing.** `/practice` shows a per-language list with `due / new / total` counts. One-language users get a single "Start practice" button; multi-language users pick which language to review.
+- **Session.** A practice session is scoped to one target language. Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
+- **Generation prompt.** Methodology preamble + language instructions + user profile + L1 interference notes (cached) + the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`, `native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense, surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are unreliable at character arithmetic; the server locates each `surface_form` in `body` and computes offsets itself, claiming non-overlapping positions when a surface form repeats.
+- **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray). Tapping a chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
+- **End condition.** When the eligible pool minus chunks already covered in this session is empty, `generateNextText` returns `done: true` and the session view shows an "All caught up" view. Eligible = `srs_state IS NULL OR srs_due <= NOW()`. New rows enter as `state='new'` lazily on first surfacing.
+- **FSRS.** `ts-fsrs` package, default parameters with `enable_fuzz: true`. The adapter at `apps/backend/src/service/practice/fsrs.ts` round-trips `user_lookups` rows ↔ `ts-fsrs` Card objects.
+- **Out of scope (v2).** Pre-generation pipeline, coverage guarantee + cleanup pass for stubborn chunks, flashcard fallback view, "remove from practice" affordance, custom FSRS parameters, audio TTS, browseable "my vocabulary" list view (the `listVocabularyForLanguage` repo method is built, but the UI isn't yet).
+
 ### Export
 
 - CSV with columns: `front`, `back`, `context`, `tags`, `headword`, `surface_form`, `note`. Imports cleanly into Anki.
 - No `.apkg` for MVP.
-- Exporting a card upserts a row in `user_lookup`.
+- Exporting a card upserts a row in `user_lookup` (already created on keep; export stamps `exported_at` and bumps `count`).
 
 ### Navigation chrome
 
 Native-style shell so the eventual React Native port is a translation, not a redesign.
 
-- **Mobile** (`< 768px`): bottom tab bar with three slots — `Sessions` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (`Start a movie session`, `Practice with a text`; designed to grow as more `content_source.type`s land).
+- **Mobile** (`< 768px`): bottom tab bar with four slots — `Sessions` / `Practice` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (`Start a movie session`, `Practice with a text`; designed to grow as more `content_source.type`s land). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text.
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
@@ -256,15 +269,58 @@ card_chat_message
   content             text
   created_at          timestamptz
 
-user_lookup                          -- cross-source dedup
+user_lookup                          -- cross-source dedup + canonical user vocabulary record + SRS state
   user_id             uuid
   target_language     text
   headword            text
   sense               text          -- 1-5 word disambiguator; '' for legacy rows
-  first_card_id       uuid?
-  exported_at         timestamptz?
-  count               int default 1
+  first_card_id       uuid?         -- representative card for content lookup (Practice generation prompt)
+  exported_at         timestamptz?  -- last CSV export
+  count               int default 1 -- bumped on keep + on export
+  -- Practice / FSRS state. Null until the row enters its first practice session.
+  srs_state           'new' | 'learning' | 'review' | 'relearning'?
+  srs_due             timestamptz?
+  srs_stability       real?
+  srs_difficulty      real?
+  srs_last_review     timestamptz?
+  srs_reps            int default 0
+  srs_lapses          int default 0
+  added_to_practice_at timestamptz?
   primary key (user_id, target_language, headword, sense)
+
+practice_session
+  id                  uuid pk
+  user_id             uuid
+  target_language     text
+  status              'active' | 'completed' | 'abandoned'
+  started_at          timestamptz
+  ended_at            timestamptz?
+
+practice_text                        -- one LLM-generated passage within a session
+  id                  uuid pk
+  practice_session_id uuid -> practice_session.id
+  ord                 int           -- order within session
+  status              'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
+  body                text?
+  annotations         jsonb         -- [{ headword, sense, surface_form, char_start, char_end }]
+                                    -- char_start/end computed server-side from surface_form (LLMs
+                                    -- are unreliable at counting characters; the tool only emits
+                                    -- surface_form and the server locates each occurrence).
+  generation_warning  text?         -- e.g. dropped annotations summary
+  created_at          timestamptz
+  ready_at            timestamptz?
+  read_at             timestamptz?
+
+practice_rating                      -- audit log of every rating event (explicit + implicit)
+  id                  uuid pk
+  practice_text_id    uuid -> practice_text.id
+  user_id             uuid
+  target_language     text
+  headword            text
+  sense               text          -- composite FK to user_lookup
+  rating              'again' | 'hard' | 'good' | 'easy'
+  was_explicit        bool          -- false = implicit-good applied on Next-text advance
+  rated_at            timestamptz
 
 l1_interference_notes                -- shared across users
   l1_language         text
@@ -462,3 +518,4 @@ cached result instantly.
 - User-customizable methodology prompt for advanced users (the gf use case). The MVP already has per-target-language instructions hardcoded in `language-instructions.ts` — v2 promotes them to a DB-backed, per-user editable field.
 - Multi-deck organization (per language pair, or by tag).
 - Spaced-repetition history pulled back from Anki to close the loop.
+- Practice v2: pre-generation pipeline (queue 2–3 texts ahead of the user), coverage-guarantee + cleanup pass for chunks the LLM persistently fails to fit naturally, flashcard fallback view for those, "remove from practice" affordance, custom FSRS parameters, audio TTS for generated texts, browseable "my vocabulary" list.

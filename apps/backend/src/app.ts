@@ -61,6 +61,10 @@ import { CardChatMessagesRepository } from './transport/database/card-chat-messa
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { L1InterferenceNotesRepository } from './transport/database/l1-interference-notes/l1-interference-notes-repository'
 import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
+import { PracticeSessionsRepository } from './transport/database/practice-sessions/practice-sessions-repository'
+import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
+import { PracticeRatingsRepository } from './transport/database/practice-ratings/practice-ratings-repository'
+import { PracticeRouter } from './router/practice-router/practice-router'
 
 export type AppDependencies = {
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
@@ -223,6 +227,9 @@ export const buildApp = ({
   const userTargetLanguagePrefsRepository = UserTargetLanguagePrefsRepository()
   const l1InterferenceNotesRepository = L1InterferenceNotesRepository()
   const userLookupsRepository = UserLookupsRepository()
+  const practiceSessionsRepository = PracticeSessionsRepository()
+  const practiceTextsRepository = PracticeTextsRepository()
+  const practiceRatingsRepository = PracticeRatingsRepository()
 
   const processingDependencies = {
     contentSourcesRepository,
@@ -240,6 +247,34 @@ export const buildApp = ({
     cardsRepository,
     textSegmentsRepository,
     studySessionsRepository,
+    userLookupsRepository,
+  }
+
+  const setCardStatusDependencies = {
+    cardsRepository,
+    studySessionsRepository,
+    userLookupsRepository,
+  }
+
+  const startPracticeSessionDependencies = {
+    practiceSessionsRepository,
+    userLookupsRepository,
+    l1InterferenceNotesRepository,
+    usersRepository,
+  }
+
+  const generateNextPracticeTextDependencies = {
+    practiceSessionsRepository,
+    practiceTextsRepository,
+    userLookupsRepository,
+    cardsRepository,
+    l1InterferenceNotesRepository,
+    usersRepository,
+  }
+
+  const rateChunkDependencies = {
+    practiceTextsRepository,
+    practiceRatingsRepository,
     userLookupsRepository,
   }
 
@@ -274,9 +309,30 @@ export const buildApp = ({
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
   app.use(API_V1, StudySessionsRouter(studySessionsRepository, processingDependencies))
   app.use(API_V1, HighlightsRouter(highlightsRepository, studySessionsRepository, textSegmentsRepository))
-  app.use(API_V1, CardsRouter(cardsRepository, studySessionsRepository, exportDependencies, exploreDependencies))
+  app.use(
+    API_V1,
+    CardsRouter(
+      cardsRepository,
+      studySessionsRepository,
+      exportDependencies,
+      exploreDependencies,
+      setCardStatusDependencies
+    )
+  )
   app.use(API_V1, CardChatRouter(cardChatMessagesRepository, cardsRepository, chatDependencies))
   app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
+  app.use(
+    API_V1,
+    PracticeRouter({
+      practiceSessionsRepository,
+      practiceTextsRepository,
+      userLookupsRepository,
+      startPracticeSessionDependencies,
+      generateNextPracticeTextDependencies,
+      rateChunkDependencies,
+      finalizePracticeTextDependencies: rateChunkDependencies,
+    })
+  )
 
   accessCache.initialize()
 

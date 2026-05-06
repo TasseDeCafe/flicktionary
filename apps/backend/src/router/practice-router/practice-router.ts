@@ -1,0 +1,197 @@
+import { Router } from 'express'
+import { implement } from '@orpc/server'
+import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
+import { type OrpcContext } from '../orpc/orpc-context'
+import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
+import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  PracticeSessionsRepositoryInterface,
+  DbPracticeSession,
+} from '../../transport/database/practice-sessions/practice-sessions-repository'
+import type {
+  PracticeTextsRepositoryInterface,
+  DbPracticeText,
+} from '../../transport/database/practice-texts/practice-texts-repository'
+import {
+  startPracticeSession,
+  type StartPracticeSessionDependencies,
+} from '../../service/practice/start-practice-session'
+import {
+  generateNextPracticeText,
+  type GenerateNextPracticeTextDependencies,
+} from '../../service/practice/generate-next-practice-text'
+import { rateChunk, type RateChunkDependencies } from '../../service/practice/rate-chunk'
+import {
+  finalizePracticeText,
+  type FinalizePracticeTextDependencies,
+} from '../../service/practice/finalize-practice-text'
+
+export type PracticeRouterDependencies = {
+  practiceSessionsRepository: PracticeSessionsRepositoryInterface
+  practiceTextsRepository: PracticeTextsRepositoryInterface
+  userLookupsRepository: UserLookupsRepositoryInterface
+  startPracticeSessionDependencies: StartPracticeSessionDependencies
+  generateNextPracticeTextDependencies: GenerateNextPracticeTextDependencies
+  rateChunkDependencies: RateChunkDependencies
+  finalizePracticeTextDependencies: FinalizePracticeTextDependencies
+}
+
+const toPracticeSessionDto = (row: DbPracticeSession) => ({
+  id: row.id,
+  userId: row.user_id,
+  targetLanguage: row.target_language,
+  status: row.status,
+  startedAt: new Date(row.started_at).toISOString(),
+  endedAt: row.ended_at ? new Date(row.ended_at).toISOString() : null,
+})
+
+type RawAnnotation = {
+  headword?: unknown
+  sense?: unknown
+  surface_form?: unknown
+  char_start?: unknown
+  char_end?: unknown
+}
+
+const toPracticeTextDto = (row: DbPracticeText) => {
+  const annRaw = Array.isArray(row.annotations) ? (row.annotations as RawAnnotation[]) : []
+  const annotations = annRaw.map((a) => ({
+    headword: typeof a.headword === 'string' ? a.headword : '',
+    sense: typeof a.sense === 'string' ? a.sense : '',
+    surfaceForm: typeof a.surface_form === 'string' ? a.surface_form : '',
+    charStart: typeof a.char_start === 'number' ? a.char_start : 0,
+    charEnd: typeof a.char_end === 'number' ? a.char_end : 0,
+  }))
+  return {
+    id: row.id,
+    practiceSessionId: row.practice_session_id,
+    ord: row.ord,
+    status: row.status,
+    body: row.body,
+    annotations,
+    generationWarning: row.generation_warning,
+    createdAt: new Date(row.created_at).toISOString(),
+    readyAt: row.ready_at ? new Date(row.ready_at).toISOString() : null,
+    readAt: row.read_at ? new Date(row.read_at).toISOString() : null,
+  }
+}
+
+export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
+  const implementer = implement(practiceContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
+
+  const router = implementer.router({
+    dueSummary: implementer.dueSummary.handler(async ({ context }) => {
+      const userId = context.res.locals.userId
+      const summary = await deps.userLookupsRepository.listDueSummary(userId)
+      return { data: { perLanguage: summary } }
+    }),
+
+    startSession: implementer.startSession.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await startPracticeSession(userId, input.targetLanguage, deps.startPracticeSessionDependencies)
+      if (!result.ok) {
+        throw errors.BAD_REQUEST({
+          data: {
+            errors: [
+              {
+                message:
+                  result.reason === 'no_kept_cards'
+                    ? 'No kept cards in this language yet.'
+                    : 'Set your native language in settings before starting practice.',
+              },
+            ],
+          },
+        })
+      }
+      return { data: { sessionId: result.sessionId } }
+    }),
+
+    getSession: implementer.getSession.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await deps.practiceSessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Practice session not found' }] },
+        })
+      }
+      const currentText = await deps.practiceTextsRepository.findCurrentReadable(session.id)
+      return {
+        data: {
+          session: toPracticeSessionDto(session),
+          currentText: currentText ? toPracticeTextDto(currentText) : null,
+        },
+      }
+    }),
+
+    generateNextText: implementer.generateNextText.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await generateNextPracticeText(input.sessionId, userId, deps.generateNextPracticeTextDependencies)
+      if (!result.ok) {
+        if (result.reason === 'session_not_found') {
+          throw errors.NOT_FOUND({
+            data: { errors: [{ message: 'Practice session not found' }] },
+          })
+        }
+        if (result.reason === 'session_completed' || result.reason === 'no_native_language') {
+          throw errors.BAD_REQUEST({
+            data: {
+              errors: [
+                {
+                  message:
+                    result.reason === 'session_completed'
+                      ? 'Practice session is no longer active.'
+                      : 'Native language pref missing.',
+                },
+              ],
+            },
+          })
+        }
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: result.warning ?? 'Practice text generation failed' }] },
+        })
+      }
+      if (result.done) {
+        return { data: { done: true as const } }
+      }
+      return { data: { done: false as const, practiceText: toPracticeTextDto(result.practiceText) } }
+    }),
+
+    rateChunk: implementer.rateChunk.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await rateChunk(
+        input.textId,
+        userId,
+        input.headword,
+        input.sense,
+        input.rating,
+        true,
+        deps.rateChunkDependencies
+      )
+      if (!result.ok) {
+        if (result.reason === 'text_not_found' || result.reason === 'lookup_not_found') {
+          throw errors.NOT_FOUND({
+            data: { errors: [{ message: result.reason }] },
+          })
+        }
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'Chunk is not part of this practice text.' }] },
+        })
+      }
+      return { data: { accepted: true as const } }
+    }),
+
+    finalizeText: implementer.finalizeText.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await finalizePracticeText(input.textId, userId, deps.finalizePracticeTextDependencies)
+      if (!result.ok) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Practice text not found' }] },
+        })
+      }
+      return { data: { implicitGoodCount: result.implicitGoodCount } }
+    }),
+  })
+
+  return createOrpcExpressRouter(router, { contract: practiceContract })
+}

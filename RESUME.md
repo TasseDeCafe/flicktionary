@@ -243,9 +243,134 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     contact-us sheet, the `+` action sheet, and any future bottom drawer
     respect the home-indicator on mobile.
 
+- **Practice tab — SRS through generated texts (2026-05-05 / 06).** New top-level
+  destination at `/practice`. Full plan at
+  `/Users/sebastien/.claude/plans/we-are-working-on-shimmering-turtle.md`.
+  See SPEC.md §Practice for the user-facing model. Don't re-introduce any of
+  the prior behavior — especially not the char-offset annotation transport.
+  - **Schema additions** in the consolidated migration
+    (`apps/backend/supabase/migrations/20260425215345_initial_schema.sql`):
+    new enums `practice_session_status`, `practice_text_status`,
+    `practice_rating`, `srs_state`. `user_lookups` extended with FSRS state
+    (`srs_state`, `srs_due`, `srs_stability`, `srs_difficulty`,
+    `srs_last_review`, `srs_reps`, `srs_lapses`, `added_to_practice_at`)
+    plus `idx_user_lookups_due` partial index. New tables
+    `practice_sessions`, `practice_texts` (with `annotations jsonb`),
+    `practice_ratings` (composite FK to `user_lookups`). The five
+    `supabase/migrations/20260425215345_initial_schema.sql` paths share
+    one inode (hard-linked across `migrations/` + `supabase-dev/` +
+    `supabase-dev-tunnel/` + `supabase-test/` + `supabase-prod/`) so
+    editing one updates them all. Apply via `supabase db reset --local`
+    in `apps/backend/supabase/supabase-dev/supabase`.
+  - **Repos under `apps/backend/src/transport/database/`:** new
+    `practice-sessions/`, `practice-texts/`, `practice-ratings/`. Extended
+    `user-lookups/` with `upsertOnKeep` (called from the new
+    `set-card-status` service when a card transitions to `'kept'`),
+    `listDueSummary`, `listEligibleForLanguage`, `findByKey`,
+    `initializeSrsState`, `applyFsrsResult`, `listVocabularyForLanguage`.
+  - **`set-card-status` service** at `apps/backend/src/service/cards/`
+    wraps `cardsRepository.updateStatus` so flipping a card to `'kept'`
+    upserts `user_lookups` with `first_card_id`. Both
+    `cards-router.updateStatus` and `updateStatusBatch` route through it.
+    Un-keep does NOT remove the row — `user_lookups` is durable history
+    and SRS state stays put. v2 adds an explicit "remove from practice"
+    affordance.
+  - **LLM pass:**
+    `apps/backend/src/transport/third-party/anthropic/passes/generate-practice-text.ts`
+    streams via `messages.stream(...).finalMessage()` with `MODEL_OPUS`,
+    4k max_tokens. Tool schema deliberately omits character offsets:
+    `used_chunks: [{ headword, sense, surface_form }]`. The server
+    locates each `surface_form` in `body` and computes offsets itself
+    (`locateAnnotations`), claiming non-overlapping positions when a
+    surface form repeats. Don't re-introduce char_start/char_end on the
+    tool — LLMs are unreliable at character arithmetic; the symptom was
+    "Dropped 6 bad annotation(s): offset mismatch ..." with only 1 of 7
+    chunks visible in the rendered text. Length target is ~80–120 words
+    in both the tool description and user message; the prompt asks for
+    dense chunk packing rather than narrative. New
+    `buildPracticeMethodologySystem` in `methodology-prompt.ts` strips
+    the source-context block (Practice has no per-source context) and
+    moves the `cache_control: ephemeral` breakpoint onto the L1
+    interference notes block.
+  - **FSRS adapter** at `apps/backend/src/service/practice/fsrs.ts` uses
+    `ts-fsrs` (catalog `5.3.2`, default `generatorParameters` with
+    `enable_fuzz: true`). Imports `Grade` from ts-fsrs because the
+    `next` signature wants `Grade` not `Rating` (Grade excludes
+    `Rating.Manual`).
+  - **Practice services** under `apps/backend/src/service/practice/`:
+    `start-practice-session.ts` (validates ≥1 kept card + native_language
+    pref; warms L1 notes; inserts session row), `generate-next-practice-text.ts`
+    (eligible MINUS covered, init SRS state on null-state rows, picks 7,
+    inserts pending → markGenerating → LLM call → markReady; returns
+    `{ done: true }` when remaining is empty and marks session
+    `'completed'`), `rate-chunk.ts` (validates the chunk is in the
+    practice_text's annotations; applies FSRS; writes `practice_ratings`
+    with `was_explicit=true`), `finalize-practice-text.ts` (implicit-good
+    every annotation not yet rated, then `markDone`),
+    `ensure-l1-interference-notes.ts` (deduped helper used by
+    `start-practice-session`).
+  - **Contracts & router.** New
+    `packages/api-client/src/orpc-contracts/practice-contract.ts` with 6
+    endpoints: `dueSummary`, `startSession`, `getSession`,
+    `generateNextText`, `rateChunk`, `finalizeText`. Practice-specific
+    schemas (`PracticeRatingSchema`, `PracticeSessionSchema`,
+    `PracticeTextSchema`, `PracticeAnnotationSchema`,
+    `PracticeDueSummaryEntrySchema`) appended to
+    `common/flicktionary-schemas.ts`. Registered in `root-contract.ts`.
+    Backend router at
+    `apps/backend/src/router/practice-router/practice-router.ts`,
+    mounted in `app.ts` after the auth middleware.
+  - **Vitest unit tests:**
+    `passes/generate-practice-text.unit.test.ts` (5 cases — happy path,
+    not-in-body, unrequested, repeated surface form, skipped_chunks
+    preserved); `service/practice/fsrs.unit.test.ts` (3 cases — new row
+    transitions out of `new`, `again` decreases stability + increments
+    lapses, `easy` schedules longer than `good`).
+  - **Frontend nav.** `bottom-tab-bar.tsx` and `sidebar-nav.tsx` grew a
+    third tab (`Practice`, `Brain` icon). Mobile layout becomes
+    `[Sessions] [Practice] [+] [More]` — the central `+` stays a raised
+    floating button, slot count went from 3 to 4 with the central +
+    counted alongside three flat tabs.
+  - **Frontend feature** `apps/web/src/features/practice/`:
+    - `api/practice-hooks.ts` — `useDueSummary`, `useStartPracticeSession`,
+      `useGetPracticeSession`, `useGenerateNextPracticeText`,
+      `useRatePracticeChunk`, `useFinalizePracticeText`. Mutation success
+      handlers use `setQueryData` to atomically swap `currentText` in
+      the `getSession` cache rather than `invalidateQueries` (avoids the
+      stale-flash on Next while a refetch is in flight).
+    - `components/practice-landing-view.tsx` — per-language summary
+      list; one-language case shows a single "Start practice" button.
+    - `components/practice-session-view.tsx` — `<ModalScreen>` host;
+      state machine: auto-trigger first generation on mount, click
+      annotation → `RateSheet`, Next → finalize then generate. Local
+      `isAdvancing` flag hides the previous text + sticky footer the
+      moment Next is clicked, preventing both the stale-text flash and
+      a double-fire of `generateNextText` from the auto-trigger effect.
+    - `components/annotated-text.tsx` — renders `body` with annotations
+      as clickable spans (yellow → unrated; gray → rated). Drops
+      overlapping annotations defensively even though the server side
+      claims non-overlapping positions.
+    - `components/rate-sheet.tsx` — `ResponsiveOverlay` wrapper hosting
+      a new `RateButtons` UI primitive at
+      `apps/web/src/components/ui/rate-buttons.tsx` (Again / Hard / Good
+      / Easy quartet, Good as default selection).
+  - **Routes:** `/practice/index.tsx` (regular route, app chrome) and
+    `/practice/$practiceSessionId.tsx` (`hideAppChrome: true`).
+  - **AGENTS.md update.** New `## oRPC + TanStack Query` section
+    documenting the `.key()` (prefix, for invalidate / cancel) vs
+    `.queryKey({ input })` (exact, for setQueryData / getQueryData)
+    distinction. The symptom of mixing them up is silent no-op writes —
+    we hit this during Phase 6 testing when `setQueryData` was passing
+    a `.key()` result and the practice-text cache appeared frozen on
+    the same text after every Next click.
+
 **Remaining:**
-- Phase 10 — End-to-end verification (manual golden path + lint + types + vitest).
-- Pricing/limits decision (the LLM passes are not free; ~66¢ per movie).
+- Phase 10 — End-to-end verification (manual golden path + lint + types + vitest)
+  for the original Flicktionary build (Practice's golden path is also still in
+  progress — see Practice plan §Phase 6).
+- Pricing/limits decision (the LLM passes are not free; ~66¢ per movie for the
+  basic-data + enrichment passes; Practice adds ongoing per-text generation cost
+  on Opus).
 
 ## Known cosmetic issues (defer to Phase 10 cleanup unless raised earlier)
 
@@ -253,9 +378,13 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
 
 ## How to continue
 
-1. Read `SPEC.md` and the plan file at `/Users/sebastien/.claude/plans/i-would-like-to-wild-codd.md`.
+1. Read `SPEC.md` (now includes the Practice section + extended data model), the
+   original build plan at
+   `/Users/sebastien/.claude/plans/i-would-like-to-wild-codd.md`, and the
+   Practice tab plan at
+   `/Users/sebastien/.claude/plans/we-are-working-on-shimmering-turtle.md`.
 2. Run `pnpm check:types` and `pnpm lint` from the repo root to confirm we're starting clean.
-3. Pick up Phase 10 — Verification.
+3. Pick up Phase 10 — Verification (and finish the Practice golden path).
    - The schema is consolidated into the single
      `20260427120000_create_flicktionary_tables.sql` migration. Pre-launch,
      so a fresh `supabase db reset` is safe in principle — but if you have
@@ -275,6 +404,7 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
      - **Chat tool calls** — ask the assistant in chat to "rewrite the example sentence" or "use a different translation". The basic columns update server-side, the field inputs remount with the new values, and the assistant body shows `_Updated: <fields>_`.
      - **Cross-session dedup** — export a Spanish session that includes a polysemous word (`correr` with one sense). Start a second Spanish session containing `correr` in a different sense and process. The new sense should appear as a new card; the same sense should be excluded. Inspect `user_lookups` to confirm the composite PK `(user, lang, headword, sense)` lets both rows coexist.
      - **SRT markup** — import a track with `<i>...</i>` cues. Confirm rendered segments show plain text (not raw tags), that highlighting still aligns to the right characters, and that the LLM passes do not see markup.
+     - **Practice golden path** — keep ≥10 cards in a single target language → tap the `Practice` tab → confirm the landing shows the language with `due / new / total` counts that match `SELECT COUNT(*) FROM user_lookups WHERE user_id=… AND target_language=…` → start session → first text generates within ~10s with all 7 chunks visibly highlighted (no offset-mismatch warning) → tap a chunk → `RateSheet` opens with headword + sense → rate `Hard` → spinner → text 2 generates and reuses the cache update path (NO stale flash, NO double LLM call). Repeat until `done: true`. Inspect `practice_ratings` (should have 1 explicit Hard + 6 implicit Goods per advanced text), `user_lookups.srs_state` (now non-null), and `practice_sessions.status` (should be `'completed'` once `done: true` returned).
 4. The TanStack Router route tree (`apps/web/src/app/routeTree.gen.ts`) regenerates on Vite startup — if you delete or add route files and need it regen'd without running dev, run `pnpm exec vite build --mode development` in `apps/web` for ~3 seconds in the background, then kill it.
 5. After backend schema changes, regenerate types from `apps/backend/supabase/supabase-dev-tunnel/`: `doppler run -- supabase gen types typescript --local > /Users/sebastien/Documents/flicktionary/apps/backend/src/transport/database/database.public.types.ts`.
 6. Auto mode is fine — make reasonable assumptions and proceed; only stop for genuinely destructive ops (rm -rf, dropping prod data, force pushing main, etc.).

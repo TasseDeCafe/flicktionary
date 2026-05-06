@@ -72,3 +72,39 @@ ${movieContextBlob}`
   blocks.push({ type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } })
   return blocks
 }
+
+type BuildPracticeMethodologySystemArgs = {
+  nativeLanguage: string
+  targetLanguage: string
+  cefrLevel: string
+  l1InterferenceNotes: string
+}
+
+// Variant for the Practice tab. Same cacheable prefix structure but without the
+// per-session source-context block (Practice texts aren't tied to a movie/source).
+// The cache breakpoint sits on the L1-interference block so subsequent practice
+// calls in the same session can reuse the prefix.
+export const buildPracticeMethodologySystem = ({
+  nativeLanguage,
+  targetLanguage,
+  cefrLevel,
+  l1InterferenceNotes,
+}: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
+  const userProfile = `User profile:
+- Native language: ${nativeLanguage}
+- Target language: ${targetLanguage}
+- CEFR level: ${cefrLevel}`
+
+  const l1Block = `L1 interference notes (${nativeLanguage} -> ${targetLanguage}):
+${l1InterferenceNotes}`
+
+  const languageInstructions = getLanguageInstructions(targetLanguage)
+
+  const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
+  if (languageInstructions) {
+    blocks.push({ type: 'text', text: languageInstructions })
+  }
+  blocks.push({ type: 'text', text: userProfile })
+  blocks.push({ type: 'text', text: l1Block, cache_control: { type: 'ephemeral' } })
+  return blocks
+}
