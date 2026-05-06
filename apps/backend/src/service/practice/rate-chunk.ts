@@ -45,10 +45,7 @@ export const rateChunk = async (
 
   const result = applyRating(lookup, rating, new Date())
   await deps.userLookupsRepository.applyFsrsResult({
-    userId,
-    targetLanguage: found.targetLanguage,
-    headword,
-    sense,
+    userLookupId: lookup.id,
     state: result.state,
     due: result.due,
     stability: result.stability,
@@ -59,6 +56,7 @@ export const rateChunk = async (
   })
   await deps.practiceRatingsRepository.insert({
     practiceTextId,
+    userLookupId: lookup.id,
     userId,
     targetLanguage: found.targetLanguage,
     headword,

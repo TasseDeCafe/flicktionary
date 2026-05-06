@@ -2,7 +2,7 @@ import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
 import { buildPromptContext } from '../processing/build-prompt-context'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
-import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
+import { CardsRepositoryInterface, DbCardWithChunk } from '../../transport/database/cards/cards-repository'
 import {
   CardChatMessagesRepositoryInterface,
   DbCardChatMessage,
@@ -10,6 +10,7 @@ import {
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
+import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 
 export type RunCardChatDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -17,6 +18,7 @@ export type RunCardChatDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
+  userLookupsRepository: UserLookupsRepositoryInterface
 }
 
 export type RunCardChatInput = {
@@ -57,17 +59,17 @@ const updateCardFieldsTool: Anthropic.Tool = {
   },
 }
 
-const renderCardForChat = (card: DbCard): string => {
+const renderCardForChat = (card: DbCardWithChunk): string => {
   const lines = [
-    `- headword: ${card.headword}`,
-    `- sense: ${card.sense || '(none)'}`,
+    `- headword: ${card.chunk.headword}`,
+    `- sense: ${card.chunk.sense || '(none)'}`,
     `- surface_form: ${card.surface_form}`,
-    `- translation: ${card.translation ?? '(none)'}`,
-    `- definition: ${card.definition ?? '(none)'}`,
-    `- target_example: ${card.target_example ?? '(none)'}`,
-    `- native_example: ${card.native_example ?? '(none)'}`,
+    `- translation: ${card.chunk.translation ?? '(none)'}`,
+    `- definition: ${card.chunk.definition ?? '(none)'}`,
+    `- target_example: ${card.chunk.target_example ?? '(none)'}`,
+    `- native_example: ${card.chunk.native_example ?? '(none)'}`,
   ]
-  const extras = (card.exploration_extras ?? {}) as Record<string, unknown>
+  const extras = (card.chunk.exploration_extras ?? {}) as Record<string, unknown>
   if (Object.keys(extras).length > 0) {
     lines.push(`- exploration_extras:\n${JSON.stringify(extras, null, 2)}`)
   } else {
@@ -76,7 +78,7 @@ const renderCardForChat = (card: DbCard): string => {
   return lines.join('\n')
 }
 
-const buildSeedUserTurn = (card: DbCard, surroundingSegmentsBlock: string): string => {
+const buildSeedUserTurn = (card: DbCardWithChunk, surroundingSegmentsBlock: string): string => {
   return `Card under discussion:
 ${renderCardForChat(card)}
 
@@ -246,10 +248,42 @@ export const runCardChat = async (
   if (toolUse && toolUse.type === 'tool_use' && toolUse.name === UPDATE_TOOL_NAME) {
     const parsed = parseToolInput(toolUse.input)
     if (parsed) {
-      const updated = await deps.cardsRepository.updateFields(input.cardId, parsed.patch)
-      if (updated) {
-        updatedFieldNames = parsed.changedFieldNames
+      // surface_form lives on the card itself; everything else lives on the
+      // canonical chunk (user_lookups). We split the patch across the two
+      // repositories accordingly.
+      if (parsed.patch.surfaceForm !== null) {
+        await deps.cardsRepository.updateFields(input.cardId, { surfaceForm: parsed.patch.surfaceForm })
       }
+      const contentTouched =
+        parsed.patch.translation !== null ||
+        parsed.patch.definition !== null ||
+        parsed.patch.targetExample !== null ||
+        parsed.patch.nativeExample !== null ||
+        parsed.patch.extrasPatch !== null
+      if (contentTouched) {
+        await deps.userLookupsRepository.updateContent({
+          id: card.user_lookup_id,
+          translation: parsed.patch.translation,
+          definition: parsed.patch.definition,
+          targetExample: parsed.patch.targetExample,
+          nativeExample: parsed.patch.nativeExample,
+          explorationExtrasPatch: parsed.patch.extrasPatch,
+        })
+      }
+      if (parsed.patch.headword !== null || parsed.patch.sense !== null) {
+        const result = await deps.userLookupsRepository.renameKey({
+          id: card.user_lookup_id,
+          headword: parsed.patch.headword ?? card.chunk.headword,
+          sense: parsed.patch.sense ?? card.chunk.sense ?? '',
+        })
+        if (!result.ok) {
+          // Drop the rename from the changed-field list silently — the chat
+          // reply still lists what we did manage to apply. A future iteration
+          // could surface a typed warning to the assistant.
+          parsed.changedFieldNames = parsed.changedFieldNames.filter((n) => n !== 'headword' && n !== 'sense')
+        }
+      }
+      updatedFieldNames = parsed.changedFieldNames
     }
   }
 

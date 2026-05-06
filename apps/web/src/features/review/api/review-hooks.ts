@@ -170,6 +170,46 @@ export const useUpdateCardFields = () => {
   )
 }
 
+// Patch translation/definition/examples/extras on the canonical chunk
+// (user_lookups). After success, invalidate the cards caches so any sibling
+// card showing the same chunk picks up the new content via re-fetch. We don't
+// have surgical-update access to embedded chunks across all card caches, so
+// invalidation is the simplest correct path.
+export const useUpdateChunkContent = (sessionId?: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.updateContent.mutationOptions({
+      onSuccess: () => {
+        if (sessionId) {
+          queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
+        }
+        queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+      },
+      meta: { errorMessage: t`Failed to update chunk` },
+    })
+  )
+}
+
+// Rename the (headword, sense) pair on the canonical chunk. Surfaces a 409
+// CONFLICT when the user already has a chunk with the target pair — the
+// caller decides how to display that.
+export const useRenameChunk = (sessionId?: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.rename.mutationOptions({
+      onSuccess: () => {
+        if (sessionId) {
+          queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
+        }
+        queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+      },
+      meta: { errorMessage: t`Failed to rename chunk` },
+    })
+  )
+}
+
 export const useExportSessionCsv = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

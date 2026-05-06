@@ -4,6 +4,7 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
+import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 
@@ -13,6 +14,7 @@ export type ExploreCardDependencies = {
   textSegmentsRepository: TextSegmentsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface
   l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
+  userLookupsRepository: UserLookupsRepositoryInterface
 }
 
 export type ExploreCardOutcome = 'updated' | 'skipped' | 'failed'
@@ -23,8 +25,11 @@ const isExtrasEmpty = (extras: unknown): boolean => {
 }
 
 // Idempotently runs the enrichment pass for one card. Skips when extras are
-// already populated (unless options.force is true). Persists basic columns +
-// extras_patch in a single repository call. Caller decides fire-and-forget vs await.
+// already populated on the canonical user_lookups row (unless options.force).
+// Persists content fields + extras_patch on user_lookups; surface_form on the
+// card itself. Headword/sense renames propagate to all sibling cards via the
+// canonical row — if the rename collides with an existing chunk we keep the
+// original key and log a warning.
 export const exploreCardIfMissing = async (
   cardId: string,
   userId: string,
@@ -34,7 +39,7 @@ export const exploreCardIfMissing = async (
   try {
     const card = await deps.cardsRepository.findByIdForUser(cardId, userId)
     if (!card) return 'skipped'
-    if (!options.force && !isExtrasEmpty(card.exploration_extras)) return 'skipped'
+    if (!options.force && !isExtrasEmpty(card.chunk.exploration_extras)) return 'skipped'
 
     const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, userId)
     if (!session || !session.context_blob) return 'skipped'
@@ -65,22 +70,52 @@ export const exploreCardIfMissing = async (
       cefrLevel: session.cefr_level,
       movieContextBlob: session.context_blob,
       l1InterferenceNotes: l1.notes,
-      surfaceForm: card.surface_form || card.headword,
+      surfaceForm: card.surface_form || card.chunk.headword,
       surroundingSegments: surroundingFormatted,
       userNote,
       presetTags,
     })
 
-    await deps.cardsRepository.updateFields(cardId, {
-      headword: enrichment.headword || card.headword,
-      sense: enrichment.sense ?? card.sense ?? '',
-      surfaceForm: enrichment.surface_form || card.surface_form,
+    // Surface form is per-card-instance — write directly on the card.
+    if (enrichment.surface_form && enrichment.surface_form !== card.surface_form) {
+      await deps.cardsRepository.updateFields(cardId, { surfaceForm: enrichment.surface_form })
+    }
+
+    // Content + extras live on the canonical chunk.
+    await deps.userLookupsRepository.updateContent({
+      id: card.user_lookup_id,
       translation: enrichment.translation,
       definition: enrichment.definition,
       targetExample: enrichment.target_example,
       nativeExample: enrichment.native_example,
-      extrasPatch: enrichment.extras,
+      explorationExtrasPatch: enrichment.extras as Record<string, unknown>,
     })
+
+    // Rename only if the LLM produced a different (headword, sense) and the
+    // change doesn't collide with another chunk the user already owns.
+    const enrichedHeadword = enrichment.headword || card.chunk.headword
+    const enrichedSense = enrichment.sense ?? card.chunk.sense ?? ''
+    if (enrichedHeadword !== card.chunk.headword || enrichedSense !== card.chunk.sense) {
+      const result = await deps.userLookupsRepository.renameKey({
+        id: card.user_lookup_id,
+        headword: enrichedHeadword,
+        sense: enrichedSense,
+      })
+      if (!result.ok) {
+        logWithSentry({
+          message: 'exploreCardIfMissing: rename collision, keeping original key',
+          params: {
+            cardId,
+            userLookupId: card.user_lookup_id,
+            fromHeadword: card.chunk.headword,
+            fromSense: card.chunk.sense,
+            toHeadword: enrichedHeadword,
+            toSense: enrichedSense,
+          },
+        })
+      }
+    }
+
     return 'updated'
   } catch (e) {
     logCustomErrorMessageAndError(`exploreCardIfMissing failed, cardId = ${cardId}`, e)
@@ -90,7 +125,7 @@ export const exploreCardIfMissing = async (
         await deps.studySessionsRepository.appendProcessingWarning(
           card.study_session_id,
           userId,
-          `On-demand exploration failed for card "${card.surface_form || card.headword}": ${
+          `On-demand exploration failed for card "${card.surface_form || card.chunk.headword}": ${
             e instanceof Error ? e.message : String(e)
           }`
         )

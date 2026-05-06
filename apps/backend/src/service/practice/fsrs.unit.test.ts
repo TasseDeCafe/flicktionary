@@ -3,10 +3,16 @@ import { applyRating } from './fsrs'
 import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
 
 const newRow: DbUserLookup = {
+  id: '00000000-0000-0000-0000-0000000000aa',
   user_id: '00000000-0000-0000-0000-000000000001',
   target_language: 'es',
   headword: 'aprovechar',
   sense: 'to take advantage of',
+  translation: null,
+  definition: null,
+  target_example: null,
+  native_example: null,
+  exploration_extras: {},
   first_card_id: null,
   exported_at: null,
   count: 1,

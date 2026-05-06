@@ -6,6 +6,7 @@ export type PracticeRatingValue = Database['public']['Enums']['practice_rating']
 
 const insert = async (params: {
   practiceTextId: string
+  userLookupId: string
   userId: string
   targetLanguage: string
   headword: string
@@ -15,10 +16,11 @@ const insert = async (params: {
 }): Promise<DbPracticeRating> => {
   const result = (await sql`
     INSERT INTO public.practice_ratings (
-      practice_text_id, user_id, target_language, headword, sense, rating, was_explicit
+      practice_text_id, user_lookup_id, user_id, target_language, headword, sense, rating, was_explicit
     )
     VALUES (
       ${params.practiceTextId},
+      ${params.userLookupId},
       ${params.userId},
       ${params.targetLanguage},
       ${params.headword},
@@ -57,6 +59,7 @@ const getRatedHeadwordSensesForText = async (
 export interface PracticeRatingsRepositoryInterface {
   insert: (params: {
     practiceTextId: string
+    userLookupId: string
     userId: string
     targetLanguage: string
     headword: string

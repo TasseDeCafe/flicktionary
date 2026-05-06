@@ -25,10 +25,7 @@ export const exportSession = async (
   await Promise.all(
     cards.map((card) =>
       deps.userLookupsRepository.upsertOnExport({
-        userId,
-        targetLanguage: session.target_language,
-        headword: card.headword,
-        sense: card.sense ?? '',
+        userLookupId: card.user_lookup_id,
         firstCardId: card.id,
       })
     )

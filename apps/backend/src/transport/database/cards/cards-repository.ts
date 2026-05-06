@@ -1,47 +1,48 @@
-import postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 
 export type DbCard = Tables<'cards'>
 export type CardStatus = Database['public']['Enums']['card_status']
 
-export type ExplorationExtras = { readonly [key: string]: postgres.JSONValue | undefined }
+// The chunk view returned alongside each card on read paths. After the
+// content refactor, headword/sense and the gloss fields live on user_lookups,
+// so anything that wants to display a card must JOIN to user_lookups. We
+// expose a typed `chunk` shape so callers don't have to re-derive it.
+export type DbChunkSummary = {
+  id: string
+  user_id: string
+  target_language: string
+  headword: string
+  sense: string
+  translation: string | null
+  definition: string | null
+  target_example: string | null
+  native_example: string | null
+  exploration_extras: Record<string, unknown>
+}
+
+export type DbCardWithChunk = DbCard & { chunk: DbChunkSummary }
 
 export type CardInsertInput = {
   studySessionId: string
   highlightId: string | null
   segmentId: string
-  headword: string
-  sense: string
+  userLookupId: string
   surfaceForm: string
-  translation: string | null
-  definition: string | null
-  targetExample: string | null
-  nativeExample: string | null
-  explorationExtras: ExplorationExtras
   status: CardStatus
 }
 
 const insertCard = async (params: CardInsertInput): Promise<DbCard> => {
   const result = (await sql`
     INSERT INTO public.cards (
-      study_session_id, highlight_id, segment_id,
-      headword, sense, surface_form,
-      translation, definition, target_example, native_example,
-      exploration_extras, status
+      study_session_id, highlight_id, segment_id, user_lookup_id, surface_form, status
     )
     VALUES (
       ${params.studySessionId},
       ${params.highlightId},
       ${params.segmentId},
-      ${params.headword},
-      ${params.sense},
+      ${params.userLookupId},
       ${params.surfaceForm},
-      ${params.translation},
-      ${params.definition},
-      ${params.targetExample},
-      ${params.nativeExample},
-      ${sql.json(params.explorationExtras)},
       ${params.status}
     )
     RETURNING *
@@ -49,31 +50,54 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard> => {
   return result[0]!
 }
 
-const listBySessionId = async (studySessionId: string, status?: CardStatus): Promise<DbCard[]> => {
-  return status
+const SELECT_CARD_WITH_CHUNK_SQL = sql`
+  SELECT
+    c.*,
+    jsonb_build_object(
+      'id', ul.id,
+      'user_id', ul.user_id,
+      'target_language', ul.target_language,
+      'headword', ul.headword,
+      'sense', ul.sense,
+      'translation', ul.translation,
+      'definition', ul.definition,
+      'target_example', ul.target_example,
+      'native_example', ul.native_example,
+      'exploration_extras', ul.exploration_extras
+    ) AS chunk
+  FROM public.cards c
+  JOIN public.user_lookups ul ON ul.id = c.user_lookup_id
+`
+
+const listBySessionId = async (studySessionId: string, status?: CardStatus): Promise<DbCardWithChunk[]> => {
+  const rows = status
     ? ((await sql`
-        SELECT * FROM public.cards
-        WHERE study_session_id = ${studySessionId} AND status = ${status}
-        ORDER BY created_at ASC
-      `) as DbCard[])
+        ${SELECT_CARD_WITH_CHUNK_SQL}
+        WHERE c.study_session_id = ${studySessionId} AND c.status = ${status}
+        ORDER BY c.created_at ASC
+      `) as Array<DbCard & { chunk: DbChunkSummary }>)
     : ((await sql`
-        SELECT * FROM public.cards
-        WHERE study_session_id = ${studySessionId}
-        ORDER BY created_at ASC
-      `) as DbCard[])
+        ${SELECT_CARD_WITH_CHUNK_SQL}
+        WHERE c.study_session_id = ${studySessionId}
+        ORDER BY c.created_at ASC
+      `) as Array<DbCard & { chunk: DbChunkSummary }>)
+  return rows
 }
 
-const findById = async (id: string): Promise<DbCard | null> => {
-  const result = (await sql`SELECT * FROM public.cards WHERE id = ${id}`) as DbCard[]
+const findById = async (id: string): Promise<DbCardWithChunk | null> => {
+  const result = (await sql`
+    ${SELECT_CARD_WITH_CHUNK_SQL}
+    WHERE c.id = ${id}
+  `) as DbCardWithChunk[]
   return result[0] ?? null
 }
 
-const findByIdForUser = async (id: string, userId: string): Promise<DbCard | null> => {
+const findByIdForUser = async (id: string, userId: string): Promise<DbCardWithChunk | null> => {
   const result = (await sql`
-    SELECT c.* FROM public.cards c
+    ${SELECT_CARD_WITH_CHUNK_SQL}
     JOIN public.study_sessions s ON s.id = c.study_session_id
     WHERE c.id = ${id} AND s.user_id = ${userId}
-  `) as DbCard[]
+  `) as DbCardWithChunk[]
   return result[0] ?? null
 }
 
@@ -98,35 +122,17 @@ const updateStatusBatch = async (studySessionId: string, cardIds: string[], stat
   return result
 }
 
-// Patch shape for partial updates. `null` on a field means "leave the column
-// unchanged" (handled via COALESCE on the SQL side). To clear a basic field,
-// pass an explicit empty string. `extrasPatch` is shallow-merged into
-// exploration_extras via `||` jsonb concat.
+// Card-level field patch. Vocabulary content (headword/sense/translation/etc.)
+// lives on user_lookups now and is patched via userLookupsRepository.
 export type CardFieldsPatch = {
-  headword?: string | null
-  sense?: string | null
   surfaceForm?: string | null
-  translation?: string | null
-  definition?: string | null
-  targetExample?: string | null
-  nativeExample?: string | null
-  extrasPatch?: Record<string, unknown> | null
 }
 
 const updateFields = async (id: string, patch: CardFieldsPatch): Promise<DbCard | null> => {
-  const extras = patch.extrasPatch ?? null
-  const extrasJson = extras ? sql.json(extras as unknown as postgres.JSONValue) : null
   const result = (await sql`
     UPDATE public.cards
     SET
-      headword       = COALESCE(${patch.headword ?? null}, headword),
-      sense          = COALESCE(${patch.sense ?? null}, sense),
-      surface_form   = COALESCE(${patch.surfaceForm ?? null}, surface_form),
-      translation    = COALESCE(${patch.translation ?? null}, translation),
-      definition     = COALESCE(${patch.definition ?? null}, definition),
-      target_example = COALESCE(${patch.targetExample ?? null}, target_example),
-      native_example = COALESCE(${patch.nativeExample ?? null}, native_example),
-      exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb),
+      surface_form = COALESCE(${patch.surfaceForm ?? null}, surface_form),
       updated_at = NOW()
     WHERE id = ${id}
     RETURNING *
@@ -134,19 +140,19 @@ const updateFields = async (id: string, patch: CardFieldsPatch): Promise<DbCard 
   return result[0] ?? null
 }
 
-const listKeptForSession = async (studySessionId: string): Promise<DbCard[]> => {
+const listKeptForSession = async (studySessionId: string): Promise<DbCardWithChunk[]> => {
   return listBySessionId(studySessionId, 'kept')
 }
 
 export interface CardsRepositoryInterface {
   insertCard: (params: CardInsertInput) => Promise<DbCard>
-  listBySessionId: (studySessionId: string, status?: CardStatus) => Promise<DbCard[]>
-  findById: (id: string) => Promise<DbCard | null>
-  findByIdForUser: (id: string, userId: string) => Promise<DbCard | null>
+  listBySessionId: (studySessionId: string, status?: CardStatus) => Promise<DbCardWithChunk[]>
+  findById: (id: string) => Promise<DbCardWithChunk | null>
+  findByIdForUser: (id: string, userId: string) => Promise<DbCardWithChunk | null>
   updateStatus: (id: string, status: CardStatus) => Promise<DbCard | null>
   updateStatusBatch: (studySessionId: string, cardIds: string[], status: CardStatus) => Promise<DbCard[]>
   updateFields: (id: string, patch: CardFieldsPatch) => Promise<DbCard | null>
-  listKeptForSession: (studySessionId: string) => Promise<DbCard[]>
+  listKeptForSession: (studySessionId: string) => Promise<DbCardWithChunk[]>
 }
 
 export const CardsRepository = (): CardsRepositoryInterface => {

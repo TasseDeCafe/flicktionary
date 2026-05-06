@@ -1,4 +1,4 @@
-import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
+import { CardsRepositoryInterface, DbCardWithChunk } from '../../transport/database/cards/cards-repository'
 import {
   TextSegmentsRepositoryInterface,
   DbTextSegment,
@@ -11,7 +11,7 @@ export type BuildCsvDependencies = {
 
 export type BuildCsvResult = {
   csv: string
-  cards: DbCard[]
+  cards: DbCardWithChunk[]
 }
 
 const CSV_COLUMNS = ['front', 'back', 'context', 'tags', 'headword', 'surface_form', 'note'] as const
@@ -26,19 +26,19 @@ const escapeCell = (value: string): string => {
 
 const renderRow = (cells: readonly string[]): string => cells.map(escapeCell).join(',')
 
-const computeDefaults = (card: DbCard): { front: string; back: string } => {
-  const headword = card.headword || card.surface_form
-  const targetExample = card.target_example ?? ''
-  const backFirstLine = card.translation || card.definition || ''
-  const nativeExample = card.native_example ?? ''
+const computeDefaults = (card: DbCardWithChunk): { front: string; back: string } => {
+  const headword = card.chunk.headword || card.surface_form
+  const targetExample = card.chunk.target_example ?? ''
+  const backFirstLine = card.chunk.translation || card.chunk.definition || ''
+  const nativeExample = card.chunk.native_example ?? ''
 
   const front = [headword, targetExample].filter((s) => s.trim().length > 0).join('\n\n')
   const back = [backFirstLine, nativeExample].filter((s) => s.trim().length > 0).join('\n\n')
   return { front, back }
 }
 
-const extractContext = (card: DbCard, segmentText: string): string => {
-  const extras = (card.exploration_extras ?? {}) as Record<string, unknown>
+const extractContext = (card: DbCardWithChunk, segmentText: string): string => {
+  const extras = (card.chunk.exploration_extras ?? {}) as Record<string, unknown>
   if (typeof extras.context_segment === 'string' && extras.context_segment.trim().length > 0) {
     return extras.context_segment
   }
@@ -64,7 +64,7 @@ export const buildCsv = async (sessionId: string, deps: BuildCsvDependencies): P
     const context = extractContext(card, segmentText)
     const tags = 'flicktionary'
     const note = ''
-    return renderRow([front, back, context, tags, card.headword, card.surface_form, note])
+    return renderRow([front, back, context, tags, card.chunk.headword, card.surface_form, note])
   })
 
   const csv = [header, ...rows].join('\n')

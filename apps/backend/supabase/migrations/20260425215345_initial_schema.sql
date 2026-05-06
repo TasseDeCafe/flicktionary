@@ -383,15 +383,12 @@ ALTER TABLE public.highlights ENABLE ROW LEVEL SECURITY;
 -- =========================================================================
 -- cards
 --
--- Basic columns (headword, sense, surface_form, translation, definition,
--- target_example, native_example) are populated by the Step-1 basic-data
--- pass during processing. exploration_extras is a partial JSONB bag holding
--- the optional enrichment fields (ipa, frequency, more_frequent_synonym,
--- regionalism, register, register_alternatives, collocations, etymology,
--- l1_notes, notes, context_segment) and is populated only when the user
--- explicitly clicks "Generate full exploration".
--- translation and native_example are nullable so L1 = L2 sessions can leave
--- them empty and rely on definition instead.
+-- A card is a per-session detection event: surface_form is the inflected form
+-- as it appeared in the source segment; status is the per-session lifecycle
+-- (pending -> kept/rejected/auto_rejected/exported). The vocabulary content
+-- (headword, sense, translation, definition, target_example, native_example,
+-- exploration_extras) lives on user_lookups and is reached via user_lookup_id.
+-- A card_chat_messages thread is per-card-instance.
 -- =========================================================================
 
 CREATE TABLE public.cards (
@@ -399,14 +396,8 @@ CREATE TABLE public.cards (
   study_session_id UUID NOT NULL,
   highlight_id UUID NULL,
   segment_id UUID NOT NULL,
-  headword TEXT NOT NULL,
-  sense TEXT NOT NULL DEFAULT '',
+  user_lookup_id UUID NOT NULL,
   surface_form TEXT NOT NULL,
-  translation TEXT NULL,
-  definition TEXT NULL,
-  target_example TEXT NULL,
-  native_example TEXT NULL,
-  exploration_extras JSONB NOT NULL DEFAULT '{}'::jsonb,
   status card_status NOT NULL DEFAULT 'pending',
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -417,10 +408,12 @@ CREATE TABLE public.cards (
     REFERENCES public.highlights (id) ON DELETE SET NULL,
   CONSTRAINT cards_segment_id_fkey FOREIGN KEY (segment_id)
     REFERENCES public.text_segments (id) ON DELETE RESTRICT
+  -- cards_user_lookup_id_fkey is added via ALTER TABLE after user_lookups exists.
 );
 
 CREATE INDEX idx_cards_study_session_status ON public.cards (study_session_id, status);
 CREATE INDEX idx_cards_highlight_id ON public.cards (highlight_id);
+CREATE INDEX idx_cards_user_lookup_id ON public.cards (user_lookup_id);
 
 ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
 
@@ -444,18 +437,44 @@ CREATE INDEX idx_card_chat_messages_card_id_created ON public.card_chat_messages
 ALTER TABLE public.card_chat_messages ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
--- user_lookups (cross-source dedup; sense disambiguator lets the same
--- headword be studied in multiple distinct senses)
+-- user_lookups (canonical vocabulary entry; cross-source dedup; sense
+-- disambiguator lets the same headword be studied in multiple distinct
+-- senses).
+--
+-- Owns the vocabulary CONTENT (translation, definition, target_example,
+-- native_example, exploration_extras) so edits propagate to every card
+-- referencing this row instead of being per-card snapshots. A row is created
+-- eagerly the first time a card with this (headword, sense) is detected for
+-- the user (see findOrCreate in user-lookups-repository.ts), so the content
+-- has a home before the card is "kept".
+--
+-- exploration_extras is a partial JSONB bag of optional enrichment fields
+-- (ipa, frequency, more_frequent_synonym, regionalism, register,
+-- register_alternatives, collocations, etymology, l1_notes, notes,
+-- context_segment) populated when the user clicks "Generate full
+-- exploration". translation and native_example are nullable so L1 = L2
+-- sessions can leave them empty and rely on definition instead.
+--
+-- first_card_id points at the originating card (the first detection that
+-- created this row). It is set on creation and never updated; it powers the
+-- "Open source" navigation in the vocabulary view.
 -- =========================================================================
 
 CREATE TABLE public.user_lookups (
+  id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
   user_id UUID NOT NULL,
   target_language TEXT NOT NULL,
   headword TEXT NOT NULL,
   sense TEXT NOT NULL DEFAULT '',
+  -- Canonical vocabulary content (formerly on cards):
+  translation TEXT NULL,
+  definition TEXT NULL,
+  target_example TEXT NULL,
+  native_example TEXT NULL,
+  exploration_extras JSONB NOT NULL DEFAULT '{}'::jsonb,
   first_card_id UUID NULL,
   exported_at TIMESTAMP WITH TIME ZONE NULL,
-  count INTEGER NOT NULL DEFAULT 1,
+  count INTEGER NOT NULL DEFAULT 0,
   -- FSRS state for the Practice tab. Null until the row enters its first
   -- practice session. Stability/difficulty are FSRS-internal and only set
   -- once srs_state is non-null (and after at least one rating).
@@ -467,7 +486,9 @@ CREATE TABLE public.user_lookups (
   srs_reps INTEGER NOT NULL DEFAULT 0,
   srs_lapses INTEGER NOT NULL DEFAULT 0,
   added_to_practice_at TIMESTAMP WITH TIME ZONE NULL,
-  CONSTRAINT user_lookups_pkey PRIMARY KEY (user_id, target_language, headword, sense),
+  CONSTRAINT user_lookups_pkey PRIMARY KEY (id),
+  CONSTRAINT user_lookups_user_target_headword_sense_unique
+    UNIQUE (user_id, target_language, headword, sense),
   CONSTRAINT user_lookups_user_id_fkey FOREIGN KEY (user_id)
     REFERENCES auth.users (id) ON DELETE CASCADE,
   CONSTRAINT user_lookups_first_card_id_fkey FOREIGN KEY (first_card_id)
@@ -480,6 +501,13 @@ CREATE INDEX idx_user_lookups_due
   WHERE srs_state IS NOT NULL;
 
 ALTER TABLE public.user_lookups ENABLE ROW LEVEL SECURITY;
+
+-- Now that user_lookups exists, wire the cards.user_lookup_id FK.
+ALTER TABLE public.cards
+  ADD CONSTRAINT cards_user_lookup_id_fkey
+  FOREIGN KEY (user_lookup_id)
+  REFERENCES public.user_lookups (id)
+  ON DELETE RESTRICT;
 
 -- =========================================================================
 -- l1_interference_notes (shared across users)
@@ -587,6 +615,10 @@ ALTER TABLE public.practice_texts ENABLE ROW LEVEL SECURITY;
 CREATE TABLE public.practice_ratings (
   id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
   practice_text_id UUID NOT NULL,
+  user_lookup_id UUID NOT NULL,
+  -- Audit-snapshot columns: captured at rating time and never updated. They
+  -- preserve "what the user rated then" even if the underlying user_lookups
+  -- row is later renamed.
   user_id UUID NOT NULL,
   target_language TEXT NOT NULL,
   headword TEXT NOT NULL,
@@ -597,14 +629,12 @@ CREATE TABLE public.practice_ratings (
   CONSTRAINT practice_ratings_pkey PRIMARY KEY (id),
   CONSTRAINT practice_ratings_text_fkey FOREIGN KEY (practice_text_id)
     REFERENCES public.practice_texts (id) ON DELETE CASCADE,
-  CONSTRAINT practice_ratings_lookup_fkey
-    FOREIGN KEY (user_id, target_language, headword, sense)
-    REFERENCES public.user_lookups (user_id, target_language, headword, sense)
-    ON DELETE CASCADE
+  CONSTRAINT practice_ratings_lookup_fkey FOREIGN KEY (user_lookup_id)
+    REFERENCES public.user_lookups (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_practice_ratings_lookup
-  ON public.practice_ratings (user_id, target_language, headword, sense);
+  ON public.practice_ratings (user_lookup_id);
 CREATE INDEX idx_practice_ratings_text
   ON public.practice_ratings (practice_text_id);
 

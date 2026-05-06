@@ -76,9 +76,9 @@ export const cardsContract = {
     .input(z.object({ cardId: z.string().uuid() }))
     .output(z.object({ data: CardSchema })),
 
-  // Patch shape: null on a field means "leave unchanged" (COALESCE semantics).
-  // To clear a basic field, send an explicit empty string. extrasPatch is
-  // shallow-merged into exploration_extras via JSONB || on the server.
+  // Card-level field patch. Vocabulary content (headword/sense/translation/
+  // definition/examples/extras) lives on user_lookups now and is patched via
+  // the chunks contract (chunks.updateChunkContent / chunks.renameChunk).
   updateFields: oc
     .route({ method: 'PATCH', path: '/cards/{cardId}/fields', successStatus: 200 })
     .errors({
@@ -89,14 +89,7 @@ export const cardsContract = {
       z.object({
         cardId: z.string().uuid(),
         patch: z.object({
-          headword: z.string().nullable().optional(),
-          sense: z.string().nullable().optional(),
           surfaceForm: z.string().nullable().optional(),
-          translation: z.string().nullable().optional(),
-          definition: z.string().nullable().optional(),
-          targetExample: z.string().nullable().optional(),
-          nativeExample: z.string().nullable().optional(),
-          extrasPatch: z.record(z.string(), z.unknown()).nullable().optional(),
         }),
       })
     )

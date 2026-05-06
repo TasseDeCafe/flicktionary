@@ -3,30 +3,52 @@ import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { cardsContract } from '@flicktionary/api-client/orpc-contracts/cards-contract'
-import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
+import {
+  CardsRepositoryInterface,
+  DbCard,
+  DbCardWithChunk,
+  DbChunkSummary,
+} from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { exportSession, ExportSessionDependencies } from '../../service/export/export-session'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
 import { setCardStatus, setCardStatusBatch, SetCardStatusDependencies } from '../../service/cards/set-card-status'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 
-const toCardDto = (row: DbCard) => ({
+const toChunkDto = (chunk: DbChunkSummary) => ({
+  id: chunk.id,
+  userId: chunk.user_id,
+  targetLanguage: chunk.target_language,
+  headword: chunk.headword,
+  sense: chunk.sense ?? '',
+  translation: chunk.translation,
+  definition: chunk.definition,
+  targetExample: chunk.target_example,
+  nativeExample: chunk.native_example,
+  explorationExtras: (chunk.exploration_extras ?? {}) as Record<string, unknown>,
+})
+
+const toCardDto = (row: DbCardWithChunk) => ({
   id: row.id,
   studySessionId: row.study_session_id,
   highlightId: row.highlight_id,
   segmentId: row.segment_id,
-  headword: row.headword,
-  sense: row.sense ?? '',
+  userLookupId: row.user_lookup_id,
   surfaceForm: row.surface_form,
-  translation: row.translation,
-  definition: row.definition,
-  targetExample: row.target_example,
-  nativeExample: row.native_example,
-  explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
   status: row.status,
   createdAt: new Date(row.created_at).toISOString(),
   updatedAt: new Date(row.updated_at).toISOString(),
+  chunk: toChunkDto(row.chunk),
 })
+
+// updateStatus / updateStatusBatch return DbCard (no chunk join). Re-fetch by
+// id to surface the chunk on the response, or accept a smaller shape and let
+// the frontend reconcile from cache. Re-fetching is the simplest correct path.
+const cardWithChunkOrError = async (
+  cardsRepository: CardsRepositoryInterface,
+  card: DbCard,
+  userId: string
+): Promise<DbCardWithChunk | null> => cardsRepository.findByIdForUser(card.id, userId)
 
 export const CardsRouter = (
   cardsRepository: CardsRepositoryInterface,
@@ -69,7 +91,11 @@ export const CardsRouter = (
           data: { errors: [{ message: 'Card not found' }] },
         })
       }
-      return { data: toCardDto(updated) }
+      const withChunk = await cardWithChunkOrError(cardsRepository, updated, userId)
+      if (!withChunk) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Card disappeared after status update' }] } })
+      }
+      return { data: toCardDto(withChunk) }
     }),
 
     updateStatusBatch: implementer.updateStatusBatch.handler(async ({ input, context, errors }) => {
@@ -87,7 +113,8 @@ export const CardsRouter = (
         input.status,
         setCardStatusDependencies
       )
-      return { data: updated.map(toCardDto) }
+      const withChunks = await Promise.all(updated.map((card) => cardWithChunkOrError(cardsRepository, card, userId)))
+      return { data: withChunks.filter((c): c is DbCardWithChunk => c !== null).map(toCardDto) }
     }),
 
     updateFields: implementer.updateFields.handler(async ({ input, context, errors }) => {
@@ -98,22 +125,14 @@ export const CardsRouter = (
           data: { errors: [{ message: 'Card not found' }] },
         })
       }
-      const updated = await cardsRepository.updateFields(input.cardId, {
-        headword: input.patch.headword ?? null,
-        sense: input.patch.sense ?? null,
+      await cardsRepository.updateFields(input.cardId, {
         surfaceForm: input.patch.surfaceForm ?? null,
-        translation: input.patch.translation ?? null,
-        definition: input.patch.definition ?? null,
-        targetExample: input.patch.targetExample ?? null,
-        nativeExample: input.patch.nativeExample ?? null,
-        extrasPatch: input.patch.extrasPatch ?? null,
       })
-      if (!updated) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Card not found' }] },
-        })
+      const refreshed = await cardsRepository.findByIdForUser(input.cardId, userId)
+      if (!refreshed) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Card not found' }] } })
       }
-      return { data: toCardDto(updated) }
+      return { data: toCardDto(refreshed) }
     }),
 
     exportCsv: implementer.exportCsv.handler(async ({ input, context, errors }) => {

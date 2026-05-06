@@ -4,7 +4,6 @@ import type {
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
-import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import type { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { ensureL1InterferenceNotes } from './ensure-l1-interference-notes'
@@ -14,7 +13,6 @@ export type GenerateNextPracticeTextDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
-  cardsRepository: CardsRepositoryInterface
   l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
   usersRepository: UsersRepositoryInterface
   // Optional override for tests / future CEFR-specific tuning.
@@ -39,15 +37,14 @@ const DEFAULT_CHUNKS_PER_TEXT = 7
 const RESCUE_THRESHOLD = 1
 const ABANDON_THRESHOLD = 2
 
-// Pulls the user's representative card for a given (headword, sense) so the
-// generation prompt has translation/example fields. Returns null if the
-// user_lookups row's first_card_id is missing or the card was deleted.
+// Pulls the canonical content for a given (headword, sense) so the generation
+// prompt has translation/example fields. After the content refactor this lives
+// on user_lookups directly — no card join required.
 const fetchChunkContent = async (
   userId: string,
   targetLanguage: string,
   headword: string,
   sense: string,
-  cardsRepository: CardsRepositoryInterface,
   userLookupsRepository: UserLookupsRepositoryInterface
 ): Promise<{
   headword: string
@@ -59,17 +56,13 @@ const fetchChunkContent = async (
 } | null> => {
   const lookup = await userLookupsRepository.findByKey({ userId, targetLanguage, headword, sense })
   if (!lookup) return null
-  const cardId = lookup.first_card_id
-  if (!cardId) return { headword, sense, translation: null, definition: null, targetExample: null, nativeExample: null }
-  const card = await cardsRepository.findById(cardId)
-  if (!card) return { headword, sense, translation: null, definition: null, targetExample: null, nativeExample: null }
   return {
     headword,
     sense,
-    translation: card.translation,
-    definition: card.definition,
-    targetExample: card.target_example,
-    nativeExample: card.native_example,
+    translation: lookup.translation,
+    definition: lookup.definition,
+    targetExample: lookup.target_example,
+    nativeExample: lookup.native_example,
   }
 }
 
@@ -113,16 +106,7 @@ export const generateNextPracticeText = async (
   // Initialize SRS state on the never-reviewed rows we're about to surface so
   // they enter the queue properly. Idempotent (no-op when srs_state is set).
   const newRows = remaining.filter((row) => row.srs_state == null)
-  await Promise.all(
-    newRows.map((row) =>
-      deps.userLookupsRepository.initializeSrsState({
-        userId,
-        targetLanguage: session.target_language,
-        headword: row.headword,
-        sense: row.sense ?? '',
-      })
-    )
-  )
+  await Promise.all(newRows.map((row) => deps.userLookupsRepository.initializeSrsState(row.id)))
 
   // Pick rescue-first: any remaining chunk that was skipped exactly once gets a
   // single-sentence rescue text (much easier to fit than a 7-chunk paragraph).
@@ -133,14 +117,7 @@ export const generateNextPracticeText = async (
   const picked = rescueMode ? [stubborn!] : remaining.slice(0, chunksPerText)
   const enriched = await Promise.all(
     picked.map((row) =>
-      fetchChunkContent(
-        userId,
-        session.target_language,
-        row.headword,
-        row.sense ?? '',
-        deps.cardsRepository,
-        deps.userLookupsRepository
-      )
+      fetchChunkContent(userId, session.target_language, row.headword, row.sense ?? '', deps.userLookupsRepository)
     )
   )
   const chunks = enriched.filter((c): c is NonNullable<typeof c> => c !== null)

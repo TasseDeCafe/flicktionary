@@ -102,11 +102,11 @@ export const FocusView = () => {
 
   const isKept = card.status === 'kept'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
-  const hasExtras = Object.keys(card.explorationExtras ?? {}).length > 0
+  const hasExtras = Object.keys(card.chunk.explorationExtras ?? {}).length > 0
   const hasBasicData = !!(
-    (card.translation && card.translation.trim().length > 0) ||
-    (card.definition && card.definition.trim().length > 0) ||
-    (card.targetExample && card.targetExample.trim().length > 0)
+    (card.chunk.translation && card.chunk.translation.trim().length > 0) ||
+    (card.chunk.definition && card.chunk.definition.trim().length > 0) ||
+    (card.chunk.targetExample && card.chunk.targetExample.trim().length > 0)
   )
   const sameLanguage =
     !!session && session.nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()

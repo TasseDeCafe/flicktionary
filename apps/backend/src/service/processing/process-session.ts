@@ -179,38 +179,52 @@ export const processSession = async (
           coveredHighlightIds.add(chunk.highlightId)
         }
 
+        // Ensure the canonical vocabulary row exists, then fill in content
+        // only when no prior content is set. This preserves user edits and
+        // keeps the first-seen translation/definition stable across sessions.
+        const lookup = await userLookupsRepository.findOrCreate({
+          userId,
+          targetLanguage: session.target_language,
+          headword: chunk.headword,
+          sense: chunk.sense,
+        })
+        if (lookup.translation === null && lookup.definition === null) {
+          await userLookupsRepository.updateContent({
+            id: lookup.id,
+            translation: chunk.translation,
+            definition: chunk.definition,
+            targetExample: chunk.targetExample,
+            nativeExample: chunk.nativeExample,
+          })
+        }
+
         await cardsRepository.insertCard({
           studySessionId: sessionId,
           highlightId: chunk.source === 'highlight' ? (chunk.highlightId ?? null) : null,
           segmentId: chunk.segmentId,
-          headword: chunk.headword,
-          sense: chunk.sense,
+          userLookupId: lookup.id,
           surfaceForm: chunk.surfaceForm,
-          translation: chunk.translation,
-          definition: chunk.definition,
-          targetExample: chunk.targetExample,
-          nativeExample: chunk.nativeExample,
-          explorationExtras: {},
           status: chunk.source === 'highlight' ? 'kept' : chunk.belowCefr ? 'auto_rejected' : 'pending',
         })
       }
 
       // Fallback: if the model failed to emit a row for a highlight, insert a
-      // minimal stub so the highlight isn't silently dropped.
+      // minimal stub so the highlight isn't silently dropped. Headword falls
+      // back to the raw selection text.
       for (const highlight of newHighlights) {
         if (coveredHighlightIds.has(highlight.highlightId)) continue
+        const lookup = await userLookupsRepository.findOrCreate({
+          userId,
+          targetLanguage: session.target_language,
+          headword: highlight.selectionText,
+          sense: '',
+        })
         await cardsRepository.insertCard({
           studySessionId: sessionId,
           highlightId: highlight.highlightId,
           segmentId: highlight.segmentId,
-          headword: highlight.selectionText,
-          sense: '',
+          userLookupId: lookup.id,
           surfaceForm: highlight.selectionText,
-          translation: null,
-          definition: null,
-          targetExample: null,
-          nativeExample: null,
-          explorationExtras: {},
           status: 'kept',
         })
       }

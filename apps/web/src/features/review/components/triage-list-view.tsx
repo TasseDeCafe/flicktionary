@@ -15,7 +15,7 @@ import { CsvExportButton } from './csv-export-button'
 
 const matchesSearch = (card: Card, q: string): boolean => {
   if (!q) return true
-  const haystack = `${card.surfaceForm} ${card.headword}`.toLowerCase()
+  const haystack = `${card.surfaceForm} ${card.chunk.headword}`.toLowerCase()
   return haystack.includes(q.toLowerCase())
 }
 

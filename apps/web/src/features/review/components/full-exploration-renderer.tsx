@@ -31,12 +31,12 @@ type Props = {
 
 export const FullExplorationRenderer = ({ card }: Props) => {
   const { t } = useLingui()
-  const extras = card.explorationExtras ?? {}
+  const extras = card.chunk.explorationExtras ?? {}
 
-  const definition = asString(card.definition)
-  const translation = asString(card.translation)
-  const targetExample = asString(card.targetExample)
-  const nativeExample = asString(card.nativeExample)
+  const definition = asString(card.chunk.definition)
+  const translation = asString(card.chunk.translation)
+  const targetExample = asString(card.chunk.targetExample)
+  const nativeExample = asString(card.chunk.nativeExample)
 
   const ipa = asString(extras.ipa)
   const frequency = asString(extras.frequency)

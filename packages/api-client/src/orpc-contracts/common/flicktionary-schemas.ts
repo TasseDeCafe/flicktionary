@@ -47,22 +47,34 @@ export type Highlight = z.infer<typeof HighlightSchema>
 export const ExplorationExtrasSchema = z.record(z.string(), z.unknown())
 export type ExplorationExtras = z.infer<typeof ExplorationExtrasSchema>
 
-export const CardSchema = z.object({
+// The canonical vocabulary entry: one row per (user, targetLanguage, headword,
+// sense). Owns the gloss/example fields so edits propagate to every card that
+// references it. Cards carry a `chunk` of this shape on read paths.
+export const ChunkSchema = z.object({
   id: z.string().uuid(),
-  studySessionId: z.string().uuid(),
-  highlightId: z.string().uuid().nullable(),
-  segmentId: z.string().uuid(),
+  userId: z.string().uuid(),
+  targetLanguage: z.string(),
   headword: z.string(),
   sense: z.string(),
-  surfaceForm: z.string(),
   translation: z.string().nullable(),
   definition: z.string().nullable(),
   targetExample: z.string().nullable(),
   nativeExample: z.string().nullable(),
   explorationExtras: ExplorationExtrasSchema,
+})
+export type Chunk = z.infer<typeof ChunkSchema>
+
+export const CardSchema = z.object({
+  id: z.string().uuid(),
+  studySessionId: z.string().uuid(),
+  highlightId: z.string().uuid().nullable(),
+  segmentId: z.string().uuid(),
+  userLookupId: z.string().uuid(),
+  surfaceForm: z.string(),
   status: CardStatusSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
+  chunk: ChunkSchema,
 })
 export type Card = z.infer<typeof CardSchema>
 

@@ -9,10 +9,10 @@ export type SetCardStatusDependencies = {
 }
 
 // Wraps cardsRepository.updateStatus so that transitioning a card to 'kept'
-// also upserts a row in user_lookups (the canonical "user vocabulary" record
-// that backs the Practice tab). status=kept is idempotent — re-keeping the
-// same card just bumps `count`. We don't undo the upsert on un-keep: the
-// user_lookups row is durable history, and the SRS state stays put.
+// also bumps `count` on the canonical user_lookups row that backs the Practice
+// tab. status=kept is idempotent — re-keeping the same card just bumps `count`.
+// We don't undo the bump on un-keep: the user_lookups row is durable history,
+// and the SRS state stays put.
 export const setCardStatus = async (
   cardId: string,
   userId: string,
@@ -26,24 +26,16 @@ export const setCardStatus = async (
   if (!updated) return null
 
   if (status === 'kept') {
-    const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, userId)
-    if (session) {
-      await deps.userLookupsRepository.upsertOnKeep({
-        userId,
-        targetLanguage: session.target_language,
-        headword: card.headword,
-        sense: card.sense ?? '',
-        cardId: card.id,
-      })
-    }
+    await deps.userLookupsRepository.upsertOnKeep({
+      userLookupId: card.user_lookup_id,
+      cardId: card.id,
+    })
   }
 
   return updated
 }
 
 // Bulk variant for the triage list's "Keep all" / "Reject all" buttons.
-// Resolves the session once (saves N round-trips), then upserts user_lookups
-// for every card flipped to 'kept'.
 export const setCardStatusBatch = async (
   studySessionId: string,
   cardIds: string[],
@@ -61,10 +53,7 @@ export const setCardStatusBatch = async (
       await Promise.all(
         updated.map((card) =>
           deps.userLookupsRepository.upsertOnKeep({
-            userId,
-            targetLanguage: session.target_language,
-            headword: card.headword,
-            sense: card.sense ?? '',
+            userLookupId: card.user_lookup_id,
             cardId: card.id,
           })
         )

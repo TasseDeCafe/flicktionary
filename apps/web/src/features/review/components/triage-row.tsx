@@ -5,7 +5,7 @@ import { Check, X } from 'lucide-react'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
-const getBackPreview = (card: Card): string => card.translation || card.definition || ''
+const getBackPreview = (card: Card): string => card.chunk.translation || card.chunk.definition || ''
 
 type Props = {
   sessionId: string
@@ -27,9 +27,9 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
           params={{ sessionId, cardId: card.id }}
           className='text-base font-medium hover:underline'
         >
-          {card.headword || card.surfaceForm}
+          {card.chunk.headword || card.surfaceForm}
         </Link>
-        {card.headword && card.surfaceForm && card.headword !== card.surfaceForm && (
+        {card.chunk.headword && card.surfaceForm && card.chunk.headword !== card.surfaceForm && (
           <span className='text-muted-foreground ml-2 text-sm'>({card.surfaceForm})</span>
         )}
         {preview && <p className='mt-1 text-sm'>{preview}</p>}

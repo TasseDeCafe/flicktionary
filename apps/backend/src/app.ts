@@ -50,6 +50,7 @@ import { StudySessionsRouter } from './router/study-sessions-router/study-sessio
 import { HighlightsRouter } from './router/highlights-router/highlights-router'
 import { CardsRouter } from './router/cards-router/cards-router'
 import { CardChatRouter } from './router/card-chat-router/card-chat-router'
+import { ChunksRouter } from './router/chunks-router/chunks-router'
 import { UserPrefsRouter } from './router/user-prefs-router/user-prefs-router'
 import { ContentSourcesRepository } from './transport/database/content-sources/content-sources-repository'
 import { TextTracksRepository } from './transport/database/text-tracks/text-tracks-repository'
@@ -267,7 +268,6 @@ export const buildApp = ({
     practiceSessionsRepository,
     practiceTextsRepository,
     userLookupsRepository,
-    cardsRepository,
     l1InterferenceNotesRepository,
     usersRepository,
   }
@@ -284,6 +284,7 @@ export const buildApp = ({
     textSegmentsRepository,
     highlightsRepository,
     l1InterferenceNotesRepository,
+    userLookupsRepository,
   }
 
   const chatDependencies = {
@@ -292,6 +293,7 @@ export const buildApp = ({
     studySessionsRepository,
     textSegmentsRepository,
     l1InterferenceNotesRepository,
+    userLookupsRepository,
   }
 
   const subscriptionMiddlewareInstance = subscriptionMiddleware(accessCache, usersWithFreeAccess)
@@ -320,6 +322,7 @@ export const buildApp = ({
     )
   )
   app.use(API_V1, CardChatRouter(cardChatMessagesRepository, cardsRepository, chatDependencies))
+  app.use(API_V1, ChunksRouter(userLookupsRepository))
   app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
   app.use(
     API_V1,
