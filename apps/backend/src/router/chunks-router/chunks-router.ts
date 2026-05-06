@@ -3,8 +3,16 @@ import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import { chunksContract } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
-import { DbUserLookup, UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  chunksContract,
+  ChunksCursorSchema,
+  type ChunksCursor,
+} from '@flicktionary/api-client/orpc-contracts/chunks-contract'
+import {
+  ChunkRow,
+  DbUserLookup,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 
 const toChunkDto = (row: DbUserLookup) => ({
   id: row.id,
@@ -18,6 +26,54 @@ const toChunkDto = (row: DbUserLookup) => ({
   nativeExample: row.native_example,
   explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
 })
+
+// postgres.js returns timestamptz columns as JS Date objects; the wire schema
+// expects ISO strings, so we normalize here.
+const toIsoString = (value: string | Date | null): string | null => {
+  if (value === null) return null
+  if (value instanceof Date) return value.toISOString()
+  return new Date(value).toISOString()
+}
+
+const toChunkRowDto = (row: ChunkRow) => ({
+  id: row.id,
+  userId: row.userId,
+  targetLanguage: row.targetLanguage,
+  headword: row.headword,
+  sense: row.sense,
+  translation: row.translation,
+  definition: row.definition,
+  targetExample: row.targetExample,
+  nativeExample: row.nativeExample,
+  explorationExtras: row.explorationExtras,
+  count: row.count,
+  srsState: row.srsState,
+  srsDue: toIsoString(row.srsDue),
+  srsReps: row.srsReps,
+  createdAt: toIsoString(row.createdAt) ?? new Date(0).toISOString(),
+  firstCardId: row.firstCardId,
+  studySessionId: row.studySessionId,
+})
+
+// Opaque base64-of-JSON wire format for the listChunks cursor. Returning null
+// from decode means "ignore the cursor and start from page 1" — the
+// frontend should only ever feed us cursors we just emitted, so we treat a
+// malformed cursor as "fall back to page 1" rather than 400ing.
+const decodeCursor = (raw: string | null | undefined): ChunksCursor | null => {
+  if (!raw) return null
+  try {
+    const json = Buffer.from(raw, 'base64').toString('utf8')
+    const parsed = ChunksCursorSchema.safeParse(JSON.parse(json))
+    return parsed.success ? parsed.data : null
+  } catch {
+    return null
+  }
+}
+
+const encodeCursor = (cursor: ChunksCursor | null): string | null => {
+  if (!cursor) return null
+  return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
+}
 
 export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterface): Router => {
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -42,6 +98,34 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }
       return { data: toChunkDto(refreshed) }
+    }),
+
+    listChunks: implementer.listChunks.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const { rows, nextCursor } = await userLookupsRepository.listChunksForLanguage({
+        userId,
+        targetLanguage: input.targetLanguage,
+        sort: input.sort,
+        cursor: decodeCursor(input.cursor),
+        limit: input.limit,
+      })
+      return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
+    }),
+
+    listLanguages: implementer.listLanguages.handler(async ({ context }) => {
+      const userId = context.res.locals.userId
+      const languages = await userLookupsRepository.listLanguagesForUser(userId)
+      return { languages }
+    }),
+
+    deleteChunk: implementer.deleteChunk.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.id, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      await userLookupsRepository.softDeleteChunk(input.id, userId)
+      return { data: { id: input.id } }
     }),
 
     rename: implementer.rename.handler(async ({ input, context, errors }) => {

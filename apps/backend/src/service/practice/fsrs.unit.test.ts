@@ -24,6 +24,8 @@ const newRow: DbUserLookup = {
   srs_reps: 0,
   srs_lapses: 0,
   added_to_practice_at: null,
+  created_at: '2026-01-01T00:00:00Z',
+  deleted_at: null,
 }
 
 const reviewRow: DbUserLookup = {

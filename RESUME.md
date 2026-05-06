@@ -11,7 +11,7 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
 - **Stack**: existing template — Vite + React 19 + TanStack Router (web), Express + oRPC + Postgres.js (backend), Supabase auth.
 - **Scope**: web only. Do not touch `apps/native`.
 - **LLM**: Anthropic via `@anthropic-ai/sdk`. `claude-opus-4-7` (`MODEL_OPUS`) for all heavy passes (context blob, L1, difficult-words, full-exploration, per-card chat); `claude-haiku-4-5-20251001` (`MODEL_HAIKU`) for tap-to-translate. Aggressive prompt caching with `cache_control: { type: 'ephemeral' }` on the stable methodology + language-instructions + L1 + context-blob prefix.
-- **Demo content**: home / dashboard / premium-demo tabs replaced with Flicktionary navigation (mobile bottom tab bar + desktop sidebar — Sessions / `+` / More; settings + profile consolidated under `/more` since 2026-05-02). Stripe billing, danger-zone, login flows kept untouched.
+- **Demo content**: home / dashboard / premium-demo tabs replaced with Flicktionary navigation (mobile bottom tab bar + desktop sidebar — Sessions / Practice / `+` / Vocabulary / More; settings + profile consolidated under `/more` since 2026-05-02). Stripe billing, danger-zone, login flows kept untouched.
 - **Async pipeline**: fire-and-forget in-process. The `process` route flips status to `processing`, kicks off async work without `await`, returns 202. Frontend polls `getStatus`. No queue.
 - **TMDB / OpenSubtitles**: real APIs via Doppler-managed env vars (`TMDB_API_KEY`, `OPENSUBTITLES_API_KEY`, `OPENSUBTITLES_USER_AGENT`, `ANTHROPIC_API_KEY`). Local Doppler config is `dev_personal`.
 
@@ -327,10 +327,11 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     transitions out of `new`, `again` decreases stability + increments
     lapses, `easy` schedules longer than `good`).
   - **Frontend nav.** `bottom-tab-bar.tsx` and `sidebar-nav.tsx` grew a
-    third tab (`Practice`, `Brain` icon). Mobile layout becomes
-    `[Sessions] [Practice] [+] [More]` — the central `+` stays a raised
-    floating button, slot count went from 3 to 4 with the central +
-    counted alongside three flat tabs.
+    third tab (`Practice`, `Brain` icon). Mobile layout was
+    `[Sessions] [Practice] [+] [More]` after this change — the central `+`
+    stays a raised floating button. (The Vocabulary-tab work later
+    inserted a fourth flat tab; current layout is documented in that
+    block.)
   - **Frontend feature** `apps/web/src/features/practice/`:
     - `api/practice-hooks.ts` — `useDueSummary`, `useStartPracticeSession`,
       `useGetPracticeSession`, `useGenerateNextPracticeText`,
@@ -363,6 +364,78 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     we hit this during Phase 6 testing when `setQueryData` was passing
     a `.key()` result and the practice-text cache appeared frozen on
     the same text after every Next click.
+
+- **Vocabulary tab — manage kept chunks (2026-05-06).** New top-level
+  destination at `/vocabulary`. Full plan at
+  `/Users/sebastien/Documents/flicktionary/MANAGE_CHUNKS_PLAN.md`. See SPEC.md
+  §Vocabulary for the user-facing model. Don't re-introduce the prior
+  behavior — especially not a separate `is_deleted` boolean; the soft-delete
+  is `deleted_at TIMESTAMPTZ`.
+  - **Schema delta** on the consolidated migration. `user_lookups` got
+    `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` and `deleted_at
+    TIMESTAMPTZ NULL`. Existing indexes (`idx_user_lookups_user_target`,
+    `idx_user_lookups_due`) recreated as `WHERE deleted_at IS NULL` partial
+    variants. Two new partial indexes for cursor-paginated sorts:
+    `idx_user_lookups_recent (user_id, target_language, created_at DESC, id)`
+    and `idx_user_lookups_due_sort (user_id, target_language, srs_due ASC
+    NULLS LAST, id)`. Applied as targeted ALTERs on the running local DB
+    (preserved in-progress data); types regenerated.
+  - **Repo extensions** in `user-lookups-repository.ts`: every read path now
+    filters `deleted_at IS NULL`. `findOrCreate`, `upsertOnKeep`, and
+    `upsertOnExport` clear `deleted_at` on conflict — re-keeping a deleted
+    chunk revives it. New methods: `listChunksForLanguage` (cursor-paginated,
+    two-phase cursor for `due` to handle NULLS LAST cleanly: phase
+    `'scheduled'` walks `srs_due NOT NULL` rows, phase `'unscheduled'` walks
+    the tail), `softDeleteChunk`, `listLanguagesForUser`. `ChunkRow`
+    denormalizes `firstCardId` and originating `studySessionId` via LEFT
+    JOIN cards on `first_card_id`.
+  - **Contracts.** `chunks-contract.ts` gained `listChunks` (GET, base64-JSON
+    cursor on the wire), `listLanguages` (GET), `deleteChunk` (POST). New
+    `ChunkRowSchema` in `common/flicktionary-schemas.ts` extends `ChunkSchema`
+    with SRS state + `createdAt` + `firstCardId` + `studySessionId`.
+  - **Router.** `chunks-router.ts` now also handles list/delete/languages.
+    Cursor encode/decode helpers live alongside the handlers.
+    **Date normalization gotcha:** postgres.js returns timestamptz as JS
+    `Date` objects, but the wire schema declares them as `z.string()`.
+    `toChunkRowDto` ISO-stringifies `createdAt` and `srsDue`. Don't
+    re-introduce the version that returned raw `Date` objects (Zod rejects
+    them with "Output validation failed").
+  - **Boundary middleware diagnostics.** `error-boundary-middleware.ts` now
+    detects oRPC `ValidationError` (input or output) inside an `ORPCError`
+    and logs procedure path + Zod issues to stdout (and Sentry) before
+    rethrowing. The wire response still says "validation failed" but the
+    backend terminal shows the actual offending field. Use this when a 500
+    surfaces from an oRPC call.
+  - **Frontend.** New feature `apps/web/src/features/vocabulary/` with
+    `api/vocabulary-hooks.ts` (`useListLanguages`, `useListChunksInfinite`
+    via oRPC `infiniteOptions`, `useDeleteChunk` with optimistic page
+    patching across the entire `chunks.listChunks` family + invalidation of
+    `practice.dueSummary` on settle). Components: `vocabulary-list-view.tsx`
+    (orchestrator with `@tanstack/react-virtual` and a sentinel item that
+    triggers `fetchNextPage` when scrolled into view), `vocabulary-row.tsx`
+    (headword + sense + 1-line `translation || definition` preview + Due/New
+    chip + count badge), `vocabulary-action-drawer.tsx` (Edit | Open source |
+    Delete via `ResponsiveOverlay`; Delete shows inline confirm).
+    `vocabulary-language-switcher.tsx` (pills, hidden when only one lang).
+    `@tanstack/react-virtual` added to the workspace catalog.
+  - **Routes & nav.** New `/_authenticated/_app/vocabulary/index.tsx`. The
+    bottom tab bar widened from 4 slots (Sessions / Practice / FAB / More)
+    to 5 (Sessions / Practice / FAB / Vocabulary / More); sidebar got a
+    matching entry. Don't re-introduce the duplicate-`tabs[3]` render that
+    briefly showed two More tabs on mobile.
+  - **Focus view origin tracking.** `/sessions/$id/review/$cardId` now
+    `validateSearch`-es a `from` enum (`'triage' | 'vocabulary'`). The
+    Vocabulary action drawer's Edit handler navigates with
+    `search: { from: 'vocabulary' }`; `focus-view.tsx::closeToTriage` reads
+    the param and sends the user back to `/vocabulary` instead of the
+    triage list. Prev/next preserve the param. Default is unchanged for the
+    normal triage → focus flow.
+  - **Drawer reset bug.** Earlier draft had `confirmingDelete` state
+    sticking across drawer opens because the parent imperatively closed the
+    drawer (`setDrawerOpen(false)` in the delete success handler) without
+    going through the wrapper `onOpenChange`. Fix is a `useEffect(() => {
+    if (!open) setConfirmingDelete(false) }, [open, chunkId])` so any
+    open→closed transition (or chunk swap) resets the confirm state.
 
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal

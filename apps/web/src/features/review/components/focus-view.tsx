@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
@@ -58,6 +58,7 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
+  const { from } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
 
   const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId)
   const initialCard = useMemo(() => cards?.find((listCard) => listCard.id === cardId), [cards, cardId])
@@ -69,19 +70,34 @@ export const FocusView = () => {
 
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
+  // Preserve the `from` origin across prev/next so the close button still
+  // knows where to land after the user navigates around.
+  const search = from ? { from } : undefined
   const goPrev = () => {
     if (cursor.prev) {
-      void navigate({ to: '/sessions/$sessionId/review/$cardId', params: { sessionId, cardId: cursor.prev.id } })
+      void navigate({
+        to: '/sessions/$sessionId/review/$cardId',
+        params: { sessionId, cardId: cursor.prev.id },
+        search,
+      })
     }
   }
   const goNext = () => {
     if (cursor.next) {
-      void navigate({ to: '/sessions/$sessionId/review/$cardId', params: { sessionId, cardId: cursor.next.id } })
+      void navigate({
+        to: '/sessions/$sessionId/review/$cardId',
+        params: { sessionId, cardId: cursor.next.id },
+        search,
+      })
     }
   }
   useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext })
 
   const closeToTriage = () => {
+    if (from === 'vocabulary') {
+      void navigate({ to: '/vocabulary' })
+      return
+    }
     void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
   }
 

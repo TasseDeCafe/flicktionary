@@ -78,6 +78,7 @@ catalog:
   '@tanstack/react-router': 1.168.10
   '@tanstack/react-router-devtools': 1.166.11
   '@tanstack/react-table': 8.21.3
+  '@tanstack/react-virtual': 3.13.6
   '@tanstack/router-plugin': 1.167.12
   '@tanstack/zod-adapter': 1.166.9
   '@testing-library/dom': 10.4.1

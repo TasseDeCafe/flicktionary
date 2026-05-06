@@ -24,6 +24,7 @@ import { Route as AuthenticatedRedirectToCheckOutPlanIntervalRouteImport } from 
 import { Route as AuthenticatedProfileDangerZoneRouteImport } from './routes/_authenticated/profile/danger-zone'
 import { Route as AuthenticatedPricingFreeTrialExplanationRouteImport } from './routes/_authenticated/pricing/free-trial-explanation'
 import { Route as AuthenticatedPricingCheckoutSuccessRouteImport } from './routes/_authenticated/pricing/checkout-success'
+import { Route as AuthenticatedAppVocabularyIndexRouteImport } from './routes/_authenticated/_app/vocabulary/index'
 import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
 import { Route as AuthenticatedAppPracticeIndexRouteImport } from './routes/_authenticated/_app/practice/index'
 import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
@@ -115,6 +116,12 @@ const AuthenticatedPricingCheckoutSuccessRoute =
     id: '/pricing/checkout-success',
     path: '/pricing/checkout-success',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppVocabularyIndexRoute =
+  AuthenticatedAppVocabularyIndexRouteImport.update({
+    id: '/vocabulary/',
+    path: '/vocabulary/',
+    getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppSessionsIndexRoute =
   AuthenticatedAppSessionsIndexRouteImport.update({
@@ -211,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/more/': typeof AuthenticatedAppMoreIndexRoute
   '/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
+  '/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -238,6 +246,7 @@ export interface FileRoutesByTo {
   '/more': typeof AuthenticatedAppMoreIndexRoute
   '/practice': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
+  '/vocabulary': typeof AuthenticatedAppVocabularyIndexRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
   '/_authenticated/_app/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
+  '/_authenticated/_app/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/_authenticated/_app/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/more/'
     | '/practice/'
     | '/sessions/'
+    | '/vocabulary/'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId/'
     | '/sessions/$sessionId/review/$cardId'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/more'
     | '/practice'
     | '/sessions'
+    | '/vocabulary'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId'
     | '/sessions/$sessionId/review/$cardId'
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/more/'
     | '/_authenticated/_app/practice/'
     | '/_authenticated/_app/sessions/'
+    | '/_authenticated/_app/vocabulary/'
     | '/_authenticated/_app/sessions/$sessionId/processing'
     | '/_authenticated/_app/sessions/$sessionId/'
     | '/_authenticated/_app/sessions/$sessionId/review/$cardId'
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPricingCheckoutSuccessRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_app/vocabulary/': {
+      id: '/_authenticated/_app/vocabulary/'
+      path: '/vocabulary'
+      fullPath: '/vocabulary/'
+      preLoaderRoute: typeof AuthenticatedAppVocabularyIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/': {
       id: '/_authenticated/_app/sessions/'
       path: '/sessions'
@@ -573,6 +593,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
   AuthenticatedAppPracticeIndexRoute: typeof AuthenticatedAppPracticeIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
+  AuthenticatedAppVocabularyIndexRoute: typeof AuthenticatedAppVocabularyIndexRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
   AuthenticatedAppSessionsSessionIdReviewCardIdRoute: typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -589,6 +610,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,
   AuthenticatedAppPracticeIndexRoute: AuthenticatedAppPracticeIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,
+  AuthenticatedAppVocabularyIndexRoute: AuthenticatedAppVocabularyIndexRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:
     AuthenticatedAppSessionsSessionIdProcessingRoute,
   AuthenticatedAppSessionsSessionIdIndexRoute:

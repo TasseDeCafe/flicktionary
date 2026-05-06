@@ -1,7 +1,33 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { ChunkSchema } from './common/flicktionary-schemas'
+import { ChunkRowSchema, ChunkSchema } from './common/flicktionary-schemas'
+
+// Cursor wire format for `listChunks`. Encoded base64 over a JSON payload by
+// both client and server; we keep the schema strict so a malformed cursor
+// 400s cleanly instead of silently returning page 1.
+export const ChunksSortSchema = z.enum(['recent', 'due'])
+export type ChunksSort = z.infer<typeof ChunksSortSchema>
+
+export const ChunksCursorSchema = z.union([
+  z.object({
+    sort: z.literal('recent'),
+    createdAt: z.string(),
+    id: z.string().uuid(),
+  }),
+  z.object({
+    sort: z.literal('due'),
+    phase: z.literal('scheduled'),
+    srsDue: z.string(),
+    id: z.string().uuid(),
+  }),
+  z.object({
+    sort: z.literal('due'),
+    phase: z.literal('unscheduled'),
+    id: z.string().uuid(),
+  }),
+])
+export type ChunksCursor = z.infer<typeof ChunksCursorSchema>
 
 // Mutations on the canonical vocabulary entries (user_lookups). Edits made
 // here propagate to every card that references the chunk, so the focus view
@@ -48,4 +74,50 @@ export const chunksContract = {
       })
     )
     .output(z.object({ data: ChunkSchema })),
+
+  // Vocabulary management list. Returns kept chunks for one target language
+  // with cursor pagination. `cursor` is base64(JSON of ChunksCursor); the
+  // server decodes/encodes — frontend just round-trips the opaque string.
+  listChunks: oc
+    .route({ method: 'GET', path: '/chunks', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        sort: ChunksSortSchema.default('recent'),
+        cursor: z.string().nullable().optional(),
+        limit: z.coerce.number().int().min(1).max(200).default(50),
+      })
+    )
+    .output(
+      z.object({
+        rows: z.array(ChunkRowSchema),
+        nextCursor: z.string().nullable(),
+      })
+    ),
+
+  // Distinct target_languages the user has at least one (non-deleted) chunk in.
+  // Powers the language switcher pills on the Vocabulary tab.
+  listLanguages: oc
+    .route({ method: 'GET', path: '/chunks/languages', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({}))
+    .output(z.object({ languages: z.array(z.string()) })),
+
+  // Soft-delete a chunk. POST (not DELETE) for symmetry with other mutations
+  // and to avoid URL-encoding the UUID. Hides the chunk from the Vocabulary
+  // list AND from the Practice queue. Re-keeping the same headword later
+  // revives the row.
+  deleteChunk: oc
+    .route({ method: 'POST', path: '/chunks/delete', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ id: z.string().uuid() }))
+    .output(z.object({ data: z.object({ id: z.string().uuid() }) })),
 } as const

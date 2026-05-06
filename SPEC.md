@@ -143,7 +143,16 @@ A separate top-level destination from the per-session review flow. Practice is *
 - **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray). Tapping a chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
 - **End condition.** When the eligible pool minus chunks already covered in this session is empty, `generateNextText` returns `done: true` and the session view shows an "All caught up" view. Eligible = `srs_state IS NULL OR srs_due <= NOW()`. New rows enter as `state='new'` lazily on first surfacing.
 - **FSRS.** `ts-fsrs` package, default parameters with `enable_fuzz: true`. The adapter at `apps/backend/src/service/practice/fsrs.ts` round-trips `user_lookups` rows ↔ `ts-fsrs` Card objects.
-- **Out of scope (v2).** Pre-generation pipeline, coverage guarantee + cleanup pass for stubborn chunks, flashcard fallback view, "remove from practice" affordance, custom FSRS parameters, audio TTS, browseable "my vocabulary" list view (the `listVocabularyForLanguage` repo method is built, but the UI isn't yet).
+- **Out of scope (v2).** Pre-generation pipeline, coverage guarantee + cleanup pass for stubborn chunks, flashcard fallback view, custom FSRS parameters, audio TTS. (The "remove from practice" affordance and the browseable "my vocabulary" view both shipped as the Vocabulary tab — see below.)
+
+### Vocabulary (browse + manage kept chunks)
+
+A separate top-level destination at `/vocabulary` for cross-session browsing of the user's kept chunks. The same `user_lookups` rows feed Practice and this view.
+
+- **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + count badge when the chunk has been kept multiple times.
+- **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
+- **Row actions.** Tap a row → bottom drawer with three options: `Edit` (navigates to the focus view of `first_card_id` with `?from=vocabulary` so close returns here), `Open source` (jumps to `/sessions/$id` for the originating session), `Delete` (with inline confirm).
+- **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Re-keeping the same `(headword, sense)` in any session revives the chunk via `upsertOnKeep` clearing `deleted_at`. No Trash/restore UI in v1.
 
 ### Export
 
@@ -155,7 +164,7 @@ A separate top-level destination from the per-session review flow. Practice is *
 
 Native-style shell so the eventual React Native port is a translation, not a redesign.
 
-- **Mobile** (`< 768px`): bottom tab bar with four slots — `Sessions` / `Practice` / central `+` button / `More`. The `+` opens an action sheet listing the start-something-new options (`Start a movie session`, `Practice with a text`; designed to grow as more `content_source.type`s land). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text.
+- **Mobile** (`< 768px`): bottom tab bar with five slots — `Sessions` / `Practice` / central `+` button / `Vocabulary` / `More`. The `+` opens an action sheet listing the start-something-new options (`Start a movie session`, `Practice with a text`; designed to grow as more `content_source.type`s land). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text. "Vocabulary" the tab is the browseable cross-session list of kept chunks (see Vocabulary section).
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
@@ -286,7 +295,10 @@ user_lookup                          -- cross-source dedup + canonical user voca
   srs_reps            int default 0
   srs_lapses          int default 0
   added_to_practice_at timestamptz?
-  primary key (user_id, target_language, headword, sense)
+  created_at          timestamptz   -- powers Vocabulary "Recently added" sort
+  deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
+  primary key (id)
+  unique (user_id, target_language, headword, sense)
 
 practice_session
   id                  uuid pk
@@ -512,10 +524,10 @@ cached result instantly.
 ## v2 / out-of-scope ideas worth not forgetting
 
 - Books and articles as additional `content_source.type`s (pasted text already shipped — books/articles need their own ingestion path but reuse the rest of the pipeline).
-- Cross-source personal vocabulary corpus screen.
+- Multi-headword merge UX inside the Vocabulary tab (collapse two senses into one without manual re-export).
 - `.apkg` Anki export with audio + images.
 - Inline subtitle player with sync, for users who actually want it.
 - User-customizable methodology prompt for advanced users (the gf use case). The MVP already has per-target-language instructions hardcoded in `language-instructions.ts` — v2 promotes them to a DB-backed, per-user editable field.
 - Multi-deck organization (per language pair, or by tag).
 - Spaced-repetition history pulled back from Anki to close the loop.
-- Practice v2: pre-generation pipeline (queue 2–3 texts ahead of the user), coverage-guarantee + cleanup pass for chunks the LLM persistently fails to fit naturally, flashcard fallback view for those, "remove from practice" affordance, custom FSRS parameters, audio TTS for generated texts, browseable "my vocabulary" list.
+- Practice v2: pre-generation pipeline (queue 2–3 texts ahead of the user), coverage-guarantee + cleanup pass for chunks the LLM persistently fails to fit naturally, flashcard fallback view for those, custom FSRS parameters, audio TTS for generated texts. (The browseable "my vocabulary" list shipped as the Vocabulary tab — Delete there is the "remove from practice" affordance.)

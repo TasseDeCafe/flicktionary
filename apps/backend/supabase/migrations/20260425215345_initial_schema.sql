@@ -486,6 +486,12 @@ CREATE TABLE public.user_lookups (
   srs_reps INTEGER NOT NULL DEFAULT 0,
   srs_lapses INTEGER NOT NULL DEFAULT 0,
   added_to_practice_at TIMESTAMP WITH TIME ZONE NULL,
+  -- Soft-delete + creation timestamps for the Vocabulary management view.
+  -- deleted_at hides the chunk from the Vocabulary list AND from the Practice
+  -- queue. Re-keeping the same headword in a new session revives the row by
+  -- clearing deleted_at (see upsertOnKeep).
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMP WITH TIME ZONE NULL,
   CONSTRAINT user_lookups_pkey PRIMARY KEY (id),
   CONSTRAINT user_lookups_user_target_headword_sense_unique
     UNIQUE (user_id, target_language, headword, sense),
@@ -495,10 +501,20 @@ CREATE TABLE public.user_lookups (
     REFERENCES public.cards (id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_user_lookups_user_target ON public.user_lookups (user_id, target_language);
+-- All read paths gate on deleted_at IS NULL, so the indexes below are partial
+-- on that predicate. The id tiebreaker on the sort indexes gives stable
+-- cursor pagination even as srs_due mutates under us during a long scroll.
+CREATE INDEX idx_user_lookups_user_target ON public.user_lookups (user_id, target_language)
+  WHERE deleted_at IS NULL;
 CREATE INDEX idx_user_lookups_due
   ON public.user_lookups (user_id, target_language, srs_due)
-  WHERE srs_state IS NOT NULL;
+  WHERE srs_state IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX idx_user_lookups_recent
+  ON public.user_lookups (user_id, target_language, created_at DESC, id)
+  WHERE deleted_at IS NULL;
+CREATE INDEX idx_user_lookups_due_sort
+  ON public.user_lookups (user_id, target_language, srs_due ASC NULLS LAST, id)
+  WHERE deleted_at IS NULL;
 
 ALTER TABLE public.user_lookups ENABLE ROW LEVEL SECURITY;
 

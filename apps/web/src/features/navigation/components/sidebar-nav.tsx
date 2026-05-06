@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Brain, Clapperboard, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
+import { BookOpen, Brain, Clapperboard, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MainActionOverlay } from './main-action-overlay'
 
 type NavItem = {
-  to: '/sessions' | '/practice' | '/more'
+  to: '/sessions' | '/practice' | '/vocabulary' | '/more'
   label: string
   icon: LucideIcon
   matchPrefixes: string[]
@@ -37,6 +37,7 @@ export const SidebarNav = () => {
   const items: NavItem[] = [
     { to: '/sessions', label: t`Sessions`, icon: Clapperboard, matchPrefixes: ['/sessions'] },
     { to: '/practice', label: t`Practice`, icon: Brain, matchPrefixes: ['/practice'] },
+    { to: '/vocabulary', label: t`Vocabulary`, icon: BookOpen, matchPrefixes: ['/vocabulary'] },
     { to: '/more', label: t`More`, icon: MoreHorizontal, matchPrefixes: ['/more'] },
   ]
 

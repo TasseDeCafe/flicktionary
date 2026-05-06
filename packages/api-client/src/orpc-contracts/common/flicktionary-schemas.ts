@@ -64,6 +64,20 @@ export const ChunkSchema = z.object({
 })
 export type Chunk = z.infer<typeof ChunkSchema>
 
+// Row shape returned by the Vocabulary tab list endpoint. Adds SRS state,
+// recency, and the originating session/card so the action drawer can navigate
+// without round trips.
+export const ChunkRowSchema = ChunkSchema.extend({
+  count: z.number().int(),
+  srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
+  srsDue: z.string().nullable(),
+  srsReps: z.number().int(),
+  createdAt: z.string(),
+  firstCardId: z.string().uuid().nullable(),
+  studySessionId: z.string().uuid().nullable(),
+})
+export type ChunkRow = z.infer<typeof ChunkRowSchema>
+
 export const CardSchema = z.object({
   id: z.string().uuid(),
   studySessionId: z.string().uuid(),

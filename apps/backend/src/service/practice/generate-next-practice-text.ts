@@ -111,7 +111,9 @@ export const generateNextPracticeText = async (
   // Pick rescue-first: any remaining chunk that was skipped exactly once gets a
   // single-sentence rescue text (much easier to fit than a 7-chunk paragraph).
   // Otherwise, fall back to the normal multi-chunk text.
-  const stubborn = remaining.find((row) => (skipCountByKey.get(`${row.headword}::${row.sense ?? ''}`) ?? 0) === RESCUE_THRESHOLD)
+  const stubborn = remaining.find(
+    (row) => (skipCountByKey.get(`${row.headword}::${row.sense ?? ''}`) ?? 0) === RESCUE_THRESHOLD
+  )
   const rescueMode = stubborn != null
   const chunksPerText = deps.chunksPerText ?? DEFAULT_CHUNKS_PER_TEXT
   const picked = rescueMode ? [stubborn!] : remaining.slice(0, chunksPerText)
