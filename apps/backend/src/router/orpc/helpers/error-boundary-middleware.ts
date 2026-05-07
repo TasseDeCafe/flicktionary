@@ -22,10 +22,8 @@ export const errorBoundaryMiddleware: AnyMiddleware = async ({ next, errors, pat
     if (e instanceof ORPCError) {
       if (e.cause instanceof ValidationError) {
         const procedure = path.join('.')
-        // eslint-disable-next-line no-console
-        console.error(
-          `[orpc validation] ${procedure} ${e.message}\n` + JSON.stringify(e.cause.issues, null, 2)
-        )
+
+        console.error(`[orpc validation] ${procedure} ${e.message}\n` + JSON.stringify(e.cause.issues, null, 2))
         logWithSentry({
           message: 'orpc validation failed',
           params: { path: procedure, message: e.message, issues: e.cause.issues },
