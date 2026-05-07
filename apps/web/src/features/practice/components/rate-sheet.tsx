@@ -11,7 +11,6 @@ import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
 
 export type RateSheetChunkContent = {
   headword: string
-  sense: string
   // Either translation (L1≠L2) or definition (L1=L2 fallback) is shown as the
   // glossing line. Optional support fields rendered when present.
   translation: string | null
@@ -34,36 +33,24 @@ interface RateSheetProps {
 
 export const RateSheet = ({ open, onOpenChange, chunk, currentRating, isSubmitting, onSubmit }: RateSheetProps) => {
   const { t } = useLingui()
+  // Translation wins for the description slot; definition is the L1=L2 fallback.
+  const description = chunk?.translation || chunk?.definition || null
 
   return (
     <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
       <OverlayContent>
         <OverlayHeader>
           <OverlayTitle>{chunk?.headword ?? t`Rate`}</OverlayTitle>
-          {chunk?.sense && <OverlayDescription>{chunk.sense}</OverlayDescription>}
+          {description && <OverlayDescription>{description}</OverlayDescription>}
         </OverlayHeader>
-        {chunk && (
+        {chunk?.targetExample && (
           <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
-            {chunk.translation && (
-              <p>
-                <span className='text-muted-foreground'>{t`Translation: `}</span>
-                {chunk.translation}
-              </p>
-            )}
-            {chunk.definition && (
-              <p>
-                <span className='text-muted-foreground'>{t`Definition: `}</span>
-                {chunk.definition}
-              </p>
-            )}
-            {chunk.targetExample && (
-              <p className='border-l-2 border-yellow-300 pl-3 italic'>
-                {chunk.targetExample}
-                {chunk.nativeExample && (
-                  <span className='text-muted-foreground mt-1 block not-italic'>{chunk.nativeExample}</span>
-                )}
-              </p>
-            )}
+            <p className='border-l-2 border-yellow-300 pl-3 italic'>
+              {chunk.targetExample}
+              {chunk.nativeExample && (
+                <span className='text-muted-foreground mt-1 block not-italic'>{chunk.nativeExample}</span>
+              )}
+            </p>
           </div>
         )}
         <OverlayFooter>

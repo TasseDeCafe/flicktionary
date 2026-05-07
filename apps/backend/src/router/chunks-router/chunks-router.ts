@@ -52,6 +52,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   srsReps: row.srsReps,
   createdAt: toIsoString(row.createdAt) ?? new Date(0).toISOString(),
   firstCardId: row.firstCardId,
+  firstCardSegmentId: row.firstCardSegmentId,
   studySessionId: row.studySessionId,
 })
 
@@ -102,12 +103,14 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
 
     listChunks: implementer.listChunks.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
+      const trimmedQ = input.q?.trim() ?? ''
       const { rows, nextCursor } = await userLookupsRepository.listChunksForLanguage({
         userId,
         targetLanguage: input.targetLanguage,
         sort: input.sort,
         cursor: decodeCursor(input.cursor),
         limit: input.limit,
+        q: trimmedQ.length > 0 ? trimmedQ : null,
       })
       return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
     }),

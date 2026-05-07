@@ -342,6 +342,7 @@ export type ChunkRow = {
   srsReps: number
   createdAt: string
   firstCardId: string | null
+  firstCardSegmentId: string | null
   studySessionId: string | null
 }
 
@@ -363,6 +364,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.srs_reps,
     ul.created_at,
     ul.first_card_id,
+    c.segment_id AS first_card_segment_id,
     c.study_session_id
   FROM public.user_lookups ul
   LEFT JOIN public.cards c ON c.id = ul.first_card_id
@@ -385,8 +387,18 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   srsReps: (row.srs_reps as number) ?? 0,
   createdAt: row.created_at as string,
   firstCardId: (row.first_card_id as string | null) ?? null,
+  firstCardSegmentId: (row.first_card_segment_id as string | null) ?? null,
   studySessionId: (row.study_session_id as string | null) ?? null,
 })
+
+// Case-insensitive substring filter across headword/translation/definition.
+// `%` and `_` in user input retain LIKE-pattern semantics — acceptable for
+// the v1 search bar; if it becomes a footgun we can escape later.
+const buildSearchClause = (q: string | null) => {
+  if (!q || q.length === 0) return sql``
+  const pattern = `%${q}%`
+  return sql`AND (ul.headword ILIKE ${pattern} OR ul.translation ILIKE ${pattern} OR ul.definition ILIKE ${pattern})`
+}
 
 const listChunksForLanguage = async (params: {
   userId: string
@@ -394,9 +406,11 @@ const listChunksForLanguage = async (params: {
   sort: ChunksSort
   cursor: ChunksCursor | null
   limit: number
+  q: string | null
 }): Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }> => {
   const limit = Math.max(1, Math.min(params.limit, 200))
   const fetchLimit = limit + 1
+  const searchClause = buildSearchClause(params.q)
 
   if (params.sort === 'recent') {
     const cursor = params.cursor && params.cursor.sort === 'recent' ? params.cursor : null
@@ -405,6 +419,7 @@ const listChunksForLanguage = async (params: {
       WHERE ul.user_id = ${params.userId}
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
+        ${searchClause}
         AND ${cursor ? sql`(ul.created_at, ul.id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)` : sql`TRUE`}
       ORDER BY ul.created_at DESC, ul.id ASC
       LIMIT ${fetchLimit}
@@ -431,6 +446,7 @@ const listChunksForLanguage = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
         AND ul.srs_due IS NOT NULL
+        ${searchClause}
         AND ${
           cursor && cursor.phase === 'scheduled'
             ? sql`(ul.srs_due, ul.id) > (${cursor.srsDue}::timestamptz, ${cursor.id}::uuid)`
@@ -467,6 +483,7 @@ const listChunksForLanguage = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
         AND ul.srs_due IS NULL
+        ${searchClause}
       ORDER BY ul.id ASC
       LIMIT ${tailFetchLimit}
     `) as Array<Record<string, unknown>>
@@ -488,6 +505,7 @@ const listChunksForLanguage = async (params: {
       AND ul.target_language = ${params.targetLanguage}
       AND ul.deleted_at IS NULL
       AND ul.srs_due IS NULL
+      ${searchClause}
       AND ul.id > ${cursor!.id}::uuid
     ORDER BY ul.id ASC
     LIMIT ${fetchLimit}
@@ -499,6 +517,28 @@ const listChunksForLanguage = async (params: {
   const last = sliced[sliced.length - 1]
   const nextCursor: ChunksCursor | null = hasMore && last ? { sort: 'due', phase: 'unscheduled', id: last.id } : null
   return { rows: sliced, nextCursor }
+}
+
+// Used to enrich practice annotations with the live gloss/definition before
+// shipping a practice text to the client. Soft-deleted rows are excluded —
+// their content shouldn't surface in the rate sheet. We fetch all rows for
+// the (user, language) and let the caller index by (headword, sense); typical
+// user vocabularies stay in the low hundreds, so the simple query beats
+// composing an array-tuple WHERE clause.
+const listChunkContentForKeys = async (params: {
+  userId: string
+  targetLanguage: string
+  keys: Array<{ headword: string; sense: string }>
+}): Promise<Array<{ headword: string; sense: string; translation: string | null; definition: string | null }>> => {
+  if (params.keys.length === 0) return []
+  const result = (await sql`
+    SELECT headword, sense, translation, definition
+    FROM public.user_lookups
+    WHERE user_id = ${params.userId}
+      AND target_language = ${params.targetLanguage}
+      AND deleted_at IS NULL
+  `) as Array<{ headword: string; sense: string; translation: string | null; definition: string | null }>
+  return result
 }
 
 const softDeleteChunk = async (id: string, userId: string): Promise<void> => {
@@ -568,8 +608,14 @@ export interface UserLookupsRepositoryInterface {
     sort: ChunksSort
     cursor: ChunksCursor | null
     limit: number
+    q: string | null
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
+  listChunkContentForKeys: (params: {
+    userId: string
+    targetLanguage: string
+    keys: Array<{ headword: string; sense: string }>
+  }) => Promise<Array<{ headword: string; sense: string; translation: string | null; definition: string | null }>>
   listLanguagesForUser: (userId: string) => Promise<string[]>
 }
 
@@ -590,6 +636,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listVocabularyForLanguage,
     listChunksForLanguage,
     softDeleteChunk,
+    listChunkContentForKeys,
     listLanguagesForUser,
   }
 }

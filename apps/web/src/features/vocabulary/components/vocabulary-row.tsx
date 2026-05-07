@@ -34,7 +34,6 @@ export const VocabularyRow = ({ chunk, onTap, style }: VocabularyRowProps) => {
       <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
         <div className='flex items-baseline gap-2'>
           <span className='truncate text-sm font-semibold text-gray-900'>{chunk.headword}</span>
-          {chunk.sense && <span className='text-muted-foreground truncate text-xs italic'>{chunk.sense}</span>}
         </div>
         {preview && <span className='text-muted-foreground truncate text-xs'>{preview}</span>}
       </div>

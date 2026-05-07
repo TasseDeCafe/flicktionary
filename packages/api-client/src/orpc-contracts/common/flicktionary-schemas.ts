@@ -74,6 +74,7 @@ export const ChunkRowSchema = ChunkSchema.extend({
   srsReps: z.number().int(),
   createdAt: z.string(),
   firstCardId: z.string().uuid().nullable(),
+  firstCardSegmentId: z.string().uuid().nullable(),
   studySessionId: z.string().uuid().nullable(),
 })
 export type ChunkRow = z.infer<typeof ChunkRowSchema>
@@ -162,6 +163,11 @@ export const PracticeAnnotationSchema = z.object({
   surfaceForm: z.string(),
   charStart: z.number().int(),
   charEnd: z.number().int(),
+  // Live content joined from user_lookups at fetch time so the rate sheet can
+  // show the translation + definition without an extra round trip. Null when
+  // the canonical row was deleted between generation and read.
+  translation: z.string().nullable(),
+  definition: z.string().nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 

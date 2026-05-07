@@ -89,6 +89,9 @@ export const chunksContract = {
         sort: ChunksSortSchema.default('recent'),
         cursor: z.string().nullable().optional(),
         limit: z.coerce.number().int().min(1).max(200).default(50),
+        // Optional case-insensitive substring filter applied across headword,
+        // translation, and definition. Empty string is treated as no filter.
+        q: z.string().optional(),
       })
     )
     .output(

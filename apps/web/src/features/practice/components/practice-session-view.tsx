@@ -78,15 +78,13 @@ export const PracticeSessionView = () => {
     if (openIndex == null || !currentText) return null
     const ann = currentText.annotations[openIndex]
     if (!ann) return null
-    // We don't have translation/definition/example client-side without an
-    // extra fetch. The MVP shows the headword + sense + surface_form only;
-    // the next iteration can wire a per-chunk content fetch (cards.findByKey
-    // or a dedicated practice.getChunkContent endpoint).
+    // Translation/definition are joined server-side from user_lookups so the
+    // rate sheet shows live content (edits in the focus view propagate).
+    // Examples aren't surfaced here yet — they'd need their own fetch.
     return {
       headword: ann.headword,
-      sense: ann.sense,
-      translation: null,
-      definition: null,
+      translation: ann.translation,
+      definition: ann.definition,
       targetExample: null,
       nativeExample: null,
     }

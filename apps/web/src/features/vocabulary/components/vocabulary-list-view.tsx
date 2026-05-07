@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/vocabulary-hooks'
+import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
+import { Input } from '@/components/ui/input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
 import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
@@ -50,6 +52,8 @@ export const VocabularyListView = () => {
 
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
   const [sort, setSort] = useState<ChunksSort>('recent')
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -69,7 +73,7 @@ export const VocabularyListView = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort })
+  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch })
 
   const rows: ChunkRow[] = useMemo(() => {
     if (!data) return []
@@ -119,6 +123,12 @@ export const VocabularyListView = () => {
     void navigate({
       to: '/sessions/$sessionId',
       params: { sessionId: chunk.studySessionId },
+      // `from: 'vocabulary'` makes the X-close in session view land back here.
+      // The segment is optional — chunks pre-dating the field land without flash.
+      search: {
+        ...(chunk.firstCardSegmentId ? { segment: chunk.firstCardSegmentId } : {}),
+        from: 'vocabulary' as const,
+      },
     })
   }
 
@@ -157,6 +167,14 @@ export const VocabularyListView = () => {
         />
       )}
 
+      <Input
+        type='search'
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        placeholder={t`Search headword, translation, or definition…`}
+        className='w-full'
+      />
+
       <div className='flex items-center justify-between'>
         <span className='text-muted-foreground text-xs tracking-wider uppercase'>{t`Sort`}</span>
         <SortPills value={sort} onChange={setSort} />
@@ -166,7 +184,7 @@ export const VocabularyListView = () => {
 
       {showLanguageEmpty && (
         <div className='rounded-xl border bg-gray-50 p-6 text-center text-sm text-gray-600'>
-          {t`No vocabulary in this language yet.`}
+          {debouncedSearch.length > 0 ? t`No matches.` : t`No vocabulary in this language yet.`}
         </div>
       )}
 

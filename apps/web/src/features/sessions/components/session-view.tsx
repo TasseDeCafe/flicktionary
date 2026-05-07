@@ -35,7 +35,7 @@ export const SessionView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/' })
-  const { segment: targetSegmentId } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/' })
+  const { segment: targetSegmentId, from } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/' })
 
   const { data: session, isLoading: isSessionLoading } = useGetStudySession(sessionId)
   const trackId = session?.textTrackId ?? null
@@ -183,6 +183,10 @@ export const SessionView = () => {
   }
 
   const closeToSessions = () => {
+    if (from === 'vocabulary') {
+      void navigate({ to: '/vocabulary' })
+      return
+    }
     void navigate({ to: '/sessions' })
   }
 

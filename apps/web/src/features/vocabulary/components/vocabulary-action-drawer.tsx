@@ -2,13 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Edit3, ExternalLink, Trash2, type LucideIcon } from 'lucide-react'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import {
-  ResponsiveOverlay,
-  OverlayContent,
-  OverlayHeader,
-  OverlayTitle,
-  OverlayDescription,
-} from '@/components/ui/responsive-overlay'
+import { ResponsiveOverlay, OverlayContent, OverlayHeader, OverlayTitle } from '@/components/ui/responsive-overlay'
 import { Button } from '@/components/ui/button'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
@@ -100,7 +94,6 @@ export const VocabularyActionDrawer = ({
       <OverlayContent>
         <OverlayHeader>
           <OverlayTitle>{chunk.headword}</OverlayTitle>
-          {chunk.sense && <OverlayDescription>{chunk.sense}</OverlayDescription>}
         </OverlayHeader>
         <div className='flex flex-col gap-1 px-2 pb-2'>
           <ActionRow

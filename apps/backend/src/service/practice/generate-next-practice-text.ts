@@ -20,7 +20,7 @@ export type GenerateNextPracticeTextDependencies = {
 }
 
 export type GenerateNextPracticeTextResult =
-  | { ok: true; done: false; practiceText: DbPracticeText }
+  | { ok: true; done: false; practiceText: DbPracticeText; targetLanguage: string }
   | { ok: true; done: true }
   | {
       ok: false
@@ -171,7 +171,7 @@ export const generateNextPracticeText = async (
     if (!ready) {
       return { ok: false, reason: 'generation_failed', warning: 'practice_text disappeared after markReady' }
     }
-    return { ok: true, done: false, practiceText: ready }
+    return { ok: true, done: false, practiceText: ready, targetLanguage: session.target_language }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     await deps.practiceTextsRepository.markFailed({ id: pending.id, warning: message })

@@ -14,9 +14,15 @@ export const useListLanguages = () => {
   )
 }
 
-export const useListChunksInfinite = (params: { targetLanguage: string | null; sort: ChunksSort; limit?: number }) => {
+export const useListChunksInfinite = (params: {
+  targetLanguage: string | null
+  sort: ChunksSort
+  q?: string
+  limit?: number
+}) => {
   const { t } = useLingui()
   const targetLanguage = params.targetLanguage
+  const q = params.q?.trim() ?? ''
   return useInfiniteQuery(
     orpcQuery.chunks.listChunks.infiniteOptions({
       enabled: Boolean(targetLanguage),
@@ -25,6 +31,7 @@ export const useListChunksInfinite = (params: { targetLanguage: string | null; s
         sort: params.sort,
         cursor: pageParam ?? null,
         limit: params.limit ?? 50,
+        ...(q.length > 0 ? { q } : {}),
       }),
       initialPageParam: null as string | null,
       getNextPageParam: (last) => last.nextCursor,
