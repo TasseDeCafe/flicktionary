@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Edit3, ExternalLink, Trash2, type LucideIcon } from 'lucide-react'
+import { ExternalLink, Trash2, type LucideIcon } from 'lucide-react'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { ResponsiveOverlay, OverlayContent, OverlayHeader, OverlayTitle } from '@/components/ui/responsive-overlay'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,6 @@ interface VocabularyActionDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   chunk: ChunkRow | null
-  onEdit: (chunk: ChunkRow) => void
   onOpenSource: (chunk: ChunkRow) => void
   onDelete: (chunk: ChunkRow) => void
   isDeleting?: boolean
@@ -61,7 +60,6 @@ export const VocabularyActionDrawer = ({
   open,
   onOpenChange,
   chunk,
-  onEdit,
   onOpenSource,
   onDelete,
   isDeleting,
@@ -86,7 +84,6 @@ export const VocabularyActionDrawer = ({
 
   if (!chunk) return null
 
-  const canEdit = chunk.firstCardId !== null && chunk.studySessionId !== null
   const canOpenSource = chunk.studySessionId !== null
 
   return (
@@ -96,13 +93,6 @@ export const VocabularyActionDrawer = ({
           <OverlayTitle>{chunk.headword}</OverlayTitle>
         </OverlayHeader>
         <div className='flex flex-col gap-1 px-2 pb-2'>
-          <ActionRow
-            icon={Edit3}
-            label={t`Edit`}
-            description={canEdit ? t`Open the focus view to edit fields and chat` : t`No source card on file`}
-            disabled={!canEdit}
-            onClick={() => onEdit(chunk)}
-          />
           <ActionRow
             icon={ExternalLink}
             label={t`Open source`}

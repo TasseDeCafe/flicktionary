@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, MoreVertical } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { toast } from 'sonner'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -13,9 +13,17 @@ import { Input } from '@/components/ui/input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
 import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
+import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
 import { VocabularyRow } from './vocabulary-row'
+import { Button } from '@/components/ui/button'
 
 const ESTIMATED_ROW_HEIGHT = 72
+
+// Module-level so it survives unmount when the user opens the focus view.
+// Keyed by the active filter combo — a stale offset from a different result
+// set never gets applied. Lost on hard reload (good enough for now; bump to
+// sessionStorage if survival across reloads is wanted).
+let savedScroll: { key: string; offset: number } | null = null
 
 const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: ChunksSort) => void }) => {
   const { t } = useLingui()
@@ -56,6 +64,7 @@ export const VocabularyListView = () => {
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [optionsOpen, setOptionsOpen] = useState(false)
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
@@ -98,12 +107,22 @@ export const VocabularyListView = () => {
     void fetchNextPage()
   }, [lastItem, rows.length, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunk()
+  // Restore scroll position on remount (e.g. when the user closes the focus
+  // view back to /vocabulary). Tracks per filter combo so changing language /
+  // sort / search starts fresh. Runs once per filterKey, after rows are
+  // available so the virtualizer has something to render at the offset.
+  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}`
+  const restoredKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (restoredKeyRef.current === filterKey) return
+    if (rows.length === 0) return
+    if (savedScroll && savedScroll.key === filterKey && savedScroll.offset > 0 && parentRef.current) {
+      parentRef.current.scrollTop = savedScroll.offset
+    }
+    restoredKeyRef.current = filterKey
+  }, [filterKey, rows.length])
 
-  const handleRowTap = (chunk: ChunkRow) => {
-    setActiveChunk(chunk)
-    setDrawerOpen(true)
-  }
+  const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunk()
 
   const handleEdit = (chunk: ChunkRow) => {
     if (!chunk.studySessionId || !chunk.firstCardId) return
@@ -115,6 +134,23 @@ export const VocabularyListView = () => {
       params: { sessionId: chunk.studySessionId, cardId: chunk.firstCardId },
       search: { from: 'vocabulary' as const },
     })
+  }
+
+  const handleRowTap = (chunk: ChunkRow) => {
+    // Primary action: jump straight to edit. Fall back to the options drawer
+    // for chunks whose source card or session has been deleted (so Open
+    // source / Delete remain reachable).
+    if (chunk.firstCardId && chunk.studySessionId) {
+      handleEdit(chunk)
+      return
+    }
+    setActiveChunk(chunk)
+    setDrawerOpen(true)
+  }
+
+  const handleRowOptions = (chunk: ChunkRow) => {
+    setActiveChunk(chunk)
+    setDrawerOpen(true)
   }
 
   const handleOpenSource = (chunk: ChunkRow) => {
@@ -153,10 +189,20 @@ export const VocabularyListView = () => {
       <header className='flex items-center gap-3'>
         <BookOpen className='h-7 w-7 text-yellow-500' />
         <h1 className='text-2xl font-bold'>{t`Vocabulary`}</h1>
+        <Button
+          variant='ghost'
+          size='icon'
+          className='ml-auto'
+          onClick={() => setOptionsOpen(true)}
+          disabled={!selectedLanguage}
+          aria-label={t`Vocabulary options`}
+        >
+          <MoreVertical className='h-5 w-5' />
+        </Button>
       </header>
 
       <p className='text-muted-foreground text-sm'>
-        {t`Every chunk you've kept, across every session. Tap a row for actions.`}
+        {t`Every chunk you've kept, across every session. Tap a row to edit, or open the menu for more options.`}
       </p>
 
       {languages && languages.length > 1 && selectedLanguage && (
@@ -191,8 +237,11 @@ export const VocabularyListView = () => {
       {!showEmpty && !showLanguageEmpty && (
         <div
           ref={parentRef}
-          className='min-h-[60vh] flex-1 overflow-y-auto rounded-xl border bg-white'
+          className='flex-1 overflow-y-auto rounded-xl border bg-white md:min-h-[60vh]'
           aria-busy={isInitialLoad}
+          onScroll={(e) => {
+            savedScroll = { key: filterKey, offset: e.currentTarget.scrollTop }
+          }}
         >
           {isInitialLoad ? (
             <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>
@@ -223,7 +272,15 @@ export const VocabularyListView = () => {
                   )
                 }
                 if (!chunk) return null
-                return <VocabularyRow key={chunk.id} chunk={chunk} onTap={handleRowTap} style={style} />
+                return (
+                  <VocabularyRow
+                    key={chunk.id}
+                    chunk={chunk}
+                    onTap={handleRowTap}
+                    onOptions={handleRowOptions}
+                    style={style}
+                  />
+                )
               })}
             </div>
           )}
@@ -234,11 +291,12 @@ export const VocabularyListView = () => {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         chunk={activeChunk}
-        onEdit={handleEdit}
         onOpenSource={handleOpenSource}
         onDelete={handleDelete}
         isDeleting={isDeleting}
       />
+
+      <VocabularyOptionsOverlay open={optionsOpen} onOpenChange={setOptionsOpen} targetLanguage={selectedLanguage} />
     </div>
   )
 }

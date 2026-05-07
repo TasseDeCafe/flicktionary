@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronRight, FileText } from 'lucide-react'
+import { Brain, ChevronRight, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
@@ -11,7 +11,6 @@ import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } 
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
-import { CsvExportButton } from './csv-export-button'
 
 const matchesSearch = (card: Card, q: string): boolean => {
   if (!q) return true
@@ -199,9 +198,18 @@ export const TriageListView = () => {
       </div>
 
       <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
-        <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
-          <span className='text-muted-foreground text-sm'>{t`${keptCount} card(s) kept.`}</span>
-          <CsvExportButton sessionId={sessionId} keptCount={keptCount} />
+        <div className='mx-auto flex max-w-4xl items-center md:justify-end'>
+          <Button
+            className='w-full md:w-auto'
+            disabled={keptCount === 0 || !session}
+            onClick={() => {
+              if (!session) return
+              void navigate({ to: '/practice/start', search: { lang: session.targetLanguage } })
+            }}
+          >
+            <Brain className='mr-2 h-4 w-4' />
+            {t`Practice these chunks`}
+          </Button>
         </div>
       </div>
     </ModalScreen>

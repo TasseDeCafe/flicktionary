@@ -13,6 +13,7 @@ import {
   DbUserLookup,
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
 
 const toChunkDto = (row: DbUserLookup) => ({
   id: row.id,
@@ -119,6 +120,12 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       const userId = context.res.locals.userId
       const languages = await userLookupsRepository.listLanguagesForUser(userId)
       return { languages }
+    }),
+
+    exportCsv: implementer.exportCsv.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const result = await buildVocabularyCsv(userId, input.targetLanguage, { userLookupsRepository })
+      return { data: { csv: result.csv, chunkCount: result.chunkCount } }
     }),
 
     deleteChunk: implementer.deleteChunk.handler(async ({ input, context, errors }) => {

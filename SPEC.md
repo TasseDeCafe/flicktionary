@@ -106,7 +106,10 @@ Two-layer UI.
 - Filter, search, sort across both sections.
 - Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
 - Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). LLM-suggested chunks land as `pending` and require explicit triage. Below-CEFR LLM chunks are still `auto_rejected`.
-- Sticky footer: `Export N kept cards`.
+- Sticky footer: `Practice these chunks` button (full-width on mobile,
+  right-aligned on desktop) that starts a Practice session in the session's
+  target language. Disabled when no cards are kept. Per-session CSV export is
+  gone from this screen — exports happen from the Vocabulary tab instead.
 - No chat here. This layer is for fast triage.
 
 **Layer 2 — Focus view (modal screen pushed above the tab navigator).**
@@ -152,14 +155,25 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
 
 - **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + count badge when the chunk has been kept multiple times.
 - **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
-- **Row actions.** Tap a row → bottom drawer with three options: `Edit` (navigates to the focus view of `first_card_id` with `?from=vocabulary` so close returns here), `Open source` (jumps to `/sessions/$id` for the originating session), `Delete` (with inline confirm).
-- **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Re-keeping the same `(headword, sense)` in any session revives the chunk via `upsertOnKeep` clearing `deleted_at`. No Trash/restore UI in v1.
+- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: `Open source` (jumps to `/sessions/$id` for the originating session) and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so Open source / Delete remain reachable.
+- **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Re-keeping the same `(headword, sense)` in any session revives the chunk via the keep-transition clearing `deleted_at`. No Trash/restore UI in v1.
+- **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki-compatible columns; same shape per-session export used to produce). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
 
 ### Export
 
 - CSV with columns: `front`, `back`, `context`, `tags`, `headword`, `surface_form`, `note`. Imports cleanly into Anki.
 - No `.apkg` for MVP.
-- Exporting a card upserts a row in `user_lookup` (already created on keep; export stamps `exported_at` and bumps `count`).
+- **Entry point** is the Vocabulary tab's 3-dots menu → `Export vocabulary`.
+  Output is one CSV per target language covering every kept (non-deleted)
+  chunk, regardless of which session it came from. Per-session CSV is no
+  longer surfaced in the UI; the triage footer is now a `Practice these
+  chunks` CTA. The `cards.exportCsv` backend endpoint still exists (and still
+  stamps `exported_at` on `user_lookups` if hit directly) but is unreachable
+  from the UI.
+- The vocabulary export pulls a representative `surface_form` and `context`
+  per chunk via the `first_card_id` back-pointer (LEFT JOIN cards +
+  text_segments); rows whose origin card or segment have been deleted fall
+  back to empty cells. Tags are `flicktionary <target_language>`.
 
 ### Navigation chrome
 
@@ -285,8 +299,19 @@ user_lookup                          -- cross-source dedup + canonical user voca
   headword            text
   sense               text          -- 1-5 word disambiguator; '' for legacy rows
   first_card_id       uuid?         -- representative card for content lookup (Practice generation prompt)
-  exported_at         timestamptz?  -- last CSV export
-  count               int default 1 -- bumped on keep + on export
+  exported_at         timestamptz?  -- last CSV export (legacy; the vocab-wide
+                                    -- export does not stamp this)
+  count               int default 0 -- transition-driven: how many cards across
+                                    -- all sessions currently have status='kept'
+                                    -- pointing at this lookup. count > 0 is the
+                                    -- visibility gate for both Vocabulary and
+                                    -- Practice (alongside deleted_at IS NULL).
+                                    -- pending/rejected/auto_rejected → kept
+                                    -- bumps +1 (and clears deleted_at);
+                                    -- kept → anything-else decrements -1
+                                    -- (floored at 0). SRS state is preserved
+                                    -- across un-keep so re-keeping resumes the
+                                    -- schedule.
   -- Practice / FSRS state. Null until the row enters its first practice session.
   srs_state           'new' | 'learning' | 'review' | 'relearning'?
   srs_due             timestamptz?
@@ -497,10 +522,15 @@ cached result instantly.
 3. Pipeline runs (context blob if missing, L1 notes if missing, difficult-words pass if no LLM-suggested cards yet, per-chunk Full exploration for highlights without cards).
 4. Status flips to `processed`. On uncaught failure: `failed` (retryable from the polling page).
 
-**Review and export**
-1. Triage list — keep/reject across both sections. The modal-header chevron closes back to the sessions list; a `Subtitles` button in the right slot cross-jumps to the mid-watch view.
-2. Drill into focus view for any card. Edit front/back, chat to refine.
-3. Export CSV. Status flips to `exported`. `user_lookup` upserted.
+**Review and practice**
+1. Triage list — keep/reject across both sections. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
+2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`.
+3. Sticky-footer `Practice these chunks` button starts a Practice session in the session's target language (language-wide pool — kept chunks from this session feed into it via the user-lookups upsert that fires on the keep transition).
+
+**Export vocabulary**
+1. Open the Vocabulary tab.
+2. Pick the language pill (skipped if you only have one language).
+3. Header 3-dots → `Export vocabulary` → download CSV.
 
 **Add more highlights after processing**
 1. From the triage list, tap the `Subtitles` button (or open the session card again).

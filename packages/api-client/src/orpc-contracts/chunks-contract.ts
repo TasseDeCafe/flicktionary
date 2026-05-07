@@ -111,6 +111,25 @@ export const chunksContract = {
     .input(z.object({}))
     .output(z.object({ languages: z.array(z.string()) })),
 
+  // Cross-session CSV export. Returns one row per kept chunk in the given
+  // target language with the same column shape per-session export uses, so
+  // both flow into Anki identically. Surface form / context fall back to
+  // empty when the originating card or segment has been removed.
+  exportCsv: oc
+    .route({ method: 'POST', path: '/chunks/export', successStatus: 200 })
+    .errors({
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ targetLanguage: z.string().min(1) }))
+    .output(
+      z.object({
+        data: z.object({
+          csv: z.string(),
+          chunkCount: z.number().int(),
+        }),
+      })
+    ),
+
   // Soft-delete a chunk. POST (not DELETE) for symmetry with other mutations
   // and to avoid URL-encoding the UUID. Hides the chunk from the Vocabulary
   // list AND from the Practice queue. Re-keeping the same headword later

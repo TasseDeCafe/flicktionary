@@ -40,6 +40,15 @@ export const useListChunksInfinite = (params: {
   )
 }
 
+export const useExportVocabularyCsv = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.chunks.exportCsv.mutationOptions({
+      meta: { errorMessage: t`Failed to export vocabulary` },
+    })
+  )
+}
+
 // Soft-delete is a quick mutation but the optimistic UX matters: the row
 // disappears the moment the user confirms. We do that by patching every
 // in-flight infinite-query page to drop the row, then invalidate the whole

@@ -437,6 +437,123 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     if (!open) setConfirmingDelete(false) }, [open, chunkId])` so any
     open→closed transition (or chunk swap) resets the confirm state.
 
+- **Drop global L1 interference notes (2026-05-07).** The `l1_interference_notes`
+  table + the global per-`(L1, target)` generation pass were dead weight. Modern
+  Opus already knows L1→L2 interference from training; the global blob was just
+  paraphrasing that back into the prompt. The genuinely valuable per-chunk L1
+  notes (e.g. "English speakers want to say *près de moi* to mean 'near my
+  home' but that means 'near me'") are still produced by the enrichment pass
+  and live in `cards.exploration_extras.l1_notes` — anchored to a specific
+  chunk and source. Don't re-introduce the global blob.
+  - **Migration:** `l1_interference_notes` table removed from
+    `20260425215345_initial_schema.sql` in place; `db:dev` reset applied;
+    `database.public.types.ts` regenerated.
+  - **Deletions:** `transport/database/l1-interference-notes/`,
+    `service/practice/ensure-l1-interference-notes.ts`,
+    `transport/third-party/anthropic/passes/generate-l1-interference-notes.ts`.
+  - **Methodology prompt.** `buildMethodologySystem` /
+    `buildPracticeMethodologySystem` no longer take `l1InterferenceNotes`.
+    Preamble bullet rephrased from "See the L1 interference notes below" to
+    "Apply your knowledge of typical interference patterns from the user's
+    native language to the target language" — implicit instruction. The
+    practice variant's `cache_control: ephemeral` breakpoint moved from the
+    L1 block onto the user-profile block.
+  - **Anthropic passes.** `basic-data-pass`, `enrichment-pass`,
+    `generate-practice-text` no longer take or inject `l1InterferenceNotes`.
+    The enrichment-pass tool schema still has optional `extras.l1_notes` —
+    that's the per-chunk L1 note generated from training knowledge.
+  - **Service callers.** `process-session`, `build-prompt-context`,
+    `run-card-chat`, `explore-card-if-missing`, `generate-next-practice-text`,
+    `start-practice-session` all no longer fetch L1 notes. `app.ts` no longer
+    wires the deleted repo into five dep bags.
+  - **SPEC.md updates.** Processing pipeline step 2 removed; full-exploration
+    step now states per-chunk L1 notes come from training knowledge. Data
+    model entry removed. Methodology prompt template L1 block removed.
+
+- **Triage → Practice CTA + cross-session vocab export (2026-05-07).**
+  The triage footer was rebuilt around the Practice tab and the per-session
+  CSV export was relocated to a Vocabulary-wide entry point. Don't
+  re-introduce the old "Export N kept cards" sticky footer or the
+  per-session CSV download path.
+  - **Triage footer.** `csv-export-button.tsx` deleted. The "X card(s) kept"
+    counter is gone. Footer is now a single `Practice these chunks` button
+    (Brain icon) — `w-full` on mobile, `w-auto` on `md:`+, container is
+    `md:justify-end`. Disabled when keptCount === 0 or session not loaded.
+    Click navigates to `/practice/start?lang=<session.targetLanguage>` which
+    reuses the existing `PracticeStartView` loader (mutation fires on mount,
+    URL replaces with `/practice/$id` on success).
+  - **Vocabulary 3-dots menu.** New `vocabulary-options-overlay.tsx`
+    (`ResponsiveOverlay`, drawer on mobile / dialog on desktop) titled
+    "Vocabulary options" with a single `Export vocabulary` action row.
+    Trigger: `MoreVertical` ghost icon button right-aligned in the
+    `vocabulary-list-view.tsx` header (disabled until a language is
+    selected). Action description renders the full language name via
+    `getLanguageName('en') = 'English'` from
+    `@flicktionary/core/constants/supported-languages` rather than the
+    bare ISO code.
+  - **Backend export endpoint.** `chunks-contract.ts` gained `exportCsv`
+    (POST `/chunks/export`, input `{ targetLanguage }`, output `{ csv,
+    chunkCount }`). `chunks-router.ts` dispatches to the new
+    `service/export/build-vocabulary-csv.ts`, which calls
+    `userLookupsRepository.listKeptChunksForExport` (LEFT JOIN cards +
+    text_segments via `first_card_id`) and renders the same
+    `front,back,context,tags,headword,surface_form,note` columns the
+    per-session export produced. Tags are `flicktionary <target_language>`.
+    Filename downloaded as `flicktionary-vocabulary-<lang>.csv`. The
+    `cards.exportCsv` route is left intact but is no longer reachable from
+    the UI.
+  - **Keep/unkeep is now transition-aware.**
+    `service/cards/set-card-status.ts` reads the previous card status before
+    flipping. `pending|rejected|auto_rejected → kept` calls
+    `userLookupsRepository.applyKeepTransition` (count +1, clear
+    `deleted_at`, backfill `first_card_id`). `kept → anything-else` calls
+    `applyUnkeepTransition` (count -1, floored at 0). Same-state click is
+    a no-op (idempotent re-clicks no longer inflate `count`). The batch
+    variant partitions cards into entering-kept / leaving-kept / unchanged
+    before doing one bulk `updateStatusBatch` and the matching ±1s. SRS
+    state is **not** touched on un-keep so re-keeping later resumes the
+    schedule. Don't re-introduce the old `upsertOnKeep` (always +1, no
+    decrement path) — toggling keep/reject N times used to leave a chunk
+    at `count=N` with `×N` in the Vocabulary badge.
+  - **`user_lookups` repo deltas.** `upsertOnKeep` removed; replaced by
+    `applyKeepTransition({ userLookupId, cardId })` and
+    `applyUnkeepTransition({ userLookupId })`. `upsertOnExport` no longer
+    bumps `count` (export is not a keep event; only stamps `exported_at`
+    + backfills `first_card_id`). `listChunksForLanguage` (both sort modes,
+    both phases) and `listLanguagesForUser` now filter `count > 0` so a
+    fully-rejected chunk drops out of the Vocabulary list AND the language
+    switcher. New `listKeptChunksForExport` returns the joined export rows.
+  - **SPEC.md updates.** Triage Layer 1 footer description, Vocabulary
+    "Header options" bullet, Export section (entry point + tag format +
+    surface_form/context fallback), `user_lookups.count` comment
+    (transition-driven, default 0, gate semantics), and the user-flows
+    section ("Review and practice" + a new "Export vocabulary" flow).
+
+- **Practice landing → session loading UX (2026-05-07).** Clicking a language
+  in `/practice` used to grey out the buttons while `startSession` resolved,
+  then jump to `/practice/$id` where a small "Loading…" briefly flashed before
+  "Preparing the session…" — three loaders in three positions. Refactored to
+  one continuous spinner from click to text. Don't re-introduce the
+  await-mutation-then-navigate flow.
+  - **New route `/practice/start?lang=xx`** (`practice-start-view.tsx`):
+    renders `<ModalScreen>` immediately with the centered "Preparing the
+    session…" loader, fires `startSession` on mount, and `replace`s the URL
+    with `/practice/$realSessionId` on success. The landing view's
+    `handleStart` just navigates here — no mutation, no awaiting.
+  - **`getSession` cache pre-population.** `useStartPracticeSession.onSuccess`
+    writes a synthetic `{ session: <stub>, currentText: null }` into the
+    `getSession` query cache before the URL replace. When the session view
+    mounts, `useGetPracticeSession` returns immediately (no `isLoading`
+    flash) and the auto-trigger effect fires `generateNextText` straight
+    away — saves the previously-wasted ~200-500ms round-trip.
+  - **Unified `<PracticeLoader>`** at `components/practice-loader.tsx`
+    (centered Sparkles + label, fills the modal). Used in both the start view
+    and the session view's loading branch. The session view's loader is now
+    mounted at the modal top level (outside the `flex-col overflow-hidden`
+    article frame) so position is pixel-identical across the URL replace.
+    Combined gate: `!done && (isLoading || isAdvancing || !currentText)`.
+    The previous "Loading…" div is gone.
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still

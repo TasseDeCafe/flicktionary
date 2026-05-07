@@ -105,30 +105,38 @@ const renameKey = async (params: { id: string; headword: string; sense: string }
   }
 }
 
-// Bumps `count` and (optionally) backfills first_card_id. The row is created
-// at card-insert time via findOrCreate, so this is a pure update.
+// Stamps exported_at and (optionally) backfills first_card_id. count is owned
+// by keep/unkeep transitions on the cards table, not by export — exporting a
+// card that's already kept must not inflate the badge.
 const upsertOnExport = async (params: { userLookupId: string; firstCardId: string | null }): Promise<void> => {
   await sql`
     UPDATE public.user_lookups
-    SET count = count + 1,
-        exported_at = COALESCE(exported_at, NOW()),
+    SET exported_at = COALESCE(exported_at, NOW()),
         first_card_id = COALESCE(first_card_id, ${params.firstCardId}),
         deleted_at = NULL
     WHERE id = ${params.userLookupId}
   `
 }
 
-// Bumps `count` (idempotent re-keep semantic) and backfills first_card_id if
-// it wasn't set. The row exists by virtue of card creation; this never inserts.
-const upsertOnKeep = async (params: { userLookupId: string; cardId: string }): Promise<void> => {
-  // Keep is also the revival path for soft-deleted chunks: re-keeping a card
-  // that points at a deleted user_lookups row clears deleted_at so the chunk
-  // reappears in the Vocabulary list and Practice queue.
+// Card transitioned X → 'kept' (X !== 'kept'). count bumps by 1, deleted_at
+// clears (re-keeping a soft-deleted chunk revives it), first_card_id is
+// backfilled if it wasn't set.
+const applyKeepTransition = async (params: { userLookupId: string; cardId: string }): Promise<void> => {
   await sql`
     UPDATE public.user_lookups
     SET count = count + 1,
         first_card_id = COALESCE(first_card_id, ${params.cardId}),
         deleted_at = NULL
+    WHERE id = ${params.userLookupId}
+  `
+}
+
+// Card transitioned 'kept' → Y (Y !== 'kept'). count drops by 1, floored at 0.
+// SRS state stays put — re-keeping later resumes the schedule.
+const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<void> => {
+  await sql`
+    UPDATE public.user_lookups
+    SET count = GREATEST(count - 1, 0)
     WHERE id = ${params.userLookupId}
   `
 }
@@ -306,6 +314,59 @@ const listVocabularyForLanguage = async (params: {
   }))
 }
 
+// Row shape for the cross-session vocabulary CSV export. Pulls representative
+// surface_form + segment text via the first_card_id back-pointer so the CSV
+// has the same column shape per-session export produces. Surface_form /
+// segment_text fall back to empty when first_card_id is null or stale.
+export type ExportChunkRow = {
+  headword: string
+  sense: string
+  translation: string | null
+  definition: string | null
+  targetExample: string | null
+  nativeExample: string | null
+  explorationExtras: Record<string, unknown>
+  surfaceForm: string
+  segmentText: string
+}
+
+const listKeptChunksForExport = async (params: {
+  userId: string
+  targetLanguage: string
+}): Promise<ExportChunkRow[]> => {
+  const result = await sql`
+    SELECT
+      ul.headword,
+      ul.sense,
+      ul.translation,
+      ul.definition,
+      ul.target_example,
+      ul.native_example,
+      ul.exploration_extras,
+      c.surface_form,
+      ts.text AS segment_text
+    FROM public.user_lookups ul
+    LEFT JOIN public.cards c ON c.id = ul.first_card_id
+    LEFT JOIN public.text_segments ts ON ts.id = c.segment_id
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+    ORDER BY ul.created_at ASC, ul.id ASC
+  `
+  return result.map((row) => ({
+    headword: row.headword as string,
+    sense: (row.sense as string) ?? '',
+    translation: (row.translation as string | null) ?? null,
+    definition: (row.definition as string | null) ?? null,
+    targetExample: (row.target_example as string | null) ?? null,
+    nativeExample: (row.native_example as string | null) ?? null,
+    explorationExtras: (row.exploration_extras as Record<string, unknown> | null) ?? {},
+    surfaceForm: (row.surface_form as string | null) ?? '',
+    segmentText: (row.segment_text as string | null) ?? '',
+  }))
+}
+
 // =========================================================================
 // Vocabulary management view (the /vocabulary tab)
 // =========================================================================
@@ -419,6 +480,7 @@ const listChunksForLanguage = async (params: {
       WHERE ul.user_id = ${params.userId}
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
+        AND ul.count > 0
         ${searchClause}
         AND ${cursor ? sql`(ul.created_at, ul.id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)` : sql`TRUE`}
       ORDER BY ul.created_at DESC, ul.id ASC
@@ -445,6 +507,7 @@ const listChunksForLanguage = async (params: {
       WHERE ul.user_id = ${params.userId}
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
+        AND ul.count > 0
         AND ul.srs_due IS NOT NULL
         ${searchClause}
         AND ${
@@ -482,6 +545,7 @@ const listChunksForLanguage = async (params: {
       WHERE ul.user_id = ${params.userId}
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
+        AND ul.count > 0
         AND ul.srs_due IS NULL
         ${searchClause}
       ORDER BY ul.id ASC
@@ -504,6 +568,7 @@ const listChunksForLanguage = async (params: {
     WHERE ul.user_id = ${params.userId}
       AND ul.target_language = ${params.targetLanguage}
       AND ul.deleted_at IS NULL
+      AND ul.count > 0
       AND ul.srs_due IS NULL
       ${searchClause}
       AND ul.id > ${cursor!.id}::uuid
@@ -557,6 +622,7 @@ const listLanguagesForUser = async (userId: string): Promise<string[]> => {
     FROM public.user_lookups
     WHERE user_id = ${userId}
       AND deleted_at IS NULL
+      AND count > 0
     ORDER BY target_language ASC
   `
   return result.map((row) => row.target_language as string)
@@ -580,7 +646,8 @@ export interface UserLookupsRepositoryInterface {
   }) => Promise<void>
   renameKey: (params: { id: string; headword: string; sense: string }) => Promise<RenameKeyResult>
   upsertOnExport: (params: { userLookupId: string; firstCardId: string | null }) => Promise<void>
-  upsertOnKeep: (params: { userLookupId: string; cardId: string }) => Promise<void>
+  applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
+  applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>
   listDueSummary: (userId: string) => Promise<DueSummaryEntry[]>
   listEligibleForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<DbUserLookup[]>
   findByKey: (params: {
@@ -602,6 +669,7 @@ export interface UserLookupsRepositoryInterface {
     lapses: number
   }) => Promise<void>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
+  listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
   listChunksForLanguage: (params: {
     userId: string
     targetLanguage: string
@@ -626,7 +694,8 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     updateContent,
     renameKey,
     upsertOnExport,
-    upsertOnKeep,
+    applyKeepTransition,
+    applyUnkeepTransition,
     listDueSummary,
     listEligibleForLanguage,
     findByKey,
@@ -634,6 +703,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     initializeSrsState,
     applyFsrsResult,
     listVocabularyForLanguage,
+    listKeptChunksForExport,
     listChunksForLanguage,
     softDeleteChunk,
     listChunkContentForKeys,
