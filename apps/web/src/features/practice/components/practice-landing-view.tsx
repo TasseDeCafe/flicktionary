@@ -2,26 +2,18 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useDueSummary, useStartPracticeSession } from '../api/practice-hooks'
+import { useDueSummary } from '../api/practice-hooks'
 
 export const PracticeLandingView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { data: summary, isLoading } = useDueSummary()
-  const { mutate: startSession, isPending: isStarting } = useStartPracticeSession()
 
   const handleStart = (targetLanguage: string) => {
-    startSession(
-      { targetLanguage },
-      {
-        onSuccess: (response) => {
-          void navigate({
-            to: '/practice/$practiceSessionId',
-            params: { practiceSessionId: response.data.sessionId },
-          })
-        },
-      }
-    )
+    void navigate({
+      to: '/practice/start',
+      search: { lang: targetLanguage },
+    })
   }
 
   return (
@@ -63,7 +55,7 @@ export const PracticeLandingView = () => {
                 <button
                   key={entry.targetLanguage}
                   type='button'
-                  disabled={reviewable === 0 || isStarting}
+                  disabled={reviewable === 0}
                   onClick={() => handleStart(entry.targetLanguage)}
                   className='flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 disabled:opacity-50'
                 >
@@ -80,13 +72,8 @@ export const PracticeLandingView = () => {
       )}
 
       {summary && summary.length === 1 && (summary[0]?.dueCount ?? 0) + (summary[0]?.newCount ?? 0) > 0 && (
-        <Button
-          size='lg'
-          className='w-full'
-          disabled={isStarting}
-          onClick={() => handleStart(summary[0]!.targetLanguage)}
-        >
-          {isStarting ? t`Starting…` : t`Start practice`}
+        <Button size='lg' className='w-full' onClick={() => handleStart(summary[0]!.targetLanguage)}>
+          {t`Start practice`}
         </Button>
       )}
     </div>

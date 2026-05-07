@@ -255,30 +255,6 @@ export type Database = {
           },
         ]
       }
-      l1_interference_notes: {
-        Row: {
-          created_at: string
-          l1_language: string
-          notes: string
-          target_language: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          l1_language: string
-          notes: string
-          target_language: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          l1_language?: string
-          notes?: string
-          target_language?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       practice_ratings: {
         Row: {
           headword: string

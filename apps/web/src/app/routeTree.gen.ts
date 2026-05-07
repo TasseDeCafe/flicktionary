@@ -30,6 +30,7 @@ import { Route as AuthenticatedAppPracticeIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
 import { Route as AuthenticatedAppSessionsNewTextRouteImport } from './routes/_authenticated/_app/sessions/new-text'
 import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authenticated/_app/sessions/new'
+import { Route as AuthenticatedAppPracticeStartRouteImport } from './routes/_authenticated/_app/practice/start'
 import { Route as AuthenticatedAppPracticePracticeSessionIdRouteImport } from './routes/_authenticated/_app/practice/$practiceSessionId'
 import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_authenticated/_app/more/languages'
 import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
@@ -153,6 +154,12 @@ const AuthenticatedAppSessionsNewRoute =
     path: '/sessions/new',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppPracticeStartRoute =
+  AuthenticatedAppPracticeStartRouteImport.update({
+    id: '/practice/start',
+    path: '/practice/start',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppPracticePracticeSessionIdRoute =
   AuthenticatedAppPracticePracticeSessionIdRouteImport.update({
     id: '/practice/$practiceSessionId',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/practice/$practiceSessionId': typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  '/practice/start': typeof AuthenticatedAppPracticeStartRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
   '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/more/': typeof AuthenticatedAppMoreIndexRoute
@@ -241,6 +249,7 @@ export interface FileRoutesByTo {
   '/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/practice/$practiceSessionId': typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  '/practice/start': typeof AuthenticatedAppPracticeStartRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
   '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/more': typeof AuthenticatedAppMoreIndexRoute
@@ -272,6 +281,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/more/account': typeof AuthenticatedAppMoreAccountRoute
   '/_authenticated/_app/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
   '/_authenticated/_app/practice/$practiceSessionId': typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  '/_authenticated/_app/practice/start': typeof AuthenticatedAppPracticeStartRoute
   '/_authenticated/_app/sessions/new': typeof AuthenticatedAppSessionsNewRoute
   '/_authenticated/_app/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
   '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/more/account'
     | '/more/languages'
     | '/practice/$practiceSessionId'
+    | '/practice/start'
     | '/sessions/new'
     | '/sessions/new-text'
     | '/more/'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/more/account'
     | '/more/languages'
     | '/practice/$practiceSessionId'
+    | '/practice/start'
     | '/sessions/new'
     | '/sessions/new-text'
     | '/more'
@@ -360,6 +372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/more/account'
     | '/_authenticated/_app/more/languages'
     | '/_authenticated/_app/practice/$practiceSessionId'
+    | '/_authenticated/_app/practice/start'
     | '/_authenticated/_app/sessions/new'
     | '/_authenticated/_app/sessions/new-text'
     | '/_authenticated/_app/more/'
@@ -532,6 +545,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSessionsNewRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/practice/start': {
+      id: '/_authenticated/_app/practice/start'
+      path: '/practice/start'
+      fullPath: '/practice/start'
+      preLoaderRoute: typeof AuthenticatedAppPracticeStartRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/practice/$practiceSessionId': {
       id: '/_authenticated/_app/practice/$practiceSessionId'
       path: '/practice/$practiceSessionId'
@@ -588,6 +608,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
   AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
   AuthenticatedAppPracticePracticeSessionIdRoute: typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  AuthenticatedAppPracticeStartRoute: typeof AuthenticatedAppPracticeStartRoute
   AuthenticatedAppSessionsNewRoute: typeof AuthenticatedAppSessionsNewRoute
   AuthenticatedAppSessionsNewTextRoute: typeof AuthenticatedAppSessionsNewTextRoute
   AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
@@ -605,6 +626,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
   AuthenticatedAppPracticePracticeSessionIdRoute:
     AuthenticatedAppPracticePracticeSessionIdRoute,
+  AuthenticatedAppPracticeStartRoute: AuthenticatedAppPracticeStartRoute,
   AuthenticatedAppSessionsNewRoute: AuthenticatedAppSessionsNewRoute,
   AuthenticatedAppSessionsNewTextRoute: AuthenticatedAppSessionsNewTextRoute,
   AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,

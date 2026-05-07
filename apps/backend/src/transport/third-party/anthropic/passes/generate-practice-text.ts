@@ -71,7 +71,6 @@ type GeneratePracticeTextArgs = {
   nativeLanguage: string
   targetLanguage: string
   cefrLevel: string
-  l1InterferenceNotes: string
   chunks: PracticeChunkInput[]
   // Rescue mode: a stubborn chunk the LLM previously skipped in a multi-chunk
   // text. Switches the prompt to "single short sentence containing this one
@@ -358,7 +357,6 @@ export const generatePracticeText = async (args: GeneratePracticeTextArgs): Prom
       nativeLanguage: args.nativeLanguage,
       targetLanguage: args.targetLanguage,
       cefrLevel: args.cefrLevel,
-      l1InterferenceNotes: args.l1InterferenceNotes,
     }),
     tools: [buildTool()],
     tool_choice: { type: 'tool', name: TOOL_NAME },

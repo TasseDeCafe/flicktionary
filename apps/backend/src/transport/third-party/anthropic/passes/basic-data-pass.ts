@@ -40,7 +40,6 @@ type BasicDataPassArgs = {
   targetLanguage: string
   cefrLevel: string
   movieContextBlob: string
-  l1InterferenceNotes: string
   segments: SegmentInput[]
   highlights: HighlightInput[]
   excludedHeadwordSenses: ExcludedHeadwordSense[]
@@ -163,7 +162,6 @@ export const basicDataPass = async ({
   targetLanguage,
   cefrLevel,
   movieContextBlob,
-  l1InterferenceNotes,
   segments,
   highlights,
   excludedHeadwordSenses,
@@ -267,7 +265,6 @@ ${segmentLines}`
       targetLanguage,
       cefrLevel,
       movieContextBlob,
-      l1InterferenceNotes,
     }),
     tools: [buildTool(sameLanguage)],
     tool_choice: { type: 'tool', name: TOOL_NAME },

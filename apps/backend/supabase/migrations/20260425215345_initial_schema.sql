@@ -526,21 +526,6 @@ ALTER TABLE public.cards
   ON DELETE RESTRICT;
 
 -- =========================================================================
--- l1_interference_notes (shared across users)
--- =========================================================================
-
-CREATE TABLE public.l1_interference_notes (
-  l1_language TEXT NOT NULL,
-  target_language TEXT NOT NULL,
-  notes TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  CONSTRAINT l1_interference_notes_pkey PRIMARY KEY (l1_language, target_language)
-);
-
-ALTER TABLE public.l1_interference_notes ENABLE ROW LEVEL SECURITY;
-
--- =========================================================================
 -- user_target_language_prefs
 -- =========================================================================
 

@@ -60,7 +60,6 @@ import { HighlightsRepository } from './transport/database/highlights/highlights
 import { CardsRepository } from './transport/database/cards/cards-repository'
 import { CardChatMessagesRepository } from './transport/database/card-chat-messages/card-chat-messages-repository'
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
-import { L1InterferenceNotesRepository } from './transport/database/l1-interference-notes/l1-interference-notes-repository'
 import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
 import { PracticeSessionsRepository } from './transport/database/practice-sessions/practice-sessions-repository'
 import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
@@ -226,7 +225,6 @@ export const buildApp = ({
   const cardsRepository = CardsRepository()
   const cardChatMessagesRepository = CardChatMessagesRepository()
   const userTargetLanguagePrefsRepository = UserTargetLanguagePrefsRepository()
-  const l1InterferenceNotesRepository = L1InterferenceNotesRepository()
   const userLookupsRepository = UserLookupsRepository()
   const practiceSessionsRepository = PracticeSessionsRepository()
   const practiceTextsRepository = PracticeTextsRepository()
@@ -239,7 +237,6 @@ export const buildApp = ({
     studySessionsRepository,
     highlightsRepository,
     cardsRepository,
-    l1InterferenceNotesRepository,
     userLookupsRepository,
     usersRepository,
   }
@@ -260,7 +257,6 @@ export const buildApp = ({
   const startPracticeSessionDependencies = {
     practiceSessionsRepository,
     userLookupsRepository,
-    l1InterferenceNotesRepository,
     usersRepository,
   }
 
@@ -268,7 +264,6 @@ export const buildApp = ({
     practiceSessionsRepository,
     practiceTextsRepository,
     userLookupsRepository,
-    l1InterferenceNotesRepository,
     usersRepository,
   }
 
@@ -283,7 +278,6 @@ export const buildApp = ({
     studySessionsRepository,
     textSegmentsRepository,
     highlightsRepository,
-    l1InterferenceNotesRepository,
     userLookupsRepository,
   }
 
@@ -292,7 +286,6 @@ export const buildApp = ({
     cardChatMessagesRepository,
     studySessionsRepository,
     textSegmentsRepository,
-    l1InterferenceNotesRepository,
     userLookupsRepository,
   }
 

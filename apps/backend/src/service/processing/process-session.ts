@@ -5,11 +5,9 @@ import { TextSegmentsRepositoryInterface } from '../../transport/database/text-s
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
-import { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
-import { generateL1InterferenceNotes } from '../../transport/third-party/anthropic/passes/generate-l1-interference-notes'
 import {
   basicDataPass,
   BasicDataChunk,
@@ -23,7 +21,6 @@ export type ProcessingDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface
   cardsRepository: CardsRepositoryInterface
-  l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
 }
@@ -42,7 +39,6 @@ export const processSession = async (
     studySessionsRepository,
     highlightsRepository,
     cardsRepository,
-    l1InterferenceNotesRepository,
     userLookupsRepository,
     usersRepository,
   } = deps
@@ -97,23 +93,6 @@ export const processSession = async (
       await studySessionsRepository.updateContextBlob(sessionId, userId, contextBlob)
     }
 
-    // 2. L1 interference notes — generate per (L1, target) pair, cached forever.
-    let l1Row = await l1InterferenceNotesRepository.findByPair(session.native_language, session.target_language)
-    if (!l1Row) {
-      const notes = await generateL1InterferenceNotes({
-        nativeLanguage: session.native_language,
-        targetLanguage: session.target_language,
-      })
-      await l1InterferenceNotesRepository.upsertNotes(session.native_language, session.target_language, notes)
-      l1Row = {
-        l1_language: session.native_language,
-        target_language: session.target_language,
-        notes,
-        created_at: '',
-        updated_at: '',
-      }
-    }
-
     const llmHighlightsEnabled = await usersRepository.getLlmHighlightsEnabled(userId)
 
     // When LLM discovery is off, the only point of running the pass is to
@@ -147,7 +126,6 @@ export const processSession = async (
           targetLanguage: session.target_language,
           cefrLevel: session.cefr_level,
           movieContextBlob: contextBlob,
-          l1InterferenceNotes: l1Row.notes,
           segments: segmentInputs,
           highlights: newHighlights,
           excludedHeadwordSenses,

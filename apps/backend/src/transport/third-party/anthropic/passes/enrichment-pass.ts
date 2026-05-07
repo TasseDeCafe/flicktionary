@@ -25,7 +25,6 @@ type EnrichmentPassArgs = {
   targetLanguage: string
   cefrLevel: string
   movieContextBlob: string
-  l1InterferenceNotes: string
   surfaceForm: string
   surroundingSegments: string
   userNote?: string | null
@@ -112,7 +111,6 @@ export const enrichmentPass = async ({
   targetLanguage,
   cefrLevel,
   movieContextBlob,
-  l1InterferenceNotes,
   surfaceForm,
   surroundingSegments,
   userNote,
@@ -140,7 +138,6 @@ whichever are genuinely useful for this chunk.`
       targetLanguage,
       cefrLevel,
       movieContextBlob,
-      l1InterferenceNotes,
     }),
     tools: [tool],
     tool_choice: { type: 'tool', name: TOOL_NAME },

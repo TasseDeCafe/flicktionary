@@ -9,7 +9,6 @@ import {
 } from '../../transport/database/card-chat-messages/card-chat-messages-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
-import { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 
 export type RunCardChatDependencies = {
@@ -17,7 +16,6 @@ export type RunCardChatDependencies = {
   cardChatMessagesRepository: CardChatMessagesRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
-  l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
 }
 
@@ -193,8 +191,7 @@ export const runCardChat = async (
 
   const promptContext = await buildPromptContext(
     { sessionId: card.study_session_id, userId: input.userId },
-    deps.studySessionsRepository,
-    deps.l1InterferenceNotesRepository
+    deps.studySessionsRepository
   )
   if (!promptContext) {
     throw new Error('Cannot chat: session has not been processed yet')

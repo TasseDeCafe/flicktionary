@@ -4,16 +4,13 @@ import type {
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
-import type { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { ensureL1InterferenceNotes } from './ensure-l1-interference-notes'
 import { generatePracticeText } from '../../transport/third-party/anthropic/passes/generate-practice-text'
 
 export type GenerateNextPracticeTextDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
-  l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
   usersRepository: UsersRepositoryInterface
   // Optional override for tests / future CEFR-specific tuning.
   chunksPerText?: number
@@ -135,12 +132,6 @@ export const generateNextPracticeText = async (
   // and let the LLM ride that.
   const cefrLevel = 'B1'
 
-  const l1Notes = await ensureL1InterferenceNotes(
-    nativeLanguage,
-    session.target_language,
-    deps.l1InterferenceNotesRepository
-  )
-
   const ord = await deps.practiceTextsRepository.getNextOrd(practiceSessionId)
   const pending = await deps.practiceTextsRepository.insertPending({
     practiceSessionId,
@@ -153,7 +144,6 @@ export const generateNextPracticeText = async (
       nativeLanguage,
       targetLanguage: session.target_language,
       cefrLevel,
-      l1InterferenceNotes: l1Notes,
       chunks,
       rescueMode,
     })

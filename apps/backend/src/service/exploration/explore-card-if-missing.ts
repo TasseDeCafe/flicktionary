@@ -3,7 +3,6 @@ import { CardsRepositoryInterface } from '../../transport/database/cards/cards-r
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
-import { L1InterferenceNotesRepositoryInterface } from '../../transport/database/l1-interference-notes/l1-interference-notes-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
@@ -13,7 +12,6 @@ export type ExploreCardDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface
-  l1InterferenceNotesRepository: L1InterferenceNotesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
 }
 
@@ -44,9 +42,6 @@ export const exploreCardIfMissing = async (
     const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, userId)
     if (!session || !session.context_blob) return 'skipped'
 
-    const l1 = await deps.l1InterferenceNotesRepository.findByPair(session.native_language, session.target_language)
-    if (!l1) return 'skipped'
-
     const surrounding = await selectSurroundingSegments(
       session.text_track_id,
       card.segment_id,
@@ -69,7 +64,6 @@ export const exploreCardIfMissing = async (
       targetLanguage: session.target_language,
       cefrLevel: session.cefr_level,
       movieContextBlob: session.context_blob,
-      l1InterferenceNotes: l1.notes,
       surfaceForm: card.surface_form || card.chunk.headword,
       surroundingSegments: surroundingFormatted,
       userNote,

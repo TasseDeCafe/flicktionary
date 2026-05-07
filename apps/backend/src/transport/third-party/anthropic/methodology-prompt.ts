@@ -15,8 +15,9 @@ Core principles — apply to everything you do:
   + preposition, not fancier vocabulary. Flag these patterns when relevant.
 - Connotation and prosody. Synonyms can share a denotation but differ in emotional
   weight or rhythm. Always flag this.
-- L1 interference. See the L1 interference notes below. Flag false friends,
-  structural transfer, missing or extra grammatical features, register mismatches.
+- L1 interference. Apply your knowledge of typical interference patterns from the
+  user's native language to the target language: false friends, structural transfer,
+  missing or extra grammatical features, register mismatches.
 - Discourse markers and pragmatics. Words like 'well', 'I mean', 'the thing is'
   carry no lexical meaning but are essential for natural speech. Don't ignore them.
 - Collocational range. Some words are promiscuous (big, great, nice), some are
@@ -37,7 +38,6 @@ type BuildMethodologySystemArgs = {
   targetLanguage: string
   cefrLevel: string
   movieContextBlob: string
-  l1InterferenceNotes: string
 }
 
 // Builds a system prompt as an array of TextBlockParam, with a single ephemeral
@@ -48,15 +48,11 @@ export const buildMethodologySystem = ({
   targetLanguage,
   cefrLevel,
   movieContextBlob,
-  l1InterferenceNotes,
 }: BuildMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
 - Target language: ${targetLanguage}
 - CEFR level: ${cefrLevel}`
-
-  const l1Block = `L1 interference notes (${nativeLanguage} -> ${targetLanguage}):
-${l1InterferenceNotes}`
 
   const contextBlock = `Source context for this session:
 ${movieContextBlob}`
@@ -68,7 +64,6 @@ ${movieContextBlob}`
     blocks.push({ type: 'text', text: languageInstructions })
   }
   blocks.push({ type: 'text', text: userProfile })
-  blocks.push({ type: 'text', text: l1Block })
   blocks.push({ type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } })
   return blocks
 }
@@ -77,26 +72,21 @@ type BuildPracticeMethodologySystemArgs = {
   nativeLanguage: string
   targetLanguage: string
   cefrLevel: string
-  l1InterferenceNotes: string
 }
 
 // Variant for the Practice tab. Same cacheable prefix structure but without the
 // per-session source-context block (Practice texts aren't tied to a movie/source).
-// The cache breakpoint sits on the L1-interference block so subsequent practice
+// The cache breakpoint sits on the user profile block so subsequent practice
 // calls in the same session can reuse the prefix.
 export const buildPracticeMethodologySystem = ({
   nativeLanguage,
   targetLanguage,
   cefrLevel,
-  l1InterferenceNotes,
 }: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
 - Target language: ${targetLanguage}
 - CEFR level: ${cefrLevel}`
-
-  const l1Block = `L1 interference notes (${nativeLanguage} -> ${targetLanguage}):
-${l1InterferenceNotes}`
 
   const languageInstructions = getLanguageInstructions(targetLanguage)
 
@@ -104,7 +94,6 @@ ${l1InterferenceNotes}`
   if (languageInstructions) {
     blocks.push({ type: 'text', text: languageInstructions })
   }
-  blocks.push({ type: 'text', text: userProfile })
-  blocks.push({ type: 'text', text: l1Block, cache_control: { type: 'ephemeral' } })
+  blocks.push({ type: 'text', text: userProfile, cache_control: { type: 'ephemeral' } })
   return blocks
 }

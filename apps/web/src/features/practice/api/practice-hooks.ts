@@ -2,6 +2,13 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 
+type GetSessionCache = {
+  data: {
+    session: unknown
+    currentText: unknown
+  }
+}
+
 export const useDueSummary = () => {
   const { t } = useLingui()
   return useQuery(
@@ -15,8 +22,28 @@ export const useDueSummary = () => {
 
 export const useStartPracticeSession = () => {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.startSession.mutationOptions({
+      onSuccess: (response, variables) => {
+        // Seed the getSession cache so the session view doesn't pay a redundant
+        // round-trip after navigation — we just created the session, we know
+        // currentText is null, and the auto-trigger effect can fire immediately.
+        const sessionId = response.data.sessionId
+        queryClient.setQueryData<GetSessionCache>(orpcQuery.practice.getSession.queryKey({ input: { sessionId } }), {
+          data: {
+            session: {
+              id: sessionId,
+              userId: '',
+              targetLanguage: variables.targetLanguage,
+              status: 'active',
+              startedAt: new Date().toISOString(),
+              endedAt: null,
+            },
+            currentText: null,
+          },
+        })
+      },
       meta: {
         errorMessage: t`Failed to start practice session`,
         showErrorModal: true,
@@ -34,13 +61,6 @@ export const useGetPracticeSession = (sessionId: string) => {
       meta: { errorMessage: t`Failed to load practice session` },
     })
   )
-}
-
-type GetSessionCache = {
-  data: {
-    session: unknown
-    currentText: unknown
-  }
 }
 
 export const useGenerateNextPracticeText = (sessionId: string) => {
