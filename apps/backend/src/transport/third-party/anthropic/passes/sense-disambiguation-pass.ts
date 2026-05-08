@@ -4,6 +4,7 @@ import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
 const TOOL_NAME = 'submit_disambiguations'
 
 export type ExistingSense = {
+  headword: string
   sense: string
   definition: string | null
 }
@@ -89,7 +90,12 @@ export const senseDisambiguationPass = async ({
   const candidateBlocks = candidates
     .map((c) => {
       const existingLines = c.existingSenses
-        .map((s) => `    - sense: "${s.sense}"${s.definition ? ` | definition: ${s.definition}` : ''}`)
+        .map(
+          (s) =>
+            `    - headword: "${s.headword}" | sense: "${s.sense}"${
+              s.definition ? ` | definition: ${s.definition}` : ''
+            }`
+        )
         .join('\n')
       const definitionLine = c.candidateDefinition ? `\n  candidateDefinition: ${c.candidateDefinition}` : ''
       return `- candidateId: ${c.candidateId}

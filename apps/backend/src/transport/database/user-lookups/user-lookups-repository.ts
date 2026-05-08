@@ -92,36 +92,55 @@ const listHeadwordSensesRelevantToTrack = async (params: {
   }
 }
 
-// Case-insensitive lookup of every existing sense tracked under any of the
-// given headwords for a (user, target_language). Powers the Haiku tiebreaker
-// — for each LLM-emitted candidate that may collide with an existing entry,
-// we feed Haiku the candidate plus all senses already on file for that
-// headword and let it decide whether the candidate is a duplicate of an
-// existing sense or a genuinely new one.
+// Broad lookup of existing senses that may collide with each candidate
+// headword. Powers the Haiku tiebreaker — this deliberately overmatches:
+// exact lowercase equality OR shared FTS lexemes under the target language
+// regconfig. False positives are cheap because Haiku makes the final
+// duplicate/distinct decision; false negatives silently create duplicate
+// vocabulary rows.
 //
-// Result is keyed by lowercased headword so the caller can index in via
-// `chunk.headword.toLowerCase()` regardless of casing drift between LLM runs.
-const findExistingSensesByHeadwords = async (params: {
+// Result is keyed by the lowercased candidate headword so the caller can attach
+// the right existing-sense set to each LLM-emitted candidate.
+const findPotentialExistingSensesByHeadwords = async (params: {
   userId: string
   targetLanguage: string
   headwords: string[]
-}): Promise<Map<string, Array<{ sense: string; definition: string | null }>>> => {
+}): Promise<Map<string, Array<{ headword: string; sense: string; definition: string | null }>>> => {
   if (params.headwords.length === 0) return new Map()
-  const lowered = params.headwords.map((h) => h.toLowerCase())
+  const cfg = resolveRegconfig(params.targetLanguage)
   const result = (await sql`
-    SELECT headword, sense, definition
-    FROM public.user_lookups
-    WHERE user_id = ${params.userId}
-      AND target_language = ${params.targetLanguage}
-      AND deleted_at IS NULL
-      AND LOWER(headword) = ANY(${lowered}::text[])
-  `) as Array<{ headword: string; sense: string | null; definition: string | null }>
+    WITH candidate_inputs AS (
+      SELECT DISTINCT candidate_headword
+      FROM unnest(${params.headwords}::text[]) AS input(candidate_headword)
+    )
+    SELECT
+      ci.candidate_headword,
+      ul.headword,
+      ul.sense,
+      ul.definition
+    FROM candidate_inputs ci
+    JOIN public.user_lookups ul
+      ON ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.deleted_at IS NULL
+      AND (
+        LOWER(ul.headword) = LOWER(ci.candidate_headword)
+        OR tsvector_to_array(to_tsvector(${cfg}::regconfig, ul.headword))
+          && tsvector_to_array(to_tsvector(${cfg}::regconfig, ci.candidate_headword))
+      )
+    ORDER BY ci.candidate_headword ASC, ul.headword ASC, ul.sense ASC
+  `) as Array<{
+    candidate_headword: string
+    headword: string
+    sense: string | null
+    definition: string | null
+  }>
 
-  const grouped = new Map<string, Array<{ sense: string; definition: string | null }>>()
+  const grouped = new Map<string, Array<{ headword: string; sense: string; definition: string | null }>>()
   for (const row of result) {
-    const key = row.headword.toLowerCase()
+    const key = row.candidate_headword.toLowerCase()
     const senses = grouped.get(key) ?? []
-    senses.push({ sense: row.sense ?? '', definition: row.definition })
+    senses.push({ headword: row.headword, sense: row.sense ?? '', definition: row.definition })
     grouped.set(key, senses)
   }
   return grouped
@@ -740,11 +759,11 @@ export interface UserLookupsRepositoryInterface {
     targetLanguage: string
     textTrackId: string
   }) => Promise<{ headwordSenses: HeadwordSense[]; totalVocabSize: number }>
-  findExistingSensesByHeadwords: (params: {
+  findPotentialExistingSensesByHeadwords: (params: {
     userId: string
     targetLanguage: string
     headwords: string[]
-  }) => Promise<Map<string, Array<{ sense: string; definition: string | null }>>>
+  }) => Promise<Map<string, Array<{ headword: string; sense: string; definition: string | null }>>>
   findOrCreate: (params: {
     userId: string
     targetLanguage: string
@@ -807,7 +826,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
   return {
     listHeadwordSensesForLanguage,
     listHeadwordSensesRelevantToTrack,
-    findExistingSensesByHeadwords,
+    findPotentialExistingSensesByHeadwords,
     findOrCreate,
     updateContent,
     renameKey,

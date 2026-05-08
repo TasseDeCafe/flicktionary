@@ -177,10 +177,10 @@ export const processSession = async (
       // Sense-disambiguation tiebreaker (Haiku): the pre-filter is heuristic
       // guidance to Opus, not a correctness gate. After the pass returns, run
       // a cheap second LLM call only on LLM-discovered candidates whose
-      // headword collides (case-insensitive) with an existing user_lookups
-      // headword — Haiku decides which are duplicates of an existing sense
-      // vs genuinely new senses worth keeping. Highlights and below-CEFR rows
-      // bypass: highlights always pass through per spec; below-CEFR land as
+      // headword plausibly collides with an existing user_lookups headword —
+      // Haiku decides which are duplicates of an existing sense vs genuinely
+      // new senses worth keeping. Highlights and below-CEFR rows bypass:
+      // highlights always pass through per spec; below-CEFR land as
       // auto_rejected and shouldn't burn Haiku tokens.
       const dedupedChunks = await applySenseDisambiguationTiebreaker({
         sessionId,
@@ -300,12 +300,12 @@ const applySenseDisambiguationTiebreaker = async (params: {
   const eligibleForTiebreak = chunks.filter((c) => c.source === 'llm' && !c.belowCefr)
   if (eligibleForTiebreak.length === 0) return chunks
 
-  const existingByHeadword = await userLookupsRepository.findExistingSensesByHeadwords({
+  const existingByCandidateHeadword = await userLookupsRepository.findPotentialExistingSensesByHeadwords({
     userId: params.userId,
     targetLanguage: params.targetLanguage,
     headwords: eligibleForTiebreak.map((c) => c.headword),
   })
-  if (existingByHeadword.size === 0) {
+  if (existingByCandidateHeadword.size === 0) {
     await recordPassTelemetry(processingTelemetryRepository, {
       studySessionId: params.sessionId,
       passName: 'disambiguation',
@@ -318,7 +318,7 @@ const applySenseDisambiguationTiebreaker = async (params: {
   const candidateById = new Map<string, BasicDataChunk>()
   const candidates: CandidateForDisambiguation[] = []
   eligibleForTiebreak.forEach((chunk, index) => {
-    const existing = existingByHeadword.get(chunk.headword.toLowerCase())
+    const existing = existingByCandidateHeadword.get(chunk.headword.toLowerCase())
     if (!existing || existing.length === 0) return
     const candidateId = `c${index}`
     candidateById.set(candidateId, chunk)
@@ -376,7 +376,22 @@ const applySenseDisambiguationTiebreaker = async (params: {
     return chunks
   }
 
-  const duplicateIds = new Set(decisions.filter((d) => d.isDuplicate).map((d) => d.candidateId))
+  const allowedMatchedSensesByCandidateId = new Map(
+    candidates.map((candidate) => [
+      candidate.candidateId,
+      new Set(candidate.existingSenses.map((existingSense) => existingSense.sense)),
+    ])
+  )
+  const acceptedDuplicateDecisions = decisions.filter((decision) => {
+    if (!decision.isDuplicate || decision.matchedExistingSense === null) return false
+    return allowedMatchedSensesByCandidateId.get(decision.candidateId)?.has(decision.matchedExistingSense) ?? false
+  })
+  const rejectedDuplicateDecisions = decisions.filter(
+    (decision) =>
+      decision.isDuplicate &&
+      !acceptedDuplicateDecisions.some((accepted) => accepted.candidateId === decision.candidateId)
+  )
+  const duplicateIds = new Set(acceptedDuplicateDecisions.map((d) => d.candidateId))
   const droppedChunkRefs = new Set<BasicDataChunk>()
   for (const [candidateId, chunk] of candidateById.entries()) {
     if (duplicateIds.has(candidateId)) droppedChunkRefs.add(chunk)
@@ -400,6 +415,11 @@ const applySenseDisambiguationTiebreaker = async (params: {
         candidateId: d.candidateId,
         isDuplicate: d.isDuplicate,
         matchedExistingSense: d.matchedExistingSense,
+      })),
+      rejectedDuplicateDecisions: rejectedDuplicateDecisions.map((d) => ({
+        candidateId: d.candidateId,
+        matchedExistingSense: d.matchedExistingSense,
+        reason: 'matched_existing_sense_not_in_candidate_existing_senses',
       })),
       droppedCount: droppedChunkRefs.size,
     },
