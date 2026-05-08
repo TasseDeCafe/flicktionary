@@ -197,13 +197,17 @@ export const FocusView = () => {
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
             <div className='mb-3'>
-              <GrammarChips grammar={card.chunk.grammar} />
+              <GrammarChips grammar={card.chunk.grammar} targetLanguage={session?.targetLanguage} />
             </div>
             {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}
             <EditableCardFields key={`${card.id}:${card.updatedAt}`} card={card} sameLanguage={sameLanguage} />
             <div className='mt-4'>
-              <EditableGrammarPanel key={`grammar:${card.chunk.id}:${card.updatedAt}`} card={card} />
+              <EditableGrammarPanel
+                key={`grammar:${card.chunk.id}:${card.updatedAt}`}
+                card={card}
+                targetLanguage={session?.targetLanguage}
+              />
             </div>
           </section>
 

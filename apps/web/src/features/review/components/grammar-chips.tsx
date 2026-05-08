@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { Badge } from '@/components/ui/badge'
+import { getLanguageGrammarConfig } from '@flicktionary/core/constants/language-grammar'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 const asString = (v: unknown): string | null => {
@@ -39,15 +40,17 @@ const renderAspectLabel = (aspect: string): string => {
 
 type Props = {
   grammar: Grammar | Record<string, unknown> | null | undefined
+  targetLanguage?: string
 }
 
 // Compact pills surfaced near the headword so the highest-signal grammar
 // facts (gender for surprising nouns, aspect + pair for verbs, government,
 // plurale tantum, indeclinable) are glanceable. The full editable set lives
 // in EditableGrammarPanel below.
-export const GrammarChips = ({ grammar }: Props) => {
+export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const { t } = useLingui()
   const g = (grammar ?? {}) as Record<string, unknown>
+  const allowed = getLanguageGrammarConfig(targetLanguage).fields
 
   const gender = asString(g.gender)
   const aspect = asString(g.aspect)
@@ -59,55 +62,57 @@ export const GrammarChips = ({ grammar }: Props) => {
 
   const chips: React.ReactNode[] = []
 
-  if (gender) {
+  if (gender && allowed.includes('gender')) {
     chips.push(
       <Badge key='gender' variant='secondary' aria-label={t`Gender`}>
         {renderGenderLabel(gender)}
       </Badge>
     )
   }
-  if (aspect) {
+  if (aspect && allowed.includes('aspect')) {
     chips.push(
       <Badge key='aspect' variant='secondary' aria-label={t`Aspect`}>
         {renderAspectLabel(aspect)}
       </Badge>
     )
   }
-  if (aspectPair) {
+  if (aspectPair && allowed.includes('aspect_pair_headword')) {
     chips.push(
       <Badge key='aspect_pair' variant='outline' aria-label={t`Aspect pair`}>
         ↔ {aspectPair}
       </Badge>
     )
   }
-  if (government) {
+  if (government && allowed.includes('government')) {
     chips.push(
       <Badge key='government' variant='outline' aria-label={t`Government`}>
         {government}
       </Badge>
     )
   }
-  if (numberOnly === 'plurale_tantum') {
-    chips.push(
-      <Badge key='pl_tantum' variant='outline'>
-        pl. tantum
-      </Badge>
-    )
-  } else if (numberOnly === 'singulare_tantum') {
-    chips.push(
-      <Badge key='sg_tantum' variant='outline'>
-        sg. tantum
-      </Badge>
-    )
+  if (allowed.includes('number_only')) {
+    if (numberOnly === 'plurale_tantum') {
+      chips.push(
+        <Badge key='pl_tantum' variant='outline'>
+          pl. tantum
+        </Badge>
+      )
+    } else if (numberOnly === 'singulare_tantum') {
+      chips.push(
+        <Badge key='sg_tantum' variant='outline'>
+          sg. tantum
+        </Badge>
+      )
+    }
   }
-  if (isIndeclinable) {
+  if (isIndeclinable && allowed.includes('is_indeclinable')) {
     chips.push(
       <Badge key='indecl' variant='outline'>
         indecl.
       </Badge>
     )
   }
-  if (isReflexive) {
+  if (isReflexive && allowed.includes('is_reflexive')) {
     chips.push(
       <Badge key='refl' variant='outline'>
         refl.
