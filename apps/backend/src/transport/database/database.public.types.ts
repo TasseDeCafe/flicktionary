@@ -692,6 +692,7 @@ export type Database = {
           exploration_extras: Json
           exported_at: string | null
           first_card_id: string | null
+          grammar: Json
           headword: string
           id: string
           native_example: string | null
@@ -717,6 +718,7 @@ export type Database = {
           exploration_extras?: Json
           exported_at?: string | null
           first_card_id?: string | null
+          grammar?: Json
           headword: string
           id?: string
           native_example?: string | null
@@ -742,6 +744,7 @@ export type Database = {
           exploration_extras?: Json
           exported_at?: string | null
           first_card_id?: string | null
+          grammar?: Json
           headword?: string
           id?: string
           native_example?: string | null

@@ -26,6 +26,7 @@ const toChunkDto = (chunk: DbChunkSummary) => ({
   targetExample: chunk.target_example,
   nativeExample: chunk.native_example,
   explorationExtras: (chunk.exploration_extras ?? {}) as Record<string, unknown>,
+  grammar: (chunk.grammar ?? {}) as Record<string, unknown>,
 })
 
 const toCardDto = (row: DbCardWithChunk) => ({

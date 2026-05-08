@@ -455,6 +455,15 @@ ALTER TABLE public.card_chat_messages ENABLE ROW LEVEL SECURITY;
 -- exploration". translation and native_example are nullable so L1 = L2
 -- sessions can leave them empty and rely on definition instead.
 --
+-- grammar is a parallel JSONB bag for typed, language-agnostic
+-- morphology/grammar facts (pos, gender, aspect, aspect_pair_headword,
+-- government, number_only, is_indeclinable, is_reflexive, animacy,
+-- display_form, notable_forms, notes). Populated by the basic-data pass
+-- and refinable by the enrichment pass. Kept separate from
+-- exploration_extras so the renderer can treat grammar facts (chips near
+-- the headword, structured editors) differently from learning content
+-- (etymology, register, etc.).
+--
 -- first_card_id points at the originating card (the first detection that
 -- created this row). It is set on creation and never updated; it powers the
 -- "Open source" navigation in the vocabulary view.
@@ -472,6 +481,7 @@ CREATE TABLE public.user_lookups (
   target_example TEXT NULL,
   native_example TEXT NULL,
   exploration_extras JSONB NOT NULL DEFAULT '{}'::jsonb,
+  grammar JSONB NOT NULL DEFAULT '{}'::jsonb,
   first_card_id UUID NULL,
   exported_at TIMESTAMP WITH TIME ZONE NULL,
   count INTEGER NOT NULL DEFAULT 0,

@@ -60,6 +60,11 @@ export type BasicDataChunk = {
   definition: string | null
   targetExample: string | null
   nativeExample: string | null
+  // Optional language-specific morphology / grammar facts. Sparse — keys
+  // populated only when relevant to the chunk and target language. See
+  // packages/api-client/.../flicktionary-schemas.ts (GrammarSchema) and the
+  // language-instructions block for per-language guidance.
+  grammar?: Record<string, unknown>
   belowCefr: boolean
   reasoning?: string
 }
@@ -132,6 +137,51 @@ const buildTool = (sameLanguage: boolean): Anthropic.Tool => ({
               type: 'boolean',
               description:
                 "True if the chunk is below the learner's CEFR level. For LLM-discovered chunks you should not submit such chunks at all — but if one slips in, set this true and skip the translation/definition/example fields (set them to null) to save tokens. For source='highlight' you MUST emit a row regardless of level (always set below_cefr=false for highlights — the user explicitly asked).",
+            },
+            grammar: {
+              type: 'object',
+              description:
+                "Optional sparse bag of typed morphology / grammar facts for this chunk. Include keys only when they are useful for THIS chunk in THIS target language; omit the whole object when nothing applies. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть` — keep the headword itself clean), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string — the counterpart's clean lemma), `is_reflexive` (boolean), `government` (case/preposition pattern, e.g. '+ acc', 'от + gen', 'с + instr'), `notable_forms` (array of {label, form} for irregular paradigm cells, max 3), `notes` (free-form, last resort). The per-target-language instructions in the system prompt say WHEN to fill which keys.",
+              properties: {
+                pos: {
+                  type: 'string',
+                  enum: [
+                    'noun',
+                    'verb',
+                    'adjective',
+                    'adverb',
+                    'preposition',
+                    'pronoun',
+                    'particle',
+                    'conjunction',
+                    'numeral',
+                    'phrase',
+                    'idiom',
+                    'other',
+                  ],
+                },
+                display_form: { type: 'string' },
+                gender: { type: 'string', enum: ['m', 'f', 'n', 'c'] },
+                number_only: { type: 'string', enum: ['plurale_tantum', 'singulare_tantum'] },
+                is_indeclinable: { type: 'boolean' },
+                animacy: { type: 'string', enum: ['animate', 'inanimate'] },
+                aspect: { type: 'string', enum: ['impf', 'perf', 'biaspectual'] },
+                aspect_pair_headword: { type: 'string' },
+                is_reflexive: { type: 'boolean' },
+                government: { type: 'string' },
+                notable_forms: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      label: { type: 'string' },
+                      form: { type: 'string' },
+                    },
+                    required: ['label', 'form'],
+                  },
+                },
+                notes: { type: 'string' },
+              },
             },
             reasoning: {
               type: 'string',
@@ -235,7 +285,12 @@ Selection criteria for LLM-discovered chunks — apply strictly:
 - Headwords must be in dictionary citation form (lemmatized). Verbs as
   infinitives, nouns as singular masculine, pronominal verbs include 'se'
   ('fundirse con', not 'se fundía con'). Surface_form is the literal form
-  in the segment.${excludedBlock}${sameLangNote}${highlightsBlock}
+  in the segment.
+- Populate the optional \`grammar\` object per chunk when relevant for the
+  target language — see the per-target-language guidance in the system
+  prompt for which keys to fill (e.g. aspect/aspect_pair_headword for
+  Russian verbs, gender for surprising nouns, government for case-taking
+  verbs/prepositions). Skip the object entirely when nothing applies.${excludedBlock}${sameLangNote}${highlightsBlock}
 
 Segments (id followed by text):
 ${segmentLines}`
@@ -245,7 +300,9 @@ have source='highlight' and a matching highlight_id from the list below. Do
 not emit any source='llm' rows.
 
 For every emitted row, populate the basic data: headword, sense, surface_form,
-segment_id, translation, definition, target_example, native_example.
+segment_id, translation, definition, target_example, native_example. Populate
+the optional \`grammar\` object per chunk when relevant for the target
+language (see the system prompt for per-language guidance).
 The learner is at ${cefrLevel}, native language ${nativeLanguage}, target
 ${targetLanguage}. Headwords must be in dictionary citation form (lemmatized).${sameLangNote}${highlightsBlock}
 
@@ -302,6 +359,10 @@ export const parseBasicDataChunks = (raw: Array<Record<string, unknown>>): Basic
     definition: typeof c.definition === 'string' ? c.definition : null,
     targetExample: typeof c.target_example === 'string' ? c.target_example : null,
     nativeExample: typeof c.native_example === 'string' ? c.native_example : null,
+    grammar:
+      c.grammar && typeof c.grammar === 'object' && !Array.isArray(c.grammar)
+        ? (c.grammar as Record<string, unknown>)
+        : undefined,
     belowCefr: Boolean(c.below_cefr),
     reasoning: typeof c.reasoning === 'string' ? c.reasoning : undefined,
   }))

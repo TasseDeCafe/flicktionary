@@ -62,8 +62,8 @@ const findOrCreate = async (params: {
 
 // Patch any subset of the canonical content fields. `undefined`/`null`
 // preserve the existing value (COALESCE semantic); to clear a basic field,
-// pass an explicit empty string. `explorationExtrasPatch` is shallow-merged
-// into exploration_extras via JSONB `||` on the server.
+// pass an explicit empty string. `explorationExtrasPatch` and `grammarPatch`
+// are shallow-merged into their JSONB columns via `||` on the server.
 const updateContent = async (params: {
   id: string
   translation?: string | null
@@ -71,9 +71,12 @@ const updateContent = async (params: {
   targetExample?: string | null
   nativeExample?: string | null
   explorationExtrasPatch?: Record<string, unknown> | null
+  grammarPatch?: Record<string, unknown> | null
 }): Promise<void> => {
   const extras = params.explorationExtrasPatch ?? null
   const extrasJson = extras ? sql.json(extras as unknown as postgres.JSONValue) : null
+  const grammar = params.grammarPatch ?? null
+  const grammarJson = grammar ? sql.json(grammar as unknown as postgres.JSONValue) : null
   await sql`
     UPDATE public.user_lookups
     SET
@@ -81,7 +84,8 @@ const updateContent = async (params: {
       definition = COALESCE(${params.definition ?? null}, definition),
       target_example = COALESCE(${params.targetExample ?? null}, target_example),
       native_example = COALESCE(${params.nativeExample ?? null}, native_example),
-      exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb)
+      exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb),
+      grammar = grammar || COALESCE(${grammarJson}::jsonb, '{}'::jsonb)
     WHERE id = ${params.id}
   `
 }
@@ -326,6 +330,7 @@ export type ExportChunkRow = {
   targetExample: string | null
   nativeExample: string | null
   explorationExtras: Record<string, unknown>
+  grammar: Record<string, unknown>
   surfaceForm: string
   segmentText: string
 }
@@ -343,6 +348,7 @@ const listKeptChunksForExport = async (params: {
       ul.target_example,
       ul.native_example,
       ul.exploration_extras,
+      ul.grammar,
       c.surface_form,
       ts.text AS segment_text
     FROM public.user_lookups ul
@@ -362,6 +368,7 @@ const listKeptChunksForExport = async (params: {
     targetExample: (row.target_example as string | null) ?? null,
     nativeExample: (row.native_example as string | null) ?? null,
     explorationExtras: (row.exploration_extras as Record<string, unknown> | null) ?? {},
+    grammar: (row.grammar as Record<string, unknown> | null) ?? {},
     surfaceForm: (row.surface_form as string | null) ?? '',
     segmentText: (row.segment_text as string | null) ?? '',
   }))
@@ -397,6 +404,7 @@ export type ChunkRow = {
   targetExample: string | null
   nativeExample: string | null
   explorationExtras: Record<string, unknown>
+  grammar: Record<string, unknown>
   count: number
   srsState: SrsState | null
   srsDue: string | null
@@ -419,6 +427,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.target_example,
     ul.native_example,
     ul.exploration_extras,
+    ul.grammar,
     ul.count,
     ul.srs_state,
     ul.srs_due,
@@ -442,6 +451,7 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   targetExample: (row.target_example as string | null) ?? null,
   nativeExample: (row.native_example as string | null) ?? null,
   explorationExtras: ((row.exploration_extras as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
+  grammar: ((row.grammar as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
   count: (row.count as number) ?? 0,
   srsState: (row.srs_state as SrsState | null) ?? null,
   srsDue: (row.srs_due as string | null) ?? null,
@@ -643,6 +653,7 @@ export interface UserLookupsRepositoryInterface {
     targetExample?: string | null
     nativeExample?: string | null
     explorationExtrasPatch?: Record<string, unknown> | null
+    grammarPatch?: Record<string, unknown> | null
   }) => Promise<void>
   renameKey: (params: { id: string; headword: string; sense: string }) => Promise<RenameKeyResult>
   upsertOnExport: (params: { userLookupId: string; firstCardId: string | null }) => Promise<void>

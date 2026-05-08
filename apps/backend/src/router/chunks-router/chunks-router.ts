@@ -26,6 +26,7 @@ const toChunkDto = (row: DbUserLookup) => ({
   targetExample: row.target_example,
   nativeExample: row.native_example,
   explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
+  grammar: (row.grammar ?? {}) as Record<string, unknown>,
 })
 
 // postgres.js returns timestamptz columns as JS Date objects; the wire schema
@@ -47,6 +48,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   targetExample: row.targetExample,
   nativeExample: row.nativeExample,
   explorationExtras: row.explorationExtras,
+  grammar: row.grammar,
   count: row.count,
   srsState: row.srsState,
   srsDue: toIsoString(row.srsDue),
@@ -94,6 +96,7 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         targetExample: input.patch.targetExample,
         nativeExample: input.patch.nativeExample,
         explorationExtrasPatch: input.patch.explorationExtrasPatch ?? null,
+        grammarPatch: input.patch.grammarPatch ?? null,
       })
       const refreshed = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
       if (!refreshed) {

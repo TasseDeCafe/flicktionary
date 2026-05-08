@@ -173,6 +173,15 @@ export const processSession = async (
             definition: chunk.definition,
             targetExample: chunk.targetExample,
             nativeExample: chunk.nativeExample,
+            grammarPatch: chunk.grammar ?? null,
+          })
+        } else if (chunk.grammar) {
+          // Existing row already had content from an earlier session. Don't
+          // touch the user's text edits, but still merge any grammar facts
+          // the model emitted this round — they're additive.
+          await userLookupsRepository.updateContent({
+            id: lookup.id,
+            grammarPatch: chunk.grammar,
           })
         }
 

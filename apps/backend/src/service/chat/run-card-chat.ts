@@ -37,7 +37,7 @@ const UPDATE_TOOL_NAME = 'update_card_fields'
 const updateCardFieldsTool: Anthropic.Tool = {
   name: UPDATE_TOOL_NAME,
   description:
-    'Patch one or more fields on the card under discussion. Pass only the fields that should change — do not echo unchanged fields. To clear a basic text field, send an explicit empty string. `extras_patch` is shallow-merged into the optional enrichment bag.',
+    'Patch one or more fields on the card under discussion. Pass only the fields that should change — do not echo unchanged fields. To clear a basic text field, send an explicit empty string. `extras_patch` and `grammar_patch` are shallow-merged into their respective bags.',
   input_schema: {
     type: 'object',
     properties: {
@@ -53,6 +53,11 @@ const updateCardFieldsTool: Anthropic.Tool = {
         description:
           'Object of optional enrichment keys to merge into exploration_extras. Recognized keys: ipa, frequency, more_frequent_synonym, regionalism, register, register_alternatives, collocations, etymology, l1_notes, notes, context_segment.',
       },
+      grammar_patch: {
+        type: 'object',
+        description:
+          'Object of typed morphology / grammar keys to merge into the grammar bag. Recognized keys: pos, display_form, gender, number_only, is_indeclinable, animacy, aspect, aspect_pair_headword, is_reflexive, government, notable_forms, notes. See the per-target-language guidance in the system prompt for which keys to fill.',
+      },
     },
   },
 }
@@ -67,6 +72,12 @@ const renderCardForChat = (card: DbCardWithChunk): string => {
     `- target_example: ${card.chunk.target_example ?? '(none)'}`,
     `- native_example: ${card.chunk.native_example ?? '(none)'}`,
   ]
+  const grammar = (card.chunk.grammar ?? {}) as Record<string, unknown>
+  if (Object.keys(grammar).length > 0) {
+    lines.push(`- grammar:\n${JSON.stringify(grammar, null, 2)}`)
+  } else {
+    lines.push('- grammar: (empty)')
+  }
   const extras = (card.chunk.exploration_extras ?? {}) as Record<string, unknown>
   if (Object.keys(extras).length > 0) {
     lines.push(`- exploration_extras:\n${JSON.stringify(extras, null, 2)}`)
@@ -112,6 +123,7 @@ type CardFieldsToolInput = {
   target_example?: unknown
   native_example?: unknown
   extras_patch?: unknown
+  grammar_patch?: unknown
 }
 
 const FIELD_KEYS: Array<keyof CardFieldsToolInput> = [
@@ -134,6 +146,7 @@ type ParsedPatch = {
     targetExample: string | null
     nativeExample: string | null
     extrasPatch: Record<string, unknown> | null
+    grammarPatch: Record<string, unknown> | null
   }
   changedFieldNames: string[]
 }
@@ -165,6 +178,13 @@ const parseToolInput = (raw: unknown): ParsedPatch | null => {
     else extrasPatch = null
   }
 
+  let grammarPatch: Record<string, unknown> | null = null
+  if (input.grammar_patch && typeof input.grammar_patch === 'object' && !Array.isArray(input.grammar_patch)) {
+    grammarPatch = input.grammar_patch as Record<string, unknown>
+    if (Object.keys(grammarPatch).length > 0) changedFieldNames.push('grammar')
+    else grammarPatch = null
+  }
+
   if (changedFieldNames.length === 0) return null
 
   return {
@@ -177,6 +197,7 @@ const parseToolInput = (raw: unknown): ParsedPatch | null => {
       targetExample,
       nativeExample,
       extrasPatch,
+      grammarPatch,
     },
     changedFieldNames,
   }
@@ -256,7 +277,8 @@ export const runCardChat = async (
         parsed.patch.definition !== null ||
         parsed.patch.targetExample !== null ||
         parsed.patch.nativeExample !== null ||
-        parsed.patch.extrasPatch !== null
+        parsed.patch.extrasPatch !== null ||
+        parsed.patch.grammarPatch !== null
       if (contentTouched) {
         await deps.userLookupsRepository.updateContent({
           id: card.user_lookup_id,
@@ -265,6 +287,7 @@ export const runCardChat = async (
           targetExample: parsed.patch.targetExample,
           nativeExample: parsed.patch.nativeExample,
           explorationExtrasPatch: parsed.patch.extrasPatch,
+          grammarPatch: parsed.patch.grammarPatch,
         })
       }
       if (parsed.patch.headword !== null || parsed.patch.sense !== null) {

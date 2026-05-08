@@ -14,6 +14,8 @@ import {
 import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
 import { EditableCardFields } from './editable-card-fields'
+import { EditableGrammarPanel } from './editable-grammar-panel'
+import { GrammarChips } from './grammar-chips'
 import { PerCardChat } from './per-card-chat'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
 import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
@@ -194,9 +196,15 @@ export const FocusView = () => {
         <div className='mx-auto flex max-w-4xl flex-col gap-6'>
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
+            <div className='mb-3'>
+              <GrammarChips grammar={card.chunk.grammar} />
+            </div>
             {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}
             <EditableCardFields key={`${card.id}:${card.updatedAt}`} card={card} sameLanguage={sameLanguage} />
+            <div className='mt-4'>
+              <EditableGrammarPanel key={`grammar:${card.chunk.id}:${card.updatedAt}`} card={card} />
+            </div>
           </section>
 
           <section>

@@ -554,6 +554,81 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     Combined gate: `!done && (isLoading || isAdvancing || !currentText)`.
     The previous "Loading…" div is gone.
 
+- **Per-language grammar enrichment (2026-05-07).** New typed JSONB bag on
+  `user_lookups` for sparse, language-agnostic morphology / grammar facts —
+  surfaced as compact chips near the headword and an editable panel in the
+  focus view. Russian, English, and (lightly) Spanish each got dedicated
+  guidance in the per-target-language instructions block. Don't re-introduce
+  the prior "annotations live inline in the headword" pattern — the
+  headword stays clean for matching, all morphology lives in `grammar`.
+  - **Schema delta** in the consolidated migration: `user_lookups.grammar
+    JSONB NOT NULL DEFAULT '{}'::jsonb` next to `exploration_extras`.
+    Modified in place + `supabase db reset --local`.
+    `database.public.types.ts` hand-extended.
+  - **`GrammarSchema`** in `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
+    is a Zod object with `.passthrough()` and every field
+    `.nullable().optional()` because both the LLM and the JSONB `||`
+    merge can leave explicit nulls on disk (the editable panel's "clear"
+    path stamps `null`; the model occasionally emits `notable_forms: null`
+    despite the tool schema saying "array"). The renderer treats null
+    and absent identically. Don't re-introduce the strict variant — it
+    500s the triage view on otherwise-valid rows.
+  - **Both LLM passes emit grammar.** `basic-data-pass.ts` tool schema
+    gained an optional `grammar` object per chunk; emitted inline (no
+    extra round trip, ~tens of tokens per row). `enrichment-pass.ts`
+    mirrors the schema so the on-demand pass can refine. Persistence in
+    `process-session.ts` additively merges new grammar facts even into
+    rows that already had content from earlier sessions (a chunk seen
+    in a Russian session before this shipped will pick up its grammar
+    on the next time it surfaces, without overwriting any user edits to
+    translation/definition).
+  - **`updateContent` accepts `grammarPatch`** end-to-end:
+    `chunks-contract.ts` → `chunks-router.ts` →
+    `userLookupsRepository.updateContent` (JSONB `||` merge mirroring
+    extras). The chat tool's `update_card_fields` gained `grammar_patch`
+    so the assistant can correct gender / aspect pair / government
+    when asked. `renderCardForChat` prints the grammar bag so the model
+    sees its current state.
+  - **Russian instructions block** (`ru` / `rus` / `russian`) codifies
+    the rules from `skills-previous-project/flashcard-data-guidelines.md`
+    and the four `clean-russian-*` / `clean-language-reactor` /
+    `clean-kindle-vocab` skills: clean headword, soft-sign masculine
+    flagging only when surprising, aspect + aspect_pair_headword on
+    every verb, government format (`от + gen`, `+ acc`, `с + instr`),
+    plurale tantum (`деньги` / `ножницы` / `часы`), stress-marked
+    `display_form` (skip monosyllables and ё-words), 1–3 notable_forms
+    max for irregular paradigm cells.
+  - **English instructions block** (`en` / `eng` / `english`) sets the
+    marked-infinitive convention for verbs (`to practice`,
+    `to look forward to`) — `to` goes only in the headword, never in
+    example sentences. Defines `government` for prepositional verbs
+    (`+ on (gerund)`), `notable_forms` for irregular pasts /
+    past participles / plurals / comparatives (skip regular `-ed`
+    paradigms), `number_only` for `scissors` / `news` / `mathematics`.
+    Explicit "leave unset" for `gender` / `aspect` / `animacy` /
+    `display_form` / `is_reflexive`.
+  - **Spanish instructions block** got brief grammar-field guidance
+    appended (gender for unpredictable nouns like `el problema` /
+    `la mano`, `is_reflexive` for intrinsically pronominal verbs,
+    `government` for fixed-preposition verbs like `depender de`).
+  - **Frontend.** New
+    `apps/web/src/features/review/components/grammar-chips.tsx`
+    (compact pills near the headword: gender / aspect / `↔ <pair>` /
+    government / pl. tantum / indecl. / refl.) and
+    `editable-grammar-panel.tsx` (collapsible section below the basic
+    fields; native `<select>` for enums, text inputs for headword
+    pointers and government and display_form, checkboxes for booleans,
+    add/remove list editor for `notable_forms`). 600ms-debounced PATCH
+    via `useUpdateChunkContent`; `lastSavedRef` pattern guards against
+    chat-tool clobber. Wired into `focus-view.tsx`'s Card section
+    (chips above the inputs, panel below).
+  - **Backend unit tests.** `basic-data-pass.unit.test.ts` got 3 new
+    cases: round-trips a Russian grammar bag (gender, aspect,
+    aspect_pair_headword, government, plurale_tantum, notable_forms);
+    preserves unknown keys via passthrough (forward-compat for
+    languages we haven't tuned yet — e.g. `tone` for Mandarin); treats
+    a missing or non-object `grammar` as `undefined`.
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still
@@ -607,6 +682,7 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
      - **Chat tool calls** — ask the assistant in chat to "rewrite the example sentence" or "use a different translation". The basic columns update server-side, the field inputs remount with the new values, and the assistant body shows `_Updated: <fields>_`.
      - **Cross-session dedup** — export a Spanish session that includes a polysemous word (`correr` with one sense). Start a second Spanish session containing `correr` in a different sense and process. The new sense should appear as a new card; the same sense should be excluded. Inspect `user_lookups` to confirm the composite PK `(user, lang, headword, sense)` lets both rows coexist.
      - **SRT markup** — import a track with `<i>...</i>` cues. Confirm rendered segments show plain text (not raw tags), that highlighting still aligns to the right characters, and that the LLM passes do not see markup.
+     - **Per-language grammar enrichment** — process a Russian session with at least one of each kind: a soft-sign masculine noun (`день` / `гость`), an imperfective verb with a paired perfective (`видеть` / `увидеть`), a verb with case government (`зависеть от`, `издеваться над`), a plurale-tantum noun (`деньги` / `калоши`), a stress-marked common word. Open the focus view: chips render `m.` next to `день`, `несов.` + `↔ увидеть` next to `видеть`, `+ gen` next to `зависеть`, `pl. tantum` next to `деньги`. Open the Grammar panel; flip the gender on one row to confirm the debounced PATCH lands and survives a refetch. Then process an English session and confirm verb headwords come back as `to <verb>` (e.g. `to practice`, `to look forward to`), example sentences use the conjugated form, and `notable_forms` is populated for irregulars (`went`/`gone`, `children`, `better`/`best`). Triage list must load without a 500 (regression test for the original `notable_forms: null` bug).
      - **Practice golden path** — keep ≥10 cards in a single target language → tap the `Practice` tab → confirm the landing shows the language with `due / new / total` counts that match `SELECT COUNT(*) FROM user_lookups WHERE user_id=… AND target_language=…` → start session → first text generates within ~10s with all 7 chunks visibly highlighted (no offset-mismatch warning) → tap a chunk → `RateSheet` opens with headword + sense → rate `Hard` → spinner → text 2 generates and reuses the cache update path (NO stale flash, NO double LLM call). Repeat until `done: true`. Inspect `practice_ratings` (should have 1 explicit Hard + 6 implicit Goods per advanced text), `user_lookups.srs_state` (now non-null), and `practice_sessions.status` (should be `'completed'` once `done: true` returned).
 4. The TanStack Router route tree (`apps/web/src/app/routeTree.gen.ts`) regenerates on Vite startup — if you delete or add route files and need it regen'd without running dev, run `pnpm exec vite build --mode development` in `apps/web` for ~3 seconds in the background, then kill it.
 5. After backend schema changes, regenerate types from `apps/backend/supabase/supabase-dev-tunnel/`: `doppler run -- supabase gen types typescript --local > /Users/sebastien/Documents/flicktionary/apps/backend/src/transport/database/database.public.types.ts`.

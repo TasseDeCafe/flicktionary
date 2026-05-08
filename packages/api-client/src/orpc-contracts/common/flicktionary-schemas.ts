@@ -47,6 +47,77 @@ export type Highlight = z.infer<typeof HighlightSchema>
 export const ExplorationExtrasSchema = z.record(z.string(), z.unknown())
 export type ExplorationExtras = z.infer<typeof ExplorationExtrasSchema>
 
+// Typed-but-sparse grammar/morphology bag stored alongside the canonical
+// content fields on user_lookups. Every key is optional; the renderer shows
+// only what's populated. Shape is language-agnostic: Russian uses aspect +
+// aspect_pair_headword + government, Spanish uses gender, German uses
+// gender + government, English mostly leaves it empty. Forward-compatible
+// via passthrough — unknown future keys (e.g. tone for Mandarin) round-trip
+// without a contract bump.
+export const GrammarPosSchema = z.enum([
+  'noun',
+  'verb',
+  'adjective',
+  'adverb',
+  'preposition',
+  'pronoun',
+  'particle',
+  'conjunction',
+  'numeral',
+  'phrase',
+  'idiom',
+  'other',
+])
+export type GrammarPos = z.infer<typeof GrammarPosSchema>
+
+export const GrammarGenderSchema = z.enum(['m', 'f', 'n', 'c'])
+export type GrammarGender = z.infer<typeof GrammarGenderSchema>
+
+export const GrammarAspectSchema = z.enum(['impf', 'perf', 'biaspectual'])
+export type GrammarAspect = z.infer<typeof GrammarAspectSchema>
+
+export const GrammarNumberOnlySchema = z.enum(['plurale_tantum', 'singulare_tantum'])
+export type GrammarNumberOnly = z.infer<typeof GrammarNumberOnlySchema>
+
+export const GrammarAnimacySchema = z.enum(['animate', 'inanimate'])
+export type GrammarAnimacy = z.infer<typeof GrammarAnimacySchema>
+
+export const GrammarNotableFormSchema = z.object({
+  label: z.string(),
+  form: z.string(),
+})
+export type GrammarNotableForm = z.infer<typeof GrammarNotableFormSchema>
+
+// Every key is `.nullable().optional()` because LLMs and JSONB-merge writes
+// both occasionally leave explicit `null` values in the bag (the model emits
+// `"notable_forms": null` despite the tool schema saying "array"; the
+// editable panel's "clear" path stamps `null` via JSONB `||`). The renderer
+// treats null and absent identically, so accepting null on read keeps the
+// view from 500ing on otherwise-valid rows.
+export const GrammarSchema = z
+  .object({
+    pos: GrammarPosSchema.nullable().optional(),
+    // Display variant — canonical-but-decorated form. Russian: stress-marked
+    // (`ви́деть`); the headword stays clean (`видеть`) for matching/lemmatization.
+    display_form: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
+    // Nominal
+    gender: GrammarGenderSchema.nullable().optional(),
+    number_only: GrammarNumberOnlySchema.nullable().optional(),
+    is_indeclinable: z.boolean().nullable().optional(),
+    animacy: GrammarAnimacySchema.nullable().optional(),
+    // Verbal
+    aspect: GrammarAspectSchema.nullable().optional(),
+    aspect_pair_headword: z.string().nullable().optional(),
+    is_reflexive: z.boolean().nullable().optional(),
+    // Government / case requirements (e.g. "+ acc", "от + gen", "с + instr")
+    government: z.string().nullable().optional(),
+    // Irregular / notable forms — open list of (label, form) pairs.
+    notable_forms: z.array(GrammarNotableFormSchema).nullable().optional(),
+  })
+  .passthrough()
+export type Grammar = z.infer<typeof GrammarSchema>
+
 // The canonical vocabulary entry: one row per (user, targetLanguage, headword,
 // sense). Owns the gloss/example fields so edits propagate to every card that
 // references it. Cards carry a `chunk` of this shape on read paths.
@@ -61,6 +132,7 @@ export const ChunkSchema = z.object({
   targetExample: z.string().nullable(),
   nativeExample: z.string().nullable(),
   explorationExtras: ExplorationExtrasSchema,
+  grammar: GrammarSchema.default({}),
 })
 export type Chunk = z.infer<typeof ChunkSchema>
 

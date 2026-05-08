@@ -35,7 +35,9 @@ export type ChunksCursor = z.infer<typeof ChunksCursorSchema>
 export const chunksContract = {
   // Patch any subset of the gloss/example fields. `undefined` (omitted)
   // preserves the existing value; `null` clears it. `explorationExtrasPatch`
-  // is shallow-merged into exploration_extras via JSONB `||` on the server.
+  // and `grammarPatch` are shallow-merged into their JSONB columns via `||`
+  // on the server (set a key to JSON null to "clear" it visually — the
+  // renderer hides nulls).
   updateContent: oc
     .route({ method: 'PATCH', path: '/chunks/{chunkId}/content', successStatus: 200 })
     .errors({
@@ -51,6 +53,7 @@ export const chunksContract = {
           targetExample: z.string().nullable().optional(),
           nativeExample: z.string().nullable().optional(),
           explorationExtrasPatch: z.record(z.string(), z.unknown()).nullable().optional(),
+          grammarPatch: z.record(z.string(), z.unknown()).nullable().optional(),
         }),
       })
     )

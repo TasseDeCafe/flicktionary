@@ -13,6 +13,7 @@ const newRow: DbUserLookup = {
   target_example: null,
   native_example: null,
   exploration_extras: {},
+  grammar: {},
   first_card_id: null,
   exported_at: null,
   count: 1,

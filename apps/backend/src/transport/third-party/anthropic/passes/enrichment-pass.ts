@@ -8,7 +8,8 @@ const TOOL_NAME = 'submit_enrichment'
 //
 // Required fields are the basic columns (the model may refine them based on
 // deeper analysis with the surrounding context). Optional fields are bundled
-// into `extras` and persisted into `cards.exploration_extras`.
+// into `extras` (persisted into user_lookups.exploration_extras) and `grammar`
+// (persisted into user_lookups.grammar — typed morphology / grammar facts).
 export type EnrichmentOutput = {
   headword: string
   sense: string
@@ -18,6 +19,7 @@ export type EnrichmentOutput = {
   target_example: string
   native_example: string
   extras: Record<string, unknown>
+  grammar: Record<string, unknown>
 }
 
 type EnrichmentPassArgs = {
@@ -92,6 +94,51 @@ const tool: Anthropic.Tool = {
           context_segment: { type: 'string' },
         },
       },
+      grammar: {
+        type: 'object',
+        description:
+          "Optional typed morphology / grammar facts for this chunk. Same shape as the basic-data pass's grammar object — refine or add keys based on deeper analysis with the surrounding context. Include keys only when useful for THIS chunk in THIS target language; omit the whole object when nothing applies. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть`), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string), `is_reflexive` (boolean), `government` (case/preposition pattern), `notable_forms` (array of {label, form}, max 3), `notes` (free-form). Per-language guidance is in the system prompt.",
+        properties: {
+          pos: {
+            type: 'string',
+            enum: [
+              'noun',
+              'verb',
+              'adjective',
+              'adverb',
+              'preposition',
+              'pronoun',
+              'particle',
+              'conjunction',
+              'numeral',
+              'phrase',
+              'idiom',
+              'other',
+            ],
+          },
+          display_form: { type: 'string' },
+          gender: { type: 'string', enum: ['m', 'f', 'n', 'c'] },
+          number_only: { type: 'string', enum: ['plurale_tantum', 'singulare_tantum'] },
+          is_indeclinable: { type: 'boolean' },
+          animacy: { type: 'string', enum: ['animate', 'inanimate'] },
+          aspect: { type: 'string', enum: ['impf', 'perf', 'biaspectual'] },
+          aspect_pair_headword: { type: 'string' },
+          is_reflexive: { type: 'boolean' },
+          government: { type: 'string' },
+          notable_forms: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                label: { type: 'string' },
+                form: { type: 'string' },
+              },
+              required: ['label', 'form'],
+            },
+          },
+          notes: { type: 'string' },
+        },
+      },
     },
     required: [
       'headword',
@@ -128,7 +175,10 @@ Submit the enrichment via the tool. Required fields are the basic columns
 (headword, sense, surface_form, translation, definition, target_example,
 native_example) — refine them if your deeper analysis improves on the
 shallow basic-data pass. Optional fields go inside \`extras\`; include
-whichever are genuinely useful for this chunk.`
+whichever are genuinely useful for this chunk. Use \`grammar\` for typed
+morphology / grammar facts (pos, gender, aspect, government, etc.) — see
+the per-target-language guidance in the system prompt for which keys to
+fill. Skip the \`grammar\` object entirely when nothing applies.`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_OPUS,
@@ -150,6 +200,10 @@ whichever are genuinely useful for this chunk.`
   }
   const raw = toolUse.input as Record<string, unknown>
   const extras = raw.extras && typeof raw.extras === 'object' ? (raw.extras as Record<string, unknown>) : {}
+  const grammar =
+    raw.grammar && typeof raw.grammar === 'object' && !Array.isArray(raw.grammar)
+      ? (raw.grammar as Record<string, unknown>)
+      : {}
   return {
     headword: String(raw.headword ?? ''),
     sense: typeof raw.sense === 'string' ? raw.sense : '',
@@ -159,5 +213,6 @@ whichever are genuinely useful for this chunk.`
     target_example: typeof raw.target_example === 'string' ? raw.target_example : '',
     native_example: typeof raw.native_example === 'string' ? raw.native_example : '',
     extras,
+    grammar,
   }
 }

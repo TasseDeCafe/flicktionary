@@ -19,6 +19,7 @@ export type DbChunkSummary = {
   target_example: string | null
   native_example: string | null
   exploration_extras: Record<string, unknown>
+  grammar: Record<string, unknown>
 }
 
 export type DbCardWithChunk = DbCard & { chunk: DbChunkSummary }
@@ -63,7 +64,8 @@ const SELECT_CARD_WITH_CHUNK_SQL = sql`
       'definition', ul.definition,
       'target_example', ul.target_example,
       'native_example', ul.native_example,
-      'exploration_extras', ul.exploration_extras
+      'exploration_extras', ul.exploration_extras,
+      'grammar', ul.grammar
     ) AS chunk
   FROM public.cards c
   JOIN public.user_lookups ul ON ul.id = c.user_lookup_id

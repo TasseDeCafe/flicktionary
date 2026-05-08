@@ -75,7 +75,7 @@ export const exploreCardIfMissing = async (
       await deps.cardsRepository.updateFields(cardId, { surfaceForm: enrichment.surface_form })
     }
 
-    // Content + extras live on the canonical chunk.
+    // Content + extras + grammar live on the canonical chunk.
     await deps.userLookupsRepository.updateContent({
       id: card.user_lookup_id,
       translation: enrichment.translation,
@@ -83,6 +83,7 @@ export const exploreCardIfMissing = async (
       targetExample: enrichment.target_example,
       nativeExample: enrichment.native_example,
       explorationExtrasPatch: enrichment.extras as Record<string, unknown>,
+      grammarPatch: Object.keys(enrichment.grammar).length > 0 ? enrichment.grammar : null,
     })
 
     // Rename only if the LLM produced a different (headword, sense) and the
