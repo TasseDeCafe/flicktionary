@@ -232,7 +232,7 @@ export const processSession = async (
           })
         }
 
-        await cardsRepository.insertCard({
+        const insertedCard = await cardsRepository.insertCard({
           studySessionId: sessionId,
           highlightId: chunk.source === 'highlight' ? (chunk.highlightId ?? null) : null,
           segmentId: chunk.segmentId,
@@ -240,6 +240,12 @@ export const processSession = async (
           surfaceForm: chunk.surfaceForm,
           status: chunk.source === 'highlight' ? 'kept' : chunk.belowCefr ? 'auto_rejected' : 'pending',
         })
+        if (insertedCard.status === 'kept') {
+          await userLookupsRepository.applyKeepTransition({
+            userLookupId: lookup.id,
+            cardId: insertedCard.id,
+          })
+        }
       }
 
       // Fallback: if the model failed to emit a row for a highlight, insert a
@@ -253,13 +259,17 @@ export const processSession = async (
           headword: highlight.selectionText,
           sense: '',
         })
-        await cardsRepository.insertCard({
+        const insertedCard = await cardsRepository.insertCard({
           studySessionId: sessionId,
           highlightId: highlight.highlightId,
           segmentId: highlight.segmentId,
           userLookupId: lookup.id,
           surfaceForm: highlight.selectionText,
           status: 'kept',
+        })
+        await userLookupsRepository.applyKeepTransition({
+          userLookupId: lookup.id,
+          cardId: insertedCard.id,
         })
       }
     }

@@ -629,6 +629,88 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     languages we haven't tuned yet — e.g. `tone` for Mandarin); treats
     a missing or non-object `grammar` as `undefined`.
 
+- **Exclusion-list scaling fix (2026-05-08).** Two-stage dedup for the
+  basic-data pass plus a lightweight telemetry table. Problem framing in
+  `EXCLUSION_LIST_SCALING.md`; mechanism + per-language quality tiers in
+  `EXCLUSION_PREFILTER.md`. Don't re-introduce the unbounded
+  `listHeadwordSensesForLanguage` call from process-session — it returns
+  the user's entire vocab and bloats the basic-data prompt linearly with
+  every kept chunk (breaks somewhere between 5–10k entries on cost / cache
+  invalidation / LLM judgment quality).
+  - **Pre-filter (heuristic guidance, Option A).** New repo method
+    `userLookupsRepository.listHeadwordSensesRelevantToTrack({ userId,
+    targetLanguage, textTrackId })` aggregates the track's text into one
+    tsvector via `to_tsvector(${cfg}, string_agg(text, ' '))` then keeps
+    `user_lookups` rows where `plainto_tsquery(headword)` matches.
+    Returns `{ headwordSenses, totalVocabSize }` so the call site can log
+    the prune ratio without a second round-trip. `cfg` comes from the
+    now-exported `resolveRegconfig` in `text-segments-repository.ts:37`.
+    `process-session.ts:115-118` swapped to call this instead of
+    `listHeadwordSensesForLanguage` (the old method stays for any future
+    caller that needs the unfiltered list). Real LOTR English session
+    pruned 69 → 24.
+  - **Haiku tiebreaker (correctness gate, Option C).** New pass file
+    `apps/backend/src/transport/third-party/anthropic/passes/sense-disambiguation-pass.ts`
+    — `MODEL_HAIKU`, `messages.create` (no streaming), forced tool use
+    `submit_disambiguations`. Batches all colliding candidates into a
+    single call. New repo method
+    `userLookupsRepository.findExistingSensesByHeadwords({ userId,
+    targetLanguage, headwords })` does the case-insensitive collision
+    detection (`LOWER(headword) = ANY(${lowered}::text[])`), returns a
+    `Map<lowercasedHeadword, [{sense, definition}, ...]>`. Orchestrator
+    helper `applySenseDisambiguationTiebreaker` in `process-session.ts`
+    filters chunks to `source === 'llm' && !belowCefr` (highlights
+    bypass per spec; below-CEFR rows are auto_rejected anyway), looks up
+    collisions, builds `CandidateForDisambiguation` payloads only for
+    the colliding subset, calls Haiku with one retry on failure, drops
+    `isDuplicate: true` candidates from the chunk list. Skips Haiku
+    entirely when there are zero collisions. On unrecoverable failure:
+    log + `appendProcessingWarning` + fall through keeping all candidates
+    (matches the existing pattern at `process-session.ts:134-141`).
+    Parser `parseDisambiguationResults` exported and unit-tested
+    (`sense-disambiguation-pass.unit.test.ts`, 6 cases — happy path,
+    empty, missing candidate_id, defensive non-bool coercion, clears
+    matched_existing_sense when not duplicate, coerces non-string
+    matched value to null).
+  - **Why both A and C.** A reduces collisions before they happen and
+    keeps the basic-data prompt small; C is the correctness gate for
+    sense disambiguation that A's heuristic can't perform. Sense strings
+    are LLM-generated on both sides, so a deterministic
+    `(headword, sense)` exact-match post-filter would miss obvious
+    duplicates (`"abandon"` vs `"to abandon"`, `"grow worse / corrupt"`
+    vs `"grow worse over time"` — both cases observed in real LOTR
+    testing where Haiku correctly flagged them).
+  - **Telemetry table.** New `processing_telemetry` table on the
+    consolidated migration (`20260425215345_initial_schema.sql`):
+    `id`, `study_session_id` (FK to study_sessions, ON DELETE CASCADE),
+    `pass_name` text (`'disambiguation' | 'exclusion_prefilter'`),
+    `payload` jsonb, `duration_ms` int, `created_at` timestamptz, plus
+    `idx_processing_telemetry_session (study_session_id, created_at
+    DESC)`. RLS enabled, no policies (backend-only writes). New repo
+    `transport/database/processing-telemetry/processing-telemetry-repository.ts`
+    with one method `record(...)`. New helper
+    `service/processing/telemetry.ts` exporting `recordPassTelemetry`
+    that (a) `console.log`s a structured `[telemetry]` JSON line for
+    live tailing AND (b) writes to the DB; the DB write is wrapped in
+    try/catch so telemetry failures can NEVER break the pipeline. Both
+    pre-filter and tiebreaker measure `duration_ms` with `Date.now()`
+    deltas around their work. Disambiguation payload includes the full
+    candidate list, decisions, attempts (1 or 2 if retried), and
+    `droppedCount`. Exclusion-prefilter payload includes `totalVocabSize`,
+    `filteredSize`, `regconfig`, `headwordSampleKept` (capped at 20).
+  - **No target-count bump.** Pre-filter shrinks what the LLM sees as
+    "already studied" so it honors the `targetForLevel` chunk count on
+    novel chunks; tiebreaker drops should be a small minority. Revisit
+    if telemetry shows >15% drop rate on real sessions.
+  - **Plumbing.** `processingTelemetryRepository` added to
+    `ProcessingDependencies` in `process-session.ts:25-35`; instantiated
+    + threaded in `app.ts` (new import + new line in
+    `processingDependencies` bag). The `database.public.types.ts`
+    `processing_telemetry` Row/Insert/Update/Relationships entries were
+    hand-added between `practice_texts` and `removals` (the typegen
+    file is hand-maintained — regen on next `db:dev` reset will be a
+    no-op diff).
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still
@@ -680,7 +762,7 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
      - **LLM-highlights toggle** — Settings → Processing → On/Off. With it off and zero highlights, the Process button is disabled with explanatory copy. With it off and ≥1 highlight, processing produces only highlight-source cards.
      - **Generate full exploration** — kept card → focus view → click `Generate full exploration`. The `exploration_extras` populates and the renderer shows the optional sections (etymology, register, IPA, …).
      - **Chat tool calls** — ask the assistant in chat to "rewrite the example sentence" or "use a different translation". The basic columns update server-side, the field inputs remount with the new values, and the assistant body shows `_Updated: <fields>_`.
-     - **Cross-session dedup** — export a Spanish session that includes a polysemous word (`correr` with one sense). Start a second Spanish session containing `correr` in a different sense and process. The new sense should appear as a new card; the same sense should be excluded. Inspect `user_lookups` to confirm the composite PK `(user, lang, headword, sense)` lets both rows coexist.
+     - **Cross-session dedup** — process a session that includes a polysemous word (`correr` with one sense). Start a second session containing `correr` in a different sense and process. The new sense should appear as a new card; the same sense should be excluded. Inspect `user_lookups` to confirm the composite PK `(user, lang, headword, sense)` lets both rows coexist. After processing, query `processing_telemetry` for `pass_name='exclusion_prefilter'` (payload's `filteredSize` should be << `totalVocabSize`) and `pass_name='disambiguation'` (when present, `decisions[]` should mark same-sense duplicates as `isDuplicate: true` and distinct senses as `false`). See `EXCLUSION_PREFILTER.md` for the full mechanism + per-language quality tiers.
      - **SRT markup** — import a track with `<i>...</i>` cues. Confirm rendered segments show plain text (not raw tags), that highlighting still aligns to the right characters, and that the LLM passes do not see markup.
      - **Per-language grammar enrichment** — process a Russian session with at least one of each kind: a soft-sign masculine noun (`день` / `гость`), an imperfective verb with a paired perfective (`видеть` / `увидеть`), a verb with case government (`зависеть от`, `издеваться над`), a plurale-tantum noun (`деньги` / `калоши`), a stress-marked common word. Open the focus view: chips render `m.` next to `день`, `несов.` + `↔ увидеть` next to `видеть`, `+ gen` next to `зависеть`, `pl. tantum` next to `деньги`. Open the Grammar panel; flip the gender on one row to confirm the debounced PATCH lands and survives a refetch. Then process an English session and confirm verb headwords come back as `to <verb>` (e.g. `to practice`, `to look forward to`), example sentences use the conjugated form, and `notable_forms` is populated for irregulars (`went`/`gone`, `children`, `better`/`best`). Triage list must load without a 500 (regression test for the original `notable_forms: null` bug).
      - **Practice golden path** — keep ≥10 cards in a single target language → tap the `Practice` tab → confirm the landing shows the language with `due / new / total` counts that match `SELECT COUNT(*) FROM user_lookups WHERE user_id=… AND target_language=…` → start session → first text generates within ~10s with all 7 chunks visibly highlighted (no offset-mismatch warning) → tap a chunk → `RateSheet` opens with headword + sense → rate `Hard` → spinner → text 2 generates and reuses the cache update path (NO stale flash, NO double LLM call). Repeat until `done: true`. Inspect `practice_ratings` (should have 1 explicit Hard + 6 implicit Goods per advanced text), `user_lookups.srs_state` (now non-null), and `practice_sessions.status` (should be `'completed'` once `done: true` returned).

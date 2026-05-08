@@ -55,9 +55,12 @@ tracks does).
 2. **Basic-data pass** — one call per session, combining LLM chunk discovery and
    per-highlight basic-data population.
    - Input: full SRT (segment list), the user's highlights (so the model emits
-     one row per highlight too), movie context blob, CEFR level, user's
-     already-seen `(headword, sense)` pairs from `user_lookup`, and the
-     `llm_highlights_enabled` user pref.
+     one row per highlight too), movie context blob, CEFR level, the
+     **source-relevant subset** of the user's already-seen `(headword, sense)`
+     pairs from `user_lookup` (only entries whose headword plausibly appears
+     in this session's source — bounded by source size, not vocab size; see
+     the Cross-source dedup section), and the `llm_highlights_enabled` user
+     pref.
    - Output: one row per user highlight (always) plus, when LLM discovery is
      enabled, ~20–40 LLM-suggested chunks (target scales with CEFR — A1/A2=20,
      B1/B2=25, C1=35, C2=40). Each row has `source` (`'highlight'` or `'llm'`),
@@ -202,7 +205,35 @@ Native-style shell so the eventual React Native port is a translation, not a red
 ### Cross-source dedup
 
 - `user_lookup(user_id, target_language, headword, sense)` is the canonical "user has already studied this" table. The composite PK lets the same headword be studied in multiple distinct senses (polysemy on bare lemmas — `correr | race` and `correr | spread (news)` are two rows).
-- Difficult-words pass receives the user's `(headword, sense)` list as exclusion context and is told **same headword + clearly distinct sense should still be included as a new entry**. The judgment is LLM-based; the only programmatic gate is the composite PK at write time, which lets `ON CONFLICT` increment `count` rather than create a duplicate.
+- Dedup runs in two stages, plus a write-time gate. Both stages apply only to
+  LLM-discovered chunks; user highlights bypass entirely (every highlight
+  always produces a card).
+  1. **Source-relevant pre-filter** (heuristic guidance). Before the
+     basic-data pass runs, `user_lookups` is filtered to only entries whose
+     headword plausibly appears in this session's source via Postgres FTS
+     (`tsvector` aggregated over the track + `plainto_tsquery(headword)`
+     using the per-language regconfig). Bounded by source size, not by the
+     user's full vocab. The filtered subset is what's sent to the LLM as
+     exclusion guidance; the basic-data prompt still says **same headword +
+     clearly distinct sense should still be included as a new entry**. Full
+     mechanism + per-language quality tiers are documented in
+     `EXCLUSION_PREFILTER.md`.
+  2. **Haiku tiebreaker** (correctness gate). After the basic-data pass
+     returns, any LLM-discovered candidate whose headword collides
+     case-insensitively with an existing `user_lookups` row is sent to a
+     small Haiku call alongside the existing senses for that headword.
+     Haiku decides which candidates are duplicates of an existing sense vs
+     genuinely new senses. Duplicates are dropped before card creation; new
+     senses pass through. Skipped entirely when there are zero collisions.
+     Failure mode: one retry, then fall through keeping all candidates and
+     append a `processing_warnings` entry — better to surface a duplicate
+     at triage than silently drop a real distinct sense.
+  3. **Composite PK gate** at write time. `ON CONFLICT (user_id,
+     target_language, headword, sense)` increments `count` rather than
+     creating a duplicate row when the same triple resurfaces.
+- Decisions for both stages are audited in the `processing_telemetry`
+  table (one row per pass invocation, payload includes inputs + decisions
+  + duration). Internal/diagnostic only — droppable when no longer useful.
 - Designed so future content sources (books, articles) feed the same dedup table — a chunk learned from a movie won't resurface in a book.
 
 ## Settings (per user)
