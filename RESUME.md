@@ -711,6 +711,47 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     file is hand-maintained — regen on next `db:dev` reset will be a
     no-op diff).
 
+- **Language-aware grammar UI (2026-05-08).** The Grammar panel + chips in
+  the focus view now filter their visible fields by the session's target
+  language. Previously every card rendered every grammar key regardless of
+  language — English cards asked for gender / aspect / animacy /
+  is_reflexive / is_indeclinable / aspect_pair_headword and showed a
+  Russian-flavored "Display form (e.g. stress-marked)" placeholder
+  (`увидеть`). Don't re-introduce the unfiltered renderer.
+  - **Source of truth.** New
+    `packages/core/src/constants/language-grammar.ts` exporting
+    `LANGUAGE_GRAMMAR` (per-language `{ fields, hints? }` config),
+    `DEFAULT_GRAMMAR_CONFIG` (conservative `pos` / `display_form` /
+    `government` / `number_only` / `notable_forms` / `notes` for any
+    supported language without an explicit entry), and
+    `getLanguageGrammarConfig(code)`. Explicit configs ship for `en`,
+    `es`, `ru`, `fr`, `pt`. Hints carry per-language label / placeholder
+    overrides — Russian's `display_form` reads "Display form
+    (stress-marked)" with placeholder `e.g. ви́деть`; English's reads
+    "Pronunciation hint (stress / IPA)" with `e.g. PHO·to·graph or
+    /ˈfoʊtəɡræf/`; French's is IPA-flavored. Government placeholders
+    are language-tuned (`+ acc, от + gen` for ru, `+ on, + with` for en,
+    `+ à, + de` for fr, etc.).
+  - **Frontend wiring.** `editable-grammar-panel.tsx` and
+    `grammar-chips.tsx` now take an optional `targetLanguage` prop;
+    `focus-view.tsx` passes `session?.targetLanguage` to both. Each
+    field block in the panel is wrapped in `{has('<key>') && (...)}`;
+    each chip push in `grammar-chips.tsx` is gated on
+    `allowed.includes('<key>')`. Hidden-field values stay in the JSONB
+    blob — filtering is purely a UI concern, not a write — so re-keying
+    the same chunk in a language with a wider allowlist resurfaces the
+    earlier-stored data without loss.
+  - **Backend untouched.** `language-instructions.ts` still ships only
+    `es` / `ru` / `en` blocks (so the LLM only actively populates
+    `gender` / `is_reflexive` / `government` / etc. in those three);
+    `fr` and `pt` cards get the editable UI but the user fills the bag
+    by hand or via chat tool until a backend instructions block is
+    added. `GrammarSchema` shape is unchanged.
+  - **Type-check clean.** Initial draft of `getLanguageGrammarConfig`
+    used `(code && LANGUAGE_GRAMMAR[code]) ?? DEFAULT` which TS rejected
+    (`"" | LanguageGrammarConfig` not assignable); the shipping form
+    branches on `if (!code) return DEFAULT_GRAMMAR_CONFIG` first.
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still

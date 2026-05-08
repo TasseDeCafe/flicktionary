@@ -136,10 +136,17 @@ Two-layer UI.
   Above the inputs: compact grammar chips (`m.` / `f.` / `c.`, `impf.` /
   `perf.`, `↔ <pair>`, `+ acc`, `pl. tantum`, `indecl.`, `refl.`) for the
   high-signal keys, glanceable. Below the inputs: a collapsible `Grammar`
-  panel exposing every key (selects for enums, text inputs for headword
-  pointers / government / display_form, checkboxes for booleans, an
-  add/remove list editor for `notable_forms`). Same debounced-PATCH path,
-  with `grammarPatch` shallow-merged into the JSONB column server-side.
+  panel (selects for enums, text inputs for headword pointers / government /
+  display_form, checkboxes for booleans, an add/remove list editor for
+  `notable_forms`). Both chips and panel filter the visible keys by the
+  session's `target_language` — the per-language allowlist + label /
+  placeholder hints live in
+  `packages/core/src/constants/language-grammar.ts` (explicit configs for
+  `en`, `es`, `ru`, `fr`, `pt`; other supported languages fall through to a
+  conservative default of `pos` / `display_form` / `government` /
+  `number_only` / `notable_forms` / `notes`). Same debounced-PATCH path,
+  with `grammarPatch` shallow-merged into the JSONB column server-side;
+  hidden fields' stored values are preserved untouched.
 - Below the card: a collapsed `Context` block showing ±2 surrounding source
   segments. Open it with the chevron when needed.
 - Full exploration: rendered when `exploration_extras` has data. Otherwise
