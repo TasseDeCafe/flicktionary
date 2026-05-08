@@ -1,6 +1,7 @@
 import postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import { resolveRegconfig } from '../text-segments/text-segments-repository'
 
 export type DbUserLookup = Tables<'user_lookups'>
 export type SrsState = Database['public']['Enums']['srs_state']
@@ -30,6 +31,100 @@ const listHeadwordSensesForLanguage = async (userId: string, targetLanguage: str
     headword: row.headword as string,
     sense: (row.sense as string) ?? '',
   }))
+}
+
+// Source-relevant pre-filter for the basic-data pass. Returns only the user's
+// (headword, sense) pairs whose headword plausibly appears in the source
+// segments for `textTrackId` — bounded by source vocabulary, not user vocab.
+//
+// Mechanism: aggregate the track's text into one tsvector using the
+// per-language regconfig (the same one the text_segments_set_tsv trigger
+// uses), then keep user_lookups rows where plainto_tsquery(headword) matches.
+//
+// `plainto_tsquery` parses multi-word headwords as ANDed lexemes after
+// stopword removal, which is liberal (false positives only). False negatives
+// come from the 'simple' regconfig fallback for languages without a Postgres
+// stemmer (zh/ja/ko/vi/etc.) — there's no stemming so inflected headwords
+// won't match inflected source forms. The downstream Haiku tiebreaker is the
+// correctness gate that catches what slips through.
+//
+// Also returns the user's total non-deleted vocab count for telemetry — lets
+// callers report the prune ratio without an extra round-trip pattern at the
+// call site.
+const listHeadwordSensesRelevantToTrack = async (params: {
+  userId: string
+  targetLanguage: string
+  textTrackId: string
+}): Promise<{ headwordSenses: HeadwordSense[]; totalVocabSize: number }> => {
+  const cfg = resolveRegconfig(params.targetLanguage)
+  const [filtered, totals] = await Promise.all([
+    sql`
+      WITH agg AS (
+        SELECT to_tsvector(${cfg}::regconfig, string_agg(text, ' ')) AS source_tsv
+        FROM public.text_segments
+        WHERE text_track_id = ${params.textTrackId}
+      )
+      SELECT ul.headword, ul.sense
+      FROM public.user_lookups ul
+      CROSS JOIN agg
+      WHERE ul.user_id = ${params.userId}
+        AND ul.target_language = ${params.targetLanguage}
+        AND ul.deleted_at IS NULL
+        AND agg.source_tsv @@ plainto_tsquery(${cfg}::regconfig, ul.headword)
+    `,
+    sql`
+      SELECT COUNT(*)::int AS total
+      FROM public.user_lookups
+      WHERE user_id = ${params.userId}
+        AND target_language = ${params.targetLanguage}
+        AND deleted_at IS NULL
+    `,
+  ])
+
+  const filteredRows = filtered as unknown as Array<{ headword: string; sense: string | null }>
+  const totalsRows = totals as unknown as Array<{ total: number }>
+  return {
+    headwordSenses: filteredRows.map((row) => ({
+      headword: row.headword,
+      sense: row.sense ?? '',
+    })),
+    totalVocabSize: totalsRows[0]?.total ?? 0,
+  }
+}
+
+// Case-insensitive lookup of every existing sense tracked under any of the
+// given headwords for a (user, target_language). Powers the Haiku tiebreaker
+// — for each LLM-emitted candidate that may collide with an existing entry,
+// we feed Haiku the candidate plus all senses already on file for that
+// headword and let it decide whether the candidate is a duplicate of an
+// existing sense or a genuinely new one.
+//
+// Result is keyed by lowercased headword so the caller can index in via
+// `chunk.headword.toLowerCase()` regardless of casing drift between LLM runs.
+const findExistingSensesByHeadwords = async (params: {
+  userId: string
+  targetLanguage: string
+  headwords: string[]
+}): Promise<Map<string, Array<{ sense: string; definition: string | null }>>> => {
+  if (params.headwords.length === 0) return new Map()
+  const lowered = params.headwords.map((h) => h.toLowerCase())
+  const result = (await sql`
+    SELECT headword, sense, definition
+    FROM public.user_lookups
+    WHERE user_id = ${params.userId}
+      AND target_language = ${params.targetLanguage}
+      AND deleted_at IS NULL
+      AND LOWER(headword) = ANY(${lowered}::text[])
+  `) as Array<{ headword: string; sense: string | null; definition: string | null }>
+
+  const grouped = new Map<string, Array<{ sense: string; definition: string | null }>>()
+  for (const row of result) {
+    const key = row.headword.toLowerCase()
+    const senses = grouped.get(key) ?? []
+    senses.push({ sense: row.sense ?? '', definition: row.definition })
+    grouped.set(key, senses)
+  }
+  return grouped
 }
 
 // Idempotent get-or-insert keyed by (user_id, target_language, headword, sense).
@@ -640,6 +735,16 @@ const listLanguagesForUser = async (userId: string): Promise<string[]> => {
 
 export interface UserLookupsRepositoryInterface {
   listHeadwordSensesForLanguage: (userId: string, targetLanguage: string) => Promise<HeadwordSense[]>
+  listHeadwordSensesRelevantToTrack: (params: {
+    userId: string
+    targetLanguage: string
+    textTrackId: string
+  }) => Promise<{ headwordSenses: HeadwordSense[]; totalVocabSize: number }>
+  findExistingSensesByHeadwords: (params: {
+    userId: string
+    targetLanguage: string
+    headwords: string[]
+  }) => Promise<Map<string, Array<{ sense: string; definition: string | null }>>>
   findOrCreate: (params: {
     userId: string
     targetLanguage: string
@@ -701,6 +806,8 @@ export interface UserLookupsRepositoryInterface {
 export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
   return {
     listHeadwordSensesForLanguage,
+    listHeadwordSensesRelevantToTrack,
+    findExistingSensesByHeadwords,
     findOrCreate,
     updateContent,
     renameKey,

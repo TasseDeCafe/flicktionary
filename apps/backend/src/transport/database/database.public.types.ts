@@ -386,6 +386,41 @@ export type Database = {
           },
         ]
       }
+      processing_telemetry: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          id: string
+          pass_name: string
+          payload: Json
+          study_session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          pass_name: string
+          payload: Json
+          study_session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          pass_name?: string
+          payload?: Json
+          study_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'processing_telemetry_session_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       removals: {
         Row: {
           created_at: string

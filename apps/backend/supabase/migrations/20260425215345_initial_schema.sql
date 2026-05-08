@@ -650,3 +650,27 @@ CREATE INDEX idx_practice_ratings_text
   ON public.practice_ratings (practice_text_id);
 
 ALTER TABLE public.practice_ratings ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- processing_telemetry — audit trail for backend processing passes (e.g. the
+-- exclusion-list pre-filter and the Haiku-tier sense-disambiguation tiebreaker
+-- that gate basic-data card creation). Backend-only writes; never queried
+-- through PostgREST. Drop this table if telemetry stops being useful.
+-- =========================================================================
+
+CREATE TABLE public.processing_telemetry (
+  id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
+  study_session_id UUID NULL,
+  pass_name TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  duration_ms INTEGER NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  CONSTRAINT processing_telemetry_pkey PRIMARY KEY (id),
+  CONSTRAINT processing_telemetry_session_fkey FOREIGN KEY (study_session_id)
+    REFERENCES public.study_sessions (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_processing_telemetry_session
+  ON public.processing_telemetry (study_session_id, created_at DESC);
+
+ALTER TABLE public.processing_telemetry ENABLE ROW LEVEL SECURITY;

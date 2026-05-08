@@ -34,7 +34,7 @@ const LANGUAGE_TO_REGCONFIG: Record<string, string> = {
   ta: 'tamil',
 }
 
-const resolveRegconfig = (language: string): string => LANGUAGE_TO_REGCONFIG[language.toLowerCase()] ?? 'simple'
+export const resolveRegconfig = (language: string): string => LANGUAGE_TO_REGCONFIG[language.toLowerCase()] ?? 'simple'
 
 const bulkInsertSegments = async (textTrackId: string, segments: SegmentInsertInput[]): Promise<void> => {
   if (segments.length === 0) {

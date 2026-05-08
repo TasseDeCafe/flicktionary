@@ -7,12 +7,20 @@ import { HighlightsRepositoryInterface } from '../../transport/database/highligh
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
 import {
   basicDataPass,
   BasicDataChunk,
   HighlightInput,
 } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import {
+  CandidateForDisambiguation,
+  DisambiguationResult,
+  senseDisambiguationPass,
+} from '../../transport/third-party/anthropic/passes/sense-disambiguation-pass'
+import { resolveRegconfig } from '../../transport/database/text-segments/text-segments-repository'
+import { recordPassTelemetry } from './telemetry'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -23,6 +31,7 @@ export type ProcessingDependencies = {
   cardsRepository: CardsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
 }
 
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
@@ -41,6 +50,7 @@ export const processSession = async (
     cardsRepository,
     userLookupsRepository,
     usersRepository,
+    processingTelemetryRepository,
   } = deps
 
   try {
@@ -112,10 +122,29 @@ export const processSession = async (
     const shouldCallPass = !skipBasicDataPass && (llmDiscoveryWanted || newHighlights.length > 0)
 
     if (shouldCallPass) {
-      const excludedHeadwordSenses = await userLookupsRepository.listHeadwordSensesForLanguage(
-        userId,
-        session.target_language
-      )
+      // Source-relevant pre-filter: only feed the LLM exclusions whose
+      // headword plausibly appears in this session's source. Bounded by
+      // source size (a few hundred typical), not user vocab size. Telemetry
+      // captures the prune ratio for monitoring.
+      const prefilterStartedAt = Date.now()
+      const { headwordSenses: excludedHeadwordSenses, totalVocabSize } =
+        await userLookupsRepository.listHeadwordSensesRelevantToTrack({
+          userId,
+          targetLanguage: session.target_language,
+          textTrackId: session.text_track_id,
+        })
+      await recordPassTelemetry(processingTelemetryRepository, {
+        studySessionId: sessionId,
+        passName: 'exclusion_prefilter',
+        durationMs: Date.now() - prefilterStartedAt,
+        payload: {
+          totalVocabSize,
+          filteredSize: excludedHeadwordSenses.length,
+          regconfig: resolveRegconfig(session.target_language),
+          headwordSampleKept: excludedHeadwordSenses.slice(0, 20).map((e) => e.headword),
+        },
+      })
+
       const segmentInputs = segments.map((s) => ({ id: s.id, index: s.index, text: s.text }))
       const segmentIdSet = new Set(segments.map((s) => s.id))
 
@@ -145,11 +174,29 @@ export const processSession = async (
       const filteredChunks =
         hasLlmSuggestedCards || !llmHighlightsEnabled ? chunks.filter((c) => c.source === 'highlight') : chunks
 
+      // Sense-disambiguation tiebreaker (Haiku): the pre-filter is heuristic
+      // guidance to Opus, not a correctness gate. After the pass returns, run
+      // a cheap second LLM call only on LLM-discovered candidates whose
+      // headword collides (case-insensitive) with an existing user_lookups
+      // headword — Haiku decides which are duplicates of an existing sense
+      // vs genuinely new senses worth keeping. Highlights and below-CEFR rows
+      // bypass: highlights always pass through per spec; below-CEFR land as
+      // auto_rejected and shouldn't burn Haiku tokens.
+      const dedupedChunks = await applySenseDisambiguationTiebreaker({
+        sessionId,
+        userId,
+        targetLanguage: session.target_language,
+        chunks: filteredChunks,
+        userLookupsRepository,
+        studySessionsRepository,
+        processingTelemetryRepository,
+      })
+
       // Track which highlights we've created cards for, so we can fall back to
       // a minimal stub for any highlight the model dropped on the floor.
       const coveredHighlightIds = new Set<string>()
 
-      for (const chunk of filteredChunks) {
+      for (const chunk of dedupedChunks) {
         if (!segmentIdSet.has(chunk.segmentId)) continue
 
         if (chunk.source === 'highlight' && chunk.highlightId) {
@@ -222,4 +269,131 @@ export const processSession = async (
     logWithSentry({ message: 'processSession: uncaught error', params: { sessionId, userId }, error: e })
     await studySessionsRepository.markFailed(sessionId, userId)
   }
+}
+
+// One retry on transient failure (network blip, malformed Haiku response).
+// On unrecoverable failure: log, warn, fall through keeping all candidates —
+// better to surface a few duplicates at triage than silently drop genuinely
+// new senses.
+const applySenseDisambiguationTiebreaker = async (params: {
+  sessionId: string
+  userId: string
+  targetLanguage: string
+  chunks: BasicDataChunk[]
+  userLookupsRepository: UserLookupsRepositoryInterface
+  studySessionsRepository: StudySessionsRepositoryInterface
+  processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
+}): Promise<BasicDataChunk[]> => {
+  const { chunks, userLookupsRepository, studySessionsRepository, processingTelemetryRepository } = params
+  const startedAt = Date.now()
+
+  const eligibleForTiebreak = chunks.filter((c) => c.source === 'llm' && !c.belowCefr)
+  if (eligibleForTiebreak.length === 0) return chunks
+
+  const existingByHeadword = await userLookupsRepository.findExistingSensesByHeadwords({
+    userId: params.userId,
+    targetLanguage: params.targetLanguage,
+    headwords: eligibleForTiebreak.map((c) => c.headword),
+  })
+  if (existingByHeadword.size === 0) {
+    await recordPassTelemetry(processingTelemetryRepository, {
+      studySessionId: params.sessionId,
+      passName: 'disambiguation',
+      durationMs: Date.now() - startedAt,
+      payload: { skipped: true, reason: 'no_collisions', candidateCount: eligibleForTiebreak.length },
+    })
+    return chunks
+  }
+
+  const candidateById = new Map<string, BasicDataChunk>()
+  const candidates: CandidateForDisambiguation[] = []
+  eligibleForTiebreak.forEach((chunk, index) => {
+    const existing = existingByHeadword.get(chunk.headword.toLowerCase())
+    if (!existing || existing.length === 0) return
+    const candidateId = `c${index}`
+    candidateById.set(candidateId, chunk)
+    candidates.push({
+      candidateId,
+      headword: chunk.headword,
+      candidateSense: chunk.sense,
+      candidateDefinition: chunk.definition,
+      existingSenses: existing,
+    })
+  })
+
+  if (candidates.length === 0) {
+    await recordPassTelemetry(processingTelemetryRepository, {
+      studySessionId: params.sessionId,
+      passName: 'disambiguation',
+      durationMs: Date.now() - startedAt,
+      payload: { skipped: true, reason: 'no_collisions', candidateCount: eligibleForTiebreak.length },
+    })
+    return chunks
+  }
+
+  let decisions: DisambiguationResult[] | null = null
+  let lastError: unknown = null
+  let attempts = 0
+  for (let i = 0; i < 2 && decisions === null; i++) {
+    attempts++
+    try {
+      decisions = await senseDisambiguationPass({ targetLanguage: params.targetLanguage, candidates })
+    } catch (e) {
+      lastError = e
+    }
+  }
+
+  if (decisions === null) {
+    logCustomErrorMessageAndError(`senseDisambiguationPass failed, sessionId = ${params.sessionId}`, lastError)
+    await studySessionsRepository.appendProcessingWarning(
+      params.sessionId,
+      params.userId,
+      `Sense-disambiguation pass failed (kept all candidates): ${
+        lastError instanceof Error ? lastError.message : String(lastError)
+      }`
+    )
+    await recordPassTelemetry(processingTelemetryRepository, {
+      studySessionId: params.sessionId,
+      passName: 'disambiguation',
+      durationMs: Date.now() - startedAt,
+      payload: {
+        attempts,
+        failed: true,
+        error: lastError instanceof Error ? lastError.message : String(lastError),
+        candidateCount: candidates.length,
+      },
+    })
+    return chunks
+  }
+
+  const duplicateIds = new Set(decisions.filter((d) => d.isDuplicate).map((d) => d.candidateId))
+  const droppedChunkRefs = new Set<BasicDataChunk>()
+  for (const [candidateId, chunk] of candidateById.entries()) {
+    if (duplicateIds.has(candidateId)) droppedChunkRefs.add(chunk)
+  }
+  const survivors = chunks.filter((c) => !droppedChunkRefs.has(c))
+
+  await recordPassTelemetry(processingTelemetryRepository, {
+    studySessionId: params.sessionId,
+    passName: 'disambiguation',
+    durationMs: Date.now() - startedAt,
+    payload: {
+      attempts,
+      candidates: candidates.map((c) => ({
+        id: c.candidateId,
+        headword: c.headword,
+        candidateSense: c.candidateSense,
+        candidateDefinition: c.candidateDefinition,
+        existingSenses: c.existingSenses,
+      })),
+      decisions: decisions.map((d) => ({
+        candidateId: d.candidateId,
+        isDuplicate: d.isDuplicate,
+        matchedExistingSense: d.matchedExistingSense,
+      })),
+      droppedCount: droppedChunkRefs.size,
+    },
+  })
+
+  return survivors
 }

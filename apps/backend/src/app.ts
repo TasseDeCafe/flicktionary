@@ -64,6 +64,7 @@ import { UserLookupsRepository } from './transport/database/user-lookups/user-lo
 import { PracticeSessionsRepository } from './transport/database/practice-sessions/practice-sessions-repository'
 import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
 import { PracticeRatingsRepository } from './transport/database/practice-ratings/practice-ratings-repository'
+import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { PracticeRouter } from './router/practice-router/practice-router'
 
 export type AppDependencies = {
@@ -229,6 +230,7 @@ export const buildApp = ({
   const practiceSessionsRepository = PracticeSessionsRepository()
   const practiceTextsRepository = PracticeTextsRepository()
   const practiceRatingsRepository = PracticeRatingsRepository()
+  const processingTelemetryRepository = ProcessingTelemetryRepository()
 
   const processingDependencies = {
     contentSourcesRepository,
@@ -239,6 +241,7 @@ export const buildApp = ({
     cardsRepository,
     userLookupsRepository,
     usersRepository,
+    processingTelemetryRepository,
   }
 
   const exportDependencies = {
