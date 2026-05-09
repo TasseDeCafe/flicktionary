@@ -91,6 +91,15 @@ Rules:
  export const initiateCancelCallViaTwilio = async (
 ```
 
+# Local Supabase Instance
+
+When the user refers to their "local DB" (resetting it, querying it, updating rows while testing dev), they mean the **dev-tunnel** instance, not `supabase-dev`. `supabase-dev` is the remote dev environment; `supabase-dev-tunnel` is the locally-running Supabase that the user actually develops against.
+
+- DB connection: `postgresql://postgres:postgres@127.0.0.1:34322/postgres` (port `34322`, not the default `54322`)
+- Start it with: `pnpm db:dev:tunnel` (runs `doppler run -- supabase start` in `apps/backend/supabase/supabase-dev-tunnel/supabase`)
+- Reset it with: `doppler run -- supabase db reset --local` from `apps/backend/supabase/supabase-dev-tunnel/`
+- The connection string is exposed as `SUPABASE_CONNECTION_STRING` (Doppler `backend` project, `dev_personal` config) — any standalone script that touches the local DB should read it from there and be run via `doppler run --`. Do not hardcode `54322`.
+
 # Database Migrations
 
 The canonical migrations directory is `apps/backend/supabase/migrations/`. The four Supabase environment folders each have a `supabase/migrations` symlink pointing to it:

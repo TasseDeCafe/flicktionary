@@ -674,3 +674,54 @@ CREATE INDEX idx_processing_telemetry_session
   ON public.processing_telemetry (study_session_id, created_at DESC);
 
 ALTER TABLE public.processing_telemetry ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- wiktionary_entries — reference data loaded from kaikki.org dumps. One row
+-- per (target_language, headword, pos): a single headword can yield multiple
+-- entries when it covers more than one part of speech (e.g. Russian "печь"
+-- = both the verb "to bake" and the noun "stove"). The full kaikki record
+-- is stored verbatim in `data` so future features (conjugation tables,
+-- audio links, etymology, etc.) can read it without re-ingestion. Backend
+-- reads only — no RLS policies; the postgres role used by the API bypasses
+-- RLS, anon/authed clients have no access.
+-- =========================================================================
+
+CREATE TABLE public.wiktionary_entries (
+  id BIGSERIAL NOT NULL,
+  target_language TEXT NOT NULL,
+  headword TEXT NOT NULL,
+  pos TEXT NOT NULL,
+  data JSONB NOT NULL,
+  CONSTRAINT wiktionary_entries_pkey PRIMARY KEY (id)
+);
+
+CREATE INDEX idx_wiktionary_entries_lookup
+  ON public.wiktionary_entries (target_language, headword);
+
+CREATE INDEX idx_wiktionary_entries_pos
+  ON public.wiktionary_entries (target_language, pos);
+
+ALTER TABLE public.wiktionary_entries ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- wiktionary_forms — flattened paradigm-cell index. Maps every inflected
+-- form kaikki ships (Russian verbs ship ~80 cells each) back to its lemma
+-- entry. Used as a fallback when the LLM-normalized headword doesn't hit a
+-- wiktionary_entries row directly (e.g. the LLM produced a form rather than
+-- the lemma). Many-to-many: a form can map to multiple entries when it's a
+-- homograph across POS or aspect.
+-- =========================================================================
+
+CREATE TABLE public.wiktionary_forms (
+  target_language TEXT NOT NULL,
+  form TEXT NOT NULL,
+  entry_id BIGINT NOT NULL,
+  CONSTRAINT wiktionary_forms_pkey PRIMARY KEY (target_language, form, entry_id),
+  CONSTRAINT wiktionary_forms_entry_fkey FOREIGN KEY (entry_id)
+    REFERENCES public.wiktionary_entries (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_wiktionary_forms_lookup
+  ON public.wiktionary_forms (target_language, form);
+
+ALTER TABLE public.wiktionary_forms ENABLE ROW LEVEL SECURITY;

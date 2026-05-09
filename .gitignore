@@ -1,6 +1,7 @@
 node_modules
 dist
 copied-dist
+.cache
 
 .idea
 .DS_store
