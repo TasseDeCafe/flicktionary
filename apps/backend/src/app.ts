@@ -65,6 +65,7 @@ import { PracticeSessionsRepository } from './transport/database/practice-sessio
 import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
 import { PracticeRatingsRepository } from './transport/database/practice-ratings/practice-ratings-repository'
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
+import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { PracticeRouter } from './router/practice-router/practice-router'
 
 export type AppDependencies = {
@@ -231,6 +232,7 @@ export const buildApp = ({
   const practiceTextsRepository = PracticeTextsRepository()
   const practiceRatingsRepository = PracticeRatingsRepository()
   const processingTelemetryRepository = ProcessingTelemetryRepository()
+  const wiktionaryEntriesRepository = WiktionaryEntriesRepository()
 
   const processingDependencies = {
     contentSourcesRepository,
@@ -242,6 +244,7 @@ export const buildApp = ({
     userLookupsRepository,
     usersRepository,
     processingTelemetryRepository,
+    wiktionaryEntriesRepository,
   }
 
   const exportDependencies = {

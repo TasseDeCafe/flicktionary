@@ -83,6 +83,14 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
   },
 }
 
+// Languages whose `card.chunk.grammar` is grounded against a kaikki Wiktionary
+// dump in the backend. Mirror of `KAIKKI_ENABLED_LANGUAGES` in
+// apps/backend/src/service/wiktionary-grounding/config.ts. Used by the focus
+// view to decide whether to render a "Wiktionary" / "LLM only" badge —
+// languages outside the set get no badge, since the absence of grounding is
+// the default state and doesn't need explanation.
+export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru'])
+
 export const getLanguageGrammarConfig = (code: string | undefined | null): LanguageGrammarConfig => {
   if (!code) return DEFAULT_GRAMMAR_CONFIG
   return LANGUAGE_GRAMMAR[code as SupportedLanguageCode] ?? DEFAULT_GRAMMAR_CONFIG

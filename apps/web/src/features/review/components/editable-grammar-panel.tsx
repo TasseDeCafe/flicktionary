@@ -2,10 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import {
-  getLanguageGrammarConfig,
-  type GrammarFieldKey,
-} from '@flicktionary/core/constants/language-grammar'
+import { getLanguageGrammarConfig, type GrammarFieldKey } from '@flicktionary/core/constants/language-grammar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

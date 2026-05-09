@@ -8,6 +8,7 @@ import { CardsRepositoryInterface } from '../../transport/database/cards/cards-r
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
+import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
 import {
   basicDataPass,
@@ -21,6 +22,7 @@ import {
 } from '../../transport/third-party/anthropic/passes/sense-disambiguation-pass'
 import { resolveRegconfig } from '../../transport/database/text-segments/text-segments-repository'
 import { recordPassTelemetry } from './telemetry'
+import { groundChunk, KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -32,6 +34,7 @@ export type ProcessingDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
 }
 
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
@@ -51,6 +54,7 @@ export const processSession = async (
     userLookupsRepository,
     usersRepository,
     processingTelemetryRepository,
+    wiktionaryEntriesRepository,
   } = deps
 
   try {
@@ -195,6 +199,15 @@ export const processSession = async (
       // Track which highlights we've created cards for, so we can fall back to
       // a minimal stub for any highlight the model dropped on the floor.
       const coveredHighlightIds = new Set<string>()
+      // Lookups touched in this run, captured to drive the wiktionary-grounding
+      // post-step without re-querying. Keyed by user_lookups.id; value carries
+      // the headword + LLM-emitted POS we'll feed to the grounding lookup, and
+      // the in-memory `grounded_at` so we can short-circuit re-grounded rows
+      // without an extra SELECT.
+      const touchedLookups = new Map<
+        string,
+        { headword: string; llmPos: string | null; alreadyGrounded: boolean }
+      >()
 
       for (const chunk of dedupedChunks) {
         if (!segmentIdSet.has(chunk.segmentId)) continue
@@ -213,6 +226,14 @@ export const processSession = async (
           headword: chunk.headword,
           sense: chunk.sense,
         })
+        if (!touchedLookups.has(lookup.id)) {
+          const llmPos = typeof chunk.grammar?.pos === 'string' ? (chunk.grammar.pos as string) : null
+          touchedLookups.set(lookup.id, {
+            headword: lookup.headword,
+            llmPos,
+            alreadyGrounded: lookup.grounded_at !== null,
+          })
+        }
         if (lookup.translation === null && lookup.definition === null) {
           await userLookupsRepository.updateContent({
             id: lookup.id,
@@ -259,6 +280,13 @@ export const processSession = async (
           headword: highlight.selectionText,
           sense: '',
         })
+        if (!touchedLookups.has(lookup.id)) {
+          touchedLookups.set(lookup.id, {
+            headword: lookup.headword,
+            llmPos: null,
+            alreadyGrounded: lookup.grounded_at !== null,
+          })
+        }
         const insertedCard = await cardsRepository.insertCard({
           studySessionId: sessionId,
           highlightId: highlight.highlightId,
@@ -270,6 +298,24 @@ export const processSession = async (
         await userLookupsRepository.applyKeepTransition({
           userLookupId: lookup.id,
           cardId: insertedCard.id,
+        })
+      }
+
+      // Wiktionary grounding: for each unique user_lookups row we just touched
+      // in a kaikki-enabled language, look up the matching kaikki entry and
+      // shallow-merge structured grammar fields on top of the LLM's. Skips
+      // rows already grounded so re-processing doesn't re-issue lookups, and
+      // skips languages without a loaded dump. Failures here are best-effort
+      // — never fail the whole pipeline.
+      if (KAIKKI_ENABLED_LANGUAGES.has(session.target_language)) {
+        await runWiktionaryGrounding({
+          sessionId,
+          userId,
+          targetLanguage: session.target_language,
+          touchedLookups,
+          userLookupsRepository,
+          wiktionaryEntriesRepository,
+          processingTelemetryRepository,
         })
       }
     }
@@ -426,4 +472,77 @@ const applySenseDisambiguationTiebreaker = async (params: {
   })
 
   return survivors
+}
+
+// For each unique user_lookups row touched by this run, look up the matching
+// kaikki entry and merge its structured grammar fields into the row's grammar
+// JSONB. Already-grounded rows are skipped (idempotent reprocess); per-row
+// failures are swallowed and counted - grounding is supplementary, never
+// load-bearing.
+const runWiktionaryGrounding = async (params: {
+  sessionId: string
+  userId: string
+  targetLanguage: string
+  touchedLookups: Map<string, { headword: string; llmPos: string | null; alreadyGrounded: boolean }>
+  userLookupsRepository: UserLookupsRepositoryInterface
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
+  processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
+}): Promise<void> => {
+  const startedAt = Date.now()
+  let attempted = 0
+  let grounded = 0
+  let alreadyGrounded = 0
+  let missed = 0
+  let failed = 0
+
+  // Run lookups + UPDATEs concurrently. The lookup chain is read-only and the
+  // UPDATEs target distinct rows, so postgres.js's connection pool can
+  // pipeline them without contention. The `alreadyGrounded` flag is taken
+  // from the in-memory lookup we already had in the chunk loop, so no extra
+  // SELECT is needed.
+  await Promise.all(
+    Array.from(params.touchedLookups.entries()).map(async ([lookupId, info]) => {
+      if (info.alreadyGrounded) {
+        alreadyGrounded++
+        return
+      }
+      attempted++
+      try {
+        const result = await groundChunk({
+          targetLanguage: params.targetLanguage,
+          headword: info.headword,
+          pos: info.llmPos,
+          wiktionaryEntriesRepository: params.wiktionaryEntriesRepository,
+        })
+        if (!result) {
+          missed++
+          return
+        }
+        // TODO: This could be parallelized with a batch update.
+        await params.userLookupsRepository.applyGroundingPatch({ id: lookupId, grammarPatch: result.patch })
+        grounded++
+      } catch (e) {
+        failed++
+        logCustomErrorMessageAndError(
+          `wiktionary grounding failed for headword=${info.headword}, sessionId=${params.sessionId}`,
+          e
+        )
+      }
+    })
+  )
+
+  await recordPassTelemetry(params.processingTelemetryRepository, {
+    studySessionId: params.sessionId,
+    passName: 'wiktionary_grounding',
+    durationMs: Date.now() - startedAt,
+    payload: {
+      targetLanguage: params.targetLanguage,
+      uniqueLookups: params.touchedLookups.size,
+      attempted,
+      grounded,
+      alreadyGrounded,
+      missed,
+      failed,
+    },
+  })
 }

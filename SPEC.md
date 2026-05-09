@@ -87,7 +87,24 @@ tracks does).
    - The LLM **normalizes the chunk**: it produces a `headword` that may
      differ from `selection_text`. Example: user highlights `out` inside
      `ran out of milk` → `headword = "run out of"`.
-3. **Per-chunk Full exploration (deferred, on-demand)** — one call per card,
+3. **Wiktionary grounding (post-basic-data, per-language).** For target
+   languages with a kaikki.org dump loaded into our `wiktionary_entries` /
+   `wiktionary_forms` tables (currently `ru` only — gated by
+   `KAIKKI_ENABLED_LANGUAGES`), each newly-touched `user_lookups` row is
+   looked up via a four-path chain: real-lemma direct hit → real-lemma
+   POS-agnostic → form-of pseudo-entry resolved to its underlying lemma →
+   `wiktionary_forms` paradigm-cell match. When something matches, the
+   structured grammar fields the extractor knows about (gender, animacy,
+   number-only, indeclinability, aspect, aspect-pair headword,
+   is_reflexive, display_form) are shallow-merged into the row's `grammar`
+   JSONB with **kaikki winning where both sides have a value**; LLM-only
+   keys (e.g. `government`, `notes`, `notable_forms`) are preserved
+   untouched. `grounded_at` is stamped on success. Idempotent across
+   re-process: rows already grounded short-circuit. Languages outside the
+   set are pure-LLM and `grounded_at` stays null. See
+   `WIKTIONARY_GROUNDING.md` for the full design + per-POS extraction
+   rules.
+4. **Per-chunk Full exploration (deferred, on-demand)** — one call per card,
    triggered manually by clicking `Generate full exploration` in the focus
    view. Cards arrive from step 2 with only the basic data populated; this
    pass adds the optional enrichment fields. NOT run automatically during
@@ -146,7 +163,11 @@ Two-layer UI.
   conservative default of `pos` / `display_form` / `government` /
   `number_only` / `notable_forms` / `notes`). Same debounced-PATCH path,
   with `grammarPatch` shallow-merged into the JSONB column server-side;
-  hidden fields' stored values are preserved untouched.
+  hidden fields' stored values are preserved untouched. A small card-level
+  grounding badge sits next to the chips for kaikki-enabled languages
+  (currently `ru`): `✓ Wiktionary` when `grounded_at` is set,
+  `⚠ LLM only` when the language has a dump loaded but the chunk didn't
+  match. Other languages get no badge.
 - Below the card: a collapsed `Context` block showing ±2 surrounding source
   segments. Open it with the chevron when needed.
 - Full exploration: rendered when `exploration_extras` has data. Otherwise
@@ -342,6 +363,13 @@ card
                                     -- notable_forms (irregular paradigm cells). Default '{}'.
                                     -- Populated by basic-data pass; refinable by enrichment pass.
                                     -- Per-language instructions block dictates which keys to fill.
+                                    -- Wiktionary grounding (Russian only, v1) overrides high-confidence
+                                    -- structured fields via kaikki data after the basic-data pass.
+  grounded_at         timestamptz?  -- stamped when wiktionary grounding merged kaikki data into
+                                    -- `grammar`. Null = pure LLM (no dump for this language, or
+                                    -- nothing matched). Persists across user edits — the badge
+                                    -- reflects "kaikki was consulted at processing time", not
+                                    -- whether the current value is unedited.
   status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
   created_at          timestamptz
   updated_at          timestamptz

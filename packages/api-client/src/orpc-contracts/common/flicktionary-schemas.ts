@@ -133,6 +133,10 @@ export const ChunkSchema = z.object({
   nativeExample: z.string().nullable(),
   explorationExtras: ExplorationExtrasSchema,
   grammar: GrammarSchema.default({}),
+  // Set when the wiktionary-grounding step merged kaikki data into `grammar`.
+  // Null means pure-LLM (either grounding didn't run, or no kaikki entry
+  // matched). Persists across user edits.
+  groundedAt: z.string().nullable(),
 })
 export type Chunk = z.infer<typeof ChunkSchema>
 

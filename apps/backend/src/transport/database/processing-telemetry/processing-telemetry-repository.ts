@@ -4,7 +4,7 @@ import { Tables } from '../database.public.types'
 
 export type DbProcessingTelemetry = Tables<'processing_telemetry'>
 
-export type ProcessingPassName = 'disambiguation' | 'exclusion_prefilter'
+export type ProcessingPassName = 'disambiguation' | 'exclusion_prefilter' | 'wiktionary_grounding'
 
 const record = async (params: {
   studySessionId: string | null

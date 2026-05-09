@@ -482,6 +482,12 @@ CREATE TABLE public.user_lookups (
   native_example TEXT NULL,
   exploration_extras JSONB NOT NULL DEFAULT '{}'::jsonb,
   grammar JSONB NOT NULL DEFAULT '{}'::jsonb,
+  -- Set by the wiktionary-grounding step when kaikki data was merged into the
+  -- grammar JSONB. NULL means pure LLM (no grounding ran or no entry matched).
+  -- Editing a grammar field via the focus view does NOT clear this — the badge
+  -- reflects "kaikki was consulted at processing time", not whether the
+  -- current value is unedited.
+  grounded_at TIMESTAMP WITH TIME ZONE NULL,
   first_card_id UUID NULL,
   exported_at TIMESTAMP WITH TIME ZONE NULL,
   count INTEGER NOT NULL DEFAULT 0,

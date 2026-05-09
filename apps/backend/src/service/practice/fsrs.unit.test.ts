@@ -14,6 +14,7 @@ const newRow: DbUserLookup = {
   native_example: null,
   exploration_extras: {},
   grammar: {},
+  grounded_at: null,
   first_card_id: null,
   exported_at: null,
   count: 1,

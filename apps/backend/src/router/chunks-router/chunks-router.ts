@@ -27,6 +27,7 @@ const toChunkDto = (row: DbUserLookup) => ({
   nativeExample: row.native_example,
   explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
   grammar: (row.grammar ?? {}) as Record<string, unknown>,
+  groundedAt: toIsoString(row.grounded_at),
 })
 
 // postgres.js returns timestamptz columns as JS Date objects; the wire schema
@@ -49,6 +50,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   nativeExample: row.nativeExample,
   explorationExtras: row.explorationExtras,
   grammar: row.grammar,
+  groundedAt: toIsoString(row.groundedAt),
   count: row.count,
   srsState: row.srsState,
   srsDue: toIsoString(row.srsDue),

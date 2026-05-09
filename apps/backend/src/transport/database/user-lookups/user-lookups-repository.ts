@@ -204,6 +204,21 @@ const updateContent = async (params: {
   `
 }
 
+// Apply a wiktionary-grounded grammar patch and stamp grounded_at. Kaikki
+// values OVERRIDE the LLM-emitted values where they collide (the whole point
+// of grounding is that the structured kaikki data is more reliable than the
+// LLM's), so we use `patch || grammar` rather than the additive `grammar ||
+// patch` semantics used elsewhere. Other LLM-only keys are preserved.
+const applyGroundingPatch = async (params: { id: string; grammarPatch: Record<string, unknown> }): Promise<void> => {
+  const grammarJson = sql.json(params.grammarPatch as unknown as postgres.JSONValue)
+  await sql`
+    UPDATE public.user_lookups
+    SET grammar = grammar || ${grammarJson}::jsonb,
+        grounded_at = NOW()
+    WHERE id = ${params.id}
+  `
+}
+
 // Rename the (headword, sense) pair on an existing user_lookups row. Surfaces
 // 'CONFLICT' when another row already owns the target pair for the same
 // (user_id, target_language). Callers map this to a 409.
@@ -519,6 +534,7 @@ export type ChunkRow = {
   nativeExample: string | null
   explorationExtras: Record<string, unknown>
   grammar: Record<string, unknown>
+  groundedAt: string | null
   count: number
   srsState: SrsState | null
   srsDue: string | null
@@ -542,6 +558,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.native_example,
     ul.exploration_extras,
     ul.grammar,
+    ul.grounded_at,
     ul.count,
     ul.srs_state,
     ul.srs_due,
@@ -566,6 +583,7 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   nativeExample: (row.native_example as string | null) ?? null,
   explorationExtras: ((row.exploration_extras as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
   grammar: ((row.grammar as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
+  groundedAt: (row.grounded_at as string | null) ?? null,
   count: (row.count as number) ?? 0,
   srsState: (row.srs_state as SrsState | null) ?? null,
   srsDue: (row.srs_due as string | null) ?? null,
@@ -779,6 +797,7 @@ export interface UserLookupsRepositoryInterface {
     explorationExtrasPatch?: Record<string, unknown> | null
     grammarPatch?: Record<string, unknown> | null
   }) => Promise<void>
+  applyGroundingPatch: (params: { id: string; grammarPatch: Record<string, unknown> }) => Promise<void>
   renameKey: (params: { id: string; headword: string; sense: string }) => Promise<RenameKeyResult>
   upsertOnExport: (params: { userLookupId: string; firstCardId: string | null }) => Promise<void>
   applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
@@ -829,6 +848,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findPotentialExistingSensesByHeadwords,
     findOrCreate,
     updateContent,
+    applyGroundingPatch,
     renameKey,
     upsertOnExport,
     applyKeepTransition,

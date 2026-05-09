@@ -16,6 +16,7 @@ import { FullExplorationRenderer } from './full-exploration-renderer'
 import { EditableCardFields } from './editable-card-fields'
 import { EditableGrammarPanel } from './editable-grammar-panel'
 import { GrammarChips } from './grammar-chips'
+import { GroundingBadge } from './grounding-badge'
 import { PerCardChat } from './per-card-chat'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
 import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
@@ -196,8 +197,9 @@ export const FocusView = () => {
         <div className='mx-auto flex max-w-4xl flex-col gap-6'>
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
-            <div className='mb-3'>
+            <div className='mb-3 flex flex-wrap items-center gap-2'>
               <GrammarChips grammar={card.chunk.grammar} targetLanguage={session?.targetLanguage} />
+              <GroundingBadge groundedAt={card.chunk.groundedAt} targetLanguage={session?.targetLanguage} />
             </div>
             {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}

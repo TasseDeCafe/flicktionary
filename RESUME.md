@@ -752,6 +752,88 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     (`"" | LanguageGrammarConfig` not assignable); the shipping form
     branches on `if (!code) return DEFAULT_GRAMMAR_CONFIG` first.
 
+- **Wiktionary grounding for Russian (2026-05-09).** New post-basic-data
+  step that overrides high-confidence structured grammar fields against
+  the kaikki.org dump already loaded into the local DB. Default behavior
+  unchanged for non-Russian languages; full design + per-POS extraction
+  rules in `WIKTIONARY_GROUNDING.md`. Don't re-introduce the prior pure-LLM
+  flow for Russian.
+  - **Schema.** `apps/backend/supabase/migrations/20260425215345_initial_schema.sql`
+    gains `user_lookups.grounded_at TIMESTAMP WITH TIME ZONE NULL`
+    (NOT on `cards` — the live schema has `grammar` on `user_lookups`,
+    contra the current SPEC data-model description). `database.public.types.ts`
+    hand-edited to match. Applied via `pnpm db:reset`, which restores the
+    441k entries / 1.46M forms from the snapshot at
+    `apps/backend/scripts/.cache/wiktionary/wiktionary.dump`.
+  - **New repository.**
+    `apps/backend/src/transport/database/wiktionary-entries/wiktionary-entries-repository.ts`
+    owns all `wiktionary_entries` / `wiktionary_forms` reads:
+    `findRealLemmaByHeadwordAndPos`, `findRealLemmaByHeadword`,
+    `findFormOfLemma`, `findRealLemmaByForm`. Wired in `app.ts` and
+    threaded through `ProcessingDependencies`. Don't put SQL in the
+    service layer (was briefly in `lookup.ts` — refactored out).
+  - **New service module** at
+    `apps/backend/src/service/wiktionary-grounding/`:
+    - `config.ts` — `KAIKKI_ENABLED_LANGUAGES = new Set(['ru'])`.
+    - `lookup.ts` — pure orchestration of the 4-path lookup chain
+      (real-lemma direct → POS-agnostic → form-of pseudo-entry resolved
+      to lemma → wiktionary_forms paradigm-cell match), takes the repo
+      as a parameter.
+    - `extract.ts` — Russian-tuned extractors for verbs (aspect via
+      `head_templates[0].args.2`, aspect_pair_headword via
+      `args.impf`/`args.pf` stress-stripped, is_reflexive from `-ся`/`-сь`
+      headword suffix) and nouns (gender / animacy / `pl` / indeclinable
+      parsed out of `head_templates[0].expansion` — never trust
+      `args.1` for nouns, it alternates between Cyrillic and Zaliznyak
+      class). `display_form` is the first token of `expansion` for any
+      POS. 10 unit-test cases in `extract.unit.test.ts`.
+    - `merge.ts` — undefined-stripping helper.
+    - `index.ts` — public `groundChunk({ targetLanguage, headword, pos,
+      wiktionaryEntriesRepository })`. Includes `mapGrammarPosToKaikkiPos`
+      because the LLM emits long-form POS (`adjective`/`adverb`/`preposition`/...)
+      and kaikki uses short tags (`adj`/`adv`/`prep`/...). Mapper is
+      backend-only — frontend stays on long-form throughout.
+  - **Pipeline hook.** `process-session.ts` tracks every `user_lookups`
+    row touched in the chunk loop into `touchedLookups: Map<id, { headword,
+    llmPos, alreadyGrounded }>` (in-memory snapshot — no extra SELECT for
+    the idempotency check). After the chunk loop, when
+    `KAIKKI_ENABLED_LANGUAGES.has(session.target_language)`,
+    `runWiktionaryGrounding` fires `Promise.all` over the map: each row
+    short-circuits when `alreadyGrounded` is true, otherwise calls
+    `groundChunk` and `userLookupsRepository.applyGroundingPatch` (UPDATE
+    that does `grammar = grammar || ${patch}::jsonb` so kaikki overrides
+    LLM where they collide, and stamps `grounded_at = NOW()`). Failures
+    swallowed and counted; recorded under
+    `processing_telemetry.pass_name = 'wiktionary_grounding'`. Don't
+    re-introduce the original sequential for-loop or the per-row
+    `findByIdForUser` round-trip — both wasted RTTs in proportion to
+    chunk count.
+  - **Frontend wiring.** `Chunk` schema in
+    `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
+    gained `groundedAt: z.string().nullable()`; mapped through
+    `cards-router.ts::toChunkDto` and `chunks-router.ts::toChunkRowDto`.
+    `cards-repository.ts` `SELECT_CARD_WITH_CHUNK_SQL` includes
+    `ul.grounded_at` in the chunk JSONB; `user-lookups-repository.ts`
+    `ChunkRow` and `mapChunkRow` expose `groundedAt`. New
+    `KAIKKI_LANGUAGES = new Set(['ru'])` in
+    `packages/core/src/constants/language-grammar.ts` mirrors the backend
+    set so the badge logic doesn't drift.
+  - **Badge.** `apps/web/src/features/review/components/grounding-badge.tsx`
+    renders next to the grammar chips in `focus-view.tsx`. ✓ Wiktionary
+    (with date in the title attribute) when `groundedAt` is set, ⚠ LLM
+    only when the session language is in `KAIKKI_LANGUAGES` but the chunk
+    didn't ground. Returns null for other languages — the absence of
+    grounding is the default state and a badge would be noise.
+  - **`mapChunkRow` keeps reading `row.grounded_at`** as `string | null`
+    (postgres.js JSONB extraction); the chunks-router `toChunkRowDto`
+    runs `toIsoString` on it for the wire. Don't drop that conversion —
+    timestamptz columns surface as JS Dates from some code paths.
+  - **Idempotency note.** Re-process of an already-processed Russian
+    session is cheap: every touched lookup that's already grounded
+    short-circuits without issuing wiktionary queries. Re-grounding old
+    pre-kaikki rows requires a separate admin action (out of scope for
+    v1; called out in `WIKTIONARY_GROUNDING.md`).
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still
