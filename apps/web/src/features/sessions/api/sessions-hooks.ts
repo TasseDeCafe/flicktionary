@@ -138,11 +138,12 @@ export const useSetCefrForLanguage = () => {
   )
 }
 
-export const useGetStudySession = (sessionId: string) => {
+export const useGetStudySession = (sessionId: string, options?: { enabled?: boolean }) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.studySessions.get.queryOptions({
       input: { sessionId },
+      enabled: options?.enabled ?? true,
       select: (response) => response.data,
       meta: { errorMessage: t`Failed to load session` },
     })

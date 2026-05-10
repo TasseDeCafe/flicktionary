@@ -84,7 +84,7 @@ export const VocabularyActionDrawer = ({
 
   if (!chunk) return null
 
-  const canOpenSource = chunk.studySessionId !== null
+  const canOpenSource = chunk.studySessionId !== null && chunk.sourceAvailable
 
   return (
     <ResponsiveOverlay open={open} onOpenChange={handleOpenChange}>
@@ -96,7 +96,7 @@ export const VocabularyActionDrawer = ({
           <ActionRow
             icon={ExternalLink}
             label={t`Open source`}
-            description={canOpenSource ? t`Jump to the session this chunk came from` : t`No source session on file`}
+            description={canOpenSource ? t`Jump to the session this chunk came from` : t`Source was removed`}
             disabled={!canOpenSource}
             onClick={() => onOpenSource(chunk)}
           />

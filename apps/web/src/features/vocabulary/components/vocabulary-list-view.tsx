@@ -132,14 +132,15 @@ export const VocabularyListView = () => {
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId: chunk.studySessionId, cardId: chunk.firstCardId },
-      search: { from: 'vocabulary' as const },
+      search: { from: 'vocabulary' as const, ...(chunk.sourceAvailable ? { source: 'available' as const } : {}) },
     })
   }
 
   const handleRowTap = (chunk: ChunkRow) => {
     // Primary action: jump straight to edit. Fall back to the options drawer
-    // for chunks whose source card or session has been deleted (so Open
-    // source / Delete remain reachable).
+    // for chunks whose source card has been deleted (so Delete remains
+    // reachable). A removed source session can still open the card editor,
+    // but its context/source link stay hidden.
     if (chunk.firstCardId && chunk.studySessionId) {
       handleEdit(chunk)
       return
@@ -154,7 +155,7 @@ export const VocabularyListView = () => {
   }
 
   const handleOpenSource = (chunk: ChunkRow) => {
-    if (!chunk.studySessionId) return
+    if (!chunk.studySessionId || !chunk.sourceAvailable) return
     setDrawerOpen(false)
     void navigate({
       to: '/sessions/$sessionId',

@@ -6,7 +6,10 @@ import { CardSchema, CardStatusSchema } from './common/flicktionary-schemas'
 export const cardsContract = {
   listBySession: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/cards', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(
       z.object({
         sessionId: z.string().uuid(),

@@ -9,6 +9,7 @@ import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 type Props = {
   card: Card
   sameLanguage: boolean
+  sourceSessionId?: string
 }
 
 const SAVE_DEBOUNCE_MS = 600
@@ -17,10 +18,10 @@ const SAVE_DEBOUNCE_MS = 600
 // the canonical chunk (user_lookups). Editing here mutates ONE row that may be
 // referenced by many cards across sessions — sibling cards re-fetch and pick
 // up the change via cache invalidation.
-export const EditableCardFields = ({ card, sameLanguage }: Props) => {
+export const EditableCardFields = ({ card, sameLanguage, sourceSessionId }: Props) => {
   const { t } = useLingui()
-  const updateChunkContent = useUpdateChunkContent(card.studySessionId)
-  const renameChunk = useRenameChunk(card.studySessionId)
+  const updateChunkContent = useUpdateChunkContent(sourceSessionId)
+  const renameChunk = useRenameChunk(sourceSessionId)
   const isPending = updateChunkContent.isPending || renameChunk.isPending
   const [renameError, setRenameError] = useState<string | null>(null)
 

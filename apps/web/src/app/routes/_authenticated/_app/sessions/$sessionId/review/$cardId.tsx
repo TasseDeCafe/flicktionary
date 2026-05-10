@@ -7,6 +7,7 @@ import { FocusView } from '@/features/review/components/focus-view'
 // returns there instead.
 const focusViewSearchSchema = z.object({
   from: z.enum(['triage', 'vocabulary']).optional(),
+  source: z.enum(['available']).optional(),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/sessions/$sessionId/review/$cardId')({

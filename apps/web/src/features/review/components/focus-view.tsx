@@ -75,12 +75,16 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const { from } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
+  const { from, source } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
+  const fromVocabulary = from === 'vocabulary'
+  const shouldLoadSessionScope = !fromVocabulary || source === 'available'
 
-  const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId)
+  const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId, {
+    enabled: shouldLoadSessionScope,
+  })
   const initialCard = useMemo(() => cards?.find((listCard) => listCard.id === cardId), [cards, cardId])
   const { data: card, isLoading } = useGetCard(cardId, initialCard, cardsUpdatedAt)
-  const { data: session } = useGetStudySession(sessionId)
+  const { data: session } = useGetStudySession(sessionId, { enabled: shouldLoadSessionScope })
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
   const { mutate: exploreCard, isPending: isExploringAny, variables: exploringVariables } = useExploreCard()
   const isExploring = isExploringAny && exploringVariables?.cardId === cardId
@@ -146,7 +150,8 @@ export const FocusView = () => {
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
-  const fromVocabulary = from === 'vocabulary'
+  const sourceSessionId = shouldLoadSessionScope ? card.studySessionId : undefined
+  const targetLanguage = session?.targetLanguage ?? card.chunk.targetLanguage
   // Vocabulary entries are already kept by definition, so the keep/reject
   // toggles and the per-session position counter don't apply here. Show the
   // chunk's headword as the title instead.
@@ -198,21 +203,27 @@ export const FocusView = () => {
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
             <div className='mb-3 flex flex-wrap items-center gap-2'>
-              <GrammarChips grammar={card.chunk.grammar} targetLanguage={session?.targetLanguage} />
+              <GrammarChips grammar={card.chunk.grammar} targetLanguage={targetLanguage} />
               <GroundingBadge
                 groundedAt={card.chunk.groundedAt}
                 grammarUserEditedAt={card.chunk.grammarUserEditedAt}
-                targetLanguage={session?.targetLanguage}
+                targetLanguage={targetLanguage}
               />
             </div>
             {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}
-            <EditableCardFields key={`${card.id}:${card.updatedAt}`} card={card} sameLanguage={sameLanguage} />
+            <EditableCardFields
+              key={`${card.id}:${card.updatedAt}`}
+              card={card}
+              sameLanguage={sameLanguage}
+              sourceSessionId={sourceSessionId}
+            />
             <div className='mt-4'>
               <EditableGrammarPanel
                 key={`grammar:${card.chunk.id}:${card.updatedAt}`}
                 card={card}
-                targetLanguage={session?.targetLanguage}
+                targetLanguage={targetLanguage}
+                sourceSessionId={sourceSessionId}
               />
             </div>
           </section>
@@ -253,7 +264,7 @@ export const FocusView = () => {
 
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Chat`}</h2>
-            <PerCardChat key={card.id} cardId={card.id} sessionId={sessionId} />
+            <PerCardChat key={card.id} cardId={card.id} sessionId={sourceSessionId} />
           </section>
         </div>
       </div>

@@ -19,11 +19,12 @@ import {
   type CardListSnapshot,
 } from './card-cache'
 
-export const useListCardsBySession = (sessionId: string) => {
+export const useListCardsBySession = (sessionId: string, options?: { enabled?: boolean }) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.cards.listBySession.queryOptions({
       input: { sessionId },
+      enabled: options?.enabled ?? true,
       select: (response) => response.data,
       meta: { errorMessage: t`Failed to load cards` },
     })
@@ -185,6 +186,7 @@ export const useUpdateChunkContent = (sessionId?: string) => {
           queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
         }
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
       },
       meta: { errorMessage: t`Failed to update chunk` },
     })
@@ -204,6 +206,7 @@ export const useRenameChunk = (sessionId?: string) => {
           queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
         }
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
       },
       meta: { errorMessage: t`Failed to rename chunk` },
     })

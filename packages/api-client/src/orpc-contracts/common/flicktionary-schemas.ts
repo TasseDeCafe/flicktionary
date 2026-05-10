@@ -155,6 +155,7 @@ export const ChunkRowSchema = ChunkSchema.extend({
   firstCardId: z.string().uuid().nullable(),
   firstCardSegmentId: z.string().uuid().nullable(),
   studySessionId: z.string().uuid().nullable(),
+  sourceAvailable: z.boolean(),
 })
 export type ChunkRow = z.infer<typeof ChunkRowSchema>
 

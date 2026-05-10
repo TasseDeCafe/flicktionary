@@ -758,12 +758,15 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
   unchanged for non-Russian languages; full design + per-POS extraction
   rules in `WIKTIONARY_GROUNDING.md`. Don't re-introduce the prior pure-LLM
   flow for Russian.
-  - **Schema.** `apps/backend/supabase/migrations/20260425215345_initial_schema.sql`
-    gains `user_lookups.grounded_at TIMESTAMP WITH TIME ZONE NULL`
-    (NOT on `cards` — the live schema has `grammar` on `user_lookups`,
-    contra the current SPEC data-model description). `database.public.types.ts`
-    hand-edited to match. Applied via `pnpm db:reset`, which restores the
-    441k entries / 1.46M forms from the snapshot at
+  - **Schema.** `apps/backend/supabase/migrations/20260510091540_initial_app_schema.sql`
+    has `user_lookups.grounded_at TIMESTAMP WITH TIME ZONE NULL` and
+    `user_lookups.grammar_user_edited_at TIMESTAMP WITH TIME ZONE NULL`
+    (NOT on `cards` — the live schema has `grammar` on `user_lookups`).
+    `grounded_at` is historical provenance ("kaikki matched and merged");
+    `grammar_user_edited_at` is stamped when the user manually edits grammar
+    provenance (grammar fields, headword, or sense). `database.public.types.ts`
+    is hand-edited to match. Apply locally via `pnpm db:reset`, which restores
+    the 441k entries / 1.46M forms from the snapshot at
     `apps/backend/scripts/.cache/wiktionary/wiktionary.dump`.
   - **New repository.**
     `apps/backend/src/transport/database/wiktionary-entries/wiktionary-entries-repository.ts`
@@ -795,44 +798,63 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
       backend-only — frontend stays on long-form throughout.
   - **Pipeline hook.** `process-session.ts` tracks every `user_lookups`
     row touched in the chunk loop into `touchedLookups: Map<id, { headword,
-    llmPos, alreadyGrounded }>` (in-memory snapshot — no extra SELECT for
-    the idempotency check). After the chunk loop, when
+    llmPos, alreadyGrounded, grammarUserEdited }>` (in-memory snapshot —
+    no extra SELECT for the idempotency check). After the chunk loop, when
     `KAIKKI_ENABLED_LANGUAGES.has(session.target_language)`,
     `runWiktionaryGrounding` fires `Promise.all` over the map: each row
-    short-circuits when `alreadyGrounded` is true, otherwise calls
-    `groundChunk` and `userLookupsRepository.applyGroundingPatch` (UPDATE
-    that does `grammar = grammar || ${patch}::jsonb` so kaikki overrides
-    LLM where they collide, and stamps `grounded_at = NOW()`). Failures
-    swallowed and counted; recorded under
+    short-circuits when `alreadyGrounded` or `grammarUserEdited` is true,
+    otherwise calls `groundChunk` and
+    `userLookupsRepository.applyGroundingPatch` (UPDATE that does
+    `grammar = grammar || ${patch}::jsonb` so kaikki overrides LLM where
+    they collide, and stamps `grounded_at = NOW()`). Failures swallowed
+    and counted; recorded under
     `processing_telemetry.pass_name = 'wiktionary_grounding'`. Don't
     re-introduce the original sequential for-loop or the per-row
     `findByIdForUser` round-trip — both wasted RTTs in proportion to
     chunk count.
+  - **Automatic grammar patch guard.** `buildBasicDataGrammarPatch` in
+    `process-session.ts` protects provenance: when a row is already grounded,
+    later basic-data LLM patches may only merge LLM-only keys (`government`,
+    `notes`, `notable_forms`, etc.) and must not overwrite Wiktionary-owned
+    keys (`pos`, `display_form`, `gender`, `number_only`, `is_indeclinable`,
+    `animacy`, `aspect`, `aspect_pair_headword`, `is_reflexive`). When
+    `grammar_user_edited_at` is set, automatic basic-data grammar patches are
+    dropped entirely so user edits stay authoritative. Covered by
+    `apps/backend/src/service/processing/process-session.unit.test.ts`.
   - **Frontend wiring.** `Chunk` schema in
     `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
-    gained `groundedAt: z.string().nullable()`; mapped through
+    gained `groundedAt: z.string().nullable()` and
+    `grammarUserEditedAt: z.string().nullable()`; mapped through
     `cards-router.ts::toChunkDto` and `chunks-router.ts::toChunkRowDto`.
     `cards-repository.ts` `SELECT_CARD_WITH_CHUNK_SQL` includes
-    `ul.grounded_at` in the chunk JSONB; `user-lookups-repository.ts`
-    `ChunkRow` and `mapChunkRow` expose `groundedAt`. New
-    `KAIKKI_LANGUAGES = new Set(['ru'])` in
+    `ul.grounded_at` and `ul.grammar_user_edited_at` in the chunk JSONB;
+    `user-lookups-repository.ts` `ChunkRow` and `mapChunkRow` expose both.
+    `chunks.updateContent` stamps `grammar_user_edited_at` only when the
+    user-facing request carries a non-empty `grammarPatch`; `chunks.rename`
+    stamps it for manual headword/sense edits. Automatic processing,
+    exploration, grounding, and chat tool updates call the repository without
+    that flag. New `KAIKKI_LANGUAGES = new Set(['ru'])` in
     `packages/core/src/constants/language-grammar.ts` mirrors the backend
     set so the badge logic doesn't drift.
   - **Badge.** `apps/web/src/features/review/components/grounding-badge.tsx`
-    renders next to the grammar chips in `focus-view.tsx`. ✓ Wiktionary
-    (with date in the title attribute) when `groundedAt` is set, ⚠ LLM
-    only when the session language is in `KAIKKI_LANGUAGES` but the chunk
-    didn't ground. Returns null for other languages — the absence of
+    renders next to the grammar chips in `focus-view.tsx`. For
+    Kaikki-enabled languages: `✓ Wiktionary` when `groundedAt` is set and
+    `grammarUserEditedAt` is null; `Wiktionary, edited` when both are set;
+    `Edited` when only `grammarUserEditedAt` is set; `⚠ LLM only` when
+    neither is set. Returns null for other languages — the absence of
     grounding is the default state and a badge would be noise.
-  - **`mapChunkRow` keeps reading `row.grounded_at`** as `string | null`
-    (postgres.js JSONB extraction); the chunks-router `toChunkRowDto`
-    runs `toIsoString` on it for the wire. Don't drop that conversion —
-    timestamptz columns surface as JS Dates from some code paths.
+  - **Timestamp DTO rule.** `router-utils.ts` exports shared `toIsoString`.
+    `cards-router.ts` and `chunks-router.ts` both run timestamptz values
+    (`groundedAt`, `grammarUserEditedAt`, due/created cursors) through it for
+    the wire. Don't reintroduce router-local copies or rely on JSON
+    serialization order — oRPC contracts expect strings before output
+    validation.
   - **Idempotency note.** Re-process of an already-processed Russian
     session is cheap: every touched lookup that's already grounded
-    short-circuits without issuing wiktionary queries. Re-grounding old
-    pre-kaikki rows requires a separate admin action (out of scope for
-    v1; called out in `WIKTIONARY_GROUNDING.md`).
+    short-circuits without issuing wiktionary queries; user-edited rows also
+    short-circuit so manual provenance stays authoritative. Re-grounding old
+    pre-kaikki rows requires a separate admin action (out of scope for v1;
+    called out in `WIKTIONARY_GROUNDING.md`).
 
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal

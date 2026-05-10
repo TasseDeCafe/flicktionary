@@ -17,6 +17,7 @@ import { useUpdateChunkContent } from '../api/review-hooks'
 type Props = {
   card: Card
   targetLanguage?: string
+  sourceSessionId?: string
 }
 
 const SAVE_DEBOUNCE_MS = 600
@@ -93,9 +94,9 @@ const buildGrammarPatch = (current: Grammar, lastSaved: Grammar): Record<string,
 // Editable per-key editor. Sends a debounced PATCH on every change. Mirrors
 // the lastSavedRef pattern from EditableCardFields so concurrent updates
 // (chat tool, sibling tab) don't clobber in-flight edits.
-export const EditableGrammarPanel = ({ card, targetLanguage }: Props) => {
+export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: Props) => {
   const { t } = useLingui()
-  const updateChunkContent = useUpdateChunkContent(card.studySessionId)
+  const updateChunkContent = useUpdateChunkContent(sourceSessionId)
 
   const config = useMemo(() => getLanguageGrammarConfig(targetLanguage), [targetLanguage])
   const has = (k: GrammarFieldKey) => config.fields.includes(k)

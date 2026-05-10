@@ -54,6 +54,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   firstCardId: row.firstCardId,
   firstCardSegmentId: row.firstCardSegmentId,
   studySessionId: row.studySessionId,
+  sourceAvailable: row.sourceAvailable,
 })
 
 // Opaque base64-of-JSON wire format for the listChunks cursor. Returning null

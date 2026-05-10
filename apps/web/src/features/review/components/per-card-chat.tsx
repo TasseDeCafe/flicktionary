@@ -7,7 +7,7 @@ import { useListChatForCard, useSendChatMessage } from '../api/review-hooks'
 
 type Props = {
   cardId: string
-  sessionId: string
+  sessionId?: string
 }
 
 export const PerCardChat = ({ cardId, sessionId }: Props) => {

@@ -100,8 +100,12 @@ tracks does).
    JSONB with **kaikki winning where both sides have a value**; LLM-only
    keys (e.g. `government`, `notes`, `notable_forms`) are preserved
    untouched. `grounded_at` is stamped on success. Idempotent across
-   re-process: rows already grounded short-circuit. Languages outside the
-   set are pure-LLM and `grounded_at` stays null. See
+   re-process: rows already grounded short-circuit. Automatic basic-data
+   grammar patches must not overwrite Wiktionary-owned keys on already
+   grounded rows; after a user manually edits grammar provenance, automatic
+   grammar patches and re-grounding skip that row so manual changes stay
+   authoritative. Languages outside the set are pure-LLM and `grounded_at`
+   stays null. See
    `WIKTIONARY_GROUNDING.md` for the full design + per-POS extraction
    rules.
 4. **Per-chunk Full exploration (deferred, on-demand)** — one call per card,
@@ -165,9 +169,12 @@ Two-layer UI.
   with `grammarPatch` shallow-merged into the JSONB column server-side;
   hidden fields' stored values are preserved untouched. A small card-level
   grounding badge sits next to the chips for kaikki-enabled languages
-  (currently `ru`): `✓ Wiktionary` when `grounded_at` is set,
-  `⚠ LLM only` when the language has a dump loaded but the chunk didn't
-  match. Other languages get no badge.
+  (currently `ru`): `✓ Wiktionary` when `grounded_at` is set and the user
+  has not manually edited grammar provenance, `Wiktionary, edited` when a
+  grounded row has been manually edited, `Edited` when an ungrounded row has
+  been manually edited, and `⚠ LLM only` when the language has a dump loaded
+  but the chunk did not match and has not been edited. Other languages get no
+  badge.
 - Below the card: a collapsed `Context` block showing ±2 surrounding source
   segments. Open it with the chevron when needed.
 - Full exploration: rendered when `exploration_extras` has data. Otherwise
@@ -367,9 +374,14 @@ card
                                     -- structured fields via kaikki data after the basic-data pass.
   grounded_at         timestamptz?  -- stamped when wiktionary grounding merged kaikki data into
                                     -- `grammar`. Null = pure LLM (no dump for this language, or
-                                    -- nothing matched). Persists across user edits — the badge
-                                    -- reflects "kaikki was consulted at processing time", not
-                                    -- whether the current value is unedited.
+                                    -- nothing matched). Historical provenance: does not get cleared
+                                    -- by user edits.
+  grammar_user_edited_at timestamptz?
+                                    -- stamped when the user manually edits grammar-provenance-
+                                    -- sensitive data (grammar fields, headword, or sense). Used with
+                                    -- grounded_at to derive badge states: Wiktionary, Wiktionary
+                                    -- edited, Edited, or LLM only. Automatic processing, grounding,
+                                    -- enrichment, and chat tool patches do not stamp this.
   status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
   created_at          timestamptz
   updated_at          timestamptz

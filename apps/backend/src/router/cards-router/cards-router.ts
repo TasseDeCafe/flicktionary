@@ -68,7 +68,7 @@ export const CardsRouter = (
       const userId = context.res.locals.userId
       const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
       if (!session) {
-        throw errors.INTERNAL_SERVER_ERROR({
+        throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
