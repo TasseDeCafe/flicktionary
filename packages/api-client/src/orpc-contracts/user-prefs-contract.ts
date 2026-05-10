@@ -10,6 +10,7 @@ const TargetLanguagePrefSchema = z.object({
 const UserPrefsSchema = z.object({
   nativeLanguage: z.string().nullable(),
   isOnboarded: z.boolean(),
+  lastTargetLanguage: z.string().nullable(),
   tapToTranslateEnabled: z.boolean(),
   llmHighlightsEnabled: z.boolean(),
   practiceMaxNewTerms: z.number().int(),

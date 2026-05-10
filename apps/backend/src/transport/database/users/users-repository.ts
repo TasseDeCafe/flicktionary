@@ -103,6 +103,22 @@ const setNativeLanguage = async (userId: string, nativeLanguage: string): Promis
   return result.count === 1
 }
 
+const getLastTargetLanguage = async (userId: string): Promise<string | null> => {
+  const result = (await sql`
+    SELECT last_target_language FROM public.users WHERE id = ${userId}
+  `) as { last_target_language: string | null }[]
+  return result[0]?.last_target_language ?? null
+}
+
+const setLastTargetLanguage = async (userId: string, targetLanguage: string): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users
+    SET last_target_language = ${targetLanguage}
+    WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
 const getIsOnboarded = async (userId: string): Promise<boolean> => {
   const result = (await sql`
     SELECT is_onboarded FROM public.users WHERE id = ${userId}
@@ -193,6 +209,8 @@ export interface UsersRepositoryInterface {
   setNativeLanguage: (userId: string, nativeLanguage: string) => Promise<boolean>
   getIsOnboarded: (userId: string) => Promise<boolean>
   completeOnboarding: (userId: string, nativeLanguage: string) => Promise<boolean>
+  getLastTargetLanguage: (userId: string) => Promise<string | null>
+  setLastTargetLanguage: (userId: string, targetLanguage: string) => Promise<boolean>
   getTapToTranslateEnabled: (userId: string) => Promise<boolean>
   setTapToTranslateEnabled: (userId: string, enabled: boolean) => Promise<boolean>
   getLlmHighlightsEnabled: (userId: string) => Promise<boolean>
@@ -213,6 +231,8 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setNativeLanguage,
     getIsOnboarded,
     completeOnboarding,
+    getLastTargetLanguage,
+    setLastTargetLanguage,
     getTapToTranslateEnabled,
     setTapToTranslateEnabled,
     getLlmHighlightsEnabled,

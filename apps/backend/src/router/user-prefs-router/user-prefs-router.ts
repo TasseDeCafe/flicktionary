@@ -10,6 +10,7 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 type UserPrefsResponse = {
   nativeLanguage: string | null
   isOnboarded: boolean
+  lastTargetLanguage: string | null
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
   practiceMaxNewTerms: number
@@ -22,18 +23,27 @@ const buildPrefs = async (
   usersRepository: UsersRepositoryInterface,
   prefsRepository: UserTargetLanguagePrefsRepositoryInterface
 ): Promise<UserPrefsResponse> => {
-  const [nativeLanguage, isOnboarded, tapToTranslateEnabled, llmHighlightsEnabled, practiceLimits, targetPrefs] =
-    await Promise.all([
-      usersRepository.getNativeLanguage(userId),
-      usersRepository.getIsOnboarded(userId),
-      usersRepository.getTapToTranslateEnabled(userId),
-      usersRepository.getLlmHighlightsEnabled(userId),
-      usersRepository.getPracticeSessionLimits(userId),
-      prefsRepository.listForUser(userId),
-    ])
+  const [
+    nativeLanguage,
+    isOnboarded,
+    lastTargetLanguage,
+    tapToTranslateEnabled,
+    llmHighlightsEnabled,
+    practiceLimits,
+    targetPrefs,
+  ] = await Promise.all([
+    usersRepository.getNativeLanguage(userId),
+    usersRepository.getIsOnboarded(userId),
+    usersRepository.getLastTargetLanguage(userId),
+    usersRepository.getTapToTranslateEnabled(userId),
+    usersRepository.getLlmHighlightsEnabled(userId),
+    usersRepository.getPracticeSessionLimits(userId),
+    prefsRepository.listForUser(userId),
+  ])
   return {
     nativeLanguage,
     isOnboarded,
+    lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
     practiceMaxNewTerms: practiceLimits.maxNewTerms,

@@ -106,7 +106,7 @@ export const NewTextSessionWizard = () => {
                 </Button>
               </div>
             ) : (
-              <TextPasteInput onImported={handleImported} defaultLanguage={prefs?.nativeLanguage ?? 'en'} />
+              <TextPasteInput onImported={handleImported} defaultLanguage={prefs?.lastTargetLanguage ?? 'en'} />
             )}
           </CardContent>
         </Card>

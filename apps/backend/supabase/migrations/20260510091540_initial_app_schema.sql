@@ -13,7 +13,11 @@ ALTER TABLE public.users
   ADD COLUMN llm_highlights_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   ADD COLUMN practice_max_new_terms INTEGER NOT NULL DEFAULT 20,
   ADD COLUMN practice_max_review_terms INTEGER NOT NULL DEFAULT 100,
-  ADD COLUMN is_onboarded BOOLEAN NOT NULL DEFAULT FALSE;
+  ADD COLUMN is_onboarded BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Sticky last-used target language. Updated whenever a session or adhoc
+  -- card is created. Powers the adhoc-wizard prefill so the user doesn't
+  -- have to re-pick the same language every time.
+  ADD COLUMN last_target_language TEXT NULL;
 
 -- =========================================================================
 -- Flicktionary enums

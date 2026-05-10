@@ -321,7 +321,7 @@ export const buildApp = ({
     })
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
-  app.use(API_V1, StudySessionsRouter(studySessionsRepository, processingDependencies))
+  app.use(API_V1, StudySessionsRouter(studySessionsRepository, usersRepository, processingDependencies))
   app.use(API_V1, HighlightsRouter(highlightsRepository, studySessionsRepository, textSegmentsRepository))
   app.use(
     API_V1,

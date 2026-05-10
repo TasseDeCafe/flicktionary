@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label'
 import { LanguagePicker } from '@/components/language-picker'
 import { toast } from 'sonner'
 import { useCreateContentSourceFromText, useImportFromPaste } from '../api/sessions-hooks'
+import { useDebouncedValue } from '../hooks/use-debounced-value'
+import { detectLanguage } from '../utils/detect-language'
 
 const MIN_LENGTH = 50
 const MAX_LENGTH = 20_000
@@ -37,6 +39,7 @@ export const TextPasteInput = ({ onImported, defaultLanguage = 'en' }: Props) =>
   const [title, setTitle] = useState('')
   const [titleTouched, setTitleTouched] = useState(false)
   const [language, setLanguage] = useState(defaultLanguage)
+  const [languageTouched, setLanguageTouched] = useState(false)
 
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromText()
   const { mutate: importFromPaste, isPending: isImporting } = useImportFromPaste()
@@ -47,6 +50,15 @@ export const TextPasteInput = ({ onImported, defaultLanguage = 'en' }: Props) =>
     if (titleTouched) return
     setTitle(suggestTitleFromText(text))
   }, [text, titleTouched])
+
+  // Auto-detect language with franc once the textarea has enough signal.
+  // Skip once the user manually picks — their override always wins.
+  const debouncedText = useDebouncedValue(text, 300)
+  useEffect(() => {
+    if (languageTouched) return
+    const detected = detectLanguage(debouncedText)
+    if (detected && detected !== language) setLanguage(detected)
+  }, [debouncedText, languageTouched, language])
 
   const charCount = text.length
   const trimmedTitle = title.trim()
@@ -117,7 +129,14 @@ export const TextPasteInput = ({ onImported, defaultLanguage = 'en' }: Props) =>
       <div className='flex flex-col gap-2'>
         <Label htmlFor='paste-language'>{t`Language of the text`}</Label>
         <div className='max-w-xs'>
-          <LanguagePicker id='paste-language' value={language} onChange={(code) => setLanguage(code)} />
+          <LanguagePicker
+            id='paste-language'
+            value={language}
+            onChange={(code) => {
+              setLanguageTouched(true)
+              setLanguage(code)
+            }}
+          />
         </div>
       </div>
 

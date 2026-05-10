@@ -5,6 +5,17 @@ import { Button } from '@/components/ui/button'
 import { LanguagePicker } from '@/components/language-picker'
 import { useImportFromOpenSubtitles, useSearchOpenSubtitles, useUploadSrt } from '../api/sessions-hooks'
 import { SrtUploadInput } from './srt-upload-input'
+import { detectLanguage } from '../utils/detect-language'
+
+// Strip SRT timecodes / sequence numbers / inline tags so franc sees pure dialogue.
+const SRT_LINE_PATTERN = /^\s*(\d+|\d{2}:\d{2}:\d{2}[,.]\d{3} --> \d{2}:\d{2}:\d{2}[,.]\d{3})\s*$/
+const stripSrtForDetection = (srt: string): string =>
+  srt
+    .split(/\r?\n/)
+    .filter((line) => line.trim().length > 0 && !SRT_LINE_PATTERN.test(line))
+    .map((line) => line.replace(/<[^>]+>/g, ''))
+    .slice(0, 30)
+    .join(' ')
 
 type ImportedTrack = {
   trackId: string
@@ -52,10 +63,11 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
     )
   }
 
-  const handleUpload = (srtContent: string) => {
-    if (!language) return
+  const handleUpload = (srtContent: string, languageOverride?: string) => {
+    const langToUse = languageOverride ?? language
+    if (!langToUse) return
     uploadSrt(
-      { contentSourceId, language, srtContent },
+      { contentSourceId, language: langToUse, srtContent },
       {
         onSuccess: (response) => {
           onImported({
@@ -134,7 +146,11 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
         <div className='flex flex-col gap-3'>
           <SrtUploadInput
             onLoaded={(content) => {
-              handleUpload(content)
+              const detected = detectLanguage(stripSrtForDetection(content))
+              if (detected && detected !== targetLanguage) {
+                setTargetLanguage(detected)
+              }
+              handleUpload(content, detected ?? targetLanguage)
             }}
           />
           {isUploading && <p className='text-muted-foreground text-sm'>{t`Uploading…`}</p>}

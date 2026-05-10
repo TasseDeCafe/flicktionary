@@ -8,6 +8,7 @@ import {
   DbStudySessionWithSource,
   StudySessionsRepositoryInterface,
 } from '../../transport/database/study-sessions/study-sessions-repository'
+import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processSession, ProcessingDependencies } from '../../service/processing/process-session'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 
@@ -42,6 +43,7 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
 
 export const StudySessionsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
+  usersRepository: UsersRepositoryInterface,
   processingDependencies: ProcessingDependencies
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -87,6 +89,14 @@ export const StudySessionsRouter = (
           data: { errors: [{ message: 'Failed to load created study session' }] },
         })
       }
+      // Stamp the most-recent target language so the adhoc wizard can prefill it.
+      void usersRepository.setLastTargetLanguage(userId, input.targetLanguage).catch((error) => {
+        logWithSentry({
+          message: 'setLastTargetLanguage failed',
+          params: { userId, targetLanguage: input.targetLanguage },
+          error,
+        })
+      })
       return { data: toStudySessionDto(enriched) }
     }),
 

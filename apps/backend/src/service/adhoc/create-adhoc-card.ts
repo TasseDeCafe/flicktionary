@@ -163,5 +163,10 @@ export const createAdhocCard = async (params: {
     throw new AdhocCardCreationError('card_not_inserted', `no card created for highlight ${highlight.id}`)
   }
 
+  // Stamp the most-recent target language so the next adhoc-wizard open prefills it.
+  void deps.usersRepository.setLastTargetLanguage(userId, targetLanguage).catch((e) => {
+    logCustomErrorMessageAndError(`createAdhocCard: setLastTargetLanguage failed for userId=${userId}`, e)
+  })
+
   return { cardId: insertedCard.id, sessionId: session.id }
 }

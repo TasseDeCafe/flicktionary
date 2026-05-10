@@ -886,6 +886,7 @@ export type Database = {
           created_at: string
           id: string
           is_onboarded: boolean
+          last_target_language: string | null
           llm_highlights_enabled: boolean
           native_language: string | null
           practice_max_new_terms: number
@@ -903,6 +904,7 @@ export type Database = {
           created_at?: string
           id: string
           is_onboarded?: boolean
+          last_target_language?: string | null
           llm_highlights_enabled?: boolean
           native_language?: string | null
           practice_max_new_terms?: number
@@ -920,6 +922,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_onboarded?: boolean
+          last_target_language?: string | null
           llm_highlights_enabled?: boolean
           native_language?: string | null
           practice_max_new_terms?: number

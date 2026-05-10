@@ -24,16 +24,17 @@ export const NewAdhocCardWizard = () => {
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: createAdhoc, isPending: isCreating } = useCreateAdhocCard()
 
-  // Default to the first CEFR-set language alphabetically (no MRU is stored
-  // on the user pref). The picker itself spans every supported language so
-  // the user can add a word in a brand-new language too — the backend
-  // returns `cefr_not_set` and we surface the CEFR dialog inline.
+  // Prefill the picker from `lastTargetLanguage` (sticky MRU on `users`),
+  // falling back to the first CEFR-set language alphabetically. The picker
+  // itself spans every supported language so the user can add a word in a
+  // brand-new language too — the backend returns `cefr_not_set` and we
+  // surface the CEFR dialog inline.
   const cefrSetLanguages = useMemo(
     () => (prefs?.targetLanguagePrefs ?? []).map((p) => p.targetLanguage).sort(),
     [prefs]
   )
   const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
-  const effectiveTarget = targetLanguage ?? cefrSetLanguages[0] ?? null
+  const effectiveTarget = targetLanguage ?? prefs?.lastTargetLanguage ?? cefrSetLanguages[0] ?? null
 
   const [headword, setHeadword] = useState('')
   const [context, setContext] = useState('')

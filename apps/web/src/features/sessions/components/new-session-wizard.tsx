@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,14 +29,24 @@ export const NewSessionWizard = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
 
+  const { data: prefs } = useGetUserPrefs()
+
   const [step, setStep] = useState<StepKey>('movie')
   const [movie, setMovie] = useState<TmdbMoviePick | null>(null)
   const [contentSourceId, setContentSourceId] = useState<string | null>(null)
-  const [contentSourceLanguage, setContentSourceLanguage] = useState<string>('en')
+  const [contentSourceLanguage, setContentSourceLanguage] = useState<string>(prefs?.lastTargetLanguage ?? 'en')
+  const [contentSourceLanguageTouched, setContentSourceLanguageTouched] = useState(false)
   const [importedTrack, setImportedTrack] = useState<ImportedTrack | null>(null)
   const [showCefrDialog, setShowCefrDialog] = useState(false)
 
-  const { data: prefs } = useGetUserPrefs()
+  // Prefs may not be cached yet when the wizard mounts. Once they arrive,
+  // backfill the picker — unless the user already touched it.
+  useEffect(() => {
+    if (contentSourceLanguageTouched) return
+    if (prefs?.lastTargetLanguage && prefs.lastTargetLanguage !== contentSourceLanguage) {
+      setContentSourceLanguage(prefs.lastTargetLanguage)
+    }
+  }, [prefs?.lastTargetLanguage, contentSourceLanguageTouched, contentSourceLanguage])
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromTmdb()
   const { mutate: setCefr } = useSetCefrForLanguage()
   const { mutate: createSession, isPending: isCreatingSession } = useCreateStudySession()
@@ -161,7 +171,10 @@ export const NewSessionWizard = () => {
                       <LanguagePicker
                         id='source-language'
                         value={contentSourceLanguage}
-                        onChange={(code) => setContentSourceLanguage(code)}
+                        onChange={(code) => {
+                          setContentSourceLanguageTouched(true)
+                          setContentSourceLanguage(code)
+                        }}
                       />
                     </div>
                   </div>
