@@ -12,7 +12,8 @@ ALTER TABLE public.users
   ADD COLUMN tap_to_translate_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN llm_highlights_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   ADD COLUMN practice_max_new_terms INTEGER NOT NULL DEFAULT 20,
-  ADD COLUMN practice_max_review_terms INTEGER NOT NULL DEFAULT 100;
+  ADD COLUMN practice_max_review_terms INTEGER NOT NULL DEFAULT 100,
+  ADD COLUMN is_onboarded BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- =========================================================================
 -- Flicktionary enums

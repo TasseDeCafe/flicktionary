@@ -9,6 +9,7 @@ const TargetLanguagePrefSchema = z.object({
 
 const UserPrefsSchema = z.object({
   nativeLanguage: z.string().nullable(),
+  isOnboarded: z.boolean(),
   tapToTranslateEnabled: z.boolean(),
   llmHighlightsEnabled: z.boolean(),
   practiceMaxNewTerms: z.number().int(),
@@ -37,6 +38,12 @@ export const userPrefsContract = {
 
   setNativeLanguage: oc
     .route({ method: 'PUT', path: '/user-prefs/native-language', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ nativeLanguage: z.string().min(1) }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  completeOnboarding: oc
+    .route({ method: 'POST', path: '/user-prefs/complete-onboarding', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({ nativeLanguage: z.string().min(1) }))
     .output(z.object({ data: UserPrefsSchema })),

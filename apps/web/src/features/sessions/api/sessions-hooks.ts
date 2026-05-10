@@ -296,6 +296,22 @@ export const useSetNativeLanguage = () => {
   )
 }
 
+export const useCompleteOnboarding = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.completeOnboarding.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to complete onboarding`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useSetTapToTranslateEnabled = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

@@ -11,6 +11,18 @@ import { FEATURES } from '@flicktionary/core/features'
 import { parseEmails } from './environment-config-utils'
 import { EnvironmentConfig } from './environment-config-schema'
 
+const parseAutoSeedPattern = (raw: string | undefined): RegExp | null => {
+  if (!raw) return null
+  try {
+    return new RegExp(raw)
+  } catch {
+    return null
+  }
+}
+
+const devAutoSeedEmailPattern = parseAutoSeedPattern(process.env.DEV_AUTOSEED_EMAIL_PATTERN)
+const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'fr'
+
 const productionConfig: EnvironmentConfig = {
   environmentName: 'production',
   // Railway injects PORT env var, fallback to 4004 for other deployments
@@ -60,6 +72,8 @@ const productionConfig: EnvironmentConfig = {
   shouldSlowDownApiRoutes: false,
   usersWithFreeAccess: parseEmails(process.env.USERS_WITH_FREE_ACCESS || '').validEmails,
   emailsOfTestUsers: parseEmails(process.env.EMAILS_OF_TEST_USERS || '').validEmails,
+  devAutoSeedEmailPattern,
+  devAutoSeedNativeLanguage,
   featureFlags: {
     isCreditCardRequiredForAll: () => true,
     shouldAppBeFreeForEveryone: () => false,
@@ -115,6 +129,8 @@ const developmentConfig: EnvironmentConfig = {
   shouldSlowDownApiRoutes: false,
   usersWithFreeAccess: parseEmails(process.env.USERS_WITH_FREE_ACCESS || '').validEmails,
   emailsOfTestUsers: parseEmails(process.env.EMAILS_OF_TEST_USERS || '').validEmails,
+  devAutoSeedEmailPattern,
+  devAutoSeedNativeLanguage,
   featureFlags: {
     isCreditCardRequiredForAll: () => true,
     shouldAppBeFreeForEveryone: () => false,
@@ -200,6 +216,8 @@ const testConfig: EnvironmentConfig = {
   shouldSlowDownApiRoutes: false,
   usersWithFreeAccess: [],
   emailsOfTestUsers: [],
+  devAutoSeedEmailPattern: null,
+  devAutoSeedNativeLanguage: 'fr',
   featureFlags: {
     isCreditCardRequiredForAll: () => true,
     shouldAppBeFreeForEveryone: () => false,

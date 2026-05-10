@@ -24,6 +24,7 @@ import { Route as AuthenticatedRedirectToCheckOutPlanIntervalRouteImport } from 
 import { Route as AuthenticatedProfileDangerZoneRouteImport } from './routes/_authenticated/profile/danger-zone'
 import { Route as AuthenticatedPricingFreeTrialExplanationRouteImport } from './routes/_authenticated/pricing/free-trial-explanation'
 import { Route as AuthenticatedPricingCheckoutSuccessRouteImport } from './routes/_authenticated/pricing/checkout-success'
+import { Route as AuthenticatedAppOnboardingRouteImport } from './routes/_authenticated/_app/onboarding'
 import { Route as AuthenticatedAppVocabularyIndexRouteImport } from './routes/_authenticated/_app/vocabulary/index'
 import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
 import { Route as AuthenticatedAppPracticeIndexRouteImport } from './routes/_authenticated/_app/practice/index'
@@ -118,6 +119,12 @@ const AuthenticatedPricingCheckoutSuccessRoute =
     id: '/pricing/checkout-success',
     path: '/pricing/checkout-success',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAppOnboardingRoute =
+  AuthenticatedAppOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppVocabularyIndexRoute =
   AuthenticatedAppVocabularyIndexRouteImport.update({
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
+  '/onboarding': typeof AuthenticatedAppOnboardingRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -246,6 +254,7 @@ export interface FileRoutesByTo {
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login': typeof LoginIndexRoute
+  '/onboarding': typeof AuthenticatedAppOnboardingRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -279,6 +288,7 @@ export interface FileRoutesById {
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
+  '/_authenticated/_app/onboarding': typeof AuthenticatedAppOnboardingRoute
   '/_authenticated/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/_authenticated/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/_authenticated/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/admin-settings'
     | '/account/removed'
     | '/login/'
+    | '/onboarding'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/admin-settings'
     | '/account/removed'
     | '/login'
+    | '/onboarding'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -373,6 +385,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin-settings'
     | '/account/removed'
     | '/login/'
+    | '/_authenticated/_app/onboarding'
     | '/_authenticated/pricing/checkout-success'
     | '/_authenticated/pricing/free-trial-explanation'
     | '/_authenticated/profile/danger-zone'
@@ -516,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPricingCheckoutSuccessRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_app/onboarding': {
+      id: '/_authenticated/_app/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedAppOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/vocabulary/': {
       id: '/_authenticated/_app/vocabulary/'
       path: '/vocabulary'
@@ -625,6 +645,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppOnboardingRoute: typeof AuthenticatedAppOnboardingRoute
   AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
   AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
   AuthenticatedAppPracticePracticeSessionIdRoute: typeof AuthenticatedAppPracticePracticeSessionIdRoute
@@ -643,6 +664,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppOnboardingRoute: AuthenticatedAppOnboardingRoute,
   AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,
   AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
   AuthenticatedAppPracticePracticeSessionIdRoute:

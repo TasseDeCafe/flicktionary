@@ -9,6 +9,7 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 
 type UserPrefsResponse = {
   nativeLanguage: string | null
+  isOnboarded: boolean
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
   practiceMaxNewTerms: number
@@ -21,15 +22,18 @@ const buildPrefs = async (
   usersRepository: UsersRepositoryInterface,
   prefsRepository: UserTargetLanguagePrefsRepositoryInterface
 ): Promise<UserPrefsResponse> => {
-  const [nativeLanguage, tapToTranslateEnabled, llmHighlightsEnabled, practiceLimits, targetPrefs] = await Promise.all([
-    usersRepository.getNativeLanguage(userId),
-    usersRepository.getTapToTranslateEnabled(userId),
-    usersRepository.getLlmHighlightsEnabled(userId),
-    usersRepository.getPracticeSessionLimits(userId),
-    prefsRepository.listForUser(userId),
-  ])
+  const [nativeLanguage, isOnboarded, tapToTranslateEnabled, llmHighlightsEnabled, practiceLimits, targetPrefs] =
+    await Promise.all([
+      usersRepository.getNativeLanguage(userId),
+      usersRepository.getIsOnboarded(userId),
+      usersRepository.getTapToTranslateEnabled(userId),
+      usersRepository.getLlmHighlightsEnabled(userId),
+      usersRepository.getPracticeSessionLimits(userId),
+      prefsRepository.listForUser(userId),
+    ])
   return {
     nativeLanguage,
+    isOnboarded,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
     practiceMaxNewTerms: practiceLimits.maxNewTerms,
@@ -60,6 +64,18 @@ export const UserPrefsRouter = (
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to set native language' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    completeOnboarding: implementer.completeOnboarding.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.completeOnboarding(userId, input.nativeLanguage)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to complete onboarding' }] },
         })
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

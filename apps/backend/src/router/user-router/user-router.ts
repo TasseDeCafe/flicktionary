@@ -6,6 +6,17 @@ import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middlewa
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processReferral } from './user-router-utils'
 import { userContract } from '@flicktionary/api-client/orpc-contracts/user-contract'
+import { getConfig } from '../../config/environment-config'
+
+const buildSeedFromEmail = (
+  email: string | undefined
+): { nativeLanguage: string; isOnboarded: boolean } | undefined => {
+  if (!email) return undefined
+  const { devAutoSeedEmailPattern, devAutoSeedNativeLanguage } = getConfig()
+  if (!devAutoSeedEmailPattern) return undefined
+  if (!devAutoSeedEmailPattern.test(email)) return undefined
+  return { nativeLanguage: devAutoSeedNativeLanguage, isOnboarded: true }
+}
 
 export const UserRouter = (usersRepository: UsersRepositoryInterface): Router => {
   const implementer = implement(userContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -42,13 +53,19 @@ export const UserRouter = (usersRepository: UsersRepositoryInterface): Router =>
 
       if (!dbUser) {
         const processedReferral = processReferral(referral)
-        await usersRepository.insertUser(userId, processedReferral, {
-          utmSource: utmSource || null,
-          utmMedium: utmMedium || null,
-          utmCampaign: utmCampaign || null,
-          utmTerm: utmTerm || null,
-          utmContent: utmContent || null,
-        })
+        const seed = buildSeedFromEmail(context.res.locals.email)
+        await usersRepository.insertUser(
+          userId,
+          processedReferral,
+          {
+            utmSource: utmSource || null,
+            utmMedium: utmMedium || null,
+            utmCampaign: utmCampaign || null,
+            utmTerm: utmTerm || null,
+            utmContent: utmContent || null,
+          },
+          seed
+        )
         return {
           data: {
             referral: referral ?? null,

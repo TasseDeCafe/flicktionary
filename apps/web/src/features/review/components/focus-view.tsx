@@ -153,8 +153,7 @@ export const FocusView = () => {
   )
   const targetLanguage = session?.targetLanguage ?? card.chunk.targetLanguage
   const nativeLanguage = session?.nativeLanguage ?? userPrefs?.nativeLanguage ?? null
-  const sameLanguage =
-    !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
+  const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`

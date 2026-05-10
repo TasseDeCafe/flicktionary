@@ -22,7 +22,8 @@ const insertUser = async (
     utmCampaign: string | null
     utmTerm: string | null
     utmContent: string | null
-  }
+  },
+  seed?: { nativeLanguage: string; isOnboarded: boolean }
 ): Promise<void> => {
   await sql`
     INSERT INTO public.users (
@@ -32,7 +33,9 @@ const insertUser = async (
       utm_medium,
       utm_campaign,
       utm_term,
-      utm_content
+      utm_content,
+      native_language,
+      is_onboarded
     )
     VALUES (
       ${id},
@@ -41,7 +44,9 @@ const insertUser = async (
       ${utmParams.utmMedium},
       ${utmParams.utmCampaign},
       ${utmParams.utmTerm},
-      ${utmParams.utmContent}
+      ${utmParams.utmContent},
+      ${seed?.nativeLanguage ?? null},
+      ${seed?.isOnboarded ?? false}
     )
     ON CONFLICT (id) DO NOTHING
   `
@@ -94,6 +99,23 @@ const getNativeLanguage = async (userId: string): Promise<string | null> => {
 const setNativeLanguage = async (userId: string, nativeLanguage: string): Promise<boolean> => {
   const result = await sql`
     UPDATE public.users SET native_language = ${nativeLanguage} WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
+const getIsOnboarded = async (userId: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT is_onboarded FROM public.users WHERE id = ${userId}
+  `) as { is_onboarded: boolean }[]
+  return result[0]?.is_onboarded ?? false
+}
+
+const completeOnboarding = async (userId: string, nativeLanguage: string): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users
+    SET native_language = ${nativeLanguage},
+        is_onboarded = TRUE
+    WHERE id = ${userId}
   `
   return result.count === 1
 }
@@ -159,7 +181,8 @@ export interface UsersRepositoryInterface {
       utmCampaign: string | null
       utmTerm: string | null
       utmContent: string | null
-    }
+    },
+    seed?: { nativeLanguage: string; isOnboarded: boolean }
   ) => Promise<void>
   findUserByUserId: (id: string) => Promise<DbUser | null>
   findUserByStripeCustomerId: (stripeCustomerId: string) => Promise<DbUser | null>
@@ -168,6 +191,8 @@ export interface UsersRepositoryInterface {
   retrieveAllUsersCreatedLessThanNDaysAgo: (days: number) => Promise<string[]>
   getNativeLanguage: (userId: string) => Promise<string | null>
   setNativeLanguage: (userId: string, nativeLanguage: string) => Promise<boolean>
+  getIsOnboarded: (userId: string) => Promise<boolean>
+  completeOnboarding: (userId: string, nativeLanguage: string) => Promise<boolean>
   getTapToTranslateEnabled: (userId: string) => Promise<boolean>
   setTapToTranslateEnabled: (userId: string, enabled: boolean) => Promise<boolean>
   getLlmHighlightsEnabled: (userId: string) => Promise<boolean>
@@ -186,6 +211,8 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     retrieveAllUsersCreatedLessThanNDaysAgo,
     getNativeLanguage,
     setNativeLanguage,
+    getIsOnboarded,
+    completeOnboarding,
     getTapToTranslateEnabled,
     setTapToTranslateEnabled,
     getLlmHighlightsEnabled,

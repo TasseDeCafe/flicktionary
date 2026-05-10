@@ -30,7 +30,10 @@ export type CreateAdhocCardDependencies = {
 export type CreateAdhocCardError = 'native_language_not_set' | 'cefr_not_set' | 'llm_failure' | 'card_not_inserted'
 
 export class AdhocCardCreationError extends Error {
-  constructor(public readonly code: CreateAdhocCardError, message?: string) {
+  constructor(
+    public readonly code: CreateAdhocCardError,
+    message?: string
+  ) {
     super(message ?? code)
     this.name = 'AdhocCardCreationError'
   }

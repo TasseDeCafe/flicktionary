@@ -6,13 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { LanguagePicker } from '@/components/language-picker'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { toast } from 'sonner'
 import {
   useCreateContentSourceFromTmdb,
   useCreateStudySession,
   useGetUserPrefs,
   useSetCefrForLanguage,
-  useSetNativeLanguage,
 } from '../api/sessions-hooks'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { TmdbSearch, TmdbMoviePick } from './tmdb-search'
@@ -40,7 +38,6 @@ export const NewSessionWizard = () => {
 
   const { data: prefs } = useGetUserPrefs()
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromTmdb()
-  const { mutate: setNativeLanguage } = useSetNativeLanguage()
   const { mutate: setCefr } = useSetCefrForLanguage()
   const { mutate: createSession, isPending: isCreatingSession } = useCreateStudySession()
 
@@ -73,11 +70,7 @@ export const NewSessionWizard = () => {
   }
 
   const handleStartSession = () => {
-    if (!contentSourceId || !importedTrack) return
-    if (!prefs?.nativeLanguage) {
-      toast.error(t`Set your native language first.`)
-      return
-    }
+    if (!contentSourceId || !importedTrack || !prefs?.nativeLanguage) return
     const existingCefr = prefs.targetLanguagePrefs.find((p) => p.targetLanguage === importedTrack.language)?.cefrLevel
     if (!existingCefr) {
       setShowCefrDialog(true)
@@ -101,6 +94,7 @@ export const NewSessionWizard = () => {
 
   const handleCefrSubmit = (level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
     if (!importedTrack || !prefs?.nativeLanguage || !contentSourceId) return
+    const nativeLanguage = prefs.nativeLanguage
     setCefr(
       { targetLanguage: importedTrack.language, cefrLevel: level },
       {
@@ -110,7 +104,7 @@ export const NewSessionWizard = () => {
             {
               contentSourceId,
               textTrackId: importedTrack.trackId,
-              nativeLanguage: prefs.nativeLanguage!,
+              nativeLanguage,
               targetLanguage: importedTrack.language,
               cefrLevel: level,
             },
@@ -224,18 +218,7 @@ export const NewSessionWizard = () => {
               <CardTitle>3. {t`Start session`}</CardTitle>
             </CardHeader>
             <CardContent className='flex flex-col gap-4'>
-              {!prefs?.nativeLanguage ? (
-                <div className='flex flex-col gap-2'>
-                  <Label htmlFor='native-language' className='text-sm'>{t`Your native language`}</Label>
-                  <div className='max-w-xs'>
-                    <LanguagePicker
-                      id='native-language'
-                      value={null}
-                      onChange={(code) => setNativeLanguage({ nativeLanguage: code })}
-                    />
-                  </div>
-                </div>
-              ) : (
+              {prefs?.nativeLanguage &&
                 (() => {
                   const nativeLanguage = getLanguageName(prefs.nativeLanguage)
                   const trackLanguage = getLanguageName(importedTrack.language)
@@ -246,8 +229,7 @@ export const NewSessionWizard = () => {
                       {cefrLabel ? t`Level for ${trackLanguage}: ${cefrLabel}.` : t`We'll ask your level next.`}
                     </div>
                   )
-                })()
-              )}
+                })()}
               <Button onClick={handleStartSession} disabled={!prefs?.nativeLanguage || isCreatingSession}>
                 {isCreatingSession ? t`Creating…` : t`Start session`}
               </Button>

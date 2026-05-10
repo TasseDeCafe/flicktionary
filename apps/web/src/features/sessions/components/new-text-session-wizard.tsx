@@ -3,16 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { LanguagePicker } from '@/components/language-picker'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { toast } from 'sonner'
-import {
-  useCreateStudySession,
-  useGetUserPrefs,
-  useSetCefrForLanguage,
-  useSetNativeLanguage,
-} from '../api/sessions-hooks'
+import { useCreateStudySession, useGetUserPrefs, useSetCefrForLanguage } from '../api/sessions-hooks'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { TextPasteInput } from './text-paste-input'
 import { CefrPromptDialog } from './cefr-prompt-dialog'
@@ -32,7 +24,6 @@ export const NewTextSessionWizard = () => {
   const [showCefrDialog, setShowCefrDialog] = useState(false)
 
   const { data: prefs } = useGetUserPrefs()
-  const { mutate: setNativeLanguage } = useSetNativeLanguage()
   const { mutate: setCefr } = useSetCefrForLanguage()
   const { mutate: createSession, isPending: isCreatingSession } = useCreateStudySession()
 
@@ -63,11 +54,7 @@ export const NewTextSessionWizard = () => {
   }
 
   const handleStartSession = () => {
-    if (!contentSourceId || !importedTrack) return
-    if (!prefs?.nativeLanguage) {
-      toast.error(t`Set your native language first.`)
-      return
-    }
+    if (!contentSourceId || !importedTrack || !prefs?.nativeLanguage) return
     const existingCefr = prefs.targetLanguagePrefs.find((p) => p.targetLanguage === importedTrack.language)?.cefrLevel
     if (!existingCefr) {
       setShowCefrDialog(true)
@@ -78,12 +65,13 @@ export const NewTextSessionWizard = () => {
 
   const handleCefrSubmit = (level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
     if (!importedTrack || !prefs?.nativeLanguage || !contentSourceId) return
+    const nativeLanguage = prefs.nativeLanguage
     setCefr(
       { targetLanguage: importedTrack.language, cefrLevel: level },
       {
         onSuccess: () => {
           setShowCefrDialog(false)
-          startSession(level, prefs.nativeLanguage!)
+          startSession(level, nativeLanguage)
         },
       }
     )
@@ -130,18 +118,7 @@ export const NewTextSessionWizard = () => {
               <CardTitle>2. {t`Start session`}</CardTitle>
             </CardHeader>
             <CardContent className='flex flex-col gap-4'>
-              {!prefs?.nativeLanguage ? (
-                <div className='flex flex-col gap-2'>
-                  <Label htmlFor='native-language' className='text-sm'>{t`Your native language`}</Label>
-                  <div className='max-w-xs'>
-                    <LanguagePicker
-                      id='native-language'
-                      value={null}
-                      onChange={(code) => setNativeLanguage({ nativeLanguage: code })}
-                    />
-                  </div>
-                </div>
-              ) : (
+              {prefs?.nativeLanguage &&
                 (() => {
                   const nativeLanguage = getLanguageName(prefs.nativeLanguage)
                   const trackLanguage = getLanguageName(importedTrack.language)
@@ -152,8 +129,7 @@ export const NewTextSessionWizard = () => {
                       {cefrLabel ? t`Level for ${trackLanguage}: ${cefrLabel}.` : t`We'll ask your level next.`}
                     </div>
                   )
-                })()
-              )}
+                })()}
               <Button onClick={handleStartSession} disabled={!prefs?.nativeLanguage || isCreatingSession}>
                 {isCreatingSession ? t`Creating…` : t`Start session`}
               </Button>

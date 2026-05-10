@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { LanguagePicker } from '@/components/language-picker'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { useGetUserPrefs, useSetCefrForLanguage, useSetNativeLanguage } from '@/features/sessions/api/sessions-hooks'
+import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
 import { useCreateAdhocCard } from '../api/adhoc-hooks'
 
@@ -21,7 +21,6 @@ export const NewAdhocCardWizard = () => {
   const navigate = useNavigate()
 
   const { data: prefs } = useGetUserPrefs()
-  const { mutate: setNativeLanguage } = useSetNativeLanguage()
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: createAdhoc, isPending: isCreating } = useCreateAdhocCard()
 
@@ -108,19 +107,6 @@ export const NewAdhocCardWizard = () => {
             <CardTitle>{t`Save a chunk`}</CardTitle>
           </CardHeader>
           <CardContent className='flex flex-col gap-4'>
-            {!prefs?.nativeLanguage && (
-              <div className='flex flex-col gap-2'>
-                <Label htmlFor='native-language' className='text-sm'>{t`Your native language`}</Label>
-                <div className='max-w-xs'>
-                  <LanguagePicker
-                    id='native-language'
-                    value={null}
-                    onChange={(code) => setNativeLanguage({ nativeLanguage: code })}
-                  />
-                </div>
-              </div>
-            )}
-
             <div className='flex flex-col gap-2'>
               <Label htmlFor='target-language' className='text-sm'>{t`Target language`}</Label>
               <div className='max-w-xs'>

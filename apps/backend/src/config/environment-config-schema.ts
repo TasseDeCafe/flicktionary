@@ -50,6 +50,12 @@ export const environmentConfigSchema = z.object({
   usersWithFreeAccess: z.array(z.email()),
   // Emails of developers, collaborators, etc.
   emailsOfTestUsers: z.array(z.email()),
+  // Optional regex matching dev/test emails: matching accounts skip the
+  // onboarding gate and have native_language pre-seeded at signup.
+  devAutoSeedEmailPattern: z.instanceof(RegExp).nullable(),
+  // ISO 639-1 code used as the auto-seed default native_language for
+  // matching emails. Must be set whenever devAutoSeedEmailPattern is set.
+  devAutoSeedNativeLanguage: z.string(),
   featureFlags: z.object({
     // the two flags below should never be set to true at the same time, as it doesn't make sense
     isCreditCardRequiredForAll: z.function({
