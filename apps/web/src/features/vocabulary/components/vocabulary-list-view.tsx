@@ -25,6 +25,11 @@ const ESTIMATED_ROW_HEIGHT = 72
 // sessionStorage if survival across reloads is wanted).
 let savedScroll: { key: string; offset: number } | null = null
 
+// Same rationale as savedScroll: survives the focus-view round-trip so the
+// user lands back on the language they were browsing instead of being reset
+// to languages[0].
+let savedLanguage: string | null = null
+
 const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: ChunksSort) => void }) => {
   const { t } = useLingui()
   const options: Array<{ value: ChunksSort; label: string }> = [
@@ -58,7 +63,11 @@ export const VocabularyListView = () => {
   const navigate = useNavigate()
   const parentRef = useRef<HTMLDivElement | null>(null)
 
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null)
+  const [selectedLanguage, setSelectedLanguageState] = useState<string | null>(savedLanguage)
+  const setSelectedLanguage = (next: string | null) => {
+    savedLanguage = next
+    setSelectedLanguageState(next)
+  }
   const [sort, setSort] = useState<ChunksSort>('recent')
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
