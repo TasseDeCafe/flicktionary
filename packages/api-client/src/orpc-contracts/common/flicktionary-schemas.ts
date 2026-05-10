@@ -278,7 +278,12 @@ export type PracticeSession = z.infer<typeof PracticeSessionSchema>
 export const PracticeDueSummaryEntrySchema = z.object({
   targetLanguage: z.string(),
   totalKept: z.number().int(),
+  // Legacy alias used by older clients. In the current UX this means daily
+  // review due, not intraday learning follow-ups.
   dueCount: z.number().int(),
+  reviewDueCount: z.number().int(),
+  learningDueCount: z.number().int(),
+  nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>

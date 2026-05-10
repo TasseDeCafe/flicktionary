@@ -14,7 +14,12 @@ export type HeadwordSense = {
 export type DueSummaryEntry = {
   targetLanguage: string
   totalKept: number
+  // Legacy alias for clients that still read `dueCount`; this now maps to
+  // daily reviews only, while intraday learning work is exposed separately.
   dueCount: number
+  reviewDueCount: number
+  learningDueCount: number
+  nextLearningDueAt: string | null
   newCount: number
 }
 
@@ -290,7 +295,9 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 
 // Per-language summary used by the Practice landing. Counts:
 // - totalKept: rows the user has kept at least once (count > 0)
-// - dueCount: rows whose srs_due <= now (rows already in the SRS queue)
+// - reviewDueCount: daily review rows due now
+// - learningDueCount: intraday learning/relearning rows due now
+// - nextLearningDueAt: soonest future intraday follow-up
 // - newCount: rows with srs_state IS NULL (never reviewed; would enter as 'new')
 //
 // Rows with count = 0 exist because user_lookups is created eagerly at card
@@ -302,7 +309,21 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
     SELECT
       target_language,
       COUNT(*)::int AS total_kept,
-      COUNT(*) FILTER (WHERE srs_state IS NOT NULL AND srs_due IS NOT NULL AND srs_due <= NOW())::int AS due_count,
+      COUNT(*) FILTER (
+        WHERE srs_state = 'review'
+          AND srs_due IS NOT NULL
+          AND srs_due <= NOW()
+      )::int AS review_due_count,
+      COUNT(*) FILTER (
+        WHERE srs_state IN ('learning', 'relearning')
+          AND srs_due IS NOT NULL
+          AND srs_due <= NOW()
+      )::int AS learning_due_count,
+      MIN(srs_due) FILTER (
+        WHERE srs_state IN ('learning', 'relearning')
+          AND srs_due IS NOT NULL
+          AND srs_due > NOW()
+      ) AS next_learning_due_at,
       COUNT(*) FILTER (WHERE srs_state IS NULL)::int AS new_count
     FROM public.user_lookups
     WHERE user_id = ${userId}
@@ -314,7 +335,12 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   return result.map((row) => ({
     targetLanguage: row.target_language as string,
     totalKept: row.total_kept as number,
-    dueCount: row.due_count as number,
+    dueCount: row.review_due_count as number,
+    reviewDueCount: row.review_due_count as number,
+    learningDueCount: row.learning_due_count as number,
+    nextLearningDueAt: row.next_learning_due_at
+      ? new Date(row.next_learning_due_at as string | Date).toISOString()
+      : null,
     newCount: row.new_count as number,
   }))
 }

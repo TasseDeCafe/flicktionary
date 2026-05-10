@@ -11,7 +11,8 @@ import {
 
 export const practiceContract = {
   // Per-language summary used by the Practice landing. Returns one row per
-  // target_language the user has cards in, with total / due / new counts.
+  // target_language the user has cards in, with daily review, intraday
+  // learning follow-up, new, and total counts.
   dueSummary: oc
     .route({ method: 'GET', path: '/practice/due-summary', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })

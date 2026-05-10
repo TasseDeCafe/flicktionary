@@ -4,6 +4,7 @@ import { Brain, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useDueSummary } from '../api/practice-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 export const PracticeLandingView = () => {
   const { t } = useLingui()
@@ -14,8 +15,8 @@ export const PracticeLandingView = () => {
   const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
   const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
 
-  const canStartEntry = (entry: { dueCount: number; newCount: number }) =>
-    (entry.dueCount > 0 && maxReviewTerms > 0) || (entry.newCount > 0 && maxNewTerms > 0)
+  const canStartEntry = (entry: PracticeDueSummaryEntry) =>
+    (entry.reviewDueCount + entry.learningDueCount > 0 && maxReviewTerms > 0) || (entry.newCount > 0 && maxNewTerms > 0)
 
   const handleStart = (targetLanguage: string) => {
     void navigate({
@@ -26,6 +27,43 @@ export const PracticeLandingView = () => {
 
   const singleLanguageReviewable =
     summary && summary.length === 1 && summary[0] && canStartEntry(summary[0]) ? summary[0]!.targetLanguage : null
+
+  const formatFollowUpDelay = (nextLearningDueAt: string | null) => {
+    if (!nextLearningDueAt) return null
+    const minutesUntilFollowUp = Math.max(1, Math.ceil((new Date(nextLearningDueAt).getTime() - Date.now()) / 60_000))
+    if (!Number.isFinite(minutesUntilFollowUp)) return null
+    if (minutesUntilFollowUp < 60) return t`Follow-up in ${minutesUntilFollowUp} min`
+    const hoursUntilFollowUp = Math.ceil(minutesUntilFollowUp / 60)
+    if (hoursUntilFollowUp < 24) return t`Follow-up in ${hoursUntilFollowUp} hr`
+    return t`Follow-up later`
+  }
+
+  const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
+    const totalKept = entry.totalKept
+    const reviewDueCount = entry.reviewDueCount
+    const learningDueCount = entry.learningDueCount
+    const newCount = entry.newCount
+    const hasDailyWork = reviewDueCount > 0 || newCount > 0
+    const followUpDelay = formatFollowUpDelay(entry.nextLearningDueAt)
+
+    if (!hasDailyWork && learningDueCount > 0) {
+      return t`All caught up for today · ${learningDueCount} follow-up(s) ready · ${totalKept} total`
+    }
+    if (!hasDailyWork && followUpDelay) {
+      return t`All caught up for today · ${followUpDelay} · ${totalKept} total`
+    }
+    if (!hasDailyWork) {
+      return t`All caught up for today · ${totalKept} total`
+    }
+
+    const parts = [
+      reviewDueCount > 0 ? t`${reviewDueCount} due` : null,
+      newCount > 0 ? t`${newCount} new` : null,
+      learningDueCount > 0 ? t`${learningDueCount} follow-up(s)` : null,
+      t`${totalKept} total`,
+    ].filter((part): part is string => part != null)
+    return parts.join(' · ')
+  }
 
   return (
     <div className='flex h-full flex-col'>
@@ -56,15 +94,8 @@ export const PracticeLandingView = () => {
               <h2 className='text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase'>{t`Languages`}</h2>
               <div className='divide-y divide-gray-100 overflow-hidden rounded-xl border bg-white'>
                 {summary.map((entry) => {
-                  const reviewable = entry.dueCount + entry.newCount
-                  const totalKept = entry.totalKept
-                  const dueCount = entry.dueCount
-                  const newCount = entry.newCount
                   const canStart = canStartEntry(entry)
-                  const summaryLine =
-                    reviewable === 0
-                      ? t`All caught up — ${totalKept} card(s) total`
-                      : t`${dueCount} due · ${newCount} new · ${totalKept} total`
+                  const summaryLine = getSummaryLine(entry)
                   return (
                     <button
                       key={entry.targetLanguage}

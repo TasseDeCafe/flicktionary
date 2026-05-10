@@ -61,7 +61,10 @@ export const startPracticeSession = async (
   const active = await deps.practiceSessionsRepository.findActiveForUser({ userId, targetLanguage })
   if (!active) {
     const selectedNewTerms = Math.min(langSummary.newCount, limits.maxNewTerms)
-    const selectedReviewTerms = Math.min(langSummary.dueCount, limits.maxReviewTerms)
+    const selectedReviewTerms = Math.min(
+      langSummary.reviewDueCount + langSummary.learningDueCount,
+      limits.maxReviewTerms
+    )
     if (selectedNewTerms + selectedReviewTerms === 0) return { ok: false, reason: 'no_practice_terms' }
   }
 
