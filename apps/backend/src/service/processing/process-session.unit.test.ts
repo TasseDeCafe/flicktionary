@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildBasicDataGrammarPatch } from './process-session'
+import { buildBasicDataGrammarPatch } from './materialize-basic-data-chunks'
 
 describe('buildBasicDataGrammarPatch', () => {
   it('keeps the full LLM grammar patch before a lookup has been grounded', () => {

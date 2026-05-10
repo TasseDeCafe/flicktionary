@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Clapperboard, FileText, type LucideIcon } from 'lucide-react'
+import { Clapperboard, FileText, Sparkles, type LucideIcon } from 'lucide-react'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -72,6 +72,14 @@ export const MainActionOverlay = ({ open, onOpenChange }: MainActionOverlayProps
       description: t`Paste an article, comment, or post`,
       onSelect: () => {
         void navigate({ to: '/sessions/new-text' })
+      },
+    },
+    {
+      icon: Sparkles,
+      label: t`Add a word`,
+      description: t`Save a chunk you heard or saw, no source needed`,
+      onSelect: () => {
+        void navigate({ to: '/vocabulary/new-word' })
       },
     },
   ]

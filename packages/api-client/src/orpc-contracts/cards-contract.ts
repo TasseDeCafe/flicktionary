@@ -97,4 +97,35 @@ export const cardsContract = {
       })
     )
     .output(z.object({ data: CardSchema })),
+
+  // "Add a word" entry point. Creates (or reuses) a synthetic per-(user,
+  // target_language) adhoc session in the background, generates one card via
+  // a single basicDataPass call, runs Wiktionary grounding when available,
+  // and returns the new cardId + sessionId so the client can navigate
+  // straight to the focus view.
+  //
+  // BAD_REQUEST is overloaded with discriminated codes (`cefr_not_set`,
+  // `native_language_not_set`) so the frontend can prompt for the missing
+  // pref inline rather than blocking submit.
+  createAdhoc: oc
+    .route({ method: 'POST', path: '/cards/adhoc', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        targetLanguage: z.string().min(2).max(10),
+        headword: z.string().trim().min(1).max(200),
+        context: z.string().trim().max(2000).nullable(),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          cardId: z.string().uuid(),
+          sessionId: z.string().uuid(),
+        }),
+      })
+    ),
 } as const

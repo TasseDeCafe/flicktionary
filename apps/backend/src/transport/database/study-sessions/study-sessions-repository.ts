@@ -45,10 +45,51 @@ const insertStudySession = async (params: {
   return result[0] ?? null
 }
 
+// Insert a synthetic adhoc session in the 'processed' state with a non-null
+// context_blob. The context blob is required so per-card chat and "Generate
+// full exploration" don't short-circuit (both refuse to run when context_blob
+// is null). Kept separate from `insertStudySession` so the public ingestion
+// path can't accidentally bypass the 'active' status.
+const insertAdhocStudySession = async (params: {
+  userId: string
+  contentSourceId: string
+  textTrackId: string
+  nativeLanguage: string
+  targetLanguage: string
+  cefrLevel: string
+  contextBlob: string
+}): Promise<DbStudySession | null> => {
+  const result = (await sql`
+    INSERT INTO public.study_sessions (
+      user_id, content_source_id, text_track_id,
+      native_language, target_language, cefr_level,
+      context_blob, status, processed_at
+    )
+    VALUES (
+      ${params.userId},
+      ${params.contentSourceId},
+      ${params.textTrackId},
+      ${params.nativeLanguage},
+      ${params.targetLanguage},
+      ${params.cefrLevel},
+      ${params.contextBlob},
+      'processed',
+      NOW()
+    )
+    RETURNING *
+  `) as DbStudySession[]
+  return result[0] ?? null
+}
+
 // Soft-deleted sessions are filtered out everywhere except softDelete itself
 // and the highlight/card chains, which keep working so kept vocabulary can
 // still back-link to its source. Hard erasure happens via account deletion
 // (auth.users CASCADE).
+//
+// Adhoc sessions (the synthetic per-(user, language) "Personal vocabulary"
+// rows that back the "Add a word" flow) are filtered out here too so they
+// don't pollute the Sessions list. Their cards still surface in Vocabulary
+// and Practice through the user_lookups path.
 const listByUserIdWithSource = async (userId: string): Promise<DbStudySessionWithSource[]> => {
   return (await sql`
     SELECT s.*,
@@ -57,9 +98,29 @@ const listByUserIdWithSource = async (userId: string): Promise<DbStudySessionWit
            cs.metadata AS content_source_metadata
     FROM public.study_sessions s
     LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
-    WHERE s.user_id = ${userId} AND s.deleted_at IS NULL
+    WHERE s.user_id = ${userId} AND s.deleted_at IS NULL AND cs.type != 'adhoc'
     ORDER BY s.created_at DESC
   `) as DbStudySessionWithSource[]
+}
+
+// Look up the existing adhoc study_session for a (user, target_language) pair.
+// Returns null when no adhoc session exists yet — the caller is expected to
+// create one via the get-or-create adhoc service.
+const findAdhocForUserAndLanguage = async (
+  userId: string,
+  targetLanguage: string
+): Promise<DbStudySession | null> => {
+  const result = (await sql`
+    SELECT s.*
+    FROM public.study_sessions s
+    JOIN public.content_sources cs ON cs.id = s.content_source_id
+    WHERE s.user_id = ${userId}
+      AND cs.type = 'adhoc'
+      AND s.target_language = ${targetLanguage}
+      AND s.deleted_at IS NULL
+    LIMIT 1
+  `) as DbStudySession[]
+  return result[0] ?? null
 }
 
 const findByIdForUserWithSource = async (
@@ -201,6 +262,16 @@ export interface StudySessionsRepositoryInterface {
     targetLanguage: string
     cefrLevel: string
   }) => Promise<DbStudySession | null>
+  insertAdhocStudySession: (params: {
+    userId: string
+    contentSourceId: string
+    textTrackId: string
+    nativeLanguage: string
+    targetLanguage: string
+    cefrLevel: string
+    contextBlob: string
+  }) => Promise<DbStudySession | null>
+  findAdhocForUserAndLanguage: (userId: string, targetLanguage: string) => Promise<DbStudySession | null>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
@@ -218,6 +289,8 @@ export interface StudySessionsRepositoryInterface {
 export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
   return {
     insertStudySession,
+    insertAdhocStudySession,
+    findAdhocForUserAndLanguage,
     findByIdForUser,
     findByIdForUserWithSource,
     hasTextTrackForUser,

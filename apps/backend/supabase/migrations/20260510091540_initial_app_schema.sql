@@ -18,7 +18,7 @@ ALTER TABLE public.users
 -- Flicktionary enums
 -- =========================================================================
 
-CREATE TYPE content_source_type AS ENUM ('movie', 'book', 'article', 'text');
+CREATE TYPE content_source_type AS ENUM ('movie', 'book', 'article', 'text', 'adhoc');
 
 CREATE TYPE text_track_source AS ENUM ('opensubtitles', 'upload', 'paste', 'url');
 
@@ -54,6 +54,14 @@ CREATE TABLE public.content_sources (
 );
 
 CREATE INDEX idx_content_sources_created_by_user_id ON public.content_sources (created_by_user_id);
+
+-- One synthetic ad-hoc content_source per (user, language). Used by the
+-- "Add a word" flow to let users save vocabulary that didn't come from any
+-- specific source. The partial index makes the get-or-create on this row
+-- concurrency-safe via INSERT ... ON CONFLICT.
+CREATE UNIQUE INDEX content_sources_adhoc_user_language_unique
+  ON public.content_sources (created_by_user_id, language)
+  WHERE type = 'adhoc';
 
 ALTER TABLE public.content_sources ENABLE ROW LEVEL SECURITY;
 

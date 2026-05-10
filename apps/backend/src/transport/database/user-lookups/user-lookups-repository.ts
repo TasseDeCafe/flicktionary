@@ -623,10 +623,11 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.first_card_id,
     c.segment_id AS first_card_segment_id,
     c.study_session_id,
-    (s.id IS NOT NULL) AS source_available
+    (s.id IS NOT NULL AND cs.type != 'adhoc') AS source_available
   FROM public.user_lookups ul
   LEFT JOIN public.cards c ON c.id = ul.first_card_id
   LEFT JOIN public.study_sessions s ON s.id = c.study_session_id AND s.deleted_at IS NULL
+  LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
 `
 
 const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({

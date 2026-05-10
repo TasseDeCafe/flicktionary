@@ -288,6 +288,20 @@ export const buildApp = ({
     userLookupsRepository,
   }
 
+  const createAdhocCardDependencies = {
+    contentSourcesRepository,
+    textTracksRepository,
+    textSegmentsRepository,
+    studySessionsRepository,
+    highlightsRepository,
+    cardsRepository,
+    userLookupsRepository,
+    usersRepository,
+    userTargetLanguagePrefsRepository,
+    processingTelemetryRepository,
+    wiktionaryEntriesRepository,
+  }
+
   const chatDependencies = {
     cardsRepository,
     cardChatMessagesRepository,
@@ -318,7 +332,8 @@ export const buildApp = ({
       studySessionsRepository,
       exportDependencies,
       exploreDependencies,
-      setCardStatusDependencies
+      setCardStatusDependencies,
+      createAdhocCardDependencies
     )
   )
   app.use(API_V1, CardChatRouter(cardChatMessagesRepository, cardsRepository, chatDependencies))

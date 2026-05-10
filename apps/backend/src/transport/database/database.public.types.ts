@@ -1,4 +1,10 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   graphql_public: {
@@ -34,29 +40,29 @@ export type Database = {
           content: string
           created_at: string
           id: string
-          role: Database['public']['Enums']['card_chat_role']
+          role: Database["public"]["Enums"]["card_chat_role"]
         }
         Insert: {
           card_id: string
           content: string
           created_at?: string
           id?: string
-          role: Database['public']['Enums']['card_chat_role']
+          role: Database["public"]["Enums"]["card_chat_role"]
         }
         Update: {
           card_id?: string
           content?: string
           created_at?: string
           id?: string
-          role?: Database['public']['Enums']['card_chat_role']
+          role?: Database["public"]["Enums"]["card_chat_role"]
         }
         Relationships: [
           {
-            foreignKeyName: 'card_chat_messages_card_id_fkey'
-            columns: ['card_id']
+            foreignKeyName: "card_chat_messages_card_id_fkey"
+            columns: ["card_id"]
             isOneToOne: false
-            referencedRelation: 'cards'
-            referencedColumns: ['id']
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -66,7 +72,7 @@ export type Database = {
           highlight_id: string | null
           id: string
           segment_id: string
-          status: Database['public']['Enums']['card_status']
+          status: Database["public"]["Enums"]["card_status"]
           study_session_id: string
           surface_form: string
           updated_at: string
@@ -77,7 +83,7 @@ export type Database = {
           highlight_id?: string | null
           id?: string
           segment_id: string
-          status?: Database['public']['Enums']['card_status']
+          status?: Database["public"]["Enums"]["card_status"]
           study_session_id: string
           surface_form: string
           updated_at?: string
@@ -88,7 +94,7 @@ export type Database = {
           highlight_id?: string | null
           id?: string
           segment_id?: string
-          status?: Database['public']['Enums']['card_status']
+          status?: Database["public"]["Enums"]["card_status"]
           study_session_id?: string
           surface_form?: string
           updated_at?: string
@@ -96,32 +102,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'cards_highlight_id_fkey'
-            columns: ['highlight_id']
+            foreignKeyName: "cards_highlight_id_fkey"
+            columns: ["highlight_id"]
             isOneToOne: false
-            referencedRelation: 'highlights'
-            referencedColumns: ['id']
+            referencedRelation: "highlights"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'cards_segment_id_fkey'
-            columns: ['segment_id']
+            foreignKeyName: "cards_segment_id_fkey"
+            columns: ["segment_id"]
             isOneToOne: false
-            referencedRelation: 'text_segments'
-            referencedColumns: ['id']
+            referencedRelation: "text_segments"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'cards_study_session_id_fkey'
-            columns: ['study_session_id']
+            foreignKeyName: "cards_study_session_id_fkey"
+            columns: ["study_session_id"]
             isOneToOne: false
-            referencedRelation: 'study_sessions'
-            referencedColumns: ['id']
+            referencedRelation: "study_sessions"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'cards_user_lookup_id_fkey'
-            columns: ['user_lookup_id']
+            foreignKeyName: "cards_user_lookup_id_fkey"
+            columns: ["user_lookup_id"]
             isOneToOne: false
-            referencedRelation: 'user_lookups'
-            referencedColumns: ['id']
+            referencedRelation: "user_lookups"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -133,7 +139,7 @@ export type Database = {
           language: string
           metadata: Json
           title: string
-          type: Database['public']['Enums']['content_source_type']
+          type: Database["public"]["Enums"]["content_source_type"]
         }
         Insert: {
           created_at?: string
@@ -142,7 +148,7 @@ export type Database = {
           language: string
           metadata?: Json
           title: string
-          type: Database['public']['Enums']['content_source_type']
+          type: Database["public"]["Enums"]["content_source_type"]
         }
         Update: {
           created_at?: string
@@ -151,7 +157,7 @@ export type Database = {
           language?: string
           metadata?: Json
           title?: string
-          type?: Database['public']['Enums']['content_source_type']
+          type?: Database["public"]["Enums"]["content_source_type"]
         }
         Relationships: []
       }
@@ -233,25 +239,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'highlights_end_segment_id_fkey'
-            columns: ['end_segment_id']
+            foreignKeyName: "highlights_end_segment_id_fkey"
+            columns: ["end_segment_id"]
             isOneToOne: false
-            referencedRelation: 'text_segments'
-            referencedColumns: ['id']
+            referencedRelation: "text_segments"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'highlights_start_segment_id_fkey'
-            columns: ['start_segment_id']
+            foreignKeyName: "highlights_start_segment_id_fkey"
+            columns: ["start_segment_id"]
             isOneToOne: false
-            referencedRelation: 'text_segments'
-            referencedColumns: ['id']
+            referencedRelation: "text_segments"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'highlights_study_session_id_fkey'
-            columns: ['study_session_id']
+            foreignKeyName: "highlights_study_session_id_fkey"
+            columns: ["study_session_id"]
             isOneToOne: false
-            referencedRelation: 'study_sessions'
-            referencedColumns: ['id']
+            referencedRelation: "study_sessions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -261,7 +267,7 @@ export type Database = {
           id: string
           practice_text_id: string
           rated_at: string
-          rating: Database['public']['Enums']['practice_rating']
+          rating: Database["public"]["Enums"]["practice_rating"]
           sense: string
           target_language: string
           user_id: string
@@ -273,7 +279,7 @@ export type Database = {
           id?: string
           practice_text_id: string
           rated_at?: string
-          rating: Database['public']['Enums']['practice_rating']
+          rating: Database["public"]["Enums"]["practice_rating"]
           sense?: string
           target_language: string
           user_id: string
@@ -285,7 +291,7 @@ export type Database = {
           id?: string
           practice_text_id?: string
           rated_at?: string
-          rating?: Database['public']['Enums']['practice_rating']
+          rating?: Database["public"]["Enums"]["practice_rating"]
           sense?: string
           target_language?: string
           user_id?: string
@@ -294,18 +300,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'practice_ratings_lookup_fkey'
-            columns: ['user_lookup_id']
+            foreignKeyName: "practice_ratings_lookup_fkey"
+            columns: ["user_lookup_id"]
             isOneToOne: false
-            referencedRelation: 'user_lookups'
-            referencedColumns: ['id']
+            referencedRelation: "user_lookups"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'practice_ratings_text_fkey'
-            columns: ['practice_text_id']
+            foreignKeyName: "practice_ratings_text_fkey"
+            columns: ["practice_text_id"]
             isOneToOne: false
-            referencedRelation: 'practice_texts'
-            referencedColumns: ['id']
+            referencedRelation: "practice_texts"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -330,18 +336,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'practice_session_chunks_lookup_fkey'
-            columns: ['user_lookup_id']
+            foreignKeyName: "practice_session_chunks_lookup_fkey"
+            columns: ["user_lookup_id"]
             isOneToOne: false
-            referencedRelation: 'user_lookups'
-            referencedColumns: ['id']
+            referencedRelation: "user_lookups"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'practice_session_chunks_session_fkey'
-            columns: ['practice_session_id']
+            foreignKeyName: "practice_session_chunks_session_fkey"
+            columns: ["practice_session_id"]
             isOneToOne: false
-            referencedRelation: 'practice_sessions'
-            referencedColumns: ['id']
+            referencedRelation: "practice_sessions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -352,7 +358,7 @@ export type Database = {
           max_new_terms: number
           max_review_terms: number
           started_at: string
-          status: Database['public']['Enums']['practice_session_status']
+          status: Database["public"]["Enums"]["practice_session_status"]
           target_language: string
           user_id: string
         }
@@ -362,7 +368,7 @@ export type Database = {
           max_new_terms?: number
           max_review_terms?: number
           started_at?: string
-          status?: Database['public']['Enums']['practice_session_status']
+          status?: Database["public"]["Enums"]["practice_session_status"]
           target_language: string
           user_id: string
         }
@@ -372,7 +378,7 @@ export type Database = {
           max_new_terms?: number
           max_review_terms?: number
           started_at?: string
-          status?: Database['public']['Enums']['practice_session_status']
+          status?: Database["public"]["Enums"]["practice_session_status"]
           target_language?: string
           user_id?: string
         }
@@ -391,7 +397,7 @@ export type Database = {
           read_at: string | null
           ready_at: string | null
           skipped_chunks: Json
-          status: Database['public']['Enums']['practice_text_status']
+          status: Database["public"]["Enums"]["practice_text_status"]
         }
         Insert: {
           annotations?: Json
@@ -405,7 +411,7 @@ export type Database = {
           read_at?: string | null
           ready_at?: string | null
           skipped_chunks?: Json
-          status?: Database['public']['Enums']['practice_text_status']
+          status?: Database["public"]["Enums"]["practice_text_status"]
         }
         Update: {
           annotations?: Json
@@ -419,15 +425,15 @@ export type Database = {
           read_at?: string | null
           ready_at?: string | null
           skipped_chunks?: Json
-          status?: Database['public']['Enums']['practice_text_status']
+          status?: Database["public"]["Enums"]["practice_text_status"]
         }
         Relationships: [
           {
-            foreignKeyName: 'practice_texts_session_fkey'
-            columns: ['practice_session_id']
+            foreignKeyName: "practice_texts_session_fkey"
+            columns: ["practice_session_id"]
             isOneToOne: false
-            referencedRelation: 'practice_sessions'
-            referencedColumns: ['id']
+            referencedRelation: "practice_sessions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -458,11 +464,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'processing_telemetry_session_fkey'
-            columns: ['study_session_id']
+            foreignKeyName: "processing_telemetry_session_fkey"
+            columns: ["study_session_id"]
             isOneToOne: false
-            referencedRelation: 'study_sessions'
-            referencedColumns: ['id']
+            referencedRelation: "study_sessions"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -492,7 +498,7 @@ export type Database = {
       }
       revenuecat_subscriptions: {
         Row: {
-          auto_renewal_status: Database['public']['Enums']['revenuecat_auto_renewal_status']
+          auto_renewal_status: Database["public"]["Enums"]["revenuecat_auto_renewal_status"]
           billing_country_code: string | null
           created_at: string
           current_period_ends_at: string | null
@@ -508,15 +514,15 @@ export type Database = {
           revenuecat_product_id: string | null
           revenuecat_subscription_id: string
           starts_at: string
-          status: Database['public']['Enums']['revenuecat_subscription_status']
-          store: Database['public']['Enums']['revenuecat_store']
+          status: Database["public"]["Enums"]["revenuecat_subscription_status"]
+          store: Database["public"]["Enums"]["revenuecat_store"]
           store_subscription_identifier: string
           total_revenue_in_usd: number
           updated_at: string
           user_id: string
         }
         Insert: {
-          auto_renewal_status: Database['public']['Enums']['revenuecat_auto_renewal_status']
+          auto_renewal_status: Database["public"]["Enums"]["revenuecat_auto_renewal_status"]
           billing_country_code?: string | null
           created_at?: string
           current_period_ends_at?: string | null
@@ -532,15 +538,15 @@ export type Database = {
           revenuecat_product_id?: string | null
           revenuecat_subscription_id: string
           starts_at: string
-          status: Database['public']['Enums']['revenuecat_subscription_status']
-          store: Database['public']['Enums']['revenuecat_store']
+          status: Database["public"]["Enums"]["revenuecat_subscription_status"]
+          store: Database["public"]["Enums"]["revenuecat_store"]
           store_subscription_identifier: string
           total_revenue_in_usd: number
           updated_at?: string
           user_id: string
         }
         Update: {
-          auto_renewal_status?: Database['public']['Enums']['revenuecat_auto_renewal_status']
+          auto_renewal_status?: Database["public"]["Enums"]["revenuecat_auto_renewal_status"]
           billing_country_code?: string | null
           created_at?: string
           current_period_ends_at?: string | null
@@ -556,8 +562,8 @@ export type Database = {
           revenuecat_product_id?: string | null
           revenuecat_subscription_id?: string
           starts_at?: string
-          status?: Database['public']['Enums']['revenuecat_subscription_status']
-          store?: Database['public']['Enums']['revenuecat_store']
+          status?: Database["public"]["Enums"]["revenuecat_subscription_status"]
+          store?: Database["public"]["Enums"]["revenuecat_store"]
           store_subscription_identifier?: string
           total_revenue_in_usd?: number
           updated_at?: string
@@ -573,9 +579,9 @@ export type Database = {
           currency: string | null
           current_period_end: string | null
           id: string
-          interval: Database['public']['Enums']['subscription_interval'] | null
+          interval: Database["public"]["Enums"]["subscription_interval"] | null
           interval_count: number | null
-          status: Database['public']['Enums']['stripe_subscription_status']
+          status: Database["public"]["Enums"]["stripe_subscription_status"]
           stripe_product_id: string
           stripe_subscription_id: string
           trial_end: string | null
@@ -589,9 +595,9 @@ export type Database = {
           currency?: string | null
           current_period_end?: string | null
           id?: string
-          interval?: Database['public']['Enums']['subscription_interval'] | null
+          interval?: Database["public"]["Enums"]["subscription_interval"] | null
           interval_count?: number | null
-          status: Database['public']['Enums']['stripe_subscription_status']
+          status: Database["public"]["Enums"]["stripe_subscription_status"]
           stripe_product_id: string
           stripe_subscription_id: string
           trial_end?: string | null
@@ -605,9 +611,9 @@ export type Database = {
           currency?: string | null
           current_period_end?: string | null
           id?: string
-          interval?: Database['public']['Enums']['subscription_interval'] | null
+          interval?: Database["public"]["Enums"]["subscription_interval"] | null
           interval_count?: number | null
-          status?: Database['public']['Enums']['stripe_subscription_status']
+          status?: Database["public"]["Enums"]["stripe_subscription_status"]
           stripe_product_id?: string
           stripe_subscription_id?: string
           trial_end?: string | null
@@ -627,7 +633,7 @@ export type Database = {
           native_language: string
           processed_at: string | null
           processing_warnings: string[]
-          status: Database['public']['Enums']['study_session_status']
+          status: Database["public"]["Enums"]["study_session_status"]
           target_language: string
           text_track_id: string
           user_id: string
@@ -642,7 +648,7 @@ export type Database = {
           native_language: string
           processed_at?: string | null
           processing_warnings?: string[]
-          status?: Database['public']['Enums']['study_session_status']
+          status?: Database["public"]["Enums"]["study_session_status"]
           target_language: string
           text_track_id: string
           user_id: string
@@ -657,32 +663,32 @@ export type Database = {
           native_language?: string
           processed_at?: string | null
           processing_warnings?: string[]
-          status?: Database['public']['Enums']['study_session_status']
+          status?: Database["public"]["Enums"]["study_session_status"]
           target_language?: string
           text_track_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: 'study_sessions_content_source_id_fkey'
-            columns: ['content_source_id']
+            foreignKeyName: "study_sessions_content_source_id_fkey"
+            columns: ["content_source_id"]
             isOneToOne: false
-            referencedRelation: 'content_sources'
-            referencedColumns: ['id']
+            referencedRelation: "content_sources"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'study_sessions_content_source_text_track_fkey'
-            columns: ['content_source_id', 'text_track_id']
+            foreignKeyName: "study_sessions_content_source_text_track_fkey"
+            columns: ["content_source_id", "text_track_id"]
             isOneToOne: false
-            referencedRelation: 'text_tracks'
-            referencedColumns: ['content_source_id', 'id']
+            referencedRelation: "text_tracks"
+            referencedColumns: ["content_source_id", "id"]
           },
           {
-            foreignKeyName: 'study_sessions_text_track_id_fkey'
-            columns: ['text_track_id']
+            foreignKeyName: "study_sessions_text_track_id_fkey"
+            columns: ["text_track_id"]
             isOneToOne: false
-            referencedRelation: 'text_tracks'
-            referencedColumns: ['id']
+            referencedRelation: "text_tracks"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -716,11 +722,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'text_segments_text_track_id_fkey'
-            columns: ['text_track_id']
+            foreignKeyName: "text_segments_text_track_id_fkey"
+            columns: ["text_track_id"]
             isOneToOne: false
-            referencedRelation: 'text_tracks'
-            referencedColumns: ['id']
+            referencedRelation: "text_tracks"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -732,7 +738,7 @@ export type Database = {
           hash: string
           id: string
           language: string
-          source: Database['public']['Enums']['text_track_source']
+          source: Database["public"]["Enums"]["text_track_source"]
         }
         Insert: {
           content_source_id: string
@@ -741,7 +747,7 @@ export type Database = {
           hash: string
           id?: string
           language: string
-          source: Database['public']['Enums']['text_track_source']
+          source: Database["public"]["Enums"]["text_track_source"]
         }
         Update: {
           content_source_id?: string
@@ -750,15 +756,15 @@ export type Database = {
           hash?: string
           id?: string
           language?: string
-          source?: Database['public']['Enums']['text_track_source']
+          source?: Database["public"]["Enums"]["text_track_source"]
         }
         Relationships: [
           {
-            foreignKeyName: 'text_tracks_content_source_id_fkey'
-            columns: ['content_source_id']
+            foreignKeyName: "text_tracks_content_source_id_fkey"
+            columns: ["content_source_id"]
             isOneToOne: false
-            referencedRelation: 'content_sources'
-            referencedColumns: ['id']
+            referencedRelation: "content_sources"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -785,7 +791,7 @@ export type Database = {
           srs_last_review: string | null
           srs_reps: number
           srs_stability: number | null
-          srs_state: Database['public']['Enums']['srs_state'] | null
+          srs_state: Database["public"]["Enums"]["srs_state"] | null
           target_example: string | null
           target_language: string
           translation: string | null
@@ -813,7 +819,7 @@ export type Database = {
           srs_last_review?: string | null
           srs_reps?: number
           srs_stability?: number | null
-          srs_state?: Database['public']['Enums']['srs_state'] | null
+          srs_state?: Database["public"]["Enums"]["srs_state"] | null
           target_example?: string | null
           target_language: string
           translation?: string | null
@@ -841,7 +847,7 @@ export type Database = {
           srs_last_review?: string | null
           srs_reps?: number
           srs_stability?: number | null
-          srs_state?: Database['public']['Enums']['srs_state'] | null
+          srs_state?: Database["public"]["Enums"]["srs_state"] | null
           target_example?: string | null
           target_language?: string
           translation?: string | null
@@ -849,11 +855,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'user_lookups_first_card_id_fkey'
-            columns: ['first_card_id']
+            foreignKeyName: "user_lookups_first_card_id_fkey"
+            columns: ["first_card_id"]
             isOneToOne: false
-            referencedRelation: 'cards'
-            referencedColumns: ['id']
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -974,11 +980,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'wiktionary_forms_entry_fkey'
-            columns: ['entry_id']
+            foreignKeyName: "wiktionary_forms_entry_fkey"
+            columns: ["entry_id"]
             isOneToOne: false
-            referencedRelation: 'wiktionary_entries'
-            referencedColumns: ['id']
+            referencedRelation: "wiktionary_entries"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -990,50 +996,61 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      card_chat_role: 'user' | 'assistant'
-      card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
-      content_source_type: 'movie' | 'book' | 'article' | 'text'
-      practice_rating: 'again' | 'hard' | 'good' | 'easy'
-      practice_session_status: 'active' | 'completed' | 'abandoned'
-      practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
+      card_chat_role: "user" | "assistant"
+      card_status: "pending" | "kept" | "rejected" | "auto_rejected"
+      content_source_type: "movie" | "book" | "article" | "text" | "adhoc"
+      practice_rating: "again" | "hard" | "good" | "easy"
+      practice_session_status: "active" | "completed" | "abandoned"
+      practice_text_status:
+        | "pending"
+        | "generating"
+        | "ready"
+        | "reading"
+        | "done"
+        | "failed"
       revenuecat_auto_renewal_status:
-        | 'will_renew'
-        | 'will_not_renew'
-        | 'will_change_product'
-        | 'will_pause'
-        | 'requires_price_increase_consent'
-        | 'has_already_renewed'
+        | "will_renew"
+        | "will_not_renew"
+        | "will_change_product"
+        | "will_pause"
+        | "requires_price_increase_consent"
+        | "has_already_renewed"
       revenuecat_store:
-        | 'amazon'
-        | 'app_store'
-        | 'mac_app_store'
-        | 'play_store'
-        | 'promotional'
-        | 'stripe'
-        | 'rc_billing'
-        | 'test_store'
+        | "amazon"
+        | "app_store"
+        | "mac_app_store"
+        | "play_store"
+        | "promotional"
+        | "stripe"
+        | "rc_billing"
+        | "test_store"
       revenuecat_subscription_status:
-        | 'trialing'
-        | 'active'
-        | 'expired'
-        | 'in_grace_period'
-        | 'in_billing_retry'
-        | 'paused'
-        | 'unknown'
-        | 'incomplete'
-      srs_state: 'new' | 'learning' | 'review' | 'relearning'
+        | "trialing"
+        | "active"
+        | "expired"
+        | "in_grace_period"
+        | "in_billing_retry"
+        | "paused"
+        | "unknown"
+        | "incomplete"
+      srs_state: "new" | "learning" | "review" | "relearning"
       stripe_subscription_status:
-        | 'active'
-        | 'trialing'
-        | 'past_due'
-        | 'canceled'
-        | 'unpaid'
-        | 'incomplete_expired'
-        | 'incomplete'
-        | 'paused'
-      study_session_status: 'active' | 'processing' | 'processed' | 'exported' | 'failed'
-      subscription_interval: 'month' | 'year'
-      text_track_source: 'opensubtitles' | 'upload' | 'paste' | 'url'
+        | "active"
+        | "trialing"
+        | "past_due"
+        | "canceled"
+        | "unpaid"
+        | "incomplete_expired"
+        | "incomplete"
+        | "paused"
+      study_session_status:
+        | "active"
+        | "processing"
+        | "processed"
+        | "exported"
+        | "failed"
+      subscription_interval: "month" | "year"
+      text_track_source: "opensubtitles" | "upload" | "paste" | "url"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1119,11 +1136,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'objects_bucketId_fkey'
-            columns: ['bucket_id']
+            foreignKeyName: "objects_bucketId_fkey"
+            columns: ["bucket_id"]
             isOneToOne: false
-            referencedRelation: 'buckets'
-            referencedColumns: ['id']
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1162,31 +1179,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1194,22 +1213,24 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1217,22 +1238,24 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables'] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1240,35 +1263,37 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums'] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -1277,57 +1302,71 @@ export const Constants = {
   },
   public: {
     Enums: {
-      card_chat_role: ['user', 'assistant'],
-      card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
-      content_source_type: ['movie', 'book', 'article', 'text'],
-      practice_rating: ['again', 'hard', 'good', 'easy'],
-      practice_session_status: ['active', 'completed', 'abandoned'],
-      practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
+      card_chat_role: ["user", "assistant"],
+      card_status: ["pending", "kept", "rejected", "auto_rejected"],
+      content_source_type: ["movie", "book", "article", "text", "adhoc"],
+      practice_rating: ["again", "hard", "good", "easy"],
+      practice_session_status: ["active", "completed", "abandoned"],
+      practice_text_status: [
+        "pending",
+        "generating",
+        "ready",
+        "reading",
+        "done",
+        "failed",
+      ],
       revenuecat_auto_renewal_status: [
-        'will_renew',
-        'will_not_renew',
-        'will_change_product',
-        'will_pause',
-        'requires_price_increase_consent',
-        'has_already_renewed',
+        "will_renew",
+        "will_not_renew",
+        "will_change_product",
+        "will_pause",
+        "requires_price_increase_consent",
+        "has_already_renewed",
       ],
       revenuecat_store: [
-        'amazon',
-        'app_store',
-        'mac_app_store',
-        'play_store',
-        'promotional',
-        'stripe',
-        'rc_billing',
-        'test_store',
+        "amazon",
+        "app_store",
+        "mac_app_store",
+        "play_store",
+        "promotional",
+        "stripe",
+        "rc_billing",
+        "test_store",
       ],
       revenuecat_subscription_status: [
-        'trialing',
-        'active',
-        'expired',
-        'in_grace_period',
-        'in_billing_retry',
-        'paused',
-        'unknown',
-        'incomplete',
+        "trialing",
+        "active",
+        "expired",
+        "in_grace_period",
+        "in_billing_retry",
+        "paused",
+        "unknown",
+        "incomplete",
       ],
-      srs_state: ['new', 'learning', 'review', 'relearning'],
+      srs_state: ["new", "learning", "review", "relearning"],
       stripe_subscription_status: [
-        'active',
-        'trialing',
-        'past_due',
-        'canceled',
-        'unpaid',
-        'incomplete_expired',
-        'incomplete',
-        'paused',
+        "active",
+        "trialing",
+        "past_due",
+        "canceled",
+        "unpaid",
+        "incomplete_expired",
+        "incomplete",
+        "paused",
       ],
-      study_session_status: ['active', 'processing', 'processed', 'exported', 'failed'],
-      subscription_interval: ['month', 'year'],
-      text_track_source: ['opensubtitles', 'upload', 'paste', 'url'],
+      study_session_status: [
+        "active",
+        "processing",
+        "processed",
+        "exported",
+        "failed",
+      ],
+      subscription_interval: ["month", "year"],
+      text_track_source: ["opensubtitles", "upload", "paste", "url"],
     },
   },
   storage: {
     Enums: {},
   },
 } as const
+

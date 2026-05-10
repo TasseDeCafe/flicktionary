@@ -36,6 +36,7 @@ describe('importSrt', () => {
       searchInTrack: vi.fn(),
       findById: vi.fn(),
       listAroundIndex: vi.fn(),
+      appendSegmentAtomic: vi.fn(),
     }
 
     const result = await importSrt(

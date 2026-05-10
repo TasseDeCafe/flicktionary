@@ -28,6 +28,7 @@ import { Route as AuthenticatedAppVocabularyIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
 import { Route as AuthenticatedAppPracticeIndexRouteImport } from './routes/_authenticated/_app/practice/index'
 import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
+import { Route as AuthenticatedAppVocabularyNewWordRouteImport } from './routes/_authenticated/_app/vocabulary/new-word'
 import { Route as AuthenticatedAppSessionsNewTextRouteImport } from './routes/_authenticated/_app/sessions/new-text'
 import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authenticated/_app/sessions/new'
 import { Route as AuthenticatedAppPracticeStartRouteImport } from './routes/_authenticated/_app/practice/start'
@@ -142,6 +143,12 @@ const AuthenticatedAppMoreIndexRoute =
     path: '/more/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppVocabularyNewWordRoute =
+  AuthenticatedAppVocabularyNewWordRouteImport.update({
+    id: '/vocabulary/new-word',
+    path: '/vocabulary/new-word',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsNewTextRoute =
   AuthenticatedAppSessionsNewTextRouteImport.update({
     id: '/sessions/new-text',
@@ -223,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/practice/start': typeof AuthenticatedAppPracticeStartRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
   '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
+  '/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
   '/more/': typeof AuthenticatedAppMoreIndexRoute
   '/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
@@ -252,6 +260,7 @@ export interface FileRoutesByTo {
   '/practice/start': typeof AuthenticatedAppPracticeStartRoute
   '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
   '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
+  '/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
   '/more': typeof AuthenticatedAppMoreIndexRoute
   '/practice': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
@@ -284,6 +293,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/practice/start': typeof AuthenticatedAppPracticeStartRoute
   '/_authenticated/_app/sessions/new': typeof AuthenticatedAppSessionsNewRoute
   '/_authenticated/_app/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
+  '/_authenticated/_app/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
   '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
   '/_authenticated/_app/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/practice/start'
     | '/sessions/new'
     | '/sessions/new-text'
+    | '/vocabulary/new-word'
     | '/more/'
     | '/practice/'
     | '/sessions/'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/practice/start'
     | '/sessions/new'
     | '/sessions/new-text'
+    | '/vocabulary/new-word'
     | '/more'
     | '/practice'
     | '/sessions'
@@ -375,6 +387,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/practice/start'
     | '/_authenticated/_app/sessions/new'
     | '/_authenticated/_app/sessions/new-text'
+    | '/_authenticated/_app/vocabulary/new-word'
     | '/_authenticated/_app/more/'
     | '/_authenticated/_app/practice/'
     | '/_authenticated/_app/sessions/'
@@ -531,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMoreIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/vocabulary/new-word': {
+      id: '/_authenticated/_app/vocabulary/new-word'
+      path: '/vocabulary/new-word'
+      fullPath: '/vocabulary/new-word'
+      preLoaderRoute: typeof AuthenticatedAppVocabularyNewWordRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/new-text': {
       id: '/_authenticated/_app/sessions/new-text'
       path: '/sessions/new-text'
@@ -611,6 +631,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPracticeStartRoute: typeof AuthenticatedAppPracticeStartRoute
   AuthenticatedAppSessionsNewRoute: typeof AuthenticatedAppSessionsNewRoute
   AuthenticatedAppSessionsNewTextRoute: typeof AuthenticatedAppSessionsNewTextRoute
+  AuthenticatedAppVocabularyNewWordRoute: typeof AuthenticatedAppVocabularyNewWordRoute
   AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
   AuthenticatedAppPracticeIndexRoute: typeof AuthenticatedAppPracticeIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
@@ -629,6 +650,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppPracticeStartRoute: AuthenticatedAppPracticeStartRoute,
   AuthenticatedAppSessionsNewRoute: AuthenticatedAppSessionsNewRoute,
   AuthenticatedAppSessionsNewTextRoute: AuthenticatedAppSessionsNewTextRoute,
+  AuthenticatedAppVocabularyNewWordRoute:
+    AuthenticatedAppVocabularyNewWordRoute,
   AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,
   AuthenticatedAppPracticeIndexRoute: AuthenticatedAppPracticeIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,

@@ -11,7 +11,7 @@ import {
   useTextSegmentsWindow,
   useUpdateCardStatus,
 } from '../api/review-hooks'
-import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
+import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
 import { EditableCardFields } from './editable-card-fields'
 import { EditableGrammarPanel } from './editable-grammar-panel'
@@ -85,6 +85,12 @@ export const FocusView = () => {
   const initialCard = useMemo(() => cards?.find((listCard) => listCard.id === cardId), [cards, cardId])
   const { data: card, isLoading } = useGetCard(cardId, initialCard, cardsUpdatedAt)
   const { data: session } = useGetStudySession(sessionId, { enabled: shouldLoadSessionScope })
+  // Vocabulary entries (including adhoc) intentionally skip the session
+  // fetch, so we read the native language from user prefs to keep
+  // sameLanguage detection working without a session row. When the session
+  // IS loaded, we still prefer it (it carries the snapshotted native
+  // language at session creation time, which matches what the LLM saw).
+  const { data: userPrefs } = useGetUserPrefs()
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
   const { mutate: exploreCard, isPending: isExploringAny, variables: exploringVariables } = useExploreCard()
   const isExploring = isExploringAny && exploringVariables?.cardId === cardId
@@ -145,13 +151,14 @@ export const FocusView = () => {
     (card.chunk.definition && card.chunk.definition.trim().length > 0) ||
     (card.chunk.targetExample && card.chunk.targetExample.trim().length > 0)
   )
+  const targetLanguage = session?.targetLanguage ?? card.chunk.targetLanguage
+  const nativeLanguage = session?.nativeLanguage ?? userPrefs?.nativeLanguage ?? null
   const sameLanguage =
-    !!session && session.nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
+    !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
   const sourceSessionId = shouldLoadSessionScope ? card.studySessionId : undefined
-  const targetLanguage = session?.targetLanguage ?? card.chunk.targetLanguage
   // Vocabulary entries are already kept by definition, so the keep/reject
   // toggles and the per-session position counter don't apply here. Show the
   // chunk's headword as the title instead.
@@ -229,7 +236,7 @@ export const FocusView = () => {
           </section>
 
           <section>
-            {session?.textTrackId && (
+            {session?.textTrackId && session.contentSourceType !== 'adhoc' && (
               <SurroundingContextBlock
                 sessionId={sessionId}
                 textTrackId={session.textTrackId}

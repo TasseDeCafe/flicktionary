@@ -13,6 +13,11 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { exportSession, ExportSessionDependencies } from '../../service/export/export-session'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
 import { setCardStatus, setCardStatusBatch, SetCardStatusDependencies } from '../../service/cards/set-card-status'
+import {
+  createAdhocCard,
+  CreateAdhocCardDependencies,
+  AdhocCardCreationError,
+} from '../../service/adhoc/create-adhoc-card'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { toIsoString } from '../router-utils'
 
@@ -59,7 +64,8 @@ export const CardsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   exportDependencies: ExportSessionDependencies,
   exploreDependencies: ExploreCardDependencies,
-  setCardStatusDependencies: SetCardStatusDependencies
+  setCardStatusDependencies: SetCardStatusDependencies,
+  createAdhocCardDependencies: CreateAdhocCardDependencies
 ): Router => {
   const implementer = implement(cardsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -173,6 +179,32 @@ export const CardsRouter = (
         })
       }
       return { data: toCardDto(refreshed) }
+    }),
+
+    createAdhoc: implementer.createAdhoc.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      try {
+        const result = await createAdhocCard({
+          userId,
+          targetLanguage: input.targetLanguage,
+          headword: input.headword,
+          context: input.context,
+          deps: createAdhocCardDependencies,
+        })
+        return { data: result }
+      } catch (e) {
+        if (e instanceof AdhocCardCreationError) {
+          if (e.code === 'cefr_not_set' || e.code === 'native_language_not_set') {
+            throw errors.BAD_REQUEST({
+              data: { errors: [{ message: e.message, code: e.code }] },
+            })
+          }
+          throw errors.INTERNAL_SERVER_ERROR({
+            data: { errors: [{ message: e.message, code: e.code }] },
+          })
+        }
+        throw e
+      }
     }),
   })
 
