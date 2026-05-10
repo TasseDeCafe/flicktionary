@@ -856,6 +856,112 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     pre-kaikki rows requires a separate admin action (out of scope for v1;
     called out in `WIKTIONARY_GROUNDING.md`).
 
+- **Ad-hoc vocabulary entry — "Add a word" (2026-05-10).** New `+`-overlay
+  flow that captures a single word + optional context with no source needed.
+  One LLM call (basic-data pass in highlight-only mode) produces a card that
+  flows into Vocabulary + Practice exactly like a session-born card. Don't
+  re-introduce the original "lock the language picker to CEFR-set languages"
+  UX or the "session+segment FK nullable" alternative architecture (both
+  ruled out during planning).
+  - **Synthetic source pattern.** Every `(user, target_language)` gets one
+    lazily-created `content_source(type='adhoc', title='Personal vocabulary')`
+    + `text_track(source='paste')` + `study_session(status='processed',
+    context_blob=<hardcoded non-empty string>)`. Each new word appends one
+    `text_segment` (text = `${headword} — ${context}` so the synthetic
+    highlight's offsets always land on a real substring) and one `highlight`
+    over `[0, headword.length)`. Hardcoded `context_blob` is required —
+    `exploreCardIfMissing` and per-card chat (`buildPromptContext`) both
+    short-circuit on null context. Constants in
+    `apps/backend/src/service/adhoc/constants.ts`.
+  - **Schema.** `apps/backend/supabase/migrations/20260510091540_initial_app_schema.sql`
+    adds `'adhoc'` to `content_source_type` and a partial unique index
+    `content_sources_adhoc_user_language_unique ON public.content_sources
+    (created_by_user_id, language) WHERE type = 'adhoc'` for concurrency-safe
+    get-or-create. `text_track_source` is unchanged — adhoc tracks reuse
+    `'paste'`. `database.public.types.ts` regenerated. Mirrored in
+    `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
+    `ContentSourceTypeSchema` — without that, every joined DTO would fail
+    Zod validation as soon as adhoc rows surface.
+  - **Repository additions.**
+    - `content-sources-repository.ts::findOrCreateAdhoc` uses
+      `INSERT … ON CONFLICT (created_by_user_id, language) WHERE type='adhoc'
+      DO NOTHING RETURNING *` with a SELECT fallback. **Don't** use
+      `ON CONFLICT ON CONSTRAINT <name>` — partial unique *indexes* aren't
+      *constraints*, so the named-constraint form raises `42704`. Use the
+      column-list + WHERE form so Postgres infers the matching partial index.
+    - `study-sessions-repository.ts::insertAdhocStudySession` is a sibling
+      of `insertStudySession` that allows `status='processed'` + non-null
+      `context_blob` and stamps `processed_at = NOW()`. Kept separate so the
+      public ingestion path can't bypass `'active'`. Also adds
+      `findAdhocForUserAndLanguage`; `listByUserIdWithSource` got
+      `AND cs.type != 'adhoc'` so synthetic sessions never appear under any
+      Sessions chip.
+    - `text-segments-repository.ts::appendSegmentAtomic` runs
+      `INSERT … SELECT COALESCE(MAX(index)+1, 0) FROM text_segments
+      WHERE text_track_id = ?` so concurrent adhoc adds don't collide on the
+      `(text_track_id, index)` unique constraint. Don't reintroduce the
+      racy `listByTrackId(...).length` pattern.
+    - `user-lookups-repository.ts` `SELECT_CHUNK_ROW_SQL` now LEFT JOINs
+      `content_sources` and returns
+      `(s.id IS NOT NULL AND cs.type != 'adhoc') AS source_available` —
+      this is what naturally disables the Vocabulary "Open source" drawer
+      button for adhoc cards (`vocabulary-action-drawer.tsx:96-102`).
+  - **Shared post-pass extraction.** `process-session.ts` post-basic-data
+    write loop and `runWiktionaryGrounding` were extracted into
+    `apps/backend/src/service/processing/materialize-basic-data-chunks.ts`
+    and `wiktionary-grounding-runner.ts` so both `processSession` and the
+    new adhoc service call the same code path. `materializeBasicDataChunks`
+    now returns `{ touchedLookups, insertedCards }` (added `insertedCards`
+    so the adhoc service can find its newly-inserted card without a second
+    repo lookup). `buildBasicDataGrammarPatch` moved with the loop —
+    `process-session.unit.test.ts` import updated.
+  - **Service layer.** `apps/backend/src/service/adhoc/`:
+    - `get-or-create-adhoc-session.ts` — idempotent get-or-create returning
+      `{ session, track }`. Track hash is deterministic
+      `'adhoc:' + sha256(userId + ':' + targetLanguage)` to satisfy
+      `text_tracks_content_source_language_hash_unique`. Re-checks for a
+      raced session insert between the content-source upsert and the session
+      insert.
+    - `create-adhoc-card.ts` — orchestrates: native + CEFR lookup
+      (`usersRepository.getNativeLanguage` + `userTargetLanguagePrefsRepository.findForLanguage`,
+      **not** `usersRepository.findById` — CEFR lives on
+      `user_target_language_prefs`, not `users`), get-or-create session,
+      append segment, insert highlight, `basicDataPass({ ...,
+      llmDiscoveryEnabled: false, excludedHeadwordSenses: [] })`,
+      `materializeBasicDataChunks`, optional `runWiktionaryGrounding`.
+      Discriminated `AdhocCardCreationError` codes: `cefr_not_set`,
+      `native_language_not_set`, `llm_failure`, `card_not_inserted`. Maps
+      to `BAD_REQUEST` (first two) / `INTERNAL_SERVER_ERROR` in
+      `cards-router.ts::createAdhoc`. Wired in `app.ts` via a dedicated
+      `createAdhocCardDependencies` bundle (cards-router gained a 6th arg).
+  - **Contract.** `cards-contract.ts::createAdhoc` (POST `/cards/adhoc`),
+    input `{ targetLanguage, headword: trim min 1 max 200, context: trim max 2000 nullable }`,
+    output `{ data: { cardId, sessionId } }`. Matches the existing
+    `{ data: ... }` wrapper convention.
+  - **Frontend.** Third row in `main-action-overlay.tsx` (icon `Sparkles`,
+    label "Add a word", route `/vocabulary/new-word`). Route file at
+    `apps/web/src/app/routes/_authenticated/_app/vocabulary/new-word.tsx`
+    (`hideAppChrome: true`). Wizard at
+    `apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx`:
+    LanguagePicker spans **all** supported languages (not just CEFR-set
+    ones) so the user can add a word in a brand-new language — the
+    backend's `cefr_not_set` reply triggers the inline `CefrPromptDialog`
+    (reused from text/movie wizards). Default language = first CEFR-set
+    alphabetically (no MRU is stored on `user_target_language_prefs`).
+    Hook in `apps/web/src/features/vocabulary/api/adhoc-hooks.ts`
+    invalidates `chunks.listChunks`, `chunks.listLanguages`, and
+    `practice.dueSummary`. Sets `meta.showErrorToast: false` so the global
+    handler doesn't double up on `cefr_not_set` (the dialog *is* the
+    action); the wizard's onError handles unknown failures with its own
+    toast.
+  - **Focus-view fixes that came along.** `sameLanguage` was always `false`
+    on the vocabulary path because the session intentionally isn't fetched
+    when `from=vocabulary && source !== 'available'`. Now reads
+    `nativeLanguage` from `useGetUserPrefs()` (preferred when session is
+    loaded) so L1=L2 layout works for vocabulary entries. Surrounding-context
+    block additionally hides on `session.contentSourceType === 'adhoc'`
+    for the rare direct-URL-entry case where the session does load.
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still
