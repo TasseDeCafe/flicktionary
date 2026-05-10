@@ -1,6 +1,13 @@
 import type { PracticeSessionsRepositoryInterface } from '../../transport/database/practice-sessions/practice-sessions-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
-import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import {
+  DEFAULT_PRACTICE_MAX_NEW_TERMS,
+  DEFAULT_PRACTICE_MAX_REVIEW_TERMS,
+  HARD_MAX_PRACTICE_NEW_TERMS,
+  HARD_MAX_PRACTICE_REVIEW_TERMS,
+  type PracticeSessionLimits,
+  type UsersRepositoryInterface,
+} from '../../transport/database/users/users-repository'
 
 export type StartPracticeSessionDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
@@ -9,12 +16,29 @@ export type StartPracticeSessionDependencies = {
 }
 
 export type StartPracticeSessionResult =
-  | { ok: true; sessionId: string }
-  | { ok: false; reason: 'no_kept_cards' | 'no_native_language' }
+  | { ok: true; sessionId: string; resumed: boolean }
+  | { ok: false; reason: 'no_kept_cards' | 'no_native_language' | 'no_practice_terms' }
 
-// Creates a new practice_session for (user, target_language). Refuses if the
-// user has zero kept cards in that language (the review pool would be empty)
-// or if their native_language pref isn't set (we need it for the LLM prompt).
+// Sessions older than this are auto-abandoned before we try to resume — the
+// user has clearly walked away, and we'd rather snapshot a fresh eligibility
+// universe than dredge up a days-old one.
+const STALE_SESSION_HOURS = 24
+
+const clampPracticeSessionLimits = (limits: PracticeSessionLimits): PracticeSessionLimits => {
+  const maxNewTerms = Math.min(Math.max(Math.trunc(limits.maxNewTerms), 0), HARD_MAX_PRACTICE_NEW_TERMS)
+  const maxReviewTerms = Math.min(Math.max(Math.trunc(limits.maxReviewTerms), 0), HARD_MAX_PRACTICE_REVIEW_TERMS)
+  if (maxNewTerms + maxReviewTerms > 0) return { maxNewTerms, maxReviewTerms }
+  return {
+    maxNewTerms: DEFAULT_PRACTICE_MAX_NEW_TERMS,
+    maxReviewTerms: DEFAULT_PRACTICE_MAX_REVIEW_TERMS,
+  }
+}
+
+// Resume-or-create. If the user has an active practice_session for this
+// (user, target_language), return its id with resumed=true. Otherwise insert
+// a fresh row + snapshot the capped practice batch in one transaction
+// (insertOrResume handles the race; the partial unique index makes
+// double-create impossible).
 export const startPracticeSession = async (
   userId: string,
   targetLanguage: string,
@@ -27,6 +51,25 @@ export const startPracticeSession = async (
   const langSummary = summary.find((s) => s.targetLanguage === targetLanguage)
   if (!langSummary || langSummary.totalKept === 0) return { ok: false, reason: 'no_kept_cards' }
 
-  const session = await deps.practiceSessionsRepository.insert({ userId, targetLanguage })
-  return { ok: true, sessionId: session.id }
+  await deps.practiceSessionsRepository.abandonStaleForUser({
+    userId,
+    targetLanguage,
+    olderThanHours: STALE_SESSION_HOURS,
+  })
+
+  const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
+  const active = await deps.practiceSessionsRepository.findActiveForUser({ userId, targetLanguage })
+  if (!active) {
+    const selectedNewTerms = Math.min(langSummary.newCount, limits.maxNewTerms)
+    const selectedReviewTerms = Math.min(langSummary.dueCount, limits.maxReviewTerms)
+    if (selectedNewTerms + selectedReviewTerms === 0) return { ok: false, reason: 'no_practice_terms' }
+  }
+
+  const { session, resumed } = await deps.practiceSessionsRepository.insertOrResume({
+    userId,
+    targetLanguage,
+    maxNewTerms: limits.maxNewTerms,
+    maxReviewTerms: limits.maxReviewTerms,
+  })
+  return { ok: true, sessionId: session.id, resumed }
 }

@@ -328,6 +328,22 @@ export const useSetLlmHighlightsEnabled = () => {
   )
 }
 
+export const useSetPracticeSessionLimits = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.setPracticeSessionLimits.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to update practice limits`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useFastGloss = () => {
   const { t } = useLingui()
   return useMutation(

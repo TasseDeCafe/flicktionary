@@ -11,6 +11,8 @@ type UserPrefsResponse = {
   nativeLanguage: string | null
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
+  practiceMaxNewTerms: number
+  practiceMaxReviewTerms: number
   targetLanguagePrefs: { targetLanguage: string; cefrLevel: string }[]
 }
 
@@ -19,16 +21,19 @@ const buildPrefs = async (
   usersRepository: UsersRepositoryInterface,
   prefsRepository: UserTargetLanguagePrefsRepositoryInterface
 ): Promise<UserPrefsResponse> => {
-  const [nativeLanguage, tapToTranslateEnabled, llmHighlightsEnabled, targetPrefs] = await Promise.all([
+  const [nativeLanguage, tapToTranslateEnabled, llmHighlightsEnabled, practiceLimits, targetPrefs] = await Promise.all([
     usersRepository.getNativeLanguage(userId),
     usersRepository.getTapToTranslateEnabled(userId),
     usersRepository.getLlmHighlightsEnabled(userId),
+    usersRepository.getPracticeSessionLimits(userId),
     prefsRepository.listForUser(userId),
   ])
   return {
     nativeLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
+    practiceMaxNewTerms: practiceLimits.maxNewTerms,
+    practiceMaxReviewTerms: practiceLimits.maxReviewTerms,
     targetLanguagePrefs: targetPrefs.map((p) => ({
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
@@ -86,6 +91,21 @@ export const UserPrefsRouter = (
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to update LLM highlights setting' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    setPracticeSessionLimits: implementer.setPracticeSessionLimits.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.setPracticeSessionLimits(userId, {
+        maxNewTerms: input.maxNewTerms,
+        maxReviewTerms: input.maxReviewTerms,
+      })
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to update practice limits' }] },
         })
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

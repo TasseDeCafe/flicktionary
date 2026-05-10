@@ -319,28 +319,41 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   }))
 }
 
-// Returns the rows eligible for the next practice text in this session:
-// - rows already in SRS state with srs_due <= now (older first), AND
-// - rows that have never been reviewed (srs_state IS NULL).
-// Caller is expected to subtract chunks already covered by prior practice_texts
-// in this session (that's a JSONB join the caller does after the fact).
-const listEligibleForLanguage = async (params: { userId: string; targetLanguage: string }): Promise<DbUserLookup[]> => {
+// Returns the rows eligible for the next practice text in this session,
+// pulled from the frozen capped-batch snapshot in practice_session_chunks.
+// We no longer consult the live srs_due clock — eligibility is whatever was
+// captured at session start, which is what makes the progress denominator
+// stable across the sitting and keeps late-keep cards from sneaking in.
+//
+// `extraUserLookupIds` lets callers force-include rows even if they aren't
+// flagged eligible_at_start — used by Problem 3 to resurface chunks the user
+// rated `again`.
+const listEligibleForLanguage = async (params: {
+  userId: string
+  targetLanguage: string
+  practiceSessionId: string
+  extraUserLookupIds?: string[]
+}): Promise<DbUserLookup[]> => {
+  const extras = params.extraUserLookupIds ?? []
   return (await sql`
-    SELECT *
-    FROM public.user_lookups
-    WHERE user_id = ${params.userId}
-      AND target_language = ${params.targetLanguage}
-      AND count > 0
-      AND deleted_at IS NULL
+    SELECT ul.*
+    FROM public.user_lookups ul
+    JOIN public.practice_session_chunks psc
+      ON psc.user_lookup_id = ul.id
+     AND psc.practice_session_id = ${params.practiceSessionId}
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
       AND (
-        srs_state IS NULL
-        OR (srs_due IS NOT NULL AND srs_due <= NOW())
+        psc.eligible_at_start = TRUE
+        OR ul.id = ANY(${extras}::uuid[])
       )
     ORDER BY
-      CASE WHEN srs_state IS NULL THEN 1 ELSE 0 END ASC,
-      srs_due ASC NULLS LAST,
-      headword ASC,
-      sense ASC
+      CASE WHEN ul.srs_state IS NULL THEN 1 ELSE 0 END ASC,
+      ul.srs_due ASC NULLS LAST,
+      ul.headword ASC,
+      ul.sense ASC
   `) as DbUserLookup[]
 }
 
@@ -830,7 +843,12 @@ export interface UserLookupsRepositoryInterface {
   applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
   applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>
   listDueSummary: (userId: string) => Promise<DueSummaryEntry[]>
-  listEligibleForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<DbUserLookup[]>
+  listEligibleForLanguage: (params: {
+    userId: string
+    targetLanguage: string
+    practiceSessionId: string
+    extraUserLookupIds?: string[]
+  }) => Promise<DbUserLookup[]>
   findByKey: (params: {
     userId: string
     targetLanguage: string

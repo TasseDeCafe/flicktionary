@@ -282,3 +282,13 @@ export const PracticeDueSummaryEntrySchema = z.object({
   newCount: z.number().int(),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
+
+// Session progress (Problem 1). Numerator = chunks resolved (rated
+// hard/good/easy at any point in the session, plus chunks the LLM abandoned
+// after two skips). Denominator = the eligible-at-start subset of the
+// frozen membership snapshot. Stable across the whole sitting.
+export const PracticeSessionProgressSchema = z.object({
+  completed: z.number().int(),
+  target: z.number().int(),
+})
+export type PracticeSessionProgress = z.infer<typeof PracticeSessionProgressSchema>

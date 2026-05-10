@@ -3,11 +3,19 @@ import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useDueSummary } from '../api/practice-hooks'
+import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 
 export const PracticeLandingView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { data: summary, isLoading } = useDueSummary()
+  const { data: prefs } = useGetUserPrefs()
+
+  const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
+  const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
+
+  const canStartEntry = (entry: { dueCount: number; newCount: number }) =>
+    (entry.dueCount > 0 && maxReviewTerms > 0) || (entry.newCount > 0 && maxNewTerms > 0)
 
   const handleStart = (targetLanguage: string) => {
     void navigate({
@@ -17,9 +25,7 @@ export const PracticeLandingView = () => {
   }
 
   const singleLanguageReviewable =
-    summary && summary.length === 1 && (summary[0]?.dueCount ?? 0) + (summary[0]?.newCount ?? 0) > 0
-      ? summary[0]!.targetLanguage
-      : null
+    summary && summary.length === 1 && summary[0] && canStartEntry(summary[0]) ? summary[0]!.targetLanguage : null
 
   return (
     <div className='flex h-full flex-col'>
@@ -31,7 +37,7 @@ export const PracticeLandingView = () => {
           </header>
 
           <p className='text-sm text-gray-600'>
-            {t`Read short generated texts that weave in your kept vocabulary. Tap a chunk to rate it; chunks you don't tap are scored as recognized when you advance.`}
+            {t`Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance.`}
           </p>
 
           {isLoading && <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>}
@@ -54,6 +60,7 @@ export const PracticeLandingView = () => {
                   const totalKept = entry.totalKept
                   const dueCount = entry.dueCount
                   const newCount = entry.newCount
+                  const canStart = canStartEntry(entry)
                   const summaryLine =
                     reviewable === 0
                       ? t`All caught up — ${totalKept} card(s) total`
@@ -62,7 +69,7 @@ export const PracticeLandingView = () => {
                     <button
                       key={entry.targetLanguage}
                       type='button'
-                      disabled={reviewable === 0}
+                      disabled={!canStart}
                       onClick={() => handleStart(entry.targetLanguage)}
                       className='flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 disabled:opacity-50'
                     >
@@ -70,7 +77,7 @@ export const PracticeLandingView = () => {
                         <span className='truncate text-sm font-medium uppercase'>{entry.targetLanguage}</span>
                         <span className='text-muted-foreground truncate text-xs'>{summaryLine}</span>
                       </div>
-                      {reviewable > 0 && <ChevronRight className='h-5 w-5 text-gray-400' />}
+                      {canStart && <ChevronRight className='h-5 w-5 text-gray-400' />}
                     </button>
                   )
                 })}

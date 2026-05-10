@@ -1,11 +1,13 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
+import type { PracticeSessionProgress } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 type GetSessionCache = {
   data: {
     session: unknown
     currentText: unknown
+    progress: PracticeSessionProgress
   }
 }
 
@@ -22,28 +24,12 @@ export const useDueSummary = () => {
 
 export const useStartPracticeSession = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
+  // Per Problem 2: don't seed the getSession cache. With resume, the seed
+  // would suppress the resumed text long enough for the auto-trigger to fire
+  // generateNextText and burn another LLM call. Cost: one extra fetch on
+  // first entry into the session view.
   return useMutation(
     orpcQuery.practice.startSession.mutationOptions({
-      onSuccess: (response, variables) => {
-        // Seed the getSession cache so the session view doesn't pay a redundant
-        // round-trip after navigation — we just created the session, we know
-        // currentText is null, and the auto-trigger effect can fire immediately.
-        const sessionId = response.data.sessionId
-        queryClient.setQueryData<GetSessionCache>(orpcQuery.practice.getSession.queryKey({ input: { sessionId } }), {
-          data: {
-            session: {
-              id: sessionId,
-              userId: '',
-              targetLanguage: variables.targetLanguage,
-              status: 'active',
-              startedAt: new Date().toISOString(),
-              endedAt: null,
-            },
-            currentText: null,
-          },
-        })
-      },
       meta: {
         errorMessage: t`Failed to start practice session`,
         showErrorModal: true,
@@ -81,7 +67,7 @@ export const useGenerateNextPracticeText = (sessionId: string) => {
             const nextCurrentText = response.data.done ? null : response.data.practiceText
             return {
               ...old,
-              data: { ...old.data, currentText: nextCurrentText },
+              data: { ...old.data, currentText: nextCurrentText, progress: response.data.progress },
             }
           }
         )
@@ -91,10 +77,33 @@ export const useGenerateNextPracticeText = (sessionId: string) => {
   )
 }
 
-export const useRatePracticeChunk = () => {
+// Fire-and-forget pre-generation. Eagerly kicks off the LLM call for the
+// next slot as soon as the current text loads so handleNext can hand back a
+// cached 'ready' row instantly.
+export const usePrepareNextPracticeText = () => {
+  return useMutation(
+    orpcQuery.practice.prepareNextText.mutationOptions({
+      // No meta.errorMessage: failures here are non-fatal (foreground will
+      // generate fresh on Next), and we don't want to surface modal toasts
+      // for a background eagerness optimisation.
+    })
+  )
+}
+
+export const useRatePracticeChunk = (sessionId: string) => {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.rateChunk.mutationOptions({
+      onSuccess: (response) => {
+        queryClient.setQueryData<GetSessionCache>(
+          orpcQuery.practice.getSession.queryKey({ input: { sessionId } }),
+          (old) => {
+            if (!old) return old
+            return { ...old, data: { ...old.data, progress: response.data.progress } }
+          }
+        )
+      },
       meta: { errorMessage: t`Failed to record rating` },
     })
   )

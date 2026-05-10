@@ -18,6 +18,7 @@ import {
   useSetLlmHighlightsEnabled,
   useSetTapToTranslateEnabled,
 } from '@/features/sessions/api/sessions-hooks'
+import { PracticeSessionLimitsSetting } from '@/features/settings/components/practice-session-limits-setting'
 import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-settings'
 import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/danger-zone'
 import { MoreListSection } from './more-list-section'
@@ -83,17 +84,23 @@ export const MoreTabView = () => {
         />
         <MoreListRow
           icon={Sparkles}
-          label={t`LLM-suggested chunks`}
-          description={t`Let the model surface chunks at your level on Process`}
+          label={t`LLM-suggested terms`}
+          description={t`Let the model surface terms at your level on Process`}
           trailing={
             <Switch
               checked={prefs?.llmHighlightsEnabled ?? true}
               disabled={isSavingLlm || !prefs}
               onCheckedChange={(checked) => setLlmHighlights({ enabled: checked })}
-              aria-label={t`LLM-suggested chunks`}
+              aria-label={t`LLM-suggested terms`}
             />
           }
         />
+        {prefs && (
+          <PracticeSessionLimitsSetting
+            maxNewTerms={prefs.practiceMaxNewTerms}
+            maxReviewTerms={prefs.practiceMaxReviewTerms}
+          />
+        )}
       </MoreListSection>
 
       <MoreListSection title={t`About`}>

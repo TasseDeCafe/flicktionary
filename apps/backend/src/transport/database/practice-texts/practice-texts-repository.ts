@@ -19,6 +19,11 @@ export type PracticeSkippedChunk = {
   reason: string
 }
 
+// Stale-slot recovery threshold. Workers are expected to finish in well under
+// this; pre-gen slots that age past it without making it to 'ready' are
+// considered crashed/abandoned and the next caller can fence them off.
+const STALE_SLOT_SECONDS = 60
+
 const insertPending = async (params: { practiceSessionId: string; ord: number }): Promise<DbPracticeText> => {
   const result = (await sql`
     INSERT INTO public.practice_texts (practice_session_id, ord, status)
@@ -28,16 +33,26 @@ const insertPending = async (params: { practiceSessionId: string; ord: number })
   return result[0]!
 }
 
-const markGenerating = async (id: string): Promise<void> => {
-  await sql`
+// Atomically transition pending -> generating and return the freshly minted
+// fencing token. The token is bound to the worker that wins this update;
+// markReady / markFailed verify it before persisting their result. Callers
+// that lose the race (because takeover already moved the slot) get null.
+const claimGenerating = async (id: string): Promise<{ token: string } | null> => {
+  const result = (await sql`
     UPDATE public.practice_texts
-    SET status = 'generating'
-    WHERE id = ${id} AND status IN ('pending')
-  `
+    SET status = 'generating',
+        generation_token = gen_random_uuid()
+    WHERE id = ${id} AND status = 'pending'
+    RETURNING generation_token
+  `) as Array<{ generation_token: string }>
+  const row = result[0]
+  if (!row) return null
+  return { token: row.generation_token }
 }
 
 const markReady = async (params: {
   id: string
+  token: string
   body: string
   annotations: PracticeAnnotation[]
   skippedChunks: PracticeSkippedChunk[]
@@ -62,33 +77,61 @@ const markReady = async (params: {
         generation_warning = ${params.generationWarning},
         ready_at = NOW()
     WHERE id = ${params.id}
+      AND status = 'generating'
+      AND generation_token = ${params.token}::uuid
     RETURNING *
   `) as DbPracticeText[]
   return result[0] ?? null
 }
 
-const markFailed = async (params: { id: string; warning: string }): Promise<void> => {
+const markFailed = async (params: { id: string; token: string | null; warning: string }): Promise<void> => {
+  if (params.token != null) {
+    await sql`
+      UPDATE public.practice_texts
+      SET status = 'failed', generation_warning = ${params.warning}
+      WHERE id = ${params.id}
+        AND generation_token = ${params.token}::uuid
+        AND status IN ('pending', 'generating')
+    `
+    return
+  }
+  // Token-less failure: used by the takeover path to mark a stale slot
+  // failed without holding ownership. The original worker's eventual write
+  // is then fenced out by the gen_random_uuid() on its prior claim.
   await sql`
     UPDATE public.practice_texts
     SET status = 'failed', generation_warning = ${params.warning}
     WHERE id = ${params.id}
+      AND status IN ('pending', 'generating')
   `
 }
 
-const markReading = async (id: string): Promise<void> => {
-  await sql`
+const markReading = async (id: string): Promise<DbPracticeText | null> => {
+  const updated = (await sql`
     UPDATE public.practice_texts
     SET status = 'reading'
     WHERE id = ${id} AND status = 'ready'
-  `
+    RETURNING *
+  `) as DbPracticeText[]
+  if (updated[0]) return updated[0]
+
+  const existing = (await sql`
+    SELECT *
+    FROM public.practice_texts
+    WHERE id = ${id} AND status = 'reading'
+    LIMIT 1
+  `) as DbPracticeText[]
+  return existing[0] ?? null
 }
 
-const markDone = async (id: string): Promise<void> => {
-  await sql`
+const markDone = async (id: string): Promise<DbPracticeText | null> => {
+  const result = (await sql`
     UPDATE public.practice_texts
     SET status = 'done', read_at = NOW()
     WHERE id = ${id} AND status IN ('ready', 'reading')
-  `
+    RETURNING *
+  `) as DbPracticeText[]
+  return result[0] ?? null
 }
 
 const findById = async (id: string): Promise<DbPracticeText | null> => {
@@ -132,16 +175,39 @@ const listBySessionId = async (practiceSessionId: string): Promise<DbPracticeTex
   `) as DbPracticeText[]
 }
 
-// Returns the most recently created text in a state the user is meant to act
-// on: 'ready' or 'reading'. Used to resume a session.
-const findCurrentReadable = async (practiceSessionId: string): Promise<DbPracticeText | null> => {
-  const result = (await sql`
+// Atomically pick the row to surface to the user and (if needed) flip it from
+// 'ready' to 'reading' so closing & re-opening the modal — or hitting the
+// session via a second tab — sees the in-progress text rather than a
+// pre-generated successor at a higher ord.
+//
+// Selection rules:
+//   1. If a 'reading' row exists for this session, return it as-is (only one
+//      can exist; enforced by at_most_one_reading_per_session).
+//   2. Otherwise the lowest-ord 'ready' row gets promoted to 'reading' in a
+//      single atomic UPDATE keyed on status='ready', and the returned row is
+//      the post-update one.
+const selectAndMarkReading = async (practiceSessionId: string): Promise<DbPracticeText | null> => {
+  const existing = (await sql`
     SELECT *
     FROM public.practice_texts
     WHERE practice_session_id = ${practiceSessionId}
-      AND status IN ('ready', 'reading')
-    ORDER BY ord DESC
+      AND status = 'reading'
     LIMIT 1
+  `) as DbPracticeText[]
+  if (existing[0]) return existing[0]
+
+  const result = (await sql`
+    UPDATE public.practice_texts
+    SET status = 'reading'
+    WHERE id = (
+      SELECT id
+      FROM public.practice_texts
+      WHERE practice_session_id = ${practiceSessionId}
+        AND status = 'ready'
+      ORDER BY ord ASC
+      LIMIT 1
+    )
+    RETURNING *
   `) as DbPracticeText[]
   return result[0] ?? null
 }
@@ -153,6 +219,104 @@ const getNextOrd = async (practiceSessionId: string): Promise<number> => {
     WHERE practice_session_id = ${practiceSessionId}
   `
   return (result[0]?.next_ord as number) ?? 0
+}
+
+export type ReservedSlot = {
+  practiceText: DbPracticeText
+  isFresh: boolean
+}
+
+// Reserve the "next" slot for this session, or return the slot already
+// reserved if one exists. Wraps the lookup-or-insert in a per-session
+// advisory lock so two concurrent callers (foreground generateNextText +
+// background prepareNextText) can't collide on the (session, ord) unique
+// constraint or insert duplicate slots.
+//
+// "Already reserved" means: a row at ord > the highest done/reading ord
+// exists in status pending/generating/ready. If we find one but it's stuck
+// (pending/generating older than STALE_SLOT_SECONDS), we mark it failed and
+// reserve a fresh slot at the next ord. The original worker's eventual write
+// is no-oped via the generation_token check.
+//
+// `isFresh` is true when the caller is responsible for kicking off the
+// generation work for this slot. False means the slot is an existing
+// pending/generating/ready row the caller can poll or return to the user.
+const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<ReservedSlot> => {
+  return await sql.begin(async (tx) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    await (tx as any)`
+      SELECT pg_advisory_xact_lock(hashtext(${practiceSessionId}))
+    `
+
+    const anchorRows = (await (tx as any)`
+      SELECT COALESCE(MAX(ord), -1) AS anchor_ord
+      FROM public.practice_texts
+      WHERE practice_session_id = ${practiceSessionId}
+        AND status IN ('reading', 'done')
+    `) as Array<{ anchor_ord: number }>
+    const anchorOrd = anchorRows[0]?.anchor_ord ?? -1
+
+    const candidate = (await (tx as any)`
+      SELECT *
+      FROM public.practice_texts
+      WHERE practice_session_id = ${practiceSessionId}
+        AND status IN ('pending', 'generating', 'ready')
+        AND ord > ${anchorOrd}
+      ORDER BY ord ASC
+      LIMIT 1
+    `) as DbPracticeText[]
+
+    const existing = candidate[0]
+    if (existing) {
+      if (
+        (existing.status === 'pending' || existing.status === 'generating') &&
+        Date.now() - new Date(existing.created_at).getTime() > STALE_SLOT_SECONDS * 1000
+      ) {
+        // Stale. Fence it off by flipping to 'failed' (token-less, see
+        // markFailed), then fall through to reserve a fresh slot at next
+        // ord. The previous worker's markReady will fail its token check
+        // and silently no-op.
+        await (tx as any)`
+          UPDATE public.practice_texts
+          SET status = 'failed',
+              generation_warning = COALESCE(generation_warning, 'stale slot reclaimed')
+          WHERE id = ${existing.id}
+            AND status IN ('pending', 'generating')
+        `
+      } else {
+        return { practiceText: existing, isFresh: false }
+      }
+    }
+
+    const nextOrdRows = (await (tx as any)`
+      SELECT COALESCE(MAX(ord), -1) + 1 AS next_ord
+      FROM public.practice_texts
+      WHERE practice_session_id = ${practiceSessionId}
+    `) as Array<{ next_ord: number }>
+    const nextOrd = nextOrdRows[0]?.next_ord ?? 0
+
+    const inserted = (await (tx as any)`
+      INSERT INTO public.practice_texts (practice_session_id, ord, status)
+      VALUES (${practiceSessionId}, ${nextOrd}, 'pending')
+      RETURNING *
+    `) as DbPracticeText[]
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    return { practiceText: inserted[0]!, isFresh: true }
+  })
+}
+
+// Atomic finalize gate: only the caller who flips the row from 'ready' or
+// 'reading' to 'done' owns the implicit-rating insert. Returns the
+// post-update row if we won, null if another caller already finalized.
+const claimFinalize = async (id: string): Promise<DbPracticeText | null> => {
+  const result = (await sql`
+    UPDATE public.practice_texts
+    SET status = 'done', read_at = NOW()
+    WHERE id = ${id} AND status IN ('ready', 'reading')
+    RETURNING *
+  `) as DbPracticeText[]
+  return result[0] ?? null
 }
 
 // Returns the union of (headword, sense) pairs already covered by any
@@ -204,25 +368,28 @@ const getSkippedChunkCountsForSession = async (
 
 export interface PracticeTextsRepositoryInterface {
   insertPending: (params: { practiceSessionId: string; ord: number }) => Promise<DbPracticeText>
-  markGenerating: (id: string) => Promise<void>
+  claimGenerating: (id: string) => Promise<{ token: string } | null>
   markReady: (params: {
     id: string
+    token: string
     body: string
     annotations: PracticeAnnotation[]
     skippedChunks: PracticeSkippedChunk[]
     generationWarning: string | null
   }) => Promise<DbPracticeText | null>
-  markFailed: (params: { id: string; warning: string }) => Promise<void>
-  markReading: (id: string) => Promise<void>
-  markDone: (id: string) => Promise<void>
+  markFailed: (params: { id: string; token: string | null; warning: string }) => Promise<void>
+  markReading: (id: string) => Promise<DbPracticeText | null>
+  markDone: (id: string) => Promise<DbPracticeText | null>
   findById: (id: string) => Promise<DbPracticeText | null>
   findByIdForUser: (
     id: string,
     userId: string
   ) => Promise<{ practiceText: DbPracticeText; practiceSessionId: string; targetLanguage: string } | null>
   listBySessionId: (practiceSessionId: string) => Promise<DbPracticeText[]>
-  findCurrentReadable: (practiceSessionId: string) => Promise<DbPracticeText | null>
+  selectAndMarkReading: (practiceSessionId: string) => Promise<DbPracticeText | null>
   getNextOrd: (practiceSessionId: string) => Promise<number>
+  reserveOrFindNextSlot: (practiceSessionId: string) => Promise<ReservedSlot>
+  claimFinalize: (id: string) => Promise<DbPracticeText | null>
   getCoveredHeadwordSenses: (practiceSessionId: string) => Promise<Array<{ headword: string; sense: string }>>
   getSkippedChunkCountsForSession: (
     practiceSessionId: string
@@ -232,7 +399,7 @@ export interface PracticeTextsRepositoryInterface {
 export const PracticeTextsRepository = (): PracticeTextsRepositoryInterface => {
   return {
     insertPending,
-    markGenerating,
+    claimGenerating,
     markReady,
     markFailed,
     markReading,
@@ -240,8 +407,10 @@ export const PracticeTextsRepository = (): PracticeTextsRepositoryInterface => {
     findById,
     findByIdForUser,
     listBySessionId,
-    findCurrentReadable,
+    selectAndMarkReading,
     getNextOrd,
+    reserveOrFindNextSlot,
+    claimFinalize,
     getCoveredHeadwordSenses,
     getSkippedChunkCountsForSession,
   }

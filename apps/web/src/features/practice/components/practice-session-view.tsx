@@ -8,6 +8,7 @@ import {
   useFinalizePracticeText,
   useGenerateNextPracticeText,
   useGetPracticeSession,
+  usePrepareNextPracticeText,
   useRatePracticeChunk,
 } from '../api/practice-hooks'
 import { AnnotatedText, type AnnotationInput } from './annotated-text'
@@ -22,8 +23,9 @@ export const PracticeSessionView = () => {
 
   const { data: sessionData, isLoading } = useGetPracticeSession(practiceSessionId)
   const { mutate: generateNextText, isPending: isGenerating } = useGenerateNextPracticeText(practiceSessionId)
-  const { mutate: rateChunk } = useRatePracticeChunk()
+  const { mutate: rateChunk, isPending: isRating } = useRatePracticeChunk(practiceSessionId)
   const { mutate: finalizeText, isPending: isFinalizing } = useFinalizePracticeText(practiceSessionId)
+  const { mutate: prepareNextText } = usePrepareNextPracticeText()
 
   // Per-text map of annotation index -> the rating the user submitted. Used
   // both to mark already-rated chunks in the body and to pre-select the
@@ -38,6 +40,7 @@ export const PracticeSessionView = () => {
 
   const currentText = sessionData?.currentText ?? null
   const currentTextId = currentText?.id ?? null
+  const progress = sessionData?.progress ?? null
 
   // Auto-trigger generation if the session has no current text and isn't done.
   useEffect(() => {
@@ -61,6 +64,14 @@ export const PracticeSessionView = () => {
     setRatings(new Map())
     setOpenIndex(null)
   }, [currentTextId])
+
+  // Eager pre-gen (Problem 4): kick off the next slot as soon as a fresh
+  // text loads so handleNext can hand back a 'ready' row instantly. Server
+  // is idempotent — repeat fires no-op.
+  useEffect(() => {
+    if (!currentTextId) return
+    prepareNextText({ sessionId: practiceSessionId })
+  }, [currentTextId, practiceSessionId, prepareNextText])
 
   const annotations: AnnotationInput[] = useMemo(() => {
     if (!currentText) return []
@@ -147,12 +158,33 @@ export const PracticeSessionView = () => {
   const showLoader = !done && (isLoading || isAdvancing || !currentText)
   const loaderLabel = isAdvancing ? t`Generating the next text…` : t`Preparing the session…`
 
+  // Cap the visible bar at 100% — the numerator can briefly equal the
+  // denominator on the all-caught-up frame.
+  const progressPct =
+    progress && progress.target > 0 ? Math.min(100, Math.round((progress.completed / progress.target) * 100)) : 0
+
   return (
     <ModalScreen onClose={close} closeIcon='x' title={t`Practice`}>
       {showLoader && <PracticeLoader label={loaderLabel} />}
 
       {!showLoader && (
         <div className='flex flex-1 flex-col overflow-hidden'>
+          {progress && progress.target > 0 && (
+            <div className='border-b bg-white/95 px-4 py-2 backdrop-blur'>
+              <div className='mx-auto flex max-w-2xl items-center gap-3'>
+                <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200'>
+                  <div
+                    className='h-full bg-yellow-500 transition-[width] duration-300 ease-out'
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+                <span className='text-muted-foreground text-xs tabular-nums'>
+                  {progress.completed}/{progress.target}
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className='flex-1 overflow-y-auto px-4 py-6'>
             <div className='mx-auto flex max-w-2xl flex-col gap-6'>
               {done && (
@@ -160,7 +192,7 @@ export const PracticeSessionView = () => {
                   <CheckCircle2 className='h-10 w-10 text-yellow-600' />
                   <h2 className='text-lg font-semibold'>{t`All caught up`}</h2>
                   <p className='text-sm text-gray-700'>
-                    {t`You've reviewed every due chunk for this language. Come back later when more are ready.`}
+                    {t`You've reviewed every due term for this language. Come back later when more are ready.`}
                   </p>
                   <Button onClick={close}>{t`Back to Practice`}</Button>
                 </div>
@@ -189,11 +221,11 @@ export const PracticeSessionView = () => {
                   const totalCount = annotations.length
                   return (
                     <span className='text-muted-foreground text-xs'>
-                      {t`${ratedCount} of ${totalCount} rated. Untapped chunks count as 'good' on Next.`}
+                      {t`${ratedCount} of ${totalCount} rated. Untapped terms count as 'good' on Next.`}
                     </span>
                   )
                 })()}
-                <Button onClick={handleNext} disabled={isFinalizing || isGenerating} size='lg'>
+                <Button onClick={handleNext} disabled={isFinalizing || isGenerating || isRating} size='lg'>
                   {t`Next text`}
                   <ArrowRight className='ml-1 h-4 w-4' />
                 </Button>

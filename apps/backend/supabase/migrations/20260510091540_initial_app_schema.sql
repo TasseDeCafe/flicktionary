@@ -10,7 +10,9 @@
 ALTER TABLE public.users
   ADD COLUMN native_language TEXT NULL,
   ADD COLUMN tap_to_translate_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-  ADD COLUMN llm_highlights_enabled BOOLEAN NOT NULL DEFAULT TRUE;
+  ADD COLUMN llm_highlights_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN practice_max_new_terms INTEGER NOT NULL DEFAULT 20,
+  ADD COLUMN practice_max_review_terms INTEGER NOT NULL DEFAULT 100;
 
 -- =========================================================================
 -- Flicktionary enums
@@ -402,6 +404,8 @@ CREATE TABLE public.practice_sessions (
   id UUID NOT NULL DEFAULT extensions.uuid_generate_v4(),
   user_id UUID NOT NULL,
   target_language TEXT NOT NULL,
+  max_new_terms INTEGER NOT NULL DEFAULT 20,
+  max_review_terms INTEGER NOT NULL DEFAULT 100,
   status practice_session_status NOT NULL DEFAULT 'active',
   started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   ended_at TIMESTAMP WITH TIME ZONE NULL,
@@ -413,7 +417,47 @@ CREATE TABLE public.practice_sessions (
 CREATE INDEX idx_practice_sessions_user_started
   ON public.practice_sessions (user_id, target_language, started_at DESC);
 
+-- Race-safe resume-or-create: at most one 'active' session per (user_id,
+-- target_language). Concurrent INSERT ... ON CONFLICT DO NOTHING in
+-- start-practice-session.ts collapses to a single row; the loser fetches the
+-- existing one with findActiveForUser.
+CREATE UNIQUE INDEX one_active_practice_session_per_user_lang
+  ON public.practice_sessions (user_id, target_language)
+  WHERE status = 'active';
+
 ALTER TABLE public.practice_sessions ENABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- practice_session_chunks (frozen membership snapshot)
+--
+-- Snapshotted at session start. Each row is a (session, user_lookup) pair
+-- selected for this session's capped batch. The user's practice limits decide
+-- how many new terms and review terms enter the batch. eligible_at_start is
+-- retained as the progress denominator flag.
+--
+-- abandoned_at is stamped by generate-next-practice-text when a chunk
+-- gets skipped twice in a row by the LLM (ABANDON_THRESHOLD). It bumps
+-- the session-progress numerator without requiring a denormalized
+-- counter.
+-- =========================================================================
+
+CREATE TABLE public.practice_session_chunks (
+  practice_session_id UUID NOT NULL,
+  user_lookup_id UUID NOT NULL,
+  eligible_at_start BOOLEAN NOT NULL,
+  abandoned_at TIMESTAMP WITH TIME ZONE NULL,
+  CONSTRAINT practice_session_chunks_pkey PRIMARY KEY (practice_session_id, user_lookup_id),
+  CONSTRAINT practice_session_chunks_session_fkey FOREIGN KEY (practice_session_id)
+    REFERENCES public.practice_sessions (id) ON DELETE CASCADE,
+  CONSTRAINT practice_session_chunks_lookup_fkey FOREIGN KEY (user_lookup_id)
+    REFERENCES public.user_lookups (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_practice_session_chunks_session_eligible
+  ON public.practice_session_chunks (practice_session_id)
+  WHERE eligible_at_start = TRUE;
+
+ALTER TABLE public.practice_session_chunks ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
 -- practice_texts (LLM-generated short passages within a practice_session)
@@ -441,6 +485,11 @@ CREATE TABLE public.practice_texts (
   -- twice and it's excluded from the rest of the session.
   skipped_chunks JSONB NOT NULL DEFAULT '[]'::jsonb,
   generation_warning TEXT NULL,
+  -- Fencing token for the pre-gen / foreground takeover protocol. Set when a
+  -- worker transitions a slot 'pending' -> 'generating'; markReady / markFailed
+  -- both AND on this token so a worker that lost ownership during a stale-slot
+  -- takeover silently no-ops instead of writing stale results.
+  generation_token UUID NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   ready_at TIMESTAMP WITH TIME ZONE NULL,
   read_at TIMESTAMP WITH TIME ZONE NULL,
@@ -452,6 +501,14 @@ CREATE TABLE public.practice_texts (
 
 CREATE INDEX idx_practice_texts_session_ord
   ON public.practice_texts (practice_session_id, ord);
+
+-- Enforce at most one in-progress 'reading' text per session. Cross-cutting B
+-- atomically transitions 'ready' -> 'reading' server-side; with pre-gen, more
+-- than one 'ready' row can exist at a time but only one of them can have been
+-- handed to the user.
+CREATE UNIQUE INDEX at_most_one_reading_per_session
+  ON public.practice_texts (practice_session_id)
+  WHERE status = 'reading';
 
 ALTER TABLE public.practice_texts ENABLE ROW LEVEL SECURITY;
 

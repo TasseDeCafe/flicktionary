@@ -269,6 +269,7 @@ export const buildApp = ({
   const generateNextPracticeTextDependencies = {
     practiceSessionsRepository,
     practiceTextsRepository,
+    practiceRatingsRepository,
     userLookupsRepository,
     usersRepository,
   }

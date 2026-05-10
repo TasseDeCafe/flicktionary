@@ -56,6 +56,28 @@ const getRatedHeadwordSensesForText = async (
   }))
 }
 
+// Strict-Again loop: chunks whose latest rating in this session
+// was 'again' should resurface inside the same session until the user rates
+// them Hard / Good / Easy. We key by user_lookup_id (not headword/sense) so
+// a rename in the focus view mid-session doesn't break the linkage.
+const getStubbornUserLookupIdsForSession = async (practiceSessionId: string): Promise<string[]> => {
+  const result = (await sql`
+    WITH latest AS (
+      SELECT DISTINCT ON (pr.user_lookup_id)
+        pr.user_lookup_id,
+        pr.rating
+      FROM public.practice_ratings pr
+      JOIN public.practice_texts pt ON pt.id = pr.practice_text_id
+      WHERE pt.practice_session_id = ${practiceSessionId}
+      ORDER BY pr.user_lookup_id, pr.rated_at DESC, pr.id DESC
+    )
+    SELECT user_lookup_id
+    FROM latest
+    WHERE rating = 'again'
+  `) as Array<{ user_lookup_id: string }>
+  return result.map((row) => row.user_lookup_id)
+}
+
 export interface PracticeRatingsRepositoryInterface {
   insert: (params: {
     practiceTextId: string
@@ -69,6 +91,7 @@ export interface PracticeRatingsRepositoryInterface {
   }) => Promise<DbPracticeRating>
   listByPracticeTextId: (practiceTextId: string) => Promise<DbPracticeRating[]>
   getRatedHeadwordSensesForText: (practiceTextId: string) => Promise<Array<{ headword: string; sense: string }>>
+  getStubbornUserLookupIdsForSession: (practiceSessionId: string) => Promise<string[]>
 }
 
 export const PracticeRatingsRepository = (): PracticeRatingsRepositoryInterface => {
@@ -76,5 +99,6 @@ export const PracticeRatingsRepository = (): PracticeRatingsRepositoryInterface 
     insert,
     listByPracticeTextId,
     getRatedHeadwordSensesForText,
+    getStubbornUserLookupIdsForSession,
   }
 }
