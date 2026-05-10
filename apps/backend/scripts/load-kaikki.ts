@@ -187,6 +187,12 @@ async function loadCsvs(
 ): Promise<void> {
   const sql = postgres(connectionString, { max: 1 })
   try {
+    // Supabase's pooled `postgres` role has a short default statement_timeout
+    // (~60s) that the multi-minute COPY for ~700MB of entries blows through.
+    // `max: 1` above guarantees we hold a single session, so this SET sticks
+    // for both COPYs.
+    await sql`SET statement_timeout = '30min'`
+
     console.log('Truncating existing wiktionary tables...')
     await sql`TRUNCATE public.wiktionary_forms, public.wiktionary_entries RESTART IDENTITY CASCADE`
 
@@ -271,8 +277,12 @@ async function main(): Promise<void> {
   console.log('\nLoading into DB...')
   await loadCsvs(connectionString, out.entriesCsv, out.formsCsv)
 
-  console.log('\nSnapshotting wiktionary tables for fast db reset...')
-  await snapshotWiktionary(connectionString)
+  if (connectionString === DEFAULT_LOCAL_DEV_CONNECTION) {
+    console.log('\nSnapshotting wiktionary tables for fast db reset...')
+    await snapshotWiktionary(connectionString)
+  } else {
+    console.log('\nSkipping snapshot (only relevant for the local dev tunnel DB).')
+  }
 
   console.log('\n✓ Done.')
 }
