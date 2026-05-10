@@ -1,10 +1,8 @@
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
-import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
-import { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
@@ -17,8 +15,6 @@ import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runne
 import { getOrCreateAdhocSession } from './get-or-create-adhoc-session'
 
 export type CreateAdhocCardDependencies = {
-  contentSourcesRepository: ContentSourcesRepositoryInterface
-  textTracksRepository: TextTracksRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface

@@ -2,6 +2,7 @@ import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 
 export type DbStudySession = Tables<'study_sessions'>
+export type DbTextTrack = Tables<'text_tracks'>
 export type StudySessionStatus = Database['public']['Enums']['study_session_status']
 
 // Joined shape used by the list/get views: every UI surface that shows a session
@@ -45,40 +46,104 @@ const insertStudySession = async (params: {
   return result[0] ?? null
 }
 
-// Insert a synthetic adhoc session in the 'processed' state with a non-null
-// context_blob. The context blob is required so per-card chat and "Generate
-// full exploration" don't short-circuit (both refuse to run when context_blob
-// is null). Kept separate from `insertStudySession` so the public ingestion
-// path can't accidentally bypass the 'active' status.
-const insertAdhocStudySession = async (params: {
+const getOrCreateAdhocStudySession = async (params: {
   userId: string
-  contentSourceId: string
-  textTrackId: string
-  nativeLanguage: string
   targetLanguage: string
+  nativeLanguage: string
   cefrLevel: string
+  title: string
+  trackHash: string
   contextBlob: string
-}): Promise<DbStudySession | null> => {
-  const result = (await sql`
-    INSERT INTO public.study_sessions (
-      user_id, content_source_id, text_track_id,
-      native_language, target_language, cefr_level,
-      context_blob, status, processed_at
-    )
-    VALUES (
-      ${params.userId},
-      ${params.contentSourceId},
-      ${params.textTrackId},
-      ${params.nativeLanguage},
-      ${params.targetLanguage},
-      ${params.cefrLevel},
-      ${params.contextBlob},
-      'processed',
-      NOW()
-    )
-    RETURNING *
-  `) as DbStudySession[]
-  return result[0] ?? null
+}): Promise<{ session: DbStudySession; track: DbTextTrack }> => {
+  return await sql.begin(async (tx) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    await (tx as any)`
+      SELECT pg_advisory_xact_lock(hashtext(${`adhoc:${params.userId}:${params.targetLanguage}`}))
+    `
+
+    const insertedSource = (await (tx as any)`
+      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
+      VALUES (
+        'adhoc',
+        ${params.title},
+        ${params.targetLanguage},
+        '{}'::jsonb,
+        ${params.userId}
+      )
+      ON CONFLICT (created_by_user_id, language) WHERE type = 'adhoc'
+        DO UPDATE SET title = EXCLUDED.title
+      RETURNING *
+    `) as Tables<'content_sources'>[]
+    const contentSource = insertedSource[0]
+    if (!contentSource) throw new Error('getOrCreateAdhocStudySession: content source upsert returned no row')
+
+    const insertedTrack = (await (tx as any)`
+      INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+      VALUES (
+        ${contentSource.id},
+        'paste',
+        ${params.targetLanguage},
+        NULL,
+        ${params.trackHash}
+      )
+      ON CONFLICT (content_source_id, language, hash)
+        DO UPDATE SET hash = EXCLUDED.hash
+      RETURNING *
+    `) as DbTextTrack[]
+    const track = insertedTrack[0]
+    if (!track) throw new Error('getOrCreateAdhocStudySession: track upsert returned no row')
+
+    const existing = (await (tx as any)`
+      SELECT s.*
+      FROM public.study_sessions s
+      WHERE s.user_id = ${params.userId}
+        AND s.content_source_id = ${contentSource.id}
+        AND s.target_language = ${params.targetLanguage}
+        AND s.deleted_at IS NULL
+      LIMIT 1
+    `) as DbStudySession[]
+
+    if (existing[0]) {
+      const updated = (await (tx as any)`
+        UPDATE public.study_sessions
+        SET native_language = ${params.nativeLanguage},
+            cefr_level = ${params.cefrLevel},
+            context_blob = COALESCE(context_blob, ${params.contextBlob}),
+            status = 'processed',
+            processed_at = COALESCE(processed_at, NOW())
+        WHERE id = ${existing[0].id}
+        RETURNING *
+      `) as DbStudySession[]
+      const session = updated[0]
+      if (!session) throw new Error('getOrCreateAdhocStudySession: session refresh returned no row')
+      return { session, track }
+    }
+
+    const insertedSession = (await (tx as any)`
+      INSERT INTO public.study_sessions (
+        user_id, content_source_id, text_track_id,
+        native_language, target_language, cefr_level,
+        context_blob, status, processed_at
+      )
+      VALUES (
+        ${params.userId},
+        ${contentSource.id},
+        ${track.id},
+        ${params.nativeLanguage},
+        ${params.targetLanguage},
+        ${params.cefrLevel},
+        ${params.contextBlob},
+        'processed',
+        NOW()
+      )
+      RETURNING *
+    `) as DbStudySession[]
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+
+    const session = insertedSession[0]
+    if (!session) throw new Error('getOrCreateAdhocStudySession: session insert returned no row')
+    return { session, track }
+  })
 }
 
 // Soft-deleted sessions are filtered out everywhere except softDelete itself
@@ -101,26 +166,6 @@ const listByUserIdWithSource = async (userId: string): Promise<DbStudySessionWit
     WHERE s.user_id = ${userId} AND s.deleted_at IS NULL AND cs.type != 'adhoc'
     ORDER BY s.created_at DESC
   `) as DbStudySessionWithSource[]
-}
-
-// Look up the existing adhoc study_session for a (user, target_language) pair.
-// Returns null when no adhoc session exists yet — the caller is expected to
-// create one via the get-or-create adhoc service.
-const findAdhocForUserAndLanguage = async (
-  userId: string,
-  targetLanguage: string
-): Promise<DbStudySession | null> => {
-  const result = (await sql`
-    SELECT s.*
-    FROM public.study_sessions s
-    JOIN public.content_sources cs ON cs.id = s.content_source_id
-    WHERE s.user_id = ${userId}
-      AND cs.type = 'adhoc'
-      AND s.target_language = ${targetLanguage}
-      AND s.deleted_at IS NULL
-    LIMIT 1
-  `) as DbStudySession[]
-  return result[0] ?? null
 }
 
 const findByIdForUserWithSource = async (
@@ -262,16 +307,15 @@ export interface StudySessionsRepositoryInterface {
     targetLanguage: string
     cefrLevel: string
   }) => Promise<DbStudySession | null>
-  insertAdhocStudySession: (params: {
+  getOrCreateAdhocStudySession: (params: {
     userId: string
-    contentSourceId: string
-    textTrackId: string
-    nativeLanguage: string
     targetLanguage: string
+    nativeLanguage: string
     cefrLevel: string
+    title: string
+    trackHash: string
     contextBlob: string
-  }) => Promise<DbStudySession | null>
-  findAdhocForUserAndLanguage: (userId: string, targetLanguage: string) => Promise<DbStudySession | null>
+  }) => Promise<{ session: DbStudySession; track: DbTextTrack }>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
@@ -289,8 +333,7 @@ export interface StudySessionsRepositoryInterface {
 export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
   return {
     insertStudySession,
-    insertAdhocStudySession,
-    findAdhocForUserAndLanguage,
+    getOrCreateAdhocStudySession,
     findByIdForUser,
     findByIdForUserWithSource,
     hasTextTrackForUser,

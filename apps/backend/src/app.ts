@@ -289,8 +289,6 @@ export const buildApp = ({
   }
 
   const createAdhocCardDependencies = {
-    contentSourcesRepository,
-    textTracksRepository,
     textSegmentsRepository,
     studySessionsRepository,
     highlightsRepository,

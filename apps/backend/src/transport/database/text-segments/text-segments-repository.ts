@@ -91,29 +91,34 @@ const listAroundIndex = async (textTrackId: string, centerIndex: number, radius:
   `) as DbTextSegment[]
 }
 
-// Append a single segment at MAX(index)+1, computed atomically in the
-// same INSERT. Used by the adhoc "Add a word" flow where each new entry
-// adds one segment to the synthetic per-(user, language) text_track.
-// The unique (text_track_id, index) constraint backstops the rare race
-// where two concurrent appends compute the same MAX — the loser retries.
+// Append a single segment at MAX(index)+1. The transaction-scoped advisory
+// lock serializes appenders for the same text_track so concurrent ad-hoc
+// submissions cannot collide on the unique (text_track_id, index) constraint.
 const appendSegmentAtomic = async (params: {
   textTrackId: string
   text: string
   startMs: number | null
   endMs: number | null
 }): Promise<DbTextSegment> => {
-  const result = (await sql`
-    INSERT INTO public.text_segments (text_track_id, index, text, start_ms, end_ms)
-    SELECT
-      ${params.textTrackId},
-      COALESCE(MAX(index) + 1, 0),
-      ${params.text},
-      ${params.startMs},
-      ${params.endMs}
-    FROM public.text_segments WHERE text_track_id = ${params.textTrackId}
-    RETURNING id, text_track_id, index, text, start_ms, end_ms, tsv
-  `) as DbTextSegment[]
-  return result[0]!
+  return await sql.begin(async (tx) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    await (tx as any)`
+      SELECT pg_advisory_xact_lock(hashtext(${`text_segment_append:${params.textTrackId}`}))
+    `
+    const result = (await (tx as any)`
+      INSERT INTO public.text_segments (text_track_id, index, text, start_ms, end_ms)
+      SELECT
+        ${params.textTrackId},
+        COALESCE(MAX(index) + 1, 0),
+        ${params.text},
+        ${params.startMs},
+        ${params.endMs}
+      FROM public.text_segments WHERE text_track_id = ${params.textTrackId}
+      RETURNING id, text_track_id, index, text, start_ms, end_ms, tsv
+    `) as DbTextSegment[]
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+    return result[0]!
+  })
 }
 
 export interface TextSegmentsRepositoryInterface {
