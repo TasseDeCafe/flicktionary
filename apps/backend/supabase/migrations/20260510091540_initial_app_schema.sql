@@ -315,6 +315,10 @@ CREATE TABLE public.user_lookups (
   -- reflects "kaikki was consulted at processing time", not whether the
   -- current value is unedited.
   grounded_at TIMESTAMP WITH TIME ZONE NULL,
+  -- Set when the user manually edits grammar-provenance-sensitive data in the
+  -- focus view (grammar fields, headword, or sense). Automatic processing,
+  -- grounding, enrichment, and chat tool updates do not stamp this.
+  grammar_user_edited_at TIMESTAMP WITH TIME ZONE NULL,
   first_card_id UUID NULL,
   exported_at TIMESTAMP WITH TIME ZONE NULL,
   count INTEGER NOT NULL DEFAULT 0,

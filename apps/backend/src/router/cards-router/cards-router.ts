@@ -14,6 +14,7 @@ import { exportSession, ExportSessionDependencies } from '../../service/export/e
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
 import { setCardStatus, setCardStatusBatch, SetCardStatusDependencies } from '../../service/cards/set-card-status'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
+import { toIsoString } from '../router-utils'
 
 const toChunkDto = (chunk: DbChunkSummary) => ({
   id: chunk.id,
@@ -27,7 +28,8 @@ const toChunkDto = (chunk: DbChunkSummary) => ({
   nativeExample: chunk.native_example,
   explorationExtras: (chunk.exploration_extras ?? {}) as Record<string, unknown>,
   grammar: (chunk.grammar ?? {}) as Record<string, unknown>,
-  groundedAt: chunk.grounded_at,
+  groundedAt: toIsoString(chunk.grounded_at),
+  grammarUserEditedAt: toIsoString(chunk.grammar_user_edited_at),
 })
 
 const toCardDto = (row: DbCardWithChunk) => ({

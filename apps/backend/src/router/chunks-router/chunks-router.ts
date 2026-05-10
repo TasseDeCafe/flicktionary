@@ -14,6 +14,7 @@ import {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
+import { toIsoString } from '../router-utils'
 
 const toChunkDto = (row: DbUserLookup) => ({
   id: row.id,
@@ -28,15 +29,8 @@ const toChunkDto = (row: DbUserLookup) => ({
   explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
   grammar: (row.grammar ?? {}) as Record<string, unknown>,
   groundedAt: toIsoString(row.grounded_at),
+  grammarUserEditedAt: toIsoString(row.grammar_user_edited_at),
 })
-
-// postgres.js returns timestamptz columns as JS Date objects; the wire schema
-// expects ISO strings, so we normalize here.
-const toIsoString = (value: string | Date | null): string | null => {
-  if (value === null) return null
-  if (value instanceof Date) return value.toISOString()
-  return new Date(value).toISOString()
-}
 
 const toChunkRowDto = (row: ChunkRow) => ({
   id: row.id,
@@ -51,6 +45,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   explorationExtras: row.explorationExtras,
   grammar: row.grammar,
   groundedAt: toIsoString(row.groundedAt),
+  grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
   count: row.count,
   srsState: row.srsState,
   srsDue: toIsoString(row.srsDue),
@@ -81,6 +76,9 @@ const encodeCursor = (cursor: ChunksCursor | null): string | null => {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
 }
 
+const hasGrammarPatch = (patch: Record<string, unknown> | null | undefined): boolean =>
+  !!patch && Object.keys(patch).length > 0
+
 export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterface): Router => {
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -99,6 +97,7 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         nativeExample: input.patch.nativeExample,
         explorationExtrasPatch: input.patch.explorationExtrasPatch ?? null,
         grammarPatch: input.patch.grammarPatch ?? null,
+        markGrammarUserEdited: hasGrammarPatch(input.patch.grammarPatch),
       })
       const refreshed = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
       if (!refreshed) {
@@ -153,6 +152,7 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         id: input.chunkId,
         headword: input.headword,
         sense: input.sense,
+        markGrammarUserEdited: true,
       })
       if (!result.ok) {
         throw errors.CONFLICT({

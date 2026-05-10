@@ -186,6 +186,7 @@ const updateContent = async (params: {
   nativeExample?: string | null
   explorationExtrasPatch?: Record<string, unknown> | null
   grammarPatch?: Record<string, unknown> | null
+  markGrammarUserEdited?: boolean
 }): Promise<void> => {
   const extras = params.explorationExtrasPatch ?? null
   const extrasJson = extras ? sql.json(extras as unknown as postgres.JSONValue) : null
@@ -199,7 +200,11 @@ const updateContent = async (params: {
       target_example = COALESCE(${params.targetExample ?? null}, target_example),
       native_example = COALESCE(${params.nativeExample ?? null}, native_example),
       exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb),
-      grammar = grammar || COALESCE(${grammarJson}::jsonb, '{}'::jsonb)
+      grammar = grammar || COALESCE(${grammarJson}::jsonb, '{}'::jsonb),
+      grammar_user_edited_at = CASE
+        WHEN ${params.markGrammarUserEdited ?? false} THEN NOW()
+        ELSE grammar_user_edited_at
+      END
     WHERE id = ${params.id}
   `
 }
@@ -222,12 +227,21 @@ const applyGroundingPatch = async (params: { id: string; grammarPatch: Record<st
 // Rename the (headword, sense) pair on an existing user_lookups row. Surfaces
 // 'CONFLICT' when another row already owns the target pair for the same
 // (user_id, target_language). Callers map this to a 409.
-const renameKey = async (params: { id: string; headword: string; sense: string }): Promise<RenameKeyResult> => {
+const renameKey = async (params: {
+  id: string
+  headword: string
+  sense: string
+  markGrammarUserEdited?: boolean
+}): Promise<RenameKeyResult> => {
   try {
     await sql`
       UPDATE public.user_lookups
       SET headword = ${params.headword},
-          sense = ${params.sense}
+          sense = ${params.sense},
+          grammar_user_edited_at = CASE
+            WHEN ${params.markGrammarUserEdited ?? false} THEN NOW()
+            ELSE grammar_user_edited_at
+          END
       WHERE id = ${params.id}
     `
     return { ok: true }
@@ -535,6 +549,7 @@ export type ChunkRow = {
   explorationExtras: Record<string, unknown>
   grammar: Record<string, unknown>
   groundedAt: string | null
+  grammarUserEditedAt: string | null
   count: number
   srsState: SrsState | null
   srsDue: string | null
@@ -559,6 +574,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.exploration_extras,
     ul.grammar,
     ul.grounded_at,
+    ul.grammar_user_edited_at,
     ul.count,
     ul.srs_state,
     ul.srs_due,
@@ -584,6 +600,7 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   explorationExtras: ((row.exploration_extras as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
   grammar: ((row.grammar as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
   groundedAt: (row.grounded_at as string | null) ?? null,
+  grammarUserEditedAt: (row.grammar_user_edited_at as string | null) ?? null,
   count: (row.count as number) ?? 0,
   srsState: (row.srs_state as SrsState | null) ?? null,
   srsDue: (row.srs_due as string | null) ?? null,
@@ -796,9 +813,15 @@ export interface UserLookupsRepositoryInterface {
     nativeExample?: string | null
     explorationExtrasPatch?: Record<string, unknown> | null
     grammarPatch?: Record<string, unknown> | null
+    markGrammarUserEdited?: boolean
   }) => Promise<void>
   applyGroundingPatch: (params: { id: string; grammarPatch: Record<string, unknown> }) => Promise<void>
-  renameKey: (params: { id: string; headword: string; sense: string }) => Promise<RenameKeyResult>
+  renameKey: (params: {
+    id: string
+    headword: string
+    sense: string
+    markGrammarUserEdited?: boolean
+  }) => Promise<RenameKeyResult>
   upsertOnExport: (params: { userLookupId: string; firstCardId: string | null }) => Promise<void>
   applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
   applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>

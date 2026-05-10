@@ -72,6 +72,8 @@ The web/native apps consume the contract through `@orpc/tanstack-query`'s `creat
 
 Rule of thumb: if you're invalidating, use `.key(...)`. If you're reading or writing the cache directly, use `.queryKey({ input })`. See `apps/web/src/features/review/api/card-cache.ts` for the canonical setQueryData pattern.
 
+Backend oRPC handlers should return DTOs that already match the contract exactly. In particular, normalize `TIMESTAMP WITH TIME ZONE` / `timestamptz` values from Postgres.js to ISO strings in router mappers with `toIsoString` from `apps/backend/src/router/router-utils.ts` instead of relying on JSON serialization to coerce `Date` objects after output validation.
+
 # Useful commands:
 
 - Check typing with TS: pnpm check:types (executed from the root directory)

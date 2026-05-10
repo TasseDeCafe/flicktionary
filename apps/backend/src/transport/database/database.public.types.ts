@@ -728,6 +728,7 @@ export type Database = {
           exported_at: string | null
           first_card_id: string | null
           grammar: Json
+          grammar_user_edited_at: string | null
           grounded_at: string | null
           headword: string
           id: string
@@ -755,6 +756,7 @@ export type Database = {
           exported_at?: string | null
           first_card_id?: string | null
           grammar?: Json
+          grammar_user_edited_at?: string | null
           grounded_at?: string | null
           headword: string
           id?: string
@@ -782,6 +784,7 @@ export type Database = {
           exported_at?: string | null
           first_card_id?: string | null
           grammar?: Json
+          grammar_user_edited_at?: string | null
           grounded_at?: string | null
           headword?: string
           id?: string

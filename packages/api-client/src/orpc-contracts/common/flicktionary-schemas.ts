@@ -137,6 +137,9 @@ export const ChunkSchema = z.object({
   // Null means pure-LLM (either grounding didn't run, or no kaikki entry
   // matched). Persists across user edits.
   groundedAt: z.string().nullable(),
+  // Set when the user manually edits grammar-provenance-sensitive data.
+  // Automatic processing/enrichment/chat patches do not stamp this.
+  grammarUserEditedAt: z.string().nullable(),
 })
 export type Chunk = z.infer<typeof ChunkSchema>
 

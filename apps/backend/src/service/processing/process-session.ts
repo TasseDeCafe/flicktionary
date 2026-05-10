@@ -38,6 +38,32 @@ export type ProcessingDependencies = {
 }
 
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
+const WIKTIONARY_GROUNDED_GRAMMAR_KEYS = new Set([
+  'pos',
+  'display_form',
+  'gender',
+  'number_only',
+  'is_indeclinable',
+  'animacy',
+  'aspect',
+  'aspect_pair_headword',
+  'is_reflexive',
+])
+
+export const buildBasicDataGrammarPatch = (
+  grammar: Record<string, unknown> | null | undefined,
+  alreadyGrounded: boolean,
+  grammarUserEdited: boolean
+): Record<string, unknown> | null => {
+  if (!grammar) return null
+  if (grammarUserEdited) return null
+  if (!alreadyGrounded) return grammar
+
+  const patch = Object.fromEntries(
+    Object.entries(grammar).filter(([key]) => !WIKTIONARY_GROUNDED_GRAMMAR_KEYS.has(key))
+  )
+  return Object.keys(patch).length > 0 ? patch : null
+}
 
 export const processSession = async (
   sessionId: string,
@@ -202,11 +228,11 @@ export const processSession = async (
       // Lookups touched in this run, captured to drive the wiktionary-grounding
       // post-step without re-querying. Keyed by user_lookups.id; value carries
       // the headword + LLM-emitted POS we'll feed to the grounding lookup, and
-      // the in-memory `grounded_at` so we can short-circuit re-grounded rows
-      // without an extra SELECT.
+      // the in-memory provenance markers so we can short-circuit rows that
+      // should not be automatically rewritten without an extra SELECT.
       const touchedLookups = new Map<
         string,
-        { headword: string; llmPos: string | null; alreadyGrounded: boolean }
+        { headword: string; llmPos: string | null; alreadyGrounded: boolean; grammarUserEdited: boolean }
       >()
 
       for (const chunk of dedupedChunks) {
@@ -226,12 +252,16 @@ export const processSession = async (
           headword: chunk.headword,
           sense: chunk.sense,
         })
+        const alreadyGrounded = lookup.grounded_at !== null
+        const grammarUserEdited = lookup.grammar_user_edited_at !== null
+        const grammarPatch = buildBasicDataGrammarPatch(chunk.grammar, alreadyGrounded, grammarUserEdited)
         if (!touchedLookups.has(lookup.id)) {
           const llmPos = typeof chunk.grammar?.pos === 'string' ? (chunk.grammar.pos as string) : null
           touchedLookups.set(lookup.id, {
             headword: lookup.headword,
             llmPos,
-            alreadyGrounded: lookup.grounded_at !== null,
+            alreadyGrounded,
+            grammarUserEdited,
           })
         }
         if (lookup.translation === null && lookup.definition === null) {
@@ -241,15 +271,16 @@ export const processSession = async (
             definition: chunk.definition,
             targetExample: chunk.targetExample,
             nativeExample: chunk.nativeExample,
-            grammarPatch: chunk.grammar ?? null,
+            grammarPatch,
           })
-        } else if (chunk.grammar) {
+        } else if (grammarPatch) {
           // Existing row already had content from an earlier session. Don't
-          // touch the user's text edits, but still merge any grammar facts
-          // the model emitted this round — they're additive.
+          // touch the user's text edits, but still merge LLM-only grammar facts
+          // the model emitted this round. Wiktionary-owned fields stay pinned
+          // once the row has been grounded.
           await userLookupsRepository.updateContent({
             id: lookup.id,
-            grammarPatch: chunk.grammar,
+            grammarPatch,
           })
         }
 
@@ -285,6 +316,7 @@ export const processSession = async (
             headword: lookup.headword,
             llmPos: null,
             alreadyGrounded: lookup.grounded_at !== null,
+            grammarUserEdited: lookup.grammar_user_edited_at !== null,
           })
         }
         const insertedCard = await cardsRepository.insertCard({
@@ -483,7 +515,10 @@ const runWiktionaryGrounding = async (params: {
   sessionId: string
   userId: string
   targetLanguage: string
-  touchedLookups: Map<string, { headword: string; llmPos: string | null; alreadyGrounded: boolean }>
+  touchedLookups: Map<
+    string,
+    { headword: string; llmPos: string | null; alreadyGrounded: boolean; grammarUserEdited: boolean }
+  >
   userLookupsRepository: UserLookupsRepositoryInterface
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
   processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
@@ -492,6 +527,7 @@ const runWiktionaryGrounding = async (params: {
   let attempted = 0
   let grounded = 0
   let alreadyGrounded = 0
+  let userEdited = 0
   let missed = 0
   let failed = 0
 
@@ -504,6 +540,10 @@ const runWiktionaryGrounding = async (params: {
     Array.from(params.touchedLookups.entries()).map(async ([lookupId, info]) => {
       if (info.alreadyGrounded) {
         alreadyGrounded++
+        return
+      }
+      if (info.grammarUserEdited) {
+        userEdited++
         return
       }
       attempted++
@@ -541,6 +581,7 @@ const runWiktionaryGrounding = async (params: {
       attempted,
       grounded,
       alreadyGrounded,
+      userEdited,
       missed,
       failed,
     },

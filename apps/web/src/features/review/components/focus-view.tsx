@@ -199,7 +199,11 @@ export const FocusView = () => {
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
             <div className='mb-3 flex flex-wrap items-center gap-2'>
               <GrammarChips grammar={card.chunk.grammar} targetLanguage={session?.targetLanguage} />
-              <GroundingBadge groundedAt={card.chunk.groundedAt} targetLanguage={session?.targetLanguage} />
+              <GroundingBadge
+                groundedAt={card.chunk.groundedAt}
+                grammarUserEditedAt={card.chunk.grammarUserEditedAt}
+                targetLanguage={session?.targetLanguage}
+              />
             </div>
             {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}
