@@ -8,8 +8,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  load-kaikki:
+  validate-main:
     runs-on: ubuntu-latest
+    steps:
+      - name: Require main branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "This workflow can only run from main. Selected ref: $GITHUB_REF"
+          exit 1
+
+      - name: Confirm main branch
+        if: github.ref == 'refs/heads/main'
+        run: echo "Running from main."
+
+  load-kaikki:
+    needs: validate-main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: load-kaikki-prod
+      cancel-in-progress: false
     timeout-minutes: 60
     env:
       # Must be the Supavisor SESSION-mode pooler URL (port 5432, IPv4).
