@@ -62,7 +62,7 @@ export const OnboardingView = () => {
             <div className='flex flex-col gap-2'>
               <h1 className='text-2xl font-semibold'>{t`You're all set`}</h1>
               <p className='text-muted-foreground text-sm'>
-                {t`Try adding a movie or pasting a chunk of text in any language to get started. You can pick the target language each time you add new content.`}
+                {t`Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content.`}
               </p>
             </div>
             <Button onClick={handleGetStarted} className='w-full'>

@@ -77,7 +77,7 @@ export const MainActionOverlay = ({ open, onOpenChange }: MainActionOverlayProps
     {
       icon: Sparkles,
       label: t`Add a word`,
-      description: t`Save a chunk you heard or saw, no source needed`,
+      description: t`Save a term you heard or saw, no source needed`,
       onSelect: () => {
         void navigate({ to: '/vocabulary/new-word' })
       },

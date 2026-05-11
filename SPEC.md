@@ -14,6 +14,23 @@ The app's value is **not** flashcard generation per se — it's the structured e
 - Not a free-form chatbot. Per-card chat is scoped to refining understanding of one chunk.
 - Not a books/articles reader. MVP handles movie subtitles and pasted text; books and articles are designed for in the data model but not yet implemented.
 
+## Terminology: "chunk" vs "term"
+
+This spec uses "chunk" throughout — it's the internal domain word, borrowed
+from the lexical-approach methodology (a multi-word language unit stored as
+one item: `run out of`, `по-русски`, `to put up with`). Code identifiers
+(`Chunk`, `ChunkRow`, `useDeleteChunk`), API contracts (`chunks-contract`,
+`chunks.listChunks`), database columns, comments, internal services, and
+backend prompts all keep "chunk".
+
+In the **web UI**, every user-facing surface (Lingui-wrapped strings — labels,
+buttons, placeholders, toasts, error messages) uses **"term"** instead. So
+`Practice these chunks` reads "Practice these terms" on screen; the
+`LLM-suggested chunks` toggle is labeled "LLM-suggested terms"; deleting a row
+shows "Term deleted"; etc. Where this spec quotes a user-facing string in
+backticks, it uses the on-screen word ("term"); where it describes the
+internal model, it uses "chunk".
+
 ## Core decisions
 
 ### Source content
@@ -138,7 +155,7 @@ Two-layer UI.
 - Filter, search, sort across both sections.
 - Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
 - Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). LLM-suggested chunks land as `pending` and require explicit triage. Below-CEFR LLM chunks are still `auto_rejected`.
-- Sticky footer: `Practice these chunks` button (full-width on mobile,
+- Sticky footer: `Practice these terms` button (full-width on mobile,
   right-aligned on desktop) that starts a Practice session in the session's
   target language. Disabled when no cards are kept. Per-session CSV export is
   gone from this screen — exports happen from the Vocabulary tab instead.
@@ -236,7 +253,7 @@ Native-style shell so the eventual React Native port is a translation, not a red
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify. Synthetic adhoc sessions (the per-(user, language) "Personal vocabulary" pseudo-sessions backing the Add-a-word flow) are filtered out at the query layer — they never appear under any chip. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
-- **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus inline `Switch` rows for tap-to-translate and LLM-suggested chunks.
+- **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus inline `Switch` rows for tap-to-translate and `LLM-suggested terms`.
 
 ### Cross-source dedup
 

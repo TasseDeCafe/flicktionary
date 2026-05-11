@@ -53,12 +53,12 @@ export const ProcessButton = ({
 
   const hint = (() => {
     if (!hasSomethingToProcess) {
-      return t`LLM-suggested chunks are off. Highlight at least one chunk to process this session.`
+      return t`LLM-suggested terms are off. Highlight at least one term to process this session.`
     }
     if (isFailed) return t`Previous run failed. Click to retry.`
     if (isReprocess && noPriorOutput) return t`Previous run produced no cards. Click to retry.`
     if (status === 'active' && highlightCount === 0) {
-      return t`No highlights — the LLM will suggest chunks based on your level.`
+      return t`No highlights — the LLM will suggest terms based on your level.`
     }
     if (isReprocessNothingNew) return t`All highlights have been processed.`
     if (isReprocess) return t`${unprocessedHighlightCount} new highlight(s) to process.`

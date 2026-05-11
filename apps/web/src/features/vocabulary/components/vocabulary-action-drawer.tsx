@@ -96,7 +96,7 @@ export const VocabularyActionDrawer = ({
           <ActionRow
             icon={ExternalLink}
             label={t`Open source`}
-            description={canOpenSource ? t`Jump to the session this chunk came from` : t`Source was removed`}
+            description={canOpenSource ? t`Jump to the session this term came from` : t`Source was removed`}
             disabled={!canOpenSource}
             onClick={() => onOpenSource(chunk)}
           />

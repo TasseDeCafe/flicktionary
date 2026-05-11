@@ -15,10 +15,10 @@ export const LlmHighlightsToggle = ({ enabled }: Props) => {
     <div className='flex items-start justify-between gap-4'>
       <div className='flex flex-col gap-1'>
         <Label htmlFor='llm-highlights-switch' className='text-sm font-medium'>
-          {t`LLM-suggested chunks`}
+          {t`LLM-suggested terms`}
         </Label>
         <p className='text-muted-foreground text-xs'>
-          {t`When on, processing a session lets the LLM scan the whole track and suggest chunks at your level. When off, only your manual highlights become cards.`}
+          {t`When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards.`}
         </p>
       </div>
       <Switch

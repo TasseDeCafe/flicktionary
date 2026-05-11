@@ -188,7 +188,7 @@ export const useUpdateChunkContent = (sessionId?: string) => {
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
       },
-      meta: { errorMessage: t`Failed to update chunk` },
+      meta: { errorMessage: t`Failed to update term` },
     })
   )
 }
@@ -208,7 +208,7 @@ export const useRenameChunk = (sessionId?: string) => {
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
       },
-      meta: { errorMessage: t`Failed to rename chunk` },
+      meta: { errorMessage: t`Failed to rename term` },
     })
   )
 }

@@ -1028,6 +1028,22 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     prompt. Adding a 21st supported language is now one line in
     `SUPPORTED_LANGUAGES` and nothing else.
 
+- **User-facing "chunk" → "term" rename (2026-05-11).** Pure cosmetics: every
+  Lingui-wrapped user-facing string in `apps/web/src` that contained "chunk"
+  was reworded to "term" (12 component files + 2 hook files; see SPEC.md
+  §Terminology for the formal rule). Code identifiers, types (`Chunk`,
+  `ChunkRow`, `RateSheetChunkContent`), oRPC contract names (`chunks-contract`,
+  `chunks.listChunks`, `useDeleteChunk`, `useUpdateChunkContent`,
+  `useRenameChunk`, `useRatePracticeChunk`), database columns, comments, and
+  backend prompts all **stayed on "chunk"** — the rename is UI-only. Don't
+  re-introduce "chunk" in user-facing strings (button labels, toasts,
+  placeholders, error messages, descriptions). Don't rename code identifiers
+  to match — the existing internal name is the load-bearing domain term from
+  the lexical-approach methodology and is referenced from the spec, backend
+  prompts, repo names, and contract paths. The one non-vocab use ("paste a
+  chunk of text" in onboarding) was reworded to "piece of text" rather than
+  "term" because the meaning differs there.
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still

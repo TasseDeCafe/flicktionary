@@ -129,7 +129,7 @@ export const EditableCardFields = ({ card, sameLanguage, sourceSessionId }: Prop
             onError: (err) => {
               const status = (err as { status?: number; data?: { code?: string } }).status
               if (status === 409) {
-                setRenameError(t`Another chunk already exists with that headword and sense.`)
+                setRenameError(t`Another term already exists with that headword and sense.`)
               } else {
                 setRenameError(t`Could not rename — please try again.`)
               }
@@ -166,7 +166,7 @@ export const EditableCardFields = ({ card, sameLanguage, sourceSessionId }: Prop
           value={targetExample}
           onChange={(e) => setTargetExample(e.target.value)}
           rows={2}
-          placeholder={t`A sentence using this chunk in its natural setting.`}
+          placeholder={t`A sentence using this term in its natural setting.`}
         />
       </div>
 

@@ -173,7 +173,7 @@ export const TriageListView = () => {
             <section className='mb-6'>
               <div className='flex items-center justify-between gap-2'>
                 <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-                  {t`LLM-suggested chunks`} ({grouped.llmSuggested.length})
+                  {t`LLM-suggested terms`} ({grouped.llmSuggested.length})
                 </h2>
                 <BulkActions
                   cards={grouped.llmSuggested}
@@ -208,7 +208,7 @@ export const TriageListView = () => {
             }}
           >
             <Brain className='mr-2 h-4 w-4' />
-            {t`Practice these chunks`}
+            {t`Practice these terms`}
           </Button>
         </div>
       </div>

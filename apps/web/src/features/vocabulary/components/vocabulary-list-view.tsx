@@ -184,7 +184,7 @@ export const VocabularyListView = () => {
       {
         onSuccess: () => {
           setDrawerOpen(false)
-          toast.success(t`Chunk deleted`)
+          toast.success(t`Term deleted`)
         },
       }
     )
@@ -212,7 +212,7 @@ export const VocabularyListView = () => {
       </header>
 
       <p className='text-muted-foreground text-sm'>
-        {t`Every chunk you've kept, across every session. Tap a row to edit, or open the menu for more options.`}
+        {t`Every term you've kept, across every session. Tap a row to edit, or open the menu for more options.`}
       </p>
 
       {languages && languages.length > 1 && selectedLanguage && (

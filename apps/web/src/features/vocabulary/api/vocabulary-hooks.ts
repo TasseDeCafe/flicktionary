@@ -89,7 +89,7 @@ export const useDeleteChunk = () => {
         void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
       },
       meta: {
-        errorMessage: t`Failed to delete chunk`,
+        errorMessage: t`Failed to delete term`,
         showErrorModal: true,
       },
     })

@@ -46,7 +46,7 @@ export const PerCardChat = ({ cardId, sessionId }: Props) => {
         {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading chat…`}</p>}
         {!isLoading && (messages?.length ?? 0) === 0 && !optimisticUserContent && (
           <p className='text-muted-foreground text-sm'>
-            {t`Ask a follow-up question about this chunk. The model already has the methodology, your profile, and the surrounding scene loaded.`}
+            {t`Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded.`}
           </p>
         )}
         {messages?.map((m) => (
@@ -76,7 +76,7 @@ export const PerCardChat = ({ cardId, sessionId }: Props) => {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
           rows={2}
-          placeholder={t`Ask anything about this chunk… (Cmd/Ctrl+Enter to send)`}
+          placeholder={t`Ask anything about this term… (Cmd/Ctrl+Enter to send)`}
           disabled={isPending}
         />
         <Button onClick={handleSend} disabled={!draft.trim() || isPending} aria-label={t`Send`}>

@@ -64,7 +64,7 @@ export const VocabularyOptionsOverlay = ({ open, onOpenChange, targetLanguage }:
           document.body.removeChild(link)
           URL.revokeObjectURL(url)
           const chunkCount = response.data.chunkCount
-          toast.success(t`Exported ${chunkCount} chunk(s)`)
+          toast.success(t`Exported ${chunkCount} term(s)`)
           onOpenChange(false)
         },
       }
@@ -84,7 +84,7 @@ export const VocabularyOptionsOverlay = ({ open, onOpenChange, targetLanguage }:
             description={(() => {
               if (!targetLanguage) return t`Pick a language first`
               const languageName = getLanguageName(targetLanguage)
-              return t`Download all kept chunks for ${languageName} as CSV (Anki-compatible)`
+              return t`Download all kept terms for ${languageName} as CSV (Anki-compatible)`
             })()}
             disabled={isPending || !targetLanguage}
             onClick={handleExport}
