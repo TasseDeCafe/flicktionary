@@ -13,6 +13,2379 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
+msgid "(Current)"
+msgstr "(Actuel)"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
+msgid "(Expired)"
+msgstr "(Expiré)"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:183
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:219
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:236
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:274
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:289
+msgid "(unset)"
+msgstr "(non défini)"
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
+#. placeholder {0}: preview.cardCount
+#. placeholder {1}: preview.keptCardCount
+msgid "{0} card(s) — of which {1} kept"
+msgstr "{0} carte(s) — dont {1} conservée(s)"
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:52
+#. placeholder {0}: preview.highlightCount
+msgid "{0} highlight(s)"
+msgstr "{0} surlignage(s)"
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:118
+msgid "{charCount} / {MAX_LENGTH} characters"
+msgstr "{charCount} / {MAX_LENGTH} caractères"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:188
+msgid "{discount}% off with your referral for {durationLimit} months!"
+msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} mois !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:210
+msgid "{discount}% off with your referral for {durationLimit} years!"
+msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} ans !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:186
+msgid "{discount}% off with your referral for 1 month!"
+msgstr "{discount}% de réduction avec votre parrainage pendant 1 mois !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:208
+msgid "{discount}% off with your referral for 1 year!"
+msgstr "{discount}% de réduction avec votre parrainage pendant 1 an !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:183
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:205
+msgid "{discount}% off with your referral forever!"
+msgstr "{discount}% de réduction avec votre parrainage à vie !"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:175
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:197
+msgid "{discountPercentage}% off thanks to your past referral!"
+msgstr "{discountPercentage} % de réduction grâce à votre ancien parrainage !"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:65
+msgid "{highlightCount} highlight(s) ready."
+msgstr "{highlightCount} surlignage(s) prêt(s)."
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:62
+msgid "{learningDueCount} follow-up(s)"
+msgstr "{learningDueCount} suivi(s)"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:61
+msgid "{newCount} new"
+msgstr "{newCount} nouveau(x)"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:56
+msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
+msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:224
+msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
+msgstr "{ratedCount} sur {totalCount} évalués. Les termes non touchés comptent comme « bons » au suivant."
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
+msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
+msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:60
+msgid "{reviewDueCount} due"
+msgstr "{reviewDueCount} à revoir"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:63
+msgid "{totalKept} total"
+msgstr "{totalKept} au total"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:64
+msgid "{unprocessedHighlightCount} new highlight(s) to process."
+msgstr "{unprocessedHighlightCount} nouveau(x) surlignage(s) à traiter."
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:48
+msgid "⚠ LLM only"
+msgstr "⚠ LLM uniquement"
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:33
+msgid "✓ Wiktionary"
+msgstr "✓ Wiktionnaire"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:73
+msgid "€{monthlyPriceFormatted}/month"
+msgstr "{monthlyPriceFormatted} €/mois"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:65
+msgid "€{yearlyPricePerMonth}/month"
+msgstr "{yearlyPricePerMonth} €/mois"
+
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:34
+msgid "3 examples"
+msgstr "3 exemples"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:199
+msgid "A natural translation of the target example."
+msgstr "Une traduction naturelle de l'exemple cible."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:104
+msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
+msgstr "Une version plus récente de l'application est requise pour continuer. Veuillez mettre à jour vers la dernière version pour accéder à toutes les fonctionnalités et améliorations."
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:169
+msgid "A sentence using this term in its natural setting."
+msgstr "Une phrase utilisant ce terme dans son contexte naturel."
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:135
+msgid "A short label for this session"
+msgstr "Un libellé court pour cette session"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:106
+msgid "About"
+msgstr "À propos"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:36
+msgid "Access exclusive premium features available to subscribers."
+msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les abonnés."
+
+#: apps/web/src/features/more/components/account-page.tsx:73
+#: apps/web/src/features/more/components/more-tab-view.tsx:59
+msgid "Account"
+msgstr "Compte"
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:16
+#: apps/web/src/features/auth/components/account-removed-view.tsx:29
+msgid "Account Removed"
+msgstr "Compte supprimé"
+
+#: apps/native/src/features/profile/components/danger-zone-view.tsx:32
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:19
+msgid "Actions in this section can lead to permanent data loss."
+msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:79
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:145
+msgid "Add a word"
+msgstr "Ajouter un mot"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:359
+msgid "Add form"
+msgstr "Ajouter une forme"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:187
+msgid "Adjective"
+msgstr "Adjectif"
+
+#: apps/web/src/features/admin/components/admin-settings-view.tsx:46
+#: apps/web/src/features/more/components/more-tab-view.tsx:108
+msgid "Admin settings"
+msgstr "Paramètres administrateur"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:58
+#: apps/native/src/features/profile/components/profile-view.tsx:143
+msgid "Admin Settings"
+msgstr "Paramètres Administrateur"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:188
+msgid "Adverb"
+msgstr "Adverbe"
+
+#: apps/web/src/components/ui/rate-buttons.tsx:20
+msgid "Again"
+msgstr "Encore"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:39
+msgid "All"
+msgstr "Tout"
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:193
+msgid "All caught up"
+msgstr "Tout est à jour"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:53
+msgid "All caught up for today · {followUpDelay} · {totalKept} total"
+msgstr "Tout est à jour pour aujourd'hui · {followUpDelay} · {totalKept} au total"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:50
+msgid "All caught up for today · {learningDueCount} follow-up(s) ready · {totalKept} total"
+msgstr "Tout est à jour pour aujourd'hui · {learningDueCount} révision(s) prête(s) · {totalKept} au total"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:56
+msgid "All caught up for today · {totalKept} total"
+msgstr "Tout est à jour pour aujourd'hui · {totalKept} au total"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:63
+msgid "All highlights have been processed."
+msgstr "Tous les surlignages ont été traités."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:65
+msgid "An error occurred while attempting to manage your subscription."
+msgstr "Une erreur est survenue lors de la gestion de votre abonnement."
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:146
+#: apps/native/src/features/removals/api/removals-hooks.ts:14
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:126
+#: apps/web/src/features/removals/api/removals-hooks.ts:17
+msgid "An error occurred. Please try again."
+msgstr "Une erreur s'est produite. Veuillez réessayer."
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:49
+msgid "An unexpected error occurred"
+msgstr "Une erreur inattendue s'est produite"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:285
+msgid "Animacy"
+msgstr "Animéité"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:291
+msgid "Animate"
+msgstr "Animé"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:132
+msgid "Another term already exists with that headword and sense."
+msgstr "Un autre terme existe déjà avec ce mot-vedette et ce sens."
+
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
+msgid "Are you absolutely sure?"
+msgstr "Êtes-vous absolument sûr ?"
+
+#: apps/web/src/features/review/components/per-card-chat.tsx:49
+msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
+msgstr "Posez une question complémentaire sur ce terme. Le modèle a déjà chargé la méthodologie, votre profil et la scène environnante."
+
+#: apps/web/src/features/review/components/per-card-chat.tsx:79
+msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
+msgstr "Posez n'importe quelle question sur ce terme… (Cmd/Ctrl+Entrée pour envoyer)"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:232
+#: apps/web/src/features/review/components/grammar-chips.tsx:74
+msgid "Aspect"
+msgstr "Aspect"
+
+#: apps/web/src/features/review/components/grammar-chips.tsx:81
+msgid "Aspect pair"
+msgstr "Paire d'aspect"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:248
+msgid "Aspect pair (counterpart headword)"
+msgstr "Paire aspectuelle (mot-vedette correspondant)"
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:120
+msgid "At least {MIN_LENGTH} characters needed"
+msgstr "Au moins {MIN_LENGTH} caractères requis"
+
+#: apps/web/src/features/auth/components/login-view.tsx:48
+#: apps/web/src/features/auth/components/login-view.tsx:60
+msgid "Authentication failed"
+msgstr "Échec de l'authentification"
+
+#: apps/web/src/features/more/components/account-page.tsx:78
+msgid "Avatar"
+msgstr "Avatar"
+
+#: apps/web/src/features/navigation/components/modal-screen.tsx:21
+msgid "Back"
+msgstr "Retour"
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:77
+msgid "Back to login"
+msgstr "Retour à la connexion"
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:29
+msgid "Back to Login"
+msgstr "Retour à la connexion"
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:197
+#: apps/web/src/features/practice/components/practice-start-view.tsx:41
+msgid "Back to Practice"
+msgstr "Retour à la pratique"
+
+#: apps/web/src/features/review/components/processing-view.tsx:50
+msgid "Back to session"
+msgstr "Retour à la session"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:67
+msgid "best value"
+msgstr "meilleur rapport qualité-prix"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:240
+msgid "Biaspectual"
+msgstr "Biaspectuel"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:68
+msgid "Billed yearly at €{yearlyPriceTotal}"
+msgstr "Facturé annuellement à {yearlyPriceTotal} €"
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
+msgid "Calibrates the difficult-words pass and the depth of explanations."
+msgstr "Calibre le passage des mots difficiles et la profondeur des explications."
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:66
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:108
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:65
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:128
+msgid "Cancel"
+msgstr "Annuler"
+
+#: apps/web/src/features/review/components/focus-view.tsx:133
+#: apps/web/src/features/review/components/focus-view.tsx:140
+#: apps/web/src/features/review/components/focus-view.tsx:210
+msgid "Card"
+msgstr "Carte"
+
+#: apps/web/src/features/review/components/focus-view.tsx:159
+msgid "Card {cardPosition} of {cardTotal}"
+msgstr "Carte {cardPosition} sur {cardTotal}"
+
+#: apps/web/src/features/review/components/focus-view.tsx:141
+msgid "Card not found."
+msgstr "Carte introuvable."
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:31
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:42
+msgid "CEFR level per language"
+msgstr "Niveau CECRL par langue"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:162
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
+msgid "Change"
+msgstr "Modifier"
+
+#: apps/web/src/features/review/components/focus-view.tsx:272
+msgid "Chat"
+msgstr "Discussion"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:19
+msgid "Check your email"
+msgstr "Vérifiez votre e-mail"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:76
+msgid "Checking app version..."
+msgstr "Vérification de la version de l'application..."
+
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
+msgid "Choose .srt file"
+msgstr "Choisir un fichier .srt"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:103
+msgid "Choose a plan to unlock all features"
+msgstr "Choisissez un plan pour débloquer toutes les fonctionnalités"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:193
+msgid "Choose subtitles"
+msgstr "Choisir les sous-titres"
+
+#: apps/web/src/features/billing/components/pricing-view.tsx:140
+msgid "Choose your plan"
+msgstr "Choisissez votre forfait"
+
+#: apps/web/src/features/review/components/focus-view.tsx:255
+msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
+msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte avec des collocations, l'étymologie, le registre, l'API et plus encore."
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
+msgid "Click the link in the email to continue."
+msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
+
+#: apps/web/src/features/navigation/components/modal-screen.tsx:21
+msgid "Close"
+msgstr "Fermer"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:83
+msgid "Collocations"
+msgstr "Cooccurrences"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:224
+msgid "Common"
+msgstr "Commun"
+
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:63
+msgid "Confirm deletion"
+msgstr "Confirmer la suppression"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:192
+msgid "Conjunction"
+msgstr "Conjonction"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:107
+msgid "Contact us"
+msgstr "Nous contacter"
+
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:84
+msgid "Contact Us"
+msgstr "Contact"
+
+#: apps/web/src/features/review/components/focus-view.tsx:45
+msgid "Context"
+msgstr "Contexte"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:190
+msgid "Context (optional)"
+msgstr "Contexte (facultatif)"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:94
+#: apps/web/src/features/auth/components/login-email-view.tsx:86
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:56
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:154
+msgid "Continue"
+msgstr "Continuer"
+
+#: apps/web/src/features/auth/components/login-view.tsx:96
+msgid "Continue with Apple"
+msgstr "Continuer avec Apple"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:68
+#: apps/native/src/features/auth/components/login-view.tsx:39
+#: apps/web/src/features/auth/components/login-view.tsx:85
+msgid "Continue with Email"
+msgstr "Continuer avec l'adresse e-mail"
+
+#: apps/native/src/features/auth/components/login-view.tsx:51
+#: apps/web/src/features/auth/components/login-view.tsx:90
+msgid "Continue with Google"
+msgstr "Continuer avec Google"
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:60
+msgid "Could not display payment options at this time."
+msgstr "Impossible d'afficher les options de paiement en ce moment."
+
+#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:117
+msgid "Could not fetch a gloss. The highlight is still saved."
+msgstr "Impossible de récupérer une glose. Le surlignage est toujours enregistré."
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:95
+msgid "Could not import the pasted text."
+msgstr "Impossible d'importer le texte collé."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:37
+msgid "Could not load payment options at this time (no offerings)."
+msgstr "Impossible de charger les options de paiement en ce moment (aucune offre)."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:45
+msgid "Could not load payment options. Please try again later."
+msgstr "Impossible de charger les options de paiement. Veuillez réessayer plus tard."
+
+#: apps/web/src/features/more/components/account-page.tsx:62
+msgid "Could not open billing settings."
+msgstr "Impossible d'ouvrir les paramètres de facturation."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:61
+msgid "Could not open customer center."
+msgstr "Impossible d'ouvrir le centre client."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:86
+msgid "Could not open the link. Please visit our website to manage your subscription."
+msgstr "Impossible d'ouvrir le lien. Veuillez visiter notre site web pour gérer votre abonnement."
+
+#: apps/native/src/features/profile/components/profile-view.tsx:71
+msgid "Could not open upgrade screen."
+msgstr "Impossible d'ouvrir l'écran de mise à niveau."
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:134
+msgid "Could not rename — please try again."
+msgstr "Impossible de renommer — veuillez réessayer."
+
+#: apps/native/src/features/auth/components/user-setup-gate.tsx:79
+msgid "Could not set up your account. Please try restarting the app."
+msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'application."
+
+#: apps/web/src/features/practice/components/practice-start-view.tsx:40
+msgid "Couldn't start the session. Please try again."
+msgstr "Impossible de démarrer la session. Veuillez réessayer."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
+msgid "Creating…"
+msgstr "Création…"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:109
+msgid ""
+"Current version: {currentVersion}\n"
+"Required version: {requiredVersion}"
+msgstr ""
+"Version actuelle : {currentVersion}\\n"
+"Version requise : {requiredVersion}"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:102
+#: apps/native/src/features/profile/components/profile-view.tsx:120
+msgid "Customer Center"
+msgstr "Centre Client"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:111
+msgid "Danger zone"
+msgstr "Zone dangereuse"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:146
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:15
+msgid "Danger Zone"
+msgstr "Zone Dangereuse"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:30
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:99
+msgid "Dashboard"
+msgstr "Tableau de bord"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:175
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:56
+msgid "Definition"
+msgstr "Définition"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:203
+msgid "Definition (optional)"
+msgstr "Définition (facultatif)"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:106
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:131
+msgid "Delete"
+msgstr "Supprimer"
+
+#: apps/native/src/features/profile/components/danger-zone-view.tsx:38
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:24
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:29
+msgid "Delete my account"
+msgstr "Supprimer mon compte"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:131
+msgid "Deleting…"
+msgstr "Suppression…"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:164
+msgid "Detecting language…"
+msgstr "Détection de la langue…"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:204
+msgid "Display form (e.g. stress-marked)"
+msgstr "Forme d'affichage (par ex. accentuée)"
+
+#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:138
+msgid "Done"
+msgstr "Terminé"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:87
+msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
+msgstr "Télécharger tous les termes conservés pour {languageName} au format CSV (compatible Anki)"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:127
+msgid "downloads"
+msgstr "téléchargements"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:52
+msgid "Due"
+msgstr "Dû"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:37
+msgid "Due soonest"
+msgstr "Au plus tôt"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:263
+msgid "e.g. + acc, от + gen"
+msgstr "p. ex. + acc, от + gén"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:183
+msgid "e.g. подоконник, ran out of, à propos"
+msgstr "p. ex. подоконник, ran out of, à propos"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:252
+msgid "e.g. увидеть"
+msgstr "p. ex. увидеть"
+
+#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
+msgid "Each new session uses up to this many new terms and review terms."
+msgstr "Chaque nouvelle session utilise jusqu'à ce nombre de nouveaux termes et de termes à réviser."
+
+#: apps/web/src/components/ui/rate-buttons.tsx:23
+msgid "Easy"
+msgstr "Facile"
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:41
+msgid "Edited"
+msgstr "Modifié"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:99
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:85
+msgid "Email"
+msgstr "Email"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:74
+#: apps/web/src/features/auth/components/login-email-view.tsx:78
+msgid "Email address"
+msgstr "Adresse email"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:62
+msgid "Email link is invalid or has expired"
+msgstr "Le lien n'est pas valide ou a expiré"
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:34
+msgid "Email Verification Sent"
+msgstr "Email de Vérification Envoyé"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:280
+msgid "End of list"
+msgstr "Fin de la liste"
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:29
+msgid "Enjoy unlimited access to all our premium features and content."
+msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus premium."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:70
+#: apps/native/src/features/billing/hooks/use-paywall.ts:65
+msgid "Error"
+msgstr "Erreur"
+
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:24
+msgid "error code: {userFacingErrorCode}"
+msgstr "code d'erreur : {userFacingErrorCode}"
+
+#: apps/native/src/features/auth/components/user-setup-gate.tsx:83
+msgid "Error setting up account..."
+msgstr "Erreur lors de la configuration du compte..."
+
+#: apps/native/src/features/user/api/user-hooks.ts:12
+#: apps/web/src/features/user/api/user-hooks.ts:27
+msgid "Error setting up user data"
+msgstr "Erreur lors de la configuration des données utilisateur"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:84
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:36
+msgid "Etymology"
+msgstr "Étymologie"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:61
+msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
+msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement inconditionnel. Il suffit de nous le faire savoir en cliquant sur le bouton « Nous contacter » ci-dessus."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:215
+msgid "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
+msgstr "Tous les termes que vous avez conservés, dans toutes les sessions. Appuyez sur une ligne pour modifier ou ouvrez le menu pour plus d'options."
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:59
+msgid "Example"
+msgstr "Exemple"
+
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:33
+msgid "Explain"
+msgstr "Expliquer"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:83
+msgid "Export vocabulary"
+msgstr "Exporter le vocabulaire"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:67
+msgid "Exported {chunkCount} term(s)"
+msgstr "Exporté {chunkCount} terme(s)"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:83
+msgid "Exporting…"
+msgstr "Export en cours…"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:308
+msgid "Failed to complete onboarding"
+msgstr "Échec de la finalisation de l'intégration"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:119
+msgid "Failed to create card"
+msgstr "Échec de la création de la carte"
+
+#: apps/web/src/features/checkout/api/checkout-hooks.ts:20
+msgid "Failed to create checkout session"
+msgstr "Échec de la création de la session de paiement"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:24
+msgid "Failed to create session"
+msgstr "Échec de la création de la session"
+
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:92
+msgid "Failed to delete term"
+msgstr "Échec de la suppression du terme"
+
+#: apps/web/src/features/review/api/review-hooks.ts:232
+msgid "Failed to export CSV"
+msgstr "Échec de l'exportation du CSV"
+
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:47
+msgid "Failed to export vocabulary"
+msgstr "Échec de l'export du vocabulaire"
+
+#: apps/native/src/features/billing/api/billing-hooks.ts:11
+#: apps/web/src/features/billing/api/billing-hooks.ts:12
+msgid "Failed to fetch subscription details"
+msgstr "Échec de la récupération des détails de l'abonnement"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:130
+msgid "Failed to finalize text"
+msgstr "Échec de la finalisation du texte"
+
+#: apps/web/src/features/review/api/review-hooks.ts:144
+msgid "Failed to generate exploration"
+msgstr "Échec de la génération de l'exploration"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:75
+msgid "Failed to generate next text"
+msgstr "Échec de la génération du texte suivant"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:108
+msgid "Failed to import pasted text"
+msgstr "Échec de l'importation du texte collé"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:84
+msgid "Failed to import subtitles"
+msgstr "Échec de l'importation des sous-titres"
+
+#: apps/native/src/features/auth/components/revenuecat-initializer.tsx:38
+msgid "Failed to initialize payment system. Please restart the app."
+msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer l'application."
+
+#: apps/web/src/features/review/api/review-hooks.ts:47
+msgid "Failed to load card"
+msgstr "Échec du chargement de la carte"
+
+#: apps/web/src/features/review/api/review-hooks.ts:29
+msgid "Failed to load cards"
+msgstr "Échec du chargement des cartes"
+
+#: apps/web/src/features/review/api/review-hooks.ts:108
+msgid "Failed to load chat"
+msgstr "Échec du chargement de la discussion"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:239
+msgid "Failed to load highlights"
+msgstr "Échec du chargement des surlignages"
+
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:12
+msgid "Failed to load languages"
+msgstr "Échec du chargement des langues"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:47
+msgid "Failed to load practice session"
+msgstr "Échec du chargement de la session de pratique"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:20
+msgid "Failed to load practice summary"
+msgstr "Échec du chargement du résumé de pratique"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:120
+msgid "Failed to load preferences"
+msgstr "Échec du chargement des préférences"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:148
+msgid "Failed to load session"
+msgstr "Échec du chargement de la session"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:160
+msgid "Failed to load session counts"
+msgstr "Échec du chargement du nombre de sessions"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:204
+msgid "Failed to load session status"
+msgstr "Échec du chargement du statut de la session"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:10
+msgid "Failed to load sessions"
+msgstr "Échec du chargement des sessions"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:216
+msgid "Failed to load subtitle segments"
+msgstr "Échec du chargement des segments de sous-titres"
+
+#: apps/web/src/features/review/api/review-hooks.ts:156
+msgid "Failed to load surrounding context"
+msgstr "Échec du chargement du contexte environnant"
+
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:38
+msgid "Failed to load vocabulary"
+msgstr "Échec du chargement du vocabulaire"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:107
+msgid "Failed to record rating"
+msgstr "Échec de l'enregistrement de l'évaluation"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:48
+msgid "Failed to register movie"
+msgstr "Échec de l'enregistrement du film"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:60
+msgid "Failed to register text"
+msgstr "Échec de l'enregistrement du texte"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:403
+msgid "Failed to remove highlight"
+msgstr "Échec de la suppression du surlignage"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:190
+msgid "Failed to remove session"
+msgstr "Échec de la suppression de la session"
+
+#: apps/web/src/features/review/api/review-hooks.ts:211
+msgid "Failed to rename term"
+msgstr "Échec du renommage du terme"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:255
+msgid "Failed to save highlight"
+msgstr "Échec de l'enregistrement du surlignage"
+
+#: apps/web/src/features/review/api/review-hooks.ts:131
+msgid "Failed to send chat message"
+msgstr "Échec de l'envoi du message de discussion"
+
+#: apps/native/src/features/contact/api/contact-hooks.ts:16
+#: apps/web/src/features/contact/api/contact-hooks.ts:16
+msgid "Failed to send feedback. Please try again."
+msgstr "Impossible d'envoyer le retour. Veuillez réessayer."
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:134
+msgid "Failed to set CEFR level"
+msgstr "Échec de la définition du niveau CECR"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:292
+msgid "Failed to set native language"
+msgstr "Échec de la définition de la langue maternelle"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:34
+msgid "Failed to start practice session"
+msgstr "Échec du démarrage de la session de pratique"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:276
+msgid "Failed to start processing"
+msgstr "Échec du démarrage du traitement"
+
+#: apps/native/src/features/admin/api/sentry-debug-hooks.ts:11
+#: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
+msgid "Failed to trigger Sentry message"
+msgstr "Échec du déclenchement du message Sentry"
+
+#: apps/web/src/features/review/api/review-hooks.ts:169
+msgid "Failed to update card fields"
+msgstr "Échec de la mise à jour des champs de la carte"
+
+#: apps/web/src/features/review/api/review-hooks.ts:69
+msgid "Failed to update card status"
+msgstr "Échec de la mise à jour du statut de la carte"
+
+#: apps/web/src/features/review/api/review-hooks.ts:97
+msgid "Failed to update card statuses"
+msgstr "Échec de la mise à jour des statuts des cartes"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:386
+msgid "Failed to update highlight"
+msgstr "Échec de la mise à jour de la surbrillance"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:340
+msgid "Failed to update LLM-highlights setting"
+msgstr "Échec de la mise à jour du paramètre de surlignage par LLM"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:356
+msgid "Failed to update practice limits"
+msgstr "Échec de la mise à jour des limites de pratique"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:324
+msgid "Failed to update tap-to-translate setting"
+msgstr "Échec de la mise à jour du paramètre de traduction tactile"
+
+#: apps/web/src/features/review/api/review-hooks.ts:191
+msgid "Failed to update term"
+msgstr "Échec de la mise à jour du terme"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:96
+msgid "Failed to upload subtitles"
+msgstr "Échec de l'envoi des sous-titres"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:75
+msgid "Fast gloss when you select text mid-watch"
+msgstr "Traduction rapide lorsque vous sélectionnez du texte pendant le visionnage"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:222
+msgid "Feminine"
+msgstr "Féminin"
+
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
+msgid "Flicktionary"
+msgstr "Flicktionary"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:37
+msgid "Follow-up in {hoursUntilFollowUp} hr"
+msgstr "Suite dans {hoursUntilFollowUp} h"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:35
+msgid "Follow-up in {minutesUntilFollowUp} min"
+msgstr "Suivi dans {minutesUntilFollowUp} min"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:38
+msgid "Follow-up later"
+msgstr "Révision plus tard"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:343
+msgid "Form (e.g. был)"
+msgstr "Forme (par ex. был)"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:83
+msgid "Free for {NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
+msgstr "Gratuit pendant {NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
+msgid "Free Trial"
+msgstr "Essai gratuit"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:372
+msgid "Free-form notes that don't fit the structured fields above."
+msgstr "Notes libres qui ne correspondent pas aux champs structurés ci-dessus."
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:65
+msgid "Frequency"
+msgstr "Fréquence"
+
+#: apps/web/src/features/review/components/focus-view.tsx:246
+msgid "Full exploration"
+msgstr "Exploration complète"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:215
+#: apps/web/src/features/review/components/grammar-chips.tsx:67
+msgid "Gender"
+msgstr "Genre"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:56
+msgid "General"
+msgstr "Général"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
+msgid "Generate card"
+msgstr "Générer la carte"
+
+#: apps/web/src/features/review/components/focus-view.tsx:265
+msgid "Generate full exploration"
+msgstr "Générer l'exploration complète"
+
+#: apps/web/src/features/review/components/focus-view.tsx:253
+msgid "Generating full exploration… this takes a few seconds."
+msgstr "Génération de l'exploration complète… cela prend quelques secondes."
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:159
+msgid "Generating the next text…"
+msgstr "Génération du prochain texte…"
+
+#: apps/web/src/features/review/components/focus-view.tsx:265
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
+msgid "Generating…"
+msgstr "Génération…"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:69
+msgid "Get started"
+msgstr "Commencer"
+
+#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:115
+msgid "Glossing…"
+msgstr "Glose en cours…"
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:41
+msgid "Go Back"
+msgstr "Retour"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:141
+msgid "Go back to the source view and click Retry processing to try again."
+msgstr "Revenez à la vue source et cliquez sur Réessayer le traitement pour réessayer."
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
+msgid "Go to Sessions"
+msgstr "Aller aux Sessions"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:71
+msgid "Go to triage"
+msgstr "Aller au tri"
+
+#: apps/web/src/components/ui/rate-buttons.tsx:22
+msgid "Good"
+msgstr "Bien"
+
+#: apps/web/src/features/review/components/grammar-chips.tsx:88
+msgid "Government"
+msgstr "Régime"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
+msgid "Government / case requirement"
+msgstr "Régime / exigence casuelle"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:172
+msgid "Grammar"
+msgstr "Grammaire"
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:40
+msgid "Grammar fields have been edited manually"
+msgstr "Les champs grammaticaux ont été modifiés manuellement"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:367
+msgid "Grammar notes"
+msgstr "Notes grammaticales"
+
+#: apps/web/src/components/ui/rate-buttons.tsx:21
+msgid "Hard"
+msgstr "Difficile"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:158
+msgid "Headword"
+msgstr "Mot-vedette"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:79
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:57
+msgid "Help us improve Flicktionary"
+msgstr "Aidez-nous à améliorer Flicktionary"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:129
+msgid "HI"
+msgstr "SM"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:118
+msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by re-keeping it in a session."
+msgstr "Masquer « {headword} » du vocabulaire et de la pratique ? Vous pouvez le restaurer en le conservant à nouveau dans une session."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:107
+msgid "Hide from vocabulary and Practice"
+msgstr "Masquer du vocabulaire et de la pratique"
+
+#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:131
+msgid "Highlight saved. Add a note or chips next time without tap-to-translate."
+msgstr "Surlignage enregistré. Ajoutez une note ou des étiquettes la prochaine fois sans appuyer pour traduire."
+
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:92
+msgid "Home"
+msgstr "Accueil"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
+msgid "How your free trial works"
+msgstr "Comment fonctionne votre essai gratuit"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:195
+msgid "Idiom"
+msgstr "Expression idiomatique"
+
+#: apps/web/src/features/auth/components/account-removed-view.tsx:33
+msgid "If you'd like to create a new account, sign up again below."
+msgstr "Si vous souhaitez créer un nouveau compte, inscrivez-vous à nouveau ci-dessous."
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:25
+msgid "If you'd like to create a new account, you can sign up again."
+msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à nouveau."
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:238
+msgid "Imperfective"
+msgstr "Imperfectif"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:154
+msgid "Importing…"
+msgstr "Importation…"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
+msgid "Inanimate"
+msgstr "Inanimé"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:308
+msgid "Indeclinable"
+msgstr "Indéclinable"
+
+#: apps/native/src/features/auth/components/revenuecat-initializer.tsx:48
+msgid "Initializing payments..."
+msgstr "Initialisation des paiements..."
+
+#: apps/native/src/features/auth/components/session-initializer.tsx:27
+msgid "Initializing..."
+msgstr "Initialisation..."
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
+msgid "Introduce your card details and get instant access"
+msgstr "Introduisez les détails de votre carte et obtenez accès instantané"
+
+#: apps/native/src/config/react-query-config.ts:77
+msgid "Invalid token. Please sign in again."
+msgstr "Jeton invalide. Veuillez vous reconnecter."
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:64
+msgid "IPA"
+msgstr "API"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:99
+msgid "Jump to the session this term came from"
+msgstr "Accéder à la session d'origine de ce terme"
+
+#: apps/web/src/features/review/components/focus-view.tsx:171
+#: apps/web/src/features/review/components/triage-row.tsx:41
+msgid "Keep"
+msgstr "Conserver"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:40
+msgid "Keep all"
+msgstr "Tout conserver"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:85
+msgid "L1 notes"
+msgstr "Notes L1"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:337
+msgid "Label (e.g. past.m)"
+msgstr "Libellé (par ex. passé.m)"
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:140
+msgid "Language of the text"
+msgstr "Langue du texte"
+
+#: apps/web/src/features/more/components/languages-page.tsx:14
+#: apps/web/src/features/more/components/more-tab-view.tsx:68
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:94
+msgid "Languages"
+msgstr "Langues"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:57
+msgid "Last day to cancel before first charge"
+msgstr "Dernier jour pour annuler avant le premier prélèvement"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
+msgid "Later"
+msgstr "Plus tard"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:76
+msgid "Less formal:"
+msgstr "Moins formel :"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:88
+msgid "Let the model surface terms at your level on Process"
+msgstr "Laisser le modèle suggérer des termes adaptés à votre niveau dans Process"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
+msgid "Level for {trackLanguage}: {cefrLabel}."
+msgstr "Niveau pour {trackLanguage} : {cefrLabel}."
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:75
+msgid "Link expired or invalid"
+msgstr "Lien expiré ou invalide"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:87
+#: apps/web/src/features/more/components/more-tab-view.tsx:94
+#: apps/web/src/features/review/components/triage-list-view.tsx:176
+#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:18
+msgid "LLM-suggested terms"
+msgstr "Termes suggérés par IA"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:56
+msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
+msgstr "Les termes suggérés par l'IA sont désactivés. Surlignez au moins un terme pour traiter cette session."
+
+#: apps/web/src/features/review/components/focus-view.tsx:134
+msgid "Loading card…"
+msgstr "Chargement de la carte…"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:146
+msgid "Loading cards…"
+msgstr "Chargement des cartes…"
+
+#: apps/web/src/features/review/components/per-card-chat.tsx:46
+msgid "Loading chat…"
+msgstr "Chargement de la discussion…"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:280
+msgid "Loading more…"
+msgstr "Chargement…"
+
+#: apps/web/src/features/sessions/components/session-view.tsx:246
+msgid "Loading segments…"
+msgstr "Chargement des segments…"
+
+#: apps/web/src/features/sessions/components/session-view.tsx:196
+msgid "Loading session…"
+msgstr "Chargement de la session…"
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:31
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:102
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:108
+msgid "Loading..."
+msgstr "Chargement..."
+
+#: apps/web/src/features/more/components/account-page.tsx:67
+#: apps/web/src/features/more/components/languages-page.tsx:17
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:81
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:49
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:257
+msgid "Loading…"
+msgstr "Chargement…"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:171
+msgid "Looks like {suggestedLanguageName} — switch?"
+msgstr "On dirait du {suggestedLanguageName} — changer ?"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:122
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:104
+#: apps/web/src/features/more/components/account-page.tsx:69
+msgid "Manage Subscription"
+msgstr "Gérer l'Abonnement"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:221
+msgid "Masculine"
+msgstr "Masculin"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:134
+msgid "Maybe later"
+msgstr "Peut-être plus tard"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:81
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:68
+msgid "Message to the founders"
+msgstr "Message pour les fondateurs"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
+msgid "Monthly"
+msgstr "Mensuel"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:54
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
+msgid "More"
+msgstr "Plus"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
+msgid "More formal:"
+msgstr "Plus formel :"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:81
+msgid "More frequent synonym"
+msgstr "Synonyme plus fréquent"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:67
+msgid "More options"
+msgstr "Plus d'options"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:42
+msgid "Movies"
+msgstr "Films"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
+msgid "Name (optional)"
+msgstr "Nom (optionnel)"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:194
+msgid "Native example"
+msgstr "Exemple en langue maternelle"
+
+#: apps/web/src/features/settings/components/native-language-selector.tsx:16
+msgid "Native language"
+msgstr "Langue maternelle"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:69
+msgid "Native language and CEFR levels"
+msgstr "Langue maternelle et niveaux CECRL"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:128
+msgid "Native language: {nativeLanguage}."
+msgstr "Langue maternelle : {nativeLanguage}."
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:223
+msgid "Neuter"
+msgstr "Neutre"
+
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:58
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:55
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:53
+msgid "New"
+msgstr "Nouveau"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:133
+msgid "New session"
+msgstr "Nouvelle session"
+
+#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:59
+msgid "New terms"
+msgstr "Nouveaux termes"
+
+#: apps/web/src/features/review/components/focus-view.tsx:200
+msgid "Next card"
+msgstr "Carte suivante"
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:229
+msgid "Next text"
+msgstr "Texte suivant"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:149
+msgid "No cards yet. Process the session to generate them."
+msgstr "Aucune carte pour le moment. Traitez la session pour les générer."
+
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
+msgid "No highlight selected."
+msgstr "Aucune sélection surlignée."
+
+#: apps/web/src/features/sessions/components/process-button.tsx:61
+msgid "No highlights — the LLM will suggest terms based on your level."
+msgstr "Aucun surlignage — l'IA suggérera des termes en fonction de votre niveau."
+
+#: apps/web/src/components/language-picker.tsx:99
+msgid "No languages found."
+msgstr "Aucune langue trouvée."
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:75
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:243
+msgid "No matches."
+msgstr "Aucun résultat."
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:56
+msgid "No sessions in this filter."
+msgstr "Aucune session dans ce filtre."
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:53
+msgid "No sessions yet. Start one to begin."
+msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:33
+msgid "No target languages yet. Levels are set the first time you start a session in a new language."
+msgstr "Aucune langue cible pour l'instant. Les niveaux sont définis lors du démarrage de votre première session dans une nouvelle langue."
+
+#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:135
+msgid "No text selected."
+msgstr "Aucun texte sélectionné."
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:117
+msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
+msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fichier .srt à la place."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:243
+msgid "No vocabulary in this language yet."
+msgstr "Aucun vocabulaire dans cette langue pour le moment."
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:85
+msgid "No vocabulary to practice yet"
+msgstr "Aucun vocabulaire à pratiquer pour le moment"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:9
+msgid "No vocabulary yet"
+msgstr "Aucun vocabulaire pour l'instant"
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:47
+msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
+msgstr "Absent du Wiktionnaire — champs grammaticaux générés uniquement par LLM"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:330
+msgid "Notable forms"
+msgstr "Formes remarquables"
+
+#: apps/web/src/features/sessions/components/highlight-action-menu.tsx:66
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:76
+msgid "Note & tags"
+msgstr "Note et étiquettes"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:385
+msgid "Note saved"
+msgstr "Note enregistrée"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:86
+msgid "Notes"
+msgstr "Notes"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:185
+msgid "Noun"
+msgstr "Nom"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:270
+msgid "Number-only"
+msgstr "Nombre uniquement"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:193
+msgid "Numeral"
+msgstr "Numéral"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:65
+#: apps/native/src/components/gates/force-update-gate.tsx:70
+msgid "OK"
+msgstr "OK"
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:43
+msgid "Open Mail App"
+msgstr "Ouvrir l'Application Mail"
+
+#: apps/web/src/features/review/components/focus-view.tsx:54
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:98
+msgid "Open source"
+msgstr "Ouvrir la source"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:100
+msgid "OpenSubtitles search"
+msgstr "Recherche OpenSubtitles"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:74
+msgid "OpenSubtitles search failed"
+msgstr "La recherche OpenSubtitles a échoué"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:208
+msgid "Optional"
+msgstr "Facultatif"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:208
+msgid "Optional contextual paraphrase in the target language."
+msgstr "Paraphrase contextuelle optionnelle dans la langue cible."
+
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:84
+msgid "Optional note for the LLM (what specifically confuses you?)"
+msgstr "Note optionnelle pour le LLM (qu'est-ce qui vous confond précisément ?)"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:169
+msgid "Original language"
+msgstr "Langue d'origine"
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:23
+msgid "Originally verified against Wiktionary on {groundedDate}, then edited"
+msgstr "Initialement vérifié par rapport au Wiktionnaire le {groundedDate}, puis modifié"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:196
+msgid "Other"
+msgstr "Autre"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:179
+msgid "Part of speech"
+msgstr "Partie du discours"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:191
+msgid "Particle"
+msgstr "Particule"
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:112
+msgid "Paste a Reddit comment, news excerpt, Telegram post…"
+msgstr "Collez un commentaire Reddit, un extrait d'article, un post Telegram…"
+
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:86
+msgid "Paste a text"
+msgstr "Coller un texte"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:72
+msgid "Paste an article, comment, or post"
+msgstr "Collez un article, un commentaire ou une publication"
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:107
+msgid "Paste your text"
+msgstr "Collez votre texte"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:239
+msgid "Perfective"
+msgstr "Perfectif"
+
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:25
+msgid "Permanently delete your account and all associated data"
+msgstr "Supprimer définitivement votre compte et toutes les données associées"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:194
+msgid "Phrase"
+msgstr "Expression"
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:70
+msgid "Pick"
+msgstr "Choisir"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:162
+msgid "Pick a language"
+msgstr "Choisissez une langue"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:85
+msgid "Pick a language first"
+msgstr "Choisissez d'abord une langue"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:138
+msgid "Pick a movie"
+msgstr "Choisir un film"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:64
+msgid "Pick a movie and load its subtitles"
+msgstr "Choisissez un film et chargez ses sous-titres"
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:40
+msgid "Please check your inbox and click on the link to continue"
+msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour continuer"
+
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:18
+msgid "Please choose a .srt file."
+msgstr "Veuillez choisir un fichier .srt."
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:89
+#: apps/web/src/features/auth/components/login-email-view.tsx:47
+#: apps/web/src/features/auth/components/login-email-view.tsx:83
+msgid "Please enter a valid email address"
+msgstr "Veuillez entrer une adresse email valide"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:82
+msgid "Please manage your subscription on our website: {webAccountUrl}"
+msgstr "Veuillez gérer votre abonnement sur notre site web : {webAccountUrl}"
+
+#: apps/web/src/features/more/components/account-page.tsx:58
+msgid "Please manage your subscription through the App Store or Google Play."
+msgstr "Veuillez gérer votre abonnement via l'App Store ou Google Play."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:64
+msgid "Please manually update the app through your device's app store."
+msgstr "Veuillez mettre à jour manuellement l'application via le magasin d'applications de votre appareil."
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:76
+msgid "Please request a new verification link."
+msgstr "Veuillez demander un nouveau lien de vérification."
+
+#: apps/web/src/config/react-query-config.ts:36
+msgid "Please try again or refresh the page."
+msgstr "Veuillez réessayer ou actualiser la page."
+
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:60
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:48
+msgid "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
+msgstr "Veuillez saisir \"{EXPECTED_CONFIRMATION_TEXT}\""
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:276
+msgid "Plural-only"
+msgstr "Pluriel uniquement"
+
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:74
+#: apps/web/src/features/practice/components/practice-session-view.tsx:167
+#: apps/web/src/features/practice/components/practice-start-view.tsx:36
+msgid "Practice"
+msgstr "Pratique"
+
+#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:51
+msgid "Practice limits"
+msgstr "Limites de pratique"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:211
+msgid "Practice these terms"
+msgstr "Pratiquer ces termes"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:71
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:81
+msgid "Practice with a text"
+msgstr "S'entraîner avec un texte"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:36
+msgid "Premium Features"
+msgstr "Fonctionnalités Premium"
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:159
+#: apps/web/src/features/practice/components/practice-start-view.tsx:45
+msgid "Preparing the session…"
+msgstr "Préparation de la session…"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:189
+msgid "Preposition"
+msgstr "Préposition"
+
+#: apps/web/src/features/review/components/focus-view.tsx:196
+msgid "Previous card"
+msgstr "Carte précédente"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:58
+msgid "Previous run failed. Click to retry."
+msgstr "L'exécution précédente a échoué. Cliquez pour réessayer."
+
+#: apps/web/src/features/sessions/components/process-button.tsx:59
+msgid "Previous run produced no cards. Click to retry."
+msgstr "La précédente exécution n'a produit aucune carte. Cliquez pour réessayer."
+
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:49
+msgid "Primary"
+msgstr "Principal"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:73
+msgid "Process"
+msgstr "Traiter"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:87
+msgid "Process a session and keep some cards. They'll show up here automatically."
+msgstr "Traitez une session et conservez quelques cartes. Elles apparaîtront ici automatiquement."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:11
+msgid "Process a session and keep some cards. They'll show up here, browsable across every session."
+msgstr "Traitez une session et conservez des cartes. Elles apparaîtront ici, consultables dans toutes les sessions."
+
+#: apps/web/src/features/sessions/components/process-button.tsx:72
+msgid "Process new highlights"
+msgstr "Traiter les nouveaux surlignages"
+
+#: apps/web/src/features/review/components/processing-view.tsx:27
+msgid "Processing"
+msgstr "Traitement"
+
+#: apps/web/src/features/review/components/processing-view.tsx:43
+msgid "Processing failed"
+msgstr "Échec du traitement"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:275
+msgid "Processing started"
+msgstr "Traitement lancé"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:134
+msgid "Processing warnings"
+msgstr "Avertissements de traitement"
+
+#: apps/web/src/features/review/components/processing-view.tsx:33
+msgid "Processing your session…"
+msgstr "Traitement de votre session en cours…"
+
+#: apps/native/src/features/navigation/components/tabs-layout.tsx:106
+msgid "Profile"
+msgstr "Profil"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:60
+msgid "Profile, subscription, sign-in"
+msgstr "Profil, abonnement, connexion"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:190
+msgid "Pronoun"
+msgstr "Pronom"
+
+#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:110
+msgid "Quick gloss"
+msgstr "Glose rapide"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:368
+msgid "Quick gloss failed"
+msgstr "Glose rapide échouée"
+
+#: apps/web/src/features/practice/components/rate-sheet.tsx:43
+msgid "Rate"
+msgstr "Noter"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:78
+msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
+msgstr "Lisez de courts textes générés qui intègrent votre vocabulaire enregistré. Appuyez sur un terme pour l'évaluer ; les termes non appuyés sont considérés comme reconnus lorsque vous avancez."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:36
+msgid "Recently added"
+msgstr "Récemment ajouté"
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:33
+msgid "Redirecting..."
+msgstr "Redirection..."
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:323
+msgid "Reflexive"
+msgstr "Réfléchi"
+
+#: apps/web/src/config/react-query-config.ts:38
+#: apps/web/src/features/overlay/components/refresh-button.tsx:17
+msgid "Refresh"
+msgstr "Actualiser"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:82
+msgid "Regionalism"
+msgstr "Régionalisme"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:66
+msgid "Register"
+msgstr "Registre"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:68
+msgid "Register alternatives"
+msgstr "Alternatives de registre"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:183
+msgid "Registering movie…"
+msgstr "Enregistrement du film…"
+
+#: apps/web/src/features/review/components/focus-view.tsx:179
+#: apps/web/src/features/review/components/triage-row.tsx:49
+msgid "Reject"
+msgstr "Rejeter"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:49
+msgid "Reject all"
+msgstr "Tout rejeter"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:351
+#: apps/web/src/features/sessions/components/highlight-action-menu.tsx:74
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
+msgid "Remove"
+msgstr "Supprimer"
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:42
+msgid "Remove \"{sessionTitle}\"?"
+msgstr "Supprimer « {sessionTitle} » ?"
+
+#: apps/web/src/features/sessions/components/session-card.tsx:64
+msgid "Remove session"
+msgstr "Supprimer la session"
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
+msgid "Removing…"
+msgstr "Suppression…"
+
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
+msgid "Replace file ({fileName})"
+msgstr "Remplacer le fichier ({fileName})"
+
+#: apps/web/src/features/review/components/processing-view.tsx:47
+msgid "Retry"
+msgstr "Réessayer"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:70
+msgid "Retry processing"
+msgstr "Réessayer le traitement"
+
+#: apps/web/src/features/review/components/processing-view.tsx:47
+msgid "Retrying…"
+msgstr "Nouvelle tentative…"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:75
+msgid "Return to Login"
+msgstr "Retour à la connexion"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:118
+msgid "Review"
+msgstr "Réviser"
+
+#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:78
+msgid "Review terms"
+msgstr "Termes à réviser"
+
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:110
+msgid "Save"
+msgstr "Enregistrer"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:149
+msgid "Save a term"
+msgstr "Enregistrer un terme"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:80
+msgid "Save a term you heard or saw, no source needed"
+msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source nécessaire"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:214
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:377
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:110
+msgid "Saving…"
+msgstr "Enregistrement…"
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:31
+msgid "Search a movie title…"
+msgstr "Rechercher un titre de film…"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:228
+msgid "Search failed"
+msgstr "Échec de la recherche"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:230
+msgid "Search headword, translation, or definition…"
+msgstr "Rechercher un lemme, une traduction ou une définition…"
+
+#: apps/web/src/components/language-picker.tsx:88
+msgid "Search languages…"
+msgstr "Rechercher des langues…"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:126
+#: apps/web/src/features/sessions/components/track-search-bar.tsx:16
+msgid "Search…"
+msgstr "Rechercher…"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:109
+msgid "Searching OpenSubtitles…"
+msgstr "Recherche sur OpenSubtitles…"
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:36
+msgid "Searching…"
+msgstr "Recherche en cours…"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
+msgid "segments"
+msgstr "segments"
+
+#: apps/web/src/components/language-picker.tsx:53
+msgid "Select a language"
+msgstr "Sélectionner une langue"
+
+#: apps/web/src/features/review/components/per-card-chat.tsx:82
+msgid "Send"
+msgstr "Envoyer"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:147
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:130
+msgid "Send Message"
+msgstr "Envoyer le message"
+
+#: apps/native/src/features/auth/components/login-email-view.tsx:94
+msgid "Sending an email"
+msgstr "Envoi de l'email"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:142
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:77
+#: apps/web/src/features/auth/components/login-email-view.tsx:86
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:123
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:63
+msgid "Sending..."
+msgstr "Envoi en cours..."
+
+#: apps/web/src/features/sessions/components/session-view.tsx:195
+#: apps/web/src/features/sessions/components/session-view.tsx:202
+msgid "Session"
+msgstr "Session"
+
+#: apps/web/src/features/sessions/components/session-view.tsx:203
+msgid "Session not found."
+msgstr "Session introuvable."
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:189
+msgid "Session removed"
+msgstr "Session supprimée"
+
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:37
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:38
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:34
+msgid "Sessions"
+msgstr "Sessions"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
+msgid "Set your native language first."
+msgstr "Définissez d'abord votre langue maternelle."
+
+#: apps/native/src/features/auth/components/user-setup-gate.tsx:75
+msgid "Setting up account..."
+msgstr "Configuration du compte..."
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:65
+msgid "Settings"
+msgstr "Paramètres"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
+msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
+msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous lisons et répondons à chaque message !"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:180
+msgid "Short paraphrase in the target language."
+msgstr "Courte paraphrase dans la langue cible."
+
+#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:23
+msgid "Show {filteredCount} filtered out (below your level)"
+msgstr "Afficher {filteredCount} filtrés (en dessous de votre niveau)"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:155
+#: apps/web/src/features/billing/components/pricing-view.tsx:181
+#: apps/web/src/features/more/components/more-tab-view.tsx:115
+msgid "Sign out"
+msgstr "Déconnexion"
+
+#: apps/web/src/features/billing/components/pricing-view.tsx:114
+#: apps/web/src/features/more/components/more-tab-view.tsx:39
+msgid "Sign out success"
+msgstr "Déconnexion réussie"
+
+#: apps/web/src/features/auth/components/account-removed-view.tsx:35
+msgid "Sign up"
+msgstr "S'inscrire"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:277
+msgid "Singular-only"
+msgstr "Singulier seulement"
+
+#: apps/native/src/features/home/components/home-view.tsx:21
+msgid "Some text for the Home tab"
+msgstr "Du texte pour l'onglet Accueil"
+
+#: apps/native/src/config/react-query-config.ts:24
+msgid "Something went wrong"
+msgstr "Une erreur s'est produite"
+
+#: apps/web/src/config/react-query-config.ts:30
+msgid "Something went wrong."
+msgstr "Une erreur s'est produite."
+
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:23
+msgid "Something went wrong. Please refresh the page and try again."
+msgstr "Une erreur est survenue. Veuillez actualiser la page et réessayer."
+
+#: apps/web/src/features/review/components/processing-view.tsx:44
+msgid "Something went wrong. You can retry or go back to the session."
+msgstr "Une erreur s'est produite. Vous pouvez réessayer ou retourner à la session."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:235
+msgid "Sort"
+msgstr "Trier"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:114
+msgid "Source"
+msgstr "Source"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:99
+msgid "Source was removed"
+msgstr "La source a été supprimée"
+
+#: apps/web/src/features/review/components/focus-view.tsx:159
+msgid "Standalone"
+msgstr "Autonome"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:142
+msgid "Start"
+msgstr "Commencer"
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:91
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:111
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:113
+msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
+msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:63
+msgid "Start a movie session"
+msgstr "Démarrer une session de film"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:125
+msgid "Start practice"
+msgstr "Commencer la pratique"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:231
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:118
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
+msgid "Start session"
+msgstr "Démarrer la session"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx:91
+msgid "Start something new"
+msgstr "Commencer quelque chose de nouveau"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:69
+msgid "Starting…"
+msgstr "Démarrage…"
+
+#: apps/web/src/features/sessions/components/session-card.tsx:57
+msgid "Status"
+msgstr "Statut"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
+msgid "Subscribe Now"
+msgstr "S'abonner maintenant"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:102
+msgid "Subscribe to access premium features"
+msgstr "S'abonner pour accéder aux fonctionnalités premium"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:37
+msgid "Subscribe to unlock premium features and get the most out of the app."
+msgstr "Abonnez-vous pour débloquer les fonctionnalités premium et tirer le meilleur parti de l'application."
+
+#: apps/native/src/features/billing/hooks/use-paywall.ts:37
+#: apps/native/src/features/billing/hooks/use-paywall.ts:45
+#: apps/native/src/features/billing/hooks/use-paywall.ts:60
+msgid "Subscription Required"
+msgstr "Abonnement Requis"
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:25
+msgid "Subscription Successful!"
+msgstr "Abonnement réussi !"
+
+#: apps/native/src/config/react-query-config.ts:114
+#: apps/web/src/config/react-query-config.ts:125
+msgid "Success!"
+msgstr "Succès !"
+
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:35
+msgid "Synonyms"
+msgstr "Synonymes"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:74
+#: apps/web/src/features/more/components/more-tab-view.tsx:81
+#: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:18
+msgid "Tap-to-translate"
+msgstr "Toucher pour traduire"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:164
+msgid "Target example"
+msgstr "Exemple cible"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:87
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:153
+msgid "Target language"
+msgstr "Langue cible"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:90
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:72
+msgid "Tell us what you think or describe any issues you encountered..."
+msgstr "Dites-nous ce que vous pensez ou décrivez tout problème rencontré..."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:187
+msgid "Term deleted"
+msgstr "Terme supprimé"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:67
+msgid "Test Backend Sentry Message"
+msgstr "Tester le message Sentry backend"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:65
+msgid "Test Frontend Sentry Log"
+msgstr "Tester le journal Sentry Frontend"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:66
+msgid "Test Frontend Unhandled Error"
+msgstr "Tester l'erreur frontend non gérée"
+
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:92
+msgid "Text imported"
+msgstr "Texte importé"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
+msgid "Texts"
+msgstr "Textes"
+
+#: apps/native/src/features/contact/api/contact-hooks.ts:15
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:144
+#: apps/web/src/features/contact/api/contact-hooks.ts:15
+msgid "Thank you for your feedback!"
+msgstr "Merci pour votre retour !"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:91
+msgid "The chosen subtitle track must match this language."
+msgstr "La piste de sous-titres choisie doit correspondre à cette langue."
+
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:23
+msgid "The file appears to be empty."
+msgstr "Le fichier semble être vide."
+
+#: apps/native/src/features/auth/api/authentication-hooks.ts:15
+#: apps/web/src/features/auth/api/authentication-hooks.ts:16
+msgid "There was an error sending the verification email. Please try again."
+msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. Veuillez réessayer."
+
+#: apps/web/src/features/billing/components/pricing-view.tsx:91
+msgid "There was an error. Please contact support."
+msgstr "Il y a eu une erreur. Veuillez contacter le support."
+
+#: apps/web/src/features/review/components/per-card-chat.tsx:70
+msgid "Thinking…"
+msgstr "Réflexion en cours…"
+
+#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:58
+#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:43
+msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
+msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
+
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
+msgid "This calibrates the difficult-words pass and the depth of explanations."
+msgstr "Cela calibre le passage des mots difficiles et la profondeur des explications."
+
+#: apps/web/src/features/review/components/focus-view.tsx:256
+msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
+msgstr "Cette carte semble incomplète. Retraitez la session pour remplir ses données de base, puis revenez pour l'enrichir."
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:44
+msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
+msgstr "Cela masque la session de votre liste. Votre vocabulaire conservé reste dans votre collection. Le texte source est conservé afin que vous puissiez retracer vos mots conservés jusqu'à l'endroit où vous les avez appris. Pour tout effacer, supprimez votre compte."
+
+#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
+msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
+msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous pouvez présenter les fonctionnalités premium ici."
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:58
+msgid "This session is processing — wait for it to finish before removing."
+msgstr "Cette session est en cours de traitement — attendez qu'elle se termine avant de la supprimer."
+
+#: apps/web/src/features/review/components/processing-view.tsx:35
+msgid "This usually takes 1–2 minutes. You can leave this page and come back."
+msgstr "Cela prend généralement 1 à 2 minutes. Vous pouvez quitter cette page et revenir plus tard."
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:126
+msgid "Title"
+msgstr "Titre"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:38
+msgid "TMDB search failed"
+msgstr "La recherche TMDB a échoué"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:41
+#: apps/web/src/features/billing/components/pricing-view.tsx:40
+msgid "To change your current plan type, please click on \"Manage Subscription\"."
+msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer l'Abonnement\"."
+
+#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
+msgid "Today"
+msgstr "Aujourd'hui"
+
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:32
+msgid "Too Many Requests"
+msgstr "Trop de Requêtes"
+
+#: apps/native/src/config/react-query-config.ts:69
+msgid "Too many requests. Please try again later."
+msgstr "Trop de requêtes. Veuillez réessayer plus tard."
+
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:36
+msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
+msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet et appareil à la fois et réessayer."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:199
+msgid "Track imported"
+msgstr "Piste importée"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:186
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:57
+msgid "Translation"
+msgstr "Traduction"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:190
+msgid "Translation in your native language."
+msgstr "Traduction dans votre langue maternelle."
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:108
+#: apps/web/src/features/sessions/components/session-view.tsx:231
+msgid "Triage"
+msgstr "Tri"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:65
+msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
+msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle langue pour commencer. Vous pouvez choisir la langue cible à chaque fois que vous ajoutez du nouveau contenu."
+
+#: apps/web/src/features/billing/api/portal-session-hooks.ts:14
+msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
+msgstr "Impossible d'accéder à votre section de facturation en ce moment. Veuillez réessayer plus tard ou contacter le support si le problème persiste."
+
+#: apps/native/src/components/gates/force-update-gate.tsx:64
+msgid "Unable to open app store"
+msgstr "Impossible d'ouvrir le magasin d'applications"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:70
+msgid "Unable to open app store. Please manually update the app."
+msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour manuellement l'application."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:149
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:55
+msgid "Unknown year"
+msgstr "Année inconnue"
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
+msgid "Unlock Premium"
+msgstr "Débloquer Premium"
+
+#: apps/web/src/features/sessions/components/session-card.tsx:27
+#: apps/web/src/features/sessions/components/session-view.tsx:208
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
+msgid "Untitled"
+msgstr "Sans titre"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:117
+msgid "Update Now"
+msgstr "Mettre à jour maintenant"
+
+#: apps/native/src/components/gates/force-update-gate.tsx:101
+msgid "Update Required"
+msgstr "Mise à jour requise"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:113
+#: apps/web/src/features/more/components/account-page.tsx:68
+msgid "Upgrade to Premium"
+msgstr "Passer à Premium"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:103
+msgid "Upload .srt"
+msgstr "Importer un .srt"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:164
+msgid "Uploading…"
+msgstr "Téléchargement…"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
+msgid "Use"
+msgstr "Utiliser"
+
+#: apps/native/src/features/admin/components/admin-settings-view.tsx:62
+msgid "Use these options to test Sentry error reporting in your environment."
+msgstr "Utilisez ces options pour tester le rapport d'erreurs Sentry dans votre environnement."
+
+#: apps/web/src/features/settings/components/native-language-selector.tsx:17
+msgid "Used as your L1 in the LLM prompts."
+msgstr "Utilisée comme votre L1 dans les prompts LLM."
+
+#: apps/web/src/features/more/components/account-page.tsx:84
+msgid "User"
+msgstr "Utilisateur"
+
+#: apps/native/src/features/user/api/user-hooks.ts:11
+#: apps/web/src/features/user/api/user-hooks.ts:26
+msgid "User setup complete"
+msgstr "Configuration de l'utilisateur terminée"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:186
+msgid "Verb"
+msgstr "Verbe"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:81
+msgid "Verification successful! Redirecting..."
+msgstr "Vérification réussie ! Redirection en cours..."
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:32
+msgid "Verified against Wiktionary on {groundedDate}"
+msgstr "Vérifié dans le Wiktionnaire le {groundedDate}"
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
+msgid "Verify"
+msgstr "Vérifier"
+
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:81
+msgid "Verify your email"
+msgstr "Vérifiez votre adresse e-mail"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:62
+msgid "Verify Your Email"
+msgstr "Vérifiez Votre Email"
+
+#: apps/native/src/features/auth/components/login-email-verify-view.tsx:69
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
+msgid "Verifying..."
+msgstr "Vérification..."
+
+#: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
+msgid "View Premium Demo"
+msgstr "Voir la démo Premium"
+
+#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:39
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:40
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:201
+msgid "Vocabulary"
+msgstr "Vocabulaire"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:208
+#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:78
+msgid "Vocabulary options"
+msgstr "Options de vocabulaire"
+
+#: apps/native/src/features/profile/components/danger-zone-view.tsx:31
+#: apps/web/src/features/profile/components/danger-zone-view.tsx:18
+msgid "Warning"
+msgstr "Attention"
+
+#: apps/web/src/features/review/components/processing-view.tsx:58
+msgid "Warnings"
+msgstr "Avertissements"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
+msgid "We'll ask your level next."
+msgstr "Nous vous demanderons votre niveau ensuite."
+
+#: apps/native/src/features/auth/components/account-removed-view.tsx:19
+#: apps/web/src/features/auth/components/account-removed-view.tsx:32
+msgid "We're sorry to see you go. Your account has been successfully removed."
+msgstr "Nous sommes désolés de vous voir partir. Votre compte a été supprimé avec succès."
+
+#: apps/native/src/features/auth/components/login-email-sent-view.tsx:37
+msgid "We've sent a verification email to:"
+msgstr "Nous avons envoyé un email de vérification à :"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:20
+msgid "We've sent a verification link to:"
+msgstr "Nous avons envoyé un lien de vérification à :"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:39
+msgid "Welcome to Flicktionary"
+msgstr "Bienvenue sur Flicktionary"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:41
+msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
+msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flicktionary traduira les mots et les phrases."
+
+#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
+msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
+msgstr "Lorsqu'activé, le traitement d'une session permet au LLM de scanner l'intégralité de la piste et de suggérer des termes adaptés à votre niveau. Lorsque désactivé, seuls vos surlignages manuels deviennent des cartes."
+
+#: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:21
+msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
+msgstr "Lorsqu'activé, sélectionner du texte en cours de visionnage génère une glose Haiku rapide en plus de créer le surlignage."
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:197
+msgid "Where did you hear this? Paste a sentence or leave blank."
+msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
+
+#: apps/web/src/features/sessions/components/highlight-sheet.tsx:37
+msgid "Why this form?"
+msgstr "Pourquoi cette forme ?"
+
+#: apps/web/src/features/review/components/grounding-badge.tsx:24
+msgid "Wiktionary, edited"
+msgstr "Wiktionary, modifié"
+
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
+msgid "Word or expression"
+msgstr "Mot ou expression"
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
+msgid "Yearly"
+msgstr "Annuel"
+
+#: apps/native/src/features/profile/components/profile-view.tsx:105
+#: apps/web/src/features/more/components/account-page.tsx:41
+msgid "You are a special user with free access. You have no active subscription."
+msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez pas d'abonnement actif."
+
+#: apps/web/src/features/checkout/components/checkout-success-view.tsx:26
+msgid "You are now subscribed to Premium!"
+msgstr "Vous êtes maintenant abonné à Premium !"
+
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:38
+msgid "You can try again in {countdown} seconds"
+msgstr "Vous pourrez réessayer dans {countdown} secondes"
+
+#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
+#: apps/web/src/features/billing/components/pricing-view.tsx:38
+msgid "You have already used your free trial."
+msgstr "Vous avez déjà utilisé votre essai gratuit."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:96
+msgid "You used your free trial"
+msgstr "Vous avez déjà utilisé votre essai gratuit"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:63
+msgid "You're all set"
+msgstr "Vous êtes prêt"
+
+#: apps/web/src/features/practice/components/practice-session-view.tsx:195
+msgid "You've reviewed every due term for this language. Come back later when more are ready."
+msgstr "Vous avez révisé tous les termes dus pour cette langue. Revenez plus tard lorsque d'autres seront prêts."
+
+#: apps/native/src/features/removals/api/removals-hooks.ts:13
+#: apps/web/src/features/removals/api/removals-hooks.ts:16
+msgid "Your account has been deleted successfully."
+msgstr "Votre compte a été supprimé avec succès."
+
+#: apps/web/src/features/billing/utils/pricing-view-utils.ts:94
+msgid "Your current plan"
+msgstr "Votre forfait actuel"
+
+#: apps/web/src/features/auth/components/login-email-sent-view.tsx:10
+msgid "your email address"
+msgstr "votre adresse e-mail"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:156
+msgid "Your highlights"
+msgstr "Vos surlignages"
+
+#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:34
+msgid "Your level in {languageName}"
+msgstr "Votre niveau en {languageName}"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:126
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:101
+msgid "Your name"
+msgstr "Votre nom"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:46
+msgid "Your native language"
+msgstr "Votre langue maternelle"
+
+#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:108
+#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:87
+msgid "your@email.com"
+msgstr "votre@email.com"
+
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
 #~ msgid "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
 #~ msgstr "- Accéder au service à des fins illégales ou en violation de toute loi locale, étatique, nationale ou internationale."
@@ -109,16 +2482,6 @@ msgstr ""
 #~ msgid "- Voice Recordings: To assist in pronunciation improvement, we collect and analyze recordings of your voice. These are used to create personalized voice clones. - App data: We collect and store data that you input into the app for language learning purposes. This includes your learning progress, custom settings, and interactions within the app. This data is utilized to tailor and enhance your learning experience, enabling personalized language learning pathways and recommendations."
 #~ msgstr "- Enregistrements vocaux : Pour vous aider à améliorer votre prononciation, nous collectons et analysons des enregistrements de votre voix. Ceux-ci sont utilisés pour créer des clones vocaux personnalisés. - Données de l'application : Nous collectons et stockons les données que vous saisissez dans l'application à des fins d'apprentissage des langues. Cela inclut votre progression d'apprentissage, vos paramètres personnalisés et vos interactions au sein de l'application. Ces données sont utilisées pour adapter et améliorer votre expérience d'apprentissage, en permettant des parcours et recommandations d'apprentissage linguistique personnalisés."
 
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
-msgid "(Current)"
-msgstr "(Actuel)"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
-msgid "(Expired)"
-msgstr "(Expiré)"
-
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:127
 #~ msgid "(i) your access to or use of or inability to access or use the service;"
 #~ msgstr "(i) votre accès ou utilisation du service ou votre incapacité à accéder ou à utiliser le service ;"
@@ -135,63 +2498,6 @@ msgstr "(Expiré)"
 #~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
 #~ msgstr "(iv) l'accès, l'utilisation ou la modification non autorisés de vos transmissions ou contenus, que ce soit sur la base d'une garantie, d'un contrat, d'un délit (y compris la négligence) ou de toute autre théorie juridique, que nous ayons été informés ou non de la possibilité de tels dommages."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:183
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:219
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:236
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:274
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:289
-msgid "(unset)"
-msgstr ""
-
-#. placeholder {0}: preview.cardCount
-#. placeholder {1}: preview.keptCardCount
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
-msgid "{0} card(s) — of which {1} kept"
-msgstr ""
-
-#. placeholder {0}: preview.highlightCount
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:52
-msgid "{0} highlight(s)"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:118
-msgid "{charCount} / {MAX_LENGTH} characters"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:188
-msgid "{discount}% off with your referral for {durationLimit} months!"
-msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} mois !"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:210
-msgid "{discount}% off with your referral for {durationLimit} years!"
-msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} ans !"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:186
-msgid "{discount}% off with your referral for 1 month!"
-msgstr "{discount}% de réduction avec votre parrainage pendant 1 mois !"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:208
-msgid "{discount}% off with your referral for 1 year!"
-msgstr "{discount}% de réduction avec votre parrainage pendant 1 an !"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:183
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:205
-msgid "{discount}% off with your referral forever!"
-msgstr "{discount}% de réduction avec votre parrainage à vie !"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:175
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:197
-msgid "{discountPercentage}% off thanks to your past referral!"
-msgstr "{discountPercentage} % de réduction grâce à votre ancien parrainage !"
-
-#: apps/web/src/features/sessions/components/process-button.tsx:65
-msgid "{highlightCount} highlight(s) ready."
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:62
-msgid "{learningDueCount} follow-up(s)"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:143
 #~ msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with your referral!"
 #~ msgstr "{monthlyDiscountPercentage}% de réduction pendant {monthlyDurationLimit} mois avec votre parrainage !"
@@ -203,34 +2509,6 @@ msgstr ""
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:140
 #~ msgid "{monthlyDiscountPercentage}% off with your referral!"
 #~ msgstr "{monthlyDiscountPercentage}% de réduction avec votre parrainage !"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:61
-msgid "{newCount} new"
-msgstr ""
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:56
-msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
-msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:224
-msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
-msgstr ""
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
-msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
-msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:60
-msgid "{reviewDueCount} due"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:63
-msgid "{totalKept} total"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:64
-msgid "{unprocessedHighlightCount} new highlight(s) to process."
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:125
 #~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
@@ -260,22 +2538,6 @@ msgstr ""
 #~ msgid "• Full communication records and interaction history"
 #~ msgstr "• Registres complets de communication et historique des interactions"
 
-#: apps/web/src/features/review/components/grounding-badge.tsx:48
-msgid "⚠ LLM only"
-msgstr ""
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:33
-msgid "✓ Wiktionary"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:73
-msgid "€{monthlyPriceFormatted}/month"
-msgstr "{monthlyPriceFormatted} €/mois"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:65
-msgid "€{yearlyPricePerMonth}/month"
-msgstr "{yearlyPricePerMonth} €/mois"
-
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:21
 #~ msgid "1. Agreement to Terms"
 #~ msgstr "1. Acceptation des conditions"
@@ -295,10 +2557,6 @@ msgstr "{yearlyPricePerMonth} €/mois"
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:30
 #~ msgid "2. Intellectual Property Rights"
 #~ msgstr "2. Droits de propriété intellectuelle"
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:34
-msgid "3 examples"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:66
 #~ msgid "3. Use of Information"
@@ -356,26 +2614,6 @@ msgstr ""
 #~ msgid "9. Your Rights"
 #~ msgstr "9. Vos droits"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:199
-msgid "A natural translation of the target example."
-msgstr ""
-
-#: apps/native/src/components/gates/force-update-gate.tsx:104
-msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
-msgstr "Une version plus récente de l'application est requise pour continuer. Veuillez mettre à jour vers la dernière version pour accéder à toutes les fonctionnalités et améliorations."
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:169
-msgid "A sentence using this term in its natural setting."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:135
-msgid "A short label for this session"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:106
-msgid "About"
-msgstr "À propos"
-
 #: apps/landing-page/src/app/[lang]/about/page.tsx:15
 #~ msgid "About | Flicktionary"
 #~ msgstr "À propos | Flicktionary"
@@ -384,190 +2622,17 @@ msgstr "À propos"
 #~ msgid "About Us"
 #~ msgstr "À propos de nous"
 
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:36
-msgid "Access exclusive premium features available to subscribers."
-msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les abonnés."
-
-#: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:59
-msgid "Account"
-msgstr ""
-
-#: apps/native/src/features/auth/components/account-removed-view.tsx:16
-#: apps/web/src/features/auth/components/account-removed-view.tsx:29
-msgid "Account Removed"
-msgstr "Compte supprimé"
-
-#: apps/native/src/features/profile/components/danger-zone-view.tsx:32
-#: apps/web/src/features/profile/components/danger-zone-view.tsx:19
-msgid "Actions in this section can lead to permanent data loss."
-msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:79
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:145
-msgid "Add a word"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:359
-msgid "Add form"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:187
-msgid "Adjective"
-msgstr ""
-
-#: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:108
-msgid "Admin settings"
-msgstr ""
-
-#: apps/native/src/features/admin/components/admin-settings-view.tsx:58
-#: apps/native/src/features/profile/components/profile-view.tsx:143
-msgid "Admin Settings"
-msgstr "Paramètres Administrateur"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:188
-msgid "Adverb"
-msgstr ""
-
-#: apps/web/src/components/ui/rate-buttons.tsx:20
-msgid "Again"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:39
-msgid "All"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:193
-msgid "All caught up"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:53
-msgid "All caught up for today · {followUpDelay} · {totalKept} total"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:50
-msgid "All caught up for today · {learningDueCount} follow-up(s) ready · {totalKept} total"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:56
-msgid "All caught up for today · {totalKept} total"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:63
-msgid "All highlights have been processed."
-msgstr ""
-
-#: apps/native/src/features/billing/hooks/use-paywall.ts:65
-msgid "An error occurred while attempting to manage your subscription."
-msgstr "Une erreur est survenue lors de la gestion de votre abonnement."
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:146
-#: apps/native/src/features/removals/api/removals-hooks.ts:14
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:126
-#: apps/web/src/features/removals/api/removals-hooks.ts:17
-msgid "An error occurred. Please try again."
-msgstr "Une erreur s'est produite. Veuillez réessayer."
-
-#: apps/native/src/features/auth/components/login-email-view.tsx:49
-msgid "An unexpected error occurred"
-msgstr "Une erreur inattendue s'est produite"
-
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:13
 #~ msgid "Android App"
 #~ msgstr "App Android"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:285
-msgid "Animacy"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:291
-msgid "Animate"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:132
-msgid "Another term already exists with that headword and sense."
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:27
 #~ msgid "App Store"
 #~ msgstr "App Store"
 
-#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
-#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
-msgid "Are you absolutely sure?"
-msgstr "Êtes-vous absolument sûr ?"
-
-#: apps/web/src/features/review/components/per-card-chat.tsx:49
-msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
-msgstr ""
-
-#: apps/web/src/features/review/components/per-card-chat.tsx:79
-msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:232
-#: apps/web/src/features/review/components/grammar-chips.tsx:74
-msgid "Aspect"
-msgstr ""
-
-#: apps/web/src/features/review/components/grammar-chips.tsx:81
-msgid "Aspect pair"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:248
-msgid "Aspect pair (counterpart headword)"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:120
-msgid "At least {MIN_LENGTH} characters needed"
-msgstr ""
-
-#: apps/web/src/features/auth/components/login-view.tsx:48
-#: apps/web/src/features/auth/components/login-view.tsx:60
-msgid "Authentication failed"
-msgstr "Échec de l'authentification"
-
-#: apps/web/src/features/more/components/account-page.tsx:78
-msgid "Avatar"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/modal-screen.tsx:21
-msgid "Back"
-msgstr ""
-
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:77
-msgid "Back to login"
-msgstr "Retour à la connexion"
-
-#: apps/native/src/features/auth/components/account-removed-view.tsx:29
-msgid "Back to Login"
-msgstr "Retour à la connexion"
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:197
-#: apps/web/src/features/practice/components/practice-start-view.tsx:41
-msgid "Back to Practice"
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:50
-msgid "Back to session"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:67
-msgid "best value"
-msgstr "meilleur rapport qualité-prix"
-
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:129
 #~ msgid "Best Value"
 #~ msgstr "Meilleur rapport qualité-prix"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:240
-msgid "Biaspectual"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:68
-msgid "Billed yearly at €{yearlyPriceTotal}"
-msgstr "Facturé annuellement à {yearlyPriceTotal} €"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:130
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
@@ -577,272 +2642,21 @@ msgstr "Facturé annuellement à {yearlyPriceTotal} €"
 #~ msgid "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
 #~ msgstr "En accédant et en utilisant notre site web, flicktionary.app, et tous les services associés, vous acceptez d'être lié par ces Conditions d'utilisation (« Conditions »)."
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
-msgid "Calibrates the difficult-words pass and the depth of explanations."
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
-#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:66
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:108
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:65
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:128
-msgid "Cancel"
-msgstr "Annuler"
-
-#: apps/web/src/features/review/components/focus-view.tsx:133
-#: apps/web/src/features/review/components/focus-view.tsx:140
-#: apps/web/src/features/review/components/focus-view.tsx:210
-msgid "Card"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:159
-msgid "Card {cardPosition} of {cardTotal}"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:141
-msgid "Card not found."
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/layout.tsx:50
 #~ msgid "Category of the app"
 #~ msgstr "Catégorie de l'application"
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:31
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:42
-msgid "CEFR level per language"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:162
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
-msgid "Change"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:272
-msgid "Chat"
-msgstr ""
-
-#: apps/web/src/features/auth/components/login-email-sent-view.tsx:19
-msgid "Check your email"
-msgstr "Vérifiez votre e-mail"
-
-#: apps/native/src/components/gates/force-update-gate.tsx:76
-msgid "Checking app version..."
-msgstr "Vérification de la version de l'application..."
-
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
-msgid "Choose .srt file"
-msgstr ""
-
-#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:103
-msgid "Choose a plan to unlock all features"
-msgstr "Choisissez un plan pour débloquer toutes les fonctionnalités"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:193
-msgid "Choose subtitles"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
 #~ msgid "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
 #~ msgstr "Choisissez le plan parfait pour votre parcours d'entraînement à l'accent. Options de tarification flexibles pour vous aider à atteindre votre accent parfait grâce à l'entraînement vocal propulsé par l'IA."
 
-#: apps/web/src/features/billing/components/pricing-view.tsx:140
-msgid "Choose your plan"
-msgstr "Choisissez votre forfait"
-
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:177
 #~ msgid "Choose Your Plan"
 #~ msgstr "Choisissez votre formule"
 
-#: apps/web/src/features/review/components/focus-view.tsx:255
-msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
-msgstr ""
-
-#: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
-msgid "Click the link in the email to continue."
-msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
-
-#: apps/web/src/features/navigation/components/modal-screen.tsx:21
-msgid "Close"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:83
-msgid "Collocations"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:224
-msgid "Common"
-msgstr ""
-
-#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:63
-msgid "Confirm deletion"
-msgstr "Confirmer la suppression"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:192
-msgid "Conjunction"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:107
-msgid "Contact us"
-msgstr ""
-
-#: apps/native/src/features/navigation/components/tabs-layout.tsx:84
-msgid "Contact Us"
-msgstr "Contact"
-
-#: apps/web/src/features/review/components/focus-view.tsx:45
-msgid "Context"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:190
-msgid "Context (optional)"
-msgstr ""
-
-#: apps/native/src/features/auth/components/login-email-view.tsx:94
-#: apps/web/src/features/auth/components/login-email-view.tsx:86
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:56
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:154
-msgid "Continue"
-msgstr "Continuer"
-
-#: apps/web/src/features/auth/components/login-view.tsx:96
-msgid "Continue with Apple"
-msgstr "Continuer avec Apple"
-
-#: apps/native/src/features/auth/components/login-email-view.tsx:68
-#: apps/native/src/features/auth/components/login-view.tsx:39
-#: apps/web/src/features/auth/components/login-view.tsx:85
-msgid "Continue with Email"
-msgstr "Continuer avec l'adresse e-mail"
-
-#: apps/native/src/features/auth/components/login-view.tsx:51
-#: apps/web/src/features/auth/components/login-view.tsx:90
-msgid "Continue with Google"
-msgstr "Continuer avec Google"
-
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:29
 #~ msgid "Copied!"
 #~ msgstr "Copié !"
-
-#: apps/native/src/features/billing/hooks/use-paywall.ts:60
-msgid "Could not display payment options at this time."
-msgstr "Impossible d'afficher les options de paiement en ce moment."
-
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:117
-msgid "Could not fetch a gloss. The highlight is still saved."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:95
-msgid "Could not import the pasted text."
-msgstr ""
-
-#: apps/native/src/features/billing/hooks/use-paywall.ts:37
-msgid "Could not load payment options at this time (no offerings)."
-msgstr "Impossible de charger les options de paiement en ce moment (aucune offre)."
-
-#: apps/native/src/features/billing/hooks/use-paywall.ts:45
-msgid "Could not load payment options. Please try again later."
-msgstr "Impossible de charger les options de paiement. Veuillez réessayer plus tard."
-
-#: apps/web/src/features/more/components/account-page.tsx:62
-msgid "Could not open billing settings."
-msgstr "Impossible d'ouvrir les paramètres de facturation."
-
-#: apps/native/src/features/profile/components/profile-view.tsx:61
-msgid "Could not open customer center."
-msgstr "Impossible d'ouvrir le centre client."
-
-#: apps/native/src/features/profile/components/profile-view.tsx:86
-msgid "Could not open the link. Please visit our website to manage your subscription."
-msgstr "Impossible d'ouvrir le lien. Veuillez visiter notre site web pour gérer votre abonnement."
-
-#: apps/native/src/features/profile/components/profile-view.tsx:71
-msgid "Could not open upgrade screen."
-msgstr "Impossible d'ouvrir l'écran de mise à niveau."
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:134
-msgid "Could not rename — please try again."
-msgstr ""
-
-#: apps/native/src/features/auth/components/user-setup-gate.tsx:79
-msgid "Could not set up your account. Please try restarting the app."
-msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'application."
-
-#: apps/web/src/features/practice/components/practice-start-view.tsx:40
-msgid "Couldn't start the session. Please try again."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
-msgid "Creating…"
-msgstr ""
-
-#: apps/native/src/components/gates/force-update-gate.tsx:109
-msgid ""
-"Current version: {currentVersion}\n"
-"Required version: {requiredVersion}"
-msgstr "Version actuelle : {currentVersion}\\nVersion requise : {requiredVersion}"
-
-#: apps/native/src/features/profile/components/profile-view.tsx:102
-#: apps/native/src/features/profile/components/profile-view.tsx:120
-msgid "Customer Center"
-msgstr "Centre Client"
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:111
-msgid "Danger zone"
-msgstr ""
-
-#: apps/native/src/features/profile/components/profile-view.tsx:146
-#: apps/web/src/features/profile/components/danger-zone-view.tsx:15
-msgid "Danger Zone"
-msgstr "Zone Dangereuse"
-
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:30
-#: apps/native/src/features/navigation/components/tabs-layout.tsx:99
-msgid "Dashboard"
-msgstr "Tableau de bord"
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:175
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:56
-msgid "Definition"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:203
-msgid "Definition (optional)"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:106
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:131
-msgid "Delete"
-msgstr ""
-
-#: apps/native/src/features/profile/components/danger-zone-view.tsx:38
-#: apps/web/src/features/profile/components/danger-zone-view.tsx:24
-#: apps/web/src/features/profile/components/danger-zone-view.tsx:29
-msgid "Delete my account"
-msgstr "Supprimer mon compte"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:131
-msgid "Deleting…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:164
-msgid "Detecting language…"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:204
-msgid "Display form (e.g. stress-marked)"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:138
-msgid "Done"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:87
-msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:16
 #~ msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
@@ -856,420 +2670,14 @@ msgstr ""
 #~ msgid "Download the App"
 #~ msgstr "Télécharger l'app"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:127
-msgid "downloads"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:52
-msgid "Due"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:37
-msgid "Due soonest"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:263
-msgid "e.g. + acc, от + gen"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:183
-msgid "e.g. подоконник, ran out of, à propos"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:252
-msgid "e.g. увидеть"
-msgstr ""
-
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
-msgid "Each new session uses up to this many new terms and review terms."
-msgstr ""
-
-#: apps/web/src/components/ui/rate-buttons.tsx:23
-msgid "Easy"
-msgstr ""
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:41
-msgid "Edited"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:99
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:85
-msgid "Email"
-msgstr "Email"
-
-#: apps/native/src/features/auth/components/login-email-view.tsx:74
-#: apps/web/src/features/auth/components/login-email-view.tsx:78
-msgid "Email address"
-msgstr "Adresse email"
-
-#: apps/native/src/features/auth/components/login-email-verify-view.tsx:62
-msgid "Email link is invalid or has expired"
-msgstr "Le lien n'est pas valide ou a expiré"
-
-#: apps/native/src/features/auth/components/login-email-sent-view.tsx:34
-msgid "Email Verification Sent"
-msgstr "Email de Vérification Envoyé"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:280
-msgid "End of list"
-msgstr ""
-
-#: apps/web/src/features/checkout/components/checkout-success-view.tsx:29
-msgid "Enjoy unlimited access to all our premium features and content."
-msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus premium."
-
-#: apps/native/src/components/gates/force-update-gate.tsx:70
-#: apps/native/src/features/billing/hooks/use-paywall.ts:65
-msgid "Error"
-msgstr "Erreur"
-
-#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:24
-msgid "error code: {userFacingErrorCode}"
-msgstr "code d'erreur : {userFacingErrorCode}"
-
-#: apps/native/src/features/auth/components/user-setup-gate.tsx:83
-msgid "Error setting up account..."
-msgstr "Erreur lors de la configuration du compte..."
-
-#: apps/native/src/features/user/api/user-hooks.ts:12
-#: apps/web/src/features/user/api/user-hooks.ts:27
-msgid "Error setting up user data"
-msgstr "Erreur lors de la configuration des données utilisateur"
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:84
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:36
-msgid "Etymology"
-msgstr ""
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:61
-msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
-msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement inconditionnel. Il suffit de nous le faire savoir en cliquant sur le bouton « Nous contacter » ci-dessus."
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:215
-msgid "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:59
-msgid "Example"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:33
-msgid "Explain"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:83
-msgid "Export vocabulary"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:67
-msgid "Exported {chunkCount} term(s)"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:83
-msgid "Exporting…"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:308
-msgid "Failed to complete onboarding"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:119
-msgid "Failed to create card"
-msgstr ""
-
-#: apps/web/src/features/checkout/api/checkout-hooks.ts:20
-msgid "Failed to create checkout session"
-msgstr "Échec de la création de la session de paiement"
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:24
-msgid "Failed to create session"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:92
-msgid "Failed to delete term"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:232
-msgid "Failed to export CSV"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:47
-msgid "Failed to export vocabulary"
-msgstr ""
-
-#: apps/native/src/features/billing/api/billing-hooks.ts:11
-#: apps/web/src/features/billing/api/billing-hooks.ts:12
-msgid "Failed to fetch subscription details"
-msgstr "Échec de la récupération des détails de l'abonnement"
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:130
-msgid "Failed to finalize text"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:144
-msgid "Failed to generate exploration"
-msgstr ""
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:75
-msgid "Failed to generate next text"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:108
-msgid "Failed to import pasted text"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:84
-msgid "Failed to import subtitles"
-msgstr ""
-
-#: apps/native/src/features/auth/components/revenuecat-initializer.tsx:38
-msgid "Failed to initialize payment system. Please restart the app."
-msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer l'application."
-
-#: apps/web/src/features/review/api/review-hooks.ts:47
-msgid "Failed to load card"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:29
-msgid "Failed to load cards"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:108
-msgid "Failed to load chat"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:239
-msgid "Failed to load highlights"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:12
-msgid "Failed to load languages"
-msgstr ""
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:47
-msgid "Failed to load practice session"
-msgstr ""
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:20
-msgid "Failed to load practice summary"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:120
-msgid "Failed to load preferences"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:148
-msgid "Failed to load session"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:160
-msgid "Failed to load session counts"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:204
-msgid "Failed to load session status"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:10
-msgid "Failed to load sessions"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:216
-msgid "Failed to load subtitle segments"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:156
-msgid "Failed to load surrounding context"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:38
-msgid "Failed to load vocabulary"
-msgstr ""
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:107
-msgid "Failed to record rating"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:48
-msgid "Failed to register movie"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:60
-msgid "Failed to register text"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:403
-msgid "Failed to remove highlight"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:190
-msgid "Failed to remove session"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:211
-msgid "Failed to rename term"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:255
-msgid "Failed to save highlight"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:131
-msgid "Failed to send chat message"
-msgstr ""
-
-#: apps/native/src/features/contact/api/contact-hooks.ts:16
-#: apps/web/src/features/contact/api/contact-hooks.ts:16
-msgid "Failed to send feedback. Please try again."
-msgstr "Impossible d'envoyer le retour. Veuillez réessayer."
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:134
-msgid "Failed to set CEFR level"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:292
-msgid "Failed to set native language"
-msgstr ""
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:34
-msgid "Failed to start practice session"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:276
-msgid "Failed to start processing"
-msgstr ""
-
-#: apps/native/src/features/admin/api/sentry-debug-hooks.ts:11
-#: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
-msgid "Failed to trigger Sentry message"
-msgstr "Échec du déclenchement du message Sentry"
-
-#: apps/web/src/features/review/api/review-hooks.ts:169
-msgid "Failed to update card fields"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:69
-msgid "Failed to update card status"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:97
-msgid "Failed to update card statuses"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:386
-msgid "Failed to update highlight"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:340
-msgid "Failed to update LLM-highlights setting"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:356
-msgid "Failed to update practice limits"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:324
-msgid "Failed to update tap-to-translate setting"
-msgstr ""
-
-#: apps/web/src/features/review/api/review-hooks.ts:191
-msgid "Failed to update term"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:96
-msgid "Failed to upload subtitles"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:75
-msgid "Fast gloss when you select text mid-watch"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:19
 #: apps/landing-page/src/app/[lang]/features/page.tsx:13
 #~ msgid "Features"
 #~ msgstr "Fonctionnalités"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:222
-msgid "Feminine"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
-msgid "Flicktionary"
-msgstr "Flicktionary"
-
 #: apps/landing-page/src/app/[lang]/page.tsx:16
 #~ msgid "Flicktionary - Perfect Your Accent with AI Voice Training"
 #~ msgstr "Flicktionary - Perfectionnez votre accent avec l'entraînement vocal par IA"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:37
-msgid "Follow-up in {hoursUntilFollowUp} hr"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:35
-msgid "Follow-up in {minutesUntilFollowUp} min"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:38
-msgid "Follow-up later"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:343
-msgid "Form (e.g. был)"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:83
-msgid "Free for {NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
-msgstr "Gratuit pendant {NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:80
-msgid "Free Trial"
-msgstr "Essai gratuit"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:372
-msgid "Free-form notes that don't fit the structured fields above."
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:65
-msgid "Frequency"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:246
-msgid "Full exploration"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:215
-#: apps/web/src/features/review/components/grammar-chips.tsx:67
-msgid "Gender"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:56
-msgid "General"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
-msgid "Generate card"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:265
-msgid "Generate full exploration"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:253
-msgid "Generating full exploration… this takes a few seconds."
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:159
-msgid "Generating the next text…"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:265
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
-msgid "Generating…"
-msgstr ""
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:69
-msgid "Get started"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:45
 #~ msgid "Get Started"
@@ -1279,94 +2687,9 @@ msgstr ""
 #~ msgid "Get the App"
 #~ msgstr "Obtenir l'App"
 
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:115
-msgid "Glossing…"
-msgstr ""
-
-#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:41
-msgid "Go Back"
-msgstr "Retour"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:141
-msgid "Go back to the source view and click Retry processing to try again."
-msgstr ""
-
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
 #~ msgid "Go to Dashboard"
 #~ msgstr "Aller au tableau de bord"
-
-#: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
-msgid "Go to Sessions"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:71
-msgid "Go to triage"
-msgstr ""
-
-#: apps/web/src/components/ui/rate-buttons.tsx:22
-msgid "Good"
-msgstr ""
-
-#: apps/web/src/features/review/components/grammar-chips.tsx:88
-msgid "Government"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
-msgid "Government / case requirement"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:172
-msgid "Grammar"
-msgstr ""
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:40
-msgid "Grammar fields have been edited manually"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:367
-msgid "Grammar notes"
-msgstr ""
-
-#: apps/web/src/components/ui/rate-buttons.tsx:21
-msgid "Hard"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:158
-msgid "Headword"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:79
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:57
-msgid "Help us improve Flicktionary"
-msgstr "Aidez-nous à améliorer Flicktionary"
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:129
-msgid "HI"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:118
-msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by re-keeping it in a session."
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:107
-msgid "Hide from vocabulary and Practice"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:131
-msgid "Highlight saved. Add a note or chips next time without tap-to-translate."
-msgstr ""
-
-#: apps/native/src/features/navigation/components/tabs-layout.tsx:92
-msgid "Home"
-msgstr "Accueil"
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
-msgid "How your free trial works"
-msgstr "Comment fonctionne votre essai gratuit"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:195
-msgid "Idiom"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
 #~ msgid "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
@@ -1376,23 +2699,6 @@ msgstr ""
 #~ msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
 #~ msgstr "Si vous avez des questions concernant cette Politique de confidentialité, veuillez nous contacter par e-mail : contact@flicktionary.app"
 
-#: apps/web/src/features/auth/components/account-removed-view.tsx:33
-msgid "If you'd like to create a new account, sign up again below."
-msgstr "Si vous souhaitez créer un nouveau compte, inscrivez-vous à nouveau ci-dessous."
-
-#: apps/native/src/features/auth/components/account-removed-view.tsx:25
-msgid "If you'd like to create a new account, you can sign up again."
-msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à nouveau."
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:238
-msgid "Imperfective"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:154
-msgid "Importing…"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
 #~ msgid "In no event shall flicktionary.app, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
 #~ msgstr "En aucun cas flicktionary.app, ni ses directeurs, employés, partenaires, agents, fournisseurs ou affiliés, ne pourront être tenus responsables de dommages indirects, accessoires, spéciaux, consécutifs ou punitifs, y compris, sans s'y limiter, la perte de profits, de données, d'utilisation, de fonds de commerce ou d'autres pertes intangibles, résultant de :"
@@ -1401,517 +2707,33 @@ msgstr ""
 #~ msgid "In-App Purchases"
 #~ msgstr "Achats intégrés"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
-msgid "Inanimate"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:308
-msgid "Indeclinable"
-msgstr ""
-
-#: apps/native/src/features/auth/components/revenuecat-initializer.tsx:48
-msgid "Initializing payments..."
-msgstr "Initialisation des paiements..."
-
-#: apps/native/src/features/auth/components/session-initializer.tsx:27
-msgid "Initializing..."
-msgstr "Initialisation..."
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
-msgid "Introduce your card details and get instant access"
-msgstr "Introduisez les détails de votre carte et obtenez accès instantané"
-
-#: apps/native/src/config/react-query-config.ts:77
-msgid "Invalid token. Please sign in again."
-msgstr "Jeton invalide. Veuillez vous reconnecter."
-
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:13
 #~ msgid "iOS App"
 #~ msgstr "App iOS"
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:64
-msgid "IPA"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:99
-msgid "Jump to the session this term came from"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:171
-#: apps/web/src/features/review/components/triage-row.tsx:41
-msgid "Keep"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:40
-msgid "Keep all"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:85
-msgid "L1 notes"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:337
-msgid "Label (e.g. past.m)"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:140
-msgid "Language of the text"
-msgstr ""
-
-#: apps/web/src/features/more/components/languages-page.tsx:14
-#: apps/web/src/features/more/components/more-tab-view.tsx:68
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:94
-msgid "Languages"
-msgstr ""
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:57
-msgid "Last day to cancel before first charge"
-msgstr "Dernier jour pour annuler avant le premier prélèvement"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
-msgid "Later"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:76
-msgid "Less formal:"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:88
-msgid "Let the model surface terms at your level on Process"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
-msgid "Level for {trackLanguage}: {cefrLabel}."
-msgstr ""
-
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:75
-msgid "Link expired or invalid"
-msgstr "Lien expiré ou invalide"
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:87
-#: apps/web/src/features/more/components/more-tab-view.tsx:94
-#: apps/web/src/features/review/components/triage-list-view.tsx:176
-#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:18
-msgid "LLM-suggested terms"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:56
-msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:134
-msgid "Loading card…"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:146
-msgid "Loading cards…"
-msgstr ""
-
-#: apps/web/src/features/review/components/per-card-chat.tsx:46
-msgid "Loading chat…"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:280
-msgid "Loading more…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-view.tsx:246
-msgid "Loading segments…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-view.tsx:196
-msgid "Loading session…"
-msgstr ""
 
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx:31
 #~ msgid "Loading subscription status..."
 #~ msgstr "Chargement du statut d'abonnement..."
 
-#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:31
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:102
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:108
-msgid "Loading..."
-msgstr "Chargement..."
-
-#: apps/web/src/features/more/components/account-page.tsx:67
-#: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:81
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:49
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:257
-msgid "Loading…"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:171
-msgid "Looks like {suggestedLanguageName} — switch?"
-msgstr ""
-
-#: apps/native/src/features/profile/components/profile-view.tsx:122
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:104
-#: apps/web/src/features/more/components/account-page.tsx:69
-msgid "Manage Subscription"
-msgstr "Gérer l'Abonnement"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:221
-msgid "Masculine"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/page.tsx:18
 #~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
 #~ msgstr "Maîtrisez une prononciation parfaite grâce au clonage vocal propulsé par l'IA. Pratiquez la parole dans votre langue cible avec votre propre voix. Essayez notre essai gratuit aujourd'hui !"
-
-#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:134
-msgid "Maybe later"
-msgstr "Peut-être plus tard"
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:81
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:68
-msgid "Message to the founders"
-msgstr "Message pour les fondateurs"
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
-msgid "Monthly"
-msgstr "Mensuel"
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:54
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
-msgid "More"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
-msgid "More formal:"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:81
-msgid "More frequent synonym"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:67
-msgid "More options"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:42
-msgid "Movies"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
-msgid "Name (optional)"
-msgstr "Nom (optionnel)"
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:194
-msgid "Native example"
-msgstr ""
-
-#: apps/web/src/features/settings/components/native-language-selector.tsx:16
-msgid "Native language"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:69
-msgid "Native language and CEFR levels"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:128
-msgid "Native language: {nativeLanguage}."
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:223
-msgid "Neuter"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:58
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:55
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:53
-msgid "New"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:133
-msgid "New session"
-msgstr ""
-
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:59
-msgid "New terms"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:200
-msgid "Next card"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:229
-msgid "Next text"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
 #~ msgid "No Card Required"
 #~ msgstr "Aucune carte requise"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:149
-msgid "No cards yet. Process the session to generate them."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
-msgid "No highlight selected."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:61
-msgid "No highlights — the LLM will suggest terms based on your level."
-msgstr ""
-
-#: apps/web/src/components/language-picker.tsx:99
-msgid "No languages found."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:75
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:243
-msgid "No matches."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:56
-msgid "No sessions in this filter."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:53
-msgid "No sessions yet. Start one to begin."
-msgstr ""
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:33
-msgid "No target languages yet. Levels are set the first time you start a session in a new language."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:135
-msgid "No text selected."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:117
-msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:243
-msgid "No vocabulary in this language yet."
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:85
-msgid "No vocabulary to practice yet"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:9
-msgid "No vocabulary yet"
-msgstr ""
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:47
-msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:330
-msgid "Notable forms"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/highlight-action-menu.tsx:66
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:76
-msgid "Note & tags"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:385
-msgid "Note saved"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:86
-msgid "Notes"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:185
-msgid "Noun"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:270
-msgid "Number-only"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:193
-msgid "Numeral"
-msgstr ""
-
-#: apps/native/src/components/gates/force-update-gate.tsx:65
-#: apps/native/src/components/gates/force-update-gate.tsx:70
-msgid "OK"
-msgstr "OK"
-
-#: apps/native/src/features/auth/components/login-email-sent-view.tsx:43
-msgid "Open Mail App"
-msgstr "Ouvrir l'Application Mail"
-
-#: apps/web/src/features/review/components/focus-view.tsx:54
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:98
-msgid "Open source"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:100
-msgid "OpenSubtitles search"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:74
-msgid "OpenSubtitles search failed"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:208
-msgid "Optional"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:208
-msgid "Optional contextual paraphrase in the target language."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:84
-msgid "Optional note for the LLM (what specifically confuses you?)"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:26
 #~ msgid "or copy links to"
 #~ msgstr "ou copier les liens vers"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:169
-msgid "Original language"
-msgstr ""
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:23
-msgid "Originally verified against Wiktionary on {groundedDate}, then edited"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:196
-msgid "Other"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
 #~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 #~ msgstr "Notre infrastructure de sécurité est continuellement surveillée, évaluée et améliorée pour répondre aux défis évolutifs de la cybersécurité. Nous maintenons des normes rigoureuses en matière de protection des données et suivons les meilleures pratiques de sécurité recommandées par les principales organisations de sécurité technologique. Pour une transparence totale, nous reconnaissons que tous les systèmes numériques nécessitent une vigilance constante, c'est pourquoi nous avons mis en place des protocoles de surveillance complets et de réponse rapide."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:179
-msgid "Part of speech"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:191
-msgid "Particle"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:112
-msgid "Paste a Reddit comment, news excerpt, Telegram post…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:86
-msgid "Paste a text"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:72
-msgid "Paste an article, comment, or post"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:107
-msgid "Paste your text"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:239
-msgid "Perfective"
-msgstr ""
-
-#: apps/web/src/features/profile/components/danger-zone-view.tsx:25
-msgid "Permanently delete your account and all associated data"
-msgstr "Supprimer définitivement votre compte et toutes les données associées"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:194
-msgid "Phrase"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:70
-msgid "Pick"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:162
-msgid "Pick a language"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:85
-msgid "Pick a language first"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:138
-msgid "Pick a movie"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:64
-msgid "Pick a movie and load its subtitles"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:28
 #~ msgid "Play Store"
 #~ msgstr "Play Store"
-
-#: apps/native/src/features/auth/components/login-email-sent-view.tsx:40
-msgid "Please check your inbox and click on the link to continue"
-msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour continuer"
-
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:18
-msgid "Please choose a .srt file."
-msgstr ""
-
-#: apps/native/src/features/auth/components/login-email-view.tsx:89
-#: apps/web/src/features/auth/components/login-email-view.tsx:47
-#: apps/web/src/features/auth/components/login-email-view.tsx:83
-msgid "Please enter a valid email address"
-msgstr "Veuillez entrer une adresse email valide"
-
-#: apps/native/src/features/profile/components/profile-view.tsx:82
-msgid "Please manage your subscription on our website: {webAccountUrl}"
-msgstr "Veuillez gérer votre abonnement sur notre site web : {webAccountUrl}"
-
-#: apps/web/src/features/more/components/account-page.tsx:58
-msgid "Please manage your subscription through the App Store or Google Play."
-msgstr "Veuillez gérer votre abonnement via l'App Store ou Google Play."
-
-#: apps/native/src/components/gates/force-update-gate.tsx:64
-msgid "Please manually update the app through your device's app store."
-msgstr "Veuillez mettre à jour manuellement l'application via le magasin d'applications de votre appareil."
-
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:76
-msgid "Please request a new verification link."
-msgstr "Veuillez demander un nouveau lien de vérification."
-
-#: apps/web/src/config/react-query-config.ts:36
-msgid "Please try again or refresh the page."
-msgstr "Veuillez réessayer ou actualiser la page."
-
-#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:60
-#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:48
-msgid "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
-msgstr "Veuillez saisir \"{EXPECTED_CONFIRMATION_TEXT}\""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:276
-msgid "Plural-only"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:74
-#: apps/web/src/features/practice/components/practice-session-view.tsx:167
-#: apps/web/src/features/practice/components/practice-start-view.tsx:36
-msgid "Practice"
-msgstr ""
-
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:51
-msgid "Practice limits"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:211
-msgid "Practice these terms"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:71
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:81
-msgid "Practice with a text"
-msgstr ""
 
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx:26
 #~ msgid "Premium"
@@ -1920,32 +2742,6 @@ msgstr ""
 #: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:44
 #~ msgid "Premium Demo"
 #~ msgstr "Démo Premium"
-
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
-#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:36
-msgid "Premium Features"
-msgstr "Fonctionnalités Premium"
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:159
-#: apps/web/src/features/practice/components/practice-start-view.tsx:45
-msgid "Preparing the session…"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:189
-msgid "Preposition"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:196
-msgid "Previous card"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:58
-msgid "Previous run failed. Click to retry."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:59
-msgid "Previous run produced no cards. Click to retry."
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:22
 #: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:80
@@ -1956,315 +2752,18 @@ msgstr ""
 #~ msgid "Pricing | Flicktionary"
 #~ msgstr "Tarifs | Flicktionary"
 
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:49
-msgid "Primary"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:21
 #~ msgid "Privacy Policy"
 #~ msgstr "Politique de Confidentialité"
-
-#: apps/web/src/features/sessions/components/process-button.tsx:73
-msgid "Process"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:87
-msgid "Process a session and keep some cards. They'll show up here automatically."
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:11
-msgid "Process a session and keep some cards. They'll show up here, browsable across every session."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:72
-msgid "Process new highlights"
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:27
-msgid "Processing"
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:43
-msgid "Processing failed"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:275
-msgid "Processing started"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:134
-msgid "Processing warnings"
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:33
-msgid "Processing your session…"
-msgstr ""
-
-#: apps/native/src/features/navigation/components/tabs-layout.tsx:106
-msgid "Profile"
-msgstr "Profil"
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:60
-msgid "Profile, subscription, sign-in"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:190
-msgid "Pronoun"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:110
-msgid "Quick gloss"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:368
-msgid "Quick gloss failed"
-msgstr ""
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx:43
-msgid "Rate"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:78
-msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:36
-msgid "Recently added"
-msgstr ""
-
-#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:33
-msgid "Redirecting..."
-msgstr "Redirection..."
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:323
-msgid "Reflexive"
-msgstr ""
-
-#: apps/web/src/config/react-query-config.ts:38
-#: apps/web/src/features/overlay/components/refresh-button.tsx:17
-msgid "Refresh"
-msgstr "Actualiser"
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:82
-msgid "Regionalism"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:66
-msgid "Register"
-msgstr ""
-
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:68
-msgid "Register alternatives"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:183
-msgid "Registering movie…"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:179
-#: apps/web/src/features/review/components/triage-row.tsx:49
-msgid "Reject"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:49
-msgid "Reject all"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:351
-#: apps/web/src/features/sessions/components/highlight-action-menu.tsx:74
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
-msgid "Remove"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:42
-msgid "Remove \"{sessionTitle}\"?"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-card.tsx:64
-msgid "Remove session"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
-msgid "Removing…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
-msgid "Replace file ({fileName})"
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:47
-msgid "Retry"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:70
-msgid "Retry processing"
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:47
-msgid "Retrying…"
-msgstr ""
-
-#: apps/native/src/features/auth/components/login-email-verify-view.tsx:75
-msgid "Return to Login"
-msgstr "Retour à la connexion"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:118
-msgid "Review"
-msgstr ""
-
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:78
-msgid "Review terms"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:110
-msgid "Save"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:149
-msgid "Save a term"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:80
-msgid "Save a term you heard or saw, no source needed"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:214
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:377
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:110
-msgid "Saving…"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:25
 #~ msgid "Scan the QR code to download the app"
 #~ msgstr "Scannez le code QR pour télécharger l'app"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:31
-msgid "Search a movie title…"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:228
-msgid "Search failed"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:230
-msgid "Search headword, translation, or definition…"
-msgstr ""
-
-#: apps/web/src/components/language-picker.tsx:88
-msgid "Search languages…"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:126
-#: apps/web/src/features/sessions/components/track-search-bar.tsx:16
-msgid "Search…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:109
-msgid "Searching OpenSubtitles…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:36
-msgid "Searching…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
-msgid "segments"
-msgstr ""
-
-#: apps/web/src/components/language-picker.tsx:53
-msgid "Select a language"
-msgstr ""
-
-#: apps/web/src/features/review/components/per-card-chat.tsx:82
-msgid "Send"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:147
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:130
-msgid "Send Message"
-msgstr "Envoyer le message"
-
-#: apps/native/src/features/auth/components/login-email-view.tsx:94
-msgid "Sending an email"
-msgstr "Envoi de l'email"
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:142
-#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:77
-#: apps/web/src/features/auth/components/login-email-view.tsx:86
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:123
-#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:63
-msgid "Sending..."
-msgstr "Envoi en cours..."
-
-#: apps/web/src/features/sessions/components/session-view.tsx:195
-#: apps/web/src/features/sessions/components/session-view.tsx:202
-msgid "Session"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-view.tsx:203
-msgid "Session not found."
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:189
-msgid "Session removed"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:37
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:38
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:34
-msgid "Sessions"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
-msgid "Set your native language first."
-msgstr ""
-
-#: apps/native/src/features/auth/components/user-setup-gate.tsx:75
-msgid "Setting up account..."
-msgstr "Configuration du compte..."
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:65
-msgid "Settings"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
-msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
-msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous lisons et répondons à chaque message !"
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:180
-msgid "Short paraphrase in the target language."
-msgstr ""
-
-#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:23
-msgid "Show {filteredCount} filtered out (below your level)"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:35
 #: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:118
 #~ msgid "Sign in"
 #~ msgstr "Se connecter"
-
-#: apps/native/src/features/profile/components/profile-view.tsx:155
-#: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:115
-msgid "Sign out"
-msgstr "Déconnexion"
-
-#: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:39
-msgid "Sign out success"
-msgstr "Déconnexion réussie"
-
-#: apps/web/src/features/auth/components/account-removed-view.tsx:35
-msgid "Sign up"
-msgstr "S'inscrire"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:277
-msgid "Singular-only"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:16
 #~ msgid "Some super cool text!"
@@ -2274,172 +2773,13 @@ msgstr ""
 #~ msgid "Some super cool title!"
 #~ msgstr "Un titre super cool !"
 
-#: apps/native/src/features/home/components/home-view.tsx:21
-msgid "Some text for the Home tab"
-msgstr "Du texte pour l'onglet Accueil"
-
-#: apps/native/src/config/react-query-config.ts:24
-msgid "Something went wrong"
-msgstr "Une erreur s'est produite"
-
-#: apps/web/src/config/react-query-config.ts:30
-msgid "Something went wrong."
-msgstr "Une erreur s'est produite."
-
-#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:23
-msgid "Something went wrong. Please refresh the page and try again."
-msgstr "Une erreur est survenue. Veuillez actualiser la page et réessayer."
-
-#: apps/web/src/features/review/components/processing-view.tsx:44
-msgid "Something went wrong. You can retry or go back to the session."
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:235
-msgid "Sort"
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:114
-msgid "Source"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:99
-msgid "Source was removed"
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:159
-msgid "Standalone"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:142
-msgid "Start"
-msgstr "Commencer"
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:91
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:111
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:113
-msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
-msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:63
-msgid "Start a movie session"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:166
 #~ msgid "Start Free Trial"
 #~ msgstr "Commencer l'essai gratuit"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:125
-msgid "Start practice"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:231
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:118
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
-msgid "Start session"
-msgstr ""
-
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx:91
-msgid "Start something new"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/process-button.tsx:69
-msgid "Starting…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-card.tsx:57
-msgid "Status"
-msgstr ""
-
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
-msgid "Subscribe Now"
-msgstr "S'abonner maintenant"
-
-#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:102
-msgid "Subscribe to access premium features"
-msgstr "S'abonner pour accéder aux fonctionnalités premium"
-
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:37
-msgid "Subscribe to unlock premium features and get the most out of the app."
-msgstr "Abonnez-vous pour débloquer les fonctionnalités premium et tirer le meilleur parti de l'application."
-
-#: apps/native/src/features/billing/hooks/use-paywall.ts:37
-#: apps/native/src/features/billing/hooks/use-paywall.ts:45
-#: apps/native/src/features/billing/hooks/use-paywall.ts:60
-msgid "Subscription Required"
-msgstr "Abonnement Requis"
-
-#: apps/web/src/features/checkout/components/checkout-success-view.tsx:25
-msgid "Subscription Successful!"
-msgstr "Abonnement réussi !"
-
-#: apps/native/src/config/react-query-config.ts:114
-#: apps/web/src/config/react-query-config.ts:125
-msgid "Success!"
-msgstr "Succès !"
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:35
-msgid "Synonyms"
-msgstr ""
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:74
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
-#: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:18
-msgid "Tap-to-translate"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:164
-msgid "Target example"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:87
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:153
-msgid "Target language"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:90
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:72
-msgid "Tell us what you think or describe any issues you encountered..."
-msgstr "Dites-nous ce que vous pensez ou décrivez tout problème rencontré..."
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:187
-msgid "Term deleted"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:24
 #~ msgid "Terms and Conditions"
 #~ msgstr "Conditions d'Utilisation"
-
-#: apps/native/src/features/admin/components/admin-settings-view.tsx:67
-msgid "Test Backend Sentry Message"
-msgstr "Tester le message Sentry backend"
-
-#: apps/native/src/features/admin/components/admin-settings-view.tsx:65
-msgid "Test Frontend Sentry Log"
-msgstr "Tester le journal Sentry Frontend"
-
-#: apps/native/src/features/admin/components/admin-settings-view.tsx:66
-msgid "Test Frontend Unhandled Error"
-msgstr "Tester l'erreur frontend non gérée"
-
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:92
-msgid "Text imported"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
-msgid "Texts"
-msgstr ""
-
-#: apps/native/src/features/contact/api/contact-hooks.ts:15
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:144
-#: apps/web/src/features/contact/api/contact-hooks.ts:15
-msgid "Thank you for your feedback!"
-msgstr "Merci pour votre retour !"
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:91
-msgid "The chosen subtitle track must match this language."
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
 #~ msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
@@ -2453,241 +2793,22 @@ msgstr ""
 #~ msgid "The data we collect serves several purposes:"
 #~ msgstr "Les données que nous collectons servent plusieurs objectifs :"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:23
-msgid "The file appears to be empty."
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:51
 #~ msgid "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
 #~ msgstr "eux-mêmes. Chaque utilisateur doit avoir le droit légal d'utiliser toutes les données vocales qu'il télécharge sur notre plateforme."
 
-#: apps/native/src/features/auth/api/authentication-hooks.ts:15
-#: apps/web/src/features/auth/api/authentication-hooks.ts:16
-msgid "There was an error sending the verification email. Please try again."
-msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. Veuillez réessayer."
-
-#: apps/web/src/features/billing/components/pricing-view.tsx:91
-msgid "There was an error. Please contact support."
-msgstr "Il y a eu une erreur. Veuillez contacter le support."
-
-#: apps/web/src/features/review/components/per-card-chat.tsx:70
-msgid "Thinking…"
-msgstr ""
-
-#: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:58
-#: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:43
-msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
-msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
-
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
 #~ msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
 #~ msgstr "Ce système de suppression automatisé est accessible 24h/24 et 7j/7 via votre tableau de bord de compte sécurisé. Pour une assistance supplémentaire, notre équipe dédiée à la confidentialité est disponible à contact@flicktionary.app pour traiter vos demandes avec le même niveau d'immédiateté et de minutie."
-
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
-msgid "This calibrates the difficult-words pass and the depth of explanations."
-msgstr ""
-
-#: apps/web/src/features/review/components/focus-view.tsx:256
-msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:44
-msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
-msgstr ""
-
-#: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
-msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
-msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous pouvez présenter les fonctionnalités premium ici."
-
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:58
-msgid "This session is processing — wait for it to finish before removing."
-msgstr ""
-
-#: apps/web/src/features/review/components/processing-view.tsx:35
-msgid "This usually takes 1–2 minutes. You can leave this page and come back."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:126
-msgid "Title"
-msgstr ""
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:38
-msgid "TMDB search failed"
-msgstr ""
-
-#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:41
-#: apps/web/src/features/billing/components/pricing-view.tsx:40
-msgid "To change your current plan type, please click on \"Manage Subscription\"."
-msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer l'Abonnement\"."
-
-#: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
-msgid "Today"
-msgstr "Aujourd'hui"
-
-#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:32
-msgid "Too Many Requests"
-msgstr "Trop de Requêtes"
-
-#: apps/native/src/config/react-query-config.ts:69
-msgid "Too many requests. Please try again later."
-msgstr "Trop de requêtes. Veuillez réessayer plus tard."
-
-#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:36
-msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
-msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet et appareil à la fois et réessayer."
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:199
-msgid "Track imported"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:186
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:57
-msgid "Translation"
-msgstr ""
-
-#: apps/web/src/features/review/components/editable-card-fields.tsx:190
-msgid "Translation in your native language."
-msgstr ""
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:108
-#: apps/web/src/features/sessions/components/session-view.tsx:231
-msgid "Triage"
-msgstr ""
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:65
-msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
-msgstr ""
-
-#: apps/web/src/features/billing/api/portal-session-hooks.ts:14
-msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
-msgstr "Impossible d'accéder à votre section de facturation en ce moment. Veuillez réessayer plus tard ou contacter le support si le problème persiste."
-
-#: apps/native/src/components/gates/force-update-gate.tsx:64
-msgid "Unable to open app store"
-msgstr "Impossible d'ouvrir le magasin d'applications"
-
-#: apps/native/src/components/gates/force-update-gate.tsx:70
-msgid "Unable to open app store. Please manually update the app."
-msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour manuellement l'application."
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:149
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:55
-msgid "Unknown year"
-msgstr ""
-
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
-msgid "Unlock Premium"
-msgstr "Débloquer Premium"
-
-#: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:208
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
-msgid "Untitled"
-msgstr ""
-
-#: apps/native/src/components/gates/force-update-gate.tsx:117
-msgid "Update Now"
-msgstr "Mettre à jour maintenant"
-
-#: apps/native/src/components/gates/force-update-gate.tsx:101
-msgid "Update Required"
-msgstr "Mise à jour requise"
-
-#: apps/native/src/features/profile/components/profile-view.tsx:113
-#: apps/web/src/features/more/components/account-page.tsx:68
-msgid "Upgrade to Premium"
-msgstr "Passer à Premium"
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:103
-msgid "Upload .srt"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:164
-msgid "Uploading…"
-msgstr ""
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
-msgid "Use"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:33
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:38
 #~ msgid "Use on Web"
 #~ msgstr "Utiliser sur Web"
 
-#: apps/native/src/features/admin/components/admin-settings-view.tsx:62
-msgid "Use these options to test Sentry error reporting in your environment."
-msgstr "Utilisez ces options pour tester le rapport d'erreurs Sentry dans votre environnement."
-
-#: apps/web/src/features/settings/components/native-language-selector.tsx:17
-msgid "Used as your L1 in the LLM prompts."
-msgstr ""
-
-#: apps/web/src/features/more/components/account-page.tsx:84
-msgid "User"
-msgstr ""
-
-#: apps/native/src/features/user/api/user-hooks.ts:11
-#: apps/web/src/features/user/api/user-hooks.ts:26
-msgid "User setup complete"
-msgstr "Configuration de l'utilisateur terminée"
-
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:89
 #~ msgid "Users retain all rights to any content they upload, submit, post, or display on or through the service. By uploading this content, users grant us a permission to use, reproduce, modify, publish, and display this content in connection with the service. In particular, this content will neither be sold or traded with any external service provider nor made public without user\"s explicit consent"
 #~ msgstr "Les utilisateurs conservent tous les droits sur tout contenu qu'ils téléchargent, soumettent, publient ou affichent sur ou via le service. En téléchargeant ce contenu, les utilisateurs nous accordent la permission d'utiliser, reproduire, modifier, publier et afficher ce contenu en lien avec le service. En particulier, ce contenu ne sera ni vendu ni échangé avec un prestataire de services externe, ni rendu public sans le consentement explicite de l'utilisateur"
-
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:186
-msgid "Verb"
-msgstr ""
-
-#: apps/native/src/features/auth/components/login-email-verify-view.tsx:81
-msgid "Verification successful! Redirecting..."
-msgstr "Vérification réussie ! Redirection en cours..."
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:32
-msgid "Verified against Wiktionary on {groundedDate}"
-msgstr ""
-
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
-msgid "Verify"
-msgstr "Vérifier"
-
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:81
-msgid "Verify your email"
-msgstr "Vérifiez votre adresse e-mail"
-
-#: apps/native/src/features/auth/components/login-email-verify-view.tsx:62
-msgid "Verify Your Email"
-msgstr "Vérifiez Votre Email"
-
-#: apps/native/src/features/auth/components/login-email-verify-view.tsx:69
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
-msgid "Verifying..."
-msgstr "Vérification..."
-
-#: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
-msgid "View Premium Demo"
-msgstr "Voir la démo Premium"
-
-#: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:39
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:40
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:201
-msgid "Vocabulary"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:208
-#: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:78
-msgid "Vocabulary options"
-msgstr ""
-
-#: apps/native/src/features/profile/components/danger-zone-view.tsx:31
-#: apps/web/src/features/profile/components/danger-zone-view.tsx:18
-msgid "Warning"
-msgstr "Attention"
-
-#: apps/web/src/features/review/components/processing-view.tsx:58
-msgid "Warnings"
-msgstr ""
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:107
 #~ msgid "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
@@ -2709,133 +2830,14 @@ msgstr ""
 #~ msgid "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
 #~ msgstr "Nous ne conserverons vos Données personnelles que le temps nécessaire aux fins énoncées dans cette Politique de confidentialité. Nous conserverons et utiliserons vos Données personnelles dans la mesure nécessaire pour nous conformer à nos obligations légales, résoudre les litiges et faire appliquer nos accords et politiques juridiques."
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
-msgid "We'll ask your level next."
-msgstr ""
-
-#: apps/native/src/features/auth/components/account-removed-view.tsx:19
-#: apps/web/src/features/auth/components/account-removed-view.tsx:32
-msgid "We're sorry to see you go. Your account has been successfully removed."
-msgstr "Nous sommes désolés de vous voir partir. Votre compte a été supprimé avec succès."
-
-#: apps/native/src/features/auth/components/login-email-sent-view.tsx:37
-msgid "We've sent a verification email to:"
-msgstr "Nous avons envoyé un email de vérification à :"
-
-#: apps/web/src/features/auth/components/login-email-sent-view.tsx:20
-msgid "We've sent a verification link to:"
-msgstr "Nous avons envoyé un lien de vérification à :"
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:39
-msgid "Welcome to Flicktionary"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
 #~ msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
 #~ msgstr "Bienvenue sur flicktionary.app. Nous nous engageons à protéger votre vie privée. Cette Politique de confidentialité décrit comment nous collectons, traitons, stockons et protégeons vos données personnelles lorsque vous interagissez avec nos services."
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:41
-msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
-msgstr ""
-
-#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
-msgstr ""
-
-#: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:21
-msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:197
-msgid "Where did you hear this? Paste a sentence or leave blank."
-msgstr ""
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:37
-msgid "Why this form?"
-msgstr ""
-
-#: apps/web/src/features/review/components/grounding-badge.tsx:24
-msgid "Wiktionary, edited"
-msgstr ""
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
-msgid "Word or expression"
-msgstr ""
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
-msgid "Yearly"
-msgstr "Annuel"
-
-#: apps/native/src/features/profile/components/profile-view.tsx:105
-#: apps/web/src/features/more/components/account-page.tsx:41
-msgid "You are a special user with free access. You have no active subscription."
-msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez pas d'abonnement actif."
-
-#: apps/web/src/features/checkout/components/checkout-success-view.tsx:26
-msgid "You are now subscribed to Premium!"
-msgstr "Vous êtes maintenant abonné à Premium !"
-
-#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:38
-msgid "You can try again in {countdown} seconds"
-msgstr "Vous pourrez réessayer dans {countdown} secondes"
-
-#: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
-#: apps/web/src/features/billing/components/pricing-view.tsx:38
-msgid "You have already used your free trial."
-msgstr "Vous avez déjà utilisé votre essai gratuit."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:110
 #~ msgid "You understand and agree that your use of our service is at your sole risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. We expressly disclaim all warranties, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
 #~ msgstr "Vous comprenez et acceptez que votre utilisation de notre service se fait à vos seuls risques. Le service est fourni « TEL QUEL » et « SELON DISPONIBILITÉ ». Nous déclinons expressément toutes garanties, expresses ou implicites, y compris, mais sans s'y limiter, les garanties implicites de qualité marchande, d'adéquation à un usage particulier et de non-contrefaçon."
 
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:96
-msgid "You used your free trial"
-msgstr "Vous avez déjà utilisé votre essai gratuit"
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:63
-msgid "You're all set"
-msgstr ""
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:195
-msgid "You've reviewed every due term for this language. Come back later when more are ready."
-msgstr ""
-
-#: apps/native/src/features/removals/api/removals-hooks.ts:13
-#: apps/web/src/features/removals/api/removals-hooks.ts:16
-msgid "Your account has been deleted successfully."
-msgstr "Votre compte a été supprimé avec succès."
-
-#: apps/web/src/features/billing/utils/pricing-view-utils.ts:94
-msgid "Your current plan"
-msgstr "Votre forfait actuel"
-
-#: apps/web/src/features/auth/components/login-email-sent-view.tsx:10
-msgid "your email address"
-msgstr "votre adresse e-mail"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:156
-msgid "Your highlights"
-msgstr ""
-
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:98
 #~ msgid "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
 #~ msgstr "Vos informations, y compris les Données personnelles, peuvent être transférées et conservées sur des ordinateurs situés en dehors de votre juridiction où les lois sur la protection des données peuvent différer de celles de votre juridiction."
-
-#: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:34
-msgid "Your level in {languageName}"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:126
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:101
-msgid "Your name"
-msgstr "Votre nom"
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:46
-msgid "Your native language"
-msgstr ""
-
-#: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:108
-#: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:87
-msgid "your@email.com"
-msgstr "votre@email.com"
