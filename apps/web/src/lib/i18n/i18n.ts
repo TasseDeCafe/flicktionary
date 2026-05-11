@@ -1,6 +1,10 @@
 import type { Messages } from '@lingui/core'
 import { i18n } from '@lingui/core'
-import { ENGLISH_LOCALE, FRENCH_LOCALE, Locale /* , POLISH_LOCALE, SPANISH_LOCALE */ } from '@flicktionary/i18n/i18n-config'
+import {
+  ENGLISH_LOCALE,
+  FRENCH_LOCALE,
+  Locale /* , POLISH_LOCALE, SPANISH_LOCALE */,
+} from '@flicktionary/i18n/i18n-config'
 import { messages as enMessages } from '@flicktionary/i18n/locales/en/messages.po'
 // import { messages as esMessages } from '@flicktionary/i18n/locales/es/messages.po'
 import { messages as frMessages } from '@flicktionary/i18n/locales/fr/messages.po'
