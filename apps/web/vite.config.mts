@@ -18,7 +18,7 @@ export default defineConfig({
     // This could be optimized by only running babel on files whose source code contains a lingui macro import
     // see: https://github.com/lingui/js-lingui/issues/2477#issuecomment-4068015629
     babel({
-      plugins: ['babel-plugin-react-compiler', '@lingui/babel-plugin-lingui-macro'],
+      plugins: ['@lingui/babel-plugin-lingui-macro', 'babel-plugin-react-compiler'],
     }),
     lingui(),
     sentryVitePlugin({
