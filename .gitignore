@@ -73,8 +73,6 @@ next-env.d.ts
 # Local commit message template
 gitmessage
 
-/docs
-
 # Lingui
 /packages/i18n/locales/**/*.ts
 /nextjs-babel/
