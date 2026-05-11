@@ -67,6 +67,7 @@ import { PracticeRatingsRepository } from './transport/database/practice-ratings
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { PracticeRouter } from './router/practice-router/practice-router'
+import { LanguagesRouter } from './router/languages-router/languages-router'
 
 export type AppDependencies = {
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
@@ -337,6 +338,7 @@ export const buildApp = ({
   app.use(API_V1, CardChatRouter(cardChatMessagesRepository, cardsRepository, chatDependencies))
   app.use(API_V1, ChunksRouter(userLookupsRepository))
   app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
+  app.use(API_V1, LanguagesRouter())
   app.use(
     API_V1,
     PracticeRouter({

@@ -962,6 +962,72 @@ The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-
     block additionally hides on `session.contentSourceType === 'adhoc'`
     for the rare direct-URL-entry case where the session does load.
 
+- **Backend-driven language auto-detect (2026-05-11).** Replaces the
+  `franc-min` client-side detector with a Haiku call on the server.
+  franc-min only covers 13 of the 20 supported languages (no CJK, no
+  Bengali/Tamil/Telugu/Korean); the next-tier `franc` data adds
+  Myanmar/Ethiopic/Hebrew but still misses CJK + Indic-S without the
+  ~600 KB `franc-all` dump. Don't re-introduce the bundled-dictionary
+  approach — script-coverage gaps are the load-bearing reason it was
+  replaced.
+  - **Contract.** `packages/api-client/src/orpc-contracts/languages-contract.ts`
+    exposes `detect: POST /languages/detect`, input
+    `{ text: string min 1 max 20000 }`, output
+    `{ data: { code: SupportedLanguageCode | null } }`. Registered in
+    `root-contract.ts` as `languages`.
+    `supportedLanguageCodeSchema = z.enum(SUPPORTED_LANGUAGE_CODES)`
+    lives in `packages/core/src/constants/supported-languages.ts`. zod 4
+    accepts a `readonly T[]` directly — no
+    `as unknown as [T, ...T[]]` tuple cast needed (the cast pattern is a
+    zod-v3 holdover).
+  - **Pass.** `apps/backend/src/transport/third-party/anthropic/passes/language-detection-pass.ts`
+    mirrors `fast-gloss-pass.ts`: single `messages.create`, no tool use
+    (plain text out is cheaper than a tool schema for a 2-char response),
+    `MODEL_HAIKU`, `max_tokens: 16`, input truncated to first 1000 chars.
+    System prompt enumerates the allowed 639-1 codes from
+    `SUPPORTED_LANGUAGE_CODES` at module load and instructs the model to
+    emit `und` for anything else. Parser lowercases + runs through
+    `isSupportedLanguageCode`; everything else (including `und`) → null.
+  - **Router.** `apps/backend/src/router/languages-router/languages-router.ts`
+    is a single-handler oRPC router with the standard
+    `errorBoundaryMiddleware` + `OrpcContext` setup. Wired in `app.ts`
+    after `UserPrefsRouter` (no extra deps — the pass is self-contained).
+  - **Frontend hook.** `apps/web/src/features/sessions/api/languages-hooks.ts::useDetectLanguage`
+    sets `meta.showErrorModal: false` — detection is advisory, never
+    block the UX on a backend hiccup.
+  - **Call sites.**
+    - `text-paste-input.tsx`: debounced 300 ms (`useDebouncedValue`) on
+      the textarea, fires `detectLanguageMutation`, applies
+      `setLanguage(code)` on success unless `languageTouched` is set.
+      Don't re-introduce the synchronous `detectLanguage()` helper —
+      detection is async now.
+    - `subtitle-source-picker.tsx`: `mutateAsync` on file load, then
+      `handleUpload` with the detected (or current) code. Shows a small
+      "Detecting language…" line while the call is in flight. The
+      `stripSrtForDetection` helper still strips timecodes + tags + caps
+      at 30 lines before sending to Haiku.
+    - `new-adhoc-card-wizard.tsx`: **does not auto-apply.** Default stays
+      `lastTargetLanguage` MRU. If the typed `headword + context` is
+      detected as a different language, an amber
+      `Looks like German — switch?` button appears below the picker
+      (`text-amber-700 self-start text-xs underline-offset-2 hover:underline`).
+      One click applies the switch and sets `languageTouched=true` so the
+      hint stays gone for the rest of the session. Don't re-introduce
+      auto-apply for adhoc words — single-word homographs (`importar`
+      ES/PT, `casa` ES/IT/PT, `fin` ES/FR) make the override wrong often
+      enough to be annoying.
+  - **Deleted.** `apps/web/src/features/sessions/utils/detect-language.ts`
+    and the `franc` dep (`pnpm-workspace.yaml` + `apps/web/package.json`,
+    lockfile refreshed). The transient `iso6393` array on
+    `SUPPORTED_LANGUAGES` (added briefly while exploring a franc upgrade
+    earlier in the day) was also dropped — language codes are decided
+    server-side now.
+  - **`SUPPORTED_LANGUAGE_CODES`** export is a `readonly SupportedLanguageCode[]`
+    derived from `SUPPORTED_LANGUAGES.map(l => l.code)` and is the single
+    source of truth that feeds both the zod schema and the Haiku system
+    prompt. Adding a 21st supported language is now one line in
+    `SUPPORTED_LANGUAGES` and nothing else.
+
 **Remaining:**
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still

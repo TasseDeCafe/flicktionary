@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 // Top 20 most-spoken languages, used for both native and target language pickers.
 // `code` is ISO 639-1 (matches `target_language` / `native_language` storage).
 export const SUPPORTED_LANGUAGES = [
@@ -25,6 +27,10 @@ export const SUPPORTED_LANGUAGES = [
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 export type SupportedLanguageCode = SupportedLanguage['code']
+
+export const SUPPORTED_LANGUAGE_CODES = SUPPORTED_LANGUAGES.map((l) => l.code) as readonly SupportedLanguageCode[]
+
+export const supportedLanguageCodeSchema = z.enum(SUPPORTED_LANGUAGE_CODES)
 
 export const isSupportedLanguageCode = (code: string): code is SupportedLanguageCode =>
   SUPPORTED_LANGUAGES.some((l) => l.code === code)

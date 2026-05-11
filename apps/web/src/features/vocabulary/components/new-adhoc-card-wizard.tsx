@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { LanguagePicker } from '@/components/language-picker'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
+import { useDetectLanguage } from '@/features/sessions/api/languages-hooks'
+import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
 import { useCreateAdhocCard } from '../api/adhoc-hooks'
 
@@ -34,11 +37,49 @@ export const NewAdhocCardWizard = () => {
     [prefs]
   )
   const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
+  const [languageTouched, setLanguageTouched] = useState(false)
   const effectiveTarget = targetLanguage ?? prefs?.lastTargetLanguage ?? cefrSetLanguages[0] ?? null
 
   const [headword, setHeadword] = useState('')
   const [context, setContext] = useState('')
   const [showCefrDialog, setShowCefrDialog] = useState<string | null>(null)
+
+  // Advisory language hint: detection runs on what the user types, but the
+  // picker default (sticky MRU) stays authoritative. We only nudge when the
+  // detector disagrees, and a single manual pick dismisses the nudge for the
+  // rest of the session — homograph-style false positives stay non-disruptive.
+  const [suggestedCode, setSuggestedCode] = useState<string | null>(null)
+  const { mutate: detectLanguageMutation } = useDetectLanguage()
+  const detectionInput = useMemo(
+    () => [headword.trim(), context.trim()].filter(Boolean).join('\n'),
+    [headword, context]
+  )
+  const debouncedDetectionInput = useDebouncedValue(detectionInput, 300)
+  useEffect(() => {
+    if (languageTouched) return
+    if (debouncedDetectionInput.length === 0) {
+      setSuggestedCode(null)
+      return
+    }
+    detectLanguageMutation(
+      { text: debouncedDetectionInput },
+      {
+        onSuccess: (response) => {
+          if (languageTouched) return
+          setSuggestedCode(response.data.code)
+        },
+      }
+    )
+  }, [debouncedDetectionInput, languageTouched, detectLanguageMutation])
+
+  const showLanguageHint = !languageTouched && !!suggestedCode && suggestedCode !== effectiveTarget
+  const suggestedLanguageName = suggestedCode ? getLanguageName(suggestedCode) : ''
+  const acceptLanguageSuggestion = () => {
+    if (!suggestedCode) return
+    setTargetLanguage(suggestedCode)
+    setLanguageTouched(true)
+    setSuggestedCode(null)
+  }
 
   const trimmedHeadword = headword.trim()
   const trimmedContext = context.trim()
@@ -114,10 +155,22 @@ export const NewAdhocCardWizard = () => {
                 <LanguagePicker
                   id='target-language'
                   value={effectiveTarget}
-                  onChange={(code) => setTargetLanguage(code)}
+                  onChange={(code) => {
+                    setLanguageTouched(true)
+                    setTargetLanguage(code)
+                  }}
                   placeholder={t`Pick a language`}
                 />
               </div>
+              {showLanguageHint && (
+                <button
+                  type='button'
+                  onClick={acceptLanguageSuggestion}
+                  className='self-start text-xs text-amber-700 underline-offset-2 hover:underline'
+                >
+                  {t`Looks like ${suggestedLanguageName} — switch?`}
+                </button>
+              )}
             </div>
 
             <div className='flex flex-col gap-2'>

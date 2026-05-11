@@ -4,10 +4,10 @@ import { getLanguageName } from '@flicktionary/core/constants/supported-language
 import { Button } from '@/components/ui/button'
 import { LanguagePicker } from '@/components/language-picker'
 import { useImportFromOpenSubtitles, useSearchOpenSubtitles, useUploadSrt } from '../api/sessions-hooks'
+import { useDetectLanguage } from '../api/languages-hooks'
 import { SrtUploadInput } from './srt-upload-input'
-import { detectLanguage } from '../utils/detect-language'
 
-// Strip SRT timecodes / sequence numbers / inline tags so franc sees pure dialogue.
+// Strip SRT timecodes / sequence numbers / inline tags so the detector sees pure dialogue.
 const SRT_LINE_PATTERN = /^\s*(\d+|\d{2}:\d{2}:\d{2}[,.]\d{3} --> \d{2}:\d{2}:\d{2}[,.]\d{3})\s*$/
 const stripSrtForDetection = (srt: string): string =>
   srt
@@ -42,6 +42,7 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
 
   const { mutate: importFromOs, isPending: isImporting } = useImportFromOpenSubtitles()
   const { mutate: uploadSrt, isPending: isUploading } = useUploadSrt()
+  const { mutateAsync: detectLanguageAsync, isPending: isDetecting } = useDetectLanguage()
   const [importingFileId, setImportingFileId] = useState<number | null>(null)
 
   const handleImportOs = (fileId: number, trackLanguage: string) => {
@@ -145,15 +146,23 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
       {tab === 'upload' && (
         <div className='flex flex-col gap-3'>
           <SrtUploadInput
-            onLoaded={(content) => {
-              const detected = detectLanguage(stripSrtForDetection(content))
+            onLoaded={async (content) => {
+              let detected: string | null = null
+              try {
+                const response = await detectLanguageAsync({ text: stripSrtForDetection(content) })
+                detected = response.data.code
+              } catch {
+                // detection is advisory — fall through to the picker's current value
+              }
               if (detected && detected !== targetLanguage) {
                 setTargetLanguage(detected)
               }
               handleUpload(content, detected ?? targetLanguage)
             }}
           />
-          {isUploading && <p className='text-muted-foreground text-sm'>{t`Uploading…`}</p>}
+          {(isDetecting || isUploading) && (
+            <p className='text-muted-foreground text-sm'>{isDetecting ? t`Detecting language…` : t`Uploading…`}</p>
+          )}
         </div>
       )}
     </div>

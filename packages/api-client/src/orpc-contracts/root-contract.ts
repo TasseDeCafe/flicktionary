@@ -18,6 +18,7 @@ import { cardChatContract } from './card-chat-contract'
 import { chunksContract } from './chunks-contract'
 import { userPrefsContract } from './user-prefs-contract'
 import { practiceContract } from './practice-contract'
+import { languagesContract } from './languages-contract'
 
 export const rootOrpcContract = {
   authentication: authenticationContract,
@@ -40,4 +41,5 @@ export const rootOrpcContract = {
   chunks: chunksContract,
   userPrefs: userPrefsContract,
   practice: practiceContract,
+  languages: languagesContract,
 } as const

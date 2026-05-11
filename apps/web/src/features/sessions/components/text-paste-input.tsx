@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label'
 import { LanguagePicker } from '@/components/language-picker'
 import { toast } from 'sonner'
 import { useCreateContentSourceFromText, useImportFromPaste } from '../api/sessions-hooks'
+import { useDetectLanguage } from '../api/languages-hooks'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
-import { detectLanguage } from '../utils/detect-language'
 
 const MIN_LENGTH = 50
 const MAX_LENGTH = 20_000
@@ -43,6 +43,7 @@ export const TextPasteInput = ({ onImported, defaultLanguage = 'en' }: Props) =>
 
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromText()
   const { mutate: importFromPaste, isPending: isImporting } = useImportFromPaste()
+  const { mutate: detectLanguageMutation } = useDetectLanguage()
   const isPending = isCreatingSource || isImporting
 
   // Auto-suggest a title from the paste; the user can override.
@@ -51,14 +52,23 @@ export const TextPasteInput = ({ onImported, defaultLanguage = 'en' }: Props) =>
     setTitle(suggestTitleFromText(text))
   }, [text, titleTouched])
 
-  // Auto-detect language with franc once the textarea has enough signal.
+  // Auto-detect language via the backend Haiku call once the user pauses typing.
   // Skip once the user manually picks — their override always wins.
   const debouncedText = useDebouncedValue(text, 300)
   useEffect(() => {
     if (languageTouched) return
-    const detected = detectLanguage(debouncedText)
-    if (detected && detected !== language) setLanguage(detected)
-  }, [debouncedText, languageTouched, language])
+    if (debouncedText.trim().length === 0) return
+    detectLanguageMutation(
+      { text: debouncedText },
+      {
+        onSuccess: (response) => {
+          if (languageTouched) return
+          const code = response.data.code
+          if (code && code !== language) setLanguage(code)
+        },
+      }
+    )
+  }, [debouncedText, languageTouched, language, detectLanguageMutation])
 
   const charCount = text.length
   const trimmedTitle = title.trim()
