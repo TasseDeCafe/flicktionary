@@ -38,25 +38,11 @@ export const StripeService = (
       return null
     }
     const referral: string | null = user.referral
-    let customerId: string | null = null
+    let customerId: string
     if (user?.stripe_customer_id) {
       customerId = user.stripe_customer_id
     } else {
-      const freshlyCreatedCustomerId: string | null = await stripeApi.createCustomerWithMetadata(
-        userId,
-        email,
-        referral
-      )
-      if (!freshlyCreatedCustomerId) {
-        logWithSentry({
-          message: 'createCheckoutSession - Stripe customer could not be created for userId',
-          params: {
-            userId,
-            referral,
-          },
-        })
-        return null
-      }
+      const freshlyCreatedCustomerId = await stripeApi.createCustomerWithMetadata(userId, email, referral)
 
       const hasUpdatedUserStripeCustomerId = await usersRepository.updateUserStripeCustomerId(
         userId,
@@ -125,10 +111,7 @@ export const StripeService = (
     userEmail: string,
     referral: string | null
   ): Promise<StripeCustomerId | null> => {
-    const customerId: string | null = await stripeApi.createCustomerWithMetadata(userId, userEmail, referral)
-    if (!customerId) {
-      return null
-    }
+    const customerId = await stripeApi.createCustomerWithMetadata(userId, userEmail, referral)
 
     const hasUpdatedUserStripeCustomerId = await usersRepository.updateUserStripeCustomerId(userId, customerId)
     if (!hasUpdatedUserStripeCustomerId) {

@@ -1,12 +1,13 @@
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft } from 'lucide-react'
+import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button.tsx'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx'
 import { logWithSentry } from '@/lib/analytics/log-with-sentry.ts'
 import { useTriggerSentryMessageMutation } from '@/features/admin/api/sentry-debug-hooks.ts'
-import { Route as profileRoute } from '@/app/routes/_authenticated/_tabs/profile'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
 
 export const AdminSettingsView = () => {
+  const { t } = useLingui()
   const navigate = useNavigate()
   const triggerSentryMessageMutation = useTriggerSentryMessageMutation()
 
@@ -42,20 +43,8 @@ export const AdminSettingsView = () => {
   }
 
   return (
-    <div className='flex min-h-screen flex-col'>
-      {/* Header */}
-      <header className='bg-background sticky top-0 z-10 flex h-14 items-center border-b px-4'>
-        <button
-          onClick={() => navigate({ to: profileRoute.to })}
-          className='flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100'
-        >
-          <ArrowLeft className='h-6 w-6' />
-        </button>
-        <h1 className='ml-2 text-lg font-semibold'>Admin Settings</h1>
-      </header>
-
-      {/* Main content */}
-      <main className='flex flex-1 justify-center p-4'>
+    <ModalScreen onClose={() => navigate({ to: '/more' })} closeIcon='chevron' title={t`Admin settings`}>
+      <main className='flex flex-1 justify-center overflow-y-auto p-4'>
         <div className='w-full max-w-3xl'>
           <Card>
             <CardHeader>
@@ -84,6 +73,6 @@ export const AdminSettingsView = () => {
           </Card>
         </div>
       </main>
-    </div>
+    </ModalScreen>
   )
 }

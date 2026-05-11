@@ -15,6 +15,6 @@ export const mockCreateCheckoutSessionUrl = async (
   referral: string | null,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   couponId: string | undefined
-): Promise<string | null> => {
+): Promise<string> => {
   return 'https://checkout.stripe.com/pay/cs_test123'
 }

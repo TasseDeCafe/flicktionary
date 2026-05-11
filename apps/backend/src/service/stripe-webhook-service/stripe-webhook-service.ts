@@ -16,22 +16,23 @@ export const StripeWebhookService = (
   usersRepository: UsersRepositoryInterface
 ): StripeWebhookServiceInterface => {
   const syncStripeSubscriptionWithOurDbAndCache = async (customerId: string): Promise<boolean> => {
-    const [subscriptions, dbUser]: [ListStripeSubscriptionsResponse | null, DbUser | null] = await Promise.all([
-      stripeApi.listAllSubscriptions(customerId),
-      usersRepository.findUserByStripeCustomerId(customerId),
-    ])
+    let subscriptions: ListStripeSubscriptionsResponse
+    let dbUser: DbUser | null
+    try {
+      // Catch here so the webhook router can keep its specific
+      // "subscription was not synced successfully" log; without this, an
+      // infra throw would only surface as the generic boundary log.
+      ;[subscriptions, dbUser] = await Promise.all([
+        stripeApi.listAllSubscriptions(customerId),
+        usersRepository.findUserByStripeCustomerId(customerId),
+      ])
+    } catch (error) {
+      logWithSentry({ message: 'syncStripeSubscription: failed to load inputs', params: { customerId }, error })
+      return false
+    }
     if (!dbUser) {
       // this happens when user removed his account, by this time we don't have his subscriptions in the db, and we should not try to sync them
       return true
-    }
-    if (!subscriptions) {
-      logWithSentry({
-        message: "could not retrieve user's subscriptions",
-        params: {
-          customerId,
-        },
-      })
-      return false
     }
     if (subscriptions.length === 0) {
       logWithSentry({
@@ -55,13 +56,9 @@ export const StripeWebhookService = (
     // than Theo recommends, so it's not clear if a listSubscriptions call give us all the data we need
     // as we store more data in our database, like amount, interval etc
     // We might not need the below additional call to Stripe API, but I tried to have less changes when migrating from our stripe v1 to v2
-    const subscriptionWithMoreDetails: RetrieveSubscriptionResponse | null = await stripeApi.retrieveSubscription(
+    const subscriptionWithMoreDetails: RetrieveSubscriptionResponse = await stripeApi.retrieveSubscription(
       mostRecentSubscription.id
     )
-
-    if (!subscriptionWithMoreDetails) {
-      return false
-    }
 
     const { id, status, current_period_end, cancel_at_period_end, trial_end, items, metadata } =
       subscriptionWithMoreDetails
@@ -74,7 +71,7 @@ export const StripeWebhookService = (
     const interval = plan.interval
     const interval_count = plan.interval_count
 
-    const isSuccessfullyUpserted: boolean = await stripeSubscriptionsRepository.upsertSubscription(
+    await stripeSubscriptionsRepository.upsertSubscription(
       userId,
       id,
       status,
@@ -88,25 +85,6 @@ export const StripeWebhookService = (
       interval,
       interval_count
     )
-    if (!isSuccessfullyUpserted) {
-      logWithSentry({
-        message: 'Error upserting subscription',
-        params: {
-          userId,
-          id,
-          status,
-          current_period_end,
-          cancel_at_period_end,
-          trial_end,
-          productId,
-          updatedAt,
-          currency,
-          amount,
-          interval,
-          interval_count,
-        },
-      })
-    }
     await accessCacheService.updateForUser(userId)
     return true
   }

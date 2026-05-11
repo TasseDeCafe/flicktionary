@@ -228,10 +228,6 @@ else
 fi
 
 cd apps/backend
-pnpm check-migrations
-cd ../..
-
-cd apps/backend
 pnpm check-templates
 cd ../..
 

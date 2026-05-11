@@ -22,7 +22,7 @@ describe('Subscription Repository Integration Tests', () => {
     it('should insert a subscription successfully', async () => {
       const { id: testUserId } = await __createUserInSupabaseAndGetHisIdAndToken()
 
-      const result = await repository.insertSubscription(
+      await repository.insertSubscription(
         testUserId,
         'test-stripe-subscription-id',
         'active',
@@ -36,8 +36,6 @@ describe('Subscription Repository Integration Tests', () => {
         'month',
         1
       )
-
-      expect(result).toBe(true)
 
       const insertedSubscription =
         await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
@@ -65,7 +63,7 @@ describe('Subscription Repository Integration Tests', () => {
     it('should insert a new subscription when it does not exist', async () => {
       const { id: testUserId } = await __createUserInSupabaseAndGetHisIdAndToken()
 
-      const result = await repository.upsertSubscription(
+      await repository.upsertSubscription(
         testUserId,
         'test-stripe-subscription-id',
         'active',
@@ -79,8 +77,6 @@ describe('Subscription Repository Integration Tests', () => {
         'month',
         1
       )
-
-      expect(result).toBe(true)
 
       const upsertedSubscription =
         await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
@@ -121,7 +117,7 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      const result = await repository.upsertSubscription(
+      await repository.upsertSubscription(
         testUserId,
         'test-stripe-subscription-id',
         'past_due',
@@ -135,8 +131,6 @@ describe('Subscription Repository Integration Tests', () => {
         'year',
         2
       )
-
-      expect(result).toBe(true)
 
       const updatedSubscription = await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')
       expect(updatedSubscription).not.toBeNull()
@@ -214,9 +208,7 @@ describe('Subscription Repository Integration Tests', () => {
         1
       )
 
-      const cancellationResult = await repository.cancelSubscription('test-stripe-subscription-id')
-
-      expect(cancellationResult).toBe(true)
+      await repository.cancelSubscription('test-stripe-subscription-id')
 
       const canceledSubscription =
         await repository.findSubscriptionByStripeSubscriptionId('test-stripe-subscription-id')

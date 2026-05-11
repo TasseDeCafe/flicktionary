@@ -1,4 +1,4 @@
-This turborepo monorepo is an attempt at creating a template for quick SaaS iteration. This is a work in progress, don't treat it like a polished product.
+This turborepo monorepo is the repo of Flicktionary.app. This is a work in progress, don't treat it like a polished product.
 
 The following stack is used:
 
@@ -23,6 +23,8 @@ The template is built so that it's easy to deploy this stack, and also have usef
 - Error monitoring with Sentry
 - Analytics with Posthog
 - Doppler for secrets management and injection.
+
+Not all those features are enable. See packages/core/src/features.tsx for the list of enable features. Also see DISABLED.md
 
 # Conventions:
 
@@ -51,7 +53,7 @@ For our react code style:
 - If you think that a critical file or some context is missing, try to find it yourself, or ask for it to the user.
 - Try not to apply "band-aid" solutions: try to fix the root cause of the problem.
 - Do not hesitate to refactor the code if it fixes the root cause or simplify the code without changing the functionality.
-- Do not write code that is backwards compatible unless explicitly asked to do so. Assume that the code is not yet in production.
+- Do not write code that is backwards compatible unless explicitly asked to do so. Assume that the code is a greenfield project.
 
 ## Localization pattern (Lingui)
 
@@ -60,6 +62,17 @@ For our react code style:
 - Outside React (e.g., config files, query meta, utility modules), import `{ t }` from `@lingui/macro` and, when needed, the shared `i18n` instance for lookups. Keep text in template literals so translators see the full sentence.
 - When interpolating values, assign them to descriptive variables and reference them inside the template literal (`const savedCount = ...; t`You saved ${savedCount} phrases``). Avoid string concatenation or unnamed `${expression}` chains.
 - Do not set custom ids when calling `t`. The English source string remains the id so extraction keeps working without manual bookkeeping.
+
+## oRPC + TanStack Query
+
+The web/native apps consume the contract through `@orpc/tanstack-query`'s `createTanstackQueryUtils(...)` (exposed as `orpcQuery`). Two helpers look interchangeable but aren't:
+
+- `orpcQuery.path.method.key(...)` — returns a **partial / prefix** key. Use it for `invalidateQueries` and `cancelQueries`, where prefix matching is the point. `.key()` (no arg) matches every variation; `.key({ input })` narrows the prefix but still uses prefix semantics.
+- `orpcQuery.path.method.queryKey({ input })` — returns the **exact full** key including input. Required by `setQueryData` / `getQueryData`, which look up an entry by exact match. Passing a `.key(...)` result here silently no-ops (writes go nowhere; reads return undefined), and the symptom is "the cache won't update / the UI keeps showing stale data after a successful mutation."
+
+Rule of thumb: if you're invalidating, use `.key(...)`. If you're reading or writing the cache directly, use `.queryKey({ input })`. See `apps/web/src/features/review/api/card-cache.ts` for the canonical setQueryData pattern.
+
+Backend oRPC handlers should return DTOs that already match the contract exactly. In particular, normalize `TIMESTAMP WITH TIME ZONE` / `timestamptz` values from Postgres.js to ISO strings in router mappers with `toIsoString` from `apps/backend/src/router/router-utils.ts` instead of relying on JSON serialization to coerce `Date` objects after output validation.
 
 # Useful commands:
 
@@ -79,6 +92,38 @@ Rules:
  // based on https://elevenlabs.io/docs/api-reference/twilio/outbound-call
  export const initiateCancelCallViaTwilio = async (
 ```
+
+# Local Supabase Instance
+
+When the user refers to their "local DB" (resetting it, querying it, updating rows while testing dev), they mean the **dev-tunnel** instance, not `supabase-dev`. `supabase-dev` is the remote dev environment; `supabase-dev-tunnel` is the locally-running Supabase that the user actually develops against.
+
+- DB connection: `postgresql://postgres:postgres@127.0.0.1:34322/postgres` (port `34322`, not the default `54322`)
+- Start it with: `pnpm db:dev:tunnel` (runs `doppler run -- supabase start` in `apps/backend/supabase/supabase-dev-tunnel/supabase`)
+- Reset it with: `doppler run -- supabase db reset --local` from `apps/backend/supabase/supabase-dev-tunnel/`
+- The connection string is exposed as `SUPABASE_CONNECTION_STRING` (Doppler `backend` project, `dev_personal` config) — any standalone script that touches the local DB should read it from there and be run via `doppler run --`. Do not hardcode `54322`.
+
+# Database Migrations
+
+The canonical migrations directory is `apps/backend/supabase/migrations/`. The four Supabase environment folders each have a `supabase/migrations` symlink pointing to it:
+
+- `apps/backend/supabase/supabase-dev-tunnel/supabase/migrations` → `../../migrations` (local dev — the one you reset and iterate against)
+- `apps/backend/supabase/supabase-dev/supabase/migrations` → `../../migrations` (remote dev)
+- `apps/backend/supabase/supabase-test/supabase/migrations` → `../../migrations` (test)
+- `apps/backend/supabase/supabase-prod/supabase/migrations` → `../../migrations` (production)
+
+This means there's exactly one copy of each migration file on disk; the four envs cannot drift. The workflow is:
+
+1. From `apps/backend/supabase/supabase-dev-tunnel/`, create the migration with the Supabase CLI so the timestamp prefix is correct and the file lands in the symlinked directory (which resolves to the canonical location):
+
+   ```bash
+   supabase migration new <name>
+   ```
+
+2. Edit the new file, then verify it applies cleanly with `doppler run -- supabase db reset --local`.
+
+That's it — no copying, no sync step. Never hand-write the timestamp prefix or create the file with `touch` / `Write` directly; `supabase migration new` is the source of truth for ordering. Never replace any of the four `supabase/migrations` symlinks with a real directory.
+
+**Always prefix Supabase CLI commands with `doppler run --`** (e.g. `doppler run -- supabase db reset --local`, `doppler run -- supabase start`, `doppler run -- supabase stop`). Doppler injects the secrets the local stack needs (auth providers, etc.) — without it, the CLI runs against an unconfigured environment and either errors out or silently boots with wrong values.
 
 # Database Types
 

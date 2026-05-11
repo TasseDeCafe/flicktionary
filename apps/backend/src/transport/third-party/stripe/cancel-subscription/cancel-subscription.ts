@@ -1,25 +1,15 @@
-import { logWithSentry } from '../../sentry/error-monitoring'
 import { stripe } from '../stripe'
 import Stripe from 'stripe'
 
-export const cancelSubscription = async (subscriptionId: string): Promise<boolean> => {
+export const cancelSubscription = async (subscriptionId: string): Promise<void> => {
   try {
     await stripe.subscriptions.cancel(subscriptionId)
-    return true
   } catch (error) {
-    // If the subscription is already canceled, Stripe will return this error.
-    // We want the call to succeed in this scenario, so we can return true.
+    // If the subscription is already canceled, Stripe returns this error.
+    // Treat it as success — cancel is idempotent in our domain.
     if (error instanceof Stripe.errors.StripeError && error.code === 'resource_missing') {
-      return true
+      return
     }
-
-    logWithSentry({
-      message: 'Error while cancelling subscription with Stripe',
-      params: {
-        subscriptionId: subscriptionId,
-      },
-      error,
-    })
-    return false
+    throw error
   }
 }

@@ -21,6 +21,10 @@ export const environmentConfigSchema = z.object({
   allowedCorsOrigins: z.array(z.union([z.string(), z.instanceof(RegExp)])).min(1),
   // https://resend.com/api-keys
   resendApiKey: z.string().min(1),
+  anthropicApiKey: z.string().min(1),
+  tmdbApiKey: z.string().min(1),
+  openSubtitlesApiKey: z.string().min(1),
+  openSubtitlesUserAgent: z.string().min(1),
   stripeSecretKey: FEATURES.STRIPE ? z.string().min(1) : z.string(),
   stripeWebhookSecret: FEATURES.STRIPE ? z.string().min(1) : z.string(),
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? z.string().min(1) : z.string(),
@@ -46,6 +50,12 @@ export const environmentConfigSchema = z.object({
   usersWithFreeAccess: z.array(z.email()),
   // Emails of developers, collaborators, etc.
   emailsOfTestUsers: z.array(z.email()),
+  // Optional regex matching dev/test emails: matching accounts skip the
+  // onboarding gate and have native_language pre-seeded at signup.
+  devAutoSeedEmailPattern: z.instanceof(RegExp).nullable(),
+  // ISO 639-1 code used as the auto-seed default native_language for
+  // matching emails. Must be set whenever devAutoSeedEmailPattern is set.
+  devAutoSeedNativeLanguage: z.string(),
   featureFlags: z.object({
     // the two flags below should never be set to true at the same time, as it doesn't make sense
     isCreditCardRequiredForAll: z.function({

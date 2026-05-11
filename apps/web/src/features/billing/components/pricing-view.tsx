@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { getConfig } from '@/config/environment-config.ts'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
-import { Route as dashboardRoute } from '@/app/routes/_authenticated/_tabs/dashboard'
+import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
 import { Route as freeTrialExplanationRoute } from '@/app/routes/_authenticated/pricing/free-trial-explanation'
 import { Route as checkoutSuccessRoute } from '@/app/routes/_authenticated/pricing/checkout-success'
 import { Route as pricingRoute } from '@/app/routes/_authenticated/pricing/index'
@@ -104,7 +104,7 @@ export const PricingView = () => {
 
   const handleGoPracticeNowClick = () => {
     POSTHOG_EVENTS.click('go_practice_now_button')
-    navigate({ to: dashboardRoute.to })
+    navigate({ to: sessionsRoute.to })
   }
 
   const signOut = useAuthStore((state) => state.signOut)

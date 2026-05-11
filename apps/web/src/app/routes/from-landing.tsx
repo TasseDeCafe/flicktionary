@@ -1,7 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { z } from 'zod'
 import { PLAN_INTERVALS } from '@flicktionary/core/constants/pricing-constants'
-import { Route as dashboardRoute } from '@/app/routes/_authenticated/_tabs/dashboard'
 import { Route as redirectToCheckoutRoute } from '@/app/routes/_authenticated/redirect-to-check-out/$planInterval'
 
 const fromLandingSearchSchema = z.object({
@@ -17,6 +16,6 @@ export const Route = createFileRoute('/from-landing')({
         params: { planInterval: search.planInterval },
       })
     }
-    throw redirect({ to: dashboardRoute.to })
+    throw redirect({ to: '/sessions' })
   },
 })

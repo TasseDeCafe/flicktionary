@@ -95,7 +95,6 @@ describe('removals-router', () => {
         ...MockStripeApi,
         cancelSubscription: async () => {
           cancelSubscriptionWasCalled = true
-          return true
         },
       }
       const { testApp, token } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({
@@ -120,7 +119,6 @@ describe('removals-router', () => {
         ...MockStripeApi,
         cancelSubscription: async () => {
           cancelSubscriptionWasCalled = true
-          return true
         },
       }
       const stripeCustomerId = 'some_stripe_customer_id'
@@ -152,7 +150,9 @@ describe('removals-router', () => {
     test('should fail account removal if subscription cancellation fails', async () => {
       const stripeApi = {
         ...MockStripeApi,
-        cancelSubscription: async () => false,
+        cancelSubscription: async () => {
+          throw new Error('Stripe cancel subscription failed')
+        },
       }
       const { testApp, token } = await __createDefaultInitialStateAfterIntroducingCreditCardAndOnboarding({
         appDependencies: {

@@ -2,7 +2,7 @@ import { mockSendContactEmail } from './send-contact-email/mock-send-contact-ema
 import { sendContactEmail } from './send-contact-email/send-contact-email'
 
 export interface ResendApi {
-  sendContactEmail: (username: string | undefined, email: string, message: string) => Promise<boolean>
+  sendContactEmail: (username: string | undefined, email: string, message: string) => Promise<void>
 }
 
 export const RealResendApi: ResendApi = {

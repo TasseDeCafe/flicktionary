@@ -5,6 +5,4 @@ export const mockSendContactEmail = async (
   email: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   message: string
-): Promise<boolean> => {
-  return true
-}
+): Promise<void> => {}

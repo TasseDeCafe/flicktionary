@@ -8,7 +8,7 @@ export type ListSubscriptionsResponse = components['schemas']['ListSubscriptions
 export type Customer = components['schemas']['Customer']
 
 export interface RevenuecatApi {
-  getSubscriptions: (customerId: string) => Promise<ListSubscriptionsResponse | null>
+  getSubscriptions: (customerId: string) => Promise<ListSubscriptionsResponse>
   getCustomer: (customerId: string) => Promise<Customer | null>
 }
 

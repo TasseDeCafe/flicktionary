@@ -1,6 +1,7 @@
 node_modules
 dist
 copied-dist
+.cache
 
 .idea
 .DS_store
@@ -71,8 +72,6 @@ next-env.d.ts
 
 # Local commit message template
 gitmessage
-
-/docs
 
 # Lingui
 /packages/i18n/locales/**/*.ts

@@ -1,0 +1,29 @@
+import { orpcQuery } from '@/lib/transport/orpc-client'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+// Mutation for the "Add a word" flow. Invalidates everything that depends on
+// the user's vocabulary set: chunks list (Vocabulary tab), language list
+// (the language pills), and the practice due summary (the new chunk lands as
+// `state='new'` and bumps the new-count). Mirrors the invalidation set used
+// by useDeleteChunk in vocabulary-hooks.ts.
+//
+// `showErrorToast: false` suppresses the global toast — the wizard's own
+// onError differentiates between `cefr_not_set` (open the CEFR dialog inline,
+// no toast), `native_language_not_set` (its own toast), and unknown failures
+// (a generic toast). Letting the global handler fire would double up on
+// cefr_not_set with the raw backend code as the toast text.
+export const useCreateAdhocCard = () => {
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.cards.createAdhoc.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listLanguages.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: {
+        showErrorToast: false,
+      },
+    })
+  )
+}

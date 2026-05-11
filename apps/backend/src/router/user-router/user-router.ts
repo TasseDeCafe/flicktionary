@@ -2,12 +2,24 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { DbUser, UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processReferral } from './user-router-utils'
 import { userContract } from '@flicktionary/api-client/orpc-contracts/user-contract'
+import { getConfig } from '../../config/environment-config'
+
+const buildSeedFromEmail = (
+  email: string | undefined
+): { nativeLanguage: string; isOnboarded: boolean } | undefined => {
+  if (!email) return undefined
+  const { devAutoSeedEmailPattern, devAutoSeedNativeLanguage } = getConfig()
+  if (!devAutoSeedEmailPattern) return undefined
+  if (!devAutoSeedEmailPattern.test(email)) return undefined
+  return { nativeLanguage: devAutoSeedNativeLanguage, isOnboarded: true }
+}
 
 export const UserRouter = (usersRepository: UsersRepositoryInterface): Router => {
-  const implementer = implement(userContract).$context<OrpcContext>()
+  const implementer = implement(userContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     getUser: implementer.getUser.handler(async ({ context, errors }) => {
@@ -33,7 +45,7 @@ export const UserRouter = (usersRepository: UsersRepositoryInterface): Router =>
       }
     }),
 
-    putUser: implementer.putUser.handler(async ({ input, context, errors }) => {
+    putUser: implementer.putUser.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
       const { referral, utmSource, utmMedium, utmCampaign, utmTerm, utmContent } = input
 
@@ -41,20 +53,19 @@ export const UserRouter = (usersRepository: UsersRepositoryInterface): Router =>
 
       if (!dbUser) {
         const processedReferral = processReferral(referral)
-        const hasInsertedSuccessfully = await usersRepository.insertUser(userId, processedReferral, {
-          utmSource: utmSource || null,
-          utmMedium: utmMedium || null,
-          utmCampaign: utmCampaign || null,
-          utmTerm: utmTerm || null,
-          utmContent: utmContent || null,
-        })
-        if (!hasInsertedSuccessfully) {
-          throw errors.INTERNAL_SERVER_ERROR({
-            data: {
-              errors: [{ message: 'An error occurred while inserting the user.' }],
-            },
-          })
-        }
+        const seed = buildSeedFromEmail(context.res.locals.email)
+        await usersRepository.insertUser(
+          userId,
+          processedReferral,
+          {
+            utmSource: utmSource || null,
+            utmMedium: utmMedium || null,
+            utmCampaign: utmCampaign || null,
+            utmTerm: utmTerm || null,
+            utmContent: utmContent || null,
+          },
+          seed
+        )
         return {
           data: {
             referral: referral ?? null,

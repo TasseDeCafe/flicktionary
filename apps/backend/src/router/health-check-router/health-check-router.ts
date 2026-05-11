@@ -3,6 +3,7 @@ import { Router } from 'express'
 import { implement } from '@orpc/server'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
+import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { sql } from '../../transport/database/postgres-client'
 import { healthCheckContract } from '@flicktionary/api-client/orpc-contracts/health-check-contract'
 
@@ -16,7 +17,7 @@ const getGitCommit = (): string => {
 }
 
 export const HealthCheckRouter = (): Router => {
-  const implementer = implement(healthCheckContract).$context<OrpcContext>()
+  const implementer = implement(healthCheckContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
     getHealthCheck: implementer.getHealthCheck.handler(async () => {

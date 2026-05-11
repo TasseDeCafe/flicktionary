@@ -1,0 +1,63 @@
+name: Load Kaikki data into prod Supabase
+
+# Manual trigger only. Pointing the loader at prod TRUNCATEs both wiktionary
+# tables before reloading, so any cards processed during the run will fall
+# through to LLM-only grounding for the duration. Run during a low-traffic
+# window. Expected runtime ~10-20 min (download cached, COPY over the network).
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "This workflow can only run from main. Selected ref: $GITHUB_REF"
+          exit 1
+
+      - name: Confirm main branch
+        if: github.ref == 'refs/heads/main'
+        run: echo "Running from main."
+
+  load-kaikki:
+    needs: validate-main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: load-kaikki-prod
+      cancel-in-progress: false
+    timeout-minutes: 60
+    env:
+      # Must be the Supavisor SESSION-mode pooler URL (port 5432, IPv4).
+      # Transaction mode (6543) breaks COPY; the direct URL is IPv6-only and
+      # GitHub-hosted runners are IPv4-only.
+      SUPABASE_CONNECTION_STRING: ${{ secrets.SUPABASE_PROD_SESSION_POOLER_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      # Avoid re-downloading the ~600MB kaikki JSONL on every run. The dump
+      # changes infrequently; bump the cache key (or clear caches in the GH UI)
+      # to force a fresh download.
+      - name: Cache kaikki download
+        uses: actions/cache@v4
+        with:
+          path: apps/backend/scripts/.cache/kaikki
+          key: kaikki-ru-v1
+          restore-keys: kaikki-ru-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Load kaikki into prod
+        run: pnpm --filter @flicktionary/backend load:kaikki

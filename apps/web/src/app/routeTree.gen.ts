@@ -14,9 +14,8 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AccountRemovedRouteImport } from './routes/account/removed'
-import { Route as AuthenticatedPremiumDemoRouteImport } from './routes/_authenticated/premium-demo'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin-settings'
-import { Route as AuthenticatedTabsRouteImport } from './routes/_authenticated/_tabs'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/_app'
 import { Route as LoginEmailIndexRouteImport } from './routes/login/email/index'
 import { Route as AuthenticatedPricingIndexRouteImport } from './routes/_authenticated/pricing/index'
 import { Route as LoginEmailVerifyRouteImport } from './routes/login/email/verify'
@@ -25,9 +24,22 @@ import { Route as AuthenticatedRedirectToCheckOutPlanIntervalRouteImport } from 
 import { Route as AuthenticatedProfileDangerZoneRouteImport } from './routes/_authenticated/profile/danger-zone'
 import { Route as AuthenticatedPricingFreeTrialExplanationRouteImport } from './routes/_authenticated/pricing/free-trial-explanation'
 import { Route as AuthenticatedPricingCheckoutSuccessRouteImport } from './routes/_authenticated/pricing/checkout-success'
-import { Route as AuthenticatedTabsProfileRouteImport } from './routes/_authenticated/_tabs/profile'
-import { Route as AuthenticatedTabsHomeRouteImport } from './routes/_authenticated/_tabs/home'
-import { Route as AuthenticatedTabsDashboardRouteImport } from './routes/_authenticated/_tabs/dashboard'
+import { Route as AuthenticatedAppOnboardingRouteImport } from './routes/_authenticated/_app/onboarding'
+import { Route as AuthenticatedAppVocabularyIndexRouteImport } from './routes/_authenticated/_app/vocabulary/index'
+import { Route as AuthenticatedAppSessionsIndexRouteImport } from './routes/_authenticated/_app/sessions/index'
+import { Route as AuthenticatedAppPracticeIndexRouteImport } from './routes/_authenticated/_app/practice/index'
+import { Route as AuthenticatedAppMoreIndexRouteImport } from './routes/_authenticated/_app/more/index'
+import { Route as AuthenticatedAppVocabularyNewWordRouteImport } from './routes/_authenticated/_app/vocabulary/new-word'
+import { Route as AuthenticatedAppSessionsNewTextRouteImport } from './routes/_authenticated/_app/sessions/new-text'
+import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authenticated/_app/sessions/new'
+import { Route as AuthenticatedAppPracticeStartRouteImport } from './routes/_authenticated/_app/practice/start'
+import { Route as AuthenticatedAppPracticePracticeSessionIdRouteImport } from './routes/_authenticated/_app/practice/$practiceSessionId'
+import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_authenticated/_app/more/languages'
+import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
+import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
+import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
+import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
+import { Route as AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/$cardId'
 
 const FromLandingRoute = FromLandingRouteImport.update({
   id: '/from-landing',
@@ -53,20 +65,14 @@ const AccountRemovedRoute = AccountRemovedRouteImport.update({
   path: '/account/removed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPremiumDemoRoute =
-  AuthenticatedPremiumDemoRouteImport.update({
-    id: '/premium-demo',
-    path: '/premium-demo',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin-settings',
     path: '/admin-settings',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedTabsRoute = AuthenticatedTabsRouteImport.update({
-  id: '/_tabs',
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const LoginEmailIndexRoute = LoginEmailIndexRouteImport.update({
@@ -114,34 +120,110 @@ const AuthenticatedPricingCheckoutSuccessRoute =
     path: '/pricing/checkout-success',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedTabsProfileRoute =
-  AuthenticatedTabsProfileRouteImport.update({
-    id: '/profile',
-    path: '/profile',
-    getParentRoute: () => AuthenticatedTabsRoute,
+const AuthenticatedAppOnboardingRoute =
+  AuthenticatedAppOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedTabsHomeRoute = AuthenticatedTabsHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
-  getParentRoute: () => AuthenticatedTabsRoute,
-} as any)
-const AuthenticatedTabsDashboardRoute =
-  AuthenticatedTabsDashboardRouteImport.update({
-    id: '/dashboard',
-    path: '/dashboard',
-    getParentRoute: () => AuthenticatedTabsRoute,
+const AuthenticatedAppVocabularyIndexRoute =
+  AuthenticatedAppVocabularyIndexRouteImport.update({
+    id: '/vocabulary/',
+    path: '/vocabulary/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsIndexRoute =
+  AuthenticatedAppSessionsIndexRouteImport.update({
+    id: '/sessions/',
+    path: '/sessions/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPracticeIndexRoute =
+  AuthenticatedAppPracticeIndexRouteImport.update({
+    id: '/practice/',
+    path: '/practice/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppMoreIndexRoute =
+  AuthenticatedAppMoreIndexRouteImport.update({
+    id: '/more/',
+    path: '/more/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppVocabularyNewWordRoute =
+  AuthenticatedAppVocabularyNewWordRouteImport.update({
+    id: '/vocabulary/new-word',
+    path: '/vocabulary/new-word',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsNewTextRoute =
+  AuthenticatedAppSessionsNewTextRouteImport.update({
+    id: '/sessions/new-text',
+    path: '/sessions/new-text',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsNewRoute =
+  AuthenticatedAppSessionsNewRouteImport.update({
+    id: '/sessions/new',
+    path: '/sessions/new',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPracticeStartRoute =
+  AuthenticatedAppPracticeStartRouteImport.update({
+    id: '/practice/start',
+    path: '/practice/start',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPracticePracticeSessionIdRoute =
+  AuthenticatedAppPracticePracticeSessionIdRouteImport.update({
+    id: '/practice/$practiceSessionId',
+    path: '/practice/$practiceSessionId',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppMoreLanguagesRoute =
+  AuthenticatedAppMoreLanguagesRouteImport.update({
+    id: '/more/languages',
+    path: '/more/languages',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppMoreAccountRoute =
+  AuthenticatedAppMoreAccountRouteImport.update({
+    id: '/more/account',
+    path: '/more/account',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsSessionIdIndexRoute =
+  AuthenticatedAppSessionsSessionIdIndexRouteImport.update({
+    id: '/sessions/$sessionId/',
+    path: '/sessions/$sessionId/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsSessionIdProcessingRoute =
+  AuthenticatedAppSessionsSessionIdProcessingRouteImport.update({
+    id: '/sessions/$sessionId/processing',
+    path: '/sessions/$sessionId/processing',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsSessionIdReviewIndexRoute =
+  AuthenticatedAppSessionsSessionIdReviewIndexRouteImport.update({
+    id: '/sessions/$sessionId/review/',
+    path: '/sessions/$sessionId/review/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSessionsSessionIdReviewCardIdRoute =
+  AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport.update({
+    id: '/sessions/$sessionId/review/$cardId',
+    path: '/sessions/$sessionId/review/$cardId',
+    getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
-  '/premium-demo': typeof AuthenticatedPremiumDemoRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
-  '/dashboard': typeof AuthenticatedTabsDashboardRoute
-  '/home': typeof AuthenticatedTabsHomeRoute
-  '/profile': typeof AuthenticatedTabsProfileRoute
+  '/onboarding': typeof AuthenticatedAppOnboardingRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -150,17 +232,29 @@ export interface FileRoutesByFullPath {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
+  '/more/account': typeof AuthenticatedAppMoreAccountRoute
+  '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
+  '/practice/$practiceSessionId': typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  '/practice/start': typeof AuthenticatedAppPracticeStartRoute
+  '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
+  '/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
+  '/more/': typeof AuthenticatedAppMoreIndexRoute
+  '/practice/': typeof AuthenticatedAppPracticeIndexRoute
+  '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
+  '/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
+  '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
+  '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
+  '/sessions/$sessionId/review/': typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
-  '/premium-demo': typeof AuthenticatedPremiumDemoRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login': typeof LoginIndexRoute
-  '/dashboard': typeof AuthenticatedTabsDashboardRoute
-  '/home': typeof AuthenticatedTabsHomeRoute
-  '/profile': typeof AuthenticatedTabsProfileRoute
+  '/onboarding': typeof AuthenticatedAppOnboardingRoute
   '/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -169,20 +263,32 @@ export interface FileRoutesByTo {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/pricing': typeof AuthenticatedPricingIndexRoute
   '/login/email': typeof LoginEmailIndexRoute
+  '/more/account': typeof AuthenticatedAppMoreAccountRoute
+  '/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
+  '/practice/$practiceSessionId': typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  '/practice/start': typeof AuthenticatedAppPracticeStartRoute
+  '/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
+  '/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
+  '/more': typeof AuthenticatedAppMoreIndexRoute
+  '/practice': typeof AuthenticatedAppPracticeIndexRoute
+  '/sessions': typeof AuthenticatedAppSessionsIndexRoute
+  '/vocabulary': typeof AuthenticatedAppVocabularyIndexRoute
+  '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
+  '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
+  '/sessions/$sessionId/review': typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/from-landing': typeof FromLandingRoute
-  '/_authenticated/_tabs': typeof AuthenticatedTabsRouteWithChildren
+  '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
-  '/_authenticated/premium-demo': typeof AuthenticatedPremiumDemoRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
-  '/_authenticated/_tabs/dashboard': typeof AuthenticatedTabsDashboardRoute
-  '/_authenticated/_tabs/home': typeof AuthenticatedTabsHomeRoute
-  '/_authenticated/_tabs/profile': typeof AuthenticatedTabsProfileRoute
+  '/_authenticated/_app/onboarding': typeof AuthenticatedAppOnboardingRoute
   '/_authenticated/pricing/checkout-success': typeof AuthenticatedPricingCheckoutSuccessRoute
   '/_authenticated/pricing/free-trial-explanation': typeof AuthenticatedPricingFreeTrialExplanationRoute
   '/_authenticated/profile/danger-zone': typeof AuthenticatedProfileDangerZoneRoute
@@ -191,6 +297,21 @@ export interface FileRoutesById {
   '/login/email/verify': typeof LoginEmailVerifyRoute
   '/_authenticated/pricing/': typeof AuthenticatedPricingIndexRoute
   '/login/email/': typeof LoginEmailIndexRoute
+  '/_authenticated/_app/more/account': typeof AuthenticatedAppMoreAccountRoute
+  '/_authenticated/_app/more/languages': typeof AuthenticatedAppMoreLanguagesRoute
+  '/_authenticated/_app/practice/$practiceSessionId': typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  '/_authenticated/_app/practice/start': typeof AuthenticatedAppPracticeStartRoute
+  '/_authenticated/_app/sessions/new': typeof AuthenticatedAppSessionsNewRoute
+  '/_authenticated/_app/sessions/new-text': typeof AuthenticatedAppSessionsNewTextRoute
+  '/_authenticated/_app/vocabulary/new-word': typeof AuthenticatedAppVocabularyNewWordRoute
+  '/_authenticated/_app/more/': typeof AuthenticatedAppMoreIndexRoute
+  '/_authenticated/_app/practice/': typeof AuthenticatedAppPracticeIndexRoute
+  '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
+  '/_authenticated/_app/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
+  '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
+  '/_authenticated/_app/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
+  '/_authenticated/_app/sessions/$sessionId/review/': typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -198,12 +319,9 @@ export interface FileRouteTypes {
     | '/'
     | '/from-landing'
     | '/admin-settings'
-    | '/premium-demo'
     | '/account/removed'
     | '/login/'
-    | '/dashboard'
-    | '/home'
-    | '/profile'
+    | '/onboarding'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -212,17 +330,29 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/pricing/'
     | '/login/email/'
+    | '/more/account'
+    | '/more/languages'
+    | '/practice/$practiceSessionId'
+    | '/practice/start'
+    | '/sessions/new'
+    | '/sessions/new-text'
+    | '/vocabulary/new-word'
+    | '/more/'
+    | '/practice/'
+    | '/sessions/'
+    | '/vocabulary/'
+    | '/sessions/$sessionId/processing'
+    | '/sessions/$sessionId/'
+    | '/sessions/$sessionId/review/$cardId'
+    | '/sessions/$sessionId/review/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/from-landing'
     | '/admin-settings'
-    | '/premium-demo'
     | '/account/removed'
     | '/login'
-    | '/dashboard'
-    | '/home'
-    | '/profile'
+    | '/onboarding'
     | '/pricing/checkout-success'
     | '/pricing/free-trial-explanation'
     | '/profile/danger-zone'
@@ -231,19 +361,31 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/pricing'
     | '/login/email'
+    | '/more/account'
+    | '/more/languages'
+    | '/practice/$practiceSessionId'
+    | '/practice/start'
+    | '/sessions/new'
+    | '/sessions/new-text'
+    | '/vocabulary/new-word'
+    | '/more'
+    | '/practice'
+    | '/sessions'
+    | '/vocabulary'
+    | '/sessions/$sessionId/processing'
+    | '/sessions/$sessionId'
+    | '/sessions/$sessionId/review/$cardId'
+    | '/sessions/$sessionId/review'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/from-landing'
-    | '/_authenticated/_tabs'
+    | '/_authenticated/_app'
     | '/_authenticated/admin-settings'
-    | '/_authenticated/premium-demo'
     | '/account/removed'
     | '/login/'
-    | '/_authenticated/_tabs/dashboard'
-    | '/_authenticated/_tabs/home'
-    | '/_authenticated/_tabs/profile'
+    | '/_authenticated/_app/onboarding'
     | '/_authenticated/pricing/checkout-success'
     | '/_authenticated/pricing/free-trial-explanation'
     | '/_authenticated/profile/danger-zone'
@@ -252,6 +394,21 @@ export interface FileRouteTypes {
     | '/login/email/verify'
     | '/_authenticated/pricing/'
     | '/login/email/'
+    | '/_authenticated/_app/more/account'
+    | '/_authenticated/_app/more/languages'
+    | '/_authenticated/_app/practice/$practiceSessionId'
+    | '/_authenticated/_app/practice/start'
+    | '/_authenticated/_app/sessions/new'
+    | '/_authenticated/_app/sessions/new-text'
+    | '/_authenticated/_app/vocabulary/new-word'
+    | '/_authenticated/_app/more/'
+    | '/_authenticated/_app/practice/'
+    | '/_authenticated/_app/sessions/'
+    | '/_authenticated/_app/vocabulary/'
+    | '/_authenticated/_app/sessions/$sessionId/processing'
+    | '/_authenticated/_app/sessions/$sessionId/'
+    | '/_authenticated/_app/sessions/$sessionId/review/$cardId'
+    | '/_authenticated/_app/sessions/$sessionId/review/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -302,13 +459,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountRemovedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/premium-demo': {
-      id: '/_authenticated/premium-demo'
-      path: '/premium-demo'
-      fullPath: '/premium-demo'
-      preLoaderRoute: typeof AuthenticatedPremiumDemoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/admin-settings': {
       id: '/_authenticated/admin-settings'
       path: '/admin-settings'
@@ -316,11 +466,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_tabs': {
-      id: '/_authenticated/_tabs'
+    '/_authenticated/_app': {
+      id: '/_authenticated/_app'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedTabsRouteImport
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/login/email/': {
@@ -379,49 +529,171 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPricingCheckoutSuccessRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_tabs/profile': {
-      id: '/_authenticated/_tabs/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedTabsProfileRouteImport
-      parentRoute: typeof AuthenticatedTabsRoute
+    '/_authenticated/_app/onboarding': {
+      id: '/_authenticated/_app/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedAppOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/_tabs/home': {
-      id: '/_authenticated/_tabs/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthenticatedTabsHomeRouteImport
-      parentRoute: typeof AuthenticatedTabsRoute
+    '/_authenticated/_app/vocabulary/': {
+      id: '/_authenticated/_app/vocabulary/'
+      path: '/vocabulary'
+      fullPath: '/vocabulary/'
+      preLoaderRoute: typeof AuthenticatedAppVocabularyIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/_tabs/dashboard': {
-      id: '/_authenticated/_tabs/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedTabsDashboardRouteImport
-      parentRoute: typeof AuthenticatedTabsRoute
+    '/_authenticated/_app/sessions/': {
+      id: '/_authenticated/_app/sessions/'
+      path: '/sessions'
+      fullPath: '/sessions/'
+      preLoaderRoute: typeof AuthenticatedAppSessionsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/practice/': {
+      id: '/_authenticated/_app/practice/'
+      path: '/practice'
+      fullPath: '/practice/'
+      preLoaderRoute: typeof AuthenticatedAppPracticeIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/more/': {
+      id: '/_authenticated/_app/more/'
+      path: '/more'
+      fullPath: '/more/'
+      preLoaderRoute: typeof AuthenticatedAppMoreIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/vocabulary/new-word': {
+      id: '/_authenticated/_app/vocabulary/new-word'
+      path: '/vocabulary/new-word'
+      fullPath: '/vocabulary/new-word'
+      preLoaderRoute: typeof AuthenticatedAppVocabularyNewWordRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/new-text': {
+      id: '/_authenticated/_app/sessions/new-text'
+      path: '/sessions/new-text'
+      fullPath: '/sessions/new-text'
+      preLoaderRoute: typeof AuthenticatedAppSessionsNewTextRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/new': {
+      id: '/_authenticated/_app/sessions/new'
+      path: '/sessions/new'
+      fullPath: '/sessions/new'
+      preLoaderRoute: typeof AuthenticatedAppSessionsNewRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/practice/start': {
+      id: '/_authenticated/_app/practice/start'
+      path: '/practice/start'
+      fullPath: '/practice/start'
+      preLoaderRoute: typeof AuthenticatedAppPracticeStartRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/practice/$practiceSessionId': {
+      id: '/_authenticated/_app/practice/$practiceSessionId'
+      path: '/practice/$practiceSessionId'
+      fullPath: '/practice/$practiceSessionId'
+      preLoaderRoute: typeof AuthenticatedAppPracticePracticeSessionIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/more/languages': {
+      id: '/_authenticated/_app/more/languages'
+      path: '/more/languages'
+      fullPath: '/more/languages'
+      preLoaderRoute: typeof AuthenticatedAppMoreLanguagesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/more/account': {
+      id: '/_authenticated/_app/more/account'
+      path: '/more/account'
+      fullPath: '/more/account'
+      preLoaderRoute: typeof AuthenticatedAppMoreAccountRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/$sessionId/': {
+      id: '/_authenticated/_app/sessions/$sessionId/'
+      path: '/sessions/$sessionId'
+      fullPath: '/sessions/$sessionId/'
+      preLoaderRoute: typeof AuthenticatedAppSessionsSessionIdIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/$sessionId/processing': {
+      id: '/_authenticated/_app/sessions/$sessionId/processing'
+      path: '/sessions/$sessionId/processing'
+      fullPath: '/sessions/$sessionId/processing'
+      preLoaderRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/$sessionId/review/': {
+      id: '/_authenticated/_app/sessions/$sessionId/review/'
+      path: '/sessions/$sessionId/review'
+      fullPath: '/sessions/$sessionId/review/'
+      preLoaderRoute: typeof AuthenticatedAppSessionsSessionIdReviewIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/sessions/$sessionId/review/$cardId': {
+      id: '/_authenticated/_app/sessions/$sessionId/review/$cardId'
+      path: '/sessions/$sessionId/review/$cardId'
+      fullPath: '/sessions/$sessionId/review/$cardId'
+      preLoaderRoute: typeof AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
   }
 }
 
-interface AuthenticatedTabsRouteChildren {
-  AuthenticatedTabsDashboardRoute: typeof AuthenticatedTabsDashboardRoute
-  AuthenticatedTabsHomeRoute: typeof AuthenticatedTabsHomeRoute
-  AuthenticatedTabsProfileRoute: typeof AuthenticatedTabsProfileRoute
+interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppOnboardingRoute: typeof AuthenticatedAppOnboardingRoute
+  AuthenticatedAppMoreAccountRoute: typeof AuthenticatedAppMoreAccountRoute
+  AuthenticatedAppMoreLanguagesRoute: typeof AuthenticatedAppMoreLanguagesRoute
+  AuthenticatedAppPracticePracticeSessionIdRoute: typeof AuthenticatedAppPracticePracticeSessionIdRoute
+  AuthenticatedAppPracticeStartRoute: typeof AuthenticatedAppPracticeStartRoute
+  AuthenticatedAppSessionsNewRoute: typeof AuthenticatedAppSessionsNewRoute
+  AuthenticatedAppSessionsNewTextRoute: typeof AuthenticatedAppSessionsNewTextRoute
+  AuthenticatedAppVocabularyNewWordRoute: typeof AuthenticatedAppVocabularyNewWordRoute
+  AuthenticatedAppMoreIndexRoute: typeof AuthenticatedAppMoreIndexRoute
+  AuthenticatedAppPracticeIndexRoute: typeof AuthenticatedAppPracticeIndexRoute
+  AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
+  AuthenticatedAppVocabularyIndexRoute: typeof AuthenticatedAppVocabularyIndexRoute
+  AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
+  AuthenticatedAppSessionsSessionIdReviewCardIdRoute: typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
+  AuthenticatedAppSessionsSessionIdReviewIndexRoute: typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
 }
 
-const AuthenticatedTabsRouteChildren: AuthenticatedTabsRouteChildren = {
-  AuthenticatedTabsDashboardRoute: AuthenticatedTabsDashboardRoute,
-  AuthenticatedTabsHomeRoute: AuthenticatedTabsHomeRoute,
-  AuthenticatedTabsProfileRoute: AuthenticatedTabsProfileRoute,
+const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppOnboardingRoute: AuthenticatedAppOnboardingRoute,
+  AuthenticatedAppMoreAccountRoute: AuthenticatedAppMoreAccountRoute,
+  AuthenticatedAppMoreLanguagesRoute: AuthenticatedAppMoreLanguagesRoute,
+  AuthenticatedAppPracticePracticeSessionIdRoute:
+    AuthenticatedAppPracticePracticeSessionIdRoute,
+  AuthenticatedAppPracticeStartRoute: AuthenticatedAppPracticeStartRoute,
+  AuthenticatedAppSessionsNewRoute: AuthenticatedAppSessionsNewRoute,
+  AuthenticatedAppSessionsNewTextRoute: AuthenticatedAppSessionsNewTextRoute,
+  AuthenticatedAppVocabularyNewWordRoute:
+    AuthenticatedAppVocabularyNewWordRoute,
+  AuthenticatedAppMoreIndexRoute: AuthenticatedAppMoreIndexRoute,
+  AuthenticatedAppPracticeIndexRoute: AuthenticatedAppPracticeIndexRoute,
+  AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,
+  AuthenticatedAppVocabularyIndexRoute: AuthenticatedAppVocabularyIndexRoute,
+  AuthenticatedAppSessionsSessionIdProcessingRoute:
+    AuthenticatedAppSessionsSessionIdProcessingRoute,
+  AuthenticatedAppSessionsSessionIdIndexRoute:
+    AuthenticatedAppSessionsSessionIdIndexRoute,
+  AuthenticatedAppSessionsSessionIdReviewCardIdRoute:
+    AuthenticatedAppSessionsSessionIdReviewCardIdRoute,
+  AuthenticatedAppSessionsSessionIdReviewIndexRoute:
+    AuthenticatedAppSessionsSessionIdReviewIndexRoute,
 }
 
-const AuthenticatedTabsRouteWithChildren =
-  AuthenticatedTabsRoute._addFileChildren(AuthenticatedTabsRouteChildren)
+const AuthenticatedAppRouteWithChildren =
+  AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedTabsRoute: typeof AuthenticatedTabsRouteWithChildren
+  AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
-  AuthenticatedPremiumDemoRoute: typeof AuthenticatedPremiumDemoRoute
   AuthenticatedPricingCheckoutSuccessRoute: typeof AuthenticatedPricingCheckoutSuccessRoute
   AuthenticatedPricingFreeTrialExplanationRoute: typeof AuthenticatedPricingFreeTrialExplanationRoute
   AuthenticatedProfileDangerZoneRoute: typeof AuthenticatedProfileDangerZoneRoute
@@ -430,9 +702,8 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedTabsRoute: AuthenticatedTabsRouteWithChildren,
+  AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
-  AuthenticatedPremiumDemoRoute: AuthenticatedPremiumDemoRoute,
   AuthenticatedPricingCheckoutSuccessRoute:
     AuthenticatedPricingCheckoutSuccessRoute,
   AuthenticatedPricingFreeTrialExplanationRoute:

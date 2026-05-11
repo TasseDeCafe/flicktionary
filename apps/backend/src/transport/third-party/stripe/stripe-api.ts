@@ -13,11 +13,7 @@ import { mockListAllSubscriptions } from './list-subscriptions/mock-list-all-sub
 import { DbInterval } from '../../database/stripe-subscriptions/stripe-subscriptions-repository'
 
 export type StripeApi = {
-  createCustomerWithMetadata: (
-    userId: string,
-    userEmail: string,
-    referral: string | null
-  ) => Promise<StripeCustomerId | null>
+  createCustomerWithMetadata: (userId: string, userEmail: string, referral: string | null) => Promise<StripeCustomerId>
   createCheckoutSessionUrl: (
     customerId: string,
     priceId: string,
@@ -27,11 +23,11 @@ export type StripeApi = {
     trialDays: number | undefined,
     referral: string | null,
     couponId: string | undefined
-  ) => Promise<string | null>
-  cancelSubscription: (subscriptionId: string) => Promise<boolean>
-  retrieveSubscription: (subscriptionId: string) => Promise<RetrieveSubscriptionResponse | null>
-  createBillingPortalUrl: (customerId: string, returnUrl: string) => Promise<string | null>
-  listAllSubscriptions: (customerId: string) => Promise<ListStripeSubscriptionsResponse | null>
+  ) => Promise<string>
+  cancelSubscription: (subscriptionId: string) => Promise<void>
+  retrieveSubscription: (subscriptionId: string) => Promise<RetrieveSubscriptionResponse>
+  createBillingPortalUrl: (customerId: string, returnUrl: string) => Promise<string>
+  listAllSubscriptions: (customerId: string) => Promise<ListStripeSubscriptionsResponse>
 }
 
 export type StripeCustomerId = string

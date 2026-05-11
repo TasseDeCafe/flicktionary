@@ -3,7 +3,7 @@ import { getConfig } from '../../../../config/environment-config'
 
 type ListSubscriptionsResponse = components['schemas']['ListSubscriptions']
 
-export const mockGetSubscriptions = async (customerId: string): Promise<ListSubscriptionsResponse | null> => {
+export const mockGetSubscriptions = async (customerId: string): Promise<ListSubscriptionsResponse> => {
   const now = new Date()
   const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days in the future
   const timestamp = now.getTime()

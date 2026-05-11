@@ -1,0 +1,76 @@
+import { FSRS, generatorParameters, createEmptyCard, Rating, State, type Card as FsrsCard, type Grade } from 'ts-fsrs'
+import type { DbUserLookup, SrsState } from '../../transport/database/user-lookups/user-lookups-repository'
+
+const fsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
+
+export type AppRating = 'again' | 'hard' | 'good' | 'easy'
+
+const RATING_MAP: Record<AppRating, Grade> = {
+  again: Rating.Again,
+  hard: Rating.Hard,
+  good: Rating.Good,
+  easy: Rating.Easy,
+}
+
+const STATE_TO_DB: Record<State, SrsState> = {
+  [State.New]: 'new',
+  [State.Learning]: 'learning',
+  [State.Review]: 'review',
+  [State.Relearning]: 'relearning',
+}
+
+const DB_TO_STATE: Record<SrsState, State> = {
+  new: State.New,
+  learning: State.Learning,
+  review: State.Review,
+  relearning: State.Relearning,
+}
+
+// Convert a user_lookups row's SRS columns into a ts-fsrs Card. If srs_state is
+// null (the row has never been reviewed) we return null and the caller seeds
+// with createEmptyCard.
+const userLookupToFsrs = (row: DbUserLookup): FsrsCard | null => {
+  if (row.srs_state == null || row.srs_due == null) return null
+  const lastReview = row.srs_last_review ? new Date(row.srs_last_review) : undefined
+  return {
+    due: new Date(row.srs_due),
+    stability: row.srs_stability ?? 0,
+    difficulty: row.srs_difficulty ?? 0,
+    elapsed_days: 0,
+    scheduled_days: 0,
+    learning_steps: 0,
+    reps: row.srs_reps,
+    lapses: row.srs_lapses,
+    state: DB_TO_STATE[row.srs_state],
+    last_review: lastReview,
+  }
+}
+
+export type FsrsResult = {
+  state: SrsState
+  due: Date
+  stability: number
+  difficulty: number
+  lastReview: Date
+  reps: number
+  lapses: number
+}
+
+// Apply a rating event to a row. For never-reviewed rows the FSRS library's
+// createEmptyCard provides the seed; the rating then transitions it into
+// learning/review with computed intervals.
+export const applyRating = (row: DbUserLookup, rating: AppRating, now: Date): FsrsResult => {
+  const existing = userLookupToFsrs(row)
+  const card: FsrsCard = existing ?? createEmptyCard(now)
+  const result = fsrs.next(card, now, RATING_MAP[rating])
+  const next = result.card
+  return {
+    state: STATE_TO_DB[next.state],
+    due: next.due,
+    stability: next.stability,
+    difficulty: next.difficulty,
+    lastReview: next.last_review ?? now,
+    reps: next.reps,
+    lapses: next.lapses,
+  }
+}

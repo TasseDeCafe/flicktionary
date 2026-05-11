@@ -5,6 +5,6 @@ export const mockCreateCustomerWithMetadata = async (
   userEmail: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   referral: string | null
-): Promise<string | null> => {
+): Promise<string> => {
   return 'cus_test_id'
 }

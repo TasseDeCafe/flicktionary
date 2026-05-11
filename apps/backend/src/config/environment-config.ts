@@ -11,6 +11,18 @@ import { FEATURES } from '@flicktionary/core/features'
 import { parseEmails } from './environment-config-utils'
 import { EnvironmentConfig } from './environment-config-schema'
 
+const parseAutoSeedPattern = (raw: string | undefined): RegExp | null => {
+  if (!raw) return null
+  try {
+    return new RegExp(raw)
+  } catch {
+    return null
+  }
+}
+
+const devAutoSeedEmailPattern = parseAutoSeedPattern(process.env.DEV_AUTOSEED_EMAIL_PATTERN)
+const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'fr'
+
 const productionConfig: EnvironmentConfig = {
   environmentName: 'production',
   // Railway injects PORT env var, fallback to 4004 for other deployments
@@ -25,6 +37,10 @@ const productionConfig: EnvironmentConfig = {
     /https:\/\/.*\.up\.railway\.app(\/.*)?/, // Railway Preview URLs
   ],
   resendApiKey: process.env.RESEND_API_KEY || '',
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  tmdbApiKey: process.env.TMDB_API_KEY || '',
+  openSubtitlesApiKey: process.env.OPENSUBTITLES_API_KEY || '',
+  openSubtitlesUserAgent: process.env.OPENSUBTITLES_USER_AGENT || '',
   stripeSecretKey: FEATURES.STRIPE ? process.env.STRIPE_SECRET_KEY || '' : '',
   stripeWebhookSecret: FEATURES.STRIPE ? process.env.STRIPE_WEBHOOK_SECRET || '' : '',
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? process.env.STRIPE_MONTHLY_PRICE_IN_EUR_ID || '' : '',
@@ -56,6 +72,8 @@ const productionConfig: EnvironmentConfig = {
   shouldSlowDownApiRoutes: false,
   usersWithFreeAccess: parseEmails(process.env.USERS_WITH_FREE_ACCESS || '').validEmails,
   emailsOfTestUsers: parseEmails(process.env.EMAILS_OF_TEST_USERS || '').validEmails,
+  devAutoSeedEmailPattern,
+  devAutoSeedNativeLanguage,
   featureFlags: {
     isCreditCardRequiredForAll: () => true,
     shouldAppBeFreeForEveryone: () => false,
@@ -72,6 +90,10 @@ const developmentConfig: EnvironmentConfig = {
     'http://localhost:4173', // "yarn preview" origin
   ],
   resendApiKey: process.env.RESEND_API_KEY || '',
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  tmdbApiKey: process.env.TMDB_API_KEY || '',
+  openSubtitlesApiKey: process.env.OPENSUBTITLES_API_KEY || '',
+  openSubtitlesUserAgent: process.env.OPENSUBTITLES_USER_AGENT || 'Flicktionary v0.0.1',
   stripeSecretKey: FEATURES.STRIPE ? process.env.STRIPE_SECRET_KEY || '' : '',
   stripeWebhookSecret: FEATURES.STRIPE ? process.env.STRIPE_WEBHOOK_SECRET || '' : '',
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? process.env.STRIPE_MONTHLY_PRICE_IN_EUR_ID || '' : '',
@@ -107,6 +129,8 @@ const developmentConfig: EnvironmentConfig = {
   shouldSlowDownApiRoutes: false,
   usersWithFreeAccess: parseEmails(process.env.USERS_WITH_FREE_ACCESS || '').validEmails,
   emailsOfTestUsers: parseEmails(process.env.EMAILS_OF_TEST_USERS || '').validEmails,
+  devAutoSeedEmailPattern,
+  devAutoSeedNativeLanguage,
   featureFlags: {
     isCreditCardRequiredForAll: () => true,
     shouldAppBeFreeForEveryone: () => false,
@@ -156,6 +180,10 @@ const testConfig: EnvironmentConfig = {
   shouldLogRequests: false,
   allowedCorsOrigins: ['some-web-url'],
   resendApiKey: 'dummyResendApiKey',
+  anthropicApiKey: 'dummyAnthropicApiKey',
+  tmdbApiKey: 'dummyTmdbApiKey',
+  openSubtitlesApiKey: 'dummyOpenSubtitlesApiKey',
+  openSubtitlesUserAgent: 'dummyOpenSubtitlesUserAgent',
   stripeSecretKey: FEATURES.STRIPE ? 'dummyStripeSecretKey' : '',
   stripeWebhookSecret: FEATURES.STRIPE ? 'dummyStripeWebhookSecret' : '',
   stripeMonthlyPriceInEurId: FEATURES.STRIPE ? 'dummyStripeMonthlyPriceInEurId' : '',
@@ -188,6 +216,8 @@ const testConfig: EnvironmentConfig = {
   shouldSlowDownApiRoutes: false,
   usersWithFreeAccess: [],
   emailsOfTestUsers: [],
+  devAutoSeedEmailPattern: null,
+  devAutoSeedNativeLanguage: 'fr',
   featureFlags: {
     isCreditCardRequiredForAll: () => true,
     shouldAppBeFreeForEveryone: () => false,
