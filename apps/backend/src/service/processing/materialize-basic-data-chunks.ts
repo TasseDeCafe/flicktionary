@@ -19,6 +19,7 @@ const WIKTIONARY_GROUNDED_GRAMMAR_KEYS = new Set([
   'aspect',
   'aspect_pair_headword',
   'is_reflexive',
+  'ipa',
 ])
 
 export const buildBasicDataGrammarPatch = (

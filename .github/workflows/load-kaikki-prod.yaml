@@ -46,15 +46,15 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      # Avoid re-downloading the ~600MB kaikki JSONL on every run. The dump
-      # changes infrequently; bump the cache key (or clear caches in the GH UI)
-      # to force a fresh download.
+      # Avoid re-downloading the ~2.5GB gzipped kaikki raw dump on every run.
+      # The dump changes infrequently; bump the cache key (or clear caches in
+      # the GH UI) to force a fresh download.
       - name: Cache kaikki download
         uses: actions/cache@v4
         with:
           path: apps/backend/scripts/.cache/kaikki
-          key: kaikki-ru-v1
-          restore-keys: kaikki-ru-
+          key: kaikki-raw-v1
+          restore-keys: kaikki-raw-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

@@ -344,6 +344,22 @@ export const useSetLlmHighlightsEnabled = () => {
   )
 }
 
+export const useSetEnglishIpaDialect = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.setEnglishIpaDialect.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to update English IPA dialect`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useSetPracticeSessionLimits = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

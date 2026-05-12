@@ -13,6 +13,7 @@ type UserPrefsResponse = {
   lastTargetLanguage: string | null
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
+  englishIpaDialect: 'ga' | 'rp'
   practiceMaxNewTerms: number
   practiceMaxReviewTerms: number
   targetLanguagePrefs: { targetLanguage: string; cefrLevel: string }[]
@@ -29,6 +30,7 @@ const buildPrefs = async (
     lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
+    englishIpaDialect,
     practiceLimits,
     targetPrefs,
   ] = await Promise.all([
@@ -37,6 +39,7 @@ const buildPrefs = async (
     usersRepository.getLastTargetLanguage(userId),
     usersRepository.getTapToTranslateEnabled(userId),
     usersRepository.getLlmHighlightsEnabled(userId),
+    usersRepository.getEnglishIpaDialect(userId),
     usersRepository.getPracticeSessionLimits(userId),
     prefsRepository.listForUser(userId),
   ])
@@ -46,6 +49,7 @@ const buildPrefs = async (
     lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
+    englishIpaDialect,
     practiceMaxNewTerms: practiceLimits.maxNewTerms,
     practiceMaxReviewTerms: practiceLimits.maxReviewTerms,
     targetLanguagePrefs: targetPrefs.map((p) => ({
@@ -132,6 +136,18 @@ export const UserPrefsRouter = (
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to update practice limits' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    setEnglishIpaDialect: implementer.setEnglishIpaDialect.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.setEnglishIpaDialect(userId, input.dialect)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to update English IPA dialect' }] },
         })
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

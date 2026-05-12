@@ -165,6 +165,21 @@ const setLlmHighlightsEnabled = async (userId: string, enabled: boolean): Promis
   return result.count === 1
 }
 
+const getEnglishIpaDialect = async (userId: string): Promise<'ga' | 'rp'> => {
+  const result = (await sql`
+    SELECT english_ipa_dialect FROM public.users WHERE id = ${userId}
+  `) as { english_ipa_dialect: string | null }[]
+  const value = result[0]?.english_ipa_dialect
+  return value === 'rp' ? 'rp' : 'ga'
+}
+
+const setEnglishIpaDialect = async (userId: string, dialect: 'ga' | 'rp'): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users SET english_ipa_dialect = ${dialect} WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
 const getPracticeSessionLimits = async (userId: string): Promise<PracticeSessionLimits> => {
   const result = (await sql`
     SELECT practice_max_new_terms, practice_max_review_terms
@@ -215,6 +230,8 @@ export interface UsersRepositoryInterface {
   setTapToTranslateEnabled: (userId: string, enabled: boolean) => Promise<boolean>
   getLlmHighlightsEnabled: (userId: string) => Promise<boolean>
   setLlmHighlightsEnabled: (userId: string, enabled: boolean) => Promise<boolean>
+  getEnglishIpaDialect: (userId: string) => Promise<'ga' | 'rp'>
+  setEnglishIpaDialect: (userId: string, dialect: 'ga' | 'rp') => Promise<boolean>
   getPracticeSessionLimits: (userId: string) => Promise<PracticeSessionLimits>
   setPracticeSessionLimits: (userId: string, limits: PracticeSessionLimits) => Promise<boolean>
 }
@@ -237,6 +254,8 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setTapToTranslateEnabled,
     getLlmHighlightsEnabled,
     setLlmHighlightsEnabled,
+    getEnglishIpaDialect,
+    setEnglishIpaDialect,
     getPracticeSessionLimits,
     setPracticeSessionLimits,
   }

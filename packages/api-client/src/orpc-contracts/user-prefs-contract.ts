@@ -13,6 +13,7 @@ const UserPrefsSchema = z.object({
   lastTargetLanguage: z.string().nullable(),
   tapToTranslateEnabled: z.boolean(),
   llmHighlightsEnabled: z.boolean(),
+  englishIpaDialect: z.enum(['ga', 'rp']),
   practiceMaxNewTerms: z.number().int(),
   practiceMaxReviewTerms: z.number().int(),
   targetLanguagePrefs: z.array(TargetLanguagePrefSchema),
@@ -71,5 +72,11 @@ export const userPrefsContract = {
     .route({ method: 'PUT', path: '/user-prefs/practice-session-limits', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(PracticeSessionLimitsInputSchema)
+    .output(z.object({ data: UserPrefsSchema })),
+
+  setEnglishIpaDialect: oc
+    .route({ method: 'PUT', path: '/user-prefs/english-ipa-dialect', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ dialect: z.enum(['ga', 'rp']) }))
     .output(z.object({ data: UserPrefsSchema })),
 } as const

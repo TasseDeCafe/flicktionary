@@ -37,7 +37,7 @@ export const groundChunk = async (params: {
   })
   if (!entry) return null
 
-  const grammarPatch: GrammarPatch = extractGrammarPatch(entry.data)
+  const grammarPatch: GrammarPatch = extractGrammarPatch(entry.data, params.targetLanguage)
   const patch = buildGrammarPatchFromKaikki(grammarPatch)
   if (Object.keys(patch).length === 0) return null
 

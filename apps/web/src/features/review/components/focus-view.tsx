@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Sparkles, X } from 'lucide-react'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import {
   useExploreCard,
   useGetCard,
@@ -153,6 +154,9 @@ export const FocusView = () => {
   )
   const targetLanguage = session?.targetLanguage ?? card.chunk.targetLanguage
   const nativeLanguage = session?.nativeLanguage ?? userPrefs?.nativeLanguage ?? null
+  // Wiktionary-grounded IPA. When set, the full-exploration renderer must
+  // suppress its own `extras.ipa` so we don't show pronunciation twice.
+  const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga')
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
@@ -230,6 +234,7 @@ export const FocusView = () => {
                 card={card}
                 targetLanguage={targetLanguage}
                 sourceSessionId={sourceSessionId}
+                wiktionaryIpa={displayedIpa}
               />
             </div>
           </section>
@@ -245,7 +250,7 @@ export const FocusView = () => {
             )}
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
             {hasExtras ? (
-              <FullExplorationRenderer card={card} />
+              <FullExplorationRenderer card={card} hideExtrasIpa={!!displayedIpa} />
             ) : (
               <div className='flex flex-col items-start gap-3'>
                 <p className='text-muted-foreground text-sm'>
