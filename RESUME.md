@@ -6,6 +6,15 @@ I'm building the Flicktionary web app described in `/Users/sebastien/Documents/f
 
 The full implementation plan is at `/Users/sebastien/.claude/plans/i-would-like-to-wild-codd.md` — please read both `SPEC.md` and that plan file in full before doing anything else. Follow `AGENTS.md` conventions (no `function` keyword, no semicolons, single quotes, never import React, ESM, Lingui for all user-facing text, oRPC for API contracts, raw `postgres.js` SQL — no ORM).
 
+Current migration rule: schema/data migrations are append-only. Some historical
+entries below mention editing a consolidated or initial migration, or
+hand-editing generated DB types; those notes are stale. For new DB changes,
+create a new migration from `apps/backend/supabase/supabase-dev-tunnel/` with
+`doppler run -- supabase migration new <name>`, edit only that new file, verify
+with `doppler run -- supabase db reset --local`, then regenerate database
+types. The root `pnpm db:reset` wrapper exists; the backend package script is
+`db:dev:tunnel:reset`, not `db:reset`.
+
 ## Decisions already locked in
 
 - **Stack**: existing template — Vite + React 19 + TanStack Router (web), Express + oRPC + Postgres.js (backend), Supabase auth.
