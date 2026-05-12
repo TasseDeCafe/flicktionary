@@ -106,26 +106,32 @@ tracks does).
      differ from `selection_text`. Example: user highlights `out` inside
      `ran out of milk` → `headword = "run out of"`.
 3. **Wiktionary grounding (post-basic-data, per-language).** For target
-   languages with a kaikki.org dump loaded into our `wiktionary_entries` /
-   `wiktionary_forms` tables (currently `ru` only — gated by
-   `KAIKKI_ENABLED_LANGUAGES`), each newly-touched `user_lookups` row is
-   looked up via a four-path chain: real-lemma direct hit → real-lemma
-   POS-agnostic → form-of pseudo-entry resolved to its underlying lemma →
-   `wiktionary_forms` paradigm-cell match. When something matches, the
-   structured grammar fields the extractor knows about (gender, animacy,
-   number-only, indeclinability, aspect, aspect-pair headword,
-   is_reflexive, display_form) are shallow-merged into the row's `grammar`
-   JSONB with **kaikki winning where both sides have a value**; LLM-only
-   keys (e.g. `government`, `notes`, `notable_forms`) are preserved
-   untouched. `grounded_at` is stamped on success. Idempotent across
-   re-process: rows already grounded short-circuit. Automatic basic-data
-   grammar patches must not overwrite Wiktionary-owned keys on already
-   grounded rows; after a user manually edits grammar provenance, automatic
-   grammar patches and re-grounding skip that row so manual changes stay
-   authoritative. Languages outside the set are pure-LLM and `grounded_at`
-   stays null. See
-   `WIKTIONARY_GROUNDING.md` for the full design + per-POS extraction
-   rules.
+   languages loaded from the raw Kaikki/Wiktextract dump into our
+   `wiktionary_entries` / `wiktionary_forms` tables (currently `ru` and
+   `en` — gated by `KAIKKI_ENABLED_LANGUAGES`), each newly-touched
+   `user_lookups` row is looked up via a four-path chain: real-lemma direct
+   hit → real-lemma POS-agnostic → form-of pseudo-entry resolved to its
+   underlying lemma → `wiktionary_forms` paradigm-cell match. For English
+   verbs, direct lookup also tries the headword without a leading `to `
+   under the same verb POS (`to stink` → `stink`) before falling back to
+   broader paths. When something matches, the structured grammar fields the
+   extractor knows about (e.g. POS, Russian gender/animacy/aspect fields,
+   display_form where appropriate, and Wiktionary IPA) are shallow-merged
+   into the row's `grammar` JSONB with **kaikki winning where both sides
+   have a value**; LLM-only keys (e.g. `government`, `notes`,
+   `notable_forms`) are preserved untouched. English skips Wiktionary
+   `display_form` because head-template expansions are noisy
+   (`dictionary (plural dictionaries)`); English IPA is bucketed into GA/RP
+   when tags allow it, while non-English IPA currently uses the untagged
+   bucket. `grounded_at` is stamped on success. Idempotent across re-process:
+   rows already grounded short-circuit. Automatic basic-data grammar patches
+   must not overwrite Wiktionary-owned keys on already grounded rows; after a
+   user manually edits grammar provenance, automatic grammar patches and
+   re-grounding skip that row so manual changes stay authoritative.
+   Languages outside the set are pure-LLM and `grounded_at` stays null.
+   See `WIKTIONARY_GROUNDING.md` and
+   `.claude/skills/add-wiktionary-language/SKILL.md` for the operational
+   workflow and per-language extraction guidance.
 4. **Per-chunk Full exploration (deferred, on-demand)** — one call per card,
    triggered manually by clicking `Generate full exploration` in the focus
    view. Cards arrive from step 2 with only the basic data populated; this
@@ -176,18 +182,21 @@ Two-layer UI.
   `perf.`, `↔ <pair>`, `+ acc`, `pl. tantum`, `indecl.`, `refl.`) for the
   high-signal keys, glanceable. Below the inputs: a collapsible `Grammar`
   panel (selects for enums, text inputs for headword pointers / government /
-  display_form, checkboxes for booleans, an add/remove list editor for
-  `notable_forms`). Both chips and panel filter the visible keys by the
+  display_form where the target language supports it, checkboxes for
+  booleans, an add/remove list editor for `notable_forms`, plus read-only
+  Wiktionary IPA when `grammar.ipa` has a displayable bucket). Both chips and
+  panel filter the visible keys by the
   session's `target_language` — the per-language allowlist + label /
   placeholder hints live in
   `packages/core/src/constants/language-grammar.ts` (explicit configs for
   `en`, `es`, `ru`, `fr`, `pt`; other supported languages fall through to a
   conservative default of `pos` / `display_form` / `government` /
-  `number_only` / `notable_forms` / `notes`). Same debounced-PATCH path,
-  with `grammarPatch` shallow-merged into the JSONB column server-side;
-  hidden fields' stored values are preserved untouched. A small card-level
-  grounding badge sits next to the chips for kaikki-enabled languages
-  (currently `ru`): `✓ Wiktionary` when `grounded_at` is set and the user
+  `number_only` / `notable_forms` / `notes`; English intentionally omits
+  editable `display_form`). Same debounced-PATCH path, with `grammarPatch`
+  shallow-merged into the JSONB column server-side; hidden fields' stored
+  values are preserved untouched. A small card-level grounding badge sits
+  next to the chips for kaikki-enabled languages (currently `ru` and `en`):
+  `✓ Wiktionary` when `grounded_at` is set and the user
   has not manually edited grammar provenance, `Wiktionary, edited` when a
   grounded row has been manually edited, `Edited` when an ungrounded row has
   been manually edited, and `⚠ LLM only` when the language has a dump loaded
@@ -385,11 +394,12 @@ card
                                     -- aspect_pair_headword, government (e.g. "от + gen"), number_only
                                     -- (plurale_tantum/singulare_tantum), is_indeclinable, is_reflexive,
                                     -- animacy, display_form (e.g. stress-marked Russian "ви́деть"),
-                                    -- notable_forms (irregular paradigm cells). Default '{}'.
+                                    -- notable_forms (irregular paradigm cells), ipa
+                                    -- ({ga?, rp?, untagged?}). Default '{}'.
                                     -- Populated by basic-data pass; refinable by enrichment pass.
                                     -- Per-language instructions block dictates which keys to fill.
-                                    -- Wiktionary grounding (Russian only, v1) overrides high-confidence
-                                    -- structured fields via kaikki data after the basic-data pass.
+                                    -- Wiktionary grounding for enabled languages overrides high-confidence
+                                    -- structured fields and IPA via kaikki data after the basic-data pass.
   grounded_at         timestamptz?  -- stamped when wiktionary grounding merged kaikki data into
                                     -- `grammar`. Null = pure LLM (no dump for this language, or
                                     -- nothing matched). Historical provenance: does not get cleared
@@ -578,6 +588,7 @@ explicit nulls behind, so consumers must be defensive).
   "aspect_pair_headword": "string",
   "is_reflexive": true,
   "government": "string (e.g. '+ acc', 'от + gen', '+ on (gerund)')",
+  "ipa": { "ga": "string | null", "rp": "string | null", "untagged": "string | null" },
   "notable_forms": [{ "label": "string", "form": "string" }],
   "notes": "string"
 }

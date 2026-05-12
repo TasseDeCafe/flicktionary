@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Sparkles, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import {
   useExploreCard,
   useGetCard,
@@ -157,6 +158,7 @@ export const FocusView = () => {
   // Wiktionary-grounded IPA. When set, the full-exploration renderer must
   // suppress its own `extras.ipa` so we don't show pronunciation twice.
   const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga')
+  const wiktionaryUrl = buildWiktionaryUrl(card.chunk.headword, targetLanguage, card.chunk.grammar?.pos)
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
@@ -219,6 +221,17 @@ export const FocusView = () => {
                 grammarUserEditedAt={card.chunk.grammarUserEditedAt}
                 targetLanguage={targetLanguage}
               />
+              {wiktionaryUrl && (
+                <a
+                  href={wiktionaryUrl}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='text-foreground hover:bg-accent inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors'
+                >
+                  <ExternalLink className='h-3 w-3' />
+                  {t`Wiktionary`}
+                </a>
+              )}
             </div>
             {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}
