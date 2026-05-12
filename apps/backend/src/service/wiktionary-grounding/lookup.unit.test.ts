@@ -10,9 +10,7 @@ const entry = (headword: string, pos: string): DbWiktionaryEntry => ({
   data: {},
 })
 
-const mockRepository = (
-  directEntries: Map<string, DbWiktionaryEntry>
-): WiktionaryEntriesRepositoryInterface => ({
+const mockRepository = (directEntries: Map<string, DbWiktionaryEntry>): WiktionaryEntriesRepositoryInterface => ({
   findRealLemmaByHeadwordAndPos: vi.fn(async ({ targetLanguage, headword, pos }) => {
     return directEntries.get(`${targetLanguage}:${headword}:${pos}`) ?? null
   }),
