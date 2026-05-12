@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import {
   useFinalizePracticeText,
@@ -15,6 +16,35 @@ import { AnnotatedText, type AnnotationInput } from './annotated-text'
 import { PracticeLoader } from './practice-loader'
 import { RateSheet, type RateSheetChunkContent } from './rate-sheet'
 import type { RateValue } from '@/components/ui/rate-buttons'
+
+type AdvancingSnapshot = {
+  completed: number
+  target: number
+  ratedCount: number
+  totalCount: number
+}
+
+const PracticeTextSkeleton = () => (
+  <article className='min-h-[22rem] rounded-xl border bg-white p-5 shadow-sm' aria-hidden='true'>
+    <div className='space-y-9'>
+      <div className='space-y-3'>
+        <Skeleton className='h-6 w-11/12' />
+        <Skeleton className='h-6 w-4/5' />
+      </div>
+      <div className='space-y-3'>
+        <Skeleton className='h-6 w-full' />
+        <Skeleton className='h-6 w-10/12' />
+        <Skeleton className='h-6 w-11/12' />
+        <Skeleton className='h-6 w-3/5' />
+      </div>
+      <div className='space-y-3'>
+        <Skeleton className='h-6 w-9/12' />
+        <Skeleton className='h-6 w-full' />
+        <Skeleton className='h-6 w-2/3' />
+      </div>
+    </div>
+  </article>
+)
 
 export const PracticeSessionView = () => {
   const { t } = useLingui()
@@ -37,6 +67,7 @@ export const PracticeSessionView = () => {
   // Hides the previous text and gates the auto-trigger effect so we don't
   // flash a stale text or double-fire the LLM call.
   const [isAdvancing, setIsAdvancing] = useState(false)
+  const [advancingSnapshot, setAdvancingSnapshot] = useState<AdvancingSnapshot | null>(null)
 
   const currentText = sessionData?.currentText ?? null
   const currentTextId = currentText?.id ?? null
@@ -132,6 +163,13 @@ export const PracticeSessionView = () => {
 
   const handleNext = () => {
     if (!currentText) return
+    const implicitGoodCount = annotations.filter((ann) => !ratings.has(ann.index)).length
+    setAdvancingSnapshot({
+      completed: progress ? Math.min(progress.target, progress.completed + implicitGoodCount) : implicitGoodCount,
+      target: progress?.target ?? annotations.length,
+      ratedCount: ratings.size,
+      totalCount: annotations.length,
+    })
     setIsAdvancing(true)
     finalizeText(
       { textId: currentText.id },
@@ -142,44 +180,53 @@ export const PracticeSessionView = () => {
             {
               onSuccess: (response) => {
                 if (response.data.done) setDone(true)
+                setAdvancingSnapshot(null)
                 setIsAdvancing(false)
               },
-              onError: () => setIsAdvancing(false),
+              onError: () => {
+                setAdvancingSnapshot(null)
+                setIsAdvancing(false)
+              },
             }
           )
         },
-        onError: () => setIsAdvancing(false),
+        onError: () => {
+          setAdvancingSnapshot(null)
+          setIsAdvancing(false)
+        },
       }
     )
   }
 
   const close = () => navigate({ to: '/practice' })
 
-  const showLoader = !done && (isLoading || isAdvancing || !currentText)
-  const loaderLabel = isAdvancing ? t`Generating the next text…` : t`Preparing the session…`
+  const showInitialLoader = !done && (isLoading || (!isAdvancing && !currentText))
+  const displayProgress = isAdvancing && advancingSnapshot ? advancingSnapshot : progress
 
   // Cap the visible bar at 100% — the numerator can briefly equal the
   // denominator on the all-caught-up frame.
   const progressPct =
-    progress && progress.target > 0 ? Math.min(100, Math.round((progress.completed / progress.target) * 100)) : 0
+    displayProgress && displayProgress.target > 0
+      ? Math.min(100, Math.round((displayProgress.completed / displayProgress.target) * 100))
+      : 0
 
   return (
     <ModalScreen onClose={close} closeIcon='x' title={t`Practice`}>
-      {showLoader && <PracticeLoader label={loaderLabel} />}
+      {showInitialLoader && <PracticeLoader label={t`Preparing the session…`} />}
 
-      {!showLoader && (
+      {!showInitialLoader && (
         <div className='flex flex-1 flex-col overflow-hidden'>
-          {progress && progress.target > 0 && (
+          {displayProgress && displayProgress.target > 0 && (
             <div className='border-b bg-white/95 px-4 py-2 backdrop-blur'>
               <div className='mx-auto flex max-w-2xl items-center gap-3'>
                 <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200'>
                   <div
-                    className='h-full bg-yellow-500 transition-[width] duration-300 ease-out'
+                    className='h-full bg-yellow-500 transition-[width] duration-700 ease-out'
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
                 <span className='text-muted-foreground text-xs tabular-nums'>
-                  {progress.completed}/{progress.target}
+                  {displayProgress.completed}/{displayProgress.target}
                 </span>
               </div>
             </div>
@@ -198,7 +245,9 @@ export const PracticeSessionView = () => {
                 </div>
               )}
 
-              {!done && currentText && currentText.body && (
+              {!done && isAdvancing && <PracticeTextSkeleton />}
+
+              {!done && !isAdvancing && currentText && currentText.body && (
                 <article className='rounded-xl border bg-white p-5 shadow-sm'>
                   {currentText.generationWarning && (
                     <p className='text-muted-foreground mb-3 text-xs italic'>{currentText.generationWarning}</p>
@@ -213,21 +262,34 @@ export const PracticeSessionView = () => {
             </div>
           </div>
 
-          {!done && currentText && (
+          {!done && (currentText || isAdvancing) && (
             <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
               <div className='mx-auto flex max-w-2xl items-center justify-between gap-3'>
                 {(() => {
-                  const ratedCount = ratings.size
-                  const totalCount = annotations.length
+                  const ratedCount = advancingSnapshot?.ratedCount ?? ratings.size
+                  const totalCount = advancingSnapshot?.totalCount ?? annotations.length
                   return (
                     <span className='text-muted-foreground text-xs'>
                       {t`${ratedCount} of ${totalCount} rated. Untapped terms count as 'good' on Next.`}
                     </span>
                   )
                 })()}
-                <Button onClick={handleNext} disabled={isFinalizing || isGenerating || isRating} size='lg'>
-                  {t`Next text`}
-                  <ArrowRight className='ml-1 h-4 w-4' />
+                <Button
+                  onClick={handleNext}
+                  disabled={isAdvancing || isFinalizing || isGenerating || isRating}
+                  size='lg'
+                >
+                  {isAdvancing ? (
+                    <>
+                      {t`Generating…`}
+                      <LoaderCircle className='ml-1 h-4 w-4 animate-spin' />
+                    </>
+                  ) : (
+                    <>
+                      {t`Next text`}
+                      <ArrowRight className='ml-1 h-4 w-4' />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
