@@ -13,6 +13,7 @@ export type GrammarFieldKey =
   | 'is_reflexive'
   | 'notable_forms'
   | 'notes'
+  | 'ipa'
 
 export type FieldHint = { label?: string; placeholder?: string }
 
@@ -30,6 +31,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
     fields: [
       'pos',
       'display_form',
+      'ipa',
       'gender',
       'aspect',
       'aspect_pair_headword',
@@ -45,6 +47,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
       display_form: { label: 'Display form (stress-marked)', placeholder: 'e.g. ви́деть' },
       aspect_pair_headword: { placeholder: 'e.g. увидеть' },
       government: { placeholder: 'e.g. + acc, от + gen' },
+      ipa: { label: 'IPA' },
     },
   },
   es: {
@@ -52,13 +55,10 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
     hints: { government: { placeholder: 'e.g. + de, + a' } },
   },
   en: {
-    fields: ['pos', 'display_form', 'government', 'number_only', 'notable_forms', 'notes'],
+    fields: ['pos', 'ipa', 'government', 'number_only', 'notable_forms', 'notes'],
     hints: {
-      display_form: {
-        label: 'Pronunciation hint (stress / IPA)',
-        placeholder: 'e.g. PHO·to·graph or /ˈfoʊtəɡræf/',
-      },
       government: { placeholder: 'e.g. + on, + with' },
+      ipa: { label: 'IPA' },
     },
   },
   fr: {
@@ -89,7 +89,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
 // view to decide whether to render a "Wiktionary" / "LLM only" badge —
 // languages outside the set get no badge, since the absence of grounding is
 // the default state and doesn't need explanation.
-export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru'])
+export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en'])
 
 export const getLanguageGrammarConfig = (code: string | undefined | null): LanguageGrammarConfig => {
   if (!code) return DEFAULT_GRAMMAR_CONFIG

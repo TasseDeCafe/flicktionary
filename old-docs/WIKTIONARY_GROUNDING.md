@@ -26,7 +26,13 @@ Goals:
 
 ## What already exists
 
-### Schema (already in `apps/backend/supabase/migrations/20260425215345_initial_schema.sql`)
+### Schema
+
+These tables now live in the canonical migration history under
+`apps/backend/supabase/migrations/`. This document is historical; do not edit
+the old initial/consolidated migration files when making new schema changes.
+Create a new migration with `doppler run -- supabase migration new <name>` from
+`apps/backend/supabase/supabase-dev-tunnel/`, then edit only that new file.
 
 ```sql
 CREATE TABLE public.wiktionary_entries (
@@ -131,8 +137,23 @@ and the script will print a notice telling you to run the loader.
 
 ## Schema addition
 
-Append to the same migration file (`20260425215345_initial_schema.sql`), in
-the `public.cards` table definition:
+Historical note: this section originally described adding `grounded_at` during
+pre-deploy schema consolidation. For any new schema/data change, do not append
+to or rewrite an existing migration. Create a new migration from
+`apps/backend/supabase/supabase-dev-tunnel/`:
+
+```bash
+doppler run -- supabase migration new <name>
+```
+
+Then edit only the newly created file in `apps/backend/supabase/migrations/`
+and verify with:
+
+```bash
+doppler run -- supabase db reset --local
+```
+
+The historical SQL shape was:
 
 ```sql
 grounded_at TIMESTAMP WITH TIME ZONE NULL,  -- set when wiktionary grounding
@@ -140,12 +161,10 @@ grounded_at TIMESTAMP WITH TIME ZONE NULL,  -- set when wiktionary grounding
                                             -- card. null = pure LLM.
 ```
 
-After editing, run `cd apps/backend/supabase/supabase-dev-tunnel/supabase &&
-doppler run -- supabase db reset` to apply. The dev tunnel DB will be wiped —
-that's fine, the user has approved this workflow (see memory:
-`feedback_flicktionary_migrations.md`).
-
-After reset, re-run `pnpm load:kaikki` to repopulate the wiktionary tables.
+From the repo root, `pnpm db:reset` runs the dev-tunnel reset wrapper. From
+backend package scope, use
+`pnpm --filter @flicktionary/backend db:dev:tunnel:reset`; there is no backend
+`db:reset` script.
 
 ## Implementation
 
@@ -442,8 +461,9 @@ LIMIT 20;
 
 When implementing, expect to touch:
 
-- `apps/backend/supabase/migrations/20260425215345_initial_schema.sql` — add
-  `grounded_at` column to `cards`.
+- `apps/backend/supabase/migrations/<new timestamp>_<name>.sql` — append-only
+  migration for any new schema/data change. Do not edit the initial schema
+  migration in place.
 - `apps/backend/src/service/wiktionary-grounding/{index,lookup,extract,merge,config}.ts`
   — new module.
 - `apps/backend/src/service/process-session.ts` (or wherever the basic-data

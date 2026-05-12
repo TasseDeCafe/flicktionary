@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractGrammarPatch, extractDisplayForm, type KaikkiEntry } from './extract'
+import { extractGrammarPatch, extractDisplayForm, extractIpaBag, type KaikkiEntry } from './extract'
 
 // Minimal fixtures shaped after real kaikki Russian entries. Only the fields
 // the extractor reads are populated.
@@ -111,9 +111,9 @@ describe('extractDisplayForm', () => {
   })
 })
 
-describe('extractGrammarPatch — verbs', () => {
+describe('extractGrammarPatch — Russian verbs', () => {
   it('extracts aspect, aspect_pair_headword (stress-stripped), is_reflexive=false', () => {
-    expect(extractGrammarPatch(verbObnaruzhit)).toEqual({
+    expect(extractGrammarPatch(verbObnaruzhit, 'ru')).toEqual({
       pos: 'verb',
       aspect: 'perf',
       aspect_pair_headword: 'обнаруживать',
@@ -123,7 +123,7 @@ describe('extractGrammarPatch — verbs', () => {
   })
 
   it('flags is_reflexive=true on -ся lemmas', () => {
-    expect(extractGrammarPatch(verbReflexive)).toMatchObject({
+    expect(extractGrammarPatch(verbReflexive, 'ru')).toMatchObject({
       pos: 'verb',
       aspect: 'impf',
       aspect_pair_headword: 'найтись',
@@ -132,7 +132,7 @@ describe('extractGrammarPatch — verbs', () => {
   })
 
   it('keeps only the first aspect pair when kaikki returns several', () => {
-    expect(extractGrammarPatch(verbWithMultiplePairs)).toMatchObject({
+    expect(extractGrammarPatch(verbWithMultiplePairs, 'ru')).toMatchObject({
       pos: 'verb',
       aspect: 'impf',
       aspect_pair_headword: 'положить',
@@ -140,9 +140,9 @@ describe('extractGrammarPatch — verbs', () => {
   })
 })
 
-describe('extractGrammarPatch — nouns', () => {
+describe('extractGrammarPatch — Russian nouns', () => {
   it('extracts gender + animacy from afterRoman tokens', () => {
-    expect(extractGrammarPatch(nounKniga)).toEqual({
+    expect(extractGrammarPatch(nounKniga, 'ru')).toEqual({
       pos: 'noun',
       gender: 'f',
       animacy: 'inanimate',
@@ -151,14 +151,14 @@ describe('extractGrammarPatch — nouns', () => {
   })
 
   it('detects plurale_tantum via the "pl" token', () => {
-    expect(extractGrammarPatch(nounNozhnitsy)).toMatchObject({
+    expect(extractGrammarPatch(nounNozhnitsy, 'ru')).toMatchObject({
       pos: 'noun',
       number_only: 'plurale_tantum',
     })
   })
 
   it('detects indeclinable from the full expansion (not just afterRoman)', () => {
-    expect(extractGrammarPatch(nounKofe)).toMatchObject({
+    expect(extractGrammarPatch(nounKofe, 'ru')).toMatchObject({
       pos: 'noun',
       gender: 'm',
       animacy: 'inanimate',
@@ -167,10 +167,215 @@ describe('extractGrammarPatch — nouns', () => {
   })
 
   it('extracts animate marker', () => {
-    expect(extractGrammarPatch(nounMat)).toMatchObject({
+    expect(extractGrammarPatch(nounMat, 'ru')).toMatchObject({
       pos: 'noun',
       gender: 'f',
       animacy: 'animate',
     })
+  })
+})
+
+describe('extractGrammarPatch — gating of Russian-specific logic', () => {
+  it('does NOT run Russian noun extraction when langCode is not ru', () => {
+    // Same shape as nounKniga, but lang_code overridden — the function takes
+    // langCode as an argument, so it doesn't read entry.lang_code anyway,
+    // but the safety we want to assert is "no afterRoman parse → no gender".
+    const patch = extractGrammarPatch(nounKniga, 'en')
+    expect(patch.gender).toBeUndefined()
+    expect(patch.animacy).toBeUndefined()
+    expect(patch.pos).toBe('noun')
+    expect(patch.display_form).toBeUndefined()
+  })
+
+  it('does NOT run Russian verb extraction when langCode is not ru', () => {
+    const patch = extractGrammarPatch(verbObnaruzhit, 'en')
+    expect(patch.aspect).toBeUndefined()
+    expect(patch.aspect_pair_headword).toBeUndefined()
+    expect(patch.is_reflexive).toBeUndefined()
+    expect(patch.pos).toBe('verb')
+  })
+})
+
+describe('extractGrammarPatch — English display form', () => {
+  it('does not store noisy English head-template expansions as display_form', () => {
+    const patch = extractGrammarPatch(
+      {
+        word: 'dictionary',
+        pos: 'noun',
+        head_templates: [{ name: 'en-noun', expansion: 'dictionary (plural dictionaries)' }],
+      },
+      'en'
+    )
+    expect(patch).toEqual({ pos: 'noun' })
+  })
+})
+
+describe('extractIpaBag — Russian', () => {
+  it('puts untagged IPA in untagged bucket only', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/sɐˈbakə/' }],
+    }
+    expect(extractIpaBag(entry, 'ru')).toEqual({ untagged: '/sɐˈbakə/' })
+  })
+
+  it('ignores entries with no string ipa', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: 12 }, { other: 'x' }, { ipa: '' }],
+    }
+    expect(extractIpaBag(entry, 'ru')).toEqual({})
+  })
+
+  it('does NOT cross-fall-back tagged English buckets into the Russian untagged path', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/sɐˈbakə/', tags: ['General-American'] }],
+    }
+    // Any tags on a non-English entry → not untagged → skipped.
+    expect(extractIpaBag(entry, 'ru')).toEqual({})
+  })
+})
+
+describe('extractIpaBag — English GA/RP', () => {
+  const cat: KaikkiEntry = {
+    sounds: [
+      { ipa: '/kæt/', tags: ['General-American'] },
+      { ipa: '/kat/', tags: ['Received-Pronunciation'] },
+    ],
+  }
+
+  it('buckets GA and RP separately', () => {
+    expect(extractIpaBag(cat, 'en')).toEqual({ ga: '/kæt/', rp: '/kat/' })
+  })
+
+  it('puts shared GA/RP pronunciations into both buckets', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/twɪnd͡ʒ/', tags: ['General-American', 'Received-Pronunciation'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/twɪnd͡ʒ/', rp: '/twɪnd͡ʒ/' })
+  })
+
+  it('accepts bare US tag as GA when no narrower US region tag is present', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/foo/', tags: ['US'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/foo/' })
+  })
+
+  it('rejects bare US when paired with a narrower US region tag', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/foo/', tags: ['US', 'Southern-US'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({})
+  })
+
+  it('rejects real crayon-style narrower US regional variants', () => {
+    const entry: KaikkiEntry = {
+      sounds: [
+        { ipa: '/ˈkɹeɪ̯.ɑn/', tags: ['US'] },
+        { ipa: '/ˈkɹæn/', tags: ['Midwestern-US', 'Northeastern', 'US', 'especially'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/ˈkɹeɪ̯.ɑn/' })
+  })
+
+  it('accepts UK tag as RP', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/foo/', tags: ['UK'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ rp: '/foo/' })
+  })
+
+  it('ignores Australian / Canadian / other unrelated regional pronunciations', () => {
+    const entry: KaikkiEntry = {
+      sounds: [
+        { ipa: '/au/', tags: ['Australia'] },
+        { ipa: '/ca/', tags: ['Canada'] },
+        { ipa: '/ga/', tags: ['General-American'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/ga/' })
+  })
+})
+
+describe('extractIpaBag — English untagged fallback', () => {
+  it('routes entries with no tags into the untagged bucket', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/dɪkʃənɛɹi/' }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ untagged: '/dɪkʃənɛɹi/' })
+  })
+
+  it('does NOT cross-fall-back untagged into GA or RP', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/foo/' }],
+    }
+    const out = extractIpaBag(entry, 'en')
+    expect(out.ga).toBeUndefined()
+    expect(out.rp).toBeUndefined()
+    expect(out.untagged).toBe('/foo/')
+  })
+})
+
+describe('extractIpaBag — quality tag rejection', () => {
+  it('drops nonstandard pronunciations like the /kræn/ for crayon', () => {
+    const entry: KaikkiEntry = {
+      sounds: [
+        { ipa: '/ˈkɹeɪɒn/', tags: ['General-American'] },
+        { ipa: '/kɹæn/', tags: ['General-American', 'nonstandard'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/ˈkɹeɪɒn/' })
+  })
+
+  it('drops dated, dialectal, archaic, rare, and obsolete variants', () => {
+    const entry: KaikkiEntry = {
+      sounds: [
+        { ipa: '/a/', tags: ['General-American', 'dated'] },
+        { ipa: '/b/', tags: ['General-American', 'dialectal'] },
+        { ipa: '/c/', tags: ['General-American', 'archaic'] },
+        { ipa: '/d/', tags: ['General-American', 'rare'] },
+        { ipa: '/e/', tags: ['General-American', 'obsolete'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({})
+  })
+})
+
+describe('extractIpaBag — phonemic preference', () => {
+  it('prefers phonemic (/.../) over phonetic ([...]) within a bucket', () => {
+    const entry: KaikkiEntry = {
+      sounds: [
+        { ipa: '[kʰæt]', tags: ['General-American'] },
+        { ipa: '/kæt/', tags: ['General-American'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/kæt/' })
+  })
+
+  it('falls back to phonetic when no phonemic exists for the bucket', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '[kʰæt]', tags: ['General-American'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '[kʰæt]' })
+  })
+})
+
+describe('extractGrammarPatch — IPA integration', () => {
+  it('attaches IPA bag to the patch when populated', () => {
+    const entry: KaikkiEntry = {
+      word: 'cat',
+      pos: 'noun',
+      sounds: [{ ipa: '/kæt/', tags: ['General-American'] }],
+    }
+    const patch = extractGrammarPatch(entry, 'en')
+    expect(patch.ipa).toEqual({ ga: '/kæt/' })
+  })
+
+  it('omits IPA bag entirely when all buckets empty', () => {
+    const entry: KaikkiEntry = {
+      word: 'cat',
+      pos: 'noun',
+    }
+    const patch = extractGrammarPatch(entry, 'en')
+    expect(patch.ipa).toBeUndefined()
   })
 })

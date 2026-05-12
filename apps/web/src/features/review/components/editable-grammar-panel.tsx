@@ -18,6 +18,7 @@ type Props = {
   card: Card
   targetLanguage?: string
   sourceSessionId?: string
+  wiktionaryIpa?: string
 }
 
 const SAVE_DEBOUNCE_MS = 600
@@ -94,12 +95,19 @@ const buildGrammarPatch = (current: Grammar, lastSaved: Grammar): Record<string,
 // Editable per-key editor. Sends a debounced PATCH on every change. Mirrors
 // the lastSavedRef pattern from EditableCardFields so concurrent updates
 // (chat tool, sibling tab) don't clobber in-flight edits.
-export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: Props) => {
+export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId, wiktionaryIpa }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
 
   const config = useMemo(() => getLanguageGrammarConfig(targetLanguage), [targetLanguage])
-  const has = (k: GrammarFieldKey) => config.fields.includes(k)
+  // IPA is grounded from Wiktionary and rendered above the chips in the focus
+  // view; v1 keeps it read-only here so user edits can't drift from the
+  // dialect-bucketed shape.
+  const editableFields = useMemo<readonly GrammarFieldKey[]>(
+    () => config.fields.filter((f): f is GrammarFieldKey => f !== 'ipa'),
+    [config]
+  )
+  const has = (k: GrammarFieldKey) => editableFields.includes(k)
   const hint = (k: GrammarFieldKey) => config.hints?.[k]
 
   const initial = useMemo(() => grammarFromCard(card), [card])
@@ -174,6 +182,15 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
 
       {open && (
         <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
+          {wiktionaryIpa && (
+            <div>
+              <Label className='text-xs'>{t`IPA`}</Label>
+              <div className='border-input bg-muted/30 flex h-9 w-full items-center rounded-md border px-3 py-1 font-mono text-sm shadow-sm'>
+                {wiktionaryIpa}
+              </div>
+            </div>
+          )}
+
           {has('pos') && (
             <div>
               <Label className='text-xs'>{t`Part of speech`}</Label>

@@ -27,9 +27,13 @@ const asString = (v: unknown): string | null => {
 
 type Props = {
   card: Card
+  // True when the focus view already rendered a Wiktionary-grounded IPA above
+  // the grammar chips. Suppresses the extras.ipa section so we don't show
+  // pronunciation twice on the same card.
+  hideExtrasIpa?: boolean
 }
 
-export const FullExplorationRenderer = ({ card }: Props) => {
+export const FullExplorationRenderer = ({ card, hideExtrasIpa = false }: Props) => {
   const { t } = useLingui()
   const extras = card.chunk.explorationExtras ?? {}
 
@@ -38,7 +42,7 @@ export const FullExplorationRenderer = ({ card }: Props) => {
   const targetExample = asString(card.chunk.targetExample)
   const nativeExample = asString(card.chunk.nativeExample)
 
-  const ipa = asString(extras.ipa)
+  const ipa = hideExtrasIpa ? null : asString(extras.ipa)
   const frequency = asString(extras.frequency)
   const moreFrequentSynonym = asString(extras.more_frequent_synonym)
   const regionalism = asString(extras.regionalism)

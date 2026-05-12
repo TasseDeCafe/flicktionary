@@ -111,7 +111,7 @@ The canonical migrations directory is `apps/backend/supabase/migrations/`. The f
 - `apps/backend/supabase/supabase-test/supabase/migrations` → `../../migrations` (test)
 - `apps/backend/supabase/supabase-prod/supabase/migrations` → `../../migrations` (production)
 
-This means there's exactly one copy of each migration file on disk; the four envs cannot drift. The workflow is:
+This means there's exactly one copy of each migration file on disk; the four envs cannot drift. The app is deployed, so migrations are append-only: do not edit an existing migration to change the database schema unless the user explicitly asks for a history rewrite before that migration has been applied anywhere. Every schema/data migration change should be a new migration. Historical docs or resume notes may mention editing a consolidated or initial migration in place; those notes are stale and must not be followed. The workflow is:
 
 1. From `apps/backend/supabase/supabase-dev-tunnel/`, create the migration with the Supabase CLI so the timestamp prefix is correct and the file lands in the symlinked directory (which resolves to the canonical location):
 
@@ -119,7 +119,9 @@ This means there's exactly one copy of each migration file on disk; the four env
    supabase migration new <name>
    ```
 
-2. Edit the new file, then verify it applies cleanly with `doppler run -- supabase db reset --local`.
+2. Edit only the newly created migration file, then verify it applies cleanly with `doppler run -- supabase db reset --local`.
+
+The root `pnpm db:reset` script is a wrapper for the dev-tunnel reset. The backend package does **not** expose a plain `db:reset` script; from package scope use `pnpm --filter @flicktionary/backend db:dev:tunnel:reset`.
 
 That's it — no copying, no sync step. Never hand-write the timestamp prefix or create the file with `touch` / `Write` directly; `supabase migration new` is the source of truth for ordering. Never replace any of the four `supabase/migrations` symlinks with a real directory.
 

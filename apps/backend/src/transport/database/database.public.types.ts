@@ -884,6 +884,7 @@ export type Database = {
       users: {
         Row: {
           created_at: string
+          english_ipa_dialect: string
           id: string
           is_onboarded: boolean
           last_target_language: string | null
@@ -902,6 +903,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          english_ipa_dialect?: string
           id: string
           is_onboarded?: boolean
           last_target_language?: string | null
@@ -920,6 +922,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          english_ipa_dialect?: string
           id?: string
           is_onboarded?: boolean
           last_target_language?: string | null

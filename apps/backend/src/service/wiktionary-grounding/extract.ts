@@ -2,8 +2,10 @@
 // `data` blob (the JSONL line preserved untouched at load time). All functions
 // are defensive: any unexpected shape returns null/empty rather than throwing.
 //
-// Russian-specific for v1. Other languages will need their own extractors
-// (template names and arg conventions differ); see KAIKKI_ENABLED_LANGUAGES.
+// Russian noun/verb extraction is language-specific (template names and arg
+// conventions differ); English uses the generic POS fallback plus the
+// dialect-aware IPA bag. Add new per-language extractors before adding the
+// language to KAIKKI_ENABLED_LANGUAGES.
 
 export type KaikkiEntry = {
   word?: unknown
@@ -11,6 +13,8 @@ export type KaikkiEntry = {
   head_templates?: unknown
   senses?: unknown
   forms?: unknown
+  lang_code?: unknown
+  sounds?: unknown
 }
 
 export type GrammarPatch = {
@@ -23,6 +27,11 @@ export type GrammarPatch = {
   aspect?: 'impf' | 'perf' | 'biaspectual'
   aspect_pair_headword?: string
   is_reflexive?: boolean
+  ipa?: {
+    ga?: string
+    rp?: string
+    untagged?: string
+  }
   // government — TODO: extract from senses[].raw_glosses bracketed parentheticals
   // (e.g. "[with от (ot, + genitive)]"). Deferred for v1.
 }
@@ -124,18 +133,177 @@ const POS_KAIKKI_TO_GRAMMAR: Record<string, GrammarPatch['pos']> = {
   numeral: 'numeral',
 }
 
+// Tags that mark a pronunciation as non-standard / not-what-a-learner-wants.
+// `crayon`, for example, has a `nonstandard` /kræn/ that would confuse beginners.
+const REJECTED_QUALITY_TAGS = new Set([
+  'uncommon',
+  'dated',
+  'obsolete',
+  'nonstandard',
+  'dialectal',
+  'archaic',
+  'sometimes',
+  'rare',
+])
+
+// Tags that bucket a pronunciation as RP (UK). We accept either the explicit
+// RP label or a bare `UK` tag.
+const RP_TAGS = new Set(['Received-Pronunciation', 'RP', 'UK'])
+
+// Tags that bucket a pronunciation as General American.
+const GA_TAGS = new Set(['General-American', 'GenAm'])
+
+// Bare `US` is GA *unless* a narrower US region is also present (Southern,
+// Boston, etc.) — those are too regional to call GA.
+const NARROWER_US_TAGS = new Set([
+  'Southern-US',
+  'Boston',
+  'New-York',
+  'New-York-City',
+  'Northeast-US',
+  'Northeastern',
+  'Northeastern-US',
+  'Midwestern',
+  'Midwestern-US',
+  'Inland-Northern-American',
+  'Inland-Northern-American-English',
+  'Inland-North',
+  'African-American-Vernacular-English',
+  'AAVE',
+  'Pacific-Northwest',
+  'California',
+])
+
+// Any regional tag that isn't UK/US and isn't a quality tag — e.g.
+// Australia, Canada, Ireland, New-Zealand, South-African. We don't want to
+// mix these into either GA or RP.
+const UNRELATED_REGIONAL_TAGS = new Set([
+  'Australia',
+  'Australian',
+  'Canada',
+  'Canadian',
+  'Ireland',
+  'Irish',
+  'New-Zealand',
+  'South-Africa',
+  'South-African',
+  'Scotland',
+  'Scottish',
+  'Wales',
+  'Welsh',
+  'India',
+  'Indian-English',
+])
+
+type SoundEntry = {
+  ipa?: unknown
+  tags?: unknown
+}
+
+const tagsOf = (sound: SoundEntry): string[] => {
+  if (!Array.isArray(sound.tags)) return []
+  const out: string[] = []
+  for (const t of sound.tags) {
+    if (typeof t === 'string') out.push(t)
+  }
+  return out
+}
+
+const hasAnyTag = (tags: string[], set: ReadonlySet<string>): boolean => {
+  for (const t of tags) if (set.has(t)) return true
+  return false
+}
+
+const hasRejectedQualityTag = (tags: string[]): boolean => hasAnyTag(tags, REJECTED_QUALITY_TAGS)
+
+const isPhonemic = (ipa: string): boolean => ipa.startsWith('/')
+const isPhonetic = (ipa: string): boolean => ipa.startsWith('[')
+
+// `phonemic` (slashes) is preferred — it's the abstract form a learner cares
+// about. Fall back to `phonetic` (brackets) only when no phonemic candidate
+// exists for the bucket.
+const pickPreferredFromBucket = (candidates: string[]): string | undefined => {
+  const phonemic = candidates.find(isPhonemic)
+  if (phonemic) return phonemic
+  const phonetic = candidates.find(isPhonetic)
+  return phonetic
+}
+
+const classifyEnglishBuckets = (tags: string[]): Array<'ga' | 'rp' | 'untagged'> => {
+  if (tags.length === 0) return ['untagged']
+  if (hasAnyTag(tags, UNRELATED_REGIONAL_TAGS)) return []
+  const isRp = hasAnyTag(tags, RP_TAGS)
+  const isExplicitGa = hasAnyTag(tags, GA_TAGS)
+  const hasBareUs = tags.includes('US')
+  const hasNarrowerUs = hasAnyTag(tags, NARROWER_US_TAGS)
+  const out: Array<'ga' | 'rp'> = []
+  if (isRp && !hasBareUs && !hasNarrowerUs) out.push('rp')
+  if (isExplicitGa && !hasNarrowerUs) out.push('ga')
+  else if (hasBareUs && !isRp && !hasNarrowerUs) out.push('ga')
+  return out
+}
+
+const pushUnique = (bucket: string[], ipa: string): void => {
+  if (!bucket.includes(ipa)) bucket.push(ipa)
+}
+
+export const extractIpaBag = (
+  entry: KaikkiEntry,
+  langCode: string
+): { ga?: string; rp?: string; untagged?: string } => {
+  const sounds = entry.sounds
+  if (!Array.isArray(sounds)) return {}
+
+  const ga: string[] = []
+  const rp: string[] = []
+  const untagged: string[] = []
+
+  for (const raw of sounds) {
+    if (!raw || typeof raw !== 'object') continue
+    const sound = raw as SoundEntry
+    const ipa = typeof sound.ipa === 'string' ? sound.ipa.trim() : ''
+    if (!ipa) continue
+    const tags = tagsOf(sound)
+    if (hasRejectedQualityTag(tags)) continue
+
+    if (langCode === 'en') {
+      for (const bucket of classifyEnglishBuckets(tags)) {
+        if (bucket === 'ga') pushUnique(ga, ipa)
+        else if (bucket === 'rp') pushUnique(rp, ipa)
+        else if (bucket === 'untagged') pushUnique(untagged, ipa)
+      }
+      continue
+    }
+
+    // Non-English: only untagged entries land in the bag.
+    if (tags.length === 0) pushUnique(untagged, ipa)
+  }
+
+  const out: { ga?: string; rp?: string; untagged?: string } = {}
+  const pickedGa = pickPreferredFromBucket(ga)
+  if (pickedGa) out.ga = pickedGa
+  const pickedRp = pickPreferredFromBucket(rp)
+  if (pickedRp) out.rp = pickedRp
+  const pickedUntagged = pickPreferredFromBucket(untagged)
+  if (pickedUntagged) out.untagged = pickedUntagged
+  return out
+}
+
 // Public: extract the structured-grammar patch we want to merge into the
-// vocabulary row's `grammar` JSONB column. Caller is responsible for narrowing
-// by language — this is currently Russian-tuned.
-export const extractGrammarPatch = (entry: KaikkiEntry): GrammarPatch => {
+// vocabulary row's `grammar` JSONB column. Russian-specific noun/verb logic is
+// gated to `ru`; other languages get the POS fallback, display form, and IPA.
+export const extractGrammarPatch = (entry: KaikkiEntry, langCode: string): GrammarPatch => {
   const posRaw = typeof entry.pos === 'string' ? entry.pos.toLowerCase() : ''
   let patch: GrammarPatch
-  if (posRaw === 'verb') patch = extractVerb(entry)
-  else if (posRaw === 'noun') patch = extractNoun(entry)
+  if (langCode === 'ru' && posRaw === 'verb') patch = extractVerb(entry)
+  else if (langCode === 'ru' && posRaw === 'noun') patch = extractNoun(entry)
   else patch = { pos: POS_KAIKKI_TO_GRAMMAR[posRaw] }
 
-  const display = extractDisplayForm(entry)
+  const display = langCode === 'en' ? null : extractDisplayForm(entry)
   if (display) patch.display_form = display
+
+  const ipa = extractIpaBag(entry, langCode)
+  if (ipa.ga || ipa.rp || ipa.untagged) patch.ipa = ipa
 
   return patch
 }

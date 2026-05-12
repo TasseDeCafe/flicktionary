@@ -88,6 +88,17 @@ export const GrammarNotableFormSchema = z.object({
 })
 export type GrammarNotableForm = z.infer<typeof GrammarNotableFormSchema>
 
+// IPA strings bucketed by dialect. English populates `ga` (General American)
+// and/or `rp` (Received Pronunciation); other languages populate `untagged`.
+// Sourced from Wiktionary `sounds[]` at grounding time so the focus view can
+// render pronunciation without waiting on the LLM full-exploration pass.
+export const GrammarIpaBagSchema = z.object({
+  ga: z.string().nullable().optional(),
+  rp: z.string().nullable().optional(),
+  untagged: z.string().nullable().optional(),
+})
+export type GrammarIpaBag = z.infer<typeof GrammarIpaBagSchema>
+
 // Every key is `.nullable().optional()` because LLMs and JSONB-merge writes
 // both occasionally leave explicit `null` values in the bag (the model emits
 // `"notable_forms": null` despite the tool schema saying "array"; the
@@ -114,6 +125,10 @@ export const GrammarSchema = z
     government: z.string().nullable().optional(),
     // Irregular / notable forms — open list of (label, form) pairs.
     notable_forms: z.array(GrammarNotableFormSchema).nullable().optional(),
+    // Wiktionary-grounded IPA bag. English splits GA/RP; other languages
+    // populate `untagged`. Renderer picks the right bucket from the user's
+    // englishIpaDialect preference.
+    ipa: GrammarIpaBagSchema.nullable().optional(),
   })
   .passthrough()
 export type Grammar = z.infer<typeof GrammarSchema>

@@ -8,8 +8,11 @@ import {
   statSync,
   unlinkSync,
 } from 'node:fs'
+import { createGunzip } from 'node:zlib'
 import { dirname, join } from 'node:path'
 import { pipeline } from 'node:stream/promises'
+import { Readable, type Writable } from 'node:stream'
+import { once } from 'node:events'
 import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
@@ -19,9 +22,14 @@ const CACHE_DIR = join(__dirname, '.cache', 'kaikki')
 const SNAPSHOT_DIR = join(__dirname, '.cache', 'wiktionary')
 const SNAPSHOT_PATH = join(SNAPSHOT_DIR, 'wiktionary.dump')
 
-const TARGET_LANGUAGE = 'ru'
-const KAIKKI_URL = 'https://kaikki.org/dictionary/Russian/kaikki.org-dictionary-Russian.jsonl'
-const JSONL_FILENAME = 'kaikki-russian.jsonl'
+// Canonical raw wiktextract dump — covers every language. We filter at parse
+// time by `lang_code` to keep only the languages in LOAD_LANGUAGES. The
+// per-language dumps (e.g. `Russian/kaikki.org-dictionary-Russian.jsonl`) are
+// deprecated.
+const KAIKKI_URL = 'https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz'
+const KAIKKI_GZ_FILENAME = 'raw-wiktextract-data.jsonl.gz'
+const LOAD_LANGUAGES = ['ru', 'en'] as const
+const LOAD_LANGUAGES_SET: ReadonlySet<string> = new Set(LOAD_LANGUAGES)
 
 // Hardcoded for local dev work. The dev-tunnel Supabase connection string is
 // also hardcoded in apps/backend/src/config/environment-config.ts; we duplicate
@@ -29,17 +37,19 @@ const JSONL_FILENAME = 'kaikki-russian.jsonl'
 // app's config layer. Override with SUPABASE_CONNECTION_STRING if needed.
 const DEFAULT_LOCAL_DEV_CONNECTION = 'postgresql://postgres:postgres@127.0.0.1:34322/postgres'
 
-function ensureCacheDir(): void {
+const ensureCacheDir = (): void => {
   if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true })
 }
 
-async function downloadIfMissing(): Promise<string> {
-  const path = join(CACHE_DIR, JSONL_FILENAME)
+const downloadIfMissing = async (): Promise<string> => {
+  const path = join(CACHE_DIR, KAIKKI_GZ_FILENAME)
   if (existsSync(path)) {
     const sizeMb = (statSync(path).size / 1024 / 1024).toFixed(1)
-    console.log(`✓ Using cached dump (${sizeMb} MB) at ${path}`)
+    console.log(`✓ Using cached gzipped dump (${sizeMb} MB) at ${path}`)
     return path
   }
+  const tmpPath = `${path}.tmp`
+  if (existsSync(tmpPath)) unlinkSync(tmpPath)
 
   console.log(`Downloading ${KAIKKI_URL}...`)
   const res = await fetch(KAIKKI_URL)
@@ -50,35 +60,51 @@ async function downloadIfMissing(): Promise<string> {
   const totalMb = total ? (total / 1024 / 1024).toFixed(0) : '?'
   let downloaded = 0
   let lastReport = 0
-  const out = createWriteStream(path)
+
+  // Wrap the WHATWG fetch body in a Node Readable and pipeline it to disk so
+  // backpressure is honored — the prior `out.write(value)` loop wrote
+  // unbounded into a sync stream and could balloon memory on slow disks.
   const reader = res.body.getReader()
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    out.write(value)
-    downloaded += value.length
-    if (downloaded - lastReport > 50_000_000) {
-      const mb = (downloaded / 1024 / 1024).toFixed(0)
-      console.log(`  ${mb}/${totalMb} MB downloaded...`)
-      lastReport = downloaded
-    }
-  }
-  await new Promise<void>((resolve, reject) => {
-    out.end(() => resolve())
-    out.on('error', reject)
+  const nodeStream = new Readable({
+    async read() {
+      try {
+        const { done, value } = await reader.read()
+        if (done) {
+          this.push(null)
+          return
+        }
+        downloaded += value.length
+        if (downloaded - lastReport > 100_000_000) {
+          const mb = (downloaded / 1024 / 1024).toFixed(0)
+          console.log(`  ${mb}/${totalMb} MB downloaded...`)
+          lastReport = downloaded
+        }
+        this.push(Buffer.from(value))
+      } catch (err) {
+        this.destroy(err as Error)
+      }
+    },
   })
+
+  await pipeline(nodeStream, createWriteStream(tmpPath))
+  renameSync(tmpPath, path)
   console.log(`✓ Downloaded to ${path}`)
   return path
 }
 
-function csvEscape(s: string): string {
+const csvEscape = (s: string): string => {
   return `"${s.replace(/"/g, '""')}"`
+}
+
+const writeCsvLine = async (out: Writable, line: string): Promise<void> => {
+  if (out.write(line)) return
+  await once(out, 'drain')
 }
 
 // U+0301 = combining acute accent. Russian kaikki entries store stressed forms
 // in `forms[]` (e.g. "обнару́жил"); LLM-emitted headwords are always unstressed.
 // We index stress-stripped versions so plain lookups hit.
-function stripStress(s: string): string {
+const stripStress = (s: string): string => {
   return s.replace(/́/g, '')
 }
 
@@ -91,7 +117,7 @@ const NON_FORM_TAGS = new Set([
   'table-tags',
 ])
 
-function isRealForm(tags: unknown): boolean {
+const isRealForm = (tags: unknown): boolean => {
   if (!Array.isArray(tags)) return true
   for (const t of tags) {
     if (typeof t === 'string' && NON_FORM_TAGS.has(t)) return false
@@ -106,16 +132,19 @@ interface CsvOutputs {
   formCount: number
   parseErrors: number
   skippedNoWordOrPos: number
+  skippedWrongLang: number
 }
 
-async function generateCsvs(jsonlPath: string): Promise<CsvOutputs> {
+const generateCsvs = async (gzPath: string): Promise<CsvOutputs> => {
   const entriesCsv = join(CACHE_DIR, 'entries.csv')
   const formsCsv = join(CACHE_DIR, 'forms.csv')
   const entriesOut = createWriteStream(entriesCsv)
   const formsOut = createWriteStream(formsCsv)
 
+  // Stream gz -> gunzip -> readline so we never hold the full 2.5GB+ JSONL
+  // (or its ~25GB decompressed form) in memory at once.
   const rl = createInterface({
-    input: createReadStream(jsonlPath),
+    input: createReadStream(gzPath).pipe(createGunzip()),
     crlfDelay: Infinity,
   })
 
@@ -124,14 +153,20 @@ async function generateCsvs(jsonlPath: string): Promise<CsvOutputs> {
   let formCount = 0
   let parseErrors = 0
   let skippedNoWordOrPos = 0
+  let skippedWrongLang = 0
 
   for await (const line of rl) {
     if (!line) continue
-    let entry: { word?: unknown; pos?: unknown; forms?: unknown }
+    let entry: { word?: unknown; pos?: unknown; forms?: unknown; lang_code?: unknown }
     try {
       entry = JSON.parse(line) as typeof entry
     } catch {
       parseErrors++
+      continue
+    }
+    const langCode = typeof entry.lang_code === 'string' ? entry.lang_code : ''
+    if (!LOAD_LANGUAGES_SET.has(langCode)) {
+      skippedWrongLang++
       continue
     }
     const word = typeof entry.word === 'string' ? entry.word : ''
@@ -142,8 +177,9 @@ async function generateCsvs(jsonlPath: string): Promise<CsvOutputs> {
     }
 
     entryId++
-    entriesOut.write(
-      `${entryId},${csvEscape(TARGET_LANGUAGE)},${csvEscape(word)},${csvEscape(pos)},${csvEscape(line)}\n`
+    await writeCsvLine(
+      entriesOut,
+      `${entryId},${csvEscape(langCode)},${csvEscape(word)},${csvEscape(pos)},${csvEscape(line)}\n`
     )
     entryCount++
 
@@ -156,7 +192,7 @@ async function generateCsvs(jsonlPath: string): Promise<CsvOutputs> {
         const formStr = stripStress(raw)
         if (!formStr || seen.has(formStr)) continue
         seen.add(formStr)
-        formsOut.write(`${csvEscape(TARGET_LANGUAGE)},${csvEscape(formStr)},${entryId}\n`)
+        await writeCsvLine(formsOut, `${csvEscape(langCode)},${csvEscape(formStr)},${entryId}\n`)
         formCount++
       }
     }
@@ -177,14 +213,14 @@ async function generateCsvs(jsonlPath: string): Promise<CsvOutputs> {
     }),
   ])
 
-  return { entriesCsv, formsCsv, entryCount, formCount, parseErrors, skippedNoWordOrPos }
+  return { entriesCsv, formsCsv, entryCount, formCount, parseErrors, skippedNoWordOrPos, skippedWrongLang }
 }
 
-async function loadCsvs(
+const loadCsvs = async (
   connectionString: string,
   entriesCsv: string,
   formsCsv: string
-): Promise<void> {
+): Promise<void> => {
   const sql = postgres(connectionString, { max: 1 })
   try {
     // Supabase's pooled `postgres` role has a short default statement_timeout
@@ -232,6 +268,15 @@ async function loadCsvs(
       `\nFinal counts: ${entriesCount.count.toLocaleString()} entries, ${formsCount.count.toLocaleString()} forms`
     )
 
+    console.log('\nPer-language entry counts:')
+    const perLang = await sql<{ target_language: string; count: number }[]>`
+      SELECT target_language, COUNT(*)::int AS count
+      FROM public.wiktionary_entries
+      GROUP BY target_language
+      ORDER BY target_language
+    `
+    console.log(JSON.stringify(perLang, null, 2))
+
     console.log("\nSample lookup: headword = 'обнаружить'")
     const sample = await sql`
       SELECT id, headword, pos, jsonb_array_length(COALESCE(data->'senses', '[]'::jsonb)) AS sense_count,
@@ -254,7 +299,7 @@ async function loadCsvs(
   }
 }
 
-async function main(): Promise<void> {
+const main = async (): Promise<void> => {
   const envValue = process.env.SUPABASE_CONNECTION_STRING ?? ''
   const connectionString = envValue.startsWith('postgresql://')
     ? envValue
@@ -262,17 +307,18 @@ async function main(): Promise<void> {
   console.log(`Connecting to ${connectionString.replace(/:[^:@]+@/, ':****@')}`)
 
   ensureCacheDir()
-  const jsonlPath = await downloadIfMissing()
+  const gzPath = await downloadIfMissing()
 
-  console.log('\nGenerating CSVs from JSONL...')
+  console.log('\nGenerating CSVs from gzipped JSONL...')
   const tCsv = Date.now()
-  const out = await generateCsvs(jsonlPath)
+  const out = await generateCsvs(gzPath)
   console.log(
     `✓ Generated ${out.entryCount.toLocaleString()} entries, ${out.formCount.toLocaleString()} forms in ${((Date.now() - tCsv) / 1000).toFixed(1)}s`
   )
   if (out.parseErrors > 0) console.warn(`  ⚠ ${out.parseErrors} JSONL lines failed to parse`)
   if (out.skippedNoWordOrPos > 0)
     console.warn(`  ⚠ ${out.skippedNoWordOrPos} entries skipped (missing word/pos)`)
+  console.log(`  Skipped ${out.skippedWrongLang.toLocaleString()} entries from non-loaded languages`)
 
   console.log('\nLoading into DB...')
   await loadCsvs(connectionString, out.entriesCsv, out.formsCsv)
@@ -293,7 +339,7 @@ async function main(): Promise<void> {
 // snapshot another instance.
 const SUPABASE_CONTAINER = 'supabase_db_supabase-dev-tunnel'
 
-async function snapshotWiktionary(_connectionString: string): Promise<void> {
+const snapshotWiktionary = async (_connectionString: string): Promise<void> => {
   if (!existsSync(SNAPSHOT_DIR)) mkdirSync(SNAPSHOT_DIR, { recursive: true })
   // Write to a tmp path and rename on success so a failed pg_dump never
   // leaves a zero-byte file masquerading as a valid snapshot.

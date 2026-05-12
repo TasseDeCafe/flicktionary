@@ -4,6 +4,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { NativeLanguageSelector } from '@/features/settings/components/native-language-selector'
 import { CefrPerLanguageList } from '@/features/settings/components/cefr-per-language-list'
+import { EnglishIpaDialectSelector } from '@/features/settings/components/english-ipa-dialect-selector'
 
 export const LanguagesPage = () => {
   const { t } = useLingui()
@@ -19,6 +20,10 @@ export const LanguagesPage = () => {
           <>
             <NativeLanguageSelector currentValue={prefs.nativeLanguage} />
             <CefrPerLanguageList prefs={prefs.targetLanguagePrefs} />
+            <EnglishIpaDialectSelector
+              currentValue={prefs.englishIpaDialect}
+              visible={prefs.targetLanguagePrefs.some((p) => p.targetLanguage === 'en')}
+            />
           </>
         )}
       </div>
