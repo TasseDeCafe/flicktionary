@@ -185,6 +185,17 @@ const runGenerationForSlot = async (params: {
       chunks,
       rescueMode,
     })
+    if (result.usedChunks.length === 0) {
+      const warning = ['generated text had no usable annotations', result.generationWarning]
+        .filter((w): w is string => w != null && w.length > 0)
+        .join(' / ')
+      await deps.practiceTextsRepository.markFailed({
+        id: slotId,
+        token: claim.token,
+        warning,
+      })
+      return { ok: false, warning }
+    }
     const annotatedWarning = rescueMode
       ? [`Rescue: ${chunks[0]!.headword}|${chunks[0]!.sense}`, result.generationWarning].filter(Boolean).join(' / ') ||
         null

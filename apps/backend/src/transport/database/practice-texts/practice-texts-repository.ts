@@ -187,6 +187,15 @@ const listBySessionId = async (practiceSessionId: string): Promise<DbPracticeTex
 //      single atomic UPDATE keyed on status='ready', and the returned row is
 //      the post-update one.
 const selectAndMarkReading = async (practiceSessionId: string): Promise<DbPracticeText | null> => {
+  await sql`
+    UPDATE public.practice_texts
+    SET status = 'failed',
+        generation_warning = COALESCE(generation_warning, 'readable text had no usable annotations')
+    WHERE practice_session_id = ${practiceSessionId}
+      AND status IN ('ready', 'reading')
+      AND jsonb_array_length(annotations) = 0
+  `
+
   const existing = (await sql`
     SELECT *
     FROM public.practice_texts
@@ -268,7 +277,15 @@ const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<Reserve
 
     const existing = candidate[0]
     if (existing) {
-      if (
+      if (existing.status === 'ready' && (!Array.isArray(existing.annotations) || existing.annotations.length === 0)) {
+        await (tx as any)`
+          UPDATE public.practice_texts
+          SET status = 'failed',
+              generation_warning = COALESCE(generation_warning, 'ready text had no usable annotations')
+          WHERE id = ${existing.id}
+            AND status = 'ready'
+        `
+      } else if (
         (existing.status === 'pending' || existing.status === 'generating') &&
         Date.now() - new Date(existing.created_at).getTime() > STALE_SLOT_SECONDS * 1000
       ) {
@@ -320,9 +337,10 @@ const claimFinalize = async (id: string): Promise<DbPracticeText | null> => {
 }
 
 // Returns the union of (headword, sense) pairs already covered by any
-// completed-or-current practice_text in this session. The caller subtracts
-// these from the "due" set to avoid surfacing the same chunk twice in one
-// sitting.
+// user-visible practice_text in this session. Pre-generated 'ready' rows are
+// deliberately excluded: they have not been shown to the user yet, and
+// counting them here can make the foreground path complete the session before
+// surfacing the queued text.
 const getCoveredHeadwordSenses = async (
   practiceSessionId: string
 ): Promise<Array<{ headword: string; sense: string }>> => {
@@ -333,7 +351,7 @@ const getCoveredHeadwordSenses = async (
     FROM public.practice_texts pt,
          jsonb_array_elements(pt.annotations) AS ann
     WHERE pt.practice_session_id = ${practiceSessionId}
-      AND pt.status IN ('ready', 'reading', 'done')
+      AND pt.status IN ('reading', 'done')
   `
   return result.map((row) => ({
     headword: row.headword as string,
