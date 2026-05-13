@@ -6,6 +6,9 @@
     "packages/*"
   ],
   "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "turbo run dev",
     "dev:tunnel": "scripts/dev-tunnel.sh",
