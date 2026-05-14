@@ -4,23 +4,25 @@ import { createORPCClient } from '@orpc/client'
 import { createTanstackQueryUtils } from '@orpc/tanstack-query'
 import { OpenAPILink } from '@orpc/openapi-client/fetch'
 import { getConfig } from '@/config/environment-config'
-import { useAuthStore, getAccessToken } from '@/stores/auth-store'
+import { useAuthStore } from '@/stores/auth-store'
 import { rootOrpcContract } from '@flicktionary/api-client/orpc-contracts/root-contract'
+import { supabaseClient } from '@/lib/transport/supabase-client'
 
 const apiPrefix = '/api/v1'
 const hostWithPrefix = `${getConfig().apiHost}${apiPrefix}`
 
 const link = new OpenAPILink(rootOrpcContract, {
   url: hostWithPrefix,
-  headers: () => {
-    const state = useAuthStore.getState()
-    const accessToken = getAccessToken(state)
+  headers: async () => {
+    const { data, error } = await supabaseClient.auth.getSession()
 
-    if (accessToken) {
-      return { Authorization: `Bearer ${accessToken}` }
+    if (error || !data.session?.access_token) {
+      return {}
     }
 
-    return {}
+    useAuthStore.getState().setSession(data.session)
+
+    return { Authorization: `Bearer ${data.session.access_token}` }
   },
 })
 

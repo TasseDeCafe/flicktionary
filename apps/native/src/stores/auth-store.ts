@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { Session } from '@supabase/supabase-js'
 import { supabaseClient } from '@/lib/transport/supabase-client'
-import { orpcClient, setTokenGetter } from '@/lib/transport/orpc-client'
+import { orpcClient } from '@/lib/transport/orpc-client'
 import { GoogleSignin, User as GoogleUser } from '@react-native-google-signin/google-signin'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { FEATURES } from '@flicktionary/core/features'
@@ -35,8 +35,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isRevenueCatInitialized: false,
   setSession: (session) => {
     set({ session })
-    const authHeader = session?.access_token ? `Bearer ${session.access_token}` : ''
-    setTokenGetter(() => authHeader)
   },
   setLoading: (isLoading) => set({ isLoading }),
   setIsRevenueCatInitialized: (isRevenueCatInitialized) => set({ isRevenueCatInitialized }),
@@ -54,8 +52,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
         logWithSentry('Error fetching Supabase session', error)
       } else {
         set({ session: data.session })
-        const authHeader = data.session?.access_token ? `Bearer ${data.session.access_token}` : ''
-        setTokenGetter(() => authHeader)
       }
     } catch (err) {
       logWithSentry('Unexpected error fetching Supabase session', err)
@@ -106,7 +102,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
 
     set({ session: null })
-    setTokenGetter(() => '')
     queryClient.clear()
     posthog?.reset()
     set({ isLoading: false })
@@ -143,7 +138,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ isRevenueCatInitialized: false })
 
     set({ session: null })
-    setTokenGetter(() => '')
     queryClient.clear()
     posthog?.reset()
     set({ isLoading: false })
