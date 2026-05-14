@@ -27,6 +27,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
 ## Status of the build (as of last session)
 
 **Done:**
+
 - **Phase 0** — demo tabs deleted; `_authenticated/_app.tsx` pathless layout + `AppShellLayout` sidebar; placeholder `_app/sessions/index.tsx`, `_app/profile.tsx`, `_app/settings.tsx`; redirects in `index.tsx` + `from-landing.tsx` repointed to `/sessions`; all 7 callers of the old `dashboardRoute`/`profileRoute` updated. Web type-check + lint clean.
 - **Phase 1** — migration `apps/backend/supabase/supabase-dev/supabase/migrations/20260427120000_create_flicktionary_tables.sql` with all Flicktionary tables (`content_sources`, `text_tracks`, `text_segments` with tsv trigger, `study_sessions`, `highlights`, `cards`, `card_chat_messages`, `user_lookups`, `l1_interference_notes`, `user_target_language_prefs`), `users` extended with `native_language` + `tap_to_translate_enabled`. Migration also copied to `supabase-dev-tunnel/`. Applied via `supabase migration up --local`. `database.public.types.ts` regenerated. Backend type-check clean.
 - **Phase 2** — `@anthropic-ai/sdk` added; env config schema + dev/prod/test variants extended with `anthropicApiKey`, `tmdbApiKey`, `openSubtitlesApiKey`, `openSubtitlesUserAgent`. Anthropic singleton + methodology prompt builder + 5 pass modules (`generate-context-blob`, `generate-l1-interference-notes`, `difficult-words-pass` and `full-exploration-pass` using tool_use, `fast-gloss-pass`). TMDB + OpenSubtitles clients. SRT parser at `apps/backend/src/utils/srt-parser.ts` with 5 passing vitest unit tests. Backend type-check clean.
@@ -171,8 +172,8 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     because GET query params arrive as strings.
   - **Process button retry path.** Allows re-process when the previous run
     produced zero cards (silent failure case) or status is `failed`. Hint
-    + label switch to "Retry processing" / "Previous run produced no cards.
-    Click to retry." Reads `cardCount` from `useListCardsBySession`.
+    - label switch to "Retry processing" / "Previous run produced no cards.
+      Click to retry." Reads `cardCount` from `useListCardsBySession`.
   - **Processing warnings surfaced** in `triage-list-view.tsx` as an amber
     banner above the list, so silent pass failures are visible to the user
     instead of producing an unexplained empty triage.
@@ -181,8 +182,8 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     "output truncated at max_tokens" rather than an opaque parse error.
 
 - **Native-style chrome refactor (2026-05-02).** Web shell rebuilt around the
-  React-Navigation mental model — *root stack + tab navigator, modals
-  presented above tabs* — so the eventual native port is a translation, not
+  React-Navigation mental model — _root stack + tab navigator, modals
+  presented above tabs_ — so the eventual native port is a translation, not
   a redesign. Don't re-introduce the old burger / sidebar / Settings + Profile
   separation.
   - **Routing flag.** `apps/web/src/app/router.tsx` augments
@@ -382,12 +383,12 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
   is `deleted_at TIMESTAMPTZ`.
   - **Schema delta** on the consolidated migration. `user_lookups` got
     `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()` and `deleted_at
-    TIMESTAMPTZ NULL`. Existing indexes (`idx_user_lookups_user_target`,
+TIMESTAMPTZ NULL`. Existing indexes (`idx_user_lookups_user_target`,
     `idx_user_lookups_due`) recreated as `WHERE deleted_at IS NULL` partial
     variants. Two new partial indexes for cursor-paginated sorts:
     `idx_user_lookups_recent (user_id, target_language, created_at DESC, id)`
     and `idx_user_lookups_due_sort (user_id, target_language, srs_due ASC
-    NULLS LAST, id)`. Applied as targeted ALTERs on the running local DB
+NULLS LAST, id)`. Applied as targeted ALTERs on the running local DB
     (preserved in-progress data); types regenerated.
   - **Repo extensions** in `user-lookups-repository.ts`: every read path now
     filters `deleted_at IS NULL`. `findOrCreate`, `upsertOnKeep`, and
@@ -443,14 +444,14 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     sticking across drawer opens because the parent imperatively closed the
     drawer (`setDrawerOpen(false)` in the delete success handler) without
     going through the wrapper `onOpenChange`. Fix is a `useEffect(() => {
-    if (!open) setConfirmingDelete(false) }, [open, chunkId])` so any
+if (!open) setConfirmingDelete(false) }, [open, chunkId])` so any
     open→closed transition (or chunk swap) resets the confirm state.
 
 - **Drop global L1 interference notes (2026-05-07).** The `l1_interference_notes`
   table + the global per-`(L1, target)` generation pass were dead weight. Modern
   Opus already knows L1→L2 interference from training; the global blob was just
   paraphrasing that back into the prompt. The genuinely valuable per-chunk L1
-  notes (e.g. "English speakers want to say *près de moi* to mean 'near my
+  notes (e.g. "English speakers want to say _près de moi_ to mean 'near my
   home' but that means 'near me'") are still produced by the enrichment pass
   and live in `cards.exploration_extras.l1_notes` — anchored to a specific
   chunk and source. Don't re-introduce the global blob.
@@ -502,7 +503,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     bare ISO code.
   - **Backend export endpoint.** `chunks-contract.ts` gained `exportCsv`
     (POST `/chunks/export`, input `{ targetLanguage }`, output `{ csv,
-    chunkCount }`). `chunks-router.ts` dispatches to the new
+chunkCount }`). `chunks-router.ts` dispatches to the new
     `service/export/build-vocabulary-csv.ts`, which calls
     `userLookupsRepository.listKeptChunksForExport` (LEFT JOIN cards +
     text_segments via `first_card_id`) and renders the same
@@ -528,10 +529,10 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     `applyKeepTransition({ userLookupId, cardId })` and
     `applyUnkeepTransition({ userLookupId })`. `upsertOnExport` no longer
     bumps `count` (export is not a keep event; only stamps `exported_at`
-    + backfills `first_card_id`). `listChunksForLanguage` (both sort modes,
-    both phases) and `listLanguagesForUser` now filter `count > 0` so a
-    fully-rejected chunk drops out of the Vocabulary list AND the language
-    switcher. New `listKeptChunksForExport` returns the joined export rows.
+    - backfills `first_card_id`). `listChunksForLanguage` (both sort modes,
+      both phases) and `listLanguagesForUser` now filter `count > 0` so a
+      fully-rejected chunk drops out of the Vocabulary list AND the language
+      switcher. New `listKeptChunksForExport` returns the joined export rows.
   - **SPEC.md updates.** Triage Layer 1 footer description, Vocabulary
     "Header options" bullet, Export section (entry point + tag format +
     surface_form/context fallback), `user_lookups.count` comment
@@ -571,7 +572,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
   the prior "annotations live inline in the headword" pattern — the
   headword stays clean for matching, all morphology lives in `grammar`.
   - **Schema delta** in the consolidated migration: `user_lookups.grammar
-    JSONB NOT NULL DEFAULT '{}'::jsonb` next to `exploration_extras`.
+JSONB NOT NULL DEFAULT '{}'::jsonb` next to `exploration_extras`.
     Modified in place + `supabase db reset --local`.
     `database.public.types.ts` hand-extended.
   - **`GrammarSchema`** in `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
@@ -648,7 +649,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
   invalidation / LLM judgment quality).
   - **Pre-filter (heuristic guidance, Option A).** New repo method
     `userLookupsRepository.listHeadwordSensesRelevantToTrack({ userId,
-    targetLanguage, textTrackId })` aggregates the track's text into one
+targetLanguage, textTrackId })` aggregates the track's text into one
     tsvector via `to_tsvector(${cfg}, string_agg(text, ' '))` then keeps
     `user_lookups` rows where `plainto_tsquery(headword)` matches.
     Returns `{ headwordSenses, totalVocabSize }` so the call site can log
@@ -664,7 +665,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     `submit_disambiguations`. Batches all colliding candidates into a
     single call. New repo method
     `userLookupsRepository.findExistingSensesByHeadwords({ userId,
-    targetLanguage, headwords })` does the case-insensitive collision
+targetLanguage, headwords })` does the case-insensitive collision
     detection (`LOWER(headword) = ANY(${lowered}::text[])`), returns a
     `Map<lowercasedHeadword, [{sense, definition}, ...]>`. Orchestrator
     helper `applySenseDisambiguationTiebreaker` in `process-session.ts`
@@ -695,7 +696,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     `pass_name` text (`'disambiguation' | 'exclusion_prefilter'`),
     `payload` jsonb, `duration_ms` int, `created_at` timestamptz, plus
     `idx_processing_telemetry_session (study_session_id, created_at
-    DESC)`. RLS enabled, no policies (backend-only writes). New repo
+DESC)`. RLS enabled, no policies (backend-only writes). New repo
     `transport/database/processing-telemetry/processing-telemetry-repository.ts`
     with one method `record(...)`. New helper
     `service/processing/telemetry.ts` exporting `recordPassTelemetry`
@@ -713,12 +714,12 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     if telemetry shows >15% drop rate on real sessions.
   - **Plumbing.** `processingTelemetryRepository` added to
     `ProcessingDependencies` in `process-session.ts:25-35`; instantiated
-    + threaded in `app.ts` (new import + new line in
-    `processingDependencies` bag). The `database.public.types.ts`
-    `processing_telemetry` Row/Insert/Update/Relationships entries were
-    hand-added between `practice_texts` and `removals` (the typegen
-    file is hand-maintained — regen on next `db:dev` reset will be a
-    no-op diff).
+    - threaded in `app.ts` (new import + new line in
+      `processingDependencies` bag). The `database.public.types.ts`
+      `processing_telemetry` Row/Insert/Update/Relationships entries were
+      hand-added between `practice_texts` and `removals` (the typegen
+      file is hand-maintained — regen on next `db:dev` reset will be a
+      no-op diff).
 
 - **Language-aware grammar UI (2026-05-08).** The Grammar panel + chips in
   the focus view now filter their visible fields by the session's target
@@ -738,7 +739,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     overrides — Russian's `display_form` reads "Display form
     (stress-marked)" with placeholder `e.g. ви́деть`; English's reads
     "Pronunciation hint (stress / IPA)" with `e.g. PHO·to·graph or
-    /ˈfoʊtəɡræf/`; French's is IPA-flavored. Government placeholders
+/ˈfoʊtəɡræf/`; French's is IPA-flavored. Government placeholders
     are language-tuned (`+ acc, от + gen` for ru, `+ on, + with` for en,
     `+ à, + de` for fr, etc.).
   - **Frontend wiring.** `editable-grammar-panel.tsx` and
@@ -785,29 +786,24 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     threaded through `ProcessingDependencies`. Don't put SQL in the
     service layer (was briefly in `lookup.ts` — refactored out).
   - **New service module** at
-    `apps/backend/src/service/wiktionary-grounding/`:
-    - `config.ts` — `KAIKKI_ENABLED_LANGUAGES = new Set(['ru'])`.
-    - `lookup.ts` — pure orchestration of the 4-path lookup chain
-      (real-lemma direct → POS-agnostic → form-of pseudo-entry resolved
-      to lemma → wiktionary_forms paradigm-cell match), takes the repo
-      as a parameter.
-    - `extract.ts` — Russian-tuned extractors for verbs (aspect via
-      `head_templates[0].args.2`, aspect_pair_headword via
-      `args.impf`/`args.pf` stress-stripped, is_reflexive from `-ся`/`-сь`
-      headword suffix) and nouns (gender / animacy / `pl` / indeclinable
-      parsed out of `head_templates[0].expansion` — never trust
-      `args.1` for nouns, it alternates between Cyrillic and Zaliznyak
-      class). `display_form` is the first token of `expansion` for any
-      POS. 10 unit-test cases in `extract.unit.test.ts`.
-    - `merge.ts` — undefined-stripping helper.
-    - `index.ts` — public `groundChunk({ targetLanguage, headword, pos,
-      wiktionaryEntriesRepository })`. Includes `mapGrammarPosToKaikkiPos`
-      because the LLM emits long-form POS (`adjective`/`adverb`/`preposition`/...)
-      and kaikki uses short tags (`adj`/`adv`/`prep`/...). Mapper is
-      backend-only — frontend stays on long-form throughout.
+    `apps/backend/src/service/wiktionary-grounding/`: - `config.ts` — `KAIKKI_ENABLED_LANGUAGES = new Set(['ru'])`. - `lookup.ts` — pure orchestration of the 4-path lookup chain
+    (real-lemma direct → POS-agnostic → form-of pseudo-entry resolved
+    to lemma → wiktionary_forms paradigm-cell match), takes the repo
+    as a parameter. - `extract.ts` — Russian-tuned extractors for verbs (aspect via
+    `head_templates[0].args.2`, aspect_pair_headword via
+    `args.impf`/`args.pf` stress-stripped, is_reflexive from `-ся`/`-сь`
+    headword suffix) and nouns (gender / animacy / `pl` / indeclinable
+    parsed out of `head_templates[0].expansion` — never trust
+    `args.1` for nouns, it alternates between Cyrillic and Zaliznyak
+    class). `display_form` is the first token of `expansion` for any
+    POS. 10 unit-test cases in `extract.unit.test.ts`. - `merge.ts` — undefined-stripping helper. - `index.ts` — public `groundChunk({ targetLanguage, headword, pos,
+wiktionaryEntriesRepository })`. Includes `mapGrammarPosToKaikkiPos`
+    because the LLM emits long-form POS (`adjective`/`adverb`/`preposition`/...)
+    and kaikki uses short tags (`adj`/`adv`/`prep`/...). Mapper is
+    backend-only — frontend stays on long-form throughout.
   - **Pipeline hook.** `process-session.ts` tracks every `user_lookups`
     row touched in the chunk loop into `touchedLookups: Map<id, { headword,
-    llmPos, alreadyGrounded, grammarUserEdited }>` (in-memory snapshot —
+llmPos, alreadyGrounded, grammarUserEdited }>` (in-memory snapshot —
     no extra SELECT for the idempotency check). After the chunk loop, when
     `KAIKKI_ENABLED_LANGUAGES.has(session.target_language)`,
     `runWiktionaryGrounding` fires `Promise.all` over the map: each row
@@ -873,9 +869,8 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
   UX or the "session+segment FK nullable" alternative architecture (both
   ruled out during planning).
   - **Synthetic source pattern.** Every `(user, target_language)` gets one
-    lazily-created `content_source(type='adhoc', title='Personal vocabulary')`
-    + `text_track(source='paste')` + `study_session(status='processed',
-    context_blob=<hardcoded non-empty string>)`. Each new word appends one
+    lazily-created `content_source(type='adhoc', title='Personal vocabulary')` - `text_track(source='paste')` + `study_session(status='processed',
+context_blob=<hardcoded non-empty string>)`. Each new word appends one
     `text_segment` (text = `${headword} — ${context}` so the synthetic
     highlight's offsets always land on a real substring) and one `highlight`
     over `[0, headword.length)`. Hardcoded `context_blob` is required —
@@ -885,36 +880,32 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
   - **Schema.** `apps/backend/supabase/migrations/20260510091540_initial_app_schema.sql`
     adds `'adhoc'` to `content_source_type` and a partial unique index
     `content_sources_adhoc_user_language_unique ON public.content_sources
-    (created_by_user_id, language) WHERE type = 'adhoc'` for concurrency-safe
+(created_by_user_id, language) WHERE type = 'adhoc'` for concurrency-safe
     get-or-create. `text_track_source` is unchanged — adhoc tracks reuse
     `'paste'`. `database.public.types.ts` regenerated. Mirrored in
     `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
     `ContentSourceTypeSchema` — without that, every joined DTO would fail
     Zod validation as soon as adhoc rows surface.
-  - **Repository additions.**
-    - `content-sources-repository.ts::findOrCreateAdhoc` uses
-      `INSERT … ON CONFLICT (created_by_user_id, language) WHERE type='adhoc'
-      DO NOTHING RETURNING *` with a SELECT fallback. **Don't** use
-      `ON CONFLICT ON CONSTRAINT <name>` — partial unique *indexes* aren't
-      *constraints*, so the named-constraint form raises `42704`. Use the
-      column-list + WHERE form so Postgres infers the matching partial index.
-    - `study-sessions-repository.ts::insertAdhocStudySession` is a sibling
-      of `insertStudySession` that allows `status='processed'` + non-null
-      `context_blob` and stamps `processed_at = NOW()`. Kept separate so the
-      public ingestion path can't bypass `'active'`. Also adds
-      `findAdhocForUserAndLanguage`; `listByUserIdWithSource` got
-      `AND cs.type != 'adhoc'` so synthetic sessions never appear under any
-      Sessions chip.
-    - `text-segments-repository.ts::appendSegmentAtomic` runs
-      `INSERT … SELECT COALESCE(MAX(index)+1, 0) FROM text_segments
-      WHERE text_track_id = ?` so concurrent adhoc adds don't collide on the
-      `(text_track_id, index)` unique constraint. Don't reintroduce the
-      racy `listByTrackId(...).length` pattern.
-    - `user-lookups-repository.ts` `SELECT_CHUNK_ROW_SQL` now LEFT JOINs
-      `content_sources` and returns
-      `(s.id IS NOT NULL AND cs.type != 'adhoc') AS source_available` —
-      this is what naturally disables the Vocabulary "Open source" drawer
-      button for adhoc cards (`vocabulary-action-drawer.tsx:96-102`).
+  - **Repository additions.** - `content-sources-repository.ts::findOrCreateAdhoc` uses
+    `INSERT … ON CONFLICT (created_by_user_id, language) WHERE type='adhoc'
+DO NOTHING RETURNING *` with a SELECT fallback. **Don't** use
+    `ON CONFLICT ON CONSTRAINT <name>` — partial unique _indexes_ aren't
+    _constraints_, so the named-constraint form raises `42704`. Use the
+    column-list + WHERE form so Postgres infers the matching partial index. - `study-sessions-repository.ts::insertAdhocStudySession` is a sibling
+    of `insertStudySession` that allows `status='processed'` + non-null
+    `context_blob` and stamps `processed_at = NOW()`. Kept separate so the
+    public ingestion path can't bypass `'active'`. Also adds
+    `findAdhocForUserAndLanguage`; `listByUserIdWithSource` got
+    `AND cs.type != 'adhoc'` so synthetic sessions never appear under any
+    Sessions chip. - `text-segments-repository.ts::appendSegmentAtomic` runs
+    `INSERT … SELECT COALESCE(MAX(index)+1, 0) FROM text_segments
+WHERE text_track_id = ?` so concurrent adhoc adds don't collide on the
+    `(text_track_id, index)` unique constraint. Don't reintroduce the
+    racy `listByTrackId(...).length` pattern. - `user-lookups-repository.ts` `SELECT_CHUNK_ROW_SQL` now LEFT JOINs
+    `content_sources` and returns
+    `(s.id IS NOT NULL AND cs.type != 'adhoc') AS source_available` —
+    this is what naturally disables the Vocabulary "Open source" drawer
+    button for adhoc cards (`vocabulary-action-drawer.tsx:96-102`).
   - **Shared post-pass extraction.** `process-session.ts` post-basic-data
     write loop and `runWiktionaryGrounding` were extracted into
     `apps/backend/src/service/processing/materialize-basic-data-chunks.ts`
@@ -924,25 +915,23 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     so the adhoc service can find its newly-inserted card without a second
     repo lookup). `buildBasicDataGrammarPatch` moved with the loop —
     `process-session.unit.test.ts` import updated.
-  - **Service layer.** `apps/backend/src/service/adhoc/`:
-    - `get-or-create-adhoc-session.ts` — idempotent get-or-create returning
-      `{ session, track }`. Track hash is deterministic
-      `'adhoc:' + sha256(userId + ':' + targetLanguage)` to satisfy
-      `text_tracks_content_source_language_hash_unique`. Re-checks for a
-      raced session insert between the content-source upsert and the session
-      insert.
-    - `create-adhoc-card.ts` — orchestrates: native + CEFR lookup
-      (`usersRepository.getNativeLanguage` + `userTargetLanguagePrefsRepository.findForLanguage`,
-      **not** `usersRepository.findById` — CEFR lives on
-      `user_target_language_prefs`, not `users`), get-or-create session,
-      append segment, insert highlight, `basicDataPass({ ...,
-      llmDiscoveryEnabled: false, excludedHeadwordSenses: [] })`,
-      `materializeBasicDataChunks`, optional `runWiktionaryGrounding`.
-      Discriminated `AdhocCardCreationError` codes: `cefr_not_set`,
-      `native_language_not_set`, `llm_failure`, `card_not_inserted`. Maps
-      to `BAD_REQUEST` (first two) / `INTERNAL_SERVER_ERROR` in
-      `cards-router.ts::createAdhoc`. Wired in `app.ts` via a dedicated
-      `createAdhocCardDependencies` bundle (cards-router gained a 6th arg).
+  - **Service layer.** `apps/backend/src/service/adhoc/`: - `get-or-create-adhoc-session.ts` — idempotent get-or-create returning
+    `{ session, track }`. Track hash is deterministic
+    `'adhoc:' + sha256(userId + ':' + targetLanguage)` to satisfy
+    `text_tracks_content_source_language_hash_unique`. Re-checks for a
+    raced session insert between the content-source upsert and the session
+    insert. - `create-adhoc-card.ts` — orchestrates: native + CEFR lookup
+    (`usersRepository.getNativeLanguage` + `userTargetLanguagePrefsRepository.findForLanguage`,
+    **not** `usersRepository.findById` — CEFR lives on
+    `user_target_language_prefs`, not `users`), get-or-create session,
+    append segment, insert highlight, `basicDataPass({ ...,
+llmDiscoveryEnabled: false, excludedHeadwordSenses: [] })`,
+    `materializeBasicDataChunks`, optional `runWiktionaryGrounding`.
+    Discriminated `AdhocCardCreationError` codes: `cefr_not_set`,
+    `native_language_not_set`, `llm_failure`, `card_not_inserted`. Maps
+    to `BAD_REQUEST` (first two) / `INTERNAL_SERVER_ERROR` in
+    `cards-router.ts::createAdhoc`. Wired in `app.ts` via a dedicated
+    `createAdhocCardDependencies` bundle (cards-router gained a 6th arg).
   - **Contract.** `cards-contract.ts::createAdhoc` (POST `/cards/adhoc`),
     input `{ targetLanguage, headword: trim min 1 max 200, context: trim max 2000 nullable }`,
     output `{ data: { cardId, sessionId } }`. Matches the existing
@@ -960,7 +949,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     Hook in `apps/web/src/features/vocabulary/api/adhoc-hooks.ts`
     invalidates `chunks.listChunks`, `chunks.listLanguages`, and
     `practice.dueSummary`. Sets `meta.showErrorToast: false` so the global
-    handler doesn't double up on `cefr_not_set` (the dialog *is* the
+    handler doesn't double up on `cefr_not_set` (the dialog _is_ the
     action); the wizard's onError handles unknown failures with its own
     toast.
   - **Focus-view fixes that came along.** `sameLanguage` was always `false`
@@ -1090,7 +1079,37 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
     `sounds[]` entries and add language-specific IPA handling/tests if useful
     IPA is tagged.
 
+- **Practice review/new split (2026-05-14).** Starting Practice no longer
+  silently adds the user's full new-term cap every time they only meant to
+  clear follow-ups.
+  - **Start modes.** `practice.startSession` input gained
+    `mode: 'review_due' | 'learn_new' | 'learn_extra' | 'mixed'` (default
+    `review_due`). Fresh sessions snapshot mode-specific membership:
+    `review_due` = due terms with existing SRS state only; `learn_new` =
+    unseen terms up to today's remaining `practice_max_new_terms`;
+    `learn_extra` = explicit extra unseen terms, bypassing the daily cap;
+    `mixed` = old due+new behavior for source/triage entry points. Existing
+    active sessions still resume because `one_active_practice_session_per_user_lang`
+    remains the concurrency/cost guard.
+  - **Daily new accounting.** `listDueSummary` now returns
+    `newIntroducedTodayCount`, counted from `user_lookups.added_to_practice_at`
+    on the current DB day. `start-practice-session.ts` clamps `learn_new` /
+    `mixed` new-term selection to `maxNewTerms - newIntroducedTodayCount`.
+  - **Practice landing UI.** Language rows now render full names via
+    `getLanguageName(...)`, show follow-ups / new today / unseen / total, and
+    expose explicit row actions: primary `Continue session` when the due
+    summary reports an active session for that language, otherwise
+    `Review follow-ups` when due terms exist, otherwise `Learn new terms`,
+    plus `Learn new` / `Learn more` secondary actions where appropriate. The
+    new-term secondary actions are hidden while an active session exists
+    because `startSession` will resume that session regardless of requested
+    mode. The old single-language sticky `Start practice` footer is gone.
+  - **Settings copy.** Practice limits now describe new terms as a daily cap
+    and review terms as the follow-up session cap. `SPEC.md` was updated to
+    make the split canonical.
+
 **Remaining:**
+
 - Phase 10 — **Shelved as of 2026-05-06.** Integration tests + the formal
   end-to-end verification pass are paused while the feature surface is still
   churning. Writing tests against a moving target produces churn, not safety:
@@ -1136,7 +1155,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
      - Tap-to-translate (Settings → toggle on → mid-watch selection → `TapToTranslateSheet` shows the gloss; second tap of the same selection should be instant from cache).
      - Re-process flow (process a session, return to subtitles via `← Subtitles` or by clicking the session card again, add more highlights, click `Process new highlights`, confirm only the new highlights produced cards and the difficult-words section did not duplicate); CSV export still includes the freshly-processed cards.
      - **Process with zero highlights** — first-pass should be allowed and surface LLM-suggested chunks only.
-     - **Spanish session at C1** — pick a film with strong regional flavor (e.g. *El secreto de sus ojos* for rioplatense). Confirm the difficult-words pass biases toward voseo / lunfardo / regional collocations, that headwords are in dictionary form (`fundirse con`, not `se fundía con`), and that B-level filler (`nunca más`, `según su costumbre`) is excluded.
+     - **Spanish session at C1** — pick a film with strong regional flavor (e.g. _El secreto de sus ojos_ for rioplatense). Confirm the difficult-words pass biases toward voseo / lunfardo / regional collocations, that headwords are in dictionary form (`fundirse con`, not `se fundía con`), and that B-level filler (`nunca más`, `según su costumbre`) is excluded.
      - **Card front/back** — front = `headword` + blank line + `target_example`; back = `translation || definition` + blank line + `native_example`. Edits in the focus view's per-field inputs flow into the basic columns directly (no overrides). Verify CSV columns match.
      - **LLM-highlights toggle** — Settings → Processing → On/Off. With it off and zero highlights, the Process button is disabled with explanatory copy. With it off and ≥1 highlight, processing produces only highlight-source cards.
      - **Generate full exploration** — kept card → focus view → click `Generate full exploration`. The `exploration_extras` populates and the renderer shows the optional sections (etymology, register, IPA, …).
@@ -1144,7 +1163,7 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
      - **Cross-session dedup** — process a session that includes a polysemous word (`correr` with one sense). Start a second session containing `correr` in a different sense and process. The new sense should appear as a new card; the same sense should be excluded. Inspect `user_lookups` to confirm the composite PK `(user, lang, headword, sense)` lets both rows coexist. After processing, query `processing_telemetry` for `pass_name='exclusion_prefilter'` (payload's `filteredSize` should be << `totalVocabSize`) and `pass_name='disambiguation'` (when present, `decisions[]` should mark same-sense duplicates as `isDuplicate: true` and distinct senses as `false`). See `EXCLUSION_PREFILTER.md` for the full mechanism + per-language quality tiers.
      - **SRT markup** — import a track with `<i>...</i>` cues. Confirm rendered segments show plain text (not raw tags), that highlighting still aligns to the right characters, and that the LLM passes do not see markup.
      - **Per-language grammar enrichment** — process a Russian session with at least one of each kind: a soft-sign masculine noun (`день` / `гость`), an imperfective verb with a paired perfective (`видеть` / `увидеть`), a verb with case government (`зависеть от`, `издеваться над`), a plurale-tantum noun (`деньги` / `калоши`), a stress-marked common word. Open the focus view: chips render `m.` next to `день`, `несов.` + `↔ увидеть` next to `видеть`, `+ gen` next to `зависеть`, `pl. tantum` next to `деньги`. Open the Grammar panel; flip the gender on one row to confirm the debounced PATCH lands and survives a refetch. Then process an English session and confirm verb headwords come back as `to <verb>` (e.g. `to practice`, `to look forward to`) while Wiktionary grounding still finds IPA by stripping `to ` for direct verb lookups; confirm English IPA appears read-only in the Grammar panel, English `display_form` is not editable, and `notable_forms` is populated for irregulars (`went`/`gone`, `children`, `better`/`best`). Triage list must load without a 500 (regression test for the original `notable_forms: null` bug).
-     - **Practice golden path** — keep ≥10 cards in a single target language → tap the `Practice` tab → confirm the landing shows the language with `due / new / total` counts that match `SELECT COUNT(*) FROM user_lookups WHERE user_id=… AND target_language=…` → start session → first text generates within ~10s with all 7 chunks visibly highlighted (no offset-mismatch warning) → tap a chunk → `RateSheet` opens with headword + sense → rate `Hard` → spinner → text 2 generates and reuses the cache update path (NO stale flash, NO double LLM call). Repeat until `done: true`. Inspect `practice_ratings` (should have 1 explicit Hard + 6 implicit Goods per advanced text), `user_lookups.srs_state` (now non-null), and `practice_sessions.status` (should be `'completed'` once `done: true` returned).
+     - **Practice golden path** — keep ≥10 cards in a single target language → tap the `Practice` tab → confirm the landing shows the full language name plus follow-up / new today / unseen / total counts that match `user_lookups` (`count > 0`, `deleted_at IS NULL`, due SRS rows, `srs_state IS NULL`, and today's `added_to_practice_at`) → use `Learn new terms` for first exposure, then later use `Review follow-ups` and confirm it does not add more unseen rows to `practice_session_chunks` → first text generates within ~10s with all chunks visibly highlighted (no offset-mismatch warning) → tap a chunk → `RateSheet` opens with headword + sense → rate `Hard` → spinner → text 2 generates and reuses the cache update path (NO stale flash, NO double LLM call). Repeat until `done: true`. Inspect `practice_ratings` (should have 1 explicit Hard + implicit Goods per advanced text), `user_lookups.srs_state` (now non-null), and `practice_sessions.status` (should be `'completed'` once `done: true` returned).
 4. The TanStack Router route tree (`apps/web/src/app/routeTree.gen.ts`) regenerates on Vite startup — if you delete or add route files and need it regen'd without running dev, run `pnpm exec vite build --mode development` in `apps/web` for ~3 seconds in the background, then kill it.
 5. After backend schema changes, regenerate types from `apps/backend/supabase/supabase-dev-tunnel/`: `doppler run -- supabase gen types typescript --local > /Users/sebastien/Documents/flicktionary/apps/backend/src/transport/database/database.public.types.ts`.
 6. Auto mode is fine — make reasonable assumptions and proceed; only stop for genuinely destructive ops (rm -rf, dropping prod data, force pushing main, etc.).

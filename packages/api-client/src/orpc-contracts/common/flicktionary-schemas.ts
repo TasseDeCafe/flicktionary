@@ -300,6 +300,8 @@ export const PracticeDueSummaryEntrySchema = z.object({
   learningDueCount: z.number().int(),
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
+  newIntroducedTodayCount: z.number().int(),
+  activePracticeSessionId: z.string().uuid().nullable(),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
 

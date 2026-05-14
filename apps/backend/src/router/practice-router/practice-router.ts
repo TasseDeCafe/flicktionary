@@ -126,7 +126,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     startSession: implementer.startSession.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await startPracticeSession(userId, input.targetLanguage, deps.startPracticeSessionDependencies)
+      const result = await startPracticeSession(
+        userId,
+        input.targetLanguage,
+        input.mode,
+        deps.startPracticeSessionDependencies
+      )
       if (!result.ok) {
         throw errors.BAD_REQUEST({
           data: {

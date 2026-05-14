@@ -9,7 +9,7 @@ import { PracticeLoader } from './practice-loader'
 export const PracticeStartView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
-  const { lang } = useSearch({ from: '/_authenticated/_app/practice/start' })
+  const { lang, mode } = useSearch({ from: '/_authenticated/_app/practice/start' })
   const { mutate: startSession, isError } = useStartPracticeSession()
   const triggered = useRef(false)
 
@@ -17,7 +17,7 @@ export const PracticeStartView = () => {
     if (triggered.current) return
     triggered.current = true
     startSession(
-      { targetLanguage: lang },
+      { targetLanguage: lang, mode },
       {
         onSuccess: (response) => {
           void navigate({
@@ -28,7 +28,7 @@ export const PracticeStartView = () => {
         },
       }
     )
-  }, [lang, navigate, startSession])
+  }, [lang, mode, navigate, startSession])
 
   const close = () => void navigate({ to: '/practice' })
 

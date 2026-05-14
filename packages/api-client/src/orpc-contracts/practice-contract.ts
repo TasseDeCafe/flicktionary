@@ -9,6 +9,9 @@ import {
   PracticeTextSchema,
 } from './common/flicktionary-schemas'
 
+export const PracticeSessionModeSchema = z.enum(['review_due', 'learn_new', 'learn_extra', 'mixed'])
+export type PracticeSessionMode = z.infer<typeof PracticeSessionModeSchema>
+
 export const practiceContract = {
   // Per-language summary used by the Practice landing. Returns one row per
   // target_language the user has cards in, with daily review, intraday
@@ -28,7 +31,7 @@ export const practiceContract = {
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ targetLanguage: z.string().min(1) }))
+    .input(z.object({ targetLanguage: z.string().min(1), mode: PracticeSessionModeSchema.default('review_due') }))
     .output(z.object({ data: z.object({ sessionId: z.string().uuid(), resumed: z.boolean() }) })),
 
   // Loads the practice_session + the most recent readable practice_text (if

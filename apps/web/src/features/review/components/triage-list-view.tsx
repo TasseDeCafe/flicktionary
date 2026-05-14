@@ -204,7 +204,7 @@ export const TriageListView = () => {
             disabled={keptCount === 0 || !session}
             onClick={() => {
               if (!session) return
-              void navigate({ to: '/practice/start', search: { lang: session.targetLanguage } })
+              void navigate({ to: '/practice/start', search: { lang: session.targetLanguage, mode: 'mixed' } })
             }}
           >
             <Brain className='mr-2 h-4 w-4' />

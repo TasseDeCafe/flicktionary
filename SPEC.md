@@ -156,6 +156,7 @@ tracks does).
 Two-layer UI.
 
 **Layer 1 — Triage list (default landing).**
+
 - Two sections: "Your highlights" and "LLM-suggested chunks". Auto-rejected chunks collapsed under a `Show N filtered out` toggle.
 - Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, keep/reject toggle, tap target.
 - Filter, search, sort across both sections.
@@ -168,6 +169,7 @@ Two-layer UI.
 - No chat here. This layer is for fast triage.
 
 **Layer 2 — Focus view (modal screen pushed above the tab navigator).**
+
 - Modal header: chevron-back to triage, position counter (`Card N of M`),
   keep/reject toggles in the right slot.
 - Below the header: a compact toolbar with prev/next arrows and the
@@ -220,11 +222,12 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context 
 A separate top-level destination from the per-session review flow. Practice is **cross-session** — its review pool is every kept card the user has accumulated, regardless of which study session it came from.
 
 - **Pool source.** Every card with `status='kept'` flows into `user_lookup` automatically (the keep transition writes the row). `user_lookup` is the canonical "user vocabulary" record; it carries FSRS state per `(user_id, target_language, headword, sense)`.
-- **Landing.** `/practice` shows a per-language list with `due / new / total` counts. One-language users get a single "Start practice" button; multi-language users pick which language to review.
-- **Session.** A practice session is scoped to one target language. Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
+- **Landing.** `/practice` shows a per-language list with full language names, follow-up counts, today's available new-term allowance, unseen/new counts, total kept terms, and whether an active session is already in progress. The primary action is **Continue session** when an active session exists, and new-term actions are hidden until that session is finished or abandoned because the backend intentionally resumes the active session. Otherwise the primary action is **Review follow-ups** when any already-introduced terms are due; new terms are a separate explicit action (`Learn new terms` / `Learn more`) so starting another review session never silently increases future workload.
+- **Session modes.** A practice session is scoped to one target language and one start mode: `review_due` snapshots only already-introduced due terms; `learn_new` snapshots unseen terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` is used by source/triage entry points that should keep the previous due+new behavior. The one-active-session-per-language rule still wins: starting while an active session exists resumes that session.
+- **Session.** Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
 - **Generation prompt.** Methodology preamble + language instructions + user profile + the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`, `native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense, surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are unreliable at character arithmetic; the server locates each `surface_form` in `body` and computes offsets itself, claiming non-overlapping positions when a surface form repeats.
 - **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray). Tapping a chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
-- **End condition.** When the eligible pool minus chunks already covered in this session is empty, `generateNextText` returns `done: true` and the session view shows an "All caught up" view. Eligible = `srs_state IS NULL OR srs_due <= NOW()`. New rows enter as `state='new'` lazily on first surfacing.
+- **End condition.** When the eligible pool minus chunks already covered in this session is empty, `generateNextText` returns `done: true` and the session view shows an "All caught up" view. Eligibility is the frozen mode-aware snapshot in `practice_session_chunks`; live rows do not enter mid-session. New rows enter as `state='new'` lazily on first surfacing/rating and count against the per-day new-term allowance via `added_to_practice_at`.
 - **FSRS.** `ts-fsrs` package, default parameters with `enable_fuzz: true`. The adapter at `apps/backend/src/service/practice/fsrs.ts` round-trips `user_lookups` rows ↔ `ts-fsrs` Card objects.
 - **Out of scope (v2).** Pre-generation pipeline, coverage guarantee + cleanup pass for stubborn chunks, flashcard fallback view, custom FSRS parameters, audio TTS. (The "remove from practice" affordance and the browseable "my vocabulary" view both shipped as the Vocabulary tab — see below.)
 
@@ -246,7 +249,7 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
   Output is one CSV per target language covering every kept (non-deleted)
   chunk, regardless of which session it came from. Per-session CSV is no
   longer surfaced in the UI; the triage footer is now a `Practice these
-  chunks` CTA. The `cards.exportCsv` backend endpoint still exists (and still
+chunks` CTA. The `cards.exportCsv` backend endpoint still exists (and still
   stamps `exported_at` on `user_lookups` if hit directly) but is unreachable
   from the UI.
 - The vocabulary export pulls a representative `surface_form` and `context`
@@ -291,11 +294,11 @@ Native-style shell so the eventual React Native port is a translation, not a red
      append a `processing_warnings` entry — better to surface a duplicate
      at triage than silently drop a real distinct sense.
   3. **Composite PK gate** at write time. `ON CONFLICT (user_id,
-     target_language, headword, sense)` increments `count` rather than
+target_language, headword, sense)` increments `count` rather than
      creating a duplicate row when the same triple resurfaces.
 - Decisions for both stages are audited in the `processing_telemetry`
   table (one row per pass invocation, payload includes inputs + decisions
-  + duration). Internal/diagnostic only — droppable when no longer useful.
+  - duration). Internal/diagnostic only — droppable when no longer useful.
 - Designed so future content sources (books, articles) feed the same dedup table — a chunk learned from a movie won't resurface in a book.
 
 ## Settings (per user)
@@ -498,6 +501,7 @@ users
 ```
 
 Notes:
+
 - `highlight` uses `start_segment_id` + `end_segment_id` so multi-line selections work cleanly. Single-line is the case where they're equal.
 - `card` is split from `highlight` because LLM-suggested chunks have no highlight, and because regenerating a card shouldn't churn the original highlight metadata.
 - Foreign keys point to `text_segment.id` — the stable id, not `index`. We don't re-fetch SRTs in v1.
@@ -629,7 +633,7 @@ through the `update_card_fields` tool), and those edits are what flow into
 the CSV.
 
 - `front` = `[headword, target_example]` joined by a blank line (skipping empty values)
-- `back`  = `[translation || definition, native_example]` joined by a blank line (skipping empty values)
+- `back` = `[translation || definition, native_example]` joined by a blank line (skipping empty values)
 
 ## Tap-to-translate (fast path)
 
@@ -652,6 +656,7 @@ cached result instantly.
 ## User flows
 
 **Start a movie session**
+
 1. Pick or search a movie (TMDB-backed metadata).
 2. Pick a subtitle track: OpenSubtitles search filtered to target language, or upload `.srt`.
 3. App verifies the chosen track's language matches target language; can't proceed otherwise.
@@ -659,6 +664,7 @@ cached result instantly.
 5. Session created, status `active`.
 
 **Start a text session**
+
 1. From the `+` overlay, pick `Practice with a text`.
 2. Paste the source text (50–20,000 chars). Title field auto-fills with the first ~60 chars (truncated at a word boundary); user can override.
 3. Pick the language of the text (auto-detected from the paste; manual override always wins).
@@ -666,6 +672,7 @@ cached result instantly.
 5. Session created, status `active`. Same mid-session UI as movies, minus the timestamps.
 
 **Add a word (no source)**
+
 1. From the `+` overlay, pick `Add a word`.
 2. Pick the target language (any supported language; defaults to the user's `lastTargetLanguage` MRU, then the first CEFR-set language alphabetically). An advisory amber hint suggests switching if the typed headword + context look like a different language.
 3. Enter the headword and an optional context sentence.
@@ -674,27 +681,32 @@ cached result instantly.
 6. Frontend lands on the focus view of the new card with `?from=vocabulary`, so chevron-back returns to `/vocabulary`.
 
 **Mid-watch**
+
 1. Open the session.
 2. Search the track or scroll. Optionally tap-to-translate (sheet) for quick checks.
 3. Select text in a line (or across lines) → highlight sheet → optional note/presets → save.
 
 **Process**
+
 1. User taps `Process` on the session.
 2. Status flips to `processing`. Frontend redirects to a polling page.
 3. Pipeline runs (context blob if missing, L1 notes if missing, difficult-words pass if no LLM-suggested cards yet, per-chunk Full exploration for highlights without cards).
 4. Status flips to `processed`. On uncaught failure: `failed` (retryable from the polling page).
 
 **Review and practice**
+
 1. Triage list — keep/reject across both sections. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
 2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`.
 3. Sticky-footer `Practice these chunks` button starts a Practice session in the session's target language (language-wide pool — kept chunks from this session feed into it via the user-lookups upsert that fires on the keep transition).
 
 **Export vocabulary**
+
 1. Open the Vocabulary tab.
 2. Pick the language pill (skipped if you only have one language).
 3. Header 3-dots → `Export vocabulary` → download CSV.
 
 **Add more highlights after processing**
+
 1. From the triage list, tap the `Subtitles` button (or open the session card again).
 2. The mid-watch UI is browsable on `processed` / `exported` sessions — `Triage` jumps back; `Highlight selection` still works.
 3. Tap `Process new highlights`. Only the newly-added highlights run the full-exploration pass; the difficult-words pass does not re-run.
