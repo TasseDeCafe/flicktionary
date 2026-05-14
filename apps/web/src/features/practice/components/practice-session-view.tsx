@@ -18,8 +18,6 @@ import { RateSheet, type RateSheetChunkContent } from './rate-sheet'
 import type { RateValue } from '@/components/ui/rate-buttons'
 
 type AdvancingSnapshot = {
-  completed: number
-  target: number
   ratedCount: number
   totalCount: number
 }
@@ -163,10 +161,7 @@ export const PracticeSessionView = () => {
 
   const handleNext = () => {
     if (!currentText) return
-    const implicitGoodCount = annotations.filter((ann) => !ratings.has(ann.index)).length
     setAdvancingSnapshot({
-      completed: progress ? Math.min(progress.target, progress.completed + implicitGoodCount) : implicitGoodCount,
-      target: progress?.target ?? annotations.length,
       ratedCount: ratings.size,
       totalCount: annotations.length,
     })
@@ -201,7 +196,7 @@ export const PracticeSessionView = () => {
   const close = () => navigate({ to: '/practice' })
 
   const showInitialLoader = !done && (isLoading || (!isAdvancing && !currentText))
-  const displayProgress = isAdvancing && advancingSnapshot ? advancingSnapshot : progress
+  const displayProgress = progress
 
   // Cap the visible bar at 100% — the numerator can briefly equal the
   // denominator on the all-caught-up frame.

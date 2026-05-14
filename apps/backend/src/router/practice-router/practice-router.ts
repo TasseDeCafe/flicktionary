@@ -296,7 +296,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
           data: { errors: [{ message: 'Practice text not found' }] },
         })
       }
-      return { data: { implicitGoodCount: result.implicitGoodCount } }
+      const found = await deps.practiceTextsRepository.findByIdForUser(input.textId, userId)
+      const sessionId = found?.practiceSessionId
+      const progress = sessionId
+        ? await deps.practiceSessionsRepository.getSessionProgress(sessionId)
+        : { completed: 0, target: 0 }
+      return { data: { implicitGoodCount: result.implicitGoodCount, progress } }
     }),
   })
 

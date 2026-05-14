@@ -129,7 +129,8 @@ export const practiceContract = {
     ),
 
   // User pressed Next: every annotation that wasn't explicitly rated gets an
-  // implicit-good. The text moves to status='done'.
+  // implicit-good. The text moves to status='done'. Returns authoritative
+  // progress so the client doesn't have to estimate distinct completed terms.
   finalizeText: oc
     .route({ method: 'POST', path: '/practice/texts/{textId}/finalize', successStatus: 200 })
     .errors({
@@ -137,5 +138,12 @@ export const practiceContract = {
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(z.object({ textId: z.string().uuid() }))
-    .output(z.object({ data: z.object({ implicitGoodCount: z.number().int() }) })),
+    .output(
+      z.object({
+        data: z.object({
+          implicitGoodCount: z.number().int(),
+          progress: PracticeSessionProgressSchema,
+        }),
+      })
+    ),
 } as const
