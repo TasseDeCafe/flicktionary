@@ -50,7 +50,7 @@ export const PracticeSessionLimitsSetting = ({ maxNewTerms, maxReviewTerms }: Pr
       <div className='flex flex-col gap-1'>
         <span className='text-sm font-medium'>{t`Practice limits`}</span>
         <p className='text-muted-foreground text-xs'>
-          {t`Each new session uses up to this many new terms and review terms.`}
+          {t`New terms are capped per day. Follow-up sessions use up to this many review terms.`}
         </p>
       </div>
       <div className='grid grid-cols-2 gap-3'>

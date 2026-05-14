@@ -1,10 +1,10 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { useDueSummary } from '../api/practice-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 
 export const PracticeLandingView = () => {
   const { t } = useLingui()
@@ -15,18 +15,12 @@ export const PracticeLandingView = () => {
   const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
   const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
 
-  const canStartEntry = (entry: PracticeDueSummaryEntry) =>
-    (entry.reviewDueCount + entry.learningDueCount > 0 && maxReviewTerms > 0) || (entry.newCount > 0 && maxNewTerms > 0)
-
-  const handleStart = (targetLanguage: string) => {
+  const handlePickLanguage = (targetLanguage: string) => {
     void navigate({
-      to: '/practice/start',
-      search: { lang: targetLanguage },
+      to: '/practice/language/$targetLanguage',
+      params: { targetLanguage },
     })
   }
-
-  const singleLanguageReviewable =
-    summary && summary.length === 1 && summary[0] && canStartEntry(summary[0]) ? summary[0]!.targetLanguage : null
 
   const formatFollowUpDelay = (nextLearningDueAt: string | null) => {
     if (!nextLearningDueAt) return null
@@ -38,16 +32,31 @@ export const PracticeLandingView = () => {
     return t`Follow-up later`
   }
 
+  const getDailyNewAvailable = (entry: PracticeDueSummaryEntry) => {
+    if (maxNewTerms <= 0) return 0
+    const remainingDailyNewTerms = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
+    return Math.min(entry.newCount, remainingDailyNewTerms)
+  }
+
   const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
     const totalKept = entry.totalKept
-    const reviewDueCount = entry.reviewDueCount
-    const learningDueCount = entry.learningDueCount
+    const dueTermCount = entry.reviewDueCount + entry.learningDueCount
     const newCount = entry.newCount
-    const hasDailyWork = reviewDueCount > 0 || newCount > 0
+    const dailyNewAvailable = getDailyNewAvailable(entry)
+    const hasDailyWork = (dueTermCount > 0 && maxReviewTerms > 0) || dailyNewAvailable > 0
     const followUpDelay = formatFollowUpDelay(entry.nextLearningDueAt)
 
-    if (!hasDailyWork && learningDueCount > 0) {
-      return t`All caught up for today · ${learningDueCount} follow-up(s) ready · ${totalKept} total`
+    if (entry.activePracticeSessionId) {
+      const parts = [
+        t`Session in progress`,
+        followUpDelay,
+        newCount > 0 ? t`${newCount} unseen` : null,
+        t`${totalKept} total`,
+      ].filter((part): part is string => part != null)
+      return parts.join(' · ')
+    }
+    if (!hasDailyWork && newCount > 0 && maxNewTerms > 0) {
+      return t`Daily new limit reached · ${newCount} unseen · ${totalKept} total`
     }
     if (!hasDailyWork && followUpDelay) {
       return t`All caught up for today · ${followUpDelay} · ${totalKept} total`
@@ -57,9 +66,9 @@ export const PracticeLandingView = () => {
     }
 
     const parts = [
-      reviewDueCount > 0 ? t`${reviewDueCount} due` : null,
-      newCount > 0 ? t`${newCount} new` : null,
-      learningDueCount > 0 ? t`${learningDueCount} follow-up(s)` : null,
+      dueTermCount > 0 ? t`${dueTermCount} follow-up(s)` : null,
+      dailyNewAvailable > 0 ? t`${dailyNewAvailable} new today` : null,
+      newCount > dailyNewAvailable ? t`${newCount} unseen` : null,
       t`${totalKept} total`,
     ].filter((part): part is string => part != null)
     return parts.join(' · ')
@@ -94,21 +103,19 @@ export const PracticeLandingView = () => {
               <h2 className='text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase'>{t`Languages`}</h2>
               <div className='divide-y divide-gray-100 overflow-hidden rounded-xl border bg-white'>
                 {summary.map((entry) => {
-                  const canStart = canStartEntry(entry)
                   const summaryLine = getSummaryLine(entry)
                   return (
                     <button
                       key={entry.targetLanguage}
                       type='button'
-                      disabled={!canStart}
-                      onClick={() => handleStart(entry.targetLanguage)}
-                      className='flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 disabled:opacity-50'
+                      onClick={() => handlePickLanguage(entry.targetLanguage)}
+                      className='flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-gray-50'
                     >
                       <div className='flex min-w-0 flex-1 flex-col'>
-                        <span className='truncate text-sm font-medium uppercase'>{entry.targetLanguage}</span>
+                        <span className='truncate text-sm font-medium'>{getLanguageName(entry.targetLanguage)}</span>
                         <span className='text-muted-foreground truncate text-xs'>{summaryLine}</span>
                       </div>
-                      {canStart && <ChevronRight className='h-5 w-5 text-gray-400' />}
+                      <ChevronRight className='h-5 w-5 shrink-0 text-gray-400' />
                     </button>
                   )
                 })}
@@ -117,16 +124,6 @@ export const PracticeLandingView = () => {
           )}
         </div>
       </div>
-
-      {singleLanguageReviewable && (
-        <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
-          <div className='mx-auto flex w-full max-w-2xl items-center md:justify-end'>
-            <Button className='w-full md:w-auto' onClick={() => handleStart(singleLanguageReviewable)}>
-              {t`Start practice`}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

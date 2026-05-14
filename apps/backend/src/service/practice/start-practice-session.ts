@@ -1,5 +1,6 @@
 import type { PracticeSessionsRepositoryInterface } from '../../transport/database/practice-sessions/practice-sessions-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { PracticeSessionMode } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import {
   DEFAULT_PRACTICE_MAX_NEW_TERMS,
   DEFAULT_PRACTICE_MAX_REVIEW_TERMS,
@@ -42,6 +43,7 @@ const clampPracticeSessionLimits = (limits: PracticeSessionLimits): PracticeSess
 export const startPracticeSession = async (
   userId: string,
   targetLanguage: string,
+  mode: PracticeSessionMode,
   deps: StartPracticeSessionDependencies
 ): Promise<StartPracticeSessionResult> => {
   const nativeLanguage = await deps.usersRepository.getNativeLanguage(userId)
@@ -60,19 +62,36 @@ export const startPracticeSession = async (
   const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
   const active = await deps.practiceSessionsRepository.findActiveForUser({ userId, targetLanguage })
   if (!active) {
-    const selectedNewTerms = Math.min(langSummary.newCount, limits.maxNewTerms)
+    const remainingDailyNewTerms = Math.max(0, limits.maxNewTerms - langSummary.newIntroducedTodayCount)
+    const selectedNewTerms = Math.min(langSummary.newCount, getMaxNewTermsForMode(mode, limits, remainingDailyNewTerms))
     const selectedReviewTerms = Math.min(
       langSummary.reviewDueCount + langSummary.learningDueCount,
-      limits.maxReviewTerms
+      getMaxReviewTermsForMode(mode, limits)
     )
     if (selectedNewTerms + selectedReviewTerms === 0) return { ok: false, reason: 'no_practice_terms' }
   }
 
+  const remainingDailyNewTerms = Math.max(0, limits.maxNewTerms - langSummary.newIntroducedTodayCount)
   const { session, resumed } = await deps.practiceSessionsRepository.insertOrResume({
     userId,
     targetLanguage,
-    maxNewTerms: limits.maxNewTerms,
-    maxReviewTerms: limits.maxReviewTerms,
+    maxNewTerms: getMaxNewTermsForMode(mode, limits, remainingDailyNewTerms),
+    maxReviewTerms: getMaxReviewTermsForMode(mode, limits),
   })
   return { ok: true, sessionId: session.id, resumed }
+}
+
+const getMaxNewTermsForMode = (
+  mode: PracticeSessionMode,
+  limits: PracticeSessionLimits,
+  remainingDailyNewTerms: number
+) => {
+  if (mode === 'review_due') return 0
+  if (mode === 'learn_extra') return limits.maxNewTerms
+  return remainingDailyNewTerms
+}
+
+const getMaxReviewTermsForMode = (mode: PracticeSessionMode, limits: PracticeSessionLimits) => {
+  if (mode === 'learn_new' || mode === 'learn_extra') return 0
+  return limits.maxReviewTerms
 }

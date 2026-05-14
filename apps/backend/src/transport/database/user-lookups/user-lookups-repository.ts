@@ -21,6 +21,8 @@ export type DueSummaryEntry = {
   learningDueCount: number
   nextLearningDueAt: string | null
   newCount: number
+  newIntroducedTodayCount: number
+  activePracticeSessionId: string | null
 }
 
 export type RenameKeyResult = { ok: true } | { ok: false; reason: 'CONFLICT' }
@@ -307,30 +309,42 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   const result = await sql`
     SELECT
-      target_language,
+      ul.target_language,
       COUNT(*)::int AS total_kept,
       COUNT(*) FILTER (
-        WHERE srs_state = 'review'
-          AND srs_due IS NOT NULL
-          AND srs_due <= NOW()
+        WHERE ul.srs_state = 'review'
+          AND ul.srs_due IS NOT NULL
+          AND ul.srs_due <= NOW()
       )::int AS review_due_count,
       COUNT(*) FILTER (
-        WHERE srs_state IN ('learning', 'relearning')
-          AND srs_due IS NOT NULL
-          AND srs_due <= NOW()
+        WHERE ul.srs_state IN ('learning', 'relearning')
+          AND ul.srs_due IS NOT NULL
+          AND ul.srs_due <= NOW()
       )::int AS learning_due_count,
-      MIN(srs_due) FILTER (
-        WHERE srs_state IN ('learning', 'relearning')
-          AND srs_due IS NOT NULL
-          AND srs_due > NOW()
+      MIN(ul.srs_due) FILTER (
+        WHERE ul.srs_state IN ('learning', 'relearning')
+          AND ul.srs_due IS NOT NULL
+          AND ul.srs_due > NOW()
       ) AS next_learning_due_at,
-      COUNT(*) FILTER (WHERE srs_state IS NULL)::int AS new_count
-    FROM public.user_lookups
-    WHERE user_id = ${userId}
-      AND count > 0
-      AND deleted_at IS NULL
-    GROUP BY target_language
-    ORDER BY target_language ASC
+      COUNT(*) FILTER (WHERE ul.srs_state IS NULL)::int AS new_count,
+      COUNT(*) FILTER (
+        WHERE ul.added_to_practice_at >= CURRENT_DATE
+          AND ul.added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
+      )::int AS new_introduced_today_count,
+      (
+        SELECT ps.id
+        FROM public.practice_sessions ps
+        WHERE ps.user_id = ${userId}
+          AND ps.target_language = ul.target_language
+          AND ps.status = 'active'
+        LIMIT 1
+      ) AS active_practice_session_id
+    FROM public.user_lookups ul
+    WHERE ul.user_id = ${userId}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+    GROUP BY ul.target_language
+    ORDER BY ul.target_language ASC
   `
   return result.map((row) => ({
     targetLanguage: row.target_language as string,
@@ -342,6 +356,8 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       ? new Date(row.next_learning_due_at as string | Date).toISOString()
       : null,
     newCount: row.new_count as number,
+    newIntroducedTodayCount: row.new_introduced_today_count as number,
+    activePracticeSessionId: (row.active_practice_session_id as string | null) ?? null,
   }))
 }
 

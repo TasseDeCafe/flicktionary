@@ -126,7 +126,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     startSession: implementer.startSession.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await startPracticeSession(userId, input.targetLanguage, deps.startPracticeSessionDependencies)
+      const result = await startPracticeSession(
+        userId,
+        input.targetLanguage,
+        input.mode,
+        deps.startPracticeSessionDependencies
+      )
       if (!result.ok) {
         throw errors.BAD_REQUEST({
           data: {
@@ -144,6 +149,18 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         })
       }
       return { data: { sessionId: result.sessionId, resumed: result.resumed } }
+    }),
+
+    abandonSession: implementer.abandonSession.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await deps.practiceSessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Practice session not found' }] },
+        })
+      }
+      const abandoned = await deps.practiceSessionsRepository.markAbandoned(input.sessionId, userId)
+      return { data: { abandoned } }
     }),
 
     getSession: implementer.getSession.handler(async ({ input, context, errors }) => {

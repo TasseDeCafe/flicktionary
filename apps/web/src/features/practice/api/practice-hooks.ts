@@ -38,6 +38,25 @@ export const useStartPracticeSession = () => {
   )
 }
 
+export const useAbandonPracticeSession = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.practice.abandonSession.mutationOptions({
+      onSuccess: (_response, variables) => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.practice.getSession.queryKey({ input: { sessionId: variables.sessionId } }),
+        })
+      },
+      meta: {
+        errorMessage: t`Failed to end practice session`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useGetPracticeSession = (sessionId: string) => {
   const { t } = useLingui()
   return useQuery(
