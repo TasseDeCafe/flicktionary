@@ -1095,15 +1095,20 @@ llmDiscoveryEnabled: false, excludedHeadwordSenses: [] })`,
     `newIntroducedTodayCount`, counted from `user_lookups.added_to_practice_at`
     on the current DB day. `start-practice-session.ts` clamps `learn_new` /
     `mixed` new-term selection to `maxNewTerms - newIntroducedTodayCount`.
-  - **Practice landing UI.** Language rows now render full names via
-    `getLanguageName(...)`, show follow-ups / new today / unseen / total, and
-    expose explicit row actions: primary `Continue session` when the due
-    summary reports an active session for that language, otherwise
-    `Review follow-ups` when due terms exist, otherwise `Learn new terms`,
-    plus `Learn new` / `Learn more` secondary actions where appropriate. The
-    new-term secondary actions are hidden while an active session exists
-    because `startSession` will resume that session regardless of requested
-    mode. The old single-language sticky `Start practice` footer is gone.
+  - **Practice landing + language screen.** `/practice` is now only a
+    per-language selector: full language names via `getLanguageName(...)`,
+    compact status summary, and chevron navigation to
+    `/practice/language/$targetLanguage`. The language screen owns the
+    full action surface with a sticky bottom bar: `Continue session` + `End
+session` when active, otherwise `Review follow-ups`, `Learn new terms`,
+    or `Learn more anyway` depending on due/new availability. This avoids
+    hidden row text and makes the primary action reachable on mobile.
+  - **End session endpoint.** `practice.abandonSession` was added at
+    `POST /practice/sessions/{sessionId}/abandon`; it validates ownership and
+    calls `practiceSessionsRepository.markAbandoned`. `useAbandonPracticeSession`
+    invalidates the practice summary and the abandoned session query. Ending
+    keeps already-recorded ratings and frees the language for a fresh
+    `learn_new` / `learn_extra` session.
   - **Settings copy.** Practice limits now describe new terms as a daily cap
     and review terms as the follow-up session cap. `SPEC.md` was updated to
     make the split canonical.

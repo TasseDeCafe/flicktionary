@@ -1,11 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, Plus, RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Brain, ChevronRight } from 'lucide-react'
 import { useDueSummary } from '../api/practice-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import type { PracticeSessionMode } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 
 export const PracticeLandingView = () => {
@@ -17,10 +15,10 @@ export const PracticeLandingView = () => {
   const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
   const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
 
-  const handleStart = (targetLanguage: string, mode: PracticeSessionMode) => {
+  const handlePickLanguage = (targetLanguage: string) => {
     void navigate({
-      to: '/practice/start',
-      search: { lang: targetLanguage, mode },
+      to: '/practice/language/$targetLanguage',
+      params: { targetLanguage },
     })
   }
 
@@ -76,27 +74,6 @@ export const PracticeLandingView = () => {
     return parts.join(' · ')
   }
 
-  const getPrimaryAction = (entry: PracticeDueSummaryEntry): { label: string; mode: PracticeSessionMode } | null => {
-    if (entry.activePracticeSessionId) return { label: t`Continue session`, mode: 'review_due' }
-    const dueTermCount = entry.reviewDueCount + entry.learningDueCount
-    if (dueTermCount > 0 && maxReviewTerms > 0) return { label: t`Review follow-ups`, mode: 'review_due' }
-    if (getDailyNewAvailable(entry) > 0) return { label: t`Learn new terms`, mode: 'learn_new' }
-    if (entry.newCount > 0 && maxNewTerms > 0) return { label: t`Learn more anyway`, mode: 'learn_extra' }
-    return null
-  }
-
-  const showSecondaryLearnAction = (entry: PracticeDueSummaryEntry) =>
-    !entry.activePracticeSessionId &&
-    entry.reviewDueCount + entry.learningDueCount > 0 &&
-    getDailyNewAvailable(entry) > 0
-
-  const showExtraLearnAction = (entry: PracticeDueSummaryEntry) =>
-    !entry.activePracticeSessionId &&
-    entry.reviewDueCount + entry.learningDueCount > 0 &&
-    getDailyNewAvailable(entry) === 0 &&
-    entry.newCount > 0 &&
-    maxNewTerms > 0
-
   return (
     <div className='flex h-full flex-col'>
       <div className='flex-1 overflow-y-auto'>
@@ -126,61 +103,20 @@ export const PracticeLandingView = () => {
               <h2 className='text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase'>{t`Languages`}</h2>
               <div className='divide-y divide-gray-100 overflow-hidden rounded-xl border bg-white'>
                 {summary.map((entry) => {
-                  const primaryAction = getPrimaryAction(entry)
                   const summaryLine = getSummaryLine(entry)
                   return (
-                    <div
+                    <button
                       key={entry.targetLanguage}
-                      className='flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between'
+                      type='button'
+                      onClick={() => handlePickLanguage(entry.targetLanguage)}
+                      className='flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-gray-50'
                     >
                       <div className='flex min-w-0 flex-1 flex-col'>
                         <span className='truncate text-sm font-medium'>{getLanguageName(entry.targetLanguage)}</span>
                         <span className='text-muted-foreground truncate text-xs'>{summaryLine}</span>
                       </div>
-                      <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-                        {showSecondaryLearnAction(entry) && (
-                          <Button
-                            type='button'
-                            variant='outline'
-                            size='sm'
-                            className='w-full sm:w-auto'
-                            onClick={() => handleStart(entry.targetLanguage, 'learn_new')}
-                          >
-                            <Plus className='h-4 w-4' />
-                            {t`Learn new`}
-                          </Button>
-                        )}
-                        {showExtraLearnAction(entry) && (
-                          <Button
-                            type='button'
-                            variant='outline'
-                            size='sm'
-                            className='w-full sm:w-auto'
-                            onClick={() => handleStart(entry.targetLanguage, 'learn_extra')}
-                          >
-                            <Plus className='h-4 w-4' />
-                            {t`Learn more`}
-                          </Button>
-                        )}
-                        <Button
-                          type='button'
-                          size='sm'
-                          className='w-full sm:w-auto'
-                          disabled={!primaryAction}
-                          onClick={() => {
-                            if (!primaryAction) return
-                            handleStart(entry.targetLanguage, primaryAction.mode)
-                          }}
-                        >
-                          {primaryAction?.mode === 'review_due' ? (
-                            <RotateCcw className='h-4 w-4' />
-                          ) : (
-                            <Plus className='h-4 w-4' />
-                          )}
-                          {primaryAction?.label ?? t`All caught up`}
-                        </Button>
-                      </div>
-                    </div>
+                      <ChevronRight className='h-5 w-5 shrink-0 text-gray-400' />
+                    </button>
                   )
                 })}
               </div>

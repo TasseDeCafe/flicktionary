@@ -34,6 +34,15 @@ export const practiceContract = {
     .input(z.object({ targetLanguage: z.string().min(1), mode: PracticeSessionModeSchema.default('review_due') }))
     .output(z.object({ data: z.object({ sessionId: z.string().uuid(), resumed: z.boolean() }) })),
 
+  abandonSession: oc
+    .route({ method: 'POST', path: '/practice/sessions/{sessionId}/abandon', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ abandoned: z.boolean() }) })),
+
   // Loads the practice_session + the most recent readable practice_text (if
   // any). Used to bootstrap the session view on mount and to resume an
   // in-progress session. The currentText (if returned) is server-side

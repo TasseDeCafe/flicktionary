@@ -193,7 +193,16 @@ export const PracticeSessionView = () => {
     )
   }
 
-  const close = () => navigate({ to: '/practice' })
+  const close = () => {
+    const targetLanguage = sessionData?.session.targetLanguage
+    if (targetLanguage) {
+      return navigate({
+        to: '/practice/language/$targetLanguage',
+        params: { targetLanguage },
+      })
+    }
+    return navigate({ to: '/practice' })
+  }
 
   const showInitialLoader = !done && (isLoading || (!isAdvancing && !currentText))
   const displayProgress = progress
