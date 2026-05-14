@@ -43,14 +43,18 @@ const finalizePracticeTextUnlocked = async (
   for (const ann of annotations) {
     const headword = String(ann.headword ?? '')
     const sense = typeof ann.sense === 'string' ? ann.sense : ''
+    const key = `${headword}::${sense}`
     if (!headword) continue
-    if (ratedKeys.has(`${headword}::${sense}`)) continue
+    if (ratedKeys.has(key)) continue
     // Bypass status guard since we already own the finalize transition; the
     // text is now 'done' but implicit ratings still need to land.
     const result = await rateChunk(practiceTextId, userId, headword, sense, 'good', false, deps, {
       bypassStatusGuard: true,
     })
-    if (result.ok) implicitGoodCount += 1
+    if (result.ok) {
+      ratedKeys.add(key)
+      implicitGoodCount += 1
+    }
   }
 
   return { ok: true, implicitGoodCount, alreadyFinalized: false }

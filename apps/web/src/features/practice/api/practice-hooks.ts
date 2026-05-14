@@ -114,15 +114,16 @@ export const useFinalizePracticeText = (sessionId: string) => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.finalizeText.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (response) => {
         // Optimistically null out currentText so the UI doesn't keep showing
         // the just-finalized text while we wait for the next generate. The
-        // generate step then writes the new text in via setQueryData.
+        // finalize response carries authoritative progress; the generate
+        // step then writes the new text in via setQueryData.
         queryClient.setQueryData<GetSessionCache>(
           orpcQuery.practice.getSession.queryKey({ input: { sessionId } }),
           (old) => {
             if (!old) return old
-            return { ...old, data: { ...old.data, currentText: null } }
+            return { ...old, data: { ...old.data, currentText: null, progress: response.data.progress } }
           }
         )
         queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
