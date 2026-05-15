@@ -105,6 +105,7 @@ export const usePrepareNextPracticeText = () => {
       // No meta.errorMessage: failures here are non-fatal (foreground will
       // generate fresh on Next), and we don't want to surface modal toasts
       // for a background eagerness optimisation.
+      meta: { showErrorToast: false },
     })
   )
 }

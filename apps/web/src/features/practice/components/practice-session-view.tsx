@@ -70,10 +70,22 @@ export const PracticeSessionView = () => {
   const currentText = sessionData?.currentText ?? null
   const currentTextId = currentText?.id ?? null
   const progress = sessionData?.progress ?? null
+  const targetLanguage = sessionData?.session.targetLanguage ?? null
+  const isSessionActive = sessionData?.session.status === 'active'
+
+  useEffect(() => {
+    if (!sessionData || isSessionActive) return
+    void navigate({
+      to: '/practice/language/$targetLanguage',
+      params: { targetLanguage: sessionData.session.targetLanguage },
+      replace: true,
+    })
+  }, [isSessionActive, navigate, sessionData])
 
   // Auto-trigger generation if the session has no current text and isn't done.
   useEffect(() => {
     if (!sessionData) return
+    if (!isSessionActive) return
     if (currentText) return
     if (done) return
     if (isGenerating) return
@@ -86,7 +98,7 @@ export const PracticeSessionView = () => {
         },
       }
     )
-  }, [sessionData, currentText, done, isGenerating, isAdvancing, generateNextText, practiceSessionId])
+  }, [sessionData, isSessionActive, currentText, done, isGenerating, isAdvancing, generateNextText, practiceSessionId])
 
   // Reset rated state when the text changes.
   useEffect(() => {
@@ -99,8 +111,9 @@ export const PracticeSessionView = () => {
   // is idempotent — repeat fires no-op.
   useEffect(() => {
     if (!currentTextId) return
+    if (!isSessionActive) return
     prepareNextText({ sessionId: practiceSessionId })
-  }, [currentTextId, practiceSessionId, prepareNextText])
+  }, [currentTextId, isSessionActive, practiceSessionId, prepareNextText])
 
   const annotations: AnnotationInput[] = useMemo(() => {
     if (!currentText) return []
@@ -194,7 +207,6 @@ export const PracticeSessionView = () => {
   }
 
   const close = () => {
-    const targetLanguage = sessionData?.session.targetLanguage
     if (targetLanguage) {
       return navigate({
         to: '/practice/language/$targetLanguage',

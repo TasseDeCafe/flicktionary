@@ -1109,6 +1109,12 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     invalidates the practice summary and the abandoned session query. Ending
     keeps already-recorded ratings and frees the language for a fresh
     `learn_new` / `learn_extra` session.
+  - **Stale session URL recovery.** `practice-session-view.tsx` redirects
+    inactive sessions (`status !== 'active'`) to
+    `/practice/language/$targetLanguage` with `replace: true`, and gates both
+    auto-generation and eager pre-generation behind active status. The
+    `prepareNextText` mutation now has `showErrorToast: false` because it is a
+    non-critical background optimization.
   - **Settings copy.** Practice limits now describe new terms as a daily cap
     and review terms as the follow-up session cap. `SPEC.md` was updated to
     make the split canonical.
