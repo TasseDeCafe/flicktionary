@@ -10,6 +10,7 @@ import {
 import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { StressMarkedText } from './stress-marked-text'
 
 export type RateSheetChunkContent = {
   headword: string
@@ -55,7 +56,9 @@ export const RateSheet = ({ open, onOpenChange, chunk, currentRating, isSubmitti
     <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
       <OverlayContent>
         <OverlayHeader>
-          <OverlayTitle>{titleText}</OverlayTitle>
+          <OverlayTitle>
+            <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
+          </OverlayTitle>
           {chunk?.ipa && <div className='text-muted-foreground text-sm'>{chunk.ipa}</div>}
           {description && <OverlayDescription>{description}</OverlayDescription>}
           {chunk?.grammar && (

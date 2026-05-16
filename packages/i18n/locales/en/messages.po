@@ -2189,7 +2189,7 @@ msgstr "Quick gloss"
 msgid "Quick gloss failed"
 msgstr "Quick gloss failed"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:52
+#: apps/web/src/features/practice/components/rate-sheet.tsx:53
 msgid "Rate"
 msgstr "Rate"
 
