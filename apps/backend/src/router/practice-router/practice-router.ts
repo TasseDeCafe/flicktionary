@@ -55,7 +55,11 @@ type RawAnnotation = {
   char_end?: unknown
 }
 
-type ChunkContent = { translation: string | null; definition: string | null }
+type ChunkContent = {
+  translation: string | null
+  definition: string | null
+  grammar: Record<string, unknown> | null
+}
 
 const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
 
@@ -73,6 +77,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
       charEnd: typeof a.char_end === 'number' ? a.char_end : 0,
       translation: content?.translation ?? null,
       definition: content?.definition ?? null,
+      grammar: content?.grammar ?? null,
     }
   })
   return {
@@ -109,7 +114,11 @@ const fetchAnnotationContent = async (
   const rows = await userLookupsRepository.listChunkContentForKeys({ userId, targetLanguage, keys })
   const map = new Map<string, ChunkContent>()
   for (const r of rows) {
-    map.set(lookupKey(r.headword, r.sense), { translation: r.translation, definition: r.definition })
+    map.set(lookupKey(r.headword, r.sense), {
+      translation: r.translation,
+      definition: r.definition,
+      grammar: r.grammar,
+    })
   }
   return map
 }

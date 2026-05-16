@@ -38,6 +38,10 @@ const renderAspectLabel = (aspect: string): string => {
   }
 }
 
+// Render POS as a full lowercased word so it doesn't collide visually with the
+// gender chip (`n.` would mean "noun" here and "neuter" in the gender slot).
+const renderPosLabel = (pos: string): string => pos.toLowerCase()
+
 type Props = {
   grammar: Grammar | Record<string, unknown> | null | undefined
   targetLanguage?: string
@@ -52,6 +56,7 @@ export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const g = (grammar ?? {}) as Record<string, unknown>
   const allowed = getLanguageGrammarConfig(targetLanguage).fields
 
+  const pos = asString(g.pos)
   const gender = asString(g.gender)
   const aspect = asString(g.aspect)
   const aspectPair = asString(g.aspect_pair_headword)
@@ -62,6 +67,13 @@ export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
 
   const chips: React.ReactNode[] = []
 
+  if (pos && allowed.includes('pos')) {
+    chips.push(
+      <Badge key='pos' variant='outline' aria-label={t`Part of speech`}>
+        {renderPosLabel(pos)}
+      </Badge>
+    )
+  }
   if (gender && allowed.includes('gender')) {
     chips.push(
       <Badge key='gender' variant='secondary' aria-label={t`Gender`}>

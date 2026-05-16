@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ArrowRight, CheckCircle2, Info, LoaderCircle } from 'lucide-react'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import {
   useFinalizePracticeText,
   useGenerateNextPracticeText,
@@ -55,6 +57,7 @@ export const PracticeSessionView = () => {
   const { mutate: rateChunk, isPending: isRating } = useRatePracticeChunk(practiceSessionId)
   const { mutate: finalizeText, isPending: isFinalizing } = useFinalizePracticeText(practiceSessionId)
   const { mutate: prepareNextText } = usePrepareNextPracticeText()
+  const { data: userPrefs } = useGetUserPrefs()
 
   // Per-text map of annotation index -> the rating the user submitted. Used
   // both to mark already-rated chunks in the body and to pre-select the
@@ -130,20 +133,27 @@ export const PracticeSessionView = () => {
   }, [currentText, ratings])
 
   const openChunk: RateSheetChunkContent | null = useMemo(() => {
-    if (openIndex == null || !currentText) return null
+    if (openIndex == null || !currentText || !targetLanguage) return null
     const ann = currentText.annotations[openIndex]
     if (!ann) return null
-    // Translation/definition are joined server-side from user_lookups so the
-    // rate sheet shows live content (edits in the focus view propagate).
+    // Translation/definition/grammar are joined server-side from user_lookups
+    // so the rate sheet shows live content (edits in the focus view propagate).
     // Examples aren't surfaced here yet — they'd need their own fetch.
+    const grammar = ann.grammar
+    const displayForm = typeof grammar?.display_form === 'string' ? grammar.display_form : null
+    const ipa = pickIpa(grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga') ?? null
     return {
       headword: ann.headword,
+      displayForm,
+      ipa,
       translation: ann.translation,
       definition: ann.definition,
       targetExample: null,
       nativeExample: null,
+      grammar,
+      targetLanguage,
     }
-  }, [openIndex, currentText])
+  }, [openIndex, currentText, targetLanguage, userPrefs?.englishIpaDialect])
 
   const handleAnnotationClick = (index: number) => {
     setOpenIndex(index)
