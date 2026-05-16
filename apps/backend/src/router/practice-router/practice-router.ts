@@ -5,6 +5,7 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type {
   PracticeSessionsRepositoryInterface,
   DbPracticeSession,
@@ -27,11 +28,13 @@ import {
   finalizePracticeText,
   type FinalizePracticeTextDependencies,
 } from '../../service/practice/finalize-practice-text'
+import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 
 export type PracticeRouterDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  usersRepository: UsersRepositoryInterface
   startPracticeSessionDependencies: StartPracticeSessionDependencies
   generateNextPracticeTextDependencies: GenerateNextPracticeTextDependencies
   rateChunkDependencies: RateChunkDependencies
@@ -56,9 +59,15 @@ type RawAnnotation = {
 }
 
 type ChunkContent = {
+  userLookupId: string
+  cardId: string | null
+  // Source session of the representative card. Needed so the practice text's
+  // "Edit term" action can deep-link to `/sessions/$sessionId/review/$cardId`.
+  cardSessionId: string | null
   translation: string | null
   definition: string | null
   grammar: Record<string, unknown> | null
+  deletedAt: Date | null
 }
 
 const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
@@ -78,6 +87,10 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
       translation: content?.translation ?? null,
       definition: content?.definition ?? null,
       grammar: content?.grammar ?? null,
+      userLookupId: content?.userLookupId ?? null,
+      cardId: content?.cardId ?? null,
+      cardSessionId: content?.cardSessionId ?? null,
+      deletedAt: content?.deletedAt ? new Date(content.deletedAt).toISOString() : null,
     }
   })
   return {
@@ -115,9 +128,13 @@ const fetchAnnotationContent = async (
   const map = new Map<string, ChunkContent>()
   for (const r of rows) {
     map.set(lookupKey(r.headword, r.sense), {
+      userLookupId: r.id,
+      cardId: r.firstCardId,
+      cardSessionId: r.firstCardSessionId,
       translation: r.translation,
       definition: r.definition,
       grammar: r.grammar,
+      deletedAt: r.deletedAt,
     })
   }
   return map
@@ -312,6 +329,29 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         ? await deps.practiceSessionsRepository.getSessionProgress(sessionId)
         : { completed: 0, target: 0 }
       return { data: { accepted: true as const, progress } }
+    }),
+
+    fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const found = await deps.practiceTextsRepository.findByIdForUser(input.practiceTextId, userId)
+      if (!found) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
+      }
+      const body = found.practiceText.body
+      if (!body || body.length === 0) {
+        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Practice text has no body yet' }] } })
+      }
+      const nativeLanguage = await deps.usersRepository.getNativeLanguage(userId)
+      if (!nativeLanguage) {
+        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
+      }
+      const gloss = await fastGlossPass({
+        targetLanguage: found.targetLanguage,
+        nativeLanguage,
+        contextLine: body,
+        selectionText: input.selectionText,
+      })
+      return { data: gloss }
     }),
 
     finalizeText: implementer.finalizeText.handler(async ({ input, context, errors }) => {

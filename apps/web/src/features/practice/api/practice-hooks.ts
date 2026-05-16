@@ -129,6 +129,61 @@ export const useRatePracticeChunk = (sessionId: string) => {
   )
 }
 
+// Soft-delete from inside a practice text. Differs from the Vocabulary tab's
+// useDeleteChunk: the user is mid-reading and we want the practice text's
+// annotation to flip to the "deleted" state immediately. We invalidate
+// `getSession` so the next render shows the new `deletedAt`, but skip the
+// vocab-list optimistic patching since the vocab list isn't mounted here.
+export const useDeleteChunkFromPractice = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.deleteChunk.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({
+          queryKey: orpcQuery.practice.getSession.queryKey({ input: { sessionId } }),
+        })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Failed to delete term` },
+    })
+  )
+}
+
+// Counterpart to useDeleteChunkFromPractice. Calls chunks.restoreChunk which
+// clears deleted_at without touching count/status — the chunk resumes
+// participating in SRS with its existing schedule. Same invalidations as
+// delete so the practice text's annotation flips back.
+export const useRestoreChunkFromPractice = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.restoreChunk.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries({
+          queryKey: orpcQuery.practice.getSession.queryKey({ input: { sessionId } }),
+        })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Failed to restore term` },
+    })
+  )
+}
+
+// Selection-driven gloss for a span in the practice text. No server-side
+// cache — TanStack Query handles re-selection of the same span within the
+// session via its in-memory cache.
+export const usePracticeFastGloss = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.fastGloss.mutationOptions({
+      meta: { errorMessage: t`Failed to fetch translation` },
+    })
+  )
+}
+
 export const useFinalizePracticeText = (sessionId: string) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

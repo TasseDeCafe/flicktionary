@@ -428,6 +428,20 @@ const findByIdForUser = async (id: string, userId: string): Promise<DbUserLookup
   return result[0] ?? null
 }
 
+// Sibling of findByIdForUser that does NOT filter out soft-deleted rows. Used
+// by restoreChunk: a deleted row is exactly what we're looking up. Keeping
+// the deleted-filter in the default lookup avoids accidental leakage in the
+// many handlers that should never see soft-deleted entries.
+const findByIdForUserIncludingDeleted = async (id: string, userId: string): Promise<DbUserLookup | null> => {
+  const result = (await sql`
+    SELECT *
+    FROM public.user_lookups
+    WHERE id = ${id}
+      AND user_id = ${userId}
+  `) as DbUserLookup[]
+  return result[0] ?? null
+}
+
 // Initialize SRS state on a row that's never been reviewed before, so it
 // appears in the queue as 'new' and due now. No-op if srs_state is already
 // non-null.
@@ -804,39 +818,67 @@ const listChunksForLanguage = async (params: {
 }
 
 // Used to enrich practice annotations with the live gloss/definition before
-// shipping a practice text to the client. Soft-deleted rows are excluded —
-// their content shouldn't surface in the rate sheet. We fetch all rows for
-// the (user, language) and let the caller index by (headword, sense); typical
-// user vocabularies stay in the low hundreds, so the simple query beats
-// composing an array-tuple WHERE clause.
+// shipping a practice text to the client. Soft-deleted rows are still
+// returned so the rate sheet can render the "deleted, tap to restore" state;
+// `deletedAt` lets the renderer distinguish. We fetch all rows for the (user,
+// language) and let the caller index by (headword, sense); typical user
+// vocabularies stay in the low hundreds, so the simple query beats composing
+// an array-tuple WHERE clause.
 const listChunkContentForKeys = async (params: {
   userId: string
   targetLanguage: string
   keys: Array<{ headword: string; sense: string }>
 }): Promise<
   Array<{
+    id: string
     headword: string
     sense: string
     translation: string | null
     definition: string | null
     grammar: Record<string, unknown> | null
+    firstCardId: string | null
+    firstCardSessionId: string | null
+    deletedAt: Date | null
   }>
 > => {
   if (params.keys.length === 0) return []
   const result = (await sql`
-    SELECT headword, sense, translation, definition, grammar
-    FROM public.user_lookups
-    WHERE user_id = ${params.userId}
-      AND target_language = ${params.targetLanguage}
-      AND deleted_at IS NULL
+    SELECT
+      ul.id,
+      ul.headword,
+      ul.sense,
+      ul.translation,
+      ul.definition,
+      ul.grammar,
+      ul.first_card_id,
+      ul.deleted_at,
+      c.study_session_id AS first_card_session_id
+    FROM public.user_lookups ul
+    LEFT JOIN public.cards c ON c.id = ul.first_card_id
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
   `) as Array<{
+    id: string
     headword: string
     sense: string
     translation: string | null
     definition: string | null
     grammar: Record<string, unknown> | null
+    first_card_id: string | null
+    first_card_session_id: string | null
+    deleted_at: Date | null
   }>
-  return result
+  return result.map((row) => ({
+    id: row.id,
+    headword: row.headword,
+    sense: row.sense,
+    translation: row.translation,
+    definition: row.definition,
+    grammar: row.grammar,
+    firstCardId: row.first_card_id,
+    firstCardSessionId: row.first_card_session_id,
+    deletedAt: row.deleted_at,
+  }))
 }
 
 const softDeleteChunk = async (id: string, userId: string): Promise<void> => {
@@ -846,6 +888,16 @@ const softDeleteChunk = async (id: string, userId: string): Promise<void> => {
     WHERE id = ${id}
       AND user_id = ${userId}
       AND deleted_at IS NULL
+  `
+}
+
+const restoreChunk = async (id: string, userId: string): Promise<void> => {
+  await sql`
+    UPDATE public.user_lookups
+    SET deleted_at = NULL
+    WHERE id = ${id}
+      AND user_id = ${userId}
+      AND deleted_at IS NOT NULL
   `
 }
 
@@ -913,6 +965,7 @@ export interface UserLookupsRepositoryInterface {
     sense: string
   }) => Promise<DbUserLookup | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbUserLookup | null>
+  findByIdForUserIncludingDeleted: (id: string, userId: string) => Promise<DbUserLookup | null>
   initializeSrsState: (userLookupId: string) => Promise<void>
   applyFsrsResult: (params: {
     userLookupId: string
@@ -935,17 +988,22 @@ export interface UserLookupsRepositoryInterface {
     q: string | null
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
+  restoreChunk: (id: string, userId: string) => Promise<void>
   listChunkContentForKeys: (params: {
     userId: string
     targetLanguage: string
     keys: Array<{ headword: string; sense: string }>
   }) => Promise<
     Array<{
+      id: string
       headword: string
       sense: string
       translation: string | null
       definition: string | null
       grammar: Record<string, unknown> | null
+      firstCardId: string | null
+      firstCardSessionId: string | null
+      deletedAt: Date | null
     }>
   >
   listLanguagesForUser: (userId: string) => Promise<string[]>
@@ -967,12 +1025,14 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listEligibleForLanguage,
     findByKey,
     findByIdForUser,
+    findByIdForUserIncludingDeleted,
     initializeSrsState,
     applyFsrsResult,
     listVocabularyForLanguage,
     listKeptChunksForExport,
     listChunksForLanguage,
     softDeleteChunk,
+    restoreChunk,
     listChunkContentForKeys,
     listLanguagesForUser,
   }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ArrowRight, CheckCircle2, Info, LoaderCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -9,13 +10,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import {
+  useDeleteChunkFromPractice,
   useFinalizePracticeText,
   useGenerateNextPracticeText,
   useGetPracticeSession,
   usePrepareNextPracticeText,
   useRatePracticeChunk,
+  useRestoreChunkFromPractice,
 } from '../api/practice-hooks'
-import { AnnotatedText, type AnnotationInput } from './annotated-text'
+import { AnnotatedText, type AnnotationInput, type PlainSelection } from './annotated-text'
+import { ChunkActionsSheet } from './chunk-actions-sheet'
+import { ChunkDeleteConfirmSheet } from './chunk-delete-confirm-sheet'
+import { LookupSheet } from './lookup-sheet'
 import { PracticeLoader } from './practice-loader'
 import { RateSheet, type RateSheetChunkContent } from './rate-sheet'
 import type { RateValue } from '@/components/ui/rate-buttons'
@@ -57,6 +63,8 @@ export const PracticeSessionView = () => {
   const { mutate: rateChunk, isPending: isRating } = useRatePracticeChunk(practiceSessionId)
   const { mutate: finalizeText, isPending: isFinalizing } = useFinalizePracticeText(practiceSessionId)
   const { mutate: prepareNextText } = usePrepareNextPracticeText()
+  const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunkFromPractice(practiceSessionId)
+  const { mutate: restoreChunk, isPending: isRestoring } = useRestoreChunkFromPractice(practiceSessionId)
   const { data: userPrefs } = useGetUserPrefs()
 
   // Per-text map of annotation index -> the rating the user submitted. Used
@@ -64,6 +72,17 @@ export const PracticeSessionView = () => {
   // previous rating when the user re-opens a chunk.
   const [ratings, setRatings] = useState<Map<number, RateValue>>(new Map())
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // Sibling overlays opened from the RateSheet 3-dots. Sequenced (rate sheet
+  // closes when actions opens) — matching the practice-language-view pattern.
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  // Plain-span selection (peek + Save). Stays open until the user closes or
+  // saves; saving creates an adhoc card and navigates to its focus view.
+  const [lookupSelection, setLookupSelection] = useState<PlainSelection | null>(null)
+  // The annotation index the actions overlays are operating on. Set when
+  // RateSheet's overflow fires; the action overlays read from it directly so
+  // closing the underlying RateSheet doesn't drop the target.
+  const [actionsIndex, setActionsIndex] = useState<number | null>(null)
   const [done, setDone] = useState(false)
   // True from the moment Next is clicked until the new text lands in cache.
   // Hides the previous text and gates the auto-trigger effect so we don't
@@ -104,10 +123,14 @@ export const PracticeSessionView = () => {
     )
   }, [sessionData, isSessionActive, currentText, done, isGenerating, isAdvancing, generateNextText, practiceSessionId])
 
-  // Reset rated state when the text changes.
+  // Reset per-text UI state when the text changes.
   useEffect(() => {
     setRatings(new Map())
     setOpenIndex(null)
+    setActionsOpen(false)
+    setDeleteConfirmOpen(false)
+    setActionsIndex(null)
+    setLookupSelection(null)
   }, [currentTextId])
 
   // Eager pre-gen (Problem 4): kick off the next slot as soon as a fresh
@@ -129,6 +152,7 @@ export const PracticeSessionView = () => {
       charStart: a.charStart,
       charEnd: a.charEnd,
       rated: ratings.has(i),
+      deleted: !!a.deletedAt,
     }))
   }, [currentText, ratings])
 
@@ -152,8 +176,17 @@ export const PracticeSessionView = () => {
       nativeExample: null,
       grammar,
       targetLanguage,
+      isDeleted: !!ann.deletedAt,
     }
   }, [openIndex, currentText, targetLanguage, userPrefs?.englishIpaDialect])
+
+  // Annotation the actions/delete-confirm overlays are operating on. Read from
+  // `actionsIndex` rather than `openIndex` because RateSheet gets closed when
+  // the actions sheet opens.
+  const actionsAnnotation = useMemo(() => {
+    if (actionsIndex == null || !currentText) return null
+    return currentText.annotations[actionsIndex] ?? null
+  }, [actionsIndex, currentText])
 
   const handleAnnotationClick = (index: number) => {
     setOpenIndex(index)
@@ -177,6 +210,66 @@ export const PracticeSessionView = () => {
             next.set(openIndex, rating)
             return next
           })
+          setOpenIndex(null)
+        },
+      }
+    )
+  }
+
+  const handleMoreOptions = () => {
+    if (openIndex == null) return
+    setActionsIndex(openIndex)
+    setOpenIndex(null)
+    setActionsOpen(true)
+  }
+
+  const handleEdit = () => {
+    if (!actionsAnnotation || !actionsAnnotation.cardId || !actionsAnnotation.cardSessionId) return
+    setActionsOpen(false)
+    void navigate({
+      to: '/sessions/$sessionId/review/$cardId',
+      params: { sessionId: actionsAnnotation.cardSessionId, cardId: actionsAnnotation.cardId },
+      search: { from: 'practice' as const, practiceSessionId },
+    })
+  }
+
+  const handleDeleteRequest = () => {
+    setActionsOpen(false)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (!actionsAnnotation?.userLookupId) return
+    const lookupId = actionsAnnotation.userLookupId
+    const headword = actionsAnnotation.headword
+    deleteChunk(
+      { id: lookupId },
+      {
+        onSuccess: () => {
+          setDeleteConfirmOpen(false)
+          setActionsIndex(null)
+          toast.success(t`Deleted "${headword}"`, {
+            action: {
+              label: t`Restore`,
+              onClick: () => {
+                restoreChunk({ id: lookupId })
+              },
+            },
+          })
+        },
+      }
+    )
+  }
+
+  // From the slim "deleted" RateSheet variant: restore + dismiss.
+  const handleRestoreFromSheet = () => {
+    if (openIndex == null || !currentText) return
+    const ann = currentText.annotations[openIndex]
+    if (!ann?.userLookupId) return
+    restoreChunk(
+      { id: ann.userLookupId },
+      {
+        onSuccess: () => {
           setOpenIndex(null)
         },
       }
@@ -283,6 +376,7 @@ export const PracticeSessionView = () => {
                     body={currentText.body}
                     annotations={annotations}
                     onAnnotationClick={handleAnnotationClick}
+                    onPlainSelection={setLookupSelection}
                   />
                 </article>
               )}
@@ -349,7 +443,42 @@ export const PracticeSessionView = () => {
         chunk={openChunk}
         currentRating={openIndex != null ? (ratings.get(openIndex) ?? null) : null}
         onSubmit={handleRate}
+        onMoreOptions={handleMoreOptions}
+        onRestore={handleRestoreFromSheet}
+        isRestoring={isRestoring}
       />
+      <ChunkActionsSheet
+        open={actionsOpen}
+        onOpenChange={(open) => {
+          setActionsOpen(open)
+          if (!open) setActionsIndex(null)
+        }}
+        headword={actionsAnnotation?.headword ?? ''}
+        canEdit={!!actionsAnnotation?.cardId && !!actionsAnnotation?.cardSessionId}
+        onEdit={handleEdit}
+        onDelete={handleDeleteRequest}
+      />
+      <ChunkDeleteConfirmSheet
+        open={deleteConfirmOpen}
+        onOpenChange={(open) => {
+          setDeleteConfirmOpen(open)
+          if (!open && !isDeleting) setActionsIndex(null)
+        }}
+        headword={actionsAnnotation?.headword ?? ''}
+        isDeleting={isDeleting}
+        onConfirm={handleDeleteConfirm}
+      />
+      {targetLanguage && currentText?.body && currentText.id && (
+        <LookupSheet
+          open={lookupSelection != null}
+          selection={lookupSelection}
+          practiceTextId={currentText.id}
+          practiceSessionId={practiceSessionId}
+          practiceTextBody={currentText.body}
+          targetLanguage={targetLanguage}
+          onClose={() => setLookupSelection(null)}
+        />
+      )}
     </ModalScreen>
   )
 }

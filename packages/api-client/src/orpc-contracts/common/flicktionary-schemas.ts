@@ -268,6 +268,17 @@ export const PracticeAnnotationSchema = z.object({
   // can render the same chips + stress-marked headword + IPA the focus view
   // shows. Per-language allowlist gates which fields are rendered.
   grammar: GrammarSchema.nullable(),
+  // Identifiers joined from user_lookups so the rate sheet can wire Edit
+  // (navigate to the focus view of `cardId` within `cardSessionId`) and
+  // Delete (soft-delete `userLookupId`). Null when the canonical row no
+  // longer exists or the chunk has never been kept in any session.
+  userLookupId: z.string().uuid().nullable(),
+  cardId: z.string().uuid().nullable(),
+  cardSessionId: z.string().uuid().nullable(),
+  // Mirror of `user_lookups.deleted_at` so the practice text can render the
+  // strikethrough/Restore state for chunks the user just deleted from the
+  // sheet, even after a refetch.
+  deletedAt: z.string().nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 
