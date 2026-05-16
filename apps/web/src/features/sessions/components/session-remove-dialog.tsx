@@ -61,10 +61,10 @@ export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChang
         </div>
 
         <OverlayFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button variant='outline' size='xl' onClick={() => onOpenChange(false)} disabled={isPending}>
             {t`Cancel`}
           </Button>
-          <Button variant='destructive' onClick={handleConfirm} disabled={!canConfirm}>
+          <Button variant='destructive' size='xl' onClick={handleConfirm} disabled={!canConfirm}>
             {isPending ? t`Removing…` : t`Remove`}
           </Button>
         </OverlayFooter>

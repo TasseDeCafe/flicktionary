@@ -22,16 +22,6 @@ export const PracticeLandingView = () => {
     })
   }
 
-  const formatFollowUpDelay = (nextLearningDueAt: string | null) => {
-    if (!nextLearningDueAt) return null
-    const minutesUntilFollowUp = Math.max(1, Math.ceil((new Date(nextLearningDueAt).getTime() - Date.now()) / 60_000))
-    if (!Number.isFinite(minutesUntilFollowUp)) return null
-    if (minutesUntilFollowUp < 60) return t`Follow-up in ${minutesUntilFollowUp} min`
-    const hoursUntilFollowUp = Math.ceil(minutesUntilFollowUp / 60)
-    if (hoursUntilFollowUp < 24) return t`Follow-up in ${hoursUntilFollowUp} hr`
-    return t`Follow-up later`
-  }
-
   const getDailyNewAvailable = (entry: PracticeDueSummaryEntry) => {
     if (maxNewTerms <= 0) return 0
     const remainingDailyNewTerms = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
@@ -39,39 +29,17 @@ export const PracticeLandingView = () => {
   }
 
   const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    const totalKept = entry.totalKept
+    if (entry.activePracticeSessionId) return t`Session in progress`
+
     const dueTermCount = entry.reviewDueCount + entry.learningDueCount
-    const newCount = entry.newCount
+    if (dueTermCount > 0 && maxReviewTerms > 0) return t`${dueTermCount} follow-up(s) due`
+
     const dailyNewAvailable = getDailyNewAvailable(entry)
-    const hasDailyWork = (dueTermCount > 0 && maxReviewTerms > 0) || dailyNewAvailable > 0
-    const followUpDelay = formatFollowUpDelay(entry.nextLearningDueAt)
+    if (dailyNewAvailable > 0) return t`${dailyNewAvailable} new available`
 
-    if (entry.activePracticeSessionId) {
-      const parts = [
-        t`Session in progress`,
-        followUpDelay,
-        newCount > 0 ? t`${newCount} unseen` : null,
-        t`${totalKept} total`,
-      ].filter((part): part is string => part != null)
-      return parts.join(' · ')
-    }
-    if (!hasDailyWork && newCount > 0 && maxNewTerms > 0) {
-      return t`Daily new limit reached · ${newCount} unseen · ${totalKept} total`
-    }
-    if (!hasDailyWork && followUpDelay) {
-      return t`All caught up for today · ${followUpDelay} · ${totalKept} total`
-    }
-    if (!hasDailyWork) {
-      return t`All caught up for today · ${totalKept} total`
-    }
+    if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached`
 
-    const parts = [
-      dueTermCount > 0 ? t`${dueTermCount} follow-up(s)` : null,
-      dailyNewAvailable > 0 ? t`${dailyNewAvailable} new today` : null,
-      newCount > dailyNewAvailable ? t`${newCount} unseen` : null,
-      t`${totalKept} total`,
-    ].filter((part): part is string => part != null)
-    return parts.join(' · ')
+    return t`All caught up`
   }
 
   return (
@@ -112,8 +80,8 @@ export const PracticeLandingView = () => {
                       className='flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-gray-50'
                     >
                       <div className='flex min-w-0 flex-1 flex-col'>
-                        <span className='truncate text-sm font-medium'>{getLanguageName(entry.targetLanguage)}</span>
-                        <span className='text-muted-foreground truncate text-xs'>{summaryLine}</span>
+                        <span className='text-sm font-medium'>{getLanguageName(entry.targetLanguage)}</span>
+                        <span className='text-muted-foreground text-xs'>{summaryLine}</span>
                       </div>
                       <ChevronRight className='h-5 w-5 shrink-0 text-gray-400' />
                     </button>

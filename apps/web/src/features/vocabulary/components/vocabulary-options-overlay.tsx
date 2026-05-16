@@ -1,8 +1,14 @@
 import { useLingui } from '@lingui/react/macro'
-import { Download, type LucideIcon } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { toast } from 'sonner'
-import { ResponsiveOverlay, OverlayContent, OverlayHeader, OverlayTitle } from '@/components/ui/responsive-overlay'
-import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import {
+  ResponsiveOverlay,
+  OverlayContent,
+  OverlayDescription,
+  OverlayHeader,
+  OverlayTitle,
+} from '@/components/ui/responsive-overlay'
+import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { useExportVocabularyCsv } from '../api/vocabulary-hooks'
 
@@ -11,38 +17,6 @@ interface VocabularyOptionsOverlayProps {
   onOpenChange: (open: boolean) => void
   targetLanguage: string | null
 }
-
-const ActionRow = ({
-  icon: Icon,
-  label,
-  description,
-  onClick,
-  disabled,
-}: {
-  icon: LucideIcon
-  label: string
-  description?: string
-  onClick: () => void
-  disabled?: boolean
-}) => (
-  <button
-    type='button'
-    onClick={onClick}
-    disabled={disabled}
-    className={cn(
-      'flex w-full items-center gap-4 rounded-lg px-4 py-4 text-left transition-colors',
-      'hover:bg-gray-50 active:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
-    )}
-  >
-    <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-yellow-900'>
-      <Icon className='h-5 w-5' />
-    </span>
-    <span className='flex min-w-0 flex-col'>
-      <span className='text-base font-medium'>{label}</span>
-      {description && <span className='text-muted-foreground text-sm'>{description}</span>}
-    </span>
-  </button>
-)
 
 export const VocabularyOptionsOverlay = ({ open, onOpenChange, targetLanguage }: VocabularyOptionsOverlayProps) => {
   const { t } = useLingui()
@@ -76,9 +50,10 @@ export const VocabularyOptionsOverlay = ({ open, onOpenChange, targetLanguage }:
       <OverlayContent>
         <OverlayHeader>
           <OverlayTitle>{t`Vocabulary options`}</OverlayTitle>
+          <OverlayDescription className='sr-only'>{t`Actions for the selected vocabulary list.`}</OverlayDescription>
         </OverlayHeader>
         <div className='flex flex-col gap-1 px-2 pb-2'>
-          <ActionRow
+          <OverlayActionRow
             icon={Download}
             label={isPending ? t`Exporting…` : t`Export vocabulary`}
             description={(() => {
