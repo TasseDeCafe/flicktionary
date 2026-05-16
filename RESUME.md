@@ -1136,6 +1136,84 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
   basic-data + enrichment passes; Practice adds ongoing per-text generation cost
   on Opus).
 
+- **Practice in-text actions — peek/save/edit/delete/restore (2026-05-16).**
+  The Practice reading view (`/practice/$practiceSessionId`) is no longer
+  rate-only; users can triage vocabulary inline. SPEC §Practice +
+  §Vocabulary updated. Don't re-introduce the rate-only model.
+  - **Selection-driven peek + save.** Selecting plain text in
+    `apps/web/src/features/practice/components/annotated-text.tsx`
+    opens a new `LookupSheet` (same dir) with a fast gloss +
+    `Save to vocabulary`. Save routes through the existing
+    `cards.createAdhoc` (passing the practice text body as context,
+    truncated to 2000 chars) and navigates to the new card's focus
+    view with `?from=practice`. Gloss endpoint is
+    `practice.fastGloss` in
+    `apps/backend/src/router/practice-router/practice-router.ts`,
+    which re-uses the same `fastGlossPass` helper as
+    `highlights.fastGloss`. No server-side cache on the gloss —
+    TanStack Query handles re-selection within a session.
+  - **Annotation 3-dots → Edit / Delete.** `rate-sheet.tsx` gained
+    an overflow button that opens a sibling `ChunkActionsSheet`
+    (same dir); Edit deep-links the focus view via
+    `?from=practice&practiceSessionId=…`, Delete sequences into
+    `ChunkDeleteConfirmSheet` then `chunks.deleteChunk`. After
+    delete, a Sonner toast with a `Restore` action fires
+    `chunks.restoreChunk` (new endpoint, mirror of soft-delete:
+    clears `deleted_at` without touching `count` / status / SRS).
+    Soft-deleted annotations re-render with strikethrough; tapping
+    one opens the slim Restore-only RateSheet. Don't fold this
+    confirm flow into the vocabulary tab's
+    `vocabulary-delete-confirm-drawer.tsx` — that one's typed to
+    `ChunkRow`, the practice path only has headword + lookup id.
+  - **`?from=practice` in focus view.** New route search params on
+    `apps/web/src/app/routes/_authenticated/_app/sessions/$sessionId/review/$cardId.tsx`
+    (`from: 'practice'`, `practiceSessionId`). `focus-view.tsx`
+    treats `from='practice'` the same way it treats
+    `from='vocabulary'` (no triage prev/next bar, no keep/reject
+    buttons, headword as title — `isLanguageWideEntry`) and routes
+    the close handler back to `/practice/$practiceSessionId`.
+  - **Backend: practice annotation enrichment.**
+    `practice-router.ts`'s `fetchAnnotationContent` now joins
+    `user_lookups` so the read path projects `userLookupId`,
+    `cardId` (= `user_lookups.first_card_id`), `cardSessionId`
+    (= `cards.study_session_id` for the representative card), and
+    `deletedAt` per annotation. `listChunkContentForKeys` in
+    `user-lookups-repository.ts` no longer filters
+    `deleted_at IS NULL` so the RateSheet can render deleted
+    state; the existing `deleted_at IS NULL` filter remains on the
+    Practice queue + Vocabulary list code paths. New
+    `findByIdForUserIncludingDeleted` repo method used only by the
+    restore handler — the default `findByIdForUser` keeps its
+    deleted filter so other call sites can't accidentally surface
+    soft-deleted rows. `chunks.restoreChunk` contract added. The
+    `practice.fastGloss` handler needs native_language, so
+    `PracticeRouter` now takes `usersRepository` (wired in
+    `app.ts`).
+  - **Shared DOM-selection primitive.** New
+    `apps/web/src/lib/dom/text-selection.ts` exports
+    `findMarkedAncestor` + `offsetWithinAncestor` (Range-based
+    `toString().length` trick). Both the session view's
+    `readCurrentSelection` (`features/sessions/hooks/use-text-selection.ts`)
+    and the practice `annotated-text.tsx` consume them. Don't
+    re-introduce the child-node walking the practice path used
+    initially — it was less robust to text nodes split across
+    inline spans.
+  - **iOS Safari selection cleanup.** `annotated-text.tsx`'s
+    `handleSelectionEnd` wraps the read in `setTimeout(..., 30)` so
+    iOS finalizes the range before we read it, then calls
+    `selection.removeAllRanges()` on success so the underlying
+    selection paint doesn't linger behind the open sheet (mirrors
+    `session-view.tsx:115`/`:136`). `LookupSheet`'s `OverlayContent`
+    passes `className='outline-none focus-visible:outline-none'`
+    so Safari doesn't paint a focus ring when Vaul re-measures on
+    the loading→ready content-height jump.
+  - **RateSheet desktop X removed.** Desktop dialog hides its
+    built-in close X on the RateSheet
+    (`OverlayContent showCloseButton={false}`) so it doesn't
+    collide with the new 3-dots in the top-right. Esc +
+    click-outside still dismiss. Mobile drawer unaffected (no
+    built-in X).
+
 - **Drawer/dialog harmonization (2026-05-16).** Shared
   `apps/web/src/components/ui/overlay-action-row.tsx` (`OverlayActionRow`,
   default / destructive variants) replaces the locally-copied `ActionRow` in
