@@ -145,4 +145,18 @@ export const chunksContract = {
     })
     .input(z.object({ id: z.string().uuid() }))
     .output(z.object({ data: z.object({ id: z.string().uuid() }) })),
+
+  // Explicit restore counterpart to deleteChunk. Clears `deleted_at` without
+  // touching count / status / SRS state — the row resumes participating in
+  // Vocabulary + Practice with its existing schedule. Used by the practice
+  // text's Restore action (the keep-transition revival path still works for
+  // re-key flows; this is just the no-status-change equivalent).
+  restoreChunk: oc
+    .route({ method: 'POST', path: '/chunks/restore', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ id: z.string().uuid() }))
+    .output(z.object({ data: z.object({ id: z.string().uuid() }) })),
 } as const

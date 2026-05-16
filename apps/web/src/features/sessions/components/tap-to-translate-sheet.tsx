@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   ResponsiveOverlay,
   OverlayContent,
+  OverlayDescription,
   OverlayHeader,
   OverlayTitle,
   OverlayFooter,
@@ -107,32 +109,33 @@ export const TapToTranslateSheet = ({ open, sessionId, selection, onClose }: Pro
     >
       <OverlayContent className='max-w-md'>
         <OverlayHeader>
-          <OverlayTitle>{t`Quick gloss`}</OverlayTitle>
+          <div className='flex flex-col gap-1'>
+            <OverlayTitle>{selection?.selectionText ?? t`Quick gloss`}</OverlayTitle>
+            {state.kind === 'ready' ? (
+              <OverlayDescription>{state.gloss}</OverlayDescription>
+            ) : (
+              <OverlayDescription className='sr-only'>{t`Quick gloss for the selected text.`}</OverlayDescription>
+            )}
+          </div>
+          {state.kind === 'ready' && (state.pos || state.register) && (
+            <div className='mt-2 flex flex-wrap justify-center gap-1.5 sm:justify-start'>
+              {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
+              {state.register && <Badge variant='secondary'>{state.register}</Badge>}
+            </div>
+          )}
         </OverlayHeader>
         {selection ? (
-          <div className='flex flex-col gap-3 pb-2'>
-            <div className='rounded-md border bg-yellow-50 p-3 text-sm'>“{selection.selectionText}”</div>
-            {state.kind === 'loading' && <p className='text-muted-foreground text-sm'>{t`Glossing…`}</p>}
+          <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
+            {state.kind === 'loading' && <p className='text-muted-foreground'>{t`Glossing…`}</p>}
             {state.kind === 'error' && (
-              <p className='text-destructive text-sm'>{t`Could not fetch a gloss. The highlight is still saved.`}</p>
-            )}
-            {state.kind === 'ready' && (
-              <div className='flex flex-col gap-2 rounded-md border p-3'>
-                <p className='text-base'>{state.gloss}</p>
-                {(state.pos || state.register) && (
-                  <div className='text-muted-foreground flex gap-2 text-xs'>
-                    {state.pos && <span className='rounded border px-2 py-0.5'>{state.pos}</span>}
-                    {state.register && <span className='rounded border px-2 py-0.5'>{state.register}</span>}
-                  </div>
-                )}
-              </div>
+              <p className='text-destructive'>{t`Could not fetch a gloss. The highlight is still saved.`}</p>
             )}
             {highlightId && (
               <p className='text-muted-foreground text-xs'>{t`Highlight saved. Add a note or chips next time without tap-to-translate.`}</p>
             )}
           </div>
         ) : (
-          <p className='text-muted-foreground text-sm'>{t`No text selected.`}</p>
+          <p className='text-muted-foreground px-4 pb-2 text-sm'>{t`No text selected.`}</p>
         )}
         <OverlayFooter>
           <Button onClick={onClose}>{t`Done`}</Button>

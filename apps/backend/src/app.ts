@@ -345,6 +345,7 @@ export const buildApp = ({
       practiceSessionsRepository,
       practiceTextsRepository,
       userLookupsRepository,
+      usersRepository,
       startPracticeSessionDependencies,
       generateNextPracticeTextDependencies,
       rateChunkDependencies,

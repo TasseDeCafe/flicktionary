@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
+import { MoreVertical, RotateCcw } from 'lucide-react'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -7,6 +8,7 @@ import {
   OverlayDescription,
   OverlayFooter,
 } from '@/components/ui/responsive-overlay'
+import { Button } from '@/components/ui/button'
 import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -32,6 +34,10 @@ export type RateSheetChunkContent = {
   // allowlist in `getLanguageGrammarConfig`.
   grammar: Grammar | null
   targetLanguage: string
+  // The user has soft-deleted this term. Swaps the rate UI for a slim Restore
+  // CTA — rating a deleted chunk would be confusing, and the chunk no longer
+  // participates in SRS until restored anyway.
+  isDeleted: boolean
 }
 
 interface RateSheetProps {
@@ -44,30 +50,67 @@ interface RateSheetProps {
   currentRating?: RateValue | null
   isSubmitting?: boolean
   onSubmit: (rating: RateValue) => void
+  // Wires the 3-dots overflow button in the header. The parent owns the
+  // actions sheet because navigation + delete confirm + restore-toast all
+  // live there.
+  onMoreOptions?: () => void
+  // Restore is only meaningful when isDeleted=true; the parent fires the
+  // mutation and re-fetches.
+  onRestore?: () => void
+  isRestoring?: boolean
 }
 
-export const RateSheet = ({ open, onOpenChange, chunk, currentRating, isSubmitting, onSubmit }: RateSheetProps) => {
+export const RateSheet = ({
+  open,
+  onOpenChange,
+  chunk,
+  currentRating,
+  isSubmitting,
+  onSubmit,
+  onMoreOptions,
+  onRestore,
+  isRestoring,
+}: RateSheetProps) => {
   const { t } = useLingui()
   // Translation wins for the description slot; definition is the L1=L2 fallback.
   const description = chunk?.translation || chunk?.definition || null
   const titleText = chunk?.displayForm || chunk?.headword || t`Rate`
+  const showOverflow = !!onMoreOptions && !!chunk && !chunk.isDeleted
 
   return (
     <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
-      <OverlayContent>
+      {/* showCloseButton=false on desktop so the dialog's built-in X doesn't
+          collide with our 3-dots overflow. Esc + click-outside still dismiss. */}
+      <OverlayContent showCloseButton={false}>
         <OverlayHeader>
-          <OverlayTitle>
-            <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
-          </OverlayTitle>
-          {chunk?.ipa && <div className='text-muted-foreground text-sm'>{chunk.ipa}</div>}
-          {description && <OverlayDescription>{description}</OverlayDescription>}
-          {chunk?.grammar && (
+          <div className='relative'>
+            <div className='flex flex-col gap-1'>
+              <OverlayTitle>
+                <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
+              </OverlayTitle>
+              {chunk?.ipa && <div className='text-muted-foreground text-sm'>{chunk.ipa}</div>}
+              {description && <OverlayDescription>{description}</OverlayDescription>}
+            </div>
+            {showOverflow && (
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon-sm'
+                aria-label={t`More options`}
+                onClick={onMoreOptions}
+                className='absolute top-0 right-0'
+              >
+                <MoreVertical className='h-5 w-5' />
+              </Button>
+            )}
+          </div>
+          {chunk?.grammar && !chunk.isDeleted && (
             <div className='mt-2 flex justify-center sm:justify-start'>
               <GrammarChips grammar={chunk.grammar} targetLanguage={chunk.targetLanguage} />
             </div>
           )}
         </OverlayHeader>
-        {chunk?.targetExample && (
+        {chunk?.targetExample && !chunk.isDeleted && (
           <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
             <p className='border-l-2 border-yellow-300 pl-3 italic'>
               {chunk.targetExample}
@@ -77,8 +120,20 @@ export const RateSheet = ({ open, onOpenChange, chunk, currentRating, isSubmitti
             </p>
           </div>
         )}
+        {chunk?.isDeleted && (
+          <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
+            <p className='text-muted-foreground'>{t`This term is removed from your vocabulary. Restore it to keep practicing.`}</p>
+          </div>
+        )}
         <OverlayFooter>
-          <RateButtons value={currentRating ?? undefined} disabled={isSubmitting || !chunk} onSelect={onSubmit} />
+          {chunk?.isDeleted ? (
+            <Button type='button' size='xl' disabled={isRestoring || !onRestore} onClick={() => onRestore?.()}>
+              <RotateCcw className='mr-1 h-4 w-4' />
+              {isRestoring ? t`Restoring…` : t`Restore`}
+            </Button>
+          ) : (
+            <RateButtons value={currentRating ?? undefined} disabled={isSubmitting || !chunk} onSelect={onSubmit} />
+          )}
         </OverlayFooter>
       </OverlayContent>
     </ResponsiveOverlay>

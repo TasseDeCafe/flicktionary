@@ -77,9 +77,14 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const { from, source } = useSearch({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
+  const { from, source, practiceSessionId } = useSearch({
+    from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
+  })
   const fromVocabulary = from === 'vocabulary'
-  const shouldLoadSessionScope = !fromVocabulary || source === 'available'
+  const fromPractice = from === 'practice'
+  // Practice & Vocabulary entries are language-wide views over kept chunks,
+  // not session-scoped triage queues — same loading shortcut applies.
+  const shouldLoadSessionScope = (!fromVocabulary && !fromPractice) || source === 'available'
 
   const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId, {
     enabled: shouldLoadSessionScope,
@@ -100,8 +105,9 @@ export const FocusView = () => {
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
   // Preserve the `from` origin across prev/next so the close button still
-  // knows where to land after the user navigates around.
-  const search = from ? { from } : undefined
+  // knows where to land after the user navigates around. Practice carries
+  // an additional practiceSessionId so the back-route resolves.
+  const search = from ? (fromPractice && practiceSessionId ? { from, practiceSessionId } : { from }) : undefined
   const goPrev = () => {
     if (cursor.prev) {
       void navigate({
@@ -125,6 +131,10 @@ export const FocusView = () => {
   const closeToTriage = () => {
     if (from === 'vocabulary') {
       void navigate({ to: '/vocabulary' })
+      return
+    }
+    if (from === 'practice' && practiceSessionId) {
+      void navigate({ to: '/practice/$practiceSessionId', params: { practiceSessionId } })
       return
     }
     void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
@@ -164,11 +174,12 @@ export const FocusView = () => {
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
   const sourceSessionId = shouldLoadSessionScope ? card.studySessionId : undefined
-  // Vocabulary entries are already kept by definition, so the keep/reject
-  // toggles and the per-session position counter don't apply here. Show the
-  // chunk's headword as the title instead.
-  const title = fromVocabulary ? card.chunk.headword : positionLabel
-  const rightSlot = fromVocabulary ? undefined : (
+  // Vocabulary + Practice entries are already kept by definition, so the
+  // keep/reject toggles and the per-session position counter don't apply.
+  // Show the chunk's headword as the title instead.
+  const isLanguageWideEntry = fromVocabulary || fromPractice
+  const title = isLanguageWideEntry ? card.chunk.headword : positionLabel
+  const rightSlot = isLanguageWideEntry ? undefined : (
     <>
       <Button
         size='icon-sm'
@@ -191,7 +202,7 @@ export const FocusView = () => {
 
   return (
     <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title} rightSlot={rightSlot}>
-      {!fromVocabulary && (
+      {!isLanguageWideEntry && (
         <div className='flex items-center gap-2 border-b bg-white px-4 py-2'>
           <div className='mx-auto flex w-full max-w-4xl items-center gap-2'>
             <Button

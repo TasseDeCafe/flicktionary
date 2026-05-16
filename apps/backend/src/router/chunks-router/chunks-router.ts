@@ -143,6 +143,19 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       return { data: { id: input.id } }
     }),
 
+    restoreChunk: implementer.restoreChunk.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      // Restore targets soft-deleted rows by definition, so the deleted-filter
+      // in findByIdForUser would 404 a valid restore. Use the including-
+      // deleted variant for the ownership check.
+      const owned = await userLookupsRepository.findByIdForUserIncludingDeleted(input.id, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      await userLookupsRepository.restoreChunk(input.id, userId)
+      return { data: { id: input.id } }
+    }),
+
     rename: implementer.rename.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
