@@ -263,6 +263,11 @@ export const PracticeAnnotationSchema = z.object({
   // the canonical row was deleted between generation and read.
   translation: z.string().nullable(),
   definition: z.string().nullable(),
+  // Same join as translation/definition — surfaces the typed morphology bag
+  // (pos, gender, aspect, government, ipa, display_form, …) so the rate sheet
+  // can render the same chips + stress-marked headword + IPA the focus view
+  // shows. Per-language allowlist gates which fields are rendered.
+  grammar: GrammarSchema.nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 

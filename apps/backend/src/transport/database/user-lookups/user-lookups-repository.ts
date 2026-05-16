@@ -813,15 +813,29 @@ const listChunkContentForKeys = async (params: {
   userId: string
   targetLanguage: string
   keys: Array<{ headword: string; sense: string }>
-}): Promise<Array<{ headword: string; sense: string; translation: string | null; definition: string | null }>> => {
+}): Promise<
+  Array<{
+    headword: string
+    sense: string
+    translation: string | null
+    definition: string | null
+    grammar: Record<string, unknown> | null
+  }>
+> => {
   if (params.keys.length === 0) return []
   const result = (await sql`
-    SELECT headword, sense, translation, definition
+    SELECT headword, sense, translation, definition, grammar
     FROM public.user_lookups
     WHERE user_id = ${params.userId}
       AND target_language = ${params.targetLanguage}
       AND deleted_at IS NULL
-  `) as Array<{ headword: string; sense: string; translation: string | null; definition: string | null }>
+  `) as Array<{
+    headword: string
+    sense: string
+    translation: string | null
+    definition: string | null
+    grammar: Record<string, unknown> | null
+  }>
   return result
 }
 
@@ -925,7 +939,15 @@ export interface UserLookupsRepositoryInterface {
     userId: string
     targetLanguage: string
     keys: Array<{ headword: string; sense: string }>
-  }) => Promise<Array<{ headword: string; sense: string; translation: string | null; definition: string | null }>>
+  }) => Promise<
+    Array<{
+      headword: string
+      sense: string
+      translation: string | null
+      definition: string | null
+      grammar: Record<string, unknown> | null
+    }>
+  >
   listLanguagesForUser: (userId: string) => Promise<string[]>
 }
 

@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { Badge } from '@/components/ui/badge'
-import { getLanguageGrammarConfig } from '@flicktionary/core/constants/language-grammar'
+import { getEffectiveGrammarFields } from '@flicktionary/core/constants/language-grammar'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 const asString = (v: unknown): string | null => {
@@ -38,6 +38,10 @@ const renderAspectLabel = (aspect: string): string => {
   }
 }
 
+// Render POS as a full lowercased word so it doesn't collide visually with the
+// gender chip (`n.` would mean "noun" here and "neuter" in the gender slot).
+const renderPosLabel = (pos: string): string => pos.toLowerCase()
+
 type Props = {
   grammar: Grammar | Record<string, unknown> | null | undefined
   targetLanguage?: string
@@ -50,8 +54,8 @@ type Props = {
 export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const { t } = useLingui()
   const g = (grammar ?? {}) as Record<string, unknown>
-  const allowed = getLanguageGrammarConfig(targetLanguage).fields
 
+  const pos = asString(g.pos)
   const gender = asString(g.gender)
   const aspect = asString(g.aspect)
   const aspectPair = asString(g.aspect_pair_headword)
@@ -60,8 +64,20 @@ export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const isIndeclinable = isTruthyBool(g.is_indeclinable)
   const isReflexive = isTruthyBool(g.is_reflexive)
 
+  // Narrow by language allowlist AND by POS — stray data on the wrong POS
+  // (e.g. an aspect value accidentally left on an adjective by the LLM)
+  // shouldn't surface as a chip even if the language config lists it.
+  const allowed = getEffectiveGrammarFields(targetLanguage, pos)
+
   const chips: React.ReactNode[] = []
 
+  if (pos && allowed.includes('pos')) {
+    chips.push(
+      <Badge key='pos' variant='outline' aria-label={t`Part of speech`}>
+        {renderPosLabel(pos)}
+      </Badge>
+    )
+  }
   if (gender && allowed.includes('gender')) {
     chips.push(
       <Badge key='gender' variant='secondary' aria-label={t`Gender`}>
