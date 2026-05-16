@@ -19,11 +19,12 @@ const DialogClose = ({ ...props }: React.ComponentProps<typeof DialogPrimitive.C
   <DialogPrimitive.Close data-slot='dialog-close' {...props} />
 )
 
+// top edge is pushed below iOS 26 Safari's 4px sampling window so its toolbar-tint sampler skips this element and falls back to the body bg (white), keeping the menu bar steady instead of chasing the scrim ~500ms behind. https://jahir.dev/blog/safari-toolbar
 const DialogOverlay = ({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Overlay>) => (
   <DialogPrimitive.Overlay
     data-slot='dialog-overlay'
     className={cn(
-      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50',
+      'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-x-0 top-[max(env(safe-area-inset-top),5px)] bottom-0 z-50 bg-black/50',
       className
     )}
     {...props}
