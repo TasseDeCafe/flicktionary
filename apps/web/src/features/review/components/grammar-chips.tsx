@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { Badge } from '@/components/ui/badge'
-import { getLanguageGrammarConfig } from '@flicktionary/core/constants/language-grammar'
+import { getEffectiveGrammarFields } from '@flicktionary/core/constants/language-grammar'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 const asString = (v: unknown): string | null => {
@@ -54,7 +54,6 @@ type Props = {
 export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const { t } = useLingui()
   const g = (grammar ?? {}) as Record<string, unknown>
-  const allowed = getLanguageGrammarConfig(targetLanguage).fields
 
   const pos = asString(g.pos)
   const gender = asString(g.gender)
@@ -64,6 +63,11 @@ export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const numberOnly = asString(g.number_only)
   const isIndeclinable = isTruthyBool(g.is_indeclinable)
   const isReflexive = isTruthyBool(g.is_reflexive)
+
+  // Narrow by language allowlist AND by POS — stray data on the wrong POS
+  // (e.g. an aspect value accidentally left on an adjective by the LLM)
+  // shouldn't surface as a chip even if the language config lists it.
+  const allowed = getEffectiveGrammarFields(targetLanguage, pos)
 
   const chips: React.ReactNode[] = []
 

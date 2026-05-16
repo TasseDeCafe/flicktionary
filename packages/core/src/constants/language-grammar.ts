@@ -95,3 +95,50 @@ export const getLanguageGrammarConfig = (code: string | undefined | null): Langu
   if (!code) return DEFAULT_GRAMMAR_CONFIG
   return LANGUAGE_GRAMMAR[code as SupportedLanguageCode] ?? DEFAULT_GRAMMAR_CONFIG
 }
+
+// Fields that are meaningful for any part of speech (when the language lists
+// them at all). The POS-specific additions below layer on top of this set.
+const UNIVERSAL_FIELDS: ReadonlyArray<GrammarFieldKey> = [
+  'pos',
+  'display_form',
+  'ipa',
+  'notable_forms',
+  'notes',
+]
+
+// Additional fields that only apply to a specific POS. Linguistically
+// motivated, not language-specific: verbs have aspect; nouns have gender;
+// adjectives don't have either. The language config still decides which keys
+// even exist for that language — this map only narrows further by POS.
+//
+// POS values not listed here (phrase / idiom / other) intentionally fall
+// through to "no narrowing" — those categories are catch-alls where we can't
+// safely hide fields the user might want.
+const POS_SPECIFIC_FIELDS: Record<string, ReadonlyArray<GrammarFieldKey>> = {
+  noun: ['gender', 'number_only', 'animacy', 'is_indeclinable', 'government'],
+  verb: ['aspect', 'aspect_pair_headword', 'is_reflexive', 'government'],
+  adjective: ['government'],
+  adverb: [],
+  preposition: ['government'],
+  pronoun: ['gender', 'number_only'],
+  particle: [],
+  conjunction: [],
+  numeral: ['gender'],
+}
+
+// Returns the language's allowed fields, narrowed by part of speech when we
+// have a confident classification (`noun` / `verb` / `adjective` / etc.).
+// When `pos` is null/undefined or falls into the catch-all bucket
+// (`phrase` / `idiom` / `other` / unknown string), no POS narrowing happens —
+// the caller gets the full language allowlist.
+export const getEffectiveGrammarFields = (
+  code: string | undefined | null,
+  pos: string | null | undefined
+): ReadonlyArray<GrammarFieldKey> => {
+  const langFields = getLanguageGrammarConfig(code).fields
+  if (!pos) return langFields
+  const posSpecific = POS_SPECIFIC_FIELDS[pos]
+  if (!posSpecific) return langFields
+  const allowed = new Set<GrammarFieldKey>([...UNIVERSAL_FIELDS, ...posSpecific])
+  return langFields.filter((f) => allowed.has(f))
+}

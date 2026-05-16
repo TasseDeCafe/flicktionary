@@ -32,7 +32,7 @@ For a brand-new language code `<code>` (kaikki's `lang_code`, e.g. `de` for Germ
 
 3. **Shared grounding allowlist** — in `packages/core/src/constants/language-grammar.ts`, add the same code to `KAIKKI_LANGUAGES`. (Mirror of the backend set; used by the focus view's grounding badge.)
 
-4. **Per-language grammar config** — in the same file, add (or extend) the `LANGUAGE_GRAMMAR[<code>]` entry. The fields you list drive what the focus view renders as chips and what the editable panel exposes. `ipa` is read-only and rendered from `FocusView` via the `wiktionaryIpa` prop on `EditableGrammarPanel`; keep it in the config as metadata/hinting, but do not rely on `fields.includes('ipa')` as the display gate. Example shape:
+4. **Per-language grammar config** — in the same file, add (or extend) the `LANGUAGE_GRAMMAR[<code>]` entry. The fields you list drive what the focus view *and* the practice rate sheet render as chips (both consume `getLanguageGrammarConfig`), and what the focus view's editable panel exposes. The renderer narrows this list further by part-of-speech via `getEffectiveGrammarFields(targetLanguage, pos)` — POS-specific keys (e.g. `aspect` for verbs, `gender` for nouns) live in `POS_SPECIFIC_FIELDS` in the same file and apply across languages, so the language config just decides which keys even exist for that language. `ipa` is editable and dialect-aware: `FocusView` shows the picked bucket via `pickIpa(...)` above the chips, and the editable panel writes back to the correct bucket (`ga`/`rp`/`untagged`) based on the user's `englishIpaDialect` pref. Example shape:
 
    ```ts
    de: {
@@ -126,5 +126,5 @@ Existing user cards in the removed language keep whatever `groundedAt`/`grammar`
 
 - The `lang_code` you add must match kaikki's exact value (the JSONL's `lang_code` field). Spot-check by piping a few raw lines through `gzip -cd apps/backend/scripts/.cache/kaikki/raw-wiktextract-data.jsonl.gz | grep -m 5 '"lang_code":"<code>"'`.
 - The new language must also be present in `packages/core/src/constants/supported-languages.ts` (otherwise it can't be selected as a target language in the first place). That's a separate change and not gated by this skill — confirm before starting.
-- Don't write `ipa` chips into `GrammarChips` — IPA isn't a chip in the UX. `FocusView` picks the displayed value with `pickIpa(...)` and passes it to `EditableGrammarPanel` as read-only grammar metadata.
+- Don't write `ipa` chips into `GrammarChips` — IPA isn't a chip in the UX. `FocusView` picks the displayed value with `pickIpa(...)` and renders it above the chips; the editable panel surfaces an editable `Input` for the active bucket (`ga`/`rp` for English by user pref, `untagged` otherwise); the practice rate sheet uses the same `pickIpa(...)` to render IPA as a subtitle line under the headword.
 - Don't try to load data through `pnpm db:reset` — that script *only* replays the snapshot. To regenerate the snapshot you must run the loader.

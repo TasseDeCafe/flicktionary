@@ -247,7 +247,6 @@ export const FocusView = () => {
                 card={card}
                 targetLanguage={targetLanguage}
                 sourceSessionId={sourceSessionId}
-                wiktionaryIpa={displayedIpa}
               />
             </div>
           </section>

@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { getLanguageGrammarConfig, type GrammarFieldKey } from '@flicktionary/core/constants/language-grammar'
+import {
+  getEffectiveGrammarFields,
+  getLanguageGrammarConfig,
+  type GrammarFieldKey,
+} from '@flicktionary/core/constants/language-grammar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,16 +14,22 @@ import { Textarea } from '@/components/ui/textarea'
 import type {
   Card,
   Grammar,
+  GrammarIpaBag,
   GrammarNotableForm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useUpdateChunkContent } from '../api/review-hooks'
 
 type Props = {
   card: Card
   targetLanguage?: string
   sourceSessionId?: string
-  wiktionaryIpa?: string
 }
+
+// English splits IPA into GA / RP buckets driven by the user's dialect
+// preference; every other language writes a single `untagged` value.
+const ipaBucketKey = (lang: string | undefined, dialect: 'ga' | 'rp'): 'ga' | 'rp' | 'untagged' =>
+  lang === 'en' ? dialect : 'untagged'
 
 const SAVE_DEBOUNCE_MS = 600
 
@@ -95,26 +105,58 @@ const buildGrammarPatch = (current: Grammar, lastSaved: Grammar): Record<string,
 // Editable per-key editor. Sends a debounced PATCH on every change. Mirrors
 // the lastSavedRef pattern from EditableCardFields so concurrent updates
 // (chat tool, sibling tab) don't clobber in-flight edits.
-export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId, wiktionaryIpa }: Props) => {
+export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
+  const { data: userPrefs } = useGetUserPrefs()
+  const englishIpaDialect: 'ga' | 'rp' = userPrefs?.englishIpaDialect ?? 'ga'
 
   const config = useMemo(() => getLanguageGrammarConfig(targetLanguage), [targetLanguage])
-  // IPA is grounded from Wiktionary and rendered above the chips in the focus
-  // view; v1 keeps it read-only here so user edits can't drift from the
-  // dialect-bucketed shape.
-  const editableFields = useMemo<readonly GrammarFieldKey[]>(
-    () => config.fields.filter((f): f is GrammarFieldKey => f !== 'ipa'),
-    [config]
-  )
-  const has = (k: GrammarFieldKey) => editableFields.includes(k)
-  const hint = (k: GrammarFieldKey) => config.hints?.[k]
 
   const initial = useMemo(() => grammarFromCard(card), [card])
   const startsOpen = isMeaningful(initial)
   const [open, setOpen] = useState(startsOpen)
   const [grammar, setGrammar] = useState<Grammar>(initial)
   const lastSavedRef = useRef<Grammar>(initial)
+
+  // Narrow the language allowlist further by the current POS so adjectives
+  // don't show aspect/reflexive/gender editors etc. Reacts to live POS
+  // changes via the local `grammar` state.
+  const editableFields = useMemo<readonly GrammarFieldKey[]>(() => {
+    const pos = typeof grammar.pos === 'string' ? grammar.pos : null
+    return getEffectiveGrammarFields(targetLanguage, pos)
+  }, [targetLanguage, grammar.pos])
+  const has = (k: GrammarFieldKey) => editableFields.includes(k)
+  const hint = (k: GrammarFieldKey) => config.hints?.[k]
+
+  // IPA is bucketed (`ga` / `rp` / `untagged`); user-facing edit writes to
+  // the bucket matching the current language + dialect preference. When the
+  // bag becomes empty, drop the `ipa` key entirely so the renderer doesn't
+  // display a stale empty object.
+  const ipaBucket = ipaBucketKey(targetLanguage, englishIpaDialect)
+  const displayedIpa = useMemo<string>(() => {
+    const bag = (grammar.ipa ?? {}) as Record<string, string | null | undefined>
+    return bag[ipaBucket] ?? ''
+  }, [grammar.ipa, ipaBucket])
+  const setIpa = (value: string) => {
+    setGrammar((prev) => {
+      const prevBag = (prev.ipa ?? {}) as Record<string, string | null | undefined>
+      const nextBag: Record<string, string> = {}
+      for (const [k, v] of Object.entries(prevBag)) {
+        if (typeof v === 'string' && v.trim().length > 0) nextBag[k] = v
+      }
+      const trimmed = value.trim()
+      if (trimmed.length === 0) delete nextBag[ipaBucket]
+      else nextBag[ipaBucket] = value
+      const next: Grammar = { ...prev }
+      if (Object.keys(nextBag).length === 0) {
+        delete (next as Record<string, unknown>).ipa
+      } else {
+        ;(next as Record<string, unknown>).ipa = nextBag as GrammarIpaBag
+      }
+      return next
+    })
+  }
 
   // Sync from server when it diverges from what we last saved (chat tool
   // patched the row, another tab edited it, etc.). Don't clobber in-flight
@@ -182,12 +224,22 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId, wi
 
       {open && (
         <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
-          {wiktionaryIpa && (
+          {has('ipa') && (
             <div>
-              <Label className='text-xs'>{t`IPA`}</Label>
-              <div className='border-input bg-muted/30 flex h-9 w-full items-center rounded-md border px-3 py-1 font-mono text-sm shadow-sm'>
-                {wiktionaryIpa}
-              </div>
+              <Label className='text-xs'>
+                {hint('ipa')?.label ?? t`IPA`}
+                {targetLanguage === 'en' && (
+                  <span className='text-muted-foreground ml-1 font-normal'>
+                    ({englishIpaDialect === 'ga' ? t`GA` : t`RP`})
+                  </span>
+                )}
+              </Label>
+              <Input
+                value={displayedIpa}
+                onChange={(e) => setIpa(e.target.value)}
+                placeholder={hint('ipa')?.placeholder ?? t`e.g. /ˈkæt/`}
+                className='font-mono'
+              />
             </div>
           )}
 
