@@ -294,6 +294,25 @@ describe('extractIpaBag — English GA/RP', () => {
     }
     expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/ga/' })
   })
+
+  // Real case from the 'speculation' kaikki entry: a single sound row tagged
+  // simultaneously as Canada + General-American + Received-Pronunciation
+  // (Wiktionary collapses shared pronunciations across regions). The unrelated
+  // 'Canada' tag must not preempt the explicit GA/RP labels.
+  it('keeps explicit GA/RP buckets when sound is also tagged with an unrelated region', () => {
+    const entry: KaikkiEntry = {
+      sounds: [
+        {
+          ipa: '/ˌspɛk.jəˈleɪ.ʃən/',
+          tags: ['Canada', 'General-American', 'Received-Pronunciation'],
+        },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({
+      ga: '/ˌspɛk.jəˈleɪ.ʃən/',
+      rp: '/ˌspɛk.jəˈleɪ.ʃən/',
+    })
+  })
 })
 
 describe('extractIpaBag — English untagged fallback', () => {

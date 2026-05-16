@@ -231,15 +231,22 @@ const pickPreferredFromBucket = (candidates: string[]): string | undefined => {
 
 const classifyEnglishBuckets = (tags: string[]): Array<'ga' | 'rp' | 'untagged'> => {
   if (tags.length === 0) return ['untagged']
-  if (hasAnyTag(tags, UNRELATED_REGIONAL_TAGS)) return []
   const isRp = hasAnyTag(tags, RP_TAGS)
   const isExplicitGa = hasAnyTag(tags, GA_TAGS)
   const hasBareUs = tags.includes('US')
   const hasNarrowerUs = hasAnyTag(tags, NARROWER_US_TAGS)
+  const hasUnrelated = hasAnyTag(tags, UNRELATED_REGIONAL_TAGS)
+  // Wiktionary often lumps shared pronunciations into one sound row with
+  // multiple regional tags (e.g. `speculation` is tagged
+  // [Canada, General-American, Received-Pronunciation] under a single IPA).
+  // Explicit GA/RP labels still apply in that case — the unrelated tag is
+  // additional information, not a disqualifier. Only drop the sound for
+  // unrelated regional tags when no explicit GA/RP label is also present.
+  if (hasUnrelated && !isRp && !isExplicitGa) return []
   const out: Array<'ga' | 'rp'> = []
   if (isRp && !hasBareUs && !hasNarrowerUs) out.push('rp')
   if (isExplicitGa && !hasNarrowerUs) out.push('ga')
-  else if (hasBareUs && !isRp && !hasNarrowerUs) out.push('ga')
+  else if (hasBareUs && !isRp && !hasNarrowerUs && !hasUnrelated) out.push('ga')
   return out
 }
 
