@@ -11,6 +11,7 @@ import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { Input } from '@/components/ui/input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
+import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
 import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
@@ -74,6 +75,7 @@ export const VocabularyListView = () => {
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [optionsOpen, setOptionsOpen] = useState(false)
+  const [deleteConfirmChunk, setDeleteConfirmChunk] = useState<ChunkRow | null>(null)
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
@@ -178,12 +180,17 @@ export const VocabularyListView = () => {
     })
   }
 
-  const handleDelete = (chunk: ChunkRow) => {
+  const handleRequestDelete = (chunk: ChunkRow) => {
+    setDrawerOpen(false)
+    setDeleteConfirmChunk(chunk)
+  }
+
+  const handleConfirmDelete = (chunk: ChunkRow) => {
     deleteChunk(
       { id: chunk.id },
       {
         onSuccess: () => {
-          setDrawerOpen(false)
+          setDeleteConfirmChunk(null)
           toast.success(t`Term deleted`)
         },
       }
@@ -302,7 +309,16 @@ export const VocabularyListView = () => {
         onOpenChange={setDrawerOpen}
         chunk={activeChunk}
         onOpenSource={handleOpenSource}
-        onDelete={handleDelete}
+        onRequestDelete={handleRequestDelete}
+      />
+
+      <VocabularyDeleteConfirmDrawer
+        open={deleteConfirmChunk !== null}
+        onOpenChange={(next) => {
+          if (!next) setDeleteConfirmChunk(null)
+        }}
+        chunk={deleteConfirmChunk}
+        onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
       />
 

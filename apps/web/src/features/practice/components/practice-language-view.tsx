@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, ChevronLeft, CircleCheck, Clock, Plus, RotateCcw, XCircle } from 'lucide-react'
+import { Brain, ChevronLeft, CircleCheck, Clock, MoreVertical, Plus, RotateCcw, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import {
   OverlayContent,
   OverlayDescription,
@@ -33,6 +34,7 @@ export const PracticeLanguageView = () => {
   const { data: prefs } = useGetUserPrefs()
   const { mutate: abandonSession, isPending: isEnding } = useAbandonPracticeSession()
   const [confirmEndOpen, setConfirmEndOpen] = useState(false)
+  const [sessionOptionsOpen, setSessionOptionsOpen] = useState(false)
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
@@ -135,8 +137,18 @@ export const PracticeLanguageView = () => {
             <Button type='button' variant='ghost' size='icon' onClick={handleBack} aria-label={t`Back to Practice`}>
               <ChevronLeft className='h-5 w-5' />
             </Button>
-            <Brain className='h-7 w-7 text-yellow-500' />
             <h1 className='min-w-0 flex-1 truncate text-2xl font-bold'>{languageName}</h1>
+            {activeSessionId && (
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                onClick={() => setSessionOptionsOpen(true)}
+                aria-label={t`Session options`}
+              >
+                <MoreVertical className='h-5 w-5' />
+              </Button>
+            )}
           </header>
 
           {isLoading && <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>}
@@ -186,11 +198,11 @@ export const PracticeLanguageView = () => {
       </div>
 
       {entry && (
-        <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
+        <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-3 pt-3 pb-4 backdrop-blur'>
           <div className='mx-auto flex w-full max-w-2xl flex-col gap-2 sm:flex-row-reverse sm:items-center'>
             <Button
               type='button'
-              size='lg'
+              size='xl'
               className='w-full sm:w-auto'
               disabled={!primaryAction || isEnding}
               onClick={() => {
@@ -202,36 +214,43 @@ export const PracticeLanguageView = () => {
               {primaryAction?.label ?? t`All caught up`}
             </Button>
 
-            {activeSessionId ? (
+            {!activeSessionId && secondaryAction && (
               <Button
                 type='button'
                 variant='outline'
-                size='lg'
+                size='xl'
                 className='w-full sm:w-auto'
                 disabled={isEnding}
-                onClick={() => setConfirmEndOpen(true)}
+                onClick={() => handleStart(secondaryAction.mode)}
               >
-                <XCircle className='h-4 w-4' />
-                {t`End session`}
+                {secondaryAction.icon === 'review' ? <RotateCcw className='h-4 w-4' /> : <Plus className='h-4 w-4' />}
+                {secondaryAction.label}
               </Button>
-            ) : (
-              secondaryAction && (
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='lg'
-                  className='w-full sm:w-auto'
-                  disabled={isEnding}
-                  onClick={() => handleStart(secondaryAction.mode)}
-                >
-                  {secondaryAction.icon === 'review' ? <RotateCcw className='h-4 w-4' /> : <Plus className='h-4 w-4' />}
-                  {secondaryAction.label}
-                </Button>
-              )
             )}
           </div>
         </div>
       )}
+
+      <ResponsiveOverlay open={sessionOptionsOpen} onOpenChange={setSessionOptionsOpen}>
+        <OverlayContent>
+          <OverlayHeader>
+            <OverlayTitle>{t`Session options`}</OverlayTitle>
+            <OverlayDescription className='sr-only'>{t`Actions for the current practice session.`}</OverlayDescription>
+          </OverlayHeader>
+          <div className='flex flex-col gap-1 px-2 pb-2'>
+            <OverlayActionRow
+              icon={XCircle}
+              label={t`End session`}
+              description={t`Rated terms keep their ratings; unrated terms stay available later`}
+              variant='destructive'
+              onClick={() => {
+                setSessionOptionsOpen(false)
+                setConfirmEndOpen(true)
+              }}
+            />
+          </div>
+        </OverlayContent>
+      </ResponsiveOverlay>
 
       <ResponsiveOverlay open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
         <OverlayContent>
@@ -242,10 +261,16 @@ export const PracticeLanguageView = () => {
             </OverlayDescription>
           </OverlayHeader>
           <OverlayFooter>
-            <Button type='button' variant='outline' onClick={() => setConfirmEndOpen(false)} disabled={isEnding}>
+            <Button
+              type='button'
+              variant='outline'
+              size='xl'
+              onClick={() => setConfirmEndOpen(false)}
+              disabled={isEnding}
+            >
               {t`Cancel`}
             </Button>
-            <Button type='button' onClick={handleEndSession} disabled={isEnding}>
+            <Button type='button' size='xl' variant='destructive' onClick={handleEndSession} disabled={isEnding}>
               {isEnding ? t`Ending…` : t`End session`}
             </Button>
           </OverlayFooter>

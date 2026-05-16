@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ArrowRight, CheckCircle2, LoaderCircle } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Info, LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import {
@@ -70,10 +71,22 @@ export const PracticeSessionView = () => {
   const currentText = sessionData?.currentText ?? null
   const currentTextId = currentText?.id ?? null
   const progress = sessionData?.progress ?? null
+  const targetLanguage = sessionData?.session.targetLanguage ?? null
+  const isSessionActive = sessionData?.session.status === 'active'
+
+  useEffect(() => {
+    if (!sessionData || isSessionActive) return
+    void navigate({
+      to: '/practice/language/$targetLanguage',
+      params: { targetLanguage: sessionData.session.targetLanguage },
+      replace: true,
+    })
+  }, [isSessionActive, navigate, sessionData])
 
   // Auto-trigger generation if the session has no current text and isn't done.
   useEffect(() => {
     if (!sessionData) return
+    if (!isSessionActive) return
     if (currentText) return
     if (done) return
     if (isGenerating) return
@@ -86,7 +99,7 @@ export const PracticeSessionView = () => {
         },
       }
     )
-  }, [sessionData, currentText, done, isGenerating, isAdvancing, generateNextText, practiceSessionId])
+  }, [sessionData, isSessionActive, currentText, done, isGenerating, isAdvancing, generateNextText, practiceSessionId])
 
   // Reset rated state when the text changes.
   useEffect(() => {
@@ -99,8 +112,9 @@ export const PracticeSessionView = () => {
   // is idempotent — repeat fires no-op.
   useEffect(() => {
     if (!currentTextId) return
+    if (!isSessionActive) return
     prepareNextText({ sessionId: practiceSessionId })
-  }, [currentTextId, practiceSessionId, prepareNextText])
+  }, [currentTextId, isSessionActive, practiceSessionId, prepareNextText])
 
   const annotations: AnnotationInput[] = useMemo(() => {
     if (!currentText) return []
@@ -194,7 +208,6 @@ export const PracticeSessionView = () => {
   }
 
   const close = () => {
-    const targetLanguage = sessionData?.session.targetLanguage
     if (targetLanguage) {
       return navigate({
         to: '/practice/language/$targetLanguage',
@@ -267,21 +280,38 @@ export const PracticeSessionView = () => {
           </div>
 
           {!done && (currentText || isAdvancing) && (
-            <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
-              <div className='mx-auto flex max-w-2xl items-center justify-between gap-3'>
+            <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-3 pt-2 pb-3 backdrop-blur'>
+              <div className='mx-auto flex max-w-2xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
                 {(() => {
                   const ratedCount = advancingSnapshot?.ratedCount ?? ratings.size
                   const totalCount = advancingSnapshot?.totalCount ?? annotations.length
                   return (
-                    <span className='text-muted-foreground text-xs'>
-                      {t`${ratedCount} of ${totalCount} rated. Untapped terms count as 'good' on Next.`}
-                    </span>
+                    <div className='text-muted-foreground flex items-center gap-1 text-xs'>
+                      <span>{t`${ratedCount} of ${totalCount} rated`}</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon-sm'
+                            className='text-muted-foreground -my-1 h-7 w-7'
+                            aria-label={t`How rating works on Next`}
+                          >
+                            <Info className='h-3.5 w-3.5' />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent side='top' align='start' className='w-64 p-3 text-xs leading-relaxed'>
+                          {t`Untapped terms count as 'good' when you advance to the next text.`}
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   )
                 })()}
                 <Button
                   onClick={handleNext}
                   disabled={isAdvancing || isFinalizing || isGenerating || isRating}
-                  size='lg'
+                  size='xl'
+                  className='w-full sm:w-auto'
                 >
                   {isAdvancing ? (
                     <>
