@@ -1136,6 +1136,27 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
   basic-data + enrichment passes; Practice adds ongoing per-text generation cost
   on Opus).
 
+- **Drawer/dialog harmonization (2026-05-16).** Shared
+  `apps/web/src/components/ui/overlay-action-row.tsx` (`OverlayActionRow`,
+  default / destructive variants) replaces the locally-copied `ActionRow` in
+  `vocabulary-action-drawer`, `vocabulary-options-overlay`, and
+  `main-action-overlay`. The row blurs itself on click — silences the Chrome
+  "Blocked aria-hidden on an element because its descendant retained focus"
+  warning that triggered whenever an in-drawer button closed its host drawer.
+  Destructive confirmations now use a **two-drawer pattern**: an actions
+  drawer (rows of `OverlayActionRow`) → on tap, closes itself and opens a
+  sibling confirm drawer with `OverlayDescription` + `OverlayFooter` /
+  Cancel + Confirm pair (mirrors the End-session flow). Don't re-introduce
+  the inline confirmation block inside the actions drawer — see
+  `vocabulary-delete-confirm-drawer.tsx` as the canonical example. Every
+  `ResponsiveOverlay` should render an `OverlayDescription` (use
+  `className='sr-only'` when there's no user-facing copy) — Radix Dialog
+  otherwise logs a "Missing Description or aria-describedby={undefined}"
+  warning. Bottom-action buttons inside drawers/dialogs use `size='xl'`
+  (`h-12`) to match `Continue session` in the Practice language view; the
+  same `xl` size variant was added to `apps/web/src/components/ui/button.tsx`
+  in this pass.
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
