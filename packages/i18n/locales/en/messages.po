@@ -245,7 +245,7 @@ msgstr "{newCount} unseen"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:290
+#: apps/web/src/features/practice/components/practice-session-view.tsx:300
 msgid "{ratedCount} of {totalCount} rated"
 msgstr "{ratedCount} of {totalCount} rated"
 
@@ -490,7 +490,7 @@ msgstr "All"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:42
 #: apps/web/src/features/practice/components/practice-language-view.tsx:182
 #: apps/web/src/features/practice/components/practice-language-view.tsx:214
-#: apps/web/src/features/practice/components/practice-session-view.tsx:257
+#: apps/web/src/features/practice/components/practice-session-view.tsx:267
 msgid "All caught up"
 msgstr "All caught up"
 
@@ -567,11 +567,11 @@ msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:249
-#: apps/web/src/features/review/components/grammar-chips.tsx:74
+#: apps/web/src/features/review/components/grammar-chips.tsx:86
 msgid "Aspect"
 msgstr "Aspect"
 
-#: apps/web/src/features/review/components/grammar-chips.tsx:81
+#: apps/web/src/features/review/components/grammar-chips.tsx:93
 msgid "Aspect pair"
 msgstr "Aspect pair"
 
@@ -605,7 +605,7 @@ msgid "Back to Login"
 msgstr "Back to Login"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:137
-#: apps/web/src/features/practice/components/practice-session-view.tsx:261
+#: apps/web/src/features/practice/components/practice-session-view.tsx:271
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
 msgstr "Back to Practice"
@@ -1359,7 +1359,7 @@ msgid "Full exploration"
 msgstr "Full exploration"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:232
-#: apps/web/src/features/review/components/grammar-chips.tsx:67
+#: apps/web/src/features/review/components/grammar-chips.tsx:79
 msgid "Gender"
 msgstr "Gender"
 
@@ -1383,7 +1383,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:318
+#: apps/web/src/features/practice/components/practice-session-view.tsx:328
 #: apps/web/src/features/review/components/focus-view.tsx:283
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
 msgid "Generating…"
@@ -1429,7 +1429,7 @@ msgstr "Go to triage"
 msgid "Good"
 msgstr "Good"
 
-#: apps/web/src/features/review/components/grammar-chips.tsx:88
+#: apps/web/src/features/review/components/grammar-chips.tsx:100
 msgid "Government"
 msgstr "Government"
 
@@ -1486,7 +1486,7 @@ msgstr "Highlight saved. Add a note or chips next time without tap-to-translate.
 msgid "Home"
 msgstr "Home"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:298
+#: apps/web/src/features/practice/components/practice-session-view.tsx:308
 msgid "How rating works on Next"
 msgstr "How rating works on Next"
 
@@ -1791,7 +1791,7 @@ msgstr "New today"
 msgid "Next card"
 msgstr "Next card"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:323
+#: apps/web/src/features/practice/components/practice-session-view.tsx:333
 msgid "Next text"
 msgstr "Next text"
 
@@ -1945,6 +1945,7 @@ msgstr "Other"
 #~ msgstr "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:196
+#: apps/web/src/features/review/components/grammar-chips.tsx:72
 msgid "Part of speech"
 msgstr "Part of speech"
 
@@ -2054,7 +2055,7 @@ msgstr "Plural-only"
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:51
-#: apps/web/src/features/practice/components/practice-session-view.tsx:231
+#: apps/web/src/features/practice/components/practice-session-view.tsx:241
 #: apps/web/src/features/practice/components/practice-start-view.tsx:36
 msgid "Practice"
 msgstr "Practice"
@@ -2085,7 +2086,7 @@ msgstr "Practice with a text"
 msgid "Premium Features"
 msgstr "Premium Features"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:232
+#: apps/web/src/features/practice/components/practice-session-view.tsx:242
 #: apps/web/src/features/practice/components/practice-start-view.tsx:45
 msgid "Preparing the session…"
 msgstr "Preparing the session…"
@@ -2180,7 +2181,7 @@ msgstr "Quick gloss"
 msgid "Quick gloss failed"
 msgstr "Quick gloss failed"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:43
+#: apps/web/src/features/practice/components/rate-sheet.tsx:52
 msgid "Rate"
 msgstr "Rate"
 
@@ -2769,7 +2770,7 @@ msgstr "Unlock Premium"
 msgid "Unseen"
 msgstr "Unseen"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:304
+#: apps/web/src/features/practice/components/practice-session-view.tsx:314
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
@@ -2999,7 +3000,7 @@ msgstr "You used your free trial"
 msgid "You're all set"
 msgstr "You're all set"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:259
+#: apps/web/src/features/practice/components/practice-session-view.tsx:269
 msgid "You've reviewed every due term for this language. Come back later when more are ready."
 msgstr "You've reviewed every due term for this language. Come back later when more are ready."
 
