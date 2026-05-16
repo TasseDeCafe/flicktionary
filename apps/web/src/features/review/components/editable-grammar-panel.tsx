@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import {
   getEffectiveGrammarFields,
   getLanguageGrammarConfig,
@@ -26,8 +27,9 @@ type Props = {
   sourceSessionId?: string
 }
 
-// English splits IPA into GA / RP buckets driven by the user's dialect
-// preference; every other language writes a single `untagged` value.
+// English edits the GA / RP bucket driven by the user's dialect preference,
+// but display falls back to a shared Wiktionary `untagged` IPA when the
+// selected dialect bucket is empty.
 const ipaBucketKey = (lang: string | undefined, dialect: 'ga' | 'rp'): 'ga' | 'rp' | 'untagged' =>
   lang === 'en' ? dialect : 'untagged'
 
@@ -135,9 +137,8 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
   // display a stale empty object.
   const ipaBucket = ipaBucketKey(targetLanguage, englishIpaDialect)
   const displayedIpa = useMemo<string>(() => {
-    const bag = (grammar.ipa ?? {}) as Record<string, string | null | undefined>
-    return bag[ipaBucket] ?? ''
-  }, [grammar.ipa, ipaBucket])
+    return pickIpa(grammar.ipa, targetLanguage ?? '', englishIpaDialect) ?? ''
+  }, [grammar.ipa, targetLanguage, englishIpaDialect])
   const setIpa = (value: string) => {
     setGrammar((prev) => {
       const prevBag = (prev.ipa ?? {}) as Record<string, string | null | undefined>
@@ -146,7 +147,8 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
         if (typeof v === 'string' && v.trim().length > 0) nextBag[k] = v
       }
       const trimmed = value.trim()
-      if (trimmed.length === 0) delete nextBag[ipaBucket]
+      const bucketToEdit = targetLanguage === 'en' && !nextBag[ipaBucket] && nextBag.untagged ? 'untagged' : ipaBucket
+      if (trimmed.length === 0) delete nextBag[bucketToEdit]
       else nextBag[ipaBucket] = value
       const next: Grammar = { ...prev }
       if (Object.keys(nextBag).length === 0) {
