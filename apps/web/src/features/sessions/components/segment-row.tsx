@@ -67,7 +67,9 @@ export const SegmentRow = ({ id, text, startMs, ranges, flash }: Props) => {
 
   return (
     <div className={'flex items-start gap-3 py-1 transition-colors duration-700' + (flash ? ' bg-yellow-100' : '')}>
-      <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
+      {ts && (
+        <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
+      )}
       <span data-segment-id={id} className='flex-1'>
         {spans.map((part, idx) =>
           part.highlightId ? (

@@ -24,12 +24,17 @@ export type PlainSelection = {
   // exact source surface and pass surrounding context to the gloss prompt.
   charStart: number
   charEnd: number
+  // Snapshot of the selection's bounding box so the floating sheet can anchor
+  // on desktop after the browser selection clears.
+  rect: DOMRect
 }
 
 interface AnnotatedTextProps {
   body: string
   annotations: AnnotationInput[]
-  onAnnotationClick: (index: number) => void
+  // Element ref lets the parent anchor a floating sheet to the exact span
+  // the user tapped (desktop popover positioning).
+  onAnnotationClick: (index: number, element: HTMLElement) => void
   // Optional selection handler. When provided, mouseup/touchend on the body
   // computes the selected range; if it falls entirely inside plain text (no
   // annotation overlap), the parent gets the selection and can open a sheet.
@@ -129,7 +134,7 @@ export const AnnotatedText = ({ body, annotations, onAnnotationClick, onPlainSel
 
       const text = body.slice(charStart, charEnd).trim()
       if (text.length === 0) return
-      onPlainSelection({ text, charStart, charEnd })
+      onPlainSelection({ text, charStart, charEnd, rect: range.getBoundingClientRect() })
       // Mirror session-view: drop the browser selection once we've captured
       // it so the underlying paint doesn't linger behind the sheet.
       selection.removeAllRanges()
@@ -158,7 +163,7 @@ export const AnnotatedText = ({ body, annotations, onAnnotationClick, onPlainSel
             type='button'
             data-kind='annotation'
             data-offset={ann.charStart}
-            onClick={() => onAnnotationClick(ann.index)}
+            onClick={(e) => onAnnotationClick(ann.index, e.currentTarget)}
             className={cn(
               'cursor-pointer rounded-sm px-0.5 transition-colors',
               ann.deleted

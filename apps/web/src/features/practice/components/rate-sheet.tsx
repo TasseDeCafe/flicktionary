@@ -1,14 +1,17 @@
+import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { MoreVertical, RotateCcw } from 'lucide-react'
+import { MoreVertical, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import {
-  ResponsiveOverlay,
-  OverlayContent,
-  OverlayHeader,
-  OverlayTitle,
-  OverlayDescription,
-  OverlayFooter,
-} from '@/components/ui/responsive-overlay'
+  FloatingSheet,
+  FloatingSheetContent,
+  FloatingSheetDescription,
+  FloatingSheetFooter,
+  FloatingSheetHeader,
+  FloatingSheetTitle,
+  type FloatingSheetAnchor,
+} from '@/components/ui/floating-sheet'
 import { Button } from '@/components/ui/button'
+import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -40,20 +43,27 @@ export type RateSheetChunkContent = {
   isDeleted: boolean
 }
 
+type Mode = 'rate' | 'actions'
+
 interface RateSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   chunk: RateSheetChunkContent | null
+  // Element or rect the floating sheet should anchor to on desktop. Mobile
+  // ignores this and slides up from the bottom.
+  anchor: FloatingSheetAnchor
   // Previously-submitted rating for this chunk in the current text, if any.
   // Highlights that button instead of the default 'good' so the user sees
   // what they last picked when re-opening a chunk.
   currentRating?: RateValue | null
   isSubmitting?: boolean
   onSubmit: (rating: RateValue) => void
-  // Wires the 3-dots overflow button in the header. The parent owns the
-  // actions sheet because navigation + delete confirm + restore-toast all
-  // live there.
-  onMoreOptions?: () => void
+  // Actions-mode handlers — the 3-dots overflow swaps the sheet contents to
+  // an action list rather than opening a sibling popover, so the bottom-drawer
+  // visual position stays put on mobile.
+  canEdit: boolean
+  onEdit: () => void
+  onDelete: () => void
   // Restore is only meaningful when isDeleted=true; the parent fires the
   // mutation and re-fetches.
   onRestore?: () => void
@@ -64,32 +74,40 @@ export const RateSheet = ({
   open,
   onOpenChange,
   chunk,
+  anchor,
   currentRating,
   isSubmitting,
   onSubmit,
-  onMoreOptions,
+  canEdit,
+  onEdit,
+  onDelete,
   onRestore,
   isRestoring,
 }: RateSheetProps) => {
   const { t } = useLingui()
+  const [mode, setMode] = useState<Mode>('rate')
+
+  // Reset to rate-mode whenever the sheet closes, so the next open is fresh.
+  useEffect(() => {
+    if (!open) setMode('rate')
+  }, [open])
+
   // Translation wins for the description slot; definition is the L1=L2 fallback.
   const description = chunk?.translation || chunk?.definition || null
   const titleText = chunk?.displayForm || chunk?.headword || t`Rate`
-  const showOverflow = !!onMoreOptions && !!chunk && !chunk.isDeleted
+  const showOverflow = !!chunk && !chunk.isDeleted && mode === 'rate'
 
   return (
-    <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
-      {/* showCloseButton=false on desktop so the dialog's built-in X doesn't
-          collide with our 3-dots overflow. Esc + click-outside still dismiss. */}
-      <OverlayContent showCloseButton={false}>
-        <OverlayHeader>
+    <FloatingSheet open={open} onOpenChange={onOpenChange} anchor={anchor}>
+      <FloatingSheetContent>
+        <FloatingSheetHeader className={mode === 'actions' ? 'text-center md:text-left' : undefined}>
           <div className='relative'>
-            <div className='flex flex-col gap-1'>
-              <OverlayTitle>
+            <div className={`flex flex-col gap-1 ${showOverflow ? 'pr-10' : ''}`}>
+              <FloatingSheetTitle>
                 <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
-              </OverlayTitle>
-              {chunk?.ipa && <div className='text-muted-foreground text-sm'>{chunk.ipa}</div>}
-              {description && <OverlayDescription>{description}</OverlayDescription>}
+              </FloatingSheetTitle>
+              {mode === 'rate' && chunk?.ipa && <div className='text-muted-foreground text-sm'>{chunk.ipa}</div>}
+              {mode === 'rate' && description && <FloatingSheetDescription>{description}</FloatingSheetDescription>}
             </div>
             {showOverflow && (
               <Button
@@ -97,21 +115,22 @@ export const RateSheet = ({
                 variant='ghost'
                 size='icon-sm'
                 aria-label={t`More options`}
-                onClick={onMoreOptions}
+                onClick={() => setMode('actions')}
                 className='absolute top-0 right-0'
               >
                 <MoreVertical className='h-5 w-5' />
               </Button>
             )}
           </div>
-          {chunk?.grammar && !chunk.isDeleted && (
-            <div className='mt-2 flex justify-center sm:justify-start'>
+          {mode === 'rate' && chunk?.grammar && !chunk.isDeleted && (
+            <div className='mt-2 flex justify-start'>
               <GrammarChips grammar={chunk.grammar} targetLanguage={chunk.targetLanguage} />
             </div>
           )}
-        </OverlayHeader>
-        {chunk?.targetExample && !chunk.isDeleted && (
-          <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
+        </FloatingSheetHeader>
+
+        {mode === 'rate' && chunk?.targetExample && !chunk.isDeleted && (
+          <div className='flex flex-col gap-3 px-2 pb-2 text-sm'>
             <p className='border-l-2 border-yellow-300 pl-3 italic'>
               {chunk.targetExample}
               {chunk.nativeExample && (
@@ -120,22 +139,44 @@ export const RateSheet = ({
             </p>
           </div>
         )}
-        {chunk?.isDeleted && (
-          <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
+        {mode === 'rate' && chunk?.isDeleted && (
+          <div className='flex flex-col gap-3 px-2 pb-2 text-sm'>
             <p className='text-muted-foreground'>{t`This term is removed from your vocabulary. Restore it to keep practicing.`}</p>
           </div>
         )}
-        <OverlayFooter>
-          {chunk?.isDeleted ? (
-            <Button type='button' size='xl' disabled={isRestoring || !onRestore} onClick={() => onRestore?.()}>
-              <RotateCcw className='mr-1 h-4 w-4' />
-              {isRestoring ? t`Restoring…` : t`Restore`}
-            </Button>
-          ) : (
-            <RateButtons value={currentRating ?? undefined} disabled={isSubmitting || !chunk} onSelect={onSubmit} />
-          )}
-        </OverlayFooter>
-      </OverlayContent>
-    </ResponsiveOverlay>
+
+        {mode === 'actions' && (
+          <div className='flex flex-col gap-1 px-2 pb-2'>
+            <OverlayActionRow
+              icon={Pencil}
+              label={t`Edit term`}
+              description={t`Open the focus view to edit fields, chat, or generate full exploration.`}
+              disabled={!canEdit}
+              onClick={onEdit}
+            />
+            <OverlayActionRow
+              icon={Trash2}
+              label={t`Delete from vocabulary`}
+              description={t`Hide this term from Practice and Vocabulary. You can restore it later.`}
+              variant='destructive'
+              onClick={onDelete}
+            />
+          </div>
+        )}
+
+        {mode === 'rate' && (
+          <FloatingSheetFooter>
+            {chunk?.isDeleted ? (
+              <Button type='button' size='xl' disabled={isRestoring || !onRestore} onClick={() => onRestore?.()}>
+                <RotateCcw className='mr-1 h-4 w-4' />
+                {isRestoring ? t`Restoring…` : t`Restore`}
+              </Button>
+            ) : (
+              <RateButtons value={currentRating ?? undefined} disabled={isSubmitting || !chunk} onSelect={onSubmit} />
+            )}
+          </FloatingSheetFooter>
+        )}
+      </FloatingSheetContent>
+    </FloatingSheet>
   )
 }

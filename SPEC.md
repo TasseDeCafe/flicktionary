@@ -51,9 +51,8 @@ Three source kinds in the MVP, all feeding the same `text_segment` table.
 
 - No in-movie sync. The app is for triage and lookup, not playback.
 - The mid-source screen is a search bar over the track plus a scrollable list of segments. Movie segments show a timestamp; text segments don't. That is the entire mid-source UI.
-- Selecting text in a line — single line or contiguous multi-line — creates a `highlight`. Default behaviour: silent. No inline translation, no inline gloss.
-- Optional **tap-to-translate** setting (off by default). When on, a selection opens a sheet with a fast one-line gloss + POS + register tag. Result cached on the highlight; re-tapping is instant.
-- Highlight sheet has: selection text, optional free-text note, preset chips (`Explain`, `3 examples`, `Synonyms`, `Etymology`, `Why this form?`). The note and tags are passed to the LLM at processing time.
+- Selecting text in a line — single line or contiguous multi-line — creates a `highlight` eagerly and opens a small **floating gloss sheet** anchored to the selection (desktop popover; mobile bottom drawer with a transparent overlay so the source line stays visible). The sheet fetches a fast one-line gloss + POS + register tag, caches the result on the highlight, and a re-tap on the same span is instant. There is no backdrop tint and no separate tap-to-translate opt-out (the old setting was retired when the sheet became unobtrusive enough to be always-on).
+- The floating sheet bundles every action that used to live in a second-tap menu: optional free-text note, preset chips (`Explain`, `3 examples`, `Synonyms`, `Etymology`, `Why this form?`), and a `Remove highlight` button. On mobile the sheet drags up to a full-height snap that reveals the note editor; on desktop the same fields live behind an accordion chevron in the header. The note and tags are passed to the LLM at processing time.
 
 ### Processing pipeline
 
@@ -268,7 +267,7 @@ Native-style shell so the eventual React Native port is a translation, not a red
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify. Synthetic adhoc sessions (the per-(user, language) "Personal vocabulary" pseudo-sessions backing the Add-a-word flow) are filtered out at the query layer — they never appear under any chip. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, processing poller, new-session wizard, and the `More` sub-pages (Account, Languages). Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
-- **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus inline `Switch` rows for tap-to-translate and `LLM-suggested terms`.
+- **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus an inline `Switch` row for `LLM-suggested terms`.
 
 ### Cross-source dedup
 
@@ -308,7 +307,6 @@ target_language, headword, sense)` increments `count` rather than
 
 - Native language (single).
 - CEFR level per `target_language`. Asked once when starting a session in a new target language.
-- Tap-to-translate toggle (default off).
 - LLM-suggested chunks toggle (default on). When off, the basic-data pass
   emits cards only for the user's manual highlights — no LLM chunk discovery.
   The Process button is disabled when this pref is off and the user has zero

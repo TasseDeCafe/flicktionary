@@ -1,23 +1,10 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import {
-  AlertOctagon,
-  Languages,
-  LifeBuoy,
-  LogOut,
-  MousePointerClick,
-  Sparkles,
-  UserCircle,
-  Wrench,
-} from 'lucide-react'
+import { AlertOctagon, Languages, LifeBuoy, LogOut, Sparkles, UserCircle, Wrench } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { useAuthStore } from '@/stores/auth-store'
-import {
-  useGetUserPrefs,
-  useSetLlmHighlightsEnabled,
-  useSetTapToTranslateEnabled,
-} from '@/features/sessions/api/sessions-hooks'
+import { useGetUserPrefs, useSetLlmHighlightsEnabled } from '@/features/sessions/api/sessions-hooks'
 import { PracticeSessionLimitsSetting } from '@/features/settings/components/practice-session-limits-setting'
 import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-settings'
 import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/danger-zone'
@@ -31,7 +18,6 @@ export const MoreTabView = () => {
   const signOut = useAuthStore((state) => state.signOut)
 
   const { data: prefs } = useGetUserPrefs()
-  const { mutate: setTapToTranslate, isPending: isSavingTap } = useSetTapToTranslateEnabled()
   const { mutate: setLlmHighlights, isPending: isSavingLlm } = useSetLlmHighlightsEnabled()
 
   const handleSignOut = async () => {
@@ -68,19 +54,6 @@ export const MoreTabView = () => {
           label={t`Languages`}
           description={t`Native language and CEFR levels`}
           onPress={() => navigate({ to: '/more/languages' })}
-        />
-        <MoreListRow
-          icon={MousePointerClick}
-          label={t`Tap-to-translate`}
-          description={t`Fast gloss when you select text mid-watch`}
-          trailing={
-            <Switch
-              checked={prefs?.tapToTranslateEnabled ?? false}
-              disabled={isSavingTap || !prefs}
-              onCheckedChange={(checked) => setTapToTranslate({ enabled: checked })}
-              aria-label={t`Tap-to-translate`}
-            />
-          }
         />
         <MoreListRow
           icon={Sparkles}

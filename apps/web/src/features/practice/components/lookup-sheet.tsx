@@ -6,13 +6,14 @@ import { Bookmark, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  OverlayContent,
-  OverlayDescription,
-  OverlayFooter,
-  OverlayHeader,
-  OverlayTitle,
-  ResponsiveOverlay,
-} from '@/components/ui/responsive-overlay'
+  FloatingSheet,
+  FloatingSheetBody,
+  FloatingSheetContent,
+  FloatingSheetDescription,
+  FloatingSheetFooter,
+  FloatingSheetHeader,
+  FloatingSheetTitle,
+} from '@/components/ui/floating-sheet'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
 import { useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
@@ -144,33 +145,31 @@ export const LookupSheet = ({
 
   return (
     <>
-      <ResponsiveOverlay
+      <FloatingSheet
         open={open}
         onOpenChange={(next) => {
           if (!next) onClose()
         }}
+        anchor={selection?.rect ?? null}
       >
-        {/* outline-none suppresses Safari's focus ring on the drawer content,
-            which gets re-focused when Vaul re-measures after the loading→ready
-            content-height jump. */}
-        <OverlayContent className='outline-none focus-visible:outline-none'>
-          <OverlayHeader>
-            <div className='flex flex-col gap-1'>
-              <OverlayTitle>{selection?.text ?? t`Lookup`}</OverlayTitle>
-              {state.kind === 'ready' && <OverlayDescription>{state.gloss}</OverlayDescription>}
-              {state.kind !== 'ready' && (
-                <OverlayDescription className='sr-only'>{t`Translation lookup and save action for the selected text.`}</OverlayDescription>
-              )}
-            </div>
+        <FloatingSheetContent>
+          <FloatingSheetHeader>
+            <FloatingSheetTitle>{selection?.text ?? t`Lookup`}</FloatingSheetTitle>
+            {state.kind === 'ready' && <FloatingSheetDescription>{state.gloss}</FloatingSheetDescription>}
+            {state.kind !== 'ready' && (
+              <FloatingSheetDescription className='sr-only'>
+                {t`Translation lookup and save action for the selected text.`}
+              </FloatingSheetDescription>
+            )}
             {state.kind === 'ready' && (state.pos || state.register) && (
-              <div className='mt-2 flex flex-wrap justify-center gap-1.5 sm:justify-start'>
+              <div className='mt-2 flex flex-wrap gap-1.5'>
                 {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
                 {state.register && <Badge variant='secondary'>{state.register}</Badge>}
               </div>
             )}
-          </OverlayHeader>
+          </FloatingSheetHeader>
           {(state.kind === 'loading' || state.kind === 'error') && (
-            <div className='flex flex-col gap-3 px-4 pb-2 text-sm'>
+            <FloatingSheetBody>
               {state.kind === 'loading' && (
                 <p className='text-muted-foreground flex items-center gap-2'>
                   <Loader2 className='h-4 w-4 animate-spin' />
@@ -180,19 +179,16 @@ export const LookupSheet = ({
               {state.kind === 'error' && (
                 <p className='text-destructive text-sm'>{t`Could not fetch a translation right now.`}</p>
               )}
-            </div>
+            </FloatingSheetBody>
           )}
-          <OverlayFooter>
-            <Button type='button' variant='outline' size='xl' onClick={onClose} disabled={isCreating || isSettingCefr}>
-              {t`Close`}
-            </Button>
+          <FloatingSheetFooter>
             <Button type='button' size='xl' onClick={handleSave} disabled={isCreating || isSettingCefr || !selection}>
               <Bookmark className='mr-1 h-4 w-4' />
               {isCreating || isSettingCefr ? t`Generating…` : t`Save to vocabulary`}
             </Button>
-          </OverlayFooter>
-        </OverlayContent>
-      </ResponsiveOverlay>
+          </FloatingSheetFooter>
+        </FloatingSheetContent>
+      </FloatingSheet>
 
       {showCefrDialog && (
         <CefrPromptDialog

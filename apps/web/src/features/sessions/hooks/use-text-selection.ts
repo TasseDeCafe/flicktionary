@@ -6,6 +6,10 @@ export type SelectionResult = {
   startOffset: number
   endOffset: number
   selectionText: string
+  // Snapshot of the selection's bounding box at the moment selection finished.
+  // The floating sheet uses this to anchor itself on desktop; we capture here
+  // because window.getSelection() clears once the sheet steals focus.
+  rect: DOMRect
 }
 
 const isSegmentMarker = (el: HTMLElement) => !!el.dataset.segmentId
@@ -37,5 +41,6 @@ export const readCurrentSelection = (): SelectionResult | null => {
     startOffset,
     endOffset,
     selectionText: text,
+    rect: range.getBoundingClientRect(),
   }
 }
