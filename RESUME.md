@@ -1234,6 +1234,40 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
   (`h-12`) to match `Continue session` in the Practice language view; the
   same `xl` size variant was added to `apps/web/src/components/ui/button.tsx`
   in this pass.
+- **FloatingSheet a11y + close-animation polish (2026-05-18).** Three
+  fixes in `apps/web/src/components/ui/floating-sheet.tsx`: desktop
+  popover now carries `px-2` on `PopoverPrimitive.Content` so content
+  no longer sits flush against the border (mobile already had this
+  breathing room via the outer drawer wrapper); `FloatingSheet` runs a
+  `useLayoutEffect` that blurs `document.activeElement` on open so
+  Radix/vaul can safely aria-hide the page without retaining focus on
+  the trigger button (same warning the `ResponsiveOverlay` action rows
+  side-step via per-row blur); `FloatingSheetContent` passes
+  `aria-describedby={undefined}` on `DrawerPrimitive.Content` as
+  Radix's documented escape hatch for the missing-Description warning.
+  Don't re-introduce a per-caller sr-only description fallback — the
+  opt-out covers every caller. Practice rate-sheet
+  (`apps/web/src/features/practice/components/practice-session-view.tsx`)
+  also decouples `sheetOpen` from `openIndex` so vaul's close
+  animation finishes with the chunk content still mounted; previously
+  clearing `openIndex` on close made `openChunk` recompute to `null`
+  and the sheet rendered one frame with an empty `Rate` header +
+  disabled buttons. Close paths (`onOpenChange`, rate success, edit,
+  delete-request, restore) now flip `sheetOpen` only; `openIndex`
+  clears solely on text change.
+- **Session-view chrome polish (2026-05-18).** Process-button footer
+  (`apps/web/src/features/sessions/components/process-button.tsx`)
+  stacks on mobile (`flex flex-col gap-2 sm:flex-row …`) with
+  `w-full sm:w-auto` on the button and `size='xl'`, mirroring the
+  Practice `Next text` footer. Text-session rows no longer reserve the
+  4rem timestamp column — `segment-row.tsx` only renders the timestamp
+  span when `formatTimestamp(startMs)` returns a non-empty string, so
+  paragraphs in pasted-text sessions occupy the full row width. Session
+  gloss sheet (`session-gloss-sheet.tsx`) collapses the prior diagonal
+  staircase (Save top-right inside expanded, Remove bottom-left in
+  footer) into a single `justify-between` row inside
+  `FloatingSheetFooter`: Remove always visible, Save conditional on
+  `expanded`.
 
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 

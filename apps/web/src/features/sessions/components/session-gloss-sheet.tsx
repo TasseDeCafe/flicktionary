@@ -355,29 +355,32 @@ export const SessionGlossSheet = ({
               </button>
             ))}
           </div>
-          <Button
-            type='button'
-            size='sm'
-            disabled={isSavingNote || !highlightId}
-            onClick={handleSaveNote}
-            className='self-end'
-          >
-            {isSavingNote ? t`Saving…` : t`Save note`}
-          </Button>
         </FloatingSheetExpanded>
 
         <FloatingSheetFooter>
-          <Button
-            type='button'
-            variant='ghost'
-            size='sm'
-            disabled={isDeleting || !highlightId}
-            onClick={handleRemove}
-            className='text-destructive hover:bg-destructive/10 self-start'
-          >
-            <Trash2 className='mr-1 h-4 w-4' />
-            {isDeleting ? t`Removing…` : t`Remove highlight`}
-          </Button>
+          <div className='flex items-center justify-between gap-2'>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              disabled={isDeleting || !highlightId}
+              onClick={handleRemove}
+              className='text-destructive hover:bg-destructive/10'
+            >
+              <Trash2 className='mr-1 h-4 w-4' />
+              {isDeleting ? t`Removing…` : t`Remove highlight`}
+            </Button>
+            {expanded && (
+              <Button
+                type='button'
+                size='sm'
+                disabled={isSavingNote || !highlightId}
+                onClick={handleSaveNote}
+              >
+                {isSavingNote ? t`Saving…` : t`Save note`}
+              </Button>
+            )}
+          </div>
         </FloatingSheetFooter>
       </FloatingSheetContent>
     </FloatingSheet>

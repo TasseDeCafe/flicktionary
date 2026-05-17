@@ -83,9 +83,14 @@ export const ProcessButton = ({
 
   return (
     <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
-      <div className='mx-auto flex max-w-4xl items-center justify-between gap-3'>
+      <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
         <span className='text-muted-foreground text-sm'>{hint}</span>
-        <Button disabled={(!canTrigger && !isReprocessNothingNew) || isPending} onClick={handleClick}>
+        <Button
+          size='xl'
+          disabled={(!canTrigger && !isReprocessNothingNew) || isPending}
+          onClick={handleClick}
+          className='w-full sm:w-auto'
+        >
           {label}
         </Button>
       </div>

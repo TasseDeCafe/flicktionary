@@ -62,6 +62,17 @@ export const FloatingSheet = ({
     if (!open && expandedProp === undefined) setLocalExpanded(false)
   }, [open, expandedProp])
 
+  // Blur the trigger element on open so Radix/vaul can safely aria-hide the
+  // page content without retaining focus on a now-hidden ancestor. The drawer
+  // / popover then auto-focuses its own content as usual. useLayoutEffect runs
+  // before vaul's aria-hide effects in the bottom-up effect order.
+  React.useLayoutEffect(() => {
+    if (!open) return
+    if (typeof document === 'undefined') return
+    const active = document.activeElement
+    if (active instanceof HTMLElement && active !== document.body) active.blur()
+  }, [open])
+
   const closeSheet = React.useCallback(() => onOpenChange(false), [onOpenChange])
 
   if (isMobile === undefined) return null
@@ -137,6 +148,11 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
             dismiss intents, but it never tints the source content. */}
         <DrawerPrimitive.Overlay className='fixed inset-0 z-40 bg-transparent' />
         <DrawerPrimitive.Content
+          // Radix-Dialog (vaul wraps it) warns when no <Description> child is
+          // rendered. Our floating sheets typically display the relevant info
+          // visibly in the header / body; passing `aria-describedby={undefined}`
+          // is the documented Radix escape hatch to opt out of the requirement.
+          aria-describedby={undefined}
           className={cn(
             'group/floating-sheet bg-background fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-lg border-t shadow-xl outline-none',
             expandable ? 'max-h-[96vh]' : 'max-h-[85vh]',
@@ -160,7 +176,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
         sideOffset={6}
         collisionPadding={12}
         className={cn(
-          'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 w-80 origin-(--radix-popover-content-transform-origin) rounded-md border p-0 shadow-xl outline-hidden',
+          'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 w-80 origin-(--radix-popover-content-transform-origin) rounded-md border px-2 py-0 shadow-xl outline-hidden',
           className
         )}
       >

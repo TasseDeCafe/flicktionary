@@ -72,6 +72,11 @@ export const PracticeSessionView = () => {
   // previous rating when the user re-opens a chunk.
   const [ratings, setRatings] = useState<Map<number, RateValue>>(new Map())
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // Separate visibility flag so vaul's close animation can finish with the
+  // chunk content still mounted. Clearing `openIndex` on close used to flash
+  // an empty "Rate" header for one frame before unmount. `openIndex` now only
+  // clears on text change; close paths just flip `sheetOpen`.
+  const [sheetOpen, setSheetOpen] = useState(false)
   // DOM anchor for the floating RateSheet — set when the user taps an
   // annotation. Snapshotted so the popover doesn't jump if the annotation
   // re-renders.
@@ -128,6 +133,7 @@ export const PracticeSessionView = () => {
   useEffect(() => {
     setRatings(new Map())
     setOpenIndex(null)
+    setSheetOpen(false)
     setRateAnchor(null)
     setDeleteConfirmOpen(false)
     setPendingDeleteIndex(null)
@@ -181,9 +187,9 @@ export const PracticeSessionView = () => {
     }
   }, [openIndex, currentText, targetLanguage, userPrefs?.englishIpaDialect])
 
-  // Annotation the delete-confirm sheet is operating on. We track it through
-  // `pendingDeleteIndex` because the rate sheet closes the moment delete is
-  // requested, so `openIndex` is already null by the time the confirm opens.
+  // Annotation the delete-confirm sheet is operating on. Snapshotted because
+  // the user may open a different chunk before confirming, which would shift
+  // `openIndex` to a different target.
   const pendingDeleteAnnotation = useMemo(() => {
     if (pendingDeleteIndex == null || !currentText) return null
     return currentText.annotations[pendingDeleteIndex] ?? null
@@ -199,6 +205,7 @@ export const PracticeSessionView = () => {
   const handleAnnotationClick = (index: number, element: HTMLElement) => {
     setRateAnchor(element)
     setOpenIndex(index)
+    setSheetOpen(true)
   }
 
   const handleRate = (rating: RateValue) => {
@@ -219,7 +226,7 @@ export const PracticeSessionView = () => {
             next.set(openIndex, rating)
             return next
           })
-          setOpenIndex(null)
+          setSheetOpen(false)
         },
       }
     )
@@ -229,7 +236,7 @@ export const PracticeSessionView = () => {
     if (!openAnnotation || !openAnnotation.cardId || !openAnnotation.cardSessionId) return
     const sessionId = openAnnotation.cardSessionId
     const cardId = openAnnotation.cardId
-    setOpenIndex(null)
+    setSheetOpen(false)
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId, cardId },
@@ -239,10 +246,8 @@ export const PracticeSessionView = () => {
 
   const handleDeleteRequest = () => {
     if (openIndex == null) return
-    // Hand off the target to the confirm sheet before tearing down the rate
-    // sheet — once openIndex flips, openAnnotation goes null.
     setPendingDeleteIndex(openIndex)
-    setOpenIndex(null)
+    setSheetOpen(false)
     setDeleteConfirmOpen(true)
   }
 
@@ -278,7 +283,7 @@ export const PracticeSessionView = () => {
       { id: ann.userLookupId },
       {
         onSuccess: () => {
-          setOpenIndex(null)
+          setSheetOpen(false)
         },
       }
     )
@@ -444,12 +449,12 @@ export const PracticeSessionView = () => {
       )}
 
       <RateSheet
-        open={openIndex !== null}
+        open={sheetOpen}
         onOpenChange={(open) => {
-          // Keep rateAnchor in state across the close animation so the popover
-          // doesn't briefly flash at (0,0) on dismiss. New anchor overwrites it
-          // on next open.
-          if (!open) setOpenIndex(null)
+          // Keep rateAnchor + openIndex in state across the close animation so
+          // the popover doesn't briefly flash at (0,0) or render an empty
+          // header on dismiss. Both overwrite on the next open.
+          setSheetOpen(open)
         }}
         chunk={openChunk}
         anchor={rateAnchor}
