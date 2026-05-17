@@ -84,7 +84,7 @@ export const RateSheet = ({
       <OverlayContent showCloseButton={false}>
         <OverlayHeader>
           <div className='relative'>
-            <div className='flex flex-col gap-1'>
+            <div className={`flex flex-col gap-1 ${showOverflow ? 'pr-10' : ''}`}>
               <OverlayTitle>
                 <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
               </OverlayTitle>
