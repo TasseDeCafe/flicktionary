@@ -371,12 +371,7 @@ export const SessionGlossSheet = ({
               {isDeleting ? t`Removing…` : t`Remove highlight`}
             </Button>
             {expanded && (
-              <Button
-                type='button'
-                size='sm'
-                disabled={isSavingNote || !highlightId}
-                onClick={handleSaveNote}
-              >
+              <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
                 {isSavingNote ? t`Saving…` : t`Save note`}
               </Button>
             )}
