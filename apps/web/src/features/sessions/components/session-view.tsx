@@ -4,32 +4,21 @@ import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ListChecks } from 'lucide-react'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import type { FloatingSheetAnchor } from '@/components/ui/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   useGetStudySession,
-  useGetUserPrefs,
   useListSegmentsByTrack,
   useSearchSegments,
   useListHighlightsBySession,
-  useCreateHighlight,
-  useDeleteHighlight,
 } from '../api/sessions-hooks'
 import { useListCardsBySession } from '@/features/review/api/review-hooks'
 import { readCurrentSelection, SelectionResult } from '../hooks/use-text-selection'
 import { buildSegmentRanges } from '../utils/build-segment-ranges'
 import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
-import { HighlightSheet } from './highlight-sheet'
-import { TapToTranslateSheet } from './tap-to-translate-sheet'
-import { HighlightActionMenu } from './highlight-action-menu'
+import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { ProcessButton } from './process-button'
-
-type Highlight = {
-  id: string
-  selectionText: string
-  note: string | null
-  presetTags: string[]
-}
 
 export const SessionView = () => {
   const { t } = useLingui()
@@ -49,9 +38,6 @@ export const SessionView = () => {
   const { data: searchSegments } = useSearchSegments(trackId, debouncedSearch, isSearching)
   const visibleSegments = isSearching ? (searchSegments ?? []) : (allSegments ?? [])
 
-  const { data: prefs } = useGetUserPrefs()
-  const tapToTranslateEnabled = prefs?.tapToTranslateEnabled ?? false
-
   const { data: highlights } = useListHighlightsBySession(sessionId)
   const { data: cards } = useListCardsBySession(sessionId)
   const rangesBySegmentId = useMemo(
@@ -64,20 +50,17 @@ export const SessionView = () => {
     return highlights.reduce((n, h) => (processed.has(h.id) ? n : n + 1), 0)
   }, [highlights, cards])
 
-  const { mutate: createHighlight } = useCreateHighlight(sessionId)
-  const { mutate: deleteHighlight } = useDeleteHighlight(sessionId)
-
+  // The floating sheet has one mode at a time. `selection` is a fresh
+  // mouseup/touchend that hasn't been persisted yet; `existingHighlightId`
+  // points to an already-saved row the user just tapped.
+  const [glossOpen, setGlossOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<SelectionResult | null>(null)
-  const [editingHighlight, setEditingHighlight] = useState<Highlight | null>(null)
-  const [tapToTranslateOpen, setTapToTranslateOpen] = useState(false)
+  const [existingHighlightId, setExistingHighlightId] = useState<string | null>(null)
+  const [anchor, setAnchor] = useState<FloatingSheetAnchor>(null)
 
-  // Action menu state for clicks on existing highlights.
-  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null)
-  const [menuHighlightId, setMenuHighlightId] = useState<string | null>(null)
-
-  // Guards against the click event that follows mouseup-with-selection from
-  // re-opening the action menu when the selection happened to land on an
-  // existing highlight span.
+  // Suppress the click that immediately follows a finished selection — without
+  // this, releasing inside an existing highlight reopens the sheet for the wrong
+  // target right after we set the pending selection.
   const lastSelectionAtRef = useRef(0)
 
   useEffect(() => {
@@ -87,8 +70,6 @@ export const SessionView = () => {
     }
   }, [session?.status, sessionId, navigate])
 
-  // Deep-link scroll + 1.5s flash. Wait one rAF for the segment list to render,
-  // then locate the row by data-segment-id and scroll it into view.
   useEffect(() => {
     if (!targetSegmentId) return
     if (!allSegments || allSegments.length === 0) return
@@ -108,31 +89,21 @@ export const SessionView = () => {
     }
   }, [targetSegmentId, allSegments])
 
-  // Selection finished → either gloss it (tap-to-translate) or auto-create a
-  // bare highlight. The action menu opens on click of an existing highlight,
-  // not from selection.
+  // Selection finished → open the floating gloss sheet. Lifecycle is eager:
+  // the sheet itself creates the highlight row if the selection doesn't match
+  // an existing one. The tap-to-translate user pref was removed in favor of
+  // this always-on (but non-modal) sheet.
   useEffect(() => {
     const handleEnd = () => {
       setTimeout(() => {
         const sel = readCurrentSelection()
         if (!sel) return
         lastSelectionAtRef.current = Date.now()
-        if (tapToTranslateEnabled) {
-          if (tapToTranslateOpen) return
-          setPendingSelection(sel)
-          setTapToTranslateOpen(true)
-        } else {
-          createHighlight({
-            sessionId,
-            startSegmentId: sel.startSegmentId,
-            endSegmentId: sel.endSegmentId,
-            startOffset: sel.startOffset,
-            endOffset: sel.endOffset,
-            selectionText: sel.selectionText,
-            note: null,
-            presetTags: [],
-          })
-        }
+        if (glossOpen) return
+        setExistingHighlightId(null)
+        setPendingSelection(sel)
+        setAnchor(sel.rect)
+        setGlossOpen(true)
         window.getSelection()?.removeAllRanges()
       }, 30)
     }
@@ -142,7 +113,7 @@ export const SessionView = () => {
       document.removeEventListener('mouseup', handleEnd)
       document.removeEventListener('touchend', handleEnd)
     }
-  }, [tapToTranslateEnabled, tapToTranslateOpen, createHighlight, sessionId])
+  }, [glossOpen])
 
   const isProcessedOrExported = session?.status === 'processed' || session?.status === 'exported'
 
@@ -151,36 +122,24 @@ export const SessionView = () => {
     if (Date.now() - lastSelectionAtRef.current < 250) return
     const target = e.target instanceof Element ? e.target.closest('[data-highlight-id]') : null
     if (!(target instanceof HTMLElement) || !target.dataset.highlightId) return
-    setMenuAnchorEl(target)
-    setMenuHighlightId(target.dataset.highlightId)
+    setPendingSelection(null)
+    setExistingHighlightId(target.dataset.highlightId)
+    setAnchor(target)
+    setGlossOpen(true)
   }
 
-  const closeMenu = () => {
-    setMenuAnchorEl(null)
-    setMenuHighlightId(null)
-  }
-
-  const menuHighlight = useMemo(() => {
-    if (!menuHighlightId) return null
-    return highlights?.find((h) => h.id === menuHighlightId) ?? null
-  }, [menuHighlightId, highlights])
-
-  const handleEditNote = () => {
-    if (!menuHighlight) return
-    setEditingHighlight({
-      id: menuHighlight.id,
-      selectionText: menuHighlight.selectionText,
-      note: menuHighlight.note,
-      presetTags: menuHighlight.presetTags,
-    })
-    closeMenu()
-  }
-
-  const handleRemove = () => {
-    if (!menuHighlightId) return
-    deleteHighlight({ sessionId, highlightId: menuHighlightId })
-    closeMenu()
-  }
+  const existingHighlight: ExistingHighlightInput | null = useMemo(() => {
+    if (!existingHighlightId) return null
+    const match = highlights?.find((h) => h.id === existingHighlightId)
+    if (!match) return null
+    return {
+      id: match.id,
+      selectionText: match.selectionText,
+      note: match.note,
+      presetTags: match.presetTags,
+      fastGloss: match.fastGloss,
+    }
+  }, [existingHighlightId, highlights])
 
   const closeToSessions = () => {
     if (from === 'vocabulary') {
@@ -268,25 +227,18 @@ export const SessionView = () => {
         }}
       />
 
-      <HighlightSheet
-        open={!!editingHighlight}
-        sessionId={sessionId}
-        highlight={editingHighlight}
-        onClose={() => setEditingHighlight(null)}
-      />
-
-      <TapToTranslateSheet
-        open={tapToTranslateOpen}
+      <SessionGlossSheet
+        open={glossOpen}
         sessionId={sessionId}
         selection={pendingSelection}
-        onClose={() => setTapToTranslateOpen(false)}
-      />
-
-      <HighlightActionMenu
-        anchorEl={menuAnchorEl}
-        onEdit={handleEditNote}
-        onRemove={handleRemove}
-        onClose={closeMenu}
+        existingHighlight={existingHighlight}
+        anchor={anchor}
+        onClose={() => {
+          // Keep `anchor`, `pendingSelection`, `existingHighlightId` in state
+          // so the popover's closing animation still has its rect / data to
+          // render against. They'll be overwritten on the next open.
+          setGlossOpen(false)
+        }}
       />
     </ModalScreen>
   )

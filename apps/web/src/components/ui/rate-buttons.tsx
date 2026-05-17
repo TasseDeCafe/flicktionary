@@ -29,6 +29,7 @@ export const RateButtons = ({ value = 'good', onSelect, disabled, className }: R
         <Button
           key={b.key}
           type='button'
+          size='xl'
           variant={value === b.key ? 'default' : 'outline'}
           disabled={disabled}
           onClick={() => onSelect(b.key)}

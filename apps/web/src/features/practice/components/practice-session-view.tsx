@@ -18,8 +18,8 @@ import {
   useRatePracticeChunk,
   useRestoreChunkFromPractice,
 } from '../api/practice-hooks'
+import type { FloatingSheetAnchor } from '@/components/ui/floating-sheet'
 import { AnnotatedText, type AnnotationInput, type PlainSelection } from './annotated-text'
-import { ChunkActionsSheet } from './chunk-actions-sheet'
 import { ChunkDeleteConfirmSheet } from './chunk-delete-confirm-sheet'
 import { LookupSheet } from './lookup-sheet'
 import { PracticeLoader } from './practice-loader'
@@ -72,17 +72,18 @@ export const PracticeSessionView = () => {
   // previous rating when the user re-opens a chunk.
   const [ratings, setRatings] = useState<Map<number, RateValue>>(new Map())
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  // Sibling overlays opened from the RateSheet 3-dots. Sequenced (rate sheet
-  // closes when actions opens) — matching the practice-language-view pattern.
-  const [actionsOpen, setActionsOpen] = useState(false)
+  // DOM anchor for the floating RateSheet — set when the user taps an
+  // annotation. Snapshotted so the popover doesn't jump if the annotation
+  // re-renders.
+  const [rateAnchor, setRateAnchor] = useState<FloatingSheetAnchor>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   // Plain-span selection (peek + Save). Stays open until the user closes or
   // saves; saving creates an adhoc card and navigates to its focus view.
   const [lookupSelection, setLookupSelection] = useState<PlainSelection | null>(null)
-  // The annotation index the actions overlays are operating on. Set when
-  // RateSheet's overflow fires; the action overlays read from it directly so
-  // closing the underlying RateSheet doesn't drop the target.
-  const [actionsIndex, setActionsIndex] = useState<number | null>(null)
+  // Index of the annotation the delete-confirm sheet is operating on. We keep
+  // a separate slot from `openIndex` because the rate sheet closes when the
+  // confirm opens, but we still need to know which chunk to delete.
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null)
   const [done, setDone] = useState(false)
   // True from the moment Next is clicked until the new text lands in cache.
   // Hides the previous text and gates the auto-trigger effect so we don't
@@ -127,9 +128,9 @@ export const PracticeSessionView = () => {
   useEffect(() => {
     setRatings(new Map())
     setOpenIndex(null)
-    setActionsOpen(false)
+    setRateAnchor(null)
     setDeleteConfirmOpen(false)
-    setActionsIndex(null)
+    setPendingDeleteIndex(null)
     setLookupSelection(null)
   }, [currentTextId])
 
@@ -180,15 +181,23 @@ export const PracticeSessionView = () => {
     }
   }, [openIndex, currentText, targetLanguage, userPrefs?.englishIpaDialect])
 
-  // Annotation the actions/delete-confirm overlays are operating on. Read from
-  // `actionsIndex` rather than `openIndex` because RateSheet gets closed when
-  // the actions sheet opens.
-  const actionsAnnotation = useMemo(() => {
-    if (actionsIndex == null || !currentText) return null
-    return currentText.annotations[actionsIndex] ?? null
-  }, [actionsIndex, currentText])
+  // Annotation the delete-confirm sheet is operating on. We track it through
+  // `pendingDeleteIndex` because the rate sheet closes the moment delete is
+  // requested, so `openIndex` is already null by the time the confirm opens.
+  const pendingDeleteAnnotation = useMemo(() => {
+    if (pendingDeleteIndex == null || !currentText) return null
+    return currentText.annotations[pendingDeleteIndex] ?? null
+  }, [pendingDeleteIndex, currentText])
 
-  const handleAnnotationClick = (index: number) => {
+  // Annotation the rate sheet's actions mode acts on. Always sourced from the
+  // currently-open rate sheet so Edit/Delete operate on the right chunk.
+  const openAnnotation = useMemo(() => {
+    if (openIndex == null || !currentText) return null
+    return currentText.annotations[openIndex] ?? null
+  }, [openIndex, currentText])
+
+  const handleAnnotationClick = (index: number, element: HTMLElement) => {
+    setRateAnchor(element)
     setOpenIndex(index)
   }
 
@@ -216,38 +225,37 @@ export const PracticeSessionView = () => {
     )
   }
 
-  const handleMoreOptions = () => {
-    if (openIndex == null) return
-    setActionsIndex(openIndex)
-    setOpenIndex(null)
-    setActionsOpen(true)
-  }
-
   const handleEdit = () => {
-    if (!actionsAnnotation || !actionsAnnotation.cardId || !actionsAnnotation.cardSessionId) return
-    setActionsOpen(false)
+    if (!openAnnotation || !openAnnotation.cardId || !openAnnotation.cardSessionId) return
+    const sessionId = openAnnotation.cardSessionId
+    const cardId = openAnnotation.cardId
+    setOpenIndex(null)
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
-      params: { sessionId: actionsAnnotation.cardSessionId, cardId: actionsAnnotation.cardId },
+      params: { sessionId, cardId },
       search: { from: 'practice' as const, practiceSessionId },
     })
   }
 
   const handleDeleteRequest = () => {
-    setActionsOpen(false)
+    if (openIndex == null) return
+    // Hand off the target to the confirm sheet before tearing down the rate
+    // sheet — once openIndex flips, openAnnotation goes null.
+    setPendingDeleteIndex(openIndex)
+    setOpenIndex(null)
     setDeleteConfirmOpen(true)
   }
 
   const handleDeleteConfirm = () => {
-    if (!actionsAnnotation?.userLookupId) return
-    const lookupId = actionsAnnotation.userLookupId
-    const headword = actionsAnnotation.headword
+    if (!pendingDeleteAnnotation?.userLookupId) return
+    const lookupId = pendingDeleteAnnotation.userLookupId
+    const headword = pendingDeleteAnnotation.headword
     deleteChunk(
       { id: lookupId },
       {
         onSuccess: () => {
           setDeleteConfirmOpen(false)
-          setActionsIndex(null)
+          setPendingDeleteIndex(null)
           toast.success(t`Deleted "${headword}"`, {
             action: {
               label: t`Restore`,
@@ -438,33 +446,29 @@ export const PracticeSessionView = () => {
       <RateSheet
         open={openIndex !== null}
         onOpenChange={(open) => {
+          // Keep rateAnchor in state across the close animation so the popover
+          // doesn't briefly flash at (0,0) on dismiss. New anchor overwrites it
+          // on next open.
           if (!open) setOpenIndex(null)
         }}
         chunk={openChunk}
+        anchor={rateAnchor}
         currentRating={openIndex != null ? (ratings.get(openIndex) ?? null) : null}
         onSubmit={handleRate}
-        onMoreOptions={handleMoreOptions}
-        onRestore={handleRestoreFromSheet}
-        isRestoring={isRestoring}
-      />
-      <ChunkActionsSheet
-        open={actionsOpen}
-        onOpenChange={(open) => {
-          setActionsOpen(open)
-          if (!open) setActionsIndex(null)
-        }}
-        headword={actionsAnnotation?.headword ?? ''}
-        canEdit={!!actionsAnnotation?.cardId && !!actionsAnnotation?.cardSessionId}
+        canEdit={!!openAnnotation?.cardId && !!openAnnotation?.cardSessionId}
         onEdit={handleEdit}
         onDelete={handleDeleteRequest}
+        onRestore={handleRestoreFromSheet}
+        isRestoring={isRestoring}
       />
       <ChunkDeleteConfirmSheet
         open={deleteConfirmOpen}
         onOpenChange={(open) => {
           setDeleteConfirmOpen(open)
-          if (!open && !isDeleting) setActionsIndex(null)
+          if (!open && !isDeleting) setPendingDeleteIndex(null)
         }}
-        headword={actionsAnnotation?.headword ?? ''}
+        headword={pendingDeleteAnnotation?.headword ?? ''}
+        anchor={null}
         isDeleting={isDeleting}
         onConfirm={handleDeleteConfirm}
       />
