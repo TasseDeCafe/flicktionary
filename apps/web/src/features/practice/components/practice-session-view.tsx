@@ -32,7 +32,7 @@ type AdvancingSnapshot = {
 }
 
 const PracticeTextSkeleton = () => (
-  <article className='min-h-[22rem] rounded-xl border bg-white p-5 shadow-sm' aria-hidden='true'>
+  <article className='min-h-[22rem]' aria-hidden='true'>
     <div className='space-y-9'>
       <div className='space-y-3'>
         <Skeleton className='h-6 w-11/12' />
@@ -374,14 +374,13 @@ export const PracticeSessionView = () => {
                   <p className='text-sm text-gray-700'>
                     {t`You've reviewed every due term for this language. Come back later when more are ready.`}
                   </p>
-                  <Button onClick={close}>{t`Back to Practice`}</Button>
                 </div>
               )}
 
               {!done && isAdvancing && <PracticeTextSkeleton />}
 
               {!done && !isAdvancing && currentText && currentText.body && (
-                <article className='rounded-xl border bg-white p-5 shadow-sm'>
+                <article>
                   {currentText.generationWarning && (
                     <p className='text-muted-foreground mb-3 text-xs italic'>{currentText.generationWarning}</p>
                   )}
@@ -395,6 +394,16 @@ export const PracticeSessionView = () => {
               )}
             </div>
           </div>
+
+          {done && (
+            <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+              <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
+                <Button onClick={close} size='xl' className='w-full'>
+                  {t`Back to Practice`}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {!done && (currentText || isAdvancing) && (
             <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-3 pt-2 pb-3 backdrop-blur'>

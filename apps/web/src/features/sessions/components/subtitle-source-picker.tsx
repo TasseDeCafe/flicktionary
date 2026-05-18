@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { Button } from '@/components/ui/button'
-import { LanguagePicker } from '@/components/language-picker'
+import { OptionCard } from '@/components/ui/option-card'
 import { useImportFromOpenSubtitles, useSearchOpenSubtitles, useUploadSrt } from '../api/sessions-hooks'
 import { useDetectLanguage } from '../api/languages-hooks'
 import { SrtUploadInput } from './srt-upload-input'
@@ -17,35 +16,29 @@ const stripSrtForDetection = (srt: string): string =>
     .slice(0, 30)
     .join(' ')
 
-type ImportedTrack = {
+export type ImportedTrack = {
   trackId: string
   language: string
   segmentCount: number
 }
 
-type Props = {
+type OpenSubtitlesStepProps = {
   contentSourceId: string
   tmdbId: number
-  defaultTargetLanguage: string
+  language: string
   onImported: (track: ImportedTrack) => void
 }
 
-export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLanguage, onImported }: Props) => {
+export const OpenSubtitlesStep = ({ contentSourceId, tmdbId, language, onImported }: OpenSubtitlesStepProps) => {
   const { t } = useLingui()
-  const [targetLanguage, setTargetLanguage] = useState(defaultTargetLanguage)
-  const [tab, setTab] = useState<'opensubtitles' | 'upload'>('opensubtitles')
-  const language = targetLanguage.trim()
-
-  const { data: opensubtitlesResults, isFetching } = useSearchOpenSubtitles(
-    tab === 'opensubtitles' && language.length > 0 ? { tmdbId, language } : null
+  const trimmed = language.trim()
+  const { data: results, isFetching } = useSearchOpenSubtitles(
+    trimmed.length > 0 ? { tmdbId, language: trimmed } : null
   )
-
   const { mutate: importFromOs, isPending: isImporting } = useImportFromOpenSubtitles()
-  const { mutate: uploadSrt, isPending: isUploading } = useUploadSrt()
-  const { mutateAsync: detectLanguageAsync, isPending: isDetecting } = useDetectLanguage()
   const [importingFileId, setImportingFileId] = useState<number | null>(null)
 
-  const handleImportOs = (fileId: number, trackLanguage: string) => {
+  const handlePick = (fileId: number, trackLanguage: string) => {
     setImportingFileId(fileId)
     importFromOs(
       { contentSourceId, fileId, language: trackLanguage },
@@ -57,15 +50,63 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
             segmentCount: response.data.segmentCount,
           })
         },
-        onSettled: () => {
-          setImportingFileId(null)
-        },
+        onSettled: () => setImportingFileId(null),
       }
     )
   }
 
-  const handleUpload = (srtContent: string, languageOverride?: string) => {
-    const langToUse = languageOverride ?? language
+  const languageName = getLanguageName(trimmed)
+
+  return (
+    <div className='flex flex-col gap-3'>
+      {isFetching && <p className='text-muted-foreground text-sm'>{t`Searching OpenSubtitles…`}</p>}
+      {!isFetching && (results?.length ?? 0) === 0 && (
+        <p className='text-muted-foreground text-sm'>
+          {t`No tracks found in ${languageName}. Try uploading a .srt file instead.`}
+        </p>
+      )}
+      {(results ?? []).slice(0, 12).map((track) => {
+        const badges = [`${track.downloadCount} ${t`downloads`}`]
+        if (track.uploaderName) badges.push(track.uploaderName)
+        if (track.hearingImpaired) badges.push(t`HI`)
+        const description = badges.join(' · ')
+        return (
+          <OptionCard
+            key={track.fileId}
+            variant='navigation'
+            title={track.release}
+            description={description}
+            badge={track.language.toUpperCase()}
+            disabled={isImporting && importingFileId !== track.fileId}
+            onSelect={() => handlePick(track.fileId, track.language)}
+          />
+        )
+      })}
+      {importingFileId !== null && <p className='text-muted-foreground text-sm'>{t`Importing…`}</p>}
+    </div>
+  )
+}
+
+type SrtUploadStepProps = {
+  contentSourceId: string
+  defaultLanguage: string
+  onImported: (track: ImportedTrack) => void
+}
+
+export const SrtUploadStep = ({ contentSourceId, defaultLanguage, onImported }: SrtUploadStepProps) => {
+  const { t } = useLingui()
+  const { mutate: uploadSrt, isPending: isUploading } = useUploadSrt()
+  const { mutateAsync: detectLanguageAsync, isPending: isDetecting } = useDetectLanguage()
+
+  const handleFile = async (srtContent: string) => {
+    let detected: string | null = null
+    try {
+      const response = await detectLanguageAsync({ text: stripSrtForDetection(srtContent) })
+      detected = response.data.code
+    } catch {
+      // detection is advisory — fall through to defaultLanguage
+    }
+    const langToUse = detected ?? defaultLanguage
     if (!langToUse) return
     uploadSrt(
       { contentSourceId, language: langToUse, srtContent },
@@ -83,87 +124,12 @@ export const SubtitleSourcePicker = ({ contentSourceId, tmdbId, defaultTargetLan
 
   return (
     <div className='flex flex-col gap-4'>
-      <div className='flex flex-col gap-2'>
-        <label htmlFor='target-language' className='text-sm font-medium'>{t`Target language`}</label>
-        <div className='max-w-xs'>
-          <LanguagePicker id='target-language' value={targetLanguage} onChange={(code) => setTargetLanguage(code)} />
-        </div>
-        <p className='text-muted-foreground text-xs'>{t`The chosen subtitle track must match this language.`}</p>
-      </div>
-
-      <div className='flex gap-2'>
-        <Button
-          variant={tab === 'opensubtitles' ? 'default' : 'outline'}
-          size='sm'
-          onClick={() => setTab('opensubtitles')}
-        >
-          {t`OpenSubtitles search`}
-        </Button>
-        <Button variant={tab === 'upload' ? 'default' : 'outline'} size='sm' onClick={() => setTab('upload')}>
-          {t`Upload .srt`}
-        </Button>
-      </div>
-
-      {tab === 'opensubtitles' && (
-        <div className='flex flex-col gap-2'>
-          {isFetching && <p className='text-muted-foreground text-sm'>{t`Searching OpenSubtitles…`}</p>}
-          {!isFetching &&
-            language &&
-            (opensubtitlesResults?.length ?? 0) === 0 &&
-            (() => {
-              const languageName = getLanguageName(language)
-              return (
-                <p className='text-muted-foreground text-sm'>
-                  {t`No tracks found in ${languageName}. Try uploading a .srt file instead.`}
-                </p>
-              )
-            })()}
-          <ul className='divide-y rounded-md border'>
-            {(opensubtitlesResults ?? []).slice(0, 8).map((track) => (
-              <li key={track.fileId} className='flex items-start gap-3 p-3'>
-                <div className='min-w-0 flex-1 text-sm'>
-                  <div className='font-medium break-all'>{track.release}</div>
-                  <div className='text-muted-foreground text-xs'>
-                    {track.language} · {track.downloadCount} {t`downloads`}
-                    {track.uploaderName ? ` · ${track.uploaderName}` : ''}
-                    {track.hearingImpaired ? ` · ${t`HI`}` : ''}
-                  </div>
-                </div>
-                <Button
-                  size='sm'
-                  className='shrink-0'
-                  disabled={isImporting}
-                  onClick={() => handleImportOs(track.fileId, track.language)}
-                >
-                  {importingFileId === track.fileId ? t`Importing…` : t`Use`}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {tab === 'upload' && (
-        <div className='flex flex-col gap-3'>
-          <SrtUploadInput
-            onLoaded={async (content) => {
-              let detected: string | null = null
-              try {
-                const response = await detectLanguageAsync({ text: stripSrtForDetection(content) })
-                detected = response.data.code
-              } catch {
-                // detection is advisory — fall through to the picker's current value
-              }
-              if (detected && detected !== targetLanguage) {
-                setTargetLanguage(detected)
-              }
-              handleUpload(content, detected ?? targetLanguage)
-            }}
-          />
-          {(isDetecting || isUploading) && (
-            <p className='text-muted-foreground text-sm'>{isDetecting ? t`Detecting language…` : t`Uploading…`}</p>
-          )}
-        </div>
+      <p className='text-muted-foreground text-sm'>
+        {t`We support .srt subtitle files. The language is detected automatically from the file contents.`}
+      </p>
+      <SrtUploadInput onLoaded={(content) => void handleFile(content)} disabled={isUploading || isDetecting} />
+      {(isDetecting || isUploading) && (
+        <p className='text-muted-foreground text-sm'>{isDetecting ? t`Detecting language…` : t`Uploading…`}</p>
       )}
     </div>
   )

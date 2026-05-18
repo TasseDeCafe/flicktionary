@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { Film } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { OptionCard } from '@/components/ui/option-card'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useSearchTmdb } from '../api/sessions-hooks'
 
@@ -15,9 +16,10 @@ export type TmdbMoviePick = {
 
 type Props = {
   onPick: (movie: TmdbMoviePick) => void
+  disabled?: boolean
 }
 
-export const TmdbSearch = ({ onPick }: Props) => {
+export const TmdbSearch = ({ onPick, disabled }: Props) => {
   const { t } = useLingui()
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebouncedValue(query, 350)
@@ -31,33 +33,29 @@ export const TmdbSearch = ({ onPick }: Props) => {
         placeholder={t`Search a movie title…`}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        disabled={disabled}
         autoFocus
       />
       {isFetching && <p className='text-muted-foreground text-sm'>{t`Searching…`}</p>}
-      <ul className='divide-y rounded-md border'>
-        {(data ?? []).slice(0, 10).map((movie) => (
-          <li key={movie.tmdbId} className='flex items-center gap-3 p-3'>
-            {movie.posterUrl ? (
-              <img
-                src={movie.posterUrl}
-                alt={movie.title}
-                className='h-20 w-14 shrink-0 rounded object-cover'
-                loading='lazy'
-              />
-            ) : (
-              <div className='bg-muted h-20 w-14 shrink-0 rounded' />
-            )}
-            <div className='flex-1'>
-              <div className='font-medium'>{movie.title}</div>
-              {movie.originalTitle !== movie.title && (
-                <div className='text-muted-foreground text-sm'>{movie.originalTitle}</div>
-              )}
-              <div className='text-muted-foreground text-xs'>{movie.year ?? t`Unknown year`}</div>
-              {movie.overview && <p className='mt-1 line-clamp-2 text-sm'>{movie.overview}</p>}
-            </div>
-            <Button
-              size='sm'
-              onClick={() =>
+      <div className='flex flex-col gap-2'>
+        {(data ?? []).slice(0, 10).map((movie) => {
+          const yearLabel = movie.year != null ? String(movie.year) : t`Unknown year`
+          const description = movie.originalTitle !== movie.title ? `${yearLabel} · ${movie.originalTitle}` : yearLabel
+          return (
+            <OptionCard
+              key={movie.tmdbId}
+              variant='navigation'
+              icon={
+                movie.posterUrl ? (
+                  <img src={movie.posterUrl} alt={movie.title} className='h-full w-full object-cover' loading='lazy' />
+                ) : (
+                  <Film />
+                )
+              }
+              title={movie.title}
+              description={description}
+              disabled={disabled}
+              onSelect={() =>
                 onPick({
                   tmdbId: movie.tmdbId,
                   title: movie.title,
@@ -66,15 +64,13 @@ export const TmdbSearch = ({ onPick }: Props) => {
                   posterUrl: movie.posterUrl,
                 })
               }
-            >
-              {t`Pick`}
-            </Button>
-          </li>
-        ))}
+            />
+          )
+        })}
         {!isFetching && trimmed.length > 1 && (data?.length ?? 0) === 0 && (
-          <li className='text-muted-foreground p-3 text-sm'>{t`No matches.`}</li>
+          <p className='text-muted-foreground text-sm'>{t`No matches.`}</p>
         )}
-      </ul>
+      </div>
     </div>
   )
 }

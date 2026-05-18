@@ -1,0 +1,75 @@
+import { useMemo, useState } from 'react'
+import { useLingui } from '@lingui/react/macro'
+import { SearchIcon } from 'lucide-react'
+import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
+import { OptionCard } from '@/components/ui/option-card'
+
+type Props = {
+  value: string | null
+  onChange: (code: SupportedLanguageCode) => void
+  showSearch?: boolean
+  excludeCodes?: readonly string[]
+  // Code to pin at the top of the list (e.g. the user's last target language).
+  // The pinned language is still hidden when it doesn't match the search query.
+  pinnedCode?: string | null
+}
+
+export const LanguageOptionList = ({ value, onChange, showSearch = true, excludeCodes, pinnedCode }: Props) => {
+  const { t } = useLingui()
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const matches = SUPPORTED_LANGUAGES.filter((lang) => {
+      if (excludeCodes?.includes(lang.code)) return false
+      if (!q) return true
+      return (
+        lang.code.toLowerCase().includes(q) ||
+        lang.name.toLowerCase().includes(q) ||
+        lang.nativeName.toLowerCase().includes(q)
+      )
+    })
+    if (!pinnedCode) return matches
+    const pinnedIndex = matches.findIndex((lang) => lang.code === pinnedCode)
+    if (pinnedIndex <= 0) return matches
+    const pinned = matches[pinnedIndex]!
+    return [pinned, ...matches.slice(0, pinnedIndex), ...matches.slice(pinnedIndex + 1)]
+  }, [query, excludeCodes, pinnedCode])
+
+  return (
+    <div className='flex flex-col'>
+      {showSearch && (
+        // Wrapper is the sticky element (not the input itself) so its opaque
+        // bg covers the full width including the gap below it — otherwise the
+        // next card scrolls through the transparent gap and peeks out.
+        // `-mx-3 px-3` extends the bg into the parent's padding so a selected
+        // card's `ring-2` (rendered 2px outside its border) doesn't peek
+        // around the sides of the bar.
+        <div className='bg-background sticky top-0 z-10 -mx-3 px-3 pb-2'>
+          <div className='border-input flex items-center gap-2 rounded-md border px-3'>
+            <SearchIcon className='text-muted-foreground h-4 w-4 shrink-0' />
+            <input
+              type='search'
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t`Search languages…`}
+              className='placeholder:text-muted-foreground h-10 w-full bg-transparent text-base outline-none'
+            />
+          </div>
+        </div>
+      )}
+      <div role='radiogroup' aria-label={t`Language`} className='flex flex-col gap-2'>
+        {filtered.length === 0 && <p className='text-muted-foreground p-3 text-sm'>{t`No languages found.`}</p>}
+        {filtered.map((lang) => (
+          <OptionCard
+            key={lang.code}
+            title={lang.name}
+            description={`${lang.nativeName} · ${lang.code.toUpperCase()}`}
+            selected={value === lang.code}
+            onSelect={() => onChange(lang.code)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}

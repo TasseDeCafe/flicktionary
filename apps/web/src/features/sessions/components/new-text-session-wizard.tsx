@@ -1,13 +1,21 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { useCreateStudySession, useGetUserPrefs, useSetCefrForLanguage } from '../api/sessions-hooks'
-import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { TextPasteInput } from './text-paste-input'
-import { CefrPromptDialog } from './cefr-prompt-dialog'
+import { toast } from 'sonner'
+import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
+import {
+  useCreateContentSourceFromText,
+  useCreateStudySession,
+  useGetUserPrefs,
+  useImportFromPaste,
+  useSetCefrForLanguage,
+} from '../api/sessions-hooks'
+import { CefrStep } from './cefr-step'
+import type { CefrLevel } from '../constants/cefr'
+import { TextPasteFields } from './text-paste-input'
+import { TEXT_PASTE_MAX_LENGTH, TEXT_PASTE_MIN_LENGTH } from './text-paste-helpers'
+
+type Step = 'paste' | 'cefr'
 
 type ImportedTrack = {
   trackId: string
@@ -18,31 +26,46 @@ type ImportedTrack = {
 export const NewTextSessionWizard = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
-
-  const [contentSourceId, setContentSourceId] = useState<string | null>(null)
-  const [importedTrack, setImportedTrack] = useState<ImportedTrack | null>(null)
-  const [showCefrDialog, setShowCefrDialog] = useState(false)
-
   const { data: prefs } = useGetUserPrefs()
-  const { mutate: setCefr } = useSetCefrForLanguage()
+
+  // Step 1 form state.
+  const [text, setText] = useState('')
+  const [title, setTitle] = useState('')
+  const [titleTouched, setTitleTouched] = useState(false)
+  const [language, setLanguage] = useState<string>(prefs?.lastTargetLanguage ?? 'en')
+  const [languageTouched, setLanguageTouched] = useState(false)
+
+  // Imported track (output of step 1) and CEFR (only collected in step 2).
+  const [importedTrack, setImportedTrack] = useState<ImportedTrack | null>(null)
+  const [contentSourceId, setContentSourceId] = useState<string | null>(null)
+  const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
+
+  const [step, setStep] = useState<Step>('paste')
+
+  const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromText()
+  const { mutate: importFromPaste, isPending: isImporting } = useImportFromPaste()
+  const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: createSession, isPending: isCreatingSession } = useCreateStudySession()
 
-  const cefrForTrack =
-    importedTrack && prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === importedTrack.language)?.cefrLevel
+  const trimmedTitle = title.trim()
+  const charCount = text.length
+  const isPaseSubmitting = isCreatingSource || isImporting
+  const canSubmitPaste =
+    !isPaseSubmitting &&
+    charCount >= TEXT_PASTE_MIN_LENGTH &&
+    charCount <= TEXT_PASTE_MAX_LENGTH &&
+    trimmedTitle.length > 0
 
-  const handleImported = (sourceId: string, track: ImportedTrack) => {
-    setContentSourceId(sourceId)
-    setImportedTrack(track)
-  }
+  const requiresCefrStep = !prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === language)?.cefrLevel
+  const totalSteps = requiresCefrStep ? 2 : 1
 
-  const startSession = (cefrLevel: string, nativeLanguage: string) => {
-    if (!contentSourceId || !importedTrack) return
+  const startSession = (cefrLevel: string, nativeLanguage: string, sourceId: string, track: ImportedTrack) => {
     createSession(
       {
-        contentSourceId,
-        textTrackId: importedTrack.trackId,
+        contentSourceId: sourceId,
+        textTrackId: track.trackId,
         nativeLanguage,
-        targetLanguage: importedTrack.language,
+        targetLanguage: track.language,
         cefrLevel,
       },
       {
@@ -53,99 +76,108 @@ export const NewTextSessionWizard = () => {
     )
   }
 
-  const handleStartSession = () => {
-    if (!contentSourceId || !importedTrack || !prefs?.nativeLanguage) return
-    const existingCefr = prefs.targetLanguagePrefs.find((p) => p.targetLanguage === importedTrack.language)?.cefrLevel
-    if (!existingCefr) {
-      setShowCefrDialog(true)
-      return
-    }
-    startSession(existingCefr, prefs.nativeLanguage)
-  }
-
-  const handleCefrSubmit = (level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
-    if (!importedTrack || !prefs?.nativeLanguage || !contentSourceId) return
+  const handlePasteSubmit = () => {
+    if (!canSubmitPaste || !prefs?.nativeLanguage) return
     const nativeLanguage = prefs.nativeLanguage
-    setCefr(
-      { targetLanguage: importedTrack.language, cefrLevel: level },
+    createContentSource(
+      { title: trimmedTitle, language },
       {
-        onSuccess: () => {
-          setShowCefrDialog(false)
-          startSession(level, nativeLanguage)
+        onSuccess: (sourceResponse) => {
+          const sourceId = sourceResponse.data.id
+          setContentSourceId(sourceId)
+          importFromPaste(
+            { contentSourceId: sourceId, language, text },
+            {
+              onSuccess: (importResponse) => {
+                const track: ImportedTrack = {
+                  trackId: importResponse.data.track.id,
+                  language: importResponse.data.track.language,
+                  segmentCount: importResponse.data.segmentCount,
+                }
+                setImportedTrack(track)
+                const existingCefr = prefs.targetLanguagePrefs.find(
+                  (p) => p.targetLanguage === track.language
+                )?.cefrLevel
+                if (existingCefr) {
+                  startSession(existingCefr, nativeLanguage, sourceId, track)
+                } else {
+                  setStep('cefr')
+                }
+              },
+              onError: () => {
+                toast.error(t`Could not import the pasted text.`)
+              },
+            }
+          )
         },
       }
     )
   }
 
+  const handleCefrSubmit = () => {
+    if (!cefrChoice || !importedTrack || !contentSourceId || !prefs?.nativeLanguage) return
+    const nativeLanguage = prefs.nativeLanguage
+    const track = importedTrack
+    const sourceId = contentSourceId
+    setCefr(
+      { targetLanguage: track.language, cefrLevel: cefrChoice },
+      {
+        onSuccess: () => {
+          startSession(cefrChoice, nativeLanguage, sourceId, track)
+        },
+      }
+    )
+  }
+
+  const closeWizard = () => navigate({ to: '/sessions' })
+
+  if (step === 'cefr' && importedTrack) {
+    return (
+      <WizardShell
+        title={t`Practice with a text`}
+        currentStep={2}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep('paste')}
+        primary={{
+          label: isSettingCefr || isCreatingSession ? t`Starting…` : t`Start session`,
+          onClick: handleCefrSubmit,
+          disabled: !cefrChoice || isSettingCefr || isCreatingSession,
+          loading: isSettingCefr || isCreatingSession,
+        }}
+      >
+        <CefrStep targetLanguage={importedTrack.language} value={cefrChoice} onChange={setCefrChoice} />
+      </WizardShell>
+    )
+  }
+
   return (
-    <ModalScreen onClose={() => navigate({ to: '/sessions' })} title={t`Practice with a text`}>
-      <div className='mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 overflow-y-auto px-4 py-6'>
-        {/* Step 1 — paste text */}
-        <Card>
-          <CardHeader>
-            <CardTitle>1. {t`Paste a text`}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {importedTrack ? (
-              <div className='flex items-center justify-between gap-3'>
-                <div>
-                  <div className='font-medium'>{t`Text imported`}</div>
-                  <div className='text-muted-foreground text-sm'>
-                    {getLanguageName(importedTrack.language)} · {importedTrack.segmentCount} {t`segments`}
-                  </div>
-                </div>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => {
-                    setImportedTrack(null)
-                    setContentSourceId(null)
-                  }}
-                >
-                  {t`Change`}
-                </Button>
-              </div>
-            ) : (
-              <TextPasteInput onImported={handleImported} defaultLanguage={prefs?.lastTargetLanguage ?? 'en'} />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 2 — finalize */}
-        {importedTrack && (
-          <Card>
-            <CardHeader>
-              <CardTitle>2. {t`Start session`}</CardTitle>
-            </CardHeader>
-            <CardContent className='flex flex-col gap-4'>
-              {prefs?.nativeLanguage &&
-                (() => {
-                  const nativeLanguage = getLanguageName(prefs.nativeLanguage)
-                  const trackLanguage = getLanguageName(importedTrack.language)
-                  const cefrLabel = cefrForTrack
-                  return (
-                    <div className='text-muted-foreground text-sm'>
-                      {t`Native language: ${nativeLanguage}.`}{' '}
-                      {cefrLabel ? t`Level for ${trackLanguage}: ${cefrLabel}.` : t`We'll ask your level next.`}
-                    </div>
-                  )
-                })()}
-              <Button onClick={handleStartSession} disabled={!prefs?.nativeLanguage || isCreatingSession}>
-                {isCreatingSession ? t`Creating…` : t`Start session`}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {showCefrDialog && importedTrack && (
-          <CefrPromptDialog
-            open={showCefrDialog}
-            targetLanguage={importedTrack.language}
-            onSubmit={handleCefrSubmit}
-            onCancel={() => setShowCefrDialog(false)}
-          />
-        )}
-      </div>
-    </ModalScreen>
+    <WizardShell
+      title={t`Practice with a text`}
+      currentStep={1}
+      totalSteps={totalSteps}
+      onClose={closeWizard}
+      primary={{
+        label: isPaseSubmitting ? t`Importing…` : t`Continue`,
+        onClick: handlePasteSubmit,
+        disabled: !canSubmitPaste,
+        loading: isPaseSubmitting,
+      }}
+    >
+      <WizardStepHeading title={t`Paste a text`} />
+      <TextPasteFields
+        text={text}
+        setText={setText}
+        title={title}
+        setTitle={setTitle}
+        titleTouched={titleTouched}
+        setTitleTouched={setTitleTouched}
+        language={language}
+        setLanguage={setLanguage}
+        languageTouched={languageTouched}
+        setLanguageTouched={setLanguageTouched}
+        disabled={isPaseSubmitting}
+      />
+    </WizardShell>
   )
 }

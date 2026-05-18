@@ -1,98 +1,78 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { LanguagePicker } from '@/components/language-picker'
-import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { Search, Upload } from 'lucide-react'
+import { OptionCard } from '@/components/ui/option-card'
+import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
+import { LanguageOptionList } from '@/components/language-option-list'
 import {
   useCreateContentSourceFromTmdb,
   useCreateStudySession,
   useGetUserPrefs,
   useSetCefrForLanguage,
 } from '../api/sessions-hooks'
-import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { TmdbSearch, TmdbMoviePick } from './tmdb-search'
-import { SubtitleSourcePicker } from './subtitle-source-picker'
-import { CefrPromptDialog } from './cefr-prompt-dialog'
+import { CefrStep } from './cefr-step'
+import type { CefrLevel } from '../constants/cefr'
+import { TmdbSearch, type TmdbMoviePick } from './tmdb-search'
+import { OpenSubtitlesStep, SrtUploadStep, type ImportedTrack } from './subtitle-source-picker'
 
-type StepKey = 'movie' | 'subtitles' | 'finalize'
-
-type ImportedTrack = {
-  trackId: string
-  language: string
-  segmentCount: number
-}
+type Step = 'language' | 'cefr' | 'movie' | 'subtitle-source' | 'subtitle-pick'
+type SubtitleMode = 'opensubtitles' | 'upload'
 
 export const NewSessionWizard = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
-
   const { data: prefs } = useGetUserPrefs()
 
-  const [step, setStep] = useState<StepKey>('movie')
+  const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
+  const [languageTouched, setLanguageTouched] = useState(false)
+  // Wait for prefs to land so we can prefill the picker; the user override
+  // (`languageTouched`) always wins after that.
+  useEffect(() => {
+    if (languageTouched) return
+    if (prefs?.lastTargetLanguage && prefs.lastTargetLanguage !== targetLanguage) {
+      setTargetLanguage(prefs.lastTargetLanguage)
+    }
+  }, [prefs?.lastTargetLanguage, languageTouched, targetLanguage])
+
+  const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
   const [movie, setMovie] = useState<TmdbMoviePick | null>(null)
   const [contentSourceId, setContentSourceId] = useState<string | null>(null)
-  const [contentSourceLanguage, setContentSourceLanguage] = useState<string>(prefs?.lastTargetLanguage ?? 'en')
-  const [contentSourceLanguageTouched, setContentSourceLanguageTouched] = useState(false)
+  const [subtitleMode, setSubtitleMode] = useState<SubtitleMode | null>(null)
   const [importedTrack, setImportedTrack] = useState<ImportedTrack | null>(null)
-  const [showCefrDialog, setShowCefrDialog] = useState(false)
 
-  // Prefs may not be cached yet when the wizard mounts. Once they arrive,
-  // backfill the picker — unless the user already touched it.
-  useEffect(() => {
-    if (contentSourceLanguageTouched) return
-    if (prefs?.lastTargetLanguage && prefs.lastTargetLanguage !== contentSourceLanguage) {
-      setContentSourceLanguage(prefs.lastTargetLanguage)
-    }
-  }, [prefs?.lastTargetLanguage, contentSourceLanguageTouched, contentSourceLanguage])
+  const [step, setStep] = useState<Step>('language')
+
+  const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromTmdb()
-  const { mutate: setCefr } = useSetCefrForLanguage()
   const { mutate: createSession, isPending: isCreatingSession } = useCreateStudySession()
 
-  const cefrForTrack =
-    importedTrack && prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === importedTrack.language)?.cefrLevel
+  const cefrForLanguage = (lang: string): CefrLevel | undefined =>
+    prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === lang)?.cefrLevel as CefrLevel | undefined
 
-  const handlePickMovie = (picked: TmdbMoviePick) => {
-    setMovie(picked)
-    createContentSource(
-      {
-        tmdbId: picked.tmdbId,
-        title: picked.title,
-        originalTitle: picked.originalTitle,
-        year: picked.year,
-        posterUrl: picked.posterUrl,
-        language: contentSourceLanguage,
-      },
-      {
-        onSuccess: (response) => {
-          setContentSourceId(response.data.id)
-          setStep('subtitles')
-        },
-      }
-    )
-  }
+  const requiresCefrStep = !!targetLanguage && !cefrForLanguage(targetLanguage)
+  const totalSteps = 4 + (requiresCefrStep ? 1 : 0)
 
-  const handleImported = (track: ImportedTrack) => {
-    setImportedTrack(track)
-    setStep('finalize')
-  }
-
-  const handleStartSession = () => {
-    if (!contentSourceId || !importedTrack || !prefs?.nativeLanguage) return
-    const existingCefr = prefs.targetLanguagePrefs.find((p) => p.targetLanguage === importedTrack.language)?.cefrLevel
-    if (!existingCefr) {
-      setShowCefrDialog(true)
-      return
+  const stepIndex: Record<Step, number> = (() => {
+    if (requiresCefrStep) {
+      return { language: 1, cefr: 2, movie: 3, 'subtitle-source': 4, 'subtitle-pick': 5 }
     }
+    return { language: 1, cefr: 2, movie: 2, 'subtitle-source': 3, 'subtitle-pick': 4 }
+  })()
+
+  const closeWizard = () => navigate({ to: '/sessions' })
+
+  const startSession = (track: ImportedTrack) => {
+    if (!contentSourceId || !prefs?.nativeLanguage || !targetLanguage) return
+    const level = cefrForLanguage(targetLanguage) ?? cefrChoice
+    if (!level) return
     createSession(
       {
         contentSourceId,
-        textTrackId: importedTrack.trackId,
+        textTrackId: track.trackId,
         nativeLanguage: prefs.nativeLanguage,
-        targetLanguage: importedTrack.language,
-        cefrLevel: existingCefr,
+        targetLanguage: track.language,
+        cefrLevel: level,
       },
       {
         onSuccess: (response) => {
@@ -102,163 +82,195 @@ export const NewSessionWizard = () => {
     )
   }
 
-  const handleCefrSubmit = (level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
-    if (!importedTrack || !prefs?.nativeLanguage || !contentSourceId) return
-    const nativeLanguage = prefs.nativeLanguage
-    setCefr(
-      { targetLanguage: importedTrack.language, cefrLevel: level },
-      {
-        onSuccess: () => {
-          setShowCefrDialog(false)
-          createSession(
-            {
-              contentSourceId,
-              textTrackId: importedTrack.trackId,
-              nativeLanguage,
-              targetLanguage: importedTrack.language,
-              cefrLevel: level,
-            },
-            {
-              onSuccess: (response) => {
-                void navigate({ to: '/sessions/$sessionId', params: { sessionId: response.data.id } })
-              },
-            }
-          )
-        },
-      }
+  // === Step 1: language ===
+  if (step === 'language') {
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={stepIndex.language}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        primary={{
+          label: t`Continue`,
+          onClick: () => {
+            if (!targetLanguage) return
+            setStep(requiresCefrStep ? 'cefr' : 'movie')
+          },
+          disabled: !targetLanguage,
+        }}
+      >
+        <WizardStepHeading
+          title={t`What language are you studying?`}
+          subtitle={t`Pick the language of the movie you'll watch. Subtitles and explanations will be in this language.`}
+        />
+        <LanguageOptionList
+          value={targetLanguage}
+          pinnedCode={prefs?.lastTargetLanguage}
+          onChange={(code) => {
+            setLanguageTouched(true)
+            setTargetLanguage(code)
+          }}
+        />
+      </WizardShell>
     )
   }
 
-  return (
-    <ModalScreen onClose={() => navigate({ to: '/sessions' })} title={t`New session`}>
-      <div className='mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 overflow-y-auto px-4 py-6'>
-        {/* Step 1 — pick a movie */}
-        <Card>
-          <CardHeader>
-            <CardTitle>1. {t`Pick a movie`}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {movie ? (
-              <div className='flex items-center justify-between gap-4'>
-                <div className='flex items-center gap-3'>
-                  {movie.posterUrl && (
-                    <img src={movie.posterUrl} alt={movie.title} className='h-20 w-14 rounded object-cover' />
-                  )}
-                  <div>
-                    <div className='font-medium'>{movie.title}</div>
-                    <div className='text-muted-foreground text-sm'>{movie.year ?? t`Unknown year`}</div>
-                  </div>
-                </div>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => {
-                    setMovie(null)
-                    setContentSourceId(null)
-                    setImportedTrack(null)
-                    setStep('movie')
-                  }}
-                >
-                  {t`Change`}
-                </Button>
-              </div>
-            ) : (
-              <div className='flex flex-col gap-3'>
-                <div className='flex items-end gap-2'>
-                  <div className='flex-1'>
-                    <Label htmlFor='source-language' className='text-sm'>{t`Original language`}</Label>
-                    <div className='mt-1 max-w-xs'>
-                      <LanguagePicker
-                        id='source-language'
-                        value={contentSourceLanguage}
-                        onChange={(code) => {
-                          setContentSourceLanguageTouched(true)
-                          setContentSourceLanguage(code)
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <TmdbSearch onPick={handlePickMovie} />
-                {isCreatingSource && <p className='text-muted-foreground text-sm'>{t`Registering movie…`}</p>}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+  // === Step 2 (conditional): CEFR ===
+  if (step === 'cefr' && targetLanguage) {
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={stepIndex.cefr}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep('language')}
+        primary={{
+          label: isSettingCefr ? t`Saving…` : t`Continue`,
+          onClick: () => {
+            if (!cefrChoice) return
+            setCefr(
+              { targetLanguage, cefrLevel: cefrChoice },
+              {
+                onSuccess: () => setStep('movie'),
+              }
+            )
+          },
+          disabled: !cefrChoice || isSettingCefr,
+          loading: isSettingCefr,
+        }}
+      >
+        <CefrStep targetLanguage={targetLanguage} value={cefrChoice} onChange={setCefrChoice} />
+      </WizardShell>
+    )
+  }
 
-        {/* Step 2 — pick subtitles */}
-        {step !== 'movie' && contentSourceId && movie && (
-          <Card>
-            <CardHeader>
-              <CardTitle>2. {t`Choose subtitles`}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {importedTrack ? (
-                <div className='flex items-center justify-between gap-3'>
-                  <div>
-                    <div className='font-medium'>{t`Track imported`}</div>
-                    <div className='text-muted-foreground text-sm'>
-                      {getLanguageName(importedTrack.language)} · {importedTrack.segmentCount} {t`segments`}
-                    </div>
-                  </div>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      setImportedTrack(null)
-                      setStep('subtitles')
-                    }}
-                  >
-                    {t`Change`}
-                  </Button>
-                </div>
-              ) : (
-                <SubtitleSourcePicker
-                  contentSourceId={contentSourceId}
-                  tmdbId={movie.tmdbId}
-                  defaultTargetLanguage={contentSourceLanguage}
-                  onImported={handleImported}
-                />
-              )}
-            </CardContent>
-          </Card>
-        )}
+  // === Step 3: movie ===
+  if (step === 'movie' && targetLanguage) {
+    const handlePick = (picked: TmdbMoviePick) => {
+      setMovie(picked)
+      createContentSource(
+        {
+          tmdbId: picked.tmdbId,
+          title: picked.title,
+          originalTitle: picked.originalTitle,
+          year: picked.year,
+          posterUrl: picked.posterUrl,
+          language: targetLanguage,
+        },
+        {
+          onSuccess: (response) => {
+            setContentSourceId(response.data.id)
+            setStep('subtitle-source')
+          },
+        }
+      )
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={stepIndex.movie}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep(requiresCefrStep ? 'cefr' : 'language')}
+      >
+        <WizardStepHeading title={t`Pick a movie`} />
+        <TmdbSearch onPick={handlePick} disabled={isCreatingSource} />
+        {isCreatingSource &&
+          movie &&
+          (() => {
+            const movieTitle = movie.title
+            return <p className='text-muted-foreground text-sm'>{t`Registering ${movieTitle}…`}</p>
+          })()}
+      </WizardShell>
+    )
+  }
 
-        {/* Step 3 — finalize */}
-        {step === 'finalize' && importedTrack && (
-          <Card>
-            <CardHeader>
-              <CardTitle>3. {t`Start session`}</CardTitle>
-            </CardHeader>
-            <CardContent className='flex flex-col gap-4'>
-              {prefs?.nativeLanguage &&
-                (() => {
-                  const nativeLanguage = getLanguageName(prefs.nativeLanguage)
-                  const trackLanguage = getLanguageName(importedTrack.language)
-                  const cefrLabel = cefrForTrack
-                  return (
-                    <div className='text-muted-foreground text-sm'>
-                      {t`Native language: ${nativeLanguage}.`}{' '}
-                      {cefrLabel ? t`Level for ${trackLanguage}: ${cefrLabel}.` : t`We'll ask your level next.`}
-                    </div>
-                  )
-                })()}
-              <Button onClick={handleStartSession} disabled={!prefs?.nativeLanguage || isCreatingSession}>
-                {isCreatingSession ? t`Creating…` : t`Start session`}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+  // === Step 4: subtitle source ===
+  if (step === 'subtitle-source' && contentSourceId && targetLanguage) {
+    const pickSource = (mode: SubtitleMode) => {
+      setSubtitleMode(mode)
+      setStep('subtitle-pick')
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={stepIndex['subtitle-source']}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => {
+          setSubtitleMode(null)
+          setMovie(null)
+          setContentSourceId(null)
+          setStep('movie')
+        }}
+      >
+        <WizardStepHeading title={t`Choose subtitles`} />
+        <div className='flex flex-col gap-2'>
+          <OptionCard
+            variant='navigation'
+            icon={<Search />}
+            title={t`Search OpenSubtitles`}
+            description={t`Browse community-uploaded tracks for this movie.`}
+            onSelect={() => pickSource('opensubtitles')}
+          />
+          <OptionCard
+            variant='navigation'
+            icon={<Upload />}
+            title={t`Upload a .srt file`}
+            description={t`Use a subtitle file you already have.`}
+            onSelect={() => pickSource('upload')}
+          />
+        </div>
+      </WizardShell>
+    )
+  }
 
-        {showCefrDialog && importedTrack && (
-          <CefrPromptDialog
-            open={showCefrDialog}
-            targetLanguage={importedTrack.language}
-            onSubmit={handleCefrSubmit}
-            onCancel={() => setShowCefrDialog(false)}
+  // === Step 5: subtitle pick ===
+  if (step === 'subtitle-pick' && contentSourceId && targetLanguage && movie && subtitleMode) {
+    const handleImported = (track: ImportedTrack) => {
+      setImportedTrack(track)
+      startSession(track)
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={stepIndex['subtitle-pick']}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => {
+          setImportedTrack(null)
+          setStep('subtitle-source')
+        }}
+      >
+        <WizardStepHeading
+          title={subtitleMode === 'opensubtitles' ? t`Pick a subtitle track` : t`Upload your .srt file`}
+        />
+        {subtitleMode === 'opensubtitles' && (
+          <OpenSubtitlesStep
+            contentSourceId={contentSourceId}
+            tmdbId={movie.tmdbId}
+            language={targetLanguage}
+            onImported={handleImported}
           />
         )}
-      </div>
-    </ModalScreen>
+        {subtitleMode === 'upload' && (
+          <SrtUploadStep
+            contentSourceId={contentSourceId}
+            defaultLanguage={targetLanguage}
+            onImported={handleImported}
+          />
+        )}
+        {(isCreatingSession || importedTrack) && (
+          <p className='text-muted-foreground text-sm'>{t`Starting session…`}</p>
+        )}
+      </WizardShell>
+    )
+  }
+
+  // Fallback — invalid state, return to step 1.
+  return (
+    <WizardShell title={t`New session`} currentStep={1} totalSteps={totalSteps} onClose={closeWizard}>
+      <WizardStepHeading title={t`Something went wrong`} />
+    </WizardShell>
   )
 }
