@@ -105,7 +105,7 @@ msgstr "{newCount} non vu(s)"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:407
+#: apps/web/src/features/practice/components/practice-session-view.tsx:416
 msgid "{ratedCount} of {totalCount} rated"
 msgstr "{ratedCount} sur {totalCount} évalués"
 
@@ -193,8 +193,8 @@ msgid "Actions in this section can lead to permanent data loss."
 msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:58
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:144
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:163
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:146
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:165
 msgid "Add a word"
 msgstr "Ajouter un mot"
 
@@ -330,7 +330,7 @@ msgid "Back to Login"
 msgstr "Retour à la connexion"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:137
-#: apps/web/src/features/practice/components/practice-session-view.tsx:377
+#: apps/web/src/features/practice/components/practice-session-view.tsx:402
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
 msgstr "Retour à la pratique"
@@ -359,13 +359,9 @@ msgstr "Facturé annuellement à {yearlyPriceTotal} €"
 msgid "British"
 msgstr "Britannique"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:217
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
 msgid "Browse community-uploaded tracks for this movie."
 msgstr "Parcourez les pistes téléversées par la communauté pour ce film."
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:84
-msgid "Browse the full list."
-msgstr "Parcourir la liste complète."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
 msgid "Calibrates the difficult-words pass and the depth of explanations."
@@ -417,15 +413,11 @@ msgstr "Vérifiez votre e-mail"
 msgid "Checking app version..."
 msgstr "Vérification de la version de l'application..."
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
-msgid "Choose .srt file"
-msgstr "Choisir un fichier .srt"
-
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:103
 msgid "Choose a plan to unlock all features"
 msgstr "Choisissez un plan pour débloquer toutes les fonctionnalités"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:207
 msgid "Choose subtitles"
 msgstr "Choisir les sous-titres"
 
@@ -477,18 +469,17 @@ msgstr "Contact"
 msgid "Context"
 msgstr "Contexte"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:212
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:214
 msgid "Context (optional)"
 msgstr "Contexte (facultatif)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:94
 #: apps/web/src/features/auth/components/login-email-view.tsx:86
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:51
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:40
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:94
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:129
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:204
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:158
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:150
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:128
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:161
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
 msgid "Continue"
 msgstr "Continuer"
 
@@ -523,7 +514,7 @@ msgstr "Impossible de récupérer une glose. Le surlignage est toujours enregist
 msgid "Could not fetch a translation right now."
 msgstr "Impossible de récupérer une traduction pour le moment."
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:108
 msgid "Could not import the pasted text."
 msgstr "Impossible d'importer le texte collé."
 
@@ -637,7 +628,7 @@ msgstr "Supprimé « {headword} »"
 msgid "Deleting…"
 msgstr "Suppression…"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:129
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:132
 msgid "Detecting language…"
 msgstr "Détection de la langue…"
 
@@ -669,7 +660,7 @@ msgstr "p. ex. /ˈkæt/"
 msgid "e.g. + acc, от + gen"
 msgstr "p. ex. + acc, от + gén"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:205
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:207
 msgid "e.g. подоконник, ran out of, à propos"
 msgstr "p. ex. подоконник, ran out of, à propos"
 
@@ -1080,7 +1071,7 @@ msgstr "Genre"
 msgid "General"
 msgstr "Général"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:168
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:170
 msgid "Generate card"
 msgstr "Générer la carte"
 
@@ -1093,13 +1084,13 @@ msgid "Generating full exploration… this takes a few seconds."
 msgstr "Génération de l'exploration complète… cela prend quelques secondes."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:187
-#: apps/web/src/features/practice/components/practice-session-view.tsx:435
+#: apps/web/src/features/practice/components/practice-session-view.tsx:444
 #: apps/web/src/features/review/components/focus-view.tsx:293
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:168
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:170
 msgid "Generating…"
 msgstr "Génération…"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:104
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:62
 msgid "Get started"
 msgstr "Commencer"
 
@@ -1189,7 +1180,7 @@ msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le r
 msgid "Home"
 msgstr "Accueil"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:415
+#: apps/web/src/features/practice/components/practice-session-view.tsx:424
 msgid "How rating works on Next"
 msgstr "Fonctionnement de la notation lors du passage au suivant"
 
@@ -1213,7 +1204,7 @@ msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à
 msgid "Imperfective"
 msgstr "Imperfectif"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:158
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:161
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
 msgid "Importing…"
 msgstr "Importation…"
@@ -1271,6 +1262,10 @@ msgstr "Notes L1"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:408
 msgid "Label (e.g. past.m)"
 msgstr "Libellé (par ex. passé.m)"
+
+#: apps/web/src/components/language-option-list.tsx:61
+msgid "Language"
+msgstr "Langue"
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:113
 msgid "Language of the text"
@@ -1364,7 +1359,7 @@ msgstr "Chargement..."
 msgid "Loading…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:193
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:194
 msgid "Looks like {suggestedLanguageName} — switch?"
 msgstr "On dirait du {suggestedLanguageName} — changer ?"
 
@@ -1413,10 +1408,6 @@ msgstr "Plus formel :"
 msgid "More frequent synonym"
 msgstr "Synonyme plus fréquent"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:80
-msgid "More languages"
-msgstr "Plus de langues"
-
 #: apps/web/src/features/practice/components/rate-sheet.tsx:117
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:67
 msgid "More options"
@@ -1435,7 +1426,6 @@ msgstr "Nom (optionnel)"
 msgid "Native example"
 msgstr "Exemple en langue maternelle"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:61
 #: apps/web/src/features/settings/components/native-language-selector.tsx:16
 msgid "Native language"
 msgstr "Langue maternelle"
@@ -1455,11 +1445,11 @@ msgid "New"
 msgstr "Nouveau"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:89
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:123
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:171
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:193
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:277
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:122
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:170
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:196
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:236
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:272
 msgid "New session"
 msgstr "Nouvelle session"
 
@@ -1479,7 +1469,7 @@ msgstr "Nouveaux aujourd'hui"
 msgid "Next card"
 msgstr "Carte suivante"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:440
+#: apps/web/src/features/practice/components/practice-session-view.tsx:449
 msgid "Next text"
 msgstr "Texte suivant"
 
@@ -1491,6 +1481,7 @@ msgstr "Aucune carte pour le moment. Traitez la session pour les générer."
 msgid "No highlights — the LLM will suggest terms based on your level."
 msgstr "Aucun surlignage — l'IA suggérera des termes en fonction de votre niveau."
 
+#: apps/web/src/components/language-option-list.tsx:62
 #: apps/web/src/components/language-picker.tsx:99
 msgid "No languages found."
 msgstr "Aucune langue trouvée."
@@ -1616,7 +1607,7 @@ msgstr "Particule"
 msgid "Paste a Reddit comment, news excerpt, Telegram post…"
 msgstr "Collez un commentaire Reddit, un extrait d'article, un post Telegram…"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:164
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:167
 msgid "Paste a text"
 msgstr "Coller un texte"
 
@@ -1640,7 +1631,8 @@ msgstr "Supprimer définitivement votre compte et toutes les données associées
 msgid "Phrase"
 msgstr "Expression"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:185
+#: apps/web/src/components/language-select-field.tsx:34
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:181
 msgid "Pick a language"
 msgstr "Choisissez une langue"
 
@@ -1648,7 +1640,11 @@ msgstr "Choisissez une langue"
 msgid "Pick a language first"
 msgstr "Choisissez d'abord une langue"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:177
+#: apps/web/src/components/language-select-field.tsx:71
+msgid "Pick a language from the list."
+msgstr "Choisissez une langue dans la liste."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:176
 msgid "Pick a movie"
 msgstr "Choisir un film"
 
@@ -1656,7 +1652,7 @@ msgstr "Choisir un film"
 msgid "Pick a movie and load its subtitles"
 msgstr "Choisissez un film et chargez ses sous-titres"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:251
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:246
 msgid "Pick a subtitle track"
 msgstr "Choisir une piste de sous-titres"
 
@@ -1672,7 +1668,7 @@ msgstr "Choisissez quoi créer ensuite."
 msgid "Please check your inbox and click on the link to continue"
 msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour continuer"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:18
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:20
 msgid "Please choose a .srt file."
 msgstr "Veuillez choisir un fichier .srt."
 
@@ -1723,13 +1719,13 @@ msgstr "Pratique"
 msgid "Practice limits"
 msgstr "Limites de pratique"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:211
+#: apps/web/src/features/review/components/triage-list-view.tsx:212
 msgid "Practice these terms"
 msgstr "Pratiquer ces termes"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:50
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:153
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:137
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:156
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
@@ -1869,7 +1865,7 @@ msgstr "Registre"
 msgid "Register alternatives"
 msgstr "Alternatives de registre"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:183
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:182
 msgid "Registering {movieTitle}…"
 msgstr "Enregistrement de {movieTitle}…"
 
@@ -1904,7 +1900,7 @@ msgstr "Supprimer la session"
 msgid "Removing…"
 msgstr "Suppression…"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:55
 msgid "Replace file ({fileName})"
 msgstr "Remplacer le fichier ({fileName})"
 
@@ -1953,7 +1949,7 @@ msgstr "RP"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:174
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Save a term"
 msgstr "Enregistrer un terme"
 
@@ -1971,9 +1967,9 @@ msgstr "Enregistrer dans le vocabulaire"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:214
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:448
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:129
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:128
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:375
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:150
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
 msgid "Saving…"
 msgstr "Enregistrement…"
 
@@ -1989,11 +1985,12 @@ msgstr "Échec de la recherche"
 msgid "Search headword, translation, or definition…"
 msgstr "Rechercher un lemme, une traduction ou une définition…"
 
+#: apps/web/src/components/language-option-list.tsx:55
 #: apps/web/src/components/language-picker.tsx:88
 msgid "Search languages…"
 msgstr "Rechercher des langues…"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:216
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
 msgid "Search OpenSubtitles"
 msgstr "Rechercher sur OpenSubtitles"
 
@@ -2118,7 +2115,7 @@ msgid "Some text for the Home tab"
 msgstr "Du texte pour l'onglet Accueil"
 
 #: apps/native/src/config/react-query-config.ts:24
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:278
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:273
 msgid "Something went wrong"
 msgstr "Une erreur s'est produite"
 
@@ -2165,7 +2162,7 @@ msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
 msgid "Start a movie session"
 msgstr "Démarrer une session de film"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:140
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:143
 msgid "Start session"
 msgstr "Démarrer la session"
 
@@ -2173,11 +2170,11 @@ msgstr "Démarrer la session"
 msgid "Start something new"
 msgstr "Commencer quelque chose de nouveau"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:269
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:264
 msgid "Starting session…"
 msgstr "Démarrage de la session…"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:140
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:143
 #: apps/web/src/features/sessions/components/process-button.tsx:69
 msgid "Starting…"
 msgstr "Démarrage…"
@@ -2208,10 +2205,6 @@ msgstr "Abonnement Requis"
 msgid "Subscription Successful!"
 msgstr "Abonnement réussi !"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
-msgid "Subtitle source"
-msgstr "Source des sous-titres"
-
 #: apps/native/src/config/react-query-config.ts:114
 #: apps/web/src/config/react-query-config.ts:125
 msgid "Success!"
@@ -2225,7 +2218,7 @@ msgstr "Synonymes"
 msgid "Target example"
 msgstr "Exemple cible"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:179
 msgid "Target language"
 msgstr "Langue cible"
 
@@ -2260,7 +2253,7 @@ msgstr "Textes"
 msgid "Thank you for your feedback!"
 msgstr "Merci pour votre retour !"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:23
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:25
 msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
@@ -2362,7 +2355,7 @@ msgstr "Recherche de traduction et action de sauvegarde pour le texte sélection
 msgid "Triage"
 msgstr "Tri"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:110
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:68
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle langue pour commencer. Vous pouvez choisir la langue cible à chaque fois que vous ajoutez du nouveau contenu."
 
@@ -2390,7 +2383,7 @@ msgstr "Débloquer Premium"
 msgid "Unseen"
 msgstr "Non vus"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:421
+#: apps/web/src/features/practice/components/practice-session-view.tsx:430
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Les termes non évalués comptent comme « bons » lorsque vous passez au texte suivant."
 
@@ -2413,15 +2406,19 @@ msgstr "Mise à jour requise"
 msgid "Upgrade to Premium"
 msgstr "Passer à Premium"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:223
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:55
+msgid "Upload"
+msgstr "Téléverser"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:219
 msgid "Upload a .srt file"
 msgstr "Téléverser un fichier .srt"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:251
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:246
 msgid "Upload your .srt file"
 msgstr "Téléversez votre fichier .srt"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:129
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:132
 msgid "Uploading…"
 msgstr "Téléchargement…"
 
@@ -2429,7 +2426,7 @@ msgstr "Téléchargement…"
 msgid "Upper intermediate — fluent on familiar topics, some abstract ideas."
 msgstr "Intermédiaire supérieur — courant sur des sujets familiers, quelques idées abstraites."
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:224
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:220
 msgid "Use a subtitle file you already have."
 msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
 
@@ -2503,6 +2500,10 @@ msgstr "Attention"
 msgid "Warnings"
 msgstr "Avertissements"
 
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:128
+msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
+msgstr "Nous prenons en charge les fichiers de sous-titres .srt. La langue est détectée automatiquement à partir du contenu du fichier."
+
 #: apps/native/src/features/auth/components/account-removed-view.tsx:19
 #: apps/web/src/features/auth/components/account-removed-view.tsx:32
 msgid "We're sorry to see you go. Your account has been successfully removed."
@@ -2516,7 +2517,7 @@ msgstr "Nous avons envoyé un email de vérification à :"
 msgid "We've sent a verification link to:"
 msgstr "Nous avons envoyé un lien de vérification à :"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:58
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:47
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
 
@@ -2524,7 +2525,7 @@ msgstr "Bienvenue sur Flicktionary"
 msgid "What language are you studying?"
 msgstr "Quelle langue étudiez-vous ?"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:59
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:48
 msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
 msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flicktionary traduira les mots et les phrases."
 
@@ -2532,7 +2533,7 @@ msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flick
 msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
 msgstr "Lorsqu'activé, le traitement d'une session permet au LLM de scanner l'intégralité de la piste et de suggérer des termes adaptés à votre niveau. Lorsque désactivé, seuls vos surlignages manuels deviennent des cartes."
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:219
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:221
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
 
@@ -2552,7 +2553,7 @@ msgstr "Wiktionnaire"
 msgid "Wiktionary, edited"
 msgstr "Wiktionary, modifié"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:199
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:201
 msgid "Word or expression"
 msgstr "Mot ou expression"
 
@@ -2582,7 +2583,7 @@ msgstr "Vous avez déjà utilisé votre essai gratuit."
 msgid "You used your free trial"
 msgstr "Vous avez déjà utilisé votre essai gratuit"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:109
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:67
 msgid "You're all set"
 msgstr "Vous êtes prêt"
 
@@ -2918,6 +2919,10 @@ msgstr "votre@email.com"
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Facturé annuellement : {yearlyPriceFormatted} €"
 
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:84
+#~ msgid "Browse the full list."
+#~ msgstr "Parcourir la liste complète."
+
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
 #~ msgid "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
 #~ msgstr "En accédant et en utilisant notre site web, flicktionary.app, et tous les services associés, vous acceptez d'être lié par ces Conditions d'utilisation (« Conditions »)."
@@ -2931,6 +2936,10 @@ msgstr "votre@email.com"
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
 #~ msgid "Change"
 #~ msgstr "Modifier"
+
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
+#~ msgid "Choose .srt file"
+#~ msgstr "Choisir un fichier .srt"
 
 #: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
 #~ msgid "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
@@ -3043,6 +3052,10 @@ msgstr "votre@email.com"
 #~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
 #~ msgstr "Maîtrisez une prononciation parfaite grâce au clonage vocal propulsé par l'IA. Pratiquez la parole dans votre langue cible avec votre propre voix. Essayez notre essai gratuit aujourd'hui !"
 
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:80
+#~ msgid "More languages"
+#~ msgstr "Plus de langues"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:128
 #~ msgid "Native language: {nativeLanguage}."
@@ -3143,6 +3156,10 @@ msgstr "votre@email.com"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:125
 #~ msgid "Start practice"
 #~ msgstr "Commencer la pratique"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
+#~ msgid "Subtitle source"
+#~ msgstr "Source des sous-titres"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:74
 #: apps/web/src/features/more/components/more-tab-view.tsx:81
