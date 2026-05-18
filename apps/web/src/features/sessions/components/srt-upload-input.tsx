@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type Props = {
   onLoaded: (srtContent: string, fileName: string) => void
+  disabled?: boolean
 }
 
-export const SrtUploadInput = ({ onLoaded }: Props) => {
+export const SrtUploadInput = ({ onLoaded, disabled }: Props) => {
   const { t } = useLingui()
   const inputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
@@ -41,8 +43,16 @@ export const SrtUploadInput = ({ onLoaded }: Props) => {
           }
         }}
       />
-      <Button type='button' variant='outline' onClick={() => inputRef.current?.click()}>
-        {fileName ? t`Replace file (${fileName})` : t`Choose .srt file`}
+      <Button
+        type='button'
+        variant='secondary'
+        size='xl'
+        disabled={disabled}
+        onClick={() => inputRef.current?.click()}
+        className='w-full'
+      >
+        <Upload />
+        {fileName ? t`Replace file (${fileName})` : t`Upload`}
       </Button>
       {error && <p className='text-destructive text-sm'>{error}</p>}
     </div>

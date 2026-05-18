@@ -197,17 +197,18 @@ export const TriageListView = () => {
         </div>
       </div>
 
-      <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
-        <div className='mx-auto flex max-w-4xl items-center md:justify-end'>
+      <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+        <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
           <Button
-            className='w-full md:w-auto'
+            size='xl'
+            className='w-full'
             disabled={keptCount === 0 || !session}
             onClick={() => {
               if (!session) return
               void navigate({ to: '/practice/start', search: { lang: session.targetLanguage, mode: 'mixed' } })
             }}
           >
-            <Brain className='mr-2 h-4 w-4' />
+            <Brain />
             {t`Practice these terms`}
           </Button>
         </div>

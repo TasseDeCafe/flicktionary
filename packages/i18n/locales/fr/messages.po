@@ -42,9 +42,9 @@ msgstr "{0} carte(s) — dont {1} conservée(s)"
 msgid "{0} highlight(s)"
 msgstr "{0} surlignage(s)"
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:118
-msgid "{charCount} / {MAX_LENGTH} characters"
-msgstr "{charCount} / {MAX_LENGTH} caractères"
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:90
+msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
+msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} caractères"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:38
 msgid "{dailyNewAvailable} new available"
@@ -105,7 +105,7 @@ msgstr "{newCount} non vu(s)"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:407
+#: apps/web/src/features/practice/components/practice-session-view.tsx:416
 msgid "{ratedCount} of {totalCount} rated"
 msgstr "{ratedCount} sur {totalCount} évalués"
 
@@ -153,7 +153,7 @@ msgstr "Une version plus récente de l'application est requise pour continuer. V
 msgid "A sentence using this term in its natural setting."
 msgstr "Une phrase utilisant ce terme dans son contexte naturel."
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:135
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:108
 msgid "A short label for this session"
 msgstr "Un libellé court pour cette session"
 
@@ -193,7 +193,8 @@ msgid "Actions in this section can lead to permanent data loss."
 msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:58
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:145
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:146
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:165
 msgid "Add a word"
 msgstr "Ajouter un mot"
 
@@ -214,6 +215,10 @@ msgstr "Paramètres administrateur"
 #: apps/native/src/features/profile/components/profile-view.tsx:143
 msgid "Admin Settings"
 msgstr "Paramètres Administrateur"
+
+#: apps/web/src/features/sessions/components/cefr-step.tsx:31
+msgid "Advanced — flexible, effective use in complex contexts."
+msgstr "Avancé — utilisation flexible et efficace dans des contextes complexes."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
 msgid "Adverb"
@@ -299,9 +304,9 @@ msgstr "Paire d'aspect"
 msgid "Aspect pair (counterpart headword)"
 msgstr "Paire aspectuelle (mot-vedette correspondant)"
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:120
-msgid "At least {MIN_LENGTH} characters needed"
-msgstr "Au moins {MIN_LENGTH} caractères requis"
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:92
+msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
+msgstr "Au moins {TEXT_PASTE_MIN_LENGTH} caractères requis"
 
 #: apps/web/src/features/auth/components/login-view.tsx:48
 #: apps/web/src/features/auth/components/login-view.tsx:60
@@ -325,7 +330,7 @@ msgid "Back to Login"
 msgstr "Retour à la connexion"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:137
-#: apps/web/src/features/practice/components/practice-session-view.tsx:377
+#: apps/web/src/features/practice/components/practice-session-view.tsx:402
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
 msgstr "Retour à la pratique"
@@ -333,6 +338,10 @@ msgstr "Retour à la pratique"
 #: apps/web/src/features/review/components/processing-view.tsx:50
 msgid "Back to session"
 msgstr "Retour à la session"
+
+#: apps/web/src/features/sessions/components/cefr-step.tsx:23
+msgid "Beginner — basic phrases and immediate needs."
+msgstr "Débutant — phrases de base et besoins immédiats."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:67
 msgid "best value"
@@ -349,6 +358,10 @@ msgstr "Facturé annuellement à {yearlyPriceTotal} €"
 #: apps/web/src/features/settings/components/english-ipa-dialect-selector.tsx:26
 msgid "British"
 msgstr "Britannique"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
+msgid "Browse community-uploaded tracks for this movie."
+msgstr "Parcourez les pistes téléversées par la communauté pour ce film."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
 msgid "Calibrates the difficult-words pass and the depth of explanations."
@@ -379,16 +392,14 @@ msgstr "Carte {cardPosition} sur {cardTotal}"
 msgid "Card not found."
 msgstr "Carte introuvable."
 
+#: apps/web/src/features/sessions/components/cefr-step.tsx:43
+msgid "CEFR level"
+msgstr "Niveau CECRL"
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:31
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:42
 msgid "CEFR level per language"
 msgstr "Niveau CECRL par langue"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:162
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
-msgid "Change"
-msgstr "Modifier"
 
 #: apps/web/src/features/review/components/focus-view.tsx:300
 msgid "Chat"
@@ -402,15 +413,11 @@ msgstr "Vérifiez votre e-mail"
 msgid "Checking app version..."
 msgstr "Vérification de la version de l'application..."
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
-msgid "Choose .srt file"
-msgstr "Choisir un fichier .srt"
-
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:103
 msgid "Choose a plan to unlock all features"
 msgstr "Choisissez un plan pour débloquer toutes les fonctionnalités"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:193
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:207
 msgid "Choose subtitles"
 msgstr "Choisir les sous-titres"
 
@@ -462,14 +469,17 @@ msgstr "Contact"
 msgid "Context"
 msgstr "Contexte"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:190
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:214
 msgid "Context (optional)"
 msgstr "Contexte (facultatif)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:94
 #: apps/web/src/features/auth/components/login-email-view.tsx:86
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:56
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:154
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:40
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:94
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:128
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:161
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
 msgid "Continue"
 msgstr "Continuer"
 
@@ -504,7 +514,7 @@ msgstr "Impossible de récupérer une glose. Le surlignage est toujours enregist
 msgid "Could not fetch a translation right now."
 msgstr "Impossible de récupérer une traduction pour le moment."
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:95
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:108
 msgid "Could not import the pasted text."
 msgstr "Impossible d'importer le texte collé."
 
@@ -543,11 +553,6 @@ msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'applicatio
 #: apps/web/src/features/practice/components/practice-start-view.tsx:40
 msgid "Couldn't start the session. Please try again."
 msgstr "Impossible de démarrer la session. Veuillez réessayer."
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
-msgid "Creating…"
-msgstr "Création…"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:109
 msgid ""
@@ -623,7 +628,7 @@ msgstr "Supprimé « {headword} »"
 msgid "Deleting…"
 msgstr "Suppression…"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:164
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:132
 msgid "Detecting language…"
 msgstr "Détection de la langue…"
 
@@ -635,7 +640,7 @@ msgstr "Forme d'affichage (par ex. accentuée)"
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Télécharger tous les termes conservés pour {languageName} au format CSV (compatible Anki)"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:127
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:69
 msgid "downloads"
 msgstr "téléchargements"
 
@@ -655,7 +660,7 @@ msgstr "p. ex. /ˈkæt/"
 msgid "e.g. + acc, от + gen"
 msgstr "p. ex. + acc, от + gén"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:183
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:207
 msgid "e.g. подоконник, ran out of, à propos"
 msgstr "p. ex. подоконник, ran out of, à propos"
 
@@ -674,6 +679,10 @@ msgstr "Modifier le terme"
 #: apps/web/src/features/review/components/grounding-badge.tsx:41
 msgid "Edited"
 msgstr "Modifié"
+
+#: apps/web/src/features/sessions/components/cefr-step.tsx:25
+msgid "Elementary — simple, routine exchanges."
+msgstr "Élémentaire — échanges simples et routiniers."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:99
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:85
@@ -773,7 +782,7 @@ msgstr "Export en cours…"
 msgid "Failed to complete onboarding"
 msgstr "Échec de la finalisation de l'intégration"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:119
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:113
 msgid "Failed to create card"
 msgstr "Échec de la création de la carte"
 
@@ -1062,7 +1071,7 @@ msgstr "Genre"
 msgid "General"
 msgstr "Général"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:170
 msgid "Generate card"
 msgstr "Générer la carte"
 
@@ -1075,13 +1084,13 @@ msgid "Generating full exploration… this takes a few seconds."
 msgstr "Génération de l'exploration complète… cela prend quelques secondes."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:187
-#: apps/web/src/features/practice/components/practice-session-view.tsx:435
+#: apps/web/src/features/practice/components/practice-session-view.tsx:444
 #: apps/web/src/features/review/components/focus-view.tsx:293
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:170
 msgid "Generating…"
 msgstr "Génération…"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:69
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:62
 msgid "Get started"
 msgstr "Commencer"
 
@@ -1143,7 +1152,7 @@ msgstr "Mot-vedette"
 msgid "Help us improve Flicktionary"
 msgstr "Aidez-nous à améliorer Flicktionary"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:129
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:71
 msgid "HI"
 msgstr "SM"
 
@@ -1171,7 +1180,7 @@ msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le r
 msgid "Home"
 msgstr "Accueil"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:415
+#: apps/web/src/features/practice/components/practice-session-view.tsx:424
 msgid "How rating works on Next"
 msgstr "Fonctionnement de la notation lors du passage au suivant"
 
@@ -1195,8 +1204,8 @@ msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à
 msgid "Imperfective"
 msgstr "Imperfectif"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:154
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:161
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
 msgid "Importing…"
 msgstr "Importation…"
 
@@ -1215,6 +1224,10 @@ msgstr "Initialisation des paiements..."
 #: apps/native/src/features/auth/components/session-initializer.tsx:27
 msgid "Initializing..."
 msgstr "Initialisation..."
+
+#: apps/web/src/features/sessions/components/cefr-step.tsx:27
+msgid "Intermediate — handle most travel and everyday topics."
+msgstr "Intermédiaire — gérer la plupart des voyages et sujets quotidiens."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
 msgid "Introduce your card details and get instant access"
@@ -1250,7 +1263,11 @@ msgstr "Notes L1"
 msgid "Label (e.g. past.m)"
 msgstr "Libellé (par ex. passé.m)"
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:140
+#: apps/web/src/components/language-option-list.tsx:61
+msgid "Language"
+msgstr "Langue"
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:113
 msgid "Language of the text"
 msgstr "Langue du texte"
 
@@ -1285,11 +1302,6 @@ msgstr "Moins formel :"
 #: apps/web/src/features/more/components/more-tab-view.tsx:61
 msgid "Let the model surface terms at your level on Process"
 msgstr "Laisser le modèle suggérer des termes adaptés à votre niveau dans Process"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
-msgid "Level for {trackLanguage}: {cefrLabel}."
-msgstr "Niveau pour {trackLanguage} : {cefrLabel}."
 
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx:75
 msgid "Link expired or invalid"
@@ -1347,7 +1359,7 @@ msgstr "Chargement..."
 msgid "Loading…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:171
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:194
 msgid "Looks like {suggestedLanguageName} — switch?"
 msgstr "On dirait du {suggestedLanguageName} — changer ?"
 
@@ -1364,6 +1376,10 @@ msgstr "Gérer l'Abonnement"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
 msgid "Masculine"
 msgstr "Masculin"
+
+#: apps/web/src/features/sessions/components/cefr-step.tsx:33
+msgid "Mastery — virtually everything understood with ease."
+msgstr "Maîtrise — pratiquement tout compris avec aisance."
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:134
 msgid "Maybe later"
@@ -1418,11 +1434,6 @@ msgstr "Langue maternelle"
 msgid "Native language and CEFR levels"
 msgstr "Langue maternelle et niveaux CECRL"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:128
-msgid "Native language: {nativeLanguage}."
-msgstr "Langue maternelle : {nativeLanguage}."
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:294
 msgid "Neuter"
 msgstr "Neutre"
@@ -1433,7 +1444,12 @@ msgstr "Neutre"
 msgid "New"
 msgstr "Nouveau"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:133
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:89
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:122
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:170
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:196
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:236
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:272
 msgid "New session"
 msgstr "Nouvelle session"
 
@@ -1453,7 +1469,7 @@ msgstr "Nouveaux aujourd'hui"
 msgid "Next card"
 msgstr "Carte suivante"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:440
+#: apps/web/src/features/practice/components/practice-session-view.tsx:449
 msgid "Next text"
 msgstr "Texte suivant"
 
@@ -1465,11 +1481,12 @@ msgstr "Aucune carte pour le moment. Traitez la session pour les générer."
 msgid "No highlights — the LLM will suggest terms based on your level."
 msgstr "Aucun surlignage — l'IA suggérera des termes en fonction de votre niveau."
 
+#: apps/web/src/components/language-option-list.tsx:62
 #: apps/web/src/components/language-picker.tsx:99
 msgid "No languages found."
 msgstr "Aucune langue trouvée."
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:75
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:71
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:250
 msgid "No matches."
 msgstr "Aucun résultat."
@@ -1490,7 +1507,7 @@ msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 msgid "No target languages yet. Levels are set the first time you start a session in a new language."
 msgstr "Aucune langue cible pour l'instant. Les niveaux sont définis lors du démarrage de votre première session dans une nouvelle langue."
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:117
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:65
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fichier .srt à la place."
 
@@ -1553,10 +1570,6 @@ msgstr "Ouvrir la source"
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une exploration complète."
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:100
-msgid "OpenSubtitles search"
-msgstr "Recherche OpenSubtitles"
-
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:74
 msgid "OpenSubtitles search failed"
 msgstr "La recherche OpenSubtitles a échoué"
@@ -1572,10 +1585,6 @@ msgstr "Paraphrase contextuelle optionnelle dans la langue cible."
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:339
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Note optionnelle pour le LLM (qu'est-ce qui vous confond précisément ?)"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:169
-msgid "Original language"
-msgstr "Langue d'origine"
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:23
 msgid "Originally verified against Wiktionary on {groundedDate}, then edited"
@@ -1594,11 +1603,11 @@ msgstr "Partie du discours"
 msgid "Particle"
 msgstr "Particule"
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:112
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:84
 msgid "Paste a Reddit comment, news excerpt, Telegram post…"
 msgstr "Collez un commentaire Reddit, un extrait d'article, un post Telegram…"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:86
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:167
 msgid "Paste a text"
 msgstr "Coller un texte"
 
@@ -1606,7 +1615,7 @@ msgstr "Coller un texte"
 msgid "Paste an article, comment, or post"
 msgstr "Collez un article, un commentaire ou une publication"
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:107
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:78
 msgid "Paste your text"
 msgstr "Collez votre texte"
 
@@ -1622,11 +1631,8 @@ msgstr "Supprimer définitivement votre compte et toutes les données associées
 msgid "Phrase"
 msgstr "Expression"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:70
-msgid "Pick"
-msgstr "Choisir"
-
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:162
+#: apps/web/src/components/language-select-field.tsx:34
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:181
 msgid "Pick a language"
 msgstr "Choisissez une langue"
 
@@ -1634,13 +1640,25 @@ msgstr "Choisissez une langue"
 msgid "Pick a language first"
 msgstr "Choisissez d'abord une langue"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:138
+#: apps/web/src/components/language-select-field.tsx:71
+msgid "Pick a language from the list."
+msgstr "Choisissez une langue dans la liste."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:176
 msgid "Pick a movie"
 msgstr "Choisir un film"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:43
 msgid "Pick a movie and load its subtitles"
 msgstr "Choisissez un film et chargez ses sous-titres"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:246
+msgid "Pick a subtitle track"
+msgstr "Choisir une piste de sous-titres"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:104
+msgid "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
+msgstr "Choisissez la langue du film que vous allez regarder. Les sous-titres et les explications seront dans cette langue."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:71
 msgid "Pick what to create next."
@@ -1650,7 +1668,7 @@ msgstr "Choisissez quoi créer ensuite."
 msgid "Please check your inbox and click on the link to continue"
 msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour continuer"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:18
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:20
 msgid "Please choose a .srt file."
 msgstr "Veuillez choisir un fichier .srt."
 
@@ -1701,12 +1719,13 @@ msgstr "Pratique"
 msgid "Practice limits"
 msgstr "Limites de pratique"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:211
+#: apps/web/src/features/review/components/triage-list-view.tsx:212
 msgid "Practice these terms"
 msgstr "Pratiquer ces termes"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:50
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:81
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:137
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:156
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
@@ -1846,9 +1865,9 @@ msgstr "Registre"
 msgid "Register alternatives"
 msgstr "Alternatives de registre"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:183
-msgid "Registering movie…"
-msgstr "Enregistrement du film…"
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:182
+msgid "Registering {movieTitle}…"
+msgstr "Enregistrement de {movieTitle}…"
 
 #: apps/web/src/features/review/components/focus-view.tsx:196
 #: apps/web/src/features/review/components/triage-row.tsx:49
@@ -1881,7 +1900,7 @@ msgstr "Supprimer la session"
 msgid "Removing…"
 msgstr "Suppression…"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:55
 msgid "Replace file ({fileName})"
 msgstr "Remplacer le fichier ({fileName})"
 
@@ -1930,7 +1949,7 @@ msgstr "RP"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:149
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Save a term"
 msgstr "Enregistrer un terme"
 
@@ -1938,7 +1957,7 @@ msgstr "Enregistrer un terme"
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source nécessaire"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:380
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:375
 msgid "Save note"
 msgstr "Enregistrer la note"
 
@@ -1948,11 +1967,13 @@ msgstr "Enregistrer dans le vocabulaire"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:214
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:448
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:380
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:128
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:375
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:31
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:33
 msgid "Search a movie title…"
 msgstr "Rechercher un titre de film…"
 
@@ -1964,27 +1985,27 @@ msgstr "Échec de la recherche"
 msgid "Search headword, translation, or definition…"
 msgstr "Rechercher un lemme, une traduction ou une définition…"
 
+#: apps/web/src/components/language-option-list.tsx:55
 #: apps/web/src/components/language-picker.tsx:88
 msgid "Search languages…"
 msgstr "Rechercher des langues…"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
+msgid "Search OpenSubtitles"
+msgstr "Rechercher sur OpenSubtitles"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:126
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:16
 msgid "Search…"
 msgstr "Rechercher…"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:109
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:62
 msgid "Searching OpenSubtitles…"
 msgstr "Recherche sur OpenSubtitles…"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:36
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:39
 msgid "Searching…"
 msgstr "Recherche en cours…"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
-msgid "segments"
-msgstr "segments"
 
 #: apps/web/src/components/language-picker.tsx:53
 msgid "Select a language"
@@ -2041,7 +2062,7 @@ msgid "Sessions"
 msgstr "Sessions"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:121
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:110
 msgid "Set your native language first."
 msgstr "Définissez d'abord votre langue maternelle."
 
@@ -2094,6 +2115,7 @@ msgid "Some text for the Home tab"
 msgstr "Du texte pour l'onglet Accueil"
 
 #: apps/native/src/config/react-query-config.ts:24
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:273
 msgid "Something went wrong"
 msgstr "Une erreur s'est produite"
 
@@ -2140,10 +2162,7 @@ msgstr "COMMENCER L'ESSAI GRATUIT DE {NUMBER_OF_DAYS_IN_FREE_TRIAL} JOURS"
 msgid "Start a movie session"
 msgstr "Démarrer une session de film"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:231
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:118
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:143
 msgid "Start session"
 msgstr "Démarrer la session"
 
@@ -2151,6 +2170,11 @@ msgstr "Démarrer la session"
 msgid "Start something new"
 msgstr "Commencer quelque chose de nouveau"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:264
+msgid "Starting session…"
+msgstr "Démarrage de la session…"
+
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:143
 #: apps/web/src/features/sessions/components/process-button.tsx:69
 msgid "Starting…"
 msgstr "Démarrage…"
@@ -2194,8 +2218,7 @@ msgstr "Synonymes"
 msgid "Target example"
 msgstr "Exemple cible"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:87
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:153
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:179
 msgid "Target language"
 msgstr "Langue cible"
 
@@ -2220,10 +2243,6 @@ msgstr "Tester le journal Sentry Frontend"
 msgid "Test Frontend Unhandled Error"
 msgstr "Tester l'erreur frontend non gérée"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:92
-msgid "Text imported"
-msgstr "Texte importé"
-
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
 msgid "Texts"
 msgstr "Textes"
@@ -2234,11 +2253,7 @@ msgstr "Textes"
 msgid "Thank you for your feedback!"
 msgstr "Merci pour votre retour !"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:91
-msgid "The chosen subtitle track must match this language."
-msgstr "La piste de sous-titres choisie doit correspondre à cette langue."
-
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:23
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:25
 msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
@@ -2261,6 +2276,7 @@ msgid "This action cannot be undone. This will permanently delete your account a
 msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
+#: apps/web/src/features/sessions/components/cefr-step.tsx:41
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "Cela calibre le passage des mots difficiles et la profondeur des explications."
 
@@ -2288,7 +2304,7 @@ msgstr "Ce terme a été supprimé de votre vocabulaire. Restaurez-le pour conti
 msgid "This usually takes 1–2 minutes. You can leave this page and come back."
 msgstr "Cela prend généralement 1 à 2 minutes. Vous pouvez quitter cette page et revenir plus tard."
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:126
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:98
 msgid "Title"
 msgstr "Titre"
 
@@ -2321,10 +2337,6 @@ msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet e
 msgid "Total"
 msgstr "Total"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:199
-msgid "Track imported"
-msgstr "Piste importée"
-
 #: apps/web/src/features/review/components/editable-card-fields.tsx:186
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:61
 msgid "Translation"
@@ -2343,7 +2355,7 @@ msgstr "Recherche de traduction et action de sauvegarde pour le texte sélection
 msgid "Triage"
 msgstr "Tri"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:65
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:68
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle langue pour commencer. Vous pouvez choisir la langue cible à chaque fois que vous ajoutez du nouveau contenu."
 
@@ -2359,8 +2371,7 @@ msgstr "Impossible d'ouvrir le magasin d'applications"
 msgid "Unable to open app store. Please manually update the app."
 msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour manuellement l'application."
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:149
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:55
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:42
 msgid "Unknown year"
 msgstr "Année inconnue"
 
@@ -2372,7 +2383,7 @@ msgstr "Débloquer Premium"
 msgid "Unseen"
 msgstr "Non vus"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:421
+#: apps/web/src/features/practice/components/practice-session-view.tsx:430
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Les termes non évalués comptent comme « bons » lorsque vous passez au texte suivant."
 
@@ -2395,17 +2406,29 @@ msgstr "Mise à jour requise"
 msgid "Upgrade to Premium"
 msgstr "Passer à Premium"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:103
-msgid "Upload .srt"
-msgstr "Importer un .srt"
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:55
+msgid "Upload"
+msgstr "Téléverser"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:164
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:219
+msgid "Upload a .srt file"
+msgstr "Téléverser un fichier .srt"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:246
+msgid "Upload your .srt file"
+msgstr "Téléversez votre fichier .srt"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:132
 msgid "Uploading…"
 msgstr "Téléchargement…"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
-msgid "Use"
-msgstr "Utiliser"
+#: apps/web/src/features/sessions/components/cefr-step.tsx:29
+msgid "Upper intermediate — fluent on familiar topics, some abstract ideas."
+msgstr "Intermédiaire supérieur — courant sur des sujets familiers, quelques idées abstraites."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:220
+msgid "Use a subtitle file you already have."
+msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
@@ -2477,10 +2500,9 @@ msgstr "Attention"
 msgid "Warnings"
 msgstr "Avertissements"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
-msgid "We'll ask your level next."
-msgstr "Nous vous demanderons votre niveau ensuite."
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:128
+msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
+msgstr "Nous prenons en charge les fichiers de sous-titres .srt. La langue est détectée automatiquement à partir du contenu du fichier."
 
 #: apps/native/src/features/auth/components/account-removed-view.tsx:19
 #: apps/web/src/features/auth/components/account-removed-view.tsx:32
@@ -2495,11 +2517,15 @@ msgstr "Nous avons envoyé un email de vérification à :"
 msgid "We've sent a verification link to:"
 msgstr "Nous avons envoyé un lien de vérification à :"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:39
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:47
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:41
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:103
+msgid "What language are you studying?"
+msgstr "Quelle langue étudiez-vous ?"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:48
 msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
 msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flicktionary traduira les mots et les phrases."
 
@@ -2507,7 +2533,7 @@ msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flick
 msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
 msgstr "Lorsqu'activé, le traitement d'une session permet au LLM de scanner l'intégralité de la piste et de suggérer des termes adaptés à votre niveau. Lorsque désactivé, seuls vos surlignages manuels deviennent des cartes."
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:197
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:221
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
 
@@ -2527,7 +2553,7 @@ msgstr "Wiktionnaire"
 msgid "Wiktionary, edited"
 msgstr "Wiktionary, modifié"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:201
 msgid "Word or expression"
 msgstr "Mot ou expression"
 
@@ -2557,7 +2583,7 @@ msgstr "Vous avez déjà utilisé votre essai gratuit."
 msgid "You used your free trial"
 msgstr "Vous avez déjà utilisé votre essai gratuit"
 
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:63
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:67
 msgid "You're all set"
 msgstr "Vous êtes prêt"
 
@@ -2583,6 +2609,7 @@ msgid "Your highlights"
 msgstr "Vos surlignages"
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:34
+#: apps/web/src/features/sessions/components/cefr-step.tsx:40
 msgid "Your level in {languageName}"
 msgstr "Votre niveau en {languageName}"
 
@@ -2590,10 +2617,6 @@ msgstr "Votre niveau en {languageName}"
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:101
 msgid "Your name"
 msgstr "Votre nom"
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:46
-msgid "Your native language"
-msgstr "Votre langue maternelle"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:108
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:87
@@ -2711,6 +2734,10 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:136
 #~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
 #~ msgstr "(iv) l'accès, l'utilisation ou la modification non autorisés de vos transmissions ou contenus, que ce soit sur la base d'une garantie, d'un contrat, d'un délit (y compris la négligence) ou de toute autre théorie juridique, que nous ayons été informés ou non de la possibilité de tels dommages."
+
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:118
+#~ msgid "{charCount} / {MAX_LENGTH} characters"
+#~ msgstr "{charCount} / {MAX_LENGTH} caractères"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:70
 #~ msgid "{dailyNewAvailable} new today"
@@ -2880,6 +2907,10 @@ msgstr "votre@email.com"
 #~ msgid "App Store"
 #~ msgstr "App Store"
 
+#: apps/web/src/features/sessions/components/text-paste-input.tsx:120
+#~ msgid "At least {MIN_LENGTH} characters needed"
+#~ msgstr "Au moins {MIN_LENGTH} caractères requis"
+
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:129
 #~ msgid "Best Value"
 #~ msgstr "Meilleur rapport qualité-prix"
@@ -2888,6 +2919,10 @@ msgstr "votre@email.com"
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Facturé annuellement : {yearlyPriceFormatted} €"
 
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:84
+#~ msgid "Browse the full list."
+#~ msgstr "Parcourir la liste complète."
+
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
 #~ msgid "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
 #~ msgstr "En accédant et en utilisant notre site web, flicktionary.app, et tous les services associés, vous acceptez d'être lié par ces Conditions d'utilisation (« Conditions »)."
@@ -2895,6 +2930,16 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/layout.tsx:50
 #~ msgid "Category of the app"
 #~ msgstr "Catégorie de l'application"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:162
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
+#~ msgid "Change"
+#~ msgstr "Modifier"
+
+#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
+#~ msgid "Choose .srt file"
+#~ msgstr "Choisir un fichier .srt"
 
 #: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
 #~ msgid "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
@@ -2907,6 +2952,11 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:29
 #~ msgid "Copied!"
 #~ msgstr "Copié !"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
+#~ msgid "Creating…"
+#~ msgstr "Création…"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:59
 #~ msgid "Daily new limit reached · {newCount} unseen · {totalKept} total"
@@ -2989,6 +3039,11 @@ msgstr "votre@email.com"
 #~ msgid "iOS App"
 #~ msgstr "App iOS"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
+#~ msgid "Level for {trackLanguage}: {cefrLabel}."
+#~ msgstr "Niveau pour {trackLanguage} : {cefrLabel}."
+
 #: apps/web/src/features/dashboard/components/dashboard-view.tsx:31
 #~ msgid "Loading subscription status..."
 #~ msgstr "Chargement du statut d'abonnement..."
@@ -2996,6 +3051,15 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/page.tsx:18
 #~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
 #~ msgstr "Maîtrisez une prononciation parfaite grâce au clonage vocal propulsé par l'IA. Pratiquez la parole dans votre langue cible avec votre propre voix. Essayez notre essai gratuit aujourd'hui !"
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:80
+#~ msgid "More languages"
+#~ msgstr "Plus de langues"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:128
+#~ msgid "Native language: {nativeLanguage}."
+#~ msgstr "Langue maternelle : {nativeLanguage}."
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
 #~ msgid "No Card Required"
@@ -3014,13 +3078,25 @@ msgstr "votre@email.com"
 #~ msgid "Note & tags"
 #~ msgstr "Note et étiquettes"
 
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:100
+#~ msgid "OpenSubtitles search"
+#~ msgstr "Recherche OpenSubtitles"
+
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:26
 #~ msgid "or copy links to"
 #~ msgstr "ou copier les liens vers"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:169
+#~ msgid "Original language"
+#~ msgstr "Langue d'origine"
+
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
 #~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 #~ msgstr "Notre infrastructure de sécurité est continuellement surveillée, évaluée et améliorée pour répondre aux défis évolutifs de la cybersécurité. Nous maintenons des normes rigoureuses en matière de protection des données et suivons les meilleures pratiques de sécurité recommandées par les principales organisations de sécurité technologique. Pour une transparence totale, nous reconnaissons que tous les systèmes numériques nécessitent une vigilance constante, c'est pourquoi nous avons mis en place des protocoles de surveillance complets et de réponse rapide."
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:70
+#~ msgid "Pick"
+#~ msgstr "Choisir"
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:28
 #~ msgid "Play Store"
@@ -3047,9 +3123,18 @@ msgstr "votre@email.com"
 #~ msgid "Privacy Policy"
 #~ msgstr "Politique de Confidentialité"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:183
+#~ msgid "Registering movie…"
+#~ msgstr "Enregistrement du film…"
+
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:25
 #~ msgid "Scan the QR code to download the app"
 #~ msgstr "Scannez le code QR pour télécharger l'app"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
+#~ msgid "segments"
+#~ msgstr "segments"
 
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:35
 #: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:118
@@ -3072,6 +3157,10 @@ msgstr "votre@email.com"
 #~ msgid "Start practice"
 #~ msgstr "Commencer la pratique"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
+#~ msgid "Subtitle source"
+#~ msgstr "Source des sous-titres"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx:74
 #: apps/web/src/features/more/components/more-tab-view.tsx:81
 #: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:18
@@ -3085,6 +3174,14 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:24
 #~ msgid "Terms and Conditions"
 #~ msgstr "Conditions d'Utilisation"
+
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:92
+#~ msgid "Text imported"
+#~ msgstr "Texte importé"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:91
+#~ msgid "The chosen subtitle track must match this language."
+#~ msgstr "La piste de sous-titres choisie doit correspondre à cette langue."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
 #~ msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
@@ -3105,6 +3202,18 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
 #~ msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
 #~ msgstr "Ce système de suppression automatisé est accessible 24h/24 et 7j/7 via votre tableau de bord de compte sécurisé. Pour une assistance supplémentaire, notre équipe dédiée à la confidentialité est disponible à contact@flicktionary.app pour traiter vos demandes avec le même niveau d'immédiateté et de minutie."
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:199
+#~ msgid "Track imported"
+#~ msgstr "Piste importée"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:103
+#~ msgid "Upload .srt"
+#~ msgstr "Importer un .srt"
+
+#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
+#~ msgid "Use"
+#~ msgstr "Utiliser"
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:33
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:38
@@ -3135,6 +3244,11 @@ msgstr "votre@email.com"
 #~ msgid "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
 #~ msgstr "Nous ne conserverons vos Données personnelles que le temps nécessaire aux fins énoncées dans cette Politique de confidentialité. Nous conserverons et utiliserons vos Données personnelles dans la mesure nécessaire pour nous conformer à nos obligations légales, résoudre les litiges et faire appliquer nos accords et politiques juridiques."
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
+#~ msgid "We'll ask your level next."
+#~ msgstr "Nous vous demanderons votre niveau ensuite."
+
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
 #~ msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
 #~ msgstr "Bienvenue sur flicktionary.app. Nous nous engageons à protéger votre vie privée. Cette Politique de confidentialité décrit comment nous collectons, traitons, stockons et protégeons vos données personnelles lorsque vous interagissez avec nos services."
@@ -3150,3 +3264,7 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:98
 #~ msgid "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
 #~ msgstr "Vos informations, y compris les Données personnelles, peuvent être transférées et conservées sur des ordinateurs situés en dehors de votre juridiction où les lois sur la protection des données peuvent différer de celles de votre juridiction."
+
+#: apps/web/src/features/onboarding/components/onboarding-view.tsx:46
+#~ msgid "Your native language"
+#~ msgstr "Votre langue maternelle"
