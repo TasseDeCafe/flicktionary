@@ -84,6 +84,7 @@ const createDeps = () => {
     },
     usersRepository: {
       getNativeLanguage: vi.fn().mockResolvedValue('fr'),
+      getShowTranslationsEnabled: vi.fn().mockResolvedValue(true),
     },
   } as unknown as GenerateNextPracticeTextDependencies
 
