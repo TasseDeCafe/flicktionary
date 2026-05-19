@@ -75,8 +75,8 @@ const productionConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
   featureFlags: {
-    isCreditCardRequiredForAll: () => true,
-    shouldAppBeFreeForEveryone: () => false,
+    isCreditCardRequiredForAll: () => false,
+    shouldAppBeFreeForEveryone: () => true,
   },
 }
 
@@ -132,8 +132,8 @@ const developmentConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern,
   devAutoSeedNativeLanguage,
   featureFlags: {
-    isCreditCardRequiredForAll: () => true,
-    shouldAppBeFreeForEveryone: () => false,
+    isCreditCardRequiredForAll: () => false,
+    shouldAppBeFreeForEveryone: () => true,
   },
 }
 
@@ -219,8 +219,8 @@ const testConfig: EnvironmentConfig = {
   devAutoSeedEmailPattern: null,
   devAutoSeedNativeLanguage: 'fr',
   featureFlags: {
-    isCreditCardRequiredForAll: () => true,
-    shouldAppBeFreeForEveryone: () => false,
+    isCreditCardRequiredForAll: () => false,
+    shouldAppBeFreeForEveryone: () => true,
   },
 }
 
