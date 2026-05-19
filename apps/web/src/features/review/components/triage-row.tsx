@@ -5,19 +5,23 @@ import { Check, X } from 'lucide-react'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
-const getBackPreview = (card: Card): string => card.chunk.translation || card.chunk.definition || ''
+const getBackPreview = (card: Card, hideNativeFields: boolean): string => {
+  if (hideNativeFields) return card.chunk.definition || ''
+  return card.chunk.translation || card.chunk.definition || ''
+}
 
 type Props = {
   sessionId: string
   card: Card
+  hideNativeFields?: boolean
   onStatusChange: (cardId: string, status: CardStatus) => void
 }
 
-export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
+export const TriageRow = ({ sessionId, card, hideNativeFields = false, onStatusChange }: Props) => {
   const { t } = useLingui()
   const isKept = card.status === 'kept'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
-  const preview = getBackPreview(card)
+  const preview = getBackPreview(card, hideNativeFields)
 
   return (
     <div className='flex items-start gap-3 border-b py-3'>

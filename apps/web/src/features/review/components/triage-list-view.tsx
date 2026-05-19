@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
-import { useGetStudySession } from '@/features/sessions/api/sessions-hooks'
+import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
@@ -58,6 +58,12 @@ export const TriageListView = () => {
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/' })
   const { data: cards, isLoading } = useListCardsBySession(sessionId)
   const { data: session } = useGetStudySession(sessionId)
+  const { data: userPrefs } = useGetUserPrefs()
+  // Live user pref wins over the session snapshot.
+  const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
+  const sameLanguage =
+    !!session && !!nativeLanguage && nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
+  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
   const { mutate: updateStatusBatch, isPending: isBatchPending } = useUpdateCardStatusBatch(sessionId)
   const warnings = session?.processingWarnings ?? []
@@ -163,7 +169,13 @@ export const TriageListView = () => {
               </div>
               <div className='mt-2'>
                 {grouped.yourHighlights.map((card) => (
-                  <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
+                  <TriageRow
+                    key={card.id}
+                    sessionId={sessionId}
+                    card={card}
+                    hideNativeFields={hideNativeFields}
+                    onStatusChange={handleStatusChange}
+                  />
                 ))}
               </div>
             </section>
@@ -183,7 +195,13 @@ export const TriageListView = () => {
               </div>
               <div className='mt-2'>
                 {grouped.llmSuggested.map((card) => (
-                  <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
+                  <TriageRow
+                    key={card.id}
+                    sessionId={sessionId}
+                    card={card}
+                    hideNativeFields={hideNativeFields}
+                    onStatusChange={handleStatusChange}
+                  />
                 ))}
               </div>
             </section>
@@ -192,6 +210,7 @@ export const TriageListView = () => {
           <AutoRejectedCollapsible
             sessionId={sessionId}
             cards={grouped.autoRejected}
+            hideNativeFields={hideNativeFields}
             onStatusChange={handleStatusChange}
           />
         </div>

@@ -11,6 +11,7 @@ import {
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processSession, ProcessingDependencies } from '../../service/processing/process-session'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
+import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -68,11 +69,17 @@ export const StudySessionsRouter = (
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
+      const languagePrefs = await getEffectiveNativeLanguage({
+        userId,
+        targetLanguage: input.targetLanguage,
+        snapshotNativeLanguage: input.nativeLanguage,
+        usersRepository,
+      })
       const inserted = await studySessionsRepository.insertStudySession({
         userId,
         contentSourceId: input.contentSourceId,
         textTrackId: input.textTrackId,
-        nativeLanguage: input.nativeLanguage,
+        nativeLanguage: languagePrefs.nativeLanguage ?? input.nativeLanguage,
         targetLanguage: input.targetLanguage,
         cefrLevel: input.cefrLevel,
       })

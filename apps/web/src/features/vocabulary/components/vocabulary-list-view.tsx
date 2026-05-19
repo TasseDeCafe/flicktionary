@@ -9,6 +9,7 @@ import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/fl
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/vocabulary-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
+import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { Input } from '@/components/ui/input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
@@ -94,6 +95,13 @@ export const VocabularyListView = () => {
     hasNextPage,
     fetchNextPage,
   } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch })
+  const { data: userPrefs } = useGetUserPrefs()
+  const nativeLanguage = userPrefs?.nativeLanguage ?? null
+  const sameLanguage =
+    !!nativeLanguage &&
+    !!selectedLanguage &&
+    nativeLanguage.trim().toLowerCase() === selectedLanguage.trim().toLowerCase()
+  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
 
   const rows: ChunkRow[] = useMemo(() => {
     if (!data) return []
@@ -293,6 +301,7 @@ export const VocabularyListView = () => {
                   <VocabularyRow
                     key={chunk.id}
                     chunk={chunk}
+                    hideNativeFields={hideNativeFields}
                     onTap={handleRowTap}
                     onOptions={handleRowOptions}
                     style={style}

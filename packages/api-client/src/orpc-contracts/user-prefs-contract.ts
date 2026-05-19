@@ -13,6 +13,7 @@ const UserPrefsSchema = z.object({
   lastTargetLanguage: z.string().nullable(),
   tapToTranslateEnabled: z.boolean(),
   llmHighlightsEnabled: z.boolean(),
+  showTranslationsEnabled: z.boolean(),
   englishIpaDialect: z.enum(['ga', 'rp']),
   practiceMaxNewTerms: z.number().int(),
   practiceMaxReviewTerms: z.number().int(),
@@ -64,6 +65,12 @@ export const userPrefsContract = {
 
   setLlmHighlightsEnabled: oc
     .route({ method: 'PUT', path: '/user-prefs/llm-highlights', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ enabled: z.boolean() }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  setShowTranslationsEnabled: oc
+    .route({ method: 'PUT', path: '/user-prefs/show-translations', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({ enabled: z.boolean() }))
     .output(z.object({ data: UserPrefsSchema })),

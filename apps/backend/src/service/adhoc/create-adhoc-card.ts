@@ -12,6 +12,7 @@ import { basicDataPass, HighlightInput } from '../../transport/third-party/anthr
 import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
+import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
 import { getOrCreateAdhocSession } from './get-or-create-adhoc-session'
 
 export type CreateAdhocCardDependencies = {
@@ -62,8 +63,12 @@ export const createAdhocCard = async (params: {
 }): Promise<CreateAdhocCardResult> => {
   const { userId, targetLanguage, headword, context, deps } = params
 
-  const nativeLanguage = await deps.usersRepository.getNativeLanguage(userId)
-  if (!nativeLanguage) {
+  const languagePrefs = await getEffectiveNativeLanguage({
+    userId,
+    targetLanguage,
+    usersRepository: deps.usersRepository,
+  })
+  if (!languagePrefs.nativeLanguage) {
     throw new AdhocCardCreationError('native_language_not_set')
   }
 
@@ -76,7 +81,7 @@ export const createAdhocCard = async (params: {
   const { session, track } = await getOrCreateAdhocSession({
     userId,
     targetLanguage,
-    nativeLanguage,
+    nativeLanguage: languagePrefs.nativeLanguage,
     cefrLevel,
     deps,
   })
@@ -116,7 +121,7 @@ export const createAdhocCard = async (params: {
   let chunks
   try {
     chunks = await basicDataPass({
-      nativeLanguage,
+      nativeLanguage: languagePrefs.nativeLanguage,
       targetLanguage,
       cefrLevel,
       movieContextBlob: session.context_blob ?? '',

@@ -344,6 +344,22 @@ export const useSetLlmHighlightsEnabled = () => {
   )
 }
 
+export const useSetShowTranslationsEnabled = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.setShowTranslationsEnabled.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to update show-translations setting`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useSetEnglishIpaDialect = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
