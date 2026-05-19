@@ -50,8 +50,10 @@ export const NewTextSessionWizard = () => {
   const trimmedTitle = title.trim()
   const charCount = text.length
   const isPaseSubmitting = isCreatingSource || isImporting
+  const hasNativeLanguageOrTargetOnlyMode = !!prefs?.nativeLanguage || prefs?.showTranslationsEnabled === false
   const canSubmitPaste =
     !isPaseSubmitting &&
+    hasNativeLanguageOrTargetOnlyMode &&
     charCount >= TEXT_PASTE_MIN_LENGTH &&
     charCount <= TEXT_PASTE_MAX_LENGTH &&
     trimmedTitle.length > 0
@@ -77,8 +79,7 @@ export const NewTextSessionWizard = () => {
   }
 
   const handlePasteSubmit = () => {
-    if (!canSubmitPaste || !prefs?.nativeLanguage) return
-    const nativeLanguage = prefs.nativeLanguage
+    if (!canSubmitPaste || !prefs) return
     createContentSource(
       { title: trimmedTitle, language },
       {
@@ -98,6 +99,8 @@ export const NewTextSessionWizard = () => {
                 const existingCefr = prefs.targetLanguagePrefs.find(
                   (p) => p.targetLanguage === track.language
                 )?.cefrLevel
+                const nativeLanguage = prefs.nativeLanguage ?? (!prefs.showTranslationsEnabled ? track.language : null)
+                if (!nativeLanguage) return
                 if (existingCefr) {
                   startSession(existingCefr, nativeLanguage, sourceId, track)
                 } else {
@@ -115,8 +118,9 @@ export const NewTextSessionWizard = () => {
   }
 
   const handleCefrSubmit = () => {
-    if (!cefrChoice || !importedTrack || !contentSourceId || !prefs?.nativeLanguage) return
-    const nativeLanguage = prefs.nativeLanguage
+    if (!cefrChoice || !importedTrack || !contentSourceId || !prefs) return
+    const nativeLanguage = prefs.nativeLanguage ?? (!prefs.showTranslationsEnabled ? importedTrack.language : null)
+    if (!nativeLanguage) return
     const track = importedTrack
     const sourceId = contentSourceId
     setCefr(

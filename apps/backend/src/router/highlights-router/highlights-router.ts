@@ -7,7 +7,9 @@ import { highlightsContract } from '@flicktionary/api-client/orpc-contracts/high
 import { DbHighlight, HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
+import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { fastGlossPass, FastGloss } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
 
 // fast_gloss is a single text column; we round-trip the {gloss, pos, register}
 // triple as the same `<gloss>\n[POS]\n[register]` shape Haiku emits.
@@ -39,7 +41,8 @@ const toHighlightDto = (row: DbHighlight) => ({
 export const HighlightsRouter = (
   highlightsRepository: HighlightsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface,
-  textSegmentsRepository: TextSegmentsRepositoryInterface
+  textSegmentsRepository: TextSegmentsRepositoryInterface,
+  usersRepository: UsersRepositoryInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -141,9 +144,16 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight start segment missing' }] },
         })
       }
+      const languagePrefs = await getEffectiveNativeLanguage({
+        userId,
+        targetLanguage: session.target_language,
+        snapshotNativeLanguage: session.native_language,
+        usersRepository,
+      })
+      const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
       const gloss = await fastGlossPass({
         targetLanguage: session.target_language,
-        nativeLanguage: session.native_language,
+        nativeLanguage: effectiveNativeLanguage,
         contextLine: startSegment.text,
         selectionText: highlight.selection_text,
       })

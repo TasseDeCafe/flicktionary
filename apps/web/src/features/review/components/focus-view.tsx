@@ -164,12 +164,15 @@ export const FocusView = () => {
     (card.chunk.targetExample && card.chunk.targetExample.trim().length > 0)
   )
   const targetLanguage = session?.targetLanguage ?? card.chunk.targetLanguage
-  const nativeLanguage = session?.nativeLanguage ?? userPrefs?.nativeLanguage ?? null
+  // Live user pref wins over the session snapshot — if the user changed their
+  // L1 after creating the session, what they expect now is the live value.
+  const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
   // Wiktionary-grounded IPA. When set, the full-exploration renderer must
   // suppress its own `extras.ipa` so we don't show pronunciation twice.
   const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga')
   const wiktionaryUrl = buildWiktionaryUrl(card.chunk.headword, targetLanguage, card.chunk.grammar?.pos)
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
+  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
@@ -249,7 +252,7 @@ export const FocusView = () => {
             <EditableCardFields
               key={`${card.id}:${card.updatedAt}`}
               card={card}
-              sameLanguage={sameLanguage}
+              hideNativeFields={hideNativeFields}
               sourceSessionId={sourceSessionId}
             />
             <div className='mt-4'>
@@ -273,7 +276,7 @@ export const FocusView = () => {
             )}
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
             {hasExtras ? (
-              <FullExplorationRenderer card={card} hideExtrasIpa={!!displayedIpa} />
+              <FullExplorationRenderer card={card} hideExtrasIpa={!!displayedIpa} hideNativeFields={hideNativeFields} />
             ) : (
               <div className='flex flex-col items-start gap-3'>
                 <p className='text-muted-foreground text-sm'>

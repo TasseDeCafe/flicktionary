@@ -25,6 +25,7 @@ import { recordPassTelemetry } from './telemetry'
 import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
+import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -109,7 +110,16 @@ export const processSession = async (
       await studySessionsRepository.updateContextBlob(sessionId, userId, contextBlob)
     }
 
-    const llmHighlightsEnabled = await usersRepository.getLlmHighlightsEnabled(userId)
+    const [llmHighlightsEnabled, languagePrefs] = await Promise.all([
+      usersRepository.getLlmHighlightsEnabled(userId),
+      getEffectiveNativeLanguage({
+        userId,
+        targetLanguage: session.target_language,
+        snapshotNativeLanguage: session.native_language,
+        usersRepository,
+      }),
+    ])
+    const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 
     // When LLM discovery is off, the only point of running the pass is to
     // populate basic data for any new user highlight. With no new highlights
@@ -157,7 +167,7 @@ export const processSession = async (
       let chunks: BasicDataChunk[] = []
       try {
         chunks = await basicDataPass({
-          nativeLanguage: session.native_language,
+          nativeLanguage: effectiveNativeLanguage,
           targetLanguage: session.target_language,
           cefrLevel: session.cefr_level,
           movieContextBlob: contextBlob,

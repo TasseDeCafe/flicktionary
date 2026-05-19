@@ -7,6 +7,7 @@ import type {
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { generatePracticeText } from '../../transport/third-party/anthropic/passes/generate-practice-text'
+import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
 
 export type GenerateNextPracticeTextDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
@@ -239,10 +240,14 @@ export const generateNextPracticeText = async (
   if (!session) return { ok: false, reason: 'session_not_found' }
   if (session.status !== 'active') return { ok: false, reason: 'session_completed' }
 
-  const nativeLanguage = await deps.usersRepository.getNativeLanguage(userId)
-  if (!nativeLanguage) return { ok: false, reason: 'no_native_language' }
-
   const targetLanguage = session.target_language
+
+  const languagePrefs = await getEffectiveNativeLanguage({
+    userId,
+    targetLanguage,
+    usersRepository: deps.usersRepository,
+  })
+  if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 
   const startedAt = Date.now()
   // Loop on takeover. Each iteration: reserve-or-find -> short-circuit if
@@ -270,7 +275,7 @@ export const generateNextPracticeText = async (
         practiceSessionId,
         userId,
         targetLanguage,
-        nativeLanguage,
+        nativeLanguage: languagePrefs.nativeLanguage,
         deps,
       })
       if (result.ok) {
@@ -347,10 +352,14 @@ export const prepareNextPracticeText = async (
   if (!session) return { ok: false, reason: 'session_not_found' }
   if (session.status !== 'active') return { ok: false, reason: 'session_completed' }
 
-  const nativeLanguage = await deps.usersRepository.getNativeLanguage(userId)
-  if (!nativeLanguage) return { ok: false, reason: 'no_native_language' }
-
   const targetLanguage = session.target_language
+
+  const languagePrefs = await getEffectiveNativeLanguage({
+    userId,
+    targetLanguage,
+    usersRepository: deps.usersRepository,
+  })
+  if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 
   const { remaining } = await buildRemainingChunks(practiceSessionId, userId, targetLanguage, deps)
   if (remaining.length === 0) {
@@ -372,7 +381,7 @@ export const prepareNextPracticeText = async (
     practiceSessionId,
     userId,
     targetLanguage,
-    nativeLanguage,
+    nativeLanguage: languagePrefs.nativeLanguage,
     deps,
   })
     .then((result) => {

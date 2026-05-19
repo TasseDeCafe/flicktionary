@@ -4,8 +4,10 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
+import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
 
 export type ExploreCardDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -13,6 +15,7 @@ export type ExploreCardDependencies = {
   textSegmentsRepository: TextSegmentsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  usersRepository: UsersRepositoryInterface
 }
 
 export type ExploreCardOutcome = 'updated' | 'skipped' | 'failed'
@@ -59,8 +62,16 @@ export const exploreCardIfMissing = async (
       }
     }
 
+    const languagePrefs = await getEffectiveNativeLanguage({
+      userId,
+      targetLanguage: session.target_language,
+      snapshotNativeLanguage: session.native_language,
+      usersRepository: deps.usersRepository,
+    })
+    const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
+
     const enrichment = await enrichmentPass({
-      nativeLanguage: session.native_language,
+      nativeLanguage: effectiveNativeLanguage,
       targetLanguage: session.target_language,
       cefrLevel: session.cefr_level,
       movieContextBlob: session.context_blob,

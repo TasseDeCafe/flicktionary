@@ -63,14 +63,16 @@ export const NewSessionWizard = () => {
   const closeWizard = () => navigate({ to: '/sessions' })
 
   const startSession = (track: ImportedTrack) => {
-    if (!contentSourceId || !prefs?.nativeLanguage || !targetLanguage) return
+    if (!contentSourceId || !prefs || !targetLanguage) return
     const level = cefrForLanguage(targetLanguage) ?? cefrChoice
+    const nativeLanguage = prefs.nativeLanguage ?? (!prefs.showTranslationsEnabled ? track.language : null)
     if (!level) return
+    if (!nativeLanguage) return
     createSession(
       {
         contentSourceId,
         textTrackId: track.trackId,
-        nativeLanguage: prefs.nativeLanguage,
+        nativeLanguage,
         targetLanguage: track.language,
         cefrLevel: level,
       },

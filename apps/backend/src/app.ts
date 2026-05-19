@@ -287,6 +287,7 @@ export const buildApp = ({
     textSegmentsRepository,
     highlightsRepository,
     userLookupsRepository,
+    usersRepository,
   }
 
   const createAdhocCardDependencies = {
@@ -307,6 +308,7 @@ export const buildApp = ({
     studySessionsRepository,
     textSegmentsRepository,
     userLookupsRepository,
+    usersRepository,
   }
 
   const subscriptionMiddlewareInstance = subscriptionMiddleware(accessCache, usersWithFreeAccess)
@@ -323,7 +325,10 @@ export const buildApp = ({
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
   app.use(API_V1, StudySessionsRouter(studySessionsRepository, usersRepository, processingDependencies))
-  app.use(API_V1, HighlightsRouter(highlightsRepository, studySessionsRepository, textSegmentsRepository))
+  app.use(
+    API_V1,
+    HighlightsRouter(highlightsRepository, studySessionsRepository, textSegmentsRepository, usersRepository)
+  )
   app.use(
     API_V1,
     CardsRouter(

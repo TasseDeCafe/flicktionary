@@ -1,10 +1,14 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { AlertOctagon, Languages, LifeBuoy, LogOut, Sparkles, UserCircle, Wrench } from 'lucide-react'
+import { AlertOctagon, Globe, Languages, LifeBuoy, LogOut, Sparkles, UserCircle, Wrench } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { useAuthStore } from '@/stores/auth-store'
-import { useGetUserPrefs, useSetLlmHighlightsEnabled } from '@/features/sessions/api/sessions-hooks'
+import {
+  useGetUserPrefs,
+  useSetLlmHighlightsEnabled,
+  useSetShowTranslationsEnabled,
+} from '@/features/sessions/api/sessions-hooks'
 import { PracticeSessionLimitsSetting } from '@/features/settings/components/practice-session-limits-setting'
 import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-settings'
 import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/danger-zone'
@@ -19,6 +23,7 @@ export const MoreTabView = () => {
 
   const { data: prefs } = useGetUserPrefs()
   const { mutate: setLlmHighlights, isPending: isSavingLlm } = useSetLlmHighlightsEnabled()
+  const { mutate: setShowTranslations, isPending: isSavingShowTranslations } = useSetShowTranslationsEnabled()
 
   const handleSignOut = async () => {
     await signOut(() => navigate({ to: '/login' }))
@@ -65,6 +70,19 @@ export const MoreTabView = () => {
               disabled={isSavingLlm || !prefs}
               onCheckedChange={(checked) => setLlmHighlights({ enabled: checked })}
               aria-label={t`LLM-suggested terms`}
+            />
+          }
+        />
+        <MoreListRow
+          icon={Globe}
+          label={t`Show translations`}
+          description={t`Show existing translations and generate translations for new cards`}
+          trailing={
+            <Switch
+              checked={prefs?.showTranslationsEnabled ?? true}
+              disabled={isSavingShowTranslations || !prefs}
+              onCheckedChange={(checked) => setShowTranslations({ enabled: checked })}
+              aria-label={t`Show translations`}
             />
           }
         />

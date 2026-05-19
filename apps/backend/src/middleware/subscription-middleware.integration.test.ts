@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 import request from 'supertest'
 import { buildApp } from '../app'
+import { getConfig } from '../config/environment-config'
 import {
   __createOrGetUserWithOurApi,
   __createUserInSupabaseAndGetHisIdAndToken,
@@ -9,6 +10,10 @@ import {
 } from '../test/test-utils'
 import { __deleteAllHandledStripeEvents } from '../transport/database/webhook-events/handled-stripe-events-repository'
 import { MockStripeApi } from '../transport/third-party/stripe/stripe-api'
+
+// Subscription gating is bypassed when the app is in free-for-all mode, so
+// the "unsubscribed user blocked" assertion has nothing to assert against.
+const isAppFreeForEveryone = getConfig().featureFlags.shouldAppBeFreeForEveryone()
 
 describe('subscription-middleware', async () => {
   beforeEach(async () => {
@@ -45,7 +50,7 @@ describe('subscription-middleware', async () => {
     // expect(response.status).toBe(200)
   })
 
-  test("unsubscribed users can't use the app", async () => {
+  test.skipIf(isAppFreeForEveryone)("unsubscribed users can't use the app", async () => {
     const email = 'unsubscribed.user@email.com'
     const { token } = await __createUserInSupabaseAndGetHisIdAndToken(email)
 

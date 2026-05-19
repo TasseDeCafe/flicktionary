@@ -80,8 +80,13 @@ export const NewAdhocCardWizard = () => {
 
   const trimmedHeadword = headword.trim()
   const trimmedContext = context.trim()
+  const canUseTargetOnlyMode = prefs?.showTranslationsEnabled === false
   const canSubmit =
-    !!effectiveTarget && !!prefs?.nativeLanguage && trimmedHeadword.length > 0 && !isCreating && !isSettingCefr
+    !!effectiveTarget &&
+    (!!prefs?.nativeLanguage || canUseTargetOnlyMode) &&
+    trimmedHeadword.length > 0 &&
+    !isCreating &&
+    !isSettingCefr
 
   const submit = (lang: string) => {
     createAdhoc(

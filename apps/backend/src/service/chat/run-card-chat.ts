@@ -10,6 +10,8 @@ import {
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
 
 export type RunCardChatDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -17,6 +19,7 @@ export type RunCardChatDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
   textSegmentsRepository: TextSegmentsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  usersRepository: UsersRepositoryInterface
 }
 
 export type RunCardChatInput = {
@@ -62,23 +65,28 @@ const updateCardFieldsTool: Anthropic.Tool = {
   },
 }
 
-const renderCardForChat = (card: DbCardWithChunk): string => {
+const renderCardForChat = (card: DbCardWithChunk, hideNativeFields: boolean): string => {
   const lines = [
     `- headword: ${card.chunk.headword}`,
     `- sense: ${card.chunk.sense || '(none)'}`,
     `- surface_form: ${card.surface_form}`,
-    `- translation: ${card.chunk.translation ?? '(none)'}`,
     `- definition: ${card.chunk.definition ?? '(none)'}`,
     `- target_example: ${card.chunk.target_example ?? '(none)'}`,
-    `- native_example: ${card.chunk.native_example ?? '(none)'}`,
   ]
+  if (!hideNativeFields) {
+    lines.push(`- translation: ${card.chunk.translation ?? '(none)'}`)
+    lines.push(`- native_example: ${card.chunk.native_example ?? '(none)'}`)
+  }
   const grammar = (card.chunk.grammar ?? {}) as Record<string, unknown>
   if (Object.keys(grammar).length > 0) {
     lines.push(`- grammar:\n${JSON.stringify(grammar, null, 2)}`)
   } else {
     lines.push('- grammar: (empty)')
   }
-  const extras = (card.chunk.exploration_extras ?? {}) as Record<string, unknown>
+  const extras = { ...((card.chunk.exploration_extras ?? {}) as Record<string, unknown>) }
+  if (hideNativeFields) {
+    delete extras.l1_notes
+  }
   if (Object.keys(extras).length > 0) {
     lines.push(`- exploration_extras:\n${JSON.stringify(extras, null, 2)}`)
   } else {
@@ -87,16 +95,23 @@ const renderCardForChat = (card: DbCardWithChunk): string => {
   return lines.join('\n')
 }
 
-const buildSeedUserTurn = (card: DbCardWithChunk, surroundingSegmentsBlock: string): string => {
+const buildSeedUserTurn = (
+  card: DbCardWithChunk,
+  surroundingSegmentsBlock: string,
+  hideNativeFields: boolean
+): string => {
+  const editableFields = hideNativeFields
+    ? 'definition, target-language example, grammar, etc.'
+    : 'translation, example sentence, definition, etc.'
+
   return `Card under discussion:
-${renderCardForChat(card)}
+${renderCardForChat(card, hideNativeFields)}
 
 Surrounding segments:
 ${surroundingSegmentsBlock}
 
-When the learner asks you to change something on the card (translation,
-example sentence, definition, etc.), call the \`${UPDATE_TOOL_NAME}\` tool
-with only the fields that should change. Do not echo unchanged fields.
+When the learner asks you to change something on the card (${editableFields}),
+call the \`${UPDATE_TOOL_NAME}\` tool with only the fields that should change. Do not echo unchanged fields.
 Confirm the change briefly in your reply.`
 }
 
@@ -210,16 +225,27 @@ export const runCardChat = async (
   const card = await deps.cardsRepository.findByIdForUser(input.cardId, input.userId)
   if (!card) throw new Error('Card not found')
 
+  const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, input.userId)
+  if (!session) throw new Error('Session not found')
+
+  const languagePrefs = await getEffectiveNativeLanguage({
+    userId: input.userId,
+    targetLanguage: session.target_language,
+    snapshotNativeLanguage: session.native_language,
+    usersRepository: deps.usersRepository,
+  })
+
   const promptContext = await buildPromptContext(
-    { sessionId: card.study_session_id, userId: input.userId },
+    {
+      sessionId: card.study_session_id,
+      userId: input.userId,
+      nativeLanguageOverride: languagePrefs.nativeLanguage ?? undefined,
+    },
     deps.studySessionsRepository
   )
   if (!promptContext) {
     throw new Error('Cannot chat: session has not been processed yet')
   }
-
-  const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, input.userId)
-  if (!session) throw new Error('Session not found')
 
   const surrounding = await selectSurroundingSegments(
     session.text_track_id,
@@ -232,7 +258,7 @@ export const runCardChat = async (
   const { older, recent } = splitTurns(prior)
   const summary = summarizeOlderTurns(older)
 
-  const seedTurn = buildSeedUserTurn(card, surroundingFormatted)
+  const seedTurn = buildSeedUserTurn(card, surroundingFormatted, languagePrefs.hideNativeFields)
   const seedWithSummary = summary ? `${seedTurn}\n\n${summary}` : seedTurn
 
   const messages: Anthropic.MessageParam[] = [

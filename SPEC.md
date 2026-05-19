@@ -176,7 +176,8 @@ Two-layer UI.
   `/sessions/$id?segment=<id>` and flashes the source line).
 - Card section: each basic column gets its own labeled input — `Headword`,
   `Target example`, plus `Translation` + `Native example` (and optional
-  `Definition`) when L1 ≠ L2, or just `Definition` when L1 = L2. Every input
+  `Definition`) when L1 ≠ L2 and the Show-translations pref is on, or just
+  `Definition` when L1 = L2 or that pref is off. Every input
   debounces a partial PATCH to `cards.updateFields`; the basic columns are
   the single source of truth (no more `front_override` / `back_override`).
   Above the inputs: compact grammar chips (`m.` / `f.` / `c.`, `impf.` /
@@ -311,6 +312,21 @@ target_language, headword, sense)` increments `count` rather than
   emits cards only for the user's manual highlights — no LLM chunk discovery.
   The Process button is disabled when this pref is off and the user has zero
   highlights.
+- Show translations toggle (default on). When off, every LLM call site spoofs
+  `nativeLanguage = targetLanguage` at the boundary, so the existing
+  `sameLanguage` plumbing in `basic-data-pass`, `enrichment-pass`,
+  `fast-gloss-pass`, and `generate-practice-text` fires automatically and the
+  model emits target-language-only output (`translation` / `native_example`
+  null, `definition` carries the back). Frontend gates hide stale
+  `translation` / `native_example` / `extras.l1_notes` on already-populated
+  cards in focus view, full-exploration renderer, triage / vocabulary row
+  previews, and the practice rate sheet. CSV export's
+  `translation || definition` fallback handles the null case unchanged.
+  Trade-off: `extras.l1_notes` is a no-op when the pref is off (LLM sees no
+  L1 contrast). The live user pref overrides the session snapshot
+  (`study_session.native_language`) at every LLM call site and every
+  display gate, so toggling translations off or changing native language
+  takes effect on the next call without needing to re-process old sessions.
 
 ## Data model
 
@@ -385,10 +401,13 @@ card
   sense               text          -- 1-5 word sense disambiguator
   surface_form        text
   -- basic data (populated by step-3 basic-data pass)
-  translation         text?         -- null on L1 = L2 sessions
-  definition          text?         -- target-lang paraphrase; back-of-card when L1 = L2
+  translation         text?         -- null on L1 = L2 sessions, or when the user's
+                                    -- show_translations_enabled pref is off
+  definition          text?         -- target-lang paraphrase; back-of-card when
+                                    -- L1 = L2 or show-translations is off
   target_example      text?
-  native_example      text?         -- null on L1 = L2 sessions
+  native_example      text?         -- null on L1 = L2 sessions, or when the user's
+                                    -- show_translations_enabled pref is off
   -- enrichment (populated only on demand by Generate full exploration)
   exploration_extras  jsonb         -- partial bag: ipa, frequency, register, register_alternatives,
                                     -- collocations, etymology, l1_notes, notes, more_frequent_synonym,
@@ -568,10 +587,10 @@ user can override + click `Generate full exploration` to populate them).
 - `headword` — LLM-normalized dictionary citation form
 - `sense` — 1-5 word disambiguator (NOT a definition; used for cross-session dedup)
 - `surface_form` — literal form as it appears in the segment
-- `translation` — into native_language (null when L1 = L2)
-- `definition` — contextual paraphrase in target_language (back-of-card when L1 = L2; optional otherwise)
+- `translation` — into native_language (null when L1 = L2 or the user has the Show-translations pref off)
+- `definition` — contextual paraphrase in target_language (back-of-card when L1 = L2 or Show-translations is off; optional otherwise)
 - `target_example` — self-contained example sentence in target_language, inspired by but not equal to the source line
-- `native_example` — natural translation of `target_example` into native_language (null when L1 = L2)
+- `native_example` — natural translation of `target_example` into native_language (null when L1 = L2 or Show-translations is off)
 
 ### Grammar (populated by basic-data pass; refinable by enrichment)
 

@@ -15,6 +15,7 @@ import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { StressMarkedText } from './stress-marked-text'
 
 export type RateSheetChunkContent = {
@@ -86,14 +87,21 @@ export const RateSheet = ({
 }: RateSheetProps) => {
   const { t } = useLingui()
   const [mode, setMode] = useState<Mode>('rate')
+  const { data: userPrefs } = useGetUserPrefs()
 
   // Reset to rate-mode whenever the sheet closes, so the next open is fresh.
   useEffect(() => {
     if (!open) setMode('rate')
   }, [open])
 
-  // Translation wins for the description slot; definition is the L1=L2 fallback.
-  const description = chunk?.translation || chunk?.definition || null
+  const nativeLanguage = userPrefs?.nativeLanguage ?? null
+  const sameLanguage =
+    !!nativeLanguage &&
+    !!chunk?.targetLanguage &&
+    nativeLanguage.trim().toLowerCase() === chunk.targetLanguage.trim().toLowerCase()
+  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
+  // Translation wins for the description slot; definition is the L1=L2 / no-translations fallback.
+  const description = hideNativeFields ? chunk?.definition || null : chunk?.translation || chunk?.definition || null
   const titleText = chunk?.displayForm || chunk?.headword || t`Rate`
   const showOverflow = !!chunk && !chunk.isDeleted && mode === 'rate'
 
@@ -133,7 +141,7 @@ export const RateSheet = ({
           <div className='flex flex-col gap-3 px-2 pb-2 text-sm'>
             <p className='border-l-2 border-yellow-300 pl-3 italic'>
               {chunk.targetExample}
-              {chunk.nativeExample && (
+              {!hideNativeFields && chunk.nativeExample && (
                 <span className='text-muted-foreground mt-1 block not-italic'>{chunk.nativeExample}</span>
               )}
             </p>
