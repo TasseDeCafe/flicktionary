@@ -1269,6 +1269,90 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
   `FloatingSheetFooter`: Remove always visible, Save conditional on
   `expanded`.
 
+- **Show translations user pref (2026-05-20).** New `users.show_translations_enabled
+BOOLEAN NOT NULL DEFAULT TRUE` column (migration
+  `20260519225503_add_show_translations_pref.sql`). When off, every LLM call
+  site spoofs `nativeLanguage = targetLanguage` at the boundary so the
+  existing `sameLanguage` branches in `basic-data-pass`, `enrichment-pass`,
+  `fast-gloss-pass`, and `generate-practice-text` fire automatically; the
+  passes themselves are unchanged. Frontend render-time gates hide stale
+  `translation` / `native_example` / `extras.l1_notes` on already-populated
+  cards. Trade-off accepted for MVP: `extras.l1_notes` is a no-op when the
+  pref is off (LLM sees no L1 contrast). Don't re-introduce hardcoded
+  schema/prompt edits inside the passes — the spoof is the contract.
+  - **Schema + types.** Migration applied via `pnpm db:reset`;
+    `database.public.types.ts` hand-extended on `users` Row/Insert/Update.
+  - **Boolean-pref plumbing** mirrors `llm_highlights_enabled`:
+    `users-repository.ts` `get/setShowTranslationsEnabled` (default `true`),
+    `UserPrefsSchema.showTranslationsEnabled` in
+    `packages/api-client/src/orpc-contracts/user-prefs-contract.ts`,
+    `PUT /user-prefs/show-translations` endpoint + `buildPrefs` reads it in
+    `user-prefs-router.ts`, `useSetShowTranslationsEnabled` in
+    `sessions-hooks.ts`, new "Show translations" Switch row in
+    `more-tab-view.tsx` under Settings.
+  - **Live pref beats session snapshot** at every LLM call site and every
+    display gate. `study_session.native_language` is the historical snapshot;
+    it stays in the schema but is no longer authoritative for current
+    generation. Backend call sites read
+    `usersRepository.getNativeLanguage(userId)` and only fall back to
+    `session.native_language` when the live value is missing:
+    `service/processing/process-session.ts` (basic-data),
+    `service/exploration/explore-card-if-missing.ts` (enrichment),
+    `router/highlights-router/highlights-router.ts` fastGloss,
+    `service/chat/run-card-chat.ts` (chat — passes
+    `nativeLanguageOverride` into `service/processing/build-prompt-context.ts`,
+    which now accepts that param). `service/practice/generate-next-practice-text.ts`
+    (foreground + background pre-gen) and `router/practice-router` fastGloss
+    already read the live pref and just compute
+    `effectiveNativeLanguage` from it. Don't re-introduce the
+    `session.native_language`-first reads — they're stale when the user
+    changes their L1 mid-flight (real symptom: tap-to-translate sheet
+    returning a Spanish definition when the user is English-native because
+    the session was created before the L1 change).
+  - **Shared helper.** `service/user-prefs/effective-native-language.ts`
+    centralizes the `(showTranslations, liveNative, sessionNative) →
+effectiveNativeLanguage` derivation; used by `practice-router.fastGloss`
+    and intended for future call sites. The other call sites compute inline
+    today — fine; consolidate if more sites land.
+  - **Dependency wiring.** `usersRepository` added to
+    `ExploreCardDependencies` (`apps/backend/src/app.ts` `exploreDependencies`),
+    `RunCardChatDependencies` (`chatDependencies`), and the `HighlightsRouter`
+    constructor. The chat seam previously had no `usersRepository` access —
+    that was the trap the planner flagged for `build-prompt-context.ts`.
+  - **Frontend `hideNativeFields`.** Computed as
+    `sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)`; live
+    user pref overrides session snapshot for the `nativeLanguage` side of
+    `sameLanguage`. Threaded as a prop into `editable-card-fields.tsx`
+    (prop renamed from `sameLanguage`), `full-exploration-renderer.tsx`
+    (suppresses Translation section, native_example inside Example, and
+    L1 notes section), `triage-row.tsx` + `auto-rejected-collapsible.tsx`
+    (preview prefers `definition`), `vocabulary-row.tsx` (preview prefers
+    `definition`), and `practice/components/rate-sheet.tsx` (description
+    prefers `definition`; native_example block gated). `focus-view.tsx`
+    and `triage-list-view.tsx` compute it; `vocabulary-list-view.tsx` and
+    `rate-sheet.tsx` read `useGetUserPrefs` inline. CSV export
+    (`build-csv.ts`, `build-vocabulary-csv.ts`) needs no change — the
+    `translation || definition` fallback handles freshly-generated rows
+    correctly; stale `translation` on older cards still flows through (v2
+    cleanup if desired).
+  - **`native_language` stays required at onboarding/session creation.**
+    The toggle controls display + generation only; we did NOT relax the
+    `native_language_not_set` error path in `start-practice-session.ts`,
+    `create-adhoc-card.ts`, or the session wizards. Spoof happens at the
+    LLM boundary only.
+  - **Fast-gloss cache is not invalidated** when the pref toggles —
+    `highlight.fast_gloss` survives across toggle flips. Symmetric with
+    card content. To force a fresh gloss the user removes the highlight
+    and re-highlights.
+  - **Subscription middleware test skipped under free-for-all** —
+    `subscription-middleware.integration.test.ts` now uses
+    `test.skipIf(getConfig().featureFlags.shouldAppBeFreeForEveryone())`
+    on the "unsubscribed users can't use the app" assertion. With the
+    app in free-for-all mode (`environment-config.ts` test env returns
+    true) the middleware short-circuits via `next()` and the
+    template-stub route `/api/v1/translate-text` returns 404 instead of
+    403. Skip auto-disables when subscription gating returns.
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
