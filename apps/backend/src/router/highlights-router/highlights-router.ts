@@ -11,6 +11,8 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { fastGlossPass, FastGloss } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
+import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
+import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 
 // fast_gloss is a single text column; we round-trip the {gloss, pos, register}
 // triple as the same `<gloss>\n[POS]\n[register]` shape Haiku emits.
@@ -44,7 +46,8 @@ export const HighlightsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   textSegmentsRepository: TextSegmentsRepositoryInterface,
   usersRepository: UsersRepositoryInterface,
-  targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -138,7 +141,14 @@ export const HighlightsRouter = (
         })
       }
       if (highlight.fast_gloss) {
-        return { data: parseFastGloss(highlight.fast_gloss) }
+        const cachedGloss = parseFastGloss(highlight.fast_gloss)
+        const ipa = await lookupFastGlossIpa({
+          targetLanguage: session.target_language,
+          selectionText: highlight.selection_text,
+          pos: cachedGloss.pos,
+          wiktionaryEntriesRepository,
+        })
+        return { data: { ...cachedGloss, ipa } }
       }
       const startSegment = await textSegmentsRepository.findById(highlight.start_segment_id)
       if (!startSegment) {
@@ -162,7 +172,13 @@ export const HighlightsRouter = (
         selectionText: highlight.selection_text,
       })
       await highlightsRepository.updateFastGloss(highlight.id, serializeFastGloss(gloss))
-      return { data: gloss }
+      const ipa = await lookupFastGlossIpa({
+        targetLanguage: session.target_language,
+        selectionText: highlight.selection_text,
+        pos: gloss.pos,
+        wiktionaryEntriesRepository,
+      })
+      return { data: { ...gloss, ipa } }
     }),
   })
 

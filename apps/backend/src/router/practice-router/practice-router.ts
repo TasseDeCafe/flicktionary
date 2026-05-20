@@ -31,6 +31,8 @@ import {
 } from '../../service/practice/finalize-practice-text'
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
+import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
+import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 
 export type PracticeRouterDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
@@ -38,6 +40,7 @@ export type PracticeRouterDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
   startPracticeSessionDependencies: StartPracticeSessionDependencies
   generateNextPracticeTextDependencies: GenerateNextPracticeTextDependencies
   rateChunkDependencies: RateChunkDependencies
@@ -360,7 +363,13 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         contextLine: body,
         selectionText: input.selectionText,
       })
-      return { data: gloss }
+      const ipa = await lookupFastGlossIpa({
+        targetLanguage: found.targetLanguage,
+        selectionText: input.selectionText,
+        pos: gloss.pos,
+        wiktionaryEntriesRepository: deps.wiktionaryEntriesRepository,
+      })
+      return { data: { ...gloss, ipa } }
     }),
 
     finalizeText: implementer.finalizeText.handler(async ({ input, context, errors }) => {

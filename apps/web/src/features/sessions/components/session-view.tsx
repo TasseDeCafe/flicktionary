@@ -230,6 +230,7 @@ export const SessionView = () => {
       <SessionGlossSheet
         open={glossOpen}
         sessionId={sessionId}
+        targetLanguage={session.targetLanguage}
         selection={pendingSelection}
         existingHighlight={existingHighlight}
         anchor={anchor}

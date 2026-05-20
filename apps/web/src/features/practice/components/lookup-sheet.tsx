@@ -3,6 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { Bookmark, Loader2 } from 'lucide-react'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,7 +17,7 @@ import {
   FloatingSheetTitle,
 } from '@/components/ui/floating-sheet'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
-import { useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
+import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'
 import { usePracticeFastGloss } from '../api/practice-hooks'
 import type { PlainSelection } from './annotated-text'
@@ -23,7 +25,7 @@ import type { PlainSelection } from './annotated-text'
 type GlossState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null }
+  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null; ipa: GrammarIpaBag | null }
   | { kind: 'error' }
 
 interface LookupSheetProps {
@@ -49,6 +51,7 @@ export const LookupSheet = ({
 }: LookupSheetProps) => {
   const { t } = useLingui()
   const navigate = useNavigate()
+  const { data: userPrefs } = useGetUserPrefs()
   const { mutateAsync: fetchGloss } = usePracticeFastGloss()
   const { mutate: createAdhoc, isPending: isCreating } = useCreateAdhocCard()
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
@@ -75,6 +78,7 @@ export const LookupSheet = ({
           gloss: result.data.gloss,
           pos: result.data.pos,
           register: result.data.register,
+          ipa: result.data.ipa,
         })
       } catch {
         if (!cancelled) setState({ kind: 'error' })
@@ -142,6 +146,9 @@ export const LookupSheet = ({
     )
   }
 
+  const displayedIpa =
+    state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga') ?? null) : null
+
   return (
     <>
       <FloatingSheet
@@ -150,6 +157,8 @@ export const LookupSheet = ({
           if (!next) onClose()
         }}
         anchor={selection?.rect ?? null}
+        modal={false}
+        closeOnScroll
       >
         <FloatingSheetContent>
           <FloatingSheetHeader>
@@ -160,10 +169,11 @@ export const LookupSheet = ({
                 {t`Translation lookup and save action for the selected text.`}
               </FloatingSheetDescription>
             )}
-            {state.kind === 'ready' && (state.pos || state.register) && (
+            {state.kind === 'ready' && (state.pos || state.register || displayedIpa) && (
               <div className='mt-2 flex flex-wrap gap-1.5'>
                 {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
                 {state.register && <Badge variant='secondary'>{state.register}</Badge>}
+                {displayedIpa && <Badge variant='secondary'>{displayedIpa}</Badge>}
               </div>
             )}
           </FloatingSheetHeader>

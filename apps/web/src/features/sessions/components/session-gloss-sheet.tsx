@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,6 +23,7 @@ import {
   useCreateHighlight,
   useDeleteHighlight,
   useFastGloss,
+  useGetUserPrefs,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
 import type { SelectionResult } from '../hooks/use-text-selection'
@@ -39,12 +42,13 @@ export type ExistingHighlightInput = {
 type GlossState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null }
+  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null; ipa: GrammarIpaBag | null }
   | { kind: 'error' }
 
 interface SessionGlossSheetProps {
   open: boolean
   sessionId: string
+  targetLanguage: string
   // Provide exactly one when `open=true`. `selection` is a fresh mouseup/touchend
   // result (the sheet creates the highlight). `existingHighlight` is a click on
   // an already-saved highlight span (the sheet reads cached metadata).
@@ -100,6 +104,7 @@ const findCachedHighlight = (
 export const SessionGlossSheet = ({
   open,
   sessionId,
+  targetLanguage,
   selection,
   existingHighlight,
   anchor,
@@ -107,6 +112,7 @@ export const SessionGlossSheet = ({
 }: SessionGlossSheetProps) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
+  const { data: userPrefs } = useGetUserPrefs()
 
   const { mutateAsync: createHighlight } = useCreateHighlight(sessionId)
   const { mutateAsync: fetchGloss } = useFastGloss()
@@ -139,7 +145,7 @@ export const SessionGlossSheet = ({
       setTags(existingHighlight.presetTags)
       setGlossState(
         existingHighlight.fastGloss
-          ? { kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss) }
+          ? { kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss), ipa: null }
           : { kind: 'loading' }
       )
       return
@@ -162,26 +168,34 @@ export const SessionGlossSheet = ({
     setNote(existingHighlight.note ?? '')
     setTags(existingHighlight.presetTags)
     setExpanded(false)
-    if (existingHighlight.fastGloss) {
-      setGlossState({ kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss) })
-      return
+    const cachedGloss = existingHighlight.fastGloss ? parseCachedGloss(existingHighlight.fastGloss) : null
+    if (cachedGloss) {
+      setGlossState({ kind: 'ready', ...cachedGloss, ipa: null })
+    } else {
+      setGlossState({ kind: 'loading' })
     }
-    // No cached gloss yet — fetch one. The endpoint also persists it.
+    // Fetch even when a cached gloss exists so old highlight rows can be
+    // enriched with Wiktionary IPA without changing the fast_gloss column.
     let cancelled = false
-    setGlossState({ kind: 'loading' })
     void (async () => {
       try {
         const res = await fetchGloss({ sessionId, highlightId: existingHighlight.id })
         if (cancelled) return
-        setGlossState({ kind: 'ready', gloss: res.data.gloss, pos: res.data.pos, register: res.data.register })
+        setGlossState({
+          kind: 'ready',
+          gloss: res.data.gloss,
+          pos: res.data.pos,
+          register: res.data.register,
+          ipa: res.data.ipa,
+        })
       } catch {
-        if (!cancelled) setGlossState({ kind: 'error' })
+        if (!cancelled && !cachedGloss) setGlossState({ kind: 'error' })
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [open, existingHighlight?.id, sessionId, fetchGloss])
+  }, [open, existingHighlight, sessionId, fetchGloss])
 
   // Seed from a fresh selection: dedupe against the cache, otherwise create.
   useEffect(() => {
@@ -206,8 +220,7 @@ export const SessionGlossSheet = ({
           if (match.fastGloss) {
             if (cancelled) return
             setHighlightId(id)
-            setGlossState({ kind: 'ready', ...parseCachedGloss(match.fastGloss) })
-            return
+            setGlossState({ kind: 'ready', ...parseCachedGloss(match.fastGloss), ipa: null })
           }
         } else {
           const created = await createHighlight({
@@ -227,7 +240,13 @@ export const SessionGlossSheet = ({
         setHighlightId(id)
         const res = await fetchGloss({ sessionId, highlightId: id })
         if (cancelled) return
-        setGlossState({ kind: 'ready', gloss: res.data.gloss, pos: res.data.pos, register: res.data.register })
+        setGlossState({
+          kind: 'ready',
+          gloss: res.data.gloss,
+          pos: res.data.pos,
+          register: res.data.register,
+          ipa: res.data.ipa,
+        })
       } catch {
         if (!cancelled) setGlossState({ kind: 'error' })
       }
@@ -279,6 +298,13 @@ export const SessionGlossSheet = ({
 
   const isReady = glossState.kind === 'ready'
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
+  const displayedIpa = isReady
+    ? (pickIpa(
+        (glossState as Extract<GlossState, { kind: 'ready' }>).ipa,
+        targetLanguage,
+        userPrefs?.englishIpaDialect ?? 'ga'
+      ) ?? null)
+    : null
 
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
@@ -297,6 +323,8 @@ export const SessionGlossSheet = ({
       expandable
       expanded={expanded}
       onExpandedChange={setExpanded}
+      modal={false}
+      closeOnScroll
     >
       <FloatingSheetContent>
         <FloatingSheetHeader>
@@ -312,7 +340,8 @@ export const SessionGlossSheet = ({
               )}
               {isReady &&
                 ((glossState as Extract<GlossState, { kind: 'ready' }>).pos ||
-                  (glossState as Extract<GlossState, { kind: 'ready' }>).register) && (
+                  (glossState as Extract<GlossState, { kind: 'ready' }>).register ||
+                  displayedIpa) && (
                   <div className='mt-1 flex flex-wrap gap-1.5'>
                     {(glossState as Extract<GlossState, { kind: 'ready' }>).pos && (
                       <Badge variant='outline'>{(glossState as Extract<GlossState, { kind: 'ready' }>).pos}</Badge>
@@ -322,6 +351,7 @@ export const SessionGlossSheet = ({
                         {(glossState as Extract<GlossState, { kind: 'ready' }>).register}
                       </Badge>
                     )}
+                    {displayedIpa && <Badge variant='secondary'>{displayedIpa}</Badge>}
                   </div>
                 )}
             </div>

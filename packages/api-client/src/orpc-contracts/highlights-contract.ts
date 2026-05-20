@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { HighlightSchema } from './common/flicktionary-schemas'
+import { GrammarIpaBagSchema, HighlightSchema } from './common/flicktionary-schemas'
 
 export const highlightsContract = {
   listBySession: oc
@@ -43,6 +43,7 @@ export const highlightsContract = {
           gloss: z.string(),
           pos: z.string().nullable(),
           register: z.string().nullable(),
+          ipa: GrammarIpaBagSchema.nullable(),
         }),
       })
     ),
