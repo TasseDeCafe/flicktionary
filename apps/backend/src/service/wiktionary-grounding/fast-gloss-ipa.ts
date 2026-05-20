@@ -45,9 +45,7 @@ const normalizeFastGlossPos = (pos: string | null): string | null => {
 const lookupHeadwords = (params: { targetLanguage: string; headword: string }): string[] => {
   const out = [params.headword]
   const lower =
-    params.targetLanguage === 'en'
-      ? params.headword.toLocaleLowerCase('en-US')
-      : params.headword.toLocaleLowerCase()
+    params.targetLanguage === 'en' ? params.headword.toLocaleLowerCase('en-US') : params.headword.toLocaleLowerCase()
   if (lower && lower !== params.headword) out.push(lower)
   return out
 }
@@ -94,10 +92,7 @@ const extractEntryIpa = (entry: DbWiktionaryEntry, targetLanguage: string): Gram
 
 type SurfaceIpaLookupResult = { kind: 'found'; ipa: GrammarIpaBag } | { kind: 'ambiguous' } | { kind: 'none' }
 
-const pickUnambiguousSurfaceIpa = (
-  entries: DbWiktionaryEntry[],
-  targetLanguage: string
-): SurfaceIpaLookupResult => {
+const pickUnambiguousSurfaceIpa = (entries: DbWiktionaryEntry[], targetLanguage: string): SurfaceIpaLookupResult => {
   const bags = uniqueById(entries).flatMap((entry) => {
     const ipa = extractEntryIpa(entry, targetLanguage)
     return ipa ? [ipa] : []

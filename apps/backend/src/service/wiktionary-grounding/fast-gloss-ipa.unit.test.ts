@@ -98,7 +98,9 @@ describe('lookupFastGlossIpa', () => {
     const adjective = entry(2, 'поздний', 'adj', '[ˈpozʲnʲɪj]')
     const repo = mockRepository({
       listPronunciationEntriesByHeadword: vi.fn(async ({ headword }) => (headword === 'поздно' ? [surface] : [])),
-      findRealLemmaByFormAndPos: vi.fn(async ({ form, pos }) => (form === 'поздно' && pos === 'adj' ? adjective : null)),
+      findRealLemmaByFormAndPos: vi.fn(async ({ form, pos }) =>
+        form === 'поздно' && pos === 'adj' ? adjective : null
+      ),
     })
 
     await expect(

@@ -93,8 +93,7 @@ const normalizeCachedMetadataToken = (value: string): string =>
     .replace(/[^\p{L}\p{N}_ -]/gu, '')
     .replace(/\s+/g, ' ')
 
-const isCachedGlossPos = (value: string): boolean =>
-  FAST_GLOSS_POS_ALIASES.has(normalizeCachedMetadataToken(value))
+const isCachedGlossPos = (value: string): boolean => FAST_GLOSS_POS_ALIASES.has(normalizeCachedMetadataToken(value))
 
 const parseCachedGloss = (raw: string): { gloss: string; pos: string | null; register: string | null } => {
   const lines = raw.trim().split(/\r?\n/)
