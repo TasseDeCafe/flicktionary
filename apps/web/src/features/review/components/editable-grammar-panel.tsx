@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import type {
   Card,
   Grammar,
@@ -231,7 +232,8 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
               <Label className='text-xs'>
                 {hint('ipa')?.label ?? t`IPA`}
                 {targetLanguage === 'en' && (
-                  <span className='text-muted-foreground ml-1 font-normal'>
+                  <span className='text-muted-foreground ml-1 inline-flex items-center gap-1 font-normal'>
+                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
                     ({englishIpaDialect === 'ga' ? t`GA` : t`RP`})
                   </span>
                 )}

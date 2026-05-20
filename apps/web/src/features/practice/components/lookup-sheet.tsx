@@ -2,11 +2,13 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { Bookmark, Loader2 } from 'lucide-react'
+import { Bookmark } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import {
   FloatingSheet,
   FloatingSheetBody,
@@ -146,9 +148,11 @@ export const LookupSheet = ({
     )
   }
 
+  const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const displayedIpa =
-    state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga') ?? null) : null
+    state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, englishIpaDialect) ?? null) : null
   const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? t`No Wiktionary IPA`) : null
+  const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 
   return (
     <>
@@ -164,31 +168,48 @@ export const LookupSheet = ({
         <FloatingSheetContent>
           <FloatingSheetHeader>
             <FloatingSheetTitle>{selection?.text ?? t`Lookup`}</FloatingSheetTitle>
-            {ipaLabel && <p className='text-muted-foreground text-base leading-snug font-medium'>{ipaLabel}</p>}
-            {state.kind === 'ready' && <FloatingSheetDescription>{state.gloss}</FloatingSheetDescription>}
-            {state.kind !== 'ready' && (
-              <FloatingSheetDescription className='sr-only'>
-                {t`Translation lookup and save action for the selected text.`}
-              </FloatingSheetDescription>
-            )}
-            {state.kind === 'ready' && (state.pos || state.register) && (
-              <div className='mt-2 flex flex-wrap gap-1.5'>
-                {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
-                {state.register && <Badge variant='secondary'>{state.register}</Badge>}
-              </div>
+            {state.kind === 'loading' ? (
+              <>
+                <Skeleton className='h-5 w-20' />
+                <Skeleton className='h-4 w-11/12' />
+                <Skeleton className='h-4 w-3/4' />
+                <div className='mt-2 flex flex-wrap gap-1.5'>
+                  <Skeleton className='h-5 w-12 rounded-md' />
+                  <Skeleton className='h-5 w-16 rounded-md' />
+                </div>
+                <FloatingSheetDescription className='sr-only'>
+                  {t`Translation lookup and save action for the selected text.`}
+                </FloatingSheetDescription>
+              </>
+            ) : (
+              <>
+                {ipaLabel && (
+                  <p className='text-muted-foreground flex items-center gap-1.5 text-base leading-snug font-medium'>
+                    {showIpaFlag && (
+                      <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                    )}
+                    <span>{ipaLabel}</span>
+                  </p>
+                )}
+                {state.kind === 'ready' ? (
+                  <FloatingSheetDescription>{state.gloss}</FloatingSheetDescription>
+                ) : (
+                  <FloatingSheetDescription className='sr-only'>
+                    {t`Translation lookup and save action for the selected text.`}
+                  </FloatingSheetDescription>
+                )}
+                {state.kind === 'ready' && (state.pos || state.register) && (
+                  <div className='mt-2 flex flex-wrap gap-1.5'>
+                    {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
+                    {state.register && <Badge variant='secondary'>{state.register}</Badge>}
+                  </div>
+                )}
+              </>
             )}
           </FloatingSheetHeader>
-          {(state.kind === 'loading' || state.kind === 'error') && (
+          {state.kind === 'error' && (
             <FloatingSheetBody>
-              {state.kind === 'loading' && (
-                <p className='text-muted-foreground flex items-center gap-2'>
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                  {t`Glossing…`}
-                </p>
-              )}
-              {state.kind === 'error' && (
-                <p className='text-destructive text-sm'>{t`Could not fetch a translation right now.`}</p>
-              )}
+              <p className='text-destructive text-sm'>{t`Could not fetch a translation right now.`}</p>
             </FloatingSheetBody>
           )}
           <FloatingSheetFooter>

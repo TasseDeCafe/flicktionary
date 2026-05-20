@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
+import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
@@ -118,7 +119,15 @@ export const RateSheet = ({
               <FloatingSheetTitle>
                 <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
               </FloatingSheetTitle>
-              {mode === 'rate' && chunk?.ipa && <div className='text-muted-foreground text-sm'>{chunk.ipa}</div>}
+              {mode === 'rate' && chunk?.ipa && (
+                <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                  <EnglishIpaDialectFlag
+                    targetLanguage={chunk.targetLanguage}
+                    englishIpaDialect={userPrefs?.englishIpaDialect ?? 'ga'}
+                  />
+                  <span>{chunk.ipa}</span>
+                </div>
+              )}
               {mode === 'rate' && description && <FloatingSheetDescription>{description}</FloatingSheetDescription>}
             </div>
             {showOverflow && (
