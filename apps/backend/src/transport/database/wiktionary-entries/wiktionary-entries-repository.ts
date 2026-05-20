@@ -34,6 +34,66 @@ const findRealLemmaByHeadwordAndPos = async (params: {
   return result[0] ?? null
 }
 
+const listRealLemmasByHeadword = async (params: {
+  targetLanguage: string
+  headword: string
+}): Promise<DbWiktionaryEntry[]> => {
+  return (await sql`
+    SELECT id, headword, pos, data
+    FROM public.wiktionary_entries
+    WHERE target_language = ${params.targetLanguage}
+      AND headword = ${params.headword}
+      AND data ? 'head_templates'
+      AND NOT (data->'senses'->0 ? 'form_of')
+    ORDER BY id
+  `) as DbWiktionaryEntry[]
+}
+
+// Pronunciation lookup intentionally has looser entry filters than grammar
+// grounding: Wiktionary often stores surface-form pronunciations on form-of
+// rows or rows without head templates.
+const listPronunciationEntriesByHeadwordAndPos = async (params: {
+  targetLanguage: string
+  headword: string
+  pos: string
+}): Promise<DbWiktionaryEntry[]> => {
+  return (await sql`
+    SELECT id, headword, pos, data
+    FROM public.wiktionary_entries
+    WHERE target_language = ${params.targetLanguage}
+      AND headword = ${params.headword}
+      AND pos = ${params.pos}
+      AND EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(
+          CASE WHEN jsonb_typeof(data->'sounds') = 'array' THEN data->'sounds' ELSE '[]'::jsonb END
+        ) AS sound(value)
+        WHERE sound.value ? 'ipa'
+      )
+    ORDER BY id
+  `) as DbWiktionaryEntry[]
+}
+
+const listPronunciationEntriesByHeadword = async (params: {
+  targetLanguage: string
+  headword: string
+}): Promise<DbWiktionaryEntry[]> => {
+  return (await sql`
+    SELECT id, headword, pos, data
+    FROM public.wiktionary_entries
+    WHERE target_language = ${params.targetLanguage}
+      AND headword = ${params.headword}
+      AND EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(
+          CASE WHEN jsonb_typeof(data->'sounds') = 'array' THEN data->'sounds' ELSE '[]'::jsonb END
+        ) AS sound(value)
+        WHERE sound.value ? 'ipa'
+      )
+    ORDER BY id
+  `) as DbWiktionaryEntry[]
+}
+
 // Same shape as findRealLemmaByHeadwordAndPos but POS-agnostic. Used as a
 // fallback when the LLM's POS doesn't match kaikki's: better to ground with
 // the wrong-POS row than not at all.
@@ -41,15 +101,7 @@ const findRealLemmaByHeadword = async (params: {
   targetLanguage: string
   headword: string
 }): Promise<DbWiktionaryEntry | null> => {
-  const result = (await sql`
-    SELECT id, headword, pos, data
-    FROM public.wiktionary_entries
-    WHERE target_language = ${params.targetLanguage}
-      AND headword = ${params.headword}
-      AND data ? 'head_templates'
-      AND NOT (data->'senses'->0 ? 'form_of')
-    LIMIT 1
-  `) as DbWiktionaryEntry[]
+  const result = await listRealLemmasByHeadword(params)
   return result[0] ?? null
 }
 
@@ -92,22 +144,75 @@ const findRealLemmaByForm = async (params: {
   return result[0] ?? null
 }
 
+const findRealLemmaByFormAndPos = async (params: {
+  targetLanguage: string
+  form: string
+  pos: string
+}): Promise<DbWiktionaryEntry | null> => {
+  const result = (await sql`
+    SELECT e.id, e.headword, e.pos, e.data
+    FROM public.wiktionary_forms f
+    JOIN public.wiktionary_entries e ON e.id = f.entry_id
+    WHERE f.target_language = ${params.targetLanguage}
+      AND f.form = ${params.form}
+      AND e.pos = ${params.pos}
+      AND e.data ? 'head_templates'
+      AND NOT (e.data->'senses'->0 ? 'form_of')
+    LIMIT 1
+  `) as DbWiktionaryEntry[]
+  return result[0] ?? null
+}
+
+const listRealLemmasByForm = async (params: { targetLanguage: string; form: string }): Promise<DbWiktionaryEntry[]> => {
+  return (await sql`
+    SELECT DISTINCT e.id, e.headword, e.pos, e.data
+    FROM public.wiktionary_forms f
+    JOIN public.wiktionary_entries e ON e.id = f.entry_id
+    WHERE f.target_language = ${params.targetLanguage}
+      AND f.form = ${params.form}
+      AND e.data ? 'head_templates'
+      AND NOT (e.data->'senses'->0 ? 'form_of')
+    ORDER BY e.id
+  `) as DbWiktionaryEntry[]
+}
+
 export interface WiktionaryEntriesRepositoryInterface {
   findRealLemmaByHeadwordAndPos: (params: {
     targetLanguage: string
     headword: string
     pos: string
   }) => Promise<DbWiktionaryEntry | null>
+  listRealLemmasByHeadword: (params: { targetLanguage: string; headword: string }) => Promise<DbWiktionaryEntry[]>
+  listPronunciationEntriesByHeadwordAndPos: (params: {
+    targetLanguage: string
+    headword: string
+    pos: string
+  }) => Promise<DbWiktionaryEntry[]>
+  listPronunciationEntriesByHeadword: (params: {
+    targetLanguage: string
+    headword: string
+  }) => Promise<DbWiktionaryEntry[]>
   findRealLemmaByHeadword: (params: { targetLanguage: string; headword: string }) => Promise<DbWiktionaryEntry | null>
   findFormOfLemma: (params: { targetLanguage: string; headword: string }) => Promise<string | null>
   findRealLemmaByForm: (params: { targetLanguage: string; form: string }) => Promise<DbWiktionaryEntry | null>
+  findRealLemmaByFormAndPos: (params: {
+    targetLanguage: string
+    form: string
+    pos: string
+  }) => Promise<DbWiktionaryEntry | null>
+  listRealLemmasByForm: (params: { targetLanguage: string; form: string }) => Promise<DbWiktionaryEntry[]>
 }
 
 export const WiktionaryEntriesRepository = (): WiktionaryEntriesRepositoryInterface => {
   return {
     findRealLemmaByHeadwordAndPos,
+    listRealLemmasByHeadword,
+    listPronunciationEntriesByHeadwordAndPos,
+    listPronunciationEntriesByHeadword,
     findRealLemmaByHeadword,
     findFormOfLemma,
     findRealLemmaByForm,
+    findRealLemmaByFormAndPos,
+    listRealLemmasByForm,
   }
 }

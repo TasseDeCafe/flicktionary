@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,6 +23,7 @@ import {
   useCreateHighlight,
   useDeleteHighlight,
   useFastGloss,
+  useGetUserPrefs,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
 import type { SelectionResult } from '../hooks/use-text-selection'
@@ -39,12 +42,13 @@ export type ExistingHighlightInput = {
 type GlossState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null }
+  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null; ipa: GrammarIpaBag | null }
   | { kind: 'error' }
 
 interface SessionGlossSheetProps {
   open: boolean
   sessionId: string
+  targetLanguage: string
   // Provide exactly one when `open=true`. `selection` is a fresh mouseup/touchend
   // result (the sheet creates the highlight). `existingHighlight` is a click on
   // an already-saved highlight span (the sheet reads cached metadata).
@@ -56,13 +60,54 @@ interface SessionGlossSheetProps {
 
 // Decodes the serialized fast_gloss column (gloss\n[POS]\n[register]) into the
 // same shape the GlossPass endpoint returns.
+const FAST_GLOSS_POS_ALIASES = new Set([
+  'n',
+  'noun',
+  'v',
+  'verb',
+  'transitive verb',
+  'intransitive verb',
+  'phrasal verb',
+  'modal verb',
+  'adj',
+  'adjective',
+  'adv',
+  'adverb',
+  'prep',
+  'preposition',
+  'pron',
+  'pronoun',
+  'particle',
+  'conj',
+  'conjunction',
+  'num',
+  'numeral',
+  'intj',
+  'interjection',
+])
+
+const normalizeCachedMetadataToken = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_ -]/gu, '')
+    .replace(/\s+/g, ' ')
+
+const isCachedGlossPos = (value: string): boolean => FAST_GLOSS_POS_ALIASES.has(normalizeCachedMetadataToken(value))
+
 const parseCachedGloss = (raw: string): { gloss: string; pos: string | null; register: string | null } => {
-  const lines = raw.split(/\r?\n/)
-  return {
-    gloss: lines[0] ?? '',
-    pos: lines[1]?.trim() || null,
-    register: lines[2]?.trim() || null,
-  }
+  const lines = raw.trim().split(/\r?\n/)
+  const gloss = lines[0] ?? ''
+  const metadata = lines
+    .slice(1)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+  const first = metadata[0] ?? null
+  const second = metadata[1] ?? null
+
+  if (first && isCachedGlossPos(first)) return { gloss, pos: first, register: second }
+  if (second && isCachedGlossPos(second)) return { gloss, pos: second, register: first }
+  return { gloss, pos: null, register: first }
 }
 
 type CachedHighlight = {
@@ -100,6 +145,7 @@ const findCachedHighlight = (
 export const SessionGlossSheet = ({
   open,
   sessionId,
+  targetLanguage,
   selection,
   existingHighlight,
   anchor,
@@ -107,6 +153,7 @@ export const SessionGlossSheet = ({
 }: SessionGlossSheetProps) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
+  const { data: userPrefs } = useGetUserPrefs()
 
   const { mutateAsync: createHighlight } = useCreateHighlight(sessionId)
   const { mutateAsync: fetchGloss } = useFastGloss()
@@ -139,7 +186,7 @@ export const SessionGlossSheet = ({
       setTags(existingHighlight.presetTags)
       setGlossState(
         existingHighlight.fastGloss
-          ? { kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss) }
+          ? { kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss), ipa: null }
           : { kind: 'loading' }
       )
       return
@@ -162,26 +209,34 @@ export const SessionGlossSheet = ({
     setNote(existingHighlight.note ?? '')
     setTags(existingHighlight.presetTags)
     setExpanded(false)
-    if (existingHighlight.fastGloss) {
-      setGlossState({ kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss) })
-      return
+    const cachedGloss = existingHighlight.fastGloss ? parseCachedGloss(existingHighlight.fastGloss) : null
+    if (cachedGloss) {
+      setGlossState({ kind: 'ready', ...cachedGloss, ipa: null })
+    } else {
+      setGlossState({ kind: 'loading' })
     }
-    // No cached gloss yet — fetch one. The endpoint also persists it.
+    // Fetch even when a cached gloss exists so old highlight rows can be
+    // enriched with Wiktionary IPA without changing the fast_gloss column.
     let cancelled = false
-    setGlossState({ kind: 'loading' })
     void (async () => {
       try {
         const res = await fetchGloss({ sessionId, highlightId: existingHighlight.id })
         if (cancelled) return
-        setGlossState({ kind: 'ready', gloss: res.data.gloss, pos: res.data.pos, register: res.data.register })
+        setGlossState({
+          kind: 'ready',
+          gloss: res.data.gloss,
+          pos: res.data.pos,
+          register: res.data.register,
+          ipa: res.data.ipa,
+        })
       } catch {
-        if (!cancelled) setGlossState({ kind: 'error' })
+        if (!cancelled && !cachedGloss) setGlossState({ kind: 'error' })
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [open, existingHighlight?.id, sessionId, fetchGloss])
+  }, [open, existingHighlight, sessionId, fetchGloss])
 
   // Seed from a fresh selection: dedupe against the cache, otherwise create.
   useEffect(() => {
@@ -206,8 +261,7 @@ export const SessionGlossSheet = ({
           if (match.fastGloss) {
             if (cancelled) return
             setHighlightId(id)
-            setGlossState({ kind: 'ready', ...parseCachedGloss(match.fastGloss) })
-            return
+            setGlossState({ kind: 'ready', ...parseCachedGloss(match.fastGloss), ipa: null })
           }
         } else {
           const created = await createHighlight({
@@ -227,7 +281,13 @@ export const SessionGlossSheet = ({
         setHighlightId(id)
         const res = await fetchGloss({ sessionId, highlightId: id })
         if (cancelled) return
-        setGlossState({ kind: 'ready', gloss: res.data.gloss, pos: res.data.pos, register: res.data.register })
+        setGlossState({
+          kind: 'ready',
+          gloss: res.data.gloss,
+          pos: res.data.pos,
+          register: res.data.register,
+          ipa: res.data.ipa,
+        })
       } catch {
         if (!cancelled) setGlossState({ kind: 'error' })
       }
@@ -279,6 +339,14 @@ export const SessionGlossSheet = ({
 
   const isReady = glossState.kind === 'ready'
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
+  const displayedIpa = isReady
+    ? (pickIpa(
+        (glossState as Extract<GlossState, { kind: 'ready' }>).ipa,
+        targetLanguage,
+        userPrefs?.englishIpaDialect ?? 'ga'
+      ) ?? null)
+    : null
+  const ipaLabel = isReady ? (displayedIpa ?? t`No Wiktionary IPA`) : null
 
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
@@ -297,12 +365,15 @@ export const SessionGlossSheet = ({
       expandable
       expanded={expanded}
       onExpandedChange={setExpanded}
+      modal={false}
+      closeOnScroll
     >
       <FloatingSheetContent>
         <FloatingSheetHeader>
           <div className='flex items-start justify-between gap-2'>
             <div className='flex min-w-0 flex-col gap-1'>
               <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
+              {ipaLabel && <p className='text-muted-foreground text-base leading-snug font-medium'>{ipaLabel}</p>}
               {isReady ? (
                 <p className='text-muted-foreground text-sm'>
                   {(glossState as Extract<GlossState, { kind: 'ready' }>).gloss}

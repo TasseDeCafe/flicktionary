@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import { Drawer as DrawerPrimitive } from 'vaul'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
@@ -9,11 +10,14 @@ import { useIsMobile } from '@/hooks/use-is-mobile'
 export type FloatingSheetAnchor = HTMLElement | DOMRect | null
 
 interface FloatingSheetContextValue {
+  open: boolean
   isMobile: boolean
   expandable: boolean
   expanded: boolean
   setExpanded: (expanded: boolean) => void
   closeSheet: () => void
+  contentRef: React.RefObject<HTMLDivElement | null>
+  modal: boolean
 }
 
 const FloatingSheetContext = React.createContext<FloatingSheetContextValue | null>(null)
@@ -33,6 +37,8 @@ interface FloatingSheetProps {
   expandable?: boolean
   expanded?: boolean
   onExpandedChange?: (expanded: boolean) => void
+  modal?: boolean
+  closeOnScroll?: boolean
   children: React.ReactNode
 }
 
@@ -43,11 +49,14 @@ export const FloatingSheet = ({
   expandable = false,
   expanded: expandedProp,
   onExpandedChange,
+  modal = true,
+  closeOnScroll = false,
   children,
 }: FloatingSheetProps) => {
   const isMobile = useIsMobile()
 
   const [localExpanded, setLocalExpanded] = React.useState(false)
+  const contentRef = React.useRef<HTMLDivElement | null>(null)
   const expanded = expandedProp ?? localExpanded
   const setExpanded = React.useCallback(
     (next: boolean) => {
@@ -75,11 +84,47 @@ export const FloatingSheet = ({
 
   const closeSheet = React.useCallback(() => onOpenChange(false), [onOpenChange])
 
+  React.useEffect(() => {
+    if (!open || isMobile !== false || !closeOnScroll) return
+    const handleScroll = () => onOpenChange(false)
+    document.addEventListener('scroll', handleScroll, { capture: true })
+    return () => document.removeEventListener('scroll', handleScroll, { capture: true })
+  }, [open, isMobile, closeOnScroll, onOpenChange])
+
+  React.useEffect(() => {
+    if (!open || isMobile !== true || modal) return
+    const handleOutsideStart = (event: Event) => {
+      const content = contentRef.current
+      if (!content) return
+      if (event.target instanceof Node && content.contains(event.target)) return
+      onOpenChange(false)
+    }
+    document.addEventListener('pointerdown', handleOutsideStart, { capture: true })
+    document.addEventListener('touchstart', handleOutsideStart, { capture: true })
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideStart, { capture: true })
+      document.removeEventListener('touchstart', handleOutsideStart, { capture: true })
+    }
+  }, [open, isMobile, modal, onOpenChange])
+
   if (isMobile === undefined) return null
 
-  const ctx: FloatingSheetContextValue = { isMobile, expandable, expanded, setExpanded, closeSheet }
+  const ctx: FloatingSheetContextValue = {
+    open,
+    isMobile,
+    expandable,
+    expanded,
+    setExpanded,
+    closeSheet,
+    contentRef,
+    modal,
+  }
 
   if (isMobile) {
+    if (!modal) {
+      return <FloatingSheetContext.Provider value={ctx}>{children}</FloatingSheetContext.Provider>
+    }
+
     // We deliberately skip vaul snap points here — the controlled snap path
     // didn't reliably open on iOS in vaul 1.1.2 (the drawer mounted but stayed
     // off-screen). Without snap points, vaul fits content naturally; when the
@@ -139,30 +184,50 @@ interface FloatingSheetContentProps {
 }
 
 export const FloatingSheetContent = ({ className, children }: FloatingSheetContentProps) => {
-  const { isMobile, expandable } = useFloatingSheetContext()
+  const { open, isMobile, expandable, contentRef, modal } = useFloatingSheetContext()
 
   if (isMobile) {
+    const contentClassName = cn(
+      'group/floating-sheet bg-background fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-lg border-t shadow-xl outline-none',
+      expandable ? 'max-h-[96vh]' : 'max-h-[85vh]',
+      className
+    )
+
+    const inner = (
+      <>
+        <div className='bg-muted mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full' />
+        <div className='flex flex-1 flex-col overflow-y-auto px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]'>
+          {children}
+        </div>
+      </>
+    )
+
+    if (!modal) {
+      if (!open) return null
+      if (typeof document === 'undefined') return null
+      return createPortal(
+        <div ref={contentRef} className={contentClassName}>
+          {inner}
+        </div>,
+        document.body
+      )
+    }
+
     return (
       <DrawerPrimitive.Portal>
         {/* Transparent overlay — needed so vaul registers outside taps as
             dismiss intents, but it never tints the source content. */}
         <DrawerPrimitive.Overlay className='fixed inset-0 z-40 bg-transparent' />
         <DrawerPrimitive.Content
+          ref={contentRef}
           // Radix-Dialog (vaul wraps it) warns when no <Description> child is
           // rendered. Our floating sheets typically display the relevant info
           // visibly in the header / body; passing `aria-describedby={undefined}`
           // is the documented Radix escape hatch to opt out of the requirement.
           aria-describedby={undefined}
-          className={cn(
-            'group/floating-sheet bg-background fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-lg border-t shadow-xl outline-none',
-            expandable ? 'max-h-[96vh]' : 'max-h-[85vh]',
-            className
-          )}
+          className={contentClassName}
         >
-          <div className='bg-muted mx-auto mt-2 h-1.5 w-12 shrink-0 rounded-full' />
-          <div className='flex flex-1 flex-col overflow-y-auto px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]'>
-            {children}
-          </div>
+          {inner}
         </DrawerPrimitive.Content>
       </DrawerPrimitive.Portal>
     )
@@ -171,6 +236,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
+        ref={contentRef}
         side='bottom'
         align='start'
         sideOffset={6}
@@ -201,8 +267,8 @@ interface FloatingSheetTitleProps {
 }
 
 export const FloatingSheetTitle = ({ className, children }: FloatingSheetTitleProps) => {
-  const { isMobile } = useFloatingSheetContext()
-  if (isMobile) {
+  const { isMobile, modal } = useFloatingSheetContext()
+  if (isMobile && modal) {
     return (
       <DrawerPrimitive.Title className={cn('text-foreground text-base font-semibold', className)}>
         {children}
@@ -218,8 +284,8 @@ interface FloatingSheetDescriptionProps {
 }
 
 export const FloatingSheetDescription = ({ className, children }: FloatingSheetDescriptionProps) => {
-  const { isMobile } = useFloatingSheetContext()
-  if (isMobile) {
+  const { isMobile, modal } = useFloatingSheetContext()
+  if (isMobile && modal) {
     return (
       <DrawerPrimitive.Description className={cn('text-muted-foreground text-sm', className)}>
         {children}

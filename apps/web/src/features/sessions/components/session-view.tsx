@@ -124,7 +124,7 @@ export const SessionView = () => {
     if (!(target instanceof HTMLElement) || !target.dataset.highlightId) return
     setPendingSelection(null)
     setExistingHighlightId(target.dataset.highlightId)
-    setAnchor(target)
+    setAnchor(target.getBoundingClientRect())
     setGlossOpen(true)
   }
 
@@ -230,6 +230,7 @@ export const SessionView = () => {
       <SessionGlossSheet
         open={glossOpen}
         sessionId={sessionId}
+        targetLanguage={session.targetLanguage}
         selection={pendingSelection}
         existingHighlight={existingHighlight}
         anchor={anchor}

@@ -332,6 +332,25 @@ describe('extractIpaBag — English untagged fallback', () => {
     expect(out.rp).toBeUndefined()
     expect(out.untagged).toBe('/foo/')
   })
+
+  it('treats matching POS-only pronunciation tags as untagged', () => {
+    const entry: KaikkiEntry = {
+      pos: 'verb',
+      sounds: [
+        { ipa: '/ɹiːˈbɪld/', tags: ['verb'] },
+        { ipa: '/ˈɹiːbɪld/', tags: ['noun'] },
+      ],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ untagged: '/ɹiːˈbɪld/' })
+  })
+
+  it('keeps dialect tags after removing matching POS pronunciation tags', () => {
+    const entry: KaikkiEntry = {
+      pos: 'verb',
+      sounds: [{ ipa: '/ɹiːˈbɪld/', tags: ['US', 'verb'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/ɹiːˈbɪld/' })
+  })
 })
 
 describe('extractIpaBag — quality tag rejection', () => {

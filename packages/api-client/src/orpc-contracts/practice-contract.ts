@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
+  GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
   PracticeRatingSchema,
   PracticeSessionProgressSchema,
@@ -163,6 +164,7 @@ export const practiceContract = {
           gloss: z.string(),
           pos: z.string().nullable(),
           register: z.string().nullable(),
+          ipa: GrammarIpaBagSchema.nullable(),
         }),
       })
     ),

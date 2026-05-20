@@ -345,7 +345,8 @@ export const buildApp = ({
       studySessionsRepository,
       textSegmentsRepository,
       usersRepository,
-      userTargetLanguagePrefsRepository
+      userTargetLanguagePrefsRepository,
+      wiktionaryEntriesRepository
     )
   )
   app.use(
@@ -371,6 +372,7 @@ export const buildApp = ({
       userLookupsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
+      wiktionaryEntriesRepository,
       startPracticeSessionDependencies,
       generateNextPracticeTextDependencies,
       rateChunkDependencies,
