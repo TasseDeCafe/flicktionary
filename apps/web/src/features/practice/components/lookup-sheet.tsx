@@ -149,8 +149,7 @@ export const LookupSheet = ({
   }
 
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
-  const displayedIpa =
-    state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, englishIpaDialect) ?? null) : null
+  const displayedIpa = state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, englishIpaDialect) ?? null) : null
   const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? t`No Wiktionary IPA`) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 

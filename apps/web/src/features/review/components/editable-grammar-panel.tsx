@@ -233,8 +233,8 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
                 {hint('ipa')?.label ?? t`IPA`}
                 {targetLanguage === 'en' && (
                   <span className='text-muted-foreground ml-1 inline-flex items-center gap-1 font-normal'>
-                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-                    ({englishIpaDialect === 'ga' ? t`GA` : t`RP`})
+                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />(
+                    {englishIpaDialect === 'ga' ? t`GA` : t`RP`})
                   </span>
                 )}
               </Label>
