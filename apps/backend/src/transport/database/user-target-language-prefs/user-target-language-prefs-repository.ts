@@ -29,10 +29,35 @@ const upsertCefr = async (userId: string, targetLanguage: string, cefrLevel: str
   `
 }
 
+const getShowTranslationsEnabled = async (userId: string, targetLanguage: string): Promise<boolean> => {
+  const result = (await sql`
+    SELECT show_translations_enabled
+    FROM public.user_target_language_prefs
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
+  `) as { show_translations_enabled: boolean }[]
+  return result[0]?.show_translations_enabled ?? true
+}
+
+const setShowTranslationsEnabled = async (
+  userId: string,
+  targetLanguage: string,
+  enabled: boolean
+): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.user_target_language_prefs
+    SET show_translations_enabled = ${enabled},
+        updated_at = NOW()
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
+  `
+  return result.count === 1
+}
+
 export interface UserTargetLanguagePrefsRepositoryInterface {
   findForLanguage: (userId: string, targetLanguage: string) => Promise<DbUserTargetLanguagePref | null>
   listForUser: (userId: string) => Promise<DbUserTargetLanguagePref[]>
   upsertCefr: (userId: string, targetLanguage: string, cefrLevel: string) => Promise<void>
+  getShowTranslationsEnabled: (userId: string, targetLanguage: string) => Promise<boolean>
+  setShowTranslationsEnabled: (userId: string, targetLanguage: string, enabled: boolean) => Promise<boolean>
 }
 
 export const UserTargetLanguagePrefsRepository = (): UserTargetLanguagePrefsRepositoryInterface => {
@@ -40,5 +65,7 @@ export const UserTargetLanguagePrefsRepository = (): UserTargetLanguagePrefsRepo
     findForLanguage,
     listForUser,
     upsertCefr,
+    getShowTranslationsEnabled,
+    setShowTranslationsEnabled,
   }
 }

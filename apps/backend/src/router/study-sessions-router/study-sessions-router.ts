@@ -8,6 +8,7 @@ import {
   DbStudySessionWithSource,
   StudySessionsRepositoryInterface,
 } from '../../transport/database/study-sessions/study-sessions-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processSession, ProcessingDependencies } from '../../service/processing/process-session'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
@@ -45,6 +46,7 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
 export const StudySessionsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   usersRepository: UsersRepositoryInterface,
+  targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   processingDependencies: ProcessingDependencies
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -74,6 +76,7 @@ export const StudySessionsRouter = (
         targetLanguage: input.targetLanguage,
         snapshotNativeLanguage: input.nativeLanguage,
         usersRepository,
+        targetLanguagePrefsRepository,
       })
       const inserted = await studySessionsRepository.insertStudySession({
         userId,

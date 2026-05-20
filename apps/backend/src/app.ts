@@ -244,6 +244,7 @@ export const buildApp = ({
     cardsRepository,
     userLookupsRepository,
     usersRepository,
+    userTargetLanguagePrefsRepository,
     processingTelemetryRepository,
     wiktionaryEntriesRepository,
   }
@@ -265,6 +266,7 @@ export const buildApp = ({
     practiceSessionsRepository,
     userLookupsRepository,
     usersRepository,
+    userTargetLanguagePrefsRepository,
   }
 
   const generateNextPracticeTextDependencies = {
@@ -273,6 +275,7 @@ export const buildApp = ({
     practiceRatingsRepository,
     userLookupsRepository,
     usersRepository,
+    userTargetLanguagePrefsRepository,
   }
 
   const rateChunkDependencies = {
@@ -288,6 +291,7 @@ export const buildApp = ({
     highlightsRepository,
     userLookupsRepository,
     usersRepository,
+    userTargetLanguagePrefsRepository,
   }
 
   const createAdhocCardDependencies = {
@@ -309,6 +313,7 @@ export const buildApp = ({
     textSegmentsRepository,
     userLookupsRepository,
     usersRepository,
+    userTargetLanguagePrefsRepository,
   }
 
   const subscriptionMiddlewareInstance = subscriptionMiddleware(accessCache, usersWithFreeAccess)
@@ -324,10 +329,24 @@ export const buildApp = ({
     })
   )
   app.use(API_V1, TextSegmentsRouter(textTracksRepository, textSegmentsRepository, studySessionsRepository))
-  app.use(API_V1, StudySessionsRouter(studySessionsRepository, usersRepository, processingDependencies))
   app.use(
     API_V1,
-    HighlightsRouter(highlightsRepository, studySessionsRepository, textSegmentsRepository, usersRepository)
+    StudySessionsRouter(
+      studySessionsRepository,
+      usersRepository,
+      userTargetLanguagePrefsRepository,
+      processingDependencies
+    )
+  )
+  app.use(
+    API_V1,
+    HighlightsRouter(
+      highlightsRepository,
+      studySessionsRepository,
+      textSegmentsRepository,
+      usersRepository,
+      userTargetLanguagePrefsRepository
+    )
   )
   app.use(
     API_V1,
@@ -351,6 +370,7 @@ export const buildApp = ({
       practiceTextsRepository,
       userLookupsRepository,
       usersRepository,
+      userTargetLanguagePrefsRepository,
       startPracticeSessionDependencies,
       generateNextPracticeTextDependencies,
       rateChunkDependencies,

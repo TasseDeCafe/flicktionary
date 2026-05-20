@@ -5,6 +5,7 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type {
   PracticeSessionsRepositoryInterface,
@@ -36,6 +37,7 @@ export type PracticeRouterDependencies = {
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   startPracticeSessionDependencies: StartPracticeSessionDependencies
   generateNextPracticeTextDependencies: GenerateNextPracticeTextDependencies
   rateChunkDependencies: RateChunkDependencies
@@ -346,6 +348,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         userId,
         targetLanguage: found.targetLanguage,
         usersRepository: deps.usersRepository,
+        targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
       })
       if (!languagePrefs.nativeLanguage) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })

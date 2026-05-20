@@ -5,6 +5,7 @@ import type {
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { generatePracticeText } from '../../transport/third-party/anthropic/passes/generate-practice-text'
 import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
@@ -15,6 +16,7 @@ export type GenerateNextPracticeTextDependencies = {
   practiceRatingsRepository: PracticeRatingsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   // Optional override for tests / future CEFR-specific tuning.
   chunksPerText?: number
 }
@@ -246,6 +248,7 @@ export const generateNextPracticeText = async (
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
   if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 
@@ -358,6 +361,7 @@ export const prepareNextPracticeText = async (
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
   if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 

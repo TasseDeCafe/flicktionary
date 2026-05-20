@@ -1,5 +1,6 @@
 import type { PracticeSessionsRepositoryInterface } from '../../transport/database/practice-sessions/practice-sessions-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { PracticeSessionMode } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import {
   DEFAULT_PRACTICE_MAX_NEW_TERMS,
@@ -15,6 +16,7 @@ export type StartPracticeSessionDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
 }
 
 export type StartPracticeSessionResult =
@@ -51,6 +53,7 @@ export const startPracticeSession = async (
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
   if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 

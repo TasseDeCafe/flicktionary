@@ -6,6 +6,7 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
@@ -36,6 +37,7 @@ export type ProcessingDependencies = {
   cardsRepository: CardsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
 }
@@ -56,6 +58,7 @@ export const processSession = async (
     cardsRepository,
     userLookupsRepository,
     usersRepository,
+    userTargetLanguagePrefsRepository,
     processingTelemetryRepository,
     wiktionaryEntriesRepository,
   } = deps
@@ -117,6 +120,7 @@ export const processSession = async (
         targetLanguage: session.target_language,
         snapshotNativeLanguage: session.native_language,
         usersRepository,
+        targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
       }),
     ])
     const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language

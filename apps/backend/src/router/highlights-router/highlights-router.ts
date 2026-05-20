@@ -7,6 +7,7 @@ import { highlightsContract } from '@flicktionary/api-client/orpc-contracts/high
 import { DbHighlight, HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { fastGlossPass, FastGloss } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
@@ -42,7 +43,8 @@ export const HighlightsRouter = (
   highlightsRepository: HighlightsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface,
   textSegmentsRepository: TextSegmentsRepositoryInterface,
-  usersRepository: UsersRepositoryInterface
+  usersRepository: UsersRepositoryInterface,
+  targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -149,6 +151,7 @@ export const HighlightsRouter = (
         targetLanguage: session.target_language,
         snapshotNativeLanguage: session.native_language,
         usersRepository,
+        targetLanguagePrefsRepository,
       })
       const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
       const gloss = await fastGlossPass({

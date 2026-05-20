@@ -861,6 +861,7 @@ export type Database = {
         Row: {
           cefr_level: string
           created_at: string
+          show_translations_enabled: boolean
           target_language: string
           updated_at: string
           user_id: string
@@ -868,6 +869,7 @@ export type Database = {
         Insert: {
           cefr_level: string
           created_at?: string
+          show_translations_enabled?: boolean
           target_language: string
           updated_at?: string
           user_id: string
@@ -875,6 +877,7 @@ export type Database = {
         Update: {
           cefr_level?: string
           created_at?: string
+          show_translations_enabled?: boolean
           target_language?: string
           updated_at?: string
           user_id?: string
@@ -893,7 +896,6 @@ export type Database = {
           practice_max_new_terms: number
           practice_max_review_terms: number
           referral: string | null
-          show_translations_enabled: boolean
           stripe_customer_id: string | null
           tap_to_translate_enabled: boolean
           utm_campaign: string | null
@@ -913,7 +915,6 @@ export type Database = {
           practice_max_new_terms?: number
           practice_max_review_terms?: number
           referral?: string | null
-          show_translations_enabled?: boolean
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
           utm_campaign?: string | null
@@ -933,7 +934,6 @@ export type Database = {
           practice_max_new_terms?: number
           practice_max_review_terms?: number
           referral?: string | null
-          show_translations_enabled?: boolean
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
           utm_campaign?: string | null

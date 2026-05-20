@@ -5,6 +5,7 @@ import { BackendErrorResponseSchema } from './common/error-response-schema'
 const TargetLanguagePrefSchema = z.object({
   targetLanguage: z.string(),
   cefrLevel: z.string(),
+  showTranslationsEnabled: z.boolean(),
 })
 
 const UserPrefsSchema = z.object({
@@ -13,7 +14,6 @@ const UserPrefsSchema = z.object({
   lastTargetLanguage: z.string().nullable(),
   tapToTranslateEnabled: z.boolean(),
   llmHighlightsEnabled: z.boolean(),
-  showTranslationsEnabled: z.boolean(),
   englishIpaDialect: z.enum(['ga', 'rp']),
   practiceMaxNewTerms: z.number().int(),
   practiceMaxReviewTerms: z.number().int(),
@@ -69,10 +69,10 @@ export const userPrefsContract = {
     .input(z.object({ enabled: z.boolean() }))
     .output(z.object({ data: UserPrefsSchema })),
 
-  setShowTranslationsEnabled: oc
-    .route({ method: 'PUT', path: '/user-prefs/show-translations', successStatus: 200 })
+  setShowTranslationsForLanguage: oc
+    .route({ method: 'PUT', path: '/user-prefs/show-translations-for-language', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
-    .input(z.object({ enabled: z.boolean() }))
+    .input(z.object({ targetLanguage: z.string().min(1), enabled: z.boolean() }))
     .output(z.object({ data: UserPrefsSchema })),
 
   setPracticeSessionLimits: oc

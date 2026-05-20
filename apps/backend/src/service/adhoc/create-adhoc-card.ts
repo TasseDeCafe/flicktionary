@@ -67,6 +67,7 @@ export const createAdhocCard = async (params: {
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
   if (!languagePrefs.nativeLanguage) {
     throw new AdhocCardCreationError('native_language_not_set')

@@ -13,6 +13,7 @@ import { useDetectLanguage } from '@/features/sessions/api/languages-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
+import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { useCreateAdhocCard } from '../api/adhoc-hooks'
 
 const HEADWORD_MAX = 200
@@ -80,7 +81,7 @@ export const NewAdhocCardWizard = () => {
 
   const trimmedHeadword = headword.trim()
   const trimmedContext = context.trim()
-  const canUseTargetOnlyMode = prefs?.showTranslationsEnabled === false
+  const canUseTargetOnlyMode = !getShowTranslationsEnabledForLanguage(prefs, effectiveTarget)
   const canSubmit =
     !!effectiveTarget &&
     (!!prefs?.nativeLanguage || canUseTargetOnlyMode) &&

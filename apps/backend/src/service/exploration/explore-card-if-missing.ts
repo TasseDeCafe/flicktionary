@@ -4,6 +4,7 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
@@ -16,6 +17,7 @@ export type ExploreCardDependencies = {
   highlightsRepository: HighlightsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
 }
 
 export type ExploreCardOutcome = 'updated' | 'skipped' | 'failed'
@@ -67,6 +69,7 @@ export const exploreCardIfMissing = async (
       targetLanguage: session.target_language,
       snapshotNativeLanguage: session.native_language,
       usersRepository: deps.usersRepository,
+      targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     })
     const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 

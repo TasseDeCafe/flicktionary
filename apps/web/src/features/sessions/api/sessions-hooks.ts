@@ -344,11 +344,11 @@ export const useSetLlmHighlightsEnabled = () => {
   )
 }
 
-export const useSetShowTranslationsEnabled = () => {
+export const useSetShowTranslationsForLanguage = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
-    orpcQuery.userPrefs.setShowTranslationsEnabled.mutationOptions({
+    orpcQuery.userPrefs.setShowTranslationsForLanguage.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
       },

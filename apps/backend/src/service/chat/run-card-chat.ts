@@ -10,6 +10,7 @@ import {
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
 
@@ -20,6 +21,7 @@ export type RunCardChatDependencies = {
   textSegmentsRepository: TextSegmentsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
 }
 
 export type RunCardChatInput = {
@@ -233,6 +235,7 @@ export const runCardChat = async (
     targetLanguage: session.target_language,
     snapshotNativeLanguage: session.native_language,
     usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
 
   const promptContext = await buildPromptContext(

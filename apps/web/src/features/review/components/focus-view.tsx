@@ -22,6 +22,7 @@ import { GroundingBadge } from './grounding-badge'
 import { PerCardChat } from './per-card-chat'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
 import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
+import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 
 type ContextWindowProps = {
   sessionId: string
@@ -172,7 +173,7 @@ export const FocusView = () => {
   const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga')
   const wiktionaryUrl = buildWiktionaryUrl(card.chunk.headword, targetLanguage, card.chunk.grammar?.pos)
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
-  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
+  const hideNativeFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`

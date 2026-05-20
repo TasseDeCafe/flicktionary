@@ -1,9 +1,11 @@
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 
 type EffectiveNativeLanguageInput = {
   userId: string
   targetLanguage: string
   usersRepository: UsersRepositoryInterface
+  targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   snapshotNativeLanguage?: string | null
 }
 
@@ -19,10 +21,11 @@ export const getEffectiveNativeLanguage = async ({
   userId,
   targetLanguage,
   usersRepository,
+  targetLanguagePrefsRepository,
   snapshotNativeLanguage = null,
 }: EffectiveNativeLanguageInput): Promise<EffectiveNativeLanguage> => {
   const [showTranslationsEnabled, liveNativeLanguage] = await Promise.all([
-    usersRepository.getShowTranslationsEnabled(userId),
+    targetLanguagePrefsRepository.getShowTranslationsEnabled(userId, targetLanguage),
     usersRepository.getNativeLanguage(userId),
   ])
 

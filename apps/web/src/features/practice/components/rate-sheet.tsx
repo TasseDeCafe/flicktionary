@@ -16,6 +16,7 @@ import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { StressMarkedText } from './stress-marked-text'
 
 export type RateSheetChunkContent = {
@@ -99,7 +100,8 @@ export const RateSheet = ({
     !!nativeLanguage &&
     !!chunk?.targetLanguage &&
     nativeLanguage.trim().toLowerCase() === chunk.targetLanguage.trim().toLowerCase()
-  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
+  const hideNativeFields =
+    sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, chunk?.targetLanguage ?? null)
   // Translation wins for the description slot; definition is the L1=L2 / no-translations fallback.
   const description = hideNativeFields ? chunk?.definition || null : chunk?.translation || chunk?.definition || null
   const titleText = chunk?.displayForm || chunk?.headword || t`Rate`

@@ -14,6 +14,7 @@ import { CefrStep } from './cefr-step'
 import type { CefrLevel } from '../constants/cefr'
 import { TextPasteFields } from './text-paste-input'
 import { TEXT_PASTE_MAX_LENGTH, TEXT_PASTE_MIN_LENGTH } from './text-paste-helpers'
+import { getShowTranslationsEnabledForLanguage } from '../utils/show-translations-pref'
 
 type Step = 'paste' | 'cefr'
 
@@ -50,7 +51,8 @@ export const NewTextSessionWizard = () => {
   const trimmedTitle = title.trim()
   const charCount = text.length
   const isPaseSubmitting = isCreatingSource || isImporting
-  const hasNativeLanguageOrTargetOnlyMode = !!prefs?.nativeLanguage || prefs?.showTranslationsEnabled === false
+  const hasNativeLanguageOrTargetOnlyMode =
+    !!prefs?.nativeLanguage || !getShowTranslationsEnabledForLanguage(prefs, language)
   const canSubmitPaste =
     !isPaseSubmitting &&
     hasNativeLanguageOrTargetOnlyMode &&
@@ -99,7 +101,8 @@ export const NewTextSessionWizard = () => {
                 const existingCefr = prefs.targetLanguagePrefs.find(
                   (p) => p.targetLanguage === track.language
                 )?.cefrLevel
-                const nativeLanguage = prefs.nativeLanguage ?? (!prefs.showTranslationsEnabled ? track.language : null)
+                const showTranslations = getShowTranslationsEnabledForLanguage(prefs, track.language)
+                const nativeLanguage = prefs.nativeLanguage ?? (!showTranslations ? track.language : null)
                 if (!nativeLanguage) return
                 if (existingCefr) {
                   startSession(existingCefr, nativeLanguage, sourceId, track)
@@ -119,7 +122,8 @@ export const NewTextSessionWizard = () => {
 
   const handleCefrSubmit = () => {
     if (!cefrChoice || !importedTrack || !contentSourceId || !prefs) return
-    const nativeLanguage = prefs.nativeLanguage ?? (!prefs.showTranslationsEnabled ? importedTrack.language : null)
+    const showTranslations = getShowTranslationsEnabledForLanguage(prefs, importedTrack.language)
+    const nativeLanguage = prefs.nativeLanguage ?? (!showTranslations ? importedTrack.language : null)
     if (!nativeLanguage) return
     const track = importedTrack
     const sourceId = contentSourceId
