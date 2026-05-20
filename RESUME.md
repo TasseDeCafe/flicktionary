@@ -1052,8 +1052,20 @@ llmDiscoveryEnabled: false, excludedHeadwordSenses: [] })`,
     COPY, and snapshots the local dev-tunnel data. Downloads are atomic
     (`.tmp` then rename) and CSV writes honor stream backpressure. Run local
     loads against the dev-tunnel DB with
-    `doppler run -- pnpm --filter @flicktionary/backend load:kaikki`; the stack
-    must be running on `127.0.0.1:34322`.
+    `pnpm --filter @flicktionary/backend load:kaikki` (or via Doppler if you
+    need injected env); the stack must be running on `127.0.0.1:34322`. The
+    command may need unsandboxed execution in Codex because `tsx` creates an
+    IPC pipe under `/var/folders/.../T`.
+  - **Dev-tunnel operational note from 2026-05-20.** A reset/test run left
+    `public.wiktionary_entries` empty, so processing telemetry showed
+    `wiktionary_grounding: attempted=64, grounded=0, missed=64` and every
+    English card displayed `LLM only`. This was not a prompt/language-mode
+    regression; the reference data was missing. Reloading from the cached raw
+    dump produced `1,465,676` English entries, `441,338` Russian entries, and
+    `2,366,463` forms, then refreshed
+    `apps/backend/scripts/.cache/wiktionary/wiktionary.dump` (467.4 MB). If
+    grounding looks globally broken, first run:
+    `psql postgresql://postgres:postgres@127.0.0.1:34322/postgres -c "select target_language, count(*) from public.wiktionary_entries group by target_language;"`.
   - **Grounding sets.** Backend `KAIKKI_ENABLED_LANGUAGES` and shared
     `KAIKKI_LANGUAGES` are now `ru` + `en`. The production loader workflow
     caches the raw gz dump under the `kaikki-raw-v*` key and is still manually
@@ -1269,89 +1281,62 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
   `FloatingSheetFooter`: Remove always visible, Save conditional on
   `expanded`.
 
-- **Show translations user pref (2026-05-20).** New `users.show_translations_enabled
-BOOLEAN NOT NULL DEFAULT TRUE` column (migration
-  `20260519225503_add_show_translations_pref.sql`). When off, every LLM call
-  site spoofs `nativeLanguage = targetLanguage` at the boundary so the
-  existing `sameLanguage` branches in `basic-data-pass`, `enrichment-pass`,
-  `fast-gloss-pass`, and `generate-practice-text` fire automatically; the
-  passes themselves are unchanged. Frontend render-time gates hide stale
-  `translation` / `native_example` / `extras.l1_notes` on already-populated
-  cards. Trade-off accepted for MVP: `extras.l1_notes` is a no-op when the
-  pref is off (LLM sees no L1 contrast). Don't re-introduce hardcoded
-  schema/prompt edits inside the passes — the spoof is the contract.
-  - **Schema + types.** Migration applied via `pnpm db:reset`;
-    `database.public.types.ts` hand-extended on `users` Row/Insert/Update.
-  - **Boolean-pref plumbing** mirrors `llm_highlights_enabled`:
-    `users-repository.ts` `get/setShowTranslationsEnabled` (default `true`),
-    `UserPrefsSchema.showTranslationsEnabled` in
-    `packages/api-client/src/orpc-contracts/user-prefs-contract.ts`,
-    `PUT /user-prefs/show-translations` endpoint + `buildPrefs` reads it in
-    `user-prefs-router.ts`, `useSetShowTranslationsEnabled` in
-    `sessions-hooks.ts`, new "Show translations" Switch row in
-    `more-tab-view.tsx` under Settings.
-  - **Live pref beats session snapshot** at every LLM call site and every
-    display gate. `study_session.native_language` is the historical snapshot;
-    it stays in the schema but is no longer authoritative for current
-    generation. Backend call sites read
-    `usersRepository.getNativeLanguage(userId)` and only fall back to
-    `session.native_language` when the live value is missing:
-    `service/processing/process-session.ts` (basic-data),
-    `service/exploration/explore-card-if-missing.ts` (enrichment),
-    `router/highlights-router/highlights-router.ts` fastGloss,
-    `service/chat/run-card-chat.ts` (chat — passes
-    `nativeLanguageOverride` into `service/processing/build-prompt-context.ts`,
-    which now accepts that param). `service/practice/generate-next-practice-text.ts`
-    (foreground + background pre-gen) and `router/practice-router` fastGloss
-    already read the live pref and just compute
-    `effectiveNativeLanguage` from it. Don't re-introduce the
-    `session.native_language`-first reads — they're stale when the user
-    changes their L1 mid-flight (real symptom: tap-to-translate sheet
-    returning a Spanish definition when the user is English-native because
-    the session was created before the L1 change).
-  - **Shared helper.** `service/user-prefs/effective-native-language.ts`
-    centralizes the `(showTranslations, liveNative, sessionNative) →
-effectiveNativeLanguage` derivation; used by `practice-router.fastGloss`
-    and intended for future call sites. The other call sites compute inline
-    today — fine; consolidate if more sites land.
-  - **Dependency wiring.** `usersRepository` added to
-    `ExploreCardDependencies` (`apps/backend/src/app.ts` `exploreDependencies`),
-    `RunCardChatDependencies` (`chatDependencies`), and the `HighlightsRouter`
-    constructor. The chat seam previously had no `usersRepository` access —
-    that was the trap the planner flagged for `build-prompt-context.ts`.
-  - **Frontend `hideNativeFields`.** Computed as
-    `sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)`; live
-    user pref overrides session snapshot for the `nativeLanguage` side of
-    `sameLanguage`. Threaded as a prop into `editable-card-fields.tsx`
-    (prop renamed from `sameLanguage`), `full-exploration-renderer.tsx`
-    (suppresses Translation section, native_example inside Example, and
-    L1 notes section), `triage-row.tsx` + `auto-rejected-collapsible.tsx`
-    (preview prefers `definition`), `vocabulary-row.tsx` (preview prefers
-    `definition`), and `practice/components/rate-sheet.tsx` (description
-    prefers `definition`; native_example block gated). `focus-view.tsx`
-    and `triage-list-view.tsx` compute it; `vocabulary-list-view.tsx` and
-    `rate-sheet.tsx` read `useGetUserPrefs` inline. CSV export
-    (`build-csv.ts`, `build-vocabulary-csv.ts`) needs no change — the
-    `translation || definition` fallback handles freshly-generated rows
-    correctly; stale `translation` on older cards still flows through (v2
-    cleanup if desired).
-  - **`native_language` stays required at onboarding/session creation.**
-    The toggle controls display + generation only; we did NOT relax the
-    `native_language_not_set` error path in `start-practice-session.ts`,
-    `create-adhoc-card.ts`, or the session wizards. Spoof happens at the
-    LLM boundary only.
+- **Show translations / language-mode refactor (2026-05-20).** The original
+  per-user `show_translations_enabled` toggle was replaced by a per-target
+  language setting on `user_target_language_prefs.show_translations_enabled`
+  (default `true`). Meaning: "show/generate native-language translation
+  fields for this target language." It must NOT spoof
+  `nativeLanguage = targetLanguage`.
+  - **Language mode helper.** `service/user-prefs/language-mode.ts` replaces
+    the old `effective-native-language` helper. It returns the real
+    `nativeLanguage` (live user pref, falling back to the session snapshot),
+    `targetLanguage`, `sameLanguage`, `showTranslationsEnabled`,
+    `hideTranslationFields = sameLanguage || !showTranslationsEnabled`, and
+    `allowL1Notes = nativeLanguage != null && !sameLanguage`.
+  - **Prompt contract.** `methodology-prompt.ts` and every Anthropic path now
+    receive real native language plus explicit mode flags:
+    `basic-data-pass`, `enrichment-pass`, `generate-practice-text`,
+    `fast-gloss-pass`, and focus-view chat. Translation-disabled prompts say
+    not to populate `translation` / `native_example`, to keep definitions,
+    examples, glosses, and general explanations in the target language, and
+    to still allow `extras.l1_notes` when `allowL1Notes` is true.
+  - **Server-side guards.** `language-output-guards.ts` sanitizes LLM output
+    before persistence: if `hideTranslationFields` is true, clear/null
+    `translation` and `native_example`; if `allowL1Notes` is false, clear
+    `extras.l1_notes`. `user-lookups-repository.updateContent` gained
+    `clearTranslation` / `clearNativeExample` flags because plain `null`
+    still means "leave unchanged" under its COALESCE semantics. This matters
+    for older cards that already have translation data.
+  - **Chat behavior.** `run-card-chat.ts` seeds chat with hidden
+    `translation` / `native_example` when translation fields are hidden, but
+    keeps `l1_notes` visible when `allowL1Notes` is true. If the user asks
+    directly for a native-language translation, chat may answer
+    conversationally, but any attempted tool patch to translation fields is
+    stripped and the stored card fields are cleared instead.
+  - **Frontend rename + display split.** UI props were renamed from
+    `hideNativeFields` to `hideTranslationFields`. Focus / triage /
+    vocabulary / practice preview fall back to target-language definitions
+    when translations are hidden. Full exploration now takes a separate
+    `showL1Notes` flag, so disabling translations hides only Translation and
+    Native example; L1 notes still render when native and target differ.
+  - **`native_language` still stays required** at onboarding/session creation.
+    The pref controls display/generation of translation fields, not whether
+    the app knows the learner's L1.
   - **Fast-gloss cache is not invalidated** when the pref toggles —
-    `highlight.fast_gloss` survives across toggle flips. Symmetric with
-    card content. To force a fresh gloss the user removes the highlight
-    and re-highlights.
+    `highlight.fast_gloss` survives across toggle flips. Symmetric with card
+    content. To force a fresh gloss the user removes the highlight and
+    re-highlights.
+  - **Verification run in this thread.** Focused backend unit tests passed
+    (`language-mode`, `language-output-guards`, practice text tests), plus
+    root `pnpm check:types` and `pnpm lint` (lint still only reports
+    pre-existing warnings).
   - **Subscription middleware test skipped under free-for-all** —
     `subscription-middleware.integration.test.ts` now uses
     `test.skipIf(getConfig().featureFlags.shouldAppBeFreeForEveryone())`
     on the "unsubscribed users can't use the app" assertion. With the
     app in free-for-all mode (`environment-config.ts` test env returns
     true) the middleware short-circuits via `next()` and the
-    template-stub route `/api/v1/translate-text` returns 404 instead of
-    403. Skip auto-disables when subscription gating returns.
+    template-stub route `/api/v1/translate-text` returns 404 instead of 403. Skip auto-disables when subscription gating returns.
 
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 

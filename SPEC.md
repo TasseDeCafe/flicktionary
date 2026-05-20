@@ -128,6 +128,12 @@ tracks does).
    user manually edits grammar provenance, automatic grammar patches and
    re-grounding skip that row so manual changes stay authoritative.
    Languages outside the set are pure-LLM and `grounded_at` stays null.
+   In local dev-tunnel, the reference tables are not part of ordinary user
+   data; if a reset leaves `public.wiktionary_entries` empty, grounding will
+   still run but every lookup will miss and the UI will show `LLM only`.
+   Reload with `pnpm --filter @flicktionary/backend load:kaikki` (uses the
+   cached raw dump when present) and confirm non-zero per-language counts before
+   testing Wiktionary badges.
    See `WIKTIONARY_GROUNDING.md` and
    `.claude/skills/add-wiktionary-language/SKILL.md` for the operational
    workflow and per-language extraction guidance.
@@ -312,21 +318,25 @@ target_language, headword, sense)` increments `count` rather than
   emits cards only for the user's manual highlights — no LLM chunk discovery.
   The Process button is disabled when this pref is off and the user has zero
   highlights.
-- Show translations toggle (default on). When off, every LLM call site spoofs
-  `nativeLanguage = targetLanguage` at the boundary, so the existing
-  `sameLanguage` plumbing in `basic-data-pass`, `enrichment-pass`,
-  `fast-gloss-pass`, and `generate-practice-text` fires automatically and the
-  model emits target-language-only output (`translation` / `native_example`
-  null, `definition` carries the back). Frontend gates hide stale
-  `translation` / `native_example` / `extras.l1_notes` on already-populated
-  cards in focus view, full-exploration renderer, triage / vocabulary row
-  previews, and the practice rate sheet. CSV export's
-  `translation || definition` fallback handles the null case unchanged.
-  Trade-off: `extras.l1_notes` is a no-op when the pref is off (LLM sees no
-  L1 contrast). The live user pref overrides the session snapshot
-  (`study_session.native_language`) at every LLM call site and every
-  display gate, so toggling translations off or changing native language
-  takes effect on the next call without needing to re-process old sessions.
+- Show translations toggle per target language (default on). This means
+  "show/generate native-language translation fields for this target language",
+  not "pretend the learner has no native language." Backend call sites use the
+  shared language-mode helper: `nativeLanguage` stays the user's real L1
+  (falling back to the session snapshot only when live prefs are missing),
+  `targetLanguage` stays the session/lookup target, `sameLanguage` is true only
+  when real L1 and target match, `hideTranslationFields =
+sameLanguage || !showTranslationsEnabled`, and `allowL1Notes` is true when a
+  real, distinct native language exists. When translation fields are hidden,
+  prompts tell the model to leave `translation` / `native_example` empty and
+  keep definitions, examples, glosses, and general explanations in the target
+  language. `extras.l1_notes` remains allowed when `allowL1Notes` is true, even
+  if translation fields are hidden, so false friends / transfer traps still
+  work for users who do not want translation cards. Server-side write guards
+  clear `translation` and `native_example` before persistence whenever
+  `hideTranslationFields` is true, and clear `l1_notes` whenever
+  `allowL1Notes` is false. The frontend separately gates translation/native
+  example display and L1-note display; full exploration hides only
+  translation/native-example fields when translations are disabled.
 
 ## Data model
 
@@ -401,13 +411,15 @@ card
   sense               text          -- 1-5 word sense disambiguator
   surface_form        text
   -- basic data (populated by step-3 basic-data pass)
-  translation         text?         -- null on L1 = L2 sessions, or when the user's
-                                    -- show_translations_enabled pref is off
+  translation         text?         -- null when real L1 = target language, or when
+                                    -- show_translations_enabled is off for this
+                                    -- target language
   definition          text?         -- target-lang paraphrase; back-of-card when
                                     -- L1 = L2 or show-translations is off
   target_example      text?
-  native_example      text?         -- null on L1 = L2 sessions, or when the user's
-                                    -- show_translations_enabled pref is off
+  native_example      text?         -- null when real L1 = target language, or when
+                                    -- show_translations_enabled is off for this
+                                    -- target language
   -- enrichment (populated only on demand by Generate full exploration)
   exploration_extras  jsonb         -- partial bag: ipa, frequency, register, register_alternatives,
                                     -- collocations, etymology, l1_notes, notes, more_frequent_synonym,
@@ -511,13 +523,19 @@ practice_rating                      -- audit log of every rating event (explici
   was_explicit        bool          -- false = implicit-good applied on Next-text advance
   rated_at            timestamptz
 
--- users (template table, extended with three Flicktionary prefs)
+-- users (template table, extended with global Flicktionary prefs)
 users
   id                       uuid pk
   ...
   native_language          text?
   tap_to_translate_enabled boolean default false
   llm_highlights_enabled   boolean default true
+
+user_target_language_pref
+  user_id                   uuid
+  target_language           text
+  cefr_level                text
+  show_translations_enabled boolean default true
 ```
 
 Notes:
@@ -587,10 +605,10 @@ user can override + click `Generate full exploration` to populate them).
 - `headword` — LLM-normalized dictionary citation form
 - `sense` — 1-5 word disambiguator (NOT a definition; used for cross-session dedup)
 - `surface_form` — literal form as it appears in the segment
-- `translation` — into native_language (null when L1 = L2 or the user has the Show-translations pref off)
-- `definition` — contextual paraphrase in target_language (back-of-card when L1 = L2 or Show-translations is off; optional otherwise)
+- `translation` — into native_language (null when real L1 = target language or the per-target Show-translations pref is off)
+- `definition` — contextual paraphrase in target_language (back-of-card when translation fields are hidden; optional otherwise)
 - `target_example` — self-contained example sentence in target_language, inspired by but not equal to the source line
-- `native_example` — natural translation of `target_example` into native_language (null when L1 = L2 or Show-translations is off)
+- `native_example` — natural translation of `target_example` into native_language (null when real L1 = target language or the per-target Show-translations pref is off)
 
 ### Grammar (populated by basic-data pass; refinable by enrichment)
 
@@ -665,9 +683,10 @@ Native: {native_language}
 Context line: {segment_text}
 Selection: {selection_text}
 
-Return a one-line gloss in {native_language} (or a one-line definition in
-{target_language} if the languages match). Optionally a single POS tag and a
-single register tag. No examples, no etymology, no formatting.
+Return a one-line gloss in {native_language} when translation fields are
+enabled. Return a one-line definition/gloss in {target_language} when
+translation fields are hidden. Optionally a single POS tag and a single
+register tag. No examples, no etymology, no formatting.
 ```
 
 Result cached on `highlight.fast_gloss`. Re-tapping the same highlight shows the
