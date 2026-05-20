@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
@@ -128,21 +128,31 @@ export const SessionGlossSheet = ({
   const [tags, setTags] = useState<string[]>([])
   const [expanded, setExpanded] = useState(false)
 
-  // Delay the reset until after the desktop popover close animation. Clearing
-  // immediately makes the closing frame briefly render the fallback "Quick
-  // gloss" content.
-  useEffect(() => {
-    if (open) return
-    const timer = setTimeout(() => {
-      setGlossState({ kind: 'idle' })
+  useLayoutEffect(() => {
+    if (!open) return
+    setExpanded(false)
+
+    if (existingHighlight) {
+      setHighlightId(existingHighlight.id)
+      setTitleText(existingHighlight.selectionText)
+      setNote(existingHighlight.note ?? '')
+      setTags(existingHighlight.presetTags)
+      setGlossState(
+        existingHighlight.fastGloss
+          ? { kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss) }
+          : { kind: 'loading' }
+      )
+      return
+    }
+
+    if (selection) {
       setHighlightId(null)
+      setTitleText(selection.selectionText)
       setNote('')
       setTags([])
-      setExpanded(false)
-      setTitleText('')
-    }, 200)
-    return () => clearTimeout(timer)
-  }, [open])
+      setGlossState({ kind: 'loading' })
+    }
+  }, [open, existingHighlight, selection])
 
   // Seed from the existing-highlight branch.
   useEffect(() => {

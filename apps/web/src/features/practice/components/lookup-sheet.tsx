@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
@@ -56,14 +56,11 @@ export const LookupSheet = ({
   const [state, setState] = useState<GlossState>({ kind: 'idle' })
   const [showCefrDialog, setShowCefrDialog] = useState(false)
 
-  useEffect(() => {
-    if (open) return
-    const timer = setTimeout(() => {
-      setState({ kind: 'idle' })
-      setShowCefrDialog(false)
-    }, 200)
-    return () => clearTimeout(timer)
-  }, [open])
+  useLayoutEffect(() => {
+    if (!open || !selection || !practiceTextId) return
+    setState({ kind: 'loading' })
+    setShowCefrDialog(false)
+  }, [open, practiceTextId, selection])
 
   useEffect(() => {
     if (!open || !selection || !practiceTextId) return
