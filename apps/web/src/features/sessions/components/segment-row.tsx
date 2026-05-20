@@ -70,7 +70,7 @@ export const SegmentRow = ({ id, text, startMs, ranges, flash }: Props) => {
       {ts && (
         <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
       )}
-      <span data-segment-id={id} className='flex-1'>
+      <span data-segment-id={id} className='flex-1 text-lg md:text-base'>
         {spans.map((part, idx) =>
           part.highlightId ? (
             <span

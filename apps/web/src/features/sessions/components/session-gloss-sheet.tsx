@@ -7,6 +7,8 @@ import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/comm
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import {
   FloatingSheet,
   FloatingSheetBody,
@@ -339,14 +341,12 @@ export const SessionGlossSheet = ({
 
   const isReady = glossState.kind === 'ready'
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
+  const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const displayedIpa = isReady
-    ? (pickIpa(
-        (glossState as Extract<GlossState, { kind: 'ready' }>).ipa,
-        targetLanguage,
-        userPrefs?.englishIpaDialect ?? 'ga'
-      ) ?? null)
+    ? (pickIpa((glossState as Extract<GlossState, { kind: 'ready' }>).ipa, targetLanguage, englishIpaDialect) ?? null)
     : null
   const ipaLabel = isReady ? (displayedIpa ?? t`No Wiktionary IPA`) : null
+  const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
@@ -373,28 +373,50 @@ export const SessionGlossSheet = ({
           <div className='flex items-start justify-between gap-2'>
             <div className='flex min-w-0 flex-col gap-1'>
               <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
-              {ipaLabel && <p className='text-muted-foreground text-base leading-snug font-medium'>{ipaLabel}</p>}
-              {isReady ? (
-                <p className='text-muted-foreground text-sm'>
-                  {(glossState as Extract<GlossState, { kind: 'ready' }>).gloss}
-                </p>
-              ) : (
-                <p className='sr-only'>{ariaDescription}</p>
-              )}
-              {isReady &&
-                ((glossState as Extract<GlossState, { kind: 'ready' }>).pos ||
-                  (glossState as Extract<GlossState, { kind: 'ready' }>).register) && (
+              {glossState.kind === 'loading' ? (
+                <>
+                  <Skeleton className='h-5 w-20' />
+                  <Skeleton className='h-4 w-11/12' />
+                  <Skeleton className='h-4 w-3/4' />
                   <div className='mt-1 flex flex-wrap gap-1.5'>
-                    {(glossState as Extract<GlossState, { kind: 'ready' }>).pos && (
-                      <Badge variant='outline'>{(glossState as Extract<GlossState, { kind: 'ready' }>).pos}</Badge>
-                    )}
-                    {(glossState as Extract<GlossState, { kind: 'ready' }>).register && (
-                      <Badge variant='secondary'>
-                        {(glossState as Extract<GlossState, { kind: 'ready' }>).register}
-                      </Badge>
-                    )}
+                    <Skeleton className='h-5 w-12 rounded-md' />
+                    <Skeleton className='h-5 w-16 rounded-md' />
                   </div>
-                )}
+                  <p className='sr-only'>{ariaDescription}</p>
+                </>
+              ) : (
+                <>
+                  {ipaLabel && (
+                    <p className='text-muted-foreground flex items-center gap-1.5 text-base leading-snug font-medium'>
+                      {showIpaFlag && (
+                        <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                      )}
+                      <span>{ipaLabel}</span>
+                    </p>
+                  )}
+                  {isReady ? (
+                    <p className='text-muted-foreground text-sm'>
+                      {(glossState as Extract<GlossState, { kind: 'ready' }>).gloss}
+                    </p>
+                  ) : (
+                    <p className='sr-only'>{ariaDescription}</p>
+                  )}
+                  {isReady &&
+                    ((glossState as Extract<GlossState, { kind: 'ready' }>).pos ||
+                      (glossState as Extract<GlossState, { kind: 'ready' }>).register) && (
+                      <div className='mt-1 flex flex-wrap gap-1.5'>
+                        {(glossState as Extract<GlossState, { kind: 'ready' }>).pos && (
+                          <Badge variant='outline'>{(glossState as Extract<GlossState, { kind: 'ready' }>).pos}</Badge>
+                        )}
+                        {(glossState as Extract<GlossState, { kind: 'ready' }>).register && (
+                          <Badge variant='secondary'>
+                            {(glossState as Extract<GlossState, { kind: 'ready' }>).register}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                </>
+              )}
             </div>
             <FloatingSheetExpandToggle
               className='hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors'
@@ -412,12 +434,9 @@ export const SessionGlossSheet = ({
           </div>
         </FloatingSheetHeader>
 
-        {glossState.kind !== 'ready' && (
+        {glossState.kind === 'error' && (
           <FloatingSheetBody>
-            {glossState.kind === 'loading' && <p className='text-muted-foreground'>{t`Glossing…`}</p>}
-            {glossState.kind === 'error' && (
-              <p className='text-destructive'>{t`Could not fetch a gloss. The highlight is still saved.`}</p>
-            )}
+            <p className='text-destructive'>{t`Could not fetch a gloss. The highlight is still saved.`}</p>
           </FloatingSheetBody>
         )}
 

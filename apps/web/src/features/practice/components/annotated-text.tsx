@@ -144,7 +144,7 @@ export const AnnotatedText = ({ body, annotations, onAnnotationClick, onPlainSel
   return (
     <p
       ref={containerRef}
-      className='text-base leading-relaxed whitespace-pre-wrap'
+      className='text-lg leading-relaxed whitespace-pre-wrap md:text-base'
       onMouseUp={handleSelectionEnd}
       onTouchEnd={handleSelectionEnd}
     >
