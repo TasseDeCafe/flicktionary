@@ -60,13 +60,55 @@ interface SessionGlossSheetProps {
 
 // Decodes the serialized fast_gloss column (gloss\n[POS]\n[register]) into the
 // same shape the GlossPass endpoint returns.
+const FAST_GLOSS_POS_ALIASES = new Set([
+  'n',
+  'noun',
+  'v',
+  'verb',
+  'transitive verb',
+  'intransitive verb',
+  'phrasal verb',
+  'modal verb',
+  'adj',
+  'adjective',
+  'adv',
+  'adverb',
+  'prep',
+  'preposition',
+  'pron',
+  'pronoun',
+  'particle',
+  'conj',
+  'conjunction',
+  'num',
+  'numeral',
+  'intj',
+  'interjection',
+])
+
+const normalizeCachedMetadataToken = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_ -]/gu, '')
+    .replace(/\s+/g, ' ')
+
+const isCachedGlossPos = (value: string): boolean =>
+  FAST_GLOSS_POS_ALIASES.has(normalizeCachedMetadataToken(value))
+
 const parseCachedGloss = (raw: string): { gloss: string; pos: string | null; register: string | null } => {
-  const lines = raw.split(/\r?\n/)
-  return {
-    gloss: lines[0] ?? '',
-    pos: lines[1]?.trim() || null,
-    register: lines[2]?.trim() || null,
-  }
+  const lines = raw.trim().split(/\r?\n/)
+  const gloss = lines[0] ?? ''
+  const metadata = lines
+    .slice(1)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+  const first = metadata[0] ?? null
+  const second = metadata[1] ?? null
+
+  if (first && isCachedGlossPos(first)) return { gloss, pos: first, register: second }
+  if (second && isCachedGlossPos(second)) return { gloss, pos: second, register: first }
+  return { gloss, pos: null, register: first }
 }
 
 type CachedHighlight = {
@@ -305,6 +347,7 @@ export const SessionGlossSheet = ({
         userPrefs?.englishIpaDialect ?? 'ga'
       ) ?? null)
     : null
+  const ipaLabel = isReady ? (displayedIpa ?? t`No Wiktionary IPA`) : null
 
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
@@ -331,6 +374,7 @@ export const SessionGlossSheet = ({
           <div className='flex items-start justify-between gap-2'>
             <div className='flex min-w-0 flex-col gap-1'>
               <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
+              {ipaLabel && <p className='text-muted-foreground text-base leading-snug font-medium'>{ipaLabel}</p>}
               {isReady ? (
                 <p className='text-muted-foreground text-sm'>
                   {(glossState as Extract<GlossState, { kind: 'ready' }>).gloss}
@@ -340,8 +384,7 @@ export const SessionGlossSheet = ({
               )}
               {isReady &&
                 ((glossState as Extract<GlossState, { kind: 'ready' }>).pos ||
-                  (glossState as Extract<GlossState, { kind: 'ready' }>).register ||
-                  displayedIpa) && (
+                  (glossState as Extract<GlossState, { kind: 'ready' }>).register) && (
                   <div className='mt-1 flex flex-wrap gap-1.5'>
                     {(glossState as Extract<GlossState, { kind: 'ready' }>).pos && (
                       <Badge variant='outline'>{(glossState as Extract<GlossState, { kind: 'ready' }>).pos}</Badge>
@@ -351,7 +394,6 @@ export const SessionGlossSheet = ({
                         {(glossState as Extract<GlossState, { kind: 'ready' }>).register}
                       </Badge>
                     )}
-                    {displayedIpa && <Badge variant='secondary'>{displayedIpa}</Badge>}
                   </div>
                 )}
             </div>

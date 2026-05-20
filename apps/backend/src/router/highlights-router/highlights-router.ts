@@ -9,7 +9,7 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { fastGlossPass, FastGloss } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import { fastGlossPass, FastGloss, parseFastGlossText } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
@@ -19,12 +19,7 @@ import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-glos
 const serializeFastGloss = (g: FastGloss): string => `${g.gloss}\n${g.pos ?? ''}\n${g.register ?? ''}`
 
 const parseFastGloss = (s: string): FastGloss => {
-  const lines = s.split(/\r?\n/)
-  return {
-    gloss: lines[0] ?? '',
-    pos: lines[1]?.trim() || null,
-    register: lines[2]?.trim() || null,
-  }
+  return parseFastGlossText(s)
 }
 
 const toHighlightDto = (row: DbHighlight) => ({

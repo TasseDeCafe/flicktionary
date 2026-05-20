@@ -148,6 +148,7 @@ export const LookupSheet = ({
 
   const displayedIpa =
     state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga') ?? null) : null
+  const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? t`No Wiktionary IPA`) : null
 
   return (
     <>
@@ -163,17 +164,17 @@ export const LookupSheet = ({
         <FloatingSheetContent>
           <FloatingSheetHeader>
             <FloatingSheetTitle>{selection?.text ?? t`Lookup`}</FloatingSheetTitle>
+            {ipaLabel && <p className='text-muted-foreground text-base leading-snug font-medium'>{ipaLabel}</p>}
             {state.kind === 'ready' && <FloatingSheetDescription>{state.gloss}</FloatingSheetDescription>}
             {state.kind !== 'ready' && (
               <FloatingSheetDescription className='sr-only'>
                 {t`Translation lookup and save action for the selected text.`}
               </FloatingSheetDescription>
             )}
-            {state.kind === 'ready' && (state.pos || state.register || displayedIpa) && (
+            {state.kind === 'ready' && (state.pos || state.register) && (
               <div className='mt-2 flex flex-wrap gap-1.5'>
                 {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
                 {state.register && <Badge variant='secondary'>{state.register}</Badge>}
-                {displayedIpa && <Badge variant='secondary'>{displayedIpa}</Badge>}
               </div>
             )}
           </FloatingSheetHeader>

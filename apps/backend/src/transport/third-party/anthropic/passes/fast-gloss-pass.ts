@@ -14,6 +14,56 @@ export type FastGloss = {
   register: string | null
 }
 
+const FAST_GLOSS_POS_ALIASES = new Set([
+  'n',
+  'noun',
+  'v',
+  'verb',
+  'transitive verb',
+  'intransitive verb',
+  'phrasal verb',
+  'modal verb',
+  'adj',
+  'adjective',
+  'adv',
+  'adverb',
+  'prep',
+  'preposition',
+  'pron',
+  'pronoun',
+  'particle',
+  'conj',
+  'conjunction',
+  'num',
+  'numeral',
+  'intj',
+  'interjection',
+])
+
+const normalizeMetadataToken = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}_ -]/gu, '')
+    .replace(/\s+/g, ' ')
+
+const isFastGlossPos = (value: string): boolean => FAST_GLOSS_POS_ALIASES.has(normalizeMetadataToken(value))
+
+export const parseFastGlossText = (text: string): FastGloss => {
+  const lines = text.trim().split(/\r?\n/)
+  const gloss = lines[0] ?? ''
+  const metadata = lines
+    .slice(1)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+  const first = metadata[0] ?? null
+  const second = metadata[1] ?? null
+
+  if (first && isFastGlossPos(first)) return { gloss, pos: first, register: second }
+  if (second && isFastGlossPos(second)) return { gloss, pos: second, register: first }
+  return { gloss, pos: null, register: first }
+}
+
 const SYSTEM_PROMPT = `You return a single-line gloss for a chunk in its sentence context.
 No examples, no etymology, no formatting, no extra commentary.
 Format: <gloss>\\n[POS]\\n[register]
@@ -47,10 +97,5 @@ ${outputLanguageInstruction} Optionally a single POS tag and a single register t
   if (!textBlock || textBlock.type !== 'text') {
     throw new Error('Anthropic response did not contain a text block')
   }
-  const lines = textBlock.text.trim().split(/\r?\n/)
-  return {
-    gloss: lines[0] ?? '',
-    pos: lines[1]?.trim() || null,
-    register: lines[2]?.trim() || null,
-  }
+  return parseFastGlossText(textBlock.text)
 }

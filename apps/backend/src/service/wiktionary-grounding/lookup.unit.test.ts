@@ -15,6 +15,8 @@ const mockRepository = (directEntries: Map<string, DbWiktionaryEntry>): Wiktiona
     return directEntries.get(`${targetLanguage}:${headword}:${pos}`) ?? null
   }),
   listRealLemmasByHeadword: vi.fn(async () => []),
+  listPronunciationEntriesByHeadwordAndPos: vi.fn(async () => []),
+  listPronunciationEntriesByHeadword: vi.fn(async () => []),
   findRealLemmaByHeadword: vi.fn(async () => null),
   findFormOfLemma: vi.fn(async () => null),
   findRealLemmaByForm: vi.fn(async () => null),

@@ -174,6 +174,42 @@ const NARROWER_US_TAGS = new Set([
   'California',
 ])
 
+const PRONUNCIATION_POS_TAG_TO_KAIKKI: Record<string, string> = {
+  noun: 'noun',
+  verb: 'verb',
+  adjective: 'adj',
+  adj: 'adj',
+  adverb: 'adv',
+  adv: 'adv',
+  preposition: 'prep',
+  prep: 'prep',
+  pronoun: 'pron',
+  pron: 'pron',
+  interjection: 'intj',
+  intj: 'intj',
+  conjunction: 'conj',
+  conj: 'conj',
+  numeral: 'num',
+  num: 'num',
+  particle: 'particle',
+}
+
+const normalizeKaikkiPos = (pos: unknown): string | null => {
+  if (typeof pos !== 'string') return null
+  const normalized = pos.trim().toLowerCase()
+  return PRONUNCIATION_POS_TAG_TO_KAIKKI[normalized] ?? normalized
+}
+
+const filterEnglishPronunciationTags = (tags: string[], entryPos: string | null): string[] | null => {
+  const pronunciationPosTags = tags.flatMap((tag) => {
+    const pos = PRONUNCIATION_POS_TAG_TO_KAIKKI[tag.toLowerCase()]
+    return pos ? [pos] : []
+  })
+  if (pronunciationPosTags.length === 0) return tags
+  if (entryPos && !pronunciationPosTags.includes(entryPos)) return null
+  return tags.filter((tag) => !PRONUNCIATION_POS_TAG_TO_KAIKKI[tag.toLowerCase()])
+}
+
 // Any regional tag that isn't UK/US and isn't a quality tag — e.g.
 // Australia, Canada, Ireland, New-Zealand, South-African. We don't want to
 // mix these into either GA or RP.
@@ -242,11 +278,11 @@ const classifyEnglishBuckets = (tags: string[]): Array<'ga' | 'rp' | 'untagged'>
   // Explicit GA/RP labels still apply in that case — the unrelated tag is
   // additional information, not a disqualifier. Only drop the sound for
   // unrelated regional tags when no explicit GA/RP label is also present.
-  if (hasUnrelated && !isRp && !isExplicitGa) return []
+  if (hasUnrelated && !isRp && !isExplicitGa && !hasBareUs) return []
   const out: Array<'ga' | 'rp'> = []
   if (isRp && !hasBareUs && !hasNarrowerUs) out.push('rp')
   if (isExplicitGa && !hasNarrowerUs) out.push('ga')
-  else if (hasBareUs && !isRp && !hasNarrowerUs && !hasUnrelated) out.push('ga')
+  else if (hasBareUs && !isRp && !hasNarrowerUs) out.push('ga')
   return out
 }
 
@@ -264,6 +300,7 @@ export const extractIpaBag = (
   const ga: string[] = []
   const rp: string[] = []
   const untagged: string[] = []
+  const entryPos = langCode === 'en' ? normalizeKaikkiPos(entry.pos) : null
 
   for (const raw of sounds) {
     if (!raw || typeof raw !== 'object') continue
@@ -274,7 +311,10 @@ export const extractIpaBag = (
     if (hasRejectedQualityTag(tags)) continue
 
     if (langCode === 'en') {
-      for (const bucket of classifyEnglishBuckets(tags)) {
+      const pronunciationTags = filterEnglishPronunciationTags(tags, entryPos)
+      if (!pronunciationTags) continue
+
+      for (const bucket of classifyEnglishBuckets(pronunciationTags)) {
         if (bucket === 'ga') pushUnique(ga, ipa)
         else if (bucket === 'rp') pushUnique(rp, ipa)
         else if (bucket === 'untagged') pushUnique(untagged, ipa)
