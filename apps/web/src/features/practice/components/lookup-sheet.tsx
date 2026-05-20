@@ -57,10 +57,12 @@ export const LookupSheet = ({
   const [showCefrDialog, setShowCefrDialog] = useState(false)
 
   useEffect(() => {
-    if (!open) {
+    if (open) return
+    const timer = setTimeout(() => {
       setState({ kind: 'idle' })
       setShowCefrDialog(false)
-    }
+    }, 200)
+    return () => clearTimeout(timer)
   }, [open])
 
   useEffect(() => {

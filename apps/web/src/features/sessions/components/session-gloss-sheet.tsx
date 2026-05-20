@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -128,17 +128,20 @@ export const SessionGlossSheet = ({
   const [tags, setTags] = useState<string[]>([])
   const [expanded, setExpanded] = useState(false)
 
-  // Reset transient state every time the sheet closes — the next open should
-  // start fresh regardless of which target it's pointed at.
+  // Delay the reset until after the desktop popover close animation. Clearing
+  // immediately makes the closing frame briefly render the fallback "Quick
+  // gloss" content.
   useEffect(() => {
-    if (!open) {
+    if (open) return
+    const timer = setTimeout(() => {
       setGlossState({ kind: 'idle' })
       setHighlightId(null)
       setNote('')
       setTags([])
       setExpanded(false)
       setTitleText('')
-    }
+    }, 200)
+    return () => clearTimeout(timer)
   }, [open])
 
   // Seed from the existing-highlight branch.
@@ -148,6 +151,7 @@ export const SessionGlossSheet = ({
     setTitleText(existingHighlight.selectionText)
     setNote(existingHighlight.note ?? '')
     setTags(existingHighlight.presetTags)
+    setExpanded(false)
     if (existingHighlight.fastGloss) {
       setGlossState({ kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss) })
       return
@@ -174,6 +178,9 @@ export const SessionGlossSheet = ({
     if (!open || !selection || existingHighlight) return
     let cancelled = false
     setTitleText(selection.selectionText)
+    setNote('')
+    setTags([])
+    setExpanded(false)
     setGlossState({ kind: 'loading' })
     void (async () => {
       try {
@@ -261,6 +268,7 @@ export const SessionGlossSheet = ({
   }
 
   const isReady = glossState.kind === 'ready'
+  const hasNoteDetails = note.trim().length > 0 || tags.length > 0
 
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
@@ -370,9 +378,20 @@ export const SessionGlossSheet = ({
               <Trash2 className='mr-1 h-4 w-4' />
               {isDeleting ? t`Removing…` : t`Remove highlight`}
             </Button>
-            {expanded && (
+            {expanded ? (
               <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
                 {isSavingNote ? t`Saving…` : t`Save note`}
+              </Button>
+            ) : (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={!highlightId}
+                onClick={() => setExpanded(true)}
+              >
+                <PencilLine className='h-4 w-4' />
+                {hasNoteDetails ? t`Edit note` : t`Add note`}
               </Button>
             )}
           </div>
