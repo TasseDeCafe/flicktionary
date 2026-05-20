@@ -249,7 +249,7 @@ msgstr "{newCount} unseen"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:416
+#: apps/web/src/features/practice/components/practice-session-view.tsx:423
 msgid "{ratedCount} of {totalCount} rated"
 msgstr "{ratedCount} of {totalCount} rated"
 
@@ -466,6 +466,10 @@ msgstr "Add a word"
 msgid "Add form"
 msgstr "Add form"
 
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:404
+msgid "Add note"
+msgstr "Add note"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:258
 msgid "Adjective"
 msgstr "Adjective"
@@ -499,7 +503,7 @@ msgstr "All"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:42
 #: apps/web/src/features/practice/components/practice-language-view.tsx:182
 #: apps/web/src/features/practice/components/practice-language-view.tsx:214
-#: apps/web/src/features/practice/components/practice-session-view.tsx:373
+#: apps/web/src/features/practice/components/practice-session-view.tsx:380
 msgid "All caught up"
 msgstr "All caught up"
 
@@ -618,7 +622,7 @@ msgid "Back to Login"
 msgstr "Back to Login"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:137
-#: apps/web/src/features/practice/components/practice-session-view.tsx:402
+#: apps/web/src/features/practice/components/practice-session-view.tsx:409
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
 msgstr "Back to Practice"
@@ -836,11 +840,11 @@ msgstr "Continue with Google"
 msgid "Could not display payment options at this time."
 msgstr "Could not display payment options at this time."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:330
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:348
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Could not fetch a gloss. The highlight is still saved."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:180
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:179
 msgid "Could not fetch a translation right now."
 msgstr "Could not fetch a translation right now."
 
@@ -958,7 +962,7 @@ msgstr "Delete from vocabulary"
 msgid "Delete my account"
 msgstr "Delete my account"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:264
+#: apps/web/src/features/practice/components/practice-session-view.tsx:271
 msgid "Deleted \"{headword}\""
 msgstr "Deleted \"{headword}\""
 
@@ -1030,6 +1034,10 @@ msgstr "e.g. увидеть"
 #: apps/web/src/components/ui/rate-buttons.tsx:23
 msgid "Easy"
 msgstr "Easy"
+
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:404
+msgid "Edit note"
+msgstr "Edit note"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:164
 msgid "Edit term"
@@ -1295,7 +1303,7 @@ msgstr "Failed to restore term"
 msgid "Failed to save highlight"
 msgstr "Failed to save highlight"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:124
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:123
 msgid "Failed to save term"
 msgstr "Failed to save term"
 
@@ -1463,8 +1471,8 @@ msgstr "Generating full exploration… this takes a few seconds."
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:187
-#: apps/web/src/features/practice/components/practice-session-view.tsx:444
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:186
+#: apps/web/src/features/practice/components/practice-session-view.tsx:451
 #: apps/web/src/features/review/components/focus-view.tsx:303
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Generating…"
@@ -1482,8 +1490,8 @@ msgstr "Get started"
 #~ msgid "Get the App"
 #~ msgstr "Get the App"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:176
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:328
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:175
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:346
 msgid "Glossing…"
 msgstr "Glossing…"
 
@@ -1556,7 +1564,7 @@ msgstr "HI"
 msgid "Hide from vocabulary and Practice"
 msgstr "Hide from vocabulary and Practice"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:312
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:330
 msgid "Hide notes"
 msgstr "Hide notes"
 
@@ -1580,7 +1588,7 @@ msgstr "Hides this term from your vocabulary and Practice. You can revive it by 
 msgid "Home"
 msgstr "Home"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:424
+#: apps/web/src/features/practice/components/practice-session-view.tsx:431
 msgid "How rating works on Next"
 msgstr "How rating works on Next"
 
@@ -1797,7 +1805,7 @@ msgstr "Loading…"
 msgid "Looks like {suggestedLanguageName} — switch?"
 msgstr "Looks like {suggestedLanguageName} — switch?"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:157
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:156
 msgid "Lookup"
 msgstr "Lookup"
 
@@ -1916,7 +1924,7 @@ msgstr "New today"
 msgid "Next card"
 msgstr "Next card"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:449
+#: apps/web/src/features/practice/components/practice-session-view.tsx:456
 msgid "Next text"
 msgstr "Next text"
 
@@ -2054,7 +2062,7 @@ msgstr "Optional"
 msgid "Optional contextual paraphrase in the target language."
 msgstr "Optional contextual paraphrase in the target language."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:339
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:357
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Optional note for the LLM (what specifically confuses you?)"
 
@@ -2202,7 +2210,7 @@ msgstr "Plural-only"
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:51
-#: apps/web/src/features/practice/components/practice-session-view.tsx:347
+#: apps/web/src/features/practice/components/practice-session-view.tsx:354
 #: apps/web/src/features/practice/components/practice-start-view.tsx:36
 msgid "Practice"
 msgstr "Practice"
@@ -2234,7 +2242,7 @@ msgstr "Practice with a text"
 msgid "Premium Features"
 msgstr "Premium Features"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:348
+#: apps/web/src/features/practice/components/practice-session-view.tsx:355
 #: apps/web/src/features/practice/components/practice-start-view.tsx:45
 msgid "Preparing the session…"
 msgstr "Preparing the session…"
@@ -2321,7 +2329,7 @@ msgstr "Profile, subscription, sign-in"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:287
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:305
 msgid "Quick gloss"
 msgstr "Quick gloss"
 
@@ -2329,7 +2337,7 @@ msgstr "Quick gloss"
 msgid "Quick gloss failed"
 msgstr "Quick gloss failed"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:269
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:287
 msgid "Quick gloss for the selected text."
 msgstr "Quick gloss for the selected text."
 
@@ -2404,7 +2412,7 @@ msgstr "Remove"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:371
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:389
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
@@ -2412,7 +2420,7 @@ msgstr "Remove highlight"
 msgid "Remove session"
 msgstr "Remove session"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:371
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:389
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
 msgid "Removing…"
 msgstr "Removing…"
@@ -2421,7 +2429,7 @@ msgstr "Removing…"
 msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:266
+#: apps/web/src/features/practice/components/practice-session-view.tsx:273
 #: apps/web/src/features/practice/components/rate-sheet.tsx:184
 msgid "Restore"
 msgstr "Restore"
@@ -2474,18 +2482,18 @@ msgstr "Save a term"
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:375
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:393
 msgid "Save note"
 msgstr "Save note"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:187
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:186
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:214
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:448
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:375
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:393
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
 msgid "Saving…"
 msgstr "Saving…"
@@ -2591,7 +2599,7 @@ msgstr "Sessions"
 msgid "Set your CEFR level and translation behavior for each target language."
 msgstr "Set your CEFR level and translation behavior for each target language."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:121
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:120
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
 msgid "Set your native language first."
 msgstr "Set your native language first."
@@ -2625,7 +2633,7 @@ msgstr "Show {filteredCount} filtered out (below your level)"
 msgid "Show existing translations and generate translations for new cards in this language."
 msgstr "Show existing translations and generate translations for new cards in this language."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:312
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:330
 msgid "Show notes"
 msgstr "Show notes"
 
@@ -2960,7 +2968,7 @@ msgstr "Translation"
 msgid "Translation in your native language."
 msgstr "Translation in your native language."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:161
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:160
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
@@ -2997,7 +3005,7 @@ msgstr "Unlock Premium"
 msgid "Unseen"
 msgstr "Unseen"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:430
+#: apps/web/src/features/practice/components/practice-session-view.tsx:437
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
@@ -3255,7 +3263,7 @@ msgstr "You used your free trial"
 msgid "You're all set"
 msgstr "You're all set"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:375
+#: apps/web/src/features/practice/components/practice-session-view.tsx:382
 msgid "You've reviewed every due term for this language. Come back later when more are ready."
 msgstr "You've reviewed every due term for this language. Come back later when more are ready."
 
