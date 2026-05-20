@@ -32,18 +32,24 @@ type Props = {
   // pronunciation twice on the same card.
   hideExtrasIpa?: boolean
   // True when same-language or the user has the show-translations pref off.
-  // Suppresses translation, native_example, and l1_notes sections.
-  hideNativeFields?: boolean
+  // Suppresses translation and native_example sections.
+  hideTranslationFields?: boolean
+  showL1Notes?: boolean
 }
 
-export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, hideNativeFields = false }: Props) => {
+export const FullExplorationRenderer = ({
+  card,
+  hideExtrasIpa = false,
+  hideTranslationFields = false,
+  showL1Notes = true,
+}: Props) => {
   const { t } = useLingui()
   const extras = card.chunk.explorationExtras ?? {}
 
   const definition = asString(card.chunk.definition)
-  const translation = hideNativeFields ? null : asString(card.chunk.translation)
+  const translation = hideTranslationFields ? null : asString(card.chunk.translation)
   const targetExample = asString(card.chunk.targetExample)
-  const nativeExample = hideNativeFields ? null : asString(card.chunk.nativeExample)
+  const nativeExample = hideTranslationFields ? null : asString(card.chunk.nativeExample)
 
   const ipa = hideExtrasIpa ? null : asString(extras.ipa)
   const frequency = asString(extras.frequency)
@@ -55,7 +61,7 @@ export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, hideNativ
     | undefined
   const collocationsNode = renderInlineList(extras.collocations)
   const etymology = asString(extras.etymology)
-  const l1Notes = hideNativeFields ? null : asString(extras.l1_notes)
+  const l1Notes = showL1Notes ? asString(extras.l1_notes) : null
   const notes = asString(extras.notes)
 
   return (

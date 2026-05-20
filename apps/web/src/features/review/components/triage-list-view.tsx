@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
@@ -63,7 +64,8 @@ export const TriageListView = () => {
   const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
   const sameLanguage =
     !!session && !!nativeLanguage && nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
-  const hideNativeFields = sameLanguage || !(userPrefs?.showTranslationsEnabled ?? true)
+  const hideTranslationFields =
+    sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, session?.targetLanguage ?? null)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
   const { mutate: updateStatusBatch, isPending: isBatchPending } = useUpdateCardStatusBatch(sessionId)
   const warnings = session?.processingWarnings ?? []
@@ -173,7 +175,7 @@ export const TriageListView = () => {
                     key={card.id}
                     sessionId={sessionId}
                     card={card}
-                    hideNativeFields={hideNativeFields}
+                    hideTranslationFields={hideTranslationFields}
                     onStatusChange={handleStatusChange}
                   />
                 ))}
@@ -199,7 +201,7 @@ export const TriageListView = () => {
                     key={card.id}
                     sessionId={sessionId}
                     card={card}
-                    hideNativeFields={hideNativeFields}
+                    hideTranslationFields={hideTranslationFields}
                     onStatusChange={handleStatusChange}
                   />
                 ))}
@@ -210,7 +212,7 @@ export const TriageListView = () => {
           <AutoRejectedCollapsible
             sessionId={sessionId}
             cards={grouped.autoRejected}
-            hideNativeFields={hideNativeFields}
+            hideTranslationFields={hideTranslationFields}
             onStatusChange={handleStatusChange}
           />
         </div>

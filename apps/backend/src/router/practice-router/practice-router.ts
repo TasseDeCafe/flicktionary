@@ -5,6 +5,7 @@ import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type {
   PracticeSessionsRepositoryInterface,
@@ -29,13 +30,14 @@ import {
   type FinalizePracticeTextDependencies,
 } from '../../service/practice/finalize-practice-text'
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
-import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
+import { getLanguageMode } from '../../service/user-prefs/language-mode'
 
 export type PracticeRouterDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   startPracticeSessionDependencies: StartPracticeSessionDependencies
   generateNextPracticeTextDependencies: GenerateNextPracticeTextDependencies
   rateChunkDependencies: RateChunkDependencies
@@ -342,10 +344,11 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       if (!body || body.length === 0) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Practice text has no body yet' }] } })
       }
-      const languagePrefs = await getEffectiveNativeLanguage({
+      const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: found.targetLanguage,
         usersRepository: deps.usersRepository,
+        targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
       })
       if (!languagePrefs.nativeLanguage) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
@@ -353,6 +356,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const gloss = await fastGlossPass({
         targetLanguage: found.targetLanguage,
         nativeLanguage: languagePrefs.nativeLanguage,
+        hideTranslationFields: languagePrefs.hideTranslationFields,
         contextLine: body,
         selectionText: input.selectionText,
       })

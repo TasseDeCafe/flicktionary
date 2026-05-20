@@ -5,7 +5,7 @@ import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 interface VocabularyRowProps {
   chunk: ChunkRow
-  hideNativeFields?: boolean
+  hideTranslationFields?: boolean
   onTap: (chunk: ChunkRow) => void
   onOptions: (chunk: ChunkRow) => void
   style?: React.CSSProperties
@@ -20,13 +20,19 @@ const formatDueLabel = (chunk: ChunkRow): { label: string | null; tone: 'due' | 
   return { label: 'scheduled', tone: 'scheduled' }
 }
 
-export const VocabularyRow = ({ chunk, hideNativeFields = false, onTap, onOptions, style }: VocabularyRowProps) => {
+export const VocabularyRow = ({
+  chunk,
+  hideTranslationFields = false,
+  onTap,
+  onOptions,
+  style,
+}: VocabularyRowProps) => {
   const { t } = useLingui()
   const due = formatDueLabel(chunk)
   // Single-line preview. translation wins over definition (matches the triage
   // row convention) — unless the user has show-translations off, in which case
   // we surface the target-language definition instead.
-  const preview = hideNativeFields ? chunk.definition || '' : chunk.translation || chunk.definition || ''
+  const preview = hideTranslationFields ? chunk.definition || '' : chunk.translation || chunk.definition || ''
 
   return (
     <div style={style} className='flex items-stretch border-b border-gray-100 bg-white'>

@@ -413,7 +413,7 @@ msgstr "A sentence using this term in its natural setting."
 msgid "A short label for this session"
 msgstr "A short label for this session"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:97
+#: apps/web/src/features/more/components/more-tab-view.tsx:79
 msgid "About"
 msgstr "About"
 
@@ -430,7 +430,7 @@ msgid "Access exclusive premium features available to subscribers."
 msgstr "Access exclusive premium features available to subscribers."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:50
+#: apps/web/src/features/more/components/more-tab-view.tsx:45
 msgid "Account"
 msgstr "Account"
 
@@ -457,8 +457,8 @@ msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:58
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:151
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:170
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:171
 msgid "Add a word"
 msgstr "Add a word"
 
@@ -471,7 +471,7 @@ msgid "Adjective"
 msgstr "Adjective"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:99
+#: apps/web/src/features/more/components/more-tab-view.tsx:81
 msgid "Admin settings"
 msgstr "Admin settings"
 
@@ -655,7 +655,7 @@ msgstr "Billed yearly at €{yearlyPriceTotal}"
 msgid "British"
 msgstr "British"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:215
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:217
 msgid "Browse community-uploaded tracks for this movie."
 msgstr "Browse community-uploaded tracks for this movie."
 
@@ -668,8 +668,8 @@ msgstr "Browse community-uploaded tracks for this movie."
 #~ msgstr "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
-msgid "Calibrates the difficult-words pass and the depth of explanations."
-msgstr "Calibrates the difficult-words pass and the depth of explanations."
+#~ msgid "Calibrates the difficult-words pass and the depth of explanations."
+#~ msgstr "Calibrates the difficult-words pass and the depth of explanations."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
@@ -682,17 +682,17 @@ msgstr "Calibrates the difficult-words pass and the depth of explanations."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: apps/web/src/features/review/components/focus-view.tsx:145
-#: apps/web/src/features/review/components/focus-view.tsx:152
-#: apps/web/src/features/review/components/focus-view.tsx:230
+#: apps/web/src/features/review/components/focus-view.tsx:146
+#: apps/web/src/features/review/components/focus-view.tsx:153
+#: apps/web/src/features/review/components/focus-view.tsx:232
 msgid "Card"
 msgstr "Card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:178
+#: apps/web/src/features/review/components/focus-view.tsx:180
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Card {cardPosition} of {cardTotal}"
 
-#: apps/web/src/features/review/components/focus-view.tsx:153
+#: apps/web/src/features/review/components/focus-view.tsx:154
 msgid "Card not found."
 msgstr "Card not found."
 
@@ -706,8 +706,8 @@ msgstr "CEFR level"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:31
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:42
-msgid "CEFR level per language"
-msgstr "CEFR level per language"
+#~ msgid "CEFR level per language"
+#~ msgstr "CEFR level per language"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:162
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
@@ -715,7 +715,7 @@ msgstr "CEFR level per language"
 #~ msgid "Change"
 #~ msgstr "Change"
 
-#: apps/web/src/features/review/components/focus-view.tsx:303
+#: apps/web/src/features/review/components/focus-view.tsx:310
 msgid "Chat"
 msgstr "Chat"
 
@@ -735,7 +735,7 @@ msgstr "Checking app version..."
 msgid "Choose a plan to unlock all features"
 msgstr "Choose a plan to unlock all features"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:209
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:211
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
@@ -751,7 +751,7 @@ msgstr "Choose your plan"
 #~ msgid "Choose Your Plan"
 #~ msgstr "Choose Your Plan"
 
-#: apps/web/src/features/review/components/focus-view.tsx:286
+#: apps/web/src/features/review/components/focus-view.tsx:293
 msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 
@@ -763,7 +763,7 @@ msgstr "Click the link in the email to continue."
 msgid "Close"
 msgstr "Close"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:96
 msgid "Collocations"
 msgstr "Collocations"
 
@@ -783,7 +783,7 @@ msgstr "Confirm deletion"
 msgid "Conjunction"
 msgstr "Conjunction"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:98
+#: apps/web/src/features/more/components/more-tab-view.tsx:80
 msgid "Contact us"
 msgstr "Contact us"
 
@@ -791,21 +791,21 @@ msgstr "Contact us"
 msgid "Contact Us"
 msgstr "Contact Us"
 
-#: apps/web/src/features/review/components/focus-view.tsx:47
+#: apps/web/src/features/review/components/focus-view.tsx:48
 msgid "Context"
 msgstr "Context"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:219
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:220
 msgid "Context (optional)"
 msgstr "Context (optional)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:94
 #: apps/web/src/features/auth/components/login-email-view.tsx:86
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:40
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:96
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:130
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:165
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:157
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:98
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
 msgid "Continue"
 msgstr "Continue"
 
@@ -844,7 +844,7 @@ msgstr "Could not fetch a gloss. The highlight is still saved."
 msgid "Could not fetch a translation right now."
 msgstr "Could not fetch a translation right now."
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:111
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:114
 msgid "Could not import the pasted text."
 msgstr "Could not import the pasted text."
 
@@ -914,7 +914,7 @@ msgstr "Daily new limit reached"
 msgid "Daily new limit reached. You can learn more anyway."
 msgstr "Daily new limit reached. You can learn more anyway."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:102
+#: apps/web/src/features/more/components/more-tab-view.tsx:84
 msgid "Danger zone"
 msgstr "Danger zone"
 
@@ -929,7 +929,7 @@ msgid "Dashboard"
 msgstr "Dashboard"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:175
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:63
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:69
 msgid "Definition"
 msgstr "Definition"
 
@@ -948,7 +948,7 @@ msgstr "Delete"
 msgid "Delete \"{headword}\"?"
 msgstr "Delete \"{headword}\"?"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:167
+#: apps/web/src/features/practice/components/rate-sheet.tsx:171
 msgid "Delete from vocabulary"
 msgstr "Delete from vocabulary"
 
@@ -999,11 +999,11 @@ msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgid "downloads"
 msgstr "downloads"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:60
 msgid "Due"
 msgstr "Due"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:39
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:40
 msgid "Due soonest"
 msgstr "Due soonest"
 
@@ -1015,7 +1015,7 @@ msgstr "e.g. /ˈkæt/"
 msgid "e.g. + acc, от + gen"
 msgstr "e.g. + acc, от + gen"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:212
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:213
 msgid "e.g. подоконник, ran out of, à propos"
 msgstr "e.g. подоконник, ran out of, à propos"
 
@@ -1031,7 +1031,7 @@ msgstr "e.g. увидеть"
 msgid "Easy"
 msgstr "Easy"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:160
+#: apps/web/src/features/practice/components/rate-sheet.tsx:164
 msgid "Edit term"
 msgstr "Edit term"
 
@@ -1061,7 +1061,7 @@ msgstr "Email link is invalid or has expired"
 msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:295
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:296
 msgid "End of list"
 msgstr "End of list"
 
@@ -1104,7 +1104,7 @@ msgstr "Error setting up account..."
 msgid "Error setting up user data"
 msgstr "Error setting up user data"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:91
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:97
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:120
 msgid "Etymology"
 msgstr "Etymology"
@@ -1113,11 +1113,11 @@ msgstr "Etymology"
 msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
 msgstr "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:230
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:231
 msgid "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
 msgstr "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:66
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
 msgid "Example"
 msgstr "Example"
 
@@ -1141,7 +1141,7 @@ msgstr "Exporting…"
 msgid "Failed to complete onboarding"
 msgstr "Failed to complete onboarding"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:118
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:119
 msgid "Failed to create card"
 msgstr "Failed to create card"
 
@@ -1426,11 +1426,11 @@ msgstr "Free Trial"
 msgid "Free-form notes that don't fit the structured fields above."
 msgstr "Free-form notes that don't fit the structured fields above."
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:78
 msgid "Frequency"
 msgstr "Frequency"
 
-#: apps/web/src/features/review/components/focus-view.tsx:277
+#: apps/web/src/features/review/components/focus-view.tsx:279
 msgid "Full exploration"
 msgstr "Full exploration"
 
@@ -1443,19 +1443,19 @@ msgstr "GA"
 msgid "Gender"
 msgstr "Gender"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:47
+#: apps/web/src/features/more/components/more-tab-view.tsx:42
 msgid "General"
 msgstr "General"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:175
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Generate card"
 msgstr "Generate card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:296
+#: apps/web/src/features/review/components/focus-view.tsx:303
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: apps/web/src/features/review/components/focus-view.tsx:284
+#: apps/web/src/features/review/components/focus-view.tsx:291
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
@@ -1465,8 +1465,8 @@ msgstr "Generating full exploration… this takes a few seconds."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:187
 #: apps/web/src/features/practice/components/practice-session-view.tsx:444
-#: apps/web/src/features/review/components/focus-view.tsx:296
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:175
+#: apps/web/src/features/review/components/focus-view.tsx:303
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Generating…"
 msgstr "Generating…"
 
@@ -1491,7 +1491,7 @@ msgstr "Glossing…"
 msgid "Go Back"
 msgstr "Go Back"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:147
+#: apps/web/src/features/review/components/triage-list-view.tsx:149
 msgid "Go back to the source view and click Retry processing to try again."
 msgstr "Go back to the source view and click Retry processing to try again."
 
@@ -1560,7 +1560,7 @@ msgstr "Hide from vocabulary and Practice"
 msgid "Hide notes"
 msgstr "Hide notes"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:168
+#: apps/web/src/features/practice/components/rate-sheet.tsx:172
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
 
@@ -1612,7 +1612,7 @@ msgstr "If you'd like to create a new account, you can sign up again."
 msgid "Imperfective"
 msgstr "Imperfective"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:165
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
 msgid "Importing…"
 msgstr "Importing…"
@@ -1658,7 +1658,7 @@ msgstr "Invalid token. Please sign in again."
 #~ msgstr "iOS App"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:232
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:77
 msgid "IPA"
 msgstr "IPA"
 
@@ -1666,16 +1666,16 @@ msgstr "IPA"
 msgid "Jump to the session this term came from"
 msgstr "Jump to the session this term came from"
 
-#: apps/web/src/features/review/components/focus-view.tsx:191
+#: apps/web/src/features/review/components/focus-view.tsx:193
 #: apps/web/src/features/review/components/triage-row.tsx:45
 msgid "Keep"
 msgstr "Keep"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:40
+#: apps/web/src/features/review/components/triage-list-view.tsx:41
 msgid "Keep all"
 msgstr "Keep all"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:92
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:98
 msgid "L1 notes"
 msgstr "L1 notes"
 
@@ -1691,8 +1691,13 @@ msgstr "Language"
 msgid "Language of the text"
 msgstr "Language of the text"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:38
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:49
+msgid "Language preferences"
+msgstr "Language preferences"
+
 #: apps/web/src/features/more/components/languages-page.tsx:15
-#: apps/web/src/features/more/components/more-tab-view.tsx:59
+#: apps/web/src/features/more/components/more-tab-view.tsx:54
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:71
 msgid "Languages"
 msgstr "Languages"
@@ -1701,7 +1706,7 @@ msgstr "Languages"
 msgid "Last day to cancel before first charge"
 msgstr "Last day to cancel before first charge"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:56
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:62
 msgid "Later"
 msgstr "Later"
 
@@ -1715,11 +1720,11 @@ msgstr "Learn more anyway"
 msgid "Learn new terms"
 msgstr "Learn new terms"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:83
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:89
 msgid "Less formal:"
 msgstr "Less formal:"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:66
+#: apps/web/src/features/more/components/more-tab-view.tsx:61
 msgid "Let the model surface terms at your level on Process"
 msgstr "Let the model surface terms at your level on Process"
 
@@ -1732,9 +1737,9 @@ msgstr "Let the model surface terms at your level on Process"
 msgid "Link expired or invalid"
 msgstr "Link expired or invalid"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:65
-#: apps/web/src/features/more/components/more-tab-view.tsx:72
-#: apps/web/src/features/review/components/triage-list-view.tsx:188
+#: apps/web/src/features/more/components/more-tab-view.tsx:60
+#: apps/web/src/features/more/components/more-tab-view.tsx:67
+#: apps/web/src/features/review/components/triage-list-view.tsx:190
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:18
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
@@ -1743,11 +1748,11 @@ msgstr "LLM-suggested terms"
 msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
-#: apps/web/src/features/review/components/focus-view.tsx:146
+#: apps/web/src/features/review/components/focus-view.tsx:147
 msgid "Loading card…"
 msgstr "Loading card…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:152
+#: apps/web/src/features/review/components/triage-list-view.tsx:154
 msgid "Loading cards…"
 msgstr "Loading cards…"
 
@@ -1755,7 +1760,7 @@ msgstr "Loading cards…"
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:295
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:296
 msgid "Loading more…"
 msgstr "Loading more…"
 
@@ -1784,11 +1789,11 @@ msgstr "Loading..."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:154
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:49
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:272
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:273
 msgid "Loading…"
 msgstr "Loading…"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:199
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:200
 msgid "Looks like {suggestedLanguageName} — switch?"
 msgstr "Looks like {suggestedLanguageName} — switch?"
 
@@ -1827,17 +1832,17 @@ msgstr "Message to the founders"
 msgid "Monthly"
 msgstr "Monthly"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:45
+#: apps/web/src/features/more/components/more-tab-view.tsx:40
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
 msgid "More"
 msgstr "More"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:78
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:84
 msgid "More formal:"
 msgstr "More formal:"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:88
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:94
 msgid "More frequent synonym"
 msgstr "More frequent synonym"
 
@@ -1845,8 +1850,8 @@ msgstr "More frequent synonym"
 #~ msgid "More languages"
 #~ msgstr "More languages"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:125
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:69
+#: apps/web/src/features/practice/components/rate-sheet.tsx:129
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:75
 msgid "More options"
 msgstr "More options"
 
@@ -1867,7 +1872,7 @@ msgstr "Native example"
 msgid "Native language"
 msgstr "Native language"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:60
+#: apps/web/src/features/more/components/more-tab-view.tsx:55
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
@@ -1882,16 +1887,16 @@ msgstr "Neuter"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:58
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:55
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:55
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:61
 msgid "New"
 msgstr "New"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:91
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:124
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:172
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:198
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:238
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:274
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:93
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:126
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:174
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:200
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:240
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:276
 msgid "New session"
 msgstr "New session"
 
@@ -1907,7 +1912,7 @@ msgstr "New terms are capped per day. Follow-up sessions use up to this many rev
 msgid "New today"
 msgstr "New today"
 
-#: apps/web/src/features/review/components/focus-view.tsx:220
+#: apps/web/src/features/review/components/focus-view.tsx:222
 msgid "Next card"
 msgstr "Next card"
 
@@ -1919,7 +1924,7 @@ msgstr "Next text"
 #~ msgid "No Card Required"
 #~ msgstr "No Card Required"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:155
+#: apps/web/src/features/review/components/triage-list-view.tsx:157
 msgid "No cards yet. Process the session to generate them."
 msgstr "No cards yet. Process the session to generate them."
 
@@ -1937,7 +1942,7 @@ msgid "No languages found."
 msgstr "No languages found."
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:71
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:258
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:259
 msgid "No matches."
 msgstr "No matches."
 
@@ -1954,8 +1959,12 @@ msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:33
-msgid "No target languages yet. Levels are set the first time you start a session in a new language."
-msgstr "No target languages yet. Levels are set the first time you start a session in a new language."
+#~ msgid "No target languages yet. Levels are set the first time you start a session in a new language."
+#~ msgstr "No target languages yet. Levels are set the first time you start a session in a new language."
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:40
+msgid "No target languages yet. Preferences are set the first time you start a session in a new language."
+msgstr "No target languages yet. Preferences are set the first time you start a session in a new language."
 
 #: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:138
 #~ msgid "No text selected."
@@ -1965,7 +1974,7 @@ msgstr "No target languages yet. Levels are set the first time you start a sessi
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:258
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:259
 msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
@@ -1995,7 +2004,7 @@ msgstr "Notable forms"
 msgid "Note saved"
 msgstr "Note saved"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:93
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:99
 msgid "Notes"
 msgstr "Notes"
 
@@ -2020,12 +2029,12 @@ msgstr "OK"
 msgid "Open Mail App"
 msgstr "Open Mail App"
 
-#: apps/web/src/features/review/components/focus-view.tsx:56
+#: apps/web/src/features/review/components/focus-view.tsx:57
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:44
 msgid "Open source"
 msgstr "Open source"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:161
+#: apps/web/src/features/practice/components/rate-sheet.tsx:165
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 
@@ -2082,7 +2091,7 @@ msgstr "Particle"
 msgid "Paste a Reddit comment, news excerpt, Telegram post…"
 msgstr "Paste a Reddit comment, news excerpt, Telegram post…"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:171
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:175
 msgid "Paste a text"
 msgstr "Paste a text"
 
@@ -2111,7 +2120,7 @@ msgstr "Phrase"
 #~ msgstr "Pick"
 
 #: apps/web/src/components/language-select-field.tsx:34
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:186
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:187
 msgid "Pick a language"
 msgstr "Pick a language"
 
@@ -2123,7 +2132,7 @@ msgstr "Pick a language first"
 msgid "Pick a language from the list."
 msgstr "Pick a language from the list."
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:178
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:180
 msgid "Pick a movie"
 msgstr "Pick a movie"
 
@@ -2131,11 +2140,11 @@ msgstr "Pick a movie"
 msgid "Pick a movie and load its subtitles"
 msgstr "Pick a movie and load its subtitles"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:248
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:250
 msgid "Pick a subtitle track"
 msgstr "Pick a subtitle track"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:106
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:108
 msgid "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
 msgstr "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
 
@@ -2202,13 +2211,13 @@ msgstr "Practice"
 msgid "Practice limits"
 msgstr "Practice limits"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:231
+#: apps/web/src/features/review/components/triage-list-view.tsx:233
 msgid "Practice these terms"
 msgstr "Practice these terms"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:50
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:141
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:160
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:145
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:164
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
@@ -2234,7 +2243,7 @@ msgstr "Preparing the session…"
 msgid "Preposition"
 msgstr "Preposition"
 
-#: apps/web/src/features/review/components/focus-view.tsx:216
+#: apps/web/src/features/review/components/focus-view.tsx:218
 msgid "Previous card"
 msgstr "Previous card"
 
@@ -2292,7 +2301,7 @@ msgstr "Processing failed"
 msgid "Processing started"
 msgstr "Processing started"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:140
+#: apps/web/src/features/review/components/triage-list-view.tsx:142
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
@@ -2304,7 +2313,7 @@ msgstr "Processing your session…"
 msgid "Profile"
 msgstr "Profile"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:51
+#: apps/web/src/features/more/components/more-tab-view.tsx:46
 msgid "Profile, subscription, sign-in"
 msgstr "Profile, subscription, sign-in"
 
@@ -2324,7 +2333,7 @@ msgstr "Quick gloss failed"
 msgid "Quick gloss for the selected text."
 msgstr "Quick gloss for the selected text."
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:105
+#: apps/web/src/features/practice/components/rate-sheet.tsx:109
 msgid "Rate"
 msgstr "Rate"
 
@@ -2340,7 +2349,7 @@ msgstr "Read short generated texts that weave in your kept vocabulary. Tap a ter
 msgid "Ready to practice"
 msgstr "Ready to practice"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:38
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:39
 msgid "Recently added"
 msgstr "Recently added"
 
@@ -2357,19 +2366,19 @@ msgstr "Reflexive"
 msgid "Refresh"
 msgstr "Refresh"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:89
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:95
 msgid "Regionalism"
 msgstr "Regionalism"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:73
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:79
 msgid "Register"
 msgstr "Register"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:75
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:81
 msgid "Register alternatives"
 msgstr "Register alternatives"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:184
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:186
 msgid "Registering {movieTitle}…"
 msgstr "Registering {movieTitle}…"
 
@@ -2377,12 +2386,12 @@ msgstr "Registering {movieTitle}…"
 #~ msgid "Registering movie…"
 #~ msgstr "Registering movie…"
 
-#: apps/web/src/features/review/components/focus-view.tsx:199
+#: apps/web/src/features/review/components/focus-view.tsx:201
 #: apps/web/src/features/review/components/triage-row.tsx:53
 msgid "Reject"
 msgstr "Reject"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:49
+#: apps/web/src/features/review/components/triage-list-view.tsx:50
 msgid "Reject all"
 msgstr "Reject all"
 
@@ -2413,11 +2422,11 @@ msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:266
-#: apps/web/src/features/practice/components/rate-sheet.tsx:180
+#: apps/web/src/features/practice/components/rate-sheet.tsx:184
 msgid "Restore"
 msgstr "Restore"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:180
+#: apps/web/src/features/practice/components/rate-sheet.tsx:184
 msgid "Restoring…"
 msgstr "Restoring…"
 
@@ -2437,7 +2446,7 @@ msgstr "Retrying…"
 msgid "Return to Login"
 msgstr "Return to Login"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:124
+#: apps/web/src/features/review/components/triage-list-view.tsx:126
 msgid "Review"
 msgstr "Review"
 
@@ -2457,7 +2466,7 @@ msgstr "RP"
 msgid "Save"
 msgstr "Save"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:181
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:182
 msgid "Save a term"
 msgstr "Save a term"
 
@@ -2475,9 +2484,9 @@ msgstr "Save to vocabulary"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:214
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:448
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:130
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:375
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:157
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2493,7 +2502,7 @@ msgstr "Search a movie title…"
 msgid "Search failed"
 msgstr "Search failed"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:245
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:246
 msgid "Search headword, translation, or definition…"
 msgstr "Search headword, translation, or definition…"
 
@@ -2502,11 +2511,11 @@ msgstr "Search headword, translation, or definition…"
 msgid "Search languages…"
 msgstr "Search languages…"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:214
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:216
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:132
+#: apps/web/src/features/review/components/triage-list-view.tsx:134
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:16
 msgid "Search…"
 msgstr "Search…"
@@ -2578,8 +2587,12 @@ msgstr "Session removed"
 msgid "Sessions"
 msgstr "Sessions"
 
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:51
+msgid "Set your CEFR level and translation behavior for each target language."
+msgstr "Set your CEFR level and translation behavior for each target language."
+
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:121
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:115
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
 msgid "Set your native language first."
 msgstr "Set your native language first."
 
@@ -2587,7 +2600,7 @@ msgstr "Set your native language first."
 msgid "Setting up account..."
 msgstr "Setting up account..."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:56
+#: apps/web/src/features/more/components/more-tab-view.tsx:51
 msgid "Settings"
 msgstr "Settings"
 
@@ -2605,15 +2618,19 @@ msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:79
-msgid "Show existing translations and generate translations for new cards"
-msgstr "Show existing translations and generate translations for new cards"
+#~ msgid "Show existing translations and generate translations for new cards"
+#~ msgstr "Show existing translations and generate translations for new cards"
+
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:90
+msgid "Show existing translations and generate translations for new cards in this language."
+msgstr "Show existing translations and generate translations for new cards in this language."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:312
 msgid "Show notes"
 msgstr "Show notes"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:78
-#: apps/web/src/features/more/components/more-tab-view.tsx:85
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:88
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:99
 msgid "Show translations"
 msgstr "Show translations"
 
@@ -2624,12 +2641,12 @@ msgstr "Show translations"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:106
+#: apps/web/src/features/more/components/more-tab-view.tsx:88
 msgid "Sign out"
 msgstr "Sign out"
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:30
+#: apps/web/src/features/more/components/more-tab-view.tsx:25
 msgid "Sign out success"
 msgstr "Sign out success"
 
@@ -2654,7 +2671,7 @@ msgid "Some text for the Home tab"
 msgstr "Some text for the Home tab"
 
 #: apps/native/src/config/react-query-config.ts:24
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:275
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:277
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -2670,11 +2687,11 @@ msgstr "Something went wrong. Please refresh the page and try again."
 msgid "Something went wrong. You can retry or go back to the session."
 msgstr "Something went wrong. You can retry or go back to the session."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:250
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:251
 msgid "Sort"
 msgstr "Sort"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:120
+#: apps/web/src/features/review/components/triage-list-view.tsx:122
 msgid "Source"
 msgstr "Source"
 
@@ -2682,7 +2699,7 @@ msgstr "Source"
 msgid "Source was removed"
 msgstr "Source was removed"
 
-#: apps/web/src/features/review/components/focus-view.tsx:178
+#: apps/web/src/features/review/components/focus-view.tsx:180
 msgid "Standalone"
 msgstr "Standalone"
 
@@ -2709,7 +2726,7 @@ msgstr "Start a movie session"
 #~ msgid "Start practice"
 #~ msgstr "Start practice"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:147
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:151
 msgid "Start session"
 msgstr "Start session"
 
@@ -2717,11 +2734,11 @@ msgstr "Start session"
 msgid "Start something new"
 msgstr "Start something new"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:266
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:268
 msgid "Starting session…"
 msgstr "Starting session…"
 
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:147
+#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:151
 #: apps/web/src/features/sessions/components/process-button.tsx:69
 msgid "Starting…"
 msgstr "Starting…"
@@ -2775,7 +2792,7 @@ msgstr "Synonyms"
 msgid "Target example"
 msgstr "Target example"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:184
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:185
 msgid "Target language"
 msgstr "Target language"
 
@@ -2784,7 +2801,7 @@ msgstr "Target language"
 msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Tell us what you think or describe any issues you encountered..."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:202
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:203
 msgid "Term deleted"
 msgstr "Term deleted"
 
@@ -2873,7 +2890,7 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx:287
+#: apps/web/src/features/review/components/focus-view.tsx:294
 msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 
@@ -2889,7 +2906,7 @@ msgstr "This screen is only accessible to subscribed users. You can showcase pre
 msgid "This session is processing — wait for it to finish before removing."
 msgstr "This session is processing — wait for it to finish before removing."
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:152
+#: apps/web/src/features/practice/components/rate-sheet.tsx:156
 msgid "This term is removed from your vocabulary. Restore it to keep practicing."
 msgstr "This term is removed from your vocabulary. Restore it to keep practicing."
 
@@ -2935,7 +2952,7 @@ msgstr "Total"
 #~ msgstr "Track imported"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:186
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:64
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:70
 msgid "Translation"
 msgstr "Translation"
 
@@ -2947,7 +2964,7 @@ msgstr "Translation in your native language."
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:114
+#: apps/web/src/features/review/components/triage-list-view.tsx:116
 #: apps/web/src/features/sessions/components/session-view.tsx:190
 msgid "Triage"
 msgstr "Triage"
@@ -3011,11 +3028,11 @@ msgstr "Upload"
 #~ msgid "Upload .srt"
 #~ msgstr "Upload .srt"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:221
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:223
 msgid "Upload a .srt file"
 msgstr "Upload a .srt file"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:248
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:250
 msgid "Upload your .srt file"
 msgstr "Upload your .srt file"
 
@@ -3031,7 +3048,7 @@ msgstr "Upper intermediate — fluent on familiar topics, some abstract ideas."
 #~ msgid "Use"
 #~ msgstr "Use"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:222
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:224
 msgid "Use a subtitle file you already have."
 msgstr "Use a subtitle file you already have."
 
@@ -3096,11 +3113,11 @@ msgstr "View Premium Demo"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:39
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:40
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:216
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:217
 msgid "Vocabulary"
 msgstr "Vocabulary"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:223
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:224
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:52
 msgid "Vocabulary options"
 msgstr "Vocabulary options"
@@ -3164,7 +3181,7 @@ msgstr "Welcome to Flicktionary"
 #~ msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
 #~ msgstr "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:105
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx:107
 msgid "What language are you studying?"
 msgstr "What language are you studying?"
 
@@ -3180,7 +3197,7 @@ msgstr "When on, processing a session lets the LLM scan the whole track and sugg
 #~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
 #~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:226
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:227
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Where did you hear this? Paste a sentence or leave blank."
 
@@ -3192,7 +3209,7 @@ msgstr "Which pronunciation to show for English vocabulary cards."
 msgid "Why this form?"
 msgstr "Why this form?"
 
-#: apps/web/src/features/review/components/focus-view.tsx:246
+#: apps/web/src/features/review/components/focus-view.tsx:248
 msgid "Wiktionary"
 msgstr "Wiktionary"
 
@@ -3200,7 +3217,7 @@ msgstr "Wiktionary"
 msgid "Wiktionary, edited"
 msgstr "Wiktionary, edited"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:206
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:207
 msgid "Word or expression"
 msgstr "Word or expression"
 
@@ -3255,7 +3272,7 @@ msgstr "Your current plan"
 msgid "your email address"
 msgstr "your email address"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:162
+#: apps/web/src/features/review/components/triage-list-view.tsx:164
 msgid "Your highlights"
 msgstr "Your highlights"
 

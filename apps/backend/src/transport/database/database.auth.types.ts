@@ -27,46 +27,142 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_oauth_providers: {
+        Row: {
+          acceptable_client_ids: string[]
+          attribute_mapping: Json
+          authorization_params: Json
+          authorization_url: string | null
+          cached_discovery: Json | null
+          client_id: string
+          client_secret: string
+          created_at: string
+          discovery_cached_at: string | null
+          discovery_url: string | null
+          email_optional: boolean
+          enabled: boolean
+          id: string
+          identifier: string
+          issuer: string | null
+          jwks_uri: string | null
+          name: string
+          pkce_enabled: boolean
+          provider_type: string
+          scopes: string[]
+          skip_nonce_check: boolean
+          token_url: string | null
+          updated_at: string
+          userinfo_url: string | null
+        }
+        Insert: {
+          acceptable_client_ids?: string[]
+          attribute_mapping?: Json
+          authorization_params?: Json
+          authorization_url?: string | null
+          cached_discovery?: Json | null
+          client_id: string
+          client_secret: string
+          created_at?: string
+          discovery_cached_at?: string | null
+          discovery_url?: string | null
+          email_optional?: boolean
+          enabled?: boolean
+          id?: string
+          identifier: string
+          issuer?: string | null
+          jwks_uri?: string | null
+          name: string
+          pkce_enabled?: boolean
+          provider_type: string
+          scopes?: string[]
+          skip_nonce_check?: boolean
+          token_url?: string | null
+          updated_at?: string
+          userinfo_url?: string | null
+        }
+        Update: {
+          acceptable_client_ids?: string[]
+          attribute_mapping?: Json
+          authorization_params?: Json
+          authorization_url?: string | null
+          cached_discovery?: Json | null
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          discovery_cached_at?: string | null
+          discovery_url?: string | null
+          email_optional?: boolean
+          enabled?: boolean
+          id?: string
+          identifier?: string
+          issuer?: string | null
+          jwks_uri?: string | null
+          name?: string
+          pkce_enabled?: boolean
+          provider_type?: string
+          scopes?: string[]
+          skip_nonce_check?: boolean
+          token_url?: string | null
+          updated_at?: string
+          userinfo_url?: string | null
+        }
+        Relationships: []
+      }
       flow_state: {
         Row: {
-          auth_code: string
+          auth_code: string | null
           auth_code_issued_at: string | null
           authentication_method: string
-          code_challenge: string
-          code_challenge_method: Database['auth']['Enums']['code_challenge_method']
+          code_challenge: string | null
+          code_challenge_method: Database['auth']['Enums']['code_challenge_method'] | null
           created_at: string | null
+          email_optional: boolean
           id: string
+          invite_token: string | null
+          linking_target_id: string | null
+          oauth_client_state_id: string | null
           provider_access_token: string | null
           provider_refresh_token: string | null
           provider_type: string
+          referrer: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          auth_code: string
+          auth_code?: string | null
           auth_code_issued_at?: string | null
           authentication_method: string
-          code_challenge: string
-          code_challenge_method: Database['auth']['Enums']['code_challenge_method']
+          code_challenge?: string | null
+          code_challenge_method?: Database['auth']['Enums']['code_challenge_method'] | null
           created_at?: string | null
+          email_optional?: boolean
           id: string
+          invite_token?: string | null
+          linking_target_id?: string | null
+          oauth_client_state_id?: string | null
           provider_access_token?: string | null
           provider_refresh_token?: string | null
           provider_type: string
+          referrer?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          auth_code?: string
+          auth_code?: string | null
           auth_code_issued_at?: string | null
           authentication_method?: string
-          code_challenge?: string
-          code_challenge_method?: Database['auth']['Enums']['code_challenge_method']
+          code_challenge?: string | null
+          code_challenge_method?: Database['auth']['Enums']['code_challenge_method'] | null
           created_at?: string | null
+          email_optional?: boolean
           id?: string
+          invite_token?: string | null
+          linking_target_id?: string | null
+          oauth_client_state_id?: string | null
           provider_access_token?: string | null
           provider_refresh_token?: string | null
           provider_type?: string
+          referrer?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -341,6 +437,27 @@ export type Database = {
           },
         ]
       }
+      oauth_client_states: {
+        Row: {
+          code_verifier: string | null
+          created_at: string
+          id: string
+          provider_type: string
+        }
+        Insert: {
+          code_verifier?: string | null
+          created_at: string
+          id: string
+          provider_type: string
+        }
+        Update: {
+          code_verifier?: string | null
+          created_at?: string
+          id?: string
+          provider_type?: string
+        }
+        Relationships: []
+      }
       oauth_clients: {
         Row: {
           client_name: string | null
@@ -354,6 +471,7 @@ export type Database = {
           logo_uri: string | null
           redirect_uris: string
           registration_type: Database['auth']['Enums']['oauth_registration_type']
+          token_endpoint_auth_method: string
           updated_at: string
         }
         Insert: {
@@ -368,6 +486,7 @@ export type Database = {
           logo_uri?: string | null
           redirect_uris: string
           registration_type: Database['auth']['Enums']['oauth_registration_type']
+          token_endpoint_auth_method: string
           updated_at?: string
         }
         Update: {
@@ -382,6 +501,7 @@ export type Database = {
           logo_uri?: string | null
           redirect_uris?: string
           registration_type?: Database['auth']['Enums']['oauth_registration_type']
+          token_endpoint_auth_method?: string
           updated_at?: string
         }
         Relationships: []
@@ -852,6 +972,100 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      webauthn_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          expires_at: string
+          id: string
+          session_data: Json
+          user_id: string | null
+        }
+        Insert: {
+          challenge_type: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          session_data: Json
+          user_id?: string | null
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_data?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'webauthn_challenges_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      webauthn_credentials: {
+        Row: {
+          aaguid: string | null
+          attestation_type: string
+          backed_up: boolean
+          backup_eligible: boolean
+          created_at: string
+          credential_id: string
+          friendly_name: string
+          id: string
+          last_used_at: string | null
+          public_key: string
+          sign_count: number
+          transports: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aaguid?: string | null
+          attestation_type?: string
+          backed_up?: boolean
+          backup_eligible?: boolean
+          created_at?: string
+          credential_id: string
+          friendly_name?: string
+          id?: string
+          last_used_at?: string | null
+          public_key: string
+          sign_count?: number
+          transports?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aaguid?: string | null
+          attestation_type?: string
+          backed_up?: boolean
+          backup_eligible?: boolean
+          created_at?: string
+          credential_id?: string
+          friendly_name?: string
+          id?: string
+          last_used_at?: string | null
+          public_key?: string
+          sign_count?: number
+          transports?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'webauthn_credentials_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {

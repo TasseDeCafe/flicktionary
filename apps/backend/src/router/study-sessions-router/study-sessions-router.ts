@@ -8,10 +8,11 @@ import {
   DbStudySessionWithSource,
   StudySessionsRepositoryInterface,
 } from '../../transport/database/study-sessions/study-sessions-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processSession, ProcessingDependencies } from '../../service/processing/process-session'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
-import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
+import { getLanguageMode } from '../../service/user-prefs/language-mode'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -45,6 +46,7 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
 export const StudySessionsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   usersRepository: UsersRepositoryInterface,
+  targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   processingDependencies: ProcessingDependencies
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -69,11 +71,12 @@ export const StudySessionsRouter = (
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const languagePrefs = await getEffectiveNativeLanguage({
+      const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: input.targetLanguage,
         snapshotNativeLanguage: input.nativeLanguage,
         usersRepository,
+        targetLanguagePrefsRepository,
       })
       const inserted = await studySessionsRepository.insertStudySession({
         userId,

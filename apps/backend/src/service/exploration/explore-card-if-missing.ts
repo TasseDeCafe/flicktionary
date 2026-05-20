@@ -4,10 +4,15 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
+import {
+  sanitizeExplorationExtrasForLanguageMode,
+  sanitizeTextFieldsForLanguageMode,
+} from '../user-prefs/language-output-guards'
 
 export type ExploreCardDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -16,6 +21,7 @@ export type ExploreCardDependencies = {
   highlightsRepository: HighlightsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
 }
 
 export type ExploreCardOutcome = 'updated' | 'skipped' | 'failed'
@@ -62,24 +68,38 @@ export const exploreCardIfMissing = async (
       }
     }
 
-    const languagePrefs = await getEffectiveNativeLanguage({
+    const languagePrefs = await getLanguageMode({
       userId,
       targetLanguage: session.target_language,
       snapshotNativeLanguage: session.native_language,
       usersRepository: deps.usersRepository,
+      targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     })
-    const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
+    const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 
     const enrichment = await enrichmentPass({
-      nativeLanguage: effectiveNativeLanguage,
+      nativeLanguage: languageModeNativeLanguage,
       targetLanguage: session.target_language,
       cefrLevel: session.cefr_level,
       movieContextBlob: session.context_blob,
       surfaceForm: card.surface_form || card.chunk.headword,
       surroundingSegments: surroundingFormatted,
+      hideTranslationFields: languagePrefs.hideTranslationFields,
+      allowL1Notes: languagePrefs.allowL1Notes,
       userNote,
       presetTags,
     })
+    const sanitizedText = sanitizeTextFieldsForLanguageMode(
+      {
+        translation: enrichment.translation,
+        nativeExample: enrichment.native_example,
+      },
+      languagePrefs
+    )
+    const sanitizedExtras = sanitizeExplorationExtrasForLanguageMode(
+      enrichment.extras as Record<string, unknown>,
+      languagePrefs
+    )
 
     // Surface form is per-card-instance — write directly on the card.
     if (enrichment.surface_form && enrichment.surface_form !== card.surface_form) {
@@ -89,11 +109,13 @@ export const exploreCardIfMissing = async (
     // Content + extras + grammar live on the canonical chunk.
     await deps.userLookupsRepository.updateContent({
       id: card.user_lookup_id,
-      translation: enrichment.translation,
+      translation: sanitizedText.translation,
       definition: enrichment.definition,
       targetExample: enrichment.target_example,
-      nativeExample: enrichment.native_example,
-      explorationExtrasPatch: enrichment.extras as Record<string, unknown>,
+      nativeExample: sanitizedText.nativeExample,
+      clearTranslation: languagePrefs.hideTranslationFields,
+      clearNativeExample: languagePrefs.hideTranslationFields,
+      explorationExtrasPatch: sanitizedExtras,
       grammarPatch: Object.keys(enrichment.grammar).length > 0 ? enrichment.grammar : null,
     })
 

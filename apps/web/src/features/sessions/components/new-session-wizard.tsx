@@ -15,6 +15,7 @@ import { CefrStep } from './cefr-step'
 import type { CefrLevel } from '../constants/cefr'
 import { TmdbSearch, type TmdbMoviePick } from './tmdb-search'
 import { OpenSubtitlesStep, SrtUploadStep, type ImportedTrack } from './subtitle-source-picker'
+import { getShowTranslationsEnabledForLanguage } from '../utils/show-translations-pref'
 
 type Step = 'language' | 'cefr' | 'movie' | 'subtitle-source' | 'subtitle-pick'
 type SubtitleMode = 'opensubtitles' | 'upload'
@@ -65,7 +66,8 @@ export const NewSessionWizard = () => {
   const startSession = (track: ImportedTrack) => {
     if (!contentSourceId || !prefs || !targetLanguage) return
     const level = cefrForLanguage(targetLanguage) ?? cefrChoice
-    const nativeLanguage = prefs.nativeLanguage ?? (!prefs.showTranslationsEnabled ? track.language : null)
+    const showTranslations = getShowTranslationsEnabledForLanguage(prefs, track.language)
+    const nativeLanguage = prefs.nativeLanguage ?? (!showTranslations ? track.language : null)
     if (!level) return
     if (!nativeLanguage) return
     createSession(

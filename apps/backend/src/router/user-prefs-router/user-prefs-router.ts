@@ -13,11 +13,10 @@ type UserPrefsResponse = {
   lastTargetLanguage: string | null
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
-  showTranslationsEnabled: boolean
   englishIpaDialect: 'ga' | 'rp'
   practiceMaxNewTerms: number
   practiceMaxReviewTerms: number
-  targetLanguagePrefs: { targetLanguage: string; cefrLevel: string }[]
+  targetLanguagePrefs: { targetLanguage: string; cefrLevel: string; showTranslationsEnabled: boolean }[]
 }
 
 const buildPrefs = async (
@@ -31,7 +30,6 @@ const buildPrefs = async (
     lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
-    showTranslationsEnabled,
     englishIpaDialect,
     practiceLimits,
     targetPrefs,
@@ -41,7 +39,6 @@ const buildPrefs = async (
     usersRepository.getLastTargetLanguage(userId),
     usersRepository.getTapToTranslateEnabled(userId),
     usersRepository.getLlmHighlightsEnabled(userId),
-    usersRepository.getShowTranslationsEnabled(userId),
     usersRepository.getEnglishIpaDialect(userId),
     usersRepository.getPracticeSessionLimits(userId),
     prefsRepository.listForUser(userId),
@@ -52,13 +49,13 @@ const buildPrefs = async (
     lastTargetLanguage,
     tapToTranslateEnabled,
     llmHighlightsEnabled,
-    showTranslationsEnabled,
     englishIpaDialect,
     practiceMaxNewTerms: practiceLimits.maxNewTerms,
     practiceMaxReviewTerms: practiceLimits.maxReviewTerms,
     targetLanguagePrefs: targetPrefs.map((p) => ({
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
+      showTranslationsEnabled: p.show_translations_enabled,
     })),
   }
 }
@@ -131,17 +128,19 @@ export const UserPrefsRouter = (
       return { data: prefs }
     }),
 
-    setShowTranslationsEnabled: implementer.setShowTranslationsEnabled.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const ok = await usersRepository.setShowTranslationsEnabled(userId, input.enabled)
-      if (!ok) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update show-translations setting' }] },
-        })
+    setShowTranslationsForLanguage: implementer.setShowTranslationsForLanguage.handler(
+      async ({ input, context, errors }) => {
+        const userId = context.res.locals.userId
+        const ok = await prefsRepository.setShowTranslationsEnabled(userId, input.targetLanguage, input.enabled)
+        if (!ok) {
+          throw errors.INTERNAL_SERVER_ERROR({
+            data: { errors: [{ message: 'Failed to update show-translations setting' }] },
+          })
+        }
+        const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+        return { data: prefs }
       }
-      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
-      return { data: prefs }
-    }),
+    ),
 
     setPracticeSessionLimits: implementer.setPracticeSessionLimits.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId

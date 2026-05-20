@@ -1,5 +1,6 @@
 import type { PracticeSessionsRepositoryInterface } from '../../transport/database/practice-sessions/practice-sessions-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { PracticeSessionMode } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import {
   DEFAULT_PRACTICE_MAX_NEW_TERMS,
@@ -9,12 +10,13 @@ import {
   type PracticeSessionLimits,
   type UsersRepositoryInterface,
 } from '../../transport/database/users/users-repository'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
 
 export type StartPracticeSessionDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
 }
 
 export type StartPracticeSessionResult =
@@ -47,10 +49,11 @@ export const startPracticeSession = async (
   mode: PracticeSessionMode,
   deps: StartPracticeSessionDependencies
 ): Promise<StartPracticeSessionResult> => {
-  const languagePrefs = await getEffectiveNativeLanguage({
+  const languagePrefs = await getLanguageMode({
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
+    targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
   if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 

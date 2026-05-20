@@ -5,9 +5,9 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 export type PromptContextInput = {
   sessionId: string
   userId: string
-  // Override the session's snapshotted native_language. Used to spoof
-  // native=target when the user has the show-translations pref off.
-  nativeLanguageOverride?: string
+  nativeLanguage?: string
+  hideTranslationFields?: boolean
+  allowL1Notes?: boolean
 }
 
 export type PromptContext = {
@@ -28,13 +28,15 @@ export const buildPromptContext = async (
   const session = await studySessionsRepository.findByIdForUser(input.sessionId, input.userId)
   if (!session || !session.context_blob) return null
 
-  const nativeLanguage = input.nativeLanguageOverride ?? session.native_language
+  const nativeLanguage = input.nativeLanguage ?? session.native_language
 
   const systemBlocks = buildMethodologySystem({
     nativeLanguage,
     targetLanguage: session.target_language,
     cefrLevel: session.cefr_level,
     movieContextBlob: session.context_blob,
+    hideTranslationFields: input.hideTranslationFields,
+    allowL1Notes: input.allowL1Notes,
   })
 
   return {
