@@ -30,7 +30,7 @@ import {
   type FinalizePracticeTextDependencies,
 } from '../../service/practice/finalize-practice-text'
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
-import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
+import { getLanguageMode } from '../../service/user-prefs/language-mode'
 
 export type PracticeRouterDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
@@ -344,7 +344,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       if (!body || body.length === 0) {
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Practice text has no body yet' }] } })
       }
-      const languagePrefs = await getEffectiveNativeLanguage({
+      const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: found.targetLanguage,
         usersRepository: deps.usersRepository,
@@ -356,6 +356,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const gloss = await fastGlossPass({
         targetLanguage: found.targetLanguage,
         nativeLanguage: languagePrefs.nativeLanguage,
+        hideTranslationFields: languagePrefs.hideTranslationFields,
         contextLine: body,
         selectionText: input.selectionText,
       })

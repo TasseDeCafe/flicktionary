@@ -1,7 +1,7 @@
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 
-type EffectiveNativeLanguageInput = {
+type LanguageModeInput = {
   userId: string
   targetLanguage: string
   usersRepository: UsersRepositoryInterface
@@ -9,34 +9,40 @@ type EffectiveNativeLanguageInput = {
   snapshotNativeLanguage?: string | null
 }
 
-export type EffectiveNativeLanguage = {
+export type LanguageMode = {
   nativeLanguage: string | null
+  targetLanguage: string
+  sameLanguage: boolean
   showTranslationsEnabled: boolean
-  hideNativeFields: boolean
+  hideTranslationFields: boolean
+  allowL1Notes: boolean
 }
 
 const normalizeLanguage = (language: string): string => language.trim().toLowerCase()
 
-export const getEffectiveNativeLanguage = async ({
+export const getLanguageMode = async ({
   userId,
   targetLanguage,
   usersRepository,
   targetLanguagePrefsRepository,
   snapshotNativeLanguage = null,
-}: EffectiveNativeLanguageInput): Promise<EffectiveNativeLanguage> => {
+}: LanguageModeInput): Promise<LanguageMode> => {
   const [showTranslationsEnabled, liveNativeLanguage] = await Promise.all([
     targetLanguagePrefsRepository.getShowTranslationsEnabled(userId, targetLanguage),
     usersRepository.getNativeLanguage(userId),
   ])
 
-  const nativeLanguage = showTranslationsEnabled ? (liveNativeLanguage ?? snapshotNativeLanguage) : targetLanguage
-  const hideNativeFields =
-    !showTranslationsEnabled ||
-    (nativeLanguage !== null && normalizeLanguage(nativeLanguage) === normalizeLanguage(targetLanguage))
+  const nativeLanguage = liveNativeLanguage ?? snapshotNativeLanguage ?? null
+  const sameLanguage =
+    nativeLanguage !== null && normalizeLanguage(nativeLanguage) === normalizeLanguage(targetLanguage)
+  const hideTranslationFields = sameLanguage || !showTranslationsEnabled
 
   return {
     nativeLanguage,
+    targetLanguage,
+    sameLanguage,
     showTranslationsEnabled,
-    hideNativeFields,
+    hideTranslationFields,
+    allowL1Notes: nativeLanguage !== null && !sameLanguage,
   }
 }

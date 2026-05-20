@@ -100,10 +100,12 @@ export const RateSheet = ({
     !!nativeLanguage &&
     !!chunk?.targetLanguage &&
     nativeLanguage.trim().toLowerCase() === chunk.targetLanguage.trim().toLowerCase()
-  const hideNativeFields =
+  const hideTranslationFields =
     sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, chunk?.targetLanguage ?? null)
   // Translation wins for the description slot; definition is the L1=L2 / no-translations fallback.
-  const description = hideNativeFields ? chunk?.definition || null : chunk?.translation || chunk?.definition || null
+  const description = hideTranslationFields
+    ? chunk?.definition || null
+    : chunk?.translation || chunk?.definition || null
   const titleText = chunk?.displayForm || chunk?.headword || t`Rate`
   const showOverflow = !!chunk && !chunk.isDeleted && mode === 'rate'
 
@@ -143,7 +145,7 @@ export const RateSheet = ({
           <div className='flex flex-col gap-3 px-2 pb-2 text-sm'>
             <p className='border-l-2 border-yellow-300 pl-3 italic'>
               {chunk.targetExample}
-              {!hideNativeFields && chunk.nativeExample && (
+              {!hideTranslationFields && chunk.nativeExample && (
                 <span className='text-muted-foreground mt-1 block not-italic'>{chunk.nativeExample}</span>
               )}
             </p>

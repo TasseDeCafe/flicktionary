@@ -173,7 +173,8 @@ export const FocusView = () => {
   const displayedIpa = pickIpa(card.chunk.grammar?.ipa, targetLanguage, userPrefs?.englishIpaDialect ?? 'ga')
   const wiktionaryUrl = buildWiktionaryUrl(card.chunk.headword, targetLanguage, card.chunk.grammar?.pos)
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
-  const hideNativeFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
+  const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
+  const showL1Notes = !!nativeLanguage && !sameLanguage
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
@@ -253,7 +254,7 @@ export const FocusView = () => {
             <EditableCardFields
               key={`${card.id}:${card.updatedAt}`}
               card={card}
-              hideNativeFields={hideNativeFields}
+              hideTranslationFields={hideTranslationFields}
               sourceSessionId={sourceSessionId}
             />
             <div className='mt-4'>
@@ -277,7 +278,12 @@ export const FocusView = () => {
             )}
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
             {hasExtras ? (
-              <FullExplorationRenderer card={card} hideExtrasIpa={!!displayedIpa} hideNativeFields={hideNativeFields} />
+              <FullExplorationRenderer
+                card={card}
+                hideExtrasIpa={!!displayedIpa}
+                hideTranslationFields={hideTranslationFields}
+                showL1Notes={showL1Notes}
+              />
             ) : (
               <div className='flex flex-col items-start gap-3'>
                 <p className='text-muted-foreground text-sm'>

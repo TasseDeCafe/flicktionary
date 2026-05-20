@@ -10,7 +10,7 @@ import { TextSegmentsRepositoryInterface } from '../../transport/database/text-s
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { fastGlossPass, FastGloss } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
-import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
+import { getLanguageMode } from '../../service/user-prefs/language-mode'
 
 // fast_gloss is a single text column; we round-trip the {gloss, pos, register}
 // triple as the same `<gloss>\n[POS]\n[register]` shape Haiku emits.
@@ -146,17 +146,18 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight start segment missing' }] },
         })
       }
-      const languagePrefs = await getEffectiveNativeLanguage({
+      const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: session.target_language,
         snapshotNativeLanguage: session.native_language,
         usersRepository,
         targetLanguagePrefsRepository,
       })
-      const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
+      const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
       const gloss = await fastGlossPass({
         targetLanguage: session.target_language,
-        nativeLanguage: effectiveNativeLanguage,
+        nativeLanguage: languageModeNativeLanguage,
+        hideTranslationFields: languagePrefs.hideTranslationFields,
         contextLine: startSegment.text,
         selectionText: highlight.selection_text,
       })

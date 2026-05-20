@@ -26,7 +26,7 @@ import { recordPassTelemetry } from './telemetry'
 import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -115,7 +115,7 @@ export const processSession = async (
 
     const [llmHighlightsEnabled, languagePrefs] = await Promise.all([
       usersRepository.getLlmHighlightsEnabled(userId),
-      getEffectiveNativeLanguage({
+      getLanguageMode({
         userId,
         targetLanguage: session.target_language,
         snapshotNativeLanguage: session.native_language,
@@ -123,7 +123,7 @@ export const processSession = async (
         targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
       }),
     ])
-    const effectiveNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
+    const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 
     // When LLM discovery is off, the only point of running the pass is to
     // populate basic data for any new user highlight. With no new highlights
@@ -171,7 +171,7 @@ export const processSession = async (
       let chunks: BasicDataChunk[] = []
       try {
         chunks = await basicDataPass({
-          nativeLanguage: effectiveNativeLanguage,
+          nativeLanguage: languageModeNativeLanguage,
           targetLanguage: session.target_language,
           cefrLevel: session.cefr_level,
           movieContextBlob: contextBlob,
@@ -179,6 +179,8 @@ export const processSession = async (
           highlights: newHighlights,
           excludedHeadwordSenses,
           llmDiscoveryEnabled: llmDiscoveryWanted,
+          hideTranslationFields: languagePrefs.hideTranslationFields,
+          allowL1Notes: languagePrefs.allowL1Notes,
         })
       } catch (e) {
         logCustomErrorMessageAndError(`basicDataPass failed, sessionId = ${sessionId}`, e)
@@ -220,6 +222,7 @@ export const processSession = async (
         newHighlights,
         processedHighlightIds,
         segmentIdSet,
+        hideTranslationFields: languagePrefs.hideTranslationFields,
         cardsRepository,
         userLookupsRepository,
       })

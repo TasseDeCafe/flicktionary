@@ -8,7 +8,7 @@ import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 
 type Props = {
   card: Card
-  hideNativeFields: boolean
+  hideTranslationFields: boolean
   sourceSessionId?: string
 }
 
@@ -18,7 +18,7 @@ const SAVE_DEBOUNCE_MS = 600
 // the canonical chunk (user_lookups). Editing here mutates ONE row that may be
 // referenced by many cards across sessions — sibling cards re-fetch and pick
 // up the change via cache invalidation.
-export const EditableCardFields = ({ card, hideNativeFields, sourceSessionId }: Props) => {
+export const EditableCardFields = ({ card, hideTranslationFields, sourceSessionId }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
   const renameChunk = useRenameChunk(sourceSessionId)
@@ -170,7 +170,7 @@ export const EditableCardFields = ({ card, hideNativeFields, sourceSessionId }: 
         />
       </div>
 
-      {hideNativeFields ? (
+      {hideTranslationFields ? (
         <div>
           <Label className='text-xs'>{t`Definition`}</Label>
           <Textarea

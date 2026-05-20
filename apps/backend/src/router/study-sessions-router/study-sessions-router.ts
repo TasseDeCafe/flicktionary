@@ -12,7 +12,7 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { processSession, ProcessingDependencies } from '../../service/processing/process-session'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
-import { getEffectiveNativeLanguage } from '../../service/user-prefs/effective-native-language'
+import { getLanguageMode } from '../../service/user-prefs/language-mode'
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -71,7 +71,7 @@ export const StudySessionsRouter = (
 
     create: implementer.create.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const languagePrefs = await getEffectiveNativeLanguage({
+      const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: input.targetLanguage,
         snapshotNativeLanguage: input.nativeLanguage,

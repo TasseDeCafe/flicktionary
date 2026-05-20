@@ -183,14 +183,17 @@ const findOrCreate = async (params: {
 
 // Patch any subset of the canonical content fields. `undefined`/`null`
 // preserve the existing value (COALESCE semantic); to clear a basic field,
-// pass an explicit empty string. `explorationExtrasPatch` and `grammarPatch`
-// are shallow-merged into their JSONB columns via `||` on the server.
+// pass an explicit empty string or the corresponding clear flag.
+// `explorationExtrasPatch` and `grammarPatch` are shallow-merged into their
+// JSONB columns via `||` on the server.
 const updateContent = async (params: {
   id: string
   translation?: string | null
   definition?: string | null
   targetExample?: string | null
   nativeExample?: string | null
+  clearTranslation?: boolean
+  clearNativeExample?: boolean
   explorationExtrasPatch?: Record<string, unknown> | null
   grammarPatch?: Record<string, unknown> | null
   markGrammarUserEdited?: boolean
@@ -202,10 +205,16 @@ const updateContent = async (params: {
   await sql`
     UPDATE public.user_lookups
     SET
-      translation = COALESCE(${params.translation ?? null}, translation),
+      translation = CASE
+        WHEN ${params.clearTranslation ?? false} THEN NULL
+        ELSE COALESCE(${params.translation ?? null}, translation)
+      END,
       definition = COALESCE(${params.definition ?? null}, definition),
       target_example = COALESCE(${params.targetExample ?? null}, target_example),
-      native_example = COALESCE(${params.nativeExample ?? null}, native_example),
+      native_example = CASE
+        WHEN ${params.clearNativeExample ?? false} THEN NULL
+        ELSE COALESCE(${params.nativeExample ?? null}, native_example)
+      END,
       exploration_extras = exploration_extras || COALESCE(${extrasJson}::jsonb, '{}'::jsonb),
       grammar = grammar || COALESCE(${grammarJson}::jsonb, '{}'::jsonb),
       grammar_user_edited_at = CASE
@@ -937,6 +946,8 @@ export interface UserLookupsRepositoryInterface {
     definition?: string | null
     targetExample?: string | null
     nativeExample?: string | null
+    clearTranslation?: boolean
+    clearNativeExample?: boolean
     explorationExtrasPatch?: Record<string, unknown> | null
     grammarPatch?: Record<string, unknown> | null
     markGrammarUserEdited?: boolean

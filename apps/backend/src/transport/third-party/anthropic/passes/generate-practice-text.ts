@@ -72,6 +72,8 @@ type GeneratePracticeTextArgs = {
   targetLanguage: string
   cefrLevel: string
   chunks: PracticeChunkInput[]
+  hideTranslationFields?: boolean
+  allowL1Notes?: boolean
   // Rescue mode: a stubborn chunk the LLM previously skipped in a multi-chunk
   // text. Switches the prompt to "single short sentence containing this one
   // chunk" — much easier to fit naturally than a 7-chunk paragraph.
@@ -135,14 +137,14 @@ const buildTool = (): Anthropic.Tool => ({
   },
 })
 
-const buildChunkBlock = (chunks: PracticeChunkInput[], sameLanguage: boolean): string => {
+const buildChunkBlock = (chunks: PracticeChunkInput[], hideTranslationFields: boolean): string => {
   return chunks
     .map((c, i) => {
       const lines = [`${i + 1}. headword="${c.headword}" sense="${c.sense}"`]
-      if (c.translation) lines.push(`   translation="${c.translation}"`)
+      if (c.translation && !hideTranslationFields) lines.push(`   translation="${c.translation}"`)
       if (c.definition) lines.push(`   definition="${c.definition}"`)
       if (c.targetExample) lines.push(`   target_example="${c.targetExample}"`)
-      if (c.nativeExample && !sameLanguage) lines.push(`   native_example="${c.nativeExample}"`)
+      if (c.nativeExample && !hideTranslationFields) lines.push(`   native_example="${c.nativeExample}"`)
       return lines.join('\n')
     })
     .join('\n\n')
@@ -152,9 +154,9 @@ const buildRescueUserMessage = (args: {
   targetLanguage: string
   cefrLevel: string
   chunks: PracticeChunkInput[]
-  sameLanguage: boolean
+  hideTranslationFields: boolean
 }): string => {
-  const numbered = buildChunkBlock(args.chunks, args.sameLanguage)
+  const numbered = buildChunkBlock(args.chunks, args.hideTranslationFields)
   return `Write ONE short, natural ${args.targetLanguage} sentence (10–25 words) that uses the chunk below in its given sense. This is a "rescue" call: the chunk was skipped in a previous multi-chunk text because it didn't fit the surrounding context, so now you have full freedom to pick whatever context lets it land naturally.
 
 Hard rules:
@@ -178,10 +180,10 @@ const buildUserMessage = (args: {
   targetLanguage: string
   cefrLevel: string
   chunks: PracticeChunkInput[]
-  sameLanguage: boolean
+  hideTranslationFields: boolean
   format: string
 }): string => {
-  const numbered = buildChunkBlock(args.chunks, args.sameLanguage)
+  const numbered = buildChunkBlock(args.chunks, args.hideTranslationFields)
 
   return `Generate a short ${args.targetLanguage} text in the following format, naturally incorporating ALL of the chunks below.
 
@@ -332,18 +334,20 @@ export const parseToolResult = (
 
 export const generatePracticeText = async (args: GeneratePracticeTextArgs): Promise<GeneratePracticeTextResult> => {
   const sameLanguage = args.nativeLanguage.trim().toLowerCase() === args.targetLanguage.trim().toLowerCase()
+  const hideTranslationFields = args.hideTranslationFields ?? sameLanguage
+  const allowL1Notes = args.allowL1Notes ?? !sameLanguage
   const userMessage = args.rescueMode
     ? buildRescueUserMessage({
         targetLanguage: args.targetLanguage,
         cefrLevel: args.cefrLevel,
         chunks: args.chunks,
-        sameLanguage,
+        hideTranslationFields,
       })
     : buildUserMessage({
         targetLanguage: args.targetLanguage,
         cefrLevel: args.cefrLevel,
         chunks: args.chunks,
-        sameLanguage,
+        hideTranslationFields,
         format: pickFormat(),
       })
 
@@ -357,6 +361,8 @@ export const generatePracticeText = async (args: GeneratePracticeTextArgs): Prom
       nativeLanguage: args.nativeLanguage,
       targetLanguage: args.targetLanguage,
       cefrLevel: args.cefrLevel,
+      hideTranslationFields,
+      allowL1Notes,
     }),
     tools: [buildTool()],
     tool_choice: { type: 'tool', name: TOOL_NAME },

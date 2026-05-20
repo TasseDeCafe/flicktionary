@@ -102,7 +102,7 @@ export const VocabularyListView = () => {
     !!nativeLanguage &&
     !!selectedLanguage &&
     nativeLanguage.trim().toLowerCase() === selectedLanguage.trim().toLowerCase()
-  const hideNativeFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, selectedLanguage)
+  const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, selectedLanguage)
 
   const rows: ChunkRow[] = useMemo(() => {
     if (!data) return []
@@ -302,7 +302,7 @@ export const VocabularyListView = () => {
                   <VocabularyRow
                     key={chunk.id}
                     chunk={chunk}
-                    hideNativeFields={hideNativeFields}
+                    hideTranslationFields={hideTranslationFields}
                     onTap={handleRowTap}
                     onOptions={handleRowOptions}
                     style={style}

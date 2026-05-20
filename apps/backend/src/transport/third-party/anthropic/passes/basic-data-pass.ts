@@ -47,6 +47,8 @@ type BasicDataPassArgs = {
   // LLM-discovered chunks entirely. Used when the user has turned off the
   // "suggest chunks" pref.
   llmDiscoveryEnabled: boolean
+  hideTranslationFields?: boolean
+  allowL1Notes?: boolean
 }
 
 export type BasicDataChunk = {
@@ -69,7 +71,7 @@ export type BasicDataChunk = {
   reasoning?: string
 }
 
-const buildTool = (sameLanguage: boolean): Anthropic.Tool => ({
+const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
     "Submit the list of items worth studying for this learner, with their basic data populated. Items can be either user-provided highlights (must always produce one row per highlight) or LLM-discovered chunks at or above the learner's CEFR level. Both single words and multi-word units are valuable.",
@@ -112,14 +114,14 @@ const buildTool = (sameLanguage: boolean): Anthropic.Tool => ({
             },
             translation: {
               type: ['string', 'null'],
-              description: sameLanguage
-                ? 'Set to null when native_language equals target_language — there is nothing to translate.'
+              description: hideTranslationFields
+                ? 'Set to null. Translation fields are disabled for this target language.'
                 : "Short translation of the chunk into the learner's native language. Null when below_cefr is true (we will skip this chunk).",
             },
             definition: {
               type: ['string', 'null'],
-              description: sameLanguage
-                ? 'Short contextual paraphrase in the target language. Used as the back of the card when the languages match. Null when below_cefr is true.'
+              description: hideTranslationFields
+                ? 'Short contextual paraphrase in the target language. Used as the back of the card when translation fields are hidden. Null when below_cefr is true.'
                 : 'Short contextual paraphrase in the target language (one short sentence). Optional but encouraged. Null when below_cefr is true.',
             },
             target_example: {
@@ -129,8 +131,8 @@ const buildTool = (sameLanguage: boolean): Anthropic.Tool => ({
             },
             native_example: {
               type: ['string', 'null'],
-              description: sameLanguage
-                ? 'Set to null when native_language equals target_language.'
+              description: hideTranslationFields
+                ? 'Set to null. Native example fields are disabled for this target language.'
                 : 'A natural translation of target_example into the native language. Null when below_cefr is true.',
             },
             below_cefr: {
@@ -216,8 +218,11 @@ export const basicDataPass = async ({
   highlights,
   excludedHeadwordSenses,
   llmDiscoveryEnabled,
+  hideTranslationFields = false,
+  allowL1Notes,
 }: BasicDataPassArgs): Promise<BasicDataChunk[]> => {
   const sameLanguage = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
+  const shouldHideTranslationFields = hideTranslationFields || sameLanguage
   const segmentLines = segments.map((s) => `[${s.id}] ${s.text}`).join('\n')
   const excludedLines = excludedHeadwordSenses.map((e) => `- ${e.headword}${e.sense ? ` | ${e.sense}` : ''}`).join('\n')
   const excludedBlock = excludedHeadwordSenses.length
@@ -245,8 +250,8 @@ ${excludedLines}`
 ${highlightLines}\n`
     : ''
 
-  const sameLangNote = sameLanguage
-    ? `\n- The learner's native language equals the target language. Set translation=null and native_example=null on every row. Use definition for the back of the card.`
+  const translationModeNote = shouldHideTranslationFields
+    ? `\n- Translation fields are disabled for this target language. Set translation=null and native_example=null on every row. Keep definition and target_example in ${targetLanguage}.`
     : ''
 
   const userMessage = llmDiscoveryEnabled
@@ -290,7 +295,7 @@ Selection criteria for LLM-discovered chunks — apply strictly:
   target language — see the per-target-language guidance in the system
   prompt for which keys to fill (e.g. aspect/aspect_pair_headword for
   Russian verbs, gender for surprising nouns, government for case-taking
-  verbs/prepositions). Skip the object entirely when nothing applies.${excludedBlock}${sameLangNote}${highlightsBlock}
+  verbs/prepositions). Skip the object entirely when nothing applies.${excludedBlock}${translationModeNote}${highlightsBlock}
 
 Segments (id followed by text):
 ${segmentLines}`
@@ -304,7 +309,7 @@ segment_id, translation, definition, target_example, native_example. Populate
 the optional \`grammar\` object per chunk when relevant for the target
 language (see the system prompt for per-language guidance).
 The learner is at ${cefrLevel}, native language ${nativeLanguage}, target
-${targetLanguage}. Headwords must be in dictionary citation form (lemmatized).${sameLangNote}${highlightsBlock}
+${targetLanguage}. Headwords must be in dictionary citation form (lemmatized).${translationModeNote}${highlightsBlock}
 
 Segments (id followed by text — only for context, do NOT mine them for new chunks):
 ${segmentLines}`
@@ -322,8 +327,10 @@ ${segmentLines}`
       targetLanguage,
       cefrLevel,
       movieContextBlob,
+      hideTranslationFields: shouldHideTranslationFields,
+      allowL1Notes,
     }),
-    tools: [buildTool(sameLanguage)],
+    tools: [buildTool(shouldHideTranslationFields)],
     tool_choice: { type: 'tool', name: TOOL_NAME },
     messages: [{ role: 'user', content: userMessage }],
   })

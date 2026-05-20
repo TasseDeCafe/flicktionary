@@ -64,7 +64,7 @@ export const TriageListView = () => {
   const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
   const sameLanguage =
     !!session && !!nativeLanguage && nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
-  const hideNativeFields =
+  const hideTranslationFields =
     sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, session?.targetLanguage ?? null)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
   const { mutate: updateStatusBatch, isPending: isBatchPending } = useUpdateCardStatusBatch(sessionId)
@@ -175,7 +175,7 @@ export const TriageListView = () => {
                     key={card.id}
                     sessionId={sessionId}
                     card={card}
-                    hideNativeFields={hideNativeFields}
+                    hideTranslationFields={hideTranslationFields}
                     onStatusChange={handleStatusChange}
                   />
                 ))}
@@ -201,7 +201,7 @@ export const TriageListView = () => {
                     key={card.id}
                     sessionId={sessionId}
                     card={card}
-                    hideNativeFields={hideNativeFields}
+                    hideTranslationFields={hideTranslationFields}
                     onStatusChange={handleStatusChange}
                   />
                 ))}
@@ -212,7 +212,7 @@ export const TriageListView = () => {
           <AutoRejectedCollapsible
             sessionId={sessionId}
             cards={grouped.autoRejected}
-            hideNativeFields={hideNativeFields}
+            hideTranslationFields={hideTranslationFields}
             onStatusChange={handleStatusChange}
           />
         </div>

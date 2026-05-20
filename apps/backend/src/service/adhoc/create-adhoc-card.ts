@@ -12,7 +12,7 @@ import { basicDataPass, HighlightInput } from '../../transport/third-party/anthr
 import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
 import { getOrCreateAdhocSession } from './get-or-create-adhoc-session'
 
 export type CreateAdhocCardDependencies = {
@@ -63,7 +63,7 @@ export const createAdhocCard = async (params: {
 }): Promise<CreateAdhocCardResult> => {
   const { userId, targetLanguage, headword, context, deps } = params
 
-  const languagePrefs = await getEffectiveNativeLanguage({
+  const languagePrefs = await getLanguageMode({
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
@@ -130,6 +130,8 @@ export const createAdhocCard = async (params: {
       highlights: [highlightInput],
       excludedHeadwordSenses: [],
       llmDiscoveryEnabled: false,
+      hideTranslationFields: languagePrefs.hideTranslationFields,
+      allowL1Notes: languagePrefs.allowL1Notes,
     })
   } catch (e) {
     logCustomErrorMessageAndError(`createAdhocCard: basicDataPass failed for userId=${userId}`, e)
@@ -144,6 +146,7 @@ export const createAdhocCard = async (params: {
     newHighlights: [highlightInput],
     processedHighlightIds: new Set<string>(),
     segmentIdSet: new Set([segment.id]),
+    hideTranslationFields: languagePrefs.hideTranslationFields,
     cardsRepository: deps.cardsRepository,
     userLookupsRepository: deps.userLookupsRepository,
   })

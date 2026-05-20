@@ -29,11 +29,13 @@ type EnrichmentPassArgs = {
   movieContextBlob: string
   surfaceForm: string
   surroundingSegments: string
+  hideTranslationFields?: boolean
+  allowL1Notes?: boolean
   userNote?: string | null
   presetTags?: string[]
 }
 
-const tool: Anthropic.Tool = {
+const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean }): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
     'Submit a deep enrichment of a single chunk for the learner. Required fields are the basic columns (you may refine them based on the surrounding context). Optional fields all live inside `extras` and may be omitted individually when not relevant.',
@@ -53,8 +55,9 @@ const tool: Anthropic.Tool = {
       surface_form: { type: 'string' },
       translation: {
         type: 'string',
-        description:
-          "Translation of the chunk into the learner's native language. When native and target languages match, set this to an empty string.",
+        description: args.hideTranslationFields
+          ? 'Set to an empty string. Translation fields are disabled for this target language.'
+          : "Translation of the chunk into the learner's native language.",
       },
       definition: {
         type: 'string',
@@ -67,8 +70,9 @@ const tool: Anthropic.Tool = {
       },
       native_example: {
         type: 'string',
-        description:
-          "A natural translation of `target_example` into the learner's native language. Empty string when native and target languages match.",
+        description: args.hideTranslationFields
+          ? 'Set to an empty string. Native example fields are disabled for this target language.'
+          : "A natural translation of `target_example` into the learner's native language.",
       },
       extras: {
         type: 'object',
@@ -89,7 +93,12 @@ const tool: Anthropic.Tool = {
           },
           collocations: { type: 'array', items: { type: 'string' } },
           etymology: { type: 'string' },
-          l1_notes: { type: ['string', 'null'] },
+          l1_notes: {
+            type: ['string', 'null'],
+            description: args.allowL1Notes
+              ? "Optional contrastive note tied to the learner's native language."
+              : 'Set to null. L1 notes are disabled when there is no distinct native language.',
+          },
           notes: { type: ['string', 'null'] },
           context_segment: { type: 'string' },
         },
@@ -151,7 +160,7 @@ const tool: Anthropic.Tool = {
       'extras',
     ],
   },
-}
+})
 
 export const enrichmentPass = async ({
   nativeLanguage,
@@ -160,16 +169,24 @@ export const enrichmentPass = async ({
   movieContextBlob,
   surfaceForm,
   surroundingSegments,
+  hideTranslationFields = false,
+  allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
   userNote,
   presetTags,
 }: EnrichmentPassArgs): Promise<EnrichmentOutput> => {
   const presetBlock = presetTags && presetTags.length ? `\nPreset emphasis: ${presetTags.join(', ')}` : ''
   const noteBlock = userNote ? `\nLearner note: ${userNote}` : ''
+  const translationModeBlock = hideTranslationFields
+    ? `\nTranslation fields are disabled for this target language. Set translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
+    : ''
+  const l1NotesBlock = allowL1Notes
+    ? `\nYou may include extras.l1_notes for contrastive traps involving the learner's native language.`
+    : `\nDo not include extras.l1_notes.`
 
   const userMessage = `Enrich this chunk: "${surfaceForm}"
 
 Surrounding segments:
-${surroundingSegments}${noteBlock}${presetBlock}
+${surroundingSegments}${noteBlock}${presetBlock}${translationModeBlock}${l1NotesBlock}
 
 Submit the enrichment via the tool. Required fields are the basic columns
 (headword, sense, surface_form, translation, definition, target_example,
@@ -188,8 +205,10 @@ fill. Skip the \`grammar\` object entirely when nothing applies.`
       targetLanguage,
       cefrLevel,
       movieContextBlob,
+      hideTranslationFields,
+      allowL1Notes,
     }),
-    tools: [tool],
+    tools: [buildTool({ hideTranslationFields, allowL1Notes })],
     tool_choice: { type: 'tool', name: TOOL_NAME },
     messages: [{ role: 'user', content: userMessage }],
   })

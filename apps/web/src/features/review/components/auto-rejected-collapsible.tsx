@@ -8,11 +8,11 @@ import { TriageRow } from './triage-row'
 type Props = {
   sessionId: string
   cards: Card[]
-  hideNativeFields?: boolean
+  hideTranslationFields?: boolean
   onStatusChange: (cardId: string, status: CardStatus) => void
 }
 
-export const AutoRejectedCollapsible = ({ sessionId, cards, hideNativeFields = false, onStatusChange }: Props) => {
+export const AutoRejectedCollapsible = ({ sessionId, cards, hideTranslationFields = false, onStatusChange }: Props) => {
   const { t } = useLingui()
   const [open, setOpen] = useState(false)
   const filteredCount = cards.length
@@ -30,7 +30,7 @@ export const AutoRejectedCollapsible = ({ sessionId, cards, hideNativeFields = f
               key={card.id}
               sessionId={sessionId}
               card={card}
-              hideNativeFields={hideNativeFields}
+              hideTranslationFields={hideTranslationFields}
               onStatusChange={onStatusChange}
             />
           ))}

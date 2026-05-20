@@ -12,7 +12,12 @@ import { TextSegmentsRepositoryInterface } from '../../transport/database/text-s
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
+import {
+  sanitizeExplorationExtrasForLanguageMode,
+  sanitizeTextFieldsForLanguageMode,
+} from '../user-prefs/language-output-guards'
+import type { LanguageOutputMode } from '../user-prefs/language-output-guards'
 
 export type RunCardChatDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -67,7 +72,7 @@ const updateCardFieldsTool: Anthropic.Tool = {
   },
 }
 
-const renderCardForChat = (card: DbCardWithChunk, hideNativeFields: boolean): string => {
+const renderCardForChat = (card: DbCardWithChunk, mode: LanguageOutputMode): string => {
   const lines = [
     `- headword: ${card.chunk.headword}`,
     `- sense: ${card.chunk.sense || '(none)'}`,
@@ -75,7 +80,7 @@ const renderCardForChat = (card: DbCardWithChunk, hideNativeFields: boolean): st
     `- definition: ${card.chunk.definition ?? '(none)'}`,
     `- target_example: ${card.chunk.target_example ?? '(none)'}`,
   ]
-  if (!hideNativeFields) {
+  if (!mode.hideTranslationFields) {
     lines.push(`- translation: ${card.chunk.translation ?? '(none)'}`)
     lines.push(`- native_example: ${card.chunk.native_example ?? '(none)'}`)
   }
@@ -86,7 +91,7 @@ const renderCardForChat = (card: DbCardWithChunk, hideNativeFields: boolean): st
     lines.push('- grammar: (empty)')
   }
   const extras = { ...((card.chunk.exploration_extras ?? {}) as Record<string, unknown>) }
-  if (hideNativeFields) {
+  if (!mode.allowL1Notes) {
     delete extras.l1_notes
   }
   if (Object.keys(extras).length > 0) {
@@ -100,21 +105,24 @@ const renderCardForChat = (card: DbCardWithChunk, hideNativeFields: boolean): st
 const buildSeedUserTurn = (
   card: DbCardWithChunk,
   surroundingSegmentsBlock: string,
-  hideNativeFields: boolean
+  mode: LanguageOutputMode
 ): string => {
-  const editableFields = hideNativeFields
+  const editableFields = mode.hideTranslationFields
     ? 'definition, target-language example, grammar, etc.'
     : 'translation, example sentence, definition, etc.'
+  const translationModeNote = mode.hideTranslationFields
+    ? `\nTranslation fields are hidden for this target language: do not call \`${UPDATE_TOOL_NAME}\` with translation or native_example. If the learner explicitly asks for a native-language translation, you may answer conversationally, but do not store or backfill those card fields.`
+    : ''
 
   return `Card under discussion:
-${renderCardForChat(card, hideNativeFields)}
+${renderCardForChat(card, mode)}
 
 Surrounding segments:
 ${surroundingSegmentsBlock}
 
 When the learner asks you to change something on the card (${editableFields}),
 call the \`${UPDATE_TOOL_NAME}\` tool with only the fields that should change. Do not echo unchanged fields.
-Confirm the change briefly in your reply.`
+Confirm the change briefly in your reply.${translationModeNote}`
 }
 
 const summarizeOlderTurns = (older: DbCardChatMessage[]): string => {
@@ -230,7 +238,7 @@ export const runCardChat = async (
   const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, input.userId)
   if (!session) throw new Error('Session not found')
 
-  const languagePrefs = await getEffectiveNativeLanguage({
+  const languagePrefs = await getLanguageMode({
     userId: input.userId,
     targetLanguage: session.target_language,
     snapshotNativeLanguage: session.native_language,
@@ -242,7 +250,9 @@ export const runCardChat = async (
     {
       sessionId: card.study_session_id,
       userId: input.userId,
-      nativeLanguageOverride: languagePrefs.nativeLanguage ?? undefined,
+      nativeLanguage: languagePrefs.nativeLanguage ?? undefined,
+      hideTranslationFields: languagePrefs.hideTranslationFields,
+      allowL1Notes: languagePrefs.allowL1Notes,
     },
     deps.studySessionsRepository
   )
@@ -261,7 +271,7 @@ export const runCardChat = async (
   const { older, recent } = splitTurns(prior)
   const summary = summarizeOlderTurns(older)
 
-  const seedTurn = buildSeedUserTurn(card, surroundingFormatted, languagePrefs.hideNativeFields)
+  const seedTurn = buildSeedUserTurn(card, surroundingFormatted, languagePrefs)
   const seedWithSummary = summary ? `${seedTurn}\n\n${summary}` : seedTurn
 
   const messages: Anthropic.MessageParam[] = [
@@ -295,6 +305,29 @@ export const runCardChat = async (
   if (toolUse && toolUse.type === 'tool_use' && toolUse.name === UPDATE_TOOL_NAME) {
     const parsed = parseToolInput(toolUse.input)
     if (parsed) {
+      const hiddenTranslationPatchAttempted =
+        languagePrefs.hideTranslationFields &&
+        (parsed.patch.translation !== null || parsed.patch.nativeExample !== null)
+      if (languagePrefs.hideTranslationFields) {
+        parsed.patch.translation = null
+        parsed.patch.nativeExample = null
+        parsed.changedFieldNames = parsed.changedFieldNames.filter(
+          (name) => name !== 'translation' && name !== 'native_example'
+        )
+      }
+      parsed.patch.extrasPatch = sanitizeExplorationExtrasForLanguageMode(parsed.patch.extrasPatch, languagePrefs)
+      if (parsed.patch.extrasPatch === null) {
+        parsed.changedFieldNames = parsed.changedFieldNames.filter((name) => name !== 'extras')
+      }
+      const sanitizedText = sanitizeTextFieldsForLanguageMode(
+        {
+          translation: parsed.patch.translation,
+          nativeExample: parsed.patch.nativeExample,
+        },
+        languagePrefs
+      )
+      parsed.patch.translation = sanitizedText.translation ?? null
+      parsed.patch.nativeExample = sanitizedText.nativeExample ?? null
       // surface_form lives on the card itself; everything else lives on the
       // canonical chunk (user_lookups). We split the patch across the two
       // repositories accordingly.
@@ -307,7 +340,8 @@ export const runCardChat = async (
         parsed.patch.targetExample !== null ||
         parsed.patch.nativeExample !== null ||
         parsed.patch.extrasPatch !== null ||
-        parsed.patch.grammarPatch !== null
+        parsed.patch.grammarPatch !== null ||
+        hiddenTranslationPatchAttempted
       if (contentTouched) {
         await deps.userLookupsRepository.updateContent({
           id: card.user_lookup_id,
@@ -315,6 +349,8 @@ export const runCardChat = async (
           definition: parsed.patch.definition,
           targetExample: parsed.patch.targetExample,
           nativeExample: parsed.patch.nativeExample,
+          clearTranslation: languagePrefs.hideTranslationFields,
+          clearNativeExample: languagePrefs.hideTranslationFields,
           explorationExtrasPatch: parsed.patch.extrasPatch,
           grammarPatch: parsed.patch.grammarPatch,
         })

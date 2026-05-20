@@ -10,7 +10,7 @@ import {
   type PracticeSessionLimits,
   type UsersRepositoryInterface,
 } from '../../transport/database/users/users-repository'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
 
 export type StartPracticeSessionDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
@@ -49,7 +49,7 @@ export const startPracticeSession = async (
   mode: PracticeSessionMode,
   deps: StartPracticeSessionDependencies
 ): Promise<StartPracticeSessionResult> => {
-  const languagePrefs = await getEffectiveNativeLanguage({
+  const languagePrefs = await getLanguageMode({
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,

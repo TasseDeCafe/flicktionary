@@ -8,7 +8,7 @@ import type { UserLookupsRepositoryInterface } from '../../transport/database/us
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { generatePracticeText } from '../../transport/third-party/anthropic/passes/generate-practice-text'
-import { getEffectiveNativeLanguage } from '../user-prefs/effective-native-language'
+import { getLanguageMode } from '../user-prefs/language-mode'
 
 export type GenerateNextPracticeTextDependencies = {
   practiceSessionsRepository: PracticeSessionsRepositoryInterface
@@ -135,9 +135,20 @@ const runGenerationForSlot = async (params: {
   userId: string
   targetLanguage: string
   nativeLanguage: string
+  hideTranslationFields: boolean
+  allowL1Notes: boolean
   deps: GenerateNextPracticeTextDependencies
 }): Promise<{ ok: true; practiceText: DbPracticeText } | { ok: false; warning: string }> => {
-  const { slotId, practiceSessionId, userId, targetLanguage, nativeLanguage, deps } = params
+  const {
+    slotId,
+    practiceSessionId,
+    userId,
+    targetLanguage,
+    nativeLanguage,
+    hideTranslationFields,
+    allowL1Notes,
+    deps,
+  } = params
 
   const claim = await deps.practiceTextsRepository.claimGenerating(slotId)
   if (!claim) {
@@ -186,6 +197,8 @@ const runGenerationForSlot = async (params: {
       targetLanguage,
       cefrLevel,
       chunks,
+      hideTranslationFields,
+      allowL1Notes,
       rescueMode,
     })
     if (result.usedChunks.length === 0) {
@@ -244,7 +257,7 @@ export const generateNextPracticeText = async (
 
   const targetLanguage = session.target_language
 
-  const languagePrefs = await getEffectiveNativeLanguage({
+  const languagePrefs = await getLanguageMode({
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
@@ -279,6 +292,8 @@ export const generateNextPracticeText = async (
         userId,
         targetLanguage,
         nativeLanguage: languagePrefs.nativeLanguage,
+        hideTranslationFields: languagePrefs.hideTranslationFields,
+        allowL1Notes: languagePrefs.allowL1Notes,
         deps,
       })
       if (result.ok) {
@@ -357,7 +372,7 @@ export const prepareNextPracticeText = async (
 
   const targetLanguage = session.target_language
 
-  const languagePrefs = await getEffectiveNativeLanguage({
+  const languagePrefs = await getLanguageMode({
     userId,
     targetLanguage,
     usersRepository: deps.usersRepository,
@@ -386,6 +401,8 @@ export const prepareNextPracticeText = async (
     userId,
     targetLanguage,
     nativeLanguage: languagePrefs.nativeLanguage,
+    hideTranslationFields: languagePrefs.hideTranslationFields,
+    allowL1Notes: languagePrefs.allowL1Notes,
     deps,
   })
     .then((result) => {

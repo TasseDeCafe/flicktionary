@@ -38,6 +38,28 @@ type BuildMethodologySystemArgs = {
   targetLanguage: string
   cefrLevel: string
   movieContextBlob: string
+  hideTranslationFields?: boolean
+  allowL1Notes?: boolean
+}
+
+const buildTranslationModeBlock = (args: { hideTranslationFields?: boolean; allowL1Notes?: boolean }): string => {
+  const lines = ['Translation field mode:']
+  if (args.hideTranslationFields) {
+    lines.push('- Do not populate card fields `translation` or `native_example`; set them to null or empty.')
+    lines.push('- Keep definitions, target examples, glosses, and general explanations in the target language.')
+  } else {
+    lines.push(
+      "- Populate `translation` and `native_example` in the learner's native language when those fields are requested."
+    )
+  }
+  if (args.allowL1Notes) {
+    lines.push(
+      "- You may still populate `extras.l1_notes` for false friends, transfer mistakes, translation traps, or other contrastive notes tied to the learner's real native language."
+    )
+  } else {
+    lines.push('- Do not populate `extras.l1_notes`.')
+  }
+  return lines.join('\n')
 }
 
 // Builds a system prompt as an array of TextBlockParam, with a single ephemeral
@@ -48,6 +70,8 @@ export const buildMethodologySystem = ({
   targetLanguage,
   cefrLevel,
   movieContextBlob,
+  hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
+  allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
 }: BuildMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
@@ -58,12 +82,14 @@ export const buildMethodologySystem = ({
 ${movieContextBlob}`
 
   const languageInstructions = getLanguageInstructions(targetLanguage)
+  const translationMode = buildTranslationModeBlock({ hideTranslationFields, allowL1Notes })
 
   const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
   if (languageInstructions) {
     blocks.push({ type: 'text', text: languageInstructions })
   }
   blocks.push({ type: 'text', text: userProfile })
+  blocks.push({ type: 'text', text: translationMode })
   blocks.push({ type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } })
   return blocks
 }
@@ -72,6 +98,8 @@ type BuildPracticeMethodologySystemArgs = {
   nativeLanguage: string
   targetLanguage: string
   cefrLevel: string
+  hideTranslationFields?: boolean
+  allowL1Notes?: boolean
 }
 
 // Variant for the Practice tab. Same cacheable prefix structure but without the
@@ -82,6 +110,8 @@ export const buildPracticeMethodologySystem = ({
   nativeLanguage,
   targetLanguage,
   cefrLevel,
+  hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
+  allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
 }: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
@@ -89,11 +119,13 @@ export const buildPracticeMethodologySystem = ({
 - CEFR level: ${cefrLevel}`
 
   const languageInstructions = getLanguageInstructions(targetLanguage)
+  const translationMode = buildTranslationModeBlock({ hideTranslationFields, allowL1Notes })
 
   const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
   if (languageInstructions) {
     blocks.push({ type: 'text', text: languageInstructions })
   }
+  blocks.push({ type: 'text', text: translationMode })
   blocks.push({ type: 'text', text: userProfile, cache_control: { type: 'ephemeral' } })
   return blocks
 }

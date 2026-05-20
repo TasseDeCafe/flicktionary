@@ -3,6 +3,7 @@ import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
 type FastGlossPassArgs = {
   targetLanguage: string
   nativeLanguage: string
+  hideTranslationFields?: boolean
   contextLine: string
   selectionText: string
 }
@@ -21,15 +22,19 @@ Where POS and register are single words and may be omitted (one or two trailing 
 export const fastGlossPass = async ({
   targetLanguage,
   nativeLanguage,
+  hideTranslationFields = false,
   contextLine,
   selectionText,
 }: FastGlossPassArgs): Promise<FastGloss> => {
+  const outputLanguageInstruction = hideTranslationFields
+    ? `Return a one-line definition/gloss in ${targetLanguage}.`
+    : `Return a one-line gloss in ${nativeLanguage} (or a one-line definition in ${targetLanguage} if the languages match).`
   const userMessage = `Target: ${targetLanguage}
 Native: ${nativeLanguage}
 Context line: ${contextLine}
 Selection: ${selectionText}
 
-Return a one-line gloss in ${nativeLanguage} (or a one-line definition in ${targetLanguage} if the languages match). Optionally a single POS tag and a single register tag.`
+${outputLanguageInstruction} Optionally a single POS tag and a single register tag.`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_HAIKU,
