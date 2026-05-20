@@ -85,6 +85,7 @@ export const PracticeSessionView = () => {
   // Plain-span selection (peek + Save). Stays open until the user closes or
   // saves; saving creates an adhoc card and navigates to its focus view.
   const [lookupSelection, setLookupSelection] = useState<PlainSelection | null>(null)
+  const [lookupOpen, setLookupOpen] = useState(false)
   // Index of the annotation the delete-confirm sheet is operating on. We keep
   // a separate slot from `openIndex` because the rate sheet closes when the
   // confirm opens, but we still need to know which chunk to delete.
@@ -138,6 +139,7 @@ export const PracticeSessionView = () => {
     setDeleteConfirmOpen(false)
     setPendingDeleteIndex(null)
     setLookupSelection(null)
+    setLookupOpen(false)
   }, [currentTextId])
 
   // Eager pre-gen (Problem 4): kick off the next slot as soon as a fresh
@@ -206,6 +208,11 @@ export const PracticeSessionView = () => {
     setRateAnchor(element)
     setOpenIndex(index)
     setSheetOpen(true)
+  }
+
+  const handlePlainSelection = (selection: PlainSelection) => {
+    setLookupSelection(selection)
+    setLookupOpen(true)
   }
 
   const handleRate = (rating: RateValue) => {
@@ -388,7 +395,7 @@ export const PracticeSessionView = () => {
                     body={currentText.body}
                     annotations={annotations}
                     onAnnotationClick={handleAnnotationClick}
-                    onPlainSelection={setLookupSelection}
+                    onPlainSelection={handlePlainSelection}
                   />
                 </article>
               )}
@@ -488,13 +495,13 @@ export const PracticeSessionView = () => {
       />
       {targetLanguage && currentText?.body && currentText.id && (
         <LookupSheet
-          open={lookupSelection != null}
+          open={lookupOpen}
           selection={lookupSelection}
           practiceTextId={currentText.id}
           practiceSessionId={practiceSessionId}
           practiceTextBody={currentText.body}
           targetLanguage={targetLanguage}
-          onClose={() => setLookupSelection(null)}
+          onClose={() => setLookupOpen(false)}
         />
       )}
     </ModalScreen>
