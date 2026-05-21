@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Sparkles, Star, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, ExternalLink, Sparkles, Star, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import {
@@ -131,6 +131,16 @@ export const FocusView = () => {
   }
   useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext })
 
+  // Brief "pressed" highlight before auto-advance: optimistic cache updates only
+  // flip `status`, not `learning_mode`, so we can't rely on derived state alone
+  // for the visual confirmation. Reset on cardId change so the next card mounts
+  // with a clean slate. Declared above the early returns to keep hook order
+  // stable across loading/empty states.
+  const [pendingAction, setPendingAction] = useState<'reject' | 'passive' | 'active' | null>(null)
+  useEffect(() => {
+    setPendingAction(null)
+  }, [cardId])
+
   const closeToTriage = () => {
     if (from === 'vocabulary') {
       void navigate({ to: '/vocabulary' })
@@ -158,8 +168,6 @@ export const FocusView = () => {
     )
   }
 
-  const isKept = card.status === 'kept'
-  const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
   const hasExtras = Object.keys(card.chunk.explorationExtras ?? {}).length > 0
   const hasBasicData = !!(
     (card.chunk.translation && card.chunk.translation.trim().length > 0) ||
@@ -186,48 +194,33 @@ export const FocusView = () => {
   // Show the chunk's headword as the title instead.
   const isLanguageWideEntry = fromVocabulary || fromPractice
   const title = isLanguageWideEntry ? card.chunk.headword : positionLabel
-  const rightSlot = isLanguageWideEntry ? undefined : (
-    <>
-      <Button
-        size='icon-sm'
-        variant={isKept ? 'default' : 'outline'}
-        onClick={() => updateStatus({ cardId: card.id, status: isKept ? 'pending' : 'kept' })}
-        aria-label={t`Keep`}
-      >
-        <Check className='h-4 w-4' />
-      </Button>
-      <Button
-        size='icon-sm'
-        variant={isRejected ? 'default' : 'outline'}
-        onClick={() => updateStatus({ cardId: card.id, status: isRejected ? 'pending' : 'rejected' })}
-        aria-label={t`Reject`}
-      >
-        <X className='h-4 w-4' />
-      </Button>
-    </>
-  )
+
+  // Advance to the next card on a triage decision; if we're on the last card,
+  // bounce back to the triage list so the user isn't stranded.
+  const advanceOrClose = () => {
+    if (cursor.next) goNext()
+    else closeToTriage()
+  }
+
+  const triggerAction = (action: 'reject' | 'passive' | 'active') => {
+    if (pendingAction) return
+    setPendingAction(action)
+    if (action === 'reject') {
+      if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
+    } else if (action === 'passive') {
+      if (card.status !== 'kept' || card.chunk.learningMode !== 'passive') {
+        updateStatus({ cardId: card.id, status: 'kept', learningMode: 'passive' })
+      }
+    } else {
+      if (card.status !== 'kept' || card.chunk.learningMode !== 'active') {
+        updateStatus({ cardId: card.id, status: 'kept', learningMode: 'active' })
+      }
+    }
+    setTimeout(() => advanceOrClose(), 220)
+  }
 
   return (
-    <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title} rightSlot={rightSlot}>
-      {!isLanguageWideEntry && (
-        <div className='flex items-center gap-2 border-b bg-white px-4 py-2'>
-          <div className='mx-auto flex w-full max-w-4xl items-center gap-2'>
-            <Button
-              variant='ghost'
-              size='icon-sm'
-              onClick={goPrev}
-              disabled={!cursor.prev}
-              aria-label={t`Previous card`}
-            >
-              <ArrowLeft className='h-4 w-4' />
-            </Button>
-            <Button variant='ghost' size='icon-sm' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
-              <ArrowRight className='h-4 w-4' />
-            </Button>
-          </div>
-        </div>
-      )}
-
+    <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title}>
       <div className='flex-1 overflow-y-auto px-4 py-4'>
         <div className='mx-auto flex max-w-4xl flex-col gap-6'>
           <section>
@@ -267,32 +260,6 @@ export const FocusView = () => {
                 sourceSessionId={sourceSessionId}
               />
             </div>
-            {isKept && !isLanguageWideEntry && (
-              <div className='mt-4 flex items-center gap-2'>
-                <span className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{t`Learning mode`}</span>
-                <div className='inline-flex overflow-hidden rounded-md border'>
-                  <Button
-                    size='sm'
-                    variant={card.chunk.learningMode === 'passive' ? 'default' : 'ghost'}
-                    className='rounded-none border-r'
-                    disabled={isSettingLearningMode}
-                    onClick={() => setLearningMode({ chunkId: card.chunk.id, learningMode: 'passive' })}
-                  >
-                    {t`Passive`}
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant={card.chunk.learningMode === 'active' ? 'default' : 'ghost'}
-                    className='rounded-none'
-                    disabled={isSettingLearningMode}
-                    onClick={() => setLearningMode({ chunkId: card.chunk.id, learningMode: 'active' })}
-                  >
-                    <Star className='mr-1 h-3 w-3' />
-                    {t`Active`}
-                  </Button>
-                </div>
-              </div>
-            )}
           </section>
 
           <section>
@@ -338,62 +305,143 @@ export const FocusView = () => {
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Chat`}</h2>
             <PerCardChat key={card.id} cardId={card.id} sessionId={sourceSessionId} />
           </section>
-
-          {isLanguageWideEntry && (
-            <div className='mt-2 flex flex-col gap-2'>
-              <Button
-                variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
-                size='xl'
-                className='w-full'
-                disabled={isSettingLearningMode}
-                onClick={() => {
-                  setLearningMode(
-                    { chunkId: card.chunk.id, learningMode: 'active' },
-                    {
-                      onSuccess: () => {
-                        if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
-                        else if (from === 'practice' && practiceSessionId) {
-                          void navigate({
-                            to: '/practice/$practiceSessionId',
-                            params: { practiceSessionId },
-                          })
-                        }
-                      },
-                    }
-                  )
-                }}
-              >
-                <Star className='mr-2 h-4 w-4' />
-                {t`Add to active vocabulary`}
-              </Button>
-              <Button
-                variant={card.chunk.learningMode === 'passive' ? 'default' : 'outline'}
-                size='xl'
-                className='w-full'
-                disabled={isSettingLearningMode}
-                onClick={() => {
-                  setLearningMode(
-                    { chunkId: card.chunk.id, learningMode: 'passive' },
-                    {
-                      onSuccess: () => {
-                        if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
-                        else if (from === 'practice' && practiceSessionId) {
-                          void navigate({
-                            to: '/practice/$practiceSessionId',
-                            params: { practiceSessionId },
-                          })
-                        }
-                      },
-                    }
-                  )
-                }}
-              >
-                {t`Add to passive vocabulary`}
-              </Button>
-            </div>
-          )}
         </div>
       </div>
+
+      {isLanguageWideEntry && (
+        <div className='shrink-0 border-t bg-white px-4 py-3'>
+          <div className='mx-auto flex w-full max-w-4xl flex-col gap-2'>
+            <Button
+              variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
+              size='xl'
+              className='w-full'
+              disabled={isSettingLearningMode}
+              onClick={() => {
+                setLearningMode(
+                  { chunkId: card.chunk.id, learningMode: 'active' },
+                  {
+                    onSuccess: () => {
+                      if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
+                      else if (from === 'practice' && practiceSessionId) {
+                        void navigate({
+                          to: '/practice/$practiceSessionId',
+                          params: { practiceSessionId },
+                        })
+                      }
+                    },
+                  }
+                )
+              }}
+            >
+              <Star className='mr-2 h-4 w-4' />
+              {t`Add to active vocabulary`}
+            </Button>
+            <Button
+              variant={card.chunk.learningMode === 'passive' ? 'default' : 'outline'}
+              size='xl'
+              className='w-full'
+              disabled={isSettingLearningMode}
+              onClick={() => {
+                setLearningMode(
+                  { chunkId: card.chunk.id, learningMode: 'passive' },
+                  {
+                    onSuccess: () => {
+                      if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
+                      else if (from === 'practice' && practiceSessionId) {
+                        void navigate({
+                          to: '/practice/$practiceSessionId',
+                          params: { practiceSessionId },
+                        })
+                      }
+                    },
+                  }
+                )
+              }}
+            >
+              {t`Add to passive vocabulary`}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!isLanguageWideEntry && (
+        <>
+          {/* Side-edge nav arrows: fixed to the viewport at mid-height so they
+              stay reachable while the user scrolls long cards. Solid white +
+              stronger border/shadow so they read clearly against text; chunkier
+              touch target on mobile. */}
+          <button
+            type='button'
+            onClick={goPrev}
+            disabled={!cursor.prev}
+            aria-label={t`Previous card`}
+            className='fixed top-1/2 left-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-gray-300 bg-white shadow-lg transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-30 md:h-11 md:w-11'
+          >
+            <ArrowLeft className='h-6 w-6' />
+          </button>
+          <button
+            type='button'
+            onClick={goNext}
+            disabled={!cursor.next}
+            aria-label={t`Next card`}
+            className='fixed top-1/2 right-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-gray-300 bg-white shadow-lg transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-30 md:h-11 md:w-11'
+          >
+            <ArrowRight className='h-6 w-6' />
+          </button>
+
+          <FocusActionBar
+            card={card}
+            pendingAction={pendingAction}
+            onReject={() => triggerAction('reject')}
+            onKeepPassive={() => triggerAction('passive')}
+            onKeepActive={() => triggerAction('active')}
+          />
+        </>
+      )}
     </ModalScreen>
+  )
+}
+
+type FocusActionBarProps = {
+  card: {
+    status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
+    chunk: { learningMode: 'passive' | 'active' }
+  }
+  // When set, overrides the state-derived highlight so the just-tapped button
+  // stays filled during the brief delay before navigation.
+  pendingAction: 'reject' | 'passive' | 'active' | null
+  onReject: () => void
+  onKeepPassive: () => void
+  onKeepActive: () => void
+}
+
+const FocusActionBar = ({ card, pendingAction, onReject, onKeepPassive, onKeepActive }: FocusActionBarProps) => {
+  const { t } = useLingui()
+  const isRejected = pendingAction
+    ? pendingAction === 'reject'
+    : card.status === 'rejected' || card.status === 'auto_rejected'
+  const isKeptPassive = pendingAction
+    ? pendingAction === 'passive'
+    : card.status === 'kept' && card.chunk.learningMode === 'passive'
+  const isKeptActive = pendingAction
+    ? pendingAction === 'active'
+    : card.status === 'kept' && card.chunk.learningMode === 'active'
+
+  return (
+    <div className='shrink-0 border-t bg-white px-4 py-3'>
+      <div className='mx-auto flex w-full max-w-4xl items-stretch gap-2'>
+        <Button size='xl' variant={isRejected ? 'destructive' : 'outline'} className='flex-1' onClick={onReject}>
+          <X className='mr-1 h-4 w-4' />
+          {t`Reject`}
+        </Button>
+        <Button size='xl' variant={isKeptPassive ? 'default' : 'outline'} className='flex-1' onClick={onKeepPassive}>
+          {t`Passive`}
+        </Button>
+        <Button size='xl' variant={isKeptActive ? 'default' : 'outline'} className='flex-1' onClick={onKeepActive}>
+          <Star className='mr-1 h-4 w-4' />
+          {t`Active`}
+        </Button>
+      </div>
+    </div>
   )
 }

@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Skeleton } from '@/components/ui/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
 import {
   useDeleteChunkFromPractice,
   useFinalizePracticeText,
@@ -65,6 +66,7 @@ export const PracticeSessionView = () => {
   const { mutate: prepareNextText } = usePrepareNextPracticeText()
   const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunkFromPractice(practiceSessionId)
   const { mutate: restoreChunk, isPending: isRestoring } = useRestoreChunkFromPractice(practiceSessionId)
+  const { mutate: setLearningMode, isPending: isTogglingLearningMode } = useSetLearningMode()
   const { data: userPrefs } = useGetUserPrefs()
 
   // Per-text map of annotation index -> the rating the user submitted. Used
@@ -186,6 +188,7 @@ export const PracticeSessionView = () => {
       grammar,
       targetLanguage,
       isDeleted: !!ann.deletedAt,
+      learningMode: ann.learningMode,
     }
   }, [openIndex, currentText, targetLanguage, userPrefs?.englishIpaDialect])
 
@@ -288,6 +291,20 @@ export const PracticeSessionView = () => {
     if (!ann?.userLookupId) return
     restoreChunk(
       { id: ann.userLookupId },
+      {
+        onSuccess: () => {
+          setSheetOpen(false)
+        },
+      }
+    )
+  }
+
+  // Flip the open chunk between passive and active vocabulary, then dismiss
+  // the sheet so the user sees the practice text again with the choice applied.
+  const handleToggleLearningMode = (next: 'passive' | 'active') => {
+    if (!openAnnotation?.userLookupId) return
+    setLearningMode(
+      { chunkId: openAnnotation.userLookupId, learningMode: next },
       {
         onSuccess: () => {
           setSheetOpen(false)
@@ -479,6 +496,8 @@ export const PracticeSessionView = () => {
         canEdit={!!openAnnotation?.cardId && !!openAnnotation?.cardSessionId}
         onEdit={handleEdit}
         onDelete={handleDeleteRequest}
+        onToggleLearningMode={handleToggleLearningMode}
+        isTogglingLearningMode={isTogglingLearningMode}
         onRestore={handleRestoreFromSheet}
         isRestoring={isRestoring}
       />

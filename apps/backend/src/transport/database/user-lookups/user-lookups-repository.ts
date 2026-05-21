@@ -1030,6 +1030,7 @@ const listChunkContentForKeys = async (params: {
     firstCardId: string | null
     firstCardSessionId: string | null
     deletedAt: Date | null
+    learningMode: LearningMode
   }>
 > => {
   if (params.keys.length === 0) return []
@@ -1043,6 +1044,7 @@ const listChunkContentForKeys = async (params: {
       ul.grammar,
       ul.first_card_id,
       ul.deleted_at,
+      ul.learning_mode,
       c.study_session_id AS first_card_session_id
     FROM public.user_lookups ul
     LEFT JOIN public.cards c ON c.id = ul.first_card_id
@@ -1058,6 +1060,7 @@ const listChunkContentForKeys = async (params: {
     first_card_id: string | null
     first_card_session_id: string | null
     deleted_at: Date | null
+    learning_mode: LearningMode
   }>
   return result.map((row) => ({
     id: row.id,
@@ -1069,6 +1072,7 @@ const listChunkContentForKeys = async (params: {
     firstCardId: row.first_card_id,
     firstCardSessionId: row.first_card_session_id,
     deletedAt: row.deleted_at,
+    learningMode: row.learning_mode,
   }))
 }
 
@@ -1216,6 +1220,7 @@ export interface UserLookupsRepositoryInterface {
       firstCardId: string | null
       firstCardSessionId: string | null
       deletedAt: Date | null
+      learningMode: LearningMode
     }>
   >
   listLanguagesForUser: (userId: string) => Promise<string[]>

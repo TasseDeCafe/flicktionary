@@ -78,6 +78,7 @@ export const useSetLearningMode = () => {
       onSettled: () => {
         void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
         void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.getSession.key() })
         void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
         void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key() })
       },

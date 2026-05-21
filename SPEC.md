@@ -175,11 +175,13 @@ Two-layer UI.
 
 **Layer 2 — Focus view (modal screen pushed above the tab navigator).**
 
-- Modal header: chevron-back to triage, position counter (`Card N of M`),
-  keep/reject toggles in the right slot.
-- Below the header: a compact toolbar with prev/next arrows and the
-  `Open in subtitles` deep-link (navigates to
-  `/sessions/$id?segment=<id>` and flashes the source line).
+- Modal header: chevron-back to triage + position counter (`Card N of M`)
+  only. Keep/reject and learning-mode controls live in the fixed bottom
+  action bar below — see the next-to-last bullet in this section.
+- Prev/next navigation uses two fixed, viewport-mid-height circular buttons
+  pinned to the left and right edges so they stay reachable on long cards;
+  the `Open in subtitles` deep-link still lives inside the collapsible
+  `Context` block.
 - Card section: each basic column gets its own labeled input — `Headword`,
   `Target example`, plus `Translation` + `Native example` (and optional
   `Definition`) when L1 ≠ L2 and the Show-translations pref is on, or just
@@ -219,16 +221,24 @@ Two-layer UI.
   `update_card_fields` to patch any basic column or merge into
   `exploration_extras` / `grammar` server-side; the assistant body gets
   a `_Updated: …_` italic line and the focus view re-fetches the card.
-- When the card's `status === 'kept'`, a `Learning mode` row inside the card
-  section exposes a two-button picker (`Passive` / `Active`) that toggles the
-  underlying `user_lookup.learning_mode` through `chunks.setLearningMode`.
-  Entered via `?from=vocabulary` or `?from=practice` the per-card keep/reject
-  toggles disappear (the term is kept by definition there), and instead the
-  bottom of the scroll body shows two stacked full-width buttons —
-  `Add to active vocabulary` and `Add to passive vocabulary` — that mutate
-  `learning_mode` and then return to the origin (`/vocabulary` or the practice
-  session).
-- Prev/next navigation through the kept set. Keyboard `j`/`k` and `←`/`→`.
+- A fixed bottom action bar carries the per-card decision. In the default
+  session-scope triage entry it shows three equal-width buttons —
+  `Reject` (destructive), `Passive` (default), `★ Active` (outline) — with
+  the button matching the card's current state filled, others outlined. A
+  tap fires the appropriate mutation (`cards.updateStatus` with
+  `learningMode` on the keep buttons; status-only on Reject), holds a brief
+  ~220ms confirmation highlight on the just-tapped button, then auto-advances
+  to the next card via the cursor. If the tapped card is the last one in the
+  cursor, the focus view closes back to the triage list instead. There is no
+  inline `Learning mode` row inside the card section — the bottom bar is the
+  single source of truth for both keep/reject and active/passive promotion.
+  Entered via `?from=vocabulary` or `?from=practice` the bar swaps to two
+  stacked full-width buttons (`Add to active vocabulary` /
+  `Add to passive vocabulary`) that mutate `learning_mode` via
+  `chunks.setLearningMode` and return to the origin (`/vocabulary` or the
+  practice session). The bottom bar lives as a flex sibling of the scroll
+  body so it stays anchored on long cards.
+- Keyboard `j`/`k` and `←`/`→` still drive prev/next.
 
 Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + grammar (if populated) + extras (if populated, including any per-chunk L1 notes). The user's question is the only dynamic turn.
 
@@ -244,7 +254,7 @@ A separate top-level destination from the per-session review flow. Practice is *
 - **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` is used by source/triage entry points that should keep the previous due+new passive behavior; `active_drill` snapshots only `learning_mode = 'active'` terms — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
 - **Session.** Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
 - **Generation prompt.** Methodology preamble + language instructions + user profile + the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`, `native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense, surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are unreliable at character arithmetic; the server locates each `surface_form` in `body` and computes offsets itself, claiming non-overlapping positions when a surface form repeats.
-- **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray; soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. A 3-dots overflow on the sheet opens `Edit term` (navigates to the focus view of the chunk's representative card with `?from=practice` so chevron-back returns to the same practice text) and `Delete from vocabulary` (soft-deletes the chunk via `chunks.deleteChunk` and shows a Sonner toast with a `Restore` action backed by `chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only variant of the RateSheet. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
+- **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray; soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. A 3-dots overflow on the sheet opens `Edit term` (navigates to the focus view of the chunk's representative card with `?from=practice` so chevron-back returns to the same practice text), `Switch to active vocabulary` / `Switch to passive vocabulary` (label flips based on the term's current `learning_mode`; calls `chunks.setLearningMode` and dismisses the sheet on success; hidden when the annotation has no canonical `user_lookup` row), and `Delete from vocabulary` (soft-deletes the chunk via `chunks.deleteChunk` and shows a Sonner toast with a `Restore` action backed by `chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only variant of the RateSheet. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
 - **Peek + save unannotated spans.** Selecting plain text in the body (text not covered by an annotation) opens a `LookupSheet` with a fast one-line gloss + optional POS / register chips. The gloss reuses the same Haiku-powered `fastGlossPass` as tap-to-translate in the session view, exposed as `practice.fastGloss` keyed to the practice text body (no highlight row needed, no server-side cache). `Save to vocabulary` routes the selection into the existing `cards.createAdhoc` adhoc flow (passing the practice text body as the LLM context, truncated to 2000 chars), then navigates to the new card's focus view with `?from=practice`.
 - **End condition.** When the eligible pool minus chunks already covered in this session is empty, `generateNextText` returns `done: true` and the session view shows an "All caught up" view. Eligibility is the frozen mode-aware snapshot in `practice_session_chunks`; live rows do not enter mid-session. New rows enter as `state='new'` lazily on first surfacing/rating and count against the per-day new-term allowance via `added_to_practice_at`.
 - **FSRS.** `ts-fsrs` package, default parameters with `enable_fuzz: true`. The adapter at `apps/backend/src/service/practice/fsrs.ts` round-trips `user_lookups` rows ↔ `ts-fsrs` Card objects.

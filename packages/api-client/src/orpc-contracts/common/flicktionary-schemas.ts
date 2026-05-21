@@ -299,6 +299,9 @@ export const PracticeAnnotationSchema = z.object({
   // strikethrough/Restore state for chunks the user just deleted from the
   // sheet, even after a refetch.
   deletedAt: z.string().nullable(),
+  // Current learning mode for the user_lookup row, so the rate sheet can show
+  // the right "Switch to passive/active" action. Null when no canonical row.
+  learningMode: LearningModeSchema.nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 
