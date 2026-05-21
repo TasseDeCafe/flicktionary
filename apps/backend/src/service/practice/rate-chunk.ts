@@ -86,9 +86,11 @@ const rateChunkUnlocked = async (
   })
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
 
-  const result = applyRating(lookup, rating, new Date())
-  await deps.userLookupsRepository.applyFsrsResult({
+  const pool = found.pool
+  const result = applyRating(lookup, rating, new Date(), pool)
+  await deps.userLookupsRepository.applyFsrsResultForPool({
     userLookupId: lookup.id,
+    pool,
     state: result.state,
     due: result.due,
     stability: result.stability,
@@ -104,6 +106,7 @@ const rateChunkUnlocked = async (
     targetLanguage: found.targetLanguage,
     headword,
     sense,
+    pool,
     rating,
     wasExplicit,
   })

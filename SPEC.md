@@ -163,10 +163,10 @@ Two-layer UI.
 **Layer 1 — Triage list (default landing).**
 
 - Two sections: "Your highlights" and "LLM-suggested chunks". Auto-rejected chunks collapsed under a `Show N filtered out` toggle.
-- Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, keep/reject toggle, tap target.
+- Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, a split-keep control (primary button keeps as passive; chevron opens a menu with `Keep as passive` / `Keep as active`), reject toggle, tap target. Rows whose underlying term is already in the active pool show a compact ★ `Active` indicator. `Keep all` defaults to passive — there is no bulk "Keep all as active" in v1.
 - Filter, search, sort across both sections.
 - Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
-- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). LLM-suggested chunks land as `pending` and require explicit triage. Below-CEFR LLM chunks are still `auto_rejected`.
+- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). LLM-suggested chunks land as `pending` and require explicit triage. Below-CEFR LLM chunks are still `auto_rejected`. Because highlights are kept by default, the `cards.updateStatus` endpoint honors a `learningMode` field even when the status is already `kept` — i.e. tapping `Keep as active` on a default-kept highlight promotes its `user_lookup` to the active pool rather than no-op-ing.
 - Sticky footer: `Practice these terms` button (full-width on mobile,
   right-aligned on desktop) that starts a Practice session in the session's
   target language. Disabled when no cards are kept. Per-session CSV export is
@@ -219,6 +219,15 @@ Two-layer UI.
   `update_card_fields` to patch any basic column or merge into
   `exploration_extras` / `grammar` server-side; the assistant body gets
   a `_Updated: …_` italic line and the focus view re-fetches the card.
+- When the card's `status === 'kept'`, a `Learning mode` row inside the card
+  section exposes a two-button picker (`Passive` / `Active`) that toggles the
+  underlying `user_lookup.learning_mode` through `chunks.setLearningMode`.
+  Entered via `?from=vocabulary` or `?from=practice` the per-card keep/reject
+  toggles disappear (the term is kept by definition there), and instead the
+  bottom of the scroll body shows two stacked full-width buttons —
+  `Add to active vocabulary` and `Add to passive vocabulary` — that mutate
+  `learning_mode` and then return to the origin (`/vocabulary` or the practice
+  session).
 - Prev/next navigation through the kept set. Keyboard `j`/`k` and `←`/`→`.
 
 Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + grammar (if populated) + extras (if populated, including any per-chunk L1 notes). The user's question is the only dynamic turn.
@@ -228,10 +237,11 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context 
 A separate top-level destination from the per-session review flow. Practice is **cross-session** — its review pool is every kept card the user has accumulated, regardless of which study session it came from.
 
 - **Pool source.** Every card with `status='kept'` flows into `user_lookup` automatically (the keep transition writes the row). `user_lookup` is the canonical "user vocabulary" record; it carries FSRS state per `(user_id, target_language, headword, sense)`.
-- **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (session in progress / follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`.
-- **Language action screen.** `/practice/language/$targetLanguage` owns the practice actions for that language with a sticky bottom action bar. The primary action is **Continue session** when an active session exists, and the secondary action is **End session**. Ending marks the active row `abandoned`; already-rated terms keep their ratings, while unrated terms remain available for future sessions. Without an active session, the primary action is **Review follow-ups** when already-introduced terms are due, otherwise **Learn new terms** or **Learn more anyway** depending on the daily new-term allowance. New terms are always an explicit action so starting another review session never silently increases future workload.
+- **Passive vs active pools.** Every kept term participates in the passive (recognition) pool — that's what the existing `srs_*` columns track. Users can additionally promote a deliberate subset of terms to the **active** pool via `user_lookup.learning_mode = 'active'`; those terms enter a parallel active-drill pool with its own SRS state under `active_srs_*`. Active membership is additive — an active term still appears in the passive practice queue when its passive SRS state is due. The two pools are independent: rating in passive practice only advances `srs_*`; rating in an active drill only advances `active_srs_*`. `practice_session.pool` carries the routing decision per session and gates which column family `rate-chunk` writes.
+- **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (session in progress / follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`. When the language has any active-pool terms the summary line appends `· N active`.
+- **Language action screen.** `/practice/language/$targetLanguage` splits the actions into two sections. **Vocabulary** owns the passive-pool actions: **Continue session** / **End session** when a passive session exists, otherwise **Review follow-ups** / **Learn new terms** / **Learn more anyway** depending on what's available. New terms are always an explicit action so starting another review session never silently increases future workload. **Active vocabulary** (rendered only when `activeTotal > 0`) owns the active-pool actions: **Drill active terms** when active terms are due or new, **Continue active drill** / **End active drill** when an active drill is in progress. Because the per-language session uniqueness is now per-pool, a passive session and an active drill can coexist for the same language; ending one does not touch the other.
 - **Stale session URLs.** Reloading or deep-linking to `/practice/$sessionId` for a completed/abandoned session silently redirects back to that language's action screen. Background pre-generation is opportunistic and must not show user-facing errors for inactive sessions.
-- **Session modes.** A practice session is scoped to one target language and one start mode: `review_due` snapshots only already-introduced due terms; `learn_new` snapshots unseen terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` is used by source/triage entry points that should keep the previous due+new behavior. The one-active-session-per-language rule still wins: starting while an active session exists resumes that session.
+- **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` is used by source/triage entry points that should keep the previous due+new passive behavior; `active_drill` snapshots only `learning_mode = 'active'` terms — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
 - **Session.** Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
 - **Generation prompt.** Methodology preamble + language instructions + user profile + the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`, `native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense, surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are unreliable at character arithmetic; the server locates each `surface_form` in `body` and computes offsets itself, claiming non-overlapping positions when a surface form repeats.
 - **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray; soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. A 3-dots overflow on the sheet opens `Edit term` (navigates to the focus view of the chunk's representative card with `?from=practice` so chevron-back returns to the same practice text) and `Delete from vocabulary` (soft-deletes the chunk via `chunks.deleteChunk` and shows a Sonner toast with a `Restore` action backed by `chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only variant of the RateSheet. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
@@ -244,9 +254,9 @@ A separate top-level destination from the per-session review flow. Practice is *
 
 A separate top-level destination at `/vocabulary` for cross-session browsing of the user's kept chunks. The same `user_lookups` rows feed Practice and this view.
 
-- **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + count badge when the chunk has been kept multiple times.
+- **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Learning-mode pills: `All` (default) / `Passive` / `Active` — selection syncs with the `?mode=passive|active` search param so reload survives. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + a compact ★ `Active` chip when `learning_mode = 'active'` + count badge when the chunk has been kept multiple times.
 - **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
-- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: `Open source` (jumps to `/sessions/$id` for the originating session) and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so Open source / Delete remain reachable.
+- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: `Switch to active vocabulary` / `Switch to passive vocabulary` (toggles `learning_mode`), `Open source` (jumps to `/sessions/$id` for the originating session), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
 - **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Two restore paths: (a) re-keeping the same `(headword, sense)` in any session — the keep-transition clears `deleted_at`; (b) the explicit `Restore` action the Practice reading view surfaces (toast immediately after a delete; slim Restore-only RateSheet when tapping a soft-deleted annotation), backed by the dedicated `chunks.restoreChunk` endpoint. The Vocabulary tab itself has no Trash bin in v1.
 - **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki-compatible columns; same shape per-session export used to produce). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
 
@@ -475,7 +485,15 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- (floored at 0). SRS state is preserved
                                     -- across un-keep so re-keeping resumes the
                                     -- schedule.
-  -- Practice / FSRS state. Null until the row enters its first practice session.
+  learning_mode       'passive' | 'active' default 'passive'
+                                    -- per-term knob. Every kept term lives in
+                                    -- the passive (recognition) pool. Promoting
+                                    -- to 'active' also enters the parallel
+                                    -- active-drill pool. Demote preserves
+                                    -- active_srs_* so future re-promotion
+                                    -- resumes the active schedule.
+  -- Passive-pool SRS / FSRS state. Null until the row enters its first
+  -- passive practice session.
   srs_state           'new' | 'learning' | 'review' | 'relearning'?
   srs_due             timestamptz?
   srs_stability       real?
@@ -483,7 +501,20 @@ user_lookup                          -- cross-source dedup + canonical user voca
   srs_last_review     timestamptz?
   srs_reps            int default 0
   srs_lapses          int default 0
-  added_to_practice_at timestamptz?
+  added_to_practice_at timestamptz? -- passive-pool first-introduction stamp.
+                                    -- Drives the daily new-term cap; the active
+                                    -- pool deliberately does NOT touch it so
+                                    -- starting a drill never eats passive
+                                    -- daily-new allowance.
+  -- Active-pool SRS / FSRS state. Independent of the passive columns.
+  -- Null until the row enters its first active drill.
+  active_srs_state    'new' | 'learning' | 'review' | 'relearning'?
+  active_srs_due      timestamptz?
+  active_srs_stability real?
+  active_srs_difficulty real?
+  active_srs_last_review timestamptz?
+  active_srs_reps     int default 0
+  active_srs_lapses   int default 0
   created_at          timestamptz   -- powers Vocabulary "Recently added" sort
   deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
   primary key (id)
@@ -493,6 +524,12 @@ practice_session
   id                  uuid pk
   user_id             uuid
   target_language     text
+  pool                'passive' | 'active' default 'passive'
+                                    -- which SRS column family this session
+                                    -- reads/writes. The (user, target_language,
+                                    -- pool) tuple is unique among status='active'
+                                    -- rows, so a passive session and an active
+                                    -- drill can coexist for the same language.
   status              'active' | 'completed' | 'abandoned'
   started_at          timestamptz
   ended_at            timestamptz?
@@ -519,6 +556,10 @@ practice_rating                      -- audit log of every rating event (explici
   target_language     text
   headword            text
   sense               text          -- composite FK to user_lookup
+  pool                'passive' | 'active' default 'passive'
+                                    -- mirrors practice_session.pool so the
+                                    -- audit log identifies which SRS column
+                                    -- family this rating advanced.
   rating              'again' | 'hard' | 'good' | 'easy'
   was_explicit        bool          -- false = implicit-good applied on Next-text advance
   rated_at            timestamptz
@@ -767,3 +808,4 @@ cached result instantly.
 - Multi-deck organization (per language pair, or by tag).
 - Spaced-repetition history pulled back from Anki to close the loop.
 - Practice v2: pre-generation pipeline (queue 2–3 texts ahead of the user), coverage-guarantee + cleanup pass for chunks the LLM persistently fails to fit naturally, flashcard fallback view for those, custom FSRS parameters, audio TTS for generated texts. (The browseable "my vocabulary" list shipped as the Vocabulary tab — Delete there is the "remove from practice" affordance.)
+- Production-oriented active drills. v1 of the active pool reuses the same generated-text Practice experience — the active drill snapshots only `learning_mode='active'` rows and advances `active_srs_*`, but the reading UX is otherwise identical to passive practice. v2 explores drill formats that target production specifically (cloze, prompted recall, dictation/typing) so the active label cashes out as a different exercise rather than the same exercise over a different pool.

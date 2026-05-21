@@ -1,6 +1,7 @@
 import postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import type { PracticePool } from '../user-lookups/user-lookups-repository'
 
 export type DbPracticeText = Tables<'practice_texts'>
 export type PracticeTextStatus = Database['public']['Enums']['practice_text_status']
@@ -141,28 +142,40 @@ const findById = async (id: string): Promise<DbPracticeText | null> => {
   return result[0] ?? null
 }
 
-// Ownership-checked fetch: joins through practice_sessions to verify user_id.
+// Ownership-checked fetch: joins through practice_sessions to verify user_id
+// and to carry the session's pool tag so the rating layer can advance the
+// correct SRS column family.
 const findByIdForUser = async (
   id: string,
   userId: string
-): Promise<{ practiceText: DbPracticeText; practiceSessionId: string; targetLanguage: string } | null> => {
+): Promise<{
+  practiceText: DbPracticeText
+  practiceSessionId: string
+  targetLanguage: string
+  pool: PracticePool
+} | null> => {
   const result = (await sql`
-    SELECT pt.*, ps.target_language AS session_target_language, ps.user_id AS session_user_id
+    SELECT pt.*,
+           ps.target_language AS session_target_language,
+           ps.user_id AS session_user_id,
+           ps.pool AS session_pool
     FROM public.practice_texts pt
     JOIN public.practice_sessions ps ON ps.id = pt.practice_session_id
     WHERE pt.id = ${id} AND ps.user_id = ${userId}
-  `) as Array<DbPracticeText & { session_target_language: string; session_user_id: string }>
+  `) as Array<DbPracticeText & { session_target_language: string; session_user_id: string; session_pool: string }>
   const row = result[0]
   if (!row) return null
-  const { session_target_language, session_user_id, ...practiceText } = row as DbPracticeText & {
+  const { session_target_language, session_user_id, session_pool, ...practiceText } = row as DbPracticeText & {
     session_target_language: string
     session_user_id: string
+    session_pool: string
   }
   void session_user_id
   return {
     practiceText: practiceText as DbPracticeText,
     practiceSessionId: practiceText.practice_session_id,
     targetLanguage: session_target_language,
+    pool: session_pool as PracticePool,
   }
 }
 
@@ -402,7 +415,12 @@ export interface PracticeTextsRepositoryInterface {
   findByIdForUser: (
     id: string,
     userId: string
-  ) => Promise<{ practiceText: DbPracticeText; practiceSessionId: string; targetLanguage: string } | null>
+  ) => Promise<{
+    practiceText: DbPracticeText
+    practiceSessionId: string
+    targetLanguage: string
+    pool: PracticePool
+  } | null>
   listBySessionId: (practiceSessionId: string) => Promise<DbPracticeText[]>
   selectAndMarkReading: (practiceSessionId: string) => Promise<DbPracticeText | null>
   getNextOrd: (practiceSessionId: string) => Promise<number>

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { BookOpen, MoreVertical } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { toast } from 'sonner'
-import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { ChunkRow, LearningMode } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/vocabulary-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
@@ -61,9 +61,45 @@ const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: Ch
   )
 }
 
+const LearningModeFilterPills = ({
+  value,
+  onChange,
+}: {
+  value: LearningMode | null
+  onChange: (next: LearningMode | null) => void
+}) => {
+  const { t } = useLingui()
+  const options: Array<{ value: LearningMode | null; label: string }> = [
+    { value: null, label: t`All` },
+    { value: 'passive', label: t`Passive` },
+    { value: 'active', label: t`Active` },
+  ]
+  return (
+    <div className='flex gap-1 rounded-full bg-gray-100 p-1'>
+      {options.map((opt) => {
+        const isActive = opt.value === value
+        return (
+          <button
+            key={opt.label}
+            type='button'
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
+              isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            )}
+          >
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export const VocabularyListView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
+  const { mode } = useSearch({ from: '/_authenticated/_app/vocabulary/' })
   const parentRef = useRef<HTMLDivElement | null>(null)
 
   const [selectedLanguage, setSelectedLanguageState] = useState<string | null>(savedLanguage)
@@ -74,6 +110,10 @@ export const VocabularyListView = () => {
   const [sort, setSort] = useState<ChunksSort>('recent')
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
+  const learningMode: LearningMode | null = mode ?? null
+  const setLearningModeFilter = (next: LearningMode | null) => {
+    void navigate({ to: '/vocabulary', search: next ? { mode: next } : {} })
+  }
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [optionsOpen, setOptionsOpen] = useState(false)
@@ -95,7 +135,7 @@ export const VocabularyListView = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch })
+  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch, learningMode })
   const { data: userPrefs } = useGetUserPrefs()
   const nativeLanguage = userPrefs?.nativeLanguage ?? null
   const sameLanguage =
@@ -129,9 +169,9 @@ export const VocabularyListView = () => {
 
   // Restore scroll position on remount (e.g. when the user closes the focus
   // view back to /vocabulary). Tracks per filter combo so changing language /
-  // sort / search starts fresh. Runs once per filterKey, after rows are
-  // available so the virtualizer has something to render at the offset.
-  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}`
+  // sort / search / learning-mode starts fresh. Runs once per filterKey, after
+  // rows are available so the virtualizer has something to render at the offset.
+  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}|${learningMode ?? 'all'}`
   const restoredKeyRef = useRef<string | null>(null)
   useEffect(() => {
     if (restoredKeyRef.current === filterKey) return
@@ -247,8 +287,8 @@ export const VocabularyListView = () => {
         className='w-full'
       />
 
-      <div className='flex items-center justify-between'>
-        <span className='text-muted-foreground text-xs tracking-wider uppercase'>{t`Sort`}</span>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <LearningModeFilterPills value={learningMode} onChange={setLearningModeFilter} />
         <SortPills value={sort} onChange={setSort} />
       </div>
 

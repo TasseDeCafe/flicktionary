@@ -27,6 +27,14 @@ const newRow: DbUserLookup = {
   srs_reps: 0,
   srs_lapses: 0,
   added_to_practice_at: null,
+  learning_mode: 'passive',
+  active_srs_state: null,
+  active_srs_due: null,
+  active_srs_stability: null,
+  active_srs_difficulty: null,
+  active_srs_last_review: null,
+  active_srs_reps: 0,
+  active_srs_lapses: 0,
   created_at: '2026-01-01T00:00:00Z',
   deleted_at: null,
 }
@@ -45,7 +53,7 @@ const reviewRow: DbUserLookup = {
 describe('applyRating', () => {
   it("transitions a never-reviewed row out of the 'new' seed on first rating", () => {
     const now = new Date('2026-05-05T12:00:00Z')
-    const result = applyRating(newRow, 'good', now)
+    const result = applyRating(newRow, 'good', now, 'passive')
     expect(result.state).not.toBe('new')
     expect(result.due.getTime()).toBeGreaterThan(now.getTime())
     expect(result.reps).toBeGreaterThan(0)
@@ -54,7 +62,7 @@ describe('applyRating', () => {
 
   it("'again' on a review-state row reduces stability and increments lapses", () => {
     const now = new Date('2026-05-05T12:00:00Z')
-    const result = applyRating(reviewRow, 'again', now)
+    const result = applyRating(reviewRow, 'again', now, 'passive')
     expect(result.lapses).toBeGreaterThan(reviewRow.srs_lapses)
     // 'again' moves a review row into relearning.
     expect(result.state).toBe('relearning')
@@ -63,8 +71,8 @@ describe('applyRating', () => {
 
   it("'easy' on a review row schedules a longer due-date than 'good'", () => {
     const now = new Date('2026-05-05T12:00:00Z')
-    const easy = applyRating(reviewRow, 'easy', now)
-    const good = applyRating(reviewRow, 'good', now)
+    const easy = applyRating(reviewRow, 'easy', now, 'passive')
+    const good = applyRating(reviewRow, 'good', now, 'passive')
     expect(easy.due.getTime()).toBeGreaterThan(good.due.getTime())
   })
 })

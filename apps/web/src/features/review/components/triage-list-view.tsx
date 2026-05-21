@@ -9,7 +9,11 @@ import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value
 import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
-import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type {
+  Card,
+  CardStatus,
+  LearningMode,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
 
@@ -96,14 +100,14 @@ export const TriageListView = () => {
 
   const keptCount = (cards ?? []).filter((c) => c.status === 'kept').length
 
-  const handleStatusChange = (cardId: string, status: CardStatus) => {
-    updateStatus({ cardId, status })
+  const handleStatusChange = (cardId: string, status: CardStatus, learningMode?: LearningMode) => {
+    updateStatus({ cardId, status, learningMode })
   }
 
   const handleBulkStatusChange = (sectionCards: Card[], status: CardStatus) => {
     const cardIds = sectionCards.filter((c) => c.status !== status).map((c) => c.id)
     if (cardIds.length === 0) return
-    updateStatusBatch({ sessionId, cardIds, status })
+    updateStatusBatch({ sessionId, cardIds, status, ...(status === 'kept' ? { learningMode: 'passive' } : {}) })
   }
 
   // Triage and the source view are sibling screens (neither is the parent of

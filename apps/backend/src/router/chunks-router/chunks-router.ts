@@ -11,6 +11,7 @@ import {
 import {
   ChunkRow,
   DbUserLookup,
+  LearningMode,
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
@@ -30,6 +31,7 @@ const toChunkDto = (row: DbUserLookup) => ({
   grammar: (row.grammar ?? {}) as Record<string, unknown>,
   groundedAt: toIsoString(row.grounded_at),
   grammarUserEditedAt: toIsoString(row.grammar_user_edited_at),
+  learningMode: (row.learning_mode as LearningMode) ?? 'passive',
 })
 
 const toChunkRowDto = (row: ChunkRow) => ({
@@ -46,10 +48,14 @@ const toChunkRowDto = (row: ChunkRow) => ({
   grammar: row.grammar,
   groundedAt: toIsoString(row.groundedAt),
   grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
+  learningMode: row.learningMode,
   count: row.count,
   srsState: row.srsState,
   srsDue: toIsoString(row.srsDue),
   srsReps: row.srsReps,
+  activeSrsState: row.activeSrsState,
+  activeSrsDue: toIsoString(row.activeSrsDue),
+  activeSrsReps: row.activeSrsReps,
   createdAt: toIsoString(row.createdAt) ?? new Date(0).toISOString(),
   firstCardId: row.firstCardId,
   firstCardSegmentId: row.firstCardSegmentId,
@@ -117,8 +123,26 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         cursor: decodeCursor(input.cursor),
         limit: input.limit,
         q: trimmedQ.length > 0 ? trimmedQ : null,
+        learningMode: input.learningMode ?? null,
       })
       return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
+    }),
+
+    setLearningMode: implementer.setLearningMode.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      const updated = await userLookupsRepository.setLearningMode({
+        userLookupId: input.chunkId,
+        userId,
+        learningMode: input.learningMode,
+      })
+      if (!updated) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
+      }
+      return { data: toChunkDto(updated) }
     }),
 
     listLanguages: implementer.listLanguages.handler(async ({ context }) => {

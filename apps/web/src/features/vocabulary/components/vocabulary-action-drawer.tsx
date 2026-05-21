@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { ExternalLink, Trash2 } from 'lucide-react'
+import { ExternalLink, Star, Trash2 } from 'lucide-react'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   ResponsiveOverlay,
@@ -9,6 +9,7 @@ import {
   OverlayTitle,
 } from '@/components/ui/responsive-overlay'
 import { OverlayActionRow } from '@/components/ui/overlay-action-row'
+import { useSetLearningMode } from '../api/vocabulary-hooks'
 
 interface VocabularyActionDrawerProps {
   open: boolean
@@ -26,10 +27,12 @@ export const VocabularyActionDrawer = ({
   onRequestDelete,
 }: VocabularyActionDrawerProps) => {
   const { t } = useLingui()
+  const { mutate: setLearningMode, isPending: isSettingLearningMode } = useSetLearningMode()
 
   if (!chunk) return null
 
   const canOpenSource = chunk.studySessionId !== null && chunk.sourceAvailable
+  const isActive = chunk.learningMode === 'active'
 
   return (
     <ResponsiveOverlay open={open} onOpenChange={onOpenChange}>
@@ -39,6 +42,24 @@ export const VocabularyActionDrawer = ({
           <OverlayDescription className='sr-only'>{t`Actions for this vocabulary term.`}</OverlayDescription>
         </OverlayHeader>
         <div className='flex flex-col gap-1 px-2 pb-2'>
+          <OverlayActionRow
+            icon={Star}
+            label={isActive ? t`Switch to passive vocabulary` : t`Switch to active vocabulary`}
+            description={
+              isActive ? t`Stop drilling this term in active practice` : t`Drill this term in active practice`
+            }
+            disabled={isSettingLearningMode}
+            onClick={() => {
+              setLearningMode(
+                { chunkId: chunk.id, learningMode: isActive ? 'passive' : 'active' },
+                {
+                  onSuccess: () => {
+                    onOpenChange(false)
+                  },
+                }
+              )
+            }}
+          />
           <OverlayActionRow
             icon={ExternalLink}
             label={t`Open source`}

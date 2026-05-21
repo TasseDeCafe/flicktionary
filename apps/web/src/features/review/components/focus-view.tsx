@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Sparkles, Star, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import {
@@ -13,6 +13,7 @@ import {
   useTextSegmentsWindow,
   useUpdateCardStatus,
 } from '../api/review-hooks'
+import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
 import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
 import { EditableCardFields } from './editable-card-fields'
@@ -100,6 +101,7 @@ export const FocusView = () => {
   // language at session creation time, which matches what the LLM saw).
   const { data: userPrefs } = useGetUserPrefs()
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
+  const { mutate: setLearningMode, isPending: isSettingLearningMode } = useSetLearningMode()
   const { mutate: exploreCard, isPending: isExploringAny, variables: exploringVariables } = useExploreCard()
   const isExploring = isExploringAny && exploringVariables?.cardId === cardId
 
@@ -265,6 +267,32 @@ export const FocusView = () => {
                 sourceSessionId={sourceSessionId}
               />
             </div>
+            {isKept && !isLanguageWideEntry && (
+              <div className='mt-4 flex items-center gap-2'>
+                <span className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{t`Learning mode`}</span>
+                <div className='inline-flex overflow-hidden rounded-md border'>
+                  <Button
+                    size='sm'
+                    variant={card.chunk.learningMode === 'passive' ? 'default' : 'ghost'}
+                    className='rounded-none border-r'
+                    disabled={isSettingLearningMode}
+                    onClick={() => setLearningMode({ chunkId: card.chunk.id, learningMode: 'passive' })}
+                  >
+                    {t`Passive`}
+                  </Button>
+                  <Button
+                    size='sm'
+                    variant={card.chunk.learningMode === 'active' ? 'default' : 'ghost'}
+                    className='rounded-none'
+                    disabled={isSettingLearningMode}
+                    onClick={() => setLearningMode({ chunkId: card.chunk.id, learningMode: 'active' })}
+                  >
+                    <Star className='mr-1 h-3 w-3' />
+                    {t`Active`}
+                  </Button>
+                </div>
+              </div>
+            )}
           </section>
 
           <section>
@@ -310,6 +338,60 @@ export const FocusView = () => {
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Chat`}</h2>
             <PerCardChat key={card.id} cardId={card.id} sessionId={sourceSessionId} />
           </section>
+
+          {isLanguageWideEntry && (
+            <div className='mt-2 flex flex-col gap-2'>
+              <Button
+                variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
+                size='xl'
+                className='w-full'
+                disabled={isSettingLearningMode}
+                onClick={() => {
+                  setLearningMode(
+                    { chunkId: card.chunk.id, learningMode: 'active' },
+                    {
+                      onSuccess: () => {
+                        if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
+                        else if (from === 'practice' && practiceSessionId) {
+                          void navigate({
+                            to: '/practice/$practiceSessionId',
+                            params: { practiceSessionId },
+                          })
+                        }
+                      },
+                    }
+                  )
+                }}
+              >
+                <Star className='mr-2 h-4 w-4' />
+                {t`Add to active vocabulary`}
+              </Button>
+              <Button
+                variant={card.chunk.learningMode === 'passive' ? 'default' : 'outline'}
+                size='xl'
+                className='w-full'
+                disabled={isSettingLearningMode}
+                onClick={() => {
+                  setLearningMode(
+                    { chunkId: card.chunk.id, learningMode: 'passive' },
+                    {
+                      onSuccess: () => {
+                        if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
+                        else if (from === 'practice' && practiceSessionId) {
+                          void navigate({
+                            to: '/practice/$practiceSessionId',
+                            params: { practiceSessionId },
+                          })
+                        }
+                      },
+                    }
+                  )
+                }}
+              >
+                {t`Add to passive vocabulary`}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </ModalScreen>

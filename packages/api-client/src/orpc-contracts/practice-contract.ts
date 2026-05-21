@@ -10,7 +10,7 @@ import {
   PracticeTextSchema,
 } from './common/flicktionary-schemas'
 
-export const PracticeSessionModeSchema = z.enum(['review_due', 'learn_new', 'learn_extra', 'mixed'])
+export const PracticeSessionModeSchema = z.enum(['review_due', 'learn_new', 'learn_extra', 'mixed', 'active_drill'])
 export type PracticeSessionMode = z.infer<typeof PracticeSessionModeSchema>
 
 export const practiceContract = {

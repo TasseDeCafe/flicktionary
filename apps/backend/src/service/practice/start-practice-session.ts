@@ -1,5 +1,8 @@
 import type { PracticeSessionsRepositoryInterface } from '../../transport/database/practice-sessions/practice-sessions-repository'
-import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  PracticePool,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { PracticeSessionMode } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import {
@@ -38,11 +41,16 @@ const clampPracticeSessionLimits = (limits: PracticeSessionLimits): PracticeSess
   }
 }
 
+const poolForMode = (mode: PracticeSessionMode): PracticePool => (mode === 'active_drill' ? 'active' : 'passive')
+
 // Resume-or-create. If the user has an active practice_session for this
-// (user, target_language), return its id with resumed=true. Otherwise insert
-// a fresh row + snapshot the capped practice batch in one transaction
+// (user, target_language, pool), return its id with resumed=true. Otherwise
+// insert a fresh row + snapshot the capped practice batch in one transaction
 // (insertOrResume handles the race; the partial unique index makes
 // double-create impossible).
+//
+// A passive session and an active drill can coexist for the same target
+// language — one row each, distinguished by pool.
 export const startPracticeSession = async (
   userId: string,
   targetLanguage: string,
@@ -61,30 +69,56 @@ export const startPracticeSession = async (
   const langSummary = summary.find((s) => s.targetLanguage === targetLanguage)
   if (!langSummary || langSummary.totalKept === 0) return { ok: false, reason: 'no_kept_cards' }
 
+  const pool = poolForMode(mode)
+
   await deps.practiceSessionsRepository.abandonStaleForUser({
     userId,
     targetLanguage,
+    pool,
     olderThanHours: STALE_SESSION_HOURS,
   })
 
   const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
-  const active = await deps.practiceSessionsRepository.findActiveForUser({ userId, targetLanguage })
+  const active = await deps.practiceSessionsRepository.findActiveForUser({ userId, targetLanguage, pool })
   if (!active) {
-    const remainingDailyNewTerms = Math.max(0, limits.maxNewTerms - langSummary.newIntroducedTodayCount)
-    const selectedNewTerms = Math.min(langSummary.newCount, getMaxNewTermsForMode(mode, limits, remainingDailyNewTerms))
-    const selectedReviewTerms = Math.min(
-      langSummary.reviewDueCount + langSummary.learningDueCount,
-      getMaxReviewTermsForMode(mode, limits)
-    )
-    if (selectedNewTerms + selectedReviewTerms === 0) return { ok: false, reason: 'no_practice_terms' }
+    if (pool === 'active') {
+      // Active drill: drill all currently-due/new active terms with no caps.
+      // No drill is started if there's nothing to drill.
+      const selectedNewTerms = langSummary.activeNewCount
+      const selectedReviewTerms = langSummary.activeReviewDueCount + langSummary.activeLearningDueCount
+      if (selectedNewTerms + selectedReviewTerms === 0) return { ok: false, reason: 'no_practice_terms' }
+    } else {
+      const remainingDailyNewTerms = Math.max(0, limits.maxNewTerms - langSummary.newIntroducedTodayCount)
+      const selectedNewTerms = Math.min(
+        langSummary.newCount,
+        getMaxNewTermsForMode(mode, limits, remainingDailyNewTerms)
+      )
+      const selectedReviewTerms = Math.min(
+        langSummary.reviewDueCount + langSummary.learningDueCount,
+        getMaxReviewTermsForMode(mode, limits)
+      )
+      if (selectedNewTerms + selectedReviewTerms === 0) return { ok: false, reason: 'no_practice_terms' }
+    }
   }
 
   const remainingDailyNewTerms = Math.max(0, limits.maxNewTerms - langSummary.newIntroducedTodayCount)
+  const { maxNewTerms, maxReviewTerms } =
+    pool === 'active'
+      ? {
+          // Active drill: pull all available active terms; no per-day cap.
+          maxNewTerms: langSummary.activeNewCount,
+          maxReviewTerms: langSummary.activeReviewDueCount + langSummary.activeLearningDueCount,
+        }
+      : {
+          maxNewTerms: getMaxNewTermsForMode(mode, limits, remainingDailyNewTerms),
+          maxReviewTerms: getMaxReviewTermsForMode(mode, limits),
+        }
   const { session, resumed } = await deps.practiceSessionsRepository.insertOrResume({
     userId,
     targetLanguage,
-    maxNewTerms: getMaxNewTermsForMode(mode, limits, remainingDailyNewTerms),
-    maxReviewTerms: getMaxReviewTermsForMode(mode, limits),
+    pool,
+    maxNewTerms,
+    maxReviewTerms,
   })
   return { ok: true, sessionId: session.id, resumed }
 }
@@ -100,6 +134,6 @@ const getMaxNewTermsForMode = (
 }
 
 const getMaxReviewTermsForMode = (mode: PracticeSessionMode, limits: PracticeSessionLimits) => {
-  if (mode === 'learn_new' || mode === 'learn_extra') return 0
+  if (mode === 'learn_new' || mode === 'learn_extra' || mode === 'active_drill') return 0
   return limits.maxReviewTerms
 }

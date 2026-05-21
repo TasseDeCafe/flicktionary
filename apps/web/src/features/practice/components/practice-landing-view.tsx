@@ -28,8 +28,8 @@ export const PracticeLandingView = () => {
     return Math.min(entry.newCount, remainingDailyNewTerms)
   }
 
-  const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    if (entry.activePracticeSessionId) return t`Session in progress`
+  const getPassiveSummaryLine = (entry: PracticeDueSummaryEntry) => {
+    if (entry.passivePracticeSessionId) return t`Session in progress`
 
     const dueTermCount = entry.reviewDueCount + entry.learningDueCount
     if (dueTermCount > 0 && maxReviewTerms > 0) return t`${dueTermCount} follow-up(s) due`
@@ -40,6 +40,15 @@ export const PracticeLandingView = () => {
     if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached`
 
     return t`All caught up`
+  }
+
+  const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
+    const passive = getPassiveSummaryLine(entry)
+    if (entry.activeTotal > 0) {
+      const activeCount = entry.activeTotal
+      return `${passive} • ${t`${activeCount} active`}`
+    }
+    return passive
   }
 
   return (

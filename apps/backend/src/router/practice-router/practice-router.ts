@@ -52,6 +52,7 @@ const toPracticeSessionDto = (row: DbPracticeSession) => ({
   userId: row.user_id,
   targetLanguage: row.target_language,
   status: row.status,
+  pool: (row.pool as 'passive' | 'active') ?? 'passive',
   startedAt: new Date(row.started_at).toISOString(),
   endedAt: row.ended_at ? new Date(row.ended_at).toISOString() : null,
 })
