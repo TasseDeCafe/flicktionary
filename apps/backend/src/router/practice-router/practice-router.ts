@@ -52,6 +52,7 @@ const toPracticeSessionDto = (row: DbPracticeSession) => ({
   userId: row.user_id,
   targetLanguage: row.target_language,
   status: row.status,
+  pool: (row.pool as 'passive' | 'active') ?? 'passive',
   startedAt: new Date(row.started_at).toISOString(),
   endedAt: row.ended_at ? new Date(row.ended_at).toISOString() : null,
 })
@@ -74,6 +75,7 @@ type ChunkContent = {
   definition: string | null
   grammar: Record<string, unknown> | null
   deletedAt: Date | null
+  learningMode: 'passive' | 'active'
 }
 
 const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
@@ -97,6 +99,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
       cardId: content?.cardId ?? null,
       cardSessionId: content?.cardSessionId ?? null,
       deletedAt: content?.deletedAt ? new Date(content.deletedAt).toISOString() : null,
+      learningMode: content?.learningMode ?? null,
     }
   })
   return {
@@ -141,6 +144,7 @@ const fetchAnnotationContent = async (
       definition: r.definition,
       grammar: r.grammar,
       deletedAt: r.deletedAt,
+      learningMode: r.learningMode,
     })
   }
   return map

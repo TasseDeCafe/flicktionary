@@ -6,6 +6,16 @@ import { resolveRegconfig } from '../text-segments/text-segments-repository'
 export type DbUserLookup = Tables<'user_lookups'>
 export type SrsState = Database['public']['Enums']['srs_state']
 
+// Per-term knob: every kept term is at minimum 'passive' (recognition pool).
+// Promoting to 'active' adds the term to the parallel active-drill pool with
+// its own independent SRS state under the active_srs_* columns.
+export type LearningMode = 'passive' | 'active'
+
+// Which SRS column set to read or advance. 1:1 with practice_sessions.pool —
+// passive sessions read the legacy srs_* columns, active drills read
+// active_srs_*.
+export type PracticePool = 'passive' | 'active'
+
 export type HeadwordSense = {
   headword: string
   sense: string
@@ -22,6 +32,16 @@ export type DueSummaryEntry = {
   nextLearningDueAt: string | null
   newCount: number
   newIntroducedTodayCount: number
+  // Passive pool active practice session id. Renamed from
+  // activePracticeSessionId so clients are explicit about which pool they're
+  // resuming.
+  passivePracticeSessionId: string | null
+  // Active-drill pool counters. Parallel to the passive counters above but
+  // computed off learning_mode = 'active' and active_srs_* state.
+  activeTotal: number
+  activeReviewDueCount: number
+  activeLearningDueCount: number
+  activeNewCount: number
   activePracticeSessionId: string | null
 }
 
@@ -306,7 +326,8 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 
 // Per-language summary used by the Practice landing. Counts:
 // - totalKept: rows the user has kept at least once (count > 0)
-// - reviewDueCount: daily review rows due now
+// - reviewDueCount: daily review rows due now, plus initialized 'new' rows
+//   due now from abandoned sessions so they don't get stranded
 // - learningDueCount: intraday learning/relearning rows due now
 // - nextLearningDueAt: soonest future intraday follow-up
 // - newCount: rows with srs_state IS NULL (never reviewed; would enter as 'new')
@@ -321,7 +342,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       ul.target_language,
       COUNT(*)::int AS total_kept,
       COUNT(*) FILTER (
-        WHERE ul.srs_state = 'review'
+        WHERE ul.srs_state IN ('new', 'review')
           AND ul.srs_due IS NOT NULL
           AND ul.srs_due <= NOW()
       )::int AS review_due_count,
@@ -340,12 +361,39 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
         WHERE ul.added_to_practice_at >= CURRENT_DATE
           AND ul.added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
       )::int AS new_introduced_today_count,
+      COUNT(*) FILTER (WHERE ul.learning_mode = 'active')::int AS active_total,
+      COUNT(*) FILTER (
+        WHERE ul.learning_mode = 'active'
+          AND ul.active_srs_state IN ('new', 'review')
+          AND ul.active_srs_due IS NOT NULL
+          AND ul.active_srs_due <= NOW()
+      )::int AS active_review_due_count,
+      COUNT(*) FILTER (
+        WHERE ul.learning_mode = 'active'
+          AND ul.active_srs_state IN ('learning', 'relearning')
+          AND ul.active_srs_due IS NOT NULL
+          AND ul.active_srs_due <= NOW()
+      )::int AS active_learning_due_count,
+      COUNT(*) FILTER (
+        WHERE ul.learning_mode = 'active'
+          AND ul.active_srs_state IS NULL
+      )::int AS active_new_count,
       (
         SELECT ps.id
         FROM public.practice_sessions ps
         WHERE ps.user_id = ${userId}
           AND ps.target_language = ul.target_language
           AND ps.status = 'active'
+          AND ps.pool = 'passive'
+        LIMIT 1
+      ) AS passive_practice_session_id,
+      (
+        SELECT ps.id
+        FROM public.practice_sessions ps
+        WHERE ps.user_id = ${userId}
+          AND ps.target_language = ul.target_language
+          AND ps.status = 'active'
+          AND ps.pool = 'active'
         LIMIT 1
       ) AS active_practice_session_id
     FROM public.user_lookups ul
@@ -366,6 +414,11 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       : null,
     newCount: row.new_count as number,
     newIntroducedTodayCount: row.new_introduced_today_count as number,
+    passivePracticeSessionId: (row.passive_practice_session_id as string | null) ?? null,
+    activeTotal: row.active_total as number,
+    activeReviewDueCount: row.active_review_due_count as number,
+    activeLearningDueCount: row.active_learning_due_count as number,
+    activeNewCount: row.active_new_count as number,
     activePracticeSessionId: (row.active_practice_session_id as string | null) ?? null,
   }))
 }
@@ -379,13 +432,39 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
 // `extraUserLookupIds` lets callers force-include rows even if they aren't
 // flagged eligible_at_start — used by Problem 3 to resurface chunks the user
 // rated `again`.
+//
+// `pool` selects which SRS column family drives the order-by: passive pool
+// uses srs_state/srs_due, active pool uses active_srs_state/active_srs_due.
 const listEligibleForLanguage = async (params: {
   userId: string
   targetLanguage: string
   practiceSessionId: string
+  pool: PracticePool
   extraUserLookupIds?: string[]
 }): Promise<DbUserLookup[]> => {
   const extras = params.extraUserLookupIds ?? []
+  if (params.pool === 'passive') {
+    return (await sql`
+      SELECT ul.*
+      FROM public.user_lookups ul
+      JOIN public.practice_session_chunks psc
+        ON psc.user_lookup_id = ul.id
+       AND psc.practice_session_id = ${params.practiceSessionId}
+      WHERE ul.user_id = ${params.userId}
+        AND ul.target_language = ${params.targetLanguage}
+        AND ul.count > 0
+        AND ul.deleted_at IS NULL
+        AND (
+          psc.eligible_at_start = TRUE
+          OR ul.id = ANY(${extras}::uuid[])
+        )
+      ORDER BY
+        CASE WHEN ul.srs_state IS NULL THEN 1 ELSE 0 END ASC,
+        ul.srs_due ASC NULLS LAST,
+        ul.headword ASC,
+        ul.sense ASC
+    `) as DbUserLookup[]
+  }
   return (await sql`
     SELECT ul.*
     FROM public.user_lookups ul
@@ -401,8 +480,8 @@ const listEligibleForLanguage = async (params: {
         OR ul.id = ANY(${extras}::uuid[])
       )
     ORDER BY
-      CASE WHEN ul.srs_state IS NULL THEN 1 ELSE 0 END ASC,
-      ul.srs_due ASC NULLS LAST,
+      CASE WHEN ul.active_srs_state IS NULL THEN 1 ELSE 0 END ASC,
+      ul.active_srs_due ASC NULLS LAST,
       ul.headword ASC,
       ul.sense ASC
   `) as DbUserLookup[]
@@ -465,6 +544,32 @@ const initializeSrsState = async (userLookupId: string): Promise<void> => {
   `
 }
 
+// Pool-aware initializer. The passive pool path is identical to
+// initializeSrsState (and also stamps added_to_practice_at for the daily-new
+// cap). The active pool path only touches active_srs_*; it must NOT bump
+// added_to_practice_at because the daily-new cap is passive-only — an active
+// drill should not eat the user's passive new-term allowance for the day.
+const initializeSrsStateForPool = async (params: { userLookupId: string; pool: PracticePool }): Promise<void> => {
+  if (params.pool === 'passive') {
+    await sql`
+      UPDATE public.user_lookups
+      SET srs_state = 'new',
+          srs_due = NOW(),
+          added_to_practice_at = NOW()
+      WHERE id = ${params.userLookupId}
+        AND srs_state IS NULL
+    `
+    return
+  }
+  await sql`
+    UPDATE public.user_lookups
+    SET active_srs_state = 'new',
+        active_srs_due = NOW()
+    WHERE id = ${params.userLookupId}
+      AND active_srs_state IS NULL
+  `
+}
+
 // Patch the SRS columns from a ts-fsrs Card object. Atomic update — call this
 // for every rating event.
 const applyFsrsResult = async (params: {
@@ -488,6 +593,65 @@ const applyFsrsResult = async (params: {
         srs_lapses = ${params.lapses}
     WHERE id = ${params.userLookupId}
   `
+}
+
+// Pool-aware FSRS patch. The passive pool path matches applyFsrsResult; the
+// active pool path writes the same fields under their active_srs_* names.
+const applyFsrsResultForPool = async (params: {
+  userLookupId: string
+  pool: PracticePool
+  state: SrsState
+  due: Date
+  stability: number
+  difficulty: number
+  lastReview: Date
+  reps: number
+  lapses: number
+}): Promise<void> => {
+  if (params.pool === 'passive') {
+    await sql`
+      UPDATE public.user_lookups
+      SET srs_state = ${params.state},
+          srs_due = ${params.due.toISOString()},
+          srs_stability = ${params.stability},
+          srs_difficulty = ${params.difficulty},
+          srs_last_review = ${params.lastReview.toISOString()},
+          srs_reps = ${params.reps},
+          srs_lapses = ${params.lapses}
+      WHERE id = ${params.userLookupId}
+    `
+    return
+  }
+  await sql`
+    UPDATE public.user_lookups
+    SET active_srs_state = ${params.state},
+        active_srs_due = ${params.due.toISOString()},
+        active_srs_stability = ${params.stability},
+        active_srs_difficulty = ${params.difficulty},
+        active_srs_last_review = ${params.lastReview.toISOString()},
+        active_srs_reps = ${params.reps},
+        active_srs_lapses = ${params.lapses}
+    WHERE id = ${params.userLookupId}
+  `
+}
+
+// Switch a user_lookup between passive and active learning modes. Demoting
+// active -> passive preserves active_srs_* so a future re-promotion resumes
+// the schedule. Returns the post-update row.
+const setLearningMode = async (params: {
+  userLookupId: string
+  userId: string
+  learningMode: LearningMode
+}): Promise<DbUserLookup | null> => {
+  const result = (await sql`
+    UPDATE public.user_lookups
+    SET learning_mode = ${params.learningMode}
+    WHERE id = ${params.userLookupId}
+      AND user_id = ${params.userId}
+      AND deleted_at IS NULL
+    RETURNING *
+  `) as DbUserLookup[]
+  return result[0] ?? null
 }
 
 // Lightweight "vocabulary" view used by the practice-text generator's prompt
@@ -632,6 +796,10 @@ export type ChunkRow = {
   srsState: SrsState | null
   srsDue: string | null
   srsReps: number
+  learningMode: LearningMode
+  activeSrsState: SrsState | null
+  activeSrsDue: string | null
+  activeSrsReps: number
   createdAt: string
   firstCardId: string | null
   firstCardSegmentId: string | null
@@ -658,6 +826,10 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.srs_state,
     ul.srs_due,
     ul.srs_reps,
+    ul.learning_mode,
+    ul.active_srs_state,
+    ul.active_srs_due,
+    ul.active_srs_reps,
     ul.created_at,
     ul.first_card_id,
     c.segment_id AS first_card_segment_id,
@@ -687,6 +859,10 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   srsState: (row.srs_state as SrsState | null) ?? null,
   srsDue: (row.srs_due as string | null) ?? null,
   srsReps: (row.srs_reps as number) ?? 0,
+  learningMode: (row.learning_mode as LearningMode | null) ?? 'passive',
+  activeSrsState: (row.active_srs_state as SrsState | null) ?? null,
+  activeSrsDue: (row.active_srs_due as string | null) ?? null,
+  activeSrsReps: (row.active_srs_reps as number) ?? 0,
   createdAt: row.created_at as string,
   firstCardId: (row.first_card_id as string | null) ?? null,
   firstCardSegmentId: (row.first_card_segment_id as string | null) ?? null,
@@ -710,10 +886,12 @@ const listChunksForLanguage = async (params: {
   cursor: ChunksCursor | null
   limit: number
   q: string | null
+  learningMode?: LearningMode | null
 }): Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }> => {
   const limit = Math.max(1, Math.min(params.limit, 200))
   const fetchLimit = limit + 1
   const searchClause = buildSearchClause(params.q)
+  const learningModeClause = params.learningMode ? sql`AND ul.learning_mode = ${params.learningMode}` : sql``
 
   if (params.sort === 'recent') {
     const cursor = params.cursor && params.cursor.sort === 'recent' ? params.cursor : null
@@ -724,6 +902,7 @@ const listChunksForLanguage = async (params: {
         AND ul.deleted_at IS NULL
         AND ul.count > 0
         ${searchClause}
+        ${learningModeClause}
         AND ${cursor ? sql`(ul.created_at, ul.id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)` : sql`TRUE`}
       ORDER BY ul.created_at DESC, ul.id ASC
       LIMIT ${fetchLimit}
@@ -752,6 +931,7 @@ const listChunksForLanguage = async (params: {
         AND ul.count > 0
         AND ul.srs_due IS NOT NULL
         ${searchClause}
+        ${learningModeClause}
         AND ${
           cursor && cursor.phase === 'scheduled'
             ? sql`(ul.srs_due, ul.id) > (${cursor.srsDue}::timestamptz, ${cursor.id}::uuid)`
@@ -790,6 +970,7 @@ const listChunksForLanguage = async (params: {
         AND ul.count > 0
         AND ul.srs_due IS NULL
         ${searchClause}
+        ${learningModeClause}
       ORDER BY ul.id ASC
       LIMIT ${tailFetchLimit}
     `) as Array<Record<string, unknown>>
@@ -813,6 +994,7 @@ const listChunksForLanguage = async (params: {
       AND ul.count > 0
       AND ul.srs_due IS NULL
       ${searchClause}
+      ${learningModeClause}
       AND ul.id > ${cursor!.id}::uuid
     ORDER BY ul.id ASC
     LIMIT ${fetchLimit}
@@ -848,6 +1030,7 @@ const listChunkContentForKeys = async (params: {
     firstCardId: string | null
     firstCardSessionId: string | null
     deletedAt: Date | null
+    learningMode: LearningMode
   }>
 > => {
   if (params.keys.length === 0) return []
@@ -861,6 +1044,7 @@ const listChunkContentForKeys = async (params: {
       ul.grammar,
       ul.first_card_id,
       ul.deleted_at,
+      ul.learning_mode,
       c.study_session_id AS first_card_session_id
     FROM public.user_lookups ul
     LEFT JOIN public.cards c ON c.id = ul.first_card_id
@@ -876,6 +1060,7 @@ const listChunkContentForKeys = async (params: {
     first_card_id: string | null
     first_card_session_id: string | null
     deleted_at: Date | null
+    learning_mode: LearningMode
   }>
   return result.map((row) => ({
     id: row.id,
@@ -887,6 +1072,7 @@ const listChunkContentForKeys = async (params: {
     firstCardId: row.first_card_id,
     firstCardSessionId: row.first_card_session_id,
     deletedAt: row.deleted_at,
+    learningMode: row.learning_mode,
   }))
 }
 
@@ -967,6 +1153,7 @@ export interface UserLookupsRepositoryInterface {
     userId: string
     targetLanguage: string
     practiceSessionId: string
+    pool: PracticePool
     extraUserLookupIds?: string[]
   }) => Promise<DbUserLookup[]>
   findByKey: (params: {
@@ -978,6 +1165,7 @@ export interface UserLookupsRepositoryInterface {
   findByIdForUser: (id: string, userId: string) => Promise<DbUserLookup | null>
   findByIdForUserIncludingDeleted: (id: string, userId: string) => Promise<DbUserLookup | null>
   initializeSrsState: (userLookupId: string) => Promise<void>
+  initializeSrsStateForPool: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
   applyFsrsResult: (params: {
     userLookupId: string
     state: SrsState
@@ -988,6 +1176,22 @@ export interface UserLookupsRepositoryInterface {
     reps: number
     lapses: number
   }) => Promise<void>
+  applyFsrsResultForPool: (params: {
+    userLookupId: string
+    pool: PracticePool
+    state: SrsState
+    due: Date
+    stability: number
+    difficulty: number
+    lastReview: Date
+    reps: number
+    lapses: number
+  }) => Promise<void>
+  setLearningMode: (params: {
+    userLookupId: string
+    userId: string
+    learningMode: LearningMode
+  }) => Promise<DbUserLookup | null>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
   listChunksForLanguage: (params: {
@@ -997,6 +1201,7 @@ export interface UserLookupsRepositoryInterface {
     cursor: ChunksCursor | null
     limit: number
     q: string | null
+    learningMode?: LearningMode | null
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
   restoreChunk: (id: string, userId: string) => Promise<void>
@@ -1015,6 +1220,7 @@ export interface UserLookupsRepositoryInterface {
       firstCardId: string | null
       firstCardSessionId: string | null
       deletedAt: Date | null
+      learningMode: LearningMode
     }>
   >
   listLanguagesForUser: (userId: string) => Promise<string[]>
@@ -1038,7 +1244,10 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findByIdForUser,
     findByIdForUserIncludingDeleted,
     initializeSrsState,
+    initializeSrsStateForPool,
     applyFsrsResult,
+    applyFsrsResultForPool,
+    setLearningMode,
     listVocabularyForLanguage,
     listKeptChunksForExport,
     listChunksForLanguage,

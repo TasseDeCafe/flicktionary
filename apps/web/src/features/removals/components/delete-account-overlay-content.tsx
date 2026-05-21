@@ -56,13 +56,14 @@ export const DeleteAccountOverlayContent = () => {
         </div>
         <div className='flex flex-col gap-2'>
           <Button
+            size='xl'
             onClick={handleDeleteAccount}
             variant={isConfirmationValid ? 'destructive' : 'secondary'}
             disabled={!isConfirmationValid || isPending}
           >
             {isPending ? t`Sending...` : t`Confirm deletion`}
           </Button>
-          <Button variant='outline' onClick={handleCancel} disabled={isPending}>
+          <Button size='xl' variant='outline' onClick={handleCancel} disabled={isPending}>
             {t`Cancel`}
           </Button>
         </div>

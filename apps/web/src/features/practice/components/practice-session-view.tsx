@@ -4,11 +4,12 @@ import { useLingui } from '@lingui/react/macro'
 import { ArrowRight, CheckCircle2, Info, LoaderCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import type { PracticeText } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
 import {
   useDeleteChunkFromPractice,
   useFinalizePracticeText,
@@ -31,28 +32,6 @@ type AdvancingSnapshot = {
   totalCount: number
 }
 
-const PracticeTextSkeleton = () => (
-  <article className='min-h-[22rem]' aria-hidden='true'>
-    <div className='space-y-9'>
-      <div className='space-y-3'>
-        <Skeleton className='h-6 w-11/12' />
-        <Skeleton className='h-6 w-4/5' />
-      </div>
-      <div className='space-y-3'>
-        <Skeleton className='h-6 w-full' />
-        <Skeleton className='h-6 w-10/12' />
-        <Skeleton className='h-6 w-11/12' />
-        <Skeleton className='h-6 w-3/5' />
-      </div>
-      <div className='space-y-3'>
-        <Skeleton className='h-6 w-9/12' />
-        <Skeleton className='h-6 w-full' />
-        <Skeleton className='h-6 w-2/3' />
-      </div>
-    </div>
-  </article>
-)
-
 export const PracticeSessionView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -65,6 +44,7 @@ export const PracticeSessionView = () => {
   const { mutate: prepareNextText } = usePrepareNextPracticeText()
   const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunkFromPractice(practiceSessionId)
   const { mutate: restoreChunk, isPending: isRestoring } = useRestoreChunkFromPractice(practiceSessionId)
+  const { mutate: setLearningMode, isPending: isTogglingLearningMode } = useSetLearningMode()
   const { data: userPrefs } = useGetUserPrefs()
 
   // Per-text map of annotation index -> the rating the user submitted. Used
@@ -96,6 +76,11 @@ export const PracticeSessionView = () => {
   // flash a stale text or double-fire the LLM call.
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [advancingSnapshot, setAdvancingSnapshot] = useState<AdvancingSnapshot | null>(null)
+  // Snapshot of the just-finalized text so we can keep it visible (read-only)
+  // during the finalize→generate round-trip. Avoids a brief skeleton flash
+  // between texts and, on the last advance, between the previous text and the
+  // "All caught up" view.
+  const [previousText, setPreviousText] = useState<PracticeText | null>(null)
 
   const currentText = sessionData?.currentText ?? null
   const currentTextId = currentText?.id ?? null
@@ -186,6 +171,7 @@ export const PracticeSessionView = () => {
       grammar,
       targetLanguage,
       isDeleted: !!ann.deletedAt,
+      learningMode: ann.learningMode,
     }
   }, [openIndex, currentText, targetLanguage, userPrefs?.englishIpaDialect])
 
@@ -296,8 +282,23 @@ export const PracticeSessionView = () => {
     )
   }
 
+  // Flip the open chunk between passive and active vocabulary, then dismiss
+  // the sheet so the user sees the practice text again with the choice applied.
+  const handleToggleLearningMode = (next: 'passive' | 'active') => {
+    if (!openAnnotation?.userLookupId) return
+    setLearningMode(
+      { chunkId: openAnnotation.userLookupId, learningMode: next },
+      {
+        onSuccess: () => {
+          setSheetOpen(false)
+        },
+      }
+    )
+  }
+
   const handleNext = () => {
     if (!currentText) return
+    setPreviousText(currentText)
     setAdvancingSnapshot({
       ratedCount: ratings.size,
       totalCount: annotations.length,
@@ -314,10 +315,12 @@ export const PracticeSessionView = () => {
                 if (response.data.done) setDone(true)
                 setAdvancingSnapshot(null)
                 setIsAdvancing(false)
+                setPreviousText(null)
               },
               onError: () => {
                 setAdvancingSnapshot(null)
                 setIsAdvancing(false)
+                setPreviousText(null)
               },
             }
           )
@@ -325,6 +328,7 @@ export const PracticeSessionView = () => {
         onError: () => {
           setAdvancingSnapshot(null)
           setIsAdvancing(false)
+          setPreviousText(null)
         },
       }
     )
@@ -350,6 +354,13 @@ export const PracticeSessionView = () => {
       ? Math.min(100, Math.round((displayProgress.completed / displayProgress.target) * 100))
       : 0
 
+  // finalize bumps progress to completed === target before generateNextText
+  // confirms `done: true`. Treat at-capacity-while-advancing as done so the
+  // user sees "All caught up" immediately instead of a brief skeleton flash.
+  const isAtCapacity =
+    !!displayProgress && displayProgress.target > 0 && displayProgress.completed >= displayProgress.target
+  const showDone = done || (isAdvancing && isAtCapacity)
+
   return (
     <ModalScreen onClose={close} closeIcon='x' title={t`Practice`}>
       {showInitialLoader && <PracticeLoader label={t`Preparing the session…`} />}
@@ -374,7 +385,7 @@ export const PracticeSessionView = () => {
 
           <div className='flex-1 overflow-y-auto px-4 py-6'>
             <div className='mx-auto flex max-w-2xl flex-col gap-6'>
-              {done && (
+              {showDone && (
                 <div className='flex flex-col items-center gap-3 rounded-xl border bg-yellow-50 p-8 text-center'>
                   <CheckCircle2 className='h-10 w-10 text-yellow-600' />
                   <h2 className='text-lg font-semibold'>{t`All caught up`}</h2>
@@ -384,9 +395,30 @@ export const PracticeSessionView = () => {
                 </div>
               )}
 
-              {!done && isAdvancing && <PracticeTextSkeleton />}
+              {!showDone && isAdvancing && previousText && previousText.body && (
+                <article className='pointer-events-none opacity-60'>
+                  {previousText.generationWarning && (
+                    <p className='text-muted-foreground mb-3 text-xs italic'>{previousText.generationWarning}</p>
+                  )}
+                  <AnnotatedText
+                    body={previousText.body}
+                    annotations={previousText.annotations.map((a, i) => ({
+                      index: i,
+                      headword: a.headword,
+                      sense: a.sense,
+                      surfaceForm: a.surfaceForm,
+                      charStart: a.charStart,
+                      charEnd: a.charEnd,
+                      rated: ratings.has(i),
+                      deleted: !!a.deletedAt,
+                    }))}
+                    onAnnotationClick={() => {}}
+                    onPlainSelection={() => {}}
+                  />
+                </article>
+              )}
 
-              {!done && !isAdvancing && currentText && currentText.body && (
+              {!showDone && !isAdvancing && currentText && currentText.body && (
                 <article>
                   {currentText.generationWarning && (
                     <p className='text-muted-foreground mb-3 text-xs italic'>{currentText.generationWarning}</p>
@@ -402,7 +434,7 @@ export const PracticeSessionView = () => {
             </div>
           </div>
 
-          {done && (
+          {showDone && (
             <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
               <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
                 <Button onClick={close} size='xl' className='w-full'>
@@ -412,7 +444,7 @@ export const PracticeSessionView = () => {
             </div>
           )}
 
-          {!done && (currentText || isAdvancing) && (
+          {!showDone && (currentText || isAdvancing) && (
             <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-3 pt-2 pb-3 backdrop-blur'>
               <div className='mx-auto flex max-w-2xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
                 {(() => {
@@ -479,6 +511,8 @@ export const PracticeSessionView = () => {
         canEdit={!!openAnnotation?.cardId && !!openAnnotation?.cardSessionId}
         onEdit={handleEdit}
         onDelete={handleDeleteRequest}
+        onToggleLearningMode={handleToggleLearningMode}
+        isTogglingLearningMode={isTogglingLearningMode}
         onRestore={handleRestoreFromSheet}
         isRestoring={isRestoring}
       />

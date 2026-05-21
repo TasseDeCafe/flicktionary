@@ -133,6 +133,18 @@ export const GrammarSchema = z
   .passthrough()
 export type Grammar = z.infer<typeof GrammarSchema>
 
+// Per-term knob: every kept term is at minimum 'passive' (recognition pool).
+// Promoting to 'active' adds the term to the parallel active-drill pool.
+export const LearningModeSchema = z.enum(['passive', 'active'])
+export type LearningMode = z.infer<typeof LearningModeSchema>
+
+// Which SRS column family a practice session reads and writes. 1:1 with
+// user_lookups.learning_mode for the purpose of selecting sources, but lives
+// on practice_sessions so the rating layer knows whether to advance srs_* or
+// active_srs_*.
+export const PracticePoolSchema = z.enum(['passive', 'active'])
+export type PracticePool = z.infer<typeof PracticePoolSchema>
+
 // The canonical vocabulary entry: one row per (user, targetLanguage, headword,
 // sense). Owns the gloss/example fields so edits propagate to every card that
 // references it. Cards carry a `chunk` of this shape on read paths.
@@ -155,6 +167,9 @@ export const ChunkSchema = z.object({
   // Set when the user manually edits grammar-provenance-sensitive data.
   // Automatic processing/enrichment/chat patches do not stamp this.
   grammarUserEditedAt: z.string().nullable(),
+  // Passive (default) or active. Active terms additionally participate in the
+  // active-drill pool with their own SRS state.
+  learningMode: LearningModeSchema.default('passive'),
 })
 export type Chunk = z.infer<typeof ChunkSchema>
 
@@ -166,6 +181,11 @@ export const ChunkRowSchema = ChunkSchema.extend({
   srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
   srsDue: z.string().nullable(),
   srsReps: z.number().int(),
+  // Parallel active-pool SRS state. Null when the term hasn't been drilled in
+  // the active pool yet (including all 'passive' terms).
+  activeSrsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
+  activeSrsDue: z.string().nullable(),
+  activeSrsReps: z.number().int(),
   createdAt: z.string(),
   firstCardId: z.string().uuid().nullable(),
   firstCardSegmentId: z.string().uuid().nullable(),
@@ -279,6 +299,9 @@ export const PracticeAnnotationSchema = z.object({
   // strikethrough/Restore state for chunks the user just deleted from the
   // sheet, even after a refetch.
   deletedAt: z.string().nullable(),
+  // Current learning mode for the user_lookup row, so the rate sheet can show
+  // the right "Switch to passive/active" action. Null when no canonical row.
+  learningMode: LearningModeSchema.nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 
@@ -301,6 +324,9 @@ export const PracticeSessionSchema = z.object({
   userId: z.string().uuid(),
   targetLanguage: z.string(),
   status: PracticeSessionStatusSchema,
+  // 'passive' for normal SRS reviews, 'active' for the active-drill pool. The
+  // rating layer routes FSRS writes to srs_* or active_srs_* based on this.
+  pool: PracticePoolSchema,
   startedAt: z.string(),
   endedAt: z.string().nullable(),
 })
@@ -317,6 +343,16 @@ export const PracticeDueSummaryEntrySchema = z.object({
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
+  // Passive-pool active practice session id. Renamed from
+  // activePracticeSessionId so clients are explicit about which pool to resume.
+  passivePracticeSessionId: z.string().uuid().nullable(),
+  // Active-drill pool counters. activeTotal is the number of user_lookups
+  // promoted to learning_mode='active'; the rest mirror the passive counts
+  // but read from active_srs_* state.
+  activeTotal: z.number().int(),
+  activeReviewDueCount: z.number().int(),
+  activeLearningDueCount: z.number().int(),
+  activeNewCount: z.number().int(),
   activePracticeSessionId: z.string().uuid().nullable(),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>

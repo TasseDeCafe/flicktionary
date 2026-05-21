@@ -1,5 +1,6 @@
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import type { PracticePool } from '../user-lookups/user-lookups-repository'
 
 export type DbPracticeSession = Tables<'practice_sessions'>
 export type PracticeSessionStatus = Database['public']['Enums']['practice_session_status']
@@ -10,66 +11,117 @@ export type PracticeSessionInsertResult = {
 }
 
 // Atomically: take the partial-unique-index slot for this (user_id,
-// target_language) at status='active' (race-safe via INSERT ... ON CONFLICT
-// DO NOTHING against `one_active_practice_session_per_user_lang`); if we won,
-// snapshot the user's capped practice batch into practice_session_chunks; if
-// we lost, fetch the existing active row.
+// target_language, pool) at status='active' (race-safe via INSERT ... ON
+// CONFLICT DO NOTHING against `one_active_practice_session_per_user_lang_pool`);
+// if we won, snapshot the user's capped practice batch into
+// practice_session_chunks; if we lost, fetch the existing active row.
+//
+// The pool argument decides which SRS column family to read for the snapshot:
+// 'passive' uses the legacy srs_* columns with no learning_mode filter;
+// 'active' filters to learning_mode='active' and reads active_srs_* state.
 //
 // `resumed` is true when the caller is being handed an already-active session.
 const insertOrResume = async (params: {
   userId: string
   targetLanguage: string
+  pool: PracticePool
   maxNewTerms: number
   maxReviewTerms: number
 }): Promise<PracticeSessionInsertResult> => {
   return await sql.begin(async (tx) => {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const inserted = (await (tx as any)`
-      INSERT INTO public.practice_sessions (user_id, target_language, max_new_terms, max_review_terms)
-      VALUES (${params.userId}, ${params.targetLanguage}, ${params.maxNewTerms}, ${params.maxReviewTerms})
-      ON CONFLICT (user_id, target_language) WHERE status = 'active' DO NOTHING
+      INSERT INTO public.practice_sessions (user_id, target_language, pool, max_new_terms, max_review_terms)
+      VALUES (${params.userId}, ${params.targetLanguage}, ${params.pool}, ${params.maxNewTerms}, ${params.maxReviewTerms})
+      ON CONFLICT (user_id, target_language, pool) WHERE status = 'active' DO NOTHING
       RETURNING *
     `) as DbPracticeSession[]
 
     if (inserted.length > 0) {
       const session = inserted[0]!
       // Snapshot the capped batch in the same transaction so the session can
-      // never observe its own membership in a half-built state.
-      await (tx as any)`
-        INSERT INTO public.practice_session_chunks
-          (practice_session_id, user_lookup_id, eligible_at_start)
-        WITH review_terms AS (
-          SELECT ul.id
-          FROM public.user_lookups ul
-          WHERE ul.user_id = ${params.userId}
-            AND ul.target_language = ${params.targetLanguage}
-            AND ul.count > 0
-            AND ul.deleted_at IS NULL
-            AND ul.srs_state IS NOT NULL
-            AND ul.srs_due IS NOT NULL
-            AND ul.srs_due <= NOW()
-          ORDER BY ul.srs_due ASC NULLS LAST, ul.headword ASC, ul.sense ASC
-          LIMIT ${params.maxReviewTerms}
-        ),
-        new_terms AS (
-          SELECT ul.id
-          FROM public.user_lookups ul
-          WHERE ul.user_id = ${params.userId}
-            AND ul.target_language = ${params.targetLanguage}
-            AND ul.count > 0
-            AND ul.deleted_at IS NULL
-            AND ul.srs_state IS NULL
-          ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
-          LIMIT ${params.maxNewTerms}
-        ),
-        selected AS (
-          SELECT id FROM review_terms
-          UNION ALL
-          SELECT id FROM new_terms
-        )
-        SELECT ${session.id}, selected.id, TRUE
-        FROM selected
-      `
+      // never observe its own membership in a half-built state. The two pool
+      // branches read from disjoint SRS column families so a kept term that's
+      // due in both passive and active simultaneously enters both snapshots.
+      if (params.pool === 'passive') {
+        await (tx as any)`
+          INSERT INTO public.practice_session_chunks
+            (practice_session_id, user_lookup_id, eligible_at_start)
+          WITH review_terms AS (
+            SELECT ul.id
+            FROM public.user_lookups ul
+            WHERE ul.user_id = ${params.userId}
+              AND ul.target_language = ${params.targetLanguage}
+              AND ul.count > 0
+              AND ul.deleted_at IS NULL
+              AND ul.srs_state IS NOT NULL
+              AND ul.srs_due IS NOT NULL
+              AND ul.srs_due <= NOW()
+            ORDER BY ul.srs_due ASC NULLS LAST, ul.headword ASC, ul.sense ASC
+            LIMIT ${params.maxReviewTerms}
+          ),
+          new_terms AS (
+            SELECT ul.id
+            FROM public.user_lookups ul
+            WHERE ul.user_id = ${params.userId}
+              AND ul.target_language = ${params.targetLanguage}
+              AND ul.count > 0
+              AND ul.deleted_at IS NULL
+              AND ul.srs_state IS NULL
+            ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
+            LIMIT ${params.maxNewTerms}
+          ),
+          selected AS (
+            SELECT id FROM review_terms
+            UNION ALL
+            SELECT id FROM new_terms
+          )
+          SELECT ${session.id}, selected.id, TRUE
+          FROM selected
+        `
+      } else {
+        // Active drill: restricted to learning_mode='active' rows, reads
+        // active_srs_*. The daily-new cap does NOT apply here — the caller
+        // passes the full active-new count for maxNewTerms and the full
+        // active-due count for maxReviewTerms.
+        await (tx as any)`
+          INSERT INTO public.practice_session_chunks
+            (practice_session_id, user_lookup_id, eligible_at_start)
+          WITH review_terms AS (
+            SELECT ul.id
+            FROM public.user_lookups ul
+            WHERE ul.user_id = ${params.userId}
+              AND ul.target_language = ${params.targetLanguage}
+              AND ul.count > 0
+              AND ul.deleted_at IS NULL
+              AND ul.learning_mode = 'active'
+              AND ul.active_srs_state IS NOT NULL
+              AND ul.active_srs_due IS NOT NULL
+              AND ul.active_srs_due <= NOW()
+            ORDER BY ul.active_srs_due ASC NULLS LAST, ul.headword ASC, ul.sense ASC
+            LIMIT ${params.maxReviewTerms}
+          ),
+          new_terms AS (
+            SELECT ul.id
+            FROM public.user_lookups ul
+            WHERE ul.user_id = ${params.userId}
+              AND ul.target_language = ${params.targetLanguage}
+              AND ul.count > 0
+              AND ul.deleted_at IS NULL
+              AND ul.learning_mode = 'active'
+              AND ul.active_srs_state IS NULL
+            ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
+            LIMIT ${params.maxNewTerms}
+          ),
+          selected AS (
+            SELECT id FROM review_terms
+            UNION ALL
+            SELECT id FROM new_terms
+          )
+          SELECT ${session.id}, selected.id, TRUE
+          FROM selected
+        `
+      }
       return { session, resumed: false }
     }
 
@@ -78,6 +130,7 @@ const insertOrResume = async (params: {
       FROM public.practice_sessions
       WHERE user_id = ${params.userId}
         AND target_language = ${params.targetLanguage}
+        AND pool = ${params.pool}
         AND status = 'active'
       LIMIT 1
     `) as DbPracticeSession[]
@@ -102,12 +155,14 @@ const findByIdForUser = async (id: string, userId: string): Promise<DbPracticeSe
 const findActiveForUser = async (params: {
   userId: string
   targetLanguage: string
+  pool: PracticePool
 }): Promise<DbPracticeSession | null> => {
   const result = (await sql`
     SELECT *
     FROM public.practice_sessions
     WHERE user_id = ${params.userId}
       AND target_language = ${params.targetLanguage}
+      AND pool = ${params.pool}
       AND status = 'active'
     LIMIT 1
   `) as DbPracticeSession[]
@@ -148,6 +203,7 @@ const markAbandoned = async (id: string, userId: string): Promise<boolean> => {
 const abandonStaleForUser = async (params: {
   userId: string
   targetLanguage: string
+  pool: PracticePool
   olderThanHours: number
 }): Promise<number> => {
   const result = await sql`
@@ -155,6 +211,7 @@ const abandonStaleForUser = async (params: {
     SET status = 'abandoned', ended_at = NOW()
     WHERE user_id = ${params.userId}
       AND target_language = ${params.targetLanguage}
+      AND pool = ${params.pool}
       AND status = 'active'
       AND started_at < NOW() - (${params.olderThanHours}::int || ' hours')::interval
   `
@@ -209,15 +266,25 @@ export interface PracticeSessionsRepositoryInterface {
   insertOrResume: (params: {
     userId: string
     targetLanguage: string
+    pool: PracticePool
     maxNewTerms: number
     maxReviewTerms: number
   }) => Promise<PracticeSessionInsertResult>
   findByIdForUser: (id: string, userId: string) => Promise<DbPracticeSession | null>
-  findActiveForUser: (params: { userId: string; targetLanguage: string }) => Promise<DbPracticeSession | null>
+  findActiveForUser: (params: {
+    userId: string
+    targetLanguage: string
+    pool: PracticePool
+  }) => Promise<DbPracticeSession | null>
   listRecentByUser: (userId: string, limit?: number) => Promise<DbPracticeSession[]>
   markCompleted: (id: string, userId: string) => Promise<boolean>
   markAbandoned: (id: string, userId: string) => Promise<boolean>
-  abandonStaleForUser: (params: { userId: string; targetLanguage: string; olderThanHours: number }) => Promise<number>
+  abandonStaleForUser: (params: {
+    userId: string
+    targetLanguage: string
+    pool: PracticePool
+    olderThanHours: number
+  }) => Promise<number>
   markChunkAbandoned: (params: { practiceSessionId: string; userLookupId: string }) => Promise<void>
   getSessionProgress: (practiceSessionId: string) => Promise<{ completed: number; target: number }>
 }

@@ -4,7 +4,10 @@ import type {
   PracticeTextsRepositoryInterface,
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
-import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  PracticePool,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { generatePracticeText } from '../../transport/third-party/anthropic/passes/generate-practice-text'
@@ -85,6 +88,7 @@ const buildRemainingChunks = async (
   practiceSessionId: string,
   userId: string,
   targetLanguage: string,
+  pool: PracticePool,
   deps: GenerateNextPracticeTextDependencies
 ) => {
   const stubbornIds = await deps.practiceRatingsRepository.getStubbornUserLookupIdsForSession(practiceSessionId)
@@ -93,6 +97,7 @@ const buildRemainingChunks = async (
     userId,
     targetLanguage,
     practiceSessionId,
+    pool,
     extraUserLookupIds: stubbornIds,
   })
 
@@ -134,6 +139,7 @@ const runGenerationForSlot = async (params: {
   practiceSessionId: string
   userId: string
   targetLanguage: string
+  pool: PracticePool
   nativeLanguage: string
   hideTranslationFields: boolean
   allowL1Notes: boolean
@@ -144,6 +150,7 @@ const runGenerationForSlot = async (params: {
     practiceSessionId,
     userId,
     targetLanguage,
+    pool,
     nativeLanguage,
     hideTranslationFields,
     allowL1Notes,
@@ -156,7 +163,13 @@ const runGenerationForSlot = async (params: {
     return { ok: false, warning: 'slot already claimed' }
   }
 
-  const { remaining, skipCountByKey } = await buildRemainingChunks(practiceSessionId, userId, targetLanguage, deps)
+  const { remaining, skipCountByKey } = await buildRemainingChunks(
+    practiceSessionId,
+    userId,
+    targetLanguage,
+    pool,
+    deps
+  )
   if (remaining.length === 0) {
     await deps.practiceTextsRepository.markFailed({
       id: slotId,
@@ -166,8 +179,10 @@ const runGenerationForSlot = async (params: {
     return { ok: false, warning: 'no remaining chunks' }
   }
 
-  const newRows = remaining.filter((row) => row.srs_state == null)
-  await Promise.all(newRows.map((row) => deps.userLookupsRepository.initializeSrsState(row.id)))
+  const newRows = remaining.filter((row) => (pool === 'passive' ? row.srs_state == null : row.active_srs_state == null))
+  await Promise.all(
+    newRows.map((row) => deps.userLookupsRepository.initializeSrsStateForPool({ userLookupId: row.id, pool }))
+  )
 
   const stubborn = remaining.find(
     (row) => (skipCountByKey.get(`${row.headword}::${row.sense ?? ''}`) ?? 0) === RESCUE_THRESHOLD
@@ -256,6 +271,7 @@ export const generateNextPracticeText = async (
   if (session.status !== 'active') return { ok: false, reason: 'session_completed' }
 
   const targetLanguage = session.target_language
+  const pool = session.pool as PracticePool
 
   const languagePrefs = await getLanguageMode({
     userId,
@@ -270,7 +286,7 @@ export const generateNextPracticeText = async (
   // 'ready' -> poll if 'pending'/'generating' -> if poll times out, fence the
   // slot off and let the next iteration reserve fresh.
   for (;;) {
-    const { remaining } = await buildRemainingChunks(practiceSessionId, userId, targetLanguage, deps)
+    const { remaining } = await buildRemainingChunks(practiceSessionId, userId, targetLanguage, pool, deps)
     if (remaining.length === 0) {
       if (markCompletedOnEmpty) {
         await deps.practiceSessionsRepository.markCompleted(practiceSessionId, userId)
@@ -291,6 +307,7 @@ export const generateNextPracticeText = async (
         practiceSessionId,
         userId,
         targetLanguage,
+        pool,
         nativeLanguage: languagePrefs.nativeLanguage,
         hideTranslationFields: languagePrefs.hideTranslationFields,
         allowL1Notes: languagePrefs.allowL1Notes,
@@ -371,6 +388,7 @@ export const prepareNextPracticeText = async (
   if (session.status !== 'active') return { ok: false, reason: 'session_completed' }
 
   const targetLanguage = session.target_language
+  const pool = session.pool as PracticePool
 
   const languagePrefs = await getLanguageMode({
     userId,
@@ -380,7 +398,7 @@ export const prepareNextPracticeText = async (
   })
   if (!languagePrefs.nativeLanguage) return { ok: false, reason: 'no_native_language' }
 
-  const { remaining } = await buildRemainingChunks(practiceSessionId, userId, targetLanguage, deps)
+  const { remaining } = await buildRemainingChunks(practiceSessionId, userId, targetLanguage, pool, deps)
   if (remaining.length === 0) {
     return { ok: true, noWork: true }
   }
@@ -400,6 +418,7 @@ export const prepareNextPracticeText = async (
     practiceSessionId,
     userId,
     targetLanguage,
+    pool,
     nativeLanguage: languagePrefs.nativeLanguage,
     hideTranslationFields: languagePrefs.hideTranslationFields,
     allowL1Notes: languagePrefs.allowL1Notes,

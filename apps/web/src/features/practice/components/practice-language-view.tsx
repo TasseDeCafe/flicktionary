@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, ChevronLeft, CircleCheck, Clock, MoreVertical, Plus, RotateCcw, XCircle } from 'lucide-react'
+import { Brain, ChevronLeft, CircleCheck, Clock, MoreVertical, Plus, RotateCcw, Star, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import {
@@ -43,7 +43,14 @@ export const PracticeLanguageView = () => {
 
   const dailyNewAvailable = entry ? getDailyNewAvailable(entry, maxNewTerms) : 0
   const dueTermCount = entry ? entry.reviewDueCount + entry.learningDueCount : 0
-  const activeSessionId = entry?.activePracticeSessionId ?? null
+  // Passive-pool ('normal SRS reviews') and active-pool ('drill') sessions are
+  // independent; both can be active for the same language.
+  const passiveSessionId = entry?.passivePracticeSessionId ?? null
+  const activeDrillSessionId = entry?.activePracticeSessionId ?? null
+  const activeTotal = entry?.activeTotal ?? 0
+  const activeDueCount = entry ? entry.activeReviewDueCount + entry.activeLearningDueCount : 0
+  const activeNewCount = entry?.activeNewCount ?? 0
+  const hasActiveDrillWork = activeDueCount + activeNewCount > 0
 
   const formatFollowUpDelay = (nextLearningDueAt: string | null) => {
     if (!nextLearningDueAt) return null
@@ -57,7 +64,7 @@ export const PracticeLanguageView = () => {
 
   const primaryAction: PracticeAction | null = (() => {
     if (!entry) return null
-    if (entry.activePracticeSessionId) return { label: t`Continue session`, mode: 'review_due', icon: 'review' }
+    if (passiveSessionId) return { label: t`Continue session`, mode: 'review_due', icon: 'review' }
     if (dueTermCount > 0 && maxReviewTerms > 0) {
       return { label: t`Review follow-ups`, mode: 'review_due', icon: 'review' }
     }
@@ -70,7 +77,7 @@ export const PracticeLanguageView = () => {
 
   const secondaryAction: PracticeAction | null = (() => {
     if (!entry) return null
-    if (entry.activePracticeSessionId) return null
+    if (passiveSessionId) return null
     if (dueTermCount > 0 && dailyNewAvailable > 0) {
       return { label: t`Learn new terms`, mode: 'learn_new', icon: 'new' }
     }
@@ -86,7 +93,7 @@ export const PracticeLanguageView = () => {
     const totalKept = entry.totalKept
     const newCount = entry.newCount
 
-    if (entry.activePracticeSessionId) {
+    if (passiveSessionId) {
       const parts = [followUpDelay, newCount > 0 ? t`${newCount} unseen` : null, t`${totalKept} total`].filter(
         (part): part is string => part != null
       )
@@ -117,16 +124,23 @@ export const PracticeLanguageView = () => {
     })
   }
 
+  // The "End session" controls only target the passive-pool session — the
+  // active drill has its own End button in its section.
   const handleEndSession = () => {
-    if (!activeSessionId) return
+    if (!passiveSessionId) return
     abandonSession(
-      { sessionId: activeSessionId },
+      { sessionId: passiveSessionId },
       {
         onSuccess: () => {
           setConfirmEndOpen(false)
         },
       }
     )
+  }
+
+  const handleEndActiveDrill = () => {
+    if (!activeDrillSessionId) return
+    abandonSession({ sessionId: activeDrillSessionId })
   }
 
   return (
@@ -138,7 +152,7 @@ export const PracticeLanguageView = () => {
               <ChevronLeft className='h-5 w-5' />
             </Button>
             <h1 className='min-w-0 flex-1 truncate text-2xl font-bold'>{languageName}</h1>
-            {activeSessionId && (
+            {passiveSessionId && (
               <Button
                 type='button'
                 variant='ghost'
@@ -165,8 +179,9 @@ export const PracticeLanguageView = () => {
           {entry && (
             <>
               <section className='rounded-xl border bg-white p-4'>
+                <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Passive vocabulary`}</h2>
                 <div className='flex items-start gap-3'>
-                  {activeSessionId ? (
+                  {passiveSessionId ? (
                     <Clock className='mt-1 h-5 w-5 text-yellow-600' />
                   ) : primaryAction ? (
                     <Brain className='mt-1 h-5 w-5 text-yellow-600' />
@@ -174,15 +189,61 @@ export const PracticeLanguageView = () => {
                     <CircleCheck className='mt-1 h-5 w-5 text-emerald-600' />
                   )}
                   <div className='min-w-0 flex-1'>
-                    <h2 className='font-semibold'>
-                      {activeSessionId
+                    <h3 className='font-semibold'>
+                      {passiveSessionId
                         ? t`Session in progress`
                         : primaryAction
                           ? t`Ready to practice`
                           : t`All caught up`}
-                    </h2>
+                    </h3>
                     {statusLine && <p className='text-muted-foreground mt-1 text-sm'>{statusLine}</p>}
                   </div>
+                </div>
+                <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
+                  <Button
+                    type='button'
+                    size='lg'
+                    disabled={!primaryAction || isEnding}
+                    onClick={() => {
+                      if (!primaryAction) return
+                      handleStart(primaryAction.mode)
+                    }}
+                  >
+                    {primaryAction?.icon === 'review' ? (
+                      <RotateCcw className='h-4 w-4' />
+                    ) : (
+                      <Plus className='h-4 w-4' />
+                    )}
+                    {primaryAction?.label ?? t`All caught up`}
+                  </Button>
+                  {!passiveSessionId && secondaryAction && (
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='lg'
+                      disabled={isEnding}
+                      onClick={() => handleStart(secondaryAction.mode)}
+                    >
+                      {secondaryAction.icon === 'review' ? (
+                        <RotateCcw className='h-4 w-4' />
+                      ) : (
+                        <Plus className='h-4 w-4' />
+                      )}
+                      {secondaryAction.label}
+                    </Button>
+                  )}
+                  {passiveSessionId && (
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='lg'
+                      disabled={isEnding}
+                      onClick={() => setConfirmEndOpen(true)}
+                    >
+                      <XCircle className='h-4 w-4' />
+                      {t`End session`}
+                    </Button>
+                  )}
                 </div>
               </section>
 
@@ -192,44 +253,65 @@ export const PracticeLanguageView = () => {
                 <PracticeMetric label={t`Unseen`} value={formatCount(entry.newCount)} />
                 <PracticeMetric label={t`Total`} value={formatCount(entry.totalKept)} />
               </section>
+
+              {activeTotal > 0 && (
+                <section className='rounded-xl border bg-amber-50/40 p-4'>
+                  <h2 className='text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
+                    <Star className='h-3.5 w-3.5 text-amber-600' />
+                    {t`Active vocabulary`}
+                  </h2>
+                  <p className='text-sm text-gray-700'>
+                    {activeDrillSessionId
+                      ? t`Active drill in progress`
+                      : hasActiveDrillWork
+                        ? t`${activeDueCount} due, ${activeNewCount} new`
+                        : t`${activeTotal} active term(s). Nothing due right now.`}
+                  </p>
+                  <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
+                    {activeDrillSessionId ? (
+                      <>
+                        <Button
+                          type='button'
+                          size='lg'
+                          onClick={() =>
+                            void navigate({
+                              to: '/practice/$practiceSessionId',
+                              params: { practiceSessionId: activeDrillSessionId },
+                            })
+                          }
+                        >
+                          <RotateCcw className='h-4 w-4' />
+                          {t`Continue active drill`}
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='lg'
+                          disabled={isEnding}
+                          onClick={handleEndActiveDrill}
+                        >
+                          <XCircle className='h-4 w-4' />
+                          {t`End active drill`}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type='button'
+                        size='lg'
+                        disabled={!hasActiveDrillWork || isEnding}
+                        onClick={() => handleStart('active_drill')}
+                      >
+                        <Star className='h-4 w-4' />
+                        {t`Drill active terms`}
+                      </Button>
+                    )}
+                  </div>
+                </section>
+              )}
             </>
           )}
         </div>
       </div>
-
-      {entry && (
-        <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-3 pt-3 pb-4 backdrop-blur'>
-          <div className='mx-auto flex w-full max-w-2xl flex-col gap-2 sm:flex-row-reverse sm:items-center'>
-            <Button
-              type='button'
-              size='xl'
-              className='w-full sm:w-auto'
-              disabled={!primaryAction || isEnding}
-              onClick={() => {
-                if (!primaryAction) return
-                handleStart(primaryAction.mode)
-              }}
-            >
-              {primaryAction?.icon === 'review' ? <RotateCcw className='h-4 w-4' /> : <Plus className='h-4 w-4' />}
-              {primaryAction?.label ?? t`All caught up`}
-            </Button>
-
-            {!activeSessionId && secondaryAction && (
-              <Button
-                type='button'
-                variant='outline'
-                size='xl'
-                className='w-full sm:w-auto'
-                disabled={isEnding}
-                onClick={() => handleStart(secondaryAction.mode)}
-              >
-                {secondaryAction.icon === 'review' ? <RotateCcw className='h-4 w-4' /> : <Plus className='h-4 w-4' />}
-                {secondaryAction.label}
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
 
       <ResponsiveOverlay open={sessionOptionsOpen} onOpenChange={setSessionOptionsOpen}>
         <OverlayContent>

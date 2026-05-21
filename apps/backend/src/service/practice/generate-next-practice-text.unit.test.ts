@@ -38,6 +38,14 @@ const lookup: DbUserLookup = {
   srs_reps: 0,
   srs_lapses: 0,
   added_to_practice_at: null,
+  learning_mode: 'passive',
+  active_srs_state: null,
+  active_srs_due: null,
+  active_srs_stability: null,
+  active_srs_difficulty: null,
+  active_srs_last_review: null,
+  active_srs_reps: 0,
+  active_srs_lapses: 0,
   created_at: '2026-05-12T00:00:00Z',
   deleted_at: null,
 }
@@ -52,6 +60,7 @@ const createDeps = () => {
         user_id: userId,
         target_language: 'en',
         status: 'active',
+        pool: 'passive',
       }),
       markCompleted: vi.fn(),
       markChunkAbandoned: vi.fn(),
@@ -80,6 +89,7 @@ const createDeps = () => {
     userLookupsRepository: {
       listEligibleForLanguage: vi.fn().mockResolvedValue([lookup]),
       initializeSrsState: vi.fn(),
+      initializeSrsStateForPool: vi.fn(),
       findByKey: vi.fn().mockResolvedValue(lookup),
     },
     usersRepository: {

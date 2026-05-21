@@ -1,6 +1,6 @@
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useLingui } from '@lingui/react/macro'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, Star } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 interface VocabularyRowProps {
@@ -48,6 +48,12 @@ export const VocabularyRow = ({
           {preview && <span className='text-muted-foreground truncate text-xs'>{preview}</span>}
         </div>
         <div className='flex shrink-0 items-center gap-2'>
+          {chunk.learningMode === 'active' && (
+            <span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-amber-800 uppercase'>
+              <Star className='h-3 w-3' />
+              {t`Active`}
+            </span>
+          )}
           {due && (
             <span
               className={cn(

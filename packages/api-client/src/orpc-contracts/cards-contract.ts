@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { CardSchema, CardStatusSchema } from './common/flicktionary-schemas'
+import { CardSchema, CardStatusSchema, LearningModeSchema } from './common/flicktionary-schemas'
 
 export const cardsContract = {
   listBySession: oc
@@ -33,7 +33,17 @@ export const cardsContract = {
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ cardId: z.string().uuid(), status: CardStatusSchema }))
+    .input(
+      z.object({
+        cardId: z.string().uuid(),
+        status: CardStatusSchema,
+        // Optional learning_mode stamp applied to the canonical user_lookup
+        // whenever status lands in 'kept'. Also applies when the card is
+        // already 'kept' so "Keep as active" on a default-kept highlight does
+        // not no-op.
+        learningMode: LearningModeSchema.optional(),
+      })
+    )
     .output(z.object({ data: CardSchema })),
 
   // Bulk status update for triage's "Keep all" / "Reject all". Scoped to a
@@ -50,6 +60,10 @@ export const cardsContract = {
         sessionId: z.string().uuid(),
         cardIds: z.array(z.string().uuid()).min(1).max(500),
         status: CardStatusSchema,
+        // Optional learning_mode stamp applied to every kept user_lookup in
+        // the batch. Not exposed in the current UI ("Keep all" defaults to
+        // passive) but the contract supports the eventual bulk active path.
+        learningMode: LearningModeSchema.optional(),
       })
     )
     .output(z.object({ data: z.array(CardSchema) })),

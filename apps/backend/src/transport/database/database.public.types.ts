@@ -259,6 +259,7 @@ export type Database = {
         Row: {
           headword: string
           id: string
+          pool: string
           practice_text_id: string
           rated_at: string
           rating: Database['public']['Enums']['practice_rating']
@@ -271,6 +272,7 @@ export type Database = {
         Insert: {
           headword: string
           id?: string
+          pool?: string
           practice_text_id: string
           rated_at?: string
           rating: Database['public']['Enums']['practice_rating']
@@ -283,6 +285,7 @@ export type Database = {
         Update: {
           headword?: string
           id?: string
+          pool?: string
           practice_text_id?: string
           rated_at?: string
           rating?: Database['public']['Enums']['practice_rating']
@@ -351,6 +354,7 @@ export type Database = {
           id: string
           max_new_terms: number
           max_review_terms: number
+          pool: string
           started_at: string
           status: Database['public']['Enums']['practice_session_status']
           target_language: string
@@ -361,6 +365,7 @@ export type Database = {
           id?: string
           max_new_terms?: number
           max_review_terms?: number
+          pool?: string
           started_at?: string
           status?: Database['public']['Enums']['practice_session_status']
           target_language: string
@@ -371,6 +376,7 @@ export type Database = {
           id?: string
           max_new_terms?: number
           max_review_terms?: number
+          pool?: string
           started_at?: string
           status?: Database['public']['Enums']['practice_session_status']
           target_language?: string
@@ -764,6 +770,13 @@ export type Database = {
       }
       user_lookups: {
         Row: {
+          active_srs_difficulty: number | null
+          active_srs_due: string | null
+          active_srs_lapses: number
+          active_srs_last_review: string | null
+          active_srs_reps: number
+          active_srs_stability: number | null
+          active_srs_state: Database['public']['Enums']['srs_state'] | null
           added_to_practice_at: string | null
           count: number
           created_at: string
@@ -777,6 +790,7 @@ export type Database = {
           grounded_at: string | null
           headword: string
           id: string
+          learning_mode: string
           native_example: string | null
           sense: string
           srs_difficulty: number | null
@@ -792,6 +806,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_srs_difficulty?: number | null
+          active_srs_due?: string | null
+          active_srs_lapses?: number
+          active_srs_last_review?: string | null
+          active_srs_reps?: number
+          active_srs_stability?: number | null
+          active_srs_state?: Database['public']['Enums']['srs_state'] | null
           added_to_practice_at?: string | null
           count?: number
           created_at?: string
@@ -805,6 +826,7 @@ export type Database = {
           grounded_at?: string | null
           headword: string
           id?: string
+          learning_mode?: string
           native_example?: string | null
           sense?: string
           srs_difficulty?: number | null
@@ -820,6 +842,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_srs_difficulty?: number | null
+          active_srs_due?: string | null
+          active_srs_lapses?: number
+          active_srs_last_review?: string | null
+          active_srs_reps?: number
+          active_srs_stability?: number | null
+          active_srs_state?: Database['public']['Enums']['srs_state'] | null
           added_to_practice_at?: string | null
           count?: number
           created_at?: string
@@ -833,6 +862,7 @@ export type Database = {
           grounded_at?: string | null
           headword?: string
           id?: string
+          learning_mode?: string
           native_example?: string | null
           sense?: string
           srs_difficulty?: number | null

@@ -1338,6 +1338,86 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     true) the middleware short-circuits via `next()` and the
     template-stub route `/api/v1/translate-text` returns 404 instead of 403. Skip auto-disables when subscription gating returns.
 
+- **Focus-view triage chrome rework + rate-sheet learning-mode toggle (2026-05-21).**
+  Focus view's keep/reject + learning-mode controls were scattered (header
+  right-slot, in-content nav strip, inline `Learning mode` row inside the
+  Card section) and out of thumb-reach on mobile. Collapsed into one fixed
+  bottom action bar + side-edge nav arrows. Don't re-introduce the old
+  scattered layout.
+  - **`apps/web/src/features/review/components/focus-view.tsx`** — removed
+    the modal-header `rightSlot` keep/reject icon buttons and the
+    `border-b` prev/next toolbar that used to sit above the scroll body.
+    Removed the `isKept && !isLanguageWideEntry` inline `Learning mode`
+    row from the Card section. The scroll body and a new `FocusActionBar`
+    sibling are both flex children of `ModalScreen`'s child container, so
+    the bar stays anchored without `position: fixed`. Prev/next is now two
+    `position: fixed` circular buttons pinned mid-viewport (`h-12 w-12`
+    mobile, `md:h-11 md:w-11` desktop; `bg-white`, `border-gray-300`,
+    `shadow-lg`, `h-6 w-6` arrows).
+  - **`FocusActionBar` (same file)** — single unified bar shows
+    `[Reject (destructive)] [Passive (default)] [★ Active (outline)]`
+    for non-language-wide entries. The button matching the card's current
+    state is filled (`destructive` for rejected, `default` for kept-passive
+    or kept-active); others outlined. Tap fires the appropriate mutation,
+    sets a local `pendingAction` state that overrides the state-derived
+    highlight so the tapped button stays filled during a 220ms
+    `setTimeout` before auto-advancing — optimistic cache updates only
+    flip `status`, not `learning_mode`, so derived state alone couldn't
+    confirm the active/passive choice visually. `pendingAction` resets via
+    `useEffect([cardId])` on the next card. `useState`/`useEffect` calls
+    are declared above the early returns for `isLoading` / `!card` to
+    keep hook order stable. Last card (no `cursor.next`) calls
+    `closeToTriage()` instead of advancing. Tap on the current state is a
+    no-op mutation but still advances. Combined keep+mode uses
+    `cards.updateStatus({ status: 'kept', learningMode })` in a single
+    request — relies on the existing "same-status learningMode override"
+    behavior the cards router already supports.
+  - **Language-wide entry variant (`?from=vocabulary` / `?from=practice`)**
+    moved out of the scroll body into its own `shrink-0 border-t bg-white`
+    bar, sibling of the scroll body. Same two stacked
+    `Add to active vocabulary` / `Add to passive vocabulary` buttons as
+    before, just no longer scrolling off-screen.
+  - **`apps/web/src/features/practice/components/rate-sheet.tsx`** —
+    `RateSheetChunkContent` gained `learningMode: LearningMode | null`;
+    props gained `onToggleLearningMode(next)` + `isTogglingLearningMode`.
+    The 3-dots overflow menu now renders an `OverlayActionRow` between
+    Edit and Delete: label is `Switch to active vocabulary` when the
+    chunk is currently passive, `Switch to passive vocabulary` when
+    active, hidden when `learningMode` is null (no canonical row).
+  - **`apps/web/src/features/practice/components/practice-session-view.tsx`** —
+    imports `useSetLearningMode`, passes `learningMode` from the open
+    annotation into `openChunk`, and wires `handleToggleLearningMode` that
+    calls `setLearningMode({ chunkId: ann.userLookupId, learningMode: next })`
+    and dismisses the sheet on success.
+  - **Annotation schema gained `learningMode`.**
+    `PracticeAnnotationSchema` in
+    `packages/api-client/src/orpc-contracts/common/flicktionary-schemas.ts`
+    grew `learningMode: LearningModeSchema.nullable()`. Backend join:
+    `user-lookups-repository.listChunkContentForKeys` selects
+    `ul.learning_mode` and surfaces it on the return; `practice-router`'s
+    `ChunkContent` + `toPracticeTextDto` thread it onto each annotation.
+    No new migration — `user_lookups.learning_mode` already exists from
+    the 2026-05 passive/active migration.
+  - **Cache invalidation fix.** `useSetLearningMode` in
+    `apps/web/src/features/vocabulary/api/vocabulary-hooks.ts`
+    `onSettled` now also invalidates `orpcQuery.practice.getSession.key()`.
+    Without it, the open practice text's annotation kept the stale
+    `learningMode` after a toggle, so reopening the rate sheet showed the
+    pre-toggle label.
+  - **Lingui strings.** No new strings beyond the existing
+    `Switch to active vocabulary` / `Switch to passive vocabulary` /
+    `Reject` / `Passive` / `Active` already shipped earlier in the
+    passive/active feature.
+  - **Verification.** Workspace `pnpm check:types` and web `pnpm lint`
+    clean (lint warnings are the pre-existing template ones). Manual
+    golden paths exercised: session triage with `Reject` / `Passive` /
+    `Active` from new + already-decided cards (state highlight + 220ms
+    confirmation visible), navigation back to a rejected card shows
+    Reject filled, kept-active card shows Active filled with Reject still
+    available, vocabulary/practice add-a-word focus view stays anchored
+    on long cards, practice rate-sheet 3-dots reflects mode flips after
+    re-open.
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)

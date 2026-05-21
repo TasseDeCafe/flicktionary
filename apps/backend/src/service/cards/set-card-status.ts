@@ -1,6 +1,9 @@
 import { CardStatus, CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
-import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  LearningMode,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 
 export type SetCardStatusDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -15,17 +18,37 @@ export type SetCardStatusDependencies = {
 //   prev === 'kept' && next !== 'kept'   →  count -= 1
 //   no real transition                   →  no-op (idempotent re-clicks)
 // SRS state stays put on un-keep — re-keeping later resumes the schedule.
+//
+// `learningMode` (optional) is applied to the canonical user_lookups row
+// whenever the card lands in 'kept'. Critically, it also applies when the
+// card is *already* 'kept' — highlights are kept by default, so "Keep as
+// active" on an already-kept highlight must promote the underlying term to
+// the active pool rather than no-op.
 export const setCardStatus = async (
   cardId: string,
   userId: string,
   status: CardStatus,
-  deps: SetCardStatusDependencies
+  deps: SetCardStatusDependencies,
+  learningMode?: LearningMode
 ): Promise<DbCard | null> => {
   const card = await deps.cardsRepository.findByIdForUser(cardId, userId)
   if (!card) return null
 
   const prevStatus = card.status
-  if (prevStatus === status) return card
+
+  // Same-status optimization: re-clicking the same status is idempotent, EXCEPT
+  // when the caller is supplying a learningMode on an already-kept card — that
+  // is the "promote already-kept term to active" path.
+  if (prevStatus === status) {
+    if (status === 'kept' && learningMode) {
+      await deps.userLookupsRepository.setLearningMode({
+        userLookupId: card.user_lookup_id,
+        userId,
+        learningMode,
+      })
+    }
+    return card
+  }
 
   const updated = await deps.cardsRepository.updateStatus(cardId, status)
   if (!updated) return null
@@ -35,6 +58,13 @@ export const setCardStatus = async (
       userLookupId: card.user_lookup_id,
       cardId: card.id,
     })
+    if (learningMode) {
+      await deps.userLookupsRepository.setLearningMode({
+        userLookupId: card.user_lookup_id,
+        userId,
+        learningMode,
+      })
+    }
   } else if (prevStatus === 'kept' && status !== 'kept') {
     await deps.userLookupsRepository.applyUnkeepTransition({ userLookupId: card.user_lookup_id })
   }
@@ -44,12 +74,18 @@ export const setCardStatus = async (
 
 // Bulk variant for the triage list's "Keep all" / "Reject all" buttons. Same
 // transition semantics as setCardStatus, partitioned across the batch.
+//
+// `learningMode` (optional) is applied to every kept user_lookup in the batch
+// — both rows transitioning into 'kept' and rows already 'kept'. Note: the
+// product surface does not currently expose "Keep all as active", so this
+// parameter is reserved for future bulk surfaces.
 export const setCardStatusBatch = async (
   studySessionId: string,
   cardIds: string[],
   userId: string,
   status: CardStatus,
-  deps: SetCardStatusDependencies
+  deps: SetCardStatusDependencies,
+  learningMode?: LearningMode
 ): Promise<DbCard[]> => {
   if (cardIds.length === 0) return []
 
@@ -65,14 +101,20 @@ export const setCardStatusBatch = async (
   const enteringKept = targets.filter((c) => c.status !== 'kept' && status === 'kept')
   const leavingKept = targets.filter((c) => c.status === 'kept' && status !== 'kept')
   const transitioning = targets.filter((c) => c.status !== status)
+  const alreadyKept = targets.filter((c) => c.status === 'kept' && status === 'kept')
 
-  if (transitioning.length === 0) return []
+  if (transitioning.length === 0 && !(status === 'kept' && learningMode && alreadyKept.length > 0)) {
+    return []
+  }
 
-  const updated = await deps.cardsRepository.updateStatusBatch(
-    studySessionId,
-    transitioning.map((c) => c.id),
-    status
-  )
+  const updated =
+    transitioning.length > 0
+      ? await deps.cardsRepository.updateStatusBatch(
+          studySessionId,
+          transitioning.map((c) => c.id),
+          status
+        )
+      : []
 
   if (enteringKept.length > 0) {
     await Promise.all(
@@ -87,6 +129,20 @@ export const setCardStatusBatch = async (
   if (leavingKept.length > 0) {
     await Promise.all(
       leavingKept.map((card) => deps.userLookupsRepository.applyUnkeepTransition({ userLookupId: card.user_lookup_id }))
+    )
+  }
+  if (learningMode && status === 'kept') {
+    // Stamp learning_mode on every kept user_lookup in the batch — both
+    // newly-kept rows and rows that were already 'kept'.
+    const stampTargets = [...enteringKept, ...alreadyKept]
+    await Promise.all(
+      stampTargets.map((card) =>
+        deps.userLookupsRepository.setLearningMode({
+          userLookupId: card.user_lookup_id,
+          userId,
+          learningMode,
+        })
+      )
     )
   }
 

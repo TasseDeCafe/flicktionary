@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { ChunkRowSchema, ChunkSchema } from './common/flicktionary-schemas'
+import { ChunkRowSchema, ChunkSchema, LearningModeSchema } from './common/flicktionary-schemas'
 
 // Cursor wire format for `listChunks`. Encoded base64 over a JSON payload by
 // both client and server; we keep the schema strict so a malformed cursor
@@ -95,6 +95,9 @@ export const chunksContract = {
         // Optional case-insensitive substring filter applied across headword,
         // translation, and definition. Empty string is treated as no filter.
         q: z.string().optional(),
+        // Optional learning_mode filter. Omitted/null means "All"; otherwise
+        // restrict to passive or active terms.
+        learningMode: LearningModeSchema.nullable().optional(),
       })
     )
     .output(
@@ -103,6 +106,18 @@ export const chunksContract = {
         nextCursor: z.string().nullable(),
       })
     ),
+
+  // Switch a chunk between passive and active learning modes. Demoting active
+  // back to passive preserves the row's active_srs_* state so a future
+  // re-promotion resumes the schedule.
+  setLearningMode: oc
+    .route({ method: 'PATCH', path: '/chunks/{chunkId}/learning-mode', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ chunkId: z.string().uuid(), learningMode: LearningModeSchema }))
+    .output(z.object({ data: ChunkSchema })),
 
   // Distinct target_languages the user has at least one (non-deleted) chunk in.
   // Powers the language switcher pills on the Vocabulary tab.

@@ -1,5 +1,6 @@
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
+import type { PracticePool } from '../user-lookups/user-lookups-repository'
 
 export type DbPracticeRating = Tables<'practice_ratings'>
 export type PracticeRatingValue = Database['public']['Enums']['practice_rating']
@@ -11,12 +12,13 @@ const insert = async (params: {
   targetLanguage: string
   headword: string
   sense: string
+  pool: PracticePool
   rating: PracticeRatingValue
   wasExplicit: boolean
 }): Promise<DbPracticeRating> => {
   const result = (await sql`
     INSERT INTO public.practice_ratings (
-      practice_text_id, user_lookup_id, user_id, target_language, headword, sense, rating, was_explicit
+      practice_text_id, user_lookup_id, user_id, target_language, headword, sense, pool, rating, was_explicit
     )
     VALUES (
       ${params.practiceTextId},
@@ -25,6 +27,7 @@ const insert = async (params: {
       ${params.targetLanguage},
       ${params.headword},
       ${params.sense},
+      ${params.pool},
       ${params.rating},
       ${params.wasExplicit}
     )
@@ -86,6 +89,7 @@ export interface PracticeRatingsRepositoryInterface {
     targetLanguage: string
     headword: string
     sense: string
+    pool: PracticePool
     rating: PracticeRatingValue
     wasExplicit: boolean
   }) => Promise<DbPracticeRating>
