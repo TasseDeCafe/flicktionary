@@ -2,10 +2,16 @@ import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { useSetCefrForLanguage, useSetShowTranslationsForLanguage } from '@/features/sessions/api/sessions-hooks'
+import {
+  useSetCefrForLanguage,
+  useSetEnglishIpaDialect,
+  useSetShowTranslationsForLanguage,
+} from '@/features/sessions/api/sessions-hooks'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 type CefrLevel = (typeof LEVELS)[number]
+
+type IpaDialect = 'ga' | 'rp'
 
 type Pref = {
   targetLanguage: string
@@ -15,11 +21,12 @@ type Pref = {
 
 type Props = {
   prefs: Pref[]
+  englishIpaDialect: IpaDialect
 }
 
 const isCefrLevel = (v: string): v is CefrLevel => (LEVELS as readonly string[]).includes(v)
 
-export const CefrPerLanguageList = ({ prefs }: Props) => {
+export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending, variables } = useSetCefrForLanguage()
   const {
@@ -27,6 +34,12 @@ export const CefrPerLanguageList = ({ prefs }: Props) => {
     isPending: isSavingShowTranslations,
     variables: showTranslationsVariables,
   } = useSetShowTranslationsForLanguage()
+  const { mutate: setEnglishIpaDialect, isPending: isSavingIpaDialect } = useSetEnglishIpaDialect()
+
+  const ipaOptions: Array<{ value: IpaDialect; label: string }> = [
+    { value: 'ga', label: t`American` },
+    { value: 'rp', label: t`British` },
+  ]
 
   const handleChange = (targetLanguage: string, level: CefrLevel) => {
     mutate({ targetLanguage, cefrLevel: level })
@@ -99,6 +112,38 @@ export const CefrPerLanguageList = ({ prefs }: Props) => {
                   aria-label={t`Show translations`}
                 />
               </div>
+              {p.targetLanguage === 'en' && (
+                <div className='flex items-center justify-between gap-3 border-t pt-3'>
+                  <div className='flex flex-col gap-1'>
+                    <span className='text-sm font-medium'>{t`IPA dialect`}</span>
+                    <p className='text-muted-foreground text-xs'>
+                      {t`Which pronunciation to show for English vocabulary cards.`}
+                    </p>
+                  </div>
+                  <div className='flex shrink-0 items-center gap-1'>
+                    {ipaOptions.map((opt) => {
+                      const active = opt.value === englishIpaDialect
+                      return (
+                        <button
+                          key={opt.value}
+                          type='button'
+                          disabled={isSavingIpaDialect}
+                          onClick={() => {
+                            if (opt.value !== englishIpaDialect) setEnglishIpaDialect({ dialect: opt.value })
+                          }}
+                          className={
+                            active
+                              ? 'rounded-md border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs font-semibold'
+                              : 'rounded-md border px-3 py-1 text-xs hover:bg-gray-50 disabled:opacity-50'
+                          }
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </li>
           )
         })}

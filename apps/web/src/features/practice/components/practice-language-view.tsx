@@ -179,7 +179,7 @@ export const PracticeLanguageView = () => {
           {entry && (
             <>
               <section className='rounded-xl border bg-white p-4'>
-                <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Vocabulary`}</h2>
+                <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Passive vocabulary`}</h2>
                 <div className='flex items-start gap-3'>
                   {passiveSessionId ? (
                     <Clock className='mt-1 h-5 w-5 text-yellow-600' />

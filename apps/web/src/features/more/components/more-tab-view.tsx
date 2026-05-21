@@ -83,6 +83,7 @@ export const MoreTabView = () => {
           icon={AlertOctagon}
           label={t`Danger zone`}
           destructive
+          showChevron
           onPress={() => navigate({ to: DangerZoneRoute.to })}
         />
         <MoreListRow icon={LogOut} label={t`Sign out`} onPress={handleSignOut} />

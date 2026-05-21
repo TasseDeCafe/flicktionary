@@ -308,9 +308,9 @@ export const FocusView = () => {
         </div>
       </div>
 
-      {isLanguageWideEntry && (
+      {fromPractice && (
         <div className='shrink-0 border-t bg-white px-4 py-3'>
-          <div className='mx-auto flex w-full max-w-4xl flex-col gap-2'>
+          <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
             <Button
               variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
               size='xl'
@@ -321,8 +321,7 @@ export const FocusView = () => {
                   { chunkId: card.chunk.id, learningMode: 'active' },
                   {
                     onSuccess: () => {
-                      if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
-                      else if (from === 'practice' && practiceSessionId) {
+                      if (practiceSessionId) {
                         void navigate({
                           to: '/practice/$practiceSessionId',
                           params: { practiceSessionId },
@@ -346,8 +345,7 @@ export const FocusView = () => {
                   { chunkId: card.chunk.id, learningMode: 'passive' },
                   {
                     onSuccess: () => {
-                      if (from === 'vocabulary') void navigate({ to: '/vocabulary' })
-                      else if (from === 'practice' && practiceSessionId) {
+                      if (practiceSessionId) {
                         void navigate({
                           to: '/practice/$practiceSessionId',
                           params: { practiceSessionId },
@@ -363,6 +361,29 @@ export const FocusView = () => {
           </div>
         </div>
       )}
+
+      {fromVocabulary &&
+        (() => {
+          const targetMode = card.chunk.learningMode === 'active' ? 'passive' : 'active'
+          return (
+            <div className='shrink-0 border-t bg-white px-4 py-3'>
+              <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+                <Button
+                  variant='outline'
+                  size='xl'
+                  className='w-full'
+                  disabled={isSettingLearningMode}
+                  onClick={() => {
+                    setLearningMode({ chunkId: card.chunk.id, learningMode: targetMode })
+                  }}
+                >
+                  {targetMode === 'active' && <Star className='mr-2 h-4 w-4' />}
+                  {targetMode === 'active' ? t`Switch to active vocabulary` : t`Switch to passive vocabulary`}
+                </Button>
+              </div>
+            </div>
+          )
+        })()}
 
       {!isLanguageWideEntry && (
         <>

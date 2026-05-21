@@ -60,13 +60,14 @@ export const VocabularyActionDrawer = ({
               )
             }}
           />
-          <OverlayActionRow
-            icon={ExternalLink}
-            label={t`Open source`}
-            description={canOpenSource ? t`Jump to the session this term came from` : t`Source was removed`}
-            disabled={!canOpenSource}
-            onClick={() => onOpenSource(chunk)}
-          />
+          {canOpenSource && (
+            <OverlayActionRow
+              icon={ExternalLink}
+              label={t`Open source`}
+              description={t`Jump to the session this term came from`}
+              onClick={() => onOpenSource(chunk)}
+            />
+          )}
           <OverlayActionRow
             icon={Trash2}
             label={t`Delete`}
