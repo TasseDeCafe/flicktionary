@@ -8,8 +8,8 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
-import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -151,7 +151,7 @@ export const createAdhocCard = async (params: {
     userLookupsRepository: deps.userLookupsRepository,
   })
 
-  if (KAIKKI_ENABLED_LANGUAGES.has(targetLanguage)) {
+  if (KAIKKI_LANGUAGES.has(targetLanguage)) {
     await runWiktionaryGrounding({
       sessionId: session.id,
       userId,

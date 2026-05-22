@@ -5,7 +5,7 @@
 // Russian noun/verb extraction is language-specific (template names and arg
 // conventions differ); English uses the generic POS fallback plus the
 // dialect-aware IPA bag. Add new per-language extractors before adding the
-// language to KAIKKI_ENABLED_LANGUAGES.
+// language to KAIKKI_LANGUAGES.
 
 export type KaikkiEntry = {
   word?: unknown

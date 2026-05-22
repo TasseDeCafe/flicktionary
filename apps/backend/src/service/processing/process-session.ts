@@ -22,8 +22,8 @@ import {
   senseDisambiguationPass,
 } from '../../transport/third-party/anthropic/passes/sense-disambiguation-pass'
 import { resolveRegconfig } from '../../transport/database/text-segments/text-segments-repository'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { recordPassTelemetry } from './telemetry'
-import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -233,7 +233,7 @@ export const processSession = async (
       // rows already grounded so re-processing doesn't re-issue lookups, and
       // skips languages without a loaded dump. Failures here are best-effort
       // — never fail the whole pipeline.
-      if (KAIKKI_ENABLED_LANGUAGES.has(session.target_language)) {
+      if (KAIKKI_LANGUAGES.has(session.target_language)) {
         await runWiktionaryGrounding({
           sessionId,
           userId,

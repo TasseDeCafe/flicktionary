@@ -1,9 +1,9 @@
 import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type {
   DbWiktionaryEntry,
   WiktionaryEntriesRepositoryInterface,
 } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
-import { KAIKKI_ENABLED_LANGUAGES } from './config'
 import { extractIpaBag } from './extract'
 
 const FAST_GLOSS_POS_TO_KAIKKI: Record<string, string> = {
@@ -245,7 +245,7 @@ export const lookupFastGlossIpa = async (params: {
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
 }): Promise<GrammarIpaBag | null> => {
   const { targetLanguage, selectionText, wiktionaryEntriesRepository } = params
-  if (!KAIKKI_ENABLED_LANGUAGES.has(targetLanguage)) return null
+  if (!KAIKKI_LANGUAGES.has(targetLanguage)) return null
 
   const headword = selectionText.trim()
   if (!headword) return null

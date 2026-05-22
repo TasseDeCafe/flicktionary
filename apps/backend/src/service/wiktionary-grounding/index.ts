@@ -3,8 +3,6 @@ import { extractGrammarPatch, type GrammarPatch } from './extract'
 import { findEntry } from './lookup'
 import { buildGrammarPatchFromKaikki } from './merge'
 
-export { KAIKKI_ENABLED_LANGUAGES } from './config'
-
 export type GroundingResult = {
   patch: Record<string, unknown>
   matchedHeadword: string
@@ -14,7 +12,7 @@ export type GroundingResult = {
 // Look up `(targetLanguage, headword, pos)` in our wiktionary tables and
 // return the patch we want shallow-merged into the user_lookups.grammar JSONB
 // column. Returns null when:
-//   - the language isn't in KAIKKI_ENABLED_LANGUAGES,
+//   - the language isn't in KAIKKI_LANGUAGES,
 //   - no entry matched any of the four lookup paths, OR
 //   - the entry yielded an empty patch (nothing useful to merge).
 //
