@@ -9,10 +9,11 @@ type Segment = {
 type Props = {
   segments: Segment[]
   rangesBySegmentId?: Map<string, SegmentHighlightRange[]>
+  targetLanguage: string
   flashSegmentId?: string | null
 }
 
-export const SegmentList = ({ segments, rangesBySegmentId, flashSegmentId }: Props) => {
+export const SegmentList = ({ segments, rangesBySegmentId, targetLanguage, flashSegmentId }: Props) => {
   return (
     <div className='flex flex-col divide-y'>
       {segments.map((s) => (
@@ -22,6 +23,7 @@ export const SegmentList = ({ segments, rangesBySegmentId, flashSegmentId }: Pro
           text={s.text}
           startMs={s.startMs}
           ranges={rangesBySegmentId?.get(s.id)}
+          targetLanguage={targetLanguage}
           flash={flashSegmentId === s.id}
         />
       ))}

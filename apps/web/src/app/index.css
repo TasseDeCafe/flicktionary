@@ -156,3 +156,11 @@ body {
   }
 }
 /* end shadcn config */
+
+/* Tap-to-select-word paint. Applied via a direct DOM attribute (not React
+   state) by useWordSelection so an in-flight drag doesn't fight React
+   reconciliation. Background only — no padding — so elementFromPoint hit-tests
+   against exact glyph bounds. */
+[data-word-selected='true'] {
+  background-color: var(--color-sky-200);
+}
