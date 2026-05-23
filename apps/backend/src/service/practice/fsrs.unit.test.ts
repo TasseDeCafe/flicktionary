@@ -75,4 +75,54 @@ describe('applyRating', () => {
     const good = applyRating(reviewRow, 'good', now, 'passive')
     expect(easy.due.getTime()).toBeGreaterThan(good.due.getTime())
   })
+
+  describe('next-day floor (passive straggler clamp)', () => {
+    const DAY_MS = 24 * 60 * 60 * 1000
+    const now = new Date('2026-05-05T12:00:00Z')
+    const floor = now.getTime() + DAY_MS
+
+    it.each(['good', 'hard', 'easy'] as const)(
+      "clamps a passive '%s' rating on a new card to at least +24h",
+      (rating) => {
+        const result = applyRating(newRow, rating, now, 'passive')
+        // Without the clamp, FSRS would schedule these intraday (minutes away).
+        expect(result.due.getTime()).toBeGreaterThanOrEqual(floor)
+      }
+    )
+
+    it("does NOT clamp a passive 'again' rating — misses stay due soon", () => {
+      const result = applyRating(newRow, 'again', now, 'passive')
+      expect(result.due.getTime()).toBeLessThan(floor)
+    })
+
+    it('does NOT clamp the active pool — intraday drilling is preserved', () => {
+      const result = applyRating(newRow, 'good', now, 'active')
+      expect(result.due.getTime()).toBeLessThan(floor)
+    })
+
+    it('produces a sane interval on a second rating across the floor', () => {
+      // First rating: clamped to the +24h floor.
+      const first = applyRating(newRow, 'good', now, 'passive')
+      expect(first.due.getTime()).toBe(floor)
+
+      // Persist the clamped card and rate again ~24h later. Clamping the first
+      // due shifts the elapsed time FSRS sees vs native scheduling; confirm the
+      // result is still a valid future interval (no degenerate/zero/past due).
+      const persisted: DbUserLookup = {
+        ...newRow,
+        srs_state: first.state,
+        srs_due: first.due.toISOString(),
+        srs_stability: first.stability,
+        srs_difficulty: first.difficulty,
+        srs_last_review: first.lastReview.toISOString(),
+        srs_reps: first.reps,
+        srs_lapses: first.lapses,
+      }
+      const now2 = new Date(floor)
+      const second = applyRating(persisted, 'good', now2, 'passive')
+      expect(second.due.getTime()).toBeGreaterThanOrEqual(now2.getTime() + DAY_MS)
+      expect(Number.isFinite(second.due.getTime())).toBe(true)
+      expect(second.reps).toBeGreaterThan(first.reps)
+    })
+  })
 })

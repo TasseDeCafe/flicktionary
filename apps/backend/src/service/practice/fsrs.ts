@@ -78,6 +78,17 @@ export type FsrsResult = {
   lapses: number
 }
 
+// Passive terms the user got right are never rescheduled sooner than this far
+// out. FSRS's intraday learning/relearning steps (minutes away) would otherwise
+// surface as straggler follow-ups right after a session ends, requiring a fresh
+// session to clear. Clamping the output `due` to a next-day floor means finishing
+// a session leaves nothing immediately due. We deliberately do NOT clamp `again`:
+// in-session redrilling of misses is driven by ratings (the "stubborn" path), not
+// `srs_due`, and if a missed term gets abandoned before its retry we want it to
+// stay due soon rather than be pushed a full day out. `now + 24h` matches how
+// FSRS already expresses review intervals (offsets from `now`, not midnight).
+const MIN_PASSIVE_INTERVAL_MS = 24 * 60 * 60 * 1000
+
 // Apply a rating event to a row. For never-reviewed rows the FSRS library's
 // createEmptyCard provides the seed; the rating then transitions it into
 // learning/review with computed intervals. The pool argument selects which
@@ -87,9 +98,12 @@ export const applyRating = (row: DbUserLookup, rating: AppRating, now: Date, poo
   const card: FsrsCard = existing ?? createEmptyCard(now)
   const result = fsrs.next(card, now, RATING_MAP[rating])
   const next = result.card
+  const floor = now.getTime() + MIN_PASSIVE_INTERVAL_MS
+  const due =
+    pool === 'passive' && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
   return {
     state: STATE_TO_DB[next.state],
-    due: next.due,
+    due,
     stability: next.stability,
     difficulty: next.difficulty,
     lastReview: next.last_review ?? now,
