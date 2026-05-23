@@ -57,6 +57,15 @@ type UseWordSelectionParams = {
 // Commit to a horizontal drag only once it dominates and clears this many px;
 // until then a vertical-first touch falls through to native `pan-y` scroll.
 const AXIS_THRESHOLD = 6
+// Past this much vertical movement (before a horizontal drag or long-press has
+// committed), a touch is treated as a scroll and the gesture aborts.
+const VERTICAL_SLOP = 10
+// Hold this long on a word (touch, finger roughly still) to enter selection
+// mode — after which a drag in *any* direction extends the selection and native
+// scrolling is suppressed. This is the only way to start a downward selection
+// on touch, since `touch-action: pan-y` otherwise hands vertical drags to the
+// scroller.
+const LONG_PRESS_MS = 350
 const EDGE_ZONE = 40
 const SCROLL_STEP = 6
 
@@ -84,6 +93,7 @@ const sameKey = (a: WordKey, b: WordKey) =>
 type GestureState = {
   phase: 'idle' | 'pressed' | 'dragging'
   pointerId: number
+  pointerType: string
   startX: number
   startY: number
   lastX: number
@@ -92,6 +102,7 @@ type GestureState = {
   end: WordKey | null
   autoDir: number
   rafId: number
+  longPressId: ReturnType<typeof setTimeout> | null
 }
 
 export const useWordSelection = ({
@@ -123,6 +134,7 @@ export const useWordSelection = ({
     const st: GestureState = {
       phase: 'idle',
       pointerId: -1,
+      pointerType: '',
       startX: 0,
       startY: 0,
       lastX: 0,
@@ -131,6 +143,7 @@ export const useWordSelection = ({
       end: null,
       autoDir: 0,
       rafId: 0,
+      longPressId: null,
     }
 
     // Paint every leaf piece from `anchor` to `end` inclusive, in document
@@ -216,8 +229,16 @@ export const useWordSelection = ({
       if (dir !== 0 && st.rafId === 0) st.rafId = requestAnimationFrame(autoScrollStep)
     }
 
+    const cancelLongPress = () => {
+      if (st.longPressId !== null) {
+        clearTimeout(st.longPressId)
+        st.longPressId = null
+      }
+    }
+
     const resetState = () => {
       stopAutoScroll()
+      cancelLongPress()
       st.phase = 'idle'
       st.pointerId = -1
       st.anchor = null
@@ -248,6 +269,7 @@ export const useWordSelection = ({
       }
       st.phase = 'pressed'
       st.pointerId = e.pointerId
+      st.pointerType = e.pointerType
       st.startX = e.clientX
       st.startY = e.clientY
       st.lastX = e.clientX
@@ -255,6 +277,15 @@ export const useWordSelection = ({
       st.anchor = key
       st.end = key
       paintSelection(key, key)
+      // Touch: arm a long-press. If the finger stays roughly still until it
+      // fires, we enter drag mode so a drag in any direction (incl. downward)
+      // extends the selection instead of scrolling.
+      if (e.pointerType !== 'mouse') {
+        st.longPressId = setTimeout(() => {
+          st.longPressId = null
+          if (st.phase === 'pressed') st.phase = 'dragging'
+        }, LONG_PRESS_MS)
+      }
     }
 
     const onPointerMove = (e: PointerEvent) => {
@@ -264,10 +295,26 @@ export const useWordSelection = ({
       if (st.phase === 'pressed') {
         const dx = e.clientX - st.startX
         const dy = e.clientY - st.startY
-        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > AXIS_THRESHOLD) {
+        if (st.pointerType === 'mouse') {
+          // No scroll competes with a mouse drag — commit on any movement, so a
+          // straight-down drag selects too.
+          if (Math.abs(dx) > AXIS_THRESHOLD || Math.abs(dy) > AXIS_THRESHOLD) {
+            st.phase = 'dragging'
+          } else {
+            return
+          }
+        } else if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > AXIS_THRESHOLD) {
+          // Horizontal-dominant touch: commit to an in-line drag immediately.
+          cancelLongPress()
           st.phase = 'dragging'
+        } else if (Math.abs(dy) > VERTICAL_SLOP) {
+          // Vertical-first touch before the long-press fired → this is a scroll.
+          // Abort and let native pan take over.
+          clearPaintIn(container)
+          resetState()
+          return
         } else {
-          // Not (yet) a horizontal drag — let native vertical pan proceed.
+          // Small jitter — keep waiting for the long-press or a clearer move.
           return
         }
       }
@@ -275,6 +322,13 @@ export const useWordSelection = ({
       e.preventDefault()
       resolveEnd(e.clientX, e.clientY)
       if (cbRef.current.enableEdgeAutoScroll) updateAutoScroll(e.clientY)
+    }
+
+    // On touch, `touch-action: pan-y` makes vertical `pointermove`s
+    // non-cancelable, so we additionally preventDefault the underlying
+    // `touchmove` once dragging to actually stop scroll / pull-to-refresh.
+    const onTouchMove = (e: TouchEvent) => {
+      if (st.phase === 'dragging') e.preventDefault()
     }
 
     const onPointerUp = (e: PointerEvent) => {
@@ -310,6 +364,7 @@ export const useWordSelection = ({
     container.addEventListener('pointerup', onPointerUp)
     container.addEventListener('pointercancel', onPointerCancel)
     container.addEventListener('contextmenu', onContextMenu)
+    container.addEventListener('touchmove', onTouchMove, { passive: false })
 
     return () => {
       container.removeEventListener('pointerdown', onPointerDown)
@@ -317,7 +372,9 @@ export const useWordSelection = ({
       container.removeEventListener('pointerup', onPointerUp)
       container.removeEventListener('pointercancel', onPointerCancel)
       container.removeEventListener('contextmenu', onContextMenu)
+      container.removeEventListener('touchmove', onTouchMove)
       stopAutoScroll()
+      cancelLongPress()
       clearPaintIn(container)
     }
   }, [container, enabled])
