@@ -13,7 +13,9 @@ import {
   useListHighlightsBySession,
 } from '../api/sessions-hooks'
 import { useListCardsBySession } from '@/features/review/api/review-hooks'
-import { readCurrentSelection, SelectionResult } from '../hooks/use-text-selection'
+import type { SelectionResult } from '../utils/selection-adapter'
+import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
+import { useWordSelection } from '@/lib/dom/use-word-selection'
 import { buildSegmentRanges } from '../utils/build-segment-ranges'
 import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
@@ -89,31 +91,27 @@ export const SessionView = () => {
     }
   }, [targetSegmentId, allSegments])
 
-  // Selection finished → open the floating gloss sheet. Lifecycle is eager:
-  // the sheet itself creates the highlight row if the selection doesn't match
-  // an existing one. The tap-to-translate user pref was removed in favor of
-  // this always-on (but non-modal) sheet.
-  useEffect(() => {
-    const handleEnd = () => {
-      setTimeout(() => {
-        const sel = readCurrentSelection()
-        if (!sel) return
-        lastSelectionAtRef.current = Date.now()
-        if (glossOpen) return
-        setExistingHighlightId(null)
-        setPendingSelection(sel)
-        setAnchor(sel.rect)
-        setGlossOpen(true)
-        window.getSelection()?.removeAllRanges()
-      }, 30)
-    }
-    document.addEventListener('mouseup', handleEnd)
-    document.addEventListener('touchend', handleEnd)
-    return () => {
-      document.removeEventListener('mouseup', handleEnd)
-      document.removeEventListener('touchend', handleEnd)
-    }
-  }, [glossOpen])
+  // Tap-to-select-word gesture. Replaces native browser selection: a single
+  // click/tap selects a word, press-and-drag extends a range. The adapter maps
+  // the two word endpoints to a SelectionResult and opens the floating gloss
+  // sheet. Lifecycle is eager: the sheet itself creates the highlight row if
+  // the selection doesn't match an existing one.
+  const { ref: wordSelectionRef, clearPaint } = useWordSelection({
+    // Let taps on existing highlights fall through to their onClick handler.
+    isBlockedTarget: (el) => el.closest('[data-highlight-id]') != null,
+    enableEdgeAutoScroll: true,
+    onSelect: ({ anchor: anchorWord, end: endWord, rect }) => {
+      lastSelectionAtRef.current = Date.now()
+      if (glossOpen) return
+      const normalized = normalizeCrossSegmentSelection(anchorWord, endWord, visibleSegments)
+      if (!normalized || normalized.selectionText.length === 0) return
+      const sel: SelectionResult = { ...normalized, rect }
+      setExistingHighlightId(null)
+      setPendingSelection(sel)
+      setAnchor(sel.rect)
+      setGlossOpen(true)
+    },
+  })
 
   const isProcessedOrExported = session?.status === 'processed' || session?.status === 'exported'
 
@@ -199,7 +197,12 @@ export const SessionView = () => {
         </div>
       </div>
 
-      <div className='flex-1 overflow-y-auto px-4 py-3' onClick={handleSegmentListClick}>
+      <div
+        ref={wordSelectionRef}
+        className='flex-1 touch-pan-y overflow-y-auto px-4 py-3 select-none'
+        style={{ WebkitTouchCallout: 'none' }}
+        onClick={handleSegmentListClick}
+      >
         <div className='mx-auto max-w-4xl'>
           {isSegmentsLoading ? (
             <p className='text-sm text-gray-500'>{t`Loading segments…`}</p>
@@ -207,6 +210,7 @@ export const SessionView = () => {
             <SegmentList
               segments={visibleSegments}
               rangesBySegmentId={rangesBySegmentId}
+              targetLanguage={session.targetLanguage}
               flashSegmentId={flashSegmentId}
             />
           )}
@@ -239,6 +243,8 @@ export const SessionView = () => {
           // so the popover's closing animation still has its rect / data to
           // render against. They'll be overwritten on the next open.
           setGlossOpen(false)
+          // Drop any sky paint so a back-navigation doesn't strand it.
+          clearPaint()
         }}
       />
     </ModalScreen>

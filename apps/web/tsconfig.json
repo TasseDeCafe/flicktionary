@@ -1,6 +1,9 @@
 {
   "extends": "@flicktionary/typescript-config/vite.json",
   "compilerOptions": {
+    // Override the shared ES2020 lib so Intl.Segmenter's types
+    // (lib.es2022.intl.d.ts) are available; used by lib/dom/word-segmenter.ts.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
       "@flicktionary/api-client/*": ["../../packages/api-client/src/*"],
       "@flicktionary/core/*": ["../../packages/core/src/*"],

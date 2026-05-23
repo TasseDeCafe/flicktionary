@@ -402,6 +402,8 @@ export const PracticeSessionView = () => {
                   )}
                   <AnnotatedText
                     body={previousText.body}
+                    targetLanguage={targetLanguage ?? ''}
+                    enabled={false}
                     annotations={previousText.annotations.map((a, i) => ({
                       index: i,
                       headword: a.headword,
@@ -425,6 +427,7 @@ export const PracticeSessionView = () => {
                   )}
                   <AnnotatedText
                     body={currentText.body}
+                    targetLanguage={targetLanguage ?? ''}
                     annotations={annotations}
                     onAnnotationClick={handleAnnotationClick}
                     onPlainSelection={handlePlainSelection}

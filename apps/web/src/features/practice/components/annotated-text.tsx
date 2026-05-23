@@ -1,6 +1,7 @@
-import { useRef } from 'react'
+import { useId } from 'react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { findMarkedAncestor, offsetWithinAncestor } from '@/lib/dom/text-selection'
+import { getWordRanges } from '@/lib/dom/word-segmenter'
+import { useWordSelection } from '@/lib/dom/use-word-selection'
 
 export type AnnotationInput = {
   index: number
@@ -25,28 +26,43 @@ export type PlainSelection = {
   charStart: number
   charEnd: number
   // Snapshot of the selection's bounding box so the floating sheet can anchor
-  // on desktop after the browser selection clears.
+  // on desktop after the selection paint clears.
   rect: DOMRect
 }
 
 interface AnnotatedTextProps {
   body: string
   annotations: AnnotationInput[]
+  targetLanguage: string
   // Element ref lets the parent anchor a floating sheet to the exact span
   // the user tapped (desktop popover positioning).
   onAnnotationClick: (index: number, element: HTMLElement) => void
-  // Optional selection handler. When provided, mouseup/touchend on the body
-  // computes the selected range; if it falls entirely inside plain text (no
-  // annotation overlap), the parent gets the selection and can open a sheet.
+  // Optional selection handler. When provided (and `enabled`), a single
+  // tap/click selects a word and a press-and-drag extends a range; if the
+  // resulting span falls entirely inside plain text (no annotation overlap),
+  // the parent gets the selection and can open a sheet.
   onPlainSelection?: (selection: PlainSelection) => void
+  // When false (e.g. the read-only previous-text block), the gesture hook is
+  // not mounted and word tokenization is skipped — the paragraph renders as
+  // flat plain-text spans + annotation buttons.
+  enabled?: boolean
 }
 
 // Renders body with each annotation wrapped in a clickable span. We sort by
 // charStart, then walk linearly: any overlapping/duplicate annotation is
 // dropped (defensive — server-side already validated offsets and (headword,
 // sense) but not overlap).
-export const AnnotatedText = ({ body, annotations, onAnnotationClick, onPlainSelection }: AnnotatedTextProps) => {
-  const containerRef = useRef<HTMLParagraphElement | null>(null)
+export const AnnotatedText = ({
+  body,
+  annotations,
+  targetLanguage,
+  onAnnotationClick,
+  onPlainSelection,
+  enabled = true,
+}: AnnotatedTextProps) => {
+  // Stable owner key for the word-span contract — `useId` is constant across
+  // re-renders within a single mounted text.
+  const ownerKey = useId()
   const sorted = [...annotations]
     .filter((a) => a.charStart >= 0 && a.charEnd > a.charStart && a.charEnd <= body.length)
     .sort((a, b) => a.charStart - b.charStart)
@@ -75,86 +91,70 @@ export const AnnotatedText = ({ body, annotations, onAnnotationClick, onPlainSel
     segments.push({ kind: 'plain', text: body.slice(pos), offset: pos })
   }
 
-  // Resolves the current Window selection to a (charStart, charEnd) span in
-  // `body`. Each rendered child is tagged `data-kind="plain"` or
-  // `data-kind="annotation"` with `data-offset=<bodyOffset>`. Using the same
-  // primitives as `readCurrentSelection` (in features/sessions): find the
-  // nearest marked ancestor for each Range endpoint, then add its base
-  // offset to a Range-based local offset. Selections that start/end inside
-  // an annotation, or that straddle one, are disqualified — the rate sheet
-  // owns annotation taps.
-  //
-  // The 30ms timeout + clear-on-success mirrors `session-view.tsx`: iOS
-  // Safari hasn't finalized the selection by the time touchend fires, and
-  // the lingering selection paint underneath the modal makes the highlight
-  // band look much wider than what we actually captured.
-  const handleSelectionEnd = () => {
-    if (!onPlainSelection) return
-    setTimeout(() => {
-      const container = containerRef.current
-      if (!container) return
-      const selection = typeof window !== 'undefined' ? window.getSelection() : null
-      if (!selection || selection.isCollapsed) return
-      if (selection.rangeCount === 0) return
-      const range = selection.getRangeAt(0)
-      if (!container.contains(range.startContainer) || !container.contains(range.endContainer)) return
-
-      const isPlainMarker = (el: HTMLElement) => el.dataset.kind === 'plain' && el.dataset.offset != null
-      const isAnnotationMarker = (el: HTMLElement) => el.dataset.kind === 'annotation'
-
-      // Reject endpoints that fall inside an annotation span before checking
-      // for a plain ancestor — annotations live as descendants of `container`
-      // and `findMarkedAncestor` would otherwise just walk past them.
-      if (
-        findMarkedAncestor(range.startContainer, isAnnotationMarker) ||
-        findMarkedAncestor(range.endContainer, isAnnotationMarker)
-      ) {
+  const { ref: wordSelectionRef, clearPaint } = useWordSelection({
+    enabled,
+    isBlockedTarget: (el) => el.closest('[data-kind="annotation"]') != null,
+    enableEdgeAutoScroll: false,
+    onSelect: ({ anchor, end, rect }) => {
+      if (!onPlainSelection) return
+      // Single owner (the paragraph), so offset order == document order.
+      const charStart = Math.min(anchor.wordStart, end.wordStart)
+      const charEnd = Math.max(anchor.wordEnd, end.wordEnd)
+      if (charEnd <= charStart) {
+        clearPaint()
         return
       }
-
-      const startPlain = findMarkedAncestor(range.startContainer, isPlainMarker)
-      const endPlain = findMarkedAncestor(range.endContainer, isPlainMarker)
-      if (!startPlain || !endPlain) return
-
-      const startBase = Number(startPlain.dataset.offset)
-      const endBase = Number(endPlain.dataset.offset)
-      if (!Number.isFinite(startBase) || !Number.isFinite(endBase)) return
-
-      const startOffset = startBase + offsetWithinAncestor(startPlain, range.startContainer, range.startOffset)
-      const endOffset = endBase + offsetWithinAncestor(endPlain, range.endContainer, range.endOffset)
-      const charStart = Math.min(startOffset, endOffset)
-      const charEnd = Math.max(startOffset, endOffset)
-      if (charEnd <= charStart) return
-
-      // Final safety net: the range may span across an annotation between two
-      // plain spans even when both endpoints landed in plain text.
+      // Reject ranges that cross an annotation between two plain words. No
+      // fallback or snap-to-edge — the user can re-try.
       for (const ann of nonOverlapping) {
-        if (charStart < ann.charEnd && charEnd > ann.charStart) return
+        if (charStart < ann.charEnd && charEnd > ann.charStart) {
+          clearPaint()
+          return
+        }
       }
+      const text = body.slice(charStart, charEnd)
+      if (text.trim().length === 0) {
+        clearPaint()
+        return
+      }
+      onPlainSelection({ text, charStart, charEnd, rect })
+    },
+  })
 
-      const text = body.slice(charStart, charEnd).trim()
-      if (text.length === 0) return
-      onPlainSelection({ text, charStart, charEnd, rect: range.getBoundingClientRect() })
-      // Mirror session-view: drop the browser selection once we've captured
-      // it so the underlying paint doesn't linger behind the sheet.
-      selection.removeAllRanges()
-    }, 30)
+  // Renders a plain region either as selectable per-word spans (interactive
+  // instance) or a single flat span (read-only previous-text block).
+  const renderPlain = (text: string, offset: number, key: number) => {
+    if (!enabled) {
+      return <span key={key}>{text}</span>
+    }
+    const wordRanges = getWordRanges(text, targetLanguage)
+    const out: React.ReactNode[] = []
+    let cur = 0
+    wordRanges.forEach(([s, e], wi) => {
+      if (s > cur) out.push(<span key={`${key}-ws-${cur}`}>{text.slice(cur, s)}</span>)
+      out.push(
+        // Body-absolute offsets, matching the PlainSelection charStart/charEnd
+        // model. No horizontal padding so elementFromPoint hits exact glyphs.
+        <span key={`${key}-w-${wi}`} data-word-start={offset + s} data-word-end={offset + e} className='cursor-pointer'>
+          {text.slice(s, e)}
+        </span>
+      )
+      cur = e
+    })
+    if (cur < text.length) out.push(<span key={`${key}-ws-${cur}`}>{text.slice(cur)}</span>)
+    return <span key={key}>{out}</span>
   }
 
   return (
     <p
-      ref={containerRef}
-      className='text-lg leading-relaxed whitespace-pre-wrap md:text-base'
-      onMouseUp={handleSelectionEnd}
-      onTouchEnd={handleSelectionEnd}
+      ref={wordSelectionRef}
+      data-word-owner={ownerKey}
+      className={cn('text-lg leading-relaxed whitespace-pre-wrap md:text-base', enabled && 'touch-pan-y select-none')}
+      style={enabled ? { WebkitTouchCallout: 'none' } : undefined}
     >
       {segments.map((seg, i) => {
         if (seg.kind === 'plain') {
-          return (
-            <span key={i} data-kind='plain' data-offset={seg.offset}>
-              {seg.text}
-            </span>
-          )
+          return renderPlain(seg.text, seg.offset, i)
         }
         const ann = seg.ann
         return (
@@ -162,7 +162,6 @@ export const AnnotatedText = ({ body, annotations, onAnnotationClick, onPlainSel
             key={`${i}-${ann.index}`}
             type='button'
             data-kind='annotation'
-            data-offset={ann.charStart}
             onClick={(e) => onAnnotationClick(ann.index, e.currentTarget)}
             className={cn(
               'cursor-pointer rounded-sm px-0.5 transition-colors',

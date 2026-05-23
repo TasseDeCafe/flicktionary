@@ -29,7 +29,7 @@ import {
   useGetUserPrefs,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
-import type { SelectionResult } from '../hooks/use-text-selection'
+import type { SelectionResult } from '../utils/selection-adapter'
 
 const PRESET_TAGS = ['explain', '3_examples', 'synonyms', 'etymology', 'why_this_form'] as const
 type PresetTag = (typeof PRESET_TAGS)[number]
