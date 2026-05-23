@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { Fragment, useMemo } from 'react'
 import { stripSrtMarkupWithMap } from '@flicktionary/core/utils/srt-markup'
 import { getWordRanges } from '@/lib/dom/word-segmenter'
 
@@ -102,10 +102,34 @@ export const SegmentRow = ({ id, text, startMs, ranges, targetLanguage, flash }:
     return { displayText: stripped, displayRanges: remapped }
   }, [text, ranges])
 
-  const spans = useMemo(() => {
+  // Group consecutive runs that share a highlight id, so each highlight renders
+  // as ONE rounded/padded yellow container instead of one box per word + space.
+  const groups = useMemo(() => {
     const wordRanges = getWordRanges(displayText, targetLanguage)
-    return buildWordHighlightSpans(displayText, displayRanges, wordRanges)
+    const spans = buildWordHighlightSpans(displayText, displayRanges, wordRanges)
+    const out: Array<{ highlightId: string | null; parts: WordHighlightSpan[] }> = []
+    for (const s of spans) {
+      const last = out[out.length - 1]
+      if (last && last.highlightId === s.highlightId) last.parts.push(s)
+      else out.push({ highlightId: s.highlightId, parts: [s] })
+    }
+    return out
   }, [displayText, displayRanges, targetLanguage])
+
+  // A leaf text piece. `data-word-piece` lets the selection painter sweep a
+  // continuous run (words + the whitespace between them); word pieces also
+  // carry their offsets, with no horizontal padding so elementFromPoint
+  // hit-tests against exact glyph bounds.
+  const renderPiece = (part: WordHighlightSpan, key: React.Key) =>
+    part.word != null ? (
+      <span key={key} data-word-piece='' data-word-start={part.word[0]} data-word-end={part.word[1]}>
+        {part.text}
+      </span>
+    ) : (
+      <span key={key} data-word-piece=''>
+        {part.text}
+      </span>
+    )
 
   return (
     <div className={'flex items-start gap-3 py-1 transition-colors duration-700' + (flash ? ' bg-yellow-100' : '')}>
@@ -113,32 +137,19 @@ export const SegmentRow = ({ id, text, startMs, ranges, targetLanguage, flash }:
         <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
       )}
       <span data-segment-id={id} data-word-owner={id} className='flex-1 text-lg md:text-base'>
-        {spans.map((part, idx) => {
-          // Word offsets are written without horizontal padding so
-          // elementFromPoint hit-tests against exact glyph bounds.
-          const wordAttrs =
-            part.word != null ? { 'data-word-start': part.word[0], 'data-word-end': part.word[1] } : undefined
-          if (part.highlightId) {
-            return (
-              <span
-                key={idx}
-                data-highlight-id={part.highlightId}
-                {...wordAttrs}
-                className='cursor-pointer rounded bg-yellow-200 px-0.5 hover:bg-yellow-300'
-              >
-                {part.text}
-              </span>
-            )
-          }
-          if (part.word != null) {
-            return (
-              <span key={idx} {...wordAttrs} className='cursor-pointer'>
-                {part.text}
-              </span>
-            )
-          }
-          return <span key={idx}>{part.text}</span>
-        })}
+        {groups.map((g, gi) =>
+          g.highlightId != null ? (
+            <span
+              key={gi}
+              data-highlight-id={g.highlightId}
+              className='cursor-pointer rounded bg-yellow-200 px-0.5 hover:bg-yellow-300'
+            >
+              {g.parts.map((part, idx) => renderPiece(part, idx))}
+            </span>
+          ) : (
+            <Fragment key={gi}>{g.parts.map((part, idx) => renderPiece(part, idx))}</Fragment>
+          )
+        )}
       </span>
     </div>
   )

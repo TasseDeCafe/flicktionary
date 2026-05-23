@@ -133,13 +133,17 @@ export const useWordSelection = ({
       rafId: 0,
     }
 
-    // Paint every word span from `anchor` to `end` inclusive, in document
-    // order. Document order is read straight off the DOM, so dragging upward
-    // (end earlier than anchor) and dragging across owners both work via the
-    // min/max of the matched index ranges. Returns false if either endpoint
-    // has vanished from the DOM (e.g. a re-render dropped it).
+    // Paint every leaf piece from `anchor` to `end` inclusive, in document
+    // order. We walk *all* pieces (words and the whitespace/punctuation between
+    // them, tagged `data-word-piece`) — not just word spans — so the painted
+    // band is continuous across spaces instead of one box per word. Only word
+    // pieces carry a key, so the anchor/end endpoints still resolve to whole
+    // words; the pieces between them are swept in by the min/max index range.
+    // Document order is read straight off the DOM, so dragging upward (end
+    // earlier than anchor) and dragging across owners both work. Returns false
+    // if either endpoint has vanished from the DOM (e.g. a re-render dropped it).
     const paintSelection = (anchor: WordKey, end: WordKey): boolean => {
-      const spans = Array.from(container.querySelectorAll('[data-word-start]'))
+      const spans = Array.from(container.querySelectorAll('[data-word-piece]'))
       let aFirst = -1
       let aLast = -1
       let eFirst = -1

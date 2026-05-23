@@ -130,18 +130,37 @@ export const AnnotatedText = ({
     const wordRanges = getWordRanges(text, targetLanguage)
     const out: React.ReactNode[] = []
     let cur = 0
+    // `data-word-piece` lets the selection painter sweep a continuous band
+    // across words and the whitespace between them (rather than one box per
+    // word). Word pieces additionally carry body-absolute offsets, matching the
+    // PlainSelection charStart/charEnd model, with no horizontal padding so
+    // elementFromPoint hits exact glyphs.
     wordRanges.forEach(([s, e], wi) => {
-      if (s > cur) out.push(<span key={`${key}-ws-${cur}`}>{text.slice(cur, s)}</span>)
+      if (s > cur)
+        out.push(
+          <span key={`${key}-ws-${cur}`} data-word-piece=''>
+            {text.slice(cur, s)}
+          </span>
+        )
       out.push(
-        // Body-absolute offsets, matching the PlainSelection charStart/charEnd
-        // model. No horizontal padding so elementFromPoint hits exact glyphs.
-        <span key={`${key}-w-${wi}`} data-word-start={offset + s} data-word-end={offset + e} className='cursor-pointer'>
+        <span
+          key={`${key}-w-${wi}`}
+          data-word-piece=''
+          data-word-start={offset + s}
+          data-word-end={offset + e}
+          className='cursor-pointer'
+        >
           {text.slice(s, e)}
         </span>
       )
       cur = e
     })
-    if (cur < text.length) out.push(<span key={`${key}-ws-${cur}`}>{text.slice(cur)}</span>)
+    if (cur < text.length)
+      out.push(
+        <span key={`${key}-ws-${cur}`} data-word-piece=''>
+          {text.slice(cur)}
+        </span>
+      )
     return <span key={key}>{out}</span>
   }
 
