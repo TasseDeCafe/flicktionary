@@ -38,9 +38,10 @@ export const buildBasicDataGrammarPatch = (
 }
 
 // Writes basic-data-pass output to the DB: upserts user_lookups, fills first-time
-// content, inserts cards, and stamps keep transitions for highlight rows. Also
-// covers the fallback path where the model dropped a highlight on the floor —
-// every user highlight gets at least a stub card so nothing is silently lost.
+// content, and inserts cards in 'pending' status (or 'auto_rejected' for
+// below-CEFR rows). Also covers the fallback path where the model dropped a
+// highlight on the floor — every user highlight gets at least a stub card so
+// nothing is silently lost.
 //
 // Returns the touched user_lookups map so the caller can drive wiktionary
 // grounding without re-querying, plus the freshly-inserted card rows so
@@ -137,15 +138,9 @@ export const materializeBasicDataChunks = async (params: {
       segmentId: chunk.segmentId,
       userLookupId: lookup.id,
       surfaceForm: chunk.surfaceForm,
-      status: chunk.source === 'highlight' ? 'kept' : chunk.belowCefr ? 'auto_rejected' : 'pending',
+      status: chunk.belowCefr ? 'auto_rejected' : 'pending',
     })
     insertedCards.push(insertedCard)
-    if (insertedCard.status === 'kept') {
-      await userLookupsRepository.applyKeepTransition({
-        userLookupId: lookup.id,
-        cardId: insertedCard.id,
-      })
-    }
   }
 
   // Fallback: if the model failed to emit a row for a highlight, insert a
@@ -173,13 +168,9 @@ export const materializeBasicDataChunks = async (params: {
       segmentId: highlight.segmentId,
       userLookupId: lookup.id,
       surfaceForm: highlight.selectionText,
-      status: 'kept',
+      status: 'pending',
     })
     insertedCards.push(insertedCard)
-    await userLookupsRepository.applyKeepTransition({
-      userLookupId: lookup.id,
-      cardId: insertedCard.id,
-    })
   }
 
   return { touchedLookups, insertedCards }

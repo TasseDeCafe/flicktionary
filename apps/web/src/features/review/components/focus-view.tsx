@@ -388,15 +388,15 @@ export const FocusView = () => {
       {!isLanguageWideEntry && (
         <>
           {/* Side-edge nav arrows: fixed to the viewport at mid-height so they
-              stay reachable while the user scrolls long cards. Solid white +
-              stronger border/shadow so they read clearly against text; chunkier
-              touch target on mobile. */}
+              stay reachable while the user scrolls long cards. Dark, semi-
+              transparent fill so the arrows stay legible over both white form
+              fields and any other content; chunkier touch target on mobile. */}
           <button
             type='button'
             onClick={goPrev}
             disabled={!cursor.prev}
             aria-label={t`Previous card`}
-            className='fixed top-1/2 left-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-gray-300 bg-white shadow-lg transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-30 md:h-11 md:w-11'
+            className='fixed top-1/2 left-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-gray-900/75 text-white shadow-lg backdrop-blur-sm transition hover:bg-gray-900 disabled:pointer-events-none disabled:opacity-25 md:h-11 md:w-11'
           >
             <ArrowLeft className='h-6 w-6' />
           </button>
@@ -405,7 +405,7 @@ export const FocusView = () => {
             onClick={goNext}
             disabled={!cursor.next}
             aria-label={t`Next card`}
-            className='fixed top-1/2 right-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-gray-300 bg-white shadow-lg transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-30 md:h-11 md:w-11'
+            className='fixed top-1/2 right-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-gray-900/75 text-white shadow-lg backdrop-blur-sm transition hover:bg-gray-900 disabled:pointer-events-none disabled:opacity-25 md:h-11 md:w-11'
           >
             <ArrowRight className='h-6 w-6' />
           </button>

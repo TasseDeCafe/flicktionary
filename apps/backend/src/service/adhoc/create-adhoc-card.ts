@@ -172,6 +172,15 @@ export const createAdhocCard = async (params: {
     throw new AdhocCardCreationError('card_not_inserted', `no card created for highlight ${highlight.id}`)
   }
 
+  // Adhoc entries are an explicit user action ("add this word to my
+  // vocabulary"), so they bypass triage: stamp the card as kept and apply
+  // the lookup transition that materialize no longer does.
+  await deps.cardsRepository.updateStatus(insertedCard.id, 'kept')
+  await deps.userLookupsRepository.applyKeepTransition({
+    userLookupId: insertedCard.user_lookup_id,
+    cardId: insertedCard.id,
+  })
+
   // Stamp the most-recent target language so the next adhoc-wizard open prefills it.
   void deps.usersRepository.setLastTargetLanguage(userId, targetLanguage).catch((e) => {
     logCustomErrorMessageAndError(`createAdhocCard: setLastTargetLanguage failed for userId=${userId}`, e)
