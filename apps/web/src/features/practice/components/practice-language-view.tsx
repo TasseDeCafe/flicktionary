@@ -220,11 +220,7 @@ export const PracticeLanguageView = () => {
                         disabled={isEnding}
                         onClick={() => handleStart(action.mode)}
                       >
-                        {action.icon === 'review' ? (
-                          <RotateCcw className='h-4 w-4' />
-                        ) : (
-                          <Plus className='h-4 w-4' />
-                        )}
+                        {action.icon === 'review' ? <RotateCcw className='h-4 w-4' /> : <Plus className='h-4 w-4' />}
                         {action.label}
                       </Button>
                     ))}

@@ -99,8 +99,7 @@ export const applyRating = (row: DbUserLookup, rating: AppRating, now: Date, poo
   const result = fsrs.next(card, now, RATING_MAP[rating])
   const next = result.card
   const floor = now.getTime() + MIN_PASSIVE_INTERVAL_MS
-  const due =
-    pool === 'passive' && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
+  const due = pool === 'passive' && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
   return {
     state: STATE_TO_DB[next.state],
     due,
