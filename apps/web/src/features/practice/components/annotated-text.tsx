@@ -177,18 +177,21 @@ export const AnnotatedText = ({
         }
         const ann = seg.ann
         return (
+          // Use paint-only shadow for the visual cushion. Inline padding
+          // changes text width and can reflow the paragraph when a word becomes
+          // annotated.
           <button
             key={`${i}-${ann.index}`}
             type='button'
             data-kind='annotation'
             onClick={(e) => onAnnotationClick(ann.index, e.currentTarget)}
             className={cn(
-              'cursor-pointer rounded-sm px-0.5 transition-colors',
+              'cursor-pointer rounded-sm transition-[background-color,box-shadow]',
               ann.deleted
-                ? 'text-gray-400 line-through decoration-gray-400 hover:bg-gray-100'
+                ? 'text-gray-400 line-through decoration-gray-400 hover:bg-gray-100 hover:shadow-[0_0_0_0.125rem_var(--color-gray-100)]'
                 : ann.rated
-                  ? 'bg-gray-100 text-gray-500 underline decoration-dotted'
-                  : 'bg-yellow-100 text-yellow-950 underline decoration-yellow-500 decoration-2 hover:bg-yellow-200'
+                  ? 'bg-gray-100 text-gray-500 underline decoration-dotted shadow-[0_0_0_0.125rem_var(--color-gray-100)]'
+                  : 'bg-yellow-100 text-yellow-950 underline decoration-yellow-500 decoration-2 shadow-[0_0_0_0.125rem_var(--color-yellow-100)] hover:bg-yellow-200 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-200)]'
             )}
           >
             {body.slice(ann.charStart, ann.charEnd)}

@@ -261,7 +261,7 @@ msgstr "{newCount} unseen"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:455
+#: apps/web/src/features/practice/components/practice-session-view.tsx:458
 msgid "{ratedCount} of {totalCount} rated"
 msgstr "{ratedCount} of {totalCount} rated"
 
@@ -658,7 +658,7 @@ msgid "Back to Login"
 msgstr "Back to Login"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:151
-#: apps/web/src/features/practice/components/practice-session-view.tsx:441
+#: apps/web/src/features/practice/components/practice-session-view.tsx:444
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
 msgstr "Back to Practice"
@@ -884,7 +884,7 @@ msgstr "Could not display payment options at this time."
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Could not fetch a gloss. The highlight is still saved."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:214
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:213
 msgid "Could not fetch a translation right now."
 msgstr "Could not fetch a translation right now."
 
@@ -1528,8 +1528,8 @@ msgstr "Generating full exploration… this takes a few seconds."
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
-#: apps/web/src/features/practice/components/practice-session-view.tsx:483
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
+#: apps/web/src/features/practice/components/practice-session-view.tsx:486
 #: apps/web/src/features/review/components/focus-view.tsx:298
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Generating…"
@@ -1645,7 +1645,7 @@ msgstr "Hides this term from your vocabulary and Practice. You can revive it by 
 msgid "Home"
 msgstr "Home"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:463
+#: apps/web/src/features/practice/components/practice-session-view.tsx:466
 msgid "How rating works on Next"
 msgstr "How rating works on Next"
 
@@ -1844,11 +1844,11 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:205
+#: apps/web/src/features/sessions/components/session-view.tsx:208
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:155
+#: apps/web/src/features/sessions/components/session-view.tsx:153
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -1877,7 +1877,7 @@ msgstr "Loading…"
 msgid "Looks like {suggestedLanguageName} — switch?"
 msgstr "Looks like {suggestedLanguageName} — switch?"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:172
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:171
 msgid "Lookup"
 msgstr "Lookup"
 
@@ -2005,7 +2005,7 @@ msgstr "New today"
 msgid "Next card"
 msgstr "Next card"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:488
+#: apps/web/src/features/practice/components/practice-session-view.tsx:491
 msgid "Next text"
 msgstr "Next text"
 
@@ -2076,7 +2076,7 @@ msgstr "No vocabulary to practice yet"
 msgid "No vocabulary yet"
 msgstr "No vocabulary yet"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:156
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:155
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:350
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
@@ -2585,7 +2585,7 @@ msgstr "Save a term you heard or saw, no source needed"
 msgid "Save note"
 msgstr "Save note"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
@@ -2665,8 +2665,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:154
-#: apps/web/src/features/sessions/components/session-view.tsx:161
+#: apps/web/src/features/sessions/components/session-view.tsx:152
+#: apps/web/src/features/sessions/components/session-view.tsx:159
 msgid "Session"
 msgstr "Session"
 
@@ -2675,7 +2675,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:162
+#: apps/web/src/features/sessions/components/session-view.tsx:160
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -3083,13 +3083,13 @@ msgstr "Translation"
 msgid "Translation in your native language."
 msgstr "Translation in your native language."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:183
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:200
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:182
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:199
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:120
-#: apps/web/src/features/sessions/components/session-view.tsx:190
+#: apps/web/src/features/sessions/components/session-view.tsx:188
 msgid "Triage"
 msgstr "Triage"
 
@@ -3121,12 +3121,12 @@ msgstr "Unlock Premium"
 msgid "Unseen"
 msgstr "Unseen"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:469
+#: apps/web/src/features/practice/components/practice-session-view.tsx:472
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:167
+#: apps/web/src/features/sessions/components/session-view.tsx:165
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildWordHighlightSpans, type SegmentHighlightRange } from './segment-row.tsx'
+import { buildWordHighlightSpans, type SegmentHighlightRange } from '../utils/word-highlight-spans.ts'
 
 describe('buildWordHighlightSpans', () => {
   test('word with no highlight overlap → one span carrying the word coords', () => {
