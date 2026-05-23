@@ -1,4 +1,5 @@
-import { SegmentRow, SegmentHighlightRange } from './segment-row'
+import type { SegmentHighlightRange } from '../utils/word-highlight-spans'
+import { SegmentRow } from './segment-row'
 
 type Segment = {
   id: string
