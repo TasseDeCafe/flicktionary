@@ -261,7 +261,7 @@ msgstr "{newCount} non vu(s)"
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:455
+#: apps/web/src/features/practice/components/practice-session-view.tsx:458
 msgid "{ratedCount} of {totalCount} rated"
 msgstr "{ratedCount} sur {totalCount} évalués"
 
@@ -658,7 +658,7 @@ msgid "Back to Login"
 msgstr "Retour à la connexion"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:151
-#: apps/web/src/features/practice/components/practice-session-view.tsx:441
+#: apps/web/src/features/practice/components/practice-session-view.tsx:444
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
 msgstr "Retour à la pratique"
@@ -884,7 +884,7 @@ msgstr "Impossible d'afficher les options de paiement en ce moment."
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Impossible de récupérer une glose. Le surlignage est toujours enregistré."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:214
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:213
 msgid "Could not fetch a translation right now."
 msgstr "Impossible de récupérer une traduction pour le moment."
 
@@ -1526,8 +1526,8 @@ msgstr "Génération de l'exploration complète… cela prend quelques secondes.
 #~ msgid "Generating the next text…"
 #~ msgstr "Génération du prochain texte…"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
-#: apps/web/src/features/practice/components/practice-session-view.tsx:483
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
+#: apps/web/src/features/practice/components/practice-session-view.tsx:486
 #: apps/web/src/features/review/components/focus-view.tsx:298
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
 msgid "Generating…"
@@ -1643,7 +1643,7 @@ msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le r
 msgid "Home"
 msgstr "Accueil"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:463
+#: apps/web/src/features/practice/components/practice-session-view.tsx:466
 msgid "How rating works on Next"
 msgstr "Fonctionnement de la notation lors du passage au suivant"
 
@@ -1842,11 +1842,11 @@ msgstr "Chargement de la discussion…"
 msgid "Loading more…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:205
+#: apps/web/src/features/sessions/components/session-view.tsx:208
 msgid "Loading segments…"
 msgstr "Chargement des segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:155
+#: apps/web/src/features/sessions/components/session-view.tsx:153
 msgid "Loading session…"
 msgstr "Chargement de la session…"
 
@@ -1875,7 +1875,7 @@ msgstr "Chargement…"
 msgid "Looks like {suggestedLanguageName} — switch?"
 msgstr "On dirait du {suggestedLanguageName} — changer ?"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:172
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:171
 msgid "Lookup"
 msgstr "Recherche"
 
@@ -2003,7 +2003,7 @@ msgstr "Nouveaux aujourd'hui"
 msgid "Next card"
 msgstr "Carte suivante"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:488
+#: apps/web/src/features/practice/components/practice-session-view.tsx:491
 msgid "Next text"
 msgstr "Texte suivant"
 
@@ -2074,7 +2074,7 @@ msgstr "Aucun vocabulaire à pratiquer pour le moment"
 msgid "No vocabulary yet"
 msgstr "Aucun vocabulaire pour l'instant"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:156
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:155
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:350
 msgid "No Wiktionary IPA"
 msgstr "Pas d'API Wiktionary"
@@ -2583,7 +2583,7 @@ msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source nécessa
 msgid "Save note"
 msgstr "Enregistrer la note"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
 
@@ -2663,8 +2663,8 @@ msgstr "Envoi de l'email"
 msgid "Sending..."
 msgstr "Envoi en cours..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:154
-#: apps/web/src/features/sessions/components/session-view.tsx:161
+#: apps/web/src/features/sessions/components/session-view.tsx:152
+#: apps/web/src/features/sessions/components/session-view.tsx:159
 msgid "Session"
 msgstr "Session"
 
@@ -2673,7 +2673,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session en cours"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:162
+#: apps/web/src/features/sessions/components/session-view.tsx:160
 msgid "Session not found."
 msgstr "Session introuvable."
 
@@ -3081,13 +3081,13 @@ msgstr "Traduction"
 msgid "Translation in your native language."
 msgstr "Traduction dans votre langue maternelle."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:183
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:200
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:182
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:199
 msgid "Translation lookup and save action for the selected text."
 msgstr "Recherche de traduction et action de sauvegarde pour le texte sélectionné."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:120
-#: apps/web/src/features/sessions/components/session-view.tsx:190
+#: apps/web/src/features/sessions/components/session-view.tsx:188
 msgid "Triage"
 msgstr "Tri"
 
@@ -3119,12 +3119,12 @@ msgstr "Débloquer Premium"
 msgid "Unseen"
 msgstr "Non vus"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:469
+#: apps/web/src/features/practice/components/practice-session-view.tsx:472
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Les termes non évalués comptent comme « bons » lorsque vous passez au texte suivant."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:167
+#: apps/web/src/features/sessions/components/session-view.tsx:165
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Sans titre"
