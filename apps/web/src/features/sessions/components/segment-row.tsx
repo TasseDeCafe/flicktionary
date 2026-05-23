@@ -79,10 +79,13 @@ export const SegmentRow = ({ id, text, startMs, ranges, targetLanguage, flash }:
       <span data-segment-id={id} data-word-owner={id} className='flex-1 text-lg md:text-base'>
         {groups.map((g, gi) =>
           g.highlightId != null ? (
+            // Use paint-only shadow for the visual cushion. Inline padding
+            // changes text width and can reflow the subtitle line when a word
+            // becomes highlighted.
             <span
               key={gi}
               data-highlight-id={g.highlightId}
-              className='cursor-pointer rounded bg-yellow-200 px-0.5 hover:bg-yellow-300'
+              className='cursor-pointer rounded bg-yellow-200 shadow-[0_0_0_0.125rem_var(--color-yellow-200)] hover:bg-yellow-300 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-300)]'
             >
               {g.parts.map((part, idx) => renderPiece(part, idx))}
             </span>
