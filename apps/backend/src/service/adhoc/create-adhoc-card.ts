@@ -8,8 +8,8 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
-import { KAIKKI_ENABLED_LANGUAGES } from '../wiktionary-grounding'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -151,7 +151,7 @@ export const createAdhocCard = async (params: {
     userLookupsRepository: deps.userLookupsRepository,
   })
 
-  if (KAIKKI_ENABLED_LANGUAGES.has(targetLanguage)) {
+  if (KAIKKI_LANGUAGES.has(targetLanguage)) {
     await runWiktionaryGrounding({
       sessionId: session.id,
       userId,
@@ -171,6 +171,15 @@ export const createAdhocCard = async (params: {
   if (!insertedCard) {
     throw new AdhocCardCreationError('card_not_inserted', `no card created for highlight ${highlight.id}`)
   }
+
+  // Adhoc entries are an explicit user action ("add this word to my
+  // vocabulary"), so they bypass triage: stamp the card as kept and apply
+  // the lookup transition that materialize no longer does.
+  await deps.cardsRepository.updateStatus(insertedCard.id, 'kept')
+  await deps.userLookupsRepository.applyKeepTransition({
+    userLookupId: insertedCard.user_lookup_id,
+    cardId: insertedCard.id,
+  })
 
   // Stamp the most-recent target language so the next adhoc-wizard open prefills it.
   void deps.usersRepository.setLastTargetLanguage(userId, targetLanguage).catch((e) => {

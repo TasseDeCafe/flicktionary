@@ -1,8 +1,8 @@
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import {
   DbWiktionaryEntry,
   WiktionaryEntriesRepositoryInterface,
 } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
-import { KAIKKI_ENABLED_LANGUAGES } from './config'
 
 // Walks four progressively-broader paths to find the right wiktionary_entries
 // row for a (language, headword, pos) triple. Returns null when nothing
@@ -24,7 +24,7 @@ export const findEntry = async (params: {
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
 }): Promise<DbWiktionaryEntry | null> => {
   const { targetLanguage, headword, pos, wiktionaryEntriesRepository } = params
-  if (!KAIKKI_ENABLED_LANGUAGES.has(targetLanguage)) return null
+  if (!KAIKKI_LANGUAGES.has(targetLanguage)) return null
   if (!headword) return null
 
   if (pos) {

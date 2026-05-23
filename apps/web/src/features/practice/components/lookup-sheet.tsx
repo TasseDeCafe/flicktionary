@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { Bookmark } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -150,7 +151,8 @@ export const LookupSheet = ({
 
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const displayedIpa = state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, englishIpaDialect) ?? null) : null
-  const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? t`No Wiktionary IPA`) : null
+  const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
+  const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 
   return (

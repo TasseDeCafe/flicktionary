@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Badge } from '@/components/ui/badge'
@@ -345,7 +346,8 @@ export const SessionGlossSheet = ({
   const displayedIpa = isReady
     ? (pickIpa((glossState as Extract<GlossState, { kind: 'ready' }>).ipa, targetLanguage, englishIpaDialect) ?? null)
     : null
-  const ipaLabel = isReady ? (displayedIpa ?? t`No Wiktionary IPA`) : null
+  const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
+  const ipaLabel = isReady ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
 
   // Description fallback for accessibility — the title is the selection text,

@@ -1418,6 +1418,89 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     on long cards, practice rate-sheet 3-dots reflects mode flips after
     re-open.
 
+- **Settings + practice UI cleanup (2026-05-21).** Same-day follow-up to
+  the focus-view rework above. Small UX issues raised against the
+  language settings page, danger zone, vocabulary action drawer, and the
+  practice-session loading frame. Don't re-introduce:
+  - **English IPA dialect merged into the English row.**
+    `apps/web/src/features/settings/components/cefr-per-language-list.tsx`
+    now takes an `englishIpaDialect` prop and renders an inline
+    American/British selector under the English entry (same `border-t`
+    pattern as the existing `Show translations` row), hitting
+    `useSetEnglishIpaDialect`. The standalone
+    `apps/web/src/features/settings/components/english-ipa-dialect-selector.tsx`
+    is removed; `languages-page.tsx` no longer imports it and passes
+    `prefs.englishIpaDialect` down.
+  - **Native language picker swapped to the responsive-overlay pattern.**
+    `apps/web/src/features/settings/components/native-language-selector.tsx`
+    replaces `LanguagePicker` (Radix popover) with `LanguageSelectField`
+    (the card-with-pencil button that opens a `ResponsiveOverlay`),
+    matching the adhoc word wizard's target-language picker. Because
+    the selected language *is* the card's primary line, the component
+    wraps the field in an explicit `<Label>Native language</Label>` +
+    muted-text helper so the user knows what the button controls.
+  - **Vocabulary action drawer hides `Open source` when unavailable.**
+    `apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx`
+    used to render the row disabled when `canOpenSource === false`;
+    now the row is omitted entirely (cuts noise for adhoc chunks and
+    chunks whose source session was removed). SPEC's Vocabulary row-
+    actions paragraph updated to call this out.
+  - **Danger Zone constrained on desktop + `xl` destructive button.**
+    `apps/web/src/features/profile/components/danger-zone-view.tsx`
+    wraps the main content in `mx-auto max-w-2xl` and nests the Delete
+    button inside `max-w-md md:max-w-lg` at `size='xl'` — same
+    proportions as the "Practice these terms" sticky CTA instead of
+    stretching the full viewport.
+    `apps/web/src/features/removals/components/delete-account-overlay-content.tsx`
+    confirm + cancel buttons promoted to `size='xl'` to match other
+    overlay primary actions.
+  - **Chevron on the Danger zone More-menu row.**
+    `apps/web/src/features/more/components/more-tab-view.tsx` passes
+    `showChevron` explicitly on the Danger zone entry. `MoreListRow`'s
+    default hides the chevron for destructive rows, but this row
+    navigates to a sub-screen so the chevron belongs.
+  - **Practice session — no skeleton flash between texts or before
+    "All caught up".** `apps/web/src/features/practice/components/practice-session-view.tsx`:
+    the local `PracticeTextSkeleton` component (and its `Skeleton`
+    import) is gone. `handleNext` now snapshots `currentText` into a
+    new `previousText` useState slot before firing `finalizeText`;
+    while `isAdvancing` the body renders the snapshot with
+    `opacity-60 pointer-events-none` instead of skeleton placeholders.
+    `previousText` clears in `onSuccess` / `onError` of both finalize
+    and generate. Also added an `isAtCapacity = progress.completed >=
+    progress.target` derived flag and a `showDone = done || (isAdvancing
+    && isAtCapacity)` predicate — the last advance flips to "All caught
+    up" immediately (progress is already at target from the last rate
+    or from finalize's authoritative progress payload) instead of
+    waiting for `generateNextText` to confirm `done: true`. Don't
+    re-introduce the skeleton block.
+  - **Focus view bottom bar splits practice vs vocabulary entries.**
+    `apps/web/src/features/review/components/focus-view.tsx`:
+    `?from=practice` keeps the two stacked
+    `Add to active vocabulary` / `Add to passive vocabulary` buttons
+    and still navigates back to the practice session on success.
+    `?from=vocabulary` now renders a single button —
+    `Switch to active vocabulary` or `Switch to passive vocabulary`,
+    label derived from `card.chunk.learningMode === 'active' ?
+    'passive' : 'active'` — that mutates `learning_mode` in place and
+    does not navigate away, so the user can keep editing fields on the
+    same focus view. Bar wrapped in `max-w-md md:max-w-lg` to avoid
+    stretching full-width on desktop. SPEC's focus-view bottom-bar
+    paragraph updated to describe both entry paths separately.
+  - **Practice landing section header.**
+    `apps/web/src/features/practice/components/practice-language-view.tsx`
+    renamed the passive-pool section header from `Vocabulary` to
+    `Passive vocabulary` so it parallels the existing
+    `Active vocabulary` section. SPEC's Practice "Language action
+    screen" paragraph updated accordingly.
+  - **Verification.** `pnpm tsc --noEmit` clean from `apps/web`. Manual
+    paths exercised: language settings page (overlay opens for native
+    language, IPA chips render inside the English row, switching
+    target language updates correctly), Danger Zone on desktop +
+    mobile, delete-account overlay, practice session reaching the
+    "All caught up" view from both fully-rated and implicit-good
+    finalizations.
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
