@@ -132,14 +132,25 @@ export const materializeBasicDataChunks = async (params: {
       })
     }
 
-    const insertedCard = await cardsRepository.insertCard({
-      studySessionId: sessionId,
-      highlightId: chunk.source === 'highlight' ? (chunk.highlightId ?? null) : null,
-      segmentId: chunk.segmentId,
-      userLookupId: lookup.id,
-      surfaceForm: chunk.surfaceForm,
-      status: chunk.belowCefr ? 'auto_rejected' : 'pending',
-    })
+    const highlightId = chunk.source === 'highlight' ? (chunk.highlightId ?? null) : null
+    const status = chunk.belowCefr ? 'auto_rejected' : 'pending'
+    const insertedCard = highlightId
+      ? await cardsRepository.insertCardForHighlightIdempotent({
+          studySessionId: sessionId,
+          highlightId,
+          segmentId: chunk.segmentId,
+          userLookupId: lookup.id,
+          surfaceForm: chunk.surfaceForm,
+          status,
+        })
+      : await cardsRepository.insertCard({
+          studySessionId: sessionId,
+          highlightId: null,
+          segmentId: chunk.segmentId,
+          userLookupId: lookup.id,
+          surfaceForm: chunk.surfaceForm,
+          status,
+        })
     insertedCards.push(insertedCard)
   }
 
@@ -162,7 +173,7 @@ export const materializeBasicDataChunks = async (params: {
         grammarUserEdited: lookup.grammar_user_edited_at !== null,
       })
     }
-    const insertedCard = await cardsRepository.insertCard({
+    const insertedCard = await cardsRepository.insertCardForHighlightIdempotent({
       studySessionId: sessionId,
       highlightId: highlight.highlightId,
       segmentId: highlight.segmentId,

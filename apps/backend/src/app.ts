@@ -66,6 +66,11 @@ import { PracticeTextsRepository } from './transport/database/practice-texts/pra
 import { PracticeRatingsRepository } from './transport/database/practice-ratings/practice-ratings-repository'
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
+import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
+import {
+  EnrichmentWorkerInterface,
+  MockEnrichmentWorker,
+} from './service/long-running/enrichment-worker/enrichment-worker'
 import { PracticeRouter } from './router/practice-router/practice-router'
 import { LanguagesRouter } from './router/languages-router/languages-router'
 
@@ -74,6 +79,7 @@ export type AppDependencies = {
   revenuecatSubscriptionsRepository?: RevenuecatSubscriptionsRepositoryInterface
   usersRepository?: UsersRepositoryInterface
   accessCache?: AccessCacheServiceInterface
+  enrichmentWorker?: EnrichmentWorkerInterface
   usersWithFreeAccess?: string[]
   resendApi?: ResendApi
   stripeApi?: StripeApi
@@ -89,6 +95,7 @@ export const buildApp = ({
     RevenuecatSubscriptionsRepository(),
     UsersRepository()
   ),
+  enrichmentWorker = MockEnrichmentWorker(),
   usersWithFreeAccess = ['user.with.free.access@email.com'],
   resendApi = MockResendApi,
   stripeApi = MockStripeApi,
@@ -234,20 +241,7 @@ export const buildApp = ({
   const practiceRatingsRepository = PracticeRatingsRepository()
   const processingTelemetryRepository = ProcessingTelemetryRepository()
   const wiktionaryEntriesRepository = WiktionaryEntriesRepository()
-
-  const processingDependencies = {
-    contentSourcesRepository,
-    textTracksRepository,
-    textSegmentsRepository,
-    studySessionsRepository,
-    highlightsRepository,
-    cardsRepository,
-    userLookupsRepository,
-    usersRepository,
-    userTargetLanguagePrefsRepository,
-    processingTelemetryRepository,
-    wiktionaryEntriesRepository,
-  }
+  const processingJobsRepository = ProcessingJobsRepository()
 
   const exportDependencies = {
     cardsRepository,
@@ -335,7 +329,8 @@ export const buildApp = ({
       studySessionsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
-      processingDependencies
+      processingJobsRepository,
+      highlightsRepository
     )
   )
   app.use(
@@ -346,7 +341,8 @@ export const buildApp = ({
       textSegmentsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
-      wiktionaryEntriesRepository
+      wiktionaryEntriesRepository,
+      processingJobsRepository
     )
   )
   app.use(
@@ -381,6 +377,7 @@ export const buildApp = ({
   )
 
   accessCache.initialize()
+  enrichmentWorker.initialize()
 
   return app
 }

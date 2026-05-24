@@ -9,6 +9,8 @@ import { StudySessionsRepositoryInterface } from '../../transport/database/study
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import {
   fastGlossPass,
   FastGloss,
@@ -46,9 +48,14 @@ export const HighlightsRouter = (
   textSegmentsRepository: TextSegmentsRepositoryInterface,
   usersRepository: UsersRepositoryInterface,
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
-  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
+  processingJobsRepository: ProcessingJobsRepositoryInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
+
+  // Debounce before enriching a freshly-committed highlight, so a mis-selection
+  // the user corrects (delete within the window) never reaches the LLM.
+  const ENRICH_DEBOUNCE_MS = 5000
 
   const router = implementer.router({
     listBySession: implementer.listBySession.handler(async ({ input, context, errors }) => {
@@ -81,6 +88,24 @@ export const HighlightsRouter = (
         note: input.note ?? null,
         presetTags: input.presetTags ?? [],
       })
+      // Kick off background enrichment so the card is (almost) ready by the time
+      // the user reaches triage. Debounced to absorb mis-selections; idempotent
+      // per live job. Best-effort — a failed enqueue must not fail the highlight.
+      try {
+        await processingJobsRepository.enqueue({
+          kind: 'enrich_highlight',
+          sessionId: input.sessionId,
+          highlightId: inserted.id,
+          userId,
+          runAfter: new Date(Date.now() + ENRICH_DEBOUNCE_MS),
+        })
+      } catch (error) {
+        logWithSentry({
+          message: 'enqueue enrich_highlight failed',
+          params: { sessionId: input.sessionId, highlightId: inserted.id },
+          error,
+        })
+      }
       return { data: toHighlightDto(inserted) }
     }),
 
@@ -121,7 +146,10 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight not found' }] },
         })
       }
-      await highlightsRepository.deleteById(input.highlightId)
+      // Transactional: drop the highlight's card (cards.highlight_id is ON DELETE
+      // SET NULL, which would otherwise orphan it as a fake LLM suggestion) and
+      // cascade away its enrich job, in one go.
+      await highlightsRepository.deleteWithCardCleanup(input.highlightId)
       return { data: { id: input.highlightId } }
     }),
 

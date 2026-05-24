@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight, FileText } from 'lucide-react'
@@ -6,15 +7,23 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
-import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import {
+  useGetProcessingStatus,
+  useGetStudySession,
+  useGetUserPrefs,
+  useListHighlightsBySession,
+  useRetryEnrichment,
+} from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
+import { getSessionCardsKey } from '../api/card-cache'
 import type {
   Card,
   CardStatus,
   LearningMode,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { TriageRow } from './triage-row'
+import { Loader2 } from 'lucide-react'
+import { TriageRow, TriageEnrichingRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
 
 const matchesSearch = (card: Card, q: string): boolean => {
@@ -61,8 +70,28 @@ export const TriageListView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/' })
-  const { data: cards, isLoading } = useListCardsBySession(sessionId)
+  const queryClient = useQueryClient()
   const { data: session } = useGetStudySession(sessionId)
+  const { data: highlights } = useListHighlightsBySession(sessionId)
+  const { data: processingStatus } = useGetProcessingStatus(sessionId, 2000)
+  const { mutate: retryEnrichment, isPending: isRetrying } = useRetryEnrichment(sessionId)
+  // While the background worker is still enriching highlights (or discovering
+  // terms), the cards list grows underneath us — poll it so newly-materialized
+  // cards replace their "Enriching…" placeholder rows without a manual refresh.
+  const isProcessingActive =
+    (processingStatus?.enrichingHighlightIds.length ?? 0) > 0 || (processingStatus?.discovering ?? false)
+  const { data: cards, isLoading } = useListCardsBySession(sessionId, {
+    refetchInterval: isProcessingActive ? 2000 : false,
+  })
+  // The poll above stops the moment the status goes idle, which can race the
+  // final card insert — force one refetch on the active→idle transition.
+  const wasProcessingActiveRef = useRef(isProcessingActive)
+  useEffect(() => {
+    if (wasProcessingActiveRef.current && !isProcessingActive) {
+      queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
+    }
+    wasProcessingActiveRef.current = isProcessingActive
+  }, [isProcessingActive, sessionId, queryClient])
   const { data: userPrefs } = useGetUserPrefs()
   // Live user pref wins over the session snapshot.
   const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
@@ -99,6 +128,22 @@ export const TriageListView = () => {
   }, [cards, debouncedSearch])
 
   const keptCount = (cards ?? []).filter((c) => c.status === 'kept').length
+
+  // Highlights still being enriched in the background have no card yet — render a
+  // placeholder row per straggler (and a retry affordance for failed ones).
+  const pendingHighlightRows = useMemo(() => {
+    const cardHighlightIds = new Set((cards ?? []).map((c) => c.highlightId).filter((id): id is string => !!id))
+    const activeSet = new Set(processingStatus?.enrichingHighlightIds ?? [])
+    const failedSet = new Set(processingStatus?.failedHighlightIds ?? [])
+    return (highlights ?? [])
+      .filter((h) => !cardHighlightIds.has(h.id))
+      .map((h): { id: string; surfaceForm: string; status: 'enriching' | 'failed' | 'missing' } => {
+        const status = failedSet.has(h.id) ? 'failed' : activeSet.has(h.id) ? 'enriching' : 'missing'
+        return { id: h.id, surfaceForm: h.selectionText, status }
+      })
+  }, [highlights, cards, processingStatus])
+
+  const discovering = processingStatus?.discovering ?? false
 
   const handleStatusChange = (cardId: string, status: CardStatus, learningMode?: LearningMode) => {
     updateStatus({ cardId, status, learningMode })
@@ -157,15 +202,15 @@ export const TriageListView = () => {
 
           {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading cards…`}</p>}
 
-          {!isLoading && (cards?.length ?? 0) === 0 && (
+          {!isLoading && (cards?.length ?? 0) === 0 && pendingHighlightRows.length === 0 && !discovering && (
             <p className='text-muted-foreground text-sm'>{t`No cards yet. Process the session to generate them.`}</p>
           )}
 
-          {grouped.yourHighlights.length > 0 && (
+          {(grouped.yourHighlights.length > 0 || pendingHighlightRows.length > 0) && (
             <section className='mb-6'>
               <div className='flex items-center justify-between gap-2'>
                 <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-                  {t`Your highlights`} ({grouped.yourHighlights.length})
+                  {t`Your highlights`} ({grouped.yourHighlights.length + pendingHighlightRows.length})
                 </h2>
                 <BulkActions
                   cards={grouped.yourHighlights}
@@ -181,6 +226,15 @@ export const TriageListView = () => {
                     card={card}
                     hideTranslationFields={hideTranslationFields}
                     onStatusChange={handleStatusChange}
+                  />
+                ))}
+                {pendingHighlightRows.map((row) => (
+                  <TriageEnrichingRow
+                    key={row.id}
+                    surfaceForm={row.surfaceForm}
+                    status={row.status}
+                    isRetrying={isRetrying}
+                    onRetry={() => retryEnrichment({ sessionId, highlightId: row.id })}
                   />
                 ))}
               </div>
@@ -211,6 +265,13 @@ export const TriageListView = () => {
                 ))}
               </div>
             </section>
+          )}
+
+          {discovering && (
+            <div className='text-muted-foreground mb-6 flex items-center gap-1.5 text-sm'>
+              <Loader2 className='h-3 w-3 animate-spin' />
+              {t`Finding more terms to suggest…`}
+            </div>
           )}
 
           <AutoRejectedCollapsible

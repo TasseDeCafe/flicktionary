@@ -54,6 +54,35 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard> => {
   return result[0]!
 }
 
+// Idempotent insert for highlight-backed cards: guarded by the partial unique
+// index cards_highlight_id_unique. The background enrichment worker retries on
+// transient failure, so a single highlight must never produce two cards. On
+// conflict the INSERT does nothing and RETURNING is empty, so we read back the
+// pre-existing row. Callers must pass a non-null highlightId.
+const insertCardForHighlightIdempotent = async (params: CardInsertInput & { highlightId: string }): Promise<DbCard> => {
+  const inserted = (await sql`
+    INSERT INTO public.cards (
+      study_session_id, highlight_id, segment_id, user_lookup_id, surface_form, status
+    )
+    VALUES (
+      ${params.studySessionId},
+      ${params.highlightId},
+      ${params.segmentId},
+      ${params.userLookupId},
+      ${params.surfaceForm},
+      ${params.status}
+    )
+    ON CONFLICT (highlight_id) WHERE highlight_id IS NOT NULL
+    DO NOTHING
+    RETURNING *
+  `) as DbCard[]
+  if (inserted[0]) return inserted[0]
+  const existing = (await sql`
+    SELECT * FROM public.cards WHERE highlight_id = ${params.highlightId}
+  `) as DbCard[]
+  return existing[0]!
+}
+
 const SELECT_CARD_WITH_CHUNK_SQL = sql`
   SELECT
     c.*,
@@ -154,6 +183,7 @@ const listKeptForSession = async (studySessionId: string): Promise<DbCardWithChu
 
 export interface CardsRepositoryInterface {
   insertCard: (params: CardInsertInput) => Promise<DbCard>
+  insertCardForHighlightIdempotent: (params: CardInsertInput & { highlightId: string }) => Promise<DbCard>
   listBySessionId: (studySessionId: string, status?: CardStatus) => Promise<DbCardWithChunk[]>
   findById: (id: string) => Promise<DbCardWithChunk | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbCardWithChunk | null>
@@ -166,6 +196,7 @@ export interface CardsRepositoryInterface {
 export const CardsRepository = (): CardsRepositoryInterface => {
   return {
     insertCard,
+    insertCardForHighlightIdempotent,
     listBySessionId,
     findById,
     findByIdForUser,

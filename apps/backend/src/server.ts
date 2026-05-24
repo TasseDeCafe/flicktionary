@@ -12,6 +12,9 @@ import { AccessCacheService } from './service/long-running/subscription-cache-se
 import { StripeSubscriptionsRepository } from './transport/database/stripe-subscriptions/stripe-subscriptions-repository'
 import { RevenuecatSubscriptionsRepository } from './transport/database/revenuecat-subscriptions/revenuecat-subscriptions-repository'
 import { UsersRepository } from './transport/database/users/users-repository'
+import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
+import { EnrichmentWorker } from './service/long-running/enrichment-worker/enrichment-worker'
+import { buildProcessingDependencies } from './service/processing/processing-dependencies'
 import { posthogClient, registerPosthogShutdownHandlers } from './transport/third-party/posthog/posthog-client'
 import { setupExpressErrorHandler } from 'posthog-node'
 
@@ -29,6 +32,7 @@ const startServer = async () => {
       revenueCatSubscriptionsRepository,
       usersRepository
     )
+    const enrichmentWorker = EnrichmentWorker(ProcessingJobsRepository(), buildProcessingDependencies())
 
     const expressApp = getConfig().shouldMockThirdParties
       ? buildApp({})
@@ -36,6 +40,7 @@ const startServer = async () => {
           stripeSubscriptionsRepository,
           revenuecatSubscriptionsRepository: revenueCatSubscriptionsRepository,
           accessCache,
+          enrichmentWorker,
           usersWithFreeAccess: getConfig().usersWithFreeAccess,
           resendApi: RealResendApi,
           ...(FEATURES.STRIPE ? { stripeApi: RealStripeApi } : {}),

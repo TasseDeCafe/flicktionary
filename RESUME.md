@@ -1637,6 +1637,73 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     corrected the stale "drags up to a full-height snap" expand claim (expand is
     a header chevron on both platforms; mobile adds drag-down-to-dismiss).
 
+- **Background per-highlight enrichment + discovery-as-job (2026-05-25).** Replaced
+  the single synchronous `basicDataPass` fired from the Process button (which
+  enriched every highlight AND discovered ~60 LLM terms in one ~8-minute Opus call)
+  with a durable background-job queue. Don't re-introduce the synchronous combined
+  pass or the `processing`-status redirect.
+  - **Job queue.** Migration `processing_jobs` (kind `enrich_highlight | discover_session`,
+    status `pending|processing|done|failed`, `attempts`, `last_error`, `run_after`,
+    lease `locked_at`/`locked_by`). Poll index on `(status, run_after)`; two partial
+    unique indexes over LIVE (pending/processing) rows make enqueue idempotent (one
+    in-flight enrich per highlight, one discover per session) while allowing a fresh
+    job after a terminal one. `ProcessingJobsRepository` (`processing-jobs-repository.ts`):
+    `enqueue` (ON CONFLICT DO NOTHING), `claimBatch` (CTE with `FOR UPDATE SKIP LOCKED`
+    + stale-lease reclaim, bumps attempts), `markDone`, `markFailedOrRetry` (backoff
+    vs fail by attempts), `cancelByHighlightId`, `requeueFailedByHighlightId`,
+    `listActiveBySession`.
+  - **Idempotent highlight cards.** Migration `cards_highlight_id_unique` (partial
+    unique index on `cards(highlight_id) WHERE highlight_id IS NOT NULL`). New
+    `cardsRepository.insertCardForHighlightIdempotent` (ON CONFLICT DO NOTHING → read
+    back); `materialize-basic-data-chunks.ts` uses it for `source='highlight'` rows on
+    both the chunk loop and the fallback stub loop.
+  - **`enrich-highlight.ts`.** One highlight → one card: ensure context blob (cached on
+    the session, sampled via new `textSegmentsRepository.listFirstByTrackId`), windowed
+    surrounding segments (`selectSurroundingSegments`), `basicDataPass({ llmDiscoveryEnabled:
+    false, highlights:[one], model: MODEL_ENRICHMENT })`, **re-check the highlight still
+    exists before materializing** (deleted mid-flight → return `'cancelled'`, non-retryable,
+    no card), materialize, grounding, `highlight_enrichment` telemetry. `MODEL_ENRICHMENT =
+    process.env.ENRICHMENT_MODEL ?? MODEL_SONNET` and `basicDataPass` gained a `model` param
+    (defaults `MODEL_OPUS`).
+  - **`process-session.ts` → `discover-session.ts` (`discoverSession`).** Discovery-only:
+    always `highlights:[]`, drops stray `source='highlight'` rows, keeps the exclusion
+    prefilter + Haiku tiebreaker + materialize (llm only) + grounding, preserves the
+    `llmHighlightsEnabled` gate, idempotent via `hasLlmSuggestedCards`. **Does NOT mutate
+    `study_sessions.status`** anymore.
+  - **Worker.** `service/long-running/enrichment-worker/enrichment-worker.ts`, modeled on
+    `AccessCacheService`: injectable `EnrichmentWorkerInterface` with a no-op
+    `MockEnrichmentWorker` default (so `buildApp` test/mock runs don't poll), real
+    `EnrichmentWorker` constructed in `server.ts` and injected. Guarded tick (`if (ticking)
+    return`) → `claimBatch(K, workerId, staleAfter)` → dispatch by kind with bounded
+    concurrency → `markDone`/`markFailedOrRetry`. `buildProcessingDependencies()` factory
+    (`processing-dependencies.ts`) builds the repo bundle for the worker.
+  - **Routers.** `highlights.create` enqueues `enrich_highlight` (debounced ~5s).
+    `highlights.delete` → `highlightsRepository.deleteWithCardCleanup` (one tx: delete the
+    card so `ON DELETE SET NULL` can't orphan it as a fake LLM suggestion; the highlight
+    delete cascades its job). `studySessions.process` enqueues `discover_session` (gated on
+    the pref) and no longer flips status. New `studySessions.getProcessingStatus` (enriching
+    / failed highlight ids + `discovering`) and `retryEnrichment`.
+  - **Frontend.** Process button → navigate straight to triage (no `/processing` redirect;
+    the route still exists but is off the main flow). `useGetProcessingStatus(sessionId, 2000)`
+    polls while active; triage renders `TriageEnrichingRow` placeholders for highlights without
+    a card (enriching/failed + retry) and a "finding more terms…" indicator while discovering.
+    **Cards-list staleness fix:** the triage cards query polls (`refetchInterval`) while
+    enrichment/discovery is active and force-invalidates once on the active→idle transition,
+    so newly-materialized cards replace their placeholders without a manual refresh.
+  - **Contracts.** `study-sessions-contract.ts` gained `getProcessingStatus` + `retryEnrichment`.
+    Reminder: the backend uses TS project references, so **rebuild api-client**
+    (`pnpm --filter @flicktionary/api-client build`) after editing a contract or the backend
+    typecheck reads a stale `.d.ts`.
+  - **Tests/verification.** Unit tests `enrich-highlight.unit.test.ts` (pending card + lookup,
+    idempotent-insert path, mid-flight cancel) and `discover-session.unit.test.ts` (never emits
+    highlight rows, idempotent, pref-gated). `claimBatch`/`enqueue`/stale-reclaim are DB-level —
+    validated directly against the dev-tunnel in a rolled-back tx (integration suite still
+    shelved). Backend + web + api-client typecheck and lint clean; 151 backend unit tests pass.
+  - **SPEC.** Rewrote the Processing-pipeline section (two background jobs + queue + worker),
+    the Process / "add more highlights" user flows, the modal-screens list, the Process-button
+    pref note, the `study_sessions.status` comment; added the `processing_jobs` table.
+    `EXCLUSION_PREFILTER.md` repointed to `discover-session.ts`.
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)

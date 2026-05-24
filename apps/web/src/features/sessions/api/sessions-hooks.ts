@@ -206,6 +206,39 @@ export const useGetStudySessionStatus = (sessionId: string, refetchInterval?: nu
   )
 }
 
+// Triage loaders: poll the background enrichment/discovery job state while
+// anything is still in flight, then stop. Mirrors useGetStudySessionStatus.
+export const useGetProcessingStatus = (sessionId: string, refetchInterval?: number) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.studySessions.getProcessingStatus.queryOptions({
+      input: { sessionId },
+      select: (response) => response.data,
+      refetchInterval: (query) => {
+        const data = query.state.data?.data
+        const active = !!data && (data.enrichingHighlightIds.length > 0 || data.discovering)
+        return active ? (refetchInterval ?? 2000) : false
+      },
+      meta: { errorMessage: t`Failed to load processing status` },
+    })
+  )
+}
+
+export const useRetryEnrichment = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.studySessions.retryEnrichment.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.studySessions.getProcessingStatus.key({ input: { sessionId } }),
+        })
+      },
+      meta: { errorMessage: t`Failed to retry enrichment` },
+    })
+  )
+}
+
 export const useListSegmentsByTrack = (textTrackId: string | null) => {
   const { t } = useLingui()
   return useQuery(

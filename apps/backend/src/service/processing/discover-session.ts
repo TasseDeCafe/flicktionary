@@ -11,11 +11,7 @@ import { UsersRepositoryInterface } from '../../transport/database/users/users-r
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
-import {
-  basicDataPass,
-  BasicDataChunk,
-  HighlightInput,
-} from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import { basicDataPass, BasicDataChunk } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import {
   CandidateForDisambiguation,
   DisambiguationResult,
@@ -44,7 +40,18 @@ export type ProcessingDependencies = {
 
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
 
-export const processSession = async (
+// Discovery-only background job: scan the whole text once and surface ~20-40
+// LLM-suggested terms at/above the learner's CEFR level. The complementary job
+// — enriching each user highlight into a card — is handled per-highlight by
+// enrichHighlight, never here. This function therefore ALWAYS passes
+// `highlights: []` and drops any stray source='highlight' rows the model emits,
+// so it can never produce a duplicate highlight card alongside the worker.
+//
+// It does NOT mutate study_sessions.status: enrichment/discovery state lives in
+// processing_jobs now, not on the session. Genuine failures throw so the worker
+// can record them on the job and retry; soft sub-pass failures are recorded as
+// processing warnings on the session, as before.
+export const discoverSession = async (
   sessionId: string,
   userId: string,
   deps: ProcessingDependencies
@@ -54,7 +61,6 @@ export const processSession = async (
     textTracksRepository,
     textSegmentsRepository,
     studySessionsRepository,
-    highlightsRepository,
     cardsRepository,
     userLookupsRepository,
     usersRepository,
@@ -63,193 +69,156 @@ export const processSession = async (
     wiktionaryEntriesRepository,
   } = deps
 
+  const session = await studySessionsRepository.findByIdForUser(sessionId, userId)
+  if (!session) {
+    logWithSentry({ message: 'discoverSession: session not found', params: { sessionId, userId } })
+    return
+  }
+
+  // Preserve the LLM-suggestions gate: if the user has discovery turned off,
+  // this job is a no-op. (The enqueue path also guards this, this is defence.)
+  const llmHighlightsEnabled = await usersRepository.getLlmHighlightsEnabled(userId)
+  if (!llmHighlightsEnabled) return
+
+  const [contentSource, track, segments, existingCards] = await Promise.all([
+    contentSourcesRepository.findById(session.content_source_id),
+    textTracksRepository.findById(session.text_track_id),
+    textSegmentsRepository.listByTrackId(session.text_track_id),
+    cardsRepository.listBySessionId(sessionId),
+  ])
+
+  if (!contentSource || !track || segments.length === 0) {
+    logWithSentry({
+      message: 'discoverSession: missing prerequisites',
+      params: { sessionId, hasContentSource: !!contentSource, hasTrack: !!track, segmentCount: segments.length },
+    })
+    return
+  }
+
+  // Idempotent: discovery already ran for this session (LLM-suggested cards have
+  // a NULL highlight_id). Nothing to do.
+  const hasLlmSuggestedCards = existingCards.some((c) => c.highlight_id === null)
+  if (hasLlmSuggestedCards) return
+
+  // 1. Source context blob — generate if missing (shared cache with enrichHighlight).
+  let contextBlob = session.context_blob
+  if (!contextBlob) {
+    const sample = segments
+      .slice(0, CONTEXT_BLOB_SAMPLE_SIZE)
+      .map((s) => s.text)
+      .join('\n')
+    contextBlob = await generateContextBlob({
+      contentTitle: contentSource.title,
+      contentLanguage: contentSource.language,
+      contentType: contentSource.type,
+      segmentSample: sample,
+    })
+    await studySessionsRepository.updateContextBlob(sessionId, userId, contextBlob)
+  }
+
+  const languagePrefs = await getLanguageMode({
+    userId,
+    targetLanguage: session.target_language,
+    snapshotNativeLanguage: session.native_language,
+    usersRepository,
+    targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
+  })
+  const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
+
+  // Source-relevant pre-filter: only feed the LLM exclusions whose headword
+  // plausibly appears in this session's source. Bounded by source size (a few
+  // hundred typical), not user vocab size. Telemetry captures the prune ratio.
+  const prefilterStartedAt = Date.now()
+  const { headwordSenses: excludedHeadwordSenses, totalVocabSize } =
+    await userLookupsRepository.listHeadwordSensesRelevantToTrack({
+      userId,
+      targetLanguage: session.target_language,
+      textTrackId: session.text_track_id,
+    })
+  await recordPassTelemetry(processingTelemetryRepository, {
+    studySessionId: sessionId,
+    passName: 'exclusion_prefilter',
+    durationMs: Date.now() - prefilterStartedAt,
+    payload: {
+      totalVocabSize,
+      filteredSize: excludedHeadwordSenses.length,
+      regconfig: resolveRegconfig(session.target_language),
+      headwordSampleKept: excludedHeadwordSenses.slice(0, 20).map((e) => e.headword),
+    },
+  })
+
+  const segmentInputs = segments.map((s) => ({ id: s.id, index: s.index, text: s.text }))
+  const segmentIdSet = new Set(segments.map((s) => s.id))
+
+  let chunks: BasicDataChunk[] = []
   try {
-    const session = await studySessionsRepository.findByIdForUser(sessionId, userId)
-    if (!session) {
-      logWithSentry({ message: 'processSession: session not found', params: { sessionId, userId } })
-      return
-    }
-
-    const [contentSource, track, segments, highlights, existingCards] = await Promise.all([
-      contentSourcesRepository.findById(session.content_source_id),
-      textTracksRepository.findById(session.text_track_id),
-      textSegmentsRepository.listByTrackId(session.text_track_id),
-      highlightsRepository.listBySessionId(sessionId),
-      cardsRepository.listBySessionId(sessionId),
-    ])
-
-    if (!contentSource || !track || segments.length === 0) {
-      await studySessionsRepository.markFailed(sessionId, userId)
-      logWithSentry({
-        message: 'processSession: missing prerequisites',
-        params: { sessionId, hasContentSource: !!contentSource, hasTrack: !!track, segmentCount: segments.length },
-      })
-      return
-    }
-
-    // Idempotency markers — let users add new highlights to an already-processed
-    // session and re-run without duplicating work. The basic-data pass is a
-    // no-op when LLM-suggested cards already exist AND every highlight has a card.
-    const hasLlmSuggestedCards = existingCards.some((c) => c.highlight_id === null)
-    const processedHighlightIds = new Set(
-      existingCards.filter((c) => c.highlight_id !== null).map((c) => c.highlight_id as string)
-    )
-    const allHighlightsCovered = highlights.every((h) => processedHighlightIds.has(h.id))
-    const skipBasicDataPass = hasLlmSuggestedCards && allHighlightsCovered
-
-    // 1. Source context blob — generate if missing.
-    let contextBlob = session.context_blob
-    if (!contextBlob) {
-      const sample = segments
-        .slice(0, CONTEXT_BLOB_SAMPLE_SIZE)
-        .map((s) => s.text)
-        .join('\n')
-      contextBlob = await generateContextBlob({
-        contentTitle: contentSource.title,
-        contentLanguage: contentSource.language,
-        contentType: contentSource.type,
-        segmentSample: sample,
-      })
-      await studySessionsRepository.updateContextBlob(sessionId, userId, contextBlob)
-    }
-
-    const [llmHighlightsEnabled, languagePrefs] = await Promise.all([
-      usersRepository.getLlmHighlightsEnabled(userId),
-      getLanguageMode({
-        userId,
-        targetLanguage: session.target_language,
-        snapshotNativeLanguage: session.native_language,
-        usersRepository,
-        targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
-      }),
-    ])
-    const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
-
-    // When LLM discovery is off, the only point of running the pass is to
-    // populate basic data for any new user highlight. With no new highlights
-    // and no need to discover, there's nothing to do.
-    const newHighlights: HighlightInput[] = highlights
-      .filter((h) => !processedHighlightIds.has(h.id))
-      .map((h) => ({
-        highlightId: h.id,
-        segmentId: h.start_segment_id,
-        selectionText: h.selection_text,
-        note: h.note,
-        presetTags: h.preset_tags,
-      }))
-
-    const llmDiscoveryWanted = llmHighlightsEnabled && !hasLlmSuggestedCards
-    const shouldCallPass = !skipBasicDataPass && (llmDiscoveryWanted || newHighlights.length > 0)
-
-    if (shouldCallPass) {
-      // Source-relevant pre-filter: only feed the LLM exclusions whose
-      // headword plausibly appears in this session's source. Bounded by
-      // source size (a few hundred typical), not user vocab size. Telemetry
-      // captures the prune ratio for monitoring.
-      const prefilterStartedAt = Date.now()
-      const { headwordSenses: excludedHeadwordSenses, totalVocabSize } =
-        await userLookupsRepository.listHeadwordSensesRelevantToTrack({
-          userId,
-          targetLanguage: session.target_language,
-          textTrackId: session.text_track_id,
-        })
-      await recordPassTelemetry(processingTelemetryRepository, {
-        studySessionId: sessionId,
-        passName: 'exclusion_prefilter',
-        durationMs: Date.now() - prefilterStartedAt,
-        payload: {
-          totalVocabSize,
-          filteredSize: excludedHeadwordSenses.length,
-          regconfig: resolveRegconfig(session.target_language),
-          headwordSampleKept: excludedHeadwordSenses.slice(0, 20).map((e) => e.headword),
-        },
-      })
-
-      const segmentInputs = segments.map((s) => ({ id: s.id, index: s.index, text: s.text }))
-      const segmentIdSet = new Set(segments.map((s) => s.id))
-
-      let chunks: BasicDataChunk[] = []
-      try {
-        chunks = await basicDataPass({
-          nativeLanguage: languageModeNativeLanguage,
-          targetLanguage: session.target_language,
-          cefrLevel: session.cefr_level,
-          movieContextBlob: contextBlob,
-          segments: segmentInputs,
-          highlights: newHighlights,
-          excludedHeadwordSenses,
-          llmDiscoveryEnabled: llmDiscoveryWanted,
-          hideTranslationFields: languagePrefs.hideTranslationFields,
-          allowL1Notes: languagePrefs.allowL1Notes,
-        })
-      } catch (e) {
-        logCustomErrorMessageAndError(`basicDataPass failed, sessionId = ${sessionId}`, e)
-        await studySessionsRepository.appendProcessingWarning(
-          sessionId,
-          userId,
-          `Basic-data pass failed: ${e instanceof Error ? e.message : String(e)}`
-        )
-      }
-
-      // Drop LLM-source rows on re-process (already-have-LLM-cards case) or
-      // when the user has turned off LLM discovery entirely.
-      const filteredChunks =
-        hasLlmSuggestedCards || !llmHighlightsEnabled ? chunks.filter((c) => c.source === 'highlight') : chunks
-
-      // Sense-disambiguation tiebreaker (Haiku): the pre-filter is heuristic
-      // guidance to Opus, not a correctness gate. After the pass returns, run
-      // a cheap second LLM call only on LLM-discovered candidates whose
-      // headword plausibly collides with an existing user_lookups headword —
-      // Haiku decides which are duplicates of an existing sense vs genuinely
-      // new senses worth keeping. Highlights and below-CEFR rows bypass:
-      // highlights always pass through per spec; below-CEFR land as
-      // auto_rejected and shouldn't burn Haiku tokens.
-      const dedupedChunks = await applySenseDisambiguationTiebreaker({
-        sessionId,
-        userId,
-        targetLanguage: session.target_language,
-        chunks: filteredChunks,
-        userLookupsRepository,
-        studySessionsRepository,
-        processingTelemetryRepository,
-      })
-
-      const { touchedLookups } = await materializeBasicDataChunks({
-        sessionId,
-        userId,
-        targetLanguage: session.target_language,
-        chunks: dedupedChunks,
-        newHighlights,
-        processedHighlightIds,
-        segmentIdSet,
-        hideTranslationFields: languagePrefs.hideTranslationFields,
-        cardsRepository,
-        userLookupsRepository,
-      })
-
-      // Wiktionary grounding: for each unique user_lookups row we just touched
-      // in a kaikki-enabled language, look up the matching kaikki entry and
-      // shallow-merge structured grammar fields on top of the LLM's. Skips
-      // rows already grounded so re-processing doesn't re-issue lookups, and
-      // skips languages without a loaded dump. Failures here are best-effort
-      // — never fail the whole pipeline.
-      if (KAIKKI_LANGUAGES.has(session.target_language)) {
-        await runWiktionaryGrounding({
-          sessionId,
-          userId,
-          targetLanguage: session.target_language,
-          touchedLookups,
-          userLookupsRepository,
-          wiktionaryEntriesRepository,
-          processingTelemetryRepository,
-        })
-      }
-    }
-
-    await studySessionsRepository.markProcessed(sessionId, userId)
+    chunks = await basicDataPass({
+      nativeLanguage: languageModeNativeLanguage,
+      targetLanguage: session.target_language,
+      cefrLevel: session.cefr_level,
+      movieContextBlob: contextBlob,
+      segments: segmentInputs,
+      highlights: [],
+      excludedHeadwordSenses,
+      llmDiscoveryEnabled: true,
+      hideTranslationFields: languagePrefs.hideTranslationFields,
+      allowL1Notes: languagePrefs.allowL1Notes,
+    })
   } catch (e) {
-    logWithSentry({ message: 'processSession: uncaught error', params: { sessionId, userId }, error: e })
-    await studySessionsRepository.markFailed(sessionId, userId)
+    logCustomErrorMessageAndError(`basicDataPass (discovery) failed, sessionId = ${sessionId}`, e)
+    await studySessionsRepository.appendProcessingWarning(
+      sessionId,
+      userId,
+      `Discovery pass failed: ${e instanceof Error ? e.message : String(e)}`
+    )
+    throw e
+  }
+
+  // Discovery only: drop any source='highlight' rows entirely. Highlight cards
+  // are owned by enrichHighlight; this job must never create one.
+  const llmChunks = chunks.filter((c) => c.source === 'llm')
+
+  // Sense-disambiguation tiebreaker (Haiku): the pre-filter is heuristic guidance
+  // to Opus, not a correctness gate. Run a cheap second LLM call only on
+  // LLM-discovered candidates whose headword plausibly collides with an existing
+  // user_lookups headword — Haiku decides which are duplicates vs genuinely new
+  // senses. Below-CEFR rows land as auto_rejected and bypass to save Haiku tokens.
+  const dedupedChunks = await applySenseDisambiguationTiebreaker({
+    sessionId,
+    userId,
+    targetLanguage: session.target_language,
+    chunks: llmChunks,
+    userLookupsRepository,
+    studySessionsRepository,
+    processingTelemetryRepository,
+  })
+
+  const { touchedLookups } = await materializeBasicDataChunks({
+    sessionId,
+    userId,
+    targetLanguage: session.target_language,
+    chunks: dedupedChunks,
+    newHighlights: [],
+    processedHighlightIds: new Set<string>(),
+    segmentIdSet,
+    hideTranslationFields: languagePrefs.hideTranslationFields,
+    cardsRepository,
+    userLookupsRepository,
+  })
+
+  // Wiktionary grounding: for each unique user_lookups row we just touched in a
+  // kaikki-enabled language, merge structured grammar fields on top of the LLM's.
+  // Best-effort — never fail the whole pipeline.
+  if (KAIKKI_LANGUAGES.has(session.target_language)) {
+    await runWiktionaryGrounding({
+      sessionId,
+      userId,
+      targetLanguage: session.target_language,
+      touchedLookups,
+      userLookupsRepository,
+      wiktionaryEntriesRepository,
+      processingTelemetryRepository,
+    })
   }
 }
 
