@@ -18,6 +18,9 @@ interface FloatingSheetContextValue {
   closeSheet: () => void
   contentRef: React.RefObject<HTMLDivElement | null>
   modal: boolean
+  // The element / rect the trigger lives at. On mobile we use it to flip the
+  // sheet above the word when the default bottom placement would cover it.
+  anchor: FloatingSheetAnchor
 }
 
 const FloatingSheetContext = React.createContext<FloatingSheetContextValue | null>(null)
@@ -118,6 +121,7 @@ export const FloatingSheet = ({
     closeSheet,
     contentRef,
     modal,
+    anchor,
   }
 
   if (isMobile) {
@@ -155,6 +159,77 @@ const rectFromAnchor = (anchor: FloatingSheetAnchor): DOMRect | null => {
   return anchor
 }
 
+// Gap (px) left between the tapped word and a flipped-above sheet.
+const FLIP_GAP = 8
+
+// On mobile the sheet is a bottom drawer by default. When the tapped word sits
+// low enough that the bottom drawer would cover it, we flip the sheet so it
+// rests just *above* the word instead — keeping the word (and the text below
+// it) visible, which matters once reading switches to paginated pages that
+// can't be scrolled. Vaul has no concept of anchoring to an element, so we
+// override the drawer's `bottom` / `max-height` inline after measuring its
+// rendered height. Measuring in a layout effect (before paint) avoids a jump.
+const useMobileFlipStyle = ({
+  open,
+  isMobile,
+  anchor,
+  contentRef,
+}: {
+  open: boolean
+  isMobile: boolean
+  anchor: FloatingSheetAnchor
+  contentRef: React.RefObject<HTMLDivElement | null>
+}): React.CSSProperties | undefined => {
+  const [style, setStyle] = React.useState<React.CSSProperties | undefined>(undefined)
+
+  React.useLayoutEffect(() => {
+    if (!open || !isMobile || typeof window === 'undefined') {
+      setStyle(undefined)
+      return
+    }
+    const rect = rectFromAnchor(anchor)
+    const el = contentRef.current
+    if (!rect || !el) {
+      setStyle(undefined)
+      return
+    }
+
+    // The flip is sticky once triggered: we only ever go bottom → above within a
+    // single open, never back. This matters because (a) the sheet's content can
+    // load/grow *after* the first measurement — the very first open of a session
+    // measures a short, still-loading sheet that doesn't yet cover the word — and
+    // (b) once flipped, the inline max-height clamps the measured height, so
+    // re-evaluating would read a smaller box and wrongly un-flip.
+    let flipped = false
+    const measure = () => {
+      if (flipped) return
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+      const sheetHeight = el.offsetHeight
+      // Top edge of the drawer in its default bottom placement. If that edge
+      // sits below the word's top, the word is hidden behind the drawer → flip.
+      const bottomDrawerTop = viewportHeight - sheetHeight
+      if (rect.top - FLIP_GAP <= bottomDrawerTop) return
+      flipped = true
+      setStyle({
+        top: 'auto',
+        // Pin the sheet's bottom edge just above the word; content then grows
+        // upward and scrolls internally if it runs out of room.
+        bottom: viewportHeight - rect.top + FLIP_GAP,
+        maxHeight: Math.max(160, rect.top - FLIP_GAP - 8),
+      })
+    }
+
+    measure()
+    // Re-measure as the sheet's content settles (async gloss/definition load,
+    // font swap, expand) so a late-growing sheet still flips above the word.
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [open, isMobile, anchor, contentRef])
+
+  return open ? style : undefined
+}
+
 // Invisible 0-effect element at the anchor rect's position so Radix Popover has
 // something concrete to position against. Re-measures every render in case the
 // underlying element moved (scroll inside the modal screen, layout reflow).
@@ -184,12 +259,14 @@ interface FloatingSheetContentProps {
 }
 
 export const FloatingSheetContent = ({ className, children }: FloatingSheetContentProps) => {
-  const { open, isMobile, expandable, contentRef, modal } = useFloatingSheetContext()
+  const { open, isMobile, expandable, contentRef, modal, anchor } = useFloatingSheetContext()
+  const flipStyle = useMobileFlipStyle({ open, isMobile, anchor, contentRef })
 
   if (isMobile) {
     const contentClassName = cn(
       'group/floating-sheet bg-background fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-lg border-t shadow-xl outline-none',
-      expandable ? 'max-h-[96vh]' : 'max-h-[85vh]',
+      // When flipped above the word the cap is supplied inline via flipStyle.
+      flipStyle ? undefined : expandable ? 'max-h-[96vh]' : 'max-h-[85vh]',
       className
     )
 
@@ -206,7 +283,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
       if (!open) return null
       if (typeof document === 'undefined') return null
       return createPortal(
-        <div ref={contentRef} className={contentClassName}>
+        <div ref={contentRef} className={contentClassName} style={flipStyle}>
           {inner}
         </div>,
         document.body
@@ -226,6 +303,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
           // is the documented Radix escape hatch to opt out of the requirement.
           aria-describedby={undefined}
           className={contentClassName}
+          style={flipStyle}
         >
           {inner}
         </DrawerPrimitive.Content>
