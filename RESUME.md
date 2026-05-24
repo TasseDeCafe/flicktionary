@@ -1589,6 +1589,54 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     Verified with the focused Vitest files,
     `pnpm --filter @flicktionary/web check:types`, and scoped ESLint.
 
+- **Floating sheet: flip-above-word + vaul removed from FloatingSheet (2026-05-24).**
+  All in `apps/web/src/components/ui/floating-sheet.tsx`, covering the session
+  gloss sheet, practice rate/lookup/delete-confirm sheets. Supersedes the
+  vaul-based mechanics in the 2026-05-18 note below — don't re-introduce
+  `DrawerPrimitive`, vaul snap points, or vaul's close animation in this file.
+  - **Flip above the tapped word.** `useMobileFlipStyle` measures the rendered
+    sheet height; when a bottom-anchored sheet would cover the tapped word
+    (`rect.top > viewportHeight - sheetHeight`), it pins the sheet's bottom edge
+    just above the word (`bottom: vh - rect.top + gap`, `max-height` capped to
+    the space above) so the word and the text below stay visible. Re-measures
+    via `ResizeObserver` so a late-loading gloss still flips on the first open
+    of a session. The flip is sticky per open (never un-flips), reset only on
+    the open transition (during render, so a reopen measures an unclamped
+    height), and **persists through the exit** so a flipped sheet fades in
+    place rather than snapping to the edge. Motivated by future paginated
+    reading where the text can't be scrolled.
+  - **Modal sheets moved to Radix Dialog.** The `modal` branch (rate-sheet,
+    chunk-delete-confirm) renders `@radix-ui/react-dialog`
+    (`Root`/`Portal`/`Overlay`/`Content`, `Title`/`Description`) instead of
+    vaul `Drawer.*`. `Dialog.Root` is owned by `FloatingSheetContent` and stays
+    `open` while mounted; mount/unmount is driven by the custom motion hook, so
+    Radix's keyframe-based Presence is not relied on. Non-modal sheets (gloss,
+    lookup) stay plain `createPortal`. Reason: vaul is unmaintained and is only
+    a thin wrapper over `@radix-ui/react-dialog` (already a direct dep).
+  - **Custom slide/drag motion.** `useBottomSheetMotion` drives enter/exit with
+    a CSS *transition* (not a keyframe) on an imperative `transform`/`opacity`,
+    so a drag offset composes instead of being overridden — React's `style`
+    prop only ever owns the flip `bottom`/`max-height`. Enter always slides up.
+    Exit is position-aware: a docked sheet slides down, a flipped sheet (treated
+    as a popover) fades in place (`POPOVER_DURATION_MS`). `useDragToDismiss`
+    adds drag-to-dismiss from the handle on *all* mobile sheets (gloss/lookup
+    gained it); drag starts only on the handle (`touch-none`, `pt-3 pb-4` hit
+    area) so it never competes with content scroll.
+  - **Mounting timing.** Content mounts synchronously during render
+    (`if (isMobile && open && !rendered) setRendered(true)`), not in an effect,
+    so `contentRef` exists before the flip's layout-effect measurement on the
+    same commit. Don't move this into a `useEffect` — that re-introduces the bug
+    where every sheet opened at the bottom (flip measured a null ref).
+  - **Vaul not yet removed from the repo.** `apps/web/src/components/ui/drawer.tsx`
+    (+ `responsive-overlay.tsx`, ~13 consumers) still imports vaul, so `vaul`
+    stays in package.json / catalog until that wrapper is migrated.
+  - **Verification.** `tsc --noEmit` clean from `apps/web`; scoped ESLint clean
+    (only the pre-existing `react-refresh/only-export-components` warning).
+    Manual on-device check of flip / slide / fade / drag-dismiss left to run.
+  - **SPEC.** Updated the session floating-sheet paragraph (flip-above-word) and
+    corrected the stale "drags up to a full-height snap" expand claim (expand is
+    a header chevron on both platforms; mobile adds drag-down-to-dismiss).
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
