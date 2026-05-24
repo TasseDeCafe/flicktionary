@@ -1201,6 +1201,10 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     `practice.fastGloss` handler needs native_language, so
     `PracticeRouter` now takes `usersRepository` (wired in
     `app.ts`).
+  - **Superseded by the 2026-05-23 tap-to-select-word work below.**
+    This implementation originally used native browser `Range` selection for
+    practice peek/save and the session gloss flow; the current implementation
+    uses pointer-driven word spans instead.
   - **Shared DOM-selection primitive.** New
     `apps/web/src/lib/dom/text-selection.ts` exports
     `findMarkedAncestor` + `offsetWithinAncestor` (Range-based
@@ -1436,7 +1440,7 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     replaces `LanguagePicker` (Radix popover) with `LanguageSelectField`
     (the card-with-pencil button that opens a `ResponsiveOverlay`),
     matching the adhoc word wizard's target-language picker. Because
-    the selected language *is* the card's primary line, the component
+    the selected language _is_ the card's primary line, the component
     wraps the field in an explicit `<Label>Native language</Label>` +
     muted-text helper so the user knows what the button controls.
   - **Vocabulary action drawer hides `Open source` when unavailable.**
@@ -1501,6 +1505,138 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     "All caught up" view from both fully-rated and implicit-good
     finalizations.
 
+- **Practice: straggler floor + unified session CTA (2026-05-23).** Two
+  UX fixes from daily testing. Finishing a session used to leave intraday
+  straggler follow-ups (so you'd start session after session to reach "all
+  caught up"), and new terms required a separate session after follow-ups.
+  Don't re-introduce either behavior:
+  - **Next-day floor on passive ratings.**
+    `apps/backend/src/service/practice/fsrs.ts` — `applyRating` clamps a
+    passive term's computed `due` to `now + 24h` (`MIN_PASSIVE_INTERVAL_MS`)
+    for every rating **except `again`**. FSRS's default intraday
+    learning/relearning steps (minutes away) were surfacing as
+    immediately-due follow-ups right after a session ended. `again` is left
+    at its native short interval on purpose: in-session redrill is driven by
+    the stubborn-chunk path (ratings, not `srs_due`), and a missed term that
+    gets abandoned before its retry should stay due soon rather than be
+    pushed a full day out. The active pool is never clamped (intraday
+    drilling is intended there). Covered by
+    `apps/backend/src/service/practice/fsrs.unit.test.ts` (passive
+    good/hard/easy floored; passive `again` and active pool not floored; a
+    two-rating-across-floor sanity check for non-degenerate intervals).
+  - **Unified `Practice` button + granular splits as advanced.**
+    `apps/web/src/features/practice/components/practice-language-view.tsx` —
+    the passive-pool primary action is now a single **Practice** button that
+    starts a `mixed` session (due follow-ups first, then unseen terms up to
+    the remaining daily new-term allowance, in one sitting). The old single
+    `secondaryAction` slot became `secondaryActions: PracticeAction[]`,
+    rendering **Review only** (`review_due`) and **Learn new only**
+    (`learn_new`) side-by-side only when `mixed` actually combines both
+    halves; **Learn more anyway** (`learn_extra`) stays the primary when the
+    daily cap is reached and unseen terms remain. No new backend modes — the
+    `mixed` mode and `getMax*ForMode` mapping in `start-practice-session.ts`
+    already did the work; this was a frontend CTA rework only. New Lingui
+    strings (`Practice`, `Review only`, `Learn new only`) extracted into
+    `packages/i18n/locales/{en,fr}/messages.po`.
+  - **SPEC.** Updated the Practice "Language action screen" paragraph, the
+    `mixed` session-mode description, and the FSRS bullet to reflect the
+    unified CTA and the next-day floor.
+  - **Verification.** `fsrs.unit.test.ts` 9 pass / `src/service/practice`
+    suite 10 pass; `tsc --noEmit` clean from `apps/web`. Manual golden path
+    (unified session drills follow-ups then introduces new terms; finishing
+    leaves nothing immediately due; `again`-then-abandon stays due soon) left
+    to run on the dev-tunnel.
+
+- **Tap-to-select-word in session + practice views (2026-05-23).** Replaced
+  native browser text selection in the session segment list and Practice
+  `AnnotatedText` with a custom pointer-driven word-selection gesture.
+  Don't re-introduce double-click / long-press native selection here.
+  - **Shared word selection primitives.**
+    `apps/web/src/lib/dom/word-segmenter.ts` wraps `Intl.Segmenter` with
+    per-locale segmenter caching plus a small text+locale LRU, returning
+    word-like `[start, end)` ranges in JS string-index coordinates.
+    `apps/web/src/lib/dom/use-word-selection.ts` owns the pointer gesture:
+    single click/tap selects one word, mouse drag extends in any direction,
+    touch horizontal drag extends inline, touch long-press enters drag mode
+    for vertical/multiline selection, and vertical-first touch scrolls. It
+    paints selected runs via `data-word-selected` DOM attributes and clears
+    paint on commit, cancel, unmount, and caller rejection.
+  - **One span contract.** Selectable pieces use
+    `data-word-piece`; actual word pieces also carry `data-word-start` /
+    `data-word-end` and inherit `data-word-owner` from their logical owner
+    (session segment id or practice paragraph id). The hook is view-agnostic;
+    view adapters map owner+offset pairs back to `SelectionResult` or
+    `PlainSelection`.
+  - **Session view.** `session-view.tsx` no longer listens for global
+    `mouseup` / `touchend` or reads `window.getSelection()`.
+    `selection-adapter.ts` normalizes upward/downward and cross-segment
+    drags by walking the visible segment data in document order, so
+    selection text does not accidentally include sibling timestamp nodes.
+    `segment-row.tsx` strips SRT markup as before, tokenizes display text
+    with the target language, and merges word boundaries with existing
+    highlight boundaries via `word-highlight-spans.ts`.
+  - **Practice view.** `annotated-text.tsx` tokenizes only plain regions.
+    Annotation buttons stay blocked from word selection and continue opening
+    `RateSheet`; plain ranges that cross an annotation abort silently and
+    clear paint. The read-only previous-text block disables the hook and
+    skips tokenization.
+  - **Paint without layout shift.** Existing yellow highlights and practice
+    annotations do not use inline horizontal padding; they use paint-only
+    `box-shadow` for the visual cushion so adding a highlight cannot widen
+    the inline box and reflow the paragraph.
+  - **Tests / checks.** Added focused unit coverage for word segmentation,
+    merged word+highlight spans, and cross-segment selection normalization.
+    Verified with the focused Vitest files,
+    `pnpm --filter @flicktionary/web check:types`, and scoped ESLint.
+
+- **Floating sheet: flip-above-word + vaul removed from FloatingSheet (2026-05-24).**
+  All in `apps/web/src/components/ui/floating-sheet.tsx`, covering the session
+  gloss sheet, practice rate/lookup/delete-confirm sheets. Supersedes the
+  vaul-based mechanics in the 2026-05-18 note below — don't re-introduce
+  `DrawerPrimitive`, vaul snap points, or vaul's close animation in this file.
+  - **Flip above the tapped word.** `useMobileFlipStyle` measures the rendered
+    sheet height; when a bottom-anchored sheet would cover the tapped word
+    (`rect.top > viewportHeight - sheetHeight`), it pins the sheet's bottom edge
+    just above the word (`bottom: vh - rect.top + gap`, `max-height` capped to
+    the space above) so the word and the text below stay visible. Re-measures
+    via `ResizeObserver` so a late-loading gloss still flips on the first open
+    of a session. The flip is sticky per open (never un-flips), reset only on
+    the open transition (during render, so a reopen measures an unclamped
+    height), and **persists through the exit** so a flipped sheet fades in
+    place rather than snapping to the edge. Motivated by future paginated
+    reading where the text can't be scrolled.
+  - **Modal sheets moved to Radix Dialog.** The `modal` branch (rate-sheet,
+    chunk-delete-confirm) renders `@radix-ui/react-dialog`
+    (`Root`/`Portal`/`Overlay`/`Content`, `Title`/`Description`) instead of
+    vaul `Drawer.*`. `Dialog.Root` is owned by `FloatingSheetContent` and stays
+    `open` while mounted; mount/unmount is driven by the custom motion hook, so
+    Radix's keyframe-based Presence is not relied on. Non-modal sheets (gloss,
+    lookup) stay plain `createPortal`. Reason: vaul is unmaintained and is only
+    a thin wrapper over `@radix-ui/react-dialog` (already a direct dep).
+  - **Custom slide/drag motion.** `useBottomSheetMotion` drives enter/exit with
+    a CSS *transition* (not a keyframe) on an imperative `transform`/`opacity`,
+    so a drag offset composes instead of being overridden — React's `style`
+    prop only ever owns the flip `bottom`/`max-height`. Enter always slides up.
+    Exit is position-aware: a docked sheet slides down, a flipped sheet (treated
+    as a popover) fades in place (`POPOVER_DURATION_MS`). `useDragToDismiss`
+    adds drag-to-dismiss from the handle on *all* mobile sheets (gloss/lookup
+    gained it); drag starts only on the handle (`touch-none`, `pt-3 pb-4` hit
+    area) so it never competes with content scroll.
+  - **Mounting timing.** Content mounts synchronously during render
+    (`if (isMobile && open && !rendered) setRendered(true)`), not in an effect,
+    so `contentRef` exists before the flip's layout-effect measurement on the
+    same commit. Don't move this into a `useEffect` — that re-introduces the bug
+    where every sheet opened at the bottom (flip measured a null ref).
+  - **Vaul not yet removed from the repo.** `apps/web/src/components/ui/drawer.tsx`
+    (+ `responsive-overlay.tsx`, ~13 consumers) still imports vaul, so `vaul`
+    stays in package.json / catalog until that wrapper is migrated.
+  - **Verification.** `tsc --noEmit` clean from `apps/web`; scoped ESLint clean
+    (only the pre-existing `react-refresh/only-export-components` warning).
+    Manual on-device check of flip / slide / fade / drag-dismiss left to run.
+  - **SPEC.** Updated the session floating-sheet paragraph (flip-above-word) and
+    corrected the stale "drags up to a full-height snap" expand claim (expand is
+    a header chevron on both platforms; mobile adds drag-down-to-dismiss).
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
@@ -1528,7 +1664,7 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
      tests.)
    - **Manual golden-path checklist** — the canonical regression matrix.
      Run through it before any non-trivial release / large refactor:
-     - Tap-to-translate (Settings → toggle on → mid-watch selection → `TapToTranslateSheet` shows the gloss; second tap of the same selection should be instant from cache).
+     - Tap-to-select gloss (mid-source view → single tap/click a plain word → floating gloss sheet opens; press-and-drag across multiple words / lines selects a contiguous range; tapping an existing yellow highlight reopens the existing-highlight sheet; second tap of the same selection should be instant from cache).
      - Re-process flow (process a session, return to subtitles via `← Subtitles` or by clicking the session card again, add more highlights, click `Process new highlights`, confirm only the new highlights produced cards and the difficult-words section did not duplicate); CSV export still includes the freshly-processed cards.
      - **Process with zero highlights** — first-pass should be allowed and surface LLM-suggested chunks only.
      - **Spanish session at C1** — pick a film with strong regional flavor (e.g. _El secreto de sus ojos_ for rioplatense). Confirm the difficult-words pass biases toward voseo / lunfardo / regional collocations, that headwords are in dictionary form (`fundirse con`, not `se fundía con`), and that B-level filler (`nunca más`, `según su costumbre`) is excluded.

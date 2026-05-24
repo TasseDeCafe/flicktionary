@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, ChevronLeft, CircleCheck, Clock, MoreVertical, Plus, RotateCcw, Star, XCircle } from 'lucide-react'
+import { Brain, ChevronLeft, CircleCheck, Clock, Plus, RotateCcw, Star, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { OverlayActionRow } from '@/components/ui/overlay-action-row'
 import {
   OverlayContent,
   OverlayDescription,
@@ -34,7 +33,6 @@ export const PracticeLanguageView = () => {
   const { data: prefs } = useGetUserPrefs()
   const { mutate: abandonSession, isPending: isEnding } = useAbandonPracticeSession()
   const [confirmEndOpen, setConfirmEndOpen] = useState(false)
-  const [sessionOptionsOpen, setSessionOptionsOpen] = useState(false)
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
@@ -62,29 +60,36 @@ export const PracticeLanguageView = () => {
     return t`Follow-up later`
   }
 
+  const hasReviewWork = dueTermCount > 0 && maxReviewTerms > 0
+
+  // Primary action is a single unified session: 'mixed' drills due follow-ups
+  // first and then introduces the day's new terms in one sitting, so finishing
+  // doesn't leave new terms waiting behind a second session.
   const primaryAction: PracticeAction | null = (() => {
     if (!entry) return null
     if (passiveSessionId) return { label: t`Continue session`, mode: 'review_due', icon: 'review' }
-    if (dueTermCount > 0 && maxReviewTerms > 0) {
-      return { label: t`Review follow-ups`, mode: 'review_due', icon: 'review' }
+    if (hasReviewWork || dailyNewAvailable > 0) {
+      return { label: t`Practice`, mode: 'mixed', icon: 'review' }
     }
-    if (dailyNewAvailable > 0) return { label: t`Learn new terms`, mode: 'learn_new', icon: 'new' }
     if (entry.newCount > 0 && maxNewTerms > 0) {
       return { label: t`Learn more anyway`, mode: 'learn_extra', icon: 'new' }
     }
     return null
   })()
 
-  const secondaryAction: PracticeAction | null = (() => {
-    if (!entry) return null
-    if (passiveSessionId) return null
-    if (dueTermCount > 0 && dailyNewAvailable > 0) {
-      return { label: t`Learn new terms`, mode: 'learn_new', icon: 'new' }
+  // Granular splits offered as advanced options alongside the unified session.
+  const secondaryActions: PracticeAction[] = (() => {
+    if (!entry || passiveSessionId) return []
+    // When the primary is the unified 'mixed' session, expose the individual
+    // halves for users who want to review or learn in isolation.
+    if (hasReviewWork || dailyNewAvailable > 0) {
+      const actions: PracticeAction[] = []
+      if (hasReviewWork) actions.push({ label: t`Review only`, mode: 'review_due', icon: 'review' })
+      if (dailyNewAvailable > 0) actions.push({ label: t`Learn new only`, mode: 'learn_new', icon: 'new' })
+      // Only meaningful when 'mixed' actually combines both halves.
+      return actions.length > 1 ? actions : []
     }
-    if (dueTermCount > 0 && entry.newCount > 0 && maxNewTerms > 0) {
-      return { label: t`Learn more anyway`, mode: 'learn_extra', icon: 'new' }
-    }
-    return null
+    return []
   })()
 
   const statusLine = (() => {
@@ -152,17 +157,6 @@ export const PracticeLanguageView = () => {
               <ChevronLeft className='h-5 w-5' />
             </Button>
             <h1 className='min-w-0 flex-1 truncate text-2xl font-bold'>{languageName}</h1>
-            {passiveSessionId && (
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                onClick={() => setSessionOptionsOpen(true)}
-                aria-label={t`Session options`}
-              >
-                <MoreVertical className='h-5 w-5' />
-              </Button>
-            )}
           </header>
 
           {isLoading && <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>}
@@ -216,22 +210,20 @@ export const PracticeLanguageView = () => {
                     )}
                     {primaryAction?.label ?? t`All caught up`}
                   </Button>
-                  {!passiveSessionId && secondaryAction && (
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='lg'
-                      disabled={isEnding}
-                      onClick={() => handleStart(secondaryAction.mode)}
-                    >
-                      {secondaryAction.icon === 'review' ? (
-                        <RotateCcw className='h-4 w-4' />
-                      ) : (
-                        <Plus className='h-4 w-4' />
-                      )}
-                      {secondaryAction.label}
-                    </Button>
-                  )}
+                  {!passiveSessionId &&
+                    secondaryActions.map((action) => (
+                      <Button
+                        key={action.mode}
+                        type='button'
+                        variant='outline'
+                        size='lg'
+                        disabled={isEnding}
+                        onClick={() => handleStart(action.mode)}
+                      >
+                        {action.icon === 'review' ? <RotateCcw className='h-4 w-4' /> : <Plus className='h-4 w-4' />}
+                        {action.label}
+                      </Button>
+                    ))}
                   {passiveSessionId && (
                     <Button
                       type='button'
@@ -312,27 +304,6 @@ export const PracticeLanguageView = () => {
           )}
         </div>
       </div>
-
-      <ResponsiveOverlay open={sessionOptionsOpen} onOpenChange={setSessionOptionsOpen}>
-        <OverlayContent>
-          <OverlayHeader>
-            <OverlayTitle>{t`Session options`}</OverlayTitle>
-            <OverlayDescription className='sr-only'>{t`Actions for the current practice session.`}</OverlayDescription>
-          </OverlayHeader>
-          <div className='flex flex-col gap-1 px-2 pb-2'>
-            <OverlayActionRow
-              icon={XCircle}
-              label={t`End session`}
-              description={t`Rated terms keep their ratings; unrated terms stay available later`}
-              variant='destructive'
-              onClick={() => {
-                setSessionOptionsOpen(false)
-                setConfirmEndOpen(true)
-              }}
-            />
-          </div>
-        </OverlayContent>
-      </ResponsiveOverlay>
 
       <ResponsiveOverlay open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
         <OverlayContent>
