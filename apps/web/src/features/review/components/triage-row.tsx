@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Check, ChevronDown, Star, X } from 'lucide-react'
+import { Check, ChevronDown, Loader2, RotateCw, Star, X } from 'lucide-react'
 import type {
   Card,
   CardStatus,
@@ -13,6 +13,43 @@ import type {
 const getBackPreview = (card: Card, hideTranslationFields: boolean): string => {
   if (hideTranslationFields) return card.chunk.definition || ''
   return card.chunk.translation || card.chunk.definition || ''
+}
+
+type EnrichingRowProps = {
+  surfaceForm: string
+  status: 'enriching' | 'failed' | 'missing'
+  isRetrying: boolean
+  onRetry: () => void
+}
+
+// Placeholder row for a highlight whose card hasn't been materialized yet:
+// either still being enriched in the background, or failed (with a retry).
+export const TriageEnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }: EnrichingRowProps) => {
+  const { t } = useLingui()
+  const canRetry = status === 'failed' || status === 'missing'
+  return (
+    <div className='flex items-center gap-3 border-b py-3'>
+      <div className='flex-1'>
+        <span className='text-base font-medium'>{surfaceForm}</span>
+        {status === 'failed' ? (
+          <p className='mt-1 text-sm text-red-600'>{t`Enrichment failed`}</p>
+        ) : status === 'missing' ? (
+          <p className='text-muted-foreground mt-1 text-sm'>{t`Enrichment has not started yet.`}</p>
+        ) : (
+          <div className='text-muted-foreground mt-1 flex items-center gap-1.5 text-sm'>
+            <Loader2 className='h-3 w-3 animate-spin' />
+            {t`Enriching…`}
+          </div>
+        )}
+      </div>
+      {canRetry && (
+        <Button size='sm' variant='outline' onClick={onRetry} disabled={isRetrying}>
+          <RotateCw className='mr-1 h-3 w-3' />
+          {status === 'missing' ? t`Start` : t`Retry`}
+        </Button>
+      )}
+    </div>
+  )
 }
 
 type Props = {

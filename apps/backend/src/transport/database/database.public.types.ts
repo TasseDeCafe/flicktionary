@@ -437,6 +437,69 @@ export type Database = {
           },
         ]
       }
+      processing_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          highlight_id: string | null
+          id: string
+          kind: Database['public']['Enums']['processing_job_kind']
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          run_after: string
+          status: Database['public']['Enums']['processing_job_status']
+          study_session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          highlight_id?: string | null
+          id?: string
+          kind: Database['public']['Enums']['processing_job_kind']
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          run_after?: string
+          status?: Database['public']['Enums']['processing_job_status']
+          study_session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          highlight_id?: string | null
+          id?: string
+          kind?: Database['public']['Enums']['processing_job_kind']
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          run_after?: string
+          status?: Database['public']['Enums']['processing_job_status']
+          study_session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'processing_jobs_highlight_id_fkey'
+            columns: ['highlight_id']
+            isOneToOne: false
+            referencedRelation: 'highlights'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'processing_jobs_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       processing_telemetry: {
         Row: {
           created_at: string
@@ -1038,6 +1101,8 @@ export type Database = {
       practice_rating: 'again' | 'hard' | 'good' | 'easy'
       practice_session_status: 'active' | 'completed' | 'abandoned'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
+      processing_job_kind: 'enrich_highlight' | 'discover_session'
+      processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
         | 'will_not_renew'
@@ -1325,6 +1390,8 @@ export const Constants = {
       practice_rating: ['again', 'hard', 'good', 'easy'],
       practice_session_status: ['active', 'completed', 'abandoned'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
+      processing_job_kind: ['enrich_highlight', 'discover_session'],
+      processing_job_status: ['pending', 'processing', 'done', 'failed'],
       revenuecat_auto_renewal_status: [
         'will_renew',
         'will_not_renew',

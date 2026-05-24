@@ -65,12 +65,9 @@ export const SessionView = () => {
   // target right after we set the pending selection.
   const lastSelectionAtRef = useRef(0)
 
-  useEffect(() => {
-    const status = session?.status
-    if (status === 'processing' || status === 'failed') {
-      void navigate({ to: '/sessions/$sessionId/processing', params: { sessionId }, replace: true })
-    }
-  }, [session?.status, sessionId, navigate])
+  // Background per-highlight enrichment keeps the session `active` throughout —
+  // there is no synchronous Process step to redirect to a /processing screen,
+  // and triage is reachable while active. (Discovery runs as a background job.)
 
   useEffect(() => {
     if (!targetSegmentId) return
@@ -112,8 +109,6 @@ export const SessionView = () => {
       setGlossOpen(true)
     },
   })
-
-  const isProcessedOrExported = session?.status === 'processed' || session?.status === 'exported'
 
   const handleSegmentListClick = (e: React.MouseEvent) => {
     // Suppress the click that closes a freshly-completed selection.
@@ -181,14 +176,12 @@ export const SessionView = () => {
       onClose={closeToSessions}
       title={titleNode}
       rightSlot={
-        isProcessedOrExported && (
-          <Button variant='outline' size='sm' asChild>
-            <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
-              <ListChecks className='mr-1 h-4 w-4' />
-              {t`Triage`}
-            </Link>
-          </Button>
-        )
+        <Button variant='outline' size='sm' asChild>
+          <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
+            <ListChecks className='mr-1 h-4 w-4' />
+            {t`Triage`}
+          </Link>
+        </Button>
       }
     >
       <div className='border-b bg-white px-4 py-3'>
@@ -224,7 +217,7 @@ export const SessionView = () => {
         unprocessedHighlightCount={unprocessedHighlightCount}
         cardCount={cards?.length ?? 0}
         onProcessed={() => {
-          void navigate({ to: '/sessions/$sessionId/processing', params: { sessionId } })
+          void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
         }}
         onGoToTriage={() => {
           void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })

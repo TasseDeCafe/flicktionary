@@ -66,9 +66,53 @@ const updateNoteAndTags = async (
   return result[0] ?? null
 }
 
-const deleteById = async (id: string): Promise<boolean> => {
-  const result = await sql`DELETE FROM public.highlights WHERE id = ${id}`
-  return result.count === 1
+// Delete a highlight together with its card, in one transaction. cards.highlight_id
+// is ON DELETE SET NULL, so a bare highlight delete would orphan its card as a
+// highlight_id=NULL row that then masquerades as an LLM suggestion — we must drop
+// the card first. If the card had been kept, apply the same count decrement as a
+// kept→non-kept transition before deleting it.
+const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
+  return await sql.begin(async (tx) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    await (tx as any)`
+      UPDATE public.user_lookups ul
+      SET
+        count = GREATEST(ul.count - 1, 0),
+        first_card_id = CASE
+          WHEN ul.first_card_id = c.id THEN (
+            SELECT c2.id
+            FROM public.cards c2
+            WHERE c2.user_lookup_id = ul.id AND c2.id <> c.id
+            ORDER BY (c2.status = 'kept') DESC, c2.created_at ASC
+            LIMIT 1
+          )
+          ELSE ul.first_card_id
+        END
+      FROM public.cards c
+      WHERE c.highlight_id = ${id}
+        AND c.status = 'kept'
+        AND ul.id = c.user_lookup_id
+    `
+    await (tx as any)`
+      UPDATE public.user_lookups ul
+      SET first_card_id = (
+        SELECT c2.id
+        FROM public.cards c2
+        WHERE c2.user_lookup_id = ul.id AND c2.id <> c.id
+        ORDER BY (c2.status = 'kept') DESC, c2.created_at ASC
+        LIMIT 1
+      )
+      FROM public.cards c
+      WHERE c.highlight_id = ${id}
+        AND c.status <> 'kept'
+        AND ul.id = c.user_lookup_id
+        AND ul.first_card_id = c.id
+    `
+    await (tx as any)`DELETE FROM public.cards WHERE highlight_id = ${id}`
+    const result = await (tx as any)`DELETE FROM public.highlights WHERE id = ${id}`
+    /* eslint-enable @typescript-eslint/no-explicit-any */
+    return result.count === 1
+  })
 }
 
 export interface HighlightsRepositoryInterface {
@@ -86,7 +130,7 @@ export interface HighlightsRepositoryInterface {
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<void>
   updateNoteAndTags: (id: string, note: string | null, presetTags: string[]) => Promise<DbHighlight | null>
-  deleteById: (id: string) => Promise<boolean>
+  deleteWithCardCleanup: (id: string) => Promise<boolean>
 }
 
 export const HighlightsRepository = (): HighlightsRepositoryInterface => {
@@ -96,6 +140,6 @@ export const HighlightsRepository = (): HighlightsRepositoryInterface => {
     findById,
     updateFastGloss,
     updateNoteAndTags,
-    deleteById,
+    deleteWithCardCleanup,
   }
 }

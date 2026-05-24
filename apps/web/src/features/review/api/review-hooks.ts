@@ -23,12 +23,16 @@ import {
   type CardListSnapshot,
 } from './card-cache'
 
-export const useListCardsBySession = (sessionId: string, options?: { enabled?: boolean }) => {
+export const useListCardsBySession = (
+  sessionId: string,
+  options?: { enabled?: boolean; refetchInterval?: number | false }
+) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.cards.listBySession.queryOptions({
       input: { sessionId },
       enabled: options?.enabled ?? true,
+      ...(options?.refetchInterval !== undefined ? { refetchInterval: options.refetchInterval } : {}),
       select: (response) => response.data,
       meta: { errorMessage: t`Failed to load cards` },
     })

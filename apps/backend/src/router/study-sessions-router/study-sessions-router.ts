@@ -10,7 +10,8 @@ import {
 } from '../../transport/database/study-sessions/study-sessions-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { processSession, ProcessingDependencies } from '../../service/processing/process-session'
+import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 
@@ -47,7 +48,8 @@ export const StudySessionsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,
   usersRepository: UsersRepositoryInterface,
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
-  processingDependencies: ProcessingDependencies
+  processingJobsRepository: ProcessingJobsRepositoryInterface,
+  highlightsRepository: HighlightsRepositoryInterface
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -118,25 +120,72 @@ export const StudySessionsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
-      // `processed`/`exported`/`failed` re-enter the orchestrator: it is idempotent
-      // and only does the per-highlight pass for highlights that don't already
-      // have a card. `processing` would race the in-flight run, so reject it.
-      if (session.status === 'processing') {
-        throw errors.CONFLICT({
-          data: { errors: [{ message: 'Session is already processing' }] },
+      // Highlights are enriched in the background as they're committed; the
+      // Process button now only kicks off whole-text LLM discovery (and triage
+      // navigation is client-side). Discovery enqueue is idempotent per live
+      // job and gated on the user's LLM-suggestions pref — a no-op when off.
+      // We deliberately do NOT mutate study_sessions.status: enrichment and
+      // discovery state live in processing_jobs, not on the session.
+      const llmHighlightsEnabled = await usersRepository.getLlmHighlightsEnabled(userId)
+      if (llmHighlightsEnabled) {
+        await processingJobsRepository.enqueue({
+          kind: 'discover_session',
+          sessionId: input.sessionId,
+          userId,
         })
       }
-      const flipped = await studySessionsRepository.updateStatus(input.sessionId, userId, 'processing')
-      if (!flipped) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to start processing' }] },
+      return { data: { accepted: true as const } }
+    }),
+
+    getProcessingStatus: implementer.getProcessingStatus.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
         })
       }
-      // Fire-and-forget: the pipeline is in-process and the route returns 202
-      // immediately. The frontend polls getStatus to follow progress.
-      void processSession(input.sessionId, userId, processingDependencies).catch((error) => {
-        logWithSentry({ message: 'processSession crashed', params: { sessionId: input.sessionId, userId }, error })
+      const jobs = await processingJobsRepository.listActiveBySession(input.sessionId)
+      const enrichingHighlightIds: string[] = []
+      const failedHighlightIds: string[] = []
+      let discovering = false
+      for (const job of jobs) {
+        if (job.kind === 'enrich_highlight' && job.highlight_id) {
+          if (job.status === 'failed') failedHighlightIds.push(job.highlight_id)
+          else enrichingHighlightIds.push(job.highlight_id)
+        } else if (job.kind === 'discover_session' && (job.status === 'pending' || job.status === 'processing')) {
+          discovering = true
+        }
+      }
+      return { data: { enrichingHighlightIds, failedHighlightIds, discovering } }
+    }),
+
+    retryEnrichment: implementer.retryEnrichment.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      const highlight = await highlightsRepository.findById(input.highlightId)
+      if (!highlight || highlight.study_session_id !== input.sessionId) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Highlight not found' }] },
+        })
+      }
+      const requeued = await processingJobsRepository.requeueFailedByHighlightId({
+        sessionId: input.sessionId,
+        highlightId: input.highlightId,
       })
+      if (!requeued) {
+        await processingJobsRepository.enqueue({
+          kind: 'enrich_highlight',
+          sessionId: input.sessionId,
+          highlightId: input.highlightId,
+          userId,
+        })
+      }
       return { data: { accepted: true as const } }
     }),
 

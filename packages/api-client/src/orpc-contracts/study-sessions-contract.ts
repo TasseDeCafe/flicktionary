@@ -62,6 +62,35 @@ export const studySessionsContract = {
       })
     ),
 
+  // Triage loaders: which highlights still have an enrich job in flight, which
+  // failed (retry affordance), and whether a discovery job is still running.
+  getProcessingStatus: oc
+    .route({ method: 'GET', path: '/study-sessions/{sessionId}/processing-status', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid() }))
+    .output(
+      z.object({
+        data: z.object({
+          enrichingHighlightIds: z.array(z.string().uuid()),
+          failedHighlightIds: z.array(z.string().uuid()),
+          discovering: z.boolean(),
+        }),
+      })
+    ),
+
+  // Re-enqueue a failed per-highlight enrichment job.
+  retryEnrichment: oc
+    .route({ method: 'POST', path: '/study-sessions/{sessionId}/retry-enrichment', successStatus: 202 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), highlightId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ accepted: z.literal(true) }) })),
+
   // Counts for the Remove confirmation dialog.
   getDeletePreview: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/delete-preview', successStatus: 200 })

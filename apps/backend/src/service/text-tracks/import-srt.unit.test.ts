@@ -33,6 +33,7 @@ describe('importSrt', () => {
     const textSegmentsRepository: TextSegmentsRepositoryInterface = {
       bulkInsertSegments: vi.fn(),
       listByTrackId: vi.fn(),
+      listFirstByTrackId: vi.fn(),
       searchInTrack: vi.fn(),
       findById: vi.fn(),
       listAroundIndex: vi.fn(),

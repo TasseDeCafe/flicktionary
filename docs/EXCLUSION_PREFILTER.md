@@ -27,7 +27,9 @@ correctness gate for near-duplicate LLM suggestions that make it through.
 Manual user highlights bypass both gates. If the user manually selects a
 known chunk again, the app still creates a kept card for that highlight and
 increments the lookup count. The dedup logic only applies to LLM-discovered
-chunks.
+chunks — and now lives entirely inside the `discover_session` background job
+(`discover-session.ts`), which is the only path that runs whole-text LLM
+discovery. Per-highlight background enrichment never touches either gate.
 
 ## Stage 1 — source-relevant exclusion pre-filter
 
@@ -124,7 +126,7 @@ The pre-filter is _heuristic guidance_, not a correctness gate.
 
 Implementation:
 
-- `apps/backend/src/service/processing/process-session.ts`
+- `apps/backend/src/service/processing/discover-session.ts`
   (`applySenseDisambiguationTiebreaker`)
 - `apps/backend/src/transport/database/user-lookups/user-lookups-repository.ts`
   (`findPotentialExistingSensesByHeadwords`)

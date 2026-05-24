@@ -49,6 +49,9 @@ type BasicDataPassArgs = {
   llmDiscoveryEnabled: boolean
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
+  // Which model runs the pass. Defaults to Opus for the (whole-text) discovery
+  // path; the per-highlight enrichment path passes MODEL_ENRICHMENT (Sonnet).
+  model?: string
 }
 
 export type BasicDataChunk = {
@@ -220,6 +223,7 @@ export const basicDataPass = async ({
   llmDiscoveryEnabled,
   hideTranslationFields = false,
   allowL1Notes,
+  model = MODEL_OPUS,
 }: BasicDataPassArgs): Promise<BasicDataChunk[]> => {
   const sameLanguage = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const shouldHideTranslationFields = hideTranslationFields || sameLanguage
@@ -320,7 +324,7 @@ ${segmentLines}`
   // streaming for any request whose worst-case duration exceeds 10 minutes —
   // at 32k tokens that's mandatory, so we use messages.stream(...).finalMessage().
   const stream = getAnthropicClient().messages.stream({
-    model: MODEL_OPUS,
+    model,
     max_tokens: 32000,
     system: buildMethodologySystem({
       nativeLanguage,
