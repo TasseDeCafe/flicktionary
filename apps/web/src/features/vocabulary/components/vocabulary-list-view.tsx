@@ -11,7 +11,7 @@ import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
-import { Input } from '@/components/ui/input'
+import { SearchInput } from '@/components/ui/search-input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
@@ -279,10 +279,9 @@ export const VocabularyListView = () => {
         />
       )}
 
-      <Input
-        type='search'
+      <SearchInput
         value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
+        onChange={setSearchInput}
         placeholder={t`Search headword, translation, or definition…`}
         className='w-full'
       />

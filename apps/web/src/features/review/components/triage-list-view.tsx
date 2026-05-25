@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { SearchInput } from '@/components/ui/search-input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import {
@@ -176,7 +176,7 @@ export const TriageListView = () => {
     >
       <div className='border-b bg-white px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
-          <Input type='search' value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t`Search…`} />
+          <SearchInput value={search} onChange={setSearch} placeholder={t`Search…`} />
         </div>
       </div>
 

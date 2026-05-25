@@ -799,6 +799,10 @@ msgstr "Choose your plan"
 #~ msgid "Choose Your Plan"
 #~ msgstr "Choose Your Plan"
 
+#: apps/web/src/components/ui/search-input.tsx:30
+msgid "Clear search"
+msgstr "Clear search"
+
 #: apps/web/src/features/review/components/focus-view.tsx:288
 msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
@@ -1129,7 +1133,7 @@ msgstr "Email Verification Sent"
 msgid "End active drill"
 msgstr "End active drill"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:336
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:335
 msgid "End of list"
 msgstr "End of list"
 
@@ -1911,15 +1915,15 @@ msgstr "Loading cards…"
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:336
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:335
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:248
+#: apps/web/src/features/sessions/components/session-view.tsx:252
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:201
+#: apps/web/src/features/sessions/components/session-view.tsx:205
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -1940,7 +1944,7 @@ msgstr "Loading..."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:162
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:49
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:313
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:312
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -2118,7 +2122,7 @@ msgid "No languages found."
 msgstr "No languages found."
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:71
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:299
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:298
 msgid "No matches."
 msgstr "No matches."
 
@@ -2150,7 +2154,7 @@ msgstr "No target languages yet. Preferences are set the first time you start a 
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:299
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:298
 msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
@@ -2725,7 +2729,7 @@ msgstr "Search a movie title…"
 msgid "Search failed"
 msgstr "Search failed"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:286
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:285
 msgid "Search headword, translation, or definition…"
 msgstr "Search headword, translation, or definition…"
 
@@ -2739,7 +2743,7 @@ msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:179
-#: apps/web/src/features/sessions/components/track-search-bar.tsx:16
+#: apps/web/src/features/sessions/components/track-search-bar.tsx:11
 msgid "Search…"
 msgstr "Search…"
 
@@ -2781,8 +2785,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:200
-#: apps/web/src/features/sessions/components/session-view.tsx:207
+#: apps/web/src/features/sessions/components/session-view.tsx:204
+#: apps/web/src/features/sessions/components/session-view.tsx:211
 msgid "Session"
 msgstr "Session"
 
@@ -2791,7 +2795,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:208
+#: apps/web/src/features/sessions/components/session-view.tsx:212
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -3253,7 +3257,7 @@ msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:213
+#: apps/web/src/features/sessions/components/session-view.tsx:217
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"
