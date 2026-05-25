@@ -60,6 +60,11 @@ export const highlightsContract = {
         highlightId: z.string().uuid(),
         note: z.string().nullable(),
         presetTags: z.array(z.string()).default([]),
+        // The localized, frontend-composed question seeded into the card chat
+        // (selected presets rendered in the UI locale + the verbatim note). Null
+        // when there is nothing to ask. The backend stores it verbatim and the
+        // seed_card_chat worker uses it as the chat turn.
+        chatSeedPrompt: z.string().nullable().optional(),
       })
     )
     .output(z.object({ data: HighlightSchema })),

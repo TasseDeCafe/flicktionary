@@ -4,6 +4,7 @@ import { TextSegmentsRepository } from '../../transport/database/text-segments/t
 import { StudySessionsRepository } from '../../transport/database/study-sessions/study-sessions-repository'
 import { HighlightsRepository } from '../../transport/database/highlights/highlights-repository'
 import { CardsRepository } from '../../transport/database/cards/cards-repository'
+import { CardChatMessagesRepository } from '../../transport/database/card-chat-messages/card-chat-messages-repository'
 import { UserLookupsRepository } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepository } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
@@ -17,6 +18,7 @@ import type { TextSegmentsRepositoryInterface } from '../../transport/database/t
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import type { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
+import type { CardChatMessagesRepositoryInterface } from '../../transport/database/card-chat-messages/card-chat-messages-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
@@ -32,6 +34,7 @@ export type ProcessingDependencies = {
   studySessionsRepository: StudySessionsRepositoryInterface
   highlightsRepository: HighlightsRepositoryInterface
   cardsRepository: CardsRepositoryInterface
+  cardChatMessagesRepository: CardChatMessagesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
@@ -51,6 +54,7 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   studySessionsRepository: StudySessionsRepository(),
   highlightsRepository: HighlightsRepository(),
   cardsRepository: CardsRepository(),
+  cardChatMessagesRepository: CardChatMessagesRepository(),
   userLookupsRepository: UserLookupsRepository(),
   usersRepository: UsersRepository(),
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),

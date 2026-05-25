@@ -96,8 +96,6 @@ export const enrichHighlight = async (
     highlightId: highlight.id,
     segmentId: highlight.start_segment_id,
     selectionText: highlight.selection_text,
-    note: highlight.note,
-    presetTags: highlight.preset_tags,
   }
 
   const chunks = await basicDataPass({

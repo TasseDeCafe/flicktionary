@@ -115,8 +115,6 @@ export const createAdhocCard = async (params: {
     highlightId: highlight.id,
     segmentId: segment.id,
     selectionText: headword,
-    note: null,
-    presetTags: [],
   }
 
   let chunks

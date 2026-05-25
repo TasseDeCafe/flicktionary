@@ -35,6 +35,8 @@ export type Database = {
           created_at: string
           id: string
           role: Database['public']['Enums']['card_chat_role']
+          source: string | null
+          source_turn_key: string | null
         }
         Insert: {
           card_id: string
@@ -42,6 +44,8 @@ export type Database = {
           created_at?: string
           id?: string
           role: Database['public']['Enums']['card_chat_role']
+          source?: string | null
+          source_turn_key?: string | null
         }
         Update: {
           card_id?: string
@@ -49,6 +53,8 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database['public']['Enums']['card_chat_role']
+          source?: string | null
+          source_turn_key?: string | null
         }
         Relationships: [
           {
@@ -241,6 +247,7 @@ export type Database = {
       }
       highlights: {
         Row: {
+          chat_seed_prompt: string | null
           created_at: string
           end_offset: number
           end_segment_id: string
@@ -254,6 +261,7 @@ export type Database = {
           study_session_id: string
         }
         Insert: {
+          chat_seed_prompt?: string | null
           created_at?: string
           end_offset: number
           end_segment_id: string
@@ -267,6 +275,7 @@ export type Database = {
           study_session_id: string
         }
         Update: {
+          chat_seed_prompt?: string | null
           created_at?: string
           end_offset?: number
           end_segment_id?: string
@@ -1193,7 +1202,7 @@ export type Database = {
       practice_rating: 'again' | 'hard' | 'good' | 'easy'
       practice_session_status: 'active' | 'completed' | 'abandoned'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
-      processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window'
+      processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
@@ -1482,7 +1491,7 @@ export const Constants = {
       practice_rating: ['again', 'hard', 'good', 'easy'],
       practice_session_status: ['active', 'completed', 'abandoned'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
-      processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window'],
+      processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window', 'seed_card_chat'],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],
       revenuecat_auto_renewal_status: [
         'will_renew',

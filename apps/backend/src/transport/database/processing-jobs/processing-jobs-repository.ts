@@ -13,9 +13,20 @@ export type EnqueueJobInput = {
   runAfter?: Date | null
 }
 
+export type EnqueueSeedCardChatInput = {
+  sessionId: string
+  userId: string
+  highlightId: string
+  // Absolute time the job becomes claimable. Defaults to now() — saving a note
+  // passes a short delay so the card's enrichment likely finished first.
+  runAfter?: Date | null
+}
+
 // Idempotent per LIVE (pending/processing) highlight enrichment job. Returns the
 // inserted row, or null when an in-flight job already covered this highlight and
-// DO NOTHING fired.
+// DO NOTHING fired. The ON CONFLICT predicate mirrors uq_processing_jobs_live_enrich,
+// which is kind-scoped to enrich_highlight (seed_card_chat jobs reuse highlight_id
+// and have their own index, so the arbiter must name the kind too).
 const enqueue = async (params: EnqueueJobInput): Promise<DbProcessingJob | null> => {
   const runAfter = params.runAfter ?? null
   const result = (await sql`
@@ -27,8 +38,35 @@ const enqueue = async (params: EnqueueJobInput): Promise<DbProcessingJob | null>
       ${params.userId},
       ${runAfter ?? sql`now()`}
     )
-    ON CONFLICT (highlight_id) WHERE highlight_id IS NOT NULL AND status IN ('pending', 'processing')
+    ON CONFLICT (highlight_id) WHERE kind = 'enrich_highlight' AND highlight_id IS NOT NULL AND status IN ('pending', 'processing')
     DO NOTHING
+    RETURNING *
+  `) as DbProcessingJob[]
+  return result[0] ?? null
+}
+
+// Enqueue (or coalesce) a seed_card_chat job for a highlight after its note/presets
+// were saved. The unique index uq_processing_jobs_live_seed_card_chat scopes
+// uniqueness to PENDING seed jobs only, so:
+//   - rapid Saves before the worker starts collapse onto one pending job (we just
+//     bump its run_after and clear any stale error); when it runs it reads the
+//     latest highlights.note / preset_tags.
+//   - a Save that lands while an earlier seed is already 'processing' (or after it
+//     finished) is NOT blocked — it inserts a fresh pending job, i.e. a follow-up
+//     chat turn, instead of silently disappearing.
+const enqueueSeedCardChat = async (params: EnqueueSeedCardChatInput): Promise<DbProcessingJob | null> => {
+  const runAfter = params.runAfter ?? null
+  const result = (await sql`
+    INSERT INTO public.processing_jobs (kind, study_session_id, highlight_id, user_id, run_after)
+    VALUES (
+      'seed_card_chat',
+      ${params.sessionId},
+      ${params.highlightId},
+      ${params.userId},
+      ${runAfter ?? sql`now()`}
+    )
+    ON CONFLICT (highlight_id) WHERE kind = 'seed_card_chat' AND highlight_id IS NOT NULL AND status = 'pending'
+    DO UPDATE SET attempts = 0, run_after = EXCLUDED.run_after, last_error = NULL, updated_at = now()
     RETURNING *
   `) as DbProcessingJob[]
   return result[0] ?? null
@@ -106,7 +144,9 @@ const markFailedOrRetry = async (params: {
 }
 
 // Retry affordance: flip a failed enrich job for this highlight back to pending
-// with a clean slate so the worker picks it up again.
+// with a clean slate so the worker picks it up again. Kind-scoped to
+// enrich_highlight so a failed seed_card_chat job (which shares highlight_id) is
+// never accidentally requeued by the enrichment retry button in triage.
 const requeueFailedByHighlightId = async (params: {
   sessionId: string
   highlightId: string
@@ -117,6 +157,7 @@ const requeueFailedByHighlightId = async (params: {
         locked_at = NULL, locked_by = NULL, updated_at = now()
     WHERE study_session_id = ${params.sessionId}
       AND highlight_id = ${params.highlightId}
+      AND kind = 'enrich_highlight'
       AND status = 'failed'
     RETURNING *
   `) as DbProcessingJob[]
@@ -135,6 +176,7 @@ const listActiveBySession = async (sessionId: string): Promise<DbProcessingJob[]
 
 export interface ProcessingJobsRepositoryInterface {
   enqueue: (params: EnqueueJobInput) => Promise<DbProcessingJob | null>
+  enqueueSeedCardChat: (params: EnqueueSeedCardChatInput) => Promise<DbProcessingJob | null>
   claimBatch: (limit: number, workerId: string, staleAfterSeconds: number) => Promise<DbProcessingJob[]>
   refreshLease: (id: string, workerId: string) => Promise<boolean>
   markDone: (id: string, workerId: string) => Promise<boolean>
@@ -152,6 +194,7 @@ export interface ProcessingJobsRepositoryInterface {
 export const ProcessingJobsRepository = (): ProcessingJobsRepositoryInterface => {
   return {
     enqueue,
+    enqueueSeedCardChat,
     claimBatch,
     refreshLease,
     markDone,

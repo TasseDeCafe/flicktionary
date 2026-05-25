@@ -303,7 +303,7 @@ export const FocusView = () => {
 
           <section>
             <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Chat`}</h2>
-            <PerCardChat key={card.id} cardId={card.id} sessionId={sourceSessionId} />
+            <PerCardChat key={card.id} cardId={card.id} sessionId={sourceSessionId} highlightId={card.highlightId} />
           </section>
         </div>
       </div>

@@ -123,11 +123,41 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight not found' }] },
         })
       }
-      const updated = await highlightsRepository.updateNoteAndTags(input.highlightId, input.note, input.presetTags)
+      const chatSeedPrompt = (input.chatSeedPrompt ?? '').trim() || null
+      const updated = await highlightsRepository.updateNoteAndTags(
+        input.highlightId,
+        input.note,
+        input.presetTags,
+        chatSeedPrompt
+      )
       if (!updated) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Highlight not found' }] },
         })
+      }
+      // A saved note/preset is answered in the card's chat, not baked into the
+      // card fields. The frontend composed the localized question into
+      // chatSeedPrompt; enqueue a seed_card_chat job to turn it into a chat turn +
+      // reply. This path covers both a fresh highlight (whose enrich job is still
+      // in flight) and reopening an old one (whose enrichment already ran and
+      // won't re-fire). Debounced like enrich so the card is likely materialized
+      // first; the worker retries if not. Best-effort — a failed enqueue must not
+      // fail the save.
+      if (chatSeedPrompt) {
+        try {
+          await processingJobsRepository.enqueueSeedCardChat({
+            sessionId: input.sessionId,
+            highlightId: input.highlightId,
+            userId,
+            runAfter: new Date(Date.now() + ENRICH_DEBOUNCE_MS),
+          })
+        } catch (error) {
+          logWithSentry({
+            message: 'enqueue seed_card_chat failed',
+            params: { sessionId: input.sessionId, highlightId: input.highlightId },
+            error,
+          })
+        }
       }
       return { data: toHighlightDto(updated) }
     }),

@@ -76,6 +76,12 @@ export const studySessionsContract = {
         data: z.object({
           enrichingHighlightIds: z.array(z.string().uuid()),
           failedHighlightIds: z.array(z.string().uuid()),
+          // Highlights whose saved note/preset is being answered in the card chat
+          // (pending/processing), and those whose seed job parked as failed. Kept
+          // separate from enriching/failed so a pending answer is not mistaken for
+          // a missing card in triage.
+          seedChatHighlightIds: z.array(z.string().uuid()),
+          failedSeedChatHighlightIds: z.array(z.string().uuid()),
         }),
       })
     ),
