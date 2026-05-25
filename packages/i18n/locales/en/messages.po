@@ -1899,7 +1899,7 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:245
+#: apps/web/src/features/sessions/components/session-view.tsx:242
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
