@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ArrowRight, Languages } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
@@ -195,9 +196,16 @@ export const NewAdhocCardWizard = () => {
               <button
                 type='button'
                 onClick={acceptLanguageSuggestion}
-                className='self-start text-xs text-amber-700 underline-offset-2 hover:underline'
+                className='flex w-full items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-left text-sm text-amber-800 transition-colors hover:bg-amber-100 active:bg-amber-100'
               >
-                {t`Looks like ${suggestedLanguageName} — switch?`}
+                <span className='flex min-w-0 items-center gap-2'>
+                  <Languages className='size-4 shrink-0' />
+                  <span className='truncate'>{t`Looks like ${suggestedLanguageName}`}</span>
+                </span>
+                <span className='flex shrink-0 items-center gap-1 rounded-md bg-amber-200/80 px-2.5 py-1 font-medium text-amber-900'>
+                  {t`Switch`}
+                  <ArrowRight className='size-3.5' />
+                </span>
               </button>
             )
           }

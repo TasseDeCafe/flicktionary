@@ -23,7 +23,7 @@ import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
-import { ProcessButton } from './process-button'
+import { TriageFooter } from './triage-footer'
 
 export const SessionView = () => {
   const { t } = useLingui()
@@ -79,13 +79,19 @@ export const SessionView = () => {
     return max
   }, [allSegments])
   const deepestIndex = useDeepestVisibleSegment(scrollEl, indexBySegmentId)
-  useGhostNomination({
+  const { isRequesting: isRequestingNomination } = useGhostNomination({
     sessionId,
     deepestIndex,
     maxSegmentIndex,
     serverWindows: ghostData?.windows,
     enabled: llmHighlightsEnabled,
   })
+  // True while suggestion spans are being generated for the reader's current
+  // window — either the nominate request is in flight, or a window's nominate
+  // job is still running on the server (`status === 'pending'`). Surfaced as a
+  // footer loader so the wait doesn't look like the feature is broken.
+  const isGeneratingCandidates =
+    llmHighlightsEnabled && (isRequestingNomination || (ghostData?.windows ?? []).some((w) => w.status === 'pending'))
   const unprocessedHighlightCount = useMemo(() => {
     if (!highlights) return 0
     const processed = new Set((cards ?? []).map((c) => c.highlightId).filter((id): id is string => !!id))
@@ -252,16 +258,14 @@ export const SessionView = () => {
         </div>
       </div>
 
-      <ProcessButton
+      <TriageFooter
         sessionId={sessionId}
         status={session.status}
         highlightCount={highlights?.length ?? 0}
         unprocessedHighlightCount={unprocessedHighlightCount}
         cardCount={cards?.length ?? 0}
-        onProcessed={() => {
-          void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
-        }}
-        onGoToTriage={() => {
+        isGeneratingCandidates={isGeneratingCandidates}
+        onOpenTriage={() => {
           void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
         }}
       />

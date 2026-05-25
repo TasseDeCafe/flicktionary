@@ -34,9 +34,9 @@ export const useGhostNomination = (params: {
   maxSegmentIndex: number | null
   serverWindows: readonly NominatedWindow[] | undefined
   enabled: boolean
-}): void => {
+}): { isRequesting: boolean } => {
   const { sessionId, deepestIndex, maxSegmentIndex, serverWindows, enabled } = params
-  const { mutate: nominateWindow } = useNominateWindow(sessionId)
+  const { mutate: nominateWindow, isPending: isRequesting } = useNominateWindow(sessionId)
   // Wait for the reader to settle before nominating around their position.
   const settledIndex = useDebouncedValue(deepestIndex, SETTLE_MS)
   // Window indices we've already requested (locally or per the server). A ref so
@@ -65,4 +65,6 @@ export const useGhostNomination = (params: {
       nominateWindow({ sessionId, startIndex, endIndex })
     }
   }, [enabled, settledIndex, maxSegmentIndex, sessionId, nominateWindow])
+
+  return { isRequesting }
 }

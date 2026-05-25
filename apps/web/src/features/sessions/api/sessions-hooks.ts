@@ -306,7 +306,7 @@ export const useProcessStudySession = (sessionId: string) => {
       },
       meta: {
         successMessage: t`Opening triage`,
-        errorMessage: t`Failed to start processing`,
+        errorMessage: t`Failed to open triage`,
         showErrorModal: true,
       },
     })
