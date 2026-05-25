@@ -79,12 +79,16 @@ export const SessionView = () => {
     return max
   }, [allSegments])
   const deepestIndex = useDeepestVisibleSegment(scrollEl, indexBySegmentId)
+  // While searching, the scroll container renders only the (filtered) search
+  // results, so the deepest-visible segment jumps to an arbitrary match and would
+  // nominate windows the reader never actually read. Gate nomination off until the
+  // search is cleared and the full track is back in view.
   const { isRequesting: isRequestingNomination } = useGhostNomination({
     sessionId,
     deepestIndex,
     maxSegmentIndex,
     serverWindows: ghostData?.windows,
-    enabled: llmHighlightsEnabled,
+    enabled: llmHighlightsEnabled && !isSearching,
   })
   // True while suggestion spans are being generated for the reader's current
   // window — either the nominate request is in flight, or a window's nominate

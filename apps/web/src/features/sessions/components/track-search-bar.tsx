@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Input } from '@/components/ui/input'
+import { SearchInput } from '@/components/ui/search-input'
 
 type Props = {
   value: string
@@ -8,13 +8,5 @@ type Props = {
 
 export const TrackSearchBar = ({ value, onChange }: Props) => {
   const { t } = useLingui()
-  return (
-    <Input
-      type='search'
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={t`Search…`}
-      className='w-full'
-    />
-  )
+  return <SearchInput value={value} onChange={onChange} placeholder={t`Search…`} className='w-full' />
 }
