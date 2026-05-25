@@ -36,6 +36,7 @@ describe('importSrt', () => {
       listFirstByTrackId: vi.fn(),
       searchInTrack: vi.fn(),
       findById: vi.fn(),
+      listByIndexRange: vi.fn(),
       listAroundIndex: vi.fn(),
       appendSegmentAtomic: vi.fn(),
     }

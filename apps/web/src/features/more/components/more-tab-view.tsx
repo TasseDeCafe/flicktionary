@@ -58,7 +58,7 @@ export const MoreTabView = () => {
         <MoreListRow
           icon={Sparkles}
           label={t`LLM-suggested terms`}
-          description={t`Let the model surface terms at your level on Process`}
+          description={t`Show suggested terms while reading`}
           trailing={
             <Switch
               checked={prefs?.llmHighlightsEnabled ?? true}

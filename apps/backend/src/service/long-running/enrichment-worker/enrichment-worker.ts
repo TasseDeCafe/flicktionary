@@ -4,8 +4,9 @@ import {
   DbProcessingJob,
   ProcessingJobsRepositoryInterface,
 } from '../../../transport/database/processing-jobs/processing-jobs-repository'
-import { ProcessingDependencies, discoverSession } from '../../processing/discover-session'
+import type { ProcessingDependencies } from '../../processing/processing-dependencies'
 import { enrichHighlight } from '../../processing/enrich-highlight'
+import { nominateWindow } from '../../processing/nominate-window'
 
 export interface EnrichmentWorkerInterface {
   initialize: () => void
@@ -49,8 +50,26 @@ export const EnrichmentWorker = (
           { sessionId: job.study_session_id, highlightId: job.highlight_id, userId: job.user_id },
           processingDependencies
         )
+      } else if (job.kind === 'nominate_window') {
+        if (job.window_start_index === null || job.window_end_index === null) {
+          throw new Error('nominate_window job missing window indices')
+        }
+        await nominateWindow(
+          {
+            sessionId: job.study_session_id,
+            userId: job.user_id,
+            startIndex: job.window_start_index,
+            endIndex: job.window_end_index,
+          },
+          processingDependencies
+        )
       } else {
-        await discoverSession(job.study_session_id, job.user_id, processingDependencies)
+        // Retired Phase-1 discovery jobs can still exist in old local queues or
+        // the enum. Treat them as no-ops instead of retrying forever.
+        logCustomErrorMessageAndError(
+          `processing job kind retired (id=${job.id}, kind=${job.kind})`,
+          new Error('retired processing job kind')
+        )
       }
       const marked = await processingJobsRepository.markDone(job.id, workerId)
       if (!marked) {
@@ -65,6 +84,20 @@ export const EnrichmentWorker = (
       const backoffSeconds = Math.min(MAX_BACKOFF_SECONDS, BASE_BACKOFF_SECONDS * 2 ** Math.max(0, job.attempts - 1))
       await processingJobsRepository
         .markFailedOrRetry({ id: job.id, workerId, error: message, backoffSeconds, maxAttempts: MAX_ATTEMPTS })
+        .then((updated) => {
+          if (
+            updated?.status === 'failed' &&
+            job.kind === 'nominate_window' &&
+            job.window_start_index !== null &&
+            job.window_end_index !== null
+          ) {
+            return processingDependencies.nominatedWindowsRepository.markFailed({
+              sessionId: job.study_session_id,
+              startIndex: job.window_start_index,
+              endIndex: job.window_end_index,
+            })
+          }
+        })
         .catch((markErr) => logCustomErrorMessageAndError(`markFailedOrRetry failed (id=${job.id})`, markErr))
     } finally {
       clearInterval(heartbeatId)

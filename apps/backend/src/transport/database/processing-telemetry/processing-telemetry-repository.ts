@@ -9,6 +9,7 @@ export type ProcessingPassName =
   | 'exclusion_prefilter'
   | 'wiktionary_grounding'
   | 'highlight_enrichment'
+  | 'window_nomination'
 
 const record = async (params: {
   studySessionId: string | null

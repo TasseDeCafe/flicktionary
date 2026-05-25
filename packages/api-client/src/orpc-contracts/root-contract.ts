@@ -13,6 +13,7 @@ import { textTracksContract } from './text-tracks-contract'
 import { textSegmentsContract } from './text-segments-contract'
 import { studySessionsContract } from './study-sessions-contract'
 import { highlightsContract } from './highlights-contract'
+import { ghostsContract } from './ghosts-contract'
 import { cardsContract } from './cards-contract'
 import { cardChatContract } from './card-chat-contract'
 import { chunksContract } from './chunks-contract'
@@ -36,6 +37,7 @@ export const rootOrpcContract = {
   textSegments: textSegmentsContract,
   studySessions: studySessionsContract,
   highlights: highlightsContract,
+  ghosts: ghostsContract,
   cards: cardsContract,
   cardChat: cardChatContract,
   chunks: chunksContract,

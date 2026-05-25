@@ -3,7 +3,7 @@ import { basicDataPass } from '../../transport/third-party/anthropic/passes/basi
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { enrichHighlight } from './enrich-highlight'
-import type { ProcessingDependencies } from './discover-session'
+import type { ProcessingDependencies } from './processing-dependencies'
 
 vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', () => ({
   basicDataPass: vi.fn(),

@@ -8,7 +8,7 @@ import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { recordPassTelemetry } from './telemetry'
 import { getLanguageMode } from '../user-prefs/language-mode'
-import { ProcessingDependencies } from './discover-session'
+import type { ProcessingDependencies } from './processing-dependencies'
 
 const CONTEXT_BLOB_SAMPLE_SIZE = 150
 
@@ -58,7 +58,7 @@ export const enrichHighlight = async (
   }
 
   // Context blob: generate-and-persist on the first job for a session, read the
-  // cached value on later jobs (same caching as discoverSession). Sampling the
+  // cached value on later jobs. Sampling the
   // opening slice avoids loading the whole track for long reads.
   let contextBlob = session.context_blob
   if (!contextBlob) {
@@ -107,8 +107,6 @@ export const enrichHighlight = async (
     movieContextBlob: contextBlob,
     segments: window.map((s) => ({ id: s.id, index: s.index, text: s.text })),
     highlights: [highlightInput],
-    excludedHeadwordSenses: [],
-    llmDiscoveryEnabled: false,
     hideTranslationFields: languagePrefs.hideTranslationFields,
     allowL1Notes: languagePrefs.allowL1Notes,
     model: MODEL_ENRICHMENT,

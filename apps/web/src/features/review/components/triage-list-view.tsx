@@ -22,7 +22,6 @@ import type {
   CardStatus,
   LearningMode,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { Loader2 } from 'lucide-react'
 import { TriageRow, TriageEnrichingRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
 
@@ -75,11 +74,10 @@ export const TriageListView = () => {
   const { data: highlights } = useListHighlightsBySession(sessionId)
   const { data: processingStatus } = useGetProcessingStatus(sessionId, 2000)
   const { mutate: retryEnrichment, isPending: isRetrying } = useRetryEnrichment(sessionId)
-  // While the background worker is still enriching highlights (or discovering
-  // terms), the cards list grows underneath us — poll it so newly-materialized
+  // While the background worker is still enriching highlights, the cards list
+  // grows underneath us — poll it so newly-materialized
   // cards replace their "Enriching…" placeholder rows without a manual refresh.
-  const isProcessingActive =
-    (processingStatus?.enrichingHighlightIds.length ?? 0) > 0 || (processingStatus?.discovering ?? false)
+  const isProcessingActive = (processingStatus?.enrichingHighlightIds.length ?? 0) > 0
   const { data: cards, isLoading } = useListCardsBySession(sessionId, {
     refetchInterval: isProcessingActive ? 2000 : false,
   })
@@ -143,8 +141,6 @@ export const TriageListView = () => {
       })
   }, [highlights, cards, processingStatus])
 
-  const discovering = processingStatus?.discovering ?? false
-
   const handleStatusChange = (cardId: string, status: CardStatus, learningMode?: LearningMode) => {
     updateStatus({ cardId, status, learningMode })
   }
@@ -195,14 +191,14 @@ export const TriageListView = () => {
                 ))}
               </ul>
               <p className='text-muted-foreground mt-2 text-xs'>
-                {t`Go back to the source view and click Retry processing to try again.`}
+                {t`Go back to the source view to add or retry highlights.`}
               </p>
             </div>
           )}
 
           {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading cards…`}</p>}
 
-          {!isLoading && (cards?.length ?? 0) === 0 && pendingHighlightRows.length === 0 && !discovering && (
+          {!isLoading && (cards?.length ?? 0) === 0 && pendingHighlightRows.length === 0 && (
             <p className='text-muted-foreground text-sm'>{t`No cards yet. Process the session to generate them.`}</p>
           )}
 
@@ -265,13 +261,6 @@ export const TriageListView = () => {
                 ))}
               </div>
             </section>
-          )}
-
-          {discovering && (
-            <div className='text-muted-foreground mb-6 flex items-center gap-1.5 text-sm'>
-              <Loader2 className='h-3 w-3 animate-spin' />
-              {t`Finding more terms to suggest…`}
-            </div>
           )}
 
           <AutoRejectedCollapsible

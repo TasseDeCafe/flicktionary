@@ -1,22 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Button } from '@/components/ui/button'
-import { ListChecks } from 'lucide-react'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@/components/ui/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
   useGetStudySession,
+  useGetUserPrefs,
   useListSegmentsByTrack,
   useSearchSegments,
   useListHighlightsBySession,
+  useListGhostsBySession,
 } from '../api/sessions-hooks'
 import { useListCardsBySession } from '@/features/review/api/review-hooks'
 import type { SelectionResult } from '../utils/selection-adapter'
 import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
 import { useWordSelection } from '@/lib/dom/use-word-selection'
-import { buildSegmentRanges } from '../utils/build-segment-ranges'
+import { buildSegmentRanges, buildGhostSegmentRanges } from '../utils/build-segment-ranges'
+import { findOverlappingGhost } from '../utils/ghost-overlap'
+import { useDeepestVisibleSegment } from '../hooks/use-deepest-visible-segment'
+import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
@@ -42,10 +45,47 @@ export const SessionView = () => {
 
   const { data: highlights } = useListHighlightsBySession(sessionId)
   const { data: cards } = useListCardsBySession(sessionId)
+  const { data: userPrefs } = useGetUserPrefs()
+  // The entire ghost layer (nomination, fetch, outlines, "Use suggested") is gated
+  // off when the user has disabled LLM suggestions — fully inert for them.
+  const llmHighlightsEnabled = userPrefs?.llmHighlightsEnabled === true
+
   const rangesBySegmentId = useMemo(
     () => buildSegmentRanges(highlights ?? [], visibleSegments),
     [highlights, visibleSegments]
   )
+
+  // Ghost candidates (passive LLM-suggested spans) + the nomination coverage set.
+  const { data: ghostData } = useListGhostsBySession(sessionId, llmHighlightsEnabled)
+  const ghostCandidates = useMemo(
+    () => (llmHighlightsEnabled ? (ghostData?.candidates ?? []) : []),
+    [llmHighlightsEnabled, ghostData]
+  )
+  const ghostRangesBySegmentId = useMemo(() => buildGhostSegmentRanges(ghostCandidates), [ghostCandidates])
+
+  // Reading-position → nomination. Indices are track-relative (segment.index), never
+  // client array positions, so they stay valid under search filtering / future
+  // virtualization. We drive off the FULL track, not the (search-filtered) visible
+  // slice.
+  const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null)
+  const indexBySegmentId = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const s of allSegments ?? []) map.set(s.id, s.index)
+    return map
+  }, [allSegments])
+  const maxSegmentIndex = useMemo(() => {
+    let max: number | null = null
+    for (const s of allSegments ?? []) max = max === null || s.index > max ? s.index : max
+    return max
+  }, [allSegments])
+  const deepestIndex = useDeepestVisibleSegment(scrollEl, indexBySegmentId)
+  useGhostNomination({
+    sessionId,
+    deepestIndex,
+    maxSegmentIndex,
+    serverWindows: ghostData?.windows,
+    enabled: llmHighlightsEnabled,
+  })
   const unprocessedHighlightCount = useMemo(() => {
     if (!highlights) return 0
     const processed = new Set((cards ?? []).map((c) => c.highlightId).filter((id): id is string => !!id))
@@ -134,6 +174,13 @@ export const SessionView = () => {
     }
   }, [existingHighlightId, highlights])
 
+  // When a committed selection overlaps a ghost, the gloss sheet offers to adopt the
+  // LLM's span. Suppressed entirely when LLM suggestions are off.
+  const suggestedGhost = useMemo(() => {
+    if (!llmHighlightsEnabled || !pendingSelection) return null
+    return findOverlappingGhost(pendingSelection, ghostCandidates, visibleSegments)
+  }, [llmHighlightsEnabled, pendingSelection, ghostCandidates, visibleSegments])
+
   const closeToSessions = () => {
     if (from === 'vocabulary') {
       void navigate({ to: '/vocabulary' })
@@ -172,18 +219,7 @@ export const SessionView = () => {
   )
 
   return (
-    <ModalScreen
-      onClose={closeToSessions}
-      title={titleNode}
-      rightSlot={
-        <Button variant='outline' size='sm' asChild>
-          <Link to='/sessions/$sessionId/review' params={{ sessionId }}>
-            <ListChecks className='mr-1 h-4 w-4' />
-            {t`Triage`}
-          </Link>
-        </Button>
-      }
-    >
+    <ModalScreen onClose={closeToSessions} title={titleNode}>
       <div className='border-b bg-white px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
           <TrackSearchBar value={search} onChange={setSearch} />
@@ -191,7 +227,12 @@ export const SessionView = () => {
       </div>
 
       <div
-        ref={wordSelectionRef}
+        ref={(el) => {
+          // One scroll container, two consumers: the word-selection gesture and the
+          // IntersectionObserver behind reading-position nomination.
+          wordSelectionRef(el)
+          setScrollEl(el)
+        }}
         className='flex-1 touch-pan-y overflow-y-auto px-4 py-3 select-none'
         style={{ WebkitTouchCallout: 'none' }}
         onClick={handleSegmentListClick}
@@ -203,6 +244,7 @@ export const SessionView = () => {
             <SegmentList
               segments={visibleSegments}
               rangesBySegmentId={rangesBySegmentId}
+              ghostRangesBySegmentId={ghostRangesBySegmentId}
               targetLanguage={session.targetLanguage}
               flashSegmentId={flashSegmentId}
             />
@@ -230,6 +272,7 @@ export const SessionView = () => {
         targetLanguage={session.targetLanguage}
         selection={pendingSelection}
         existingHighlight={existingHighlight}
+        suggestedGhost={suggestedGhost}
         anchor={anchor}
         onClose={() => {
           // Keep `anchor`, `pendingSelection`, `existingHighlightId` in state

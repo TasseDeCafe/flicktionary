@@ -229,8 +229,12 @@ msgid "{dueTermCount} follow-up(s) ready"
 msgstr "{dueTermCount} follow-up(s) ready"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:65
-msgid "{highlightCount} highlight(s) ready."
-msgstr "{highlightCount} highlight(s) ready."
+#~ msgid "{highlightCount} highlight(s) ready."
+#~ msgstr "{highlightCount} highlight(s) ready."
+
+#: apps/web/src/features/sessions/components/process-button.tsx:45
+msgid "{highlightCount} highlight(s) saved."
+msgstr "{highlightCount} highlight(s) saved."
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:62
 #~ msgid "{learningDueCount} follow-up(s)"
@@ -281,9 +285,13 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgid "{totalKept} total"
 msgstr "{totalKept} total"
 
+#: apps/web/src/features/sessions/components/process-button.tsx:43
+msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
+msgstr "{unprocessedHighlightCount} new highlight(s) still enriching."
+
 #: apps/web/src/features/sessions/components/process-button.tsx:64
-msgid "{unprocessedHighlightCount} new highlight(s) to process."
-msgstr "{unprocessedHighlightCount} new highlight(s) to process."
+#~ msgid "{unprocessedHighlightCount} new highlight(s) to process."
+#~ msgstr "{unprocessedHighlightCount} new highlight(s) to process."
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:125
 #~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
@@ -349,7 +357,7 @@ msgstr "€{yearlyPricePerMonth}/month"
 #~ msgid "2. Intellectual Property Rights"
 #~ msgstr "2. Intellectual Property Rights"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:168
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:175
 msgid "3 examples"
 msgstr "3 examples"
 
@@ -493,7 +501,7 @@ msgstr "Add a word"
 msgid "Add form"
 msgstr "Add form"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:496
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:555
 msgid "Add note"
 msgstr "Add note"
 
@@ -555,7 +563,7 @@ msgstr "All caught up"
 #~ msgid "All caught up for today · {totalKept} total"
 #~ msgstr "All caught up for today · {totalKept} total"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:63
+#: apps/web/src/features/sessions/components/process-button.tsx:42
 msgid "All highlights have been processed."
 msgstr "All highlights have been processed."
 
@@ -663,7 +671,7 @@ msgstr "Back to Login"
 msgid "Back to Practice"
 msgstr "Back to Practice"
 
-#: apps/web/src/features/review/components/processing-view.tsx:50
+#: apps/web/src/features/review/components/processing-view.tsx:28
 msgid "Back to session"
 msgstr "Back to session"
 
@@ -880,7 +888,7 @@ msgstr "Continue with Google"
 msgid "Could not display payment options at this time."
 msgstr "Could not display payment options at this time."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:441
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:500
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Could not fetch a gloss. The highlight is still saved."
 
@@ -1083,7 +1091,7 @@ msgstr "e.g. увидеть"
 msgid "Easy"
 msgstr "Easy"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:496
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:555
 msgid "Edit note"
 msgstr "Edit note"
 
@@ -1177,7 +1185,7 @@ msgid "Error setting up user data"
 msgstr "Error setting up user data"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:97
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:170
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:177
 msgid "Etymology"
 msgstr "Etymology"
 
@@ -1193,7 +1201,7 @@ msgstr "Every term you've kept, across every session. Tap a row to edit, or open
 msgid "Example"
 msgstr "Example"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:167
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:174
 msgid "Explain"
 msgstr "Explain"
 
@@ -1331,6 +1339,10 @@ msgstr "Failed to load sessions"
 msgid "Failed to load subtitle segments"
 msgstr "Failed to load subtitle segments"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:491
+msgid "Failed to load suggestions"
+msgstr "Failed to load suggestions"
+
 #: apps/web/src/features/review/api/review-hooks.ts:169
 msgid "Failed to load surrounding context"
 msgstr "Failed to load surrounding context"
@@ -1362,6 +1374,10 @@ msgstr "Failed to remove session"
 #: apps/web/src/features/review/api/review-hooks.ts:224
 msgid "Failed to rename term"
 msgstr "Failed to rename term"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:508
+msgid "Failed to request suggestions"
+msgstr "Failed to request suggestions"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:170
 msgid "Failed to restore term"
@@ -1457,6 +1473,10 @@ msgstr "Failed to update term"
 msgid "Failed to upload subtitles"
 msgstr "Failed to upload subtitles"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:528
+msgid "Failed to use suggestion"
+msgstr "Failed to use suggestion"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx:75
 #~ msgid "Fast gloss when you select text mid-watch"
 #~ msgstr "Fast gloss when you select text mid-watch"
@@ -1471,8 +1491,8 @@ msgid "Feminine"
 msgstr "Feminine"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:273
-msgid "Finding more terms to suggest…"
-msgstr "Finding more terms to suggest…"
+#~ msgid "Finding more terms to suggest…"
+#~ msgstr "Finding more terms to suggest…"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
 msgid "Flicktionary"
@@ -1580,8 +1600,12 @@ msgid "Go Back"
 msgstr "Go Back"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:198
-msgid "Go back to the source view and click Retry processing to try again."
-msgstr "Go back to the source view and click Retry processing to try again."
+#~ msgid "Go back to the source view and click Retry processing to try again."
+#~ msgstr "Go back to the source view and click Retry processing to try again."
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:194
+msgid "Go back to the source view to add or retry highlights."
+msgstr "Go back to the source view to add or retry highlights."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
 #~ msgid "Go to Dashboard"
@@ -1591,7 +1615,8 @@ msgstr "Go back to the source view and click Retry processing to try again."
 msgid "Go to Sessions"
 msgstr "Go to Sessions"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:71
+#: apps/web/src/features/review/components/processing-view.tsx:25
+#: apps/web/src/features/sessions/components/process-button.tsx:50
 msgid "Go to triage"
 msgstr "Go to triage"
 
@@ -1644,7 +1669,7 @@ msgstr "HI"
 msgid "Hide from vocabulary and Practice"
 msgstr "Hide from vocabulary and Practice"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:425
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:467
 msgid "Hide notes"
 msgstr "Hide notes"
 
@@ -1663,6 +1688,10 @@ msgstr "Hides this term from your vocabulary and Practice. You can revive it by 
 #: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:134
 #~ msgid "Highlight saved. Add a note or chips next time without tap-to-translate."
 #~ msgstr "Highlight saved. Add a note or chips next time without tap-to-translate."
+
+#: apps/web/src/features/review/components/processing-view.tsx:21
+msgid "Highlights are enriched as you read. Triage is available immediately."
+msgstr "Highlights are enriched as you read. Triage is available immediately."
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:92
 msgid "Home"
@@ -1762,7 +1791,7 @@ msgstr "Jump to the session this term came from"
 msgid "Keep"
 msgstr "Keep"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:54
+#: apps/web/src/features/review/components/triage-list-view.tsx:53
 msgid "Keep all"
 msgstr "Keep all"
 
@@ -1831,8 +1860,8 @@ msgid "Less formal:"
 msgstr "Less formal:"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:61
-msgid "Let the model surface terms at your level on Process"
-msgstr "Let the model surface terms at your level on Process"
+#~ msgid "Let the model surface terms at your level on Process"
+#~ msgstr "Let the model surface terms at your level on Process"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
@@ -1845,20 +1874,20 @@ msgstr "Link expired or invalid"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:60
 #: apps/web/src/features/more/components/more-tab-view.tsx:67
-#: apps/web/src/features/review/components/triage-list-view.tsx:248
+#: apps/web/src/features/review/components/triage-list-view.tsx:244
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:18
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:56
-msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
-msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
+#~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
+#~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
 #: apps/web/src/features/review/components/focus-view.tsx:159
 msgid "Loading card…"
 msgstr "Loading card…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:203
+#: apps/web/src/features/review/components/triage-list-view.tsx:199
 msgid "Loading cards…"
 msgstr "Loading cards…"
 
@@ -1870,11 +1899,11 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:201
+#: apps/web/src/features/sessions/components/session-view.tsx:245
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:148
+#: apps/web/src/features/sessions/components/session-view.tsx:195
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -2039,7 +2068,11 @@ msgstr "Next text"
 #~ msgid "No Card Required"
 #~ msgstr "No Card Required"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:206
+#: apps/web/src/features/sessions/components/process-button.tsx:41
+msgid "No cards have been generated yet."
+msgstr "No cards have been generated yet."
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:202
 msgid "No cards yet. Process the session to generate them."
 msgstr "No cards yet. Process the session to generate them."
 
@@ -2048,8 +2081,12 @@ msgstr "No cards yet. Process the session to generate them."
 #~ msgstr "No highlight selected."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:61
-msgid "No highlights — the LLM will suggest terms based on your level."
-msgstr "No highlights — the LLM will suggest terms based on your level."
+#~ msgid "No highlights — the LLM will suggest terms based on your level."
+#~ msgstr "No highlights — the LLM will suggest terms based on your level."
+
+#: apps/web/src/features/sessions/components/process-button.tsx:44
+msgid "No highlights yet."
+msgstr "No highlights yet."
 
 #: apps/web/src/components/language-option-list.tsx:62
 #: apps/web/src/components/language-picker.tsx:99
@@ -2103,7 +2140,7 @@ msgid "No vocabulary yet"
 msgstr "No vocabulary yet"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:155
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:350
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:392
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
 
@@ -2158,6 +2195,14 @@ msgstr "Open source"
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:308
+msgid "Opening triage"
+msgstr "Opening triage"
+
+#: apps/web/src/features/sessions/components/process-button.tsx:49
+msgid "Opening…"
+msgstr "Opening…"
+
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:100
 #~ msgid "OpenSubtitles search"
 #~ msgstr "OpenSubtitles search"
@@ -2174,7 +2219,7 @@ msgstr "Optional"
 msgid "Optional contextual paraphrase in the target language."
 msgstr "Optional contextual paraphrase in the target language."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:449
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:508
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Optional note for the LLM (what specifically confuses you?)"
 
@@ -2345,7 +2390,7 @@ msgstr "Practice"
 msgid "Practice limits"
 msgstr "Practice limits"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:298
+#: apps/web/src/features/review/components/triage-list-view.tsx:287
 msgid "Practice these terms"
 msgstr "Practice these terms"
 
@@ -2381,13 +2426,17 @@ msgstr "Preposition"
 msgid "Previous card"
 msgstr "Previous card"
 
+#: apps/web/src/features/sessions/components/process-button.tsx:40
+msgid "Previous processing failed. You can still open triage."
+msgstr "Previous processing failed. You can still open triage."
+
 #: apps/web/src/features/sessions/components/process-button.tsx:58
-msgid "Previous run failed. Click to retry."
-msgstr "Previous run failed. Click to retry."
+#~ msgid "Previous run failed. Click to retry."
+#~ msgstr "Previous run failed. Click to retry."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:59
-msgid "Previous run produced no cards. Click to retry."
-msgstr "Previous run produced no cards. Click to retry."
+#~ msgid "Previous run produced no cards. Click to retry."
+#~ msgstr "Previous run produced no cards. Click to retry."
 
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:22
 #: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:80
@@ -2407,8 +2456,8 @@ msgstr "Primary"
 #~ msgstr "Privacy Policy"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:73
-msgid "Process"
-msgstr "Process"
+#~ msgid "Process"
+#~ msgstr "Process"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:73
 #: apps/web/src/features/practice/components/practice-language-view.tsx:168
@@ -2420,28 +2469,32 @@ msgid "Process a session and keep some cards. They'll show up here, browsable ac
 msgstr "Process a session and keep some cards. They'll show up here, browsable across every session."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:72
-msgid "Process new highlights"
-msgstr "Process new highlights"
+#~ msgid "Process new highlights"
+#~ msgstr "Process new highlights"
 
-#: apps/web/src/features/review/components/processing-view.tsx:27
+#: apps/web/src/features/review/components/processing-view.tsx:16
 msgid "Processing"
 msgstr "Processing"
 
 #: apps/web/src/features/review/components/processing-view.tsx:43
-msgid "Processing failed"
-msgstr "Processing failed"
+#~ msgid "Processing failed"
+#~ msgstr "Processing failed"
+
+#: apps/web/src/features/review/components/processing-view.tsx:19
+msgid "Processing has moved to the background"
+msgstr "Processing has moved to the background"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:308
-msgid "Processing started"
-msgstr "Processing started"
+#~ msgid "Processing started"
+#~ msgstr "Processing started"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:191
+#: apps/web/src/features/review/components/triage-list-view.tsx:187
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
 #: apps/web/src/features/review/components/processing-view.tsx:33
-msgid "Processing your session…"
-msgstr "Processing your session…"
+#~ msgid "Processing your session…"
+#~ msgstr "Processing your session…"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
 msgid "Profile"
@@ -2455,7 +2508,7 @@ msgstr "Profile, subscription, sign-in"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:377
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:419
 msgid "Quick gloss"
 msgstr "Quick gloss"
 
@@ -2463,7 +2516,7 @@ msgstr "Quick gloss"
 msgid "Quick gloss failed"
 msgstr "Quick gloss failed"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:357
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:399
 msgid "Quick gloss for the selected text."
 msgstr "Quick gloss for the selected text."
 
@@ -2525,7 +2578,7 @@ msgstr "Registering {movieTitle}…"
 msgid "Reject"
 msgstr "Reject"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:63
+#: apps/web/src/features/review/components/triage-list-view.tsx:62
 msgid "Reject all"
 msgstr "Reject all"
 
@@ -2538,7 +2591,7 @@ msgstr "Remove"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:481
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:540
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
@@ -2546,7 +2599,7 @@ msgstr "Remove highlight"
 msgid "Remove session"
 msgstr "Remove session"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:481
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:540
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
 msgid "Removing…"
 msgstr "Removing…"
@@ -2564,24 +2617,23 @@ msgstr "Restore"
 msgid "Restoring…"
 msgstr "Restoring…"
 
-#: apps/web/src/features/review/components/processing-view.tsx:47
 #: apps/web/src/features/review/components/triage-row.tsx:48
 msgid "Retry"
 msgstr "Retry"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:70
-msgid "Retry processing"
-msgstr "Retry processing"
+#~ msgid "Retry processing"
+#~ msgstr "Retry processing"
 
 #: apps/web/src/features/review/components/processing-view.tsx:47
-msgid "Retrying…"
-msgstr "Retrying…"
+#~ msgid "Retrying…"
+#~ msgstr "Retrying…"
 
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx:75
 msgid "Return to Login"
 msgstr "Return to Login"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:175
+#: apps/web/src/features/review/components/triage-list-view.tsx:171
 msgid "Review"
 msgstr "Review"
 
@@ -2613,7 +2665,7 @@ msgstr "Save a term"
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:485
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:544
 msgid "Save note"
 msgstr "Save note"
 
@@ -2624,7 +2676,7 @@ msgstr "Save to vocabulary"
 #: apps/web/src/features/review/components/editable-card-fields.tsx:214
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:450
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:485
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:544
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
 msgid "Saving…"
 msgstr "Saving…"
@@ -2654,7 +2706,7 @@ msgstr "Search languages…"
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:183
+#: apps/web/src/features/review/components/triage-list-view.tsx:179
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:16
 msgid "Search…"
 msgstr "Search…"
@@ -2697,8 +2749,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:147
-#: apps/web/src/features/sessions/components/session-view.tsx:154
+#: apps/web/src/features/sessions/components/session-view.tsx:194
+#: apps/web/src/features/sessions/components/session-view.tsx:201
 msgid "Session"
 msgstr "Session"
 
@@ -2707,7 +2759,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:155
+#: apps/web/src/features/sessions/components/session-view.tsx:202
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -2764,9 +2816,13 @@ msgstr "Show {filteredCount} filtered out (below your level)"
 msgid "Show existing translations and generate translations for new cards in this language."
 msgstr "Show existing translations and generate translations for new cards in this language."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:425
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:467
 msgid "Show notes"
 msgstr "Show notes"
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:61
+msgid "Show suggested terms while reading"
+msgstr "Show suggested terms while reading"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:101
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:112
@@ -2823,14 +2879,14 @@ msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
 #: apps/web/src/features/review/components/processing-view.tsx:44
-msgid "Something went wrong. You can retry or go back to the session."
-msgstr "Something went wrong. You can retry or go back to the session."
+#~ msgid "Something went wrong. You can retry or go back to the session."
+#~ msgstr "Something went wrong. You can retry or go back to the session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:251
 #~ msgid "Sort"
 #~ msgstr "Sort"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:171
+#: apps/web/src/features/review/components/triage-list-view.tsx:167
 msgid "Source"
 msgstr "Source"
 
@@ -2879,7 +2935,6 @@ msgid "Starting session…"
 msgstr "Starting session…"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:151
-#: apps/web/src/features/sessions/components/process-button.tsx:69
 msgid "Starting…"
 msgstr "Starting…"
 
@@ -2934,7 +2989,11 @@ msgstr "Switch to active vocabulary"
 msgid "Switch to passive vocabulary"
 msgstr "Switch to passive vocabulary"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:169
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:493
+msgid "Switching…"
+msgstr "Switching…"
+
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:176
 msgid "Synonyms"
 msgstr "Synonyms"
 
@@ -3067,8 +3126,8 @@ msgid "This term is removed from your vocabulary. Restore it to keep practicing.
 msgstr "This term is removed from your vocabulary. Restore it to keep practicing."
 
 #: apps/web/src/features/review/components/processing-view.tsx:35
-msgid "This usually takes 1–2 minutes. You can leave this page and come back."
-msgstr "This usually takes 1–2 minutes. You can leave this page and come back."
+#~ msgid "This usually takes 1–2 minutes. You can leave this page and come back."
+#~ msgstr "This usually takes 1–2 minutes. You can leave this page and come back."
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:98
 msgid "Title"
@@ -3121,8 +3180,7 @@ msgstr "Translation in your native language."
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:165
-#: apps/web/src/features/sessions/components/session-view.tsx:182
+#: apps/web/src/features/review/components/triage-list-view.tsx:161
 msgid "Triage"
 msgstr "Triage"
 
@@ -3159,7 +3217,7 @@ msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:160
+#: apps/web/src/features/sessions/components/session-view.tsx:207
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"
@@ -3213,6 +3271,14 @@ msgstr "Use a subtitle file you already have."
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:38
 #~ msgid "Use on Web"
 #~ msgstr "Use on Web"
+
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:485
+msgid "Use suggested"
+msgstr "Use suggested"
+
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:493
+#~ msgid "Use suggested: {suggestedSurface}"
+#~ msgstr "Use suggested: {suggestedSurface}"
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
@@ -3284,7 +3350,7 @@ msgstr "Vocabulary options"
 msgid "Warning"
 msgstr "Warning"
 
-#: apps/web/src/features/review/components/processing-view.tsx:58
+#: apps/web/src/features/review/components/processing-view.tsx:35
 msgid "Warnings"
 msgstr "Warnings"
 
@@ -3347,12 +3413,16 @@ msgid "What language do you speak natively? This is the language Flicktionary wi
 msgstr "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
 
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
-msgstr "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
+#~ msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
+#~ msgstr "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
 
 #: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:21
 #~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
 #~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
+
+#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
+msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
+msgstr "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:227
 msgid "Where did you hear this? Paste a sentence or leave blank."
@@ -3362,7 +3432,7 @@ msgstr "Where did you hear this? Paste a sentence or leave blank."
 msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Which pronunciation to show for English vocabulary cards."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:171
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:178
 msgid "Why this form?"
 msgstr "Why this form?"
 
@@ -3429,7 +3499,7 @@ msgstr "Your current plan"
 msgid "your email address"
 msgstr "your email address"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:213
+#: apps/web/src/features/review/components/triage-list-view.tsx:209
 msgid "Your highlights"
 msgstr "Your highlights"
 

@@ -21,7 +21,11 @@ types. The root `pnpm db:reset` wrapper exists; the backend package script is
 - **Scope**: web only. Do not touch `apps/native`.
 - **LLM**: Anthropic via `@anthropic-ai/sdk`. `claude-opus-4-7` (`MODEL_OPUS`) for all heavy passes (context blob, L1, difficult-words, full-exploration, per-card chat); `claude-haiku-4-5-20251001` (`MODEL_HAIKU`) for tap-to-translate. Aggressive prompt caching with `cache_control: { type: 'ephemeral' }` on the stable methodology + language-instructions + L1 + context-blob prefix.
 - **Demo content**: home / dashboard / premium-demo tabs replaced with Flicktionary navigation (mobile bottom tab bar + desktop sidebar — Sessions / Practice / `+` / Vocabulary / More; settings + profile consolidated under `/more` since 2026-05-02). Stripe billing, danger-zone, login flows kept untouched.
-- **Async pipeline**: fire-and-forget in-process. The `process` route flips status to `processing`, kicks off async work without `await`, returns 202. Frontend polls `getStatus`. No queue.
+- **Async pipeline**: durable Postgres-backed `processing_jobs` queue drained by
+  an in-process worker with leases. Per-highlight enrichment starts when a
+  highlight is committed; ghost nomination runs per reading window. The
+  `process` route is now a backward-compatible no-op / triage jump and does not
+  flip `study_sessions.status`.
 - **TMDB / OpenSubtitles**: real APIs via Doppler-managed env vars (`TMDB_API_KEY`, `OPENSUBTITLES_API_KEY`, `OPENSUBTITLES_USER_AGENT`, `ANTHROPIC_API_KEY`). Local Doppler config is `dev_personal`.
 
 ## Status of the build (as of last session)
@@ -1641,7 +1645,9 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
   the single synchronous `basicDataPass` fired from the Process button (which
   enriched every highlight AND discovered ~60 LLM terms in one ~8-minute Opus call)
   with a durable background-job queue. Don't re-introduce the synchronous combined
-  pass or the `processing`-status redirect.
+  pass or the `processing`-status redirect. **Partially superseded later the same
+  day by ghost candidates: the `discover_session` executable path was removed;
+  see the next entry.**
   - **Job queue.** Migration `processing_jobs` (kind `enrich_highlight | discover_session`,
     status `pending|processing|done|failed`, `attempts`, `last_error`, `run_after`,
     lease `locked_at`/`locked_by`). Poll index on `(status, run_after)`; two partial
@@ -1703,6 +1709,62 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     the Process / "add more highlights" user flows, the modal-screens list, the Process-button
     pref note, the `study_sessions.status` comment; added the `processing_jobs` table.
     `EXCLUSION_PREFILTER.md` repointed to `discover-session.ts`.
+
+- **Ghost candidates + retired batch discovery (2026-05-25).** Implemented Phase 2
+  of `/Users/sebastien/.claude/plans/glimmering-noodling-kurzweil.md` and removed
+  the remaining whole-text discovery path. Don't re-introduce the old Process →
+  full-track Opus discovery behavior.
+  - **Data model.** Migration
+    `20260525135607_ghost_candidates_and_nominated_windows.sql` adds
+    `nominated_windows` (coverage set keyed by session + segment-index window,
+    status `pending|done|failed`) and `ghost_candidates` (session, segment,
+    raw segment `char_start`/`char_end`, `surface_form`, `dismissed_at`). It
+    extends `processing_jobs` with `nominate_window` and
+    `window_start_index` / `window_end_index`.
+  - **Nomination job.** `nominate-candidates-pass.ts` is an Opus tool-use pass
+    over a small segment-index window, returning span anchors rather than card
+    data. `nominate-window.ts` loads the session/context blob, calls the pass,
+    reconciles offsets against stored segment text, persists live ghosts, and
+    marks the window done. Offset fallback only happens when the surface form
+    occurs exactly once; repeated surfaces with bad offsets are dropped to avoid
+    anchoring the wrong occurrence.
+  - **Atomic coverage + enqueue.** `NominatedWindowsRepository.requestWindowAndEnqueueJob`
+    inserts the coverage row and its `nominate_window` job in one transaction.
+    If the job insert fails, the coverage row rolls back so the client can retry.
+    When a `nominate_window` job exhausts retries, the worker marks the window
+    `failed` so the reader does not poll forever.
+  - **Ghost router + contract.** New `ghosts` oRPC contract/router:
+    `listBySession` returns live candidates + nomination windows,
+    `nominateWindow` requests a covered window (gated by
+    `llm_highlights_enabled`), and `switch` atomically swaps a provisional
+    selection highlight for the ghost span, dismisses the ghost, and enqueues
+    enrichment for the adopted highlight.
+  - **Reader UI.** `useDeepestVisibleSegment` observes rendered
+    `[data-segment-id]` rows inside the scroll container; `useGhostNomination`
+    debounces the current deepest visible segment and requests fixed segment
+    windows with back-margin + lookahead. `SegmentRow` renders ghosts as passive
+    underline spans with `data-ghost-id` only (no `data-highlight-id`, no click
+    handler), so text selection is unchanged. `findOverlappingGhost` picks the
+    best overlapping candidate and `SessionGlossSheet` offers a full-width
+    `Use suggested` action.
+  - **LLM-suggestions pref.** The whole ghost layer is inert when
+    `llm_highlights_enabled` is false: no list query, no nomination request, no
+    outlines, no adoption button. The frontend defaults ghosts disabled until
+    prefs load to avoid a flash for users who turned suggestions off.
+  - **Batch discovery removed.** Deleted `discover-session.ts` and its tests.
+    `studySessions.process` is now a backward-compatible no-op that returns
+    accepted; `ProcessButton` copy changed to `Go to triage`. `basicDataPass`
+    is highlight-only now (no `llmDiscoveryEnabled`, no LLM-discovered rows).
+    `getProcessingStatus` returns only enriching/failed highlight ids; triage no
+    longer renders a "finding more terms" discovery indicator. The worker treats
+    any legacy `discover_session` queue row as a retired no-op because the enum
+    label remains in the DB type.
+  - **Docs/verification.** `SPEC.md` was updated to describe ghost nomination,
+    the new `nominated_windows` / `ghost_candidates` tables, the Process →
+    triage behavior, and the retired cross-source discovery dedup flow. Verified
+    with `pnpm check:types`, focused backend/web Vitest files, `pnpm lint`
+    (existing warnings only), and
+    `doppler run -- supabase db reset --local` from the dev-tunnel Supabase dir.
 
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 

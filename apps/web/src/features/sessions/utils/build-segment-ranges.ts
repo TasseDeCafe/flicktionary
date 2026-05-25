@@ -1,4 +1,4 @@
-import type { SegmentHighlightRange } from './word-highlight-spans'
+import type { SegmentGhostRange, SegmentHighlightRange } from './word-highlight-spans'
 
 type Segment = {
   id: string
@@ -59,6 +59,28 @@ export const buildSegmentRanges = (
         push(mid.id, { highlightId: h.id, start: 0, end: mid.text.length })
       }
     }
+  }
+  return out
+}
+
+type GhostCandidate = {
+  id: string
+  segmentId: string
+  charStart: number
+  charEnd: number
+}
+
+// Ghosts are always single-segment (a nominated span never straddles a segment
+// boundary), so this is a straight group-by-segment of [charStart, charEnd) ranges.
+// Offsets are in the same display-text coords as highlights (segment text is stored
+// already SRT-stripped), so segment-row's strip-map remap applies identically.
+export const buildGhostSegmentRanges = (ghosts: readonly GhostCandidate[]): Map<string, SegmentGhostRange[]> => {
+  const out = new Map<string, SegmentGhostRange[]>()
+  for (const g of ghosts) {
+    const range: SegmentGhostRange = { ghostId: g.id, start: g.charStart, end: g.charEnd }
+    const arr = out.get(g.segmentId)
+    if (arr) arr.push(range)
+    else out.set(g.segmentId, [range])
   }
   return out
 }

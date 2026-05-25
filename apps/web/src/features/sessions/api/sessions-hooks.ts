@@ -206,8 +206,8 @@ export const useGetStudySessionStatus = (sessionId: string, refetchInterval?: nu
   )
 }
 
-// Triage loaders: poll the background enrichment/discovery job state while
-// anything is still in flight, then stop. Mirrors useGetStudySessionStatus.
+// Triage loaders: poll the background enrichment job state while anything is
+// still in flight, then stop. Mirrors useGetStudySessionStatus.
 export const useGetProcessingStatus = (sessionId: string, refetchInterval?: number) => {
   const { t } = useLingui()
   return useQuery(
@@ -216,7 +216,7 @@ export const useGetProcessingStatus = (sessionId: string, refetchInterval?: numb
       select: (response) => response.data,
       refetchInterval: (query) => {
         const data = query.state.data?.data
-        const active = !!data && (data.enrichingHighlightIds.length > 0 || data.discovering)
+        const active = !!data && data.enrichingHighlightIds.length > 0
         return active ? (refetchInterval ?? 2000) : false
       },
       meta: { errorMessage: t`Failed to load processing status` },
@@ -305,7 +305,7 @@ export const useProcessStudySession = (sessionId: string) => {
         })
       },
       meta: {
-        successMessage: t`Processing started`,
+        successMessage: t`Opening triage`,
         errorMessage: t`Failed to start processing`,
         showErrorModal: true,
       },
@@ -467,6 +467,65 @@ export const useDeleteHighlight = (sessionId: string) => {
       meta: {
         errorMessage: t`Failed to remove highlight`,
       },
+    })
+  )
+}
+
+// --- Phase 2: ghost candidates -------------------------------------------------
+
+// Live ghost candidates + the nomination coverage set. Polls while any requested
+// window is still being nominated (status='pending'), then stops — new outlines
+// appear as the worker drains windows.
+export const useListGhostsBySession = (sessionId: string, enabled = true, refetchInterval = 2000) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.ghosts.listBySession.queryOptions({
+      input: { sessionId },
+      enabled,
+      select: (response) => response.data,
+      refetchInterval: (query) => {
+        const data = query.state.data?.data
+        const anyPending = !!data && data.windows.some((w) => w.status === 'pending')
+        return anyPending ? refetchInterval : false
+      },
+      meta: { errorMessage: t`Failed to load suggestions` },
+    })
+  )
+}
+
+export const useNominateWindow = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.ghosts.nominateWindow.mutationOptions({
+      onSuccess: () => {
+        // Refresh the coverage set so the just-requested window shows as pending
+        // and the poll re-arms.
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
+        })
+      },
+      meta: { errorMessage: t`Failed to request suggestions` },
+    })
+  )
+}
+
+export const useSwitchGhost = (sessionId: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.ghosts.switch.mutationOptions({
+      onSuccess: () => {
+        // The provisional highlight was swapped for the ghost's span and the ghost
+        // dismissed — refresh both lists.
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
+        })
+        queryClient.invalidateQueries({
+          queryKey: orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
+        })
+      },
+      meta: { errorMessage: t`Failed to use suggestion` },
     })
   )
 }

@@ -18,7 +18,7 @@ export const LlmHighlightsToggle = ({ enabled }: Props) => {
           {t`LLM-suggested terms`}
         </Label>
         <p className='text-muted-foreground text-xs'>
-          {t`When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards.`}
+          {t`When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards.`}
         </p>
       </div>
       <Switch

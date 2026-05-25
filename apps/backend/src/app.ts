@@ -48,6 +48,7 @@ import { TextTracksRouter } from './router/text-tracks-router/text-tracks-router
 import { TextSegmentsRouter } from './router/text-segments-router/text-segments-router'
 import { StudySessionsRouter } from './router/study-sessions-router/study-sessions-router'
 import { HighlightsRouter } from './router/highlights-router/highlights-router'
+import { GhostsRouter } from './router/ghosts-router/ghosts-router'
 import { CardsRouter } from './router/cards-router/cards-router'
 import { CardChatRouter } from './router/card-chat-router/card-chat-router'
 import { ChunksRouter } from './router/chunks-router/chunks-router'
@@ -67,6 +68,8 @@ import { PracticeRatingsRepository } from './transport/database/practice-ratings
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
+import { GhostCandidatesRepository } from './transport/database/ghost-candidates/ghost-candidates-repository'
+import { NominatedWindowsRepository } from './transport/database/nominated-windows/nominated-windows-repository'
 import {
   EnrichmentWorkerInterface,
   MockEnrichmentWorker,
@@ -242,6 +245,8 @@ export const buildApp = ({
   const processingTelemetryRepository = ProcessingTelemetryRepository()
   const wiktionaryEntriesRepository = WiktionaryEntriesRepository()
   const processingJobsRepository = ProcessingJobsRepository()
+  const ghostCandidatesRepository = GhostCandidatesRepository()
+  const nominatedWindowsRepository = NominatedWindowsRepository()
 
   const exportDependencies = {
     cardsRepository,
@@ -344,6 +349,10 @@ export const buildApp = ({
       wiktionaryEntriesRepository,
       processingJobsRepository
     )
+  )
+  app.use(
+    API_V1,
+    GhostsRouter(studySessionsRepository, ghostCandidatesRepository, nominatedWindowsRepository, usersRepository)
   )
   app.use(
     API_V1,

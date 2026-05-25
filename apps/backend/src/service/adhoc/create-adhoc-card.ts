@@ -128,8 +128,6 @@ export const createAdhocCard = async (params: {
       movieContextBlob: session.context_blob ?? '',
       segments: [{ id: segment.id, index: segment.index, text: segment.text }],
       highlights: [highlightInput],
-      excludedHeadwordSenses: [],
-      llmDiscoveryEnabled: false,
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
     })

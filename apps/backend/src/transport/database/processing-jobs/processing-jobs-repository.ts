@@ -1,56 +1,33 @@
 import { sql } from '../postgres-client'
-import { Tables, Database } from '../database.public.types'
+import { Tables } from '../database.public.types'
 
 export type DbProcessingJob = Tables<'processing_jobs'>
-export type ProcessingJobKind = Database['public']['Enums']['processing_job_kind']
-export type ProcessingJobStatus = Database['public']['Enums']['processing_job_status']
 
 export type EnqueueJobInput = {
-  kind: ProcessingJobKind
+  kind: 'enrich_highlight'
   sessionId: string
   userId: string
-  // Required for kind='enrich_highlight', must be null for 'discover_session'
-  // (enforced by the processing_jobs_highlight_id_required check constraint).
-  highlightId?: string | null
+  highlightId: string
   // Absolute time the job becomes claimable. Defaults to now() — pass a future
   // time to debounce (absorb mis-selections before enriching a highlight).
   runAfter?: Date | null
 }
 
-// Idempotent per LIVE (pending/processing) job: the partial unique indexes
-// uq_processing_jobs_live_enrich / uq_processing_jobs_live_discover guard against
-// double-enqueue while a job is in flight, but allow a fresh job once the prior
-// one reached a terminal state. Returns the inserted row, or null when an
-// in-flight job already covered this (highlight | session) and DO NOTHING fired.
+// Idempotent per LIVE (pending/processing) highlight enrichment job. Returns the
+// inserted row, or null when an in-flight job already covered this highlight and
+// DO NOTHING fired.
 const enqueue = async (params: EnqueueJobInput): Promise<DbProcessingJob | null> => {
   const runAfter = params.runAfter ?? null
-  if (params.kind === 'enrich_highlight') {
-    if (!params.highlightId) throw new Error('enqueue: enrich_highlight requires highlightId')
-    const result = (await sql`
-      INSERT INTO public.processing_jobs (kind, study_session_id, highlight_id, user_id, run_after)
-      VALUES (
-        'enrich_highlight',
-        ${params.sessionId},
-        ${params.highlightId},
-        ${params.userId},
-        ${runAfter ?? sql`now()`}
-      )
-      ON CONFLICT (highlight_id) WHERE highlight_id IS NOT NULL AND status IN ('pending', 'processing')
-      DO NOTHING
-      RETURNING *
-    `) as DbProcessingJob[]
-    return result[0] ?? null
-  }
   const result = (await sql`
     INSERT INTO public.processing_jobs (kind, study_session_id, highlight_id, user_id, run_after)
     VALUES (
-      'discover_session',
+      'enrich_highlight',
       ${params.sessionId},
-      NULL,
+      ${params.highlightId},
       ${params.userId},
       ${runAfter ?? sql`now()`}
     )
-    ON CONFLICT (study_session_id) WHERE kind = 'discover_session' AND status IN ('pending', 'processing')
+    ON CONFLICT (highlight_id) WHERE highlight_id IS NOT NULL AND status IN ('pending', 'processing')
     DO NOTHING
     RETURNING *
   `) as DbProcessingJob[]
@@ -147,8 +124,7 @@ const requeueFailedByHighlightId = async (params: {
 }
 
 // All non-terminal (or failed) jobs for a session, for the triage status read:
-// which highlights are still enriching, which failed, and whether a discovery
-// job is in flight.
+// which highlights are still enriching, and which failed.
 const listActiveBySession = async (sessionId: string): Promise<DbProcessingJob[]> => {
   return (await sql`
     SELECT * FROM public.processing_jobs

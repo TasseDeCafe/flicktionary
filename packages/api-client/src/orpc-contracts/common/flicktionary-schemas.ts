@@ -42,6 +42,30 @@ export const HighlightSchema = z.object({
 })
 export type Highlight = z.infer<typeof HighlightSchema>
 
+// A passive LLM-nominated span (Phase 2 ghost candidate). char_start/char_end are
+// offsets into the segment's stored (SRT-stripped) text — the same coordinate space
+// as Highlight.startOffset/endOffset, so the reader's selection compares directly.
+export const GhostCandidateSchema = z.object({
+  id: z.string().uuid(),
+  studySessionId: z.string().uuid(),
+  segmentId: z.string().uuid(),
+  charStart: z.number().int(),
+  charEnd: z.number().int(),
+  surfaceForm: z.string(),
+})
+export type GhostCandidate = z.infer<typeof GhostCandidateSchema>
+
+// One entry in the nomination coverage set — a reading window already requested,
+// so the client never re-requests it. `status` is 'pending' while its nominate job
+// is in flight, 'done' once it has resolved (even if it produced no candidates),
+// or 'failed' if the job exhausted retries.
+export const NominatedWindowSchema = z.object({
+  startIndex: z.number().int(),
+  endIndex: z.number().int(),
+  status: z.enum(['pending', 'done', 'failed']),
+})
+export type NominatedWindow = z.infer<typeof NominatedWindowSchema>
+
 // Lenient on extras shape: the renderer/CSV code is per-field defensive, and LLMs
 // occasionally serialize one field oddly. One bad row should not brick the whole list.
 export const ExplorationExtrasSchema = z.record(z.string(), z.unknown())
