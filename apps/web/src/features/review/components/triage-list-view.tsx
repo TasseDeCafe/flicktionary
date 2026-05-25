@@ -284,7 +284,7 @@ export const TriageListView = () => {
             }}
           >
             <Brain />
-            {t`Practice these terms`}
+            {t`Practice your terms`}
           </Button>
         </div>
       </div>

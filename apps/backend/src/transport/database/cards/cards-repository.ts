@@ -138,6 +138,17 @@ const findByIdForUser = async (id: string, userId: string): Promise<DbCardWithCh
   return result[0] ?? null
 }
 
+// Resolve the (unique) card materialized for a highlight. Used by the
+// seed_card_chat worker to find the card enrichment created for a just-saved
+// note. cards.highlight_id is uniquely indexed, so at most one row matches.
+const findByHighlightId = async (highlightId: string): Promise<DbCardWithChunk | null> => {
+  const result = (await sql`
+    ${SELECT_CARD_WITH_CHUNK_SQL}
+    WHERE c.highlight_id = ${highlightId}
+  `) as DbCardWithChunk[]
+  return result[0] ?? null
+}
+
 const updateStatus = async (id: string, status: CardStatus): Promise<DbCard | null> => {
   const result = (await sql`
     UPDATE public.cards
@@ -187,6 +198,7 @@ export interface CardsRepositoryInterface {
   listBySessionId: (studySessionId: string, status?: CardStatus) => Promise<DbCardWithChunk[]>
   findById: (id: string) => Promise<DbCardWithChunk | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbCardWithChunk | null>
+  findByHighlightId: (highlightId: string) => Promise<DbCardWithChunk | null>
   updateStatus: (id: string, status: CardStatus) => Promise<DbCard | null>
   updateStatusBatch: (studySessionId: string, cardIds: string[], status: CardStatus) => Promise<DbCard[]>
   updateFields: (id: string, patch: CardFieldsPatch) => Promise<DbCard | null>
@@ -200,6 +212,7 @@ export const CardsRepository = (): CardsRepositoryInterface => {
     listBySessionId,
     findById,
     findByIdForUser,
+    findByHighlightId,
     updateStatus,
     updateStatusBatch,
     updateFields,

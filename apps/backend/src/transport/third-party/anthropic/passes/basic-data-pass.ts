@@ -14,8 +14,6 @@ export type HighlightInput = {
   highlightId: string
   segmentId: string
   selectionText: string
-  note: string | null
-  presetTags: string[]
 }
 
 type BasicDataPassArgs = {
@@ -204,12 +202,11 @@ export const basicDataPass = async ({
   const shouldHideTranslationFields = hideTranslationFields || sameLanguage
   const segmentLines = segments.map((s) => `[${s.id}] ${s.text}`).join('\n')
 
+  // The learner's note / preset tags are intentionally NOT injected here: they
+  // are answered directly in the per-card chat (seed_card_chat) rather than
+  // shaping the card's base fields.
   const highlightLines = highlights
-    .map((h) => {
-      const noteSuffix = h.note ? ` | note: ${h.note}` : ''
-      const tagSuffix = h.presetTags.length ? ` | tags: ${h.presetTags.join(', ')}` : ''
-      return `- ${h.highlightId} :: segment_id=${h.segmentId} :: "${h.selectionText}"${noteSuffix}${tagSuffix}`
-    })
+    .map((h) => `- ${h.highlightId} :: segment_id=${h.segmentId} :: "${h.selectionText}"`)
     .join('\n')
 
   const highlightsBlock = highlights.length

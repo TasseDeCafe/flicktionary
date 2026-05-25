@@ -55,11 +55,12 @@ const updateFastGloss = async (id: string, fastGloss: string): Promise<void> => 
 const updateNoteAndTags = async (
   id: string,
   note: string | null,
-  presetTags: string[]
+  presetTags: string[],
+  chatSeedPrompt: string | null
 ): Promise<DbHighlight | null> => {
   const result = (await sql`
     UPDATE public.highlights
-    SET note = ${note}, preset_tags = ${presetTags}
+    SET note = ${note}, preset_tags = ${presetTags}, chat_seed_prompt = ${chatSeedPrompt}
     WHERE id = ${id}
     RETURNING *
   `) as DbHighlight[]
@@ -129,7 +130,12 @@ export interface HighlightsRepositoryInterface {
   listBySessionId: (studySessionId: string) => Promise<DbHighlight[]>
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<void>
-  updateNoteAndTags: (id: string, note: string | null, presetTags: string[]) => Promise<DbHighlight | null>
+  updateNoteAndTags: (
+    id: string,
+    note: string | null,
+    presetTags: string[],
+    chatSeedPrompt: string | null
+  ) => Promise<DbHighlight | null>
   deleteWithCardCleanup: (id: string) => Promise<boolean>
 }
 

@@ -178,6 +178,18 @@ export const SessionGlossSheet = ({
     why_this_form: t`Why this form?`,
   }
 
+  // Localized natural-language phrasing for each preset, composed into the chat
+  // question sent to the backend. Localizing here (in the UI locale) keeps the
+  // backend language-agnostic; the model is told separately which language to
+  // answer in (native, or target when translations are hidden).
+  const presetPrompts: Record<PresetTag, string> = {
+    explain: t`Explain this term in more depth.`,
+    '3_examples': t`Give me three more example sentences using it.`,
+    synonyms: t`What are some synonyms or near-synonyms, and how do they differ?`,
+    etymology: t`What's the etymology or origin of this term?`,
+    why_this_form: t`Why does it appear in this particular form here?`,
+  }
+
   const [glossState, setGlossState] = useState<GlossState>({ kind: 'idle' })
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const [titleText, setTitleText] = useState<string>('')
@@ -366,10 +378,20 @@ export const SessionGlossSheet = ({
     )
   }
 
+  // Compose the localized chat question: each selected preset's sentence (in
+  // gloss-sheet button order) followed by the verbatim note. Null when there is
+  // nothing to ask, which suppresses the seed_card_chat job server-side.
+  const composeChatSeedPrompt = (): string | null => {
+    const selectedPrompts = PRESET_TAGS.filter((tag) => tags.includes(tag)).map((tag) => presetPrompts[tag])
+    const trimmedNote = note.trim()
+    const parts = trimmedNote ? [...selectedPrompts, trimmedNote] : selectedPrompts
+    return parts.length ? parts.join('\n') : null
+  }
+
   const handleSaveNote = () => {
     if (!highlightId) return
     saveNoteAndTags(
-      { sessionId, highlightId, note: note.trim() || null, presetTags: tags },
+      { sessionId, highlightId, note: note.trim() || null, presetTags: tags, chatSeedPrompt: composeChatSeedPrompt() },
       {
         onSuccess: () => {
           setExpanded(false)
@@ -524,6 +546,7 @@ export const SessionGlossSheet = ({
               </button>
             ))}
           </div>
+          <p className='text-muted-foreground mt-2 text-xs'>{t`Your answer will appear in this card's chat.`}</p>
         </FloatingSheetExpanded>
 
         <FloatingSheetFooter>

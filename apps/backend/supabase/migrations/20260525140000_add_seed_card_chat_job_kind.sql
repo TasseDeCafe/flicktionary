@@ -1,0 +1,12 @@
+-- New job kind: seed_card_chat.
+--
+-- A saved highlight note/preset no longer shapes the card's base fields — it is
+-- answered directly in the per-card chat. Pressing "Save note" enqueues a
+-- seed_card_chat job; the worker ensures the card exists, renders the note +
+-- presets into a chat turn, and calls the card-chat service to produce a reply.
+--
+-- This value MUST be added in its own migration: Postgres forbids using a newly
+-- added enum label as a literal in the same transaction. The companion migration
+-- (constraints + dedup index) references 'seed_card_chat' as a literal, so it has
+-- to run after this one has committed.
+ALTER TYPE public.processing_job_kind ADD VALUE IF NOT EXISTS 'seed_card_chat';

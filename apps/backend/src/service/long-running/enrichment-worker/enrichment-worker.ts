@@ -7,6 +7,7 @@ import {
 import type { ProcessingDependencies } from '../../processing/processing-dependencies'
 import { enrichHighlight } from '../../processing/enrich-highlight'
 import { nominateWindow } from '../../processing/nominate-window'
+import { seedCardChatFromNote } from '../../processing/seed-card-chat-from-note'
 
 export interface EnrichmentWorkerInterface {
   initialize: () => void
@@ -48,6 +49,17 @@ export const EnrichmentWorker = (
         if (!job.highlight_id) throw new Error('enrich_highlight job missing highlight_id')
         await enrichHighlight(
           { sessionId: job.study_session_id, highlightId: job.highlight_id, userId: job.user_id },
+          processingDependencies
+        )
+      } else if (job.kind === 'seed_card_chat') {
+        if (!job.highlight_id) throw new Error('seed_card_chat job missing highlight_id')
+        await seedCardChatFromNote(
+          {
+            jobId: job.id,
+            sessionId: job.study_session_id,
+            highlightId: job.highlight_id,
+            userId: job.user_id,
+          },
           processingDependencies
         )
       } else if (job.kind === 'nominate_window') {

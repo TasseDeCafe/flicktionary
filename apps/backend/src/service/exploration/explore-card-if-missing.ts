@@ -58,16 +58,6 @@ export const exploreCardIfMissing = async (
     )
     const surroundingFormatted = formatSurroundingSegments(surrounding, card.segment_id)
 
-    let userNote: string | null = null
-    let presetTags: string[] = []
-    if (card.highlight_id) {
-      const highlight = await deps.highlightsRepository.findById(card.highlight_id)
-      if (highlight) {
-        userNote = highlight.note
-        presetTags = highlight.preset_tags ?? []
-      }
-    }
-
     const languagePrefs = await getLanguageMode({
       userId,
       targetLanguage: session.target_language,
@@ -86,8 +76,6 @@ export const exploreCardIfMissing = async (
       surroundingSegments: surroundingFormatted,
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
-      userNote,
-      presetTags,
     })
     const sanitizedText = sanitizeTextFieldsForLanguageMode(
       {

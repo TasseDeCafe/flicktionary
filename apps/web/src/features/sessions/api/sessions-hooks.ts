@@ -213,10 +213,13 @@ export const useGetProcessingStatus = (sessionId: string, refetchInterval?: numb
   return useQuery(
     orpcQuery.studySessions.getProcessingStatus.queryOptions({
       input: { sessionId },
+      // Never query without a session scope (e.g. the vocabulary view passes '').
+      enabled: sessionId.length > 0,
       select: (response) => response.data,
       refetchInterval: (query) => {
         const data = query.state.data?.data
-        const active = !!data && data.enrichingHighlightIds.length > 0
+        // Keep polling while enrichment OR a seeded chat answer is still in flight.
+        const active = !!data && (data.enrichingHighlightIds.length > 0 || data.seedChatHighlightIds.length > 0)
         return active ? (refetchInterval ?? 2000) : false
       },
       meta: { errorMessage: t`Failed to load processing status` },

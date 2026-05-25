@@ -33,6 +33,17 @@ export type RunCardChatInput = {
   cardId: string
   userId: string
   content: string
+  // When false, the Opus call is made without the update_card_fields tool, so a
+  // turn cannot rewrite card fields. Interactive chat leaves this true; the
+  // auto-seeded highlight-note turn sets it false (the reply is informational
+  // and must not silently overwrite the just-enriched card). Default: true.
+  allowCardEdits?: boolean
+  // Idempotency metadata for worker-seeded turns. When sourceKey is set, both
+  // rows are persisted with it and the run is skipped if an assistant reply for
+  // the key already exists — so a retried job never calls Opus or duplicates the
+  // turn. Manual chat leaves these undefined (rows store NULL).
+  source?: string
+  sourceKey?: string
 }
 
 export type RunCardChatResult = {
@@ -105,8 +116,23 @@ const renderCardForChat = (card: DbCardWithChunk, mode: LanguageOutputMode): str
 const buildSeedUserTurn = (
   card: DbCardWithChunk,
   surroundingSegmentsBlock: string,
-  mode: LanguageOutputMode
+  mode: LanguageOutputMode,
+  allowCardEdits: boolean,
+  replyLanguage: string
 ): string => {
+  const header = `Card under discussion:
+${renderCardForChat(card, mode)}
+
+Surrounding segments:
+${surroundingSegmentsBlock}`
+
+  // No editing tool is offered for this turn — omit the tool instructions so the
+  // model answers conversationally instead of trying to call a tool it can't.
+  // The question itself may be phrased in the user's UI language (e.g. preset
+  // chips), so pin the reply language explicitly: target language when
+  // translations are hidden (preserve immersion), otherwise the native language.
+  if (!allowCardEdits) return `${header}\n\nRespond in ${replyLanguage}.`
+
   const editableFields = mode.hideTranslationFields
     ? 'definition, target-language example, grammar, etc.'
     : 'translation, example sentence, definition, etc.'
@@ -114,11 +140,7 @@ const buildSeedUserTurn = (
     ? `\nTranslation fields are hidden for this target language: do not call \`${UPDATE_TOOL_NAME}\` with translation or native_example. If the learner explicitly asks for a native-language translation, you may answer conversationally, but do not store or backfill those card fields.`
     : ''
 
-  return `Card under discussion:
-${renderCardForChat(card, mode)}
-
-Surrounding segments:
-${surroundingSegmentsBlock}
+  return `${header}
 
 When the learner asks you to change something on the card (${editableFields}),
 call the \`${UPDATE_TOOL_NAME}\` tool with only the fields that should change. Do not echo unchanged fields.
@@ -232,11 +254,31 @@ export const runCardChat = async (
   input: RunCardChatInput,
   deps: RunCardChatDependencies
 ): Promise<RunCardChatResult> => {
+  const allowCardEdits = input.allowCardEdits ?? true
+
   const card = await deps.cardsRepository.findByIdForUser(input.cardId, input.userId)
   if (!card) throw new Error('Card not found')
 
   const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, input.userId)
   if (!session) throw new Error('Session not found')
+
+  // Idempotency gate for worker-seeded turns: if this seed key already produced
+  // an assistant reply, return the stored turn without calling Opus again. The
+  // card/session ownership check above must happen first because card_chat rows
+  // carry ownership only through card -> session.
+  if (input.sourceKey) {
+    const existingAssistant = await deps.cardChatMessagesRepository.findSeededAssistant(input.cardId, input.sourceKey)
+    if (existingAssistant) {
+      const userMessage = await deps.cardChatMessagesRepository.insertSeededMessage({
+        cardId: input.cardId,
+        role: 'user',
+        content: input.content,
+        source: input.source ?? 'seed',
+        sourceTurnKey: input.sourceKey,
+      })
+      return { userMessage, assistantMessage: existingAssistant }
+    }
+  }
 
   const languagePrefs = await getLanguageMode({
     userId: input.userId,
@@ -271,7 +313,12 @@ export const runCardChat = async (
   const { older, recent } = splitTurns(prior)
   const summary = summarizeOlderTurns(older)
 
-  const seedTurn = buildSeedUserTurn(card, surroundingFormatted, languagePrefs)
+  // Reply language for the auto-seeded (non-editable) turn: target language when
+  // translations are hidden (immersion), otherwise the learner's native language.
+  const replyLanguage = languagePrefs.hideTranslationFields
+    ? session.target_language
+    : (languagePrefs.nativeLanguage ?? session.target_language)
+  const seedTurn = buildSeedUserTurn(card, surroundingFormatted, languagePrefs, allowCardEdits, replyLanguage)
   const seedWithSummary = summary ? `${seedTurn}\n\n${summary}` : seedTurn
 
   const messages: Anthropic.MessageParam[] = [
@@ -289,7 +336,8 @@ export const runCardChat = async (
     model: MODEL_OPUS,
     max_tokens: 1500,
     system: promptContext.systemBlocks,
-    tools: [updateCardFieldsTool],
+    // Withhold the editing tool for non-editable (auto-seeded) turns.
+    ...(allowCardEdits ? { tools: [updateCardFieldsTool] } : {}),
     messages,
   })
 
@@ -379,6 +427,28 @@ export const runCardChat = async (
 
   const finalAssistantBody =
     updatedFieldNames.length > 0 ? `${baseText}\n\n_Updated: ${updatedFieldNames.join(', ')}_` : baseText
+
+  // Seeded turns persist with the source key (conflict-safe, so a retry after a
+  // partial insert re-reads the stored rows instead of duplicating the turn).
+  // Manual turns insert plainly with NULL source columns.
+  if (input.sourceKey) {
+    const source = input.source ?? 'seed'
+    const userMessage = await deps.cardChatMessagesRepository.insertSeededMessage({
+      cardId: input.cardId,
+      role: 'user',
+      content: input.content,
+      source,
+      sourceTurnKey: input.sourceKey,
+    })
+    const assistantMessage = await deps.cardChatMessagesRepository.insertSeededMessage({
+      cardId: input.cardId,
+      role: 'assistant',
+      content: finalAssistantBody,
+      source,
+      sourceTurnKey: input.sourceKey,
+    })
+    return { userMessage, assistantMessage }
+  }
 
   const userMessage = await deps.cardChatMessagesRepository.insertMessage({
     cardId: input.cardId,

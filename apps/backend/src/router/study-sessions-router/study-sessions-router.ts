@@ -138,13 +138,21 @@ export const StudySessionsRouter = (
       const jobs = await processingJobsRepository.listActiveBySession(input.sessionId)
       const enrichingHighlightIds: string[] = []
       const failedHighlightIds: string[] = []
+      // Seed-chat jobs are tracked separately from enrichment: a pending seeded
+      // answer is not a missing card, so it must not show up as a triage straggler.
+      const seedChatHighlightIds: string[] = []
+      const failedSeedChatHighlightIds: string[] = []
       for (const job of jobs) {
-        if (job.kind === 'enrich_highlight' && job.highlight_id) {
+        if (!job.highlight_id) continue
+        if (job.kind === 'enrich_highlight') {
           if (job.status === 'failed') failedHighlightIds.push(job.highlight_id)
           else enrichingHighlightIds.push(job.highlight_id)
+        } else if (job.kind === 'seed_card_chat') {
+          if (job.status === 'failed') failedSeedChatHighlightIds.push(job.highlight_id)
+          else seedChatHighlightIds.push(job.highlight_id)
         }
       }
-      return { data: { enrichingHighlightIds, failedHighlightIds } }
+      return { data: { enrichingHighlightIds, failedHighlightIds, seedChatHighlightIds, failedSeedChatHighlightIds } }
     }),
 
     retryEnrichment: implementer.retryEnrichment.handler(async ({ input, context, errors }) => {

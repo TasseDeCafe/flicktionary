@@ -31,8 +31,6 @@ type EnrichmentPassArgs = {
   surroundingSegments: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
-  userNote?: string | null
-  presetTags?: string[]
 }
 
 const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean }): Anthropic.Tool => ({
@@ -171,11 +169,7 @@ export const enrichmentPass = async ({
   surroundingSegments,
   hideTranslationFields = false,
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
-  userNote,
-  presetTags,
 }: EnrichmentPassArgs): Promise<EnrichmentOutput> => {
-  const presetBlock = presetTags && presetTags.length ? `\nPreset emphasis: ${presetTags.join(', ')}` : ''
-  const noteBlock = userNote ? `\nLearner note: ${userNote}` : ''
   const translationModeBlock = hideTranslationFields
     ? `\nTranslation fields are disabled for this target language. Set translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
     : ''
@@ -186,7 +180,7 @@ export const enrichmentPass = async ({
   const userMessage = `Enrich this chunk: "${surfaceForm}"
 
 Surrounding segments:
-${surroundingSegments}${noteBlock}${presetBlock}${translationModeBlock}${l1NotesBlock}
+${surroundingSegments}${translationModeBlock}${l1NotesBlock}
 
 Submit the enrichment via the tool. Required fields are the basic columns
 (headword, sense, surface_form, translation, definition, target_example,
