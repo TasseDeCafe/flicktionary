@@ -91,8 +91,7 @@ export const SessionView = () => {
   // job is still running on the server (`status === 'pending'`). Surfaced as a
   // footer loader so the wait doesn't look like the feature is broken.
   const isGeneratingCandidates =
-    llmHighlightsEnabled &&
-    (isRequestingNomination || (ghostData?.windows ?? []).some((w) => w.status === 'pending'))
+    llmHighlightsEnabled && (isRequestingNomination || (ghostData?.windows ?? []).some((w) => w.status === 'pending'))
   const unprocessedHighlightCount = useMemo(() => {
     if (!highlights) return 0
     const processed = new Set((cards ?? []).map((c) => c.highlightId).filter((id): id is string => !!id))
