@@ -18,6 +18,7 @@
     "db:dev:tunnel:reset": "./scripts/db--dev-tunnel--reset.sh",
     "db:dev:tunnel:wipe": "./scripts/db--dev-tunnel--wipe.sh",
     "db:dev:tunnel:migrate": "./scripts/db--dev-tunnel--migrate.sh",
+    "db:dev:tunnel:gen-types": "./scripts/db--dev-tunnel--gen-types.sh",
     "preview-emails": "email dev --dir emails",
     "lint": "eslint . --fix",
     "check:types": "tsc --noEmit",

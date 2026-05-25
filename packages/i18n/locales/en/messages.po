@@ -1907,11 +1907,11 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:249
+#: apps/web/src/features/sessions/components/session-view.tsx:248
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:202
+#: apps/web/src/features/sessions/components/session-view.tsx:201
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -2765,8 +2765,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:201
-#: apps/web/src/features/sessions/components/session-view.tsx:208
+#: apps/web/src/features/sessions/components/session-view.tsx:200
+#: apps/web/src/features/sessions/components/session-view.tsx:207
 msgid "Session"
 msgstr "Session"
 
@@ -2775,7 +2775,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:209
+#: apps/web/src/features/sessions/components/session-view.tsx:208
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -3237,7 +3237,7 @@ msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:214
+#: apps/web/src/features/sessions/components/session-view.tsx:213
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"

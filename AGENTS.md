@@ -203,14 +203,14 @@ That's it — no copying, no sync step. Never hand-write the timestamp prefix or
 
 When the database schema changes (new tables, columns, enums, etc.), regenerate the TypeScript types to keep them in sync.
 
-From the `apps/backend/supabase/supabase-dev-tunnel` directory, with local Supabase running:
+**Never hand-edit `database.public.types.ts` or `database.auth.types.ts`.** They are generated artifacts. The generator emits tables/columns/enums in strict alphabetical order; editing by hand (e.g. pasting a new table block) drops entries in the wrong place and risks silently mistyping columns, nullability, or the `Date`-vs-`string` quirk. Always regenerate with the script.
+
+With the local (dev-tunnel) Supabase running (`pnpm db:dev:tunnel`), run one command from package scope:
 
 ```bash
-# Public schema (application tables)
-supabase gen types typescript --local > database.public.types.ts
-
-# Auth schema (Supabase auth tables)
-supabase gen types typescript --local --schema auth > database.auth.types.ts
+pnpm --filter @flicktionary/backend db:dev:tunnel:gen-types
 ```
+
+This regenerates both schema files (public + auth) straight into `src/transport/database/`, formats them with prettier, and runs `check:types`. Then review the diff and commit. The only legitimate diff is genuine schema changes — if you see a large quote-style/semicolon diff, the formatting step was skipped (don't run the raw `supabase gen types` by hand; use the script, which handles `doppler run --`, output paths, and formatting for you).
 
 See `apps/backend/src/transport/database/README.md` for usage examples.

@@ -9,15 +9,15 @@ This directory contains auto-generated TypeScript types for our Supabase databas
 
 ## Generating Types
 
-Make sure your local Supabase instance is running, then run these commands from the `apps/backend` directory:
+**Never hand-edit these files** — they are generated. The generator orders everything alphabetically; manual edits land in the wrong place and risk mistyping columns. Always regenerate with the script.
+
+With the local (dev-tunnel) Supabase running (`pnpm db:dev:tunnel`), run one command:
 
 ```bash
-# Generate types for the public schema
-supabase gen types typescript --local > database.public.types.ts
-
-# Generate types for the auth schema
-supabase gen types typescript --local --schema auth > database.auth.types.ts
+pnpm --filter @flicktionary/backend db:dev:tunnel:gen-types
 ```
+
+It regenerates both schema files (public + auth), formats them with prettier, and runs `check:types`. Then review the diff and commit. (The script wraps `supabase gen types typescript --local` with the required `doppler run --` prefix and the right output paths — see `scripts/db--dev-tunnel--gen-types.sh`.)
 
 ## Usage
 

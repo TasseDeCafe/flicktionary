@@ -155,42 +155,6 @@ export type Database = {
         }
         Relationships: []
       }
-      handled_revenuecat_events: {
-        Row: {
-          created_at: string
-          event_id: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          id?: number
-        }
-        Relationships: []
-      }
-      handled_stripe_events: {
-        Row: {
-          created_at: string
-          event_id: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          id?: number
-        }
-        Relationships: []
-      }
       ghost_candidates: {
         Row: {
           char_end: number
@@ -238,6 +202,42 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      handled_revenuecat_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      handled_stripe_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: number
+        }
+        Relationships: []
       }
       highlights: {
         Row: {
