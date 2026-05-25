@@ -232,7 +232,7 @@ msgstr "{dueTermCount} follow-up(s) ready"
 #~ msgid "{highlightCount} highlight(s) ready."
 #~ msgstr "{highlightCount} highlight(s) ready."
 
-#: apps/web/src/features/sessions/components/process-button.tsx:45
+#: apps/web/src/features/sessions/components/triage-footer.tsx:49
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} highlight(s) saved."
 
@@ -285,7 +285,7 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgid "{totalKept} total"
 msgstr "{totalKept} total"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:43
+#: apps/web/src/features/sessions/components/triage-footer.tsx:47
 msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
 msgstr "{unprocessedHighlightCount} new highlight(s) still enriching."
 
@@ -492,8 +492,8 @@ msgid "Active vocabulary"
 msgstr "Active vocabulary"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:58
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:171
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:153
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:172
 msgid "Add a word"
 msgstr "Add a word"
 
@@ -563,7 +563,7 @@ msgstr "All caught up"
 #~ msgid "All caught up for today · {totalKept} total"
 #~ msgstr "All caught up for today · {totalKept} total"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:42
+#: apps/web/src/features/sessions/components/triage-footer.tsx:46
 msgid "All highlights have been processed."
 msgstr "All highlights have been processed."
 
@@ -843,7 +843,7 @@ msgstr "Contact Us"
 msgid "Context"
 msgstr "Context"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:220
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:228
 msgid "Context (optional)"
 msgstr "Context (optional)"
 
@@ -853,7 +853,7 @@ msgstr "Context (optional)"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:98
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Continue"
 msgstr "Continue"
 
@@ -1075,7 +1075,7 @@ msgstr "e.g. /ˈkæt/"
 msgid "e.g. + acc, от + gen"
 msgstr "e.g. + acc, от + gen"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:213
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:221
 msgid "e.g. подоконник, ran out of, à propos"
 msgstr "e.g. подоконник, ran out of, à propos"
 
@@ -1221,7 +1221,7 @@ msgstr "Exporting…"
 msgid "Failed to complete onboarding"
 msgstr "Failed to complete onboarding"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:119
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:120
 msgid "Failed to create card"
 msgstr "Failed to create card"
 
@@ -1351,6 +1351,10 @@ msgstr "Failed to load surrounding context"
 msgid "Failed to load vocabulary"
 msgstr "Failed to load vocabulary"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
+msgid "Failed to open triage"
+msgstr "Failed to open triage"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts:127
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
@@ -1417,8 +1421,8 @@ msgid "Failed to start practice session"
 msgstr "Failed to start practice session"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:309
-msgid "Failed to start processing"
-msgstr "Failed to start processing"
+#~ msgid "Failed to start processing"
+#~ msgstr "Failed to start processing"
 
 #: apps/native/src/features/admin/api/sentry-debug-hooks.ts:11
 #: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
@@ -1494,6 +1498,10 @@ msgstr "Feminine"
 #~ msgid "Finding more terms to suggest…"
 #~ msgstr "Finding more terms to suggest…"
 
+#: apps/web/src/features/sessions/components/triage-footer.tsx:73
+msgid "Finding suggestions…"
+msgstr "Finding suggestions…"
+
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
 msgid "Flicktionary"
 msgstr "Flicktionary"
@@ -1555,7 +1563,7 @@ msgstr "Gender"
 msgid "General"
 msgstr "General"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generate card"
 msgstr "Generate card"
 
@@ -1574,7 +1582,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/practice-session-view.tsx:486
 #: apps/web/src/features/review/components/focus-view.tsx:298
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Generating…"
 
@@ -1616,7 +1624,7 @@ msgid "Go to Sessions"
 msgstr "Go to Sessions"
 
 #: apps/web/src/features/review/components/processing-view.tsx:25
-#: apps/web/src/features/sessions/components/process-button.tsx:50
+#: apps/web/src/features/sessions/components/triage-footer.tsx:54
 msgid "Go to triage"
 msgstr "Go to triage"
 
@@ -1899,11 +1907,11 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:242
+#: apps/web/src/features/sessions/components/session-view.tsx:249
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:195
+#: apps/web/src/features/sessions/components/session-view.tsx:202
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -1928,9 +1936,13 @@ msgstr "Loading..."
 msgid "Loading…"
 msgstr "Loading…"
 
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
+msgid "Looks like {suggestedLanguageName}"
+msgstr "Looks like {suggestedLanguageName}"
+
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:200
-msgid "Looks like {suggestedLanguageName} — switch?"
-msgstr "Looks like {suggestedLanguageName} — switch?"
+#~ msgid "Looks like {suggestedLanguageName} — switch?"
+#~ msgstr "Looks like {suggestedLanguageName} — switch?"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:171
 msgid "Lookup"
@@ -2068,13 +2080,17 @@ msgstr "Next text"
 #~ msgid "No Card Required"
 #~ msgstr "No Card Required"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:41
+#: apps/web/src/features/sessions/components/triage-footer.tsx:45
 msgid "No cards have been generated yet."
 msgstr "No cards have been generated yet."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:202
-msgid "No cards yet. Process the session to generate them."
-msgstr "No cards yet. Process the session to generate them."
+#~ msgid "No cards yet. Process the session to generate them."
+#~ msgstr "No cards yet. Process the session to generate them."
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:202
+msgid "No cards yet. Select some highlights in the source text to generate new cards."
+msgstr "No cards yet. Select some highlights in the source text to generate new cards."
 
 #: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
 #~ msgid "No highlight selected."
@@ -2084,7 +2100,7 @@ msgstr "No cards yet. Process the session to generate them."
 #~ msgid "No highlights — the LLM will suggest terms based on your level."
 #~ msgstr "No highlights — the LLM will suggest terms based on your level."
 
-#: apps/web/src/features/sessions/components/process-button.tsx:44
+#: apps/web/src/features/sessions/components/triage-footer.tsx:48
 msgid "No highlights yet."
 msgstr "No highlights yet."
 
@@ -2199,7 +2215,7 @@ msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 msgid "Opening triage"
 msgstr "Opening triage"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:49
+#: apps/web/src/features/sessions/components/triage-footer.tsx:53
 msgid "Opening…"
 msgstr "Opening…"
 
@@ -2294,7 +2310,7 @@ msgstr "Phrase"
 #~ msgstr "Pick"
 
 #: apps/web/src/components/language-select-field.tsx:34
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:187
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:188
 msgid "Pick a language"
 msgstr "Pick a language"
 
@@ -2426,7 +2442,7 @@ msgstr "Preposition"
 msgid "Previous card"
 msgstr "Previous card"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:40
+#: apps/web/src/features/sessions/components/triage-footer.tsx:44
 msgid "Previous processing failed. You can still open triage."
 msgstr "Previous processing failed. You can still open triage."
 
@@ -2657,7 +2673,7 @@ msgstr "RP"
 msgid "Save"
 msgstr "Save"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:182
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:183
 msgid "Save a term"
 msgstr "Save a term"
 
@@ -2677,7 +2693,7 @@ msgstr "Save to vocabulary"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:450
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:544
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -2749,8 +2765,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:194
 #: apps/web/src/features/sessions/components/session-view.tsx:201
+#: apps/web/src/features/sessions/components/session-view.tsx:208
 msgid "Session"
 msgstr "Session"
 
@@ -2759,7 +2775,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:202
+#: apps/web/src/features/sessions/components/session-view.tsx:209
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -2783,7 +2799,7 @@ msgid "Set your CEFR level and translation behavior for each target language."
 msgstr "Set your CEFR level and translation behavior for each target language."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:127
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:117
 msgid "Set your native language first."
 msgstr "Set your native language first."
 
@@ -2977,6 +2993,10 @@ msgstr "Subscription Successful!"
 msgid "Success!"
 msgstr "Success!"
 
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:206
+msgid "Switch"
+msgstr "Switch"
+
 #: apps/web/src/features/practice/components/rate-sheet.tsx:192
 #: apps/web/src/features/review/components/focus-view.tsx:381
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
@@ -3007,7 +3027,7 @@ msgstr "Synonyms"
 msgid "Target example"
 msgstr "Target example"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:185
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:186
 msgid "Target language"
 msgstr "Target language"
 
@@ -3217,7 +3237,7 @@ msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:207
+#: apps/web/src/features/sessions/components/session-view.tsx:214
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"
@@ -3424,7 +3444,7 @@ msgstr "What language do you speak natively? This is the language Flicktionary w
 msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
 msgstr "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:227
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Where did you hear this? Paste a sentence or leave blank."
 
@@ -3444,7 +3464,7 @@ msgstr "Wiktionary"
 msgid "Wiktionary, edited"
 msgstr "Wiktionary, edited"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:207
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:215
 msgid "Word or expression"
 msgstr "Word or expression"
 

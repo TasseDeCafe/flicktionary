@@ -104,7 +104,7 @@ msgstr "{dueTermCount} révision(s) en attente"
 msgid "{dueTermCount} follow-up(s) ready"
 msgstr "{dueTermCount} révision(s) prête(s)"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:45
+#: apps/web/src/features/sessions/components/triage-footer.tsx:49
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} surlignage(s) enregistré(s)."
 
@@ -129,7 +129,7 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 msgid "{totalKept} total"
 msgstr "{totalKept} au total"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:43
+#: apps/web/src/features/sessions/components/triage-footer.tsx:47
 msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
 msgstr "{unprocessedHighlightCount} nouveau(x) surlignage(s) en cours d'enrichissement."
 
@@ -216,8 +216,8 @@ msgid "Active vocabulary"
 msgstr "Vocabulaire actif"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:58
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:152
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:171
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:153
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:172
 msgid "Add a word"
 msgstr "Ajouter un mot"
 
@@ -275,7 +275,7 @@ msgstr "Tout"
 msgid "All caught up"
 msgstr "Tout est à jour"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:42
+#: apps/web/src/features/sessions/components/triage-footer.tsx:46
 msgid "All highlights have been processed."
 msgstr "Tous les surlignages ont été traités."
 
@@ -496,7 +496,7 @@ msgstr "Contact"
 msgid "Context"
 msgstr "Contexte"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:220
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:228
 msgid "Context (optional)"
 msgstr "Contexte (facultatif)"
 
@@ -506,7 +506,7 @@ msgstr "Contexte (facultatif)"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:98
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Continue"
 msgstr "Continuer"
 
@@ -699,7 +699,7 @@ msgstr "p. ex. /ˈkæt/"
 msgid "e.g. + acc, от + gen"
 msgstr "p. ex. + acc, от + gén"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:213
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:221
 msgid "e.g. подоконник, ran out of, à propos"
 msgstr "p. ex. подоконник, ran out of, à propos"
 
@@ -837,7 +837,7 @@ msgstr "Export en cours…"
 msgid "Failed to complete onboarding"
 msgstr "Échec de la finalisation de l'intégration"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:119
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:120
 msgid "Failed to create card"
 msgstr "Échec de la création de la carte"
 
@@ -967,6 +967,10 @@ msgstr "Échec du chargement du contexte environnant"
 msgid "Failed to load vocabulary"
 msgstr "Échec du chargement du vocabulaire"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
+msgid "Failed to open triage"
+msgstr "Échec de l'ouverture du tri"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts:127
 msgid "Failed to record rating"
 msgstr "Échec de l'enregistrement de l'évaluation"
@@ -1032,10 +1036,6 @@ msgstr "Échec de la définition de la langue maternelle"
 msgid "Failed to start practice session"
 msgstr "Échec du démarrage de la session de pratique"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
-msgid "Failed to start processing"
-msgstr "Échec du démarrage du traitement"
-
 #: apps/native/src/features/admin/api/sentry-debug-hooks.ts:11
 #: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
 msgid "Failed to trigger Sentry message"
@@ -1097,6 +1097,10 @@ msgstr "Échec de l'utilisation de la suggestion"
 msgid "Feminine"
 msgstr "Féminin"
 
+#: apps/web/src/features/sessions/components/triage-footer.tsx:73
+msgid "Finding suggestions…"
+msgstr "Recherche de suggestions…"
+
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
 msgid "Flicktionary"
 msgstr "Flicktionary"
@@ -1154,7 +1158,7 @@ msgstr "Genre"
 msgid "General"
 msgstr "Général"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generate card"
 msgstr "Générer la carte"
 
@@ -1169,7 +1173,7 @@ msgstr "Génération de l'exploration complète… cela prend quelques secondes.
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/practice-session-view.tsx:486
 #: apps/web/src/features/review/components/focus-view.tsx:298
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:176
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Génération…"
 
@@ -1190,7 +1194,7 @@ msgid "Go to Sessions"
 msgstr "Aller aux Sessions"
 
 #: apps/web/src/features/review/components/processing-view.tsx:25
-#: apps/web/src/features/sessions/components/process-button.tsx:50
+#: apps/web/src/features/sessions/components/triage-footer.tsx:54
 msgid "Go to triage"
 msgstr "Aller au tri"
 
@@ -1427,11 +1431,11 @@ msgstr "Chargement de la discussion…"
 msgid "Loading more…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:242
+#: apps/web/src/features/sessions/components/session-view.tsx:249
 msgid "Loading segments…"
 msgstr "Chargement des segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:195
+#: apps/web/src/features/sessions/components/session-view.tsx:202
 msgid "Loading session…"
 msgstr "Chargement de la session…"
 
@@ -1452,9 +1456,9 @@ msgstr "Chargement..."
 msgid "Loading…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:200
-msgid "Looks like {suggestedLanguageName} — switch?"
-msgstr "On dirait du {suggestedLanguageName} — changer ?"
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
+msgid "Looks like {suggestedLanguageName}"
+msgstr "On dirait {suggestedLanguageName}"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:171
 msgid "Lookup"
@@ -1575,15 +1579,15 @@ msgstr "Carte suivante"
 msgid "Next text"
 msgstr "Texte suivant"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:41
+#: apps/web/src/features/sessions/components/triage-footer.tsx:45
 msgid "No cards have been generated yet."
 msgstr "Aucune carte n'a encore été générée."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:202
-msgid "No cards yet. Process the session to generate them."
-msgstr "Aucune carte pour le moment. Traitez la session pour les générer."
+msgid "No cards yet. Select some highlights in the source text to generate new cards."
+msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte source pour générer de nouvelles cartes."
 
-#: apps/web/src/features/sessions/components/process-button.tsx:44
+#: apps/web/src/features/sessions/components/triage-footer.tsx:48
 msgid "No highlights yet."
 msgstr "Aucune sélection pour le moment."
 
@@ -1685,7 +1689,7 @@ msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une 
 msgid "Opening triage"
 msgstr "Ouverture du triage"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:49
+#: apps/web/src/features/sessions/components/triage-footer.tsx:53
 msgid "Opening…"
 msgstr "Ouverture…"
 
@@ -1760,7 +1764,7 @@ msgid "Phrase"
 msgstr "Expression"
 
 #: apps/web/src/components/language-select-field.tsx:34
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:187
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:188
 msgid "Pick a language"
 msgstr "Choisissez une langue"
 
@@ -1880,7 +1884,7 @@ msgstr "Préposition"
 msgid "Previous card"
 msgstr "Carte précédente"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:40
+#: apps/web/src/features/sessions/components/triage-footer.tsx:44
 msgid "Previous processing failed. You can still open triage."
 msgstr "Le traitement précédent a échoué. Vous pouvez toujours ouvrir le triage."
 
@@ -2050,7 +2054,7 @@ msgstr "RP"
 msgid "Save"
 msgstr "Enregistrer"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:182
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:183
 msgid "Save a term"
 msgstr "Enregistrer un terme"
 
@@ -2070,7 +2074,7 @@ msgstr "Enregistrer dans le vocabulaire"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:450
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:544
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:158
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Saving…"
 msgstr "Enregistrement…"
 
@@ -2133,8 +2137,8 @@ msgstr "Envoi de l'email"
 msgid "Sending..."
 msgstr "Envoi en cours..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:194
 #: apps/web/src/features/sessions/components/session-view.tsx:201
+#: apps/web/src/features/sessions/components/session-view.tsx:208
 msgid "Session"
 msgstr "Session"
 
@@ -2143,7 +2147,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session en cours"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:202
+#: apps/web/src/features/sessions/components/session-view.tsx:209
 msgid "Session not found."
 msgstr "Session introuvable."
 
@@ -2162,7 +2166,7 @@ msgid "Set your CEFR level and translation behavior for each target language."
 msgstr "Définissez votre niveau CECR et le comportement de traduction pour chaque langue cible."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:127
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:116
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:117
 msgid "Set your native language first."
 msgstr "Définissez d'abord votre langue maternelle."
 
@@ -2315,6 +2319,10 @@ msgstr "Abonnement réussi !"
 msgid "Success!"
 msgstr "Succès !"
 
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:206
+msgid "Switch"
+msgstr "Changer"
+
 #: apps/web/src/features/practice/components/rate-sheet.tsx:192
 #: apps/web/src/features/review/components/focus-view.tsx:381
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
@@ -2339,7 +2347,7 @@ msgstr "Synonymes"
 msgid "Target example"
 msgstr "Exemple cible"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:185
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:186
 msgid "Target language"
 msgstr "Langue cible"
 
@@ -2505,7 +2513,7 @@ msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Les termes non évalués comptent comme « bons » lorsque vous passez au texte suivant."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:207
+#: apps/web/src/features/sessions/components/session-view.tsx:214
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Sans titre"
@@ -2654,7 +2662,7 @@ msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flick
 msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
 msgstr "Lorsqu'activé, le lecteur peut souligner les termes suggérés pendant que vous faites défiler. Lorsque désactivé, seuls vos propres surlignages deviennent des cartes."
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:227
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
 
@@ -2674,7 +2682,7 @@ msgstr "Wiktionnaire"
 msgid "Wiktionary, edited"
 msgstr "Wiktionary, modifié"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:207
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:215
 msgid "Word or expression"
 msgstr "Mot ou expression"
 
@@ -3128,6 +3136,10 @@ msgstr "votre@email.com"
 #~ msgid "English IPA dialect"
 #~ msgstr "Dialecte API anglais"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
+#~ msgid "Failed to start processing"
+#~ msgstr "Échec du démarrage du traitement"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx:75
 #~ msgid "Fast gloss when you select text mid-watch"
 #~ msgstr "Traduction rapide lorsque vous sélectionnez du texte pendant le visionnage"
@@ -3220,6 +3232,10 @@ msgstr "votre@email.com"
 #~ msgid "Loading subscription status..."
 #~ msgstr "Chargement du statut d'abonnement..."
 
+#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:200
+#~ msgid "Looks like {suggestedLanguageName} — switch?"
+#~ msgstr "On dirait du {suggestedLanguageName} — changer ?"
+
 #: apps/landing-page/src/app/[lang]/page.tsx:18
 #~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
 #~ msgstr "Maîtrisez une prononciation parfaite grâce au clonage vocal propulsé par l'IA. Pratiquez la parole dans votre langue cible avec votre propre voix. Essayez notre essai gratuit aujourd'hui !"
@@ -3236,6 +3252,10 @@ msgstr "votre@email.com"
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
 #~ msgid "No Card Required"
 #~ msgstr "Aucune carte requise"
+
+#: apps/web/src/features/review/components/triage-list-view.tsx:202
+#~ msgid "No cards yet. Process the session to generate them."
+#~ msgstr "Aucune carte pour le moment. Traitez la session pour les générer."
 
 #: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
 #~ msgid "No highlight selected."
