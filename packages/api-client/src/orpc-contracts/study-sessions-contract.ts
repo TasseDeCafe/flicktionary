@@ -62,8 +62,8 @@ export const studySessionsContract = {
       })
     ),
 
-  // Triage loaders: which highlights still have an enrich job in flight, which
-  // failed (retry affordance), and whether a discovery job is still running.
+  // Triage loaders: which highlights still have an enrich job in flight, and
+  // which failed (retry affordance).
   getProcessingStatus: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/processing-status', successStatus: 200 })
     .errors({
@@ -76,7 +76,6 @@ export const studySessionsContract = {
         data: z.object({
           enrichingHighlightIds: z.array(z.string().uuid()),
           failedHighlightIds: z.array(z.string().uuid()),
-          discovering: z.boolean(),
         }),
       })
     ),

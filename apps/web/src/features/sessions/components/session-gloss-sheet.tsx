@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
-import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { GhostCandidate, GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,7 @@ import {
   useDeleteHighlight,
   useFastGloss,
   useGetUserPrefs,
+  useSwitchGhost,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
 import type { SelectionResult } from '../utils/selection-adapter'
@@ -57,6 +58,10 @@ interface SessionGlossSheetProps {
   // an already-saved highlight span (the sheet reads cached metadata).
   selection: SelectionResult | null
   existingHighlight: ExistingHighlightInput | null
+  // Set (for a fresh selection only) when the selection overlaps a ghost candidate.
+  // The sheet then offers to swap the just-created highlight for the LLM's span.
+  // Already null whenever LLM suggestions are off (the parent gates it).
+  suggestedGhost: GhostCandidate | null
   anchor: FloatingSheetAnchor
   onClose: () => void
 }
@@ -151,6 +156,7 @@ export const SessionGlossSheet = ({
   targetLanguage,
   selection,
   existingHighlight,
+  suggestedGhost,
   anchor,
   onClose,
 }: SessionGlossSheetProps) => {
@@ -162,6 +168,7 @@ export const SessionGlossSheet = ({
   const { mutateAsync: fetchGloss } = useFastGloss()
   const { mutate: deleteHighlight, isPending: isDeleting } = useDeleteHighlight(sessionId)
   const { mutate: saveNoteAndTags, isPending: isSavingNote } = useUpdateHighlightNoteAndTags(sessionId)
+  const { mutateAsync: switchGhost, isPending: isSwitching } = useSwitchGhost(sessionId)
 
   const presetLabels: Record<PresetTag, string> = {
     explain: t`Explain`,
@@ -177,10 +184,13 @@ export const SessionGlossSheet = ({
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [expanded, setExpanded] = useState(false)
+  // Set once a ghost has been adopted in this open session, to hide the action.
+  const [adopted, setAdopted] = useState(false)
 
   useLayoutEffect(() => {
     if (!open) return
     setExpanded(false)
+    setAdopted(false)
 
     if (existingHighlight) {
       setHighlightId(existingHighlight.id)
@@ -312,6 +322,38 @@ export const SessionGlossSheet = ({
     queryClient,
   ])
 
+  // Atomic span swap: drop the provisional highlight the literal selection created
+  // and replace it with the ghost's span (one backend transaction), then re-point
+  // the sheet at the new highlight and reload its gloss. Done explicitly here rather
+  // than via the selection-keyed effect to avoid any window where a stale highlight
+  // cache could create a duplicate.
+  const handleUseSuggested = async () => {
+    if (!suggestedGhost || !highlightId) return
+    try {
+      const res = await switchGhost({ sessionId, ghostId: suggestedGhost.id, provisionalHighlightId: highlightId })
+      setAdopted(true)
+      const newId = res.data.id
+      setHighlightId(newId)
+      setTitleText(res.data.selectionText)
+      setNote(res.data.note ?? '')
+      setTags(res.data.presetTags ?? [])
+      setGlossState({ kind: 'loading' })
+      const gloss = await fetchGloss({ sessionId, highlightId: newId })
+      setGlossState({
+        kind: 'ready',
+        gloss: gloss.data.gloss,
+        pos: gloss.data.pos,
+        register: gloss.data.register,
+        ipa: gloss.data.ipa,
+      })
+    } catch {
+      setGlossState({ kind: 'error' })
+    }
+  }
+
+  // Hoisted so the lingui message uses a plain ${placeholder}, not a member access.
+  const suggestedSurface = suggestedGhost?.surfaceForm ?? ''
+
   const handleRemove = () => {
     if (!highlightId) return
     deleteHighlight(
@@ -435,6 +477,23 @@ export const SessionGlossSheet = ({
             </FloatingSheetExpandToggle>
           </div>
         </FloatingSheetHeader>
+
+        {suggestedGhost && !adopted && (
+          <FloatingSheetBody>
+            {/* Label sits above the button; the button itself stays understated. Still
+                full-width so it's an easy tap target on mobile. */}
+            <p className='text-muted-foreground mb-1.5 text-xs font-medium'>{t`Use suggested`}</p>
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full justify-center'
+              disabled={!highlightId || isSwitching}
+              onClick={() => void handleUseSuggested()}
+            >
+              {isSwitching ? t`Switching…` : suggestedSurface}
+            </Button>
+          </FloatingSheetBody>
+        )}
 
         {glossState.kind === 'error' && (
           <FloatingSheetBody>

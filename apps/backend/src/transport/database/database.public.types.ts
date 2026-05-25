@@ -191,6 +191,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ghost_candidates: {
+        Row: {
+          char_end: number
+          char_start: number
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          segment_id: string
+          study_session_id: string
+          surface_form: string
+        }
+        Insert: {
+          char_end: number
+          char_start: number
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          segment_id: string
+          study_session_id: string
+          surface_form: string
+        }
+        Update: {
+          char_end?: number
+          char_start?: number
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          segment_id?: string
+          study_session_id?: string
+          surface_form?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'ghost_candidates_segment_id_fkey'
+            columns: ['segment_id']
+            isOneToOne: false
+            referencedRelation: 'text_segments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'ghost_candidates_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       highlights: {
         Row: {
           created_at: string
@@ -248,6 +296,44 @@ export type Database = {
           },
           {
             foreignKeyName: 'highlights_study_session_id_fkey'
+            columns: ['study_session_id']
+            isOneToOne: false
+            referencedRelation: 'study_sessions'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      nominated_windows: {
+        Row: {
+          created_at: string
+          end_index: number
+          id: string
+          start_index: number
+          status: string
+          study_session_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_index: number
+          id?: string
+          start_index: number
+          status?: string
+          study_session_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_index?: number
+          id?: string
+          start_index?: number
+          status?: string
+          study_session_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'nominated_windows_study_session_id_fkey'
             columns: ['study_session_id']
             isOneToOne: false
             referencedRelation: 'study_sessions'
@@ -452,6 +538,8 @@ export type Database = {
           study_session_id: string
           updated_at: string
           user_id: string
+          window_end_index: number | null
+          window_start_index: number | null
         }
         Insert: {
           attempts?: number
@@ -467,6 +555,8 @@ export type Database = {
           study_session_id: string
           updated_at?: string
           user_id: string
+          window_end_index?: number | null
+          window_start_index?: number | null
         }
         Update: {
           attempts?: number
@@ -482,6 +572,8 @@ export type Database = {
           study_session_id?: string
           updated_at?: string
           user_id?: string
+          window_end_index?: number | null
+          window_start_index?: number | null
         }
         Relationships: [
           {
@@ -1101,7 +1193,7 @@ export type Database = {
       practice_rating: 'again' | 'hard' | 'good' | 'easy'
       practice_session_status: 'active' | 'completed' | 'abandoned'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
-      processing_job_kind: 'enrich_highlight' | 'discover_session'
+      processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
       revenuecat_auto_renewal_status:
         | 'will_renew'
@@ -1390,7 +1482,7 @@ export const Constants = {
       practice_rating: ['again', 'hard', 'good', 'easy'],
       practice_session_status: ['active', 'completed', 'abandoned'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
-      processing_job_kind: ['enrich_highlight', 'discover_session'],
+      processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window'],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],
       revenuecat_auto_renewal_status: [
         'will_renew',

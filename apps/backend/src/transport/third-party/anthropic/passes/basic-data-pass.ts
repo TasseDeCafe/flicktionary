@@ -4,18 +4,6 @@ import { buildMethodologySystem } from '../methodology-prompt'
 
 const TOOL_NAME = 'submit_basic_data'
 
-// Target chunk count for the LLM-discovered side of the pass scales with CEFR —
-// higher levels benefit from a denser net across the full track since most
-// lines are noise to them.
-const targetForLevel = (cefrLevel: string): number => {
-  const upper = cefrLevel.trim().toUpperCase()
-  if (upper === 'A1' || upper === 'A2') return 20
-  if (upper === 'B1' || upper === 'B2') return 25
-  if (upper === 'C1') return 35
-  if (upper === 'C2') return 40
-  return 25
-}
-
 type SegmentInput = {
   id: string
   index: number
@@ -30,11 +18,6 @@ export type HighlightInput = {
   presetTags: string[]
 }
 
-export type ExcludedHeadwordSense = {
-  headword: string
-  sense: string
-}
-
 type BasicDataPassArgs = {
   nativeLanguage: string
   targetLanguage: string
@@ -42,15 +25,10 @@ type BasicDataPassArgs = {
   movieContextBlob: string
   segments: SegmentInput[]
   highlights: HighlightInput[]
-  excludedHeadwordSenses: ExcludedHeadwordSense[]
-  // When false, the model is told to emit ONLY highlight rows and to skip
-  // LLM-discovered chunks entirely. Used when the user has turned off the
-  // "suggest chunks" pref.
-  llmDiscoveryEnabled: boolean
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
-  // Which model runs the pass. Defaults to Opus for the (whole-text) discovery
-  // path; the per-highlight enrichment path passes MODEL_ENRICHMENT (Sonnet).
+  // Which model runs the pass. The per-highlight enrichment path passes
+  // MODEL_ENRICHMENT (Sonnet).
   model?: string
 }
 
@@ -77,7 +55,7 @@ export type BasicDataChunk = {
 const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
-    "Submit the list of items worth studying for this learner, with their basic data populated. Items can be either user-provided highlights (must always produce one row per highlight) or LLM-discovered chunks at or above the learner's CEFR level. Both single words and multi-word units are valuable.",
+    'Submit basic card data for the user-provided highlights. You must produce exactly one row per highlight.',
   input_schema: {
     type: 'object',
     properties: {
@@ -88,9 +66,8 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
           properties: {
             source: {
               type: 'string',
-              enum: ['llm', 'highlight'],
-              description:
-                "'highlight' means the chunk is one provided in the highlights list — you MUST produce exactly one row per highlight. 'llm' means a chunk you discovered yourself in the segments.",
+              enum: ['highlight'],
+              description: "Always 'highlight'. Do not discover new chunks from the context segments.",
             },
             highlight_id: {
               type: 'string',
@@ -141,7 +118,7 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
             below_cefr: {
               type: 'boolean',
               description:
-                "True if the chunk is below the learner's CEFR level. For LLM-discovered chunks you should not submit such chunks at all — but if one slips in, set this true and skip the translation/definition/example fields (set them to null) to save tokens. For source='highlight' you MUST emit a row regardless of level (always set below_cefr=false for highlights — the user explicitly asked).",
+                "Always false for user highlights. The user explicitly selected this text, so enrich it even if it is below the learner's CEFR level.",
             },
             grammar: {
               type: 'object',
@@ -219,8 +196,6 @@ export const basicDataPass = async ({
   movieContextBlob,
   segments,
   highlights,
-  excludedHeadwordSenses,
-  llmDiscoveryEnabled,
   hideTranslationFields = false,
   allowL1Notes,
   model = MODEL_OPUS,
@@ -228,18 +203,6 @@ export const basicDataPass = async ({
   const sameLanguage = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const shouldHideTranslationFields = hideTranslationFields || sameLanguage
   const segmentLines = segments.map((s) => `[${s.id}] ${s.text}`).join('\n')
-  const excludedLines = excludedHeadwordSenses.map((e) => `- ${e.headword}${e.sense ? ` | ${e.sense}` : ''}`).join('\n')
-  const excludedBlock = excludedHeadwordSenses.length
-    ? `\nThe learner has already studied these (headword | sense). Exclude any
-LLM-discovered candidate whose headword AND sense are sufficiently similar to
-one of these. A candidate with the same headword but a clearly distinct sense
-(e.g. 'correr | to run a race' vs 'correr | to spread, of news') should still
-be included as a new entry. This exclusion list does NOT apply to user
-highlights — always emit a row for every highlight.
-${excludedLines}`
-    : ''
-
-  const target = llmDiscoveryEnabled ? targetForLevel(cefrLevel) : 0
 
   const highlightLines = highlights
     .map((h) => {
@@ -258,55 +221,10 @@ ${highlightLines}\n`
     ? `\n- Translation fields are disabled for this target language. Set translation=null and native_example=null on every row. Keep definition and target_example in ${targetLanguage}.`
     : ''
 
-  const userMessage = llmDiscoveryEnabled
-    ? `Identify approximately ${target} chunks from these subtitles
-that this learner would benefit from studying, AND emit one row per user
-highlight. The learner is at ${cefrLevel}.
-
-For every emitted row, populate the basic data: headword, sense, surface_form,
-segment_id, translation, definition, target_example, native_example. For
-below_cefr=true rows the translation/definition/example fields can be null
-(saves tokens — the user can override and request enrichment later).
-
-Selection criteria for LLM-discovered chunks — apply strictly:
-- Pick the most important chunks. There can be more than ${target} useful chunks
-  to learn, so go for the ones that are the most useful/frequent.
-- Only include items AT OR ABOVE ${cefrLevel}. Do not include items below
-  ${cefrLevel} even if they appear frequently in the source. Common collocations
-  like "durante el resto de su vida", "nunca más", "según su costumbre" are not
-  ${cefrLevel} material — skip them.
-- Include BOTH single words and multi-word units. Do not skew exclusively toward
-  multi-word chunks: an advanced single word the learner does not know
-  (literary, technical, archaic, slang, jargon — e.g. 'sap' as a weapon,
-  'desfibrilador', 'untado', 'fulano') is just as worth studying as a
-  collocation. Multi-word units to consider: collocations, fixed expressions,
-  idioms, phrasal verbs, pronominal verbs (with their canonical preposition),
-  discourse markers. Aim for a natural mix that reflects what is actually
-  difficult in this source — if the source is dialogue-heavy and idiomatic,
-  multi-word units will dominate; if it is narrative or technical, single
-  words will dominate. Trust the source.
-- Read the source-context block in the system prompt for register and
-  regional cues. If the source is dense with regional, dialectal, or colloquial
-  usage that a ${cefrLevel} learner would not know (e.g. rioplatense voseo,
-  lunfardo, peninsular slang, mexicanismos), prioritize chunks that exemplify
-  that usage over neutral pan-language equivalents — that is the highest-value
-  material for this learner.
-- Headwords must be in dictionary citation form (lemmatized). Verbs as
-  infinitives, nouns as singular masculine, pronominal verbs include 'se'
-  ('fundirse con', not 'se fundía con'). Surface_form is the literal form
-  in the segment.
-- Populate the optional \`grammar\` object per chunk when relevant for the
-  target language — see the per-target-language guidance in the system
-  prompt for which keys to fill (e.g. aspect/aspect_pair_headword for
-  Russian verbs, gender for surprising nouns, government for case-taking
-  verbs/prepositions). Skip the object entirely when nothing applies.${excludedBlock}${translationModeNote}${highlightsBlock}
-
-Segments (id followed by text):
-${segmentLines}`
-    : `Emit one row per user highlight only. DO NOT discover any new chunks
-on your own — the learner has turned off LLM-suggested chunks. Every row must
-have source='highlight' and a matching highlight_id from the list below. Do
-not emit any source='llm' rows.
+  const userMessage = `Emit one row per user highlight only. DO NOT discover any new chunks
+on your own — ghost nomination handles suggestions separately. Every row must
+have source='highlight' and a matching highlight_id from the list below. Do not
+emit any source='llm' rows.
 
 For every emitted row, populate the basic data: headword, sense, surface_form,
 segment_id, translation, definition, target_example, native_example. Populate
@@ -318,11 +236,8 @@ ${targetLanguage}. Headwords must be in dictionary citation form (lemmatized).${
 Segments (id followed by text — only for context, do NOT mine them for new chunks):
 ${segmentLines}`
 
-  // Opus 4.x natively supports up to 32k output tokens. With per-chunk basic
-  // data (translation + definition + 2 examples) and CEFR target counts up to
-  // 40, a long English track can easily blow past 16k. The SDK requires
-  // streaming for any request whose worst-case duration exceeds 10 minutes —
-  // at 32k tokens that's mandatory, so we use messages.stream(...).finalMessage().
+  // Keep streaming even for highlight-only enrichment so long responses do not hit
+  // the SDK's non-streaming duration limit.
   const stream = getAnthropicClient().messages.stream({
     model,
     max_tokens: 32000,

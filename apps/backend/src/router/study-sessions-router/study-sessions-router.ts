@@ -120,20 +120,10 @@ export const StudySessionsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
-      // Highlights are enriched in the background as they're committed; the
-      // Process button now only kicks off whole-text LLM discovery (and triage
-      // navigation is client-side). Discovery enqueue is idempotent per live
-      // job and gated on the user's LLM-suggestions pref — a no-op when off.
-      // We deliberately do NOT mutate study_sessions.status: enrichment and
-      // discovery state live in processing_jobs, not on the session.
-      const llmHighlightsEnabled = await usersRepository.getLlmHighlightsEnabled(userId)
-      if (llmHighlightsEnabled) {
-        await processingJobsRepository.enqueue({
-          kind: 'discover_session',
-          sessionId: input.sessionId,
-          userId,
-        })
-      }
+      // Highlights are enriched in the background as they're committed; Phase 2
+      // ghost nomination replaced whole-text discovery. Process is now a
+      // backwards-compatible no-op that lets old clients jump to triage without
+      // mutating study_sessions.status.
       return { data: { accepted: true as const } }
     }),
 
@@ -148,16 +138,13 @@ export const StudySessionsRouter = (
       const jobs = await processingJobsRepository.listActiveBySession(input.sessionId)
       const enrichingHighlightIds: string[] = []
       const failedHighlightIds: string[] = []
-      let discovering = false
       for (const job of jobs) {
         if (job.kind === 'enrich_highlight' && job.highlight_id) {
           if (job.status === 'failed') failedHighlightIds.push(job.highlight_id)
           else enrichingHighlightIds.push(job.highlight_id)
-        } else if (job.kind === 'discover_session' && (job.status === 'pending' || job.status === 'processing')) {
-          discovering = true
         }
       }
-      return { data: { enrichingHighlightIds, failedHighlightIds, discovering } }
+      return { data: { enrichingHighlightIds, failedHighlightIds } }
     }),
 
     retryEnrichment: implementer.retryEnrichment.handler(async ({ input, context, errors }) => {

@@ -53,84 +53,69 @@ Three source kinds in the MVP, all feeding the same `text_segment` table.
 - The mid-source screen is a search bar over the track plus a scrollable list of segments. Movie segments show a timestamp; text segments don't. That is the entire mid-source UI.
 - Tap-to-select on plain segment text creates a `highlight` eagerly and opens a small **floating gloss sheet** anchored to the selection (desktop popover; mobile bottom drawer with a transparent overlay so the source line stays visible — the drawer flips to open *above* the tapped word when the word sits low enough that a bottom-anchored sheet would cover it). A single click/tap selects one `Intl.Segmenter` word in the session's target language; press-and-drag extends to a contiguous word range, including multi-line / multi-segment ranges. Native browser text selection is disabled in the segment list so the gesture vocabulary stays consistent. Clicking an existing yellow highlight opens the existing-highlight sheet instead. The sheet fetches a fast one-line gloss + POS + register tag, caches the result on the highlight, and a re-tap on the same span is instant. There is no backdrop tint and no separate tap-to-translate opt-out (the old setting was retired when the sheet became unobtrusive enough to be always-on).
 - The floating sheet bundles every action that used to live in a second-tap menu: optional free-text note, preset chips (`Explain`, `3 examples`, `Synonyms`, `Etymology`, `Why this form?`), and a `Remove highlight` button. The note editor and chips live behind an accordion chevron in the header on both mobile and desktop; the mobile sheet can be flicked down by its drag handle to dismiss. The note and tags are passed to the LLM at processing time.
+- When `LLM-suggested terms` is enabled, the reader also shows **ghost candidates**: passive underlined spans nominated by the LLM for the reading window around the user's current scroll position. Ghosts never use `data-highlight-id`, never intercept pointer events, and have no click handler; the user still selects text normally. If a fresh selection overlaps a ghost, the floating gloss sheet shows a full-width `Use suggested` action. Tapping it atomically swaps the provisional user-selected highlight for the ghost's exact segment/offset span, dismisses the ghost, and sends the adopted span through the same background enrichment path as any manual highlight. Turning the pref off disables nomination, ghost fetching/rendering, and the adoption action.
 
 ### Processing pipeline
 
-Two complementary jobs turn a session's highlights and text into triage cards.
-Both run server-side as durable background jobs off a Postgres-backed queue
-(`processing_jobs`), drained by an in-process polling worker with **leases** (a
-crashed claim is reclaimed once its lease goes stale) and bounded concurrency.
-The worker is dependency-injected and a no-op in test/mock runs. Anthropic calls
-stream (the SDK requires streaming for requests whose worst-case duration exceeds
-10 minutes — whole-text discovery on long tracks can).
+Two background job families power the reader: per-highlight enrichment produces
+cards, and reading-window ghost nomination produces passive suggestions that can
+later be adopted into highlights. Both run server-side as durable background jobs
+off a Postgres-backed queue (`processing_jobs`), drained by an in-process polling
+worker with **leases** (a crashed claim is reclaimed once its lease goes stale)
+and bounded concurrency. The worker is dependency-injected and a no-op in
+test/mock runs. Anthropic calls stream so long highlight-enrichment responses do
+not hit SDK duration limits.
 
 - **Per-highlight enrichment** (`enrich_highlight` job) — enqueued the moment a
   highlight is committed during reading (debounced ~5s to absorb mis-selections),
   so cards are mostly ready by the time the user reaches triage. One job enriches
-  exactly one highlight: a basic-data pass with `llmDiscoveryEnabled: false` over
-  a DB-windowed slice of surrounding segments (not the whole track), on
+  exactly one highlight: a highlight-only basic-data pass over a DB-windowed
+  slice of surrounding segments (not the whole track), on
   `MODEL_ENRICHMENT` (Sonnet by default; the `ENRICHMENT_MODEL` env var flips it
-  back to Opus). Highlights are independent — they bypass the discovery-only
-  exclusion prefilter and Haiku tiebreaker. The worker re-checks the highlight
+  back to Opus). Highlights are independent. The worker re-checks the highlight
   still exists immediately before writing, so deleting a highlight mid-flight
   cancels cleanly (no card, non-retryable). Card creation is idempotent (partial
   unique index on `cards(highlight_id)`), so a retry never double-creates.
-- **Discovery** (`discover_session` job) — whole-text LLM chunk discovery,
-  enqueued when the user hits Process / first enters triage. Gated on
-  `llm_highlights_enabled` (a no-op when off) and idempotent (skipped once
-  LLM-suggested cards exist). Scans the full SRT, emits ~20–40 LLM-suggested
-  chunks, and runs the exclusion prefilter + Haiku tiebreaker + materialize
-  (llm rows only) + grounding. It **never emits highlight rows** — those belong
-  to the enrichment job, which removes any duplicate-slow-path risk.
+- **Ghost nomination** (`nominate_window` job) — enqueued as the reader settles
+  on a scroll position, windowed by segment index rather than client array
+  position. A nominated window is recorded in `nominated_windows` even when it
+  yields no candidates, so reloads and back-scrolls do not re-request work.
+  Coverage-row creation and job enqueue are one transaction: a window cannot be
+  marked covered without a worker job. On terminal job failure the window is
+  marked `failed` so the client does not poll forever. The nomination pass returns
+  candidate spans as `segment_id` + raw segment `char_start` / `char_end` +
+  `surface_form`; offsets are trusted only when the slice matches the surface,
+  otherwise the candidate is recovered only if the surface occurs exactly once.
+  Candidates persist in `ghost_candidates` until adopted, at which point
+  `dismissed_at` hides them.
 
 The Process button no longer runs a synchronous pass or flips
-`study_sessions.status`: it enqueues the discovery job and navigates straight to
-triage. Enrichment/discovery progress lives in `processing_jobs`, surfaced to
-triage via a status endpoint (which highlights are still enriching, which failed,
-whether discovery is in flight); triage renders a placeholder row per
-not-yet-materialized highlight and a retry affordance for failed jobs, polling
-until everything drains.
+`study_sessions.status`: it is a triage jump (the backend `process` endpoint is a
+backward-compatible no-op). Enrichment progress lives in `processing_jobs`,
+surfaced to triage via a status endpoint (which highlights are still enriching,
+which failed); triage renders a placeholder row per not-yet-materialized
+highlight and a retry affordance for failed jobs, polling until enrichment drains.
 
-The two jobs share the same underlying steps:
+The enrichment path uses these shared steps:
 
 1. **Source context blob** — one call per `study_session`, persisted on the row by whichever job runs first; later jobs read the cached value.
    - Output ~300 tokens: topic (genre + plot sketch for narrative material; subject matter for non-narrative), register, tone, recurring vocabulary themes, named entities or recurring referents the learner will encounter.
    - Source-type-aware: prompt is the same but the user message labels the excerpts (`Subtitle excerpts` / `Article excerpts` / `Text excerpts` / `Book excerpts`) so the model knows what it's looking at.
    - Acts as a cacheable prompt prefix for every subsequent call related to this session.
-2. **Basic-data pass** — the shared LLM call. Discovery invokes it over the full
-   track with `highlights: []` (discovery only); enrichment invokes it over a
-   surrounding-segment window with a single highlight and discovery disabled.
-   - Input: the segment list (full SRT for discovery, a window for enrichment),
-     the user's highlights (enrichment passes one; discovery passes none),
-     movie context blob, CEFR level, the
-     **source-relevant subset** of the user's already-seen `(headword, sense)`
-     pairs from `user_lookup` (only entries whose headword plausibly appears
-     in this session's source — bounded by source size, not vocab size; see
-     the Cross-source dedup section), and the `llm_highlights_enabled` user
-     pref.
-   - Output: one row per user highlight (always) plus, when LLM discovery is
-     enabled, ~20–40 LLM-suggested chunks (target scales with CEFR — A1/A2=20,
-     B1/B2=25, C1=35, C2=40). Each row has `source` (`'highlight'` or `'llm'`),
-     normalized `headword`, `sense` (1-5 word disambiguator), `surface_form`,
-     `segment_id`, the **basic flashcard data** (`translation`, `definition`,
-     `target_example`, `native_example`), and an optional sparse `grammar`
-     bag of typed morphology / grammar facts (pos, gender, aspect,
-     aspect_pair_headword, government, number_only, is_indeclinable,
-     is_reflexive, animacy, display_form, notable_forms) — populated only
-     for keys that matter in the target language (per the per-language
-     instructions block).
-   - **Hard CEFR floor**: only LLM-discovered chunks at or above the user's
-     level. The LLM is told to skip common B-level filler even when frequent
-     in the source, and to **prioritize regional / dialectal / colloquial
-     chunks** when the source context blob signals that register (e.g.
-     rioplatense voseo, peninsular slang, mexicanismos) over neutral
-     pan-language equivalents. Highlights bypass the CEFR floor — they always
-     produce a card.
-   - Below-level LLM chunks that slip through are flagged `below_cefr=true`
-     and stored with status `auto_rejected`; user can override per chunk.
-   - When `llm_highlights_enabled = false`, the discovery job is never enqueued
-     (and no-ops defensively if it runs); per-highlight enrichment is unaffected
-     and always populates a card for a manual highlight.
+2. **Basic-data pass** — the highlight-only LLM call. Enrichment invokes it over
+   a surrounding-segment window with one highlight. It never discovers new chunks.
+   - Input: the surrounding segment window, the one user highlight, source context
+     blob, CEFR level, and language-mode prefs.
+   - Output: one row for the highlight with `source='highlight'`, normalized
+     `headword`, `sense` (1-5 word disambiguator), `surface_form`, `segment_id`,
+     the **basic flashcard data** (`translation`, `definition`,
+     `target_example`, `native_example`), and an optional sparse `grammar` bag of
+     typed morphology / grammar facts (pos, gender, aspect, aspect_pair_headword,
+     government, number_only, is_indeclinable, is_reflexive, animacy,
+     display_form, notable_forms) — populated only for keys that matter in the
+     target language (per the per-language instructions block).
+   - Highlights bypass the CEFR floor — they always produce a card because the
+     user explicitly selected the text.
    - The LLM **normalizes the chunk**: it produces a `headword` that may
      differ from `selection_text`. Example: user highlights `out` inside
      `ran out of milk` → `headword = "run out of"`.
@@ -192,11 +177,15 @@ Two-layer UI.
 
 **Layer 1 — Triage list (default landing).**
 
-- Two sections: "Your highlights" and "LLM-suggested chunks". Auto-rejected chunks collapsed under a `Show N filtered out` toggle.
+- Primary section: "Your highlights". These include literal manual selections
+  and adopted ghost suggestions, because adopting a ghost creates a real
+  highlight before enrichment. Legacy LLM-suggested / auto-rejected rows may still
+  render defensively, but the current pipeline no longer creates new triage cards
+  with `highlight_id = null`.
 - Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, a split-keep control (primary button keeps as passive; chevron opens a menu with `Keep as passive` / `Keep as active`), reject toggle, tap target. Rows whose underlying term is already in the active pool show a compact ★ `Active` indicator. `Keep all` defaults to passive — there is no bulk "Keep all as active" in v1.
 - Filter, search, sort across both sections.
 - Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
-- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). LLM-suggested chunks land as `pending` and require explicit triage. Below-CEFR LLM chunks are still `auto_rejected`. Because highlights are kept by default, the `cards.updateStatus` endpoint honors a `learningMode` field even when the status is already `kept` — i.e. tapping `Keep as active` on a default-kept highlight promotes its `user_lookup` to the active pool rather than no-op-ing.
+- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). Because highlights are kept by default, the `cards.updateStatus` endpoint honors a `learningMode` field even when the status is already `kept` — i.e. tapping `Keep as active` on a default-kept highlight promotes its `user_lookup` to the active pool rather than no-op-ing.
 - Sticky footer: `Practice these terms` button (full-width on mobile,
   right-aligned on desktop) that starts a Practice session in the session's
   target language. Disabled when no cards are kept. Per-session CSV export is
@@ -332,45 +321,22 @@ Native-style shell so the eventual React Native port is a translation, not a red
 ### Cross-source dedup
 
 - `user_lookup(user_id, target_language, headword, sense)` is the canonical "user has already studied this" table. The composite PK lets the same headword be studied in multiple distinct senses (polysemy on bare lemmas — `correr | race` and `correr | spread (news)` are two rows).
-- Dedup runs in two stages, plus a write-time gate. Both stages apply only to
-  LLM-discovered chunks; user highlights bypass entirely (every highlight
-  always produces a card).
-  1. **Source-relevant pre-filter** (heuristic guidance). Before the
-     basic-data pass runs, `user_lookups` is filtered to only entries whose
-     headword plausibly appears in this session's source via Postgres FTS
-     (`tsvector` aggregated over the track + `plainto_tsquery(headword)`
-     using the per-language regconfig). Bounded by source size, not by the
-     user's full vocab. The filtered subset is what's sent to the LLM as
-     exclusion guidance; the basic-data prompt still says **same headword +
-     clearly distinct sense should still be included as a new entry**. Full
-     mechanism + per-language quality tiers are documented in
-     `EXCLUSION_PREFILTER.md`.
-  2. **Haiku tiebreaker** (correctness gate). After the basic-data pass
-     returns, any LLM-discovered candidate whose headword collides
-     case-insensitively with an existing `user_lookups` row is sent to a
-     small Haiku call alongside the existing senses for that headword.
-     Haiku decides which candidates are duplicates of an existing sense vs
-     genuinely new senses. Duplicates are dropped before card creation; new
-     senses pass through. Skipped entirely when there are zero collisions.
-     Failure mode: one retry, then fall through keeping all candidates and
-     append a `processing_warnings` entry — better to surface a duplicate
-     at triage than silently drop a real distinct sense.
-  3. **Composite PK gate** at write time. `ON CONFLICT (user_id,
-target_language, headword, sense)` increments `count` rather than
-     creating a duplicate row when the same triple resurfaces.
-- Decisions for both stages are audited in the `processing_telemetry`
-  table (one row per pass invocation, payload includes inputs + decisions
-  - duration). Internal/diagnostic only — droppable when no longer useful.
+- Whole-text LLM discovery and its source-relevant prefilter / Haiku tiebreaker
+  are retired. Manual highlights and adopted ghost suggestions always produce a
+  card; if the resulting `(user_id, target_language, headword, sense)` already
+  exists, `user_lookup` is reused/incremented rather than duplicated.
+- The old `EXCLUSION_PREFILTER.md` design is historical context for a future
+  suggestion-ranking pass, not part of the active reader pipeline.
 - Designed so future content sources (books, articles) feed the same dedup table — a chunk learned from a movie won't resurface in a book.
 
 ## Settings (per user)
 
 - Native language (single).
 - CEFR level per `target_language`. Asked once when starting a session in a new target language.
-- LLM-suggested chunks toggle (default on). When off, no `discover_session` job
-  is enqueued — only the user's manual highlights are enriched into cards. The
-  Process button is disabled when this pref is off and the user has zero
-  highlights (nothing to discover, nothing highlighted to enrich).
+- LLM-suggested chunks toggle (default on). When off, ghost nomination is inert:
+  no windows are requested, no ghost outlines render, and no `Use suggested`
+  adoption action appears. Manual highlights are still enriched into cards. The
+  Process button remains available as a triage jump even with zero highlights.
 - Show translations toggle per target language (default on). This means
   "show/generate native-language translation fields for this target language",
   not "pretend the learner has no native language." Backend call sites use the
@@ -433,7 +399,7 @@ study_session
   cefr_level          text         -- snapshotted from user pref
   context_blob        text?        -- source context, populated by the first background job
   status              'active' | 'processing' | 'processed' | 'exported' | 'failed'
-                                   -- background enrichment/discovery keep the session 'active'
+                                   -- background enrichment/nomination keep the session 'active'
                                    -- and do NOT flip status; live job state lives in
                                    -- processing_jobs. 'processing' is no longer used by the
                                    -- read flow (kept for the export lifecycle + legacy rows).
@@ -462,7 +428,7 @@ highlight
 card
   id                  uuid pk
   study_session_id    uuid
-  highlight_id        uuid?         -- null for LLM-suggested chunks
+  highlight_id        uuid?         -- normally set; null only for legacy/direct non-highlight cards
   segment_id          uuid -> text_segment.id    -- where it appears in source
   headword            text          -- LLM-normalized, dictionary citation form
   sense               text          -- 1-5 word sense disambiguator
@@ -513,12 +479,15 @@ card_chat_message
   content             text
   created_at          timestamptz
 
-processing_jobs                      -- durable background-job queue (enrichment + discovery)
+processing_jobs                      -- durable background-job queue (enrichment + ghost nomination)
   id                  uuid pk
-  kind                'enrich_highlight' | 'discover_session'
+  kind                'enrich_highlight' | 'nominate_window'
+                                   -- legacy enum may still include discover_session; worker treats it as no-op
   study_session_id    uuid -> study_session.id  (ON DELETE CASCADE)
   highlight_id        uuid? -> highlight.id      (ON DELETE CASCADE; required for
-                                    -- enrich_highlight, null for discover_session)
+                                    -- enrich_highlight, null for nominate_window)
+  window_start_index  int?          -- required for nominate_window
+  window_end_index    int?          -- required for nominate_window
   user_id             uuid
   status              'pending' | 'processing' | 'done' | 'failed'
   attempts            int          -- bumped at claim; gates retry vs fail
@@ -529,8 +498,28 @@ processing_jobs                      -- durable background-job queue (enrichment
   created_at          timestamptz
   updated_at          timestamptz
   -- Partial unique indexes over LIVE (pending/processing) rows make enqueue
-  -- idempotent: one in-flight enrich job per highlight, one discover job per
-  -- session; a fresh job is allowed once the prior reaches a terminal state.
+  -- idempotent: one in-flight enrich job per highlight. Nominate-window
+  -- idempotency lives in nominated_windows and is inserted atomically with the job.
+
+nominated_windows                   -- coverage set for reading-window ghost nomination
+  id                  uuid pk
+  study_session_id    uuid -> study_session.id  (ON DELETE CASCADE)
+  start_index         int          -- track-relative segment index, inclusive
+  end_index           int          -- track-relative segment index, inclusive
+  status              'pending' | 'done' | 'failed'
+  created_at          timestamptz
+  updated_at          timestamptz
+  -- unique (study_session_id, start_index, end_index)
+
+ghost_candidates                    -- passive LLM-nominated spans in the reader
+  id                  uuid pk
+  study_session_id    uuid -> study_session.id  (ON DELETE CASCADE)
+  segment_id          uuid -> text_segment.id
+  char_start          int          -- raw segment text offset, same coordinate space as highlights
+  char_end            int
+  surface_form        text
+  dismissed_at        timestamptz? -- set when adopted into a real highlight
+  created_at          timestamptz
 
 user_lookup                          -- cross-source dedup + canonical user vocabulary record + SRS state
   user_id             uuid
@@ -823,7 +812,7 @@ cached result instantly.
 2. Pick the target language (any supported language; defaults to the user's `lastTargetLanguage` MRU, then the first CEFR-set language alphabetically). An advisory amber hint suggests switching if the typed headword + context look like a different language.
 3. Enter the headword and an optional context sentence.
 4. If CEFR is not set for the picked language: inline CEFR prompt opens; on save the original submit replays.
-5. Server lazily creates (or reuses) the synthetic `(user, target_language)` adhoc session, appends a segment + highlight, runs a one-shot basic-data pass (`llmDiscoveryEnabled: false`), runs Wiktionary grounding when applicable, returns `{ cardId, sessionId }`.
+5. Server lazily creates (or reuses) the synthetic `(user, target_language)` adhoc session, appends a segment + highlight, runs a one-shot highlight-only basic-data pass, runs Wiktionary grounding when applicable, returns `{ cardId, sessionId }`.
 6. Frontend lands on the focus view of the new card with `?from=vocabulary`, so chevron-back returns to `/vocabulary`.
 
 **Mid-watch**
@@ -837,13 +826,15 @@ cached result instantly.
 1. As the user highlights while reading, each highlight is enqueued for
    background enrichment (debounced ~5s) and the worker materializes its card —
    so most cards are ready before the user finishes reading.
-2. User taps `Process` (or opens `Triage`). This enqueues the whole-text
-   discovery job (subject to the LLM-suggestions pref) and navigates straight to
-   triage — no synchronous pass, no status flip, no polling page.
-3. Triage shows ready cards immediately, a placeholder row per highlight still
+2. As the user scrolls, settled reading windows can enqueue ghost nomination
+   jobs. Ghosts render as passive suggestions in the reader; adopting one swaps
+   the provisional selection for the suggested span and then enriches it as a
+   normal highlight.
+3. User taps `Process` / `Go to triage` (or opens `Triage`). This navigates
+   straight to triage — no synchronous pass, no status flip, no polling page.
+4. Triage shows ready cards immediately, a placeholder row per highlight still
    enriching, and a retry affordance for any failed enrichment; it polls the
-   `processing_jobs`-backed status until everything drains. Discovery results
-   appear in the LLM-suggested section as the discovery job completes.
+   `processing_jobs`-backed status until everything drains.
 
 **Review and practice**
 
@@ -861,7 +852,7 @@ cached result instantly.
 
 1. From the triage list, tap the `Source` button (or open the session card again).
 2. The mid-watch UI is always browsable while the session is `active` — `Triage` jumps back; highlighting still works.
-3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up in triage when the worker finishes. Discovery is not re-run once it has produced LLM-suggested cards.
+3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up in triage when the worker finishes. Ghost nomination continues window-by-window as the user reads.
 
 ## Open questions / TBD
 

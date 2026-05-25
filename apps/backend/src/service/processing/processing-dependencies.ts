@@ -9,7 +9,37 @@ import { UsersRepository } from '../../transport/database/users/users-repository
 import { UserTargetLanguagePrefsRepository } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { ProcessingTelemetryRepository } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
-import { ProcessingDependencies } from './discover-session'
+import { GhostCandidatesRepository } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
+import { NominatedWindowsRepository } from '../../transport/database/nominated-windows/nominated-windows-repository'
+import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
+import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
+import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
+import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
+import type { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
+import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
+import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
+import type { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
+import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
+import type { GhostCandidatesRepositoryInterface } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
+import type { NominatedWindowsRepositoryInterface } from '../../transport/database/nominated-windows/nominated-windows-repository'
+
+export type ProcessingDependencies = {
+  contentSourcesRepository: ContentSourcesRepositoryInterface
+  textTracksRepository: TextTracksRepositoryInterface
+  textSegmentsRepository: TextSegmentsRepositoryInterface
+  studySessionsRepository: StudySessionsRepositoryInterface
+  highlightsRepository: HighlightsRepositoryInterface
+  cardsRepository: CardsRepositoryInterface
+  userLookupsRepository: UserLookupsRepositoryInterface
+  usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
+  wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
+  ghostCandidatesRepository: GhostCandidatesRepositoryInterface
+  nominatedWindowsRepository: NominatedWindowsRepositoryInterface
+}
 
 // Repos are stateless factories over the shared postgres client, so the worker
 // (built in server.ts) holding its own bundle is equivalent to app.ts's. Used by
@@ -26,4 +56,6 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepository(),
   processingTelemetryRepository: ProcessingTelemetryRepository(),
   wiktionaryEntriesRepository: WiktionaryEntriesRepository(),
+  ghostCandidatesRepository: GhostCandidatesRepository(),
+  nominatedWindowsRepository: NominatedWindowsRepository(),
 })

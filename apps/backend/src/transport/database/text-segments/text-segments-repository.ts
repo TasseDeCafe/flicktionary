@@ -93,6 +93,23 @@ const findById = async (id: string): Promise<DbTextSegment | null> => {
   return result[0] ?? null
 }
 
+// Segments whose track-relative index falls in [startIndex, endIndex] inclusive —
+// the DB-windowed fetch behind reading-window nomination (does NOT load the whole
+// track, so it scales to long reads / a future book reader).
+const listByIndexRange = async (
+  textTrackId: string,
+  startIndex: number,
+  endIndex: number
+): Promise<DbTextSegment[]> => {
+  return (await sql`
+    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    FROM public.text_segments
+    WHERE text_track_id = ${textTrackId}
+      AND index BETWEEN ${startIndex} AND ${endIndex}
+    ORDER BY index ASC
+  `) as DbTextSegment[]
+}
+
 const listAroundIndex = async (textTrackId: string, centerIndex: number, radius: number): Promise<DbTextSegment[]> => {
   return (await sql`
     SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
@@ -139,6 +156,7 @@ export interface TextSegmentsRepositoryInterface {
   listFirstByTrackId: (textTrackId: string, limit: number) => Promise<DbTextSegment[]>
   searchInTrack: (textTrackId: string, language: string, query: string) => Promise<DbTextSegment[]>
   findById: (id: string) => Promise<DbTextSegment | null>
+  listByIndexRange: (textTrackId: string, startIndex: number, endIndex: number) => Promise<DbTextSegment[]>
   listAroundIndex: (textTrackId: string, centerIndex: number, radius: number) => Promise<DbTextSegment[]>
   appendSegmentAtomic: (params: {
     textTrackId: string
@@ -155,6 +173,7 @@ export const TextSegmentsRepository = (): TextSegmentsRepositoryInterface => {
     listFirstByTrackId,
     searchInTrack,
     findById,
+    listByIndexRange,
     listAroundIndex,
     appendSegmentAtomic,
   }
