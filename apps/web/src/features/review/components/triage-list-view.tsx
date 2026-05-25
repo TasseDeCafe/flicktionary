@@ -199,7 +199,7 @@ export const TriageListView = () => {
           {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading cards…`}</p>}
 
           {!isLoading && (cards?.length ?? 0) === 0 && pendingHighlightRows.length === 0 && (
-            <p className='text-muted-foreground text-sm'>{t`No cards yet. Process the session to generate them.`}</p>
+            <p className='text-muted-foreground text-sm'>{t`No cards yet. Select some highlights in the source text to generate new cards.`}</p>
           )}
 
           {(grouped.yourHighlights.length > 0 || pendingHighlightRows.length > 0) && (
