@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
@@ -13,14 +14,17 @@ import {
   useTextSegmentsWindow,
   useUpdateCardStatus,
 } from '../api/review-hooks'
+import { invalidateCardEverywhere } from '../api/card-cache'
 import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
-import { useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { useGetProcessingStatus, useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
 import { EditableCardFields } from './editable-card-fields'
 import { EditableGrammarPanel } from './editable-grammar-panel'
 import { GrammarChips } from './grammar-chips'
 import { GroundingBadge } from './grounding-badge'
-import { PerCardChat } from './per-card-chat'
+import { ChatHeaderButton } from './chat-header-button'
+import { ChatPanel, ChatSidePanel, useChatReadSync } from './chat-panel'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
 import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
@@ -129,7 +133,44 @@ export const FocusView = () => {
       })
     }
   }
-  useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext })
+  const [chatOpen, setChatOpen] = useState(false)
+  const isMobile = useIsMobile()
+  // On mobile the chat is a full-screen sheet, so prev/next keys are inert
+  // while it's open. On desktop it's a side panel beside the card, so keep
+  // keyboard nav live — you can page through cards with the panel open.
+  useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext, enabled: !(chatOpen && isMobile) })
+
+  // Session scope for this view — undefined for language-wide (vocabulary/
+  // practice) entries. Hoisted above the early returns so the seed-watch effect
+  // and processing-status poll can read it without violating hook order.
+  const sourceSessionId = shouldLoadSessionScope ? card?.studySessionId : undefined
+
+  // Persist read state on open / when fresh assistant turns arrive while open.
+  // Lives here (single owner) so the mobile sheet and desktop panel don't both fire.
+  useChatReadSync({ open: chatOpen, cardId, sessionId: sourceSessionId })
+
+  // Poll the session's processing status (only while something is in flight) to
+  // light the chat dot: amber while a seeded answer for this card's highlight
+  // generates, red when it failed. `hasUnreadChat` (server-derived) turns the
+  // dot green once an unread answer is ready.
+  const { data: processingStatus } = useGetProcessingStatus(sourceSessionId ?? '', 2000)
+  const seedHighlightId = card?.highlightId ?? null
+  const isChatGenerating =
+    !!seedHighlightId && (processingStatus?.seedChatHighlightIds.includes(seedHighlightId) ?? false)
+  const isChatFailed =
+    !!seedHighlightId && (processingStatus?.failedSeedChatHighlightIds.includes(seedHighlightId) ?? false)
+
+  // Live green transition while the panel is closed: when the seed job clears
+  // (generating → gone), refetch the card so `hasUnreadChat` flips and the dot
+  // turns green without a manual reload. Mirrors per-card-chat's seed watch.
+  const queryClient = useQueryClient()
+  const wasChatGeneratingRef = useRef(false)
+  useEffect(() => {
+    if (wasChatGeneratingRef.current && !isChatGenerating && sourceSessionId && card) {
+      invalidateCardEverywhere(queryClient, { sessionId: sourceSessionId, cardId: card.id })
+    }
+    wasChatGeneratingRef.current = isChatGenerating
+  }, [isChatGenerating, sourceSessionId, card, queryClient])
 
   // Brief "pressed" highlight before auto-advance: optimistic cache updates only
   // flip `status`, not `learning_mode`, so we can't rely on derived state alone
@@ -188,7 +229,6 @@ export const FocusView = () => {
   const cardPosition = cursor.index + 1
   const cardTotal = cursor.total
   const positionLabel = cursor.index >= 0 ? t`Card ${cardPosition} of ${cardTotal}` : t`Standalone`
-  const sourceSessionId = shouldLoadSessionScope ? card.studySessionId : undefined
   // Vocabulary + Practice entries are already kept by definition, so the
   // keep/reject toggles and the per-session position counter don't apply.
   // Show the chunk's headword as the title instead.
@@ -198,16 +238,27 @@ export const FocusView = () => {
   // Prev/next pager lives in the header (right side, away from the back
   // chevron) so it never overlaps the scrolling card content. Only triage
   // cards have a position to page through; vocabulary/practice entries don't.
-  const headerNav = !isLanguageWideEntry ? (
+  // The chat button is always present — chat exists for all card types.
+  const headerNav = (
     <>
-      <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
-        <ChevronLeft className='size-6 md:size-5' />
-      </Button>
-      <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
-        <ChevronRight className='size-6 md:size-5' />
-      </Button>
+      {!isLanguageWideEntry && (
+        <>
+          <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
+            <ChevronLeft className='size-6 md:size-5' />
+          </Button>
+          <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
+            <ChevronRight className='size-6 md:size-5' />
+          </Button>
+        </>
+      )}
+      <ChatHeaderButton
+        hasUnread={card.hasUnreadChat}
+        isGenerating={isChatGenerating}
+        isFailed={isChatFailed}
+        onClick={() => setChatOpen((o) => !o)}
+      />
     </>
-  ) : undefined
+  )
 
   // Advance to the next card on a triage decision; if we're on the last card,
   // bounce back to the triage list so the user isn't stranded.
@@ -233,182 +284,206 @@ export const FocusView = () => {
     setTimeout(() => advanceOrClose(), 220)
   }
 
+  const desktopChatOpen = chatOpen && isMobile === false
+
   return (
-    <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title} rightSlot={headerNav}>
-      <div className='flex-1 overflow-y-auto px-4 py-4'>
-        <div className='mx-auto flex max-w-4xl flex-col gap-6'>
-          <section>
-            <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
-            <div className='mb-3 flex flex-wrap items-center gap-2'>
-              <GrammarChips grammar={card.chunk.grammar} targetLanguage={targetLanguage} />
-              <GroundingBadge
-                groundedAt={card.chunk.groundedAt}
-                grammarUserEditedAt={card.chunk.grammarUserEditedAt}
-                targetLanguage={targetLanguage}
-              />
-              {wiktionaryUrl && (
-                <a
-                  href={wiktionaryUrl}
-                  target='_blank'
-                  rel='noreferrer'
-                  className='text-foreground hover:bg-accent inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors'
-                >
-                  <ExternalLink className='h-3 w-3' />
-                  {t`Wiktionary`}
-                </a>
-              )}
-            </div>
-            {/* Remount when the card mutates server-side (e.g. chat called
+    <div className='flex h-dvh'>
+      <div className='flex min-w-0 flex-1 flex-col'>
+        <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title} rightSlot={headerNav}>
+          <div className='flex-1 overflow-y-auto px-4 py-4'>
+            <div className='mx-auto flex max-w-4xl flex-col gap-6'>
+              <section>
+                <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
+                <div className='mb-3 flex flex-wrap items-center gap-2'>
+                  <GrammarChips grammar={card.chunk.grammar} targetLanguage={targetLanguage} />
+                  <GroundingBadge
+                    groundedAt={card.chunk.groundedAt}
+                    grammarUserEditedAt={card.chunk.grammarUserEditedAt}
+                    targetLanguage={targetLanguage}
+                  />
+                  {wiktionaryUrl && (
+                    <a
+                      href={wiktionaryUrl}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='text-foreground hover:bg-accent inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors'
+                    >
+                      <ExternalLink className='h-3 w-3' />
+                      {t`Wiktionary`}
+                    </a>
+                  )}
+                </div>
+                {/* Remount when the card mutates server-side (e.g. chat called
                 update_card_fields) so the field useState picks up new values. */}
-            <EditableCardFields
-              key={`${card.id}:${card.updatedAt}`}
-              card={card}
-              hideTranslationFields={hideTranslationFields}
-              sourceSessionId={sourceSessionId}
-            />
-            <div className='mt-4'>
-              <EditableGrammarPanel
-                key={`grammar:${card.chunk.id}:${card.updatedAt}`}
-                card={card}
-                targetLanguage={targetLanguage}
-                sourceSessionId={sourceSessionId}
-              />
+                <EditableCardFields
+                  key={`${card.id}:${card.updatedAt}`}
+                  card={card}
+                  hideTranslationFields={hideTranslationFields}
+                  sourceSessionId={sourceSessionId}
+                />
+                <div className='mt-4'>
+                  <EditableGrammarPanel
+                    key={`grammar:${card.chunk.id}:${card.updatedAt}`}
+                    card={card}
+                    targetLanguage={targetLanguage}
+                    sourceSessionId={sourceSessionId}
+                  />
+                </div>
+              </section>
+
+              <section>
+                {session?.textTrackId && session.contentSourceType !== 'adhoc' && (
+                  <SurroundingContextBlock
+                    sessionId={sessionId}
+                    textTrackId={session.textTrackId}
+                    segmentId={card.segmentId}
+                    fromVocabulary={fromVocabulary}
+                  />
+                )}
+                <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
+                {hasExtras ? (
+                  <FullExplorationRenderer
+                    card={card}
+                    hideExtrasIpa={!!displayedIpa}
+                    hideTranslationFields={hideTranslationFields}
+                    showL1Notes={showL1Notes}
+                  />
+                ) : (
+                  <div className='flex flex-col items-start gap-3'>
+                    <p className='text-muted-foreground text-sm'>
+                      {isExploring
+                        ? t`Generating full exploration… this takes a few seconds.`
+                        : hasBasicData
+                          ? t`Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more.`
+                          : t`This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it.`}
+                    </p>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => exploreCard({ cardId: card.id })}
+                      disabled={isExploring}
+                    >
+                      <Sparkles className='mr-1 h-4 w-4' />
+                      {isExploring ? t`Generating…` : t`Generate full exploration`}
+                    </Button>
+                  </div>
+                )}
+              </section>
             </div>
-          </section>
-
-          <section>
-            {session?.textTrackId && session.contentSourceType !== 'adhoc' && (
-              <SurroundingContextBlock
-                sessionId={sessionId}
-                textTrackId={session.textTrackId}
-                segmentId={card.segmentId}
-                fromVocabulary={fromVocabulary}
-              />
-            )}
-            <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
-            {hasExtras ? (
-              <FullExplorationRenderer
-                card={card}
-                hideExtrasIpa={!!displayedIpa}
-                hideTranslationFields={hideTranslationFields}
-                showL1Notes={showL1Notes}
-              />
-            ) : (
-              <div className='flex flex-col items-start gap-3'>
-                <p className='text-muted-foreground text-sm'>
-                  {isExploring
-                    ? t`Generating full exploration… this takes a few seconds.`
-                    : hasBasicData
-                      ? t`Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more.`
-                      : t`This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it.`}
-                </p>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => exploreCard({ cardId: card.id })}
-                  disabled={isExploring}
-                >
-                  <Sparkles className='mr-1 h-4 w-4' />
-                  {isExploring ? t`Generating…` : t`Generate full exploration`}
-                </Button>
-              </div>
-            )}
-          </section>
-
-          <section>
-            <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Chat`}</h2>
-            <PerCardChat key={card.id} cardId={card.id} sessionId={sourceSessionId} highlightId={card.highlightId} />
-          </section>
-        </div>
-      </div>
-
-      {fromPractice && (
-        <div className='shrink-0 border-t bg-white px-4 py-3'>
-          <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
-            <Button
-              variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
-              size='xl'
-              className='w-full'
-              disabled={isSettingLearningMode}
-              onClick={() => {
-                setLearningMode(
-                  { chunkId: card.chunk.id, learningMode: 'active' },
-                  {
-                    onSuccess: () => {
-                      if (practiceSessionId) {
-                        void navigate({
-                          to: '/practice/$practiceSessionId',
-                          params: { practiceSessionId },
-                        })
-                      }
-                    },
-                  }
-                )
-              }}
-            >
-              <Star className='mr-2 h-4 w-4' />
-              {t`Add to active vocabulary`}
-            </Button>
-            <Button
-              variant={card.chunk.learningMode === 'passive' ? 'default' : 'outline'}
-              size='xl'
-              className='w-full'
-              disabled={isSettingLearningMode}
-              onClick={() => {
-                setLearningMode(
-                  { chunkId: card.chunk.id, learningMode: 'passive' },
-                  {
-                    onSuccess: () => {
-                      if (practiceSessionId) {
-                        void navigate({
-                          to: '/practice/$practiceSessionId',
-                          params: { practiceSessionId },
-                        })
-                      }
-                    },
-                  }
-                )
-              }}
-            >
-              {t`Add to passive vocabulary`}
-            </Button>
           </div>
-        </div>
-      )}
 
-      {fromVocabulary &&
-        (() => {
-          const targetMode = card.chunk.learningMode === 'active' ? 'passive' : 'active'
-          return (
+          {fromPractice && (
             <div className='shrink-0 border-t bg-white px-4 py-3'>
-              <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+              <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
                 <Button
-                  variant='outline'
+                  variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
                   size='xl'
                   className='w-full'
                   disabled={isSettingLearningMode}
                   onClick={() => {
-                    setLearningMode({ chunkId: card.chunk.id, learningMode: targetMode })
+                    setLearningMode(
+                      { chunkId: card.chunk.id, learningMode: 'active' },
+                      {
+                        onSuccess: () => {
+                          if (practiceSessionId) {
+                            void navigate({
+                              to: '/practice/$practiceSessionId',
+                              params: { practiceSessionId },
+                            })
+                          }
+                        },
+                      }
+                    )
                   }}
                 >
-                  {targetMode === 'active' && <Star className='mr-2 h-4 w-4' />}
-                  {targetMode === 'active' ? t`Switch to active vocabulary` : t`Switch to passive vocabulary`}
+                  <Star className='mr-2 h-4 w-4' />
+                  {t`Add to active vocabulary`}
+                </Button>
+                <Button
+                  variant={card.chunk.learningMode === 'passive' ? 'default' : 'outline'}
+                  size='xl'
+                  className='w-full'
+                  disabled={isSettingLearningMode}
+                  onClick={() => {
+                    setLearningMode(
+                      { chunkId: card.chunk.id, learningMode: 'passive' },
+                      {
+                        onSuccess: () => {
+                          if (practiceSessionId) {
+                            void navigate({
+                              to: '/practice/$practiceSessionId',
+                              params: { practiceSessionId },
+                            })
+                          }
+                        },
+                      }
+                    )
+                  }}
+                >
+                  {t`Add to passive vocabulary`}
                 </Button>
               </div>
             </div>
-          )
-        })()}
+          )}
 
-      {!isLanguageWideEntry && (
-        <FocusActionBar
-          card={card}
-          pendingAction={pendingAction}
-          onReject={() => triggerAction('reject')}
-          onKeepPassive={() => triggerAction('passive')}
-          onKeepActive={() => triggerAction('active')}
+          {fromVocabulary &&
+            (() => {
+              const targetMode = card.chunk.learningMode === 'active' ? 'passive' : 'active'
+              return (
+                <div className='shrink-0 border-t bg-white px-4 py-3'>
+                  <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
+                    <Button
+                      variant='outline'
+                      size='xl'
+                      className='w-full'
+                      disabled={isSettingLearningMode}
+                      onClick={() => {
+                        setLearningMode({ chunkId: card.chunk.id, learningMode: targetMode })
+                      }}
+                    >
+                      {targetMode === 'active' && <Star className='mr-2 h-4 w-4' />}
+                      {targetMode === 'active' ? t`Switch to active vocabulary` : t`Switch to passive vocabulary`}
+                    </Button>
+                  </div>
+                </div>
+              )
+            })()}
+
+          {!isLanguageWideEntry && (
+            <FocusActionBar
+              card={card}
+              pendingAction={pendingAction}
+              onReject={() => triggerAction('reject')}
+              onKeepPassive={() => triggerAction('passive')}
+              onKeepActive={() => triggerAction('active')}
+            />
+          )}
+
+          {/* Mobile: full-screen sheet overlay (fixed-positioned, so it can
+              live inside the card column). */}
+          {isMobile && (
+            <ChatPanel
+              open={chatOpen}
+              onOpenChange={setChatOpen}
+              cardId={card.id}
+              sessionId={sourceSessionId}
+              highlightId={card.highlightId}
+            />
+          )}
+        </ModalScreen>
+      </div>
+
+      {/* Desktop: real side panel beside the card column — reflows the layout
+          instead of overlaying, so the card stays readable + navigable. */}
+      {desktopChatOpen && (
+        <ChatSidePanel
+          onClose={() => setChatOpen(false)}
+          cardId={card.id}
+          sessionId={sourceSessionId}
+          highlightId={card.highlightId}
         />
       )}
-    </ModalScreen>
+    </div>
   )
 }
 

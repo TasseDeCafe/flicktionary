@@ -135,3 +135,70 @@ export const invalidateCardEverywhere = (queryClient: QueryClient, params: { ses
   void queryClient.invalidateQueries({ queryKey: getSessionCardsKey(params.sessionId) })
   void queryClient.invalidateQueries({ queryKey: getCardDetailKey(params.cardId) })
 }
+
+// Set hasUnreadChat across whatever caches exist. The chat button is also used
+// in vocabulary/practice routes where there is no concrete session scope, so
+// sessionId is optional: when present we touch both the session list and the
+// card detail cache; when absent we touch only the detail cache.
+export const setCardUnreadEverywhere = (
+  queryClient: QueryClient,
+  params: { sessionId?: string; cardId: string; hasUnreadChat: boolean }
+) => {
+  const update = (card: Card): Card => ({ ...card, hasUnreadChat: params.hasUnreadChat })
+  if (params.sessionId) {
+    updateCardInSessionListCache(queryClient, params.sessionId, params.cardId, update)
+  }
+  updateCardDetailCache(queryClient, params.cardId, update)
+}
+
+// Optional-session variant of the snapshot/restore pair. The detail cache is
+// always snapshotted; the session list cache only when a sessionId is given.
+// Use these for mutations reachable from the session-less vocabulary/practice
+// routes (e.g. markRead).
+export type OptionalSessionCardSnapshot = {
+  listKey?: readonly unknown[]
+  detailKey: readonly unknown[]
+  previousList?: unknown
+  previousDetail: unknown
+}
+
+export const cancelCardCachesOptionalSession = (
+  queryClient: QueryClient,
+  params: { sessionId?: string; cardId: string }
+): Promise<unknown[]> => {
+  const cancels = [queryClient.cancelQueries({ queryKey: getCardDetailKey(params.cardId) })]
+  if (params.sessionId) {
+    cancels.push(queryClient.cancelQueries({ queryKey: getSessionCardsKey(params.sessionId) }))
+  }
+  return Promise.all(cancels)
+}
+
+export const snapshotCardCachesOptionalSession = (
+  queryClient: QueryClient,
+  params: { sessionId?: string; cardId: string }
+): OptionalSessionCardSnapshot => {
+  const detailKey = getCardDetailKey(params.cardId)
+  if (params.sessionId) {
+    const listKey = getSessionCardsKey(params.sessionId)
+    return {
+      listKey,
+      detailKey,
+      previousList: queryClient.getQueryData(listKey),
+      previousDetail: queryClient.getQueryData(detailKey),
+    }
+  }
+  return { detailKey, previousDetail: queryClient.getQueryData(detailKey) }
+}
+
+export const restoreCardCachesOptionalSession = (
+  queryClient: QueryClient,
+  snapshot: OptionalSessionCardSnapshot | undefined
+) => {
+  if (!snapshot) return
+  if (snapshot.listKey && snapshot.previousList !== undefined) {
+    queryClient.setQueryData(snapshot.listKey, snapshot.previousList)
+  }
+  if (snapshot.previousDetail !== undefined) {
+    queryClient.setQueryData(snapshot.detailKey, snapshot.previousDetail)
+  }
+}

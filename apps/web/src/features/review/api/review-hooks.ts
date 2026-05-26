@@ -8,19 +8,24 @@ import type {
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   cancelCardCaches,
+  cancelCardCachesOptionalSession,
   getCardDetailKey,
   getSessionCardsKey,
   invalidateCardEverywhere,
   restoreCardCaches,
+  restoreCardCachesOptionalSession,
   restoreSessionCardsCache,
   reviewCardCacheStaleTimeMs,
   setCardEverywhere,
   setCardStatusBatchEverywhere,
   setCardStatusEverywhere,
+  setCardUnreadEverywhere,
   snapshotCardCaches,
+  snapshotCardCachesOptionalSession,
   snapshotSessionCardsCache,
   type CardCacheSnapshot,
   type CardListSnapshot,
+  type OptionalSessionCardSnapshot,
 } from './card-cache'
 
 export const useListCardsBySession = (
@@ -142,6 +147,30 @@ export const useSendChatMessage = (cardId: string, sessionId?: string) => {
         queryClient.invalidateQueries({ queryKey: getCardDetailKey(cardId) })
       },
       meta: { errorMessage: t`Failed to send chat message` },
+    })
+  )
+}
+
+// Mark a card's chat read. Optimistically clears hasUnreadChat in whatever
+// caches exist, then rolls back on failure so a failed PATCH doesn't leave the
+// dot clear locally while a reload / another device still shows unread. No
+// onSuccess invalidation needed: server truth (last_read_at = NOW()) matches
+// the optimistic value.
+export const useMarkChatRead = (cardId: string, sessionId?: string) => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.cardChat.markRead.mutationOptions({
+      onMutate: async () => {
+        await cancelCardCachesOptionalSession(queryClient, { sessionId, cardId })
+        const snapshot = snapshotCardCachesOptionalSession(queryClient, { sessionId, cardId })
+        setCardUnreadEverywhere(queryClient, { sessionId, cardId, hasUnreadChat: false })
+        return snapshot
+      },
+      onError: (_error, _variables, context) => {
+        restoreCardCachesOptionalSession(queryClient, context as OptionalSessionCardSnapshot | undefined)
+      },
+      meta: { errorMessage: t`Failed to mark chat read` },
     })
   )
 }

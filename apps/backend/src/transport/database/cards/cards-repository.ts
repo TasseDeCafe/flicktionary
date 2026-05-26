@@ -25,7 +25,7 @@ export type DbChunkSummary = {
   learning_mode: 'passive' | 'active'
 }
 
-export type DbCardWithChunk = DbCard & { chunk: DbChunkSummary }
+export type DbCardWithChunk = DbCard & { chunk: DbChunkSummary; has_unread_chat: boolean }
 
 export type CardInsertInput = {
   studySessionId: string
@@ -101,7 +101,20 @@ const SELECT_CARD_WITH_CHUNK_SQL = sql`
       'grounded_at', ul.grounded_at,
       'grammar_user_edited_at', ul.grammar_user_edited_at,
       'learning_mode', ul.learning_mode
-    ) AS chunk
+    ) AS chunk,
+    -- Unread iff the newest assistant turn is newer than the user's last read.
+    -- role = 'assistant' is required: otherwise sending a user message bumps
+    -- MAX(created_at) and re-lights the dot for content the user just wrote.
+    -- Both subqueries are index-backed (idx_card_chat_messages_card_id_created
+    -- + the card_chat_read_state PK).
+    COALESCE(
+      (SELECT MAX(m.created_at) FROM public.card_chat_messages m
+       WHERE m.card_id = c.id AND m.role = 'assistant'),
+      'epoch'::timestamptz
+    ) > COALESCE(
+      (SELECT r.last_read_at FROM public.card_chat_read_state r WHERE r.card_id = c.id),
+      'epoch'::timestamptz
+    ) AS has_unread_chat
   FROM public.cards c
   JOIN public.user_lookups ul ON ul.id = c.user_lookup_id
 `
@@ -112,12 +125,12 @@ const listBySessionId = async (studySessionId: string, status?: CardStatus): Pro
         ${SELECT_CARD_WITH_CHUNK_SQL}
         WHERE c.study_session_id = ${studySessionId} AND c.status = ${status}
         ORDER BY c.created_at ASC
-      `) as Array<DbCard & { chunk: DbChunkSummary }>)
+      `) as DbCardWithChunk[])
     : ((await sql`
         ${SELECT_CARD_WITH_CHUNK_SQL}
         WHERE c.study_session_id = ${studySessionId}
         ORDER BY c.created_at ASC
-      `) as Array<DbCard & { chunk: DbChunkSummary }>)
+      `) as DbCardWithChunk[])
   return rows
 }
 

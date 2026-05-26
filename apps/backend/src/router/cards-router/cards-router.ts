@@ -46,6 +46,7 @@ const toCardDto = (row: DbCardWithChunk) => ({
   userLookupId: row.user_lookup_id,
   surfaceForm: row.surface_form,
   status: row.status,
+  hasUnreadChat: row.has_unread_chat,
   createdAt: new Date(row.created_at).toISOString(),
   updatedAt: new Date(row.updated_at).toISOString(),
   chunk: toChunkDto(row.chunk),

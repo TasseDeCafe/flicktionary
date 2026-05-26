@@ -66,6 +66,29 @@ export type Database = {
           },
         ]
       }
+      card_chat_read_state: {
+        Row: {
+          card_id: string
+          last_read_at: string
+        }
+        Insert: {
+          card_id: string
+          last_read_at?: string
+        }
+        Update: {
+          card_id?: string
+          last_read_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'card_chat_read_state_card_id_fkey'
+            columns: ['card_id']
+            isOneToOne: true
+            referencedRelation: 'cards'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       cards: {
         Row: {
           created_at: string

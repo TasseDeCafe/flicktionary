@@ -61,6 +61,17 @@ const listByCardId = async (cardId: string): Promise<DbCardChatMessage[]> => {
   `) as DbCardChatMessage[]
 }
 
+// Stamp the card's chat as read up to NOW(). Idempotent upsert: the focus
+// view's chat panel calls this every time it opens / observes a fresh
+// assistant turn, so repeated calls must just bump last_read_at.
+const upsertReadState = async (cardId: string): Promise<void> => {
+  await sql`
+    INSERT INTO public.card_chat_read_state (card_id, last_read_at)
+    VALUES (${cardId}, NOW())
+    ON CONFLICT (card_id) DO UPDATE SET last_read_at = NOW()
+  `
+}
+
 export interface CardChatMessagesRepositoryInterface {
   insertMessage: (params: { cardId: string; role: CardChatRole; content: string }) => Promise<DbCardChatMessage>
   insertSeededMessage: (params: {
@@ -72,6 +83,7 @@ export interface CardChatMessagesRepositoryInterface {
   }) => Promise<DbCardChatMessage>
   findSeededAssistant: (cardId: string, sourceTurnKey: string) => Promise<DbCardChatMessage | null>
   listByCardId: (cardId: string) => Promise<DbCardChatMessage[]>
+  upsertReadState: (cardId: string) => Promise<void>
 }
 
 export const CardChatMessagesRepository = (): CardChatMessagesRepositoryInterface => {
@@ -80,5 +92,6 @@ export const CardChatMessagesRepository = (): CardChatMessagesRepositoryInterfac
     insertSeededMessage,
     findSeededAssistant,
     listByCardId,
+    upsertReadState,
   }
 }
