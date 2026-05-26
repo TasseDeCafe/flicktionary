@@ -1,13 +1,11 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 
 export const handleEventIdempotently = async (
   eventId: string,
   processingFunction: () => Promise<void>
 ): Promise<boolean> => {
-  const insertResult = await sql.begin(async (sql) => {
-    // todo: remove 'as any' when TransactionSql call signature is fixed: https://github.com/porsager/postgres/issues/1150
-    /* eslint-disable  @typescript-eslint/no-explicit-any */
-    return (sql as any)`
+  const insertResult = await beginTx(async (tx) => {
+    return tx`
       INSERT INTO handled_stripe_events (event_id)
       VALUES (${eventId})
       ON CONFLICT (event_id) DO NOTHING

@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
@@ -27,9 +28,16 @@ export type EnqueueSeedCardChatInput = {
 // DO NOTHING fired. The ON CONFLICT predicate mirrors uq_processing_jobs_live_enrich,
 // which is kind-scoped to enrich_highlight (seed_card_chat jobs reuse highlight_id
 // and have their own index, so the arbiter must name the kind too).
-const enqueue = async (params: EnqueueJobInput): Promise<DbProcessingJob | null> => {
+//
+// `executor` defaults to the pooled connection; pass a transaction (sql.begin's tx)
+// to enqueue atomically as part of a larger unit of work — e.g. the ghost-adoption
+// swap, which must roll the job back with the rest of the swap if anything fails.
+export const enqueue = async (
+  params: EnqueueJobInput,
+  executor: postgres.Sql = sql
+): Promise<DbProcessingJob | null> => {
   const runAfter = params.runAfter ?? null
-  const result = (await sql`
+  const result = (await executor`
     INSERT INTO public.processing_jobs (kind, study_session_id, highlight_id, user_id, run_after)
     VALUES (
       'enrich_highlight',
@@ -175,7 +183,7 @@ const listActiveBySession = async (sessionId: string): Promise<DbProcessingJob[]
 }
 
 export interface ProcessingJobsRepositoryInterface {
-  enqueue: (params: EnqueueJobInput) => Promise<DbProcessingJob | null>
+  enqueue: (params: EnqueueJobInput, executor?: postgres.Sql) => Promise<DbProcessingJob | null>
   enqueueSeedCardChat: (params: EnqueueSeedCardChatInput) => Promise<DbProcessingJob | null>
   claimBatch: (limit: number, workerId: string, staleAfterSeconds: number) => Promise<DbProcessingJob[]>
   refreshLease: (id: string, workerId: string) => Promise<boolean>

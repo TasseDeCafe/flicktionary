@@ -1,6 +1,7 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
 import { DbHighlight } from '../highlights/highlights-repository'
+import { enqueue as enqueueProcessingJob } from '../processing-jobs/processing-jobs-repository'
 
 export type DbGhostCandidate = Tables<'ghost_candidates'>
 
@@ -70,9 +71,8 @@ const switchGhostToHighlight = async (params: {
   userId: string
   enrichDebounceMs: number
 }): Promise<SwitchGhostResult> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const ghostRows = (await (tx as any)`
+  return await beginTx(async (tx) => {
+    const ghostRows = (await tx`
       SELECT * FROM public.ghost_candidates
       WHERE id = ${params.ghostId}
         AND study_session_id = ${params.sessionId}
@@ -82,7 +82,7 @@ const switchGhostToHighlight = async (params: {
     const ghost = ghostRows[0]
     if (!ghost) return { kind: 'ghost_not_found' as const }
 
-    const provisionalRows = (await (tx as any)`
+    const provisionalRows = (await tx`
       SELECT * FROM public.highlights
       WHERE id = ${params.provisionalHighlightId} AND study_session_id = ${params.sessionId}
       FOR UPDATE
@@ -91,7 +91,7 @@ const switchGhostToHighlight = async (params: {
 
     // Card cleanup for the provisional highlight, mirroring deleteWithCardCleanup:
     // decrement vocab count and repoint first_card_id before dropping the card.
-    await (tx as any)`
+    await tx`
       UPDATE public.user_lookups ul
       SET
         count = GREATEST(ul.count - 1, 0),
@@ -110,7 +110,7 @@ const switchGhostToHighlight = async (params: {
         AND c.status = 'kept'
         AND ul.id = c.user_lookup_id
     `
-    await (tx as any)`
+    await tx`
       UPDATE public.user_lookups ul
       SET first_card_id = (
         SELECT c2.id
@@ -125,12 +125,12 @@ const switchGhostToHighlight = async (params: {
         AND ul.id = c.user_lookup_id
         AND ul.first_card_id = c.id
     `
-    await (tx as any)`DELETE FROM public.cards WHERE highlight_id = ${params.provisionalHighlightId}`
+    await tx`DELETE FROM public.cards WHERE highlight_id = ${params.provisionalHighlightId}`
     // Deleting the provisional highlight cascades away its pending enrich job
     // (processing_jobs.highlight_id ON DELETE CASCADE).
-    await (tx as any)`DELETE FROM public.highlights WHERE id = ${params.provisionalHighlightId}`
+    await tx`DELETE FROM public.highlights WHERE id = ${params.provisionalHighlightId}`
 
-    const insertedRows = (await (tx as any)`
+    const insertedRows = (await tx`
       INSERT INTO public.highlights (
         study_session_id, start_segment_id, end_segment_id,
         start_offset, end_offset, selection_text, note, preset_tags
@@ -149,20 +149,24 @@ const switchGhostToHighlight = async (params: {
     `) as DbHighlight[]
     const newHighlight = insertedRows[0]!
 
-    await (tx as any)`
+    await tx`
       UPDATE public.ghost_candidates SET dismissed_at = now() WHERE id = ${params.ghostId}
     `
 
-    // Enqueue enrichment for the adopted span. Same debounce + live-job idempotency
-    // as the highlights.create path.
-    const runAfter = new Date(Date.now() + params.enrichDebounceMs)
-    await (tx as any)`
-      INSERT INTO public.processing_jobs (kind, study_session_id, highlight_id, user_id, run_after)
-      VALUES ('enrich_highlight', ${params.sessionId}, ${newHighlight.id}, ${params.userId}, ${runAfter})
-      ON CONFLICT (highlight_id) WHERE highlight_id IS NOT NULL AND status IN ('pending', 'processing')
-      DO NOTHING
-    `
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+    // Enqueue enrichment for the adopted span through the shared enqueue (same
+    // debounce + live-job idempotency as the highlights.create path), passing the
+    // transaction so the job rolls back with the swap if anything below fails and
+    // the ON CONFLICT predicate stays in lockstep with uq_processing_jobs_live_enrich.
+    await enqueueProcessingJob(
+      {
+        kind: 'enrich_highlight',
+        sessionId: params.sessionId,
+        userId: params.userId,
+        highlightId: newHighlight.id,
+        runAfter: new Date(Date.now() + params.enrichDebounceMs),
+      },
+      tx
+    )
     return { kind: 'switched' as const, highlight: newHighlight }
   })
 }
