@@ -80,18 +80,18 @@ export const LoginView = () => {
     return (
       <div className='flex w-full flex-1 items-center justify-center'>
         <div className='flex w-full max-w-md flex-col gap-y-4 p-4'>
-          <Button variant='outline' onClick={handleContinueWithEmailClick}>
+          <Button variant='outline' onClick={handleContinueWithEmailClick} size='xl'>
             <Mail height={20} width={20} />
             <span>{t`Continue with Email`}</span>
           </Button>
           {FEATURES.GOOGLE_AUTH && shouldShowSignInWithGoogle() && (
-            <Button onClick={handleContinueWithGoogleClick}>
+            <Button onClick={handleContinueWithGoogleClick} size='xl'>
               <img src={googleSvg} alt='google' height={20} width={20} />
               <span>{t`Continue with Google`}</span>
             </Button>
           )}
           {FEATURES.APPLE_AUTH && (
-            <Button variant='secondary' onClick={handleContinueWithAppleClick}>
+            <Button variant='secondary' onClick={handleContinueWithAppleClick} size='xl'>
               <img src={appleSvg} alt='apple' height={18} width={18} />
               <span>{t`Continue with Apple`}</span>
             </Button>
