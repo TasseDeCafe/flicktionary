@@ -10,7 +10,6 @@ import {
   DbChunkSummary,
 } from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
-import { exportSession, ExportSessionDependencies } from '../../service/export/export-session'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
 import { setCardStatus, setCardStatusBatch, SetCardStatusDependencies } from '../../service/cards/set-card-status'
 import {
@@ -64,7 +63,6 @@ const cardWithChunkOrError = async (
 export const CardsRouter = (
   cardsRepository: CardsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface,
-  exportDependencies: ExportSessionDependencies,
   exploreDependencies: ExploreCardDependencies,
   setCardStatusDependencies: SetCardStatusDependencies,
   createAdhocCardDependencies: CreateAdhocCardDependencies
@@ -152,19 +150,6 @@ export const CardsRouter = (
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Card not found' }] } })
       }
       return { data: toCardDto(refreshed) }
-    }),
-
-    exportCsv: implementer.exportCsv.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
-      if (!session) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Study session not found' }] },
-        })
-      }
-
-      const result = await exportSession(input.sessionId, userId, exportDependencies)
-      return { data: result }
     }),
 
     explore: implementer.explore.handler(async ({ input, context, errors }) => {

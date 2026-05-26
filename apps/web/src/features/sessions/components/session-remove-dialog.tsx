@@ -22,8 +22,7 @@ export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChang
   const { data: preview, isLoading } = useGetSessionDeletePreview(open ? sessionId : null)
   const { mutate: removeSession, isPending } = useRemoveStudySession()
 
-  const isProcessing = preview?.status === 'processing'
-  const canConfirm = !!sessionId && !isLoading && !isPending && !isProcessing
+  const canConfirm = !!sessionId && !isLoading && !isPending
 
   const { highlightCount, cardCount, keptCardCount } = preview ?? {}
 
@@ -54,11 +53,6 @@ export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChang
               <li>{t`${highlightCount} highlight(s)`}</li>
               <li>{t`${cardCount} card(s) — of which ${keptCardCount} kept`}</li>
             </ul>
-          )}
-          {isProcessing && (
-            <p className='mt-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-amber-800'>
-              {t`This session is processing — wait for it to finish before removing.`}
-            </p>
           )}
         </div>
 

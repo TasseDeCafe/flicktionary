@@ -288,19 +288,6 @@ const renameKey = async (params: {
   }
 }
 
-// Stamps exported_at and (optionally) backfills first_card_id. count is owned
-// by keep/unkeep transitions on the cards table, not by export — exporting a
-// card that's already kept must not inflate the badge.
-const upsertOnExport = async (params: { userLookupId: string; firstCardId: string | null }): Promise<void> => {
-  await sql`
-    UPDATE public.user_lookups
-    SET exported_at = COALESCE(exported_at, NOW()),
-        first_card_id = COALESCE(first_card_id, ${params.firstCardId}),
-        deleted_at = NULL
-    WHERE id = ${params.userLookupId}
-  `
-}
-
 // Card transitioned X → 'kept' (X !== 'kept'). count bumps by 1, deleted_at
 // clears (re-keeping a soft-deleted chunk revives it), first_card_id is
 // backfilled if it wasn't set.
@@ -1145,7 +1132,6 @@ export interface UserLookupsRepositoryInterface {
     sense: string
     markGrammarUserEdited?: boolean
   }) => Promise<RenameKeyResult>
-  upsertOnExport: (params: { userLookupId: string; firstCardId: string | null }) => Promise<void>
   applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
   applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>
   listDueSummary: (userId: string) => Promise<DueSummaryEntry[]>
@@ -1235,7 +1221,6 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     updateContent,
     applyGroundingPatch,
     renameKey,
-    upsertOnExport,
     applyKeepTransition,
     applyUnkeepTransition,
     listDueSummary,

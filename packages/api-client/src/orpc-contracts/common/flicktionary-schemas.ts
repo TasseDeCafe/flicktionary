@@ -6,9 +6,6 @@ export type ContentSourceType = z.infer<typeof ContentSourceTypeSchema>
 export const TextTrackSourceSchema = z.enum(['opensubtitles', 'upload', 'paste', 'url'])
 export type TextTrackSource = z.infer<typeof TextTrackSourceSchema>
 
-export const StudySessionStatusSchema = z.enum(['active', 'processing', 'processed', 'exported', 'failed'])
-export type StudySessionStatus = z.infer<typeof StudySessionStatusSchema>
-
 export const CardStatusSchema = z.enum(['pending', 'kept', 'rejected', 'auto_rejected'])
 export type CardStatus = z.infer<typeof CardStatusSchema>
 
@@ -275,10 +272,8 @@ export const StudySessionSchema = z.object({
   targetLanguage: z.string(),
   cefrLevel: z.string(),
   contextBlob: z.string().nullable(),
-  status: StudySessionStatusSchema,
   processingWarnings: z.array(z.string()),
   createdAt: z.string(),
-  processedAt: z.string().nullable(),
   contentSourceTitle: z.string().nullable(),
   contentSourceType: ContentSourceTypeSchema.nullable(),
   contentSourcePosterUrl: z.string().nullable(),

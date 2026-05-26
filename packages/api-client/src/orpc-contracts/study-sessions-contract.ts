@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { StudySessionSchema, StudySessionStatusSchema } from './common/flicktionary-schemas'
+import { StudySessionSchema } from './common/flicktionary-schemas'
 
 export const studySessionsContract = {
   list: oc
@@ -55,9 +55,7 @@ export const studySessionsContract = {
     .output(
       z.object({
         data: z.object({
-          status: StudySessionStatusSchema,
           processingWarnings: z.array(z.string()),
-          processedAt: z.string().nullable(),
         }),
       })
     ),
@@ -107,7 +105,6 @@ export const studySessionsContract = {
     .output(
       z.object({
         data: z.object({
-          status: StudySessionStatusSchema,
           highlightCount: z.number().int(),
           cardCount: z.number().int(),
           keptCardCount: z.number().int(),
@@ -122,7 +119,6 @@ export const studySessionsContract = {
     .route({ method: 'DELETE', path: '/study-sessions/{sessionId}', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(z.object({ sessionId: z.string().uuid() }))

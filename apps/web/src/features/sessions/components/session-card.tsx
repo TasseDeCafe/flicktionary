@@ -9,7 +9,6 @@ type SessionRow = {
   id: string
   targetLanguage: string
   cefrLevel: string
-  status: string
   createdAt: string
   contentSourceTitle: string | null
   contentSourceType: ContentSourceType | null
@@ -53,9 +52,6 @@ export const SessionCard = ({ session, onRemove }: Props) => {
             <div className='text-muted-foreground text-xs'>{metaParts.join(' · ')}</div>
             <div className='text-muted-foreground text-xs'>{new Date(session.createdAt).toLocaleString()}</div>
           </div>
-          <span className='text-muted-foreground shrink-0 text-xs uppercase'>
-            {t`Status`}: {session.status}
-          </span>
         </CardContent>
       </Link>
       <Button

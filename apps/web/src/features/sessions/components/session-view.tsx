@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@/components/ui/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
@@ -12,13 +14,13 @@ import {
   useListHighlightsBySession,
   useListGhostsBySession,
 } from '../api/sessions-hooks'
-import { useListCardsBySession } from '@/features/review/api/review-hooks'
 import type { SelectionResult } from '../utils/selection-adapter'
 import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
 import { useWordSelection } from '@/lib/dom/use-word-selection'
 import { buildSegmentRanges, buildGhostSegmentRanges } from '../utils/build-segment-ranges'
 import { findOverlappingGhost } from '../utils/ghost-overlap'
 import { useDeepestVisibleSegment } from '../hooks/use-deepest-visible-segment'
+import { useSegmentPosition } from '../hooks/use-segment-position'
 import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
@@ -44,7 +46,6 @@ export const SessionView = () => {
   const visibleSegments = isSearching ? (searchSegments ?? []) : (allSegments ?? [])
 
   const { data: highlights } = useListHighlightsBySession(sessionId)
-  const { data: cards } = useListCardsBySession(sessionId)
   const { data: userPrefs } = useGetUserPrefs()
   // The entire ghost layer (nomination, fetch, outlines, "Use suggested") is gated
   // off when the user has disabled LLM suggestions — fully inert for them.
@@ -96,11 +97,6 @@ export const SessionView = () => {
   // footer loader so the wait doesn't look like the feature is broken.
   const isGeneratingCandidates =
     llmHighlightsEnabled && (isRequestingNomination || (ghostData?.windows ?? []).some((w) => w.status === 'pending'))
-  const unprocessedHighlightCount = useMemo(() => {
-    if (!highlights) return 0
-    const processed = new Set((cards ?? []).map((c) => c.highlightId).filter((id): id is string => !!id))
-    return highlights.reduce((n, h) => (processed.has(h.id) ? n : n + 1), 0)
-  }, [highlights, cards])
 
   // The floating sheet has one mode at a time. `selection` is a fresh
   // mouseup/touchend that hasn't been persisted yet; `existingHighlightId`
@@ -119,24 +115,41 @@ export const SessionView = () => {
   // there is no synchronous Process step to redirect to a /processing screen,
   // and triage is reachable while active. (Discovery runs as a background job.)
 
+  // Scroll a segment to the center of the viewport and flash it briefly. Shared by
+  // the deep-link (`?segment=`) restore and the "jump to last highlight" button.
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const scrollToSegment = useCallback((segmentId: string) => {
+    const el = document.querySelector(`[data-segment-id="${segmentId}"]`)
+    if (el && 'scrollIntoView' in el) {
+      ;(el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+    setFlashSegmentId(segmentId)
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
+  }, [])
+
+  useEffect(() => () => (flashTimerRef.current ? clearTimeout(flashTimerRef.current) : undefined), [])
+
   useEffect(() => {
     if (!targetSegmentId) return
     if (!allSegments || allSegments.length === 0) return
-    let raf: number | null = null
-    let timer: ReturnType<typeof setTimeout> | null = null
-    raf = requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-segment-id="${targetSegmentId}"]`)
-      if (el && 'scrollIntoView' in el) {
-        ;(el as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' })
-      }
-      setFlashSegmentId(targetSegmentId)
-      timer = setTimeout(() => setFlashSegmentId(null), 1500)
-    })
-    return () => {
-      if (raf !== null) cancelAnimationFrame(raf)
-      if (timer !== null) clearTimeout(timer)
-    }
-  }, [targetSegmentId, allSegments])
+    const raf = requestAnimationFrame(() => scrollToSegment(targetSegmentId))
+    return () => cancelAnimationFrame(raf)
+  }, [targetSegmentId, allSegments, scrollToSegment])
+
+  // The most recently created highlight is a reliable, already-persisted anchor for
+  // "where the reader was working". When its segment scrolls off screen we offer a
+  // jump back to it (direction-aware chevron). Suppressed while searching, since the
+  // list then renders only filtered matches and the anchor row may be absent.
+  const latestHighlight = useMemo(() => {
+    if (!highlights || highlights.length === 0) return null
+    return highlights.reduce((latest, h) => (h.createdAt > latest.createdAt ? h : latest))
+  }, [highlights])
+  const latestHighlightPosition = useSegmentPosition(scrollEl, latestHighlight?.startSegmentId ?? null)
+  const showJumpToHighlight =
+    !isSearching &&
+    latestHighlight != null &&
+    (latestHighlightPosition === 'above' || latestHighlightPosition === 'below')
 
   // Tap-to-select-word gesture. Replaces native browser selection: a single
   // click/tap selects a word, press-and-drag extends a range. The adapter maps
@@ -222,8 +235,7 @@ export const SessionView = () => {
         {session.contentSourceYear ? ` (${session.contentSourceYear})` : ''}
       </span>
       <span className='text-muted-foreground truncate text-xs font-normal'>
-        {session.targetLanguage.toUpperCase()} · {session.cefrLevel} ·{' '}
-        <span className='uppercase'>{session.status}</span>
+        {session.targetLanguage.toUpperCase()} · {session.cefrLevel}
       </span>
     </span>
   )
@@ -236,38 +248,53 @@ export const SessionView = () => {
         </div>
       </div>
 
-      <div
-        ref={(el) => {
-          // One scroll container, two consumers: the word-selection gesture and the
-          // IntersectionObserver behind reading-position nomination.
-          wordSelectionRef(el)
-          setScrollEl(el)
-        }}
-        className='flex-1 touch-pan-y overflow-y-auto px-4 py-3 select-none'
-        style={{ WebkitTouchCallout: 'none' }}
-        onClick={handleSegmentListClick}
-      >
-        <div className='mx-auto max-w-4xl'>
-          {isSegmentsLoading ? (
-            <p className='text-sm text-gray-500'>{t`Loading segments…`}</p>
-          ) : (
-            <SegmentList
-              segments={visibleSegments}
-              rangesBySegmentId={rangesBySegmentId}
-              ghostRangesBySegmentId={ghostRangesBySegmentId}
-              targetLanguage={session.targetLanguage}
-              flashSegmentId={flashSegmentId}
-            />
-          )}
+      <div className='relative flex min-h-0 flex-1 flex-col'>
+        <div
+          ref={(el) => {
+            // One scroll container, two consumers: the word-selection gesture and the
+            // IntersectionObserver behind reading-position nomination.
+            wordSelectionRef(el)
+            setScrollEl(el)
+          }}
+          className='flex-1 touch-pan-y overflow-y-auto px-4 py-3 select-none'
+          style={{ WebkitTouchCallout: 'none' }}
+          onClick={handleSegmentListClick}
+        >
+          <div className='mx-auto max-w-4xl'>
+            {isSegmentsLoading ? (
+              <p className='text-sm text-gray-500'>{t`Loading segments…`}</p>
+            ) : (
+              <SegmentList
+                segments={visibleSegments}
+                rangesBySegmentId={rangesBySegmentId}
+                ghostRangesBySegmentId={ghostRangesBySegmentId}
+                targetLanguage={session.targetLanguage}
+                flashSegmentId={flashSegmentId}
+              />
+            )}
+          </div>
         </div>
+        {showJumpToHighlight && latestHighlight && (
+          <Button
+            type='button'
+            variant='secondary'
+            size='sm'
+            onClick={() => scrollToSegment(latestHighlight.startSegmentId)}
+            className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border shadow-md'
+          >
+            {latestHighlightPosition === 'above' ? (
+              <ChevronUp className='h-4 w-4' />
+            ) : (
+              <ChevronDown className='h-4 w-4' />
+            )}
+            {t`Last highlight`}
+          </Button>
+        )}
       </div>
 
       <TriageFooter
         sessionId={sessionId}
-        status={session.status}
         highlightCount={highlights?.length ?? 0}
-        unprocessedHighlightCount={unprocessedHighlightCount}
-        cardCount={cards?.length ?? 0}
         isGeneratingCandidates={isGeneratingCandidates}
         onOpenTriage={() => {
           void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
