@@ -481,7 +481,7 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
-#: apps/web/src/features/review/components/focus-view.tsx:463
+#: apps/web/src/features/review/components/focus-view.tsx:452
 #: apps/web/src/features/review/components/triage-row.tsx:86
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:75
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
@@ -510,11 +510,11 @@ msgstr "Add form"
 msgid "Add note"
 msgstr "Add note"
 
-#: apps/web/src/features/review/components/focus-view.tsx:336
+#: apps/web/src/features/review/components/focus-view.tsx:350
 msgid "Add to active vocabulary"
 msgstr "Add to active vocabulary"
 
-#: apps/web/src/features/review/components/focus-view.tsx:359
+#: apps/web/src/features/review/components/focus-view.tsx:373
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
@@ -620,11 +620,11 @@ msgstr "Another term already exists with that headword and sense."
 msgid "Are you absolutely sure?"
 msgstr "Are you absolutely sure?"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:78
+#: apps/web/src/features/review/components/per-card-chat.tsx:79
 msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
 msgstr "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:118
+#: apps/web/src/features/review/components/per-card-chat.tsx:120
 msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 
@@ -737,7 +737,7 @@ msgstr "Cancel"
 
 #: apps/web/src/features/review/components/focus-view.tsx:158
 #: apps/web/src/features/review/components/focus-view.tsx:165
-#: apps/web/src/features/review/components/focus-view.tsx:227
+#: apps/web/src/features/review/components/focus-view.tsx:241
 msgid "Card"
 msgstr "Card"
 
@@ -768,7 +768,7 @@ msgstr "CEFR level"
 #~ msgid "Change"
 #~ msgstr "Change"
 
-#: apps/web/src/features/review/components/focus-view.tsx:305
+#: apps/web/src/features/review/components/focus-view.tsx:319
 msgid "Chat"
 msgstr "Chat"
 
@@ -808,7 +808,7 @@ msgstr "Choose your plan"
 msgid "Clear search"
 msgstr "Clear search"
 
-#: apps/web/src/features/review/components/focus-view.tsx:288
+#: apps/web/src/features/review/components/focus-view.tsx:302
 msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 
@@ -1177,10 +1177,11 @@ msgstr "Enrichment has not started yet."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:19
 msgid "Error"
 msgstr "Error"
 
-#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:24
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:25
 msgid "error code: {userFacingErrorCode}"
 msgstr "error code: {userFacingErrorCode}"
 
@@ -1559,7 +1560,7 @@ msgstr "Free-form notes that don't fit the structured fields above."
 msgid "Frequency"
 msgstr "Frequency"
 
-#: apps/web/src/features/review/components/focus-view.tsx:274
+#: apps/web/src/features/review/components/focus-view.tsx:288
 msgid "Full exploration"
 msgstr "Full exploration"
 
@@ -1580,11 +1581,11 @@ msgstr "General"
 msgid "Generate card"
 msgstr "Generate card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:298
+#: apps/web/src/features/review/components/focus-view.tsx:312
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: apps/web/src/features/review/components/focus-view.tsx:286
+#: apps/web/src/features/review/components/focus-view.tsx:300
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
@@ -1594,7 +1595,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/practice-session-view.tsx:486
-#: apps/web/src/features/review/components/focus-view.tsx:298
+#: apps/web/src/features/review/components/focus-view.tsx:312
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Generating…"
@@ -1916,7 +1917,7 @@ msgstr "Loading card…"
 msgid "Loading cards…"
 msgstr "Loading cards…"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:75
+#: apps/web/src/features/review/components/per-card-chat.tsx:76
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
@@ -2085,7 +2086,7 @@ msgstr "New terms are capped per day. Follow-up sessions use up to this many rev
 msgid "New today"
 msgstr "New today"
 
-#: apps/web/src/features/review/components/focus-view.tsx:407
+#: apps/web/src/features/review/components/focus-view.tsx:206
 msgid "Next card"
 msgstr "Next card"
 
@@ -2285,7 +2286,7 @@ msgstr "Part of speech"
 msgid "Particle"
 msgstr "Particle"
 
-#: apps/web/src/features/review/components/focus-view.tsx:459
+#: apps/web/src/features/review/components/focus-view.tsx:448
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:74
 msgid "Passive"
 msgstr "Passive"
@@ -2455,7 +2456,7 @@ msgstr "Premium Features"
 msgid "Preparing the session…"
 msgstr "Preparing the session…"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:103
+#: apps/web/src/features/review/components/per-card-chat.tsx:105
 msgid "Preparing your answer…"
 msgstr "Preparing your answer…"
 
@@ -2463,7 +2464,7 @@ msgstr "Preparing your answer…"
 msgid "Preposition"
 msgstr "Preposition"
 
-#: apps/web/src/features/review/components/focus-view.tsx:398
+#: apps/web/src/features/review/components/focus-view.tsx:203
 msgid "Previous card"
 msgstr "Previous card"
 
@@ -2614,7 +2615,7 @@ msgstr "Registering {movieTitle}…"
 #~ msgid "Registering movie…"
 #~ msgstr "Registering movie…"
 
-#: apps/web/src/features/review/components/focus-view.tsx:456
+#: apps/web/src/features/review/components/focus-view.tsx:445
 #: apps/web/src/features/review/components/triage-row.tsx:145
 msgid "Reject"
 msgstr "Reject"
@@ -2769,7 +2770,7 @@ msgstr "Searching…"
 msgid "Select a language"
 msgstr "Select a language"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:121
+#: apps/web/src/features/review/components/per-card-chat.tsx:123
 msgid "Send"
 msgstr "Send"
 
@@ -2915,7 +2916,7 @@ msgstr "Something went wrong"
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
-#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:23
+#: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:21
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
@@ -3023,13 +3024,13 @@ msgid "Switch"
 msgstr "Switch"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:192
-#: apps/web/src/features/review/components/focus-view.tsx:381
+#: apps/web/src/features/review/components/focus-view.tsx:395
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to active vocabulary"
 msgstr "Switch to active vocabulary"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:201
-#: apps/web/src/features/review/components/focus-view.tsx:381
+#: apps/web/src/features/review/components/focus-view.tsx:395
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to passive vocabulary"
 msgstr "Switch to passive vocabulary"
@@ -3132,7 +3133,7 @@ msgstr "There was an error sending the verification email. Please try again."
 msgid "There was an error. Please contact support."
 msgstr "There was an error. Please contact support."
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:99
+#: apps/web/src/features/review/components/per-card-chat.tsx:101
 msgid "Thinking…"
 msgstr "Thinking…"
 
@@ -3150,7 +3151,7 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx:289
+#: apps/web/src/features/review/components/focus-view.tsx:303
 msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 
@@ -3191,7 +3192,7 @@ msgstr "To change your current plan type, please click on \"Manage Subscription\
 msgid "Today"
 msgstr "Today"
 
-#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:32
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:31
 msgid "Too Many Requests"
 msgstr "Too Many Requests"
 
@@ -3199,7 +3200,7 @@ msgstr "Too Many Requests"
 msgid "Too many requests. Please try again later."
 msgstr "Too many requests. Please try again later."
 
-#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:36
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:33
 msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
 msgstr "Too many requests. Please use the app in only one tab and device at a time and try again later."
 
@@ -3399,7 +3400,7 @@ msgstr "Warning"
 msgid "Warnings"
 msgstr "Warnings"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:108
+#: apps/web/src/features/review/components/per-card-chat.tsx:110
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "We couldn't prepare this answer. Save the note again to retry."
 
@@ -3497,7 +3498,7 @@ msgstr "Why does it appear in this particular form here?"
 msgid "Why this form?"
 msgstr "Why this form?"
 
-#: apps/web/src/features/review/components/focus-view.tsx:243
+#: apps/web/src/features/review/components/focus-view.tsx:257
 msgid "Wiktionary"
 msgstr "Wiktionary"
 
@@ -3522,7 +3523,7 @@ msgstr "You are a special user with free access. You have no active subscription
 msgid "You are now subscribed to Premium!"
 msgstr "You are now subscribed to Premium!"
 
-#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:38
+#: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:39
 msgid "You can try again in {countdown} seconds"
 msgstr "You can try again in {countdown} seconds"
 
