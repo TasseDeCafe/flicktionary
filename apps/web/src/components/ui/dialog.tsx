@@ -31,22 +31,42 @@ const DialogOverlay = ({ className, ...props }: React.ComponentProps<typeof Dial
   />
 )
 
+// Shared fade + timing applied to every variant.
+const dialogContentBase =
+  'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed z-50 shadow-lg duration-200'
+
+// Variant-specific positioning. `center` is the original centered modal.
+// `right` is a full-height slide-in panel anchored to the right edge.
+// `fullScreen` covers the viewport and slides up from the bottom (mobile chat).
+const dialogContentVariants = {
+  center:
+    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] left-[50%] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 sm:max-w-lg',
+  right:
+    'inset-y-0 right-0 flex h-dvh w-full max-w-md flex-col rounded-none border-l p-0 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
+  fullScreen:
+    'inset-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none p-0 data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom',
+} as const
+
 const DialogContent = ({
   className,
   children,
   showCloseButton = true,
+  showOverlay = true,
+  variant = 'center',
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  // Side/full-screen panels that fully cover (mobile) or sit beside (desktop)
+  // their content don't want the dimming scrim — it flashes during the slide
+  // animation and blocks scrolling the page behind. Pass false to drop it.
+  showOverlay?: boolean
+  variant?: keyof typeof dialogContentVariants
 }) => (
   <DialogPortal data-slot='dialog-portal'>
-    <DialogOverlay />
+    {showOverlay && <DialogOverlay />}
     <DialogPrimitive.Content
       data-slot='dialog-content'
-      className={cn(
-        'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg',
-        className
-      )}
+      className={cn(dialogContentBase, dialogContentVariants[variant], className)}
       {...props}
     >
       {children}

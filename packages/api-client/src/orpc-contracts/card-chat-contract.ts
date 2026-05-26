@@ -25,4 +25,13 @@ export const cardChatContract = {
         }),
       })
     ),
+
+  // Mark a card's chat as read up to now. Idempotent upsert on the server,
+  // so the client fires it freely (on panel open, and whenever a fresh
+  // assistant turn lands while the panel is open).
+  markRead: oc
+    .route({ method: 'PATCH', path: '/cards/{cardId}/chat/read', successStatus: 200 })
+    .errors({ NOT_FOUND: { status: 404, data: BackendErrorResponseSchema } })
+    .input(z.object({ cardId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
 } as const

@@ -58,6 +58,18 @@ export const CardChatRouter = (
         },
       }
     }),
+
+    markRead: implementer.markRead.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await cardsRepository.findByIdForUser(input.cardId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Card not found' }] },
+        })
+      }
+      await cardChatMessagesRepository.upsertReadState(input.cardId)
+      return { data: { ok: true } }
+    }),
   })
 
   return createOrpcExpressRouter(router, { contract: cardChatContract })

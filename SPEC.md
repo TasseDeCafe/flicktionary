@@ -196,9 +196,10 @@ Two-layer UI.
 
 **Layer 2 — Focus view (modal screen pushed above the tab navigator).**
 
-- Modal header: chevron-back to triage + position counter (`Card N of M`)
-  only. Keep/reject and learning-mode controls live in the fixed bottom
-  action bar below — see the next-to-last bullet in this section.
+- Modal header: chevron-back to triage, position counter (`Card N of M`),
+  and a chat toggle button carrying the unread indicator (see the per-card
+  chat bullet below). Keep/reject and learning-mode controls live in the fixed
+  bottom action bar below — see the next-to-last bullet in this section.
 - Prev/next navigation uses two fixed, viewport-mid-height circular buttons
   pinned to the left and right edges so they stay reachable on long cards;
   the `Open in subtitles` deep-link still lives inside the collapsible
@@ -238,10 +239,20 @@ Two-layer UI.
 - Full exploration: rendered when `exploration_extras` has data. Otherwise
   shows a `Generate full exploration` button that triggers the on-demand
   enrichment pass.
-- Per-card chat thread, scoped to that chunk. The chat tool can call
-  `update_card_fields` to patch any basic column or merge into
-  `exploration_extras` / `grammar` server-side; the assistant body gets
-  a `_Updated: …_` italic line and the focus view re-fetches the card.
+- Per-card chat thread, scoped to that chunk, opened on demand from the
+  header chat icon (not inline in the card scroll). On mobile it's a
+  full-screen slide-up sheet; on desktop a right-side panel laid out beside
+  the card column (non-modal — the card stays scrollable and prev/next stay
+  reachable while it's open). The header icon carries an unread indicator with
+  three states: amber pulse while a seeded answer is generating, solid green
+  when an unread assistant answer is ready, red when seed generation failed;
+  opening the panel marks the chat read. Read-state is persisted server-side
+  (`card_chat_read_state`, keyed by card) so the indicator survives reload and
+  is cross-device; the `cards.*` read paths return a derived `hasUnreadChat`
+  (true when the newest assistant turn is newer than `last_read_at`). The chat
+  tool can call `update_card_fields` to patch any basic column or merge into
+  `exploration_extras` / `grammar` server-side; the assistant body gets a
+  `_Updated: …_` italic line and the focus view re-fetches the card.
 - A fixed bottom action bar carries the per-card decision. In the default
   session-scope triage entry it shows three equal-width buttons —
   `Reject` (destructive), `Passive` (default), `★ Active` (outline) — with
@@ -480,6 +491,14 @@ card_chat_message
   role                'user' | 'assistant'
   content             text
   created_at          timestamptz
+
+card_chat_read_state                 -- per-card chat read marker (server-side, cross-device)
+  card_id             uuid pk -> card.id (ON DELETE CASCADE)
+  last_read_at        timestamptz  -- bumped to NOW() when the chat panel opens or
+                                   -- observes a fresh assistant turn. cards.* read paths
+                                   -- derive hasUnreadChat = newest card_chat_message
+                                   -- with role='assistant' has created_at > last_read_at.
+                                   -- card_id alone is the PK (a card has exactly one owner).
 
 processing_jobs                      -- durable background-job queue (enrichment + ghost nomination)
   id                  uuid pk

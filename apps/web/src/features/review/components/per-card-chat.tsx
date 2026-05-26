@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { MarkdownMessage } from '@/components/ui/markdown-message'
 import { Textarea } from '@/components/ui/textarea'
 import { Send } from 'lucide-react'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { useListChatForCard, useSendChatMessage } from '../api/review-hooks'
 import { useGetProcessingStatus } from '@/features/sessions/api/sessions-hooks'
 
@@ -16,9 +17,14 @@ type Props = {
   // sessionId, the chat watches for a pending seed_card_chat job (an auto-seeded
   // answer to a saved note/preset) and shows a placeholder until it lands.
   highlightId?: string | null
+  // When true the chat fills its parent (flex column, scrolling message list)
+  // instead of capping at max-h-[400px]. Used inside the on-demand ChatPanel,
+  // whose body owns the height. Requires min-h-0 on the parent chain to
+  // actually contain the scroll.
+  fill?: boolean
 }
 
-export const PerCardChat = ({ cardId, sessionId, highlightId }: Props) => {
+export const PerCardChat = ({ cardId, sessionId, highlightId, fill = false }: Props) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   const { data: messages, isLoading } = useListChatForCard(cardId)
@@ -48,6 +54,15 @@ export const PerCardChat = ({ cardId, sessionId, highlightId }: Props) => {
   const [draft, setDraft] = useState('')
   const [optimisticUserContent, setOptimisticUserContent] = useState<string | null>(null)
 
+  // Keep the newest turn in view. Pin to the bottom whenever the message set or
+  // any pending/seed placeholder changes — a reply landing should not stay
+  // hidden below the fold.
+  const listRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = listRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages, optimisticUserContent, isPending, isSeedPending, isSeedFailed])
+
   const handleSend = () => {
     const content = draft.trim()
     if (!content || isPending) return
@@ -71,8 +86,14 @@ export const PerCardChat = ({ cardId, sessionId, highlightId }: Props) => {
   }
 
   return (
-    <div className='flex flex-col gap-3'>
-      <div className='flex max-h-[400px] flex-col gap-2 overflow-y-auto rounded-md border bg-gray-50 p-3'>
+    <div className={cn('flex flex-col gap-3', fill && 'h-full min-h-0')}>
+      <div
+        ref={listRef}
+        className={cn(
+          'flex flex-col gap-2 overflow-y-auto rounded-md border bg-gray-50 p-3',
+          fill ? 'min-h-0 flex-1' : 'max-h-[400px]'
+        )}
+      >
         {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading chat…`}</p>}
         {!isLoading && (messages?.length ?? 0) === 0 && !optimisticUserContent && !isSeedPending && !isSeedFailed && (
           <p className='text-muted-foreground text-sm'>

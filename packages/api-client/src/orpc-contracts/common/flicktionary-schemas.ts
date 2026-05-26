@@ -226,6 +226,9 @@ export const CardSchema = z.object({
   userLookupId: z.string().uuid(),
   surfaceForm: z.string(),
   status: CardStatusSchema,
+  // True when the newest assistant turn in this card's chat is newer than the
+  // user's last_read_at (server-derived per card instance, not per chunk).
+  hasUnreadChat: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
   chunk: ChunkSchema,

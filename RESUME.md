@@ -1766,6 +1766,58 @@ session` when active, otherwise `Review follow-ups`, `Learn new terms`,
     (existing warnings only), and
     `doppler run -- supabase db reset --local` from the dev-tunnel Supabase dir.
 
+- **On-demand chat panel + server-side unread indicator (2026-05-26).** Pulled
+  the per-card chat out of the inline focus-view scroll into an on-demand panel
+  launched from a chat icon in the modal header. Implements
+  `/Users/sebastien/.claude/plans/parsed-beaming-cat.md`. Don't re-introduce the
+  inline `<PerCardChat>` Chat `<section>` at the bottom of `focus-view.tsx`, and
+  don't add vaul — both breakpoints use Radix Dialog.
+  - **Data model.** Migration `20260526144437_card_chat_read_state.sql` adds
+    `card_chat_read_state` (PK `card_id` → cards ON DELETE CASCADE, `last_read_at`).
+    `card_id` alone is the PK — a card has one owner via study_sessions.user_id.
+    RLS enabled-but-unused (app-layer filtering), matching `card_chat_messages`.
+  - **Backend.** `SELECT_CARD_WITH_CHUNK_SQL` (cards-repository.ts) derives
+    `has_unread_chat` = newest `card_chat_messages` row with `role='assistant'`
+    newer than `card_chat_read_state.last_read_at` (both index-backed subqueries).
+    The `role='assistant'` filter is load-bearing — without it, sending a user
+    message bumps MAX(created_at) and re-lights the dot. `DbCardWithChunk` +
+    `toCardDto` + `CardSchema` carry `hasUnreadChat`. New
+    `cardChatMessagesRepository.upsertReadState(cardId)` (idempotent upsert) and
+    `cardChat.markRead` PATCH `/cards/{cardId}/chat/read` (ownership-checked NOT_FOUND).
+  - **Frontend cache.** `useMarkChatRead` (review-hooks.ts) optimistically clears
+    `hasUnreadChat` with rollback on error via new optional-session helpers in
+    card-cache.ts (`setCardUnreadEverywhere`,
+    `snapshot/restore/cancelCardCachesOptionalSession`) — the chat button exists
+    in vocabulary/practice routes where `sessionId` is undefined, so the existing
+    concrete-session helpers can't be reused. Mark-read fires on every false→true
+    open transition AND when the latest assistant `createdAt` advances while open
+    (a reply landing in an open panel marks read); logic lives in `useChatReadSync`
+    (chat-panel.tsx), called once in focus-view so the mobile sheet and desktop
+    panel don't double-fire.
+  - **Layout.** `chat-header-button.tsx` shows a state dot (precedence
+    generating > failed > unread > none): amber pulse / red `!` / solid green /
+    none, non-color cues. `chat-panel.tsx` exports `ChatPanel` (mobile:
+    full-screen Radix Dialog slide-up sheet, no overlay scrim, `modal`) and
+    `ChatSidePanel` (desktop: a real flex-sibling side panel — NOT an overlay —
+    laid out beside the card column so the card stays scrollable + prev/next
+    reachable). focus-view wraps its body in `flex h-dvh` → `[card column][side
+    panel]`; the header chat button toggles `chatOpen`. `dialog.tsx` gained
+    `variant` (`center|right|fullScreen`) and `showOverlay` props. `PerCardChat`
+    gained a `fill` prop (flex column + `min-h-0` scroll) and now auto-scrolls its
+    message list to the bottom on new turns. `useFocusKeyboardNav` gained an
+    `enabled` flag — j/k/arrows stay live on desktop with the panel open, inert
+    only under the mobile sheet.
+  - **iOS keyboard fix.** The mobile sheet pins its height/top to
+    `window.visualViewport` (resize + scroll listeners) while open so the input
+    isn't hidden behind the on-screen keyboard — a plain `h-dvh` sheet doesn't
+    shrink for the keyboard.
+  - **Docs/verification.** SPEC.md focus-view chat bullet, header bullet, and
+    `card_chat_read_state` table updated. Verified `pnpm db:migrate` + gen-types,
+    `pnpm --filter @flicktionary/api-client build`, backend + web `check:types`,
+    eslint, Lingui extract (7 new strings). A from-scratch `pnpm db:reset` was NOT
+    run (would wipe local dev data); the migration is a standalone CREATE TABLE
+    and applied forward cleanly.
+
 ## Known cosmetic issues (defer to verification cleanup unless raised earlier)
 
 - (None outstanding as of 2026-05-01.)
