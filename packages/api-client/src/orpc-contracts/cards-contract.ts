@@ -68,22 +68,6 @@ export const cardsContract = {
     )
     .output(z.object({ data: z.array(CardSchema) })),
 
-  exportCsv: oc
-    .route({ method: 'POST', path: '/study-sessions/{sessionId}/export', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ sessionId: z.string().uuid() }))
-    .output(
-      z.object({
-        data: z.object({
-          csv: z.string(),
-          cardCount: z.number().int(),
-        }),
-      })
-    ),
-
   explore: oc
     .route({ method: 'POST', path: '/cards/{cardId}/explore', successStatus: 200 })
     .errors({

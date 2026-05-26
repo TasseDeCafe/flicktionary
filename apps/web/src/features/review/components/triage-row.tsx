@@ -68,15 +68,13 @@ export const TriageRow = ({ sessionId, card, hideTranslationFields = false, onSt
   const preview = getBackPreview(card, hideTranslationFields)
 
   return (
-    <div className='flex items-start gap-3 border-b py-3'>
-      <div className='flex-1'>
-        <Link
-          to='/sessions/$sessionId/review/$cardId'
-          params={{ sessionId, cardId: card.id }}
-          className='text-base font-medium hover:underline'
-        >
-          {card.chunk.headword || card.surfaceForm}
-        </Link>
+    <div className='flex items-start gap-3 border-b'>
+      <Link
+        to='/sessions/$sessionId/review/$cardId'
+        params={{ sessionId, cardId: card.id }}
+        className='-ml-2 block flex-1 rounded-md px-2 py-3 transition-colors hover:bg-gray-50 active:bg-gray-100'
+      >
+        <span className='text-base font-medium'>{card.chunk.headword || card.surfaceForm}</span>
         {card.chunk.headword && card.surfaceForm && card.chunk.headword !== card.surfaceForm && (
           <span className='text-muted-foreground ml-2 text-sm'>({card.surfaceForm})</span>
         )}
@@ -87,8 +85,8 @@ export const TriageRow = ({ sessionId, card, hideTranslationFields = false, onSt
           </span>
         )}
         {preview && <p className='mt-1 text-sm'>{preview}</p>}
-      </div>
-      <div className='flex shrink-0 items-center gap-1'>
+      </Link>
+      <div className='flex shrink-0 items-center gap-1 py-3'>
         <div className='inline-flex'>
           <Button
             size='icon'

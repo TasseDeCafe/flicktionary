@@ -3,7 +3,6 @@ import { Tables, Database } from '../database.public.types'
 
 export type DbStudySession = Tables<'study_sessions'>
 export type DbTextTrack = Tables<'text_tracks'>
-export type StudySessionStatus = Database['public']['Enums']['study_session_status']
 
 // Joined shape used by the list/get views: every UI surface that shows a session
 // also wants the movie title and poster from content_sources.
@@ -107,9 +106,7 @@ const getOrCreateAdhocStudySession = async (params: {
         UPDATE public.study_sessions
         SET native_language = ${params.nativeLanguage},
             cefr_level = ${params.cefrLevel},
-            context_blob = COALESCE(context_blob, ${params.contextBlob}),
-            status = 'processed',
-            processed_at = COALESCE(processed_at, NOW())
+            context_blob = COALESCE(context_blob, ${params.contextBlob})
         WHERE id = ${existing[0].id}
         RETURNING *
       `) as DbStudySession[]
@@ -122,7 +119,7 @@ const getOrCreateAdhocStudySession = async (params: {
       INSERT INTO public.study_sessions (
         user_id, content_source_id, text_track_id,
         native_language, target_language, cefr_level,
-        context_blob, status, processed_at
+        context_blob
       )
       VALUES (
         ${params.userId},
@@ -131,9 +128,7 @@ const getOrCreateAdhocStudySession = async (params: {
         ${params.nativeLanguage},
         ${params.targetLanguage},
         ${params.cefrLevel},
-        ${params.contextBlob},
-        'processed',
-        NOW()
+        ${params.contextBlob}
       )
       RETURNING *
     `) as DbStudySession[]
@@ -210,15 +205,6 @@ const listByUserId = async (userId: string): Promise<DbStudySession[]> => {
   `) as DbStudySession[]
 }
 
-const updateStatus = async (sessionId: string, userId: string, status: StudySessionStatus): Promise<boolean> => {
-  const result = await sql`
-    UPDATE public.study_sessions
-    SET status = ${status}
-    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
-  `
-  return result.count === 1
-}
-
 const updateContextBlob = async (sessionId: string, userId: string, contextBlob: string): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
@@ -237,24 +223,6 @@ const appendProcessingWarning = async (sessionId: string, userId: string, warnin
   return result.count === 1
 }
 
-const markProcessed = async (sessionId: string, userId: string): Promise<boolean> => {
-  const result = await sql`
-    UPDATE public.study_sessions
-    SET status = 'processed', processed_at = NOW()
-    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
-  `
-  return result.count === 1
-}
-
-const markFailed = async (sessionId: string, userId: string): Promise<boolean> => {
-  const result = await sql`
-    UPDATE public.study_sessions
-    SET status = 'failed'
-    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
-  `
-  return result.count === 1
-}
-
 const softDelete = async (sessionId: string, userId: string): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
@@ -265,7 +233,6 @@ const softDelete = async (sessionId: string, userId: string): Promise<boolean> =
 }
 
 export type DeletePreview = {
-  status: StudySessionStatus
   highlightCount: number
   cardCount: number
   keptCardCount: number
@@ -274,14 +241,12 @@ export type DeletePreview = {
 const getDeletePreview = async (sessionId: string, userId: string): Promise<DeletePreview | null> => {
   const result = (await sql`
     SELECT
-      s.status,
       (SELECT COUNT(*)::int FROM public.highlights h WHERE h.study_session_id = s.id) AS highlight_count,
       (SELECT COUNT(*)::int FROM public.cards c WHERE c.study_session_id = s.id) AS card_count,
       (SELECT COUNT(*)::int FROM public.cards c WHERE c.study_session_id = s.id AND c.status = 'kept') AS kept_card_count
     FROM public.study_sessions s
     WHERE s.id = ${sessionId} AND s.user_id = ${userId} AND s.deleted_at IS NULL
   `) as Array<{
-    status: StudySessionStatus
     highlight_count: number
     card_count: number
     kept_card_count: number
@@ -289,7 +254,6 @@ const getDeletePreview = async (sessionId: string, userId: string): Promise<Dele
   const row = result[0]
   if (!row) return null
   return {
-    status: row.status,
     highlightCount: row.highlight_count,
     cardCount: row.card_count,
     keptCardCount: row.kept_card_count,
@@ -319,11 +283,8 @@ export interface StudySessionsRepositoryInterface {
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
   listByUserId: (userId: string) => Promise<DbStudySession[]>
   listByUserIdWithSource: (userId: string) => Promise<DbStudySessionWithSource[]>
-  updateStatus: (sessionId: string, userId: string, status: StudySessionStatus) => Promise<boolean>
   updateContextBlob: (sessionId: string, userId: string, contextBlob: string) => Promise<boolean>
   appendProcessingWarning: (sessionId: string, userId: string, warning: string) => Promise<boolean>
-  markProcessed: (sessionId: string, userId: string) => Promise<boolean>
-  markFailed: (sessionId: string, userId: string) => Promise<boolean>
   softDelete: (sessionId: string, userId: string) => Promise<boolean>
   getDeletePreview: (sessionId: string, userId: string) => Promise<DeletePreview | null>
 }
@@ -337,11 +298,8 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     hasTextTrackForUser,
     listByUserId,
     listByUserIdWithSource,
-    updateStatus,
     updateContextBlob,
     appendProcessingWarning,
-    markProcessed,
-    markFailed,
     softDelete,
     getDeletePreview,
   }

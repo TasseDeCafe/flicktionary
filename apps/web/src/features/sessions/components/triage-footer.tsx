@@ -5,60 +5,25 @@ import { useProcessStudySession } from '../api/sessions-hooks'
 
 type Props = {
   sessionId: string
-  status: string
   highlightCount: number
-  unprocessedHighlightCount: number
-  cardCount: number
   // True while suggestion spans are being generated for the reader's window.
   // Shown as a subtle loader so the multi-second wait doesn't look broken.
   isGeneratingCandidates?: boolean
   onOpenTriage?: () => void
 }
 
-export const TriageFooter = ({
-  sessionId,
-  status,
-  highlightCount,
-  unprocessedHighlightCount,
-  cardCount,
-  isGeneratingCandidates = false,
-  onOpenTriage,
-}: Props) => {
+export const TriageFooter = ({ sessionId, highlightCount, isGeneratingCandidates = false, onOpenTriage }: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
 
   // Highlights are enriched in the background as they're selected, so opening
   // triage is just a navigation. The click only enqueues background discovery
   // (the backend process route is a near no-op kept for old clients).
-  const isReprocess = status === 'processed' || status === 'exported'
-  const isFailed = status === 'failed'
-  const noPriorOutput = cardCount === 0
-  const isReprocessNothingNew = isReprocess && !noPriorOutput && unprocessedHighlightCount === 0
-  const showFooter = status === 'active' || isReprocess || isFailed
+  const hint = highlightCount === 0 ? t`No highlights yet.` : t`${highlightCount} highlight(s) saved.`
 
-  if (!showFooter) {
-    return null
-  }
-
-  const hint = (() => {
-    if (isFailed) return t`Previous processing failed. You can still open triage.`
-    if (isReprocess && noPriorOutput) return t`No cards have been generated yet.`
-    if (isReprocessNothingNew) return t`All highlights have been processed.`
-    if (isReprocess) return t`${unprocessedHighlightCount} new highlight(s) still enriching.`
-    if (highlightCount === 0) return t`No highlights yet.`
-    return t`${highlightCount} highlight(s) saved.`
-  })()
-
-  const label = (() => {
-    if (isPending) return t`Opening…`
-    return t`Go to triage`
-  })()
+  const label = isPending ? t`Opening…` : t`Go to triage`
 
   const handleClick = () => {
-    if (isReprocessNothingNew) {
-      onOpenTriage?.()
-      return
-    }
     mutate({ sessionId }, { onSuccess: () => onOpenTriage?.() })
   }
 

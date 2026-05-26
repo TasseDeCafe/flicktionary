@@ -34,10 +34,8 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   targetLanguage: row.target_language,
   cefrLevel: row.cefr_level,
   contextBlob: row.context_blob,
-  status: row.status,
   processingWarnings: row.processing_warnings,
   createdAt: new Date(row.created_at).toISOString(),
-  processedAt: row.processed_at ? new Date(row.processed_at).toISOString() : null,
   contentSourceTitle: row.content_source_title,
   contentSourceType: row.content_source_type,
   contentSourcePosterUrl: readPosterUrl(row.content_source_metadata),
@@ -194,9 +192,7 @@ export const StudySessionsRouter = (
       }
       return {
         data: {
-          status: session.status,
           processingWarnings: session.processing_warnings,
-          processedAt: session.processed_at ? new Date(session.processed_at).toISOString() : null,
         },
       }
     }),
@@ -218,13 +214,6 @@ export const StudySessionsRouter = (
       if (!session) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Study session not found' }] },
-        })
-      }
-      // Block while a pipeline run is in flight — yanking the row from under
-      // the orchestrator would leave inconsistent state.
-      if (session.status === 'processing') {
-        throw errors.CONFLICT({
-          data: { errors: [{ message: 'Session is processing — wait for it to finish before removing' }] },
         })
       }
       const ok = await studySessionsRepository.softDelete(input.sessionId, userId)

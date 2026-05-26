@@ -163,7 +163,7 @@ msgstr "{activeDueCount} due, {activeNewCount} new"
 msgid "{activeTotal} active term(s). Nothing due right now."
 msgstr "{activeTotal} active term(s). Nothing due right now."
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:55
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:54
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
 msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 
@@ -229,7 +229,7 @@ msgstr "{dueTermCount} follow-up(s) due"
 msgid "{dueTermCount} follow-up(s) ready"
 msgstr "{dueTermCount} follow-up(s) ready"
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:54
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
 msgstr "{highlightCount} highlight(s)"
 
@@ -237,7 +237,7 @@ msgstr "{highlightCount} highlight(s)"
 #~ msgid "{highlightCount} highlight(s) ready."
 #~ msgstr "{highlightCount} highlight(s) ready."
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx:49
+#: apps/web/src/features/sessions/components/triage-footer.tsx:22
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} highlight(s) saved."
 
@@ -291,8 +291,8 @@ msgid "{totalKept} total"
 msgstr "{totalKept} total"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:47
-msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
-msgstr "{unprocessedHighlightCount} new highlight(s) still enriching."
+#~ msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
+#~ msgstr "{unprocessedHighlightCount} new highlight(s) still enriching."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:64
 #~ msgid "{unprocessedHighlightCount} new highlight(s) to process."
@@ -482,7 +482,7 @@ msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
 #: apps/web/src/features/review/components/focus-view.tsx:527
-#: apps/web/src/features/review/components/triage-row.tsx:86
+#: apps/web/src/features/review/components/triage-row.tsx:84
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:75
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
 msgid "Active"
@@ -569,8 +569,8 @@ msgstr "All caught up"
 #~ msgstr "All caught up for today · {totalKept} total"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:46
-msgid "All highlights have been processed."
-msgstr "All highlights have been processed."
+#~ msgid "All highlights have been processed."
+#~ msgstr "All highlights have been processed."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:313
 msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
@@ -620,13 +620,17 @@ msgstr "Another term already exists with that headword and sense."
 msgid "Are you absolutely sure?"
 msgstr "Are you absolutely sure?"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:100
+#: apps/web/src/features/review/components/per-card-chat.tsx:190
 msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
 msgstr "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:141
-msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
-msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
+#~ msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
+#~ msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
+
+#: apps/web/src/features/review/components/per-card-chat.tsx:249
+msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
+msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
 
 #: apps/web/src/features/review/components/chat-panel.tsx:119
 msgid "Ask follow-up questions about this term."
@@ -734,7 +738,7 @@ msgstr "Browse community-uploaded tracks for this movie."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:324
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:67
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:67
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:61
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:45
 msgid "Cancel"
 msgstr "Cancel"
@@ -1276,8 +1280,8 @@ msgid "Failed to end practice session"
 msgstr "Failed to end practice session"
 
 #: apps/web/src/features/review/api/review-hooks.ts:274
-msgid "Failed to export CSV"
-msgstr "Failed to export CSV"
+#~ msgid "Failed to export CSV"
+#~ msgstr "Failed to export CSV"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:97
 msgid "Failed to export vocabulary"
@@ -1535,7 +1539,7 @@ msgstr "Feminine"
 #~ msgid "Finding more terms to suggest…"
 #~ msgstr "Finding more terms to suggest…"
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx:73
+#: apps/web/src/features/sessions/components/triage-footer.tsx:38
 msgid "Finding suggestions…"
 msgstr "Finding suggestions…"
 
@@ -1665,7 +1669,7 @@ msgid "Go to Sessions"
 msgstr "Go to Sessions"
 
 #: apps/web/src/features/review/components/processing-view.tsx:25
-#: apps/web/src/features/sessions/components/triage-footer.tsx:54
+#: apps/web/src/features/sessions/components/triage-footer.tsx:24
 msgid "Go to triage"
 msgstr "Go to triage"
 
@@ -1832,11 +1836,15 @@ msgstr "IPA"
 msgid "IPA dialect"
 msgstr "IPA dialect"
 
+#: apps/web/src/features/review/components/per-card-chat.tsx:236
+msgid "Jump to latest"
+msgstr "Jump to latest"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:67
 msgid "Jump to the session this term came from"
 msgstr "Jump to the session this term came from"
 
-#: apps/web/src/features/review/components/triage-row.tsx:96
+#: apps/web/src/features/review/components/triage-row.tsx:94
 msgid "Keep"
 msgstr "Keep"
 
@@ -1844,15 +1852,15 @@ msgstr "Keep"
 msgid "Keep all"
 msgstr "Keep all"
 
-#: apps/web/src/features/review/components/triage-row.tsx:135
+#: apps/web/src/features/review/components/triage-row.tsx:133
 msgid "Keep as active"
 msgstr "Keep as active"
 
-#: apps/web/src/features/review/components/triage-row.tsx:122
+#: apps/web/src/features/review/components/triage-row.tsx:120
 msgid "Keep as passive"
 msgstr "Keep as passive"
 
-#: apps/web/src/features/review/components/triage-row.tsx:107
+#: apps/web/src/features/review/components/triage-row.tsx:105
 msgid "Keep options"
 msgstr "Keep options"
 
@@ -1886,6 +1894,10 @@ msgstr "Languages"
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:57
 msgid "Last day to cancel before first charge"
 msgstr "Last day to cancel before first charge"
+
+#: apps/web/src/features/sessions/components/session-view.tsx:290
+msgid "Last highlight"
+msgstr "Last highlight"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:68
 msgid "Later"
@@ -1940,7 +1952,7 @@ msgstr "Loading card…"
 msgid "Loading cards…"
 msgstr "Loading cards…"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:97
+#: apps/web/src/features/review/components/per-card-chat.tsx:187
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
@@ -1948,11 +1960,11 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:252
+#: apps/web/src/features/sessions/components/session-view.tsx:265
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:205
+#: apps/web/src/features/sessions/components/session-view.tsx:218
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -1971,7 +1983,7 @@ msgstr "Loading..."
 #: apps/web/src/features/more/components/languages-page.tsx:17
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:67
 #: apps/web/src/features/practice/components/practice-language-view.tsx:162
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:51
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:312
 msgid "Loading…"
@@ -2122,8 +2134,8 @@ msgstr "Next text"
 #~ msgstr "No Card Required"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:45
-msgid "No cards have been generated yet."
-msgstr "No cards have been generated yet."
+#~ msgid "No cards have been generated yet."
+#~ msgstr "No cards have been generated yet."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:202
 #~ msgid "No cards yet. Process the session to generate them."
@@ -2141,7 +2153,7 @@ msgstr "No cards yet. Select some highlights in the source text to generate new 
 #~ msgid "No highlights — the LLM will suggest terms based on your level."
 #~ msgstr "No highlights — the LLM will suggest terms based on your level."
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx:48
+#: apps/web/src/features/sessions/components/triage-footer.tsx:22
 msgid "No highlights yet."
 msgstr "No highlights yet."
 
@@ -2260,7 +2272,7 @@ msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 msgid "Opening triage"
 msgstr "Opening triage"
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx:53
+#: apps/web/src/features/sessions/components/triage-footer.tsx:24
 msgid "Opening…"
 msgstr "Opening…"
 
@@ -2483,7 +2495,7 @@ msgstr "Premium Features"
 msgid "Preparing the session…"
 msgstr "Preparing the session…"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:126
+#: apps/web/src/features/review/components/per-card-chat.tsx:217
 msgid "Preparing your answer…"
 msgstr "Preparing your answer…"
 
@@ -2496,8 +2508,8 @@ msgid "Previous card"
 msgstr "Previous card"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:44
-msgid "Previous processing failed. You can still open triage."
-msgstr "Previous processing failed. You can still open triage."
+#~ msgid "Previous processing failed. You can still open triage."
+#~ msgstr "Previous processing failed. You can still open triage."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:58
 #~ msgid "Previous run failed. Click to retry."
@@ -2643,7 +2655,7 @@ msgstr "Registering {movieTitle}…"
 #~ msgstr "Registering movie…"
 
 #: apps/web/src/features/review/components/focus-view.tsx:520
-#: apps/web/src/features/review/components/triage-row.tsx:145
+#: apps/web/src/features/review/components/triage-row.tsx:143
 msgid "Reject"
 msgstr "Reject"
 
@@ -2652,11 +2664,11 @@ msgid "Reject all"
 msgstr "Reject all"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:70
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Remove"
 msgstr "Remove"
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:44
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:43
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
@@ -2664,12 +2676,12 @@ msgstr "Remove \"{sessionTitle}\"?"
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
-#: apps/web/src/features/sessions/components/session-card.tsx:64
+#: apps/web/src/features/sessions/components/session-card.tsx:60
 msgid "Remove session"
 msgstr "Remove session"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:563
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:70
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Removing…"
 msgstr "Removing…"
 
@@ -2797,7 +2809,7 @@ msgstr "Searching…"
 msgid "Select a language"
 msgstr "Select a language"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:144
+#: apps/web/src/features/review/components/per-card-chat.tsx:252
 msgid "Send"
 msgstr "Send"
 
@@ -2818,8 +2830,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:204
-#: apps/web/src/features/sessions/components/session-view.tsx:211
+#: apps/web/src/features/sessions/components/session-view.tsx:217
+#: apps/web/src/features/sessions/components/session-view.tsx:224
 msgid "Session"
 msgstr "Session"
 
@@ -2828,7 +2840,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:212
+#: apps/web/src/features/sessions/components/session-view.tsx:225
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -3008,8 +3020,8 @@ msgid "Starting…"
 msgstr "Starting…"
 
 #: apps/web/src/features/sessions/components/session-card.tsx:57
-msgid "Status"
-msgstr "Status"
+#~ msgid "Status"
+#~ msgstr "Status"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:49
 msgid "Stop drilling this term in active practice"
@@ -3160,7 +3172,7 @@ msgstr "There was an error sending the verification email. Please try again."
 msgid "There was an error. Please contact support."
 msgstr "There was an error. Please contact support."
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:122
+#: apps/web/src/features/review/components/per-card-chat.tsx:213
 msgid "Thinking…"
 msgstr "Thinking…"
 
@@ -3182,7 +3194,7 @@ msgstr "This calibrates the difficult-words pass and the depth of explanations."
 msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:46
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:45
 msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
 msgstr "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
 
@@ -3191,8 +3203,8 @@ msgid "This screen is only accessible to subscribed users. You can showcase prem
 msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:60
-msgid "This session is processing — wait for it to finish before removing."
-msgstr "This session is processing — wait for it to finish before removing."
+#~ msgid "This session is processing — wait for it to finish before removing."
+#~ msgstr "This session is processing — wait for it to finish before removing."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:176
 msgid "This term is removed from your vocabulary. Restore it to keep practicing."
@@ -3289,8 +3301,8 @@ msgstr "Unseen"
 msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
-#: apps/web/src/features/sessions/components/session-card.tsx:27
-#: apps/web/src/features/sessions/components/session-view.tsx:217
+#: apps/web/src/features/sessions/components/session-card.tsx:26
+#: apps/web/src/features/sessions/components/session-view.tsx:230
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"
@@ -3427,7 +3439,7 @@ msgstr "Warning"
 msgid "Warnings"
 msgstr "Warnings"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:131
+#: apps/web/src/features/review/components/per-card-chat.tsx:222
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "We couldn't prepare this answer. Save the note again to retry."
 

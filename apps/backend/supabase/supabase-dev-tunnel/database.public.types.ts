@@ -625,9 +625,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           native_language: string
-          processed_at: string | null
           processing_warnings: string[]
-          status: Database['public']['Enums']['study_session_status']
           target_language: string
           text_track_id: string
           user_id: string
@@ -640,9 +638,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           native_language: string
-          processed_at?: string | null
           processing_warnings?: string[]
-          status?: Database['public']['Enums']['study_session_status']
           target_language: string
           text_track_id: string
           user_id: string
@@ -655,9 +651,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           native_language?: string
-          processed_at?: string | null
           processing_warnings?: string[]
-          status?: Database['public']['Enums']['study_session_status']
           target_language?: string
           text_track_id?: string
           user_id?: string
@@ -1031,7 +1025,6 @@ export type Database = {
         | 'incomplete_expired'
         | 'incomplete'
         | 'paused'
-      study_session_status: 'active' | 'processing' | 'processed' | 'exported' | 'failed'
       subscription_interval: 'month' | 'year'
       text_track_source: 'opensubtitles' | 'upload' | 'paste' | 'url'
     }
@@ -1322,7 +1315,6 @@ export const Constants = {
         'incomplete',
         'paused',
       ],
-      study_session_status: ['active', 'processing', 'processed', 'exported', 'failed'],
       subscription_interval: ['month', 'year'],
       text_track_source: ['opensubtitles', 'upload', 'paste', 'url'],
     },

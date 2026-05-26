@@ -254,24 +254,3 @@ export const useRenameChunk = (sessionId?: string) => {
     })
   )
 }
-
-export const useExportSessionCsv = () => {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  return useMutation(
-    orpcQuery.cards.exportCsv.mutationOptions({
-      onSuccess: (_response, variables) => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.studySessions.get.key({ input: { sessionId: variables.sessionId } }),
-        })
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.studySessions.list.key(),
-        })
-        queryClient.invalidateQueries({
-          queryKey: getSessionCardsKey(variables.sessionId),
-        })
-      },
-      meta: { errorMessage: t`Failed to export CSV` },
-    })
-  )
-}
