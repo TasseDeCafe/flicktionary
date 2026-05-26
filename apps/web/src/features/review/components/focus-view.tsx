@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, ExternalLink, Sparkles, Star, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Sparkles, Star, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import {
@@ -195,6 +195,20 @@ export const FocusView = () => {
   const isLanguageWideEntry = fromVocabulary || fromPractice
   const title = isLanguageWideEntry ? card.chunk.headword : positionLabel
 
+  // Prev/next pager lives in the header (right side, away from the back
+  // chevron) so it never overlaps the scrolling card content. Only triage
+  // cards have a position to page through; vocabulary/practice entries don't.
+  const headerNav = !isLanguageWideEntry ? (
+    <>
+      <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
+        <ChevronLeft className='size-6 md:size-5' />
+      </Button>
+      <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
+        <ChevronRight className='size-6 md:size-5' />
+      </Button>
+    </>
+  ) : undefined
+
   // Advance to the next card on a triage decision; if we're on the last card,
   // bounce back to the triage list so the user isn't stranded.
   const advanceOrClose = () => {
@@ -220,7 +234,7 @@ export const FocusView = () => {
   }
 
   return (
-    <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title}>
+    <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title} rightSlot={headerNav}>
       <div className='flex-1 overflow-y-auto px-4 py-4'>
         <div className='mx-auto flex max-w-4xl flex-col gap-6'>
           <section>
@@ -386,38 +400,13 @@ export const FocusView = () => {
         })()}
 
       {!isLanguageWideEntry && (
-        <>
-          {/* Side-edge nav arrows: fixed to the viewport at mid-height so they
-              stay reachable while the user scrolls long cards. Dark, semi-
-              transparent fill so the arrows stay legible over both white form
-              fields and any other content; chunkier touch target on mobile. */}
-          <button
-            type='button'
-            onClick={goPrev}
-            disabled={!cursor.prev}
-            aria-label={t`Previous card`}
-            className='fixed top-1/2 left-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-gray-900/75 text-white shadow-lg backdrop-blur-sm transition hover:bg-gray-900 disabled:pointer-events-none disabled:opacity-25 md:h-11 md:w-11'
-          >
-            <ArrowLeft className='h-6 w-6' />
-          </button>
-          <button
-            type='button'
-            onClick={goNext}
-            disabled={!cursor.next}
-            aria-label={t`Next card`}
-            className='fixed top-1/2 right-3 z-30 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-gray-900/75 text-white shadow-lg backdrop-blur-sm transition hover:bg-gray-900 disabled:pointer-events-none disabled:opacity-25 md:h-11 md:w-11'
-          >
-            <ArrowRight className='h-6 w-6' />
-          </button>
-
-          <FocusActionBar
-            card={card}
-            pendingAction={pendingAction}
-            onReject={() => triggerAction('reject')}
-            onKeepPassive={() => triggerAction('passive')}
-            onKeepActive={() => triggerAction('active')}
-          />
-        </>
+        <FocusActionBar
+          card={card}
+          pendingAction={pendingAction}
+          onReject={() => triggerAction('reject')}
+          onKeepPassive={() => triggerAction('passive')}
+          onKeepActive={() => triggerAction('active')}
+        />
       )}
     </ModalScreen>
   )

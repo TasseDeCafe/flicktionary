@@ -17,8 +17,8 @@ export type AnnotationInput = {
   deleted: boolean
 }
 
-// Plain-span selection that doesn't overlap any annotation. Used by the
-// LookupSheet (peek + Save to vocabulary).
+// A word-range selection used by the LookupSheet (peek + Save to vocabulary).
+// May span reviewed terms — the gloss prompt gets the full surface text.
 export type PlainSelection = {
   text: string
   // Inclusive/exclusive offsets into the body. Lets the caller render the
@@ -38,9 +38,9 @@ interface AnnotatedTextProps {
   // the user tapped (desktop popover positioning).
   onAnnotationClick: (index: number, element: HTMLElement) => void
   // Optional selection handler. When provided (and `enabled`), a single
-  // tap/click selects a word and a press-and-drag extends a range; if the
-  // resulting span falls entirely inside plain text (no annotation overlap),
-  // the parent gets the selection and can open a sheet.
+  // tap/click selects a word and a press-and-drag extends a range; the
+  // resulting span (which may cross reviewed terms) is handed to the parent so
+  // it can open a sheet.
   onPlainSelection?: (selection: PlainSelection) => void
   // When false (e.g. the read-only previous-text block), the gesture hook is
   // not mounted and word tokenization is skipped — the paragraph renders as
@@ -104,14 +104,8 @@ export const AnnotatedText = ({
         clearPaint()
         return
       }
-      // Reject ranges that cross an annotation between two plain words. No
-      // fallback or snap-to-edge — the user can re-try.
-      for (const ann of nonOverlapping) {
-        if (charStart < ann.charEnd && charEnd > ann.charStart) {
-          clearPaint()
-          return
-        }
-      }
+      // A range may span reviewed terms — the gloss/Save flow handles the full
+      // phrase, so we no longer reject annotation-crossing selections.
       const text = body.slice(charStart, charEnd)
       if (text.trim().length === 0) {
         clearPaint()
@@ -121,20 +115,17 @@ export const AnnotatedText = ({
     },
   })
 
-  // Renders a plain region either as selectable per-word spans (interactive
-  // instance) or a single flat span (read-only previous-text block).
-  const renderPlain = (text: string, offset: number, key: number) => {
-    if (!enabled) {
-      return <span key={key}>{text}</span>
-    }
+  // Tokenizes a text region into selectable per-word spans. Shared by plain
+  // regions and annotation buttons so a drag can sweep continuously across
+  // both. `data-word-piece` lets the selection painter sweep a continuous band
+  // across words and the whitespace between them (rather than one box per
+  // word). Word pieces additionally carry body-absolute offsets, matching the
+  // PlainSelection charStart/charEnd model, with no horizontal padding so
+  // elementFromPoint hits exact glyphs.
+  const renderWordPieces = (text: string, offset: number, key: React.Key): React.ReactNode[] => {
     const wordRanges = getWordRanges(text, targetLanguage)
     const out: React.ReactNode[] = []
     let cur = 0
-    // `data-word-piece` lets the selection painter sweep a continuous band
-    // across words and the whitespace between them (rather than one box per
-    // word). Word pieces additionally carry body-absolute offsets, matching the
-    // PlainSelection charStart/charEnd model, with no horizontal padding so
-    // elementFromPoint hits exact glyphs.
     wordRanges.forEach(([s, e], wi) => {
       if (s > cur)
         out.push(
@@ -161,7 +152,16 @@ export const AnnotatedText = ({
           {text.slice(cur)}
         </span>
       )
-    return <span key={key}>{out}</span>
+    return out
+  }
+
+  // Renders a plain region either as selectable per-word spans (interactive
+  // instance) or a single flat span (read-only previous-text block).
+  const renderPlain = (text: string, offset: number, key: number) => {
+    if (!enabled) {
+      return <span key={key}>{text}</span>
+    }
+    return <span key={key}>{renderWordPieces(text, offset, key)}</span>
   }
 
   return (
@@ -194,7 +194,13 @@ export const AnnotatedText = ({
                   : 'bg-yellow-100 text-yellow-950 underline decoration-yellow-500 decoration-2 shadow-[0_0_0_0.125rem_var(--color-yellow-100)] hover:bg-yellow-200 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-200)]'
             )}
           >
-            {body.slice(ann.charStart, ann.charEnd)}
+            {/* Tokenize the surface form so a drag can paint across and resolve
+                onto the reviewed term (matching the session view). A stationary
+                tap still opens the rate sheet — isBlockedTarget bails the
+                gesture at pointerdown on `data-kind="annotation"`. */}
+            {enabled
+              ? renderWordPieces(body.slice(ann.charStart, ann.charEnd), ann.charStart, `${i}-${ann.index}`)
+              : body.slice(ann.charStart, ann.charEnd)}
           </button>
         )
       })}

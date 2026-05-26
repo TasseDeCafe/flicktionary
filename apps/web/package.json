@@ -66,6 +66,8 @@
     "react-circle-flags": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
+    "react-markdown": "catalog:",
+    "remark-gfm": "catalog:",
     "sonner": "catalog:",
     "turbo": "catalog:",
     "tw-animate-css": "catalog:",

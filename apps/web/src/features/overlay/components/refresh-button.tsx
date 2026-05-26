@@ -13,7 +13,7 @@ export const RefreshButton = ({ disabled }: RefreshButtonProps) => {
   }
 
   return (
-    <Button variant='default' onClick={handleRefresh} disabled={disabled}>
+    <Button size='xl' variant='default' onClick={handleRefresh} disabled={disabled}>
       {t`Refresh`}
     </Button>
   )

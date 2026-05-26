@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Button } from '@/components/ui/button'
+import { MarkdownMessage } from '@/components/ui/markdown-message'
 import { Textarea } from '@/components/ui/textarea'
 import { Send } from 'lucide-react'
 import { useListChatForCard, useSendChatMessage } from '../api/review-hooks'
@@ -78,18 +79,19 @@ export const PerCardChat = ({ cardId, sessionId, highlightId }: Props) => {
             {t`Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded.`}
           </p>
         )}
-        {messages?.map((m) => (
-          <div
-            key={m.id}
-            className={
-              m.role === 'user'
-                ? 'self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap'
-                : 'self-start rounded-lg bg-white px-3 py-2 text-sm whitespace-pre-wrap shadow-sm'
-            }
-          >
-            {m.content}
-          </div>
-        ))}
+        {messages?.map((m) =>
+          m.role === 'user' ? (
+            <div key={m.id} className='self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap'>
+              {m.content}
+            </div>
+          ) : (
+            <MarkdownMessage
+              key={m.id}
+              content={m.content}
+              className='self-start rounded-lg bg-white px-3 py-2 text-sm shadow-sm'
+            />
+          )
+        )}
         {optimisticUserContent && (
           <div className='self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap opacity-70'>
             {optimisticUserContent}
