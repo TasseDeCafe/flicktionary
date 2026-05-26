@@ -1,7 +1,6 @@
 import {
   OverlayContent,
   OverlayDescription,
-  OverlayFooter,
   OverlayHeader,
   OverlayTitle,
 } from '@/components/ui/responsive-overlay'
@@ -27,20 +26,21 @@ export const RateLimitingOverlayContent = () => {
   }, [countdown])
 
   return (
-    <OverlayContent className='w-11/12 rounded-xl bg-white p-8 sm:max-w-md'>
-      <OverlayHeader className='mb-5'>
-        <OverlayTitle>{t`Too Many Requests`}</OverlayTitle>
-        <OverlayDescription className='hidden'></OverlayDescription>
+    <OverlayContent className='sm:max-w-md'>
+      <OverlayHeader>
+        <OverlayTitle className='text-center'>{t`Too Many Requests`}</OverlayTitle>
+        <OverlayDescription className='text-center'>
+          {t`Too many requests. Please use the app in only one tab and device at a time and try again later.`}
+        </OverlayDescription>
       </OverlayHeader>
-      <div className='space-y-4'>
-        <p className='text-sm text-gray-500'>{t`Too many requests. Please use the app in only one tab and device at a time and try again later.`}</p>
+      <div className='flex flex-col gap-4'>
         <div className='flex h-6 items-center justify-center'>
-          {!isRetryEnabled && <p className='text-sm text-gray-500'>{t`You can try again in ${countdown} seconds`}</p>}
+          {!isRetryEnabled && (
+            <p className='text-muted-foreground text-sm'>{t`You can try again in ${countdown} seconds`}</p>
+          )}
         </div>
-      </div>
-      <OverlayFooter>
         <RefreshButton disabled={!isRetryEnabled} />
-      </OverlayFooter>
+      </div>
     </OverlayContent>
   )
 }

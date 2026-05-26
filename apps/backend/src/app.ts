@@ -186,9 +186,12 @@ export const buildApp = ({
   )
 
   if (getConfig().shouldRateLimit) {
-    app.use(createRateLimitMiddleware(30, 2))
-    app.use(createRateLimitMiddleware(50, 10))
-    app.use(createRateLimitMiddleware(500, 200))
+    // Each card view in the focus view fans out into several parallel requests,
+    // so quickly navigating between cards can burst dozens of requests in a second.
+    // Keep these generous enough to absorb that while still catching runaway loops.
+    app.use(createRateLimitMiddleware(80, 2))
+    app.use(createRateLimitMiddleware(150, 10))
+    app.use(createRateLimitMiddleware(1000, 200))
   }
 
   if (getConfig().shouldSlowDownApiRoutes) {

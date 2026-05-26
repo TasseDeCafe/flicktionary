@@ -23,7 +23,7 @@ export const ModalScreen = ({ onClose, closeIcon = 'x', title, rightSlot, classN
     <div className={cn('flex h-dvh flex-col bg-white', className)}>
       <header className='flex h-14 shrink-0 items-center gap-2 border-b bg-white px-2'>
         <Button variant='ghost' size='icon' onClick={onClose} aria-label={closeLabel}>
-          <Icon className='h-5 w-5' />
+          <Icon className='size-6 md:size-5' />
         </Button>
         {title && <h1 className='min-w-0 flex-1 truncate text-base font-semibold'>{title}</h1>}
         {!title && <div className='flex-1' />}
