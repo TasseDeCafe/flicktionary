@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 
 export type DbStudySession = Tables<'study_sessions'>
@@ -55,13 +55,12 @@ const getOrCreateAdhocStudySession = async (params: {
   trackHash: string
   contextBlob: string
 }): Promise<{ session: DbStudySession; track: DbTextTrack }> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    await (tx as any)`
+  return await beginTx(async (tx) => {
+    await tx`
       SELECT pg_advisory_xact_lock(hashtext(${`adhoc:${params.userId}:${params.targetLanguage}`}))
     `
 
-    const insertedSource = (await (tx as any)`
+    const insertedSource = (await tx`
       INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (
         'adhoc',
@@ -77,7 +76,7 @@ const getOrCreateAdhocStudySession = async (params: {
     const contentSource = insertedSource[0]
     if (!contentSource) throw new Error('getOrCreateAdhocStudySession: content source upsert returned no row')
 
-    const insertedTrack = (await (tx as any)`
+    const insertedTrack = (await tx`
       INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
       VALUES (
         ${contentSource.id},
@@ -93,7 +92,7 @@ const getOrCreateAdhocStudySession = async (params: {
     const track = insertedTrack[0]
     if (!track) throw new Error('getOrCreateAdhocStudySession: track upsert returned no row')
 
-    const existing = (await (tx as any)`
+    const existing = (await tx`
       SELECT s.*
       FROM public.study_sessions s
       WHERE s.user_id = ${params.userId}
@@ -104,7 +103,7 @@ const getOrCreateAdhocStudySession = async (params: {
     `) as DbStudySession[]
 
     if (existing[0]) {
-      const updated = (await (tx as any)`
+      const updated = (await tx`
         UPDATE public.study_sessions
         SET native_language = ${params.nativeLanguage},
             cefr_level = ${params.cefrLevel},
@@ -119,7 +118,7 @@ const getOrCreateAdhocStudySession = async (params: {
       return { session, track }
     }
 
-    const insertedSession = (await (tx as any)`
+    const insertedSession = (await tx`
       INSERT INTO public.study_sessions (
         user_id, content_source_id, text_track_id,
         native_language, target_language, cefr_level,
@@ -138,7 +137,6 @@ const getOrCreateAdhocStudySession = async (params: {
       )
       RETURNING *
     `) as DbStudySession[]
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     const session = insertedSession[0]
     if (!session) throw new Error('getOrCreateAdhocStudySession: session insert returned no row')

@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
 export type DbHighlight = Tables<'highlights'>
@@ -73,9 +73,8 @@ const updateNoteAndTags = async (
 // the card first. If the card had been kept, apply the same count decrement as a
 // kept→non-kept transition before deleting it.
 const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    await (tx as any)`
+  return await beginTx(async (tx) => {
+    await tx`
       UPDATE public.user_lookups ul
       SET
         count = GREATEST(ul.count - 1, 0),
@@ -94,7 +93,7 @@ const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
         AND c.status = 'kept'
         AND ul.id = c.user_lookup_id
     `
-    await (tx as any)`
+    await tx`
       UPDATE public.user_lookups ul
       SET first_card_id = (
         SELECT c2.id
@@ -109,9 +108,8 @@ const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
         AND ul.id = c.user_lookup_id
         AND ul.first_card_id = c.id
     `
-    await (tx as any)`DELETE FROM public.cards WHERE highlight_id = ${id}`
-    const result = await (tx as any)`DELETE FROM public.highlights WHERE id = ${id}`
-    /* eslint-enable @typescript-eslint/no-explicit-any */
+    await tx`DELETE FROM public.cards WHERE highlight_id = ${id}`
+    const result = await tx`DELETE FROM public.highlights WHERE id = ${id}`
     return result.count === 1
   })
 }

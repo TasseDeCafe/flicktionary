@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 import type { PracticePool } from '../user-lookups/user-lookups-repository'
 
@@ -28,9 +28,8 @@ const insertOrResume = async (params: {
   maxNewTerms: number
   maxReviewTerms: number
 }): Promise<PracticeSessionInsertResult> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const inserted = (await (tx as any)`
+  return await beginTx(async (tx) => {
+    const inserted = (await tx`
       INSERT INTO public.practice_sessions (user_id, target_language, pool, max_new_terms, max_review_terms)
       VALUES (${params.userId}, ${params.targetLanguage}, ${params.pool}, ${params.maxNewTerms}, ${params.maxReviewTerms})
       ON CONFLICT (user_id, target_language, pool) WHERE status = 'active' DO NOTHING
@@ -44,7 +43,7 @@ const insertOrResume = async (params: {
       // branches read from disjoint SRS column families so a kept term that's
       // due in both passive and active simultaneously enters both snapshots.
       if (params.pool === 'passive') {
-        await (tx as any)`
+        await tx`
           INSERT INTO public.practice_session_chunks
             (practice_session_id, user_lookup_id, eligible_at_start)
           WITH review_terms AS (
@@ -84,7 +83,7 @@ const insertOrResume = async (params: {
         // active_srs_*. The daily-new cap does NOT apply here — the caller
         // passes the full active-new count for maxNewTerms and the full
         // active-due count for maxReviewTerms.
-        await (tx as any)`
+        await tx`
           INSERT INTO public.practice_session_chunks
             (practice_session_id, user_lookup_id, eligible_at_start)
           WITH review_terms AS (
@@ -125,7 +124,7 @@ const insertOrResume = async (params: {
       return { session, resumed: false }
     }
 
-    const existing = (await (tx as any)`
+    const existing = (await tx`
       SELECT *
       FROM public.practice_sessions
       WHERE user_id = ${params.userId}
@@ -134,7 +133,6 @@ const insertOrResume = async (params: {
         AND status = 'active'
       LIMIT 1
     `) as DbPracticeSession[]
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     if (existing.length === 0) {
       throw new Error('practice_sessions: insertOrResume race lost without a resumable row')

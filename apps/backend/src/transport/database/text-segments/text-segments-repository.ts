@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
 export type DbTextSegment = Tables<'text_segments'>
@@ -129,12 +129,11 @@ const appendSegmentAtomic = async (params: {
   startMs: number | null
   endMs: number | null
 }): Promise<DbTextSegment> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    await (tx as any)`
+  return await beginTx(async (tx) => {
+    await tx`
       SELECT pg_advisory_xact_lock(hashtext(${`text_segment_append:${params.textTrackId}`}))
     `
-    const result = (await (tx as any)`
+    const result = (await tx`
       INSERT INTO public.text_segments (text_track_id, index, text, start_ms, end_ms)
       SELECT
         ${params.textTrackId},
@@ -145,7 +144,6 @@ const appendSegmentAtomic = async (params: {
       FROM public.text_segments WHERE text_track_id = ${params.textTrackId}
       RETURNING id, text_track_id, index, text, start_ms, end_ms, tsv
     `) as DbTextSegment[]
-    /* eslint-enable @typescript-eslint/no-explicit-any */
     return result[0]!
   })
 }

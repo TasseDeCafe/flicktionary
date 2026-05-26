@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 
 export interface HandledRevenuecatEventsRepository {
   handleEventIdempotently: (eventId: string, processingFunction: () => Promise<void>) => Promise<boolean>
@@ -9,10 +9,8 @@ export const buildHandledRevenuecatEventsRepository = (): HandledRevenuecatEvent
     eventId: string,
     processingFunction: () => Promise<void>
   ): Promise<boolean> => {
-    return await sql.begin(async (sql) => {
-      // todo: remove 'as any' when TransactionSql call signature is fixed: https://github.com/porsager/postgres/issues/1150
-      /* eslint-disable  @typescript-eslint/no-explicit-any */
-      const insertResult = await (sql as any)`
+    return await beginTx(async (tx) => {
+      const insertResult = await tx`
         INSERT INTO handled_revenuecat_events (event_id)
         VALUES (${eventId})
         ON CONFLICT (event_id) DO NOTHING

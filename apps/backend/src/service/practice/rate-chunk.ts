@@ -1,7 +1,7 @@
 import type { PracticeTextsRepositoryInterface } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { PracticeRatingsRepositoryInterface } from '../../transport/database/practice-ratings/practice-ratings-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
-import { sql } from '../../transport/database/postgres-client'
+import { beginTx } from '../../transport/database/postgres-client'
 import { applyRating, type AppRating } from './fsrs'
 
 export type RateChunkDependencies = {
@@ -15,12 +15,10 @@ export type RateChunkResult =
   | { ok: false; reason: 'text_not_found' | 'chunk_not_in_text' | 'lookup_not_found' | 'text_already_finalized' }
 
 export const withPracticeTextMutationLock = async <T>(practiceTextId: string, work: () => Promise<T>): Promise<T> => {
-  const result = await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    await (tx as any)`
+  const result = await beginTx(async (tx) => {
+    await tx`
       SELECT pg_advisory_xact_lock(hashtext(${practiceTextId}))
     `
-    /* eslint-enable @typescript-eslint/no-explicit-any */
     return await work()
   })
   return result as T

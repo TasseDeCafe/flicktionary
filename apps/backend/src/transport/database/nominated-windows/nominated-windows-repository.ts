@@ -1,4 +1,4 @@
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
 export type DbNominatedWindow = Tables<'nominated_windows'>
@@ -13,9 +13,8 @@ const requestWindowAndEnqueueJob = async (params: {
   startIndex: number
   endIndex: number
 }): Promise<DbNominatedWindow | null> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    const result = (await (tx as any)`
+  return await beginTx(async (tx) => {
+    const result = (await tx`
       INSERT INTO public.nominated_windows (study_session_id, start_index, end_index)
       VALUES (${params.sessionId}, ${params.startIndex}, ${params.endIndex})
       ON CONFLICT (study_session_id, start_index, end_index) DO NOTHING
@@ -23,11 +22,10 @@ const requestWindowAndEnqueueJob = async (params: {
     `) as DbNominatedWindow[]
     const window = result[0] ?? null
     if (!window) return null
-    await (tx as any)`
+    await tx`
       INSERT INTO public.processing_jobs (kind, study_session_id, user_id, window_start_index, window_end_index)
       VALUES ('nominate_window', ${params.sessionId}, ${params.userId}, ${params.startIndex}, ${params.endIndex})
     `
-    /* eslint-enable @typescript-eslint/no-explicit-any */
     return window
   })
 }

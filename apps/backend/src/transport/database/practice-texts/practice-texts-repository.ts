@@ -1,5 +1,5 @@
 import postgres from 'postgres'
-import { sql } from '../postgres-client'
+import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 import type { PracticePool } from '../user-lookups/user-lookups-repository'
 
@@ -264,13 +264,12 @@ export type ReservedSlot = {
 // generation work for this slot. False means the slot is an existing
 // pending/generating/ready row the caller can poll or return to the user.
 const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<ReservedSlot> => {
-  return await sql.begin(async (tx) => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    await (tx as any)`
+  return await beginTx(async (tx) => {
+    await tx`
       SELECT pg_advisory_xact_lock(hashtext(${practiceSessionId}))
     `
 
-    const anchorRows = (await (tx as any)`
+    const anchorRows = (await tx`
       SELECT COALESCE(MAX(ord), -1) AS anchor_ord
       FROM public.practice_texts
       WHERE practice_session_id = ${practiceSessionId}
@@ -278,7 +277,7 @@ const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<Reserve
     `) as Array<{ anchor_ord: number }>
     const anchorOrd = anchorRows[0]?.anchor_ord ?? -1
 
-    const candidate = (await (tx as any)`
+    const candidate = (await tx`
       SELECT *
       FROM public.practice_texts
       WHERE practice_session_id = ${practiceSessionId}
@@ -291,7 +290,7 @@ const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<Reserve
     const existing = candidate[0]
     if (existing) {
       if (existing.status === 'ready' && (!Array.isArray(existing.annotations) || existing.annotations.length === 0)) {
-        await (tx as any)`
+        await tx`
           UPDATE public.practice_texts
           SET status = 'failed',
               generation_warning = COALESCE(generation_warning, 'ready text had no usable annotations')
@@ -306,7 +305,7 @@ const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<Reserve
         // markFailed), then fall through to reserve a fresh slot at next
         // ord. The previous worker's markReady will fail its token check
         // and silently no-op.
-        await (tx as any)`
+        await tx`
           UPDATE public.practice_texts
           SET status = 'failed',
               generation_warning = COALESCE(generation_warning, 'stale slot reclaimed')
@@ -318,19 +317,18 @@ const reserveOrFindNextSlot = async (practiceSessionId: string): Promise<Reserve
       }
     }
 
-    const nextOrdRows = (await (tx as any)`
+    const nextOrdRows = (await tx`
       SELECT COALESCE(MAX(ord), -1) + 1 AS next_ord
       FROM public.practice_texts
       WHERE practice_session_id = ${practiceSessionId}
     `) as Array<{ next_ord: number }>
     const nextOrd = nextOrdRows[0]?.next_ord ?? 0
 
-    const inserted = (await (tx as any)`
+    const inserted = (await tx`
       INSERT INTO public.practice_texts (practice_session_id, ord, status)
       VALUES (${practiceSessionId}, ${nextOrd}, 'pending')
       RETURNING *
     `) as DbPracticeText[]
-    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     return { practiceText: inserted[0]!, isFresh: true }
   })
