@@ -25,6 +25,8 @@ export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChang
   const isProcessing = preview?.status === 'processing'
   const canConfirm = !!sessionId && !isLoading && !isPending && !isProcessing
 
+  const { highlightCount, cardCount, keptCardCount } = preview ?? {}
+
   const handleConfirm = () => {
     if (!sessionId) return
     removeSession(
@@ -49,8 +51,8 @@ export const SessionRemoveDialog = ({ open, sessionId, sessionTitle, onOpenChang
           {isLoading && <p className='text-muted-foreground'>{t`Loading…`}</p>}
           {preview && (
             <ul className='text-muted-foreground space-y-1'>
-              <li>{t`${preview.highlightCount} highlight(s)`}</li>
-              <li>{t`${preview.cardCount} card(s) — of which ${preview.keptCardCount} kept`}</li>
+              <li>{t`${highlightCount} highlight(s)`}</li>
+              <li>{t`${cardCount} card(s) — of which ${keptCardCount} kept`}</li>
             </ul>
           )}
           {isProcessing && (

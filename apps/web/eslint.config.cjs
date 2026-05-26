@@ -65,4 +65,13 @@ module.exports = [
       ],
     },
   },
+  {
+    // Vendored shadcn-style UI components and TanStack route files intrinsically
+    // mix component and non-component exports (cva variants, hooks, `Route`).
+    // Their HMR is handled fine, so scope off the Fast Refresh rule here.
+    files: ['src/components/ui/**', 'src/app/routes/**'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ]

@@ -3,4 +3,5 @@ export const SheetId = {
   CONTACT_US: 'contact-us',
 } as const
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare -- intentional const-object + same-named type idiom
 export type SheetId = (typeof SheetId)[keyof typeof SheetId]

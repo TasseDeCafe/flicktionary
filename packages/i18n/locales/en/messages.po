@@ -143,16 +143,13 @@ msgstr "(Expired)"
 msgid "(unset)"
 msgstr "(unset)"
 
-#. placeholder {0}: preview.cardCount
-#. placeholder {1}: preview.keptCardCount
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
-msgid "{0} card(s) — of which {1} kept"
-msgstr "{0} card(s) — of which {1} kept"
+#~ msgid "{0} card(s) — of which {1} kept"
+#~ msgstr "{0} card(s) — of which {1} kept"
 
-#. placeholder {0}: preview.highlightCount
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:52
-msgid "{0} highlight(s)"
-msgstr "{0} highlight(s)"
+#~ msgid "{0} highlight(s)"
+#~ msgstr "{0} highlight(s)"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:49
 msgid "{activeCount} active"
@@ -165,6 +162,10 @@ msgstr "{activeDueCount} due, {activeNewCount} new"
 #: apps/web/src/features/practice/components/practice-language-view.tsx:260
 msgid "{activeTotal} active term(s). Nothing due right now."
 msgstr "{activeTotal} active term(s). Nothing due right now."
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:55
+msgid "{cardCount} card(s) — of which {keptCardCount} kept"
+msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:118
 #~ msgid "{charCount} / {MAX_LENGTH} characters"
@@ -227,6 +228,10 @@ msgstr "{dueTermCount} follow-up(s) due"
 #: apps/web/src/features/practice/components/practice-language-view.tsx:109
 msgid "{dueTermCount} follow-up(s) ready"
 msgstr "{dueTermCount} follow-up(s) ready"
+
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:54
+msgid "{highlightCount} highlight(s)"
+msgstr "{highlightCount} highlight(s)"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:65
 #~ msgid "{highlightCount} highlight(s) ready."
@@ -725,7 +730,7 @@ msgstr "Browse community-uploaded tracks for this movie."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:324
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:67
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:65
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:67
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:45
 msgid "Cancel"
 msgstr "Cancel"
@@ -1942,7 +1947,7 @@ msgstr "Loading..."
 #: apps/web/src/features/more/components/languages-page.tsx:17
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:67
 #: apps/web/src/features/practice/components/practice-language-view.tsx:162
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:49
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:51
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:312
 msgid "Loading…"
@@ -2619,11 +2624,11 @@ msgid "Reject all"
 msgstr "Reject all"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:70
 msgid "Remove"
 msgstr "Remove"
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:42
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:44
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
@@ -2636,7 +2641,7 @@ msgid "Remove session"
 msgstr "Remove session"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:563
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:68
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:70
 msgid "Removing…"
 msgstr "Removing…"
 
@@ -3149,7 +3154,7 @@ msgstr "This calibrates the difficult-words pass and the depth of explanations."
 msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:44
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:46
 msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
 msgstr "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
 
@@ -3157,7 +3162,7 @@ msgstr "This hides the session from your list. Your kept vocabulary stays in you
 msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
 msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:58
+#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:60
 msgid "This session is processing — wait for it to finish before removing."
 msgstr "This session is processing — wait for it to finish before removing."
 
