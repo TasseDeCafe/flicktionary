@@ -28,7 +28,7 @@ export const SearchInput = ({ value, onChange, placeholder, className }: Props) 
           type='button'
           onClick={() => onChange('')}
           aria-label={t`Clear search`}
-          className='text-muted-foreground hover:text-foreground absolute top-1/2 right-1 -translate-y-1/2 flex items-center justify-center rounded-sm p-2 sm:right-2 sm:p-0.5'
+          className='text-muted-foreground hover:text-foreground absolute top-1/2 right-1 flex -translate-y-1/2 items-center justify-center rounded-sm p-2 sm:right-2 sm:p-0.5'
         >
           <X className='h-5 w-5 sm:h-4 sm:w-4' />
         </button>

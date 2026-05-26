@@ -1,10 +1,5 @@
 import { RefreshButton } from './refresh-button'
-import {
-  OverlayContent,
-  OverlayDescription,
-  OverlayHeader,
-  OverlayTitle,
-} from '@/components/ui/responsive-overlay'
+import { OverlayContent, OverlayDescription, OverlayHeader, OverlayTitle } from '@/components/ui/responsive-overlay'
 import { useLingui } from '@lingui/react/macro'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
 

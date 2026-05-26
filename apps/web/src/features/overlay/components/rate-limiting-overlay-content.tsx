@@ -1,9 +1,4 @@
-import {
-  OverlayContent,
-  OverlayDescription,
-  OverlayHeader,
-  OverlayTitle,
-} from '@/components/ui/responsive-overlay'
+import { OverlayContent, OverlayDescription, OverlayHeader, OverlayTitle } from '@/components/ui/responsive-overlay'
 import { RefreshButton } from './refresh-button'
 import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
