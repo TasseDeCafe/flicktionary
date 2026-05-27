@@ -458,7 +458,7 @@ msgstr "Choisir les sous-titres"
 msgid "Choose your plan"
 msgstr "Choisissez votre forfait"
 
-#: apps/web/src/components/ui/search-input.tsx:30
+#: apps/web/src/components/ui/search-input.tsx:36
 msgid "Clear search"
 msgstr "Effacer la recherche"
 
@@ -761,7 +761,7 @@ msgstr "Email de Vérification Envoyé"
 msgid "End active drill"
 msgstr "Terminer l'entraînement actif"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:335
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:330
 msgid "End of list"
 msgstr "Fin de la liste"
 
@@ -1390,7 +1390,7 @@ msgstr "Notes L1"
 msgid "Label (e.g. past.m)"
 msgstr "Libellé (par ex. passé.m)"
 
-#: apps/web/src/components/language-option-list.tsx:61
+#: apps/web/src/components/language-option-list.tsx:52
 msgid "Language"
 msgstr "Langue"
 
@@ -1456,7 +1456,7 @@ msgstr "Chargement des cartes…"
 msgid "Loading chat…"
 msgstr "Chargement de la discussion…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:335
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:330
 msgid "Loading more…"
 msgstr "Chargement…"
 
@@ -1481,7 +1481,7 @@ msgstr "Chargement..."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:162
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:312
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:307
 msgid "Loading…"
 msgstr "Chargement…"
 
@@ -1616,13 +1616,12 @@ msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte
 msgid "No highlights yet."
 msgstr "Aucune sélection pour le moment."
 
-#: apps/web/src/components/language-option-list.tsx:62
-#: apps/web/src/components/language-picker.tsx:99
+#: apps/web/src/components/language-option-list.tsx:53
 msgid "No languages found."
 msgstr "Aucune langue trouvée."
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:71
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:298
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:64
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "No matches."
 msgstr "Aucun résultat."
 
@@ -1646,7 +1645,7 @@ msgstr "Aucune langue cible pour l'instant. Les préférences sont définies la 
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fichier .srt à la place."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:298
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "No vocabulary in this language yet."
 msgstr "Aucun vocabulaire dans cette langue pour le moment."
 
@@ -2107,26 +2106,25 @@ msgstr "Enregistrer dans le vocabulaire"
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:33
-msgid "Search a movie title…"
-msgstr "Rechercher un titre de film…"
-
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:321
 msgid "Search failed"
 msgstr "Échec de la recherche"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:285
-msgid "Search headword, translation, or definition…"
-msgstr "Rechercher un lemme, une traduction ou une définition…"
-
-#: apps/web/src/components/language-option-list.tsx:55
-#: apps/web/src/components/language-picker.tsx:88
+#: apps/web/src/components/language-option-list.tsx:49
 msgid "Search languages…"
 msgstr "Rechercher des langues…"
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:31
+msgid "Search movies…"
+msgstr "Rechercher des films…"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:216
 msgid "Search OpenSubtitles"
 msgstr "Rechercher sur OpenSubtitles"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:282
+msgid "Search terms…"
+msgstr "Rechercher des termes…"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:179
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:11
@@ -2137,13 +2135,9 @@ msgstr "Rechercher…"
 msgid "Searching OpenSubtitles…"
 msgstr "Recherche sur OpenSubtitles…"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:39
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:32
 msgid "Searching…"
 msgstr "Recherche en cours…"
-
-#: apps/web/src/components/language-picker.tsx:53
-msgid "Select a language"
-msgstr "Sélectionner une langue"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:252
 msgid "Send"
@@ -2517,7 +2511,7 @@ msgstr "Impossible d'ouvrir le magasin d'applications"
 msgid "Unable to open app store. Please manually update the app."
 msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour manuellement l'application."
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:42
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:35
 msgid "Unknown year"
 msgstr "Année inconnue"
 
@@ -3456,10 +3450,22 @@ msgstr "votre@email.com"
 #~ msgid "Scan the QR code to download the app"
 #~ msgstr "Scannez le code QR pour télécharger l'app"
 
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:33
+#~ msgid "Search a movie title…"
+#~ msgstr "Rechercher un titre de film…"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:285
+#~ msgid "Search headword, translation, or definition…"
+#~ msgstr "Rechercher un lemme, une traduction ou une définition…"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
 #~ msgid "segments"
 #~ msgstr "segments"
+
+#: apps/web/src/components/language-picker.tsx:53
+#~ msgid "Select a language"
+#~ msgstr "Sélectionner une langue"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:161
 #: apps/web/src/features/practice/components/practice-language-view.tsx:319

@@ -80,6 +80,17 @@ Backend oRPC handlers should return DTOs that already match the contract exactly
 
 The web app follows a few opinionated UI idioms. When adding a new view, mirror the existing canonical example rather than reinventing chrome — the design is intentionally close to a future Expo native app, so layouts should translate without rework.
 
+## Hover and press (active) states on tappable surfaces
+
+Every tappable card / row / list item that has a `hover:` transition MUST pair it with the matching `active:` press state and `transition-colors`. Touch devices have no hover, so without `active:` there is zero feedback when the user taps — the row looks dead on mobile. The two are a set; never ship a `hover:` on an interactive surface without its `active:` sibling.
+
+Use the standard treatments rather than inventing per-view colors:
+
+- **Plain cards / rows** (white-ish surface on the page background): `transition-colors hover:bg-gray-50 active:bg-gray-100`. Canonical examples: `session-card.tsx`, `vocabulary-row.tsx`, `triage-row.tsx`, `more-list-row.tsx`, `overlay-action-row.tsx`.
+- **Selection cards using the accent treatment** (`OptionCard`, `LanguageSelectField`): `transition-colors hover:border-foreground/40 hover:bg-accent/40 active:bg-accent/60`.
+
+Don't use a border-color-only hover (e.g. `hover:border-yellow-300`) for the press affordance — it's invisible on touch and diverges from every other card in the app.
+
 ## Wizards and modal flows
 
 Use `WizardShell` from `apps/web/src/components/ui/wizard-shell.tsx` for any modal/flow that has steps (or even just one form-on-modal). It handles: progress bar (auto-hidden when `totalSteps <= 1`), X-on-first-step vs chevron-back, centered `max-w-md md:max-w-lg` column, and the sticky bottom action bar.

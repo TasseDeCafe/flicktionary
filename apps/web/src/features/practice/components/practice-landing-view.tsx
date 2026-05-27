@@ -86,7 +86,7 @@ export const PracticeLandingView = () => {
                       key={entry.targetLanguage}
                       type='button'
                       onClick={() => handlePickLanguage(entry.targetLanguage)}
-                      className='flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-gray-50'
+                      className='flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 active:bg-gray-100'
                     >
                       <div className='flex min-w-0 flex-1 flex-col'>
                         <span className='text-sm font-medium'>{getLanguageName(entry.targetLanguage)}</span>

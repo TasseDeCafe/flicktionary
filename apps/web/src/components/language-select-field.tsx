@@ -43,7 +43,7 @@ export const LanguageSelectField = ({ label, value, onChange, placeholder, pinne
           'bg-card flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-colors',
           'focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          'border-border hover:border-foreground/40 hover:bg-accent/40'
+          'border-border hover:border-foreground/40 hover:bg-accent/40 active:bg-accent/60'
         )}
       >
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { SearchIcon } from 'lucide-react'
 import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
 import { OptionCard } from '@/components/ui/option-card'
+import { SearchInput } from '@/components/ui/search-input'
 
 type Props = {
   value: string | null
@@ -46,16 +46,7 @@ export const LanguageOptionList = ({ value, onChange, showSearch = true, exclude
         // card's `ring-2` (rendered 2px outside its border) doesn't peek
         // around the sides of the bar.
         <div className='bg-background sticky top-0 z-10 -mx-3 px-3 pb-2'>
-          <div className='border-input flex items-center gap-2 rounded-md border px-3'>
-            <SearchIcon className='text-muted-foreground h-4 w-4 shrink-0' />
-            <input
-              type='search'
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t`Search languages…`}
-              className='placeholder:text-muted-foreground h-10 w-full bg-transparent text-base outline-none'
-            />
-          </div>
+          <SearchInput value={query} onChange={setQuery} placeholder={t`Search languages…`} />
         </div>
       )}
       <div role='radiogroup' aria-label={t`Language`} className='flex flex-col gap-2'>

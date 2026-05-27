@@ -42,7 +42,7 @@ export const OptionCard = ({
         'disabled:cursor-not-allowed disabled:opacity-50',
         selected
           ? 'border-foreground ring-foreground/10 ring-2'
-          : 'border-border hover:border-foreground/40 hover:bg-accent/40',
+          : 'border-border hover:border-foreground/40 hover:bg-accent/40 active:bg-accent/60',
         className
       )}
     >

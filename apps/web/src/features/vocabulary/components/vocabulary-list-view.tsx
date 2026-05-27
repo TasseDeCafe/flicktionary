@@ -279,12 +279,7 @@ export const VocabularyListView = () => {
         />
       )}
 
-      <SearchInput
-        value={searchInput}
-        onChange={setSearchInput}
-        placeholder={t`Search headword, translation, or definition…`}
-        className='w-full'
-      />
+      <SearchInput value={searchInput} onChange={setSearchInput} placeholder={t`Search terms…`} className='w-full' />
 
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <LearningModeFilterPills value={learningMode} onChange={setLearningModeFilter} />

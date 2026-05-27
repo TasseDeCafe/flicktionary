@@ -825,7 +825,7 @@ msgstr "Choose your plan"
 #~ msgid "Choose Your Plan"
 #~ msgstr "Choose Your Plan"
 
-#: apps/web/src/components/ui/search-input.tsx:30
+#: apps/web/src/components/ui/search-input.tsx:36
 msgid "Clear search"
 msgstr "Clear search"
 
@@ -1161,7 +1161,7 @@ msgstr "Email Verification Sent"
 msgid "End active drill"
 msgstr "End active drill"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:335
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:330
 msgid "End of list"
 msgstr "End of list"
 
@@ -1872,7 +1872,7 @@ msgstr "L1 notes"
 msgid "Label (e.g. past.m)"
 msgstr "Label (e.g. past.m)"
 
-#: apps/web/src/components/language-option-list.tsx:61
+#: apps/web/src/components/language-option-list.tsx:52
 msgid "Language"
 msgstr "Language"
 
@@ -1960,7 +1960,7 @@ msgstr "Loading cards…"
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:335
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:330
 msgid "Loading more…"
 msgstr "Loading more…"
 
@@ -1989,7 +1989,7 @@ msgstr "Loading..."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:162
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:312
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:307
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -2161,13 +2161,12 @@ msgstr "No cards yet. Select some highlights in the source text to generate new 
 msgid "No highlights yet."
 msgstr "No highlights yet."
 
-#: apps/web/src/components/language-option-list.tsx:62
-#: apps/web/src/components/language-picker.tsx:99
+#: apps/web/src/components/language-option-list.tsx:53
 msgid "No languages found."
 msgstr "No languages found."
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:71
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:298
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:64
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "No matches."
 msgstr "No matches."
 
@@ -2199,7 +2198,7 @@ msgstr "No target languages yet. Preferences are set the first time you start a 
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:298
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
@@ -2771,25 +2770,32 @@ msgstr "Saving…"
 #~ msgstr "Scan the QR code to download the app"
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:33
-msgid "Search a movie title…"
-msgstr "Search a movie title…"
+#~ msgid "Search a movie title…"
+#~ msgstr "Search a movie title…"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:321
 msgid "Search failed"
 msgstr "Search failed"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:285
-msgid "Search headword, translation, or definition…"
-msgstr "Search headword, translation, or definition…"
+#~ msgid "Search headword, translation, or definition…"
+#~ msgstr "Search headword, translation, or definition…"
 
-#: apps/web/src/components/language-option-list.tsx:55
-#: apps/web/src/components/language-picker.tsx:88
+#: apps/web/src/components/language-option-list.tsx:49
 msgid "Search languages…"
 msgstr "Search languages…"
+
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:31
+msgid "Search movies…"
+msgstr "Search movies…"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:216
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:282
+msgid "Search terms…"
+msgstr "Search terms…"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:179
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:11
@@ -2800,7 +2806,7 @@ msgstr "Search…"
 msgid "Searching OpenSubtitles…"
 msgstr "Searching OpenSubtitles…"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:39
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:32
 msgid "Searching…"
 msgstr "Searching…"
 
@@ -2810,8 +2816,8 @@ msgstr "Searching…"
 #~ msgstr "segments"
 
 #: apps/web/src/components/language-picker.tsx:53
-msgid "Select a language"
-msgstr "Select a language"
+#~ msgid "Select a language"
+#~ msgstr "Select a language"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:252
 msgid "Send"
@@ -3289,7 +3295,7 @@ msgstr "Unable to open app store"
 msgid "Unable to open app store. Please manually update the app."
 msgstr "Unable to open app store. Please manually update the app."
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:42
+#: apps/web/src/features/sessions/components/tmdb-search.tsx:35
 msgid "Unknown year"
 msgstr "Unknown year"
 

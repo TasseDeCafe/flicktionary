@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { SearchIcon, X } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Input } from '@/components/ui/input'
@@ -8,20 +8,26 @@ type Props = {
   onChange: (value: string) => void
   placeholder?: string
   className?: string
+  disabled?: boolean
+  autoFocus?: boolean
 }
 
-// Search field with a clear ("×") affordance that appears once there's input.
-// The native WebKit search-cancel button is hidden so we don't render two crosses.
-export const SearchInput = ({ value, onChange, placeholder, className }: Props) => {
+// Shared search field: a leading magnifying glass plus a clear ("×") affordance
+// that appears once there's input. The native WebKit search-cancel button is
+// hidden so we don't render two crosses.
+export const SearchInput = ({ value, onChange, placeholder, className, disabled, autoFocus }: Props) => {
   const { t } = useLingui()
   return (
     <div className={cn('relative', className)}>
+      <SearchIcon className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
       <Input
         type='search'
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className='w-full pr-10 sm:pr-9 [&::-webkit-search-cancel-button]:appearance-none'
+        disabled={disabled}
+        autoFocus={autoFocus}
+        className='w-full pr-10 pl-9 sm:pr-9 [&::-webkit-search-cancel-button]:appearance-none'
       />
       {value.length > 0 && (
         <button

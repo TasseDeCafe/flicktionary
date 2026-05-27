@@ -30,7 +30,7 @@ export const SessionCard = ({ session, onRemove }: Props) => {
   )
 
   return (
-    <Card className='relative transition-colors hover:border-yellow-300'>
+    <Card className='relative transition-colors hover:bg-gray-50 active:bg-gray-100'>
       <Link to='/sessions/$sessionId' params={{ sessionId: session.id }} className='block'>
         <CardContent className='flex items-center gap-4 p-4 pr-14'>
           {session.contentSourcePosterUrl ? (
