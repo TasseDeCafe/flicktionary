@@ -29,7 +29,7 @@ export type StartPracticeSessionResult =
 // Sessions older than this are auto-abandoned before we try to resume — the
 // user has clearly walked away, and we'd rather snapshot a fresh eligibility
 // universe than dredge up a days-old one.
-const STALE_SESSION_HOURS = 24
+export const STALE_SESSION_HOURS = 24
 
 const clampPracticeSessionLimits = (limits: PracticeSessionLimits): PracticeSessionLimits => {
   const maxNewTerms = Math.min(Math.max(Math.trunc(limits.maxNewTerms), 0), HARD_MAX_PRACTICE_NEW_TERMS)

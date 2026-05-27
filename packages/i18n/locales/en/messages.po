@@ -1270,12 +1270,12 @@ msgstr "Failed to create checkout session"
 msgid "Failed to create session"
 msgstr "Failed to create session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:149
+#: apps/web/src/features/practice/api/practice-hooks.ts:153
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:142
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:53
+#: apps/web/src/features/practice/api/practice-hooks.ts:57
 msgid "Failed to end practice session"
 msgstr "Failed to end practice session"
 
@@ -1292,11 +1292,11 @@ msgstr "Failed to export vocabulary"
 msgid "Failed to fetch subscription details"
 msgstr "Failed to fetch subscription details"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:182
+#: apps/web/src/features/practice/api/practice-hooks.ts:186
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:206
+#: apps/web/src/features/practice/api/practice-hooks.ts:210
 msgid "Failed to finalize text"
 msgstr "Failed to finalize text"
 
@@ -1304,7 +1304,7 @@ msgstr "Failed to finalize text"
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:94
+#: apps/web/src/features/practice/api/practice-hooks.ts:98
 msgid "Failed to generate next text"
 msgstr "Failed to generate next text"
 
@@ -1340,7 +1340,7 @@ msgstr "Failed to load highlights"
 msgid "Failed to load languages"
 msgstr "Failed to load languages"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:66
+#: apps/web/src/features/practice/api/practice-hooks.ts:70
 msgid "Failed to load practice session"
 msgstr "Failed to load practice session"
 
@@ -1396,7 +1396,7 @@ msgstr "Failed to mark chat read"
 msgid "Failed to open triage"
 msgstr "Failed to open triage"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:127
+#: apps/web/src/features/practice/api/practice-hooks.ts:131
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
 
@@ -1424,7 +1424,7 @@ msgstr "Failed to rename term"
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:170
+#: apps/web/src/features/practice/api/practice-hooks.ts:174
 msgid "Failed to restore term"
 msgstr "Failed to restore term"
 
@@ -1457,7 +1457,7 @@ msgstr "Failed to set CEFR level"
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:34
+#: apps/web/src/features/practice/api/practice-hooks.ts:38
 msgid "Failed to start practice session"
 msgstr "Failed to start practice session"
 

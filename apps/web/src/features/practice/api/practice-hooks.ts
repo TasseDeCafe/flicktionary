@@ -24,12 +24,16 @@ export const useDueSummary = () => {
 
 export const useStartPracticeSession = () => {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   // Per Problem 2: don't seed the getSession cache. With resume, the seed
   // would suppress the resumed text long enough for the auto-trigger to fire
   // generateNextText and burn another LLM call. Cost: one extra fetch on
   // first entry into the session view.
   return useMutation(
     orpcQuery.practice.startSession.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
       meta: {
         errorMessage: t`Failed to start practice session`,
         showErrorModal: true,
