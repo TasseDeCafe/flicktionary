@@ -1254,7 +1254,7 @@ msgstr "Exported {chunkCount} term(s)"
 msgid "Exporting…"
 msgstr "Exporting…"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:344
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:401
 msgid "Failed to complete onboarding"
 msgstr "Failed to complete onboarding"
 
@@ -1266,7 +1266,7 @@ msgstr "Failed to create card"
 msgid "Failed to create checkout session"
 msgstr "Failed to create checkout session"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:24
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:52
 msgid "Failed to create session"
 msgstr "Failed to create session"
 
@@ -1308,11 +1308,11 @@ msgstr "Failed to generate exploration"
 msgid "Failed to generate next text"
 msgstr "Failed to generate next text"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:108
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:136
 msgid "Failed to import pasted text"
 msgstr "Failed to import pasted text"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:84
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:112
 msgid "Failed to import subtitles"
 msgstr "Failed to import subtitles"
 
@@ -1332,7 +1332,7 @@ msgstr "Failed to load cards"
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:275
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:332
 msgid "Failed to load highlights"
 msgstr "Failed to load highlights"
 
@@ -1348,35 +1348,35 @@ msgstr "Failed to load practice session"
 msgid "Failed to load practice summary"
 msgstr "Failed to load practice summary"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:120
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:148
 msgid "Failed to load preferences"
 msgstr "Failed to load preferences"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:225
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:254
 msgid "Failed to load processing status"
 msgstr "Failed to load processing status"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:148
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:177
 msgid "Failed to load session"
 msgstr "Failed to load session"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:160
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:189
 msgid "Failed to load session counts"
 msgstr "Failed to load session counts"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:204
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:233
 msgid "Failed to load session status"
 msgstr "Failed to load session status"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:10
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:38
 msgid "Failed to load sessions"
 msgstr "Failed to load sessions"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:252
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
 msgid "Failed to load subtitle segments"
 msgstr "Failed to load subtitle segments"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:494
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:551
 msgid "Failed to load suggestions"
 msgstr "Failed to load suggestions"
 
@@ -1392,7 +1392,7 @@ msgstr "Failed to load vocabulary"
 msgid "Failed to mark chat read"
 msgstr "Failed to mark chat read"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:312
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:369
 msgid "Failed to open triage"
 msgstr "Failed to open triage"
 
@@ -1400,19 +1400,19 @@ msgstr "Failed to open triage"
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:48
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:76
 msgid "Failed to register movie"
 msgstr "Failed to register movie"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:60
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:88
 msgid "Failed to register text"
 msgstr "Failed to register text"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:471
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:528
 msgid "Failed to remove highlight"
 msgstr "Failed to remove highlight"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:190
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:219
 msgid "Failed to remove session"
 msgstr "Failed to remove session"
 
@@ -1420,7 +1420,7 @@ msgstr "Failed to remove session"
 msgid "Failed to rename term"
 msgstr "Failed to rename term"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:511
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:568
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
 
@@ -1428,11 +1428,11 @@ msgstr "Failed to request suggestions"
 msgid "Failed to restore term"
 msgstr "Failed to restore term"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:240
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:269
 msgid "Failed to retry enrichment"
 msgstr "Failed to retry enrichment"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:291
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:348
 msgid "Failed to save highlight"
 msgstr "Failed to save highlight"
 
@@ -1449,11 +1449,11 @@ msgstr "Failed to send chat message"
 msgid "Failed to send feedback. Please try again."
 msgstr "Failed to send feedback. Please try again."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:134
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:162
 msgid "Failed to set CEFR level"
 msgstr "Failed to set CEFR level"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:328
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:385
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
 
@@ -1482,11 +1482,11 @@ msgstr "Failed to update card status"
 msgid "Failed to update card statuses"
 msgstr "Failed to update card statuses"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:408
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:465
 msgid "Failed to update English IPA dialect"
 msgstr "Failed to update English IPA dialect"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:454
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:511
 msgid "Failed to update highlight"
 msgstr "Failed to update highlight"
 
@@ -1494,19 +1494,19 @@ msgstr "Failed to update highlight"
 msgid "Failed to update learning mode"
 msgstr "Failed to update learning mode"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:376
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:433
 msgid "Failed to update LLM-highlights setting"
 msgstr "Failed to update LLM-highlights setting"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:424
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:481
 msgid "Failed to update practice limits"
 msgstr "Failed to update practice limits"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:392
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:449
 msgid "Failed to update show-translations setting"
 msgstr "Failed to update show-translations setting"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:360
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:417
 msgid "Failed to update tap-to-translate setting"
 msgstr "Failed to update tap-to-translate setting"
 
@@ -1514,11 +1514,11 @@ msgstr "Failed to update tap-to-translate setting"
 msgid "Failed to update term"
 msgstr "Failed to update term"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:96
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:124
 msgid "Failed to upload subtitles"
 msgstr "Failed to upload subtitles"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:531
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:588
 msgid "Failed to use suggestion"
 msgstr "Failed to use suggestion"
 
@@ -1896,8 +1896,12 @@ msgid "Last day to cancel before first charge"
 msgstr "Last day to cancel before first charge"
 
 #: apps/web/src/features/sessions/components/session-view.tsx:290
-msgid "Last highlight"
-msgstr "Last highlight"
+#~ msgid "Last highlight"
+#~ msgstr "Last highlight"
+
+#: apps/web/src/features/sessions/components/session-view.tsx:366
+msgid "Last read"
+msgstr "Last read"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:68
 msgid "Later"
@@ -1960,11 +1964,11 @@ msgstr "Loading chat…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:265
+#: apps/web/src/features/sessions/components/session-view.tsx:345
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:218
+#: apps/web/src/features/sessions/components/session-view.tsx:298
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -2226,7 +2230,7 @@ msgstr "Notable forms"
 #~ msgid "Note & tags"
 #~ msgstr "Note & tags"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:453
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:510
 msgid "Note saved"
 msgstr "Note saved"
 
@@ -2268,7 +2272,7 @@ msgstr "Open source"
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:311
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:368
 msgid "Opening triage"
 msgstr "Opening triage"
 
@@ -2280,7 +2284,7 @@ msgstr "Opening…"
 #~ msgid "OpenSubtitles search"
 #~ msgstr "OpenSubtitles search"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:74
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:102
 msgid "OpenSubtitles search failed"
 msgstr "OpenSubtitles search failed"
 
@@ -2593,7 +2597,7 @@ msgstr "Pronoun"
 msgid "Quick gloss"
 msgstr "Quick gloss"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:436
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:493
 msgid "Quick gloss failed"
 msgstr "Quick gloss failed"
 
@@ -2770,7 +2774,7 @@ msgstr "Saving…"
 msgid "Search a movie title…"
 msgstr "Search a movie title…"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:264
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:321
 msgid "Search failed"
 msgstr "Search failed"
 
@@ -2830,8 +2834,8 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:217
-#: apps/web/src/features/sessions/components/session-view.tsx:224
+#: apps/web/src/features/sessions/components/session-view.tsx:297
+#: apps/web/src/features/sessions/components/session-view.tsx:304
 msgid "Session"
 msgstr "Session"
 
@@ -2840,7 +2844,7 @@ msgstr "Session"
 msgid "Session in progress"
 msgstr "Session in progress"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:225
+#: apps/web/src/features/sessions/components/session-view.tsx:305
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -2849,7 +2853,7 @@ msgstr "Session not found."
 #~ msgid "Session options"
 #~ msgstr "Session options"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:189
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:218
 msgid "Session removed"
 msgstr "Session removed"
 
@@ -3218,7 +3222,7 @@ msgstr "This term is removed from your vocabulary. Restore it to keep practicing
 msgid "Title"
 msgstr "Title"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:38
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:66
 msgid "TMDB search failed"
 msgstr "TMDB search failed"
 
@@ -3302,7 +3306,7 @@ msgid "Untapped terms count as 'good' when you advance to the next text."
 msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
-#: apps/web/src/features/sessions/components/session-view.tsx:230
+#: apps/web/src/features/sessions/components/session-view.tsx:310
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
 msgid "Untitled"
 msgstr "Untitled"

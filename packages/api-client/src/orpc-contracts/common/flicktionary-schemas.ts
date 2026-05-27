@@ -273,6 +273,9 @@ export const StudySessionSchema = z.object({
   cefrLevel: z.string(),
   contextBlob: z.string().nullable(),
   processingWarnings: z.array(z.string()),
+  // Deepest segment index the reader has reached (resume-reading position). NULL
+  // until the reader scrolls in a normal session view. Track-relative index.
+  furthestReadSegmentIndex: z.number().int().nullable(),
   createdAt: z.string(),
   contentSourceTitle: z.string().nullable(),
   contentSourceType: ContentSourceTypeSchema.nullable(),

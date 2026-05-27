@@ -1,6 +1,34 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
+import type { StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+
+type StudySessionQueryData = {
+  data: StudySession
+}
+
+const isStudySessionQueryData = (value: unknown): value is StudySessionQueryData => {
+  if (typeof value !== 'object' || value === null || !('data' in value)) return false
+  const data = value.data
+  return typeof data === 'object' && data !== null && 'furthestReadSegmentIndex' in data
+}
+
+const mergeFurthestReadSegmentIndex = (cached: unknown, incoming: unknown): unknown => {
+  if (!isStudySessionQueryData(incoming)) return incoming
+  const cachedData = isStudySessionQueryData(cached) ? cached : undefined
+  const cachedIndex = cachedData?.data.furthestReadSegmentIndex
+  const incomingIndex = incoming.data.furthestReadSegmentIndex
+  if (cachedIndex == null) return incoming
+  const furthestReadSegmentIndex = incomingIndex == null ? cachedIndex : Math.max(cachedIndex, incomingIndex)
+  if (furthestReadSegmentIndex === incomingIndex) return incoming
+  return {
+    ...incoming,
+    data: {
+      ...incoming.data,
+      furthestReadSegmentIndex,
+    },
+  }
+}
 
 export const useListStudySessions = () => {
   const { t } = useLingui()
@@ -145,6 +173,7 @@ export const useGetStudySession = (sessionId: string, options?: { enabled?: bool
       input: { sessionId },
       enabled: options?.enabled ?? true,
       select: (response) => response.data,
+      structuralSharing: mergeFurthestReadSegmentIndex,
       meta: { errorMessage: t`Failed to load session` },
     })
   )
@@ -238,6 +267,34 @@ export const useRetryEnrichment = (sessionId: string) => {
         })
       },
       meta: { errorMessage: t`Failed to retry enrichment` },
+    })
+  )
+}
+
+// Fire-and-forget write of the reader's furthest-read position. Stays silent on
+// failure — it's resume-position telemetry, not a user-facing action.
+//
+// We never *invalidate* the session query (no refetch on every throttled ping), but
+// we DO optimistically patch its cache synchronously in onMutate. Without that, the
+// cached session lags the DB by a full open/close cycle: the restore-on-open effect
+// reads the stale cached value (and locks it in) before any background refetch can
+// correct it, so the reader lands at their previous position, not the latest. The
+// patch is monotonic (Math.max), matching the server's GREATEST; useGetStudySession
+// applies the same merge to GET responses so a racing refetch cannot lower it.
+export const useUpdateReadingProgress = () => {
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.studySessions.updateReadingProgress.mutationOptions({
+      onMutate: ({ sessionId, segmentIndex }) => {
+        const key = orpcQuery.studySessions.get.queryKey({ input: { sessionId } })
+        queryClient.setQueryData<StudySessionQueryData>(key, (cached) => {
+          if (!cached?.data) return cached
+          const cur = cached.data.furthestReadSegmentIndex
+          const next = cur == null ? segmentIndex : Math.max(cur, segmentIndex)
+          return { ...cached, data: { ...cached.data, furthestReadSegmentIndex: next } }
+        })
+      },
+      meta: { showErrorModal: false },
     })
   )
 }

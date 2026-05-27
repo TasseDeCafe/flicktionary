@@ -214,6 +214,18 @@ const updateContextBlob = async (sessionId: string, userId: string, contextBlob:
   return result.count === 1
 }
 
+// Records the deepest segment the reader has reached. GREATEST keeps it monotonic
+// server-side too, so an out-of-order (lower) write — e.g. a throttled flush that
+// lands after a later one — can never walk the resume position backwards.
+const updateReadingProgress = async (sessionId: string, userId: string, segmentIndex: number): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.study_sessions
+    SET furthest_read_segment_index = GREATEST(COALESCE(furthest_read_segment_index, -1), ${segmentIndex})
+    WHERE id = ${sessionId} AND user_id = ${userId} AND deleted_at IS NULL
+  `
+  return result.count === 1
+}
+
 const appendProcessingWarning = async (sessionId: string, userId: string, warning: string): Promise<boolean> => {
   const result = await sql`
     UPDATE public.study_sessions
@@ -284,6 +296,7 @@ export interface StudySessionsRepositoryInterface {
   listByUserId: (userId: string) => Promise<DbStudySession[]>
   listByUserIdWithSource: (userId: string) => Promise<DbStudySessionWithSource[]>
   updateContextBlob: (sessionId: string, userId: string, contextBlob: string) => Promise<boolean>
+  updateReadingProgress: (sessionId: string, userId: string, segmentIndex: number) => Promise<boolean>
   appendProcessingWarning: (sessionId: string, userId: string, warning: string) => Promise<boolean>
   softDelete: (sessionId: string, userId: string) => Promise<boolean>
   getDeletePreview: (sessionId: string, userId: string) => Promise<DeletePreview | null>
@@ -299,6 +312,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     listByUserId,
     listByUserIdWithSource,
     updateContextBlob,
+    updateReadingProgress,
     appendProcessingWarning,
     softDelete,
     getDeletePreview,

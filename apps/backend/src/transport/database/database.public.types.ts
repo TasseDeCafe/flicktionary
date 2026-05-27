@@ -816,6 +816,7 @@ export type Database = {
           context_blob: string | null
           created_at: string
           deleted_at: string | null
+          furthest_read_segment_index: number | null
           id: string
           native_language: string
           processing_warnings: string[]
@@ -829,6 +830,7 @@ export type Database = {
           context_blob?: string | null
           created_at?: string
           deleted_at?: string | null
+          furthest_read_segment_index?: number | null
           id?: string
           native_language: string
           processing_warnings?: string[]
@@ -842,6 +844,7 @@ export type Database = {
           context_blob?: string | null
           created_at?: string
           deleted_at?: string | null
+          furthest_read_segment_index?: number | null
           id?: string
           native_language?: string
           processing_warnings?: string[]

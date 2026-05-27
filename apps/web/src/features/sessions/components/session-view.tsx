@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@/components/ui/floating-sheet'
@@ -13,6 +13,7 @@ import {
   useSearchSegments,
   useListHighlightsBySession,
   useListGhostsBySession,
+  useUpdateReadingProgress,
 } from '../api/sessions-hooks'
 import type { SelectionResult } from '../utils/selection-adapter'
 import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
@@ -26,6 +27,14 @@ import { SegmentList } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { TriageFooter } from './triage-footer'
+
+const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
+  const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
+  if (!target) return false
+  const delta = target.getBoundingClientRect().bottom - scrollContainer.getBoundingClientRect().bottom
+  scrollContainer.scrollTop += delta
+  return true
+}
 
 export const SessionView = () => {
   const { t } = useLingui()
@@ -79,6 +88,11 @@ export const SessionView = () => {
     for (const s of allSegments ?? []) max = max === null || s.index > max ? s.index : max
     return max
   }, [allSegments])
+  const furthestReadSegmentId = useMemo(() => {
+    const index = session?.furthestReadSegmentIndex
+    if (index == null) return null
+    return allSegments?.find((s) => s.index === index)?.id ?? null
+  }, [allSegments, session?.furthestReadSegmentIndex])
   const deepestIndex = useDeepestVisibleSegment(scrollEl, indexBySegmentId)
   // While searching, the scroll container renders only the (filtered) search
   // results, so the deepest-visible segment jumps to an arbitrary match and would
@@ -137,19 +151,85 @@ export const SessionView = () => {
     return () => cancelAnimationFrame(raf)
   }, [targetSegmentId, allSegments, scrollToSegment])
 
-  // The most recently created highlight is a reliable, already-persisted anchor for
-  // "where the reader was working". When its segment scrolls off screen we offer a
-  // jump back to it (direction-aware chevron). Suppressed while searching, since the
-  // list then renders only filtered matches and the anchor row may be absent.
-  const latestHighlight = useMemo(() => {
-    if (!highlights || highlights.length === 0) return null
-    return highlights.reduce((latest, h) => (h.createdAt > latest.createdAt ? h : latest))
-  }, [highlights])
-  const latestHighlightPosition = useSegmentPosition(scrollEl, latestHighlight?.startSegmentId ?? null)
-  const showJumpToHighlight =
-    !isSearching &&
-    latestHighlight != null &&
-    (latestHighlightPosition === 'above' || latestHighlightPosition === 'below')
+  // Persist the deepest segment the reader reaches (resume position), but only on a
+  // normal read: never while searching (deepest-visible then reflects arbitrary
+  // filtered matches) and never under a deep-link open (the "open source" jump from a
+  // card / Vocabulary mustn't move the saved position). Monotonic + throttled: one
+  // write per few seconds carrying the latest max, plus a best-effort flush on leave.
+  const { mutate: updateReadingProgress } = useUpdateReadingProgress()
+  const writtenMaxRef = useRef(-1)
+  useEffect(() => {
+    if (session?.furthestReadSegmentIndex != null) {
+      writtenMaxRef.current = Math.max(writtenMaxRef.current, session.furthestReadSegmentIndex)
+    }
+  }, [session?.furthestReadSegmentIndex])
+
+  // Resume-reading: on a normal open (no deep-link target), land the reader back at
+  // their furthest-read segment with NO visible scroll. We position the container in
+  // a layout effect — synchronously, before the browser paints — so the content
+  // appears already parked there (the same trick the chat uses to open at the
+  // bottom), rather than starting at the top and animating down. Runs once per mount.
+  const didRestoreRef = useRef(false)
+  useLayoutEffect(() => {
+    if (didRestoreRef.current) return
+    if (targetSegmentId) return // an explicit deep-link target wins over resume
+    const el = scrollEl
+    // Wait until both the container and the rows exist; this is our one shot.
+    if (!el || !session || !allSegments || allSegments.length === 0) return
+    // Consume the one-shot now, even if there's nothing to restore to — otherwise a
+    // later optimistic cache bump (furthest null → a real value as the reader
+    // scrolls) would re-trigger this effect and yank a reader of a fresh session.
+    didRestoreRef.current = true
+    if (!furthestReadSegmentId) return
+    // Align the deepest-read line to the bottom of the viewport — reproduces the
+    // frame the reader left on, with everything below it still unread. scrollTop is
+    // clamped by the browser, so an early segment just lands at the top.
+    alignSegmentToBottom(el, furthestReadSegmentId)
+  }, [scrollEl, session, allSegments, targetSegmentId, furthestReadSegmentId])
+
+  const writeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingMaxRef = useRef<number | null>(null)
+  const trackingEnabled = !isSearching && !targetSegmentId
+  const flushReadingProgress = useCallback(() => {
+    const toWrite = pendingMaxRef.current
+    pendingMaxRef.current = null
+    if (toWrite != null && toWrite > writtenMaxRef.current) {
+      writtenMaxRef.current = toWrite
+      updateReadingProgress({ sessionId, segmentIndex: toWrite })
+    }
+  }, [sessionId, updateReadingProgress])
+
+  useEffect(() => {
+    if (!trackingEnabled || deepestIndex == null) return
+    if (deepestIndex <= writtenMaxRef.current) return
+    pendingMaxRef.current = deepestIndex
+    if (writeTimerRef.current) return // throttle: a trailing write is already queued
+    writeTimerRef.current = setTimeout(() => {
+      writeTimerRef.current = null
+      flushReadingProgress()
+    }, 3000)
+  }, [deepestIndex, trackingEnabled, flushReadingProgress])
+
+  useEffect(
+    () => () => {
+      if (writeTimerRef.current) clearTimeout(writeTimerRef.current)
+      flushReadingProgress()
+    },
+    [flushReadingProgress]
+  )
+
+  // Offer a quick return to the furthest-read segment when the reader scrolls back
+  // up to re-read. Suppressed while searching, since the list then renders only
+  // filtered matches and the anchor row may be absent.
+  const furthestReadPosition = useSegmentPosition(scrollEl, furthestReadSegmentId)
+  const showJumpToLastRead = !isSearching && furthestReadSegmentId != null && furthestReadPosition === 'below'
+  const jumpToLastRead = useCallback(() => {
+    if (!scrollEl || !furthestReadSegmentId) return
+    if (!alignSegmentToBottom(scrollEl, furthestReadSegmentId)) return
+    setFlashSegmentId(furthestReadSegmentId)
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current)
+    flashTimerRef.current = setTimeout(() => setFlashSegmentId(null), 1500)
+  }, [furthestReadSegmentId, scrollEl])
 
   // Tap-to-select-word gesture. Replaces native browser selection: a single
   // click/tap selects a word, press-and-drag extends a range. The adapter maps
@@ -274,20 +354,16 @@ export const SessionView = () => {
             )}
           </div>
         </div>
-        {showJumpToHighlight && latestHighlight && (
+        {showJumpToLastRead && (
           <Button
             type='button'
             variant='secondary'
             size='sm'
-            onClick={() => scrollToSegment(latestHighlight.startSegmentId)}
+            onClick={jumpToLastRead}
             className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full border shadow-md'
           >
-            {latestHighlightPosition === 'above' ? (
-              <ChevronUp className='h-4 w-4' />
-            ) : (
-              <ChevronDown className='h-4 w-4' />
-            )}
-            {t`Last highlight`}
+            <ChevronDown className='h-4 w-4' />
+            {t`Last read`}
           </Button>
         )}
       </div>
