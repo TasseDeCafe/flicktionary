@@ -10,10 +10,6 @@ export const runWithRequestContext = <T>(callback: () => T, initialContext: Requ
   return requestContextStorage.run(initialContext, callback)
 }
 
-export const getRequestContext = (): RequestContext | undefined => {
-  return requestContextStorage.getStore()
-}
-
 export const setRequestContext = (context: Partial<RequestContext>) => {
   const store = requestContextStorage.getStore()
   if (!store) {

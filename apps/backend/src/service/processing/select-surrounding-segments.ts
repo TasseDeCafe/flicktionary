@@ -6,7 +6,7 @@ export type SurroundingSegmentSlice = {
   text: string
 }
 
-export const SURROUNDING_RADIUS = 10
+const SURROUNDING_RADIUS = 10
 
 export const selectSurroundingSegments = async (
   textTrackId: string,

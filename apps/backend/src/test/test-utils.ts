@@ -43,7 +43,7 @@ const supabaseClaims1: SupabaseClaims = {
   },
 }
 
-export const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Promise<string> => {
+const __getSupabaseTokenWithIdAndEmail = async (id: string, email: string): Promise<string> => {
   const supabaseClaims: SupabaseClaims = {
     sub: id,
     user_metadata: {

@@ -27,7 +27,7 @@ export type WordKey = {
   wordEnd: number
 }
 
-export type WordSelection = {
+type WordSelection = {
   anchor: WordKey
   end: WordKey
   // Bounding rect of the painted span run, for anchoring the floating sheet.

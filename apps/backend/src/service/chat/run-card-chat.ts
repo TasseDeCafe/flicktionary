@@ -173,16 +173,6 @@ type CardFieldsToolInput = {
   grammar_patch?: unknown
 }
 
-const FIELD_KEYS: Array<keyof CardFieldsToolInput> = [
-  'headword',
-  'sense',
-  'surface_form',
-  'translation',
-  'definition',
-  'target_example',
-  'native_example',
-]
-
 type ParsedPatch = {
   patch: {
     headword: string | null
@@ -464,6 +454,3 @@ export const runCardChat = async (
 
   return { userMessage, assistantMessage }
 }
-
-// Exported for tests.
-export const __testing = { parseToolInput, FIELD_KEYS }
