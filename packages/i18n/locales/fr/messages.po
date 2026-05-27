@@ -1268,12 +1268,12 @@ msgstr "Échec de la création de la session de paiement"
 msgid "Failed to create session"
 msgstr "Échec de la création de la session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:149
+#: apps/web/src/features/practice/api/practice-hooks.ts:153
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:142
 msgid "Failed to delete term"
 msgstr "Échec de la suppression du terme"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:53
+#: apps/web/src/features/practice/api/practice-hooks.ts:57
 msgid "Failed to end practice session"
 msgstr "Échec de la fin de la session de pratique"
 
@@ -1290,11 +1290,11 @@ msgstr "Échec de l'export du vocabulaire"
 msgid "Failed to fetch subscription details"
 msgstr "Échec de la récupération des détails de l'abonnement"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:182
+#: apps/web/src/features/practice/api/practice-hooks.ts:186
 msgid "Failed to fetch translation"
 msgstr "Échec de la récupération de la traduction"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:206
+#: apps/web/src/features/practice/api/practice-hooks.ts:210
 msgid "Failed to finalize text"
 msgstr "Échec de la finalisation du texte"
 
@@ -1302,7 +1302,7 @@ msgstr "Échec de la finalisation du texte"
 msgid "Failed to generate exploration"
 msgstr "Échec de la génération de l'exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:94
+#: apps/web/src/features/practice/api/practice-hooks.ts:98
 msgid "Failed to generate next text"
 msgstr "Échec de la génération du texte suivant"
 
@@ -1338,7 +1338,7 @@ msgstr "Échec du chargement des surlignages"
 msgid "Failed to load languages"
 msgstr "Échec du chargement des langues"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:66
+#: apps/web/src/features/practice/api/practice-hooks.ts:70
 msgid "Failed to load practice session"
 msgstr "Échec du chargement de la session de pratique"
 
@@ -1394,7 +1394,7 @@ msgstr "Échec du marquage du chat comme lu"
 msgid "Failed to open triage"
 msgstr "Échec de l'ouverture du tri"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:127
+#: apps/web/src/features/practice/api/practice-hooks.ts:131
 msgid "Failed to record rating"
 msgstr "Échec de l'enregistrement de l'évaluation"
 
@@ -1422,7 +1422,7 @@ msgstr "Échec du renommage du terme"
 msgid "Failed to request suggestions"
 msgstr "Échec de la demande de suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:170
+#: apps/web/src/features/practice/api/practice-hooks.ts:174
 msgid "Failed to restore term"
 msgstr "Échec de la restauration du terme"
 
@@ -1455,7 +1455,7 @@ msgstr "Échec de la définition du niveau CECR"
 msgid "Failed to set native language"
 msgstr "Échec de la définition de la langue maternelle"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:34
+#: apps/web/src/features/practice/api/practice-hooks.ts:38
 msgid "Failed to start practice session"
 msgstr "Échec du démarrage de la session de pratique"
 
