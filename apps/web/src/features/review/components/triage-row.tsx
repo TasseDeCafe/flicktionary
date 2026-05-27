@@ -111,7 +111,7 @@ export const TriageRow = ({ sessionId, card, hideTranslationFields = false, onSt
             <PopoverContent align='end' className='w-48 p-1'>
               <button
                 type='button'
-                className='hover:bg-muted flex w-full items-center justify-between rounded-sm px-3 py-2 text-left text-sm'
+                className='hover:bg-muted active:bg-muted flex w-full items-center justify-between rounded-sm px-3 py-2 text-left text-sm transition-colors'
                 onClick={() => {
                   setMenuOpen(false)
                   onStatusChange(card.id, 'kept', 'passive')
@@ -122,7 +122,7 @@ export const TriageRow = ({ sessionId, card, hideTranslationFields = false, onSt
               </button>
               <button
                 type='button'
-                className='hover:bg-muted flex w-full items-center justify-between rounded-sm px-3 py-2 text-left text-sm'
+                className='hover:bg-muted active:bg-muted flex w-full items-center justify-between rounded-sm px-3 py-2 text-left text-sm transition-colors'
                 onClick={() => {
                   setMenuOpen(false)
                   onStatusChange(card.id, 'kept', 'active')

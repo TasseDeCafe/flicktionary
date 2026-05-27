@@ -37,8 +37,8 @@ export const MoreListRow = ({
       onClick={isInteractive ? onPress : undefined}
       disabled={isInteractive ? disabled : undefined}
       className={cn(
-        'flex w-full items-center gap-3 px-4 py-3 text-left',
-        isInteractive && 'hover:bg-gray-50 disabled:opacity-50',
+        'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
+        isInteractive && 'hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50',
         destructive && 'text-red-600'
       )}
     >
