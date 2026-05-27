@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Film } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { OptionCard } from '@/components/ui/option-card'
+import { SearchInput } from '@/components/ui/search-input'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useSearchTmdb } from '../api/sessions-hooks'
 
@@ -28,14 +28,7 @@ export const TmdbSearch = ({ onPick, disabled }: Props) => {
 
   return (
     <div className='flex flex-col gap-3'>
-      <Input
-        type='search'
-        placeholder={t`Search a movie title…`}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        disabled={disabled}
-        autoFocus
-      />
+      <SearchInput value={query} onChange={setQuery} placeholder={t`Search movies…`} disabled={disabled} autoFocus />
       {isFetching && <p className='text-muted-foreground text-sm'>{t`Searching…`}</p>}
       <div className='flex flex-col gap-2'>
         {(data ?? []).slice(0, 10).map((movie) => {
