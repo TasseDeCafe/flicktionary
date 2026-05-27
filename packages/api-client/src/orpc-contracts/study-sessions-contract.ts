@@ -45,6 +45,18 @@ export const studySessionsContract = {
     .input(z.object({ sessionId: z.string().uuid() }))
     .output(z.object({ data: z.object({ accepted: z.literal(true) }) })),
 
+  // Resume-reading position: record the deepest segment the reader has reached so
+  // reopening the session can land them back there. Fire-and-forget from the client
+  // (throttled); the server keeps it monotonic via GREATEST.
+  updateReadingProgress: oc
+    .route({ method: 'POST', path: '/study-sessions/{sessionId}/reading-progress', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ sessionId: z.string().uuid(), segmentIndex: z.number().int().nonnegative() }))
+    .output(z.object({ data: z.object({ ok: z.literal(true) }) })),
+
   getStatus: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/status', successStatus: 200 })
     .errors({

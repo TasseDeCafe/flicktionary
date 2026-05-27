@@ -35,6 +35,7 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   cefrLevel: row.cefr_level,
   contextBlob: row.context_blob,
   processingWarnings: row.processing_warnings,
+  furthestReadSegmentIndex: row.furthest_read_segment_index,
   createdAt: new Date(row.created_at).toISOString(),
   contentSourceTitle: row.content_source_title,
   contentSourceType: row.content_source_type,
@@ -123,6 +124,17 @@ export const StudySessionsRouter = (
       // backwards-compatible no-op that lets old clients jump to triage without
       // mutating study_sessions.status.
       return { data: { accepted: true as const } }
+    }),
+
+    updateReadingProgress: implementer.updateReadingProgress.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await studySessionsRepository.updateReadingProgress(input.sessionId, userId, input.segmentIndex)
+      if (!ok) {
+        throw errors.NOT_FOUND({
+          data: { errors: [{ message: 'Study session not found' }] },
+        })
+      }
+      return { data: { ok: true as const } }
     }),
 
     getProcessingStatus: implementer.getProcessingStatus.handler(async ({ input, context, errors }) => {
