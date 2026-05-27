@@ -33,8 +33,6 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@lingui/core": "catalog:",
-    "@flicktionary/api-client": "workspace:*",
-    "@flicktionary/core": "workspace:*"
+    "@lingui/core": "catalog:"
   }
 }

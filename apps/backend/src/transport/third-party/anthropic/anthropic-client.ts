@@ -5,7 +5,7 @@ import { getConfig } from '../../../config/environment-config'
 // difficult-words, full-exploration, per-card chat). Haiku handles the latency-sensitive
 // tap-to-translate fast-gloss path.
 export const MODEL_OPUS = 'claude-opus-4-7'
-export const MODEL_SONNET = 'claude-sonnet-4-6'
+const MODEL_SONNET = 'claude-sonnet-4-6'
 export const MODEL_HAIKU = 'claude-haiku-4-5-20251001'
 
 // Per-highlight background enrichment runs through this constant. Defaults to

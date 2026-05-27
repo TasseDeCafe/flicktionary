@@ -200,19 +200,6 @@ export const useTextSegmentsWindow = (input: { textTrackId: string; segmentId: s
   )
 }
 
-export const useUpdateCardFields = () => {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  return useMutation(
-    orpcQuery.cards.updateFields.mutationOptions({
-      onSuccess: (response) => {
-        setCardEverywhere(queryClient, response.data)
-      },
-      meta: { errorMessage: t`Failed to update card fields` },
-    })
-  )
-}
-
 // Patch translation/definition/examples/extras on the canonical chunk
 // (user_lookups). After success, invalidate the cards caches so any sibling
 // card showing the same chunk picks up the new content via re-fetch. We don't

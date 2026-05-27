@@ -405,22 +405,6 @@ export const useCompleteOnboarding = () => {
   )
 }
 
-export const useSetTapToTranslateEnabled = () => {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  return useMutation(
-    orpcQuery.userPrefs.setTapToTranslateEnabled.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
-      meta: {
-        errorMessage: t`Failed to update tap-to-translate setting`,
-        showErrorModal: true,
-      },
-    })
-  )
-}
-
 export const useSetLlmHighlightsEnabled = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

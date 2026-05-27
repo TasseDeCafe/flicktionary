@@ -2,15 +2,10 @@
   "extends": "@flicktionary/typescript-config/library.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "./dist",
-    "paths": {
-      "@flicktionary/core/*": ["../../packages/core/src/*"],
-      "@flicktionary/api-client/*": ["../../packages/api-client/src/*"]
-    }
+    "outDir": "./dist"
   },
   "include": ["."],
   "exclude": ["node_modules", "dist", "vitest.config.ts"],
-  "references": [{ "path": "../core" }, { "path": "../api-client" }],
   "tsc-alias": {
     "resolveFullPaths": true,
     "verbose": false

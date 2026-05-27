@@ -10,7 +10,6 @@ The Next.js marketing site. To restore it, copy the directory back from the temp
 References that were also unwired (search for `landing-page` if restoring):
 
 - `lingui.config.mjs` — drop the `apps/landing-page/src` include path
-- `packages/i18n/scripts/detect-raw-strings.mjs` — usage doc lines
 - `scripts/generate-logos.sh` — `LANDING_APP` / `LANDING_PUBLIC` paths and the "Landing Page" image generation block
 - `.husky/prepare-commit-msg` — `landing-page` scope detection
 - `AGENTS.md` — stack list line

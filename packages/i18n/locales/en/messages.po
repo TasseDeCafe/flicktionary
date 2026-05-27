@@ -1376,7 +1376,7 @@ msgstr "Failed to load sessions"
 msgid "Failed to load subtitle segments"
 msgstr "Failed to load subtitle segments"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:551
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:535
 msgid "Failed to load suggestions"
 msgstr "Failed to load suggestions"
 
@@ -1408,7 +1408,7 @@ msgstr "Failed to register movie"
 msgid "Failed to register text"
 msgstr "Failed to register text"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:528
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:512
 msgid "Failed to remove highlight"
 msgstr "Failed to remove highlight"
 
@@ -1416,11 +1416,11 @@ msgstr "Failed to remove highlight"
 msgid "Failed to remove session"
 msgstr "Failed to remove session"
 
-#: apps/web/src/features/review/api/review-hooks.ts:253
+#: apps/web/src/features/review/api/review-hooks.ts:240
 msgid "Failed to rename term"
 msgstr "Failed to rename term"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:568
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:552
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
 
@@ -1471,8 +1471,8 @@ msgid "Failed to trigger Sentry message"
 msgstr "Failed to trigger Sentry message"
 
 #: apps/web/src/features/review/api/review-hooks.ts:211
-msgid "Failed to update card fields"
-msgstr "Failed to update card fields"
+#~ msgid "Failed to update card fields"
+#~ msgstr "Failed to update card fields"
 
 #: apps/web/src/features/review/api/review-hooks.ts:87
 msgid "Failed to update card status"
@@ -1482,11 +1482,11 @@ msgstr "Failed to update card status"
 msgid "Failed to update card statuses"
 msgstr "Failed to update card statuses"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:465
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:449
 msgid "Failed to update English IPA dialect"
 msgstr "Failed to update English IPA dialect"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:511
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:495
 msgid "Failed to update highlight"
 msgstr "Failed to update highlight"
 
@@ -1494,23 +1494,23 @@ msgstr "Failed to update highlight"
 msgid "Failed to update learning mode"
 msgstr "Failed to update learning mode"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:433
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:417
 msgid "Failed to update LLM-highlights setting"
 msgstr "Failed to update LLM-highlights setting"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:481
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:465
 msgid "Failed to update practice limits"
 msgstr "Failed to update practice limits"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:449
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:433
 msgid "Failed to update show-translations setting"
 msgstr "Failed to update show-translations setting"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:417
-msgid "Failed to update tap-to-translate setting"
-msgstr "Failed to update tap-to-translate setting"
+#~ msgid "Failed to update tap-to-translate setting"
+#~ msgstr "Failed to update tap-to-translate setting"
 
-#: apps/web/src/features/review/api/review-hooks.ts:233
+#: apps/web/src/features/review/api/review-hooks.ts:220
 msgid "Failed to update term"
 msgstr "Failed to update term"
 
@@ -1518,7 +1518,7 @@ msgstr "Failed to update term"
 msgid "Failed to upload subtitles"
 msgstr "Failed to upload subtitles"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:588
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:572
 msgid "Failed to use suggestion"
 msgstr "Failed to use suggestion"
 
@@ -1940,7 +1940,6 @@ msgstr "Link expired or invalid"
 #: apps/web/src/features/more/components/more-tab-view.tsx:60
 #: apps/web/src/features/more/components/more-tab-view.tsx:67
 #: apps/web/src/features/review/components/triage-list-view.tsx:244
-#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:18
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
@@ -2229,7 +2228,7 @@ msgstr "Notable forms"
 #~ msgid "Note & tags"
 #~ msgstr "Note & tags"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:510
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:494
 msgid "Note saved"
 msgstr "Note saved"
 
@@ -2596,7 +2595,7 @@ msgstr "Pronoun"
 msgid "Quick gloss"
 msgstr "Quick gloss"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:493
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:477
 msgid "Quick gloss failed"
 msgstr "Quick gloss failed"
 
@@ -3528,8 +3527,8 @@ msgstr "What's the etymology or origin of this term?"
 #~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
 
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
-msgstr "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
+#~ msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
+#~ msgstr "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."

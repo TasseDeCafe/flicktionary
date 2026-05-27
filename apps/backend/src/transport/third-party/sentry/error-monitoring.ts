@@ -59,7 +59,7 @@ const getCurrentFunctionName = () => {
 
 type Stringifiable = string | number | boolean | null | undefined | { toString(): string }
 
-export const __buildMessageWithFunctionName = ({
+const __buildMessageWithFunctionName = ({
   functionName,
   message,
   params = {},

@@ -161,6 +161,23 @@ Combined: `className='h-[85svh] sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:overflo
 
 - Check typing with TS: pnpm check:types (executed from the root directory)
 - Check linting with ESLint: pnpm lint (executed from the root directory)
+- Find dead code (unused files / exports / dependencies): pnpm knip (from the root). Scope to one workspace with `pnpm knip --workspace apps/web`. Config lives in `knip.json`.
+
+# Finding and removing dead code (knip)
+
+`pnpm knip` reports unused files, exports, and dependencies across the workspaces. It is a static analyzer, so treat its output as candidates, not facts.
+
+Rules:
+
+- **`apps/native` is excluded** (`ignoreWorkspaces` in `knip.json`) because it isn't wired up yet. Until native is set up correctly, run knip **scoped to a single ready workspace** — `pnpm knip --workspace apps/backend` or `pnpm knip --workspace apps/web` — rather than the unscoped `pnpm knip`. The unscoped run reports `Unused catalog entries` noise (catalog deps consumed only by the ignored native app) that is not actionable.
+- **Always ask the user for permission before deleting anything knip flags.** Never remove "dead" code unattended.
+- Verify each candidate first: `grep` the symbol/file repo-wide, and check whether an export flagged as unused is still used _within its own file_ (then only drop the `export` keyword, don't delete the symbol).
+- Known false positives — do NOT remove:
+  - shadcn/ui re-exports under `apps/web/src/components/ui/**` (e.g. `DialogClose`, `buttonVariants`) are kept as a deliberate API surface.
+  - generated files like `routeTree.gen.ts` (TanStack Router).
+  - dependencies consumed indirectly: `prettier`/`prettier-plugin-tailwindcss` (via `eslint-plugin-prettier` in `eslint.config.cjs`), and anything invoked only from config files or root orchestration.
+- The "Unused dependencies" category is the least reliable — prefer surgical, verified removals over bulk deletes, and re-run `pnpm install` afterward to sync the lockfile.
+- When knip is wrong about an entry point or generated file, teach it via `knip.json` rather than deleting working code.
 
 # Comments
 

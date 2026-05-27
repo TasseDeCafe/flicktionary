@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreWorkspaces": ["apps/native"],
+  "ignoreBinaries": ["doppler"],
+  "ignoreDependencies": ["eslint-plugin-import"],
+  "workspaces": {
+    "apps/web": {
+      "entry": ["src/app/main.tsx", "server.js"],
+      "ignore": ["src/app/routeTree.gen.ts"]
+    },
+    "apps/backend": {
+      "entry": ["ecosystem.config.cjs"],
+      "ignore": [
+        "src/transport/database/database.auth.types.ts",
+        "src/transport/database/database.public.types.ts",
+        "src/transport/third-party/revenuecat/revenuecat-api-types.ts",
+        "supabase/**"
+      ]
+    },
+    "packages/i18n": {
+      "entry": ["scripts/translate-missing.mjs"],
+      "ignoreDependencies": [
+        "@lingui/core",
+        "@lingui/cli",
+        "@lingui/format-po",
+        "@lingui/babel-plugin-lingui-macro",
+        "@lingui/vite-plugin",
+        "@vitejs/plugin-react"
+      ]
+    }
+  }
+}
