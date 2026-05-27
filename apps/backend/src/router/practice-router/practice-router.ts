@@ -16,6 +16,7 @@ import type {
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
 import {
+  STALE_SESSION_HOURS,
   startPracticeSession,
   type StartPracticeSessionDependencies,
 } from '../../service/practice/start-practice-session'
@@ -156,6 +157,10 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const router = implementer.router({
     dueSummary: implementer.dueSummary.handler(async ({ context }) => {
       const userId = context.res.locals.userId
+      await deps.practiceSessionsRepository.abandonAllStaleForUser({
+        userId,
+        olderThanHours: STALE_SESSION_HOURS,
+      })
       const summary = await deps.userLookupsRepository.listDueSummary(userId)
       return { data: { perLanguage: summary } }
     }),

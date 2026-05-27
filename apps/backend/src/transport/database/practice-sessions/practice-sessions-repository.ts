@@ -216,6 +216,20 @@ const abandonStaleForUser = async (params: {
   return result.count
 }
 
+// Same stale-session rule as start/resume, but across every language and pool.
+// The Practice landing calls this before reading its resumable-session summary
+// so it does not advertise sessions that startSession would immediately abandon.
+const abandonAllStaleForUser = async (params: { userId: string; olderThanHours: number }): Promise<number> => {
+  const result = await sql`
+    UPDATE public.practice_sessions
+    SET status = 'abandoned', ended_at = NOW()
+    WHERE user_id = ${params.userId}
+      AND status = 'active'
+      AND started_at < NOW() - (${params.olderThanHours}::int || ' hours')::interval
+  `
+  return result.count
+}
+
 // Mark a chunk abandoned for this session (LLM hit ABANDON_THRESHOLD on it).
 // Idempotent — only stamps abandoned_at the first time.
 const markChunkAbandoned = async (params: { practiceSessionId: string; userLookupId: string }): Promise<void> => {
@@ -283,6 +297,7 @@ export interface PracticeSessionsRepositoryInterface {
     pool: PracticePool
     olderThanHours: number
   }) => Promise<number>
+  abandonAllStaleForUser: (params: { userId: string; olderThanHours: number }) => Promise<number>
   markChunkAbandoned: (params: { practiceSessionId: string; userLookupId: string }) => Promise<void>
   getSessionProgress: (practiceSessionId: string) => Promise<{ completed: number; target: number }>
 }
@@ -296,6 +311,7 @@ export const PracticeSessionsRepository = (): PracticeSessionsRepositoryInterfac
     markCompleted,
     markAbandoned,
     abandonStaleForUser,
+    abandonAllStaleForUser,
     markChunkAbandoned,
     getSessionProgress,
   }
