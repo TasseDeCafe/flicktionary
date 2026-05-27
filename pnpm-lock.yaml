@@ -635,6 +635,9 @@ importers:
       '@flicktionary/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@orpc/contract':
+        specifier: 'catalog:'
+        version: 1.13.13(@opentelemetry/api@1.9.1)
       '@orpc/openapi':
         specifier: 'catalog:'
         version: 1.13.13(@opentelemetry/api@1.9.1)(ws@8.19.0)

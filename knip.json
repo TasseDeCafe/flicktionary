@@ -15,6 +15,9 @@
         "src/transport/database/database.public.types.ts",
         "src/transport/third-party/revenuecat/revenuecat-api-types.ts",
         "supabase/**"
+      ],
+      "ignoreDependencies": [
+        "@orpc/contract"
       ]
     },
     "packages/i18n": {

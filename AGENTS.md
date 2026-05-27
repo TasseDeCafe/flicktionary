@@ -176,6 +176,7 @@ Rules:
   - shadcn/ui re-exports under `apps/web/src/components/ui/**` (e.g. `DialogClose`, `buttonVariants`) are kept as a deliberate API surface.
   - generated files like `routeTree.gen.ts` (TanStack Router).
   - dependencies consumed indirectly: `prettier`/`prettier-plugin-tailwindcss` (via `eslint-plugin-prettier` in `eslint.config.cjs`), and anything invoked only from config files or root orchestration.
+  - **transitive runtime deps of bundled workspace packages.** The backend prod build (`scripts/build--prod.sh`, TS project references) compiles `@flicktionary/api-client` and `@flicktionary/core` into `apps/backend/dist/packages/**`. Those bundled files keep their own `import`s, so every _runtime_ dep of api-client/core must ALSO be a direct `apps/backend` dependency (e.g. `@orpc/contract`, `zod`) — even though nothing in `apps/backend/src` imports them. Removing one passes typecheck/build/tests locally (resolved via hoisted workspace `node_modules`) but throws `ERR_MODULE_NOT_FOUND` at runtime on Railway, where only `apps/backend`'s own deps are installed. Before removing any backend dep, cross-check `packages/api-client/src` and `packages/core/src` imports.
 - The "Unused dependencies" category is the least reliable — prefer surgical, verified removals over bulk deletes, and re-run `pnpm install` afterward to sync the lockfile.
 - When knip is wrong about an entry point or generated file, teach it via `knip.json` rather than deleting working code.
 

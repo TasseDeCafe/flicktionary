@@ -43,6 +43,7 @@
     "@anthropic-ai/sdk": "catalog:",
     "@flicktionary/api-client": "workspace:*",
     "@flicktionary/core": "workspace:*",
+    "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@sentry/cli": "catalog:",
