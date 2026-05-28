@@ -210,6 +210,7 @@ export default class Binding {
         this.dictionary = new DictionaryProvider(new ExtensionDictionaryStorage());
         this.settings = new SettingsProvider(new ExtensionSettingsStorage());
         this.subtitleController = new SubtitleController(video, this.dictionary, this.settings);
+        this.hoveredToken = new HoveredToken();
         this.videoDataSyncController = new VideoDataSyncController(this, this.settings);
         this.controlsController = new ControlsController(video);
         this.dragController = new DragController(video);

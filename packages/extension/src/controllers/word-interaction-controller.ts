@@ -572,7 +572,10 @@ export default class WordInteractionController {
             }
         }
 
-        this.tooltip.style.display = 'block';
+        // Use `important` to match the stylesheet's `display: flex !important`
+        // base rule — otherwise `_hideTooltip`'s plain inline `display: none`
+        // loses to that `!important` declaration and the popover never hides.
+        this.tooltip.style.setProperty('display', 'flex', 'important');
 
         // Use Floating UI for positioning with auto-update
         const updatePosition = () => {
@@ -618,7 +621,9 @@ export default class WordInteractionController {
         }
 
         if (this.tooltip) {
-            this.tooltip.style.display = 'none';
+            // `important` is required to override the stylesheet's
+            // `display: flex !important` base rule (a plain inline value loses).
+            this.tooltip.style.setProperty('display', 'none', 'important');
         }
     }
 

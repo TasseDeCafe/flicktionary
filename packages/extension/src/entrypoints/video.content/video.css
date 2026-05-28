@@ -265,6 +265,14 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
     pointer-events: none !important;
     line-height: 1.4 !important;
+    /* GOTCHA: `display` is toggled from JS to show/hide this tooltip
+       (word-interaction-controller.ts). Because this rule is `!important`, a
+       plain `element.style.display = 'none'` CANNOT override it — an author
+       `!important` declaration beats a non-important inline style. The JS MUST
+       use `style.setProperty('display', '...', 'important')`. Forgetting this
+       makes the popover impossible to hide (it just gets repositioned on the
+       next hovered word). If you drop the `!important` here, every other rule
+       below must drop it too, or the layout breaks on host sites. */
     display: flex !important;
     flex-direction: column !important;
     gap: 4px !important;
