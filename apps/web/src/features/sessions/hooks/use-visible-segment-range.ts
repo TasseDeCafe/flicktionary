@@ -1,27 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Reports the deepest (highest-index) segment CURRENTLY in view, via an
-// IntersectionObserver over the rendered [data-segment-id] rows. Unlike a
-// monotonic "deepest reached", this follows the viewport both ways — it drops back
-// down when the reader scrolls up — so nomination can cover a window the reader
-// scrolled back to (paired with a settle debounce in useGhostNomination, a fast
-// fly-through never settles on those windows and so never requests them).
+// Reports the [shallowest, deepest] band of segment indices CURRENTLY in view,
+// via an IntersectionObserver over the rendered [data-segment-id] rows. Both
+// ends follow the viewport in both directions (they drop back as the reader
+// scrolls up), so a consumer can ask "does range X overlap what the reader is
+// looking at right now?" — used by the footer loader to decide whether a
+// pending nomination window actually affects on-screen text or just lookahead.
 //
-// Driving off a single integer keeps it decoupled from the display layer: it works
+// Driving off two integers keeps it decoupled from the display layer: it works
 // whether all rows are mounted (today) or only a windowed slice is (a future
-// virtualized / book reader), because it observes whatever rows are actually in the
-// DOM. `indexBySegmentId` maps each rendered segment id to its track-relative index,
-// so the reported value is a stable track index, never a client array position.
-export const useDeepestVisibleSegment = (
+// virtualized / book reader), because it observes whatever rows are actually in
+// the DOM. `indexBySegmentId` maps each rendered segment id to its
+// track-relative index, so the reported values are stable track indices, never
+// client array positions.
+export const useVisibleSegmentRange = (
   scrollContainer: HTMLElement | null,
   indexBySegmentId: Map<string, number>
-): number | null => {
-  const [deepestVisibleIndex, setDeepestVisibleIndex] = useState<number | null>(null)
-  // Ids currently intersecting the viewport; the reported value is the max index
-  // among them, recomputed whenever the set changes.
+): { shallowestIndex: number | null; deepestIndex: number | null } => {
+  const [shallowestIndex, setShallowestIndex] = useState<number | null>(null)
+  const [deepestIndex, setDeepestIndex] = useState<number | null>(null)
+  // Ids currently intersecting the viewport; the reported values are the min
+  // and max indices among them, recomputed whenever the set changes.
   const visibleRef = useRef<Set<string>>(new Set())
-  // Keep the latest map in a ref so the observer callback resolves ids without the
-  // effect re-binding (and tearing down the observer) on every render.
+  // Keep the latest map in a ref so the observer callback resolves ids without
+  // the effect re-binding (and tearing down the observer) on every render.
   const mapRef = useRef(indexBySegmentId)
   useEffect(() => {
     mapRef.current = indexBySegmentId
@@ -32,12 +34,15 @@ export const useDeepestVisibleSegment = (
 
     const recompute = () => {
       let max: number | null = null
+      let min: number | null = null
       for (const id of visibleRef.current) {
         const idx = mapRef.current.get(id)
         if (idx === undefined) continue
         if (max === null || idx > max) max = idx
+        if (min === null || idx < min) min = idx
       }
-      setDeepestVisibleIndex((prev) => (prev === max ? prev : max))
+      setDeepestIndex((prev) => (prev === max ? prev : max))
+      setShallowestIndex((prev) => (prev === min ? prev : min))
     }
 
     const observer = new IntersectionObserver(
@@ -79,5 +84,5 @@ export const useDeepestVisibleSegment = (
     }
   }, [scrollContainer])
 
-  return deepestVisibleIndex
+  return { shallowestIndex, deepestIndex }
 }
