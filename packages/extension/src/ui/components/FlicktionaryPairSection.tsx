@@ -1,0 +1,83 @@
+import { useEffect, useState } from 'react';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import Button from '@mui/material/Button';
+import { v4 as uuidv4 } from 'uuid';
+import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config';
+import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client';
+import {
+    clearFlicktionaryAuth,
+    FlicktionaryAuthState,
+    getFlicktionaryAuth,
+    onFlicktionaryAuthChange,
+} from '@/services/flicktionary/auth-storage';
+import { setPendingFlicktionaryPairNonce } from '@/services/flicktionary/pairing-nonce-storage';
+
+export const FlicktionaryPairSection = () => {
+    const [auth, setAuth] = useState<FlicktionaryAuthState | null>(null);
+    const [pairing, setPairing] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+        void getFlicktionaryAuth().then((value) => {
+            if (active) setAuth(value);
+        });
+        const unsubscribe = onFlicktionaryAuthChange((value) => {
+            setAuth(value);
+            setPairing(false);
+        });
+        return () => {
+            active = false;
+            unsubscribe();
+        };
+    }, []);
+
+    const handlePair = async () => {
+        setPairing(true);
+        try {
+            const nonce = uuidv4();
+            await setPendingFlicktionaryPairNonce(nonce);
+            const url = `${getFlicktionaryConfig().webUrl}/extension-pair?nonce=${encodeURIComponent(nonce)}`;
+            await browser.tabs.create({ url, active: true });
+        } catch (error) {
+            console.error('Failed to start Flicktionary pairing', error);
+            setPairing(false);
+        }
+    };
+
+    const handleUnpair = async () => {
+        try {
+            await getFlicktionaryApiClient().extensionAuth.revokeSession({});
+        } catch (error) {
+            console.warn('Failed to revoke Flicktionary session before unpairing', error);
+        }
+        await clearFlicktionaryAuth();
+    };
+
+    return (
+        <Paper variant="outlined" sx={{ p: 1.5 }}>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+                Flicktionary
+            </Typography>
+            {auth ? (
+                <>
+                    <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                        Paired as {auth.email}
+                    </Typography>
+                    <ButtonGroup fullWidth size="small" variant="outlined">
+                        <Button color="error" onClick={handleUnpair}>
+                            Unpair
+                        </Button>
+                    </ButtonGroup>
+                </>
+            ) : (
+                <ButtonGroup fullWidth size="small" variant="outlined">
+                    <Button onClick={handlePair} disabled={pairing}>
+                        {pairing ? 'Waiting…' : 'Pair with Flicktionary'}
+                    </Button>
+                </ButtonGroup>
+            )}
+        </Paper>
+    );
+};

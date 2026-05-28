@@ -1,0 +1,31 @@
+{
+    "extends": "./.wxt/tsconfig.json",
+    "compilerOptions": {
+        "lib": ["DOM", "DOM.Iterable", "ESNext"],
+        "jsx": "react-jsx",
+        "downlevelIteration": true,
+        "useDefineForClassFields": true,
+        "allowImportingTsExtensions": true,
+        "isolatedModules": true,
+        "moduleDetection": "force",
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedSideEffectImports": true,
+        "baseUrl": ".",
+        "paths": {
+            "@": ["./src"],
+            "@/*": ["./src/*"],
+            "~": ["./src"],
+            "~/*": ["./src/*"],
+            "@@": ["."],
+            "@@/*": ["./*"],
+            "~~": ["."],
+            "~~/*": ["./*"],
+            "@asbplayer-fork/common": ["../asbplayer-common/index.ts"],
+            "@asbplayer-fork/common/*": ["../asbplayer-common/*"],
+            "@flicktionary/api-client/*": ["../api-client/src/*"],
+            "@flicktionary/core/*": ["../core/src/*"]
+        }
+    }
+}

@@ -1,0 +1,88 @@
+// Restricted to the broker URL only — NOT injected globally. The pair page
+// posts a single message containing the magic-link token_hash and we forward
+// it to the background, which performs the Supabase verifyOtp exchange.
+
+import { getPendingFlicktionaryPairNonce } from '@/services/flicktionary/pairing-nonce-storage';
+
+const POST_MESSAGE_SOURCE = 'flicktionary-extension-pair';
+const ACK_SOURCE = 'flicktionary-extension-pair-ack';
+
+interface PairMessageData {
+    source: string;
+    tokenHash: string;
+    email: string;
+    nonce: string;
+}
+
+const isPairMessage = (data: unknown): data is PairMessageData => {
+    if (!data || typeof data !== 'object') return false;
+    const d = data as Record<string, unknown>;
+    return (
+        d.source === POST_MESSAGE_SOURCE &&
+        typeof d.tokenHash === 'string' &&
+        typeof d.email === 'string' &&
+        typeof d.nonce === 'string'
+    );
+};
+
+const isPairResponse = (value: unknown): value is { ok: boolean; error?: string } => {
+    if (!value || typeof value !== 'object') return false;
+    const v = value as Record<string, unknown>;
+    return typeof v.ok === 'boolean' && (v.error === undefined || typeof v.error === 'string');
+};
+
+export default defineContentScript({
+    matches: [
+        'https://app.flicktionary.app/extension-pair*',
+        // dev-tunnel cloudflare hosts (e.g. https://web-sebastien.flicktionary.dev)
+        'https://*.flicktionary.dev/extension-pair*',
+        'http://localhost:5174/extension-pair*',
+        'http://localhost:4173/extension-pair*',
+    ],
+    runAt: 'document_idle',
+
+    main() {
+        window.addEventListener('message', async (event) => {
+            if (event.source !== window) return;
+            if (event.origin !== window.location.origin) return;
+            if (!isPairMessage(event.data)) return;
+
+            try {
+                const pending = await getPendingFlicktionaryPairNonce();
+                if (!pending || pending.nonce !== event.data.nonce) return;
+
+                const response = await browser.runtime.sendMessage({
+                    sender: 'flicktionary-extension-pair-content',
+                    message: {
+                        command: 'flicktionary-pair',
+                        tokenHash: event.data.tokenHash,
+                        email: event.data.email,
+                        nonce: event.data.nonce,
+                    },
+                });
+
+                if (!isPairResponse(response) || !response.ok) {
+                    window.postMessage(
+                        {
+                            source: ACK_SOURCE,
+                            nonce: event.data.nonce,
+                            ok: false,
+                            error: isPairResponse(response) ? response.error : 'Pairing failed',
+                        },
+                        window.location.origin
+                    );
+                    return;
+                }
+
+                // Echo back to the broker page so it knows pairing succeeded.
+                window.postMessage(
+                    { source: ACK_SOURCE, nonce: event.data.nonce, ok: true },
+                    window.location.origin
+                );
+            } catch {
+                // Background error already logged in handler; page falls back
+                // to its 10s timeout state and prompts user to retry.
+            }
+        });
+    },
+});

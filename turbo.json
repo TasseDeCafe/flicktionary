@@ -55,6 +55,31 @@
       "dependsOn": ["^topo", "^build"],
       "outputs": []
     },
+    "compile": {
+      "dependsOn": ["^topo", "^build"],
+      "outputs": []
+    },
+    "@flicktionary/extension#dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@flicktionary/api-client#build"]
+    },
+    "@flicktionary/extension#dev:firefox": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["@flicktionary/api-client#build"]
+    },
+    "@flicktionary/extension#build": {
+      "dependsOn": ["@flicktionary/api-client#build"],
+      "inputs": [
+        "src/**",
+        "public/**",
+        "wxt.config.ts",
+        "tsconfig.json",
+        "../asbplayer-common/**"
+      ],
+      "outputs": [".output/**", ".wxt/**"]
+    },
     "check:changes": {
       "cache": false,
       "outputs": []

@@ -1,4 +1,4 @@
-import express, { Express, Request } from 'express'
+import express, { Express, Request, Response } from 'express'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import cors from 'cors'
@@ -76,6 +76,8 @@ import {
 } from './service/long-running/enrichment-worker/enrichment-worker'
 import { PracticeRouter } from './router/practice-router/practice-router'
 import { LanguagesRouter } from './router/languages-router/languages-router'
+import { ExtensionAuthRouter } from './router/extension-auth-router/extension-auth-router'
+import { ExtensionPairNoncesRepository } from './transport/database/extension-pair-nonces/extension-pair-nonces-repository'
 
 export type AppDependencies = {
   stripeSubscriptionsRepository?: StripeSubscriptionsRepositoryInterface
@@ -225,6 +227,17 @@ export const buildApp = ({
   app.use(API_V1, ContactEmailRouter(resendApi))
 
   app.use(tokenAuthenticationMiddleware)
+
+  if (getConfig().shouldRateLimit) {
+    const tenMinutes = 10 * 60
+    app.use(
+      createRateLimitMiddleware(5, tenMinutes, {
+        skip: (req: Request) => req.path !== `${API_V1}/extension-auth/mint-session`,
+        keyGenerator: (_req: Request, res: Response) => String(res.locals.userId ?? 'unknown-authenticated-user'),
+      })
+    )
+  }
+
   app.use(API_V1, removalsRouter(authUsersRepository, usersRepository, stripeApi, stripeSubscriptionsRepository))
   app.use(API_V1, UserRouter(usersRepository))
   app.use(API_V1, BillingRouter(billingService, usersWithFreeAccess))
@@ -364,6 +377,10 @@ export const buildApp = ({
   app.use(API_V1, ChunksRouter(userLookupsRepository))
   app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
   app.use(API_V1, LanguagesRouter())
+  app.use(
+    API_V1,
+    ExtensionAuthRouter(ExtensionPairNoncesRepository(), usersRepository, userTargetLanguagePrefsRepository)
+  )
   app.use(
     API_V1,
     PracticeRouter({

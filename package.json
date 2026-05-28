@@ -32,6 +32,11 @@
     "prepare": "husky",
     "generate:logos": "scripts/generate-logos.sh"
   },
+  "pnpm": {
+    "patchedDependencies": {
+      "lamejs@1.2.0": "patches/lamejs@1.2.0.patch"
+    }
+  },
   "devDependencies": {
     "@lingui/cli": "catalog:",
     "@lingui/format-po": "catalog:",

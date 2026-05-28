@@ -1,0 +1,239 @@
+import Grid from '@mui/material/Grid';
+import {
+    HttpPostMessage,
+    PopupToExtensionCommand,
+    ExportSavedWordsMessage,
+    ExportSavedWordsResponse,
+    GetSavedWordsCountMessage,
+    GetSavedWordsCountResponse,
+    ClearSavedWordsMessage,
+    ClearSavedWordsResponse,
+} from '@asbplayer-fork/common';
+import { AsbplayerSettings, Profile, chromeCommandBindsToKeyBinds } from '@asbplayer-fork/common/settings';
+import SettingsForm from '@asbplayer-fork/common/components/SettingsForm';
+import PanelIcon from '@asbplayer-fork/common/components/PanelIcon';
+import LaunchIcon from '@mui/icons-material/Launch';
+import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import { useTranslation } from 'react-i18next';
+import { Fetcher } from '@asbplayer-fork/common/src/fetcher';
+import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks';
+import { Anki } from '@asbplayer-fork/common/anki';
+import { useSupportedLanguages } from '../hooks/use-supported-languages';
+import { useI18n } from '../hooks/use-i18n';
+import { isMobile } from 'react-device-detect';
+import { isFirefoxBuild } from '../../services/build-flags';
+import { useTheme } from '@mui/material/styles';
+import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu';
+import { settingsPageConfigs } from '@/services/pages';
+import { FlicktionaryPairSection } from './FlicktionaryPairSection';
+import Stack from '@mui/material/Stack';
+import TutorialIcon from '@asbplayer-fork/common/components/TutorialIcon';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db';
+import { v4 as uuidv4 } from 'uuid';
+
+interface Props {
+    dictionaryProvider: DictionaryProvider;
+    settings: AsbplayerSettings;
+    commands: any;
+    onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void;
+    onOpenApp: () => void;
+    onOpenSidePanel: () => void;
+    onOpenExtensionShortcuts: () => void;
+    onOpenUserGuide: () => void;
+    profiles: Profile[];
+    activeProfile?: string;
+    onNewProfile: (name: string) => void;
+    onRemoveProfile: (name: string) => void;
+    onSetActiveProfile: (name: string | undefined) => void;
+}
+
+class ExtensionFetcher implements Fetcher {
+    fetch(url: string, body: any) {
+        const httpPostCommand: PopupToExtensionCommand<HttpPostMessage> = {
+            sender: 'asbplayer-popup',
+            message: {
+                command: 'http-post',
+                url,
+                body,
+                messageId: '',
+            },
+        };
+        return browser.runtime.sendMessage(httpPostCommand);
+    }
+}
+
+const Popup = ({
+    dictionaryProvider,
+    settings,
+    commands,
+    onOpenApp,
+    onOpenSidePanel,
+    onSettingsChanged,
+    onOpenExtensionShortcuts,
+    onOpenUserGuide,
+    ...profilesContext
+}: Props) => {
+    const { t } = useTranslation();
+    const { initialized: i18nInitialized } = useI18n({ language: settings.language });
+    const anki = useMemo(() => new Anki(settings, new ExtensionFetcher()), [settings]);
+    const handleUnlockLocalFonts = useCallback(() => {
+        browser.tabs.create({
+            url: `${browser.runtime.getURL('/options.html')}#subtitle-appearance`,
+            active: true,
+        });
+    }, []);
+    const { supportedLanguages } = useSupportedLanguages();
+    const { localFontsAvailable, localFontsPermission, localFontFamilies } = useLocalFontFamilies();
+    const theme = useTheme();
+
+    // Saved words functionality
+    const [savedWordsCount, setSavedWordsCount] = useState(0);
+
+    const refreshSavedWordsCount = useCallback(async () => {
+        const message: PopupToExtensionCommand<GetSavedWordsCountMessage> = {
+            sender: 'asbplayer-popup',
+            message: {
+                command: 'get-saved-words-count',
+                messageId: uuidv4(),
+            },
+        };
+        const response: GetSavedWordsCountResponse = await browser.runtime.sendMessage(message);
+        setSavedWordsCount(response.count);
+    }, []);
+
+    useEffect(() => {
+        refreshSavedWordsCount();
+    }, [refreshSavedWordsCount]);
+
+    const handleExportSavedWords = useCallback(async () => {
+        const message: PopupToExtensionCommand<ExportSavedWordsMessage> = {
+            sender: 'asbplayer-popup',
+            message: {
+                command: 'export-saved-words',
+                messageId: uuidv4(),
+            },
+        };
+        const response: ExportSavedWordsResponse = await browser.runtime.sendMessage(message);
+        if (response.csv) {
+            const blob = new Blob([response.csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `saved-words-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    }, []);
+
+    const handleClearSavedWords = useCallback(async () => {
+        if (!confirm(`Are you sure you want to delete all ${savedWordsCount} saved words?`)) {
+            return;
+        }
+        const message: PopupToExtensionCommand<ClearSavedWordsMessage> = {
+            sender: 'asbplayer-popup',
+            message: {
+                command: 'clear-saved-words',
+                messageId: uuidv4(),
+            },
+        };
+        await browser.runtime.sendMessage(message);
+        refreshSavedWordsCount();
+    }, [savedWordsCount, refreshSavedWordsCount]);
+
+    if (!i18nInitialized) {
+        return null;
+    }
+
+    return (
+        <Paper>
+            <Stack direction="column" spacing={1.5} sx={{ padding: theme.spacing(1.5) }}>
+                <ButtonGroup fullWidth variant="contained" color="primary" orientation="horizontal">
+                    <Button variant="contained" color="primary" startIcon={<LaunchIcon />} onClick={onOpenApp}>
+                        {t('action.openApp')}
+                    </Button>
+                    {!isMobile && !isFirefoxBuild && (
+                        <Button variant="contained" color="primary" startIcon={<PanelIcon />} onClick={onOpenSidePanel}>
+                            {t('action.openSidePanel')}
+                        </Button>
+                    )}
+                    <Button variant="contained" color="primary" startIcon={<TutorialIcon />} onClick={onOpenUserGuide}>
+                        {t('action.userGuide')}
+                    </Button>
+                </ButtonGroup>
+                <FlicktionaryPairSection />
+                {settings.wordClickEnabled && (
+                    <Paper variant="outlined" sx={{ p: 1.5 }}>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            Saved Words: {savedWordsCount}
+                        </Typography>
+                        <ButtonGroup fullWidth size="small" variant="outlined">
+                            <Button
+                                startIcon={<DownloadIcon />}
+                                onClick={handleExportSavedWords}
+                                disabled={savedWordsCount === 0}
+                            >
+                                Export CSV
+                            </Button>
+                            <Button
+                                startIcon={<DeleteIcon />}
+                                onClick={handleClearSavedWords}
+                                disabled={savedWordsCount === 0}
+                                color="error"
+                            >
+                                Clear All
+                            </Button>
+                        </ButtonGroup>
+                    </Paper>
+                )}
+                <Grid
+                    item
+                    style={{
+                        height: isMobile ? 'auto' : 390,
+                    }}
+                >
+                    <SettingsForm
+                        heightConstrained
+                        extensionInstalled
+                        extensionVersion={browser.runtime.getManifest().version}
+                        extensionSupportsAppIntegration
+                        extensionSupportsOverlay
+                        extensionSupportsSidePanel={!isFirefoxBuild}
+                        extensionSupportsOrderableAnkiFields
+                        extensionSupportsTrackSpecificSettings
+                        extensionSupportsSubtitlesWidthSetting
+                        extensionSupportsPauseOnHover
+                        extensionSupportsExportCardBind
+                        extensionSupportsPageSettings
+                        extensionSupportsDictionary
+                        forceVerticalTabs={false}
+                        anki={anki}
+                        chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
+                        dictionaryProvider={dictionaryProvider}
+                        settings={settings}
+                        profiles={profilesContext.profiles}
+                        activeProfile={profilesContext.activeProfile}
+                        pageConfigs={settingsPageConfigs}
+                        localFontsAvailable={localFontsAvailable}
+                        localFontsPermission={localFontsPermission}
+                        localFontFamilies={localFontFamilies}
+                        supportedLanguages={supportedLanguages}
+                        onSettingsChanged={onSettingsChanged}
+                        onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
+                        onUnlockLocalFonts={handleUnlockLocalFonts}
+                    />
+                </Grid>
+                <Grid item>
+                    <SettingsProfileSelectMenu {...profilesContext} />
+                </Grid>
+            </Stack>
+        </Paper>
+    );
+};
+
+export default Popup;
