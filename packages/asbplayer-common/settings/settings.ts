@@ -436,18 +436,6 @@ export interface TranscriptSettings {
     readonly transcriptApiKey: string;
 }
 
-// Flicktionary integration knobs. Auth credentials live separately in
-// `extension/src/services/flicktionary/auth-storage.ts` so they can't be
-// exfiltrated via settings export/import — these flags are user-facing UX
-// preferences only.
-export interface FlicktionarySettings {
-    // When ON, save-word (right-click + chunk select) writes a Flicktionary
-    // highlight via the API instead of the local Dexie/IndexedDB store.
-    // Requires the extension to be paired (see auth-storage). Off by default
-    // so unpaired users keep the original asbplayer behavior.
-    readonly flicktionarySaveEnabled: boolean;
-}
-
 export type ChromeBoundKeyBindName = 'copySubtitle' | 'ankiExport' | 'updateLastCard' | 'exportCard' | 'takeScreenshot';
 export type SubtitleAlignment = 'top' | 'bottom';
 export enum SubtitleListPreference {

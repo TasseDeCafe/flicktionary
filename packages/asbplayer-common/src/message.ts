@@ -970,32 +970,6 @@ export interface RegisterFlicktionarySubtitlesResponse {
     readonly error?: string;
 }
 
-export interface GetSavedWordsCountMessage extends MessageWithId {
-    readonly command: 'get-saved-words-count';
-}
-
-export interface GetSavedWordsCountResponse {
-    readonly count: number;
-}
-
-export interface ExportSavedWordsMessage extends MessageWithId {
-    readonly command: 'export-saved-words';
-}
-
-export interface ExportSavedWordsResponse {
-    readonly csv: string;
-    readonly error?: string;
-}
-
-export interface ClearSavedWordsMessage extends MessageWithId {
-    readonly command: 'clear-saved-words';
-}
-
-export interface ClearSavedWordsResponse {
-    readonly success: boolean;
-    readonly error?: string;
-}
-
 // Supadata Subtitle Generation Messages
 export interface SupadataGenerateMessage extends MessageWithId {
     readonly command: 'supadata-generate';

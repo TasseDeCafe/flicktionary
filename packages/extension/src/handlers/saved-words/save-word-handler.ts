@@ -1,8 +1,5 @@
 import type { Browser } from 'wxt/browser';
 import type { Command, Message, SaveWordMessage, SaveWordResponse } from '@asbplayer-fork/common';
-import { IndexedDBSavedWordsRepository } from '@asbplayer-fork/common/saved-words';
-import { SettingsProvider } from '@asbplayer-fork/common/settings';
-import { ExtensionSettingsStorage } from '../../services/extension-settings-storage';
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage';
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client';
 import {
@@ -10,18 +7,15 @@ import {
     storeFlicktionarySession,
 } from '../../services/flicktionary/youtube-session-cache';
 import { getFlicktionaryTargetLanguage } from '../../services/flicktionary/flicktionary-target-language';
+import { incrementFlicktionarySessionHighlightCount } from '../../services/flicktionary/session-highlight-counter';
 
-// Routes the save-word command to either:
-//   - the Flicktionary highlights API (when paired AND flicktionarySaveEnabled
-//     AND a video context is available), or
-//   - the local IndexedDB store (asbplayer's original behavior).
+// Saves a word-click / chunk selection as a Flicktionary highlight.
 //
-// Falling back to IndexedDB on failure rather than dropping the save keeps the
-// user's data intact while they fix the connection / auth.
+// Flicktionary (Supabase) is the system of record — the old local IndexedDB
+// fallback was removed. When a save can't reach Flicktionary, we surface a
+// descriptive error so the content script can show a toast rather than
+// silently dropping the word.
 export default class SaveWordHandler {
-    private readonly _repository = new IndexedDBSavedWordsRepository();
-    private readonly _settings = new SettingsProvider(new ExtensionSettingsStorage());
-
     get sender() {
         return ['asbplayer-video-tab', 'asbplayerv2'];
     }
@@ -35,24 +29,12 @@ export default class SaveWordHandler {
 
         void (async () => {
             try {
-                const handled = await this._tryFlicktionarySaveWithFallback(message);
-                if (handled.handled) {
-                    sendResponse({ success: true });
-                    return;
-                }
-
-                await this._repository.save({
-                    word: message.word,
-                    sentence: message.sentence,
-                    translation: message.translation,
-                    videoTitle: message.videoTitle,
-                    videoUrl: message.videoUrl,
-                });
+                await this._saveToFlicktionary(message);
                 sendResponse({ success: true });
             } catch (error) {
                 sendResponse({
                     success: false,
-                    error: error instanceof Error ? error.message : 'Unknown error',
+                    error: error instanceof Error ? error.message : 'Failed to save to Flicktionary',
                 });
             }
         })();
@@ -60,30 +42,24 @@ export default class SaveWordHandler {
         return true;
     }
 
-    private async _tryFlicktionarySaveWithFallback(message: SaveWordMessage): Promise<{ handled: boolean }> {
-        try {
-            return await this._tryFlicktionarySave(message);
-        } catch (error) {
-            console.warn('[flicktionary] save failed; falling back to local IndexedDB save', error);
-            return { handled: false };
-        }
-    }
-
-    private async _tryFlicktionarySave(message: SaveWordMessage): Promise<{ handled: boolean }> {
-        const { flicktionarySaveEnabled } = await this._settings.get(['flicktionarySaveEnabled']);
-        if (!flicktionarySaveEnabled) return { handled: false };
-
+    private async _saveToFlicktionary(message: SaveWordMessage): Promise<void> {
         const auth = await getFlicktionaryAuth();
-        if (!auth) return { handled: false };
+        if (!auth) {
+            throw new Error('Pair with Flicktionary to save words.');
+        }
 
         const videoCtx = message.flicktionaryVideo;
         if (!videoCtx) {
-            // Save originated outside a YouTube binding (e.g. asbplayerv2 web
-            // app save). No video context, no session — fall back.
-            return { handled: false };
+            // Save originated without a YouTube subtitle context (e.g. the
+            // asbplayerv2 web app, or a video opened before subtitles loaded).
+            throw new Error('Reload the video, then try saving again.');
         }
-        if (message.segmentIndex === undefined || message.startCharOffset === undefined || message.endCharOffset === undefined) {
-            return { handled: false };
+        if (
+            message.segmentIndex === undefined ||
+            message.startCharOffset === undefined ||
+            message.endCharOffset === undefined
+        ) {
+            throw new Error('Could not locate this word in the subtitles.');
         }
 
         const client = getFlicktionaryApiClient();
@@ -92,8 +68,7 @@ export default class SaveWordHandler {
         if (!cached) {
             const targetLanguage = await getFlicktionaryTargetLanguage();
             if (!targetLanguage) {
-                console.warn('[flicktionary] save dropped to local: no target language');
-                return { handled: false };
+                throw new Error('Set your target language on flicktionary.app.');
             }
             const { data } = await client.studySessions.findOrCreateForYoutubeVideo({
                 youtubeVideoId: videoCtx.youtubeVideoId,
@@ -121,24 +96,23 @@ export default class SaveWordHandler {
         }
 
         const startSegmentId = cached.segmentIdByIndex[String(message.segmentIndex)];
-        const endSegmentIdRaw =
+        const endSegmentId =
             message.endSegmentIndex !== undefined
                 ? cached.segmentIdByIndex[String(message.endSegmentIndex)]
                 : startSegmentId;
-        if (!startSegmentId || !endSegmentIdRaw) {
-            console.warn('[flicktionary] missing segment id mapping; falling back to local save');
-            return { handled: false };
+        if (!startSegmentId || !endSegmentId) {
+            throw new Error('Could not map this word to a subtitle segment.');
         }
 
         await client.highlights.create({
             sessionId: cached.sessionId,
             startSegmentId,
-            endSegmentId: endSegmentIdRaw,
+            endSegmentId,
             startOffset: message.startCharOffset,
             endOffset: message.endCharOffset,
             selectionText: message.word,
         });
 
-        return { handled: true };
+        await incrementFlicktionarySessionHighlightCount();
     }
 }

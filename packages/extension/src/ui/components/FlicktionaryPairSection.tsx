@@ -13,10 +13,15 @@ import {
     onFlicktionaryAuthChange,
 } from '@/services/flicktionary/auth-storage';
 import { setPendingFlicktionaryPairNonce } from '@/services/flicktionary/pairing-nonce-storage';
+import {
+    getFlicktionarySessionHighlightCount,
+    onFlicktionarySessionHighlightCountChange,
+} from '@/services/flicktionary/session-highlight-counter';
 
 export const FlicktionaryPairSection = () => {
     const [auth, setAuth] = useState<FlicktionaryAuthState | null>(null);
     const [pairing, setPairing] = useState(false);
+    const [highlightCount, setHighlightCount] = useState(0);
 
     useEffect(() => {
         let active = true;
@@ -26,6 +31,20 @@ export const FlicktionaryPairSection = () => {
         const unsubscribe = onFlicktionaryAuthChange((value) => {
             setAuth(value);
             setPairing(false);
+        });
+        return () => {
+            active = false;
+            unsubscribe();
+        };
+    }, []);
+
+    useEffect(() => {
+        let active = true;
+        void getFlicktionarySessionHighlightCount().then((value) => {
+            if (active) setHighlightCount(value);
+        });
+        const unsubscribe = onFlicktionarySessionHighlightCountChange((value) => {
+            setHighlightCount(value);
         });
         return () => {
             active = false;
@@ -64,6 +83,7 @@ export const FlicktionaryPairSection = () => {
                 <>
                     <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
                         Paired as {auth.email}
+                        {` · ${highlightCount} ${highlightCount === 1 ? 'highlight' : 'highlights'} this session`}
                     </Typography>
                     <ButtonGroup fullWidth size="small" variant="outlined">
                         <Button color="error" onClick={handleUnpair}>
