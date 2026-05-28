@@ -24,6 +24,7 @@ import type {
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow, TriageEnrichingRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 const matchesSearch = (card: Card, q: string): boolean => {
   if (!q) return true
@@ -141,6 +142,16 @@ export const TriageListView = () => {
       })
   }, [highlights, cards, processingStatus])
 
+  // Restores scroll position when the container remounts (e.g. focus-view
+  // round-trip). Resets when search changes so a stale offset from a different
+  // filtered set never gets applied.
+  const filterKey = `${sessionId}|${debouncedSearch}`
+  const { ref: scrollRef, onScroll: onScrollSave } = useScrollRestoration<HTMLDivElement>({
+    scope: 'triage',
+    filterKey,
+    ready: (cards?.length ?? 0) > 0 || pendingHighlightRows.length > 0,
+  })
+
   const handleStatusChange = (cardId: string, status: CardStatus, learningMode?: LearningMode) => {
     updateStatus({ cardId, status, learningMode })
   }
@@ -180,7 +191,7 @@ export const TriageListView = () => {
         </div>
       </div>
 
-      <div className='flex-1 overflow-y-auto px-4 py-4'>
+      <div ref={scrollRef} onScroll={onScrollSave} className='flex-1 overflow-y-auto px-4 py-4'>
         <div className='mx-auto max-w-4xl'>
           {warnings.length > 0 && (
             <div className='mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm'>
