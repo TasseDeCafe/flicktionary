@@ -70,13 +70,10 @@ import EncodeMp3Handler from '@/handlers/video/encode-mp3-handler';
 import { DictionaryDB } from '@asbplayer-fork/common/dictionary-db/dictionary-db';
 import DictionaryHandler from '@/handlers/dictionary/dictionary-handler';
 import SaveTokenLocalHandler from '@/handlers/asbplayerv2/save-token-local-handler';
-import LLMTranslateHandler from '@/handlers/llm/llm-translate-handler';
+import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler';
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler';
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler';
 import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/register-subtitles-handler';
-import GetSavedWordsCountHandler from '@/handlers/saved-words/get-saved-words-count-handler';
-import ExportSavedWordsHandler from '@/handlers/saved-words/export-saved-words-handler';
-import ClearSavedWordsHandler from '@/handlers/saved-words/clear-saved-words-handler';
 import SupadataGenerateHandler from '@/handlers/supadata/supadata-generate-handler';
 import GetCachedTranscriptHandler from '@/handlers/video/get-cached-transcript-handler';
 import ExportTranscriptCacheHandler from '@/handlers/video/export-transcript-cache-handler';
@@ -190,13 +187,10 @@ export default defineBackground(() => {
         new RequestModelHandler(),
         new CurrentTabHandler(),
         new MobileOverlayForwarderHandler(),
-        new LLMTranslateHandler(settings),
+        new FlicktionaryGlossHandler(),
         new SaveWordHandler(),
         new FlicktionaryPairHandler(),
         new RegisterFlicktionarySubtitlesHandler(),
-        new GetSavedWordsCountHandler(),
-        new ExportSavedWordsHandler(),
-        new ClearSavedWordsHandler(),
         new SupadataGenerateHandler(settings),
         new GetCachedTranscriptHandler(),
         new ExportTranscriptCacheHandler(),

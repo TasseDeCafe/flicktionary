@@ -1,7 +1,8 @@
 import {
     TabToExtensionCommand,
-    LLMTranslateMessage,
-    LLMTranslateResponse,
+    FlicktionaryGlossMessage,
+    FlicktionaryGlossResponse,
+    FlicktionaryGlossIpa,
     SaveWordMessage,
     SaveWordResponse,
     SaveWordFlicktionaryVideoContext,
@@ -9,11 +10,13 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom';
 
-interface TooltipState {
-    element: HTMLElement | null;
-    word: string;
-    translation: string;
-    loading: boolean;
+// The structured gloss rendered in the hover tooltip — mirrors the web app's
+// fast-gloss popover (selection + IPA + gloss + POS/register).
+interface GlossData {
+    gloss: string;
+    pos: string | null;
+    register: string | null;
+    ipa: FlicktionaryGlossIpa | null;
 }
 
 interface SegmentInfo {
@@ -70,26 +73,29 @@ export default class WordInteractionController {
     private readonly getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined;
 
     private tooltip: HTMLElement | null = null;
-    private tooltipState: TooltipState = { element: null, word: '', translation: '', loading: false };
     private tooltipWordElement: HTMLElement | null = null;
+    // The word span the pointer is currently over (null when over anything
+    // else). Updated from `mouseover`, which bubbles — unlike mouseenter/leave,
+    // which don't and are unreliable when delegated through YouTube's overlays.
+    private hoveredWordElement: HTMLElement | null = null;
     private tooltipCleanup: (() => void) | null = null;
     private hoverTimeout: NodeJS.Timeout | null = null;
     private selectionState: SelectionState = { isSelecting: false, startWord: null, selectedWords: [], sentence: '' };
     private tooltipSentence: string = '';
     private selectionOverlay: HTMLElement | null = null;
-    private cachedTranslations: Map<string, string> = new Map();
+    private cachedGlosses: Map<string, GlossData> = new Map();
     private boundVideoTimeUpdate: (() => void) | null = null;
     private boundVideoPlaying: (() => void) | null = null;
     private boundHandlers: {
         mouseEnter: (e: Event) => void;
         mouseLeave: (e: Event) => void;
+        mouseOver: (e: Event) => void;
         contextMenu: (e: Event) => void;
         mouseDown: (e: Event) => void;
         mouseMove: (e: Event) => void;
         mouseUp: (e: Event) => void;
     };
     private enabled: boolean = false;
-    private llmTranslateEnabled = true;
 
     constructor(
         video: HTMLMediaElement,
@@ -105,18 +111,12 @@ export default class WordInteractionController {
         this.boundHandlers = {
             mouseEnter: this._handleMouseEnter.bind(this),
             mouseLeave: this._handleMouseLeave.bind(this),
+            mouseOver: this._handleMouseOver.bind(this),
             contextMenu: this._handleContextMenu.bind(this),
             mouseDown: this._handleMouseDown.bind(this),
             mouseMove: this._handleMouseMove.bind(this),
             mouseUp: this._handleMouseUp.bind(this),
         };
-    }
-
-    setLlmTranslateEnabled(enabled: boolean) {
-        this.llmTranslateEnabled = enabled;
-        if (!enabled) {
-            this._hideTooltip();
-        }
     }
 
     bind() {
@@ -130,6 +130,7 @@ export default class WordInteractionController {
         // Use event delegation on the document
         document.addEventListener('mouseenter', this.boundHandlers.mouseEnter, true);
         document.addEventListener('mouseleave', this.boundHandlers.mouseLeave, true);
+        document.addEventListener('mouseover', this.boundHandlers.mouseOver, true);
         document.addEventListener('contextmenu', this.boundHandlers.contextMenu, true);
         document.addEventListener('mousedown', this.boundHandlers.mouseDown, true);
         document.addEventListener('mousemove', this.boundHandlers.mouseMove, true);
@@ -184,6 +185,7 @@ export default class WordInteractionController {
 
         document.removeEventListener('mouseenter', this.boundHandlers.mouseEnter, true);
         document.removeEventListener('mouseleave', this.boundHandlers.mouseLeave, true);
+        document.removeEventListener('mouseover', this.boundHandlers.mouseOver, true);
         document.removeEventListener('contextmenu', this.boundHandlers.contextMenu, true);
         document.removeEventListener('mousedown', this.boundHandlers.mouseDown, true);
         document.removeEventListener('mousemove', this.boundHandlers.mouseMove, true);
@@ -224,8 +226,11 @@ export default class WordInteractionController {
 
         // Debounce the tooltip show
         this.hoverTimeout = setTimeout(() => {
-            // Don't show tooltip if video is playing (user probably moved mouse away)
-            if (!this.video.paused) {
+            // Don't show if the video resumed (pause-on-hover ended) or the
+            // pointer has already moved off this word during the debounce. The
+            // live `hoveredWordElement` is the source of truth — mouseleave is
+            // unreliable here, so we can't trust the timer not to outlive the hover.
+            if (!this.video.paused || this.hoveredWordElement !== target) {
                 return;
             }
 
@@ -269,6 +274,43 @@ export default class WordInteractionController {
         }
     }
 
+    // Authoritative pointer tracking. `mouseover` bubbles (so document-level
+    // delegation is reliable, unlike mouseenter/leave) and fires on every
+    // element the pointer enters — including the empty video area. We use it to
+    // (a) know which word is under the pointer for the async render guard and
+    // (b) dismiss the tooltip the moment the pointer leaves its word.
+    private _handleMouseOver(e: Event) {
+        const node = e.target;
+        const word =
+            node instanceof Element ? (node.closest('.asbplayer-word') as HTMLElement | null) : null;
+        this.hoveredWordElement = word;
+
+        if (!this.tooltipWordElement) return;
+
+        // Keep the tooltip while the pointer is over its word, or over any word
+        // in an active multi-word selection (chunk tooltip).
+        if (word === this.tooltipWordElement) return;
+        const overSelectedWord =
+            this.selectionState.selectedWords.length > 1 &&
+            word !== null &&
+            this.selectionState.selectedWords.includes(word);
+        if (overSelectedWord) return;
+
+        this._hideTooltip();
+    }
+
+    // Is the pointer still over the word a tooltip is anchored to — or, for a
+    // chunk tooltip, any word in the active selection? Mirrors the keep-logic in
+    // `_handleMouseOver` so the async render guard agrees with live dismissal.
+    private _pointerStillOnTarget(wordElement: HTMLElement): boolean {
+        if (this.hoveredWordElement === wordElement) return true;
+        return (
+            this.selectionState.selectedWords.length > 1 &&
+            this.hoveredWordElement !== null &&
+            this.selectionState.selectedWords.includes(this.hoveredWordElement)
+        );
+    }
+
     private _handleContextMenu(e: Event) {
         const target = e.target;
         if (!this._isWordElement(target)) return;
@@ -284,7 +326,7 @@ export default class WordInteractionController {
             const word = target.dataset.word;
             const sentence = target.dataset.sentence;
             if (word && sentence) {
-                const translation = this.cachedTranslations.get(`${word}::${sentence}`) || '';
+                const translation = this.cachedGlosses.get(`${word}::${sentence}`)?.gloss || '';
                 this._saveWord(word, sentence, translation, readSegmentRange(target, target));
             }
         }
@@ -416,53 +458,120 @@ export default class WordInteractionController {
     }
 
     private async _showTooltip(wordElement: HTMLElement, word: string, sentence: string) {
-        if (!this.llmTranslateEnabled) return;
-
         const cacheKey = `${word}::${sentence}`;
 
-        // Get translation first (either from cache or API)
-        let translation: string;
-        if (this.cachedTranslations.has(cacheKey)) {
-            translation = this.cachedTranslations.get(cacheKey)!;
-        } else {
-            try {
-                translation = await this._requestTranslation(word, sentence);
-                this.cachedTranslations.set(cacheKey, translation);
-            } catch (error) {
-                translation = 'Translation error';
-            }
-        }
-
-        // Check if we should still show the tooltip (user might have moved away during request)
-        // Video playing means user moved away (with pause-on-hover)
-        if (!this.video.paused) {
-            return;
-        }
-
-        // Check if the word element is still valid
-        if (!wordElement.isConnected) {
-            return;
-        }
-
-        // Track the word element and sentence the tooltip is attached to
+        // Track the word element + sentence the tooltip is attached to. Used as
+        // the staleness check after the async gloss fetch resolves.
         this.tooltipWordElement = wordElement;
         this.tooltipSentence = sentence;
 
-        // Clean up any existing autoUpdate
+        const cached = this.cachedGlosses.get(cacheKey);
+        if (cached) {
+            this._renderTooltip(wordElement, word, { kind: 'ready', data: cached });
+            return;
+        }
+
+        // Show a loading shell immediately (the hover is only triggered while the
+        // video is paused, so this is safe), then fill it in when the gloss lands.
+        this._renderTooltip(wordElement, word, { kind: 'loading' });
+
+        let response: FlicktionaryGlossResponse;
+        try {
+            response = await this._requestGloss(word, sentence);
+        } catch {
+            response = { error: 'Could not fetch a translation.' };
+        }
+
+        // Bail if the user moved on while we were fetching: video resumed, the
+        // word left the DOM, or the pointer is no longer over this word. The
+        // last check (against the live pointer position) is what prevents an
+        // orphaned tooltip when the gloss resolves after the mouse has left.
+        if (!this.video.paused || !wordElement.isConnected || !this._pointerStillOnTarget(wordElement)) {
+            return;
+        }
+
+        if (response.gloss !== undefined) {
+            const data: GlossData = {
+                gloss: response.gloss,
+                pos: response.pos ?? null,
+                register: response.register ?? null,
+                ipa: response.ipa ?? null,
+            };
+            this.cachedGlosses.set(cacheKey, data);
+            this._renderTooltip(wordElement, word, { kind: 'ready', data });
+        } else {
+            this._renderTooltip(wordElement, word, { kind: 'error', message: response.error || 'No translation available' });
+        }
+    }
+
+    private _renderTooltip(
+        wordElement: HTMLElement,
+        word: string,
+        content: { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'ready'; data: GlossData }
+    ) {
+        // Clean up any prior autoUpdate before re-rendering (loading -> ready).
         if (this.tooltipCleanup) {
             this.tooltipCleanup();
             this.tooltipCleanup = null;
         }
 
-        // Create tooltip if it doesn't exist
         if (!this.tooltip) {
             this.tooltip = document.createElement('div');
             this.tooltip.className = 'asbplayer-translation-tooltip';
             document.body.appendChild(this.tooltip);
         }
 
-        // Set content and show tooltip
-        this.tooltip.textContent = translation || 'No translation available';
+        this.tooltip.replaceChildren();
+        this.tooltip.classList.toggle('asbplayer-translation-tooltip--loading', content.kind === 'loading');
+
+        const title = document.createElement('div');
+        title.className = 'asbplayer-gloss-title';
+        title.textContent = word;
+        this.tooltip.appendChild(title);
+
+        if (content.kind === 'loading') {
+            const loading = document.createElement('div');
+            loading.className = 'asbplayer-gloss-loading';
+            this.tooltip.appendChild(loading);
+        } else if (content.kind === 'error') {
+            const error = document.createElement('div');
+            error.className = 'asbplayer-gloss-error';
+            error.textContent = content.message;
+            this.tooltip.appendChild(error);
+        } else {
+            const { data } = content;
+            const ipaLabel = this._pickIpa(data.ipa);
+            if (ipaLabel) {
+                const ipa = document.createElement('div');
+                ipa.className = 'asbplayer-gloss-ipa';
+                ipa.textContent = ipaLabel;
+                this.tooltip.appendChild(ipa);
+            }
+
+            const gloss = document.createElement('div');
+            gloss.className = 'asbplayer-gloss-text';
+            gloss.textContent = data.gloss || 'No translation available';
+            this.tooltip.appendChild(gloss);
+
+            if (data.pos || data.register) {
+                const badges = document.createElement('div');
+                badges.className = 'asbplayer-gloss-badges';
+                if (data.pos) {
+                    const pos = document.createElement('span');
+                    pos.className = 'asbplayer-gloss-badge';
+                    pos.textContent = data.pos;
+                    badges.appendChild(pos);
+                }
+                if (data.register) {
+                    const register = document.createElement('span');
+                    register.className = 'asbplayer-gloss-badge asbplayer-gloss-badge--register';
+                    register.textContent = data.register;
+                    badges.appendChild(register);
+                }
+                this.tooltip.appendChild(badges);
+            }
+        }
+
         this.tooltip.style.display = 'block';
 
         // Use Floating UI for positioning with auto-update
@@ -491,6 +600,13 @@ export default class WordInteractionController {
         this.tooltipCleanup = autoUpdate(wordElement, this.tooltip, updatePosition);
     }
 
+    // Prefer General American, then Received Pronunciation, then an untagged
+    // entry — matching the fields the backend's GrammarIpaBag exposes.
+    private _pickIpa(ipa: FlicktionaryGlossIpa | null): string | null {
+        if (!ipa) return null;
+        return ipa.ga ?? ipa.rp ?? ipa.untagged ?? null;
+    }
+
     private _hideTooltip() {
         this.tooltipWordElement = null;
         this.tooltipSentence = '';
@@ -506,27 +622,18 @@ export default class WordInteractionController {
         }
     }
 
-    private async _requestTranslation(word: string, sentence: string): Promise<string> {
-        const message: TabToExtensionCommand<LLMTranslateMessage> = {
+    private async _requestGloss(word: string, sentence: string): Promise<FlicktionaryGlossResponse> {
+        const message: TabToExtensionCommand<FlicktionaryGlossMessage> = {
             sender: 'asbplayer-video-tab',
             message: {
-                command: 'llm-translate',
+                command: 'flicktionary-gloss',
                 messageId: uuidv4(),
-                word,
-                sentence,
-                sourceLanguage: 'Russian',
-                targetLanguage: 'English',
+                selectionText: word,
+                contextLine: sentence,
             },
         };
 
-        const response: LLMTranslateResponse = await browser.runtime.sendMessage(message);
-
-        if (response.error) {
-            console.warn('LLM translation error:', response.error);
-            return '';
-        }
-
-        return response.translation;
+        return await browser.runtime.sendMessage(message);
     }
 
     private async _saveWord(
@@ -556,9 +663,10 @@ export default class WordInteractionController {
         const response: SaveWordResponse = await browser.runtime.sendMessage(message);
 
         if (response.success) {
-            this._showSaveNotification(word);
+            this._showNotification(`Saved: ${word}`);
         } else {
             console.error('Failed to save word:', response.error);
+            this._showNotification(response.error || 'Could not save to Flicktionary.', true);
         }
 
         this._clearSelection();
@@ -571,29 +679,25 @@ export default class WordInteractionController {
         const words = this.selectionState.selectedWords.map((el) => el.dataset.word || '').join(' ');
         const sentence = this.selectionState.selectedWords[0]?.dataset.sentence || '';
 
-        // Try to get cached translation for the phrase, or use individual translations
-        const cacheKey = `${words}::${sentence}`;
-        let translation = this.cachedTranslations.get(cacheKey) ?? '';
-
-        if (!translation && this.llmTranslateEnabled) {
-            // Request translation for the whole phrase
-            try {
-                translation = await this._requestTranslation(words, sentence);
-                this.cachedTranslations.set(cacheKey, translation);
-            } catch {
-                translation = '';
-            }
-        }
+        // Pass along the hovered gloss if we happen to have one cached. The
+        // Flicktionary save path discards it (the server re-glosses with full
+        // context), so there's no need to fetch one just for the save.
+        const translation = this.cachedGlosses.get(`${words}::${sentence}`)?.gloss ?? '';
 
         const first = this.selectionState.selectedWords[0];
         const last = this.selectionState.selectedWords[this.selectionState.selectedWords.length - 1];
         await this._saveWord(words, sentence, translation, readSegmentRange(first, last));
     }
 
-    private _showSaveNotification(word: string) {
+    private _showNotification(text: string, isError = false) {
         const notification = document.createElement('div');
-        notification.className = 'asbplayer-save-notification';
-        notification.textContent = `Saved: ${word}`;
+        notification.className = isError
+            ? 'asbplayer-save-notification asbplayer-save-notification--error'
+            : 'asbplayer-save-notification';
+        notification.textContent = text;
+        // Errors linger longer so the user can read what to fix; this timeout
+        // is matched to the CSS animation duration for each variant.
+        const durationMs = isError ? 3500 : 1500;
         document.body.appendChild(notification);
 
         // Position near bottom center of video
@@ -604,6 +708,6 @@ export default class WordInteractionController {
         // Remove after animation
         setTimeout(() => {
             notification.remove();
-        }, 1500);
+        }, durationMs);
     }
 }

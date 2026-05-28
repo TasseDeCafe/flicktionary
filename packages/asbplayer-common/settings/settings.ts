@@ -423,11 +423,11 @@ export interface WebSocketClientSettings {
     readonly webSocketClientEnabled: boolean;
 }
 
-export interface LLMSettings {
-    readonly llmEnabled: boolean;
-    readonly llmApiKey: string;
-    readonly llmApiEndpoint: string;
-    readonly llmModel: string;
+// Word-click mode gates the in-subtitle token tokenizer used by both the
+// hover gloss and right-click save. The old self-hosted LLM knobs (API key /
+// endpoint / model) were removed when those features moved to the Flicktionary
+// backend.
+export interface WordInteractionSettings {
     readonly wordClickEnabled: boolean;
 }
 
@@ -523,9 +523,8 @@ export interface AsbplayerSettings
         DictionarySettings,
         StreamingVideoSettings,
         WebSocketClientSettings,
-        LLMSettings,
-        TranscriptSettings,
-        FlicktionarySettings {
+        WordInteractionSettings,
+        TranscriptSettings {
     readonly subtitlePreview: string;
 }
 

@@ -1032,16 +1032,11 @@ export default class Binding {
             this.dragController.unbind();
         }
 
-        this.wordInteractionController.setLlmTranslateEnabled(currentSettings.llmEnabled);
-
-        // Flicktionary save (right-click + chunk select) doesn't depend on the
-        // asbplayer LLM — the server re-translates with full context. So we
-        // also bind word-click when flicktionarySaveEnabled is on, regardless
-        // of llmEnabled.
-        if (
-            currentSettings.wordClickEnabled &&
-            (currentSettings.llmEnabled || currentSettings.flicktionarySaveEnabled)
-        ) {
+        // Word-click mode binds whenever it's enabled. Both hover-gloss and
+        // right-click / chunk-select save now go through Flicktionary (the
+        // server glosses/translates with full context), so there's no separate
+        // LLM toggle to gate on.
+        if (currentSettings.wordClickEnabled) {
             this.wordInteractionController.bind();
         } else {
             this.wordInteractionController.unbind();
@@ -1424,8 +1419,6 @@ export default class Binding {
             this._flicktionaryVideoContext = undefined;
             if (!isYoutubeWatchPage()) return;
             if (!subtitles || subtitles.length === 0) return;
-            const { flicktionarySaveEnabled } = await this.settings.get(['flicktionarySaveEnabled']);
-            if (!flicktionarySaveEnabled) return;
             const videoMeta = getCurrentYoutubeMetadata();
             if (!videoMeta) return;
 

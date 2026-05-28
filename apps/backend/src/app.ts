@@ -77,6 +77,7 @@ import {
 import { PracticeRouter } from './router/practice-router/practice-router'
 import { LanguagesRouter } from './router/languages-router/languages-router'
 import { ExtensionAuthRouter } from './router/extension-auth-router/extension-auth-router'
+import { GlossesRouter } from './router/glosses-router/glosses-router'
 import { ExtensionPairNoncesRepository } from './transport/database/extension-pair-nonces/extension-pair-nonces-repository'
 
 export type AppDependencies = {
@@ -381,6 +382,7 @@ export const buildApp = ({
     API_V1,
     ExtensionAuthRouter(ExtensionPairNoncesRepository(), usersRepository, userTargetLanguagePrefsRepository)
   )
+  app.use(API_V1, GlossesRouter(usersRepository, userTargetLanguagePrefsRepository, wiktionaryEntriesRepository))
   app.use(
     API_V1,
     PracticeRouter({

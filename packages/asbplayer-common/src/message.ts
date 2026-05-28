@@ -888,17 +888,27 @@ export interface DictionaryBuildAnkiCacheStateError extends DictionaryBuildAnkiC
     data?: DictionaryBuildAnkiCacheStateErrorData;
 }
 
-// LLM Translation Messages
-export interface LLMTranslateMessage extends MessageWithId {
-    readonly command: 'llm-translate';
-    readonly word: string;
-    readonly sentence: string;
-    readonly sourceLanguage?: string;
-    readonly targetLanguage?: string;
+// Flicktionary hover-gloss messages. The content script asks the background to
+// fetch a fast gloss for a hovered subtitle selection; the background calls the
+// authed `glosses.fastGloss` endpoint. IPA is mirrored from the backend's
+// GrammarIpaBag shape (kept inline so this package needn't depend on api-client).
+export interface FlicktionaryGlossMessage extends MessageWithId {
+    readonly command: 'flicktionary-gloss';
+    readonly selectionText: string;
+    readonly contextLine: string;
 }
 
-export interface LLMTranslateResponse {
-    readonly translation: string;
+export interface FlicktionaryGlossIpa {
+    readonly ga?: string | null;
+    readonly rp?: string | null;
+    readonly untagged?: string | null;
+}
+
+export interface FlicktionaryGlossResponse {
+    readonly gloss?: string;
+    readonly pos?: string | null;
+    readonly register?: string | null;
+    readonly ipa?: FlicktionaryGlossIpa | null;
     readonly error?: string;
 }
 
