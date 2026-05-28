@@ -48,21 +48,35 @@ export function tokenizeText(text: string): TokenizedWord[] {
 /**
  * Wraps each word in a span element with data attributes for interaction.
  * Non-word segments are preserved as-is.
+ *
+ * When `subtitleIndex` is provided, each word also carries
+ * `data-segment-index` and `data-char-start`/`data-char-end` so the Flicktionary
+ * save path can resolve the clicked occurrence back to a `text_segments` row +
+ * exact char offsets — `indexOf` over the segment text picks the wrong instance
+ * for repeated words like "и" / "я".
  */
-export function tokenizeToHtml(text: string, sentenceText: string): string {
+export function tokenizeToHtml(text: string, sentenceText: string, subtitleIndex?: number): string {
     const tokens = tokenizeText(text);
+    const hasSegmentIndex = typeof subtitleIndex === 'number' && Number.isFinite(subtitleIndex);
+    const escapedSentence = escapeHtml(sentenceText);
+    let cursor = 0;
 
     return tokens
         .map((token) => {
-            if (token.isWord) {
-                // Escape HTML entities in the word
-                const escapedWord = escapeHtml(token.text);
-                const escapedSentence = escapeHtml(sentenceText);
-                return `<span class="asbplayer-word" data-word="${escapedWord}" data-sentence="${escapedSentence}">${escapedWord}</span>`;
-            } else {
-                // Preserve non-word segments (spaces, punctuation)
+            const tokenLength = token.text.length;
+            const charStart = cursor;
+            const charEnd = cursor + tokenLength;
+            cursor = charEnd;
+
+            if (!token.isWord) {
                 return escapeHtml(token.text);
             }
+
+            const escapedWord = escapeHtml(token.text);
+            const segmentAttrs = hasSegmentIndex
+                ? ` data-segment-index="${subtitleIndex}" data-char-start="${charStart}" data-char-end="${charEnd}"`
+                : '';
+            return `<span class="asbplayer-word" data-word="${escapedWord}" data-sentence="${escapedSentence}"${segmentAttrs}>${escapedWord}</span>`;
         })
         .join('');
 }

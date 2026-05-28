@@ -215,6 +215,7 @@ export const defaultSettings: AsbplayerSettings = {
     wordClickEnabled: false,
     transcriptServerUrl: 'https://asbplayer-production.up.railway.app',
     transcriptApiKey: '',
+    flicktionarySaveEnabled: false,
 };
 
 export const NUM_DICTIONARY_TRACKS = defaultSettings.dictionaryTracks.length;

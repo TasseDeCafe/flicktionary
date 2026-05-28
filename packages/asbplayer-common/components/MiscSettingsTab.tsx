@@ -73,6 +73,7 @@ const MiscSettingTab: React.FC<Props> = ({
         wordClickEnabled,
         transcriptServerUrl,
         transcriptApiKey,
+        flicktionarySaveEnabled,
     } = settings;
     const validRegex = useMemo(() => regexIsValid(subtitleRegexFilter), [subtitleRegexFilter]);
     const [webSocketConnectionSucceeded, setWebSocketConnectionSucceeded] = useState<boolean>();
@@ -422,6 +423,16 @@ const MiscSettingTab: React.FC<Props> = ({
                         />
                     }
                     label="Enable LLM translations"
+                    labelPlacement="start"
+                />
+                <SwitchLabelWithHoverEffect
+                    control={
+                        <Switch
+                            checked={flicktionarySaveEnabled}
+                            onChange={(event) => onSettingChanged('flicktionarySaveEnabled', event.target.checked)}
+                        />
+                    }
+                    label="Save saved words to Flicktionary"
                     labelPlacement="start"
                 />
                 <SettingsTextField

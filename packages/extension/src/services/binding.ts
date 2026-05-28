@@ -49,7 +49,17 @@ import {
     VideoToExtensionCommand,
     IndexedSubtitleModel,
     SaveTokenLocalMessage,
+    RegisterFlicktionarySubtitlesMessage,
+    SaveWordFlicktionaryVideoContext,
 } from '@asbplayer-fork/common';
+type FlicktionaryVideoContext = SaveWordFlicktionaryVideoContext;
+import { v4 as uuidv4 } from 'uuid';
+import {
+    computeSubtitlesContentHash,
+    getCurrentYoutubeMetadata,
+    isYoutubeWatchPage,
+    toFlicktionarySegments,
+} from './flicktionary/youtube-context';
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder';
 import {
     extractAnkiSettings,
@@ -151,6 +161,12 @@ export default class Binding {
     readonly bulkExportController: BulkExportController;
     readonly wordInteractionController: WordInteractionController;
 
+    // Snapshot of the current YouTube video + parsed subtitles, populated by
+    // `_maybeRegisterFlicktionarySubtitles`. WordInteractionController reads
+    // this through a closure so SaveWordMessage can carry a self-contained
+    // payload — letting the background recover when its session cache is cold.
+    private _flicktionaryVideoContext: FlicktionaryVideoContext | undefined;
+
     private copyToClipboardOnMine: boolean;
     private takeScreenshot: boolean;
     private cleanScreenshot: boolean;
@@ -207,7 +223,8 @@ export default class Binding {
         this.wordInteractionController = new WordInteractionController(
             video,
             () => document.title,
-            () => window.location.href
+            () => window.location.href,
+            () => this._flicktionaryVideoContext
         );
         this.recordMedia = true;
         this.takeScreenshot = true;
@@ -1015,7 +1032,16 @@ export default class Binding {
             this.dragController.unbind();
         }
 
-        if (currentSettings.wordClickEnabled && currentSettings.llmEnabled) {
+        this.wordInteractionController.setLlmTranslateEnabled(currentSettings.llmEnabled);
+
+        // Flicktionary save (right-click + chunk select) doesn't depend on the
+        // asbplayer LLM — the server re-translates with full context. So we
+        // also bind word-click when flicktionarySaveEnabled is on, regardless
+        // of llmEnabled.
+        if (
+            currentSettings.wordClickEnabled &&
+            (currentSettings.llmEnabled || currentSettings.flicktionarySaveEnabled)
+        ) {
             this.wordInteractionController.bind();
         } else {
             this.wordInteractionController.unbind();
@@ -1393,6 +1419,75 @@ export default class Binding {
         });
     }
 
+    private async _maybeRegisterFlicktionarySubtitles(subtitles: IndexedSubtitleModel[]) {
+        try {
+            this._flicktionaryVideoContext = undefined;
+            if (!isYoutubeWatchPage()) return;
+            if (!subtitles || subtitles.length === 0) return;
+            const { flicktionarySaveEnabled } = await this.settings.get(['flicktionarySaveEnabled']);
+            if (!flicktionarySaveEnabled) return;
+            const videoMeta = getCurrentYoutubeMetadata();
+            if (!videoMeta) return;
+
+            // asbplayer's IndexedSubtitleModel doesn't carry a track-language
+            // tag (multi-track flattening loses it). The audio language is
+            // unknown without deeper YouTube data sync — for v1 we mirror the
+            // subtitle language onto both, then let server-side enrich
+            // normalize. Same caveat in the save-path fallback.
+            const segments = toFlicktionarySegments(subtitles);
+            if (segments.length === 0) return;
+
+            const subtitleLanguage = await this._inferFlicktionarySubtitleLanguage();
+            const contentHash = await computeSubtitlesContentHash(segments);
+
+            const context: FlicktionaryVideoContext = {
+                youtubeVideoId: videoMeta.youtubeVideoId,
+                videoTitle: videoMeta.videoTitle,
+                videoUrl: videoMeta.videoUrl,
+                videoAudioLanguage: subtitleLanguage,
+                subtitleLanguage,
+                contentHash,
+                segments,
+            };
+            this._flicktionaryVideoContext = context;
+
+            const message: VideoToExtensionCommand<RegisterFlicktionarySubtitlesMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'register-flicktionary-subtitles',
+                    messageId: uuidv4(),
+                    youtubeVideoId: context.youtubeVideoId,
+                    videoTitle: context.videoTitle,
+                    videoUrl: context.videoUrl,
+                    videoAudioLanguage: context.videoAudioLanguage,
+                    subtitleLanguage: context.subtitleLanguage,
+                    contentHash: context.contentHash,
+                    segments: context.segments,
+                },
+                src: this.video.src,
+            };
+            browser.runtime.sendMessage(message);
+        } catch (error) {
+            // Don't let registration failures break subtitle rendering — the
+            // save path can still cold-start its own findOrCreate call.
+            console.warn('[flicktionary] register-subtitles failed', error);
+        }
+    }
+
+    // YouTube subtitle language is not directly on IndexedSubtitleModel.
+    // Heuristic: take the streaming-page synced language if available, else
+    // fall back to the user's UI language. Returning a non-empty string is
+    // important — backend validation rejects empty.
+    private async _inferFlicktionarySubtitleLanguage(): Promise<string> {
+        try {
+            const { language } = await this.settings.get(['language']);
+            if (typeof language === 'string' && language.length > 0) return language;
+        } catch {
+            // ignore
+        }
+        return 'en';
+    }
+
     async cropAndResize(tabImageDataUrl: string): Promise<string> {
         const rect = this.video.getBoundingClientRect();
         const maxWidth = this.maxImageWidth;
@@ -1480,6 +1575,12 @@ export default class Binding {
         this.subtitleController.subtitles = subtitles;
         this.subtitleController.subtitleFileNames = subtitleFileNames;
         this.subtitleController.cacheHtml();
+
+        // Fire-and-forget: tell the background which session this video maps to
+        // so save-word can cite real text_segments.id values without round
+        // trips. YouTube-only; other streaming sites have no Flicktionary
+        // session model yet.
+        void this._maybeRegisterFlicktionarySubtitles(subtitles);
 
         if (this._playMode !== PlayMode.normal && (!subtitles || subtitles.length === 0)) {
             this.playMode = PlayMode.normal;

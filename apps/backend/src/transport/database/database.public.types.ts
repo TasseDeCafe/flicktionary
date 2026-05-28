@@ -184,6 +184,30 @@ export type Database = {
         }
         Relationships: []
       }
+      extension_pair_nonces: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          nonce: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          nonce: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ghost_candidates: {
         Row: {
           char_end: number
@@ -1218,7 +1242,7 @@ export type Database = {
     Enums: {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
-      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc'
+      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube'
       practice_rating: 'again' | 'hard' | 'good' | 'easy'
       practice_session_status: 'active' | 'completed' | 'abandoned'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
@@ -1506,7 +1530,7 @@ export const Constants = {
     Enums: {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
-      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc'],
+      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube'],
       practice_rating: ['again', 'hard', 'good', 'easy'],
       practice_session_status: ['active', 'completed', 'abandoned'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],

@@ -1,7 +1,27 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { StudySessionSchema } from './common/flicktionary-schemas'
+import { StudySessionSchema, TextSegmentSchema } from './common/flicktionary-schemas'
+
+// Payload caps for the YouTube ingestion endpoint. Most user-visible YouTube
+// subtitles fit well under both limits; outliers (very long lectures, dense
+// karaoke captions) route through the existing text-tracks upload pipeline.
+const YOUTUBE_MAX_SEGMENTS = 2000
+
+const YoutubeSubtitleSegmentSchema = z.object({
+  index: z.number().int().nonnegative(),
+  text: z.string(),
+  startMs: z.number().int().nonnegative(),
+  endMs: z.number().int().nonnegative(),
+})
+
+const YoutubeSubtitlePayloadSchema = z.object({
+  language: z.string().min(1),
+  segments: z.array(YoutubeSubtitleSegmentSchema).max(YOUTUBE_MAX_SEGMENTS),
+  // sha256 of the canonical segments JSON the extension actually rendered.
+  // Same hash → same text_track row (idempotent re-register on reload).
+  contentHash: z.string().min(1),
+})
 
 export const studySessionsContract = {
   list: oc
@@ -120,6 +140,51 @@ export const studySessionsContract = {
           highlightCount: z.number().int(),
           cardCount: z.number().int(),
           keptCardCount: z.number().int(),
+        }),
+      })
+    ),
+
+  // YouTube ingestion entry point used by the browser extension. Idempotent:
+  // re-invoking with the same (user, videoId, hash, targetLanguage) returns the
+  // same session/track. A different `targetLanguage` against the same video
+  // creates a sibling session under the same content_source/text_track; a
+  // different `subtitles.contentHash` produces a new text_track + session.
+  //
+  // The extension sends pre-parsed, filter-applied, offset-corrected segments
+  // (verbatim from `subtitleController.subtitles`) — the backend stores them
+  // unmodified into text_segments. native_language and cefr_level are resolved
+  // server-side from user_prefs; UNPROCESSABLE_ENTITY with code 'MISSING_CEFR'
+  // is returned when prefs are incomplete (extension shows "Finish setup").
+  findOrCreateForYoutubeVideo: oc
+    .route({
+      method: 'POST',
+      path: '/study-sessions/find-or-create-for-youtube-video',
+      successStatus: 200,
+    })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        youtubeVideoId: z.string().min(1),
+        videoTitle: z.string().min(1),
+        videoUrl: z.string().url(),
+        videoAudioLanguage: z.string().min(1),
+        targetLanguage: z.string().min(1),
+        subtitles: YoutubeSubtitlePayloadSchema,
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          sessionId: z.string().uuid(),
+          textTrackId: z.string().uuid(),
+          contentSourceId: z.string().uuid(),
+          // Full segment list so the extension can resolve a clicked
+          // segment-index → text_segments.id without per-highlight round trips.
+          segments: z.array(TextSegmentSchema),
         }),
       })
     ),

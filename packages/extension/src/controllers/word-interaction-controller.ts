@@ -1,9 +1,10 @@
 import {
-    VideoToExtensionCommand,
+    TabToExtensionCommand,
     LLMTranslateMessage,
     LLMTranslateResponse,
     SaveWordMessage,
     SaveWordResponse,
+    SaveWordFlicktionaryVideoContext,
 } from '@asbplayer-fork/common';
 import { v4 as uuidv4 } from 'uuid';
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom';
@@ -14,6 +15,46 @@ interface TooltipState {
     translation: string;
     loading: boolean;
 }
+
+interface SegmentInfo {
+    readonly startSegmentIndex: number;
+    readonly endSegmentIndex: number | undefined;
+    readonly startCharOffset: number;
+    readonly endCharOffset: number;
+}
+
+// Read the (data-segment-index, data-char-start, data-char-end) trio the
+// tokenizer stamped onto each token span. These are the canonical coordinates
+// the Flicktionary save path uses to resolve the clicked occurrence to a real
+// `text_segments.id`. Missing values (e.g. on non-Flicktionary subtitles or
+// the offset notification overlay) collapse to `undefined`.
+const readSegmentRange = (first: HTMLElement, last: HTMLElement): SegmentInfo | undefined => {
+    const startIdxRaw = first.dataset.segmentIndex;
+    const endIdxRaw = last.dataset.segmentIndex;
+    const startOffsetRaw = first.dataset.charStart;
+    const endOffsetRaw = last.dataset.charEnd;
+    if (
+        startIdxRaw === undefined ||
+        endIdxRaw === undefined ||
+        startOffsetRaw === undefined ||
+        endOffsetRaw === undefined
+    ) {
+        return undefined;
+    }
+    const startSegmentIndex = Number.parseInt(startIdxRaw, 10);
+    const endSegmentIndex = Number.parseInt(endIdxRaw, 10);
+    const startCharOffset = Number.parseInt(startOffsetRaw, 10);
+    const endCharOffset = Number.parseInt(endOffsetRaw, 10);
+    if (![startSegmentIndex, endSegmentIndex, startCharOffset, endCharOffset].every(Number.isFinite)) {
+        return undefined;
+    }
+    return {
+        startSegmentIndex,
+        endSegmentIndex: endSegmentIndex === startSegmentIndex ? undefined : endSegmentIndex,
+        startCharOffset,
+        endCharOffset,
+    };
+};
 
 interface SelectionState {
     isSelecting: boolean;
@@ -26,6 +67,7 @@ export default class WordInteractionController {
     private readonly video: HTMLMediaElement;
     private readonly getVideoTitle: () => string;
     private readonly getVideoUrl: () => string;
+    private readonly getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined;
 
     private tooltip: HTMLElement | null = null;
     private tooltipState: TooltipState = { element: null, word: '', translation: '', loading: false };
@@ -47,15 +89,18 @@ export default class WordInteractionController {
         mouseUp: (e: Event) => void;
     };
     private enabled: boolean = false;
+    private llmTranslateEnabled = true;
 
     constructor(
         video: HTMLMediaElement,
         getVideoTitle: () => string,
-        getVideoUrl: () => string
+        getVideoUrl: () => string,
+        getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined = () => undefined
     ) {
         this.video = video;
         this.getVideoTitle = getVideoTitle;
         this.getVideoUrl = getVideoUrl;
+        this.getFlicktionaryVideoContext = getFlicktionaryVideoContext;
 
         this.boundHandlers = {
             mouseEnter: this._handleMouseEnter.bind(this),
@@ -65,6 +110,13 @@ export default class WordInteractionController {
             mouseMove: this._handleMouseMove.bind(this),
             mouseUp: this._handleMouseUp.bind(this),
         };
+    }
+
+    setLlmTranslateEnabled(enabled: boolean) {
+        this.llmTranslateEnabled = enabled;
+        if (!enabled) {
+            this._hideTooltip();
+        }
     }
 
     bind() {
@@ -233,7 +285,7 @@ export default class WordInteractionController {
             const sentence = target.dataset.sentence;
             if (word && sentence) {
                 const translation = this.cachedTranslations.get(`${word}::${sentence}`) || '';
-                this._saveWord(word, sentence, translation);
+                this._saveWord(word, sentence, translation, readSegmentRange(target, target));
             }
         }
     }
@@ -364,6 +416,8 @@ export default class WordInteractionController {
     }
 
     private async _showTooltip(wordElement: HTMLElement, word: string, sentence: string) {
+        if (!this.llmTranslateEnabled) return;
+
         const cacheKey = `${word}::${sentence}`;
 
         // Get translation first (either from cache or API)
@@ -453,7 +507,7 @@ export default class WordInteractionController {
     }
 
     private async _requestTranslation(word: string, sentence: string): Promise<string> {
-        const message: VideoToExtensionCommand<LLMTranslateMessage> = {
+        const message: TabToExtensionCommand<LLMTranslateMessage> = {
             sender: 'asbplayer-video-tab',
             message: {
                 command: 'llm-translate',
@@ -463,7 +517,6 @@ export default class WordInteractionController {
                 sourceLanguage: 'Russian',
                 targetLanguage: 'English',
             },
-            src: this.video.src,
         };
 
         const response: LLMTranslateResponse = await browser.runtime.sendMessage(message);
@@ -476,8 +529,13 @@ export default class WordInteractionController {
         return response.translation;
     }
 
-    private async _saveWord(word: string, sentence: string, translation: string) {
-        const message: VideoToExtensionCommand<SaveWordMessage> = {
+    private async _saveWord(
+        word: string,
+        sentence: string,
+        translation: string,
+        segmentInfo?: SegmentInfo
+    ) {
+        const message: TabToExtensionCommand<SaveWordMessage> = {
             sender: 'asbplayer-video-tab',
             message: {
                 command: 'save-word',
@@ -487,8 +545,12 @@ export default class WordInteractionController {
                 translation,
                 videoTitle: this.getVideoTitle(),
                 videoUrl: this.getVideoUrl(),
+                segmentIndex: segmentInfo?.startSegmentIndex,
+                endSegmentIndex: segmentInfo?.endSegmentIndex,
+                startCharOffset: segmentInfo?.startCharOffset,
+                endCharOffset: segmentInfo?.endCharOffset,
+                flicktionaryVideo: this.getFlicktionaryVideoContext(),
             },
-            src: this.video.src,
         };
 
         const response: SaveWordResponse = await browser.runtime.sendMessage(message);
@@ -511,9 +573,9 @@ export default class WordInteractionController {
 
         // Try to get cached translation for the phrase, or use individual translations
         const cacheKey = `${words}::${sentence}`;
-        let translation = this.cachedTranslations.get(cacheKey);
+        let translation = this.cachedTranslations.get(cacheKey) ?? '';
 
-        if (!translation) {
+        if (!translation && this.llmTranslateEnabled) {
             // Request translation for the whole phrase
             try {
                 translation = await this._requestTranslation(words, sentence);
@@ -523,7 +585,9 @@ export default class WordInteractionController {
             }
         }
 
-        await this._saveWord(words, sentence, translation);
+        const first = this.selectionState.selectedWords[0];
+        const last = this.selectionState.selectedWords[this.selectionState.selectedWords.length - 1];
+        await this._saveWord(words, sentence, translation, readSegmentRange(first, last));
     }
 
     private _showSaveNotification(word: string) {

@@ -73,6 +73,7 @@ import SaveTokenLocalHandler from '@/handlers/asbplayerv2/save-token-local-handl
 import LLMTranslateHandler from '@/handlers/llm/llm-translate-handler';
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler';
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler';
+import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/register-subtitles-handler';
 import GetSavedWordsCountHandler from '@/handlers/saved-words/get-saved-words-count-handler';
 import ExportSavedWordsHandler from '@/handlers/saved-words/export-saved-words-handler';
 import ClearSavedWordsHandler from '@/handlers/saved-words/clear-saved-words-handler';
@@ -192,6 +193,7 @@ export default defineBackground(() => {
         new LLMTranslateHandler(settings),
         new SaveWordHandler(),
         new FlicktionaryPairHandler(),
+        new RegisterFlicktionarySubtitlesHandler(),
         new GetSavedWordsCountHandler(),
         new ExportSavedWordsHandler(),
         new ClearSavedWordsHandler(),

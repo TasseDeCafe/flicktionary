@@ -903,6 +903,32 @@ export interface LLMTranslateResponse {
 }
 
 // Saved Words Messages
+//
+// Flicktionary fields (all optional, attached by the YouTube content script):
+//  - segmentIndex / endSegmentIndex: subtitle.index values from
+//    subtitleController.subtitles[] for the start and end token. Single-segment
+//    selections leave endSegmentIndex absent.
+//  - startCharOffset / endCharOffset: char positions in each segment's
+//    canonical text (matching what the tokenizer rendered).
+//  - flicktionaryVideo: full video metadata + verbatim segments payload so the
+//    background can fall back to a fresh `findOrCreateForYoutubeVideo` call
+//    when its session cache is cold (e.g. the user saved before the
+//    register-subtitles ping had time to land).
+export interface SaveWordFlicktionaryVideoContext {
+    readonly youtubeVideoId: string;
+    readonly videoTitle: string;
+    readonly videoUrl: string;
+    readonly videoAudioLanguage: string;
+    readonly subtitleLanguage: string;
+    readonly contentHash: string;
+    readonly segments: ReadonlyArray<{
+        readonly index: number;
+        readonly text: string;
+        readonly startMs: number;
+        readonly endMs: number;
+    }>;
+}
+
 export interface SaveWordMessage extends MessageWithId {
     readonly command: 'save-word';
     readonly word: string;
@@ -910,10 +936,37 @@ export interface SaveWordMessage extends MessageWithId {
     readonly translation: string;
     readonly videoTitle?: string;
     readonly videoUrl?: string;
+    readonly segmentIndex?: number;
+    readonly endSegmentIndex?: number;
+    readonly startCharOffset?: number;
+    readonly endCharOffset?: number;
+    readonly flicktionaryVideo?: SaveWordFlicktionaryVideoContext;
 }
 
 export interface SaveWordResponse {
     readonly success: boolean;
+    readonly error?: string;
+}
+
+export interface RegisterFlicktionarySubtitlesMessage extends MessageWithId {
+    readonly command: 'register-flicktionary-subtitles';
+    readonly youtubeVideoId: string;
+    readonly videoTitle: string;
+    readonly videoUrl: string;
+    readonly videoAudioLanguage: string;
+    readonly subtitleLanguage: string;
+    readonly contentHash: string;
+    readonly segments: ReadonlyArray<{
+        readonly index: number;
+        readonly text: string;
+        readonly startMs: number;
+        readonly endMs: number;
+    }>;
+}
+
+export interface RegisterFlicktionarySubtitlesResponse {
+    readonly success: boolean;
+    readonly sessionId?: string;
     readonly error?: string;
 }
 

@@ -6,6 +6,7 @@ import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middlewa
 import { studySessionsContract } from '@flicktionary/api-client/orpc-contracts/study-sessions-contract'
 import {
   DbStudySessionWithSource,
+  DbTextSegment,
   StudySessionsRepositoryInterface,
 } from '../../transport/database/study-sessions/study-sessions-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
@@ -24,6 +25,14 @@ const readYear = (metadata: Record<string, unknown> | null): number | null => {
   const v = metadata?.year
   return typeof v === 'number' ? v : null
 }
+
+const toSegmentDto = (row: DbTextSegment) => ({
+  id: row.id,
+  index: row.index,
+  text: row.text,
+  startMs: row.start_ms,
+  endMs: row.end_ms,
+})
 
 const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   id: row.id,
@@ -219,6 +228,65 @@ export const StudySessionsRouter = (
       }
       return { data: preview }
     }),
+
+    findOrCreateForYoutubeVideo: implementer.findOrCreateForYoutubeVideo.handler(
+      async ({ input, context, errors }) => {
+        const userId = context.res.locals.userId
+        const [nativeLanguage, prefs] = await Promise.all([
+          usersRepository.getNativeLanguage(userId),
+          targetLanguagePrefsRepository.findForLanguage(userId, input.targetLanguage),
+        ])
+        // The extension only has the target language; native + CEFR live in
+        // user_prefs (set during onboarding). If either is missing we can't
+        // shape an enrichment-ready session — the extension popup prompts the
+        // user to finish setup on flicktionary.app.
+        if (!nativeLanguage || !prefs?.cefr_level) {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: {
+              errors: [
+                {
+                  code: 'MISSING_CEFR',
+                  message: 'User prefs are incomplete; finish onboarding before saving from the extension.',
+                },
+              ],
+            },
+          })
+        }
+
+        const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForYoutubeVideo({
+          userId,
+          youtubeVideoId: input.youtubeVideoId,
+          videoTitle: input.videoTitle,
+          videoUrl: input.videoUrl,
+          videoAudioLanguage: input.videoAudioLanguage,
+          subtitleLanguage: input.subtitles.language,
+          subtitleHash: input.subtitles.contentHash,
+          subtitleSegments: input.subtitles.segments,
+          nativeLanguage,
+          targetLanguage: input.targetLanguage,
+          cefrLevel: prefs.cefr_level,
+        })
+
+        // Stamp the most-recent target language so adhoc wizards and other
+        // surfaces stay coherent with the extension's choice.
+        void usersRepository.setLastTargetLanguage(userId, input.targetLanguage).catch((error) => {
+          logWithSentry({
+            message: 'setLastTargetLanguage failed (youtube ingest)',
+            params: { userId, targetLanguage: input.targetLanguage },
+            error,
+          })
+        })
+
+        return {
+          data: {
+            sessionId: session.id,
+            textTrackId: track.id,
+            contentSourceId: contentSource.id,
+            segments: segments.map(toSegmentDto),
+          },
+        }
+      }
+    ),
 
     remove: implementer.remove.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId

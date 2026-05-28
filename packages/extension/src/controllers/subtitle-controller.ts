@@ -525,7 +525,7 @@ export default class SubtitleController {
                             </div>
                         `;
                     } else {
-                        return this._buildTextHtml(subtitle.text, subtitle.track, subtitle.richText);
+                        return this._buildTextHtml(subtitle.text, subtitle.track, subtitle.richText, subtitle.index);
                     }
                 },
                 key: String(subtitle.index),
@@ -533,14 +533,14 @@ export default class SubtitleController {
         });
     }
 
-    private _buildTextHtml(text: string, track?: number, richText?: string) {
+    private _buildTextHtml(text: string, track?: number, richText?: string, subtitleIndex?: number) {
         if (richText && this.subtitleColoring.hoverOnly(track!)) {
             return `<span data-track="${track!}" class="${this._subtitleClasses(track)}" style="${this._subtitleStyles(track)}"><span class="asbplayer-subtitle-text">${text}</span><span class="asbplayer-subtitle-rich">${richText}</span></span>`;
         }
 
         // When word click is enabled and there's no rich text, tokenize the text for word-level interaction
         if (this.wordClickEnabled && !richText) {
-            const tokenizedHtml = tokenizeToHtml(text, text);
+            const tokenizedHtml = tokenizeToHtml(text, text, subtitleIndex);
             return `<span data-track="${track ?? 0}" class="${this._subtitleClasses(track)}" style="${this._subtitleStyles(track)}">${tokenizedHtml}</span>`;
         }
 
