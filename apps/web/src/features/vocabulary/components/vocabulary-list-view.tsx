@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -19,18 +19,12 @@ import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
 import { VocabularyRow } from './vocabulary-row'
 import { Button } from '@/components/ui/button'
+import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 const ESTIMATED_ROW_HEIGHT = 72
 
-// Module-level so it survives unmount when the user opens the focus view.
-// Keyed by the active filter combo — a stale offset from a different result
-// set never gets applied. Lost on hard reload (good enough for now; bump to
-// sessionStorage if survival across reloads is wanted).
-let savedScroll: { key: string; offset: number } | null = null
-
-// Same rationale as savedScroll: survives the focus-view round-trip so the
-// user lands back on the language they were browsing instead of being reset
-// to languages[0].
+// Module-level so it survives the focus-view round-trip — without it the user
+// lands back on languages[0] instead of whatever they were browsing.
 let savedLanguage: string | null = null
 
 const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: ChunksSort) => void }) => {
@@ -100,7 +94,6 @@ export const VocabularyListView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { mode } = useSearch({ from: '/_authenticated/_app/vocabulary/' })
-  const parentRef = useRef<HTMLDivElement | null>(null)
 
   const [selectedLanguage, setSelectedLanguageState] = useState<string | null>(savedLanguage)
   const setSelectedLanguage = (next: string | null) => {
@@ -149,6 +142,16 @@ export const VocabularyListView = () => {
     return data.pages.flatMap((page) => page.rows)
   }, [data])
 
+  // Restores scroll position when the container remounts (e.g. focus-view
+  // round-trip). Resets when the filter combo changes so a stale offset from
+  // a different result set never gets applied.
+  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}|${learningMode ?? 'all'}`
+  const { ref: parentRef, onScroll: onParentScroll } = useScrollRestoration<HTMLDivElement>({
+    scope: 'vocabulary',
+    filterKey,
+    ready: rows.length > 0,
+  })
+
   const rowVirtualizer = useVirtualizer({
     count: hasNextPage ? rows.length + 1 : rows.length,
     getScrollElement: () => parentRef.current,
@@ -166,21 +169,6 @@ export const VocabularyListView = () => {
     if (!hasNextPage || isFetchingNextPage) return
     void fetchNextPage()
   }, [lastItem, rows.length, hasNextPage, isFetchingNextPage, fetchNextPage])
-
-  // Restore scroll position on remount (e.g. when the user closes the focus
-  // view back to /vocabulary). Tracks per filter combo so changing language /
-  // sort / search / learning-mode starts fresh. Runs once per filterKey, after
-  // rows are available so the virtualizer has something to render at the offset.
-  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}|${learningMode ?? 'all'}`
-  const restoredKeyRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (restoredKeyRef.current === filterKey) return
-    if (rows.length === 0) return
-    if (savedScroll && savedScroll.key === filterKey && savedScroll.offset > 0 && parentRef.current) {
-      parentRef.current.scrollTop = savedScroll.offset
-    }
-    restoredKeyRef.current = filterKey
-  }, [filterKey, rows.length])
 
   const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunk()
 
@@ -299,9 +287,7 @@ export const VocabularyListView = () => {
           ref={parentRef}
           className='flex-1 overflow-y-auto rounded-xl border bg-white md:min-h-[60vh]'
           aria-busy={isInitialLoad}
-          onScroll={(e) => {
-            savedScroll = { key: filterKey, offset: e.currentTarget.scrollTop }
-          }}
+          onScroll={onParentScroll}
         >
           {isInitialLoad ? (
             <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>

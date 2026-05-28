@@ -20,7 +20,7 @@ import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
 import { useWordSelection } from '@/lib/dom/use-word-selection'
 import { buildSegmentRanges, buildGhostSegmentRanges } from '../utils/build-segment-ranges'
 import { findOverlappingGhost } from '../utils/ghost-overlap'
-import { useDeepestVisibleSegment } from '../hooks/use-deepest-visible-segment'
+import { useVisibleSegmentRange } from '../hooks/use-visible-segment-range'
 import { useSegmentPosition } from '../hooks/use-segment-position'
 import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList } from './segment-list'
@@ -93,24 +93,31 @@ export const SessionView = () => {
     if (index == null) return null
     return allSegments?.find((s) => s.index === index)?.id ?? null
   }, [allSegments, session?.furthestReadSegmentIndex])
-  const deepestIndex = useDeepestVisibleSegment(scrollEl, indexBySegmentId)
+  const { shallowestIndex, deepestIndex } = useVisibleSegmentRange(scrollEl, indexBySegmentId)
   // While searching, the scroll container renders only the (filtered) search
   // results, so the deepest-visible segment jumps to an arbitrary match and would
   // nominate windows the reader never actually read. Gate nomination off until the
   // search is cleared and the full track is back in view.
-  const { isRequesting: isRequestingNomination } = useGhostNomination({
+  useGhostNomination({
     sessionId,
     deepestIndex,
     maxSegmentIndex,
     serverWindows: ghostData?.windows,
     enabled: llmHighlightsEnabled && !isSearching,
   })
-  // True while suggestion spans are being generated for the reader's current
-  // window — either the nominate request is in flight, or a window's nominate
-  // job is still running on the server (`status === 'pending'`). Surfaced as a
-  // footer loader so the wait doesn't look like the feature is broken.
+  // True while a nominate job for a window OVERLAPPING the viewport is still
+  // running (`status === 'pending'`). Scoped to on-screen text on purpose: a
+  // pending lookahead window the reader hasn't reached yet won't change what
+  // they're looking at, so flashing a "Finding suggestions…" loader for it
+  // would be noise. Surfaced as a footer loader when relevant so the
+  // multi-second wait on the visible band doesn't look broken.
   const isGeneratingCandidates =
-    llmHighlightsEnabled && (isRequestingNomination || (ghostData?.windows ?? []).some((w) => w.status === 'pending'))
+    llmHighlightsEnabled &&
+    shallowestIndex !== null &&
+    deepestIndex !== null &&
+    (ghostData?.windows ?? []).some(
+      (w) => w.status === 'pending' && w.endIndex >= shallowestIndex && w.startIndex <= deepestIndex
+    )
 
   // The floating sheet has one mode at a time. `selection` is a fresh
   // mouseup/touchend that hasn't been persisted yet; `existingHighlightId`

@@ -4,7 +4,7 @@ import { cn } from '@flicktionary/core/utils/tailwind-utils'
 const Card = ({ className, ...props }: React.ComponentProps<'div'>) => (
   <div
     data-slot='card'
-    className={cn('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm', className)}
+    className={cn('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6', className)}
     {...props}
   />
 )
