@@ -15,8 +15,8 @@ import { extractFlicktionaryApiError } from '../../services/flicktionary/api-err
 // map so subsequent saves don't need a round trip.
 //
 // Unpaired or save-disabled users still see the message arrive but get back
-// `{ success: false }` so the binding can fall back to the local IndexedDB
-// path without any extra plumbing.
+// `{ success: false }`; the binding simply leaves saving unavailable for the
+// video (there is no local fallback — Flicktionary is the system of record).
 export default class RegisterFlicktionarySubtitlesHandler {
     get sender(): string[] {
         return ['asbplayer-video', 'asbplayer-video-tab'];
