@@ -96,8 +96,6 @@ export interface AudioModel {
     readonly error?: AudioErrorCode;
 }
 
-export type AnkiExportMode = 'gui' | 'updateLast' | 'default';
-
 export interface VideoDataSubtitleTrackDef {
     label: string;
     language?: string;

@@ -1,9 +1,5 @@
 import {
-    AnkiField,
-    AnkiFieldSettings,
-    AnkiSettings,
     AsbplayerSettings,
-    CustomAnkiFieldSettings,
     KeyBindName,
     SubtitleListPreference,
     SubtitleSettings,
@@ -51,40 +47,12 @@ const defaultDictionaryTrackSettings: DictionaryTrack = {
 };
 
 export const defaultSettings: AsbplayerSettings = {
-    ankiConnectUrl: 'http://127.0.0.1:8765',
-    deck: '',
-    noteType: '',
-    sentenceField: '',
-    definitionField: '',
-    audioField: '',
-    imageField: '',
-    wordField: '',
-    sourceField: '',
-    urlField: '',
-    track1Field: '',
-    track2Field: '',
-    track3Field: '',
-    ankiFieldSettings: {
-        sentence: { order: 1, display: true },
-        definition: { order: 2, display: true },
-        word: { order: 3, display: true },
-        audio: { order: 4, display: true },
-        image: { order: 5, display: true },
-        source: { order: 6, display: true },
-        url: { order: 7, display: true },
-        track1: { order: 8, display: false },
-        track2: { order: 9, display: false },
-        track3: { order: 10, display: false },
-    },
-    customAnkiFieldSettings: {},
     ...defaultSubtitleTextSettings,
     subtitlePositionOffset: 75,
     topSubtitlePositionOffset: 75,
     subtitleAlignment: 'bottom',
     subtitleTracksV2: [],
     subtitlesWidth: -1,
-    audioPaddingStart: 0,
-    audioPaddingEnd: 500,
     maxImageWidth: 0,
     maxImageHeight: 0,
     surroundingSubtitlesCountRadius: 2,
@@ -138,8 +106,6 @@ export const defaultSettings: AsbplayerSettings = {
         markHoveredToken0: { keys: 'Q+0' },
         toggleHoveredTokenIgnored: { keys: 'Q+I' },
     },
-    recordWithAudioPlayback: true,
-    preferMp3: true,
     tabName: 'asbplayer',
     miningHistoryStorageLimit: 25,
     postMiningPlaybackState: PostMinePlayback.remember,
@@ -153,8 +119,6 @@ export const defaultSettings: AsbplayerSettings = {
     subtitleRegexFilterTextReplacement: '',
     convertNetflixRuby: false,
     language: 'en',
-    customAnkiFields: {},
-    tags: [],
     imageBasedSubtitleScaleFactor: 1,
     streamingAppUrl: 'https://app.asbplayer.dev',
     streamingDisplaySubtitles: true,
@@ -189,7 +153,6 @@ export const defaultSettings: AsbplayerSettings = {
         iwanttfc: {},
     },
     pauseOnHoverMode: 0,
-    lastSelectedAnkiExportMode: 'default',
     dictionaryTracks: [defaultDictionaryTrackSettings, defaultDictionaryTrackSettings, defaultDictionaryTrackSettings],
     wordClickEnabled: false,
     transcriptServerUrl: 'https://asbplayer-production.up.railway.app',
@@ -198,58 +161,6 @@ export const defaultSettings: AsbplayerSettings = {
 
 export const NUM_DICTIONARY_TRACKS = defaultSettings.dictionaryTracks.length;
 export const NUM_TOKEN_STATUSES = defaultDictionaryTrackSettings.tokenStatusColors.length;
-
-export interface AnkiFieldUiModel {
-    key: string;
-    field: AnkiField;
-    custom: boolean;
-}
-
-const ankiFieldEntries = (
-    fieldsMap: Record<string, AnkiField> | AnkiFieldSettings,
-    custom: boolean
-): AnkiFieldUiModel[] => {
-    return Object.entries(fieldsMap).map(([key, value]) => ({
-        key,
-        field: value as AnkiField,
-        custom,
-    }));
-};
-
-const sortedAnkiFields = (models: AnkiFieldUiModel[]) => {
-    return models.sort((a, b) => {
-        const left = a.field;
-        const right = b.field;
-
-        if (left.order < right.order) {
-            return -1;
-        }
-
-        if (left.order > right.order) {
-            return 1;
-        }
-
-        return 0;
-    });
-};
-
-export const sortedAnkiFieldModels = (settings: AnkiSettings): AnkiFieldUiModel[] => {
-    let last = Math.max(
-        ...Object.values({ ...settings.ankiFieldSettings, ...settings.customAnkiFieldSettings }).map((f) => f.order)
-    );
-    return sortedAnkiFields([
-        ...ankiFieldEntries(settings.ankiFieldSettings, false),
-        ...ankiFieldEntries(
-            Object.fromEntries(
-                Object.keys(settings.customAnkiFields).map((name) => [
-                    name,
-                    settings.customAnkiFieldSettings[name] ?? { order: ++last, display: true },
-                ])
-            ),
-            true
-        ),
-    ]);
-};
 
 export const allTextSubtitleSettings = (subtitleSettings: SubtitleSettings) => {
     const textSettings: TextSubtitleSettings[] = [];
@@ -418,8 +329,6 @@ const deepEquals = (a: any, b: any) => {
 export const ensureConsistencyOnRead = (settings: Partial<AsbplayerSettings>) => {
     let keyBindSetModified = false;
     let newKeyBindSet: any = {};
-    let ankiFieldSettingsModified = false;
-    let newAnkiFieldSettings: any = {};
 
     if (settings.keyBindSet !== undefined) {
         const keyBindSet = settings.keyBindSet;
@@ -436,26 +345,11 @@ export const ensureConsistencyOnRead = (settings: Partial<AsbplayerSettings>) =>
         }
     }
 
-    if (settings.ankiFieldSettings !== undefined) {
-        const ankiFieldSettings = settings.ankiFieldSettings;
-
-        for (const key of Object.keys(defaultSettings.ankiFieldSettings)) {
-            const fieldName = key as keyof AnkiFieldSettings;
-
-            if (ankiFieldSettings[fieldName] === undefined) {
-                newAnkiFieldSettings[fieldName] = defaultSettings.ankiFieldSettings[fieldName];
-                ankiFieldSettingsModified = true;
-            } else {
-                newAnkiFieldSettings[fieldName] = ankiFieldSettings[fieldName];
-            }
-        }
-    }
-
-    if (!ankiFieldSettingsModified && !keyBindSetModified) {
+    if (!keyBindSetModified) {
         return settings;
     }
 
-    return { ...settings, ...{ ankiFieldSettings: newAnkiFieldSettings }, ...{ keyBindSet: newKeyBindSet } };
+    return { ...settings, keyBindSet: newKeyBindSet };
 };
 
 type SettingsKey = keyof AsbplayerSettings;
@@ -534,30 +428,6 @@ export class SettingsProvider {
             while (settings.dictionaryTracks.length > NUM_DICTIONARY_TRACKS) {
                 settings.dictionaryTracks.pop();
             }
-        }
-
-        if (settings.customAnkiFields === undefined) {
-            return settings;
-        }
-        const customAnkiFieldSettings =
-            settings.customAnkiFieldSettings ??
-            ((
-                await this._storage.get({
-                    customAnkiFieldSettings: defaultSettings.customAnkiFieldSettings,
-                })
-            ).customAnkiFieldSettings as CustomAnkiFieldSettings);
-
-        let modifyCustomAnkiFieldSettings = false;
-
-        for (const key of Object.keys(customAnkiFieldSettings)) {
-            if (!(key in settings.customAnkiFields)) {
-                delete customAnkiFieldSettings[key];
-                modifyCustomAnkiFieldSettings = true;
-            }
-        }
-
-        if (modifyCustomAnkiFieldSettings) {
-            return { ...settings, customAnkiFieldSettings };
         }
 
         return settings;

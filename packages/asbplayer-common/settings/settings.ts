@@ -1,4 +1,4 @@
-import { AnkiExportMode, AutoPausePreference, PostMinePlayback, SubtitleHtml } from '../src/model';
+import { AutoPausePreference, PostMinePlayback, SubtitleHtml } from '../src/model';
 import { arrayEquals } from '../util';
 
 export enum PauseOnHoverMode {
@@ -26,7 +26,6 @@ export interface MiscSettings {
     readonly language: string;
     readonly postMiningPlaybackState: PostMinePlayback;
     readonly lastSubtitleOffset: number;
-    readonly lastSelectedAnkiExportMode: AnkiExportMode;
     readonly tabName: string;
     readonly pauseOnHoverMode: PauseOnHoverMode;
 }
@@ -177,95 +176,16 @@ export function areDictionaryTracksEqual(dt1: DictionaryTrack, dt2: DictionaryTr
     return true;
 }
 
-export type AnkiSettingsFieldKey =
-    | 'sentenceField'
-    | 'definitionField'
-    | 'audioField'
-    | 'imageField'
-    | 'wordField'
-    | 'sourceField'
-    | 'urlField'
-    | 'track1Field'
-    | 'track2Field'
-    | 'track3Field';
-
-export interface AnkiSettings {
-    readonly ankiConnectUrl: string;
-    readonly deck: string;
-    readonly noteType: string;
-    readonly sentenceField: string;
-    readonly definitionField: string;
-    readonly audioField: string;
-    readonly imageField: string;
-    readonly wordField: string;
-    readonly sourceField: string;
-    readonly urlField: string;
-    readonly track1Field: string;
-    readonly track2Field: string;
-    readonly track3Field: string;
-    readonly customAnkiFields: { [key: string]: string };
-    readonly tags: string[];
-    readonly recordWithAudioPlayback: boolean;
-    readonly preferMp3: boolean;
-    readonly audioPaddingStart: number;
-    readonly audioPaddingEnd: number;
+// Image-capture + surrounding-subtitle geometry. These survived the Anki/mining
+// teardown because they feed live features: maxImageWidth/maxImageHeight drive
+// screenshot cropping (binding.ts) and surroundingSubtitles*Radius bound the
+// subtitle context gathered on save/highlight (binding.ts + subtitle-controller.ts).
+export interface CaptureSettings {
     readonly maxImageWidth: number;
     readonly maxImageHeight: number;
     readonly surroundingSubtitlesCountRadius: number;
     readonly surroundingSubtitlesTimeRadius: number;
-    readonly ankiFieldSettings: AnkiFieldSettings;
-    readonly customAnkiFieldSettings: CustomAnkiFieldSettings;
 }
-
-export interface AnkiField {
-    readonly order: number;
-    readonly display: boolean;
-}
-
-export interface AnkiFieldSettings {
-    readonly sentence: AnkiField;
-    readonly definition: AnkiField;
-    readonly audio: AnkiField;
-    readonly image: AnkiField;
-    readonly word: AnkiField;
-    readonly source: AnkiField;
-    readonly url: AnkiField;
-    readonly track1: AnkiField;
-    readonly track2: AnkiField;
-    readonly track3: AnkiField;
-}
-
-export type CustomAnkiFieldSettings = { [key: string]: AnkiField };
-
-const ankiSettingsKeysObject: { [key in keyof AnkiSettings]: boolean } = {
-    ankiConnectUrl: true,
-    deck: true,
-    noteType: true,
-    sentenceField: true,
-    definitionField: true,
-    audioField: true,
-    imageField: true,
-    wordField: true,
-    sourceField: true,
-    urlField: true,
-    track1Field: true,
-    track2Field: true,
-    track3Field: true,
-    customAnkiFields: true,
-    tags: true,
-    recordWithAudioPlayback: true,
-    preferMp3: true,
-    audioPaddingStart: true,
-    audioPaddingEnd: true,
-    maxImageWidth: true,
-    maxImageHeight: true,
-    surroundingSubtitlesCountRadius: true,
-    surroundingSubtitlesTimeRadius: true,
-    ankiFieldSettings: true,
-    customAnkiFieldSettings: true,
-};
-
-export const ankiSettingsKeys: (keyof AnkiSettings)[] = Object.keys(ankiSettingsKeysObject) as (keyof AnkiSettings)[];
 
 const textSubtitleSettingsKeysObject: { [key in keyof TextSubtitleSettings]: boolean } = {
     subtitleColor: true,
@@ -311,10 +231,6 @@ const subtitleSettingsKeysObject: { [key in keyof SubtitleSettings]: boolean } =
 export const subtitleSettingsKeys: (keyof SubtitleSettings)[] = Object.keys(
     subtitleSettingsKeysObject
 ) as (keyof SubtitleSettings)[];
-
-export const extractAnkiSettings = <T extends AnkiSettings>(settings: T): AnkiSettings => {
-    return Object.fromEntries(ankiSettingsKeys.map((k) => [k, settings[k]])) as unknown as AnkiSettings;
-};
 
 export interface CustomStyle {
     readonly key: string;
@@ -492,7 +408,7 @@ export type KeyBindName = keyof KeyBindSet;
 
 export interface AsbplayerSettings
     extends MiscSettings,
-        AnkiSettings,
+        CaptureSettings,
         SubtitleSettings,
         DictionarySettings,
         StreamingVideoSettings,
