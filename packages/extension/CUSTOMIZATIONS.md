@@ -71,8 +71,8 @@ which we deleted — so harvest narrowly):
 
 ## §4. Removed in the 2026-05 "full lean" strip — do NOT reintroduce
 
-The fork was stripped to only what Flicktionary uses. **Removed** (8 commits;
-bundle 8.57 MB → 7.28 MB):
+The fork was stripped to only what Flicktionary uses. **Removed** (8 commits +
+a 2026-05 settings-UI follow-up; bundle 8.57 MB → 7.22 MB):
 
 - **Mining / Anki / cards** — card export, bulk export, copy-history *handlers*,
   the Anki UI (`anki-ui` entrypoint, `AnkiUi`, anki-ui controllers), `PostMineAction`
@@ -93,6 +93,19 @@ bundle 8.57 MB → 7.28 MB):
   is orphaned in the extension** (the common dir still exists — see §6).
 - **Dictionary settings UI** — the dictionary/annotation tab in `SettingsForm`,
   `DictionarySettingsTab`, and `DictionaryClipboardImport`.
+- **Anki / Mining settings UI + safe schema fields (2026-05 follow-up)** — the
+  ANKI and MINING `SettingsForm` tabs (`AnkiSettingsTab`, `MiningSettingsTab`,
+  `AnkiSelect`, `AnkiConnectTutorialBubble` deleted; the `anki`/`testCard` props
+  dropped), the mining sections in Streaming Video + Misc, the mining keyboard
+  rows (the 3 chrome-bound binds that survive are `hide:true`), and the mobile
+  overlay mine button. **Schema fields removed** (no reachable reader): the
+  `streaming*Screenshot`/`streamingRecordMedia` fields, keybinds `copySubtitle`/
+  `ankiExport`/`toggleRecording` (+ their dead `key-binder` methods), and
+  `clickToMineDefaultAction`. Removed fields are **left in the import/export
+  `settingsSchema`** so old exports still validate (`validateAllKnownKeys` throws
+  on unknown keys); `ensureConsistencyOnRead` drops stale keybinds on read.
+- **`tabCapture` manifest permission** — dropped (recording gone; no
+  `chrome.tabCapture` usage).
 
 ### Kept deliberately (NOT removed)
 - **All ~21 video platforms** + their `pages.json` entries + the video-data-sync /
@@ -106,9 +119,14 @@ bundle 8.57 MB → 7.28 MB):
   **profile management** (`use-settings-profile-context`) and the web-app dictionary
   bridge. The dictionary *feature* (coloring + settings UI) is gone, but the data
   layer survives as profile/bridge plumbing.
-- **The settings schema** — `AnkiSettings` and `dictionary*` fields remain in
-  `AsbplayerSettings`, so **old settings exports still import cleanly** (no
-  migration needed). Only the *UI/runtime usage* was removed.
+- **The settings schema (mostly)** — the `AnkiSettings` interface, `dictionary*`,
+  and the mining fields with **reachable kept readers** stay in `AsbplayerSettings`:
+  `maxImageWidth`/`maxImageHeight` + `surroundingSubtitles*Radius` (`binding.ts` /
+  `subtitle-controller.ts`), `miningHistoryStorageLimit` (`use-copy-history`),
+  `lastSelectedAnkiExportMode` + keybinds `updateLastCard`/`exportCard`/
+  `takeScreenshot` (`model.ts` + kept anki layer). So **old settings exports still
+  import cleanly** (no migration needed). Only the *UI/runtime usage* — and the
+  no-reader fields above — were removed.
 - **Whisper transcript generation** (`supadata-generate-handler`, `transcript-cache`,
   the external transcript server).
 
@@ -169,8 +187,12 @@ These were intentionally left — pursue if/when worthwhile:
 - **TS/ESLint** — `lint` is still a no-op stub (`echo`); aligning the monorepo's
   shared ESLint config is a large first-run-error task. tsc has 9 pre-existing
   errors (the WXT build is the gate).
-- **`tabCapture` permission** in `wxt.config.ts` is likely now unused (recording is
-  gone) — verify and drop.
+- **Dead i18n keys** — the Anki/mining translation keys (`settings.anki`,
+  `settings.mining`, `binds.copySubtitle`/`ankiExport`/`extensionToggleRecording`,
+  the `extension.settings.*Screenshot`/`recordAudio` labels, etc.) are still in
+  `common/locales/*.json` (12 languages). They're harmless dead weight; deletion
+  was skipped because these files don't survive a `json.dump` round-trip cleanly,
+  so a bulk rewrite would produce noisy 12-file diffs for negligible gain.
 
 ## §7. Verification (golden path)
 
