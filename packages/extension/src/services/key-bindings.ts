@@ -5,10 +5,9 @@ import {
     ToggleSubtitlesMessage,
     VideoToExtensionCommand,
 } from '@asbplayer-fork/common';
-import { ApplyStrategy, KeyBindSet, TokenState } from '@asbplayer-fork/common/settings';
+import { KeyBindSet } from '@asbplayer-fork/common/settings';
 import { DefaultKeyBinder } from '@asbplayer-fork/common/key-binder';
 import Binding from './binding';
-import { ensureStoragePersisted } from '@asbplayer-fork/common/util';
 
 type Unbinder = (() => void) | false;
 
@@ -33,8 +32,6 @@ export default class KeyBindings {
     private _unbindToggleRepeat: Unbinder = false;
     private _unbindAdjustSubtitlePositionOffset: Unbinder = false;
     private _unbindAdjustTopSubtitlePositionOffset: Unbinder = false;
-    private _unbindMarkHoveredToken?: Unbinder = false;
-    private _unbindToggleHoveredTokenIgnored?: Unbinder = false;
 
     private _bound: boolean;
 
@@ -194,44 +191,6 @@ export default class KeyBindings {
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 context.subtitleController.unblur(track);
-            },
-            () => context.subtitleController.subtitles.length === 0,
-            true
-        );
-
-        this._unbindMarkHoveredToken = this._keyBinder.bindMarkHoveredToken(
-            (event, tokenStatus) => {
-                const res = context.hoveredToken.parse();
-                if (!res) return;
-                void ensureStoragePersisted();
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                void context.subtitleController.subtitleColoring.saveTokenLocal(
-                    res.track,
-                    res.token,
-                    tokenStatus,
-                    [],
-                    ApplyStrategy.ADD
-                );
-            },
-            () => context.subtitleController.subtitles.length === 0,
-            true
-        );
-
-        this._unbindToggleHoveredTokenIgnored = this._keyBinder.bindToggleHoveredTokenIgnored(
-            (event) => {
-                const res = context.hoveredToken.parse();
-                if (!res) return;
-                void ensureStoragePersisted();
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                void context.subtitleController.subtitleColoring.saveTokenLocal(
-                    res.track,
-                    res.token,
-                    null,
-                    [TokenState.IGNORED],
-                    ApplyStrategy.TOGGLE
-                );
             },
             () => context.subtitleController.subtitles.length === 0,
             true
@@ -451,16 +410,6 @@ export default class KeyBindings {
         if (this._unbindAdjustTopSubtitlePositionOffset) {
             this._unbindAdjustTopSubtitlePositionOffset();
             this._unbindAdjustTopSubtitlePositionOffset = false;
-        }
-
-        if (this._unbindMarkHoveredToken) {
-            this._unbindMarkHoveredToken();
-            this._unbindMarkHoveredToken = false;
-        }
-
-        if (this._unbindToggleHoveredTokenIgnored) {
-            this._unbindToggleHoveredTokenIgnored();
-            this._unbindToggleHoveredTokenIgnored = false;
         }
 
         this._bound = false;

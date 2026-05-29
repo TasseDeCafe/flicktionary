@@ -23,7 +23,6 @@ import {
     VideoHeartbeatMessage,
     VideoToExtensionCommand,
     IndexedSubtitleModel,
-    SaveTokenLocalMessage,
     RegisterFlicktionarySubtitlesMessage,
     RegisterFlicktionarySubtitlesResponse,
     SaveWordFlicktionaryVideoContext,
@@ -63,9 +62,6 @@ import KeyBindings from './key-bindings';
 import { shouldShowUpdateAlert } from './update-alert';
 import { bufferToBase64 } from '@asbplayer-fork/common/base64';
 import { pgsParserWorkerFactory } from './pgs-parser-worker-factory';
-import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db/dictionary-provider';
-import { ExtensionDictionaryStorage } from './extension-dictionary-storage';
-import { HoveredToken, SubtitleColoring } from '@asbplayer-fork/common/subtitle-coloring';
 
 let netflix = false;
 document.addEventListener('asbplayer-netflix-enabled', (e) => {
@@ -98,7 +94,6 @@ export default class Binding {
     readonly mobileVideoOverlayController: MobileVideoOverlayController;
     readonly mobileGestureController: MobileGestureController;
     readonly keyBindings: KeyBindings;
-    readonly dictionary: DictionaryProvider;
     readonly settings: SettingsProvider;
     readonly wordInteractionController: WordInteractionController;
 
@@ -126,7 +121,6 @@ export default class Binding {
     private fastForwardPlaybackMinimumGapMs = 600;
     private fastForwardModePlaybackRate = 2.7;
     private pauseOnHoverMode: PauseOnHoverMode = PauseOnHoverMode.disabled;
-    hoveredToken: HoveredToken;
 
     private playListener?: EventListener;
     private pauseListener?: EventListener;
@@ -147,10 +141,8 @@ export default class Binding {
     constructor(video: HTMLMediaElement, hasPageScript: boolean, frameId?: string) {
         this.video = video;
         this.hasPageScript = hasPageScript;
-        this.dictionary = new DictionaryProvider(new ExtensionDictionaryStorage());
         this.settings = new SettingsProvider(new ExtensionSettingsStorage());
-        this.subtitleController = new SubtitleController(video, this.dictionary, this.settings);
-        this.hoveredToken = new HoveredToken();
+        this.subtitleController = new SubtitleController(video, this.settings);
         this.videoDataSyncController = new VideoDataSyncController(this, this.settings);
         this.controlsController = new ControlsController(video);
         this.dragController = new DragController(video);
@@ -506,9 +498,7 @@ export default class Binding {
 
                 document.addEventListener('mousemove', this.mouseMoveListener);
             }
-            this.hoveredToken.handleMouseOver(mouseEvent);
         };
-        this.subtitleController.onMouseOut = (mouseEvent: MouseEvent) => this.hoveredToken.handleMouseOut(mouseEvent);
 
         if (this.hasPageScript) {
             this.videoChangeListener = () => {
@@ -609,16 +599,6 @@ export default class Binding {
                     case 'settings-updated':
                         this._refreshSettings();
                         break;
-                    case 'save-token-local':
-                        const { track, token, status, states, applyStates } = request.message as SaveTokenLocalMessage;
-                        this.subtitleController.subtitleColoring.saveTokenLocal(
-                            track,
-                            token,
-                            status,
-                            states,
-                            applyStates
-                        );
-                        break;
                     case 'notify-error':
                         const notifyErrorMessage = request.message as NotifyErrorMessage;
                         this.subtitleController.notification('info.error', { message: notifyErrorMessage.message });
@@ -705,7 +685,6 @@ export default class Binding {
         const subtitleHtmlChanged = this.subtitleController.subtitleHtml !== currentSettings.subtitleHtml;
         this.subtitleController.subtitleHtml = currentSettings.subtitleHtml;
 
-        this.subtitleController.subtitleColoring.settingsUpdated(currentSettings);
         this.subtitleController.setSubtitleSettings(currentSettings);
 
         if (convertNetflixRubyChanged || subtitleHtmlChanged || wordClickEnabledChanged) {

@@ -42,7 +42,6 @@ import MobileOverlayForwarderHandler from '@/handlers/mobile-overlay/mobile-over
 import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler';
 import { DictionaryDB } from '@asbplayer-fork/common/dictionary-db/dictionary-db';
 import DictionaryHandler from '@/handlers/dictionary/dictionary-handler';
-import SaveTokenLocalHandler from '@/handlers/asbplayerv2/save-token-local-handler';
 import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler';
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler';
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler';
@@ -119,7 +118,6 @@ export default defineBackground(() => {
         new LoadSubtitlesHandler(tabRegistry),
         new RequestSubtitlesHandler(),
         new RequestCurrentSubtitleHandler(),
-        new SaveTokenLocalHandler(),
         new AckMessageHandler(tabRegistry),
         new UpdateMobileOverlayModelHandler(),
         new RefreshSettingsHandler(tabRegistry, settings),
