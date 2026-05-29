@@ -8,7 +8,9 @@ removed, and how to pull useful bits from upstream without dragging the removed
 features back in.
 
 > Companion docs: `MAINTENANCE-PLAN.md` (the strategy + execution log for the
-> 2026-05 lean strip). This file is the living reference; that one is history.
+> 2026-05 lean strip; history). `REMAINING-CLEANUP-PLAN.md` (the open dead-code
+> burndown: mining-settings fields, dead message types, the dictionary-db removal,
+> dead i18n keys). This file is the living reference.
 
 ## Lineage
 
