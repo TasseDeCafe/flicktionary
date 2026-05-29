@@ -10,7 +10,6 @@ import {
 import { SettingsProvider } from '@asbplayer-fork/common/settings';
 import { FrameInfoBroadcaster, FrameInfoListener } from '@/services/frame-info';
 import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer';
-import { TabAnkiUiController } from '@/controllers/tab-anki-ui-controller';
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage';
 import { DefaultKeyBinder } from '@asbplayer-fork/common/key-binder';
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots';
@@ -160,8 +159,6 @@ export default defineContentScript({
             const videoSelectController = new VideoSelectController(bindings);
             videoSelectController.bind();
 
-            const ankiUiController = new TabAnkiUiController(settingsProvider);
-
             if (isParentDocument) {
                 bindToggleSidePanel();
             }
@@ -226,15 +223,8 @@ export default defineContentScript({
                             cropAndResizeMessage.dataUrl
                         ).then((dataUrl) => sendResponse({ dataUrl }));
                         return true;
-                    case 'show-anki-ui':
-                        if (request.src === undefined) {
-                            // Message intended for the tab, and not a specific video binding
-                            ankiUiController.show(request.message);
-                        }
-                        break;
                     case 'settings-updated':
                         bindToggleSidePanel();
-                        ankiUiController.updateSettings();
                         break;
                     default:
                     // ignore

@@ -60,7 +60,88 @@ commercial ship — though the dictionary assets leave with the strip anyway.
 
 ---
 
-## 2. Full lean — strip Anki / Yomitan / dictionary / annotations
+## 2a. RECON FINDINGS (2026-05-29) — the plan's phase seams were wrong
+
+Reconnaissance before editing overturned three assumptions. Recorded here so the
+revised approach (§2b) is justified:
+
+1. **`SubtitleColoring` is the subtitle data store, not a coloring leaf.**
+   `subtitle-controller.ts` delegates `get/set subtitles`, `subtitlesAt()`,
+   `bind()`, `unbind()`, `reset()` to it (lines 152–166, 369, 389, 550). Coloring
+   is layered on top. Removing it = **reverting the 1.14 annotations feature onto
+   a plain `SubtitleCollection`** (already imported for `SubtitleSlice`), or
+   gutting `SubtitleColoring`'s internals into a thin collection wrapper. Surgery,
+   not deletion.
+2. **No clean leaves exist.** The "self-contained" Anki UI files are referenced by
+   the core hubs: `anki-ui-controller` ← `video.content/index.ts` + `binding.ts`;
+   `bulk-export-controller` ← `SidePanel.tsx` + `binding.ts`;
+   `tab-anki-ui-controller` ← `video.content/index.ts`. Every removal edits a hub.
+3. **`card-publisher` is the shared spine (8 importers):** all 5 recording
+   handlers (`record/rerecord/start/stop-recording-media`, `take-screenshot`) plus
+   `publish-card` + 2 bulk-export handlers. Recording and Anki export are one
+   cluster, not two phases.
+4. **Common's real surface is at the package root**, not `src/`: `anki/`,
+   `yomitan/`, `dictionary-db/`, `subtitle-coloring/`, `copy-history/`,
+   `audio-clip/`, `web-socket-client/`, **`app/` (the asbplayer web-client UI)**,
+   plus `components/`, `settings/`. Full lean spans both packages.
+
+**Hubs every removal touches:** `services/binding.ts` (1771 lines),
+`entrypoints/video.content/index.ts`, `entrypoints/background.ts`,
+`ui/components/SidePanel.tsx`, and `@asbplayer-fork/common` root.
+
+**Build-gate leverage:** the WXT build only fails on unresolved *modules*, not on
+type errors. Unused common code tree-shakes out of the bundle. So extension-side
+wiring removal can be verified first; orphaned common dirs are deleted as a later
+cleanup without affecting the shipped bundle.
+
+## 2b. REVISED execution — two surgical clusters + cleanup (supersedes §2c)
+
+**Cluster 1 — Mining / recording / cards** (no subtitle-store rework needed):
+- Delete: 5 recording handlers, `take-screenshot`, `encode-mp3`,
+  `mp3-encoder-worker`, `offscreen-audio-service`, `AudioRecorderService` +
+  `audio-recorder-delegate` + `AudioBase64Handler` + `ImageCapturer`,
+  `card-publisher`, `publish-card`/`card-exported`/`card-updated` handlers, 2
+  bulk-export handlers, copy-history handlers (request/save/delete/clear),
+  `copy-subtitle-handler`, `save-token-local`, `anki-ui` entrypoint, `ui/anki/`,
+  `AnkiUi.tsx`, `anki-ui-controller`, `tab-anki-ui-controller`,
+  `bulk-export-controller`, `SidePanelRecordingOverlay`.
+- Edit hubs: `background.ts` (drop handler registrations, the `mine-subtitle`
+  context menu, the `copy-subtitle/update-last-card/export-card/take-screenshot/
+  toggle-recording` command cases, `postMineActionFromCommand`); `binding.ts`
+  (remove `PostMineAction` recording/copy-subtitle methods ~743–776, 1164–1291);
+  `video.content/index.ts` (anki controllers); `SidePanel.tsx` (recording overlay
+  + bulk export); `message.ts`/`model.ts` (`CardModel`, `PostMineAction`, card
+  messages); `settings.ts` (`AnkiSettings`).
+- Decision applied: **recording goes entirely** (no decoupled capture kept).
+- End: green `pnpm build` + YouTube golden path. Commit.
+
+**Cluster 2 — Dictionary / Yomitan / annotations / coloring** (needs subtitle-store
+rework):
+- **DECISION (2026-05-29): revert to plain `SubtitleCollection`** (delete
+  `SubtitleColoring` entirely, no vestigial wrapper).
+- Rework `subtitle-controller.ts` to store subtitles in a plain
+  `SubtitleCollection` instead of `SubtitleColoring`; drop the `richText`/
+  `hoverOnly` coloring branch in `_buildTextHtml` (keep the `wordClickEnabled`
+  tokenizer branch); drop the `DictionaryProvider` constructor arg.
+- Delete: `DictionaryDB`, `dictionary-handler`, `statistics-ui`, dictionary/stats
+  panels in `SidePanel`/`PopupUi`/`SettingsPage`/`use-settings`, `Yomitan` import
+  in `background.ts`.
+- Edit hubs: `binding.ts` + `video.content/index.ts` (DictionaryProvider plumbing).
+- End: green build + smoke (word-click rendering unaffected). Commit.
+
+**Cleanup (after both clusters):**
+- Delete orphaned common root dirs: `anki/`, `yomitan/`, `dictionary-db/`,
+  `subtitle-coloring/`, `copy-history/`, `audio-clip/`, `web-socket-client/`,
+  prune `app/`, `components/`, `settings/`, `locales/`. (Decide on `app/` — the
+  web-client UI — separately; the side panel/popup may import from it.)
+- Settings import migration (strip `anki*`/`dictionary*`/`clickToMine*` keys).
+- Drop dead deps (`lamejs`, `dexie` if transcript cache is raw IDB, yomitan/mecab).
+- Locales/asset prune. Final build + bundle-size check vs baseline (8.57 MB).
+
+> The original §2c phases A–F below are kept for reference but **superseded** by
+> §2b. Tasks #1–#6 will be re-mapped to Cluster 1 / Cluster 2 / Cleanup.
+
+## 2c. (SUPERSEDED) Full lean — strip Anki / Yomitan / dictionary / annotations
 
 Goal: remove everything that serves card mining, Yomitan annotation, dictionary
 DB, and subtitle vocab-coloring, while keeping the `wordClickEnabled` tokenizer
@@ -199,17 +280,23 @@ This validates the donor procedure end-to-end on the cheapest real platform.
 
 ---
 
-## 7. Open questions for you
+## 7. Decisions (resolved 2026-05-29)
 
-1. **Recording/screenshot:** keep audio/screenshot capture (decoupled from Anki),
-   or remove it entirely with the mining stack? (Affects how much of `binding.ts`
-   Phase D touches.)
-2. **Netflix save:** is extension-layer Netflix support (subtitles + word-click +
-   hover gloss) enough for now, with save deferred until the backend gains a
-   Netflix content-source type? Or is save table-stakes?
-3. **Sequencing:** do the strip first then port Netflix (cleaner), or land Netflix
-   early as motivation/validation and strip around it? Plan currently assumes
-   strip-Phase-A → Netflix → finish strip.
+1. **Recording/screenshot: REMOVE.** Audio/screenshot capture was Anki-only; it
+   goes with the mining stack in Phase D. No decoupled recording feature kept.
+2. **Keep ALL video platforms.** Do **not** remove any platform page-script or
+   `pages.json` entry, nor the video-data-sync / subtitle-loading / HLS/DASH
+   plumbing they depend on. Platforms stay supported at the extension layer even
+   though only YouTube is wired to the Flicktionary backend today. Which platforms
+   to keep/wire is a later decision.
+3. **Netflix: DEFERRED.** No Netflix backend wiring now. §6 proof-of-concept is
+   shelved.
+4. **Sequencing: strip first**, no Netflix port interleaved.
+
+> Guardrail for the strip: the cut targets Anki / Yomitan / dictionary /
+> annotation / **recording** only. Anything reached by platform page-scripts,
+> `video-data-sync-controller`, subtitle loading, or `pages/` HLS/DASH helpers is
+> **out of scope** — verify before deleting.
 
 ---
 

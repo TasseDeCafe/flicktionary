@@ -1,18 +1,10 @@
 import {
     AckMessage,
-    AnkiUiSavedState,
-    AudioBase64Message,
     AutoPausePreference,
-    CardExportedMessage,
-    CardSavedMessage,
-    CardUpdatedMessage,
-    CopySubtitleMessage,
     cropAndResize,
     CurrentTimeFromVideoMessage,
     CurrentTimeToVideoMessage,
-    EncodeMp3InServiceWorkerMessage,
     ExtensionSyncMessage,
-    ImageCaptureParams,
     NotificationDialogMessage,
     NotifyErrorMessage,
     OffsetToVideoMessage,
@@ -21,28 +13,11 @@ import {
     PlaybackRateToVideoMessage,
     PlayFromVideoMessage,
     PlayMode,
-    PostMineAction,
-    PostMinePlayback,
     ReadyFromVideoMessage,
     ReadyStateFromVideoMessage,
-    RecordMediaAndForwardSubtitleMessage,
     RequestingActiveTabPermsisionMessage,
-    RerecordMediaMessage,
-    ScreenshotTakenMessage,
-    ShowAnkiUiAfterRerecordMessage,
-    ShowAnkiUiMessage,
-    StartRecordingAudioViaCaptureStreamMessage,
-    StartRecordingAudioWithTimeoutViaCaptureStreamMessage,
-    StartRecordingErrorCode,
-    StartRecordingMediaMessage,
-    StartRecordingResponse,
-    StopRecordingAudioMessage,
-    StopRecordingErrorCode,
-    StopRecordingMediaMessage,
-    StopRecordingResponse,
     SubtitleModel,
     SubtitlesToVideoMessage,
-    TakeScreenshotFromExtensionMessage,
     VideoDataUiOpenReason,
     VideoDisappearedMessage,
     VideoHeartbeatMessage,
@@ -65,25 +40,21 @@ import {
 } from './flicktionary/youtube-context';
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder';
 import {
-    extractAnkiSettings,
     PauseOnHoverMode,
     SettingsProvider,
     SubtitleListPreference,
 } from '@asbplayer-fork/common/settings';
 import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection';
 import { SubtitleReader } from '@asbplayer-fork/common/subtitle-reader';
-import { extractText, seekWithNudge, sourceString, surroundingSubtitlesAroundInterval } from '@asbplayer-fork/common/util';
-import AnkiUiController from '../controllers/anki-ui-controller';
+import { extractText, seekWithNudge, surroundingSubtitlesAroundInterval } from '@asbplayer-fork/common/util';
 import ControlsController from '../controllers/controls-controller';
 import DragController from '../controllers/drag-controller';
 import { MobileGestureController } from '../controllers/mobile-gesture-controller';
 import { MobileVideoOverlayController } from '../controllers/mobile-video-overlay-controller';
 import NotificationController from '../controllers/notification-controller';
 import SubtitleController from '../controllers/subtitle-controller';
-import BulkExportController from '../controllers/bulk-export-controller';
 import VideoDataSyncController from '../controllers/video-data-sync-controller';
 import WordInteractionController from '../controllers/word-interaction-controller';
-import AudioRecorder, { TimedRecordingInProgressError } from './audio-recorder';
 import { isMobile } from '@asbplayer-fork/common/device-detection/mobile';
 import { OffsetAnchor } from './element-overlay';
 import { ExtensionSettingsStorage } from './extension-settings-storage';
@@ -104,44 +75,14 @@ document.dispatchEvent(new CustomEvent('asbplayer-query-netflix'));
 
 const youtube = /(m|www)\.youtube\.com/.test(window.location.host);
 
-enum RecordingState {
-    requested,
-    started,
-    notRecording,
-}
-
-const startAudioRecordingErrorResponse: (e: any) => StartRecordingResponse = (e: any) => {
-    let errorCode: StartRecordingErrorCode;
-
-    if (e.name === 'NS_ERROR_FAILURE') {
-        errorCode = StartRecordingErrorCode.drmProtected;
-    } else {
-        console.error(e);
-        errorCode = StartRecordingErrorCode.other;
-    }
-
-    const errorResponse: StartRecordingResponse = {
-        started: false,
-        error: { code: errorCode, message: e.message },
-    };
-    return errorResponse;
-};
-
 export default class Binding {
     subscribed: boolean = false;
 
-    ankiUiSavedState?: AnkiUiSavedState;
     alwaysPlayOnSubtitleRepeat: boolean;
 
     private _synced: boolean;
     private _syncedTimestamp?: number;
 
-    recordingState: RecordingState = RecordingState.notRecording;
-    recordingPostMineAction?: PostMineAction;
-    wasPlayingBeforeRecordingMedia?: boolean;
-    postMinePlayback: PostMinePlayback = PostMinePlayback.remember;
-    private recordingMediaStartedTimestamp?: number;
-    private recordingMediaWithScreenshot: boolean;
     private pausedDueToHover = false;
     private _playMode: PlayMode = PlayMode.normal;
     private _seekDuration = 3;
@@ -153,15 +94,12 @@ export default class Binding {
     readonly videoDataSyncController: VideoDataSyncController;
     readonly controlsController: ControlsController;
     readonly dragController: DragController;
-    readonly ankiUiController: AnkiUiController;
     readonly notificationController: NotificationController;
     readonly mobileVideoOverlayController: MobileVideoOverlayController;
     readonly mobileGestureController: MobileGestureController;
     readonly keyBindings: KeyBindings;
     readonly dictionary: DictionaryProvider;
     readonly settings: SettingsProvider;
-    private readonly _audioRecorder = new AudioRecorder();
-    readonly bulkExportController: BulkExportController;
     readonly wordInteractionController: WordInteractionController;
 
     // Snapshot of the current YouTube video + parsed subtitles, populated by
@@ -181,21 +119,14 @@ export default class Binding {
     // reason instead of attempting a save.
     private _flicktionarySaveDisabledReason: string | undefined;
 
-    private copyToClipboardOnMine: boolean;
-    private takeScreenshot: boolean;
-    private cleanScreenshot: boolean;
-    private audioPaddingStart: number;
-    private audioPaddingEnd: number;
     private maxImageWidth: number;
     private maxImageHeight: number;
     private autoPausePreference: AutoPausePreference;
     private condensedPlaybackMinimumSkipIntervalMs = 1000;
     private fastForwardPlaybackMinimumGapMs = 600;
     private fastForwardModePlaybackRate = 2.7;
-    private imageDelay = 0;
     private pauseOnHoverMode: PauseOnHoverMode = PauseOnHoverMode.disabled;
     hoveredToken: HoveredToken;
-    recordMedia: boolean;
 
     private playListener?: EventListener;
     private pauseListener?: EventListener;
@@ -211,11 +142,6 @@ export default class Binding {
     ) => void;
     private heartbeatInterval?: NodeJS.Timeout;
 
-    // In the case of firefox, we need to avoid capturing the audio stream more than once,
-    // so we keep a reference to the first one we capture here.
-    private audioStream?: MediaStream;
-    private currentAudioRecordingRequestId?: string;
-
     private readonly frameId?: string;
 
     constructor(video: HTMLMediaElement, hasPageScript: boolean, frameId?: string) {
@@ -229,12 +155,10 @@ export default class Binding {
         this.controlsController = new ControlsController(video);
         this.dragController = new DragController(video);
         this.keyBindings = new KeyBindings();
-        this.ankiUiController = new AnkiUiController();
         this.notificationController = new NotificationController(this);
         this.mobileVideoOverlayController = new MobileVideoOverlayController(this, OffsetAnchor.top);
         this.subtitleController.onOffsetChange = () => this.mobileVideoOverlayController.updateModel();
         this.mobileGestureController = new MobileGestureController(this);
-        this.bulkExportController = new BulkExportController(this);
         this.wordInteractionController = new WordInteractionController(
             video,
             () => document.title,
@@ -242,24 +166,12 @@ export default class Binding {
             () => this._flicktionaryVideoContext,
             () => this._flicktionarySaveDisabledReason
         );
-        this.recordMedia = true;
-        this.takeScreenshot = true;
-        this.cleanScreenshot = true;
-        this.audioPaddingStart = 0;
-        this.audioPaddingEnd = 500;
         this.maxImageWidth = 0;
         this.maxImageHeight = 0;
         this.autoPausePreference = AutoPausePreference.atEnd;
-        this.copyToClipboardOnMine = false;
         this.alwaysPlayOnSubtitleRepeat = true;
-        this.postMinePlayback = PostMinePlayback.remember;
         this._synced = false;
-        this.recordingMediaWithScreenshot = false;
         this.frameId = frameId;
-    }
-
-    get recordingMedia() {
-        return this.recordingState !== RecordingState.notRecording;
     }
 
     get synced() {
@@ -307,14 +219,14 @@ export default class Binding {
         switch (newPlayMode) {
             case PlayMode.autoPause:
                 this.subtitleController.autoPauseContext.onStartedShowing = () => {
-                    if (this.recordingMedia || this.autoPausePreference !== AutoPausePreference.atStart) {
+                    if (this.autoPausePreference !== AutoPausePreference.atStart) {
                         return;
                     }
 
                     this.pause();
                 };
                 this.subtitleController.autoPauseContext.onWillStopShowing = () => {
-                    if (this.recordingMedia || this.autoPausePreference !== AutoPausePreference.atEnd) {
+                    if (this.autoPausePreference !== AutoPausePreference.atEnd) {
                         return;
                     }
 
@@ -328,7 +240,6 @@ export default class Binding {
                 this.subtitleController.onNextToShow = async (subtitle) => {
                     try {
                         if (
-                            this.recordingMedia ||
                             seeking ||
                             this.video.paused ||
                             subtitle.start - this.video.currentTime * 1000 <=
@@ -418,22 +329,6 @@ export default class Binding {
         return this.subtitleController.subtitleFileNames?.[track] ?? '';
     }
 
-    private get _imageCaptureParams(): ImageCaptureParams {
-        const rect = this.video.getBoundingClientRect();
-
-        return {
-            maxWidth: this.maxImageWidth,
-            maxHeight: this.maxImageHeight,
-            rect: {
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-            },
-            frameId: this.frameId,
-        };
-    }
-
     private get _shouldAutoResumeOnSubtitlesMouseOut() {
         return this.pauseOnHoverMode === PauseOnHoverMode.inAndOut && this.pausedDueToHover && this.video.paused;
     }
@@ -475,7 +370,6 @@ export default class Binding {
         this.subtitleController.bind();
         this.dragController.bind(this);
         this.mobileGestureController.bind();
-        this.bulkExportController.bind();
 
         const seek = (forward: boolean) => {
             const subtitle = adjacentSubtitle(
@@ -537,10 +431,6 @@ export default class Binding {
             };
 
             browser.runtime.sendMessage(command);
-
-            if (this.recordingMedia && this.recordingPostMineAction !== undefined) {
-                this._toggleRecordingMedia(this.recordingPostMineAction);
-            }
         };
 
         this.seekedListener = (event) => {
@@ -699,12 +589,6 @@ export default class Binding {
                             currentSubtitleIndex: currentSubtitle?.index ?? null,
                         });
                         break;
-                    case 'start-bulk-export':
-                        this.bulkExportController.start();
-                        break;
-                    case 'cancel-bulk-export':
-                        this.bulkExportController.cancel();
-                        break;
                     case 'offset':
                         const offsetMessage = request.message as OffsetToVideoMessage;
                         this.subtitleController.offset(offsetMessage.value, !offsetMessage.echo);
@@ -725,75 +609,6 @@ export default class Binding {
                     case 'settings-updated':
                         this._refreshSettings();
                         break;
-                    case 'copy-subtitle':
-                        const copySubtitleMessage = request.message as CopySubtitleMessage;
-
-                        if (this._synced) {
-                            if (
-                                copySubtitleMessage.subtitle !== undefined &&
-                                copySubtitleMessage.surroundingSubtitles !== undefined
-                            ) {
-                                this._copySubtitle(copySubtitleMessage);
-                            } else if (this.subtitleController.subtitles.length > 0) {
-                                const [subtitle, surroundingSubtitles] = this.subtitleController.currentSubtitle();
-                                if (subtitle !== null && surroundingSubtitles !== null) {
-                                    this._copySubtitle({ ...copySubtitleMessage, subtitle, surroundingSubtitles });
-                                }
-                            } else {
-                                this._toggleRecordingMedia(copySubtitleMessage.postMineAction);
-                            }
-
-                            this.mobileVideoOverlayController.updateModel();
-                        }
-                        break;
-                    case 'toggle-recording':
-                        if (this._synced) {
-                            this._toggleRecordingMedia(PostMineAction.showAnkiDialog);
-                            this.mobileVideoOverlayController.updateModel();
-                        }
-                        break;
-                    case 'card-updated':
-                    case 'card-exported':
-                    case 'card-saved':
-                        const cardMessage = request.message as
-                            | CardUpdatedMessage
-                            | CardExportedMessage
-                            | CardSavedMessage;
-                        let locKey: string;
-                        switch (cardMessage.command) {
-                            case 'card-updated':
-                                locKey = 'info.updatedCard';
-                                this.subtitleController.subtitleColoring.ankiCardWasModified();
-                                break;
-                            case 'card-exported':
-                                locKey = 'info.exportedCard';
-                                this.subtitleController.subtitleColoring.ankiCardWasModified();
-                                break;
-                            case 'card-saved':
-                                locKey = 'info.copiedSubtitle2';
-                                break;
-                        }
-                        this.subtitleController.notification(locKey, { result: request.message.cardName });
-                        this.ankiUiSavedState = {
-                            ...cardMessage,
-                            text: cardMessage.text ?? '',
-                            definition: cardMessage.definition ?? '',
-                            word: cardMessage.word ?? cardMessage.cardName,
-                            source: sourceString(this.subtitleFileName(), cardMessage.subtitle.start),
-                            url: cardMessage.url ?? '',
-                            customFieldValues: cardMessage.customFieldValues ?? {},
-                            timestampInterval: [cardMessage.subtitle.start, cardMessage.subtitle.end],
-                            initialTimestampInterval: [cardMessage.subtitle.start, cardMessage.subtitle.end],
-                            lastAppliedTimestampIntervalToText: [cardMessage.subtitle.start, cardMessage.subtitle.end],
-                            lastAppliedTimestampIntervalToAudio: [cardMessage.subtitle.start, cardMessage.subtitle.end],
-                            dialogRequestedTimestamp: this.video.currentTime * 1000,
-                        };
-                        this.mobileVideoOverlayController.updateModel();
-                        break;
-                    case 'card-updated-dialog':
-                    case 'card-exported-dialog':
-                        this.subtitleController.subtitleColoring.ankiCardWasModified();
-                        break;
                     case 'save-token-local':
                         const { track, token, status, states, applyStates } = request.message as SaveTokenLocalMessage;
                         this.subtitleController.subtitleColoring.saveTokenLocal(
@@ -807,57 +622,6 @@ export default class Binding {
                     case 'notify-error':
                         const notifyErrorMessage = request.message as NotifyErrorMessage;
                         this.subtitleController.notification('info.error', { message: notifyErrorMessage.message });
-                        break;
-                    case 'recording-started':
-                        this.recordingState = RecordingState.started;
-                        break;
-                    case 'recording-finished':
-                        this.recordingState = RecordingState.notRecording;
-                        this.recordingMediaStartedTimestamp = undefined;
-
-                        switch (this.postMinePlayback) {
-                            case PostMinePlayback.remember:
-                                if (!this.wasPlayingBeforeRecordingMedia) {
-                                    this.video.pause();
-                                } else if (!this.video.paused) {
-                                    this.mobileVideoOverlayController.hide();
-                                }
-                                break;
-                            case PostMinePlayback.play:
-                                // already playing, don't need to do anything
-                                this.mobileVideoOverlayController.hide();
-                                break;
-                            case PostMinePlayback.pause:
-                                this.video.pause();
-                                break;
-                        }
-                        break;
-                    case 'show-anki-ui':
-                        const showAnkiUiMessage = request.message as ShowAnkiUiMessage;
-                        this.ankiUiController.show(this, showAnkiUiMessage);
-                        break;
-                    case 'show-anki-ui-after-rerecord':
-                        const showAnkiUiAfterRerecordMessage = request.message as ShowAnkiUiAfterRerecordMessage;
-                        this.ankiUiController.showAfterRerecord(this, showAnkiUiAfterRerecordMessage.uiState);
-                        break;
-                    case 'take-screenshot':
-                        if (this._synced) {
-                            if (this.ankiUiController.showing) {
-                                this.ankiUiController.requestRewind(this);
-                            } else {
-                                this._takeScreenshot();
-                            }
-                        }
-                        break;
-                    case 'screenshot-taken':
-                        const screenshotTakenMessage = request.message as ScreenshotTakenMessage;
-                        this.subtitleController.forceHideSubtitles = false;
-                        this.mobileVideoOverlayController.forceHide = false;
-                        this.controlsController.show();
-
-                        if (!this.recordingMedia && screenshotTakenMessage.ankiUiState) {
-                            this.ankiUiController.showAfterRetakingScreenshot(this, screenshotTakenMessage.ankiUiState);
-                        }
                         break;
                     case 'alert':
                         // ignore
@@ -883,79 +647,6 @@ export default class Binding {
                     case 'load-subtitles':
                         this.showVideoDataDialog(false);
                         break;
-                    case 'start-recording-audio-with-timeout':
-                        const startRecordingAudioWithTimeoutMessage =
-                            request.message as StartRecordingAudioWithTimeoutViaCaptureStreamMessage;
-
-                        this._captureStream()
-                            .then((stream) =>
-                                this._audioRecorder
-                                    .stopSafely(true)
-                                    .then(() =>
-                                        this._audioRecorder.startWithTimeout(
-                                            stream,
-                                            startRecordingAudioWithTimeoutMessage.timeout,
-                                            () => sendResponse({ started: true }),
-                                            true
-                                        )
-                                    )
-                            )
-                            .then((audioBase64) =>
-                                this._sendAudioBase64(
-                                    audioBase64,
-                                    startRecordingAudioWithTimeoutMessage.requestId,
-                                    startRecordingAudioWithTimeoutMessage.encodeAsMp3
-                                )
-                            )
-                            .catch((e) => {
-                                sendResponse(startAudioRecordingErrorResponse(e));
-                            });
-                        return true;
-                    case 'start-recording-audio':
-                        this.currentAudioRecordingRequestId = (
-                            request.message as StartRecordingAudioViaCaptureStreamMessage
-                        ).requestId;
-                        this._captureStream()
-                            .then((stream) =>
-                                this._audioRecorder.stopSafely(true).then(() => this._audioRecorder.start(stream, true))
-                            )
-                            .then(() => sendResponse({ started: true }))
-                            .catch((e) => {
-                                sendResponse(startAudioRecordingErrorResponse(e));
-                            });
-                        return true;
-                    case 'stop-recording-audio':
-                        const stopRecordingAudioMessage = request.message as StopRecordingAudioMessage;
-                        this._audioRecorder
-                            .stop(true)
-                            .then((audioBase64) => {
-                                sendResponse({ stopped: true });
-                                this._sendAudioBase64(
-                                    audioBase64,
-                                    this.currentAudioRecordingRequestId!,
-                                    stopRecordingAudioMessage.encodeAsMp3
-                                );
-                            })
-                            .catch((e) => {
-                                let errorCode: StopRecordingErrorCode;
-
-                                if (e instanceof TimedRecordingInProgressError) {
-                                    errorCode = StopRecordingErrorCode.timedAudioRecordingInProgress;
-                                } else {
-                                    console.error(e);
-                                    errorCode = StopRecordingErrorCode.other;
-                                }
-
-                                const errorResponse: StopRecordingResponse = {
-                                    stopped: false,
-                                    error: {
-                                        code: errorCode,
-                                        message: e.message,
-                                    },
-                                };
-                                sendResponse(errorResponse);
-                            });
-                        return true;
                     case 'notification-dialog':
                         const notificationDialogMessage = request.message as NotificationDialogMessage;
                         this.notificationController.show(
@@ -987,17 +678,10 @@ export default class Binding {
         const currentSettings = await this.settings.getAll();
         this._seekDuration = currentSettings.seekDuration;
         this._speedChangeStep = currentSettings.speedChangeStep;
-        this.recordMedia = currentSettings.streamingRecordMedia;
-        this.takeScreenshot = currentSettings.streamingTakeScreenshot;
-        this.cleanScreenshot = currentSettings.streamingTakeScreenshot && currentSettings.streamingCleanScreenshot;
         this.condensedPlaybackMinimumSkipIntervalMs = currentSettings.streamingCondensedPlaybackMinimumSkipIntervalMs;
         this.fastForwardModePlaybackRate = currentSettings.fastForwardModePlaybackRate;
-        this.imageDelay = currentSettings.streamingScreenshotDelay;
-        this.audioPaddingStart = currentSettings.audioPaddingStart;
-        this.audioPaddingEnd = currentSettings.audioPaddingEnd;
         this.maxImageWidth = currentSettings.maxImageWidth;
         this.maxImageHeight = currentSettings.maxImageHeight;
-        this.copyToClipboardOnMine = currentSettings.copyToClipboardOnMine;
         this.autoPausePreference = currentSettings.autoPausePreference;
         this.alwaysPlayOnSubtitleRepeat = currentSettings.alwaysPlayOnSubtitleRepeat;
         this.pauseOnHoverMode = currentSettings.pauseOnHoverMode;
@@ -1031,15 +715,6 @@ export default class Binding {
         this.subtitleController.refresh();
 
         this.videoDataSyncController.updateSettings(currentSettings);
-        this.ankiUiController.updateSettings(
-            {
-                ...extractAnkiSettings(currentSettings),
-                themeType: currentSettings.themeType,
-                lastSelectedAnkiExportMode: currentSettings.lastSelectedAnkiExportMode,
-            },
-            this.settings
-        );
-        this.postMinePlayback = currentSettings.postMiningPlaybackState;
         this.keyBindings.setKeyBindSet(this, currentSettings.keyBindSet);
 
         if (currentSettings.streamingSubsDragAndDrop) {
@@ -1123,7 +798,6 @@ export default class Binding {
         this.mobileVideoOverlayController.unbind();
         this.mobileGestureController.unbind();
         this.notificationController.unbind();
-        this.bulkExportController.unbind();
         this.wordInteractionController.unbind();
         this.subscribed = false;
 
@@ -1134,221 +808,6 @@ export default class Binding {
             },
             src: this.video.src,
         };
-        browser.runtime.sendMessage(command);
-    }
-
-    async _takeScreenshot() {
-        if (!this.takeScreenshot) {
-            return;
-        }
-
-        await this._prepareScreenshot();
-
-        const command: VideoToExtensionCommand<TakeScreenshotFromExtensionMessage> = {
-            sender: 'asbplayer-video',
-            message: {
-                command: 'take-screenshot',
-                ankiUiState: this.ankiUiSavedState,
-                ...this._imageCaptureParams,
-                subtitleFileName: this.subtitleFileName(),
-                mediaTimestamp: this.video.currentTime * 1000,
-            },
-            src: this.video.src,
-        };
-
-        browser.runtime.sendMessage(command);
-        this.ankiUiSavedState = undefined;
-    }
-
-    async _copySubtitle({
-        postMineAction,
-        subtitle,
-        surroundingSubtitles,
-        text,
-        definition,
-        word,
-        customFieldValues,
-        isBulkExport,
-    }: CopySubtitleMessage) {
-        if (!subtitle || !surroundingSubtitles) {
-            return;
-        }
-
-        if (this.recordMedia && this.recordingMedia) {
-            return;
-        }
-
-        if (this.copyToClipboardOnMine) {
-            navigator.clipboard.writeText(subtitle.text);
-        }
-
-        if (this.takeScreenshot) {
-            await this._prepareScreenshot();
-        }
-
-        if (this.recordMedia) {
-            this.recordingState = RecordingState.requested;
-            this.recordingPostMineAction = postMineAction;
-            this.wasPlayingBeforeRecordingMedia = !this.video.paused;
-            this.recordingMediaStartedTimestamp = this.video.currentTime * 1000;
-            this.recordingMediaWithScreenshot = this.takeScreenshot;
-            const start = Math.max(0, subtitle.start - this.audioPaddingStart);
-            this.seek(start / 1000);
-            await this.play();
-        }
-
-        if (!text || subtitle.text.includes(text.trim())) {
-            text = extractText(subtitle, surroundingSubtitles);
-        }
-
-        const command: VideoToExtensionCommand<RecordMediaAndForwardSubtitleMessage> = {
-            sender: 'asbplayer-video',
-            message: {
-                command: 'record-media-and-forward-subtitle',
-                subtitle: subtitle,
-                surroundingSubtitles: surroundingSubtitles,
-                record: this.recordMedia,
-                screenshot: this.takeScreenshot,
-                url: this.url(subtitle.start, subtitle.end),
-                mediaTimestamp: this.video.currentTime * 1000,
-                subtitleFileName: this.subtitleFileName(subtitle.track),
-                postMineAction: postMineAction,
-                audioPaddingStart: this.audioPaddingStart,
-                audioPaddingEnd: this.audioPaddingEnd,
-                imageDelay: this.imageDelay,
-                playbackRate: this.video.playbackRate,
-                text,
-                definition,
-                word,
-                customFieldValues,
-                isBulkExport,
-                ...this._imageCaptureParams,
-            },
-            src: this.video.src,
-        };
-
-        browser.runtime.sendMessage(command);
-    }
-
-    // Public helper for controllers to reuse copy-subtitle flow (e.g., bulk export)
-    async copySubtitleForBulk(message: CopySubtitleMessage) {
-        await this._copySubtitle(message);
-    }
-
-    async _toggleRecordingMedia(postMineAction: PostMineAction) {
-        if (this.recordingState === RecordingState.requested) {
-            return;
-        }
-
-        if (this.recordingState === RecordingState.started) {
-            const currentTimestamp = this.video.currentTime * 1000;
-            const command: VideoToExtensionCommand<StopRecordingMediaMessage> = {
-                sender: 'asbplayer-video',
-                message: {
-                    command: 'stop-recording-media',
-                    postMineAction: postMineAction,
-                    startTimestamp: this.recordingMediaStartedTimestamp!,
-                    endTimestamp: currentTimestamp,
-                    playbackRate: this.video.playbackRate,
-                    screenshot: this.recordingMediaWithScreenshot,
-                    videoDuration: this.video.duration * 1000,
-                    url: this.url(this.recordingMediaStartedTimestamp!, currentTimestamp),
-                    subtitleFileName: this.subtitleFileName(),
-                    ...this._imageCaptureParams,
-                    ...this._surroundingSubtitlesAroundInterval(this.recordingMediaStartedTimestamp!, currentTimestamp),
-                },
-                src: this.video.src,
-            };
-
-            browser.runtime.sendMessage(command);
-        } else {
-            this.ankiUiSavedState = undefined;
-
-            if (this.takeScreenshot) {
-                await this._prepareScreenshot();
-            }
-
-            const timestamp = this.video.currentTime * 1000;
-
-            if (this.recordMedia) {
-                this.recordingState = RecordingState.requested;
-                this.wasPlayingBeforeRecordingMedia = !this.video.paused;
-                this.recordingMediaStartedTimestamp = timestamp;
-                this.recordingMediaWithScreenshot = this.takeScreenshot;
-                this.recordingPostMineAction = postMineAction;
-
-                if (this.video.paused) {
-                    await this.play();
-                }
-            }
-
-            const command: VideoToExtensionCommand<StartRecordingMediaMessage> = {
-                sender: 'asbplayer-video',
-                message: {
-                    command: 'start-recording-media',
-                    mediaTimestamp: timestamp,
-                    record: this.recordMedia,
-                    postMineAction: postMineAction,
-                    screenshot: this.takeScreenshot,
-                    url: this.url(timestamp),
-                    subtitleFileName: this.subtitleFileName(),
-                    imageDelay: this.imageDelay,
-                    ...this._imageCaptureParams,
-                },
-                src: this.video.src,
-            };
-
-            browser.runtime.sendMessage(command);
-        }
-    }
-
-    private _surroundingSubtitlesAroundInterval(start: number, end: number) {
-        return surroundingSubtitlesAroundInterval(
-            this.subtitleController.subtitles,
-            start,
-            end,
-            this.ankiUiController.settings!.surroundingSubtitlesCountRadius,
-            this.ankiUiController.settings!.surroundingSubtitlesTimeRadius
-        );
-    }
-
-    async _prepareScreenshot() {
-        if (this.cleanScreenshot) {
-            this.notificationController.hide();
-            this.subtitleController.forceHideSubtitles = true;
-            this.mobileVideoOverlayController.forceHide = true;
-            await this.controlsController.hide();
-        }
-    }
-
-    async rerecord(start: number, end: number, uiState: AnkiUiSavedState) {
-        if (this.recordingMedia) {
-            return;
-        }
-
-        const noSubtitles = this.subtitleController.subtitles.length === 0;
-        const audioPaddingStart = noSubtitles ? 0 : this.audioPaddingStart;
-        const audioPaddingEnd = noSubtitles ? 0 : this.audioPaddingEnd;
-        this.recordingState = RecordingState.requested;
-        this.recordingMediaStartedTimestamp = this.video.currentTime * 1000;
-        this.seek(Math.max(0, start - audioPaddingStart) / 1000);
-        await this.play();
-
-        const command: VideoToExtensionCommand<RerecordMediaMessage> = {
-            sender: 'asbplayer-video',
-            message: {
-                command: 'rerecord-media',
-                duration: end - start,
-                uiState: uiState,
-                audioPaddingStart: audioPaddingStart,
-                audioPaddingEnd: audioPaddingEnd,
-                playbackRate: this.video.playbackRate,
-                timestamp: start,
-                subtitleFileName: this.subtitleFileName(),
-            },
-            src: this.video.src,
-        };
-
         browser.runtime.sendMessage(command);
     }
 
@@ -1620,7 +1079,6 @@ export default class Binding {
             }
         }
         this.subtitleController.showLoadedMessage(nonEmptyTrackIndex);
-        this.ankiUiSavedState = undefined;
         this._synced = true;
         this._syncedTimestamp = Date.now();
 
@@ -1651,95 +1109,9 @@ export default class Binding {
 
     private _resetSubtitles() {
         this.subtitleController.reset();
-        this.ankiUiSavedState = undefined;
         this._synced = false;
         this._syncedTimestamp = undefined;
         this.mobileVideoOverlayController.disposeOverlay();
-    }
-
-    private _captureStream(): Promise<MediaStream> {
-        return new Promise((resolve, reject) => {
-            const existingStream = this._existingActiveAudioStream();
-
-            if (existingStream !== undefined) {
-                resolve(existingStream);
-                return;
-            }
-
-            try {
-                let stream: MediaStream | undefined;
-
-                if (typeof (this.video as any).captureStream === 'function') {
-                    stream = (this.video as any).captureStream();
-                }
-
-                if (typeof (this.video as any).mozCaptureStreamUntilEnded === 'function') {
-                    stream = (this.video as any).mozCaptureStreamUntilEnded();
-                }
-
-                if (stream === undefined) {
-                    reject(new Error('Unable to capture stream from audio'));
-                    return;
-                }
-
-                const audioStream = new MediaStream();
-
-                for (const track of stream.getVideoTracks()) {
-                    track.stop();
-                }
-
-                for (const track of stream.getAudioTracks()) {
-                    if (track.enabled) {
-                        audioStream.addTrack(track);
-                    }
-                }
-
-                // Ensure audio keeps playing through computer speakers
-                const output = new AudioContext();
-                const source = output.createMediaStreamSource(audioStream);
-                source.connect(output.destination);
-
-                this.audioStream = audioStream;
-                resolve(audioStream);
-            } catch (e) {
-                reject(e);
-            }
-        });
-    }
-
-    private _existingActiveAudioStream() {
-        if (this.audioStream === undefined) {
-            return undefined;
-        }
-
-        return this.audioStream.active ? this.audioStream : undefined;
-    }
-
-    private async _sendAudioBase64(base64: string, requestId: string, encodeAsMp3: boolean) {
-        if (encodeAsMp3) {
-            const encodeMp3Command: VideoToExtensionCommand<EncodeMp3InServiceWorkerMessage> = {
-                sender: 'asbplayer-video',
-                message: {
-                    command: 'encode-mp3',
-                    base64,
-                    extension: 'webm',
-                },
-                src: this.video.src,
-            };
-            base64 = await browser.runtime.sendMessage(encodeMp3Command);
-        }
-
-        const command: VideoToExtensionCommand<AudioBase64Message> = {
-            sender: 'asbplayer-video',
-            message: {
-                command: 'audio-base64',
-                base64,
-                requestId,
-            },
-            src: this.video.src,
-        };
-
-        browser.runtime.sendMessage(command);
     }
 
     private _notifyRequestingActiveTabPermission(requesting: boolean) {

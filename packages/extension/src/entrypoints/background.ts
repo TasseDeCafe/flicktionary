@@ -1,10 +1,5 @@
 import TabRegistry, { Asbplayer } from '@/services/tab-registry';
-import ImageCapturer from '@/services/image-capturer';
 import VideoHeartbeatHandler from '@/handlers/video/video-heartbeat-handler';
-import RecordMediaHandler from '@/handlers/video/record-media-handler';
-import RerecordMediaHandler from '@/handlers/video/rerecord-media-handler';
-import StartRecordingMediaHandler from '@/handlers/video/start-recording-media-handler';
-import StopRecordingMediaHandler from '@/handlers/video/stop-recording-media-handler';
 import ToggleSubtitlesHandler from '@/handlers/video/toggle-subtitles-handler';
 import SyncHandler from '@/handlers/video/sync-handler';
 import HttpPostHandler from '@/handlers/video/http-post-handler';
@@ -14,9 +9,6 @@ import AsbplayerV2ToVideoCommandForwardingHandler from '@/handlers/asbplayerv2/a
 import AsbplayerHeartbeatHandler from '@/handlers/asbplayerv2/asbplayer-heartbeat-handler';
 import RefreshSettingsHandler from '@/handlers/popup/refresh-settings-handler';
 import { CommandHandler } from '@/handlers/command-handler';
-import TakeScreenshotHandler from '@/handlers/video/take-screenshot-handler';
-import AudioRecorderService from '@/services/audio-recorder-service';
-import AudioBase64Handler from '@/handlers/offscreen-document/audio-base-64-handler';
 import AckTabsHandler from '@/handlers/asbplayerv2/ack-tabs-handler';
 import OpenExtensionShortcutsHandler from '@/handlers/asbplayerv2/open-extension-shortcuts-handler';
 import ExtensionCommandsHandler from '@/handlers/asbplayerv2/extension-commands-handler';
@@ -26,13 +18,8 @@ import CopyToClipboardHandler from '@/handlers/video/copy-to-clipboard-handler';
 import SettingsUpdatedHandler from '@/handlers/asbplayerv2/settings-updated-handler';
 import {
     Command,
-    CopySubtitleMessage,
-    ExtensionToAsbPlayerCommand,
     ExtensionToVideoCommand,
     Message,
-    PostMineAction,
-    TakeScreenshotMessage,
-    ToggleRecordingMessage,
     ToggleVideoSelectMessage,
 } from '@asbplayer-fork/common';
 import { SettingsProvider } from '@asbplayer-fork/common/settings';
@@ -41,18 +28,10 @@ import VideoDisappearedHandler from '@/handlers/video/video-disappeared-handler'
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage';
 import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler';
 import ToggleSidePanelHandler from '@/handlers/video/toggle-side-panel-handler';
-import CopySubtitleHandler from '@/handlers/asbplayerv2/copy-subtitle-handler';
 import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requesting-active-tab-permission';
-import { CardPublisher } from '@/services/card-publisher';
-import CardUpdatedDialogHandler from '@/handlers/asbplayerv2/card-updated-dialog-handler';
-import CardExportedDialogHandler from '@/handlers/asbplayerv2/card-exported-dialog-handler';
 import AckMessageHandler from '@/handlers/video/ack-message-handler';
-import PublishCardHandler from '@/handlers/asbplayerv2/publish-card-handler';
-import BulkExportCancellationHandler from '@/handlers/asbplayerv2/bulk-export-cancellation-handler';
-import BulkExportStartedHandler from '@/handlers/asbplayerv2/bulk-export-started-handler';
 import { bindWebSocketClient, unbindWebSocketClient } from '@/services/web-socket-client-binding';
 import { isFirefoxBuild } from '@/services/build-flags';
-import { CaptureStreamAudioRecorder, OffscreenAudioRecorder } from '@/services/audio-recorder-delegate';
 import RequestModelHandler from '@/handlers/mobile-overlay/request-model-handler';
 import CurrentTabHandler from '@/handlers/mobile-overlay/current-tab-handler';
 import UpdateMobileOverlayModelHandler from '@/handlers/video/update-mobile-overlay-model-handler';
@@ -61,12 +40,7 @@ import { enqueueUpdateAlert } from '@/services/update-alert';
 import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-handler';
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler';
 import MobileOverlayForwarderHandler from '@/handlers/mobile-overlay/mobile-overlay-forwarder-handler';
-import RequestCopyHistoryHandler from '@/handlers/asbplayerv2/request-copy-history-handler';
-import DeleteCopyHistoryHandler from '@/handlers/asbplayerv2/delete-copy-history-handler';
-import ClearCopyHistoryHandler from '@/handlers/asbplayerv2/clear-copy-history-handler';
-import SaveCopyHistoryHandler from '@/handlers/asbplayerv2/save-copy-history-handler';
 import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler';
-import EncodeMp3Handler from '@/handlers/video/encode-mp3-handler';
 import { DictionaryDB } from '@asbplayer-fork/common/dictionary-db/dictionary-db';
 import DictionaryHandler from '@/handlers/dictionary/dictionary-handler';
 import SaveTokenLocalHandler from '@/handlers/asbplayerv2/save-token-local-handler';
@@ -131,47 +105,24 @@ export default defineBackground(() => {
     browser.runtime.onStartup.addListener(startListener);
 
     const tabRegistry = new TabRegistry(settings);
-    const audioRecorder = new AudioRecorderService(
-        tabRegistry,
-        isFirefoxBuild ? new CaptureStreamAudioRecorder() : new OffscreenAudioRecorder()
-    );
-    const imageCapturer = new ImageCapturer(settings);
-    const cardPublisher = new CardPublisher(settings);
     const dictionaryDB = new DictionaryDB();
 
     const handlers: CommandHandler[] = [
         new VideoHeartbeatHandler(tabRegistry),
-        new RecordMediaHandler(audioRecorder, imageCapturer, cardPublisher, settings),
-        new RerecordMediaHandler(settings, audioRecorder, cardPublisher),
-        new StartRecordingMediaHandler(audioRecorder, imageCapturer, cardPublisher, settings),
-        new StopRecordingMediaHandler(audioRecorder, imageCapturer, cardPublisher, settings),
-        new TakeScreenshotHandler(imageCapturer, cardPublisher),
         new ToggleSubtitlesHandler(settings, tabRegistry),
         new SyncHandler(tabRegistry),
         new HttpPostHandler(),
         new ToggleSidePanelHandler(tabRegistry),
         new OpenAsbplayerSettingsHandler(),
         new CopyToClipboardHandler(),
-        new EncodeMp3Handler(),
         new DictionaryHandler(dictionaryDB),
         new VideoDisappearedHandler(tabRegistry),
         new RequestingActiveTabPermissionHandler(),
-        new CopySubtitleHandler(tabRegistry),
         new LoadSubtitlesHandler(tabRegistry),
         new RequestSubtitlesHandler(),
         new RequestCurrentSubtitleHandler(),
         new SaveTokenLocalHandler(),
-        new RequestCopyHistoryHandler(),
-        new SaveCopyHistoryHandler(settings),
-        new DeleteCopyHistoryHandler(settings),
-        new ClearCopyHistoryHandler(settings),
-        new PublishCardHandler(cardPublisher),
-        new CardUpdatedDialogHandler(),
-        new CardExportedDialogHandler(),
-        new BulkExportCancellationHandler(cardPublisher),
-        new BulkExportStartedHandler(cardPublisher),
         new AckMessageHandler(tabRegistry),
-        new AudioBase64Handler(audioRecorder),
         new UpdateMobileOverlayModelHandler(),
         new RefreshSettingsHandler(tabRegistry, settings),
         new VideoToAsbplayerCommandForwardingHandler(tabRegistry),
@@ -221,12 +172,6 @@ export default defineBackground(() => {
             title: browser.i18n.getMessage('contextMenuLoadSubtitles'),
             contexts: ['page', 'video'],
         });
-
-        browser.contextMenus?.create({
-            id: 'mine-subtitle',
-            title: browser.i18n.getMessage('contextMenuMineSubtitle'),
-            contexts: ['page', 'video'],
-        });
     });
 
     browser.contextMenus?.onClicked.addListener((info) => {
@@ -243,26 +188,6 @@ export default defineBackground(() => {
                 }
 
                 return toggleVideoSelectCommand;
-            });
-        } else if (info.menuItemId === 'mine-subtitle') {
-            tabRegistry.publishCommandToVideoElements((videoElement): ExtensionToVideoCommand<Message> | undefined => {
-                if (info.srcUrl !== undefined && videoElement.src !== info.srcUrl) {
-                    return undefined;
-                }
-
-                if (info.srcUrl === undefined && info.pageUrl !== videoElement.tab.url) {
-                    return undefined;
-                }
-
-                const copySubtitleCommand: ExtensionToVideoCommand<CopySubtitleMessage> = {
-                    sender: 'asbplayer-extension-to-video',
-                    message: {
-                        command: 'copy-subtitle',
-                        postMineAction: PostMineAction.showAnkiDialog,
-                    },
-                    src: videoElement.src,
-                };
-                return copySubtitleCommand;
             });
         }
     });
@@ -284,45 +209,6 @@ export default defineBackground(() => {
             };
 
             switch (command) {
-                case 'copy-subtitle':
-                case 'update-last-card':
-                case 'export-card':
-                case 'copy-subtitle-with-dialog':
-                    const postMineAction = postMineActionFromCommand(command);
-                    tabRegistry.publishCommandToVideoElements((videoElement) => {
-                        if (tabs.find((t) => t.id === videoElement.tab.id) === undefined) {
-                            return undefined;
-                        }
-
-                        const extensionToVideoCommand: ExtensionToVideoCommand<CopySubtitleMessage> = {
-                            sender: 'asbplayer-extension-to-video',
-                            message: {
-                                command: 'copy-subtitle',
-                                postMineAction: postMineAction,
-                            },
-                            src: videoElement.src,
-                        };
-                        return extensionToVideoCommand;
-                    });
-
-                    tabRegistry.publishCommandToAsbplayers({
-                        commandFactory: (asbplayer) => {
-                            if (!validAsbplayer(asbplayer)) {
-                                return undefined;
-                            }
-
-                            const extensionToPlayerCommand: ExtensionToAsbPlayerCommand<CopySubtitleMessage> = {
-                                sender: 'asbplayer-extension-to-player',
-                                message: {
-                                    command: 'copy-subtitle',
-                                    postMineAction: postMineAction,
-                                },
-                                asbplayerId: asbplayer.id,
-                            };
-                            return extensionToPlayerCommand;
-                        },
-                    });
-                    break;
                 case 'toggle-video-select':
                     for (const tab of tabs) {
                         if (typeof tab.id !== 'undefined') {
@@ -336,91 +222,11 @@ export default defineBackground(() => {
                         }
                     }
                     break;
-                case 'take-screenshot':
-                    tabRegistry.publishCommandToVideoElements((videoElement) => {
-                        if (tabs.find((t) => t.id === videoElement.tab.id) === undefined) {
-                            return undefined;
-                        }
-
-                        const extensionToVideoCommand: ExtensionToVideoCommand<TakeScreenshotMessage> = {
-                            sender: 'asbplayer-extension-to-video',
-                            message: {
-                                command: 'take-screenshot',
-                            },
-                            src: videoElement.src,
-                        };
-                        return extensionToVideoCommand;
-                    });
-
-                    tabRegistry.publishCommandToAsbplayers({
-                        commandFactory: (asbplayer) => {
-                            if (!validAsbplayer(asbplayer)) {
-                                return undefined;
-                            }
-
-                            const extensionToPlayerCommand: ExtensionToAsbPlayerCommand<TakeScreenshotMessage> = {
-                                sender: 'asbplayer-extension-to-player',
-                                message: {
-                                    command: 'take-screenshot',
-                                },
-                                asbplayerId: asbplayer.id,
-                            };
-                            return extensionToPlayerCommand;
-                        },
-                    });
-                    break;
-                case 'toggle-recording':
-                    tabRegistry.publishCommandToVideoElements((videoElement) => {
-                        if (tabs.find((t) => t.id === videoElement.tab.id) === undefined) {
-                            return undefined;
-                        }
-
-                        const extensionToVideoCommand: ExtensionToVideoCommand<ToggleRecordingMessage> = {
-                            sender: 'asbplayer-extension-to-video',
-                            message: {
-                                command: 'toggle-recording',
-                            },
-                            src: videoElement.src,
-                        };
-                        return extensionToVideoCommand;
-                    });
-                    tabRegistry.publishCommandToAsbplayers({
-                        commandFactory: (asbplayer) => {
-                            if (!validAsbplayer(asbplayer)) {
-                                return undefined;
-                            }
-
-                            const extensionToPlayerCommand: ExtensionToAsbPlayerCommand<ToggleRecordingMessage> = {
-                                sender: 'asbplayer-extension-to-player',
-                                message: {
-                                    command: 'toggle-recording',
-                                },
-                                asbplayerId: asbplayer.id,
-                            };
-                            return extensionToPlayerCommand;
-                        },
-                    });
-                    break;
                 default:
                     throw new Error('Unknown command ' + command);
             }
         });
     });
-
-    function postMineActionFromCommand(command: string) {
-        switch (command) {
-            case 'copy-subtitle':
-                return PostMineAction.none;
-            case 'copy-subtitle-with-dialog':
-                return PostMineAction.showAnkiDialog;
-            case 'update-last-card':
-                return PostMineAction.updateLastCard;
-            case 'export-card':
-                return PostMineAction.exportCard;
-            default:
-                throw new Error('Cannot determine post mine action for unknown command ' + command);
-        }
-    }
 
     const updateWebSocketClientState = () => {
         settings.getSingle('webSocketClientEnabled').then((webSocketClientEnabled) => {
