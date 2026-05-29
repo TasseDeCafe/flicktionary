@@ -304,13 +304,6 @@ export interface KeyBindSet {
     readonly moveBottomSubtitlesDown: KeyBind;
     readonly moveTopSubtitlesUp: KeyBind;
     readonly moveTopSubtitlesDown: KeyBind;
-    readonly markHoveredToken5: KeyBind;
-    readonly markHoveredToken4: KeyBind;
-    readonly markHoveredToken3: KeyBind;
-    readonly markHoveredToken2: KeyBind;
-    readonly markHoveredToken1: KeyBind;
-    readonly markHoveredToken0: KeyBind;
-    readonly toggleHoveredTokenIgnored: KeyBind;
 }
 
 // Word-click mode gates the in-subtitle token tokenizer used by both the

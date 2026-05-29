@@ -34,8 +34,8 @@ features back in.
   `wxt build`). Dev bundle `.output/chrome-mv3-dev`; prod `.output/chrome-mv3`.
 - **Vite env prefix.** `wxt.config.ts` adds `VITE_` to `envPrefix` for the
   Flicktionary Doppler config (`VITE_API_HOST`, `VITE_SUPABASE_*`).
-- **Gate = the WXT build (`pnpm build`), not tsc.** `tsc --noEmit` has **9
-  pre-existing errors** (down from ~18; the 2026-05 strip introduced none — see
+- **Gate = the WXT build (`pnpm build`), not tsc.** `tsc --noEmit` has **8
+  pre-existing errors** (down from ~18; the 2026-05 strips introduced none — see
   §6). esbuild does not type-check, so always run `pnpm build` after edits, and
   run `pnpm exec tsc --noEmit` to catch dangling property/type refs the build
   silently tolerates (this is how the mobile-overlay regression was caught).
@@ -66,7 +66,7 @@ which we deleted — so harvest narrowly):
 1. Rename imports `@project/*` → `@asbplayer-fork/*`.
 2. Run the **"do not reintroduce"** list below — make sure the donor file doesn't
    drag back a removed feature (mining/recording/anki/dictionary/coloring hooks).
-3. `pnpm build` + `pnpm exec tsc --noEmit` (compare error count to baseline 9) +
+3. `pnpm build` + `pnpm exec tsc --noEmit` (compare error count to baseline 8) +
    the manual golden path (§7).
 
 ## §4. Removed in the 2026-05 "full lean" strip — do NOT reintroduce
@@ -101,9 +101,11 @@ a 2026-05 settings-UI follow-up; bundle 8.57 MB → 7.22 MB):
   overlay mine button. **Schema fields removed** (no reachable reader): the
   `streaming*Screenshot`/`streamingRecordMedia` fields, keybinds `copySubtitle`/
   `ankiExport`/`toggleRecording` (+ their dead `key-binder` methods), and
-  `clickToMineDefaultAction`. Removed fields are **left in the import/export
-  `settingsSchema`** so old exports still validate (`validateAllKnownKeys` throws
-  on unknown keys); `ensureConsistencyOnRead` drops stale keybinds on read.
+  `clickToMineDefaultAction`. The import/export `settingsSchema` was later made
+  **strict** (2026-05, see §6 "landed") — it mirrors the live settings shape, so
+  removed fields are pruned from it too and `validateAllKnownKeys` now rejects any
+  old export still carrying them. `ensureConsistencyOnRead` still backfills/drops
+  keybinds against the defaults on read.
 - **`tabCapture` manifest permission** — dropped (recording gone; no
   `chrome.tabCapture` usage).
 
@@ -120,16 +122,13 @@ a 2026-05 settings-UI follow-up; bundle 8.57 MB → 7.22 MB):
   **profile management** (`use-settings-profile-context`). The dictionary *feature*
   (coloring + settings UI) and the web-app dictionary bridge are gone, but the data
   layer survives as profile plumbing.
-- **The live capture geometry + the import/export schema's tolerance.** The
-  `AnkiSettings` grab-bag was removed (see §6 "landed"); only its four
-  reachable-reader fields survive, now in a focused `CaptureSettings` interface:
-  `maxImageWidth`/`maxImageHeight` (`binding.ts` screenshot cropping) +
-  `surroundingSubtitles{Count,Time}Radius` (`binding.ts` / `subtitle-controller.ts`).
-  The `settings-import-export` JSON schema **deliberately keeps** its dead Anki
-  property + keybind entries (ankiConnectUrl, *Field, ankiFieldSettings,
-  lastSelectedAnkiExportMode, updateLastCard/exportCard/takeScreenshot/ankiExport,
-  …) so **old settings exports still import cleanly** — the schema is
-  import-tolerance only; new exports simply don't carry those keys.
+- **The live capture geometry.** The `AnkiSettings` grab-bag was removed (see §6
+  "landed"); only its four reachable-reader fields survive, now in a focused
+  `CaptureSettings` interface: `maxImageWidth`/`maxImageHeight` (`binding.ts`
+  screenshot cropping) + `surroundingSubtitles{Count,Time}Radius` (`binding.ts` /
+  `subtitle-controller.ts`). (The `settings-import-export` schema used to keep dead
+  Anki/keybind entries for old-export tolerance; that tolerance was dropped — the
+  schema is now strict, see §6 "landed".)
 - **Whisper transcript generation** (`supadata-generate-handler`, `transcript-cache`,
   the external transcript server).
 
@@ -207,9 +206,39 @@ dir + assorted stray orphans — `yomitan/index.ts`, `audio-clip/mp3-encoder-wor
   UI helpers + `SettingsProvider` customAnkiFields/ankiFieldSettings logic, the dead
   `updateLastCard`/`exportCard`/`takeScreenshot` keybinds + `key-binder.ts` handlers
   + `ChromeBoundKeyBindName`, and the orphaned `copy-history/` dir + `CopyHistoryItem`
-  are gone. The import/export JSON schema keeps the dead Anki/keybind property entries
-  for old-export tolerance (new exports don't carry them). Removed one pre-existing
-  failing jest suite (copy-history-repository).
+  are gone. (At the time, the import/export JSON schema kept the dead Anki/keybind
+  property entries for old-export tolerance; that was later dropped — see the strict-
+  schema entry below.) Removed one pre-existing failing jest suite (copy-history-repository).
+
+**Landed since (2026-05, coloring-residue strip + strict schema):**
+- **Dead dictionary-coloring keybinds removed** — the `markHoveredToken0–5` /
+  `toggleHoveredTokenIgnored` keybinds (which were still *rendered* in the Keyboard
+  Shortcuts settings tab as no-op `Q+…` rows) are gone from the `KeyBindSet` type,
+  the defaults, `KeyboardShortcutsSettingsTab`, and `key-binder.ts`
+  (`bindMarkHoveredToken`/`bindToggleHoveredTokenIgnored`). Also deleted the
+  zero-caller `bindToggleSidePanel` method (the `toggleSidePanel` *field* + its
+  hide-guarded row stay — removing them cascades into `extensionSupportsSidePanel`
+  prop plumbing) and the unused `settings/test-card.ts` (`testCard`).
+- **Import/export schema made strict.** The schema no longer keeps dead entries for
+  old-export tolerance — it mirrors the live `AsbplayerSettings` shape. Pruned all
+  Anki note fields + the `/AnkiField` sub-schema, `recordWithAudioPlayback`/`preferMp3`/
+  `audioPadding*`/`streaming*Screenshot`/`streamingRecordMedia`/`streamingScreenshotDelay`,
+  `preCacheSubtitleDom`/`clickToMineDefaultAction`/`lastSelectedAnkiExportMode`, the
+  dead keybind entries, and the `webSocket*` `ignoreKeys`. `validateAllKnownKeys` now
+  throws on any of these. (Kept: still-live-in-type fields with dead readers —
+  `miningHistoryStorageLimit`, `postMiningPlaybackState`, `copyToClipboardOnMine`,
+  `autoCopyCurrentSubtitle` — plus the full `dictionaryTracks`/`/DictionaryTrack`
+  schema, which `ensureConsistencyOnRead` migrates on load.) Rationale: no legacy
+  settings exports exist to honor.
+- **Fixed a real export bug** — `wordClickEnabled`/`transcriptServerUrl`/
+  `transcriptApiKey` (live Flicktionary fields) were never added to `settingsSchema`,
+  so `validateSettings(defaultSettings)` threw `Unknown key` — i.e. **settings export
+  was broken on a fresh install**. Added all three. The `settings-import-export` jest
+  suite (3 failing → 5 passing) now guards this.
+- **Default settings flipped on** for the common case: `streamingAutoSync` +
+  `streamingAutoSyncPromptOnFailure` (auto-load detected subtitles), `pauseOnHoverMode`
+  → `inAndOut` (auto-pause on hover with auto-resume), and `wordClickEnabled` → true.
+  Affects fresh installs / new profiles only; stored user values are untouched.
 
 Still deferred:
 
@@ -218,7 +247,7 @@ Still deferred:
   cutting that dependency would unlock deleting `anki/`, the rest of `audio-clip/`,
   and `@types/dom-mediacapture-record`. (Investigation, not mechanical.)
 - **TS/ESLint** — `lint` is still a no-op stub (`echo`); aligning the monorepo's
-  shared ESLint config is a large first-run-error task. tsc has 9 pre-existing
+  shared ESLint config is a large first-run-error task. tsc has 8 pre-existing
   errors (the WXT build is the gate).
 - **Dead i18n keys** (Cluster 5, low value) — the Anki/mining translation keys
   (`settings.anki`, `settings.mining`,

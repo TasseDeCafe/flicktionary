@@ -13,19 +13,6 @@ const keyBindSchema = {
     },
     required: ['keys'],
 };
-const ankiFieldSchema = {
-    id: '/AnkiField',
-    type: 'object',
-    properties: {
-        order: {
-            type: 'number',
-        },
-        display: {
-            type: 'boolean',
-        },
-    },
-    required: ['order', 'display'],
-};
 const dictionaryTrackSchema = {
     id: '/DictionaryTrack',
     type: 'object',
@@ -131,66 +118,6 @@ const settingsSchema = {
     id: '/Settings',
     type: 'object',
     properties: {
-        ankiConnectUrl: {
-            type: 'string',
-        },
-        deck: {
-            type: 'string',
-        },
-        noteType: {
-            type: 'string',
-        },
-        sentenceField: {
-            type: 'string',
-        },
-        definitionField: {
-            type: 'string',
-        },
-        audioField: {
-            type: 'string',
-        },
-        imageField: {
-            type: 'string',
-        },
-        wordField: {
-            type: 'string',
-        },
-        sourceField: {
-            type: 'string',
-        },
-        urlField: {
-            type: 'string',
-        },
-        track1Field: {
-            type: 'string',
-        },
-        track2Field: {
-            type: 'string',
-        },
-        track3Field: {
-            type: 'string',
-        },
-        ankiFieldSettings: {
-            type: 'object',
-            properties: {
-                sentence: { $ref: '/AnkiField' },
-                definition: { $ref: '/AnkiField' },
-                audio: { $ref: '/AnkiField' },
-                image: { $ref: '/AnkiField' },
-                word: { $ref: '/AnkiField' },
-                source: { $ref: '/AnkiField' },
-                url: { $ref: '/AnkiField' },
-                track1: { $ref: '/AnkiField' },
-                track2: { $ref: '/AnkiField' },
-                track3: { $ref: '/AnkiField' },
-            },
-        },
-        customAnkiFieldSettings: {
-            type: 'object',
-            additionalProperties: {
-                type: '/AnkiField',
-            },
-        },
         subtitleSize: {
             type: 'number',
         },
@@ -241,12 +168,6 @@ const settingsSchema = {
             items: {
                 $ref: '/TextSubtitleSettings',
             },
-        },
-        audioPaddingStart: {
-            type: 'number',
-        },
-        audioPaddingEnd: {
-            type: 'number',
         },
         maxImageWidth: {
             type: 'number',
@@ -302,12 +223,6 @@ const settingsSchema = {
                 decreaseOffset: { $ref: '/KeyBind' },
                 increaseOffset: { $ref: '/KeyBind' },
                 resetOffset: { $ref: '/KeyBind' },
-                copySubtitle: { $ref: '/KeyBind' },
-                ankiExport: { $ref: '/KeyBind' },
-                updateLastCard: { $ref: '/KeyBind' },
-                exportCard: { $ref: '/KeyBind' },
-                takeScreenshot: { $ref: '/KeyBind' },
-                toggleRecording: { $ref: '/KeyBind' },
                 decreasePlaybackRate: { $ref: '/KeyBind' },
                 increasePlaybackRate: { $ref: '/KeyBind' },
                 toggleSidePanel: { $ref: '/KeyBind' },
@@ -316,31 +231,12 @@ const settingsSchema = {
                 moveBottomSubtitlesDown: { $ref: '/KeyBind' },
                 moveTopSubtitlesUp: { $ref: '/KeyBind' },
                 moveTopSubtitlesDown: { $ref: '/KeyBind' },
-                markHoveredToken5: { $ref: '/KeyBind' },
-                markHoveredToken4: { $ref: '/KeyBind' },
-                markHoveredToken3: { $ref: '/KeyBind' },
-                markHoveredToken2: { $ref: '/KeyBind' },
-                markHoveredToken1: { $ref: '/KeyBind' },
-                markHoveredToken0: { $ref: '/KeyBind' },
-                toggleHoveredTokenIgnored: { $ref: '/KeyBind' },
             },
-        },
-        recordWithAudioPlayback: {
-            type: 'boolean',
-        },
-        preferMp3: {
-            type: 'boolean',
         },
         tabName: {
             type: 'string',
         },
         miningHistoryStorageLimit: {
-            type: 'number',
-        },
-        preCacheSubtitleDom: {
-            type: 'boolean',
-        },
-        clickToMineDefaultAction: {
             type: 'number',
         },
         postMiningPlaybackState: {
@@ -376,18 +272,6 @@ const settingsSchema = {
         language: {
             type: 'string',
         },
-        customAnkiFields: {
-            type: 'object',
-            additionalProperties: {
-                type: 'string',
-            },
-        },
-        tags: {
-            type: 'array',
-            items: {
-                type: 'string',
-            },
-        },
         imageBasedSubtitleScaleFactor: {
             type: 'number',
         },
@@ -414,18 +298,6 @@ const settingsSchema = {
         streamingDisplaySubtitles: {
             type: 'boolean',
         },
-        streamingRecordMedia: {
-            type: 'boolean',
-        },
-        streamingTakeScreenshot: {
-            type: 'boolean',
-        },
-        streamingCleanScreenshot: {
-            type: 'boolean',
-        },
-        streamingCropScreenshot: {
-            type: 'boolean',
-        },
         streamingSubsDragAndDrop: {
             type: 'boolean',
         },
@@ -447,9 +319,6 @@ const settingsSchema = {
         streamingCondensedPlaybackMinimumSkipIntervalMs: {
             type: 'number',
         },
-        streamingScreenshotDelay: {
-            type: 'number',
-        },
         streamingSubtitleListPreference: {
             type: 'string',
         },
@@ -459,14 +328,22 @@ const settingsSchema = {
         pauseOnHoverMode: {
             type: 'number',
         },
-        lastSelectedAnkiExportMode: {
-            type: 'string',
-        },
         dictionaryTracks: {
             type: 'array',
             items: {
                 $ref: '/DictionaryTrack',
             },
+        },
+        // Flicktionary-added live settings (WordInteractionSettings / TranscriptSettings).
+        // Must be listed here or validateSettings throws 'Unknown key' on export/import.
+        wordClickEnabled: {
+            type: 'boolean',
+        },
+        transcriptServerUrl: {
+            type: 'string',
+        },
+        transcriptApiKey: {
+            type: 'string',
         },
         _schema: {
             type: 'number',
@@ -474,13 +351,9 @@ const settingsSchema = {
     },
 };
 
-// Top-level keys stripped before validation. Some are current settings; others
-// (webSocket*) are removed keys kept here so importing an older settings export
-// that still carries them doesn't throw on the unknown-key check.
+// Top-level keys stripped before validation.
 const ignoreKeys: string[] = [
     'streamingPages', // Ignored due to security risk (e.g. disable CSP)
-    'webSocketClientEnabled',
-    'webSocketServerUrl',
 ];
 
 const withIgnoredKeysRemoved = (settings: any) => {
@@ -502,7 +375,6 @@ export const validateSettings = (settings: any) => {
     const copy = withIgnoredKeysRemoved(settings);
     const validator = new Validator();
     validator.addSchema(keyBindSchema);
-    validator.addSchema(ankiFieldSchema);
     validator.addSchema(dictionaryTrackSchema);
     validator.addSchema(textSubtitleSettingsSchema);
     const result = validator.validate(copy, settingsSchema);
@@ -553,10 +425,6 @@ const schemaAtPath = (schema: any, path: string[]) => {
 const schemaForRef = (ref: string) => {
     if (ref === '/KeyBind') {
         return keyBindSchema;
-    }
-
-    if (ref === '/AnkiField') {
-        return ankiFieldSchema;
     }
 
     if (ref === '/DictionaryTrack') {
