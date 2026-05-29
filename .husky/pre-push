@@ -69,7 +69,7 @@ fi
 
 
 # whenever we add a valid console.log( to the code we should increment this number
-EXPECTED_COUNT=12
+EXPECTED_COUNT=9
 
 # Use git grep to search for console.log in tracked .ts and .tsx files
 echo "📊 Checking console.log occurrences..."
