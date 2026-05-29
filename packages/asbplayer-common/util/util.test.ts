@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest';
 import { surroundingSubtitlesAroundInterval } from './util';
 
 function subtitle(text: string, start: number, end: number) {

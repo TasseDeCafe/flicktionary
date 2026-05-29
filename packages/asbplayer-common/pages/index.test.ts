@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest';
 import { pageMetadata } from '.';
 
 it('page csp rule ids are distinct', () => {

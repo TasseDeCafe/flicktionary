@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest';
 import { defaultSettings } from '@asbplayer-fork/common/settings';
 import pagesConfig from '../pages.json';
 

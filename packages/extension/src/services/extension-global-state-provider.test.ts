@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest';
 import { ExtensionGlobalStateProvider } from './extension-global-state-provider';
 import { MockStorageArea } from './mock-storage-area';
 

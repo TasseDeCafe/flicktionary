@@ -1,3 +1,4 @@
+import { expect, it, test } from 'vitest';
 import {
     AsbplayerSettings,
     AsbplayerSettingsProfile,
@@ -10,7 +11,7 @@ import {
     prefixedSettings,
     textSubtitleSettingsForTrack,
     unprefixedSettings,
-} from '@asbplayer-fork/common/settings';
+} from './index';
 
 export class MockSettingsStorage implements SettingsStorage {
     private _activeProfile?: string;

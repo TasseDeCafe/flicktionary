@@ -8,6 +8,7 @@ import {
     SettingsUpdatedMessage,
     SupadataGenerateMessage,
     SupadataGenerateResponse,
+    TabToExtensionCommand,
     VideoData,
     VideoDataSubtitleTrack,
     VideoDataUiBridgeConfirmMessage,
@@ -201,14 +202,13 @@ export default class VideoDataSyncController {
             const messageId = `get-cached-${Date.now()}`;
 
             const response = await new Promise<GetCachedTranscriptResponse>((resolve) => {
-                const command: VideoToExtensionCommand<GetCachedTranscriptMessage> = {
+                const command: TabToExtensionCommand<GetCachedTranscriptMessage> = {
                     sender: 'asbplayer-video-tab',
                     message: {
                         command: 'get-cached-transcript',
                         messageId,
                         videoUrl,
                     },
-                    src: this._context.video.src,
                 };
                 browser.runtime.sendMessage(command, resolve);
             });
@@ -765,14 +765,13 @@ export default class VideoDataSyncController {
             const messageId = `supadata-${Date.now()}`;
 
             const response = await new Promise<SupadataGenerateResponse>((resolve) => {
-                const command: VideoToExtensionCommand<SupadataGenerateMessage> = {
+                const command: TabToExtensionCommand<SupadataGenerateMessage> = {
                     sender: 'asbplayer-video-tab',
                     message: {
                         command: 'supadata-generate',
                         messageId,
                         videoUrl,
                     },
-                    src: this._context.video.src,
                 };
                 browser.runtime.sendMessage(command, resolve);
             });

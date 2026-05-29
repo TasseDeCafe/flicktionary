@@ -55,10 +55,6 @@
       "dependsOn": ["^topo", "^build"],
       "outputs": []
     },
-    "compile": {
-      "dependsOn": ["^topo", "^build"],
-      "outputs": []
-    },
     "@flicktionary/extension#dev": {
       "cache": false,
       "persistent": true,

@@ -1,3 +1,4 @@
+import { expect, it } from 'vitest';
 import { PauseOnHoverMode } from './settings';
 import { validateSettings } from './settings-import-export';
 import { defaultSettings } from './settings-provider';

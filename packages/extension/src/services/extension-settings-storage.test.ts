@@ -1,3 +1,4 @@
+import { beforeEach, expect, it } from 'vitest';
 import { ExtensionSettingsStorage } from './extension-settings-storage';
 import { defaultSettings } from '@asbplayer-fork/common/settings';
 import { MockStorageArea } from './mock-storage-area';
