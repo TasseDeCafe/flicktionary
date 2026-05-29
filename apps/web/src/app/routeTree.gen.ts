@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AccountRemovedRouteImport } from './routes/account/removed'
+import { Route as AuthenticatedExtensionPairRouteImport } from './routes/_authenticated/extension-pair'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin-settings'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/_app'
 import { Route as LoginEmailIndexRouteImport } from './routes/login/email/index'
@@ -66,6 +67,12 @@ const AccountRemovedRoute = AccountRemovedRouteImport.update({
   path: '/account/removed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedExtensionPairRoute =
+  AuthenticatedExtensionPairRouteImport.update({
+    id: '/extension-pair',
+    path: '/extension-pair',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin-settings',
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
+  '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
   '/onboarding': typeof AuthenticatedAppOnboardingRoute
@@ -260,6 +268,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
+  '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login': typeof LoginIndexRoute
   '/onboarding': typeof AuthenticatedAppOnboardingRoute
@@ -295,6 +304,7 @@ export interface FileRoutesById {
   '/from-landing': typeof FromLandingRoute
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
   '/login/': typeof LoginIndexRoute
   '/_authenticated/_app/onboarding': typeof AuthenticatedAppOnboardingRoute
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/'
     | '/from-landing'
     | '/admin-settings'
+    | '/extension-pair'
     | '/account/removed'
     | '/login/'
     | '/onboarding'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/'
     | '/from-landing'
     | '/admin-settings'
+    | '/extension-pair'
     | '/account/removed'
     | '/login'
     | '/onboarding'
@@ -395,6 +407,7 @@ export interface FileRouteTypes {
     | '/from-landing'
     | '/_authenticated/_app'
     | '/_authenticated/admin-settings'
+    | '/_authenticated/extension-pair'
     | '/account/removed'
     | '/login/'
     | '/_authenticated/_app/onboarding'
@@ -471,6 +484,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/removed'
       preLoaderRoute: typeof AccountRemovedRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/extension-pair': {
+      id: '/_authenticated/extension-pair'
+      path: '/extension-pair'
+      fullPath: '/extension-pair'
+      preLoaderRoute: typeof AuthenticatedExtensionPairRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin-settings': {
       id: '/_authenticated/admin-settings'
@@ -717,6 +737,7 @@ const AuthenticatedAppRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedExtensionPairRoute: typeof AuthenticatedExtensionPairRoute
   AuthenticatedPricingCheckoutSuccessRoute: typeof AuthenticatedPricingCheckoutSuccessRoute
   AuthenticatedPricingFreeTrialExplanationRoute: typeof AuthenticatedPricingFreeTrialExplanationRoute
   AuthenticatedProfileDangerZoneRoute: typeof AuthenticatedProfileDangerZoneRoute
@@ -727,6 +748,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedExtensionPairRoute: AuthenticatedExtensionPairRoute,
   AuthenticatedPricingCheckoutSuccessRoute:
     AuthenticatedPricingCheckoutSuccessRoute,
   AuthenticatedPricingFreeTrialExplanationRoute:

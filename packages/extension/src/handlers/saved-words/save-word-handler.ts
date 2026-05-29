@@ -1,0 +1,109 @@
+import type { Browser } from 'wxt/browser';
+import type { Command, Message, SaveWordMessage, SaveWordResponse } from '@asbplayer-fork/common';
+import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage';
+import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client';
+import {
+    lookupFlicktionarySession,
+    storeFlicktionarySession,
+} from '../../services/flicktionary/youtube-session-cache';
+import { incrementFlicktionarySessionHighlightCount } from '../../services/flicktionary/session-highlight-counter';
+import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error';
+
+// Saves a word-click / chunk selection as a Flicktionary highlight.
+//
+// Flicktionary (Supabase) is the system of record — the old local IndexedDB
+// fallback was removed. When a save can't reach Flicktionary, we surface a
+// descriptive error so the content script can show a toast rather than
+// silently dropping the word.
+export default class SaveWordHandler {
+    get sender() {
+        return ['asbplayer-video-tab', 'asbplayerv2'];
+    }
+
+    get command() {
+        return 'save-word';
+    }
+
+    handle(command: Command<Message>, _sender: Browser.runtime.MessageSender, sendResponse: (r?: SaveWordResponse) => void) {
+        const message = command.message as SaveWordMessage;
+
+        void (async () => {
+            try {
+                await this._saveToFlicktionary(message);
+                sendResponse({ success: true });
+            } catch (error) {
+                const { message: errorMessage } = extractFlicktionaryApiError(error, 'Failed to save to Flicktionary');
+                sendResponse({ success: false, error: errorMessage });
+            }
+        })();
+
+        return true;
+    }
+
+    private async _saveToFlicktionary(message: SaveWordMessage): Promise<void> {
+        const auth = await getFlicktionaryAuth();
+        if (!auth) {
+            throw new Error('Pair with Flicktionary to save words.');
+        }
+
+        const videoCtx = message.flicktionaryVideo;
+        if (!videoCtx) {
+            // Save originated without a YouTube subtitle context (e.g. the
+            // asbplayerv2 web app, or a video opened before subtitles loaded).
+            throw new Error('Reload the video, then try saving again.');
+        }
+        if (
+            message.segmentIndex === undefined ||
+            message.startCharOffset === undefined ||
+            message.endCharOffset === undefined
+        ) {
+            throw new Error('Could not locate this word in the subtitles.');
+        }
+
+        const client = getFlicktionaryApiClient();
+        let cached = await lookupFlicktionarySession(videoCtx.youtubeVideoId, videoCtx.contentHash);
+
+        if (!cached) {
+            const { data } = await client.studySessions.findOrCreateForYoutubeVideo({
+                youtubeVideoId: videoCtx.youtubeVideoId,
+                videoTitle: videoCtx.videoTitle,
+                videoUrl: videoCtx.videoUrl,
+                subtitles: {
+                    contentHash: videoCtx.contentHash,
+                    segments: videoCtx.segments.map((s) => ({ ...s })),
+                },
+            });
+            const segmentIdByIndex: Record<string, string> = {};
+            for (const segment of data.segments) {
+                segmentIdByIndex[String(segment.index)] = segment.id;
+            }
+            cached = {
+                sessionId: data.sessionId,
+                textTrackId: data.textTrackId,
+                contentSourceId: data.contentSourceId,
+                segmentIdByIndex,
+            };
+            await storeFlicktionarySession(videoCtx.youtubeVideoId, videoCtx.contentHash, cached);
+        }
+
+        const startSegmentId = cached.segmentIdByIndex[String(message.segmentIndex)];
+        const endSegmentId =
+            message.endSegmentIndex !== undefined
+                ? cached.segmentIdByIndex[String(message.endSegmentIndex)]
+                : startSegmentId;
+        if (!startSegmentId || !endSegmentId) {
+            throw new Error('Could not map this word to a subtitle segment.');
+        }
+
+        await client.highlights.create({
+            sessionId: cached.sessionId,
+            startSegmentId,
+            endSegmentId,
+            startOffset: message.startCharOffset,
+            endOffset: message.endCharOffset,
+            selectionText: message.word,
+        });
+
+        await incrementFlicktionarySessionHighlightCount();
+    }
+}

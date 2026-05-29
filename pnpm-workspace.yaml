@@ -218,6 +218,7 @@ catalog:
   vite-tsconfig-paths: 6.1.1
   vitest: 4.1.2
   webpack: 5.105.4
+  wxt: 0.20.26
   zod: 4.3.6
   zustand: 5.0.12
 

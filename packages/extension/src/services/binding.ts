@@ -1,0 +1,1122 @@
+import {
+    AckMessage,
+    AutoPausePreference,
+    cropAndResize,
+    CurrentTimeFromVideoMessage,
+    CurrentTimeToVideoMessage,
+    ExtensionSyncMessage,
+    NotificationDialogMessage,
+    NotifyErrorMessage,
+    OffsetToVideoMessage,
+    PauseFromVideoMessage,
+    PlaybackRateFromVideoMessage,
+    PlaybackRateToVideoMessage,
+    PlayFromVideoMessage,
+    PlayMode,
+    ReadyFromVideoMessage,
+    ReadyStateFromVideoMessage,
+    RequestingActiveTabPermsisionMessage,
+    SubtitleModel,
+    SubtitlesToVideoMessage,
+    VideoDataUiOpenReason,
+    VideoDisappearedMessage,
+    VideoHeartbeatMessage,
+    VideoToExtensionCommand,
+    IndexedSubtitleModel,
+    RegisterFlicktionarySubtitlesMessage,
+    RegisterFlicktionarySubtitlesResponse,
+    SaveWordFlicktionaryVideoContext,
+} from '@asbplayer-fork/common';
+type FlicktionaryVideoContext = SaveWordFlicktionaryVideoContext;
+import { v4 as uuidv4 } from 'uuid';
+import {
+    computeSubtitlesContentHash,
+    describeLanguageCode,
+    getCurrentYoutubeMetadata,
+    isYoutubeWatchPage,
+    normalizeYoutubeLanguageCode,
+    toFlicktionarySegments,
+} from './flicktionary/youtube-context';
+import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder';
+import {
+    PauseOnHoverMode,
+    SettingsProvider,
+    SubtitleListPreference,
+} from '@asbplayer-fork/common/settings';
+import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection';
+import { SubtitleReader } from '@asbplayer-fork/common/subtitle-reader';
+import { seekWithNudge } from '@asbplayer-fork/common/util';
+import ControlsController from '../controllers/controls-controller';
+import DragController from '../controllers/drag-controller';
+import { MobileGestureController } from '../controllers/mobile-gesture-controller';
+import { MobileVideoOverlayController } from '../controllers/mobile-video-overlay-controller';
+import NotificationController from '../controllers/notification-controller';
+import SubtitleController from '../controllers/subtitle-controller';
+import VideoDataSyncController from '../controllers/video-data-sync-controller';
+import WordInteractionController from '../controllers/word-interaction-controller';
+import { isMobile } from '@asbplayer-fork/common/device-detection/mobile';
+import { OffsetAnchor } from './element-overlay';
+import { ExtensionSettingsStorage } from './extension-settings-storage';
+import { i18nInit } from './i18n';
+import KeyBindings from './key-bindings';
+import { shouldShowUpdateAlert } from './update-alert';
+import { bufferToBase64 } from '@asbplayer-fork/common/base64';
+import { pgsParserWorkerFactory } from './pgs-parser-worker-factory';
+
+let netflix = false;
+document.addEventListener('asbplayer-netflix-enabled', (e) => {
+    netflix = (e as CustomEvent).detail;
+});
+document.dispatchEvent(new CustomEvent('asbplayer-query-netflix'));
+
+const youtube = /(m|www)\.youtube\.com/.test(window.location.host);
+
+export default class Binding {
+    subscribed: boolean = false;
+
+    alwaysPlayOnSubtitleRepeat: boolean;
+
+    private _synced: boolean;
+    private _syncedTimestamp?: number;
+
+    private pausedDueToHover = false;
+    private _playMode: PlayMode = PlayMode.normal;
+    private _seekDuration = 3;
+    private _speedChangeStep = 0.1;
+
+    readonly video: HTMLMediaElement;
+    readonly hasPageScript: boolean;
+    readonly subtitleController: SubtitleController;
+    readonly videoDataSyncController: VideoDataSyncController;
+    readonly controlsController: ControlsController;
+    readonly dragController: DragController;
+    readonly notificationController: NotificationController;
+    readonly mobileVideoOverlayController: MobileVideoOverlayController;
+    readonly mobileGestureController: MobileGestureController;
+    readonly keyBindings: KeyBindings;
+    readonly settings: SettingsProvider;
+    readonly wordInteractionController: WordInteractionController;
+
+    // Snapshot of the current YouTube video + parsed subtitles, populated by
+    // `_maybeRegisterFlicktionarySubtitles`. WordInteractionController reads
+    // this through a closure so SaveWordMessage can carry a self-contained
+    // payload — letting the background recover when its session cache is cold.
+    private _flicktionaryVideoContext: FlicktionaryVideoContext | undefined;
+
+    // BCP-47 language code of the YouTube caption track the user selected, set
+    // by the video-data-sync flow before subtitles load. Display-only: it names
+    // the language in the "unsupported" notice; the backend detects the real
+    // language from the text.
+    private _flicktionarySubtitleLanguageHint: string | undefined;
+
+    // When set, saving is disabled for the current video (its subtitles are in
+    // an unsupported language) and WordInteractionController surfaces this
+    // reason instead of attempting a save.
+    private _flicktionarySaveDisabledReason: string | undefined;
+
+    private maxImageWidth: number;
+    private maxImageHeight: number;
+    private autoPausePreference: AutoPausePreference;
+    private condensedPlaybackMinimumSkipIntervalMs = 1000;
+    private fastForwardPlaybackMinimumGapMs = 600;
+    private fastForwardModePlaybackRate = 2.7;
+    private pauseOnHoverMode: PauseOnHoverMode = PauseOnHoverMode.disabled;
+
+    private playListener?: EventListener;
+    private pauseListener?: EventListener;
+    private seekedListener?: EventListener;
+    private playbackRateListener?: EventListener;
+    private videoChangeListener?: EventListener;
+    private canPlayListener?: EventListener;
+    private mouseMoveListener?: (event: MouseEvent) => void;
+    private listener?: (
+        message: any,
+        sender: Browser.runtime.MessageSender,
+        sendResponse: (response?: any) => void
+    ) => void;
+    private heartbeatInterval?: NodeJS.Timeout;
+
+    private readonly frameId?: string;
+
+    constructor(video: HTMLMediaElement, hasPageScript: boolean, frameId?: string) {
+        this.video = video;
+        this.hasPageScript = hasPageScript;
+        this.settings = new SettingsProvider(new ExtensionSettingsStorage());
+        this.subtitleController = new SubtitleController(video, this.settings);
+        this.videoDataSyncController = new VideoDataSyncController(this, this.settings);
+        this.controlsController = new ControlsController(video);
+        this.dragController = new DragController(video);
+        this.keyBindings = new KeyBindings();
+        this.notificationController = new NotificationController(this);
+        this.mobileVideoOverlayController = new MobileVideoOverlayController(this, OffsetAnchor.top);
+        this.subtitleController.onOffsetChange = () => this.mobileVideoOverlayController.updateModel();
+        this.mobileGestureController = new MobileGestureController(this);
+        this.wordInteractionController = new WordInteractionController(
+            video,
+            () => document.title,
+            () => window.location.href,
+            () => this._flicktionaryVideoContext,
+            () => this._flicktionarySaveDisabledReason
+        );
+        this.maxImageWidth = 0;
+        this.maxImageHeight = 0;
+        this.autoPausePreference = AutoPausePreference.atEnd;
+        this.alwaysPlayOnSubtitleRepeat = true;
+        this._synced = false;
+        this.frameId = frameId;
+    }
+
+    get synced() {
+        return this._synced;
+    }
+
+    get speedChangeStep() {
+        return this._speedChangeStep;
+    }
+
+    get seekDuration() {
+        return this._seekDuration;
+    }
+
+    get playMode() {
+        return this._playMode;
+    }
+
+    set playMode(newPlayMode: PlayMode) {
+        if (this._playMode === newPlayMode) {
+            return;
+        }
+
+        // Disable old play mode
+        switch (this._playMode) {
+            case PlayMode.autoPause:
+                this.subtitleController.autoPauseContext.onStartedShowing = undefined;
+                this.subtitleController.autoPauseContext.onWillStopShowing = undefined;
+                break;
+            case PlayMode.condensed:
+                this.subtitleController.onNextToShow = undefined;
+                break;
+            case PlayMode.fastForward:
+                this.subtitleController.onSlice = undefined;
+                this.video.playbackRate = 1;
+                break;
+            case PlayMode.repeat:
+                this.subtitleController.autoPauseContext.onWillStopShowing = undefined;
+                break;
+        }
+
+        let changed = false;
+
+        // Enable new play mode
+        switch (newPlayMode) {
+            case PlayMode.autoPause:
+                this.subtitleController.autoPauseContext.onStartedShowing = () => {
+                    if (this.autoPausePreference !== AutoPausePreference.atStart) {
+                        return;
+                    }
+
+                    this.pause();
+                };
+                this.subtitleController.autoPauseContext.onWillStopShowing = () => {
+                    if (this.autoPausePreference !== AutoPausePreference.atEnd) {
+                        return;
+                    }
+
+                    this.pause();
+                };
+                this.subtitleController.notification('info.enabledAutoPause');
+                changed = true;
+                break;
+            case PlayMode.condensed:
+                let seeking = false;
+                this.subtitleController.onNextToShow = async (subtitle) => {
+                    try {
+                        if (
+                            seeking ||
+                            this.video.paused ||
+                            subtitle.start - this.video.currentTime * 1000 <=
+                                this.condensedPlaybackMinimumSkipIntervalMs
+                        ) {
+                            return;
+                        }
+
+                        seeking = true;
+                        this.seek(subtitle.start / 1000);
+                        await this.play();
+                        seeking = false;
+                    } finally {
+                        seeking = false;
+                    }
+                };
+                this.subtitleController.notification('info.enabledCondensedPlayback');
+                changed = true;
+                break;
+            case PlayMode.fastForward:
+                this.subtitleController.onSlice = async (slice: SubtitleSlice<IndexedSubtitleModel>) => {
+                    const subtitlesAreSufficientlyOffsetFromNow = (subtitleEdgeTime: number | undefined) => {
+                        return (
+                            subtitleEdgeTime &&
+                            Math.abs(subtitleEdgeTime - this.video.currentTime * 1000) >
+                                this.fastForwardPlaybackMinimumGapMs
+                        );
+                    };
+                    if (
+                        slice.showing.length === 0 &&
+                        // Find latest ending subtitle among the shown last ones
+                        subtitlesAreSufficientlyOffsetFromNow(
+                            Math.max.apply(
+                                undefined,
+                                (slice?.lastShown || []).map((e) => e.end)
+                            )
+                        ) &&
+                        // Find earliest starting subtitle among the next ones to be shown
+                        subtitlesAreSufficientlyOffsetFromNow(
+                            Math.min.apply(
+                                undefined,
+                                (slice?.nextToShow || []).map((e) => e.start)
+                            )
+                        )
+                    ) {
+                        this.video.playbackRate = this.fastForwardModePlaybackRate;
+                    } else {
+                        this.video.playbackRate = 1;
+                    }
+                };
+                this.subtitleController.notification('info.enabledFastForwardPlayback');
+                changed = true;
+                break;
+            case PlayMode.repeat:
+                const [currentSubtitle] = this.subtitleController.currentSubtitle();
+                if (currentSubtitle) {
+                    this.subtitleController.autoPauseContext.onWillStopShowing = () => {
+                        this.seek(currentSubtitle.start / 1000);
+                    };
+                    this.subtitleController.notification('info.enabledRepeatPlayback');
+                    changed = true;
+                }
+                break;
+            case PlayMode.normal:
+                if (this._playMode === PlayMode.repeat) {
+                    this.subtitleController.notification('info.disabledRepeatPlayback');
+                } else if (this._playMode === PlayMode.autoPause) {
+                    this.subtitleController.notification('info.disabledAutoPause');
+                } else if (this._playMode === PlayMode.condensed) {
+                    this.subtitleController.notification('info.disabledCondensedPlayback');
+                } else if (this._playMode === PlayMode.fastForward) {
+                    this.subtitleController.notification('info.disabledFastForwardPlayback');
+                }
+                changed = true;
+                break;
+            default:
+                console.error('Unknown play mode ' + newPlayMode);
+        }
+
+        if (changed) {
+            this._playMode = newPlayMode;
+            this.mobileVideoOverlayController.updateModel();
+        }
+    }
+
+    subtitleFileName(track: number = 0) {
+        return this.subtitleController.subtitleFileNames?.[track] ?? '';
+    }
+
+    private get _shouldAutoResumeOnSubtitlesMouseOut() {
+        return this.pauseOnHoverMode === PauseOnHoverMode.inAndOut && this.pausedDueToHover && this.video.paused;
+    }
+
+    bind() {
+        let bound = false;
+
+        if (this.video.readyState === 4) {
+            this._bind();
+            bound = true;
+        } else {
+            this.canPlayListener = (event) => {
+                if (!bound) {
+                    this._bind();
+                    bound = true;
+                }
+
+                const command: VideoToExtensionCommand<ReadyStateFromVideoMessage> = {
+                    sender: 'asbplayer-video',
+                    message: {
+                        command: 'readyState',
+                        value: 4,
+                    },
+                    src: this.video.src,
+                };
+
+                browser.runtime.sendMessage(command);
+            };
+            this.video.addEventListener('canplay', this.canPlayListener);
+        }
+    }
+
+    _bind() {
+        this._notifyReady();
+        this._subscribe();
+        this._refreshSettings().then(() => {
+            this.videoDataSyncController.requestSubtitles();
+        });
+        this.subtitleController.bind();
+        this.dragController.bind(this);
+        this.mobileGestureController.bind();
+
+        const seek = (forward: boolean) => {
+            const subtitle = adjacentSubtitle(
+                forward,
+                this.video.currentTime * 1000,
+                this.subtitleController.subtitles
+            );
+
+            if (subtitle !== null) {
+                this.seek(subtitle.start / 1000);
+            }
+        };
+
+        this.mobileGestureController.onSwipeLeft = () => seek(false);
+        this.mobileGestureController.onSwipeRight = () => seek(true);
+    }
+
+    _notifyReady() {
+        const command: VideoToExtensionCommand<ReadyFromVideoMessage> = {
+            sender: 'asbplayer-video',
+            message: {
+                command: 'ready',
+                duration: this.video.duration,
+                currentTime: this.video.currentTime,
+                paused: this.video.paused,
+                audioTracks: undefined,
+                selectedAudioTrack: undefined,
+                playbackRate: this.video.playbackRate,
+            },
+            src: this.video.src,
+        };
+
+        browser.runtime.sendMessage(command);
+    }
+
+    _subscribe() {
+        this.playListener = (event) => {
+            const command: VideoToExtensionCommand<PlayFromVideoMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'play',
+                    echo: false,
+                },
+                src: this.video.src,
+            };
+
+            browser.runtime.sendMessage(command);
+            this.pausedDueToHover = false;
+        };
+
+        this.pauseListener = (event) => {
+            const command: VideoToExtensionCommand<PauseFromVideoMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'pause',
+                    echo: false,
+                },
+                src: this.video.src,
+            };
+
+            browser.runtime.sendMessage(command);
+        };
+
+        this.seekedListener = (event) => {
+            const currentTimeCommand: VideoToExtensionCommand<CurrentTimeFromVideoMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'currentTime',
+                    value: this.video.currentTime,
+                    echo: false,
+                },
+                src: this.video.src,
+            };
+            const readyStateCommand: VideoToExtensionCommand<ReadyStateFromVideoMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'readyState',
+                    value: this.video.readyState,
+                },
+                src: this.video.src,
+            };
+
+            browser.runtime.sendMessage(currentTimeCommand);
+            browser.runtime.sendMessage(readyStateCommand);
+
+            this.subtitleController.autoPauseContext.clear();
+        };
+
+        this.playbackRateListener = (event) => {
+            const command: VideoToExtensionCommand<PlaybackRateFromVideoMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'playbackRate',
+                    value: this.video.playbackRate,
+                    echo: false,
+                },
+                src: this.video.src,
+            };
+
+            browser.runtime.sendMessage(command);
+
+            if (this._synced && this._playMode !== PlayMode.fastForward) {
+                this.subtitleController.notification('info.playbackRate', {
+                    rate: this.video.playbackRate.toFixed(1),
+                });
+            }
+            this.mobileVideoOverlayController.updateModel();
+        };
+
+        this.video.addEventListener('play', this.playListener);
+        this.video.addEventListener('pause', this.pauseListener);
+        this.video.addEventListener('seeked', this.seekedListener);
+        this.video.addEventListener('ratechange', this.playbackRateListener);
+
+        this.subtitleController.onMouseOver = (mouseEvent: MouseEvent) => {
+            if (this.pauseOnHoverMode !== PauseOnHoverMode.disabled && !this.video.paused) {
+                this.video.pause();
+                this.pausedDueToHover = true;
+
+                if (this.mouseMoveListener) {
+                    document.removeEventListener('mousemove', this.mouseMoveListener);
+                    this.mouseMoveListener = undefined;
+                }
+
+                this.mouseMoveListener = (e: MouseEvent) => {
+                    if (
+                        this._shouldAutoResumeOnSubtitlesMouseOut &&
+                        !this.subtitleController.intersects(e.clientX, e.clientY)
+                    ) {
+                        this.play();
+                        this.pausedDueToHover = false;
+                    }
+                };
+
+                document.addEventListener('mousemove', this.mouseMoveListener);
+            }
+        };
+
+        if (this.hasPageScript) {
+            this.videoChangeListener = () => {
+                this.videoDataSyncController.requestSubtitles();
+                this._resetSubtitles();
+            };
+            this.video.addEventListener('loadedmetadata', this.videoChangeListener);
+        }
+
+        this.heartbeatInterval = setInterval(() => {
+            const command: VideoToExtensionCommand<VideoHeartbeatMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'heartbeat',
+                    subscribed: this.subscribed,
+                    synced: this._synced,
+                    syncedTimestamp: this._syncedTimestamp,
+                    loadedSubtitles: this.subtitleController.subtitles.length > 0,
+                },
+                src: this.video.src,
+            };
+
+            browser.runtime.sendMessage(command);
+        }, 1000);
+
+        window.addEventListener('beforeunload', (event) => {
+            this.heartbeatInterval && clearInterval(this.heartbeatInterval);
+        });
+
+        this.listener = (
+            request: any,
+            sender: Browser.runtime.MessageSender,
+            sendResponse: (response?: any) => void
+        ) => {
+            if (request.sender === 'asbplayer-extension-to-video' && request.src === this.video.src) {
+                switch (request.message.command) {
+                    case 'init':
+                        this._notifyReady();
+                        break;
+                    case 'ready':
+                        // ignore
+                        break;
+                    case 'play':
+                        this.play();
+                        break;
+                    case 'pause':
+                        this.pause();
+                        break;
+                    case 'currentTime':
+                        const currentTimeMessage = request.message as CurrentTimeToVideoMessage;
+                        this.seek(currentTimeMessage.value);
+                        break;
+                    case 'close':
+                        // ignore
+                        break;
+                    case 'subtitles': {
+                        const subtitlesMessage = request.message as SubtitlesToVideoMessage;
+                        const subtitles: SubtitleModel[] = subtitlesMessage.value;
+                        this._updateSubtitles(
+                            subtitles.map((s, index) => ({ ...s, index })),
+                            subtitlesMessage.names || [subtitlesMessage.name]
+                        );
+                        break;
+                    }
+                    case 'request-subtitles': {
+                        sendResponse({
+                            subtitles: this.subtitleController.subtitles,
+                            subtitleFileNames: this.subtitleController.subtitleFileNames ?? [],
+                        });
+                        break;
+                    }
+                    // This is useful because when we kick off bulk export the side panel needs to know
+                    // what subtitle to start from.
+                    case 'request-current-subtitle':
+                        const [currentSubtitle] = this.subtitleController.currentSubtitle();
+                        sendResponse({
+                            currentSubtitle: currentSubtitle,
+                            currentSubtitleIndex: currentSubtitle?.index ?? null,
+                        });
+                        break;
+                    case 'offset':
+                        const offsetMessage = request.message as OffsetToVideoMessage;
+                        this.subtitleController.offset(offsetMessage.value, !offsetMessage.echo);
+                        break;
+                    case 'playbackRate':
+                        const playbackRateMessage = request.message as PlaybackRateToVideoMessage;
+                        this.video.playbackRate = playbackRateMessage.value;
+                        break;
+                    case 'subtitleSettings':
+                        // ignore
+                        break;
+                    case 'ankiSettings':
+                        // ignore
+                        break;
+                    case 'miscSettings':
+                        // ignore
+                        break;
+                    case 'settings-updated':
+                        this._refreshSettings();
+                        break;
+                    case 'notify-error':
+                        const notifyErrorMessage = request.message as NotifyErrorMessage;
+                        this.subtitleController.notification('info.error', { message: notifyErrorMessage.message });
+                        break;
+                    case 'alert':
+                        // ignore
+                        break;
+                    case 'request-active-tab-permission':
+                        this.notificationController.onClose = () => {
+                            this._notifyRequestingActiveTabPermission(false);
+                        };
+                        this.notificationController.show(
+                            'activeTabPermissionRequest.title',
+                            'activeTabPermissionRequest.prompt'
+                        );
+                        this._notifyRequestingActiveTabPermission(true);
+                        break;
+                    case 'granted-active-tab-permission':
+                        if (this.notificationController.showing) {
+                            this.notificationController.show(
+                                'activeTabPermissionRequest.grantedTitle',
+                                'activeTabPermissionRequest.grantedPrompt'
+                            );
+                        }
+                        break;
+                    case 'load-subtitles':
+                        this.showVideoDataDialog(false);
+                        break;
+                    case 'notification-dialog':
+                        const notificationDialogMessage = request.message as NotificationDialogMessage;
+                        this.notificationController.show(
+                            notificationDialogMessage.titleLocKey,
+                            notificationDialogMessage.messageLocKey
+                        );
+                        break;
+                }
+
+                if ('messageId' in request.message) {
+                    const ackCommand: VideoToExtensionCommand<AckMessage> = {
+                        sender: 'asbplayer-video',
+                        message: {
+                            command: 'ack-message',
+                            messageId: request.message['messageId'],
+                        },
+                        src: this.video.src,
+                    };
+                    browser.runtime.sendMessage(ackCommand);
+                }
+            }
+        };
+
+        browser.runtime.onMessage.addListener(this.listener);
+        this.subscribed = true;
+    }
+
+    async _refreshSettings() {
+        const currentSettings = await this.settings.getAll();
+        this._seekDuration = currentSettings.seekDuration;
+        this._speedChangeStep = currentSettings.speedChangeStep;
+        this.condensedPlaybackMinimumSkipIntervalMs = currentSettings.streamingCondensedPlaybackMinimumSkipIntervalMs;
+        this.fastForwardModePlaybackRate = currentSettings.fastForwardModePlaybackRate;
+        this.maxImageWidth = currentSettings.maxImageWidth;
+        this.maxImageHeight = currentSettings.maxImageHeight;
+        this.autoPausePreference = currentSettings.autoPausePreference;
+        this.alwaysPlayOnSubtitleRepeat = currentSettings.alwaysPlayOnSubtitleRepeat;
+        this.pauseOnHoverMode = currentSettings.pauseOnHoverMode;
+
+        this.subtitleController.displaySubtitles = currentSettings.streamingDisplaySubtitles;
+        this.subtitleController.bottomSubtitlePositionOffset = currentSettings.subtitlePositionOffset;
+        this.subtitleController.topSubtitlePositionOffset = currentSettings.topSubtitlePositionOffset;
+        this.subtitleController.subtitlesWidth = currentSettings.subtitlesWidth;
+        this.subtitleController.surroundingSubtitlesCountRadius = currentSettings.surroundingSubtitlesCountRadius;
+        this.subtitleController.surroundingSubtitlesTimeRadius = currentSettings.surroundingSubtitlesTimeRadius;
+        this.subtitleController.autoCopyCurrentSubtitle = currentSettings.autoCopyCurrentSubtitle;
+
+        const wordClickEnabledChanged =
+            this.subtitleController.wordClickEnabled !== currentSettings.wordClickEnabled;
+        this.subtitleController.wordClickEnabled = currentSettings.wordClickEnabled;
+
+        const convertNetflixRubyChanged =
+            this.subtitleController.convertNetflixRuby !== currentSettings.convertNetflixRuby;
+        this.subtitleController.convertNetflixRuby = currentSettings.convertNetflixRuby;
+
+        const subtitleHtmlChanged = this.subtitleController.subtitleHtml !== currentSettings.subtitleHtml;
+        this.subtitleController.subtitleHtml = currentSettings.subtitleHtml;
+
+        this.subtitleController.setSubtitleSettings(currentSettings);
+
+        if (convertNetflixRubyChanged || subtitleHtmlChanged || wordClickEnabledChanged) {
+            this.subtitleController.cacheHtml();
+        }
+
+        this.subtitleController.refresh();
+
+        this.videoDataSyncController.updateSettings(currentSettings);
+        this.keyBindings.setKeyBindSet(this, currentSettings.keyBindSet);
+
+        if (currentSettings.streamingSubsDragAndDrop) {
+            this.dragController.bind(this);
+        } else {
+            this.dragController.unbind();
+        }
+
+        // Word-click mode binds whenever it's enabled. Both hover-gloss and
+        // right-click / chunk-select save now go through Flicktionary (the
+        // server glosses/translates with full context), so there's no separate
+        // LLM toggle to gate on.
+        if (currentSettings.wordClickEnabled) {
+            this.wordInteractionController.bind();
+        } else {
+            this.wordInteractionController.unbind();
+        }
+
+        if (currentSettings.streamingEnableOverlay) {
+            this.mobileVideoOverlayController.offsetAnchor =
+                currentSettings.subtitleAlignment === 'bottom' ? OffsetAnchor.top : OffsetAnchor.bottom;
+            this.mobileVideoOverlayController.bind();
+            this.mobileVideoOverlayController.updateModel();
+        } else {
+            this.mobileVideoOverlayController.unbind();
+        }
+
+        await i18nInit(currentSettings.language);
+    }
+
+    unbind() {
+        if (this.canPlayListener) {
+            this.video.removeEventListener('canplay', this.canPlayListener);
+            this.canPlayListener = undefined;
+        }
+
+        if (this.playListener) {
+            this.video.removeEventListener('play', this.playListener);
+            this.playListener = undefined;
+        }
+
+        if (this.pauseListener) {
+            this.video.removeEventListener('pause', this.pauseListener);
+            this.pauseListener = undefined;
+        }
+
+        if (this.seekedListener) {
+            this.video.removeEventListener('seeked', this.seekedListener);
+            this.seekedListener = undefined;
+        }
+
+        if (this.playbackRateListener) {
+            this.video.removeEventListener('ratechange', this.playbackRateListener);
+            this.playbackRateListener = undefined;
+        }
+
+        if (this.videoChangeListener) {
+            this.video.removeEventListener('loadedmetadata', this.videoChangeListener);
+            this.videoChangeListener = undefined;
+        }
+
+        if (this.mouseMoveListener) {
+            document.removeEventListener('mousemove', this.mouseMoveListener);
+            this.mouseMoveListener = undefined;
+        }
+
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = undefined;
+        }
+
+        if (this.listener) {
+            browser.runtime.onMessage.removeListener(this.listener);
+            this.listener = undefined;
+        }
+
+        this.subtitleController.unbind();
+        this.dragController.unbind();
+        this.keyBindings.unbind();
+        this.videoDataSyncController.unbind();
+        this.mobileVideoOverlayController.unbind();
+        this.mobileGestureController.unbind();
+        this.notificationController.unbind();
+        this.wordInteractionController.unbind();
+        this.subscribed = false;
+
+        const command: VideoToExtensionCommand<VideoDisappearedMessage> = {
+            sender: 'asbplayer-video',
+            message: {
+                command: 'video-disappeared',
+            },
+            src: this.video.src,
+        };
+        browser.runtime.sendMessage(command);
+    }
+
+    seek(timestamp: number) {
+        if (netflix) {
+            document.dispatchEvent(
+                new CustomEvent('asbplayer-netflix-seek', {
+                    detail: timestamp * 1000,
+                })
+            );
+        } else {
+            seekWithNudge(this.video, timestamp);
+        }
+    }
+
+    async play() {
+        if (netflix) {
+            await this._playNetflix();
+            return;
+        }
+
+        try {
+            await this.video.play();
+        } catch (ex) {
+            // Ignore exception
+
+            if (this.video.readyState !== 4) {
+                // Deal with Amazon Prime player pausing in the middle of play, without loss of generality
+                return new Promise((resolve, reject) => {
+                    const listener = async (evt: Event) => {
+                        let retries = 3;
+
+                        for (let i = 0; i < retries; ++i) {
+                            try {
+                                await this.video.play();
+                                break;
+                            } catch (ex2) {
+                                console.error(ex2);
+                            }
+                        }
+
+                        resolve(undefined);
+                        this.video.removeEventListener('canplay', listener);
+                    };
+
+                    this.video.addEventListener('canplay', listener);
+                });
+            }
+        }
+    }
+
+    _playNetflix() {
+        return new Promise((resolve, reject) => {
+            const listener = async (evt: Event) => {
+                this.video.removeEventListener('play', listener);
+                this.video.removeEventListener('playing', listener);
+                resolve(undefined);
+            };
+
+            this.video.addEventListener('play', listener);
+            this.video.addEventListener('playing', listener);
+            document.dispatchEvent(new CustomEvent('asbplayer-netflix-play'));
+        });
+    }
+
+    pause() {
+        if (netflix) {
+            document.dispatchEvent(new CustomEvent('asbplayer-netflix-pause'));
+            return;
+        }
+
+        this.video.pause();
+    }
+
+    showVideoDataDialog(openedFromMiningCommand: boolean, fromAsbplayerId?: string) {
+        this.videoDataSyncController.show({
+            reason: openedFromMiningCommand ? VideoDataUiOpenReason.miningCommand : VideoDataUiOpenReason.userRequested,
+            fromAsbplayerId,
+        });
+    }
+
+    // Called by the video-data-sync flow right before subtitles load, with the
+    // selected YouTube caption track's language code (BCP-47, e.g. 'ru',
+    // 'pt-BR', or this fork's synthetic 'en_from_ru' for auto-translated
+    // tracks). Display-only — used to name the language if the backend reports
+    // it as unsupported.
+    setFlicktionarySubtitleLanguageHint(languageCode: string | undefined) {
+        this._flicktionarySubtitleLanguageHint = normalizeYoutubeLanguageCode(languageCode);
+    }
+
+    private async _maybeRegisterFlicktionarySubtitles(subtitles: IndexedSubtitleModel[]) {
+        try {
+            this._flicktionaryVideoContext = undefined;
+            this._flicktionarySaveDisabledReason = undefined;
+            if (!isYoutubeWatchPage()) return;
+            if (!subtitles || subtitles.length === 0) return;
+            const videoMeta = getCurrentYoutubeMetadata();
+            if (!videoMeta) return;
+
+            const segments = toFlicktionarySegments(subtitles);
+            if (segments.length === 0) return;
+
+            const contentHash = await computeSubtitlesContentHash(segments);
+            const youtubeLanguageCode = this._flicktionarySubtitleLanguageHint;
+
+            // No language fields: the backend detects the subtitle language from
+            // the segment text and uses it as both the content and target
+            // language.
+            const context: FlicktionaryVideoContext = {
+                youtubeVideoId: videoMeta.youtubeVideoId,
+                videoTitle: videoMeta.videoTitle,
+                videoUrl: videoMeta.videoUrl,
+                contentHash,
+                segments,
+            };
+            this._flicktionaryVideoContext = context;
+
+            const message: VideoToExtensionCommand<RegisterFlicktionarySubtitlesMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'register-flicktionary-subtitles',
+                    messageId: uuidv4(),
+                    youtubeVideoId: context.youtubeVideoId,
+                    videoTitle: context.videoTitle,
+                    videoUrl: context.videoUrl,
+                    youtubeLanguageCode,
+                    contentHash: context.contentHash,
+                    segments: context.segments,
+                },
+                src: this.video.src,
+            };
+
+            const response: RegisterFlicktionarySubtitlesResponse | undefined =
+                await browser.runtime.sendMessage(message);
+            this._handleFlicktionaryRegisterResponse(response, youtubeLanguageCode);
+        } catch (error) {
+            // Don't let registration failures break subtitle rendering — the
+            // save path can still cold-start its own findOrCreate call.
+            console.warn('[flicktionary] register-subtitles failed', error);
+        }
+    }
+
+    // Surfaces backend feedback once at video-load time. Only the unsupported
+    // case disables saving outright; missing-prefs is recoverable per-save, so
+    // we just inform and leave saving enabled (the save path re-reports it).
+    private _handleFlicktionaryRegisterResponse(
+        response: RegisterFlicktionarySubtitlesResponse | undefined,
+        youtubeLanguageCode: string | undefined
+    ) {
+        if (!response || response.success) return;
+
+        if (response.code === 'UNSUPPORTED_LANGUAGE') {
+            const languageName = describeLanguageCode(youtubeLanguageCode);
+            const reason = languageName
+                ? `Flicktionary doesn't support ${languageName} subtitles yet — saving is disabled for this video.`
+                : `These subtitles are in a language Flicktionary doesn't support yet — saving is disabled for this video.`;
+            this._flicktionarySaveDisabledReason = reason;
+            this.wordInteractionController.showNotice(reason, true);
+            return;
+        }
+
+        if (response.code === 'MISSING_CEFR' && response.error) {
+            this.wordInteractionController.showNotice(response.error, true);
+        }
+    }
+
+    async cropAndResize(tabImageDataUrl: string): Promise<string> {
+        const rect = this.video.getBoundingClientRect();
+        const maxWidth = this.maxImageWidth;
+        const maxHeight = this.maxImageHeight;
+        return await cropAndResize(maxWidth, maxHeight, rect, tabImageDataUrl);
+    }
+
+    async loadSubtitles(files: File[], flatten: boolean, syncWithAsbplayerId?: string) {
+        const {
+            streamingSubtitleListPreference,
+            subtitleRegexFilter,
+            subtitleRegexFilterTextReplacement,
+            rememberSubtitleOffset,
+            lastSubtitleOffset,
+            subtitleHtml,
+            convertNetflixRuby: convertNetflixRuby,
+        } = await this.settings.get([
+            'streamingSubtitleListPreference',
+            'subtitleRegexFilter',
+            'subtitleRegexFilterTextReplacement',
+            'rememberSubtitleOffset',
+            'lastSubtitleOffset',
+            'subtitleHtml',
+            'convertNetflixRuby',
+        ]);
+        const syncWithAsbplayerTab = async (withSyncedAsbplayerOnly: boolean, withAsbplayerId: string | undefined) => {
+            const syncMessage: VideoToExtensionCommand<ExtensionSyncMessage> = {
+                sender: 'asbplayer-video',
+                message: {
+                    command: 'sync',
+                    subtitles: await Promise.all(
+                        files.map(async (f) => {
+                            const base64 = await bufferToBase64(await f.arrayBuffer());
+
+                            return {
+                                name: f.name,
+                                base64: base64,
+                            };
+                        })
+                    ),
+                    withSyncedAsbplayerOnly,
+                    withAsbplayerId,
+                },
+                src: this.video.src,
+            };
+            browser.runtime.sendMessage(syncMessage);
+        };
+
+        switch (streamingSubtitleListPreference) {
+            case SubtitleListPreference.noSubtitleList:
+                const reader = new SubtitleReader({
+                    regexFilter: subtitleRegexFilter,
+                    regexFilterTextReplacement: subtitleRegexFilterTextReplacement,
+                    subtitleHtml: subtitleHtml,
+                    convertNetflixRuby: convertNetflixRuby,
+                    pgsParserWorkerFactory: pgsParserWorkerFactory,
+                });
+                const offset = rememberSubtitleOffset ? lastSubtitleOffset : 0;
+                const subtitles = await reader.subtitles(files, flatten);
+                this._updateSubtitles(
+                    subtitles.map((s, index) => ({
+                        start: s.start + offset,
+                        end: s.end + offset,
+                        text: s.text,
+                        textImage: s.textImage,
+                        track: s.track,
+                        index,
+                        originalStart: s.start,
+                        originalEnd: s.end,
+                    })),
+                    flatten ? [files[0].name] : files.map((f) => f.name)
+                );
+                // If target asbplayer is not specified, then sync with any already-synced asbplayer
+                // Otherwise, sync with the target asbplayer
+                const withSyncedAsbplayerOnly = syncWithAsbplayerId === undefined;
+                syncWithAsbplayerTab(withSyncedAsbplayerOnly, syncWithAsbplayerId);
+                break;
+            case SubtitleListPreference.app:
+                syncWithAsbplayerTab(false, undefined);
+                break;
+        }
+    }
+
+    private _updateSubtitles(subtitles: IndexedSubtitleModel[], subtitleFileNames: string[]) {
+        this.subtitleController.subtitles = subtitles;
+        this.subtitleController.subtitleFileNames = subtitleFileNames;
+        this.subtitleController.cacheHtml();
+
+        // Fire-and-forget: tell the background which session this video maps to
+        // so save-word can cite real text_segments.id values without round
+        // trips. YouTube-only; other streaming sites have no Flicktionary
+        // session model yet.
+        void this._maybeRegisterFlicktionarySubtitles(subtitles);
+
+        if (this._playMode !== PlayMode.normal && (!subtitles || subtitles.length === 0)) {
+            this.playMode = PlayMode.normal;
+        }
+
+        let nonEmptyTrackIndex: number[] = [];
+        for (let i = 0; i < subtitles.length; i++) {
+            if (!nonEmptyTrackIndex.includes(subtitles[i].track)) {
+                nonEmptyTrackIndex.push(subtitles[i].track);
+            }
+        }
+        this.subtitleController.showLoadedMessage(nonEmptyTrackIndex);
+        this._synced = true;
+        this._syncedTimestamp = Date.now();
+
+        if (this.video.paused) {
+            this.mobileVideoOverlayController.show();
+        }
+
+        this.mobileVideoOverlayController.updateModel();
+
+        if (!isMobile && subtitles.length > 0) {
+            this.settings
+                .get(['streamingDisplaySubtitles', 'keyBindSet'])
+                .then(({ streamingDisplaySubtitles, keyBindSet }) => {
+                    if (!streamingDisplaySubtitles && keyBindSet.toggleSubtitles.keys) {
+                        this.subtitleController.notification('info.toggleSubtitlesShortcut', {
+                            keys: keyBindSet.toggleSubtitles.keys,
+                        });
+                    }
+                });
+        }
+
+        shouldShowUpdateAlert().then((shouldShowUpdateAlert) => {
+            if (shouldShowUpdateAlert) {
+                this.notificationController.updateAlert(browser.runtime.getManifest().version);
+            }
+        });
+    }
+
+    private _resetSubtitles() {
+        this.subtitleController.reset();
+        this._synced = false;
+        this._syncedTimestamp = undefined;
+        this.mobileVideoOverlayController.disposeOverlay();
+    }
+
+    private _notifyRequestingActiveTabPermission(requesting: boolean) {
+        const command: VideoToExtensionCommand<RequestingActiveTabPermsisionMessage> = {
+            sender: 'asbplayer-video',
+            message: {
+                command: 'requesting-active-tab-permission',
+                requesting,
+            },
+            src: this.video.src,
+        };
+
+        browser.runtime.sendMessage(command);
+    }
+
+    url(start: number, end?: number) {
+        if (youtube) {
+            const toSeconds = (ms: number) => Math.floor(ms / 1000);
+            const videoId = new URLSearchParams(window.location.search).get('v');
+
+            if (videoId !== null) {
+                const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${toSeconds(start)}&autoplay=1`;
+                return end === undefined ? embedUrl : `${embedUrl}&end=${toSeconds(end)}`;
+            }
+        }
+
+        return window.location !== window.parent.location ? document.referrer : document.location.href;
+    }
+}

@@ -20,6 +20,8 @@ import { chunksContract } from './chunks-contract'
 import { userPrefsContract } from './user-prefs-contract'
 import { practiceContract } from './practice-contract'
 import { languagesContract } from './languages-contract'
+import { extensionAuthContract } from './extension-auth-contract'
+import { glossesContract } from './glosses-contract'
 
 export const rootOrpcContract = {
   authentication: authenticationContract,
@@ -44,4 +46,6 @@ export const rootOrpcContract = {
   userPrefs: userPrefsContract,
   practice: practiceContract,
   languages: languagesContract,
+  extensionAuth: extensionAuthContract,
+  glosses: glossesContract,
 } as const

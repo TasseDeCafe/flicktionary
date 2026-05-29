@@ -8,7 +8,7 @@ The app's value is **not** flashcard generation per se — it's the structured e
 
 ## What it isn't (non-goals for MVP)
 
-- Not a video player. The app does not host or sync to movie playback.
+- Not a video player. The app does not host or sync to movie playback. (A companion **browser extension** — a fork of asbplayer — does in-video subtitle capture on YouTube and feeds highlights back to the same backend; see "Browser extension (companion)" below. The web app itself remains a triage/lookup surface, not a player.)
 - Not a real-time companion. No auto-scroll, no audio fingerprinting, no clock sync.
 - Not a flashcard review app in the Anki sense. Cards still export to CSV for Anki users; **in-app review happens through the Practice tab — short LLM-generated texts that weave in the user's due chunks, with FSRS scheduling.** No isolated front/back flashcards in the app.
 - Not a free-form chatbot. Per-card chat is scoped to refining understanding of one chunk.
@@ -35,7 +35,7 @@ internal model, it uses "chunk".
 
 ### Source content
 
-Three source kinds in the MVP, all feeding the same `text_segment` table.
+Three source kinds in the MVP, all feeding the same `text_segment` table. (A fourth ingestion path — **YouTube via the companion browser extension** — also lands in `text_segment` but is not a web-app flow; see "Browser extension (companion)".)
 
 - **Movie subtitles.**
   - **OpenSubtitles search.** Search by title; results filtered to the user's target language. The track's `language` must match the chosen study language — never inferred.
@@ -354,6 +354,19 @@ Native-style shell so the eventual React Native port is a translation, not a red
   suggestion-ranking pass, not part of the active reader pipeline.
 - Designed so future content sources (books, articles) feed the same dedup table — a chunk learned from a movie won't resurface in a book.
 
+## Browser extension (companion)
+
+A separate product surface — a **fork of [asbplayer](https://github.com/killergerbah/asbplayer)** (`packages/extension`, built with WXT) — that does the one thing the web app deliberately isn't: in-video subtitle interaction. It watches YouTube, tokenizes the active subtitle line into clickable words, and feeds captures back into the **same** Flicktionary backend the web app uses, so a word grabbed while watching shows up in the same Vocabulary / Practice pools. It is optional; the web app is fully usable without it.
+
+For the full inventory of what is custom vs. vanilla upstream asbplayer (needed when re-basing onto a newer upstream), see `packages/extension/CUSTOMIZATIONS.md`.
+
+- **Pairing.** The extension authenticates as the user via Supabase. The web app exposes an `/extension-pair` route that hands the extension a magic-link `token_hash`; the extension's background runs `verifyOtp({ type: 'magiclink' })` and stores the resulting session in its own `browser.storage.local` namespace — intentionally **outside** the synced settings store, so auth tokens are never exported with settings.
+- **Hover gloss.** Hovering a subtitle word (while paused) shows a tooltip with a one-line gloss + POS/register + IPA — the same shape as the web reader's fast-gloss popover. It calls the stateless backend endpoint **`glosses.fastGloss`** (`selectionText` + `contextLine` + `targetLanguage` → `{ gloss, pos, register, ipa }`). Native language and hide-translation mode are resolved server-side from the user's prefs; **nothing is persisted** (the extension caches in memory). This replaced an earlier design where the user pasted their own Anthropic API key into the extension — there is no per-user key anymore; the gloss always goes through Flicktionary's authenticated backend.
+- **Save → highlight.** Right-clicking a word, or drag-selecting a contiguous chunk and right-clicking, saves it as a real Flicktionary `highlight`. When subtitles load on a YouTube video the binding fires **`studySessions.findOrCreateForYoutubeVideo`** (also called lazily on the first save if the load-time register hasn't landed), which creates a `content_source` of type **`youtube`** (deduped per user on `metadata->>'youtubeVideoId'`), its `text_track`, and `text_segments`, and returns the segment list so the extension can map a clicked word to an exact `(segment_id, char_start, char_end)`. Subsequent saves call **`highlights.create`** directly. From there the highlight flows through the normal enrichment pipeline into a card — identical to a highlight made in the web reader. Flicktionary is the system of record; there is no local word store.
+- **Subtitle language is detected server-side, never sent by the extension.** `findOrCreateForYoutubeVideo` runs the same Haiku **`languageDetectionPass`** used by SRT-upload / paste on the actual segment text; the detected supported language becomes both the `content_source`/`text_track` language **and** the session `target_language` (a Russian-subtitle video → a Russian session). This mirrors the web text-session rule (`targetLanguage = track.language`) and means YouTube's own caption `languageCode` is never trusted for storage — the extension passes no language at all (it keeps the YouTube BCP-47 code only to *name* an unsupported language in a notice). If the text isn't one of the supported languages the backend returns `422 UNSUPPORTED_LANGUAGE`; the extension shows a one-time notice naming the language and **disables saving** for that video (hover gloss stays available).
+- **Prereqs.** Saving requires the user's native language **and** CEFR for the *detected* language to already be set (they live in `user_prefs` from web onboarding). If they're missing the backend returns `422 MISSING_CEFR` (message names the language, e.g. "Set your Russian level") and the extension prompts the user to finish setup on flicktionary.app.
+- **Also carried from the upstream fork:** word-click tokenization, chunk drag-select, and optional Whisper-based subtitle generation (a separate FastAPI `transcript-server` + an IndexedDB transcript cache). The Whisper transcript cache is the *only* remaining client-side store — the old saved-words IndexedDB was removed in the Flicktionary migration.
+
 ## Settings (per user)
 
 - Native language (single).
@@ -389,7 +402,10 @@ Generic source shape so non-movie content can plug in later without migration.
 ```
 content_source
   id                  uuid pk
-  type                'movie' | 'book' | 'article' | 'text' | 'adhoc'
+  type                'movie' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc'
+                                   -- 'youtube' rows are created by the browser
+                                   -- extension; deduped per user on
+                                   -- metadata->>'youtubeVideoId'.
   title               text
   language            text
   metadata            jsonb        -- tmdb_id, year, isbn, url, etc.

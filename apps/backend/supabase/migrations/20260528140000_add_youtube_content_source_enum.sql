@@ -1,0 +1,11 @@
+-- Add 'youtube' to the content_source_type enum.
+--
+-- Phase 3 of the asbplayer-fork integration plan introduces a new content source
+-- type for YouTube videos so each video the user watches via the extension can
+-- live as its own Flicktionary content_source.
+--
+-- This value MUST be added in its own migration: Postgres forbids using a newly
+-- added enum label as a literal in the same transaction. The companion migration
+-- (partial unique index keyed off `type = 'youtube'`) references it as a literal,
+-- so it has to run after this one has committed.
+ALTER TYPE public.content_source_type ADD VALUE IF NOT EXISTS 'youtube';

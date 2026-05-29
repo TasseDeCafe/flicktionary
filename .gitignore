@@ -3,6 +3,10 @@ dist
 copied-dist
 .cache
 
+# WXT (browser extension)
+.wxt
+.output
+
 .idea
 .DS_store
 

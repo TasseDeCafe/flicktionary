@@ -544,7 +544,7 @@ msgstr "Adverbe"
 msgid "Again"
 msgstr "Encore"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:39
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:40
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
 msgid "All"
 msgstr "Tout"
@@ -1061,6 +1061,10 @@ msgstr "Forme d'affichage (par ex. accentuée)"
 #~ msgid "Done"
 #~ msgstr "Terminé"
 
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:94
+msgid "Done. You can close this tab and return to the extension."
+msgstr "Terminé. Vous pouvez fermer cet onglet et retourner à l'extension."
+
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:62
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Télécharger tous les termes conservés pour {languageName} au format CSV (compatible Anki)"
@@ -1454,6 +1458,10 @@ msgstr "Échec de la définition du niveau CECR"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:385
 msgid "Failed to set native language"
 msgstr "Échec de la définition de la langue maternelle"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:71
+msgid "Failed to start pairing"
+msgstr "Échec du démarrage du jumelage"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:38
 msgid "Failed to start practice session"
@@ -1985,7 +1993,7 @@ msgstr "Chargement..."
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:67
 #: apps/web/src/features/practice/components/practice-language-view.tsx:162
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:55
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "Loading…"
 msgstr "Chargement…"
@@ -2001,6 +2009,10 @@ msgstr "On dirait {suggestedLanguageName}"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:171
 msgid "Lookup"
 msgstr "Recherche"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:98
+msgid "Make sure the extension is installed and try again from its popup."
+msgstr "Assurez-vous que l'extension est installée et réessayez depuis sa popup."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:122
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:104
@@ -2064,7 +2076,7 @@ msgstr "Renvoyer ce terme à la révision passive uniquement."
 msgid "Move this term into the active drilling pool."
 msgstr "Déplacer ce terme vers le pool d'entraînement actif."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:42
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:43
 msgid "Movies"
 msgstr "Films"
 
@@ -2171,11 +2183,11 @@ msgstr "Aucun résultat."
 msgid "No practice terms are ready right now."
 msgstr "Aucun terme à pratiquer n'est disponible pour le moment."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:56
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:60
 msgid "No sessions in this filter."
 msgstr "Aucune session dans ce filtre."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:53
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:57
 msgid "No sessions yet. Start one to begin."
 msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 
@@ -2315,6 +2327,14 @@ msgstr "Autre"
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
 #~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 #~ msgstr "Notre infrastructure de sécurité est continuellement surveillée, évaluée et améliorée pour répondre aux défis évolutifs de la cybersécurité. Nous maintenons des normes rigoureuses en matière de protection des données et suivons les meilleures pratiques de sécurité recommandées par les principales organisations de sécurité technologique. Pour une transparence totale, nous reconnaissons que tous les systèmes numériques nécessitent une vigilance constante, c'est pourquoi nous avons mis en place des protocoles de surveillance complets et de réponse rapide."
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:90
+msgid "Pair the Flicktionary extension"
+msgstr "Associer l'extension Flicktionary"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:93
+msgid "Pairing your browser extension..."
+msgstr "Appariement de votre extension de navigateur..."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:252
 #: apps/web/src/features/review/components/grammar-chips.tsx:76
@@ -2676,7 +2696,7 @@ msgstr "Supprimer « {sessionTitle} » ?"
 msgid "Remove highlight"
 msgstr "Supprimer le surlignage"
 
-#: apps/web/src/features/sessions/components/session-card.tsx:60
+#: apps/web/src/features/sessions/components/session-card.tsx:65
 msgid "Remove session"
 msgstr "Supprimer la session"
 
@@ -2862,7 +2882,7 @@ msgstr "Session supprimée"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:37
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:38
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:34
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:35
 msgid "Sessions"
 msgstr "Sessions"
 
@@ -2957,6 +2977,10 @@ msgstr "Du texte pour l'onglet Accueil"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:277
 msgid "Something went wrong"
 msgstr "Une erreur s'est produite"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:103
+msgid "Something went wrong while pairing."
+msgstr "Une erreur s'est produite lors de l'appairage."
 
 #: apps/web/src/config/react-query-config.ts:30
 msgid "Something went wrong."
@@ -3136,7 +3160,7 @@ msgstr "Tester l'erreur frontend non gérée"
 #~ msgid "Text imported"
 #~ msgstr "Texte importé"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:46
 msgid "Texts"
 msgstr "Textes"
 
@@ -3161,6 +3185,10 @@ msgstr "Merci pour votre retour !"
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
 #~ msgid "The data we collect serves several purposes:"
 #~ msgstr "Les données que nous collectons servent plusieurs objectifs :"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:40
+msgid "The extension could not complete pairing."
+msgstr "L'extension n'a pas pu terminer l'appariement."
 
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx:25
 msgid "The file appears to be empty."
@@ -3310,7 +3338,7 @@ msgstr "Les termes non évalués comptent comme « bons » lorsque vous passez a
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
 #: apps/web/src/features/sessions/components/session-view.tsx:317
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:62
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
 msgid "Untitled"
 msgstr "Sans titre"
 
@@ -3449,6 +3477,10 @@ msgstr "Avertissements"
 #: apps/web/src/features/review/components/per-card-chat.tsx:222
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "Nous n'avons pas pu préparer cette réponse. Enregistrez à nouveau la note pour réessayer."
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:97
+msgid "We did not hear back from a Flicktionary extension on this device."
+msgstr "Nous n'avons pas reçu de réponse de l'extension Flicktionary sur cet appareil."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:107
 #~ msgid "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
@@ -3637,3 +3669,7 @@ msgstr "Votre nom"
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:87
 msgid "your@email.com"
 msgstr "votre@email.com"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:49
+msgid "YouTube"
+msgstr "YouTube"

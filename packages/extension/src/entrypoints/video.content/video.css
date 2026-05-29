@@ -1,0 +1,382 @@
+.asbplayer-subtitles-container-bottom {
+    position: absolute !important;
+    transform: translate(-50%, -100%) !important;
+    display: inline-block !important;
+    z-index: 2147483646 !important;
+    pointer-events: auto !important;
+}
+
+.asbplayer-subtitles-container-top {
+    position: absolute !important;
+    transform: translate(-50%) !important;
+    display: inline-block !important;
+    z-index: 2147483646 !important;
+    pointer-events: auto !important;
+}
+
+.asbplayer-subtitles {
+    position: relative !important;
+    text-align: center !important;
+    color: white;
+    font-size: 24px;
+    padding-left: 10px;
+    padding-right: 10px;
+    user-select: text !important;
+    cursor: text !important;
+    line-height: normal !important;
+    white-space: pre-wrap !important;
+}
+
+.asbplayer-subtitles-blurred {
+    filter: blur(10px);
+}
+
+.asbplayer-subtitles-blurred:hover {
+    filter: none;
+}
+
+.asbplayer-subtitle-rich {
+    display: none;
+}
+
+.asbplayer-subtitles:hover .asbplayer-subtitle-text,
+.asbplayer-fullscreen-subtitles:hover .asbplayer-subtitle-text {
+    display: none;
+}
+
+.asbplayer-subtitles:hover .asbplayer-subtitle-rich,
+.asbplayer-fullscreen-subtitles:hover .asbplayer-subtitle-rich {
+    display: inline;
+}
+
+.asbplayer-notification-container-bottom {
+    position: absolute !important;
+    left: 50%;
+    transform: translate(-50%, -100%);
+    display: inline-block;
+    z-index: 2147483646 !important;
+}
+
+.asbplayer-notification-container-top {
+    position: absolute !important;
+    left: 50%;
+    transform: translate(-50%);
+    display: inline-block;
+    z-index: 2147483646 !important;
+}
+
+.asbplayer-notification {
+    text-align: center !important;
+    color: white;
+    text-shadow:
+        0 0 2px black,
+        0 0 2px black,
+        0 0 2px black,
+        0 0 2px black;
+    font-size: 24px;
+    padding-left: 10px;
+    padding-right: 10px;
+    line-height: normal !important;
+    white-space: pre-wrap !important;
+    user-select: none;
+    pointer-events: none;
+}
+
+.asbplayer-fullscreen-subtitles {
+    position: relative !important;
+    text-align: center !important;
+    color: white;
+    text-shadow:
+        0 0 2px black,
+        0 0 2px black,
+        0 0 2px black,
+        0 0 2px black;
+    font-size: 36px;
+    padding-left: 10px;
+    padding-right: 10px;
+    user-select: text !important;
+    cursor: text !important;
+    line-height: normal !important;
+    white-space: pre-wrap !important;
+}
+
+.asbplayer-subtitles ruby,
+.asbplayer-fullscreen-subtitles ruby {
+    ruby-position: over !important;
+}
+
+.asbplayer-subtitles rt,
+.asbplayer-fullscreen-subtitles rt {
+    font-size: 0.5em !important;
+    line-height: 1 !important;
+}
+
+.asbplayer-subtitles rb,
+.asbplayer-fullscreen-subtitles rb {
+    ruby-position: under !important;
+}
+
+.asbplayer-ui-frame {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 2147483647 !important;
+    border: 0 !important;
+    pointer-events: auto !important;
+}
+
+.asbplayer-alert {
+    position: fixed !important;
+    bottom: 8px !important;
+    width: 100dvw !important;
+    visibility: visible !important;
+    height: auto !important;
+    z-index: 2147483647 !important;
+    border: 0 !important;
+    pointer-events: auto !important;
+}
+
+.asbplayer-hide {
+    display: none !important;
+}
+
+.asbplayer-drag-zone-initial {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2147483647;
+}
+
+.asbplayer-drag-zone-dragging {
+    pointer-events: all;
+}
+
+.asbplayer-image {
+    position: relative;
+    pointer-events: none;
+}
+
+.asbplayer-image-fade-in {
+    animation-duration: 0.2s;
+    animation-name: asbplayer-fade-in;
+}
+
+@keyframes asbplayer-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.asbplayer-image-container {
+    position: absolute;
+    z-index: 2147483647;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.asbplayer-drag-image {
+    pointer-events: none;
+}
+
+.asbplayer-mouse-over-image {
+    position: absolute;
+    z-index: 2147483647;
+}
+
+.asbplayer-mouse-over-image {
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.asbplayer-mouse-over-image:hover {
+    opacity: 1;
+}
+
+.asbplayer-offscreen {
+    position: fixed !important;
+    left: 100% !important;
+    top: 100% !important;
+}
+
+.asbplayer-mobile-video-overlay-container-top {
+    position: absolute !important;
+    transform: translate(-50%) !important;
+    display: inline-block !important;
+    z-index: 2147483647 !important;
+    text-align: center !important;
+    pointer-events: auto !important;
+}
+
+.asbplayer-mobile-video-overlay-container-bottom {
+    position: absolute !important;
+    transform: translate(-50%, -100%) !important;
+    display: inline-block !important;
+    z-index: 2147483647 !important;
+    text-align: center !important;
+    pointer-events: auto !important;
+}
+
+.asbplayer-mobile-video-overlay {
+}
+
+/* Word click/hover styles */
+.asbplayer-word {
+    cursor: pointer !important;
+    transition: background-color 0.15s ease !important;
+    border-radius: 2px !important;
+    padding: 0 1px !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.asbplayer-word:hover {
+    background-color: rgba(255, 255, 0, 0.35) !important;
+}
+
+.asbplayer-word::selection {
+    background: transparent !important;
+}
+
+/* Selection overlay for continuous highlight across chunks */
+.asbplayer-selection-overlay {
+    position: absolute !important;
+    background-color: rgba(255, 255, 0, 0.35) !important;
+    border-radius: 4px !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+/* Hover gloss tooltip — mirrors the Flicktionary web fast-gloss popover */
+.asbplayer-translation-tooltip {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    background-color: rgba(0, 0, 0, 0.92) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    max-width: 320px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    pointer-events: none !important;
+    line-height: 1.4 !important;
+    /* GOTCHA: `display` is toggled from JS to show/hide this tooltip
+       (word-interaction-controller.ts). Because this rule is `!important`, a
+       plain `element.style.display = 'none'` CANNOT override it — an author
+       `!important` declaration beats a non-important inline style. The JS MUST
+       use `style.setProperty('display', '...', 'important')`. Forgetting this
+       makes the popover impossible to hide (it just gets repositioned on the
+       next hovered word). If you drop the `!important` here, every other rule
+       below must drop it too, or the layout breaks on host sites. */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+}
+
+.asbplayer-gloss-title {
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    color: #fff !important;
+    word-break: break-word !important;
+}
+
+.asbplayer-gloss-ipa {
+    font-size: 13px !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.asbplayer-gloss-text {
+    font-size: 14px !important;
+    color: rgba(255, 255, 255, 0.92) !important;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+}
+
+.asbplayer-gloss-error {
+    font-size: 13px !important;
+    color: #ff9b9b !important;
+}
+
+.asbplayer-gloss-badges {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 2px !important;
+}
+
+.asbplayer-gloss-badge {
+    display: inline-block !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    padding: 1px 8px !important;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.asbplayer-gloss-badge--register {
+    border-color: transparent !important;
+    background-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.asbplayer-gloss-loading {
+    width: 16px !important;
+    height: 16px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-top-color: white !important;
+    border-radius: 50% !important;
+    animation: asbplayer-spinner 0.6s linear infinite !important;
+    margin: 2px 0 !important;
+}
+
+@keyframes asbplayer-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Save notification */
+.asbplayer-save-notification {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    background-color: rgba(40, 167, 69, 0.95) !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+    pointer-events: none !important;
+    animation: asbplayer-fade-in-out 1.5s ease !important;
+    max-width: 320px !important;
+    text-align: center !important;
+}
+
+.asbplayer-save-notification--error {
+    background-color: rgba(220, 53, 69, 0.96) !important;
+    animation-duration: 3500ms !important;
+}
+
+@keyframes asbplayer-fade-in-out {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    15% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    85% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}

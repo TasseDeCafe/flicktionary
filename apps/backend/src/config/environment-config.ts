@@ -23,6 +23,12 @@ const parseAutoSeedPattern = (raw: string | undefined): RegExp | null => {
 const devAutoSeedEmailPattern = parseAutoSeedPattern(process.env.DEV_AUTOSEED_EMAIL_PATTERN)
 const devAutoSeedNativeLanguage = process.env.DEV_AUTOSEED_NATIVE_LANGUAGE || 'fr'
 
+// Browser extension origins. We allow any chrome- or moz-extension origin during
+// development; once we have stable published extension IDs the patterns can be
+// tightened to those specific IDs. The cors package treats string values
+// containing '*' as literal matches, not wildcards, so these MUST be RegExp.
+const extensionOrigins: RegExp[] = [/^chrome-extension:\/\/[a-z]{32}$/, /^moz-extension:\/\/[0-9a-f-]+$/]
+
 const productionConfig: EnvironmentConfig = {
   environmentName: 'production',
   // Railway injects PORT env var, fallback to 4004 for other deployments
@@ -35,6 +41,7 @@ const productionConfig: EnvironmentConfig = {
     'https://app.flicktionary.app',
     /https:\/\/.*-fluencist\.vercel\.app(\/.*)?/, // Vercel Preview URLs
     /https:\/\/.*\.up\.railway\.app(\/.*)?/, // Railway Preview URLs
+    ...extensionOrigins,
   ],
   resendApiKey: process.env.RESEND_API_KEY || '',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -88,6 +95,7 @@ const developmentConfig: EnvironmentConfig = {
   allowedCorsOrigins: [
     'http://localhost:5174',
     'http://localhost:4173', // "yarn preview" origin
+    ...extensionOrigins,
   ],
   resendApiKey: process.env.RESEND_API_KEY || '',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -141,7 +149,7 @@ const developmentTunnelConfig: EnvironmentConfig = {
   ...developmentConfig,
   port: 4002,
   webUrl: process.env.WEB_URL || '',
-  allowedCorsOrigins: [process.env.WEB_URL || ''],
+  allowedCorsOrigins: [process.env.WEB_URL || '', ...extensionOrigins],
   // Uses JWKS endpoint from local Supabase (supabase-dev-tunnel)
   supabaseJwksUri: 'http://127.0.0.1:34321/auth/v1/.well-known/jwks.json',
   supabaseConnectionString: 'postgresql://postgres:postgres@127.0.0.1:34322/postgres',
@@ -169,7 +177,7 @@ const developmentWithoutThirdPartiesConfig: EnvironmentConfig = {
 const developmentWithoutThirdPartiesTunnelConfig: EnvironmentConfig = {
   ...developmentWithoutThirdPartiesConfig,
   webUrl: process.env.WEB_URL || '',
-  allowedCorsOrigins: [process.env.WEB_URL || ''],
+  allowedCorsOrigins: [process.env.WEB_URL || '', ...extensionOrigins],
   supabaseConnectionString: 'postgresql://postgres:postgres@127.0.0.1:34322/postgres',
 }
 
@@ -178,7 +186,7 @@ const testConfig: EnvironmentConfig = {
   port: 1,
   webUrl: 'some-web-url',
   shouldLogRequests: false,
-  allowedCorsOrigins: ['some-web-url'],
+  allowedCorsOrigins: ['some-web-url', ...extensionOrigins],
   resendApiKey: 'dummyResendApiKey',
   anthropicApiKey: 'dummyAnthropicApiKey',
   tmdbApiKey: 'dummyTmdbApiKey',
