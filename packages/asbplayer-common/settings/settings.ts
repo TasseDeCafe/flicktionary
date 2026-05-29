@@ -1,5 +1,4 @@
 import { AutoPausePreference, SubtitleHtml } from '../src/model';
-import { arrayEquals } from '../util';
 
 export enum PauseOnHoverMode {
     disabled = 0,
@@ -33,51 +32,6 @@ export enum DictionaryTokenSource {
     ANKI_SENTENCE = 2,
 }
 
-/*
-These are all the possible scenarios which can result in a match. We don't need to support every possible combination,
-as some are not useful or inconsistent. Inconsistent meaning the order the user collects forms affects what future forms
-are considered collected (e.g collecting the lemma will match all forms but user needs to collect every inflection if
-they don't ever collect the lemma).
-
-Lemma In Subtitle
------------------------------------------------------------------
-| User Collection | LEMMA_FORM_COLLECTED | EXACT_FORM_COLLECTED |
------------------------------------------------------------------
-| Lemma           |         MATCH        |         MATCH        |
-| Inflection      |          NO          |          NO          |
------------------------------------------------------------------
-
-Inflection In Subtitle
------------------------------------------------------------------
-| User Collection | LEMMA_FORM_COLLECTED | EXACT_FORM_COLLECTED |
------------------------------------------------------------------
-| Lemma           |         MATCH        |          NO          |
-| Same Inflection |          NO          |         MATCH        |
-| Diff Inflection |          NO          |          NO          |
------------------------------------------------------------------
-*/
-export enum TokenMatchStrategy {
-    ANY_FORM_COLLECTED = 'ANY_FORM_COLLECTED', // All scenarios above result in MATCH
-    LEMMA_OR_EXACT_FORM_COLLECTED = 'LEMMA_OR_EXACT_FORM_COLLECTED', // See LEMMA_FORM_COLLECTED and EXACT_FORM_COLLECTED columns above
-    LEMMA_FORM_COLLECTED = 'LEMMA_FORM_COLLECTED', // See LEMMA_FORM_COLLECTED column above
-    EXACT_FORM_COLLECTED = 'EXACT_FORM_COLLECTED', // See EXACT_FORM_COLLECTED column above
-}
-
-export enum TokenMatchStrategyPriority {
-    EXACT = 'EXACT',
-    LEMMA = 'LEMMA',
-    BEST_KNOWN = 'BEST_KNOWN',
-    LEAST_KNOWN = 'LEAST_KNOWN',
-}
-
-export enum TokenStyling {
-    TEXT = 'TEXT',
-    BACKGROUND = 'BACKGROUND',
-    UNDERLINE = 'UNDERLINE',
-    OVERLINE = 'OVERLINE',
-    OUTLINE = 'OUTLINE',
-}
-
 export enum TokenStatus {
     UNCOLLECTED = 0,
     UNKNOWN = 1,
@@ -100,77 +54,6 @@ export enum ApplyStrategy {
     REMOVE = 'REMOVE',
     REPLACE = 'REPLACE',
     TOGGLE = 'TOGGLE',
-}
-
-export enum TokenReadingAnnotation {
-    ALWAYS = 'ALWAYS',
-    LEARNING_OR_BELOW = 'LEARNING_OR_BELOW',
-    UNKNOWN_OR_BELOW = 'UNKNOWN_OR_BELOW',
-    NEVER = 'NEVER',
-}
-
-export function dictionaryTrackEnabled(dt: DictionaryTrack): boolean {
-    return dt.dictionaryColorizeSubtitles || dt.dictionaryTokenReadingAnnotation !== TokenReadingAnnotation.NEVER;
-}
-
-export function dictionaryStatusCollectionEnabled(dt: DictionaryTrack): boolean {
-    return (
-        dt.dictionaryColorizeSubtitles ||
-        dt.dictionaryTokenReadingAnnotation === TokenReadingAnnotation.LEARNING_OR_BELOW ||
-        dt.dictionaryTokenReadingAnnotation === TokenReadingAnnotation.UNKNOWN_OR_BELOW
-    );
-}
-
-export interface DictionaryTrack {
-    readonly dictionaryColorizeSubtitles: boolean;
-    readonly dictionaryColorizeOnHoverOnly: boolean;
-    readonly dictionaryTokenMatchStrategy: TokenMatchStrategy;
-    readonly dictionaryTokenMatchStrategyPriority: TokenMatchStrategyPriority;
-    readonly dictionaryYomitanUrl: string;
-    readonly dictionaryYomitanScanLength: number;
-    readonly dictionaryTokenReadingAnnotation: TokenReadingAnnotation;
-    readonly tokenStyling: TokenStyling;
-    readonly tokenStylingThickness: number;
-    readonly colorizeFullyKnownTokens: boolean;
-    readonly tokenStatusColors: string[]; // Indexed by TokenStatus (if adding colors for states, use a separate array indexed by TokenState)
-}
-
-export interface DictionarySettings {
-    readonly dictionaryTracks: DictionaryTrack[];
-}
-
-const dictionaryTrackComparators: {
-    [K in keyof DictionaryTrack]: (a: DictionaryTrack[K], b: DictionaryTrack[K]) => boolean;
-} = {
-    dictionaryColorizeSubtitles: (a, b) => a === b,
-    dictionaryColorizeOnHoverOnly: (a, b) => a === b,
-    dictionaryTokenMatchStrategy: (a, b) => a === b,
-    dictionaryTokenMatchStrategyPriority: (a, b) => a === b,
-    dictionaryYomitanUrl: (a, b) => a === b,
-    dictionaryYomitanScanLength: (a, b) => a === b,
-    dictionaryTokenReadingAnnotation: (a, b) => a === b,
-    tokenStyling: (a, b) => a === b,
-    tokenStylingThickness: (a, b) => a === b,
-    colorizeFullyKnownTokens: (a, b) => a === b,
-    tokenStatusColors: (a, b) => arrayEquals(a, b),
-};
-
-export function compareDTField<K extends keyof DictionaryTrack>(
-    key: K,
-    a: DictionaryTrack,
-    b: DictionaryTrack
-): boolean {
-    return dictionaryTrackComparators[key](a[key], b[key]);
-}
-
-export function areDictionaryTracksEqual(dt1: DictionaryTrack, dt2: DictionaryTrack): boolean {
-    if (dt1 === dt2) return true;
-    for (const key in dictionaryTrackComparators) {
-        if (!compareDTField(key as keyof DictionaryTrack, dt1, dt2)) {
-            return false;
-        }
-    }
-    return true;
 }
 
 // Image-capture + surrounding-subtitle geometry. These survived the Anki/mining
@@ -393,7 +276,6 @@ export interface AsbplayerSettings
     extends MiscSettings,
         CaptureSettings,
         SubtitleSettings,
-        DictionarySettings,
         StreamingVideoSettings,
         WordInteractionSettings,
         TranscriptSettings {

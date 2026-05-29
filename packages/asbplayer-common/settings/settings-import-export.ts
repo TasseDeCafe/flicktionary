@@ -13,48 +13,6 @@ const keyBindSchema = {
     },
     required: ['keys'],
 };
-const dictionaryTrackSchema = {
-    id: '/DictionaryTrack',
-    type: 'object',
-    properties: {
-        dictionaryColorizeSubtitles: {
-            type: 'boolean',
-        },
-        dictionaryColorizeOnHoverOnly: {
-            type: 'boolean',
-        },
-        dictionaryTokenMatchStrategy: {
-            type: 'string',
-        },
-        dictionaryTokenMatchStrategyPriority: {
-            type: 'string',
-        },
-        dictionaryYomitanUrl: {
-            type: 'string',
-        },
-        dictionaryYomitanScanLength: {
-            type: 'number',
-        },
-        dictionaryTokenReadingAnnotation: {
-            type: 'string',
-        },
-        tokenStyling: {
-            type: 'string',
-        },
-        tokenStylingThickness: {
-            type: 'number',
-        },
-        colorizeFullyKnownTokens: {
-            type: 'boolean',
-        },
-        tokenStatusColors: {
-            type: 'array',
-            items: {
-                type: 'string',
-            },
-        },
-    },
-};
 const textSubtitleSettingsSchema = {
     id: '/TextSubtitleSettings',
     type: 'object',
@@ -318,12 +276,6 @@ const settingsSchema = {
         pauseOnHoverMode: {
             type: 'number',
         },
-        dictionaryTracks: {
-            type: 'array',
-            items: {
-                $ref: '/DictionaryTrack',
-            },
-        },
         // Flicktionary-added live settings (WordInteractionSettings / TranscriptSettings).
         // Must be listed here or validateSettings throws 'Unknown key' on export/import.
         wordClickEnabled: {
@@ -365,7 +317,6 @@ export const validateSettings = (settings: any) => {
     const copy = withIgnoredKeysRemoved(settings);
     const validator = new Validator();
     validator.addSchema(keyBindSchema);
-    validator.addSchema(dictionaryTrackSchema);
     validator.addSchema(textSubtitleSettingsSchema);
     const result = validator.validate(copy, settingsSchema);
     validateAllKnownKeys(copy, []);
@@ -415,10 +366,6 @@ const schemaAtPath = (schema: any, path: string[]) => {
 const schemaForRef = (ref: string) => {
     if (ref === '/KeyBind') {
         return keyBindSchema;
-    }
-
-    if (ref === '/DictionaryTrack') {
-        return dictionaryTrackSchema;
     }
 
     if (ref === '/TextSubtitleSettings') {

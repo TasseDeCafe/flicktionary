@@ -284,6 +284,27 @@ used by `image.ts`). **Kept** `TakeScreenshotMessage` (`'take-screenshot'`) and
 dispatched in `video-select-controller.ts`'s open-dialog switch. tsc baseline held at 8,
 `settings-import-export` 5/5, build 6.96 MB.
 
+**Landed since (2026-05, dictionary-coloring settings cluster — see
+`REMAINING-CLEANUP-PLAN.md` item 1):** removed the entire coloring *settings* surface,
+which had **no runtime readers** (verified repo-wide: every symbol was confined to the
+four settings files). From `settings.ts`: the `DictionaryTrack`/`DictionarySettings`
+interfaces (and `DictionarySettings` from the `AsbplayerSettings extends` list), the
+`TokenMatchStrategy`/`TokenMatchStrategyPriority`/`TokenStyling`/`TokenReadingAnnotation`
+enums, the `dictionaryTrackEnabled`/`dictionaryStatusCollectionEnabled`/`compareDTField`/
+`areDictionaryTracksEqual` helpers + `dictionaryTrackComparators`, and the now-unused
+`arrayEquals` import. From `settings-provider.ts`: `defaultDictionaryTrackSettings`, the
+`dictionaryTracks` default, `NUM_DICTIONARY_TRACKS`/`NUM_TOKEN_STATUSES`, and the
+`dictionaryTracks` normalize/migrate block in `_ensureConsistencyOnWrite` (now a
+passthrough). From `settings-import-export.ts`: `dictionaryTrackSchema`, the
+`dictionaryTracks` array entry, the `addSchema`/`schemaForRef` `/DictionaryTrack`
+branches. Plus the `dictionaryTracks` test fixture. **Kept** (still load-bearing for
+`dictionary-db`/profile management): the `TokenStatus`, `TokenState`,
+`getFullyKnownTokenStatus`, `DictionaryTokenSource`, and `ApplyStrategy` symbols —
+`dictionary-db` itself was NOT touched, so the §7 golden path (profile switching/deletion)
+is structurally unaffected. tsc baseline held at 8 (same 8 errors), `settings-import-export`
+5/5, build 6.96 MB. NOTE: the deeper `dictionary-db`/`anki/` removal below remains
+deferred — this strip only removed the coloring settings, not the DB plumbing.
+
 Still deferred:
 
 - **Deep `dictionary-db` removal** — requires rewiring profile management off
