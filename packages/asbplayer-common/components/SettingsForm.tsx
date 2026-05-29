@@ -150,7 +150,6 @@ export type PageConfigMap = { [K in keyof PageSettings]: SettingsFormPageConfig 
 interface Props {
     extensionInstalled: boolean;
     extensionVersion?: string;
-    extensionSupportsAppIntegration: boolean;
     extensionSupportsOverlay: boolean;
     extensionSupportsSidePanel: boolean;
     extensionSupportsTrackSpecificSettings: boolean;
@@ -188,7 +187,6 @@ export default function SettingsForm({
     pageConfigs,
     extensionInstalled,
     extensionVersion,
-    extensionSupportsAppIntegration,
     extensionSupportsOverlay,
     extensionSupportsSidePanel,
     extensionSupportsTrackSpecificSettings,
@@ -232,15 +230,12 @@ export default function SettingsForm({
             'about',
         ];
 
-        if (!extensionSupportsAppIntegration) {
-            tabs.splice(tabs.indexOf('streaming-video'), 1);
-        }
         if (!supportsDictionary) {
             tabs.splice(tabs.indexOf('dictionary'), 1);
         }
 
         return Object.fromEntries(tabs.map((tab, i) => [tab, i]));
-    }, [extensionSupportsAppIntegration, supportsDictionary]);
+    }, [supportsDictionary]);
 
     useEffect(() => {
         if (!scrollToId) {
@@ -273,20 +268,18 @@ export default function SettingsForm({
                 <Tab tabIndex={0} label={t('settings.subtitleAppearance')} id="subtitle-appearance" />
                 <Tab tabIndex={1} label={t('settings.keyboardShortcuts')} id="keyboard-shortcuts" />
                 {supportsDictionary && <Tab tabIndex={2} label={t('settings.annotation')} id="dictionary" />}
-                {extensionSupportsAppIntegration && (
-                    <Tab
-                        tabIndex={2 + Number(supportsDictionary)}
-                        label={t('settings.streamingVideo')}
-                        id="streaming-video"
-                    />
-                )}
                 <Tab
-                    tabIndex={2 + Number(supportsDictionary) + Number(extensionSupportsAppIntegration)}
+                    tabIndex={2 + Number(supportsDictionary)}
+                    label={t('settings.streamingVideo')}
+                    id="streaming-video"
+                />
+                <Tab
+                    tabIndex={3 + Number(supportsDictionary)}
                     label={t('settings.misc')}
                     id="misc-settings"
                 />
                 <Tab
-                    tabIndex={3 + Number(supportsDictionary) + Number(extensionSupportsAppIntegration)}
+                    tabIndex={4 + Number(supportsDictionary)}
                     label={t('about.title')}
                     id="about"
                 />

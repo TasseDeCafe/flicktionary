@@ -90,7 +90,6 @@ const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChan
                     <SettingsForm
                         extensionInstalled
                         extensionVersion={browser.runtime.getManifest().version}
-                        extensionSupportsAppIntegration
                         extensionSupportsOverlay
                         extensionSupportsSidePanel={!isFirefoxBuild}
                         extensionSupportsTrackSpecificSettings

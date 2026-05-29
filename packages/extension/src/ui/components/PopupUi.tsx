@@ -19,6 +19,7 @@ import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-sett
 import { StyledEngineProvider } from '@mui/material/styles';
 import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db';
 import { ExtensionDictionaryStorage } from '@/services/extension-dictionary-storage';
+import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config';
 
 interface Props {
     commands: any;
@@ -57,11 +58,9 @@ export function PopupUi({ commands }: Props) {
         browser.tabs.create({ active: true, url: 'chrome://extensions/shortcuts' });
     }, []);
 
-    const handleOpenApp = useCallback(async () => {
-        if (settings?.streamingAppUrl) {
-            browser.tabs.create({ active: true, url: settings.streamingAppUrl });
-        }
-    }, [settings]);
+    const handleOpenApp = useCallback(() => {
+        browser.tabs.create({ active: true, url: getFlicktionaryConfig().webUrl });
+    }, []);
 
     const handleOpenUserGuide = useCallback(() => {
         browser.tabs.create({ active: true, url: 'https://docs.asbplayer.dev/docs/intro' });
