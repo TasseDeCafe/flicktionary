@@ -90,7 +90,6 @@ it('validates exported settings', () => {
             toggleFastForwardPlayback: { keys: '⇧+F' },
             togglePlay: { keys: 'space' },
             toggleRepeat: { keys: '⇧+R' },
-            toggleSidePanel: { keys: '`' },
             toggleSubtitles: { keys: 'down' },
             toggleVideoSubtitleTrack1: { keys: '1' },
             toggleVideoSubtitleTrack2: { keys: '2' },

@@ -11,7 +11,6 @@ import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks';
 import { useI18n } from '../hooks/use-i18n';
 import Paper from '@mui/material/Paper';
 import { useSupportedLanguages } from '../hooks/use-supported-languages';
-import { isFirefoxBuild } from '../../services/build-flags';
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu';
 import { AsbplayerSettings, Profile } from '@asbplayer-fork/common/settings';
 import { useTheme, type Theme } from '@mui/material/styles';
@@ -91,7 +90,6 @@ const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChan
                         extensionInstalled
                         extensionVersion={browser.runtime.getManifest().version}
                         extensionSupportsOverlay
-                        extensionSupportsSidePanel={!isFirefoxBuild}
                         extensionSupportsTrackSpecificSettings
                         extensionSupportsSubtitlesWidthSetting
                         extensionSupportsPauseOnHover

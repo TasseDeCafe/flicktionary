@@ -151,7 +151,6 @@ interface Props {
     extensionInstalled: boolean;
     extensionVersion?: string;
     extensionSupportsOverlay: boolean;
-    extensionSupportsSidePanel: boolean;
     extensionSupportsTrackSpecificSettings: boolean;
     extensionSupportsSubtitlesWidthSetting: boolean;
     extensionSupportsPauseOnHover: boolean;
@@ -188,7 +187,6 @@ export default function SettingsForm({
     extensionInstalled,
     extensionVersion,
     extensionSupportsOverlay,
-    extensionSupportsSidePanel,
     extensionSupportsTrackSpecificSettings,
     extensionSupportsSubtitlesWidthSetting,
     extensionSupportsPauseOnHover,
@@ -305,7 +303,6 @@ export default function SettingsForm({
                     chromeKeyBinds={chromeKeyBinds}
                     extensionInstalled={extensionInstalled}
                     extensionSupportsExportCardBind={extensionSupportsExportCardBind}
-                    extensionSupportsSidePanel={extensionSupportsSidePanel}
                     onOpenChromeExtensionShortcuts={onOpenChromeExtensionShortcuts}
                 />
             </TabPanel>

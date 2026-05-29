@@ -298,7 +298,6 @@ export interface KeyBindSet {
     readonly resetOffset: KeyBind;
     readonly decreasePlaybackRate: KeyBind;
     readonly increasePlaybackRate: KeyBind;
-    readonly toggleSidePanel: KeyBind;
     readonly toggleRepeat: KeyBind;
     readonly moveBottomSubtitlesUp: KeyBind;
     readonly moveBottomSubtitlesDown: KeyBind;

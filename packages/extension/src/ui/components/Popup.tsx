@@ -10,7 +10,6 @@ import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks';
 import { useSupportedLanguages } from '../hooks/use-supported-languages';
 import { useI18n } from '../hooks/use-i18n';
 import { isMobile } from 'react-device-detect';
-import { isFirefoxBuild } from '../../services/build-flags';
 import { useTheme } from '@mui/material/styles';
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu';
 import { settingsPageConfigs } from '@/services/pages';
@@ -81,7 +80,6 @@ const Popup = ({
                         extensionInstalled
                         extensionVersion={browser.runtime.getManifest().version}
                         extensionSupportsOverlay
-                        extensionSupportsSidePanel={!isFirefoxBuild}
                         extensionSupportsTrackSpecificSettings
                         extensionSupportsSubtitlesWidthSetting
                         extensionSupportsPauseOnHover

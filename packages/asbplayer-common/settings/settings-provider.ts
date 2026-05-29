@@ -90,7 +90,6 @@ export const defaultSettings: AsbplayerSettings = {
         resetOffset: { keys: isMacOs ? '⇧+⌃+down' : 'ctrl+shift+down' },
         decreasePlaybackRate: { keys: isMacOs ? '⇧+⌃+[' : 'ctrl+shift+[' },
         increasePlaybackRate: { keys: isMacOs ? '⇧+⌃+]' : 'ctrl+shift+]' },
-        toggleSidePanel: { keys: '`' },
         toggleRepeat: { keys: isMacOs ? '⇧+R' : 'shift+R' },
         moveBottomSubtitlesUp: { keys: '' },
         moveBottomSubtitlesDown: { keys: '' },

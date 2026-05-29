@@ -219,7 +219,6 @@ interface Props {
     chromeKeyBinds: { [key: string]: string | undefined };
     extensionInstalled?: boolean;
     extensionSupportsExportCardBind?: boolean;
-    extensionSupportsSidePanel?: boolean;
     onOpenChromeExtensionShortcuts: () => void;
 }
 
@@ -229,7 +228,6 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
     chromeKeyBinds,
     extensionInstalled,
     extensionSupportsExportCardBind,
-    extensionSupportsSidePanel,
     onOpenChromeExtensionShortcuts,
 }) => {
     const { t } = useTranslation();
@@ -430,11 +428,6 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
                     />
                 ),
             },
-            toggleSidePanel: {
-                label: t('binds.toggleSidePanel')!,
-                boundViaChrome: false,
-                hide: !extensionInstalled || !extensionSupportsSidePanel,
-            },
             moveBottomSubtitlesUp: {
                 label: t('binds.moveBottomSubtitlesUp')!,
                 boundViaChrome: false,
@@ -455,7 +448,6 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
         [
             t,
             extensionInstalled,
-            extensionSupportsSidePanel,
             extensionSupportsExportCardBind,
             onSettingChanged,
             seekDuration,
