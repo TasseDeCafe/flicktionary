@@ -30,13 +30,14 @@ never reaches it (so the bundle is unaffected). Deletion is **iterative** — re
 cluster makes its dependencies-only-used-by-it become newly unreachable, so re-run the
 command after each cluster to surface the next wave.
 
-### CRITICAL caveat — test files are NOT governed by this list
+### CRITICAL caveat — test files are NOT governed by this list (user-confirmed: KEEP them)
 Jest has its own program/config. Files like `settings/settings-import-export.test.ts`,
 `settings/settings-provider.test.ts`, `util/util.test.ts`, `pages/index.test.ts`,
 `copy-history/copy-history-repository.test.ts` appear "unreachable from the extension"
-but are **live jest tests for KEPT code** — do NOT delete them. Only delete a `.test.ts`
-when its **subject file** is being deleted in the same cluster (e.g. `anki/anki.test.ts`
-goes only if `anki/` goes).
+but are **live jest tests for KEPT code** — **do NOT delete them** (decided with the user,
+2026-05). Only delete a `.test.ts` when its **subject file** is itself being deleted in
+the same cluster (e.g. `anki/anki.test.ts` goes only if `anki/` goes; `app/services/util.test.ts`
+goes with `app/services/util.ts` in Cluster 1).
 
 ## Gate (after every cluster, commit per cluster)
 
@@ -85,12 +86,12 @@ This is the single largest reduction (~45 files). Safe by construction: a KEEP f
 import a DELETE file (it would make the DELETE file reachable). **Verify** the build after
 this cluster — it's the riskiest only because of its size.
 
-> **Decision to confirm with the user:** `CUSTOMIZATIONS.md §6` framed deleting
-> `common/app` as gated behind removing the web-app *integration*. That gating applies to
-> the integration bridge (the 8 KEEP files); the UI above is already orphaned and
-> independent. The donor-model playbook (§3) says harvest from **upstream**, not from
-> local orphan copies — so keeping these as a local reference isn't necessary. Recommend
-> deleting; flag in case the user wants them retained as a reading reference.
+> **Decided (user, 2026-05):** delete them. `CUSTOMIZATIONS.md §6` framed deleting
+> `common/app` as gated behind removing the web-app *integration*, but that gating only
+> applies to the integration bridge (the 8 KEEP files) — the UI above is already orphaned
+> and independent, and the donor-model playbook (§3) says harvest from **upstream**, not
+> from local orphan copies. These are NOT retained as a local reference; pull from
+> upstream git if ever needed.
 
 ## Cluster 2 — orphaned Anki/card UI components (in `common/components/`)
 
