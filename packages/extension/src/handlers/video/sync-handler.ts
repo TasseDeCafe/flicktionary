@@ -29,7 +29,7 @@ export default class SyncHandler {
             await this.tabRegistry.publishTabsToAsbplayers();
             const asbplayerId = await this.tabRegistry.findAsbplayer({
                 filter: (asbplayer) => {
-                    if (asbplayer.receivedTabs === undefined || sender.tab === undefined || asbplayer.sidePanel) {
+                    if (asbplayer.receivedTabs === undefined || sender.tab === undefined) {
                         return false;
                     }
 

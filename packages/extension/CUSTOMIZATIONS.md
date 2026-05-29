@@ -85,7 +85,11 @@ a 2026-05 settings-UI follow-up; bundle 8.57 MB → 7.22 MB):
   mining.)
 - **Side-panel web-client app** — the `sidepanel` entrypoint, the `SidePanel*`
   React components (built on `common/app`), the toggle wiring, the popup "Open side
-  panel" button, and the `sidePanel`/`offscreen` manifest permissions.
+  panel" button, and the `sidePanel`/`offscreen` manifest permissions. **The
+  remaining residue was swept later (2026-05, see §6 "landed"):** the `toggleSidePanel`
+  keybind + `extensionSupportsSidePanel` prop chain, the `sidePanel` flag threaded
+  through `tab-registry`/`AsbplayerInstance`/heartbeat·ackTabs messages + `sync-handler`,
+  the dead `Toggle/CloseSidePanelMessage` types, and the `SidePanelBubble` FTUE step.
 - **Subtitle annotation / coloring (upstream 1.14)** — `subtitle-controller` was
   reverted off `SubtitleColoring` back onto a plain `SubtitleCollection`; the
   rich-text/`hoverOnly` render branch, the `HoveredToken` mouse wiring, the
@@ -239,6 +243,20 @@ dir + assorted stray orphans — `yomitan/index.ts`, `audio-clip/mp3-encoder-wor
   `streamingAutoSyncPromptOnFailure` (auto-load detected subtitles), `pauseOnHoverMode`
   → `inAndOut` (auto-pause on hover with auto-resume), and `wordClickEnabled` → true.
   Affects fresh installs / new profiles only; stored user values are untouched.
+
+**Landed since (2026-05, side-panel residue sweep):** the side-panel UI/entrypoint was
+gone, but its plumbing lingered and was unreachable (nothing can set a tab's `sidePanel`
+flag true anymore — no entrypoint, no `toggle-side-panel` handler). Removed: the
+`toggleSidePanel` keybind (type/defaults/strict-schema/test) + its settings-tab row and
+the `extensionSupportsSidePanel` prop chain (`KeyboardShortcutsSettingsTab` → `SettingsForm`
+→ `Popup`/`SettingsPage`, + orphaned `isFirefoxBuild` imports); the `sidePanel` flag on
+`Asbplayer`/`AsbplayerInstance`/`AsbplayerHeartbeatMessage`/`AckTabsMessage` and every
+branch reading it in `tab-registry.ts` (the 5s GC loop, `_sendCommand` runtime-message
+fallback, `findAsbplayer` tab-count guard) + the `sync-handler` filter; the dead
+`ToggleSidePanelMessage`/`CloseSidePanelMessage` types; and the `SidePanelBubble` FTUE
+step in `Tutorial.tsx` (FTUE now goes load-subtitles → overlay). Left the dead
+`ftue.sidePanel`/`binds.toggleSidePanel` i18n keys (deferred, see below) and the
+"Side Panel" wording in the `ftue.loadSubtitles` copy (content decision, not dead code).
 
 Still deferred:
 

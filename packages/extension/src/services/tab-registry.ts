@@ -21,7 +21,6 @@ interface SlimTab {
 export interface Asbplayer {
     id: string;
     tab?: SlimTab;
-    sidePanel?: boolean;
     timestamp: number;
     receivedTabs?: VideoTabModel[];
     videoPlayer: boolean;
@@ -149,17 +148,6 @@ export default class TabRegistry {
         const asbplayers = await this._fetchAsbplayerState();
         const oldAsbplayers = { ...asbplayers };
         let changed = false;
-        const now = Date.now();
-
-        for (const id in asbplayers) {
-            const asbplayer = asbplayers[id];
-            const disappeared = asbplayer.sidePanel && now - asbplayer.timestamp >= 5000;
-
-            if (disappeared) {
-                changed = true;
-                delete asbplayers[id];
-            }
-        }
 
         if (mutator !== undefined) {
             changed = mutator(asbplayers) || changed;
@@ -183,20 +171,12 @@ export default class TabRegistry {
 
     async onAsbplayerHeartbeat(
         tab: Browser.tabs.Tab | undefined,
-        {
-            id: asbplayerId,
-            videoPlayer,
-            sidePanel,
-            receivedTabs,
-            loadedSubtitles,
-            syncedVideoElement,
-        }: AsbplayerHeartbeatMessage
+        { id: asbplayerId, videoPlayer, receivedTabs, loadedSubtitles, syncedVideoElement }: AsbplayerHeartbeatMessage
     ) {
         this._updateAsbplayers(
             tab,
             asbplayerId,
             videoPlayer,
-            sidePanel ?? false,
             loadedSubtitles ?? false,
             receivedTabs,
             syncedVideoElement
@@ -225,13 +205,12 @@ export default class TabRegistry {
 
     async onAsbplayerAckTabs(
         tab: Browser.tabs.Tab | undefined,
-        { id: asbplayerId, videoPlayer, sidePanel, loadedSubtitles, receivedTabs, syncedVideoElement }: AckTabsMessage
+        { id: asbplayerId, videoPlayer, loadedSubtitles, receivedTabs, syncedVideoElement }: AckTabsMessage
     ) {
         this._updateAsbplayers(
             tab,
             asbplayerId,
             videoPlayer,
-            sidePanel ?? false,
             loadedSubtitles ?? false,
             receivedTabs,
             syncedVideoElement
@@ -242,7 +221,6 @@ export default class TabRegistry {
         tab: Browser.tabs.Tab | undefined,
         asbplayerId: string,
         videoPlayer: boolean,
-        sidePanel: boolean,
         loadedSubtitles: boolean,
         receivedTabs: VideoTabModel[] | undefined,
         syncedVideoElement: VideoTabModel | undefined
@@ -262,7 +240,6 @@ export default class TabRegistry {
                 id: asbplayerId,
                 timestamp: Date.now(),
                 receivedTabs,
-                sidePanel,
                 loadedSubtitles,
                 videoPlayer,
                 syncedVideoElement,
@@ -303,7 +280,6 @@ export default class TabRegistry {
             asbplayerInstances.push({
                 id: asbplayer.id,
                 tabId: asbplayer.tab?.id,
-                sidePanel: asbplayer.sidePanel ?? false,
                 timestamp: asbplayer.timestamp,
                 videoPlayer: asbplayer.videoPlayer,
             });
@@ -413,8 +389,6 @@ export default class TabRegistry {
         try {
             if (asbplayer.tab?.id !== undefined) {
                 await browser.tabs.sendMessage(asbplayer.tab.id, command);
-            } else if (asbplayer.sidePanel) {
-                await browser.runtime.sendMessage(command);
             }
         } catch (e) {
             // Swallow as this usually only indicates that the tab is not an asbplayer tab
@@ -479,10 +453,7 @@ export default class TabRegistry {
 
         for (const id in asbplayers) {
             const asbplayer = asbplayers[id];
-
-            if (!asbplayer.sidePanel) {
-                ++asbplayerTabCount;
-            }
+            ++asbplayerTabCount;
 
             if (filter === undefined || filter(asbplayer)) {
                 const elapsed = now - asbplayer.timestamp;

@@ -32,7 +32,6 @@ export interface MessageWithId extends Message {
 export interface AsbplayerInstance {
     id: string;
     tabId?: number;
-    sidePanel: boolean;
     timestamp: number;
     videoPlayer: boolean;
 }
@@ -42,7 +41,6 @@ export interface AsbplayerHeartbeatMessage extends Message {
     readonly id: string;
     readonly receivedTabs?: VideoTabModel[];
     readonly videoPlayer: boolean;
-    readonly sidePanel?: boolean;
     readonly loadedSubtitles?: boolean;
     readonly syncedVideoElement?: VideoTabModel;
 }
@@ -52,7 +50,6 @@ export interface AckTabsMessage extends Message {
     readonly id: string;
     readonly receivedTabs: VideoTabModel[];
     readonly videoPlayer: boolean;
-    readonly sidePanel?: boolean;
     readonly loadedSubtitles?: boolean;
     readonly syncedVideoElement?: VideoTabModel;
 }
@@ -455,14 +452,6 @@ export interface RequestingActiveTabPermsisionMessage extends Message {
 
 export interface GrantedActiveTabPermissionMessage extends Message {
     readonly command: 'granted-active-tab-permission';
-}
-
-export interface ToggleSidePanelMessage extends Message {
-    readonly command: 'toggle-side-panel';
-}
-
-export interface CloseSidePanelMessage extends Message {
-    readonly command: 'close-side-panel';
 }
 
 export interface ForwardCommandMessage extends Message {

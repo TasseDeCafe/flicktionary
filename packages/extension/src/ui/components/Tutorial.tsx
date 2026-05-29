@@ -25,7 +25,6 @@ const tabRegistry = new TabRegistry(settingsProvider);
 const zIndexTop = 2147483648;
 
 const useExtensionState = () => {
-    const [sidePanelOpen, setSidePanelOpen] = useState<boolean>();
     const [loadedSubtitlesCount, setLoadedSubtitlesCount] = useState<number>();
     const [currentTabId, setCurrentTabId] = useState<number>();
     useEffect(() => {
@@ -33,13 +32,6 @@ const useExtensionState = () => {
     }, []);
     useEffect(() => {
         const interval = setInterval(() => {
-            tabRegistry
-                .findAsbplayer({
-                    filter: (asbplayer) => asbplayer.sidePanel ?? false,
-                    allowTabCreation: false,
-                })
-                .then((asbplayer) => setSidePanelOpen(asbplayer !== undefined));
-
             tabRegistry.activeVideoElements().then(async (elems) => {
                 const currentElem = elems.find((elem) => elem.id === currentTabId && elem.synced);
 
@@ -62,13 +54,12 @@ const useExtensionState = () => {
         }, 1000);
         return () => clearInterval(interval);
     }, [currentTabId]);
-    return { sidePanelOpen, loadedSubtitlesCount };
+    return { loadedSubtitlesCount };
 };
 
 enum Step {
     toolbar = 1,
     loadSubtitles = 2,
-    sidePanel = 3,
     overlay = 4,
     overlayScrollControl = 5,
     almostDone = 6,
@@ -134,24 +125,6 @@ const LoadSubtitlesDialog: React.FC<{ open: boolean; count?: number; onClose: ()
                 </DialogActions>
             )}
         </Dialog>
-    );
-};
-
-const SidePanelBubble: React.FC<{ show: boolean; onConfirm: () => void }> = ({ show, onConfirm }) => {
-    return (
-        <TutorialBubble
-            show={show}
-            placement="left"
-            text={
-                <Trans
-                    i18nKey="ftue.sidePanel"
-                    components={[<b key={0}>Side Panel</b>, <b key={1}>navigate</b>, <b key={2}>mine</b>]}
-                />
-            }
-            onConfirm={onConfirm}
-        >
-            <div style={{ position: 'absolute', right: 0, top: '10%' }} />
-        </TutorialBubble>
     );
 };
 
@@ -240,7 +213,7 @@ const FinishedDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open
 };
 
 const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, show }) => {
-    const { sidePanelOpen, loadedSubtitlesCount } = useExtensionState();
+    const { loadedSubtitlesCount } = useExtensionState();
     const [step, setStep] = useState<Step>(Step.toolbar);
 
     useEffect(() => {
@@ -251,9 +224,9 @@ const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, s
 
     useEffect(() => {
         if (step === Step.loadSubtitles && loadedSubtitlesCount !== undefined) {
-            setStep(sidePanelOpen ? Step.sidePanel : Step.overlay);
+            setStep(Step.overlay);
         }
-    }, [step, sidePanelOpen, loadedSubtitlesCount]);
+    }, [step, loadedSubtitlesCount]);
 
     useEffect(() => {
         if (step == Step.overlay) {
@@ -340,7 +313,6 @@ const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, s
                 </Fade>
             )}
             <ToolbarBubble show={show && step === Step.toolbar} onConfirm={() => setStep(Step.loadSubtitles)} />
-            <SidePanelBubble show={show && step === Step.sidePanel} onConfirm={() => setStep(Step.overlay)} />
             <LoadSubtitlesDialog
                 open={show && step === Step.loadSubtitles && showLoadSubtitles}
                 count={loadedSubtitlesCount}
