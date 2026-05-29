@@ -13,7 +13,6 @@ import {
     AudioTrackModel,
     ConfirmedVideoDataSubtitleTrack,
     PlayMode,
-    CardModel,
     MobileOverlayModel,
     VideoTabModel,
     RichSubtitleModel,
@@ -80,19 +79,6 @@ export interface HttpPostMessage extends MessageWithId {
     readonly body: any;
 }
 
-export interface EncodeMp3Message extends MessageWithId {
-    readonly command: 'encode-mp3';
-    readonly messageId: string;
-    readonly base64: string;
-    readonly extension: string;
-}
-
-export interface EncodeMp3InServiceWorkerMessage extends Message {
-    readonly command: 'encode-mp3';
-    readonly base64: string;
-    readonly extension: string;
-}
-
 export interface SettingsUpdatedMessage extends Message {
     readonly command: 'settings-updated';
 }
@@ -106,18 +92,6 @@ export interface ImageCaptureParams {
 
 export interface TakeScreenshotMessage extends Message {
     readonly command: 'take-screenshot';
-}
-
-export interface TakeScreenshotToVideoPlayerMessage extends Message {
-    readonly command: 'takeScreenshot';
-}
-
-export interface RecordingStartedMessage extends Message {
-    readonly command: 'recording-started';
-}
-
-export interface RecordingFinishedMessage extends Message {
-    readonly command: 'recording-finished';
 }
 
 export interface ToggleRecordingMessage extends Message {
@@ -328,74 +302,6 @@ export interface CropAndResizeMessage extends Message, ImageCaptureParams {
     readonly dataUrl: string;
 }
 
-export interface StartRecordingAudioWithTimeoutMessage extends Message {
-    readonly command: 'start-recording-audio-with-timeout';
-    readonly timeout: number;
-    readonly streamId: string;
-    readonly requestId: string;
-    readonly encodeAsMp3: boolean;
-}
-
-export interface StartRecordingAudioWithTimeoutViaCaptureStreamMessage extends Message {
-    readonly command: 'start-recording-audio-with-timeout';
-    readonly timeout: number;
-    readonly requestId: string;
-    readonly encodeAsMp3: boolean;
-}
-
-export interface StartRecordingAudioMessage extends Message {
-    readonly command: 'start-recording-audio';
-    readonly streamId: string;
-    readonly requestId: string;
-}
-
-export interface StartRecordingAudioViaCaptureStreamMessage extends Message {
-    readonly command: 'start-recording-audio';
-    readonly requestId: string;
-}
-
-export interface StopRecordingAudioMessage extends Message {
-    readonly command: 'stop-recording-audio';
-    readonly encodeAsMp3: boolean;
-}
-
-export enum StartRecordingErrorCode {
-    noActiveTabPermission = 1,
-    drmProtected = 2,
-    other = 3,
-}
-
-export interface StartRecordingResponse {
-    started: boolean;
-    error?: {
-        code: StartRecordingErrorCode;
-        message: string;
-    };
-}
-
-export enum StopRecordingErrorCode {
-    timedAudioRecordingInProgress = 1,
-    other = 2,
-}
-
-export interface StopRecordingResponse {
-    stopped: boolean;
-    error?: {
-        code: StopRecordingErrorCode;
-        message: string;
-    };
-}
-
-export interface BackgroundPageReadyMessage extends Message {
-    readonly command: 'background-page-ready';
-}
-
-export interface AudioBase64Message extends Message {
-    readonly command: 'audio-base64';
-    readonly base64: string;
-    readonly requestId: string;
-}
-
 export interface EditKeyboardShortcutsMessage extends Message {
     readonly command: 'edit-keyboard-shortcuts';
 }
@@ -482,14 +388,6 @@ export interface JumpToSubtitleMessage extends Message {
     readonly command: 'jump-to-subtitle';
     readonly subtitle: SubtitleModel;
     readonly subtitleFileName: string;
-}
-
-export interface DownloadImageMessage extends Message, CardModel {
-    readonly command: 'download-image';
-}
-
-export interface DownloadAudioMessage extends Message, CardModel {
-    readonly command: 'download-audio';
 }
 
 export interface NotifyErrorMessage extends Message {

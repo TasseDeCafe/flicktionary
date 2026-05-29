@@ -267,6 +267,23 @@ runtime reader (only the type, provider default, strict schema, and test fixture
 the now-orphaned `PostMinePlayback` enum in `src/model.ts`). tsc baseline held at 8,
 `settings-import-export` stayed 5/5, build stayed at 6.96 MB.
 
+**Landed since (2026-05, dead message-contract types — see `REMAINING-CLEANUP-PLAN.md`
+item 3):** removed orphaned message interfaces from `asbplayer-common/src/message.ts`
+that were defined but never constructed, sent, or handled (verified by repo-wide grep of
+both the type name and the command-string literal, incl. `apps/`): the recording/audio
+cluster `RecordingStartedMessage`, `RecordingFinishedMessage`, `EncodeMp3Message`,
+`EncodeMp3InServiceWorkerMessage`, `StartRecordingAudioMessage`(+`ViaCaptureStream`),
+`StartRecordingAudioWithTimeoutMessage`(+`ViaCaptureStream`), `StopRecordingAudioMessage`,
+`StartRecordingResponse`/`StopRecordingResponse` (+ the `StartRecordingErrorCode`/
+`StopRecordingErrorCode` enums), `BackgroundPageReadyMessage`, `AudioBase64Message`,
+`TakeScreenshotToVideoPlayerMessage` (the dead `'takeScreenshot'` camelCase variant), and
+the `DownloadImageMessage`/`DownloadAudioMessage` pair (the last `CardModel` importers in
+`message.ts` — dropped the now-unused `CardModel` import; `CardModel` itself stays, still
+used by `image.ts`). **Kept** `TakeScreenshotMessage` (`'take-screenshot'`) and
+`ToggleRecordingMessage` (`'toggle-recording'`) — both command literals are still
+dispatched in `video-select-controller.ts`'s open-dialog switch. tsc baseline held at 8,
+`settings-import-export` 5/5, build 6.96 MB.
+
 Still deferred:
 
 - **Deep `dictionary-db` removal** — requires rewiring profile management off
