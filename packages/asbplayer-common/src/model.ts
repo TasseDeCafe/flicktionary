@@ -98,26 +98,6 @@ export interface AudioModel {
 
 export type AnkiExportMode = 'gui' | 'updateLast' | 'default';
 
-export interface AnkiUiSavedState {
-    subtitle: SubtitleModel;
-    surroundingSubtitles: SubtitleModel[];
-    text: string;
-    definition: string;
-    image?: ImageModel;
-    audio?: AudioModel;
-    file?: FileModel;
-    word: string;
-    source: string;
-    url: string;
-    customFieldValues: { [key: string]: string };
-    timestampInterval: number[];
-    initialTimestampInterval: number[];
-    timestampBoundaryInterval?: number[];
-    lastAppliedTimestampIntervalToText: number[];
-    lastAppliedTimestampIntervalToAudio?: number[];
-    dialogRequestedTimestamp: number;
-}
-
 export interface VideoDataSubtitleTrackDef {
     label: string;
     language?: string;
@@ -191,13 +171,6 @@ export interface AudioTrackModel {
     id: string;
     label: string;
     language: string;
-}
-
-export enum PostMineAction {
-    none = 0,
-    showAnkiDialog = 1,
-    updateLastCard = 2,
-    exportCard = 3,
 }
 
 export enum PostMinePlayback {

@@ -1,6 +1,5 @@
 import type {
     ApplyStrategy,
-    AsbplayerSettings,
     MiscSettings,
     PageSettings,
     SettingsFormPageConfig,
@@ -8,20 +7,15 @@ import type {
     TokenState,
     TokenStatus,
 } from '../settings/settings';
-import type { GlobalState } from '../global-state';
 import {
     RectModel,
     SubtitleModel,
     AudioTrackModel,
-    AnkiUiSavedState,
     ConfirmedVideoDataSubtitleTrack,
-    PostMineAction,
     PlayMode,
     CardModel,
-    CardTextFieldValues,
     MobileOverlayModel,
     VideoTabModel,
-    CopyHistoryItem,
     RichSubtitleModel,
 } from './model';
 import { AsbPlayerToVideoCommandV2 } from './command';
@@ -113,108 +107,12 @@ export interface ImageCaptureParams {
     readonly frameId?: string;
 }
 
-export interface RecordMediaAndForwardSubtitleMessage extends Message, CardTextFieldValues, ImageCaptureParams {
-    readonly command: 'record-media-and-forward-subtitle';
-    readonly subtitle: SubtitleModel;
-    readonly surroundingSubtitles: SubtitleModel[];
-    readonly url?: string;
-    readonly subtitleFileName: string;
-    readonly record: boolean;
-    readonly screenshot: boolean;
-    readonly postMineAction: PostMineAction;
-    readonly audioPaddingStart: number;
-    readonly audioPaddingEnd: number;
-    readonly imageDelay: number;
-    readonly playbackRate: number;
-    readonly mediaTimestamp: number;
-    readonly isBulkExport?: boolean;
-}
-
-export interface StartRecordingMediaMessage extends Message, ImageCaptureParams {
-    readonly command: 'start-recording-media';
-    readonly record: boolean;
-    readonly mediaTimestamp: number;
-    readonly screenshot: boolean;
-    readonly postMineAction: PostMineAction;
-    readonly imageDelay: number;
-    readonly url?: string;
-    readonly subtitleFileName: string;
-}
-
-export interface StopRecordingMediaMessage extends Message, ImageCaptureParams {
-    readonly command: 'stop-recording-media';
-    readonly postMineAction: PostMineAction;
-    readonly startTimestamp: number;
-    readonly endTimestamp: number;
-    readonly playbackRate: number;
-    readonly screenshot: boolean;
-    readonly videoDuration: number;
-    readonly url?: string;
-    readonly subtitleFileName: string;
-    readonly subtitle?: SubtitleModel;
-    readonly surroundingSubtitles?: SubtitleModel[];
-}
-
-export interface CopyMessage extends Message, CardModel {
-    readonly command: 'copy';
-    readonly postMineAction?: PostMineAction;
-}
-
-export interface PublishCardMessage extends Message, CardModel {
-    readonly command: 'publish-card';
-}
-
-export interface CopyToVideoMessage extends Message, CardTextFieldValues {
-    readonly command: 'copy';
-    readonly postMineAction: PostMineAction;
-    readonly subtitle?: SubtitleModel;
-    readonly surroundingSubtitles?: SubtitleModel[];
-}
-
-export interface CopySubtitleMessage extends Message, CardTextFieldValues {
-    readonly command: 'copy-subtitle';
-    readonly postMineAction: PostMineAction;
-    readonly subtitle?: SubtitleModel;
-    readonly surroundingSubtitles?: SubtitleModel[];
-    readonly isBulkExport?: boolean;
-}
-
-export interface CopySubtitleWithAdditionalFieldsMessage extends Message, CardTextFieldValues {
-    readonly command: 'copy-subtitle-with-additional-fields';
-    readonly postMineAction: PostMineAction;
-}
-
 export interface TakeScreenshotMessage extends Message {
     readonly command: 'take-screenshot';
 }
 
-export interface TakeScreenshotFromExtensionMessage extends Message, ImageCaptureParams {
-    readonly command: 'take-screenshot';
-    readonly ankiUiState?: AnkiUiSavedState;
-    readonly subtitleFileName: string;
-    readonly mediaTimestamp: number;
-}
-
 export interface TakeScreenshotToVideoPlayerMessage extends Message {
     readonly command: 'takeScreenshot';
-}
-
-export interface CardUpdatedDialogMessage extends Message {
-    readonly command: 'card-updated-dialog';
-}
-
-export interface CardExportedDialogMessage extends Message {
-    readonly command: 'card-exported-dialog';
-}
-
-export interface CardSavedMessage extends Message, CardModel {
-    readonly command: 'card-saved';
-    readonly cardName: string;
-}
-
-export interface ScreenshotTakenMessage extends Message {
-    readonly command: 'screenshot-taken';
-    readonly ankiUiState?: AnkiUiSavedState;
 }
 
 export interface RecordingStartedMessage extends Message {
@@ -223,17 +121,6 @@ export interface RecordingStartedMessage extends Message {
 
 export interface RecordingFinishedMessage extends Message {
     readonly command: 'recording-finished';
-}
-
-export interface RerecordMediaMessage extends Message {
-    readonly command: 'rerecord-media';
-    readonly duration: number;
-    readonly uiState: AnkiUiSavedState;
-    readonly audioPaddingStart: number;
-    readonly audioPaddingEnd: number;
-    readonly playbackRate: number;
-    readonly timestamp: number;
-    readonly subtitleFileName: string;
 }
 
 export interface ToggleRecordingMessage extends Message {
@@ -578,49 +465,6 @@ export interface CloseSidePanelMessage extends Message {
     readonly command: 'close-side-panel';
 }
 
-export interface GetSettingsMessage extends MessageWithId {
-    readonly command: 'get-settings';
-    readonly keysAndDefaults: Partial<AsbplayerSettings>;
-}
-
-export interface SetSettingsMessage extends MessageWithId {
-    readonly command: 'set-settings';
-    readonly settings: Partial<AsbplayerSettings>;
-}
-
-export interface GetActiveProfileMessage extends MessageWithId {
-    readonly command: 'get-active-profile';
-}
-
-export interface SetActiveProfileMessage extends MessageWithId {
-    readonly command: 'set-active-profile';
-    readonly name: string | undefined;
-}
-
-export interface GetProfilesMessage extends MessageWithId {
-    readonly command: 'get-profiles';
-}
-
-export interface AddProfileMessage extends MessageWithId {
-    readonly command: 'add-profile';
-    readonly name: string;
-}
-
-export interface RemoveProfileMessage extends MessageWithId {
-    readonly command: 'remove-profile';
-    readonly name: string;
-}
-
-export interface GetGlobalStateMessage extends MessageWithId {
-    readonly command: 'get-global-state';
-    readonly keys?: (keyof GlobalState)[];
-}
-
-export interface SetGlobalStateMessage extends MessageWithId {
-    readonly command: 'set-global-state';
-    readonly state: Partial<GlobalState>;
-}
-
 export interface ForwardCommandMessage extends Message {
     readonly command: 'forward-command';
     readonly commandToForward: AsbPlayerToVideoCommandV2<Message>;
@@ -685,29 +529,6 @@ export interface NotificationDialogMessage extends Message {
 
 export interface HiddenMessage extends Message {
     readonly command: 'hidden';
-}
-
-export interface RequestCopyHistoryMessage extends MessageWithId {
-    readonly command: 'request-copy-history';
-    readonly count: number;
-}
-
-export interface RequestCopyHistoryResponse {
-    readonly copyHistoryItems: CopyHistoryItem[];
-}
-
-export interface SaveCopyHistoryMessage extends MessageWithId {
-    readonly command: 'save-copy-history';
-    readonly copyHistoryItems: CopyHistoryItem[];
-}
-
-export interface DeleteCopyHistoryMessage extends MessageWithId {
-    readonly command: 'delete-copy-history';
-    readonly ids: string[];
-}
-
-export interface ClearCopyHistoryMessage extends MessageWithId {
-    readonly command: 'clear-copy-history';
 }
 
 export interface DictionaryGetBulkMessage extends MessageWithId {
