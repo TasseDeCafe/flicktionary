@@ -30,9 +30,6 @@ export interface DictionaryStorage {
         records: Partial<DictionaryTokenRecord>[],
         profiles: string[]
     ) => Promise<DictionaryImportRecordLocalResult>;
-    ankiCardWasModified: () => void;
-    onAnkiCardModified: (callback: () => void) => () => void;
-    _removeCallback(callback: Function, callbacks: Function[]): void;
 }
 
 export class DictionaryProvider {
@@ -77,13 +74,5 @@ export class DictionaryProvider {
 
     importRecordLocalBulk(records: Partial<DictionaryTokenRecord>[], profiles: string[]) {
         return this._storage.importRecordLocalBulk(records, profiles);
-    }
-
-    ankiCardWasModified() {
-        return this._storage.ankiCardWasModified();
-    }
-
-    onAnkiCardModified(callback: () => void) {
-        return this._storage.onAnkiCardModified(callback);
     }
 }

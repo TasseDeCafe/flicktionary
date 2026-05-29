@@ -1,6 +1,4 @@
 import {
-    CardExportedDialogMessage,
-    CardUpdatedDialogMessage,
     DictionaryDBCommand,
     DictionaryDeleteProfileMessage,
     DictionaryDeleteRecordLocalBulkMessage,
@@ -15,15 +13,6 @@ import { ApplyStrategy } from '@asbplayer-fork/common/settings';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ExtensionDictionaryStorage implements DictionaryStorage {
-    private ankiCardModifiedCallbacks: (() => void)[];
-    private ankiCardModified?: (
-        message: DictionaryDBCommand<CardUpdatedDialogMessage | CardExportedDialogMessage>
-    ) => void;
-
-    constructor() {
-        this.ankiCardModifiedCallbacks = [];
-    }
-
     getBulk(profile: string | undefined, track: number, tokens: string[]) {
         const message: DictionaryDBCommand<DictionaryGetBulkMessage> = {
             sender: 'asbplayer-dictionary',
@@ -111,44 +100,4 @@ export class ExtensionDictionaryStorage implements DictionaryStorage {
         return browser.runtime.sendMessage(message);
     }
 
-    ankiCardWasModified() {
-        browser.runtime.sendMessage({
-            sender: 'asbplayer-dictionary',
-            message: { command: 'card-updated-dialog' },
-        } as DictionaryDBCommand<CardUpdatedDialogMessage>);
-    }
-
-    onAnkiCardModified(callback: () => void) {
-        this.ankiCardModifiedCallbacks.push(callback);
-        if (!this.ankiCardModified) {
-            this.ankiCardModified = (
-                message: DictionaryDBCommand<CardUpdatedDialogMessage | CardExportedDialogMessage>
-            ) => {
-                if (message.sender !== 'asbplayer-dictionary') return;
-                if (
-                    message.message.command !== 'card-updated-dialog' &&
-                    message.message.command !== 'card-exported-dialog'
-                )
-                    return;
-                this.ankiCardModifiedCallbacks.forEach((c) => c());
-            };
-            browser.runtime.onMessage.addListener(this.ankiCardModified);
-        }
-        return () => {
-            this._removeCallback(callback, this.ankiCardModifiedCallbacks);
-            if (!this.ankiCardModifiedCallbacks.length && this.ankiCardModified) {
-                browser.runtime.onMessage.removeListener(this.ankiCardModified);
-                this.ankiCardModified = undefined;
-            }
-        };
-    }
-
-    _removeCallback(callback: Function, callbacks: Function[]) {
-        for (let i = callbacks.length - 1; i >= 0; --i) {
-            if (callback === callbacks[i]) {
-                callbacks.splice(i, 1);
-                break;
-            }
-        }
-    }
 }
