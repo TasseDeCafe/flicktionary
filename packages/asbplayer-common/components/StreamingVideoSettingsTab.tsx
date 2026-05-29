@@ -52,11 +52,6 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
         streamingSubtitleListPreference,
         streamingEnableOverlay,
         streamingDisplaySubtitles,
-        streamingRecordMedia,
-        streamingTakeScreenshot,
-        streamingCleanScreenshot,
-        streamingCropScreenshot,
-        streamingScreenshotDelay,
         streamingSubsDragAndDrop,
         streamingAutoSync,
         streamingAutoSyncPromptOnFailure,
@@ -131,64 +126,6 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
                     }
                     label={t('extension.settings.displaySubtitles')}
                     labelPlacement="start"
-                />
-                <SettingsSection>{t('settings.mining')}</SettingsSection>
-                <SwitchLabelWithHoverEffect
-                    control={
-                        <Switch
-                            checked={streamingRecordMedia}
-                            onChange={(e) => onSettingChanged('streamingRecordMedia', e.target.checked)}
-                        />
-                    }
-                    label={t('extension.settings.recordAudio')}
-                    labelPlacement="start"
-                />
-                <SwitchLabelWithHoverEffect
-                    control={
-                        <Switch
-                            checked={streamingTakeScreenshot}
-                            onChange={(e) => onSettingChanged('streamingTakeScreenshot', e.target.checked)}
-                        />
-                    }
-                    label={t('extension.settings.takeScreenshot')}
-                    labelPlacement="start"
-                />
-                <SwitchLabelWithHoverEffect
-                    control={
-                        <Switch
-                            checked={streamingCleanScreenshot}
-                            onChange={(e) => onSettingChanged('streamingCleanScreenshot', e.target.checked)}
-                        />
-                    }
-                    label={t('extension.settings.cleanScreenshot')}
-                    labelPlacement="start"
-                />
-                <SwitchLabelWithHoverEffect
-                    control={
-                        <Switch
-                            checked={streamingCropScreenshot}
-                            onChange={(e) => onSettingChanged('streamingCropScreenshot', e.target.checked)}
-                        />
-                    }
-                    label={t('extension.settings.cropScreenshot')}
-                    labelPlacement="start"
-                />
-                <SettingsTextField
-                    type="number"
-                    color="primary"
-                    fullWidth
-                    label={t('extension.settings.screenshotCaptureDelay')}
-                    value={streamingScreenshotDelay}
-                    onChange={(e) => onSettingChanged('streamingScreenshotDelay', Number(e.target.value))}
-                    slotProps={{
-                        htmlInput: {
-                            min: 0,
-                            step: 1,
-                        },
-                        input: {
-                            endAdornment: <InputAdornment position="end">ms</InputAdornment>,
-                        },
-                    }}
                 />
                 <SettingsSection>{t('settings.subtitles')}</SettingsSection>
                 <SwitchLabelWithHoverEffect

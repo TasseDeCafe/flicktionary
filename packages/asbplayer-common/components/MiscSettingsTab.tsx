@@ -57,7 +57,6 @@ const MiscSettingTab: React.FC<Props> = ({
         language,
         rememberSubtitleOffset,
         autoCopyCurrentSubtitle,
-        miningHistoryStorageLimit,
         subtitleRegexFilter,
         tabName,
         subtitleRegexFilterTextReplacement,
@@ -372,21 +371,6 @@ const MiscSettingTab: React.FC<Props> = ({
                                     </IconButton>
                                 </InputAdornment>
                             ),
-                        },
-                    }}
-                />
-                <SettingsSection>{t('settings.mining')}</SettingsSection>
-                <SettingsTextField
-                    type="number"
-                    label={t('settings.miningHistoryStorageLimit')}
-                    fullWidth
-                    value={miningHistoryStorageLimit}
-                    color="primary"
-                    onChange={(event) => onSettingChanged('miningHistoryStorageLimit', Number(event.target.value))}
-                    slotProps={{
-                        htmlInput: {
-                            min: 0,
-                            step: 1,
                         },
                     }}
                 />
