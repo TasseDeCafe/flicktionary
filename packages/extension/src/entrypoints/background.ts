@@ -29,7 +29,6 @@ import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler';
 import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requesting-active-tab-permission';
 import AckMessageHandler from '@/handlers/video/ack-message-handler';
-import { bindWebSocketClient, unbindWebSocketClient } from '@/services/web-socket-client-binding';
 import { isFirefoxBuild } from '@/services/build-flags';
 import RequestModelHandler from '@/handlers/mobile-overlay/request-model-handler';
 import CurrentTabHandler from '@/handlers/mobile-overlay/current-tab-handler';
@@ -208,20 +207,6 @@ export default defineBackground(() => {
             }
         });
     });
-
-    const updateWebSocketClientState = () => {
-        settings.getSingle('webSocketClientEnabled').then((webSocketClientEnabled) => {
-            if (webSocketClientEnabled) {
-                bindWebSocketClient(settings, tabRegistry);
-            } else {
-                unbindWebSocketClient();
-            }
-        });
-    };
-
-    updateWebSocketClientState();
-    tabRegistry.onAsbplayerInstance(updateWebSocketClientState);
-    tabRegistry.onSyncedElement(updateWebSocketClientState);
 
     const action = browser.action || browser.browserAction;
 

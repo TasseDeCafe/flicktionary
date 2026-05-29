@@ -8,7 +8,6 @@ import {
 import TabRegistry from '../../services/tab-registry';
 import { SettingsProvider } from '@asbplayer-fork/common/settings';
 import { primeLocalization } from '../../services/localization-fetcher';
-import { bindWebSocketClient, unbindWebSocketClient } from '../../services/web-socket-client-binding';
 
 export default class RefreshSettingsHandler {
     private readonly _tabRegistry: TabRegistry;
@@ -33,17 +32,9 @@ export default class RefreshSettingsHandler {
     }
 
     handle(command: Command<Message>, sender: Browser.runtime.MessageSender) {
-        this._settingsProvider
-            .get(['language', 'webSocketClientEnabled'])
-            .then(({ language, webSocketClientEnabled }) => {
-                primeLocalization(language);
-
-                if (webSocketClientEnabled) {
-                    bindWebSocketClient(this._settingsProvider, this._tabRegistry);
-                } else {
-                    unbindWebSocketClient();
-                }
-            });
+        this._settingsProvider.getSingle('language').then((language) => {
+            primeLocalization(language);
+        });
         this._tabRegistry.publishCommandToVideoElements((videoElement) => {
             const settingsUpdatedCommand: ExtensionToVideoCommand<SettingsUpdatedMessage> = {
                 sender: 'asbplayer-extension-to-video',

@@ -15,10 +15,6 @@ import { AsbplayerSettings, exportSettings, PauseOnHoverMode, validateSettings }
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SubtitleHtml } from '..';
-import { WebSocketClient } from '../web-socket-client';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SettingsSection from './SettingsSection';
@@ -63,41 +59,11 @@ const MiscSettingTab: React.FC<Props> = ({
         subtitleHtml,
         convertNetflixRuby,
         pauseOnHoverMode,
-        webSocketClientEnabled,
-        webSocketServerUrl,
         wordClickEnabled,
         transcriptServerUrl,
         transcriptApiKey,
     } = settings;
     const validRegex = useMemo(() => regexIsValid(subtitleRegexFilter), [subtitleRegexFilter]);
-    const [webSocketConnectionSucceeded, setWebSocketConnectionSucceeded] = useState<boolean>();
-    const pingWebSocketServer = useCallback(() => {
-        const client = new WebSocketClient();
-        client
-            .bind(webSocketServerUrl)
-            .then(() => client.ping())
-            .then(() => setWebSocketConnectionSucceeded(true))
-            .catch((e) => {
-                console.error(e);
-                setWebSocketConnectionSucceeded(false);
-            })
-            .finally(() => client.unbind());
-    }, [webSocketServerUrl]);
-    useEffect(() => {
-        if (webSocketClientEnabled && webSocketServerUrl) {
-            pingWebSocketServer();
-        }
-    }, [pingWebSocketServer, webSocketClientEnabled, webSocketServerUrl]);
-
-    let webSocketServerUrlHelperText: string | null | undefined = undefined;
-
-    if (webSocketClientEnabled) {
-        if (webSocketConnectionSucceeded) {
-            webSocketServerUrlHelperText = t('info.connectionSucceeded');
-        } else if (webSocketConnectionSucceeded === false) {
-            webSocketServerUrlHelperText = t('info.connectionFailed');
-        }
-    }
 
     const settingsFileInputRef = useRef<HTMLInputElement>(null);
     const handleSettingsFileInputChange = useCallback(async () => {
@@ -342,38 +308,6 @@ const MiscSettingTab: React.FC<Props> = ({
                         </RadioGroup>
                     </FormControl>
                 )}
-                <SettingsSection>{t('settings.webSocketInterface')}</SettingsSection>
-                <SwitchLabelWithHoverEffect
-                    control={
-                        <Switch
-                            checked={webSocketClientEnabled}
-                            onChange={(e) => onSettingChanged('webSocketClientEnabled', e.target.checked)}
-                        />
-                    }
-                    label={t('settings.webSocketClientEnabled')}
-                    labelPlacement="start"
-                />
-                <SettingsTextField
-                    color="primary"
-                    fullWidth
-                    label={t('settings.webSocketServerUrl')}
-                    value={webSocketServerUrl}
-                    disabled={!webSocketClientEnabled}
-                    onChange={(e) => onSettingChanged('webSocketServerUrl', e.target.value)}
-                    error={webSocketClientEnabled && webSocketConnectionSucceeded === false}
-                    helperText={webSocketServerUrlHelperText}
-                    slotProps={{
-                        input: {
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton onClick={pingWebSocketServer}>
-                                        <RefreshIcon />
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        },
-                    }}
-                />
                 {insideApp && (
                     <SettingsTextField
                         label={t('settings.tabName')}
