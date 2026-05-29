@@ -71,6 +71,10 @@ export default class WordInteractionController {
     private readonly getVideoTitle: () => string;
     private readonly getVideoUrl: () => string;
     private readonly getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined;
+    // Returns a reason string when saving is disabled for the current video
+    // (e.g. its subtitles are in an unsupported language), or undefined when
+    // saving is allowed. Hover-gloss stays available regardless.
+    private readonly getFlicktionarySaveDisabledReason: () => string | undefined;
 
     private tooltip: HTMLElement | null = null;
     private tooltipWordElement: HTMLElement | null = null;
@@ -101,12 +105,14 @@ export default class WordInteractionController {
         video: HTMLMediaElement,
         getVideoTitle: () => string,
         getVideoUrl: () => string,
-        getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined = () => undefined
+        getFlicktionaryVideoContext: () => SaveWordFlicktionaryVideoContext | undefined = () => undefined,
+        getFlicktionarySaveDisabledReason: () => string | undefined = () => undefined
     ) {
         this.video = video;
         this.getVideoTitle = getVideoTitle;
         this.getVideoUrl = getVideoUrl;
         this.getFlicktionaryVideoContext = getFlicktionaryVideoContext;
+        this.getFlicktionarySaveDisabledReason = getFlicktionarySaveDisabledReason;
 
         this.boundHandlers = {
             mouseEnter: this._handleMouseEnter.bind(this),
@@ -641,12 +647,25 @@ export default class WordInteractionController {
         return await browser.runtime.sendMessage(message);
     }
 
+    // Show a styled toast from outside the controller (e.g. the binding's
+    // video-load handler surfacing an "unsupported language" notice).
+    showNotice(text: string, isError = false) {
+        this._showNotification(text, isError);
+    }
+
     private async _saveWord(
         word: string,
         sentence: string,
         translation: string,
         segmentInfo?: SegmentInfo
     ) {
+        const saveDisabledReason = this.getFlicktionarySaveDisabledReason();
+        if (saveDisabledReason) {
+            this._showNotification(saveDisabledReason, true);
+            this._clearSelection();
+            return;
+        }
+
         const message: TabToExtensionCommand<SaveWordMessage> = {
             sender: 'asbplayer-video-tab',
             message: {

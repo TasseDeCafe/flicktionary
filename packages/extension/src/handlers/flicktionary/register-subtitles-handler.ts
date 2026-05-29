@@ -8,7 +8,7 @@ import type {
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client';
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage';
 import { storeFlicktionarySession } from '../../services/flicktionary/youtube-session-cache';
-import { getFlicktionaryTargetLanguage } from '../../services/flicktionary/flicktionary-target-language';
+import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error';
 
 // Receives the parsed subtitle payload at video-load time, creates (or fetches)
 // the Flicktionary session, and caches the segment-index → text_segments.id
@@ -40,21 +40,13 @@ export default class RegisterFlicktionarySubtitlesHandler {
                     sendResponse({ success: false, error: 'Not paired with Flicktionary' });
                     return;
                 }
-                const targetLanguage = await getFlicktionaryTargetLanguage();
-                if (!targetLanguage) {
-                    sendResponse({ success: false, error: 'Target language not configured' });
-                    return;
-                }
 
                 const client = getFlicktionaryApiClient();
                 const { data } = await client.studySessions.findOrCreateForYoutubeVideo({
                     youtubeVideoId: message.youtubeVideoId,
                     videoTitle: message.videoTitle,
                     videoUrl: message.videoUrl,
-                    videoAudioLanguage: message.videoAudioLanguage,
-                    targetLanguage,
                     subtitles: {
-                        language: message.subtitleLanguage,
                         contentHash: message.contentHash,
                         segments: message.segments.map((s) => ({ ...s })),
                     },
@@ -73,10 +65,11 @@ export default class RegisterFlicktionarySubtitlesHandler {
 
                 sendResponse({ success: true, sessionId: data.sessionId });
             } catch (error) {
-                sendResponse({
-                    success: false,
-                    error: error instanceof Error ? error.message : 'register-flicktionary-subtitles failed',
-                });
+                const { code, message: errorMessage } = extractFlicktionaryApiError(
+                    error,
+                    'register-flicktionary-subtitles failed'
+                );
+                sendResponse({ success: false, code, error: errorMessage });
             }
         })();
 

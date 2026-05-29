@@ -6,8 +6,8 @@ import {
     lookupFlicktionarySession,
     storeFlicktionarySession,
 } from '../../services/flicktionary/youtube-session-cache';
-import { getFlicktionaryTargetLanguage } from '../../services/flicktionary/flicktionary-target-language';
 import { incrementFlicktionarySessionHighlightCount } from '../../services/flicktionary/session-highlight-counter';
+import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error';
 
 // Saves a word-click / chunk selection as a Flicktionary highlight.
 //
@@ -32,10 +32,8 @@ export default class SaveWordHandler {
                 await this._saveToFlicktionary(message);
                 sendResponse({ success: true });
             } catch (error) {
-                sendResponse({
-                    success: false,
-                    error: error instanceof Error ? error.message : 'Failed to save to Flicktionary',
-                });
+                const { message: errorMessage } = extractFlicktionaryApiError(error, 'Failed to save to Flicktionary');
+                sendResponse({ success: false, error: errorMessage });
             }
         })();
 
@@ -66,18 +64,11 @@ export default class SaveWordHandler {
         let cached = await lookupFlicktionarySession(videoCtx.youtubeVideoId, videoCtx.contentHash);
 
         if (!cached) {
-            const targetLanguage = await getFlicktionaryTargetLanguage();
-            if (!targetLanguage) {
-                throw new Error('Set your target language on flicktionary.app.');
-            }
             const { data } = await client.studySessions.findOrCreateForYoutubeVideo({
                 youtubeVideoId: videoCtx.youtubeVideoId,
                 videoTitle: videoCtx.videoTitle,
                 videoUrl: videoCtx.videoUrl,
-                videoAudioLanguage: videoCtx.videoAudioLanguage,
-                targetLanguage,
                 subtitles: {
-                    language: videoCtx.subtitleLanguage,
                     contentHash: videoCtx.contentHash,
                     segments: videoCtx.segments.map((s) => ({ ...s })),
                 },

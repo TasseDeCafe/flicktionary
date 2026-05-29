@@ -15,6 +15,26 @@ import { ProcessingJobsRepositoryInterface } from '../../transport/database/proc
 import { HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
+import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
+import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+
+// languageDetectionPass reads the first ~1k chars; concatenating a few dozen
+// segments is more than enough to identify the language while keeping the
+// prompt small.
+const DETECTION_SAMPLE_CHARS = 1_000
+
+const buildDetectionSample = (segments: ReadonlyArray<{ text: string }>): string => {
+  const parts: string[] = []
+  let length = 0
+  for (const segment of segments) {
+    const text = segment.text.trim()
+    if (text.length === 0) continue
+    parts.push(text)
+    length += text.length + 1
+    if (length >= DETECTION_SAMPLE_CHARS) break
+  }
+  return parts.join('\n')
+}
 
 const readPosterUrl = (metadata: Record<string, unknown> | null): string | null => {
   const v = metadata?.posterUrl
@@ -232,21 +252,41 @@ export const StudySessionsRouter = (
     findOrCreateForYoutubeVideo: implementer.findOrCreateForYoutubeVideo.handler(
       async ({ input, context, errors }) => {
         const userId = context.res.locals.userId
+
+        // Detect the language from the actual subtitle text. This is the single
+        // source of truth: the detected language is the content language AND the
+        // session target language (study Russian subs → Russian session). The
+        // pass only ever returns a supported ISO-639-1 code or null.
+        const detectedLanguage = await languageDetectionPass(buildDetectionSample(input.subtitles.segments))
+        if (!detectedLanguage) {
+          throw errors.UNPROCESSABLE_ENTITY({
+            data: {
+              errors: [
+                {
+                  code: 'UNSUPPORTED_LANGUAGE',
+                  message: 'These subtitles are not in a language Flicktionary supports yet.',
+                },
+              ],
+            },
+          })
+        }
+
         const [nativeLanguage, prefs] = await Promise.all([
           usersRepository.getNativeLanguage(userId),
-          targetLanguagePrefsRepository.findForLanguage(userId, input.targetLanguage),
+          targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
         ])
-        // The extension only has the target language; native + CEFR live in
-        // user_prefs (set during onboarding). If either is missing we can't
-        // shape an enrichment-ready session — the extension popup prompts the
-        // user to finish setup on flicktionary.app.
+        // native + CEFR live in user_prefs (set during onboarding), keyed by the
+        // language being studied. If either is missing for the detected
+        // language we can't shape an enrichment-ready session — the extension
+        // prompts the user to set their level for that language on
+        // flicktionary.app.
         if (!nativeLanguage || !prefs?.cefr_level) {
           throw errors.UNPROCESSABLE_ENTITY({
             data: {
               errors: [
                 {
                   code: 'MISSING_CEFR',
-                  message: 'User prefs are incomplete; finish onboarding before saving from the extension.',
+                  message: `Set your ${getLanguageName(detectedLanguage)} level on flicktionary.app before saving from the extension.`,
                 },
               ],
             },
@@ -258,21 +298,21 @@ export const StudySessionsRouter = (
           youtubeVideoId: input.youtubeVideoId,
           videoTitle: input.videoTitle,
           videoUrl: input.videoUrl,
-          videoAudioLanguage: input.videoAudioLanguage,
-          subtitleLanguage: input.subtitles.language,
+          videoAudioLanguage: detectedLanguage,
+          subtitleLanguage: detectedLanguage,
           subtitleHash: input.subtitles.contentHash,
           subtitleSegments: input.subtitles.segments,
           nativeLanguage,
-          targetLanguage: input.targetLanguage,
+          targetLanguage: detectedLanguage,
           cefrLevel: prefs.cefr_level,
         })
 
         // Stamp the most-recent target language so adhoc wizards and other
-        // surfaces stay coherent with the extension's choice.
-        void usersRepository.setLastTargetLanguage(userId, input.targetLanguage).catch((error) => {
+        // surfaces stay coherent with what was actually studied.
+        void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
           logWithSentry({
             message: 'setLastTargetLanguage failed (youtube ingest)',
-            params: { userId, targetLanguage: input.targetLanguage },
+            params: { userId, targetLanguage: detectedLanguage },
             error,
           })
         })

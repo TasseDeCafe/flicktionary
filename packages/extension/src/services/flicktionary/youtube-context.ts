@@ -45,6 +45,33 @@ export const getCurrentYoutubeMetadata = (): FlicktionaryYoutubeVideoMetadata | 
     };
 };
 
+// Normalize a YouTube caption-track language code into a displayable BCP-47
+// code. YouTube codes are already BCP-47 (`ru`, `pt-BR`, `zh-Hans`), but this
+// fork mints a synthetic `<target>_from_<source>` code for auto-translated
+// tracks — the text the user reads is `<target>`, so we keep that prefix.
+export const normalizeYoutubeLanguageCode = (code: string | undefined): string | undefined => {
+    if (!code) return undefined;
+    const trimmed = code.trim();
+    if (trimmed.length === 0) return undefined;
+    const fromIndex = trimmed.indexOf('_from_');
+    const normalized = fromIndex === -1 ? trimmed : trimmed.slice(0, fromIndex);
+    return normalized.length > 0 ? normalized : undefined;
+};
+
+// Human-readable English name for a BCP-47 code (`ru` → "Russian",
+// `pt-BR` → "Brazilian Portuguese"), used only to name an unsupported language
+// in a notice. Returns undefined for unknown / unparseable codes.
+export const describeLanguageCode = (code: string | undefined): string | undefined => {
+    if (!code) return undefined;
+    try {
+        const name = new Intl.DisplayNames(['en'], { type: 'language' }).of(code);
+        // Intl returns the input unchanged when it can't resolve the code.
+        return name && name.toLowerCase() !== code.toLowerCase() ? name : undefined;
+    } catch {
+        return undefined;
+    }
+};
+
 // SHA-256 hex digest of the JSON serialization of the (offset-corrected,
 // filter-applied) segments we send to the backend. Same content → same hash →
 // same text_track row server-side, so re-opening the video is idempotent.

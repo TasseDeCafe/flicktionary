@@ -928,8 +928,8 @@ export interface SaveWordFlicktionaryVideoContext {
     readonly youtubeVideoId: string;
     readonly videoTitle: string;
     readonly videoUrl: string;
-    readonly videoAudioLanguage: string;
-    readonly subtitleLanguage: string;
+    // No language fields: the backend detects the subtitle language from the
+    // segment text and uses it as both the content and target language.
     readonly contentHash: string;
     readonly segments: ReadonlyArray<{
         readonly index: number;
@@ -963,8 +963,10 @@ export interface RegisterFlicktionarySubtitlesMessage extends MessageWithId {
     readonly youtubeVideoId: string;
     readonly videoTitle: string;
     readonly videoUrl: string;
-    readonly videoAudioLanguage: string;
-    readonly subtitleLanguage: string;
+    // BCP-47 language code of the selected YouTube caption track, when known.
+    // Display-only: it is NOT sent to the backend (which detects the language
+    // from the text). Used to name the language in the "unsupported" notice.
+    readonly youtubeLanguageCode?: string;
     readonly contentHash: string;
     readonly segments: ReadonlyArray<{
         readonly index: number;
@@ -978,6 +980,9 @@ export interface RegisterFlicktionarySubtitlesResponse {
     readonly success: boolean;
     readonly sessionId?: string;
     readonly error?: string;
+    // Backend error code (e.g. 'UNSUPPORTED_LANGUAGE', 'MISSING_CEFR') so the
+    // binding can react at video-load time — show a notice and disable saving.
+    readonly code?: string;
 }
 
 // Supadata Subtitle Generation Messages

@@ -567,6 +567,7 @@ export default class VideoDataSyncController {
                 }
             }
 
+            this._context.setFlicktionarySubtitleLanguageHint(data.find((track) => track.language)?.language);
             await this._syncSubtitles(
                 subtitles,
                 data.some((track) => typeof track.url === 'object')
@@ -593,6 +594,7 @@ export default class VideoDataSyncController {
                 }
             }
 
+            this._context.setFlicktionarySubtitleLanguageHint(data.find((track) => track.language)?.language);
             await this._syncSubtitles(
                 subtitles,
                 data.some((track) => typeof track.url === 'object'),

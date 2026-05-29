@@ -50,14 +50,17 @@ import {
     IndexedSubtitleModel,
     SaveTokenLocalMessage,
     RegisterFlicktionarySubtitlesMessage,
+    RegisterFlicktionarySubtitlesResponse,
     SaveWordFlicktionaryVideoContext,
 } from '@asbplayer-fork/common';
 type FlicktionaryVideoContext = SaveWordFlicktionaryVideoContext;
 import { v4 as uuidv4 } from 'uuid';
 import {
     computeSubtitlesContentHash,
+    describeLanguageCode,
     getCurrentYoutubeMetadata,
     isYoutubeWatchPage,
+    normalizeYoutubeLanguageCode,
     toFlicktionarySegments,
 } from './flicktionary/youtube-context';
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder';
@@ -167,6 +170,17 @@ export default class Binding {
     // payload — letting the background recover when its session cache is cold.
     private _flicktionaryVideoContext: FlicktionaryVideoContext | undefined;
 
+    // BCP-47 language code of the YouTube caption track the user selected, set
+    // by the video-data-sync flow before subtitles load. Display-only: it names
+    // the language in the "unsupported" notice; the backend detects the real
+    // language from the text.
+    private _flicktionarySubtitleLanguageHint: string | undefined;
+
+    // When set, saving is disabled for the current video (its subtitles are in
+    // an unsupported language) and WordInteractionController surfaces this
+    // reason instead of attempting a save.
+    private _flicktionarySaveDisabledReason: string | undefined;
+
     private copyToClipboardOnMine: boolean;
     private takeScreenshot: boolean;
     private cleanScreenshot: boolean;
@@ -225,7 +239,8 @@ export default class Binding {
             video,
             () => document.title,
             () => window.location.href,
-            () => this._flicktionaryVideoContext
+            () => this._flicktionaryVideoContext,
+            () => this._flicktionarySaveDisabledReason
         );
         this.recordMedia = true;
         this.takeScreenshot = true;
@@ -1415,31 +1430,37 @@ export default class Binding {
         });
     }
 
+    // Called by the video-data-sync flow right before subtitles load, with the
+    // selected YouTube caption track's language code (BCP-47, e.g. 'ru',
+    // 'pt-BR', or this fork's synthetic 'en_from_ru' for auto-translated
+    // tracks). Display-only — used to name the language if the backend reports
+    // it as unsupported.
+    setFlicktionarySubtitleLanguageHint(languageCode: string | undefined) {
+        this._flicktionarySubtitleLanguageHint = normalizeYoutubeLanguageCode(languageCode);
+    }
+
     private async _maybeRegisterFlicktionarySubtitles(subtitles: IndexedSubtitleModel[]) {
         try {
             this._flicktionaryVideoContext = undefined;
+            this._flicktionarySaveDisabledReason = undefined;
             if (!isYoutubeWatchPage()) return;
             if (!subtitles || subtitles.length === 0) return;
             const videoMeta = getCurrentYoutubeMetadata();
             if (!videoMeta) return;
 
-            // asbplayer's IndexedSubtitleModel doesn't carry a track-language
-            // tag (multi-track flattening loses it). The audio language is
-            // unknown without deeper YouTube data sync — for v1 we mirror the
-            // subtitle language onto both, then let server-side enrich
-            // normalize. Same caveat in the save-path fallback.
             const segments = toFlicktionarySegments(subtitles);
             if (segments.length === 0) return;
 
-            const subtitleLanguage = await this._inferFlicktionarySubtitleLanguage();
             const contentHash = await computeSubtitlesContentHash(segments);
+            const youtubeLanguageCode = this._flicktionarySubtitleLanguageHint;
 
+            // No language fields: the backend detects the subtitle language from
+            // the segment text and uses it as both the content and target
+            // language.
             const context: FlicktionaryVideoContext = {
                 youtubeVideoId: videoMeta.youtubeVideoId,
                 videoTitle: videoMeta.videoTitle,
                 videoUrl: videoMeta.videoUrl,
-                videoAudioLanguage: subtitleLanguage,
-                subtitleLanguage,
                 contentHash,
                 segments,
             };
@@ -1453,14 +1474,16 @@ export default class Binding {
                     youtubeVideoId: context.youtubeVideoId,
                     videoTitle: context.videoTitle,
                     videoUrl: context.videoUrl,
-                    videoAudioLanguage: context.videoAudioLanguage,
-                    subtitleLanguage: context.subtitleLanguage,
+                    youtubeLanguageCode,
                     contentHash: context.contentHash,
                     segments: context.segments,
                 },
                 src: this.video.src,
             };
-            browser.runtime.sendMessage(message);
+
+            const response: RegisterFlicktionarySubtitlesResponse | undefined =
+                await browser.runtime.sendMessage(message);
+            this._handleFlicktionaryRegisterResponse(response, youtubeLanguageCode);
         } catch (error) {
             // Don't let registration failures break subtitle rendering — the
             // save path can still cold-start its own findOrCreate call.
@@ -1468,18 +1491,28 @@ export default class Binding {
         }
     }
 
-    // YouTube subtitle language is not directly on IndexedSubtitleModel.
-    // Heuristic: take the streaming-page synced language if available, else
-    // fall back to the user's UI language. Returning a non-empty string is
-    // important — backend validation rejects empty.
-    private async _inferFlicktionarySubtitleLanguage(): Promise<string> {
-        try {
-            const { language } = await this.settings.get(['language']);
-            if (typeof language === 'string' && language.length > 0) return language;
-        } catch {
-            // ignore
+    // Surfaces backend feedback once at video-load time. Only the unsupported
+    // case disables saving outright; missing-prefs is recoverable per-save, so
+    // we just inform and leave saving enabled (the save path re-reports it).
+    private _handleFlicktionaryRegisterResponse(
+        response: RegisterFlicktionarySubtitlesResponse | undefined,
+        youtubeLanguageCode: string | undefined
+    ) {
+        if (!response || response.success) return;
+
+        if (response.code === 'UNSUPPORTED_LANGUAGE') {
+            const languageName = describeLanguageCode(youtubeLanguageCode);
+            const reason = languageName
+                ? `Flicktionary doesn't support ${languageName} subtitles yet — saving is disabled for this video.`
+                : `These subtitles are in a language Flicktionary doesn't support yet — saving is disabled for this video.`;
+            this._flicktionarySaveDisabledReason = reason;
+            this.wordInteractionController.showNotice(reason, true);
+            return;
         }
-        return 'en';
+
+        if (response.code === 'MISSING_CEFR' && response.error) {
+            this.wordInteractionController.showNotice(response.error, true);
+        }
     }
 
     async cropAndResize(tabImageDataUrl: string): Promise<string> {
