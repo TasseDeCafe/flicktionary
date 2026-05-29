@@ -1,23 +1,30 @@
 # Plan: remove the asbplayer web-app integration + finish the Anki teardown
 
-> **STATUS (2026-05-29):** Parts A + B **done** (OPEN APP repointed; App-integration
-> settings surface removed; `asbplayer.content.ts` + `common/app/` +
-> `use-video-element-count.ts` deleted; dead mining/app-bridge message + model types
-> pruned from `message.ts`/`model.ts`). Build green (chrome + firefox 6.97 MB, was
-> 7.04), `@flicktionary/web` build green, tsc 9→8 (same baseline locations), jest at
-> baseline (minus the intentionally-deleted `common/app/.../cached-local-storage.test.ts`).
+> **STATUS (2026-05-29): Parts A–D DONE.** Two of the plan's premises were wrong and
+> were corrected during execution (the App-integration setting actually gated the whole
+> live Streaming Video tab incl. Whisper auto-sync; `AnkiSettings` was a grab-bag with
+> live image/subtitle readers, not app-layer-only). Net result:
 >
-> **Part C is NOT cleanly mechanical — premise was wrong.** Re-verification (which the
-> plan asked for) shows `AnkiSettings` is a grab-bag with **live readers**
-> (`maxImageWidth`/`maxImageHeight` → `binding.ts` cropping;
-> `surroundingSubtitles{Count,Time}Radius` → `binding.ts`/`subtitle-controller.ts`),
-> and `CUSTOMIZATIONS.md §4` already lists it under "Kept deliberately." Wholesale
-> removal would regress live image/subtitle features and the keybinds
-> (`updateLastCard`/`exportCard`/`takeScreenshot` + `key-binder.ts`) are entangled.
-> Doing it right needs a field-extraction refactor (move the 4 live fields out, then
-> delete the dead Anki fields) — deferred. `lastSelectedAnkiExportMode` +
-> `AnkiExportMode` are cleanly dead and could go in a focused follow-up. Part D
-> (`copy-history/`) also deferred. See `CUSTOMIZATIONS.md §6` "Still deferred."
+> - **A:** OPEN APP → `getFlicktionaryConfig().webUrl`; asbplayer App-integration
+>   settings section + `extensionSupportsAppIntegration` removed (Streaming Video tab
+>   now unconditional, its live contents kept).
+> - **B:** `asbplayer.content.ts` + `common/app/` + `use-video-element-count.ts`
+>   deleted; dead mining/app-bridge message + model types pruned.
+> - **C:** `AnkiSettings` → focused `CaptureSettings` (the 4 live fields:
+>   `maxImageWidth`/`maxImageHeight`, `surroundingSubtitles{Count,Time}Radius`); the
+>   dead Anki fields, `lastSelectedAnkiExportMode`/`AnkiExportMode`, Anki-field helpers,
+>   `SettingsProvider` Anki logic, and the dead `updateLastCard`/`exportCard`/
+>   `takeScreenshot` keybinds + handlers removed. The import/export JSON schema keeps
+>   the dead entries for old-export tolerance.
+> - **D:** orphaned `copy-history/` dir + `CopyHistoryItem` deleted.
+>
+> Gates: chrome + firefox builds 7.04 → **6.97 MB**; `@flicktionary/web` build green;
+> tsc **9 → 8** (same baseline locations); jest improved (one fewer failing suite; the
+> remaining failures are pre-existing module-resolution + `wordClickEnabled`-schema).
+> User confirmed no regression on the Part A/B golden path before Part C/D.
+>
+> **Still deferred** (see `CUSTOMIZATIONS.md §6`): deep `dictionary-db` removal (would
+> unlock `anki/` + `audio-clip/`); dead i18n keys (low value).
 
 > **For a fresh thread.** Self-contained. This is the deferred "Removing the web-app
 > integration" follow-up from `CUSTOMIZATIONS.md §6`, plus the finish-off of the Anki
