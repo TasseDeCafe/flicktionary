@@ -102,14 +102,46 @@ Surface to remove inside `asbplayer-common/dictionary-db/dictionary-db.ts`:
   `dictionary-handler.ts`, `extension-dictionary-storage.ts` — none in `extension/src/ui`,
   so the popup/settings React tree does not render card status directly.)
 
+## WebSocket interface — remove (part of the same mining surface)
+
+The Misc-tab "WebSocket interface" (toggle `webSocketClientEnabled`, URL
+`webSocketServerUrl`, default `ws://127.0.0.1:8766/ws`) is an upstream asbplayer automation
+hook: the background opens a WebSocket **client** to a **local server the user runs**, and
+external tools push three commands in. It is **not wanted** for Flicktionary (user-confirmed,
+2026-05) — its `mine-subtitle` handler is built entirely on the Anki field config, so it
+belongs to this teardown. It is **self-contained** (the commands don't touch `dictionary-db`),
+so it can land as its own step.
+
+Surface to delete:
+- `asbplayer-common/web-socket-client/` — `web-socket-client.ts` (the `WebSocketClient`
+  class + the `MineSubtitleCommand`/`LoadSubtitlesCommand`/`SeekTimestampCommand`/`SubtitleFile`
+  types) + `index.ts`.
+- `extension/src/services/web-socket-client-binding.ts` — `bindWebSocketClient` /
+  `unbindWebSocketClient` (the handler that maps `mine-subtitle` onto `ankiSettingsKeys` and
+  dispatches `copy-subtitle`, plus `load-subtitles` → toggle-video-select and
+  `seek-timestamp` → `currentTime`).
+- The `bind/unbind` call sites + the `webSocketClientEnabled` gate in
+  `extension/src/entrypoints/background.ts` (≈213), `…/handlers/popup/refresh-settings-handler.ts`
+  (≈37), `…/handlers/asbplayerv2/settings-updated-handler.ts` (≈34).
+- `asbplayer-common/components/MiscSettingsTab.tsx` — the "WebSocket interface" UI block (the
+  enable switch + server-URL field).
+- The `WebSocketClientSettings` interface (`settings.ts:417`) + its place in the
+  `AsbplayerSettings` union (≈516), the defaults in `settings-provider.ts:198`
+  (`webSocketServerUrl`/`webSocketClientEnabled`), and the `settingsSchema` entry in
+  `settings-import-export.ts:489` — see the unknown-key trap below (same (a)/(b) decision).
+
+Re-grep `web-socket-client`, `WebSocketClient`, `webSocketClientEnabled` after, expecting
+zero reachable hits.
+
 ## Settings — the unknown-key trap (decision required)
 
 These keys exist in `asbplayer-common/settings/settings.ts`:
-`ankiConnectUrl` (line 205, part of `interface AnkiSettings`), and the dictionary group
+`ankiConnectUrl` (line 205, part of `interface AnkiSettings`), the dictionary group
 `dictionaryAnkiDecks`, `dictionaryAnkiWordFields`, `dictionaryAnkiSentenceFields`,
 `dictionaryAnkiSentenceTokenMatchStrategy`, `dictionaryAnkiMatureCutoff`,
-`dictionaryAnkiTreatSuspended` (136–141). `extractAnkiSettings` (327) and the equality map
-(162–165) reference them.
+`dictionaryAnkiTreatSuspended` (136–141), and the WebSocket pair `webSocketServerUrl` /
+`webSocketClientEnabled` (417–419). `extractAnkiSettings` (327) and the equality map
+(162–165) reference the Anki ones.
 
 ⚠️ **`[[reference_settings_schema_unknown_key_trap]]`:** removing a field from
 `AsbplayerSettings` breaks importing an old settings export — `validateSettings` throws on
@@ -127,8 +159,8 @@ unknown keys unless the key stays in `settingsSchema` or in the import `ignoreKe
 
 - `extension/package.json`: drop `@types/dom-mediacapture-record` once `audio-clip/` is gone
   (re-grep `MediaRecorder` first — should be zero hits).
-- `extension/decs.d.ts`: still declares `lamejs` (now fully dead) and `vtt.js` (still used).
-  Remove the `lamejs` line.
+- `extension/decs.d.ts`: already trimmed (the `vtt.js` and `lamejs` ambient decls were
+  removed during the `videojs-vtt.js` swap) — nothing left to do here.
 
 ## Dead i18n (folds in the old plan's Cluster 5)
 
@@ -159,17 +191,20 @@ are fully dead. Low value, noisy 12-file diff. If pursued: delete the specific l
 
 ## Recommended order (commit per step)
 
-1. Remove the extension message/handler plumbing (handler case, storage machinery, provider
+1. Remove the WebSocket interface (self-contained, no `dictionary-db` coupling): the
+   `web-socket-client/` dir, `web-socket-client-binding.ts`, the bind/unbind call sites +
+   gate, and the Misc-tab UI block. Build stays green. (Settings keys handled in step 6.)
+2. Remove the extension message/handler plumbing (handler case, storage machinery, provider
    member, content branch, `message.ts` types) — pure deletions, build stays green.
-2. Refactor `dictionary-db.ts`: strip the read-path `statuses` decoration + delete the
+3. Refactor `dictionary-db.ts`: strip the read-path `statuses` decoration + delete the
    Anki-only methods + remove the import. Keep `states`. Build + tsc + **manual coloring check**.
-3. Dexie `version(2)` dropping `ankiCards` (+ decide on `*cardIds`). **Manual migration test.**
-4. `git rm` `anki/` + `audio-clip/`; drop `@types/dom-mediacapture-record` + the `lamejs`
-   line in `decs.d.ts`; `pnpm install`; full gate.
-5. Settings decision (a) or (b).
-6. (Optional) dead i18n keys.
-7. Update `CUSTOMIZATIONS.md §6` — move "Deep `dictionary-db` removal" from deferred to
-   landed; note Anki is fully gone.
+4. Dexie `version(2)` dropping `ankiCards` (+ decide on `*cardIds`). **Manual migration test.**
+5. `git rm` `anki/` + `audio-clip/`; drop `@types/dom-mediacapture-record`; `pnpm install`;
+   full gate.
+6. Settings decision (a) or (b) — covers the Anki keys **and** the WebSocket pair.
+7. (Optional) dead i18n keys.
+8. Update `CUSTOMIZATIONS.md §6` — move "Deep `dictionary-db` removal" from deferred to
+   landed; note Anki + the WebSocket interface are fully gone.
 
 ## Out of scope (separate effort)
 
