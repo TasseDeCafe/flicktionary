@@ -1,9 +1,6 @@
 import {
     CardExportedDialogMessage,
     CardUpdatedDialogMessage,
-    DictionaryBuildAnkiCacheMessage,
-    DictionaryBuildAnkiCacheState,
-    DictionaryBuildAnkiCacheStateMessage,
     DictionaryDBCommand,
     DictionaryDeleteProfileMessage,
     DictionaryDeleteRecordLocalBulkMessage,
@@ -12,24 +9,18 @@ import {
     DictionaryGetByLemmaBulkMessage,
     DictionaryImportRecordLocalBulkMessage,
     DictionarySaveRecordLocalBulkMessage,
-    ExtensionToAsbPlayerCommand,
 } from '@asbplayer-fork/common';
 import { DictionaryLocalTokenInput, DictionaryStorage, DictionaryTokenRecord } from '@asbplayer-fork/common/dictionary-db';
-import { ApplyStrategy, AsbplayerSettings } from '@asbplayer-fork/common/settings';
+import { ApplyStrategy } from '@asbplayer-fork/common/settings';
 import { v4 as uuidv4 } from 'uuid';
 
 export class ExtensionDictionaryStorage implements DictionaryStorage {
-    private buildAnkiCacheStateChangeCallbacks: ((message: DictionaryBuildAnkiCacheState) => void)[];
-    private buildAnkiCacheStateChange?: (
-        message: ExtensionToAsbPlayerCommand<DictionaryBuildAnkiCacheStateMessage>
-    ) => void;
     private ankiCardModifiedCallbacks: (() => void)[];
     private ankiCardModified?: (
         message: DictionaryDBCommand<CardUpdatedDialogMessage | CardExportedDialogMessage>
     ) => void;
 
     constructor() {
-        this.buildAnkiCacheStateChangeCallbacks = [];
         this.ankiCardModifiedCallbacks = [];
     }
 
@@ -120,15 +111,6 @@ export class ExtensionDictionaryStorage implements DictionaryStorage {
         return browser.runtime.sendMessage(message);
     }
 
-    buildAnkiCache(profile: string | undefined, settings: AsbplayerSettings, options?: { useOriginTab?: boolean }) {
-        const message: DictionaryDBCommand<DictionaryBuildAnkiCacheMessage> = {
-            sender: 'asbplayer-dictionary',
-            useOriginTab: options?.useOriginTab,
-            message: { command: 'dictionary-build-anki-cache', messageId: uuidv4(), profile, settings },
-        };
-        return browser.runtime.sendMessage(message);
-    }
-
     ankiCardWasModified() {
         browser.runtime.sendMessage({
             sender: 'asbplayer-dictionary',
@@ -157,27 +139,6 @@ export class ExtensionDictionaryStorage implements DictionaryStorage {
             if (!this.ankiCardModifiedCallbacks.length && this.ankiCardModified) {
                 browser.runtime.onMessage.removeListener(this.ankiCardModified);
                 this.ankiCardModified = undefined;
-            }
-        };
-    }
-
-    onBuildAnkiCacheStateChange(callback: (message: DictionaryBuildAnkiCacheState) => void) {
-        this.buildAnkiCacheStateChangeCallbacks.push(callback);
-        if (!this.buildAnkiCacheStateChange) {
-            this.buildAnkiCacheStateChange = (
-                message: ExtensionToAsbPlayerCommand<DictionaryBuildAnkiCacheStateMessage>
-            ) => {
-                if (message.sender !== 'asbplayer-extension-to-player') return;
-                if (message.message.command !== 'dictionary-build-anki-cache-state') return;
-                this.buildAnkiCacheStateChangeCallbacks.forEach((c) => c(message.message));
-            };
-            browser.runtime.onMessage.addListener(this.buildAnkiCacheStateChange);
-        }
-        return () => {
-            this._removeCallback(callback, this.buildAnkiCacheStateChangeCallbacks);
-            if (!this.buildAnkiCacheStateChangeCallbacks.length && this.buildAnkiCacheStateChange) {
-                browser.runtime.onMessage.removeListener(this.buildAnkiCacheStateChange);
-                this.buildAnkiCacheStateChange = undefined;
             }
         };
     }

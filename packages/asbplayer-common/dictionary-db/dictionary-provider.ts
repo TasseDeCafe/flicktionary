@@ -9,8 +9,7 @@ import {
     DictionaryDeleteRecordLocalResult,
     DictionaryDeleteProfileResult,
 } from '@asbplayer-fork/common/dictionary-db';
-import { DictionaryBuildAnkiCacheState } from '@asbplayer-fork/common';
-import { ApplyStrategy, AsbplayerSettings } from '@asbplayer-fork/common/settings';
+import { ApplyStrategy } from '@asbplayer-fork/common/settings';
 import { download, getCurrentTimeString } from '../util';
 
 export interface DictionaryStorage {
@@ -31,14 +30,8 @@ export interface DictionaryStorage {
         records: Partial<DictionaryTokenRecord>[],
         profiles: string[]
     ) => Promise<DictionaryImportRecordLocalResult>;
-    buildAnkiCache: (
-        profile: string | undefined,
-        settings: AsbplayerSettings,
-        options?: { useOriginTab?: boolean }
-    ) => Promise<void>;
     ankiCardWasModified: () => void;
     onAnkiCardModified: (callback: () => void) => () => void;
-    onBuildAnkiCacheStateChange: (callback: (message: DictionaryBuildAnkiCacheState) => void) => () => void;
     _removeCallback(callback: Function, callbacks: Function[]): void;
 }
 
@@ -86,19 +79,11 @@ export class DictionaryProvider {
         return this._storage.importRecordLocalBulk(records, profiles);
     }
 
-    buildAnkiCache(profile: string | undefined, settings: AsbplayerSettings, options?: { useOriginTab?: boolean }) {
-        return this._storage.buildAnkiCache(profile, settings, options);
-    }
-
     ankiCardWasModified() {
         return this._storage.ankiCardWasModified();
     }
 
     onAnkiCardModified(callback: () => void) {
         return this._storage.onAnkiCardModified(callback);
-    }
-
-    onBuildAnkiCacheStateChange(callback: (message: DictionaryBuildAnkiCacheState) => void) {
-        return this._storage.onBuildAnkiCacheStateChange(callback);
     }
 }

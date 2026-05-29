@@ -29,7 +29,6 @@ import {
     ClearCopyHistoryMessage,
     SetGlobalStateMessage,
     GetGlobalStateMessage,
-    DictionaryBuildAnkiCacheMessage,
     DictionaryGetBulkMessage,
     DictionaryGetByLemmaBulkMessage,
     DictionarySaveRecordLocalBulkMessage,
@@ -716,16 +715,6 @@ export default class ChromeExtension {
         };
         window.postMessage(command);
         return await this._createResponsePromise(messageId);
-    }
-
-    buildAnkiCache(profile: string | undefined, settings: AsbplayerSettings): Promise<void> {
-        const messageId = uuidv4();
-        const command: AsbPlayerCommand<DictionaryBuildAnkiCacheMessage> = {
-            sender: 'asbplayerv2',
-            message: { command: 'dictionary-build-anki-cache', messageId, profile, settings },
-        };
-        window.postMessage(command);
-        return this._createResponsePromise(messageId, 60000); // Usually <10s
     }
 
     private _createResponsePromise<T>(messageId: string, timeout = 5000) {

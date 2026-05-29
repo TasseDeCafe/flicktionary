@@ -1,11 +1,6 @@
 import {
     Command,
-    DictionaryBuildAnkiCacheMessage,
-    DictionaryBuildAnkiCacheState,
-    DictionaryBuildAnkiCacheStateMessage,
-    DictionaryDBCommand,
     DictionaryImportRecordLocalBulkMessage,
-    ExtensionToAsbPlayerCommand,
     Message,
 } from '@asbplayer-fork/common';
 import { DictionaryDB } from '@asbplayer-fork/common/dictionary-db/dictionary-db';
@@ -75,39 +70,6 @@ export default class DictionaryHandler {
                 const message = command.message as DictionaryImportRecordLocalBulkMessage;
                 this.dictionaryDB
                     .importRecordLocalBulk(message.records, message.profiles)
-                    .then((result) => sendResponse(result));
-                return true;
-            }
-            case 'dictionary-build-anki-cache': {
-                const message = command.message as DictionaryBuildAnkiCacheMessage;
-                let originTabId =
-                    (command as DictionaryDBCommand<Message>).useOriginTab && typeof sender.tab?.id === 'number'
-                        ? sender.tab.id
-                        : undefined;
-                this.dictionaryDB
-                    .buildAnkiCache(message.profile, message.settings, async (state: DictionaryBuildAnkiCacheState) => {
-                        const message: ExtensionToAsbPlayerCommand<DictionaryBuildAnkiCacheStateMessage> = {
-                            sender: 'asbplayer-extension-to-player',
-                            message: { command: 'dictionary-build-anki-cache-state', ...state },
-                        };
-
-                        try {
-                            await browser.runtime.sendMessage(message);
-                        } catch {
-                            // No one is currently listening
-                        }
-
-                        if (typeof originTabId !== 'number') return;
-                        try {
-                            await browser.tabs.sendMessage(originTabId, message);
-                        } catch (e) {
-                            console.error(
-                                'Failed to send build Anki cache status update to origin tab, stopping updates to tab',
-                                e
-                            );
-                            originTabId = undefined;
-                        }
-                    })
                     .then((result) => sendResponse(result));
                 return true;
             }

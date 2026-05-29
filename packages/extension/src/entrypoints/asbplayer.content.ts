@@ -1,6 +1,5 @@
 import type {
     AddProfileMessage,
-    DictionaryBuildAnkiCacheMessage,
     DictionaryDeleteProfileMessage,
     DictionaryDeleteRecordLocalBulkMessage,
     DictionaryGetBulkMessage,
@@ -162,14 +161,6 @@ export default defineContentScript({
                         sendMessageToPlayer({
                             response: await dictionaryStorage.importRecordLocalBulk(message.records, message.profiles),
                             messageId: message.messageId,
-                        });
-                        break;
-                    }
-                    case 'dictionary-build-anki-cache': {
-                        const { profile, settings } = command.message as DictionaryBuildAnkiCacheMessage;
-                        sendMessageToPlayer({
-                            response: await dictionaryStorage.buildAnkiCache(profile, settings, { useOriginTab: true }), // App with extension doesn't have full extension context
-                            messageId: command.message.messageId,
                         });
                         break;
                     }
