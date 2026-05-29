@@ -64,11 +64,6 @@ export interface FileModel {
     readonly audioTrack?: string;
 }
 
-export interface CopyHistoryItem extends CardModel {
-    readonly id: string;
-    readonly timestamp: number;
-}
-
 export enum ImageErrorCode {
     captureFailed = 1,
     fileLinkLost = 2,
