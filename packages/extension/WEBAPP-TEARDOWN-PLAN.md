@@ -87,28 +87,27 @@ const handleOpenApp = useCallback(() => {
 `getFlicktionaryConfig().webUrl` already resolves dev / development-tunnel / production
 (see `src/services/flicktionary/flicktionary-config.ts`): development → `http://localhost:5174`,
 dev-tunnel → `VITE_WEB_URL` (personal `*.flicktionary.dev`), production → **`https://app.flicktionary.app`**.
-
-> ⚠️ **URL discrepancy — confirm before coding.** The user asked for prod
-> `https://app.flicktionary.dev`, but `flicktionary-config.ts` currently has prod
-> `webUrl = https://app.flicktionary.app`. Resolve this once: either (a) the user meant
-> `.app` and the config is correct, or (b) prod web URL should be `.dev` and the config is
-> wrong. **Use `getFlicktionaryConfig().webUrl` as the single source of truth** (do not
-> hardcode a URL in the popup) and fix the config value if needed — that keeps OPEN APP,
-> pairing, and any future web links consistent.
+This is the single source of truth — **do not hardcode a URL in the popup.** The current
+config values are correct (prod `app.flicktionary.app` confirmed by the user); no config
+change is needed.
 
 **The "App integration" settings section** (`StreamingVideoSettingsTab`: `streamingAppUrl`
 field + `streamingAutoSync` / `streamingAutoSyncPromptOnFailure` toggles, gated by
 `extensionSupportsAppIntegration`). Its original purpose — auto-opening the asbplayer web
-app's subtitle list and handing subtitles to it — does not apply to Flicktionary (the
-Flicktionary web app doesn't consume the asbplayer bridge). **Recommended: remove the whole
-section** (and the `extensionSupportsAppIntegration` prop) since OPEN APP now points at a
-fixed URL and there is nothing to "integrate" with. Keep the section **only** if the user
-wants a user-toggle to auto-open the Flicktionary tab on subtitle load — in which case keep
-`streamingAutoSync` (re-labeled), drop the editable `streamingAppUrl` field, and have the
-auto-open use `getFlicktionaryConfig().webUrl`. **This is a user decision — ask.**
+app's subtitle list and handing subtitles to it — does not apply to Flicktionary.
 
-`streamingAutoSync` is read by `video-data-sync-controller.ts` (`_autoSync`); trace that path
-when deciding, so removing the toggle also removes the dead auto-open branch.
+**Decision (user, confirmed): remove the whole section** and the
+`extensionSupportsAppIntegration` prop. OPEN APP opens a **fixed** URL
+(`getFlicktionaryConfig().webUrl`); a plain fixed link is fine for now. The
+`streamingAppUrl` / `streamingAutoSync` / `streamingAutoSyncPromptOnFailure` settings keys
+and the dead `_autoSync` branch they drive in `video-data-sync-controller.ts` are removed in
+Part B (step 4).
+
+> **Future enhancement (not now):** make OPEN APP (and/or a re-introduced auto-open) deep-link
+> to the *current session* on Flicktionary rather than just the app root — e.g. pass the
+> active YouTube video / study-session id as a path or query param so the web app opens the
+> matching session. Out of scope for this teardown; noted because the fixed-URL choice leaves
+> room for it.
 
 ## Part B — Delete the asbplayer web-app integration
 
@@ -124,9 +123,15 @@ Once Part A no longer reads `streamingAppUrl` / `extensionSupportsAppIntegration
 2. **`packages/asbplayer-common/app/`** — delete the directory (all 9 files) and its
    `package.json` `./app` export entry if present.
 3. **`extension/src/ui/hooks/use-video-element-count.ts`** — delete (unused).
-4. **`extensionSupportsAppIntegration`** — remove the prop from `SettingsForm.tsx`
-   (interface + the gated render block + the `tabIndex` arithmetic that references it) and
-   from `Popup.tsx` / `SettingsPage.tsx` / `FtueUi.tsx` / `Tutorial.tsx` call sites (grep all).
+4. **`extensionSupportsAppIntegration` + the App-integration settings** — remove the prop
+   from `SettingsForm.tsx` (interface + the gated render block + the `tabIndex` arithmetic
+   that references it) and from `Popup.tsx` / `SettingsPage.tsx` / `FtueUi.tsx` /
+   `Tutorial.tsx` call sites (grep all). Remove the "App integration" block from
+   `StreamingVideoSettingsTab.tsx`, the `streamingAppUrl` / `streamingAutoSync` /
+   `streamingAutoSyncPromptOnFailure` keys (`settings.ts` interface, `settings-provider.ts`
+   defaults, `settings-import-export.ts` schema; add the removed top-level keys to
+   `ignoreKeys` — `[[reference_settings_schema_unknown_key_trap]]`), and the now-dead
+   `_autoSync` branch in `video-data-sync-controller.ts`.
 5. **`asbplayer-common/src/message.ts`** — remove the app-integration message types that are
    now orphaned (the `get/set-settings`, `get/set/add/remove-profiles`, `get/set-global-state`,
    `save/delete/clear/request-copy-history` app-bridge messages **iff** they have no other
@@ -212,9 +217,9 @@ After Parts B/C, re-check and delete if orphaned:
 6. (Optional) the dead i18n keys (`CUSTOMIZATIONS.md §6` Cluster 5) — low value, noisy 12-file
    diff; line-by-line leaf deletion only, grep each for 0 `t('…')` refs first.
 
-## Decisions to confirm with the user before/while executing
+## Resolved decisions (no open questions)
 
-- **Prod web URL:** `https://app.flicktionary.dev` (user's message) vs `https://app.flicktionary.app`
-  (current `flicktionary-config.ts`). Which is correct? (Drives the config fix.)
-- **App-integration section:** remove entirely (recommended), or keep a re-pointed
-  auto-open-Flicktionary toggle?
+- **Prod web URL** = `https://app.flicktionary.app` (confirmed). `flicktionary-config.ts` is
+  already correct — no config change. Route OPEN APP through `getFlicktionaryConfig().webUrl`.
+- **App-integration section** = removed entirely; OPEN APP opens a fixed URL. (Future: may
+  deep-link to the current session — see Part A note.)
