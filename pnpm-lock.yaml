@@ -568,11 +568,6 @@ catalogs:
       specifier: 5.0.12
       version: 5.0.12
 
-patchedDependencies:
-  lamejs@1.2.0:
-    hash: fefa3255ad0ee7360366074e02b2ac9285256e003fdbb1f5481a251a08ecf66c
-    path: patches/lamejs@1.2.0.patch
-
 importers:
 
   .:
@@ -1415,9 +1410,6 @@ importers:
       jsonschema:
         specifier: ^1.4.1
         version: 1.5.0
-      lamejs:
-        specifier: 1.2.0
-        version: 1.2.0(patch_hash=fefa3255ad0ee7360366074e02b2ac9285256e003fdbb1f5481a251a08ecf66c)
       pgs-parser:
         specifier: 0.1.0
         version: 0.1.0
@@ -9903,9 +9895,6 @@ packages:
     resolution: {integrity: sha512-9zy9lkjac+TR1c2tG+mkNSVlyOpInnWdSMiue4F+kq8TwJSgv6o8jhLRg8Ho6SnZ9wOYUq/yozts9qQCfk7bIw==}
     engines: {node: '>=18'}
 
-  lamejs@1.2.0:
-    resolution: {integrity: sha512-xEYvsB2sZ9jIccqfUQpQEBdB6UYQDG/ta2xQkH7oEpENb0JHFJii965WVF8ErUMdZzoe7EdIruz1WpICdhZ9Pw==}
-
   lan-network@0.2.0:
     resolution: {integrity: sha512-EZgbsXMrGS+oK+Ta12mCjzBFse+SIewGdwrSTr5g+MSymnjpox2x05ceI20PQejJOFvOgzcXrfDk/SdY7dSCtw==}
     hasBin: true
@@ -12966,9 +12955,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  use-strict@1.0.1:
-    resolution: {integrity: sha512-IeiWvvEXfW5ltKVMkxq6FvNf2LojMKvB2OCeja6+ct24S1XOmQw2dGr2JyndwACWAGJva9B7yPHwAmeA9QCqAQ==}
 
   use-sync-external-store@1.6.0:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
@@ -17505,7 +17491,9 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
     optional: true
 
   '@react-native/normalize-colors@0.83.4': {}
@@ -23276,10 +23264,6 @@ snapshots:
 
   ky@1.14.3: {}
 
-  lamejs@1.2.0(patch_hash=fefa3255ad0ee7360366074e02b2ac9285256e003fdbb1f5481a251a08ecf66c):
-    dependencies:
-      use-strict: 1.0.1
-
   lan-network@0.2.0: {}
 
   latest-version@9.0.0:
@@ -26967,8 +26951,6 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 19.2.14
-
-  use-strict@1.0.1: {}
 
   use-sync-external-store@1.6.0(react@19.2.0):
     dependencies:
