@@ -63,11 +63,6 @@ export function PopupUi({ commands }: Props) {
         }
     }, [settings]);
 
-    const handleOpenSidePanel = useCallback(async () => {
-        // @ts-ignore
-        browser.sidePanel.open({ windowId: (await browser.windows.getLastFocused()).id });
-    }, []);
-
     const handleOpenUserGuide = useCallback(() => {
         browser.tabs.create({ active: true, url: 'https://docs.asbplayer.dev/docs/intro' });
     }, []);
@@ -126,7 +121,6 @@ export function PopupUi({ commands }: Props) {
                             settings={settings}
                             onSettingsChanged={handleSettingsChanged}
                             onOpenApp={handleOpenApp}
-                            onOpenSidePanel={handleOpenSidePanel}
                             onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
                             onOpenUserGuide={handleOpenUserGuide}
                             {...profilesContext}

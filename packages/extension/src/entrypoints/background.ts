@@ -27,7 +27,6 @@ import { fetchSupportedLanguages, primeLocalization } from '@/services/localizat
 import VideoDisappearedHandler from '@/handlers/video/video-disappeared-handler';
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage';
 import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler';
-import ToggleSidePanelHandler from '@/handlers/video/toggle-side-panel-handler';
 import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requesting-active-tab-permission';
 import AckMessageHandler from '@/handlers/video/ack-message-handler';
 import { bindWebSocketClient, unbindWebSocketClient } from '@/services/web-socket-client-binding';
@@ -112,7 +111,6 @@ export default defineBackground(() => {
         new ToggleSubtitlesHandler(settings, tabRegistry),
         new SyncHandler(tabRegistry),
         new HttpPostHandler(),
-        new ToggleSidePanelHandler(tabRegistry),
         new OpenAsbplayerSettingsHandler(),
         new CopyToClipboardHandler(),
         new DictionaryHandler(dictionaryDB),

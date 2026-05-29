@@ -1,17 +1,11 @@
 import Binding from '@/services/binding';
 import { PageDelegate, currentPageDelegate } from '@/services/pages';
 import VideoSelectController from '@/controllers/video-select-controller';
-import {
-    CopyToClipboardMessage,
-    CropAndResizeMessage,
-    TabToExtensionCommand,
-    ToggleSidePanelMessage,
-} from '@asbplayer-fork/common';
+import { CopyToClipboardMessage, CropAndResizeMessage } from '@asbplayer-fork/common';
 import { SettingsProvider } from '@asbplayer-fork/common/settings';
 import { FrameInfoBroadcaster, FrameInfoListener } from '@/services/frame-info';
 import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer';
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage';
-import { DefaultKeyBinder } from '@asbplayer-fork/common/key-binder';
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots';
 import { isFirefoxBuild } from '@/services/build-flags';
 
@@ -34,30 +28,6 @@ export default defineContentScript({
     main(ctx: ContentScriptContext) {
         const extensionSettingsStorage = new ExtensionSettingsStorage();
         const settingsProvider = new SettingsProvider(extensionSettingsStorage);
-
-        let unbindToggleSidePanel: (() => void) | undefined;
-
-        const bindToggleSidePanel = () => {
-            settingsProvider.getSingle('keyBindSet').then((keyBindSet) => {
-                unbindToggleSidePanel?.();
-                unbindToggleSidePanel = new DefaultKeyBinder(keyBindSet).bindToggleSidePanel(
-                    (event) => {
-                        event.preventDefault();
-                        event.stopImmediatePropagation();
-
-                        const command: TabToExtensionCommand<ToggleSidePanelMessage> = {
-                            sender: 'asbplayer-video-tab',
-                            message: {
-                                command: 'toggle-side-panel',
-                            },
-                        };
-                        browser.runtime.sendMessage(command);
-                    },
-                    () => false,
-                    true
-                );
-            });
-        };
 
         const hasValidVideoSource = (videoElement: HTMLVideoElement, page?: PageDelegate) => {
             if (page?.config?.allowVideoElementsWithBlankSrc) {
@@ -159,10 +129,6 @@ export default defineContentScript({
             const videoSelectController = new VideoSelectController(bindings);
             videoSelectController.bind();
 
-            if (isParentDocument) {
-                bindToggleSidePanel();
-            }
-
             const messageListener = (
                 request: any,
                 sender: Browser.runtime.MessageSender,
@@ -223,9 +189,6 @@ export default defineContentScript({
                             cropAndResizeMessage.dataUrl
                         ).then((dataUrl) => sendResponse({ dataUrl }));
                         return true;
-                    case 'settings-updated':
-                        bindToggleSidePanel();
-                        break;
                     default:
                     // ignore
                 }
@@ -249,7 +212,6 @@ export default defineContentScript({
                 videoSelectController.unbind();
                 frameInfoListener?.unbind();
                 frameInfoBroadcaster?.unbind();
-                unbindToggleSidePanel?.();
                 browser.runtime.onMessage.removeListener(messageListener);
             });
         };

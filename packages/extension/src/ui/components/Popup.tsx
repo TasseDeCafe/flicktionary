@@ -2,7 +2,6 @@ import Grid from '@mui/material/Grid';
 import { HttpPostMessage, PopupToExtensionCommand } from '@asbplayer-fork/common';
 import { AsbplayerSettings, Profile, chromeCommandBindsToKeyBinds } from '@asbplayer-fork/common/settings';
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm';
-import PanelIcon from '@asbplayer-fork/common/components/PanelIcon';
 import LaunchIcon from '@mui/icons-material/Launch';
 import { useCallback, useMemo } from 'react';
 import Button from '@mui/material/Button';
@@ -30,7 +29,6 @@ interface Props {
     commands: any;
     onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void;
     onOpenApp: () => void;
-    onOpenSidePanel: () => void;
     onOpenExtensionShortcuts: () => void;
     onOpenUserGuide: () => void;
     profiles: Profile[];
@@ -60,7 +58,6 @@ const Popup = ({
     settings,
     commands,
     onOpenApp,
-    onOpenSidePanel,
     onSettingsChanged,
     onOpenExtensionShortcuts,
     onOpenUserGuide,
@@ -90,11 +87,6 @@ const Popup = ({
                     <Button variant="contained" color="primary" startIcon={<LaunchIcon />} onClick={onOpenApp}>
                         {t('action.openApp')}
                     </Button>
-                    {!isMobile && !isFirefoxBuild && (
-                        <Button variant="contained" color="primary" startIcon={<PanelIcon />} onClick={onOpenSidePanel}>
-                            {t('action.openSidePanel')}
-                        </Button>
-                    )}
                     <Button variant="contained" color="primary" startIcon={<TutorialIcon />} onClick={onOpenUserGuide}>
                         {t('action.userGuide')}
                     </Button>

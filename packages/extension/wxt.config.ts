@@ -131,42 +131,12 @@ export default defineConfig({
         };
 
         let commands: Browser.runtime.Manifest['commands'] = {
-            'copy-subtitle': {
-                description: '__MSG_shortcutMineSubtitleDescription__',
-            },
-            'copy-subtitle-with-dialog': {
-                suggested_key: {
-                    default: 'Ctrl+Shift+X',
-                    mac: 'MacCtrl+Shift+X',
-                },
-                description: '__MSG_shortcutMineSubtitleAndOpenDialogDescription__',
-            },
-            'update-last-card': {
-                suggested_key: {
-                    default: 'Ctrl+Shift+U',
-                    mac: 'MacCtrl+Shift+U',
-                },
-                description: '__MSG_shortcutUpdateLastCardDescription__',
-            },
             'toggle-video-select': {
                 suggested_key: {
                     default: 'Ctrl+Shift+F',
                     mac: 'MacCtrl+Shift+F',
                 },
                 description: '__MSG_shortcutSelectSubtitleTrackDescription__',
-            },
-            'export-card': {
-                description: '__MSG_shortcutExportCardDescription__',
-            },
-            'take-screenshot': {
-                suggested_key: {
-                    default: 'Ctrl+Shift+V',
-                    mac: 'MacCtrl+Shift+V',
-                },
-                description: '__MSG_shortcutTakeScreenshotDescription__',
-            },
-            'toggle-recording': {
-                description: '__MSG_shortcutToggleRecordingDescription__',
             },
         };
 
@@ -183,7 +153,7 @@ export default defineConfig({
         let permissions = ['tabs', 'storage', 'unlimitedStorage'];
 
         if (browser === 'chrome') {
-            permissions = [...permissions, 'tabCapture', 'activeTab', 'contextMenus', 'sidePanel', 'offscreen'];
+            permissions = [...permissions, 'tabCapture', 'activeTab', 'contextMenus', 'offscreen'];
 
             manifest = {
                 ...manifest,
