@@ -1063,7 +1063,7 @@ msgstr "Display form (e.g. stress-marked)"
 #~ msgid "Done"
 #~ msgstr "Done"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:95
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:94
 msgid "Done. You can close this tab and return to the extension."
 msgstr "Done. You can close this tab and return to the extension."
 
@@ -2012,7 +2012,7 @@ msgstr "Looks like {suggestedLanguageName}"
 msgid "Lookup"
 msgstr "Lookup"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:100
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:98
 msgid "Make sure the extension is installed and try again from its popup."
 msgstr "Make sure the extension is installed and try again from its popup."
 
@@ -2980,7 +2980,7 @@ msgstr "Some text for the Home tab"
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:105
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:103
 msgid "Something went wrong while pairing."
 msgstr "Something went wrong while pairing."
 
@@ -3480,7 +3480,7 @@ msgstr "Warnings"
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "We couldn't prepare this answer. Save the note again to retry."
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:99
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:97
 msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "We did not hear back from a Flicktionary extension on this device."
 
