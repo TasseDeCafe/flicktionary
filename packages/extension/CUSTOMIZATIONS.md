@@ -171,28 +171,47 @@ messages), `settings.ts` (`wordClickEnabled`, `TranscriptSettings`; removed
 
 ## §6. Deferred follow-ups (not done in the 2026-05 strip)
 
-These were intentionally left — pursue if/when worthwhile:
+These were intentionally left — pursue if/when worthwhile.
+
+**Landed since (2026-05, dead-code cleanup — see `DEADCODE-CLEANUP-PLAN.md`):** the
+orphaned standalone web-app UI under `common/app/` (Cluster 1, ~50 files; only the 8
+integration-bridge files remain), the orphaned Anki/card UI components in
+`common/components/` (Cluster 2, 17 files incl. `AnkiDialog`), the `subtitle-coloring`
+dir + assorted stray orphans — `yomitan/index.ts`, `audio-clip/mp3-encoder-worker.ts`,
+`device-detection/mac.ts`, `hooks/use-i18n.ts`, `hooks/use-image-data.ts`,
+`decs.d.ts`, `vite-env.d.ts` (Cluster 3), and the now-unused `lamejs` dep (Cluster 4).
+`common/asbplayer-common` dropped from 170 → 96 on-disk TS files; build stayed at
+7.22 MB and the tsc 9-error baseline held throughout.
+
+Still deferred:
 
 - **Deep `dictionary-db` removal** — requires rewiring profile management off
   `dictionary-db` and removing the `asbplayer.content.ts` dictionary bridge. Gated
   behind removing the **web-app integration** (the two collapse into one decision).
+  `dictionary-db` is the only reachable importer of `anki/anki.ts`; cutting that
+  dependency would unlock deleting `anki/`, the rest of `audio-clip/`, and
+  `@types/dom-mediacapture-record`. (Investigation, not mechanical — see the plan's
+  "Deeper unlocks".)
 - **Removing the web-app integration** — drop `asbplayer.content.ts` +
   `extensionSupportsAppIntegration` + the `ChromeExtension` usage in
-  `use-video-element-count`, which would then unlock deleting `common/app`,
-  `dictionary-db`, and the `anki` / `copy-history` / `audio-clip` /
-  `web-socket-client` common dirs. (These are mostly tree-shaken already, so the
-  *bundle* benefit is small; the value is a leaner tree.)
-- **Orphaned common dir:** `subtitle-coloring` is unused by the extension and
-  deletable once you confirm nothing else in common imports it.
+  `use-video-element-count`, which would then unlock deleting the remaining
+  `common/app` bridge files, `dictionary-db`, and the `copy-history` /
+  `web-socket-client` common dirs. (Mostly tree-shaken already, so the *bundle*
+  benefit is small; the value is a leaner tree.)
 - **TS/ESLint** — `lint` is still a no-op stub (`echo`); aligning the monorepo's
   shared ESLint config is a large first-run-error task. tsc has 9 pre-existing
   errors (the WXT build is the gate).
-- **Dead i18n keys** — the Anki/mining translation keys (`settings.anki`,
-  `settings.mining`, `binds.copySubtitle`/`ankiExport`/`extensionToggleRecording`,
-  the `extension.settings.*Screenshot`/`recordAudio` labels, etc.) are still in
+- **Dead i18n keys** (Cluster 5, low value) — the Anki/mining translation keys
+  (`settings.anki`, `settings.mining`,
+  `binds.copySubtitle`/`ankiExport`/`extensionToggleRecording`, the
+  `extension.settings.*Screenshot`/`recordAudio` labels, plus the now-dead
+  `ankiDialog.*` / anki-field-label keys after Cluster 2) are still in
   `common/locales/*.json` (12 languages). They're harmless dead weight; deletion
   was skipped because these files don't survive a `json.dump` round-trip cleanly,
-  so a bulk rewrite would produce noisy 12-file diffs for negligible gain.
+  so a bulk rewrite would produce noisy 12-file diffs for negligible gain. If
+  pursued, delete the specific leaf keys line-by-line (not a reserialize) and grep
+  each for 0 `t('…')` refs first — keep `settings.recordingBind` (still used by the
+  keybind-editing placeholder).
 
 ## §7. Verification (golden path)
 
