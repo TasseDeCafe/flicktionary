@@ -51,33 +51,6 @@ const dictionaryTrackSchema = {
         dictionaryTokenReadingAnnotation: {
             type: 'string',
         },
-        dictionaryAnkiDecks: {
-            type: 'array',
-            items: {
-                type: 'string',
-            },
-        },
-        dictionaryAnkiWordFields: {
-            type: 'array',
-            items: {
-                type: 'string',
-            },
-        },
-        dictionaryAnkiSentenceFields: {
-            type: 'array',
-            items: {
-                type: 'string',
-            },
-        },
-        dictionaryAnkiSentenceTokenMatchStrategy: {
-            type: 'string',
-        },
-        dictionaryAnkiMatureCutoff: {
-            type: 'number',
-        },
-        dictionaryAnkiTreatSuspended: {
-            type: ['string', 'number'],
-        },
         tokenStyling: {
             type: 'string',
         },
@@ -483,12 +456,6 @@ const settingsSchema = {
         streamingEnableOverlay: {
             type: 'boolean',
         },
-        webSocketClientEnabled: {
-            type: 'boolean',
-        },
-        webSocketServerUrl: {
-            type: 'string',
-        },
         pauseOnHoverMode: {
             type: 'number',
         },
@@ -507,8 +474,13 @@ const settingsSchema = {
     },
 };
 
-const ignoreKeys: (keyof AsbplayerSettings)[] = [
+// Top-level keys stripped before validation. Some are current settings; others
+// (webSocket*) are removed keys kept here so importing an older settings export
+// that still carries them doesn't throw on the unknown-key check.
+const ignoreKeys: string[] = [
     'streamingPages', // Ignored due to security risk (e.g. disable CSP)
+    'webSocketClientEnabled',
+    'webSocketServerUrl',
 ];
 
 const withIgnoredKeysRemoved = (settings: any) => {

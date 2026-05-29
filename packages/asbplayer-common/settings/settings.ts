@@ -133,12 +133,6 @@ export interface DictionaryTrack {
     readonly dictionaryYomitanUrl: string;
     readonly dictionaryYomitanScanLength: number;
     readonly dictionaryTokenReadingAnnotation: TokenReadingAnnotation;
-    readonly dictionaryAnkiDecks: string[];
-    readonly dictionaryAnkiWordFields: string[];
-    readonly dictionaryAnkiSentenceFields: string[];
-    readonly dictionaryAnkiSentenceTokenMatchStrategy: TokenMatchStrategy;
-    readonly dictionaryAnkiMatureCutoff: number;
-    readonly dictionaryAnkiTreatSuspended: TokenStatus | 'NORMAL';
     readonly tokenStyling: TokenStyling;
     readonly tokenStylingThickness: number;
     readonly colorizeFullyKnownTokens: boolean;
@@ -159,12 +153,6 @@ const dictionaryTrackComparators: {
     dictionaryYomitanUrl: (a, b) => a === b,
     dictionaryYomitanScanLength: (a, b) => a === b,
     dictionaryTokenReadingAnnotation: (a, b) => a === b,
-    dictionaryAnkiDecks: (a, b) => arrayEquals(a, b),
-    dictionaryAnkiWordFields: (a, b) => arrayEquals(a, b),
-    dictionaryAnkiSentenceFields: (a, b) => arrayEquals(a, b),
-    dictionaryAnkiSentenceTokenMatchStrategy: (a, b) => a === b,
-    dictionaryAnkiMatureCutoff: (a, b) => a === b,
-    dictionaryAnkiTreatSuspended: (a, b) => a === b,
     tokenStyling: (a, b) => a === b,
     tokenStylingThickness: (a, b) => a === b,
     colorizeFullyKnownTokens: (a, b) => a === b,
@@ -414,11 +402,6 @@ export interface KeyBindSet {
     readonly takeScreenshot: KeyBind;
 }
 
-export interface WebSocketClientSettings {
-    readonly webSocketServerUrl: string;
-    readonly webSocketClientEnabled: boolean;
-}
-
 // Word-click mode gates the in-subtitle token tokenizer used by both the
 // hover gloss and right-click save. The old self-hosted LLM knobs (API key /
 // endpoint / model) were removed when those features moved to the Flicktionary
@@ -513,7 +496,6 @@ export interface AsbplayerSettings
         SubtitleSettings,
         DictionarySettings,
         StreamingVideoSettings,
-        WebSocketClientSettings,
         WordInteractionSettings,
         TranscriptSettings {
     readonly subtitlePreview: string;
