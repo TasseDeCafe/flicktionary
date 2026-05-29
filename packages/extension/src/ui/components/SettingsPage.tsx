@@ -1,4 +1,3 @@
-import { CardModel, HttpFetcher } from '@asbplayer-fork/common';
 import { useCallback, useMemo } from 'react';
 import { makeStyles } from '@mui/styles';
 import { useTranslation } from 'react-i18next';
@@ -11,11 +10,10 @@ import { useCommandKeyBinds } from '../hooks/use-command-key-binds';
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks';
 import { useI18n } from '../hooks/use-i18n';
 import Paper from '@mui/material/Paper';
-import { Anki } from '@asbplayer-fork/common/anki';
 import { useSupportedLanguages } from '../hooks/use-supported-languages';
 import { isFirefoxBuild } from '../../services/build-flags';
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu';
-import { AsbplayerSettings, Profile, testCard } from '@asbplayer-fork/common/settings';
+import { AsbplayerSettings, Profile } from '@asbplayer-fork/common/settings';
 import { useTheme, type Theme } from '@mui/material/styles';
 import { settingsPageConfigs } from '@/services/pages';
 import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db';
@@ -47,20 +45,9 @@ interface Props {
     onSetActiveProfile: (name: string | undefined) => void;
 }
 
-const extensionTestCard: () => Promise<CardModel> = () => {
-    return testCard({
-        imageUrl: browser.runtime.getURL('/assets/test-card.jpeg'),
-        audioUrl: browser.runtime.getURL('/assets/test-card.mp3'),
-    });
-};
-
 const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const anki = useMemo(
-        () => (settings === undefined ? undefined : new Anki(settings, new HttpFetcher())),
-        [settings]
-    );
     const classes = useStyles();
 
     const {
@@ -91,7 +78,7 @@ const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChan
     }, []);
     const { supportedLanguages } = useSupportedLanguages();
 
-    if (!settings || !anki || !commands || !i18nInitialized) {
+    if (!settings || !commands || !i18nInitialized) {
         return null;
     }
 
@@ -101,13 +88,11 @@ const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChan
                 <DialogTitle>{t('settings.title')}</DialogTitle>
                 <DialogContent className={classes.content}>
                     <SettingsForm
-                        anki={anki}
                         extensionInstalled
                         extensionVersion={browser.runtime.getManifest().version}
                         extensionSupportsAppIntegration
                         extensionSupportsOverlay
                         extensionSupportsSidePanel={!isFirefoxBuild}
-                        extensionSupportsOrderableAnkiFields
                         extensionSupportsTrackSpecificSettings
                         extensionSupportsSubtitlesWidthSetting
                         extensionSupportsPauseOnHover
@@ -127,7 +112,6 @@ const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChan
                         onUnlockLocalFonts={handleUnlockLocalFonts}
                         scrollToId={section}
                         inTutorial={inTutorial}
-                        testCard={extensionTestCard}
                     />
                 </DialogContent>
                 <Box style={{ marginBottom: theme.spacing(2) }} className={classes.profilesContainer}>

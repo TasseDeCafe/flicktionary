@@ -1,15 +1,12 @@
 import Grid from '@mui/material/Grid';
-import { HttpPostMessage, PopupToExtensionCommand } from '@asbplayer-fork/common';
 import { AsbplayerSettings, Profile, chromeCommandBindsToKeyBinds } from '@asbplayer-fork/common/settings';
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm';
 import LaunchIcon from '@mui/icons-material/Launch';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import { useTranslation } from 'react-i18next';
-import { Fetcher } from '@asbplayer-fork/common/src/fetcher';
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks';
-import { Anki } from '@asbplayer-fork/common/anki';
 import { useSupportedLanguages } from '../hooks/use-supported-languages';
 import { useI18n } from '../hooks/use-i18n';
 import { isMobile } from 'react-device-detect';
@@ -36,21 +33,6 @@ interface Props {
     onSetActiveProfile: (name: string | undefined) => void;
 }
 
-class ExtensionFetcher implements Fetcher {
-    fetch(url: string, body: any) {
-        const httpPostCommand: PopupToExtensionCommand<HttpPostMessage> = {
-            sender: 'asbplayer-popup',
-            message: {
-                command: 'http-post',
-                url,
-                body,
-                messageId: '',
-            },
-        };
-        return browser.runtime.sendMessage(httpPostCommand);
-    }
-}
-
 const Popup = ({
     settings,
     commands,
@@ -62,7 +44,6 @@ const Popup = ({
 }: Props) => {
     const { t } = useTranslation();
     const { initialized: i18nInitialized } = useI18n({ language: settings.language });
-    const anki = useMemo(() => new Anki(settings, new ExtensionFetcher()), [settings]);
     const handleUnlockLocalFonts = useCallback(() => {
         browser.tabs.create({
             url: `${browser.runtime.getURL('/options.html')}#subtitle-appearance`,
@@ -102,14 +83,12 @@ const Popup = ({
                         extensionSupportsAppIntegration
                         extensionSupportsOverlay
                         extensionSupportsSidePanel={!isFirefoxBuild}
-                        extensionSupportsOrderableAnkiFields
                         extensionSupportsTrackSpecificSettings
                         extensionSupportsSubtitlesWidthSetting
                         extensionSupportsPauseOnHover
                         extensionSupportsExportCardBind
                         extensionSupportsPageSettings
                         forceVerticalTabs={false}
-                        anki={anki}
                         chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
                         settings={settings}
                         profiles={profilesContext.profiles}

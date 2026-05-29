@@ -1,21 +1,15 @@
-import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type CreateCSSProperties, makeStyles } from '@mui/styles';
 import { useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import { type Theme } from '@mui/material';
-import { CardModel } from '@asbplayer-fork/common';
 import { AsbplayerSettings, PageConfig, PageSettings, Profile } from '@asbplayer-fork/common/settings';
 import { isNumeric } from '@asbplayer-fork/common/util';
-import { isMobile } from 'react-device-detect';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import { Anki } from '../anki';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import About from './About';
-import { TutorialStep } from './settings-model';
-import AnkiSettingsTab from './AnkiSettingsTab';
-import MiningSettingsTab from './MiningSettingsTab';
 import SubtitleAppearanceSettingsTab from './SubtitleAppearanceSettingsTab';
 import KeyboardShortcutsSettingsTab from './KeyboardShortcutsSettingsTab';
 import StreamingVideoSettingsTab from './StreamingVideoSettingsTab';
@@ -141,8 +135,6 @@ const TabPanel = React.forwardRef<HTMLDivElement, TabPanelProps>(function TabPan
 });
 
 type TabName =
-    | 'anki-settings'
-    | 'mining-settings'
     | 'dictionary'
     | 'subtitle-appearance'
     | 'keyboard-shortcuts'
@@ -156,13 +148,11 @@ interface SettingsFormPageConfig extends PageConfig {
 export type PageConfigMap = { [K in keyof PageSettings]: SettingsFormPageConfig };
 
 interface Props {
-    anki: Anki;
     extensionInstalled: boolean;
     extensionVersion?: string;
     extensionSupportsAppIntegration: boolean;
     extensionSupportsOverlay: boolean;
     extensionSupportsSidePanel: boolean;
-    extensionSupportsOrderableAnkiFields: boolean;
     extensionSupportsTrackSpecificSettings: boolean;
     extensionSupportsSubtitlesWidthSetting: boolean;
     extensionSupportsPauseOnHover: boolean;
@@ -183,7 +173,6 @@ interface Props {
     forceVerticalTabs?: boolean;
     inTutorial?: boolean;
     heightConstrained?: boolean;
-    testCard?: () => Promise<CardModel>;
     onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void;
     onOpenChromeExtensionShortcuts: () => void;
     onUnlockLocalFonts: () => void;
@@ -193,7 +182,6 @@ interface Props {
 const cssStyles = Object.keys(document.body.style).filter((s) => !isNumeric(s));
 
 export default function SettingsForm({
-    anki,
     settings,
     profiles,
     activeProfile,
@@ -203,7 +191,6 @@ export default function SettingsForm({
     extensionSupportsAppIntegration,
     extensionSupportsOverlay,
     extensionSupportsSidePanel,
-    extensionSupportsOrderableAnkiFields,
     extensionSupportsTrackSpecificSettings,
     extensionSupportsSubtitlesWidthSetting,
     extensionSupportsPauseOnHover,
@@ -220,7 +207,6 @@ export default function SettingsForm({
     forceVerticalTabs,
     inTutorial,
     heightConstrained,
-    testCard,
     onSettingsChanged,
     onOpenChromeExtensionShortcuts,
     onUnlockLocalFonts,
@@ -236,11 +222,8 @@ export default function SettingsForm({
         [onSettingsChanged]
     );
     const { t } = useTranslation();
-    const { noteType } = settings;
     const tabIndicesById = useMemo(() => {
         const tabs = [
-            'anki-settings',
-            'mining-settings',
             'subtitle-appearance',
             'keyboard-shortcuts',
             'dictionary',
@@ -271,21 +254,6 @@ export default function SettingsForm({
 
     const [tabIndex, setTabIndex] = useState<number>(0);
     const tabsOrientation = smallScreen ? 'horizontal' : 'vertical';
-    const [tutorialStep, setTutorialStep] = useState<TutorialStep>(TutorialStep.ankiConnect);
-
-    useEffect(() => {
-        if (tutorialStep === TutorialStep.noteType && noteType) {
-            setTutorialStep(TutorialStep.ankiFields);
-        }
-    }, [tutorialStep, noteType]);
-
-    const ankiPanelRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (tutorialStep === TutorialStep.testCard) {
-            ankiPanelRef.current?.scrollBy({ behavior: 'smooth', top: 100000 });
-        }
-    }, [tutorialStep]);
 
     return (
         <div className={classes.root}>
@@ -302,53 +270,27 @@ export default function SettingsForm({
                     marginRight: smallScreen ? 'auto' : 0,
                 }}
             >
-                <Tab tabIndex={0} label={t('settings.anki')} id="anki-settings" />
-                <Tab tabIndex={1} label={t('settings.mining')} id="mining-settings" />
-                <Tab tabIndex={2} label={t('settings.subtitleAppearance')} id="subtitle-appearance" />
-                <Tab tabIndex={3} label={t('settings.keyboardShortcuts')} id="keyboard-shortcuts" />
-                {supportsDictionary && <Tab tabIndex={4} label={t('settings.annotation')} id="dictionary" />}
+                <Tab tabIndex={0} label={t('settings.subtitleAppearance')} id="subtitle-appearance" />
+                <Tab tabIndex={1} label={t('settings.keyboardShortcuts')} id="keyboard-shortcuts" />
+                {supportsDictionary && <Tab tabIndex={2} label={t('settings.annotation')} id="dictionary" />}
                 {extensionSupportsAppIntegration && (
                     <Tab
-                        tabIndex={4 + Number(supportsDictionary)}
+                        tabIndex={2 + Number(supportsDictionary)}
                         label={t('settings.streamingVideo')}
                         id="streaming-video"
                     />
                 )}
                 <Tab
-                    tabIndex={4 + Number(supportsDictionary) + Number(extensionSupportsAppIntegration)}
+                    tabIndex={2 + Number(supportsDictionary) + Number(extensionSupportsAppIntegration)}
                     label={t('settings.misc')}
                     id="misc-settings"
                 />
                 <Tab
-                    tabIndex={5 + Number(supportsDictionary) + Number(extensionSupportsAppIntegration)}
+                    tabIndex={3 + Number(supportsDictionary) + Number(extensionSupportsAppIntegration)}
                     label={t('about.title')}
                     id="about"
                 />
             </Tabs>
-            <TabPanel
-                ref={ankiPanelRef}
-                value={tabIndex}
-                index={tabIndicesById['anki-settings']}
-                tabsOrientation={tabsOrientation}
-            >
-                <AnkiSettingsTab
-                    settings={settings}
-                    extensionInstalled={extensionInstalled}
-                    extensionSupportsOrderableAnkiFields={extensionSupportsOrderableAnkiFields}
-                    isMobile={isMobile}
-                    insideApp={insideApp}
-                    inTutorial={inTutorial}
-                    onSettingChanged={handleSettingChanged}
-                    onSettingsChanged={onSettingsChanged}
-                    tutorialStep={tutorialStep}
-                    onTutorialStepChanged={setTutorialStep}
-                    anki={anki}
-                    testCard={testCard}
-                />
-            </TabPanel>
-            <TabPanel value={tabIndex} index={tabIndicesById['mining-settings']} tabsOrientation={tabsOrientation}>
-                <MiningSettingsTab settings={settings} onSettingChanged={handleSettingChanged} />
-            </TabPanel>
             <TabPanel value={tabIndex} index={tabIndicesById['subtitle-appearance']} tabsOrientation={tabsOrientation}>
                 <SubtitleAppearanceSettingsTab
                     settings={settings}
