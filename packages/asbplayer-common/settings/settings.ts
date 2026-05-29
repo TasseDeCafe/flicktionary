@@ -311,11 +311,6 @@ export interface KeyBindSet {
     readonly markHoveredToken1: KeyBind;
     readonly markHoveredToken0: KeyBind;
     readonly toggleHoveredTokenIgnored: KeyBind;
-
-    // Bound from Chrome if extension is installed
-    readonly updateLastCard: KeyBind;
-    readonly exportCard: KeyBind;
-    readonly takeScreenshot: KeyBind;
 }
 
 // Word-click mode gates the in-subtitle token tokenizer used by both the
@@ -331,7 +326,6 @@ export interface TranscriptSettings {
     readonly transcriptApiKey: string;
 }
 
-export type ChromeBoundKeyBindName = 'updateLastCard' | 'exportCard' | 'takeScreenshot';
 export type SubtitleAlignment = 'top' | 'bottom';
 export enum SubtitleListPreference {
     noSubtitleList = 'noSubtitleList',
@@ -418,12 +412,6 @@ export interface AsbplayerSettings
 }
 
 const keyBindNameMap: any = {
-    'copy-subtitle': 'copySubtitle',
-    'copy-subtitle-with-dialog': 'ankiExport',
-    'update-last-card': 'updateLastCard',
-    'export-card': 'exportCard',
-    'take-screenshot': 'takeScreenshot',
-    'toggle-recording': 'toggleRecording',
     'toggle-video-select': 'selectSubtitleTrack',
 };
 

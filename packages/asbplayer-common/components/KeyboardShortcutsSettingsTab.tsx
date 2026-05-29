@@ -243,23 +243,6 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
     } = settings;
     const keyBindProperties = useMemo<{ [key in AllKeyNames]: KeyBindProperties }>(
         () => ({
-            // Mining/Anki binds are kept in the schema (still read by reachable
-            // code) but hidden from the UI in this lean fork.
-            updateLastCard: {
-                label: t('binds.updateLastCard')!,
-                boundViaChrome: true,
-                hide: true,
-            },
-            exportCard: {
-                label: t('binds.exportCard')!,
-                boundViaChrome: true,
-                hide: true,
-            },
-            takeScreenshot: {
-                label: t('binds.takeScreenshot')!,
-                boundViaChrome: true,
-                hide: true,
-            },
             selectSubtitleTrack: {
                 label: t('binds.extensionSelectSubtitleTrack')!,
                 boundViaChrome: true,
