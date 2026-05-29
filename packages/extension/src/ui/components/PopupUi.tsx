@@ -117,7 +117,6 @@ export function PopupUi({ commands }: Props) {
                     <Box>
                         <Popup
                             commands={commands}
-                            dictionaryProvider={dictionaryProvider}
                             settings={settings}
                             onSettingsChanged={handleSettingsChanged}
                             onOpenApp={handleOpenApp}

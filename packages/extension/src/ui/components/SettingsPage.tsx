@@ -113,11 +113,9 @@ const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChan
                         extensionSupportsPauseOnHover
                         extensionSupportsExportCardBind
                         extensionSupportsPageSettings
-                        extensionSupportsDictionary
                         chromeKeyBinds={commands}
                         onOpenChromeExtensionShortcuts={handleOpenExtensionShortcuts}
                         onSettingsChanged={onSettingsChanged}
-                        dictionaryProvider={dictionaryProvider}
                         settings={settings}
                         profiles={profileContext.profiles}
                         activeProfile={profileContext.activeProfile}

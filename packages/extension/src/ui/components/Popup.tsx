@@ -21,10 +21,8 @@ import { FlicktionaryPairSection } from './FlicktionaryPairSection';
 import Stack from '@mui/material/Stack';
 import TutorialIcon from '@asbplayer-fork/common/components/TutorialIcon';
 import Paper from '@mui/material/Paper';
-import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db';
 
 interface Props {
-    dictionaryProvider: DictionaryProvider;
     settings: AsbplayerSettings;
     commands: any;
     onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void;
@@ -54,7 +52,6 @@ class ExtensionFetcher implements Fetcher {
 }
 
 const Popup = ({
-    dictionaryProvider,
     settings,
     commands,
     onOpenApp,
@@ -111,11 +108,9 @@ const Popup = ({
                         extensionSupportsPauseOnHover
                         extensionSupportsExportCardBind
                         extensionSupportsPageSettings
-                        extensionSupportsDictionary
                         forceVerticalTabs={false}
                         anki={anki}
                         chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
-                        dictionaryProvider={dictionaryProvider}
                         settings={settings}
                         profiles={profilesContext.profiles}
                         activeProfile={profilesContext.activeProfile}

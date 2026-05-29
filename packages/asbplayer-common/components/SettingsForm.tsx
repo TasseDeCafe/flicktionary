@@ -16,12 +16,10 @@ import About from './About';
 import { TutorialStep } from './settings-model';
 import AnkiSettingsTab from './AnkiSettingsTab';
 import MiningSettingsTab from './MiningSettingsTab';
-import DictionarySettingsTab from './DictionarySettingsTab';
 import SubtitleAppearanceSettingsTab from './SubtitleAppearanceSettingsTab';
 import KeyboardShortcutsSettingsTab from './KeyboardShortcutsSettingsTab';
 import StreamingVideoSettingsTab from './StreamingVideoSettingsTab';
 import MiscSettingsTab from './MiscSettingsTab';
-import { DictionaryProvider } from '../dictionary-db';
 
 interface StylesProps {
     smallScreen: boolean;
@@ -170,10 +168,8 @@ interface Props {
     extensionSupportsPauseOnHover: boolean;
     extensionSupportsExportCardBind: boolean;
     extensionSupportsPageSettings: boolean;
-    extensionSupportsDictionary: boolean;
     insideApp?: boolean;
     appVersion?: string;
-    dictionaryProvider: DictionaryProvider;
     settings: AsbplayerSettings;
     profiles: Profile[];
     activeProfile?: string;
@@ -198,7 +194,6 @@ const cssStyles = Object.keys(document.body.style).filter((s) => !isNumeric(s));
 
 export default function SettingsForm({
     anki,
-    dictionaryProvider,
     settings,
     profiles,
     activeProfile,
@@ -214,7 +209,6 @@ export default function SettingsForm({
     extensionSupportsPauseOnHover,
     extensionSupportsExportCardBind,
     extensionSupportsPageSettings,
-    extensionSupportsDictionary,
     insideApp,
     appVersion,
     scrollToId,
@@ -231,7 +225,7 @@ export default function SettingsForm({
     onOpenChromeExtensionShortcuts,
     onUnlockLocalFonts,
 }: Props) {
-    const supportsDictionary = !extensionInstalled || extensionSupportsDictionary;
+    const supportsDictionary = false;
     const theme = useTheme();
     const smallScreen = useMediaQuery(theme.breakpoints.down(500)) && !forceVerticalTabs;
     const classes = useStyles({ smallScreen, heightConstrained });
@@ -354,17 +348,6 @@ export default function SettingsForm({
             </TabPanel>
             <TabPanel value={tabIndex} index={tabIndicesById['mining-settings']} tabsOrientation={tabsOrientation}>
                 <MiningSettingsTab settings={settings} onSettingChanged={handleSettingChanged} />
-            </TabPanel>
-            <TabPanel value={tabIndex} index={tabIndicesById['dictionary']} tabsOrientation={tabsOrientation}>
-                <DictionarySettingsTab
-                    anki={anki}
-                    dictionaryProvider={dictionaryProvider}
-                    settings={settings}
-                    profiles={profiles}
-                    activeProfile={activeProfile}
-                    extensionInstalled={extensionInstalled}
-                    onSettingChanged={handleSettingChanged}
-                />
             </TabPanel>
             <TabPanel value={tabIndex} index={tabIndicesById['subtitle-appearance']} tabsOrientation={tabsOrientation}>
                 <SubtitleAppearanceSettingsTab
