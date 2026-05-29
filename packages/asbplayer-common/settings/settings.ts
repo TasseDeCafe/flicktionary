@@ -410,12 +410,9 @@ export interface KeyBindSet {
     readonly toggleHoveredTokenIgnored: KeyBind;
 
     // Bound from Chrome if extension is installed
-    readonly copySubtitle: KeyBind;
-    readonly ankiExport: KeyBind;
     readonly updateLastCard: KeyBind;
     readonly exportCard: KeyBind;
     readonly takeScreenshot: KeyBind;
-    readonly toggleRecording: KeyBind;
 }
 
 export interface WebSocketClientSettings {
@@ -436,7 +433,7 @@ export interface TranscriptSettings {
     readonly transcriptApiKey: string;
 }
 
-export type ChromeBoundKeyBindName = 'copySubtitle' | 'ankiExport' | 'updateLastCard' | 'exportCard' | 'takeScreenshot';
+export type ChromeBoundKeyBindName = 'updateLastCard' | 'exportCard' | 'takeScreenshot';
 export type SubtitleAlignment = 'top' | 'bottom';
 export enum SubtitleListPreference {
     noSubtitleList = 'noSubtitleList',
@@ -497,10 +494,6 @@ export interface PageSettings {
 export interface StreamingVideoSettings {
     readonly streamingAppUrl: string;
     readonly streamingDisplaySubtitles: boolean;
-    readonly streamingRecordMedia: boolean;
-    readonly streamingTakeScreenshot: boolean;
-    readonly streamingCleanScreenshot: boolean;
-    readonly streamingCropScreenshot: boolean;
     readonly streamingSubsDragAndDrop: boolean;
     readonly streamingAutoSync: boolean;
     readonly streamingAutoSyncPromptOnFailure: boolean;
@@ -508,7 +501,6 @@ export interface StreamingVideoSettings {
     // Used to auto-selecting a language in subtitle track selector, if it's available
     readonly streamingLastLanguagesSynced: { [key: string]: string[] };
     readonly streamingCondensedPlaybackMinimumSkipIntervalMs: number;
-    readonly streamingScreenshotDelay: number;
     readonly streamingSubtitleListPreference: SubtitleListPreference;
     readonly streamingEnableOverlay: boolean;
     readonly streamingPages: PageSettings;

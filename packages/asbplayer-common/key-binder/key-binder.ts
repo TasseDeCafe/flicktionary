@@ -32,17 +32,6 @@ export function adjacentSubtitle(forward: boolean, time: number, subtitles: Subt
 }
 
 export interface KeyBinder {
-    bindCopy<T extends SubtitleModel = SubtitleModel>(
-        onCopy: (event: KeyboardEvent, subtitle: T) => void,
-        disabledGetter: () => boolean,
-        subtitleGetter: () => T | undefined,
-        capture?: boolean
-    ): () => void;
-    bindAnkiExport(
-        onAnkiExport: (event: KeyboardEvent) => void,
-        disabledGetter: () => boolean,
-        capture?: boolean
-    ): () => void;
     bindUpdateLastCard(
         onUpdateLastCard: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
@@ -146,11 +135,6 @@ export interface KeyBinder {
         disabledGetter: () => boolean,
         capture?: boolean
     ): () => void;
-    bindToggleRecording(
-        onToggleRecording: (event: KeyboardEvent) => void,
-        disabledGetter: () => boolean,
-        capture?: boolean
-    ): () => void;
     bindAdjustSubtitlePositionOffset(
         onAdjustSubtitlePositionOffset: (event: KeyboardEvent, increase: boolean) => void,
         disabledGetter: () => boolean,
@@ -179,65 +163,6 @@ export class DefaultKeyBinder implements KeyBinder {
     constructor(keyBindSet: KeyBindSet) {
         this.keyBindSet = keyBindSet;
     }
-    bindCopy<T extends SubtitleModel = SubtitleModel>(
-        onCopy: (event: KeyboardEvent, subtitle: T) => void,
-        disabledGetter: () => boolean,
-        subtitleGetter: () => T | undefined,
-        capture = false
-    ) {
-        const shortcut = this.keyBindSet.copySubtitle.keys;
-
-        if (!shortcut) {
-            return () => {};
-        }
-
-        const handler = this.copyHandler(onCopy, disabledGetter, subtitleGetter);
-        return this._bind(shortcut, capture, handler);
-    }
-
-    copyHandler<T extends SubtitleModel>(
-        onCopy: (event: KeyboardEvent, subtitle: T) => void,
-        disabledGetter: () => boolean,
-        subtitleGetter: () => T | undefined
-    ) {
-        return (event: KeyboardEvent) => {
-            if (disabledGetter()) {
-                return false;
-            }
-
-            const subtitle = subtitleGetter();
-
-            if (!subtitle) {
-                return false;
-            }
-
-            onCopy(event, subtitle);
-            return true;
-        };
-    }
-
-    bindAnkiExport(onAnkiExport: (event: KeyboardEvent) => void, disabledGetter: () => boolean, capture = false) {
-        const shortcut = this.keyBindSet.ankiExport.keys;
-
-        if (!shortcut) {
-            return () => {};
-        }
-
-        const handler = this.ankiExportHandler(onAnkiExport, disabledGetter);
-        return this._bind(shortcut, capture, handler);
-    }
-
-    ankiExportHandler(onAnkiExport: (event: KeyboardEvent) => void, disabledGetter: () => boolean) {
-        return (event: KeyboardEvent) => {
-            if (disabledGetter()) {
-                return false;
-            }
-
-            onAnkiExport(event);
-            return true;
-        };
-    }
-
     bindUpdateLastCard(
         onUpdateLastCard: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
@@ -308,32 +233,6 @@ export class DefaultKeyBinder implements KeyBinder {
             }
 
             onTakeScreenshot(event);
-            return true;
-        };
-    }
-
-    bindToggleRecording(
-        onToggleRecording: (event: KeyboardEvent) => void,
-        disabledGetter: () => boolean,
-        capture = false
-    ) {
-        const shortcut = this.keyBindSet.toggleRecording.keys;
-
-        if (!shortcut) {
-            return () => {};
-        }
-
-        const handler = this.takeScreenshotHandler(onToggleRecording, disabledGetter);
-        return this._bind(shortcut, capture, handler);
-    }
-
-    toggleRecordingHandler(onToggleRecording: (event: KeyboardEvent) => void, disabledGetter: () => boolean) {
-        return (event: KeyboardEvent) => {
-            if (disabledGetter()) {
-                return false;
-            }
-
-            onToggleRecording(event);
             return true;
         };
     }

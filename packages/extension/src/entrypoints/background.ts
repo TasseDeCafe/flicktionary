@@ -79,7 +79,6 @@ export default defineBackground(() => {
         if (isMobile) {
             // Set reasonable defaults for mobile
             await settings.set({
-                streamingTakeScreenshot: false, // Kiwi Browser does not support captureVisibleTab
                 subtitleSize: 18,
                 subtitlePositionOffset: 25,
                 topSubtitlePositionOffset: 25,

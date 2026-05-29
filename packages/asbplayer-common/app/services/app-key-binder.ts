@@ -56,39 +56,6 @@ export default class AppKeyBinder implements KeyBinder {
         }
     }
 
-    bindCopy<T extends SubtitleModel = SubtitleModel>(
-        onCopy: (event: KeyboardEvent, subtitle: T) => void,
-        disabledGetter: () => boolean,
-        subtitleGetter: () => T | undefined,
-        useCapture?: boolean | undefined
-    ): () => void {
-        if (this.extension.installed) {
-            const handler = this.defaultKeyBinder.copyHandler(onCopy, disabledGetter, subtitleGetter);
-            this.copyHandlers.push(handler);
-            return () => {
-                this._remove(handler, this.copyHandlers);
-            };
-        }
-
-        return this.defaultKeyBinder.bindCopy(onCopy, disabledGetter, subtitleGetter, useCapture);
-    }
-
-    bindAnkiExport(
-        onAnkiExport: (event: KeyboardEvent) => void,
-        disabledGetter: () => boolean,
-        useCapture?: boolean | undefined
-    ): () => void {
-        if (this.extension.installed) {
-            const handler = this.defaultKeyBinder.ankiExportHandler(onAnkiExport, disabledGetter);
-            this.ankiExportHandlers.push(handler);
-            return () => {
-                this._remove(handler, this.ankiExportHandlers);
-            };
-        }
-
-        return this.defaultKeyBinder.bindAnkiExport(onAnkiExport, disabledGetter, useCapture);
-    }
-
     bindUpdateLastCard(
         onUpdateLastCard: (event: KeyboardEvent) => void,
         disabledGetter: () => boolean,
@@ -135,22 +102,6 @@ export default class AppKeyBinder implements KeyBinder {
         }
 
         return this.defaultKeyBinder.bindTakeScreenshot(onTakeScreenshot, disabledGetter, useCapture);
-    }
-
-    bindToggleRecording(
-        onToggleRecording: (event: KeyboardEvent) => void,
-        disabledGetter: () => boolean,
-        useCapture?: boolean | undefined
-    ): () => void {
-        if (this.extension.installed) {
-            const handler = this.defaultKeyBinder.toggleRecordingHandler(onToggleRecording, disabledGetter);
-            this.toggleRecordingHandlers.push(handler);
-            return () => {
-                this._remove(handler, this.toggleRecordingHandlers);
-            };
-        }
-
-        return this.defaultKeyBinder.bindToggleRecording(onToggleRecording, disabledGetter, useCapture);
     }
 
     private _remove(callback: (event: KeyboardEvent) => void, list: ((event: KeyboardEvent) => void)[]) {
