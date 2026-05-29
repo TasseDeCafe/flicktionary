@@ -1,5 +1,4 @@
 import type {
-    AnkiSettings,
     ApplyStrategy,
     AsbplayerSettings,
     MiscSettings,
@@ -23,8 +22,6 @@ import {
     MobileOverlayModel,
     VideoTabModel,
     CopyHistoryItem,
-    AnkiDialogSettings,
-    AnkiExportMode,
     RichSubtitleModel,
 } from './model';
 import { AsbPlayerToVideoCommandV2 } from './command';
@@ -202,21 +199,8 @@ export interface TakeScreenshotToVideoPlayerMessage extends Message {
     readonly command: 'takeScreenshot';
 }
 
-export interface CardUpdatedMessage extends Message, CardModel {
-    readonly command: 'card-updated';
-    readonly cardName: string;
-}
-
 export interface CardUpdatedDialogMessage extends Message {
     readonly command: 'card-updated-dialog';
-}
-
-export interface CardExportedMessage extends Message, CardModel {
-    readonly command: 'card-exported';
-    readonly cardName: string;
-    readonly isBulkExport?: boolean;
-    readonly skippedDuplicate?: boolean;
-    readonly exportError?: string;
 }
 
 export interface CardExportedDialogMessage extends Message {
@@ -231,11 +215,6 @@ export interface CardSavedMessage extends Message, CardModel {
 export interface ScreenshotTakenMessage extends Message {
     readonly command: 'screenshot-taken';
     readonly ankiUiState?: AnkiUiSavedState;
-}
-
-export interface ShowAnkiUiMessage extends Message, CardModel {
-    readonly command: 'show-anki-ui';
-    readonly id: string;
 }
 
 export interface RecordingStartedMessage extends Message {
@@ -270,11 +249,6 @@ export interface ToggleVideoSelectMessage extends Message {
     readonly command: 'toggle-video-select';
     readonly fromAsbplayerId?: string;
     readonly subtitleFiles?: SubtitleFile[];
-}
-
-export interface ShowAnkiUiAfterRerecordMessage extends Message {
-    readonly command: 'show-anki-ui-after-rerecord';
-    readonly uiState: AnkiUiSavedState;
 }
 
 export interface SerializedSubtitleFile {
@@ -443,58 +417,14 @@ export interface FullscreenToggleMessageToVideoMessage extends Message {
     readonly value: boolean;
 }
 
-export interface FinishedAnkiDialogRequestToVideoMessage extends Message {
-    readonly command: 'finishedAnkiDialogRequest';
-    readonly resume: boolean;
-}
-
-export interface AnkiSettingsToVideoMessage extends Message {
-    readonly command: 'ankiSettings';
-    readonly value: AnkiSettings;
-}
-
-export interface AnkiDialogSettingsMessage extends Message {
-    readonly command: 'settings';
-    readonly settings: AnkiDialogSettings;
-    readonly activeProfile?: string;
-    readonly profiles?: { name: string }[];
-}
-
 export interface ActiveProfileMessage extends Message {
     readonly command: 'activeProfile';
     readonly profile?: string;
 }
 
-export interface AnkiDialogDismissedQuickSelectFtueMessage extends Message {
-    readonly command: 'dismissedQuickSelectFtue';
-}
-
 export interface MiscSettingsToVideoMessage extends Message {
     readonly command: 'miscSettings';
     readonly value: MiscSettings;
-}
-
-export interface AnkiUiBridgeRewindMessage extends Message {
-    readonly command: 'rewind';
-    readonly uiState: AnkiUiSavedState;
-}
-
-export interface AnkiUiBridgeResumeMessage extends Message {
-    readonly command: 'resume';
-    readonly uiState: AnkiUiSavedState;
-    readonly cardExported: boolean;
-}
-
-export interface AnkiUiBridgeRerecordMessage extends Message {
-    readonly command: 'rerecord';
-    readonly uiState: AnkiUiSavedState;
-    readonly recordStart: number;
-    readonly recordEnd: number;
-}
-
-export interface AnkiUiBridgeExportedMessage extends Message {
-    readonly command: 'exported';
-    readonly mode: AnkiExportMode;
 }
 
 export interface VideoDataUiBridgeConfirmMessage extends Message {

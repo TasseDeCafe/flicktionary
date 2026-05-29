@@ -1,5 +1,3 @@
-import type { AnkiSettings } from '../settings/settings';
-
 type Profile = { name: string };
 
 export interface RectModel {
@@ -99,47 +97,6 @@ export interface AudioModel {
 }
 
 export type AnkiExportMode = 'gui' | 'updateLast' | 'default';
-
-export interface AnkiDialogSettings extends AnkiSettings {
-    themeType: string;
-    lastSelectedAnkiExportMode: AnkiExportMode;
-}
-
-export interface AnkiUiState extends CardTextFieldValues {
-    readonly type: 'initial' | 'resume';
-    readonly open: boolean;
-    readonly canRerecord: boolean;
-    readonly settings: AnkiDialogSettings;
-    readonly profiles: Profile[];
-    readonly activeProfile?: string;
-    readonly ftueHasSeenAnkiDialogQuickSelect: boolean;
-    readonly subtitle: SubtitleModel;
-    readonly surroundingSubtitles: SubtitleModel[];
-    readonly url?: string;
-    readonly source: string;
-    readonly image?: ImageModel;
-    readonly audio?: AudioModel;
-    readonly file?: FileModel;
-    readonly dialogRequestedTimestamp: number;
-    readonly inTutorial: boolean;
-}
-
-export interface AnkiUiInitialState extends AnkiUiState {
-    readonly type: 'initial';
-}
-
-export interface AnkiUiResumeState extends AnkiUiState {
-    readonly type: 'resume';
-    readonly text: string;
-    readonly initialTimestampInterval: number[];
-    readonly timestampInterval: number[];
-    readonly timestampBoundaryInterval?: number[];
-    readonly definition: string;
-    readonly word: string;
-    readonly customFieldValues: { [key: string]: string };
-    readonly lastAppliedTimestampIntervalToText: number[];
-    readonly lastAppliedTimestampIntervalToAudio?: number[];
-}
 
 export interface AnkiUiSavedState {
     subtitle: SubtitleModel;
