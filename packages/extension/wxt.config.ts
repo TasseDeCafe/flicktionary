@@ -153,7 +153,7 @@ export default defineConfig({
         let permissions = ['tabs', 'storage', 'unlimitedStorage'];
 
         if (browser === 'chrome') {
-            permissions = [...permissions, 'tabCapture', 'activeTab', 'contextMenus', 'offscreen'];
+            permissions = [...permissions, 'tabCapture', 'activeTab', 'contextMenus'];
 
             manifest = {
                 ...manifest,

@@ -45,7 +45,7 @@ import {
 } from '@asbplayer-fork/common/settings';
 import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection';
 import { SubtitleReader } from '@asbplayer-fork/common/subtitle-reader';
-import { extractText, seekWithNudge, surroundingSubtitlesAroundInterval } from '@asbplayer-fork/common/util';
+import { seekWithNudge } from '@asbplayer-fork/common/util';
 import ControlsController from '../controllers/controls-controller';
 import DragController from '../controllers/drag-controller';
 import { MobileGestureController } from '../controllers/mobile-gesture-controller';

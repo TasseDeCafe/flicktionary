@@ -1,4 +1,4 @@
-import TabRegistry, { Asbplayer } from '@/services/tab-registry';
+import TabRegistry from '@/services/tab-registry';
 import VideoHeartbeatHandler from '@/handlers/video/video-heartbeat-handler';
 import ToggleSubtitlesHandler from '@/handlers/video/toggle-subtitles-handler';
 import SyncHandler from '@/handlers/video/sync-handler';
@@ -190,20 +190,6 @@ export default defineBackground(() => {
 
     browser.commands?.onCommand.addListener((command) => {
         browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            const validAsbplayer = (asbplayer: Asbplayer) => {
-                if (asbplayer.sidePanel) {
-                    return false;
-                }
-
-                const tab = asbplayer.tab;
-
-                if (tab && tabs.find((t) => t.id === tab.id) === undefined) {
-                    return false;
-                }
-
-                return true;
-            };
-
             switch (command) {
                 case 'toggle-video-select':
                     for (const tab of tabs) {
