@@ -1,7 +1,6 @@
 import {
     AsbPlayerToVideoCommandV2,
     ControlType,
-    CopySubtitleMessage,
     CurrentTimeToVideoMessage,
     HiddenMessage,
     LoadSubtitlesMessage,
@@ -47,23 +46,6 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
 const MobileVideoOverlayUi = () => {
     const location = useMobileVideoOverlayLocation();
     const hiddenRef = useRef<boolean>(false);
-
-    const handleMineSubtitle = useCallback(async () => {
-        if (!location) {
-            return;
-        }
-
-        const command: AsbPlayerToVideoCommandV2<CopySubtitleMessage> = {
-            sender: 'asbplayerv2',
-            message: {
-                command: 'copy-subtitle',
-                postMineAction: await settings.getSingle('clickToMineDefaultAction'),
-            },
-            tabId: location.tabId,
-            src: location.src,
-        };
-        browser.runtime.sendMessage(command);
-    }, [location]);
 
     const handleLoadSubtitles = useCallback(() => {
         if (!location) {
@@ -231,7 +213,6 @@ const MobileVideoOverlayUi = () => {
                     tooltipsEnabled={tooltipsEnabled}
                     initialControlType={lastControlType}
                     onScrollToControlType={setLastControlType}
-                    onMineSubtitle={handleMineSubtitle}
                     onLoadSubtitles={handleLoadSubtitles}
                     onOffset={handleOffset}
                     onSeek={handleSeek}

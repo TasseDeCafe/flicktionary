@@ -1,4 +1,4 @@
-import { AnkiExportMode, AutoPausePreference, PostMineAction, PostMinePlayback, SubtitleHtml } from '../src/model';
+import { AnkiExportMode, AutoPausePreference, PostMinePlayback, SubtitleHtml } from '../src/model';
 import { arrayEquals } from '../util';
 
 export enum PauseOnHoverMode {
@@ -24,7 +24,6 @@ export interface MiscSettings {
     readonly convertNetflixRuby: boolean;
     readonly miningHistoryStorageLimit: number;
     readonly language: string;
-    readonly clickToMineDefaultAction: PostMineAction;
     readonly postMiningPlaybackState: PostMinePlayback;
     readonly lastSubtitleOffset: number;
     readonly lastSelectedAnkiExportMode: AnkiExportMode;

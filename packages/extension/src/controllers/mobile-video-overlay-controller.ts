@@ -162,13 +162,11 @@ export class MobileVideoOverlayController {
         const subtitleDisplaying =
             subtitles.length > 0 && this._context.subtitleController.currentSubtitle()[0] !== null;
         const timestamp = this._context.video.currentTime * 1000;
-        const { language, clickToMineDefaultAction, themeType, streamingDisplaySubtitles } =
-            await this._context.settings.get([
-                'language',
-                'clickToMineDefaultAction',
-                'themeType',
-                'streamingDisplaySubtitles',
-            ]);
+        const { language, themeType, streamingDisplaySubtitles } = await this._context.settings.get([
+            'language',
+            'themeType',
+            'streamingDisplaySubtitles',
+        ]);
         const model: MobileOverlayModel = {
             offset: subtitles.length === 0 ? 0 : subtitles[0].start - subtitles[0].originalStart,
             playbackRate: this._context.video.playbackRate,
@@ -179,7 +177,6 @@ export class MobileVideoOverlayController {
             nextSubtitleTimestamp: adjacentSubtitle(true, timestamp, subtitles)?.originalStart ?? undefined,
             currentTimestamp: timestamp,
             language,
-            postMineAction: clickToMineDefaultAction,
             subtitleDisplaying,
             subtitlesAreVisible: streamingDisplaySubtitles,
             playMode: this._context.playMode,

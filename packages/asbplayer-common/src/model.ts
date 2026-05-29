@@ -277,7 +277,6 @@ export interface MobileOverlayModel {
     nextSubtitleTimestamp?: number;
     currentTimestamp: number;
     language?: string;
-    postMineAction: PostMineAction;
     subtitleDisplaying: boolean;
     subtitlesAreVisible: boolean;
     themeType: 'dark' | 'light';

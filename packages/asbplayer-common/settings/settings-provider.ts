@@ -15,7 +15,7 @@ import {
     DictionaryTrack,
     TokenReadingAnnotation,
 } from '.';
-import { AutoPausePreference, PostMineAction, PostMinePlayback, SubtitleHtml } from '..';
+import { AutoPausePreference, PostMinePlayback, SubtitleHtml } from '..';
 
 // @ts-ignore
 const isMacOs = (navigator.userAgentData?.platform ?? navigator.platform)?.toUpperCase()?.indexOf('MAC') > -1;
@@ -148,7 +148,6 @@ export const defaultSettings: AsbplayerSettings = {
     preferMp3: true,
     tabName: 'asbplayer',
     miningHistoryStorageLimit: 25,
-    clickToMineDefaultAction: PostMineAction.showAnkiDialog,
     postMiningPlaybackState: PostMinePlayback.remember,
     themeType: 'dark',
     copyToClipboardOnMine: false,
