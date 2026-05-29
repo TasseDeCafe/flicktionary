@@ -1,5 +1,24 @@
 # Plan: remove the asbplayer web-app integration + finish the Anki teardown
 
+> **STATUS (2026-05-29):** Parts A + B **done** (OPEN APP repointed; App-integration
+> settings surface removed; `asbplayer.content.ts` + `common/app/` +
+> `use-video-element-count.ts` deleted; dead mining/app-bridge message + model types
+> pruned from `message.ts`/`model.ts`). Build green (chrome + firefox 6.97 MB, was
+> 7.04), `@flicktionary/web` build green, tsc 9→8 (same baseline locations), jest at
+> baseline (minus the intentionally-deleted `common/app/.../cached-local-storage.test.ts`).
+>
+> **Part C is NOT cleanly mechanical — premise was wrong.** Re-verification (which the
+> plan asked for) shows `AnkiSettings` is a grab-bag with **live readers**
+> (`maxImageWidth`/`maxImageHeight` → `binding.ts` cropping;
+> `surroundingSubtitles{Count,Time}Radius` → `binding.ts`/`subtitle-controller.ts`),
+> and `CUSTOMIZATIONS.md §4` already lists it under "Kept deliberately." Wholesale
+> removal would regress live image/subtitle features and the keybinds
+> (`updateLastCard`/`exportCard`/`takeScreenshot` + `key-binder.ts`) are entangled.
+> Doing it right needs a field-extraction refactor (move the 4 live fields out, then
+> delete the dead Anki fields) — deferred. `lastSelectedAnkiExportMode` +
+> `AnkiExportMode` are cleanly dead and could go in a focused follow-up. Part D
+> (`copy-history/`) also deferred. See `CUSTOMIZATIONS.md §6` "Still deferred."
+
 > **For a fresh thread.** Self-contained. This is the deferred "Removing the web-app
 > integration" follow-up from `CUSTOMIZATIONS.md §6`, plus the finish-off of the Anki
 > removal it unlocks. Branch: `feat/add-asbplayer-extension`.

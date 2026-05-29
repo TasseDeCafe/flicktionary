@@ -111,14 +111,15 @@ a 2026-05 settings-UI follow-up; bundle 8.57 MB → 7.22 MB):
 - **All ~21 video platforms** + their `pages.json` entries + the video-data-sync /
   subtitle-loading / HLS-DASH plumbing. Only YouTube is wired to the backend; the
   rest work at the extension layer but have no Flicktionary session model yet.
-- **The asbplayer web-app *integration*** — `asbplayer.content.ts` (the content
-  script bridge on `app.asbplayer.dev`, handling `dictionary-*-bulk` messages),
-  `common/app` (`ChromeExtension`, imported by `use-video-element-count`), and the
-  `extensionSupportsAppIntegration` settings surface.
+- ~~**The asbplayer web-app *integration***~~ — **REMOVED in the web-app teardown
+  (2026-05, see §6 "landed").** `asbplayer.content.ts`, `common/app`
+  (`ChromeExtension` etc.), the dead `use-video-element-count` hook, and the
+  `extensionSupportsAppIntegration` settings surface are gone. OPEN APP now opens
+  the Flicktionary web app (`getFlicktionaryConfig().webUrl`).
 - **The `dictionary-db` / `DictionaryProvider` data layer** — load-bearing for
-  **profile management** (`use-settings-profile-context`) and the web-app dictionary
-  bridge. The dictionary *feature* (coloring + settings UI) is gone, but the data
-  layer survives as profile/bridge plumbing.
+  **profile management** (`use-settings-profile-context`). The dictionary *feature*
+  (coloring + settings UI) and the web-app dictionary bridge are gone, but the data
+  layer survives as profile plumbing.
 - **The settings schema (mostly)** — the `AnkiSettings` interface, `dictionary*`,
   and the mining fields with **reachable kept readers** stay in `AsbplayerSettings`:
   `maxImageWidth`/`maxImageHeight` + `surroundingSubtitles*Radius` (`binding.ts` /
@@ -183,21 +184,44 @@ dir + assorted stray orphans — `yomitan/index.ts`, `audio-clip/mp3-encoder-wor
 `common/asbplayer-common` dropped from 170 → 96 on-disk TS files; build stayed at
 7.22 MB and the tsc 9-error baseline held throughout.
 
+**Landed since (2026-05, web-app teardown — see `WEBAPP-TEARDOWN-PLAN.md`):**
+- **OPEN APP repointed** to the Flicktionary web app via
+  `getFlicktionaryConfig().webUrl` (was the asbplayer `streamingAppUrl`). The
+  asbplayer "App integration" settings section (the "open subtitle list via app"
+  toggle + asbplayer URL field) and the `extensionSupportsAppIntegration` prop are
+  gone; the Streaming Video settings tab is now rendered unconditionally (its live
+  contents — display-subtitles / overlay / auto-load-Whisper / condensed playback /
+  page settings — are untouched).
+- **`asbplayer.content.ts`, `common/app/`, `use-video-element-count.ts` deleted**
+  (the latter was the only — itself dead — importer of `ChromeExtension`).
+- **Dead mining/app-bridge message + model types removed** from
+  `asbplayer-common/src/message.ts` / `model.ts`: the copy/mine/screenshot/rerecord
+  messages, card-dialog messages, the get/set-settings·profiles·global-state·
+  copy-history app-bridge messages, `PostMineAction`, `AnkiUiSavedState`. Bundle
+  7.04 → 6.97 MB; tsc baseline 9 → 8 (one fewer error).
+
 Still deferred:
 
+- **The rest of the Anki teardown is *not* cleanly mechanical.** Re-verification
+  (contra the teardown plan's Part C premise) shows `AnkiSettings` is a grab-bag with
+  **live readers**: `maxImageWidth`/`maxImageHeight` (`binding.ts` image cropping) and
+  `surroundingSubtitlesCountRadius`/`TimeRadius` (`binding.ts` / `subtitle-controller.ts`).
+  Removing it requires extracting those 4 fields into a surviving settings group
+  first — a settings refactor with regression risk to image/subtitle features, run
+  against an already-broken settings test suite. Likewise the `updateLastCard` /
+  `exportCard` / `takeScreenshot` keybinds + `key-binder.ts` handlers are entangled
+  (and `takeScreenshot` is plausibly general, not Anki). Consistent with this §4's
+  "Kept deliberately — settings schema (mostly)" note: these stay until a deliberate
+  field-extraction pass. `lastSelectedAnkiExportMode` + `AnkiExportMode` are cleanly
+  dead and could go in a focused follow-up.
 - **Deep `dictionary-db` removal** — requires rewiring profile management off
-  `dictionary-db` and removing the `asbplayer.content.ts` dictionary bridge. Gated
-  behind removing the **web-app integration** (the two collapse into one decision).
-  `dictionary-db` is the only reachable importer of `anki/anki.ts`; cutting that
-  dependency would unlock deleting `anki/`, the rest of `audio-clip/`, and
-  `@types/dom-mediacapture-record`. (Investigation, not mechanical — see the plan's
-  "Deeper unlocks".)
-- **Removing the web-app integration** — drop `asbplayer.content.ts` +
-  `extensionSupportsAppIntegration` + the `ChromeExtension` usage in
-  `use-video-element-count`, which would then unlock deleting the remaining
-  `common/app` bridge files, `dictionary-db`, and the `copy-history` /
-  `web-socket-client` common dirs. (Mostly tree-shaken already, so the *bundle*
-  benefit is small; the value is a leaner tree.)
+  `dictionary-db`. `dictionary-db` is the only reachable importer of `anki/anki.ts`;
+  cutting that dependency would unlock deleting `anki/`, the rest of `audio-clip/`,
+  and `@types/dom-mediacapture-record`. (Investigation, not mechanical.)
+- **`copy-history/` common dir** — now self-contained (`copy-history-repository` +
+  its own test + index; `use-copy-history` was deleted with `common/app`).
+  Deletable, but reassess `CopyHistoryItem` (extends the still-live `CardModel`)
+  first.
 - **TS/ESLint** — `lint` is still a no-op stub (`echo`); aligning the monorepo's
   shared ESLint config is a large first-run-error task. tsc has 9 pre-existing
   errors (the WXT build is the gate).
