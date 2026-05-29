@@ -26,13 +26,17 @@ const firefoxTtl = 3600 * 24 * 1000; // 1 day
 export const fetchExtensionConfig = async (noCache = false): Promise<ExtensionConfig | undefined> => {
     if (!noCache) {
         const result = await storage.get(['config']);
-        const cachedConfig = result ? result.config : undefined;
+        const cachedConfig = (result ? result.config : undefined) as
+            | (ExtensionConfig & { ttl?: number })
+            | '-'
+            | null
+            | undefined;
 
         if (cachedConfig === '-') {
             return undefined;
         }
 
-        if (cachedConfig !== undefined) {
+        if (cachedConfig !== undefined && cachedConfig !== null) {
             if (typeof cachedConfig.ttl !== 'number' || Date.now() < cachedConfig.ttl) {
                 return cachedConfig as ExtensionConfig;
             }

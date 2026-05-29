@@ -1,10 +1,16 @@
 const key = 'tabRequestingActiveTabPermission';
 
+interface SavedTab {
+    tabId: number;
+    src: string;
+    url?: string;
+}
+
 export const getTabRequestingActiveTabPermission = async () => {
     const result = await browser.storage.session.get(key);
-    const savedTab = result ? result[key] : undefined;
+    const savedTab = (result ? result[key] : undefined) as SavedTab | undefined;
 
-    if (savedTab === undefined) {
+    if (savedTab === undefined || savedTab === null) {
         return undefined;
     }
 

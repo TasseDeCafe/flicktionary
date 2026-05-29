@@ -1,5 +1,5 @@
 import { defineConfig } from 'wxt';
-import type { ResolvedPublicFile, UserManifest, Wxt } from 'wxt';
+import type { PublicPathEntry, ResolvedPublicFile, UserManifest, Wxt } from 'wxt';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -18,7 +18,7 @@ const moveToPublicAssets = (srcPath: string, destPath: string, files: ResolvedPu
     }
 };
 
-const addToPublicPathsType = (srcPath: string, destPath: string, paths: string[]) => {
+const addToPublicPathsType = (srcPath: string, destPath: string, paths: PublicPathEntry[]) => {
     const srcFiles = fs.readdirSync(srcPath);
     for (const file of srcFiles) {
         paths.push(`${destPath}/${file}`);
@@ -71,7 +71,7 @@ export default defineConfig({
                 moveToPublicAssets(srcDir, destDir, files);
             }
         },
-        'prepare:publicPaths': (wxt: Wxt, paths: string[]) => {
+        'prepare:publicPaths': (wxt: Wxt, paths: PublicPathEntry[]) => {
             for (const { srcDir, destDir } of commonAssets) {
                 addToPublicPathsType(srcDir, destDir, paths);
             }
