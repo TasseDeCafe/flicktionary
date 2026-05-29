@@ -249,84 +249,82 @@ export const StudySessionsRouter = (
       return { data: preview }
     }),
 
-    findOrCreateForYoutubeVideo: implementer.findOrCreateForYoutubeVideo.handler(
-      async ({ input, context, errors }) => {
-        const userId = context.res.locals.userId
+    findOrCreateForYoutubeVideo: implementer.findOrCreateForYoutubeVideo.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
 
-        // Detect the language from the actual subtitle text. This is the single
-        // source of truth: the detected language is the content language AND the
-        // session target language (study Russian subs → Russian session). The
-        // pass only ever returns a supported ISO-639-1 code or null.
-        const detectedLanguage = await languageDetectionPass(buildDetectionSample(input.subtitles.segments))
-        if (!detectedLanguage) {
-          throw errors.UNPROCESSABLE_ENTITY({
-            data: {
-              errors: [
-                {
-                  code: 'UNSUPPORTED_LANGUAGE',
-                  message: 'These subtitles are not in a language Flicktionary supports yet.',
-                },
-              ],
-            },
-          })
-        }
-
-        const [nativeLanguage, prefs] = await Promise.all([
-          usersRepository.getNativeLanguage(userId),
-          targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
-        ])
-        // native + CEFR live in user_prefs (set during onboarding), keyed by the
-        // language being studied. If either is missing for the detected
-        // language we can't shape an enrichment-ready session — the extension
-        // prompts the user to set their level for that language on
-        // flicktionary.app.
-        if (!nativeLanguage || !prefs?.cefr_level) {
-          throw errors.UNPROCESSABLE_ENTITY({
-            data: {
-              errors: [
-                {
-                  code: 'MISSING_CEFR',
-                  message: `Set your ${getLanguageName(detectedLanguage)} level on flicktionary.app before saving from the extension.`,
-                },
-              ],
-            },
-          })
-        }
-
-        const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForYoutubeVideo({
-          userId,
-          youtubeVideoId: input.youtubeVideoId,
-          videoTitle: input.videoTitle,
-          videoUrl: input.videoUrl,
-          videoAudioLanguage: detectedLanguage,
-          subtitleLanguage: detectedLanguage,
-          subtitleHash: input.subtitles.contentHash,
-          subtitleSegments: input.subtitles.segments,
-          nativeLanguage,
-          targetLanguage: detectedLanguage,
-          cefrLevel: prefs.cefr_level,
-        })
-
-        // Stamp the most-recent target language so adhoc wizards and other
-        // surfaces stay coherent with what was actually studied.
-        void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
-          logWithSentry({
-            message: 'setLastTargetLanguage failed (youtube ingest)',
-            params: { userId, targetLanguage: detectedLanguage },
-            error,
-          })
-        })
-
-        return {
+      // Detect the language from the actual subtitle text. This is the single
+      // source of truth: the detected language is the content language AND the
+      // session target language (study Russian subs → Russian session). The
+      // pass only ever returns a supported ISO-639-1 code or null.
+      const detectedLanguage = await languageDetectionPass(buildDetectionSample(input.subtitles.segments))
+      if (!detectedLanguage) {
+        throw errors.UNPROCESSABLE_ENTITY({
           data: {
-            sessionId: session.id,
-            textTrackId: track.id,
-            contentSourceId: contentSource.id,
-            segments: segments.map(toSegmentDto),
+            errors: [
+              {
+                code: 'UNSUPPORTED_LANGUAGE',
+                message: 'These subtitles are not in a language Flicktionary supports yet.',
+              },
+            ],
           },
-        }
+        })
       }
-    ),
+
+      const [nativeLanguage, prefs] = await Promise.all([
+        usersRepository.getNativeLanguage(userId),
+        targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
+      ])
+      // native + CEFR live in user_prefs (set during onboarding), keyed by the
+      // language being studied. If either is missing for the detected
+      // language we can't shape an enrichment-ready session — the extension
+      // prompts the user to set their level for that language on
+      // flicktionary.app.
+      if (!nativeLanguage || !prefs?.cefr_level) {
+        throw errors.UNPROCESSABLE_ENTITY({
+          data: {
+            errors: [
+              {
+                code: 'MISSING_CEFR',
+                message: `Set your ${getLanguageName(detectedLanguage)} level on flicktionary.app before saving from the extension.`,
+              },
+            ],
+          },
+        })
+      }
+
+      const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForYoutubeVideo({
+        userId,
+        youtubeVideoId: input.youtubeVideoId,
+        videoTitle: input.videoTitle,
+        videoUrl: input.videoUrl,
+        videoAudioLanguage: detectedLanguage,
+        subtitleLanguage: detectedLanguage,
+        subtitleHash: input.subtitles.contentHash,
+        subtitleSegments: input.subtitles.segments,
+        nativeLanguage,
+        targetLanguage: detectedLanguage,
+        cefrLevel: prefs.cefr_level,
+      })
+
+      // Stamp the most-recent target language so adhoc wizards and other
+      // surfaces stay coherent with what was actually studied.
+      void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
+        logWithSentry({
+          message: 'setLastTargetLanguage failed (youtube ingest)',
+          params: { userId, targetLanguage: detectedLanguage },
+          error,
+        })
+      })
+
+      return {
+        data: {
+          sessionId: session.id,
+          textTrackId: track.id,
+          contentSourceId: contentSource.id,
+          segments: segments.map(toSegmentDto),
+        },
+      }
+    }),
 
     remove: implementer.remove.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId

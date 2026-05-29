@@ -91,9 +91,7 @@ export const ExtensionPairView = () => {
           </CardHeader>
           <CardContent className='space-y-3 text-sm text-stone-700'>
             {status === 'pairing' && <p>{t`Pairing your browser extension...`}</p>}
-            {status === 'sent' && (
-              <p>{t`Done. You can close this tab and return to the extension.`}</p>
-            )}
+            {status === 'sent' && <p>{t`Done. You can close this tab and return to the extension.`}</p>}
             {status === 'no-extension' && (
               <>
                 <p>{t`We did not hear back from a Flicktionary extension on this device.`}</p>
