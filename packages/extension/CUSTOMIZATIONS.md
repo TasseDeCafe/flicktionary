@@ -232,7 +232,7 @@ dir + assorted stray orphans — `yomitan/index.ts`, `audio-clip/mp3-encoder-wor
   `preCacheSubtitleDom`/`clickToMineDefaultAction`/`lastSelectedAnkiExportMode`, the
   dead keybind entries, and the `webSocket*` `ignoreKeys`. `validateAllKnownKeys` now
   throws on any of these. (Kept: still-live-in-type fields with dead readers —
-  `miningHistoryStorageLimit`, `postMiningPlaybackState`, `copyToClipboardOnMine`,
+  `miningHistoryStorageLimit`, `postMiningPlaybackState`, `copyToClipboardOnMine` (all three later removed — see the dead-reader-fields sweep below),
   `autoCopyCurrentSubtitle` — plus the full `dictionaryTracks`/`/DictionaryTrack`
   schema, which `ensureConsistencyOnRead` migrates on load.) Rationale: no legacy
   settings exports exist to honor.
@@ -259,6 +259,13 @@ fallback, `findAsbplayer` tab-count guard) + the `sync-handler` filter; the dead
 step in `Tutorial.tsx` (FTUE now goes load-subtitles → overlay). Left the dead
 `ftue.sidePanel`/`binds.toggleSidePanel` i18n keys (deferred, see below) and the
 "Side Panel" wording in the `ftue.loadSubtitles` copy (content decision, not dead code).
+
+**Landed since (2026-05, dead-reader settings-fields sweep — see
+`REMAINING-CLEANUP-PLAN.md` item 2):** removed three `MiscSettings` fields that had no
+runtime reader (only the type, provider default, strict schema, and test fixture):
+`copyToClipboardOnMine`, `miningHistoryStorageLimit`, and `postMiningPlaybackState` (plus
+the now-orphaned `PostMinePlayback` enum in `src/model.ts`). tsc baseline held at 8,
+`settings-import-export` stayed 5/5, build stayed at 6.96 MB.
 
 Still deferred:
 

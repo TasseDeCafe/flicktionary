@@ -12,7 +12,7 @@ import {
     TokenReadingAnnotation,
     PauseOnHoverMode,
 } from '.';
-import { AutoPausePreference, PostMinePlayback, SubtitleHtml } from '..';
+import { AutoPausePreference, SubtitleHtml } from '..';
 
 // @ts-ignore
 const isMacOs = (navigator.userAgentData?.platform ?? navigator.platform)?.toUpperCase()?.indexOf('MAC') > -1;
@@ -97,10 +97,7 @@ export const defaultSettings: AsbplayerSettings = {
         moveTopSubtitlesDown: { keys: '' },
     },
     tabName: 'asbplayer',
-    miningHistoryStorageLimit: 25,
-    postMiningPlaybackState: PostMinePlayback.remember,
     themeType: 'dark',
-    copyToClipboardOnMine: false,
     rememberSubtitleOffset: true,
     lastSubtitleOffset: 0,
     autoCopyCurrentSubtitle: false,

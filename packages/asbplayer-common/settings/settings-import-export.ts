@@ -235,17 +235,8 @@ const settingsSchema = {
         tabName: {
             type: 'string',
         },
-        miningHistoryStorageLimit: {
-            type: 'number',
-        },
-        postMiningPlaybackState: {
-            type: 'number',
-        },
         themeType: {
             type: 'string',
-        },
-        copyToClipboardOnMine: {
-            type: 'boolean',
         },
         rememberSubtitleOffset: {
             type: 'boolean',

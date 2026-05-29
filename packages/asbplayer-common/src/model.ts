@@ -166,12 +166,6 @@ export interface AudioTrackModel {
     language: string;
 }
 
-export enum PostMinePlayback {
-    remember = 0,
-    play = 1,
-    pause = 2,
-}
-
 export enum AutoPausePreference {
     atStart = 1,
     atEnd = 2,

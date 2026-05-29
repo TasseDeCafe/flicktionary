@@ -1,4 +1,4 @@
-import { AutoPausePreference, PostMinePlayback, SubtitleHtml } from '../src/model';
+import { AutoPausePreference, SubtitleHtml } from '../src/model';
 import { arrayEquals } from '../util';
 
 export enum PauseOnHoverMode {
@@ -9,7 +9,6 @@ export enum PauseOnHoverMode {
 
 export interface MiscSettings {
     readonly themeType: 'dark' | 'light';
-    readonly copyToClipboardOnMine: boolean;
     readonly autoPausePreference: AutoPausePreference;
     readonly seekDuration: number;
     readonly speedChangeStep: number;
@@ -22,9 +21,7 @@ export interface MiscSettings {
     readonly subtitleRegexFilter: string;
     readonly subtitleRegexFilterTextReplacement: string;
     readonly convertNetflixRuby: boolean;
-    readonly miningHistoryStorageLimit: number;
     readonly language: string;
-    readonly postMiningPlaybackState: PostMinePlayback;
     readonly lastSubtitleOffset: number;
     readonly tabName: string;
     readonly pauseOnHoverMode: PauseOnHoverMode;
