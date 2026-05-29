@@ -173,8 +173,8 @@ export class MobileVideoOverlayController {
             offset: subtitles.length === 0 ? 0 : subtitles[0].start - subtitles[0].originalStart,
             playbackRate: this._context.video.playbackRate,
             emptySubtitleTrack: subtitles.length === 0,
-            recordingEnabled: this._context.recordMedia,
-            recording: this._context.recordingMedia,
+            recordingEnabled: false,
+            recording: false,
             previousSubtitleTimestamp: adjacentSubtitle(false, timestamp, subtitles)?.originalStart ?? undefined,
             nextSubtitleTimestamp: adjacentSubtitle(true, timestamp, subtitles)?.originalStart ?? undefined,
             currentTimestamp: timestamp,
@@ -276,7 +276,7 @@ export class MobileVideoOverlayController {
     }
 
     private _hide() {
-        if (!this._context.synced || this._context.recordingMedia) {
+        if (!this._context.synced) {
             return;
         }
 
