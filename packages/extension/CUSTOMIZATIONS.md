@@ -1,170 +1,192 @@
-# Extension customizations vs. upstream asbplayer
+# Flicktionary extension — maintenance playbook
 
-`packages/extension` is a **vendored fork of [asbplayer](https://github.com/killergerbah/asbplayer)**.
-This file inventories everything in it that is **not** vanilla upstream, so a
-future re-base onto a newer upstream asbplayer can carry the custom parts
-forward and leave the rest to upstream.
+`packages/extension` (+ `packages/asbplayer-common`) is an **owned, vendored fork**
+of [asbplayer](https://github.com/asbplayer/asbplayer) (MIT). We do **not** re-base
+onto upstream. We own this code and harvest from upstream selectively (the "donor
+model", §3). This file is the maintenance playbook: what we changed, what we
+removed, and how to pull useful bits from upstream without dragging the removed
+features back in.
 
-> If you're upgrading: clone the target upstream version, then reapply the
-> items in **Custom features** and **Custom / modified files** below. Do **not**
-> reintroduce anything under **Removed vs. the standalone fork**.
+> Companion docs: `MAINTENANCE-PLAN.md` (the strategy + execution log for the
+> 2026-05 lean strip). This file is the living reference; that one is history.
 
-## Lineage (three layers)
+## Lineage
 
-1. **Upstream asbplayer** (open source, killergerbah). The base. Currently a few
-   versions behind what we vendored.
-2. **The "word-learning" fork** — a standalone fork that added Russian/YouTube
-   word-learning features on top of upstream. A copy lives at
-   `~/Documents/asbplayer`; its `HANDOFF.md` documents these features against
-   upstream. Relevant features were brought into this repo.
-3. **The Flicktionary integration layer** (this repo) — rewires the fork's
-   features to talk to the Flicktionary backend (Supabase auth + oRPC API)
-   instead of a local API key + IndexedDB. This is where most of the custom
-   surface area now lives.
+1. **Upstream asbplayer** (MIT, github.com/asbplayer/asbplayer). We vendored
+   **~v1.13**; upstream is now ahead (1.17+). The donor remote is configured as
+   `asbplayer` (see §3).
+2. **The "word-learning" fork** — added Russian/YouTube word-learning features on
+   top of upstream (a copy lives at `~/Documents/asbplayer`, `HANDOFF.md`).
+3. **The Flicktionary integration layer** (this repo) — rewires the word-learning
+   features to talk to the Flicktionary backend (Supabase auth + oRPC API). This
+   is where most custom surface lives (§5).
 
-When the prompt says "the original asbplayer," layer 1 is the re-base target;
-layers 2–3 are what must be preserved.
+## Build / structural deltas (vs. upstream)
 
-## Structural deltas (bite first on a re-base)
+- **Monorepo.** Upstream is `extension/` + `common/` + `client/` at repo root.
+  Here: `packages/extension` + `packages/asbplayer-common` in a pnpm + turbo
+  monorepo. There is **no `client/`** (the standalone web app) — but the asbplayer
+  **web-app *integration*** (the content script bridge to `app.asbplayer.dev`) is
+  still present; see §4 "Kept".
+- **Package scope.** `@project/*` → `@asbplayer-fork/*`. **Every import differs**
+  from upstream — so a naive `git merge` is impossible; harvest file-by-file (§3).
+- **Build tool: WXT** — same as upstream (`pnpm dev` / `pnpm build` → `wxt` /
+  `wxt build`). Dev bundle `.output/chrome-mv3-dev`; prod `.output/chrome-mv3`.
+- **Vite env prefix.** `wxt.config.ts` adds `VITE_` to `envPrefix` for the
+  Flicktionary Doppler config (`VITE_API_HOST`, `VITE_SUPABASE_*`).
+- **Gate = the WXT build (`pnpm build`), not tsc.** `tsc --noEmit` has **9
+  pre-existing errors** (down from ~18; the 2026-05 strip introduced none — see
+  §6). esbuild does not type-check, so always run `pnpm build` after edits, and
+  run `pnpm exec tsc --noEmit` to catch dangling property/type refs the build
+  silently tolerates (this is how the mobile-overlay regression was caught).
 
-These are not features but they make a naive `git merge`/copy impossible:
+## §3. Donor model — harvesting from upstream
 
-- **Monorepo layout.** Upstream is `extension/` + `common/` at repo root. Here
-  they're `packages/extension` and `packages/asbplayer-common` inside a pnpm +
-  turbo monorepo.
-- **Package scope rename.** `@project/*` → `@asbplayer-fork/*`
-  (`@asbplayer-fork/common`, `@asbplayer-fork/extension`). **Every import differs**
-  from upstream. The standalone fork still uses `@project/*`.
-- **Build tool.** WXT (`pnpm dev` / `pnpm build` → `wxt` / `wxt build`). Dev
-  bundle is `.output/chrome-mv3-dev`; prod is `.output/chrome-mv3`. (`pnpm build`
-  only writes the **prod** dir — when testing the dev bundle you need `pnpm dev`
-  running or `pnpm build:dev`.)
-- **Vite env prefix.** `wxt.config.ts` adds `VITE_` to vite's `envPrefix` so the
-  Flicktionary Doppler config (`VITE_API_HOST`, `VITE_SUPABASE_*`, …) resolves;
-  see `src/services/flicktionary/flicktionary-config.ts`.
-- **Typecheck gate.** ~18 pre-existing `tsc --noEmit` errors exist; the real
-  gate is the **WXT build**, not tsc. Diff against a baseline build before
-  blaming a change.
+We own the fork; upstream is a **parts donor**, not a base. The remote:
 
-## Custom features (carry forward)
+```
+git remote add asbplayer https://github.com/asbplayer/asbplayer.git   # already configured
+git fetch asbplayer --tags                                            # when you want to harvest
+```
 
-### Flicktionary integration layer (this repo only)
+**Baseline:** we vendored ~v1.13. Diff a donor file against that tag to see only
+upstream's later changes:
+`git show asbplayer/v1.13.0:extension/src/entrypoints/<file>` vs. our copy.
 
-- **Pairing with Flicktionary** (Supabase magic-link). The web app's
-  `/extension-pair` route posts a `{ tokenHash, email, nonce }` message; a
-  URL-restricted content script forwards it to the background, which runs
-  `verifyOtp({ type: 'magiclink' })` and persists the Supabase session.
-  Auth lives in its **own** `browser.storage.local` namespace
-  (`flicktionary.auth.v1`), deliberately **outside** `SettingsProvider` so it is
-  never synced or included in settings export/import.
-- **Hover gloss via backend.** Hovering a word calls the stateless backend
-  endpoint `glosses.fastGloss` (selection + context line + target language →
-  `{ gloss, pos, register, ipa }`). Native language / hide-translation mode are
-  resolved server-side from the user's prefs. Nothing is persisted; the content
-  script caches in memory. Tooltip renders selection + IPA + gloss +
-  POS/register badges, mirroring the web fast-gloss popover.
-- **Save → Flicktionary highlight.** Right-click a word, or drag-select a chunk
-  then right-click, to save. On first save for a video the extension calls
-  `studySessions.findOrCreateForYoutubeVideo` (creates a `content_source` of
-  type `youtube`, a `text_track`, and `text_segments`), caches the
-  segment-index → `text_segments.id` map, then calls `highlights.create` with
-  the segment ids + char offsets. Flicktionary (Supabase) is the **system of
-  record**.
-- **Register subtitles at load.** When subtitles load on a YouTube video the
-  binding sends `register-flicktionary-subtitles` so the session + segment map
-  are ready before the first save. It **awaits** the response: on
-  `UNSUPPORTED_LANGUAGE` it shows a one-time notice and sets a save-disabled
-  reason (read by `WordInteractionController` to block saves); on `MISSING_CEFR`
-  it surfaces the backend message.
-- **Language is detected server-side, not sent.** The extension passes **no**
-  language to `findOrCreateForYoutubeVideo`; the backend runs its Haiku
-  `languageDetectionPass` on the segment text and uses the result as both the
-  content language and the session `target_language`. The extension keeps the
-  selected YouTube caption track's BCP-47 code (set on the binding via
-  `setFlicktionarySubtitleLanguageHint` from `video-data-sync-controller`, just
-  before `loadSubtitles`) only to *name* an unsupported language in the notice
-  (`Intl.DisplayNames`). This replaced the old `_inferFlicktionarySubtitleLanguage`
-  heuristic, which read the UI-language setting and defaulted to `'en'` —
-  mislabeling every video.
-- **Target-language sync** (hover-gloss only now), **popup session highlight
-  counter**, **YouTube context extraction** (video id / title / url / subtitle
-  hash + segments — no language) — all under `src/services/flicktionary/`.
-- **API client.** Uses `@flicktionary/api-client` (oRPC) with the Supabase
-  access token; `flicktionary-config.ts` selects prod / dev / dev-tunnel hosts.
+**What's worth harvesting** (upstream's post-1.13 work is mostly Anki/dictionary —
+which we deleted — so harvest narrowly):
+- **New streaming platforms.** Each site = one WXT page-script entrypoint
+  (`src/entrypoints/<site>-page.ts`) + one row in `pages.json` + maybe a shared
+  helper from `src/pages/` (`m3u8-util`, `mpd-util`). Localized; touches no core
+  controllers. (e.g. Netflix is already vendored but **not** wired to the backend.)
+- **Plumbing fixes** to `video-data-sync`, HLS/DASH parsing, or browser-compat.
+  Diff the single file against the baseline, port the hunk by hand.
 
-### Word-learning features (from the standalone fork, kept)
+**Porting checklist** (apply every time you pull a donor file):
+1. Rename imports `@project/*` → `@asbplayer-fork/*`.
+2. Run the **"do not reintroduce"** list below — make sure the donor file doesn't
+   drag back a removed feature (mining/recording/anki/dictionary/coloring hooks).
+3. `pnpm build` + `pnpm exec tsc --noEmit` (compare error count to baseline 9) +
+   the manual golden path (§7).
 
-- **Word-click mode** (`wordClickEnabled` setting). Tokenizes subtitle text into
-  `<span class="asbplayer-word" data-word data-sentence data-segment-index
-  data-char-start data-char-end>` (the data-* coordinates are a Flicktionary
-  addition — they let a save resolve to an exact `text_segments` row + offsets).
-- **Chunk drag-select** with a selection overlay positioned inside the subtitle
-  container.
-- **Whisper transcript generation** — `supadata-generate-handler` +
-  `transcript-cache.ts` + the `transcript-server/` FastAPI service. Generated
-  SRTs are cached in **IndexedDB** (`asbplayer-transcript-cache`) and auto-loaded.
-  This IndexedDB cache is **still here** — only the *saved-words* DB was removed.
+## §4. Removed in the 2026-05 "full lean" strip — do NOT reintroduce
 
-## Removed vs. the standalone fork (do NOT reintroduce)
+The fork was stripped to only what Flicktionary uses. **Removed** (8 commits;
+bundle 8.57 MB → 7.28 MB):
 
-The Flicktionary migration deleted these on purpose:
+- **Mining / Anki / cards** — card export, bulk export, copy-history *handlers*,
+  the Anki UI (`anki-ui` entrypoint, `AnkiUi`, anki-ui controllers), `PostMineAction`
+  flows in `binding.ts`, the `mine-subtitle` context menu, and the mining keyboard
+  commands (`copy-subtitle`, `update-last-card`, `export-card`, `take-screenshot`,
+  `toggle-recording`).
+- **Recording** — audio capture, screenshot capture, the offscreen audio service,
+  `card-publisher`, `ImageCapturer`, `audio-recorder*`, the mp3 worker. (Kept:
+  `cropAndResize` + `maxImage*` in `binding.ts` — used by **video-select**, not
+  mining.)
+- **Side-panel web-client app** — the `sidepanel` entrypoint, the `SidePanel*`
+  React components (built on `common/app`), the toggle wiring, the popup "Open side
+  panel" button, and the `sidePanel`/`offscreen` manifest permissions.
+- **Subtitle annotation / coloring (upstream 1.14)** — `subtitle-controller` was
+  reverted off `SubtitleColoring` back onto a plain `SubtitleCollection`; the
+  rich-text/`hoverOnly` render branch, the `HoveredToken` mouse wiring, the
+  mark/ignore-token keybindings, and `save-token-local` are gone. **`subtitle-coloring`
+  is orphaned in the extension** (the common dir still exists — see §6).
+- **Dictionary settings UI** — the dictionary/annotation tab in `SettingsForm`,
+  `DictionarySettingsTab`, and `DictionaryClipboardImport`.
 
-- **Saved-words IndexedDB (Dexie).** `common/saved-words/saved-words-repository.ts`
-  + barrel, and the `get/export/clear-saved-words` handlers. Words now go to the
-  backend; there is no local fallback. (The remaining `handlers/saved-words/`
-  file is just `save-word-handler.ts`, which posts to Flicktionary.)
-- **Manual LLM settings + UI.** `llmEnabled`, `llmApiKey`, `llmApiEndpoint`,
-  `llmModel`, the `LLMSettings` interface, and their Misc-settings tab section.
-  Hover gloss is always on when word-click is enabled **and** the extension is
-  paired — there is no per-user API key.
-- **Direct Anthropic calls.** `handlers/llm/llm-translate-handler.ts` (and the
-  `llm-translate` message) — replaced by `glosses.fastGloss`.
+### Kept deliberately (NOT removed)
+- **All ~21 video platforms** + their `pages.json` entries + the video-data-sync /
+  subtitle-loading / HLS-DASH plumbing. Only YouTube is wired to the backend; the
+  rest work at the extension layer but have no Flicktionary session model yet.
+- **The asbplayer web-app *integration*** — `asbplayer.content.ts` (the content
+  script bridge on `app.asbplayer.dev`, handling `dictionary-*-bulk` messages),
+  `common/app` (`ChromeExtension`, imported by `use-video-element-count`), and the
+  `extensionSupportsAppIntegration` settings surface.
+- **The `dictionary-db` / `DictionaryProvider` data layer** — load-bearing for
+  **profile management** (`use-settings-profile-context`) and the web-app dictionary
+  bridge. The dictionary *feature* (coloring + settings UI) is gone, but the data
+  layer survives as profile/bridge plumbing.
+- **The settings schema** — `AnkiSettings` and `dictionary*` fields remain in
+  `AsbplayerSettings`, so **old settings exports still import cleanly** (no
+  migration needed). Only the *UI/runtime usage* was removed.
+- **Whisper transcript generation** (`supadata-generate-handler`, `transcript-cache`,
+  the external transcript server).
 
-## Custom / modified files
+## §5. Flicktionary integration layer (carry forward)
 
-### New files (Flicktionary)
-| File | Purpose |
-|------|---------|
-| `src/entrypoints/flicktionary-pair.content.ts` | URL-restricted content script; forwards the pair message |
-| `src/handlers/flicktionary/flicktionary-pair-handler.ts` | Background: Supabase `verifyOtp` + persist session |
-| `src/handlers/flicktionary/gloss-handler.ts` | Calls `glosses.fastGloss` |
-| `src/handlers/flicktionary/register-subtitles-handler.ts` | Find-or-create YouTube session + cache segment map |
-| `src/handlers/saved-words/save-word-handler.ts` | Save highlight to Flicktionary (no local fallback) |
-| `src/services/flicktionary/api-error.ts` | Extracts `{ code, message }` from a thrown oRPC error (e.g. `UNSUPPORTED_LANGUAGE`, `MISSING_CEFR`) |
-| `src/services/flicktionary/*` | auth-storage, api-client, config, supabase-client, target-language, pairing-nonce-storage, session-highlight-counter, youtube-context (incl. `normalizeYoutubeLanguageCode` / `describeLanguageCode`), youtube-session-cache |
-| `src/services/word-tokenizer.ts` | Subtitle tokenizer (stamps data-* coords) |
-| `src/controllers/word-interaction-controller.ts` | Hover/click/drag/save + tooltip lifecycle |
+- **Pairing** (Supabase magic-link): `/extension-pair` posts `{tokenHash, email,
+  nonce}`; a URL-restricted content script forwards it to the background, which runs
+  `verifyOtp` and persists the session in its own `browser.storage.local`
+  namespace (`flicktionary.auth.v1`), **outside** `SettingsProvider` (never synced /
+  exported).
+- **Hover gloss via backend** — hovering a word calls `glosses.fastGloss`
+  (selection + context + target language → `{gloss, pos, register, ipa}`). Nothing
+  persisted; in-memory cache. Tooltip GOTCHA: `display: flex !important` in
+  `video.css`; JS show/hide must use `style.setProperty('display', …, 'important')`.
+- **Save → Flicktionary highlight** — right-click / drag-select → save. First save
+  per video calls `studySessions.findOrCreateForYoutubeVideo` (creates
+  `content_source`/`text_track`/`text_segments`), caches the segment map, then
+  `highlights.create`. Flicktionary is the system of record.
+- **Server-side language detection** — the extension sends **no** language; the
+  backend detects it (Haiku `languageDetectionPass`) and uses it as content +
+  target language. `register-flicktionary-subtitles` is awaited at load:
+  `UNSUPPORTED_LANGUAGE` → one-time notice + save disabled; `MISSING_CEFR` → backend
+  message.
+- **Word-click mode** (`wordClickEnabled`) — `word-tokenizer.ts` stamps
+  `data-word/data-sentence/data-segment-index/data-char-start/data-char-end` so a
+  save resolves to an exact `text_segments` row + offsets. Hover/click/drag/save +
+  tooltip live in `word-interaction-controller.ts`.
 
-### Modified upstream files
-| File | Flicktionary changes |
-|------|----------------------|
-| `src/services/binding.ts` | Instantiates `WordInteractionController` (gated on `wordClickEnabled`, passed a save-disabled-reason getter); `register-flicktionary-subtitles` at load + awaits the response (`UNSUPPORTED_LANGUAGE` → notice + disable save); `setFlicktionarySubtitleLanguageHint`; pause-on-hover wiring. **Note:** `hoveredToken` must be `new HoveredToken()` in the constructor — it's a latent crash in upstream/the fork too. |
-| `src/controllers/subtitle-controller.ts` | Tokenize words when `wordClickEnabled` |
-| `src/controllers/video-data-sync-controller.ts` | Calls `setFlicktionarySubtitleLanguageHint` with the selected track's language before `loadSubtitles` (display-only) |
-| `src/entrypoints/background.ts` | Registers the Flicktionary + saved-words + supadata handlers |
-| `src/entrypoints/video.content/video.css` | `.asbplayer-word` / selection overlay / gloss tooltip styles. **GOTCHA:** the tooltip rule is `display: flex !important`; JS show/hide must use `style.setProperty('display', …, 'important')` or the popover can't hide (see commit history / SPEC). |
-| `packages/asbplayer-common/src/message.ts` | `flicktionary-gloss`, `save-word`, `register-flicktionary-subtitles`, pair messages. The register message + `SaveWordFlicktionaryVideoContext` carry **no** language fields (backend detects); register carries an optional display-only `youtubeLanguageCode`, and `RegisterFlicktionarySubtitlesResponse` carries the backend `code`. |
-| `packages/asbplayer-common/settings/settings.ts` & `settings-provider.ts` | `wordClickEnabled`, `TranscriptSettings`; **removed** `LLMSettings` |
-| `packages/asbplayer-common/components/MiscSettingsTab.tsx` | Word-learning + transcript settings UI (LLM key UI removed) |
-| `src/ui/components/Popup.tsx` (popup-ui) | Saved-highlight counter |
+### New Flicktionary files
+`src/entrypoints/flicktionary-pair.content.ts`, `src/handlers/flicktionary/*`,
+`src/handlers/saved-words/save-word-handler.ts`, `src/services/flicktionary/*`,
+`src/services/word-tokenizer.ts`, `src/controllers/word-interaction-controller.ts`.
 
-### Whisper transcript files (kept from the fork)
-`src/handlers/supadata/supadata-generate-handler.ts`,
-`src/handlers/video/{get-cached,export,clear,get-…-count}-transcript*.ts`,
-`src/services/transcript-cache.ts`, and the `transcript-server/` FastAPI service.
+### Modified upstream files (Flicktionary)
+`binding.ts` (WordInteractionController wiring; register-subtitles at load + await;
+`setFlicktionarySubtitleLanguageHint`; pause-on-hover), `subtitle-controller.ts`
+(tokenize when `wordClickEnabled`; now on plain `SubtitleCollection`),
+`video-data-sync-controller.ts` (language hint), `background.ts` (Flicktionary +
+transcript handlers), `video.css`, `asbplayer-common/src/message.ts` (Flicktionary
+messages), `settings.ts` (`wordClickEnabled`, `TranscriptSettings`; removed
+`LLMSettings`), `MiscSettingsTab.tsx`, `Popup.tsx` (highlight counter).
 
-## Backend / web coupling
+## §6. Deferred follow-ups (not done in the 2026-05 strip)
 
-The extension now depends on Flicktionary surfaces (preserve or stub them):
+These were intentionally left — pursue if/when worthwhile:
+
+- **Deep `dictionary-db` removal** — requires rewiring profile management off
+  `dictionary-db` and removing the `asbplayer.content.ts` dictionary bridge. Gated
+  behind removing the **web-app integration** (the two collapse into one decision).
+- **Removing the web-app integration** — drop `asbplayer.content.ts` +
+  `extensionSupportsAppIntegration` + the `ChromeExtension` usage in
+  `use-video-element-count`, which would then unlock deleting `common/app`,
+  `dictionary-db`, and the `anki` / `copy-history` / `audio-clip` /
+  `web-socket-client` common dirs. (These are mostly tree-shaken already, so the
+  *bundle* benefit is small; the value is a leaner tree.)
+- **Orphaned common dir:** `subtitle-coloring` is unused by the extension and
+  deletable once you confirm nothing else in common imports it.
+- **TS/ESLint** — `lint` is still a no-op stub (`echo`); aligning the monorepo's
+  shared ESLint config is a large first-run-error task. tsc has 9 pre-existing
+  errors (the WXT build is the gate).
+- **`tabCapture` permission** in `wxt.config.ts` is likely now unused (recording is
+  gone) — verify and drop.
+
+## §7. Verification (golden path)
+
+`pnpm build` (or `pnpm dev` for the dev bundle) → load on a YouTube video with subs:
+word-click tokenization renders → hover gloss popover shows **and dismisses** →
+right-click save creates a highlight (check the backend) → an unsupported-language
+video shows the one-time notice → the popup settings tabs open and **profile
+switching/deletion** works. Auth lives in `flicktionary.auth.v1`; re-pair via
+`/extension-pair` after background/settings changes.
+
+## §8. Backend / web coupling (preserve or stub)
 
 - `glosses.fastGloss` — stateless gloss (`apps/backend` glosses-router).
 - `studySessions.findOrCreateForYoutubeVideo` — `content_source.type = 'youtube'`,
-  deduped on `metadata->>'youtubeVideoId'`. Detects the subtitle language
-  server-side (`languageDetectionPass`) and uses it as the content + target
-  language; returns `422 UNSUPPORTED_LANGUAGE` when it isn't a supported
-  language. Requires the user's native language + CEFR for the *detected*
-  language to be set (else `422 MISSING_CEFR` → popup tells the user to finish
-  setup).
+  deduped on `youtubeVideoId`; detects language server-side; `422
+  UNSUPPORTED_LANGUAGE` / `422 MISSING_CEFR`.
 - `highlights.create`.
-- Supabase auth (anon/publishable key shipped in `flicktionary-config.ts`) and
-  the web `/extension-pair` route.
+- Supabase auth (publishable key in `flicktionary-config.ts`) + the web
+  `/extension-pair` route.
