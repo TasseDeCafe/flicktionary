@@ -1,16 +1,17 @@
 import Link from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
-import { Trans, useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 import ThemeProvider from '@mui/material/styles/ThemeProvider'
 import CssBaseline from '@mui/material/CssBaseline'
 import Paper from '@mui/material/Paper'
-import { useI18n } from '../hooks/use-i18n'
 import { createTheme } from '@asbplayer-fork/common/theme'
 import { makeStyles } from 'tss-react/mui'
 import CenteredGridContainer from './CenteredGridContainer'
 import CenteredGridItem from './CenteredGridItem'
 import React, { useEffect, useState } from 'react'
 import Tutorial from './Tutorial'
+import { I18nProvider } from '@lingui/react'
+import { i18n, setupLingui } from '../lingui'
 
 const useStyles = makeStyles()({
   container: {
@@ -27,32 +28,25 @@ const useStyles = makeStyles()({
 })
 
 const WelcomeMessage: React.FC<{ className: string }> = ({ className }) => {
-  const { t } = useTranslation()
-
   return (
     <CenteredGridContainer className={className} direction='column'>
       <CenteredGridItem>
         <img style={{ width: 75 }} src={browser.runtime.getURL('/icon/image.png')} />
       </CenteredGridItem>
       <CenteredGridItem>
-        <Typography variant='h5'>{t('ftue.welcome')}</Typography>
+        <Typography variant='h5'>
+          <Trans>Welcome to asbplayer.</Trans>
+        </Typography>
       </CenteredGridItem>
       <CenteredGridItem>
         <Typography variant='h6'>
-          <Trans
-            i18nKey='ftue.welcomeBody2'
-            components={[
-              <Link
-                key={0}
-                color='primary'
-                target='_blank'
-                rel='noreferrer'
-                href={'https://docs.asbplayer.dev/docs/intro/'}
-              >
-                readme
-              </Link>,
-            ]}
-          />
+          <Trans>
+            Scroll down for a quick intro, or check out the{' '}
+            <Link color='primary' target='_blank' rel='noreferrer' href={'https://docs.asbplayer.dev/docs/intro/'}>
+              user guide
+            </Link>
+            .
+          </Trans>
         </Typography>
       </CenteredGridItem>
     </CenteredGridContainer>
@@ -68,7 +62,6 @@ const useLangParam = () => {
 const FtueUi = () => {
   const theme = createTheme('dark')
   const langParam = useLangParam()
-  const { initialized: i18Initialized } = useI18n({ language: langParam ?? browser.i18n.getUILanguage() })
   const { classes } = useStyles()
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
   const [hideWelcomePanel, setHideWelcomePanel] = useState<boolean>(false)
@@ -86,18 +79,18 @@ const FtueUi = () => {
     }
   }
 
-  if (!i18Initialized) {
-    return null
-  }
+  setupLingui(langParam ?? browser.i18n.getUILanguage())
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Paper ref={handleContainerRef} className={classes.container} square>
-        {!hideWelcomePanel && <WelcomeMessage className={classes.child} />}
-        <Tutorial show={showTutorial} className={classes.child} />
-      </Paper>
-    </ThemeProvider>
+    <I18nProvider i18n={i18n}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Paper ref={handleContainerRef} className={classes.container} square>
+          {!hideWelcomePanel && <WelcomeMessage className={classes.child} />}
+          <Tutorial show={showTutorial} className={classes.child} />
+        </Paper>
+      </ThemeProvider>
+    </I18nProvider>
   )
 }
 

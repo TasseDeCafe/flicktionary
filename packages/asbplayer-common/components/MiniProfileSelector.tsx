@@ -4,7 +4,7 @@ import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import ListItemButton from '@mui/material/ListItemButton'
 import React, { useCallback, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 import { Profile } from '../settings'
 
 interface Props {
@@ -14,7 +14,6 @@ interface Props {
 }
 
 const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Props) => {
-  const { t } = useTranslation()
   const [open, setOpen] = useState<boolean>(false)
   const [anchorEl, setAnchorEl] = useState<HTMLElement>()
   const handleOpen = useCallback((e: React.MouseEvent) => {
@@ -38,7 +37,9 @@ const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Pr
       <Popover open={open} anchorEl={anchorEl} onClose={handleClose}>
         <List>
           <ListItem disablePadding onClick={() => handleSelect(undefined)}>
-            <ListItemButton selected={activeProfile === undefined}>{t('settings.defaultProfile')}</ListItemButton>
+            <ListItemButton selected={activeProfile === undefined}>
+              <Trans>Default</Trans>
+            </ListItemButton>
           </ListItem>
           {profiles.map((p) => (
             <ListItem disablePadding key={p.name} onClick={() => handleSelect(p)}>
@@ -48,7 +49,7 @@ const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Pr
         </List>
       </Popover>
       <Button color='inherit' variant='outlined' onClick={handleOpen}>
-        {activeProfile ?? t('settings.defaultProfile')}
+        {activeProfile ?? <Trans>Default</Trans>}
       </Button>
     </>
   )

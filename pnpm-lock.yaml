@@ -426,15 +426,6 @@ catalogs:
     husky:
       specifier: 9.1.7
       version: 9.1.7
-    i18next:
-      specifier: 25.10.10
-      version: 25.10.10
-    i18next-browser-languagedetector:
-      specifier: 7.2.2
-      version: 7.2.2
-    i18next-resources-to-backend:
-      specifier: 1.2.1
-      version: 1.2.1
     jest:
       specifier: 29.7.0
       version: 29.7.0
@@ -522,9 +513,6 @@ catalogs:
     react-hook-form:
       specifier: 7.72.0
       version: 7.72.0
-    react-i18next:
-      specifier: 15.7.4
-      version: 15.7.4
     react-markdown:
       specifier: 10.1.0
       version: 10.1.0
@@ -1473,6 +1461,9 @@ importers:
       '@flatten-js/interval-tree':
         specifier: 'catalog:'
         version: 1.0.19
+      '@lingui/react':
+        specifier: 'catalog:'
+        version: 6.0.0(babel-plugin-macros@3.1.0)(react@19.2.6)
       '@mui/icons-material':
         specifier: 'catalog:'
         version: 6.5.0(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.6))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
@@ -1500,15 +1491,6 @@ importers:
       hotkeys-js:
         specifier: 'catalog:'
         version: 3.13.15
-      i18next:
-        specifier: 'catalog:'
-        version: 25.10.10(typescript@5.9.2)
-      i18next-browser-languagedetector:
-        specifier: 'catalog:'
-        version: 7.2.2
-      i18next-resources-to-backend:
-        specifier: 'catalog:'
-        version: 1.2.1
       jsonschema:
         specifier: 'catalog:'
         version: 1.5.0
@@ -1524,9 +1506,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.6(react@19.2.6)
-      react-i18next:
-        specifier: 'catalog:'
-        version: 15.7.4(i18next@25.10.10(typescript@5.9.2))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.2)
       sanitize-filename:
         specifier: 'catalog:'
         version: 1.6.4
@@ -1664,12 +1643,6 @@ importers:
       '@types/semver':
         specifier: 'catalog:'
         version: 7.7.1
-      i18next:
-        specifier: 'catalog:'
-        version: 25.10.10(typescript@5.9.2)
-      i18next-resources-to-backend:
-        specifier: 'catalog:'
-        version: 1.2.1
       m3u8-parser:
         specifier: 'catalog:'
         version: 7.2.0
@@ -1685,9 +1658,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.6(react@19.2.6)
-      react-i18next:
-        specifier: 'catalog:'
-        version: 15.7.4(i18next@25.10.10(typescript@5.9.2))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.2)
       regenerator-runtime:
         specifier: 'catalog:'
         version: 0.14.1
@@ -8972,9 +8942,6 @@ packages:
   html-escaper@3.0.3:
     resolution: {integrity: sha512-RuMffC89BOWQoY0WKGpIhn5gX3iI54O6nRA0yC124NYVtzjmFWBIiFd8M0x+ZdX0P9R4lADg1mgP8C7PxGOWuQ==}
 
-  html-parse-stringify@3.0.1:
-    resolution: {integrity: sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==}
-
   html-to-text@9.0.5:
     resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
     engines: {node: '>=14'}
@@ -9012,20 +8979,6 @@ packages:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
     engines: {node: '>=18'}
     hasBin: true
-
-  i18next-browser-languagedetector@7.2.2:
-    resolution: {integrity: sha512-6b7r75uIJDWCcCflmbof+sJ94k9UQO4X0YR62oUfqGI/GjCLVzlCwu8TFdRZIqVLzWbzNcmkmhfqKEr4TLz4HQ==}
-
-  i18next-resources-to-backend@1.2.1:
-    resolution: {integrity: sha512-okHbVA+HZ7n1/76MsfhPqDou0fptl2dAlhRDu2ideXloRRduzHsqDOznJBef+R3DFZnbvWoBW+KxJ7fnFjd6Yw==}
-
-  i18next@25.10.10:
-    resolution: {integrity: sha512-cqUW2Z3EkRx7NqSyywjkgCLK7KLCL6IFVFcONG7nVYIJ3ekZ1/N5jUsihHV6Bq37NfhgtczxJcxduELtjTwkuQ==}
-    peerDependencies:
-      typescript: ^5 || ^6
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   iceberg-js@0.8.1:
     resolution: {integrity: sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA==}
@@ -11334,22 +11287,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-i18next@15.7.4:
-    resolution: {integrity: sha512-nyU8iKNrI5uDJch0z9+Y5XEr34b0wkyYj3Rp+tfbahxtlswxSCjcUL9H0nqXo9IR3/t5Y5PKIA3fx3MfUyR9Xw==}
-    peerDependencies:
-      i18next: '>= 23.4.0'
-      react: '>= 16.8.0'
-      react-dom: '*'
-      react-native: '*'
-      typescript: ^5
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-      typescript:
-        optional: true
-
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -12932,10 +12869,6 @@ packages:
 
   vlq@1.0.1:
     resolution: {integrity: sha512-gQpnTgkubC6hQgdIcRdYGDSDc+SaujOdyesZQMv6JlfQee/9Mp0Qhnys6WxDWvQnL5WZdT7o2Ul187aSt0Rq+w==}
-
-  void-elements@3.1.0:
-    resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
-    engines: {node: '>=0.10.0'}
 
   w3c-xmlserializer@4.0.0:
     resolution: {integrity: sha512-d+BFHzbiCx6zGfz0HyQ6Rg69w9k19nviJspaj4yNscGjrHu94sVP+aRm75yEbCh+r2/yR+7q6hux9LVtbuTGBw==}
@@ -21238,10 +21171,6 @@ snapshots:
 
   html-escaper@3.0.3: {}
 
-  html-parse-stringify@3.0.1:
-    dependencies:
-      void-elements: 3.1.0
-
   html-to-text@9.0.5:
     dependencies:
       '@selderee/plugin-htmlparser2': 0.11.0
@@ -21299,20 +21228,6 @@ snapshots:
   human-signals@2.1.0: {}
 
   husky@9.1.7: {}
-
-  i18next-browser-languagedetector@7.2.2:
-    dependencies:
-      '@babel/runtime': 7.29.7
-
-  i18next-resources-to-backend@1.2.1:
-    dependencies:
-      '@babel/runtime': 7.29.7
-
-  i18next@25.10.10(typescript@5.9.2):
-    dependencies:
-      '@babel/runtime': 7.29.7
-    optionalDependencies:
-      typescript: 5.9.2
 
   iceberg-js@0.8.1: {}
 
@@ -24250,16 +24165,6 @@ snapshots:
     dependencies:
       react: 19.2.6
 
-  react-i18next@15.7.4(i18next@25.10.10(typescript@5.9.2))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.2):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      html-parse-stringify: 3.0.1
-      i18next: 25.10.10(typescript@5.9.2)
-      react: 19.2.6
-    optionalDependencies:
-      react-dom: 19.2.6(react@19.2.6)
-      typescript: 5.9.2
-
   react-is@16.13.1: {}
 
   react-is@18.3.1: {}
@@ -26053,8 +25958,6 @@ snapshots:
       - msw
 
   vlq@1.0.1: {}
-
-  void-elements@3.1.0: {}
 
   w3c-xmlserializer@4.0.0:
     dependencies:

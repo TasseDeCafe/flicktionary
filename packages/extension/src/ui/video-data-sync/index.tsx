@@ -1,11 +1,16 @@
 import { createRoot } from 'react-dom/client'
+import { I18nProvider } from '@lingui/react'
 import Bridge from '../bridge'
 import VideoDataSyncUi from '../components/VideoDataSyncUi'
-import { i18nInit } from '../i18n'
+import { i18n, setupLingui } from '../lingui'
 
-export function renderVideoDataSyncUi(element: Element, language: string, locStrings: any) {
+export function renderVideoDataSyncUi(element: Element, language: string) {
   const bridge = new Bridge()
-  i18nInit(language, locStrings)
-  createRoot(element).render(<VideoDataSyncUi bridge={bridge} />)
+  setupLingui(language)
+  createRoot(element).render(
+    <I18nProvider i18n={i18n}>
+      <VideoDataSyncUi bridge={bridge} />
+    </I18nProvider>
+  )
   return bridge
 }

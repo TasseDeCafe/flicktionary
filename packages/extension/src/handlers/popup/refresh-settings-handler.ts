@@ -7,7 +7,6 @@ import {
 } from '@asbplayer-fork/common'
 import TabRegistry from '../../services/tab-registry'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
-import { primeLocalization } from '../../services/localization-fetcher'
 
 export default class RefreshSettingsHandler {
   private readonly _tabRegistry: TabRegistry
@@ -32,9 +31,6 @@ export default class RefreshSettingsHandler {
   }
 
   handle(command: Command<Message>, sender: Browser.runtime.MessageSender) {
-    this._settingsProvider.getSingle('language').then((language) => {
-      primeLocalization(language)
-    })
     this._tabRegistry.publishCommandToVideoElements((videoElement) => {
       const settingsUpdatedCommand: ExtensionToVideoCommand<SettingsUpdatedMessage> = {
         sender: 'asbplayer-extension-to-video',

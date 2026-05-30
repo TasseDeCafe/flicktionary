@@ -18,12 +18,7 @@ export default defineConfig({
         '<rootDir>/packages/extension/src',
         '<rootDir>/packages/asbplayer-common',
       ],
-      exclude: [
-        '**/node_modules/**',
-        '**/*.test.{ts,tsx}',
-        '**/*.spec.{ts,tsx}',
-        '<rootDir>/packages/asbplayer-common/locales/**',
-      ],
+      exclude: ['**/node_modules/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     },
   ],
   format: formatter(),

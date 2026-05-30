@@ -17,7 +17,9 @@ import {
 } from '@asbplayer-fork/common/settings'
 import { SubtitleCollection, SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection'
 import { arrayEquals, computeStyleString, surroundingSubtitles } from '@asbplayer-fork/common/util'
-import i18n from 'i18next'
+import { i18n } from '@/ui/lingui'
+import { msg } from '@lingui/core/macro'
+import type { MessageDescriptor } from '@lingui/core'
 import {
   CachingElementOverlay,
   ElementOverlay,
@@ -597,8 +599,41 @@ export default class SubtitleController {
     return roundedOffset >= 0 ? '+' + roundedOffset + ' ms' : roundedOffset + ' ms'
   }
 
+  // The notification overlay is driven by dotted loc-keys chosen elsewhere (see
+  // services/binding.ts), so we map the known keys to lazy Lingui messages and
+  // resolve them imperatively against the content-script's Lingui catalog.
+  private _notificationMessage(locKey: string, r: { [key: string]: string }): MessageDescriptor {
+    const { rate, message, keys } = r
+    switch (locKey) {
+      case 'info.enabledAutoPause':
+        return msg`Auto-pause: On`
+      case 'info.disabledAutoPause':
+        return msg`Auto-pause: Off`
+      case 'info.enabledCondensedPlayback':
+        return msg`Condensed playback: On`
+      case 'info.disabledCondensedPlayback':
+        return msg`Condensed playback: Off`
+      case 'info.enabledFastForwardPlayback':
+        return msg`Fast forward playback: On`
+      case 'info.disabledFastForwardPlayback':
+        return msg`Fast forward playback: Off`
+      case 'info.enabledRepeatPlayback':
+        return msg`Repeat playback: On`
+      case 'info.disabledRepeatPlayback':
+        return msg`Repeat playback: Off`
+      case 'info.playbackRate':
+        return msg`Playback Rate: ${rate}`
+      case 'info.error':
+        return msg`Error: ${message}`
+      case 'info.toggleSubtitlesShortcut':
+        return msg`Press "${keys}" to toggle subtitle display`
+      default:
+        return { id: locKey }
+    }
+  }
+
   notification(locKey: string, replacements?: { [key: string]: string }) {
-    const text = i18n.t(locKey, replacements ?? {})
+    const text = i18n._(this._notificationMessage(locKey, replacements ?? {}))
     this.notificationElementOverlay.setHtml([{ html: () => this._buildTextHtml(text) }])
 
     if (this.notificationElementOverlayHideTimeout) {

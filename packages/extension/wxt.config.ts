@@ -5,10 +5,7 @@ import babel from '@rolldown/plugin-babel'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const commonAssets = [
-  { srcDir: path.resolve(__dirname, '../asbplayer-common/locales'), destDir: 'asbplayer-locales' },
-  { srcDir: path.resolve(__dirname, '../asbplayer-common/assets'), destDir: 'assets' },
-]
+const commonAssets = [{ srcDir: path.resolve(__dirname, '../asbplayer-common/assets'), destDir: 'assets' }]
 
 const moveToPublicAssets = (srcPath: string, destPath: string, files: ResolvedPublicFile[]) => {
   const srcFiles = fs.readdirSync(srcPath)
@@ -133,7 +130,6 @@ export default defineConfig({
           resources: [
             'chunks/*',
             'fonts/*',
-            'asbplayer-locales/*',
             'icon/image.png',
             'netflix-page.js',
             'youtube-page.js',

@@ -4,7 +4,10 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Bridge from '../bridge'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import type { MessageDescriptor } from '@lingui/core'
+import { i18n } from '../lingui'
 import Button from '@mui/material/Button'
 import ThemeProvider from '@mui/material/styles/ThemeProvider'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -20,8 +23,23 @@ interface Props {
   bridge: Bridge
 }
 
+// The notification dialog receives a dotted loc-key over the bridge (chosen by the
+// background/binding layer), so the text can't be a static macro at the call site.
+// Map the known keys to lazy Lingui messages and resolve them imperatively. These
+// are the only keys ever sent (see services/binding.ts).
+const dialogMessages: Record<string, MessageDescriptor> = {
+  'activeTabPermissionRequest.title': msg`Enable audio recording`,
+  'activeTabPermissionRequest.prompt': msg`Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab.`,
+  'activeTabPermissionRequest.grantedTitle': msg`Audio recording enabled`,
+  'activeTabPermissionRequest.grantedPrompt': msg`Audio recording has been enabled for this tab. You can now begin mining.`,
+}
+
+const localizeDialogKey = (locKey: string): string => {
+  const descriptor = dialogMessages[locKey]
+  return descriptor ? i18n._(descriptor) : locKey
+}
+
 const NotificationUi = ({ bridge }: Props) => {
-  const { t } = useTranslation()
   const handleClose = useCallback(() => {
     setShowAlert(false)
     setNewVersion(undefined)
@@ -47,11 +65,11 @@ const NotificationUi = ({ bridge }: Props) => {
       }
 
       if (state.titleLocKey !== undefined) {
-        setTitle(state.titleLocKey === '' ? '' : (t(state.titleLocKey) ?? ''))
+        setTitle(state.titleLocKey === '' ? '' : localizeDialogKey(state.titleLocKey))
       }
 
       if (state.messageLocKey !== undefined) {
-        setMessage(state.messageLocKey === '' ? '' : (t(state.messageLocKey) ?? ''))
+        setMessage(state.messageLocKey === '' ? '' : localizeDialogKey(state.messageLocKey))
       }
 
       if (state.newVersion !== undefined) {
@@ -59,7 +77,7 @@ const NotificationUi = ({ bridge }: Props) => {
         setShowAlert(true)
       }
     })
-  }, [bridge, t])
+  }, [bridge])
   const [themeType, setThemeType] = useState<PaletteMode>('dark')
   const theme = useMemo(() => createTheme(themeType), [themeType])
 
@@ -71,28 +89,27 @@ const NotificationUi = ({ bridge }: Props) => {
           <DialogTitle>{title}</DialogTitle>
           <DialogContent>{message}</DialogContent>
           <DialogActions>
-            <Button onClick={handleClose}>{t('action.ok')}</Button>
+            <Button onClick={handleClose}>
+              <Trans>OK</Trans>
+            </Button>
           </DialogActions>
         </Dialog>
       )}
       {newVersion && (
         <Snackbar open={showAlert} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} onClose={handleClose}>
           <Alert icon={<LogoIcon />} severity='info' onClose={handleClose}>
-            <Trans
-              i18nKey='update.alert'
-              values={{ version: newVersion }}
-              components={[
-                <Link
-                  key={0}
-                  color='primary'
-                  target='_blank'
-                  rel='noreferrer'
-                  href={`https://github.com/TasseDeCafe/flicktionary/releases/tag/v${newVersion}`}
-                >
-                  release notes
-                </Link>,
-              ]}
-            />
+            <Trans>
+              asbplayer updated to version {newVersion}. Check out the{' '}
+              <Link
+                color='primary'
+                target='_blank'
+                rel='noreferrer'
+                href={`https://github.com/TasseDeCafe/flicktionary/releases/tag/v${newVersion}`}
+              >
+                release notes
+              </Link>
+              .
+            </Trans>
           </Alert>
         </Snackbar>
       )}

@@ -1,7 +1,6 @@
 import Binding from '../services/binding'
 import UiFrame from '../services/ui-frame'
 import FrameBridgeClient from '../services/frame-bridge-client'
-import { fetchLocalization } from '../services/localization-fetcher'
 
 export default class NotificationController {
   public onClose?: () => void
@@ -26,9 +25,7 @@ export default class NotificationController {
                     </head>
                     <body>
                         <div id="root" style="width:100%;height:100vh;"></div>
-                        <script type="application/json" id="loc">${JSON.stringify(
-                          await fetchLocalization(lang)
-                        )}</script>
+                        <script type="application/json" id="loc">${JSON.stringify({ lang })}</script>
                         <script type="module" src="${browser.runtime.getURL('/notification-ui.js')}"></script>
                     </body>
                 </html>`

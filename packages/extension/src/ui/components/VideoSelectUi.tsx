@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import CssBaseline from '@mui/material/CssBaseline'
 import CloseIcon from '@mui/icons-material/Close'
 import SettingsIcon from '@mui/icons-material/Settings'
@@ -40,7 +40,7 @@ export default function VideoSelectUi({ bridge }: Props) {
   const [videoElements, setVideoElements] = useState<VideoElement[]>([])
   const [selectedVideoElementSrc, setSelectedVideoElementSrc] = useState<string>('')
   const [openedFromMiningCommand, setOpenedFromMiningCommand] = useState<boolean>(false)
-  const { t } = useTranslation()
+  const { t } = useLingui()
 
   const theme = useMemo(() => createTheme(themeType as PaletteMode), [themeType])
 
@@ -99,7 +99,7 @@ export default function VideoSelectUi({ bridge }: Props) {
           <>
             <Toolbar>
               <Typography variant='h6' style={{ flexGrow: 1 }}>
-                {t('extension.videoSelect.multipleVideoElements')}
+                <Trans>Multiple Video Elements Detected</Trans>
               </Typography>
               <IconButton edge='end' onClick={() => handleOpenSettings()}>
                 <SettingsIcon />
@@ -110,9 +110,16 @@ export default function VideoSelectUi({ bridge }: Props) {
             </Toolbar>
             <DialogContent>
               {openedFromMiningCommand ? (
-                <DialogContentText>{t('extension.videoSelect.syncBeforeMine')}</DialogContentText>
+                <DialogContentText>
+                  <Trans>
+                    A video element must be synced with asbplayer before it can be mined. Select a video element to sync
+                    it with asbplayer.
+                  </Trans>
+                </DialogContentText>
               ) : (
-                <DialogContentText>{t('extension.videoSelect.selectVideo')}</DialogContentText>
+                <DialogContentText>
+                  <Trans>Select a video element to sync it with asbplayer.</Trans>
+                </DialogContentText>
               )}
               <Grid container direction='column' spacing={2}>
                 <Grid item style={{ maxWidth: '100%' }}>
@@ -121,7 +128,7 @@ export default function VideoSelectUi({ bridge }: Props) {
                     fullWidth
                     color='primary'
                     variant='filled'
-                    label={t('extension.videoSelect.videoElement')}
+                    label={t`Video Element`}
                     value={selectedVideoElementSrc}
                     onChange={(e) => setSelectedVideoElementSrc(e.target.value)}
                   >
@@ -144,7 +151,9 @@ export default function VideoSelectUi({ bridge }: Props) {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleConfirm}>{t('action.ok')}</Button>
+              <Button onClick={handleConfirm}>
+                <Trans>OK</Trans>
+              </Button>
             </DialogActions>
           </>
         )}
@@ -152,17 +161,21 @@ export default function VideoSelectUi({ bridge }: Props) {
           <>
             <Toolbar>
               <Typography variant='h6' style={{ flexGrow: 1 }}>
-                {t('info.errorNoMessage')}
+                <Trans>Error</Trans>
               </Typography>
               <IconButton edge='end' onClick={() => handleCancel()}>
                 <CloseIcon />
               </IconButton>
             </Toolbar>
             <DialogContent>
-              <DialogContentText>{t('landing.noVideoElementsDetected')}</DialogContentText>
+              <DialogContentText>
+                <Trans>No videos detected.</Trans>
+              </DialogContentText>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCancel}>{t('action.ok')}</Button>
+              <Button onClick={handleCancel}>
+                <Trans>OK</Trans>
+              </Button>
             </DialogActions>
           </>
         )}

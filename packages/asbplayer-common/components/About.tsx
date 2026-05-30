@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography'
 import { withStyles } from 'tss-react/mui'
 import { useTheme } from '@mui/material/styles'
 import { type Theme } from '@mui/material'
-import { useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 import SettingsSection from './SettingsSection'
 
 interface Props {
@@ -139,10 +139,10 @@ const dependencies: Dependency[] = [
     purpose: 'Keyboard shortcuts',
   },
   {
-    name: 'i18next',
-    projectLink: 'https://www.i18next.com',
+    name: 'Lingui',
+    projectLink: 'https://lingui.dev',
     license: 'MIT',
-    licenseLink: 'https://github.com/i18next/i18next/blob/master/LICENSE',
+    licenseLink: 'https://github.com/lingui/js-lingui/blob/main/LICENSE',
     purpose: 'Localization',
   },
   {
@@ -200,7 +200,6 @@ for (const dep of dependencies) {
 
 const About = ({ appVersion, extensionVersion }: Props) => {
   const theme = useTheme<Theme>()
-  const { t } = useTranslation()
   const renderedPurpose: { [key: string]: boolean } = {}
   let purposeIndex = 0
   return (
@@ -215,7 +214,7 @@ const About = ({ appVersion, extensionVersion }: Props) => {
         {appVersion && (
           <>
             <Typography variant='caption'>
-              {t('about.appVersion')}{' '}
+              <Trans>App version</Trans>{' '}
               <Link href={`https://github.com/killergerbah/asbplayer/commit/${appVersion}`}>{appVersion}</Link>
             </Typography>
             <br />
@@ -223,7 +222,7 @@ const About = ({ appVersion, extensionVersion }: Props) => {
         )}
         {extensionVersion && (
           <Typography variant='caption'>
-            {t('about.extensionVersion')}{' '}
+            <Trans>Extension version</Trans>{' '}
             <Link href={`https://github.com/killergerbah/asbplayer/releases/tag/v${extensionVersion}`}>
               {extensionVersion}
             </Link>
@@ -231,7 +230,9 @@ const About = ({ appVersion, extensionVersion }: Props) => {
         )}
       </Box>
       <p />
-      <SettingsSection>{t('about.license')}</SettingsSection>
+      <SettingsSection>
+        <Trans>License</Trans>
+      </SettingsSection>
       <Paper variant='outlined' style={{ padding: theme.spacing(2), height: 'auto' }}>
         <Typography variant='body2'>
           MIT License
@@ -259,14 +260,22 @@ const About = ({ appVersion, extensionVersion }: Props) => {
         </Typography>
       </Paper>
       <br />
-      <SettingsSection>{t('about.deps')}</SettingsSection>
+      <SettingsSection>
+        <Trans>Dependencies</Trans>
+      </SettingsSection>
       <TableContainer variant='outlined' component={Paper} style={{ height: 'auto' }}>
         <Table style={{ margin: 0, padding: 0 }}>
           <TableHead>
             <TableRow>
-              <TableCell>{t('about.depName')}</TableCell>
-              <TableCell>{t('about.license')}</TableCell>
-              <TableCell>{t('about.purpose')}</TableCell>
+              <TableCell>
+                <Trans>Name</Trans>
+              </TableCell>
+              <TableCell>
+                <Trans>License</Trans>
+              </TableCell>
+              <TableCell>
+                <Trans>Purpose</Trans>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

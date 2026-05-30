@@ -1,5 +1,5 @@
 import MenuItem from '@mui/material/MenuItem'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import SettingsTextField from './SettingsTextField'
 
 const maxTracks = 3
@@ -12,7 +12,7 @@ interface Props {
 type Track = number | 'all'
 
 export default function SubtitleAppearanceTrackSelector({ track, onTrackSelected }: Props) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
 
   return (
     <>
@@ -22,18 +22,24 @@ export default function SubtitleAppearanceTrackSelector({ track, onTrackSelected
         color='primary'
         variant='outlined'
         size='small'
-        label={t('settings.subtitleTrack')!}
-        helperText={track === 'all' ? t('settings.subtitleTrackSelectorHelper') : undefined}
+        label={t`Subtitle Track`}
+        helperText={
+          track === 'all'
+            ? t`Changes settings for ALL tracks. Settings that already have track-specific values are hidden.`
+            : undefined
+        }
         value={track}
         onChange={(e) =>
           e.target.value === 'all' ? onTrackSelected('all') : onTrackSelected(Number(e.target.value) as Track)
         }
       >
-        <MenuItem value={'all'}>{t('settings.allSubtitleTracks')}</MenuItem>
+        <MenuItem value={'all'}>
+          <Trans>All</Trans>
+        </MenuItem>
         {[...Array(maxTracks).keys()].map((i) => {
           return (
             <MenuItem key={i} value={i}>
-              {t('settings.subtitleTrackChoice', { trackNumber: i + 1 })}
+              <Trans>Track {i + 1}</Trans>
             </MenuItem>
           )
         })}

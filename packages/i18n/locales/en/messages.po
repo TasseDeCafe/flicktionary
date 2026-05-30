@@ -15,8 +15,8 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: packages/extension/src/controllers/video-data-sync-controller.ts:98
-msgid "extension.videoDataSync.emptySubtitleTrack"
-msgstr "extension.videoDataSync.emptySubtitleTrack"
+#~ msgid "extension.videoDataSync.emptySubtitleTrack"
+#~ msgstr "extension.videoDataSync.emptySubtitleTrack"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
 #~ msgid "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
@@ -331,6 +331,10 @@ msgstr "{totalKept} total"
 #~ msgid "• Full communication records and interaction history"
 #~ msgstr "• Full communication records and interaction history"
 
+#: packages/extension/src/ui/components/Tutorial.tsx:156
+msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
+msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
+
 #: apps/web/src/features/review/components/grounding-badge.tsx:48
 msgid "⚠ LLM only"
 msgstr "⚠ LLM only"
@@ -443,6 +447,10 @@ msgstr "A sentence using this term in its natural setting."
 msgid "A short label for this session"
 msgstr "A short label for this session"
 
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:114
+msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+msgstr "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+
 #: apps/web/src/features/more/components/more-tab-view.tsx:79
 msgid "About"
 msgstr "About"
@@ -450,6 +458,10 @@ msgstr "About"
 #: apps/landing-page/src/app/[lang]/about/page.tsx:15
 #~ msgid "About | Flicktionary"
 #~ msgstr "About | Flicktionary"
+
+#: packages/asbplayer-common/components/SettingsForm.tsx:248
+msgid "About asbplayer"
+msgstr "About asbplayer"
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:38
 #~ msgid "About Us"
@@ -507,9 +519,17 @@ msgstr "Active vocabulary"
 msgid "Add a word"
 msgstr "Add a word"
 
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:66
+msgid "Add Custom CSS"
+msgstr "Add Custom CSS"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:432
 msgid "Add form"
 msgstr "Add form"
+
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:241
+msgid "Add New Profile..."
+msgstr "Add New Profile..."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:578
 msgid "Add note"
@@ -523,9 +543,33 @@ msgstr "Add to active vocabulary"
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:209
+msgid "Additional hosts"
+msgstr "Additional hosts"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:278
+msgid "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
+msgstr "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:260
 msgid "Adjective"
 msgstr "Adjective"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:389
+msgid "Adjust subtitle offset by -100ms"
+msgstr "Adjust subtitle offset by -100ms"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:388
+msgid "Adjust subtitle offset by +100ms"
+msgstr "Adjust subtitle offset by +100ms"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:385
+msgid "Adjust subtitle offset so that next subtitle is at current timestamp"
+msgstr "Adjust subtitle offset so that next subtitle is at current timestamp"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:381
+msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
+msgstr "Adjust subtitle offset so that previous subtitle is at current timestamp"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
 #: apps/web/src/features/more/components/more-tab-view.tsx:81
@@ -551,6 +595,7 @@ msgstr "Again"
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:40
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:37
 msgid "All"
 msgstr "All"
 
@@ -577,9 +622,25 @@ msgstr "All caught up"
 #~ msgid "All highlights have been processed."
 #~ msgstr "All highlights have been processed."
 
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:289
+msgid "Allow auto-loading of detected subtitles"
+msgstr "Allow auto-loading of detected subtitles"
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:110
+msgid "Allow subtitle file drag-and-drop"
+msgstr "Allow subtitle file drag-and-drop"
+
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:279
+msgid "Allow video elements with blank src"
+msgstr "Allow video elements with blank src"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx:313
 msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
 msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
+msgid "Always play (unpause) after invoking above shortcut"
+msgstr "Always play (unpause) after invoking above shortcut"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:40
 msgid "American"
@@ -612,6 +673,10 @@ msgstr "Animacy"
 msgid "Animate"
 msgstr "Animate"
 
+#: packages/asbplayer-common/components/SettingsForm.tsx:245
+msgid "Annotation"
+msgstr "Annotation"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx:132
 msgid "Another term already exists with that headword and sense."
 msgstr "Another term already exists with that headword and sense."
@@ -620,10 +685,18 @@ msgstr "Another term already exists with that headword and sense."
 #~ msgid "App Store"
 #~ msgstr "App Store"
 
+#: packages/asbplayer-common/components/About.tsx:217
+msgid "App version"
+msgstr "App version"
+
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
 msgid "Are you absolutely sure?"
 msgstr "Are you absolutely sure?"
+
+#: packages/extension/src/ui/components/NotificationUi.tsx:101
+msgid "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
+msgstr "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:190
 msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
@@ -662,10 +735,58 @@ msgstr "Aspect pair (counterpart headword)"
 msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 msgstr "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:273
+msgid "At Subtitle End"
+msgstr "At Subtitle End"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:261
+msgid "At Subtitle Start"
+msgstr "At Subtitle Start"
+
+#: packages/extension/src/ui/components/NotificationUi.tsx:33
+msgid "Audio recording enabled"
+msgstr "Audio recording enabled"
+
+#: packages/extension/src/ui/components/NotificationUi.tsx:34
+msgid "Audio recording has been enabled for this tab. You can now begin mining."
+msgstr "Audio recording has been enabled for this tab. You can now begin mining."
+
 #: apps/web/src/features/auth/components/login-view.tsx:50
 #: apps/web/src/features/auth/components/login-view.tsx:62
 msgid "Authentication failed"
 msgstr "Authentication failed"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:213
+msgid "Auto-copy current subtitle to clipboard"
+msgstr "Auto-copy current subtitle to clipboard"
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:297
+msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:120
+msgid "Auto-load detected subtitles"
+msgstr "Auto-load detected subtitles"
+
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:86
+msgid "Auto-pause"
+msgstr "Auto-pause"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:247
+msgid "Auto-pause preference"
+msgstr "Auto-pause preference"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:272
+msgid "Auto-pause when mousing over subtitles"
+msgstr "Auto-pause when mousing over subtitles"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:611
+msgid "Auto-pause: Off"
+msgstr "Auto-pause: Off"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:609
+msgid "Auto-pause: On"
+msgstr "Auto-pause: On"
 
 #: apps/web/src/features/more/components/account-page.tsx:78
 msgid "Avatar"
@@ -716,6 +837,10 @@ msgstr "Billed yearly at €{yearlyPriceTotal}"
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:130
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Billed yearly: €{yearlyPriceFormatted}"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:478
+msgid "Bottom"
+msgstr "Bottom"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:41
 msgid "British"
@@ -781,6 +906,10 @@ msgstr "CEFR level"
 #~ msgid "Change"
 #~ msgstr "Change"
 
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:28
+msgid "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
+msgstr "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
+
 #: apps/web/src/features/review/components/chat-panel.tsx:118
 #: apps/web/src/features/review/components/chat-panel.tsx:147
 msgid "Chat"
@@ -838,9 +967,22 @@ msgstr "Clear search"
 msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 
+#: packages/extension/src/ui/components/NotificationUi.tsx:32
+msgid "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+msgstr "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+
+#. placeholder {0}: isFirefox ? '⚙' : '📌'
+#: packages/extension/src/ui/components/Tutorial.tsx:72
+msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
+msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
+
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
 msgid "Click the link in the email to continue."
 msgstr "Click the link in the email to continue."
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:363
+msgid "Click to unlock font menu"
+msgstr "Click to unlock font menu"
 
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
@@ -856,9 +998,29 @@ msgstr "Collocations"
 msgid "Come back later. {followUpDelay}."
 msgstr "Come back later. {followUpDelay}."
 
+#: packages/asbplayer-common/components/ListField.tsx:56
+msgid "Comma-separated list of strings"
+msgstr "Comma-separated list of strings"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:297
 msgid "Common"
 msgstr "Common"
+
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:72
+msgid "Condensed"
+msgstr "Condensed"
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:140
+msgid "Condensed playback minimum skip interval"
+msgstr "Condensed playback minimum skip interval"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:615
+msgid "Condensed playback: Off"
+msgstr "Condensed playback: Off"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:613
+msgid "Condensed playback: On"
+msgstr "Condensed playback: On"
 
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:64
 msgid "Confirm deletion"
@@ -921,6 +1083,10 @@ msgstr "Continue with Google"
 #~ msgid "Copied!"
 #~ msgstr "Copied!"
 
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:282
+msgid "Could not auto-load subtitles in your preferred language."
+msgstr "Could not auto-load subtitles in your preferred language."
+
 #: apps/native/src/features/billing/hooks/use-paywall.ts:60
 msgid "Could not display payment options at this time."
 msgstr "Could not display payment options at this time."
@@ -978,6 +1144,15 @@ msgstr "Couldn't start the session. Please try again."
 #~ msgid "Creating…"
 #~ msgstr "Creating…"
 
+#. placeholder {0}: customStyle.key
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:103
+msgid "CSS: {0}"
+msgstr "CSS: {0}"
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:303
+msgid "Current Timestamp"
+msgstr "Current Timestamp"
+
 #: apps/native/src/components/gates/force-update-gate.tsx:109
 msgid ""
 "Current version: {currentVersion}\n"
@@ -1012,10 +1187,30 @@ msgstr "Danger zone"
 msgid "Danger Zone"
 msgstr "Danger Zone"
 
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:176
+msgid "Dark"
+msgstr "Dark"
+
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:30
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:99
 msgid "Dashboard"
 msgstr "Dashboard"
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:310
+msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
+msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:315
+msgid "Decrease playback rate"
+msgstr "Decrease playback rate"
+
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:41
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:52
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:87
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:221
+msgid "Default"
+msgstr "Default"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:175
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:69
@@ -1056,13 +1251,29 @@ msgstr "Deleted \"{headword}\""
 msgid "Deleting…"
 msgstr "Deleting…"
 
+#: packages/asbplayer-common/components/About.tsx:264
+msgid "Dependencies"
+msgstr "Dependencies"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:266
+msgid "Detect and Display Ruby"
+msgstr "Detect and Display Ruby"
+
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:132
 msgid "Detecting language…"
 msgstr "Detecting language…"
 
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:285
+msgid "Disabled"
+msgstr "Disabled"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:277
 msgid "Display form (e.g. stress-marked)"
 msgstr "Display form (e.g. stress-marked)"
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:97
+msgid "Display subtitles"
+msgstr "Display subtitles"
 
 #: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:141
 #~ msgid "Done"
@@ -1140,6 +1351,10 @@ msgstr "Edit note"
 msgid "Edit term"
 msgstr "Edit term"
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:189
+msgid "Edit this shortcut from the Plugin manager at about:addons."
+msgstr "Edit this shortcut from the Plugin manager at about:addons."
+
 #: apps/web/src/features/review/components/grounding-badge.tsx:41
 msgid "Edited"
 msgstr "Edited"
@@ -1165,6 +1380,28 @@ msgstr "Email link is invalid or has expired"
 #: apps/native/src/features/auth/components/login-email-sent-view.tsx:34
 msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
+
+#: packages/extension/src/controllers/video-data-sync-controller.ts:98
+#: packages/extension/src/ui/components/VideoDataSyncUi.tsx:40
+#: packages/extension/src/ui/components/VideoDataSyncUi.tsx:110
+msgid "Empty"
+msgstr "Empty"
+
+#: packages/extension/src/ui/components/NotificationUi.tsx:31
+msgid "Enable audio recording"
+msgstr "Enable audio recording"
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:86
+msgid "Enable controls overlay"
+msgstr "Enable controls overlay"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:309
+msgid "Enabled"
+msgstr "Enabled"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:297
+msgid "Enabled with auto-resume"
+msgstr "Enabled with auto-resume"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:286
 msgid "End active drill"
@@ -1207,9 +1444,14 @@ msgstr "Enrichment failed"
 msgid "Enrichment has not started yet."
 msgstr "Enrichment has not started yet."
 
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:163
+msgid "Enter profile name"
+msgstr "Enter profile name"
+
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:164
 msgid "Error"
 msgstr "Error"
 
@@ -1225,6 +1467,10 @@ msgstr "Error setting up account..."
 #: apps/web/src/features/user/api/user-hooks.ts:27
 msgid "Error setting up user data"
 msgstr "Error setting up user data"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:627
+msgid "Error: {message}"
+msgstr "Error: {message}"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:97
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:177
@@ -1251,6 +1497,10 @@ msgstr "Explain"
 msgid "Explain this term in more depth."
 msgstr "Explain this term in more depth."
 
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:382
+msgid "Export Settings"
+msgstr "Export Settings"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:58
 msgid "Export vocabulary"
 msgstr "Export vocabulary"
@@ -1262,6 +1512,14 @@ msgstr "Exported {chunkCount} term(s)"
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:58
 msgid "Exporting…"
 msgstr "Exporting…"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:175
+msgid "Extension shortcut"
+msgstr "Extension shortcut"
+
+#: packages/asbplayer-common/components/About.tsx:225
+msgid "Extension version"
+msgstr "Extension version"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:401
 msgid "Failed to complete onboarding"
@@ -1535,9 +1793,25 @@ msgstr "Failed to upload subtitles"
 msgid "Failed to use suggestion"
 msgstr "Failed to use suggestion"
 
+#: packages/extension/src/controllers/subtitle-controller.ts:619
+msgid "Fast forward playback: Off"
+msgstr "Fast forward playback: Off"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:617
+msgid "Fast forward playback: On"
+msgstr "Fast forward playback: On"
+
 #: apps/web/src/features/more/components/more-tab-view.tsx:75
 #~ msgid "Fast gloss when you select text mid-watch"
 #~ msgstr "Fast gloss when you select text mid-watch"
+
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:79
+msgid "Fast-forward"
+msgstr "Fast-forward"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:287
+msgid "Fast-forward mode playback rate"
+msgstr "Fast-forward mode playback rate"
 
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:19
 #: apps/landing-page/src/app/[lang]/features/page.tsx:13
@@ -1625,6 +1899,10 @@ msgstr "Generate card"
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:354
+msgid "Generate Subtitles"
+msgstr "Generate Subtitles"
+
 #: apps/web/src/features/review/components/focus-view.tsx:355
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
@@ -1632,6 +1910,10 @@ msgstr "Generating full exploration… this takes a few seconds."
 #: apps/web/src/features/practice/components/practice-session-view.tsx:159
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
+msgid "Generating..."
+msgstr "Generating..."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/practice-session-view.tsx:486
@@ -1690,6 +1972,10 @@ msgstr "Go to triage"
 msgid "Good"
 msgstr "Good"
 
+#: packages/asbplayer-common/components/TutorialBubble.tsx:42
+msgid "Got it"
+msgstr "Got it"
+
 #: apps/web/src/features/review/components/grammar-chips.tsx:104
 msgid "Government"
 msgstr "Government"
@@ -1743,6 +2029,10 @@ msgstr "Hide notes"
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
 
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:423
+msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
+msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
+
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:38
 msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
 msgstr "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
@@ -1762,6 +2052,10 @@ msgstr "Highlights are enriched as you read. Triage is available immediately."
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:92
 msgid "Home"
 msgstr "Home"
+
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:207
+msgid "Host regex"
+msgstr "Host regex"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:466
 msgid "How rating works on Next"
@@ -1791,9 +2085,17 @@ msgstr "If you'd like to create a new account, sign up again below."
 msgid "If you'd like to create a new account, you can sign up again."
 msgstr "If you'd like to create a new account, you can sign up again."
 
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:443
+msgid "Image-based Subtitle Scale Factor"
+msgstr "Image-based Subtitle Scale Factor"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:311
 msgid "Imperfective"
 msgstr "Imperfective"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:379
+msgid "Import Settings"
+msgstr "Import Settings"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
@@ -1811,6 +2113,15 @@ msgstr "Importing…"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:365
 msgid "Inanimate"
 msgstr "Inanimate"
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:308
+msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
+msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:317
+msgid "Increase playback rate"
+msgstr "Increase playback rate"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:381
 msgid "Indeclinable"
@@ -1877,6 +2188,10 @@ msgstr "Keep as passive"
 msgid "Keep options"
 msgstr "Keep options"
 
+#: packages/asbplayer-common/components/SettingsForm.tsx:244
+msgid "Keyboard Shortcuts"
+msgstr "Keyboard Shortcuts"
+
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:98
 msgid "L1 notes"
 msgstr "L1 notes"
@@ -1886,6 +2201,7 @@ msgid "Label (e.g. past.m)"
 msgstr "Label (e.g. past.m)"
 
 #: apps/web/src/components/language-option-list.tsx:52
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:182
 msgid "Language"
 msgstr "Language"
 
@@ -1920,6 +2236,10 @@ msgstr "Last read"
 msgid "Later"
 msgstr "Later"
 
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:460
+msgid "Layout"
+msgstr "Layout"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx:75
 msgid "Learn more anyway"
 msgstr "Learn more anyway"
@@ -1946,6 +2266,15 @@ msgstr "Less formal:"
 #~ msgid "Level for {trackLanguage}: {cefrLabel}."
 #~ msgstr "Level for {trackLanguage}: {cefrLabel}."
 
+#: packages/asbplayer-common/components/About.tsx:234
+#: packages/asbplayer-common/components/About.tsx:274
+msgid "License"
+msgstr "License"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:166
+msgid "Light"
+msgstr "Light"
+
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx:86
 msgid "Link expired or invalid"
 msgstr "Link expired or invalid"
@@ -1959,6 +2288,10 @@ msgstr "LLM-suggested terms"
 #: apps/web/src/features/sessions/components/process-button.tsx:56
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:360
+msgid "Load Subtitles"
+msgstr "Load Subtitles"
 
 #: apps/web/src/features/review/components/focus-view.tsx:200
 msgid "Loading card…"
@@ -2048,6 +2381,11 @@ msgstr "Maybe later"
 msgid "Message to the founders"
 msgstr "Message to the founders"
 
+#: packages/asbplayer-common/components/SettingsForm.tsx:247
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:134
+msgid "Misc"
+msgstr "Misc"
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
 msgid "Monthly"
 msgstr "Monthly"
@@ -2075,6 +2413,14 @@ msgstr "More frequent synonym"
 msgid "More options"
 msgstr "More options"
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:422
+msgid "Move bottom subtitles down"
+msgstr "Move bottom subtitles down"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:418
+msgid "Move bottom subtitles up"
+msgstr "Move bottom subtitles up"
+
 #: apps/web/src/features/practice/components/rate-sheet.tsx:202
 msgid "Move this term back to passive review only."
 msgstr "Move this term back to passive review only."
@@ -2083,14 +2429,34 @@ msgstr "Move this term back to passive review only."
 msgid "Move this term into the active drilling pool."
 msgstr "Move this term into the active drilling pool."
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:430
+msgid "Move top subtitles down"
+msgstr "Move top subtitles down"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:426
+msgid "Move top subtitles up"
+msgstr "Move top subtitles up"
+
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:43
 msgid "Movies"
 msgstr "Movies"
+
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:102
+msgid "Multiple Video Elements Detected"
+msgstr "Multiple Video Elements Detected"
+
+#: packages/asbplayer-common/components/About.tsx:271
+msgid "Name"
+msgstr "Name"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
 msgid "Name (optional)"
 msgstr "Name (optional)"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:316
+msgid "Name of the tab"
+msgstr "Name of the tab"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:194
 msgid "Native example"
@@ -2214,6 +2580,10 @@ msgstr "No target languages yet. Preferences are set the first time you start a 
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:172
+msgid "No videos detected."
+msgstr "No videos detected."
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:281
 msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
@@ -2231,6 +2601,10 @@ msgstr "No vocabulary yet"
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:414
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
+
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:65
+msgid "Normal"
+msgstr "Normal"
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:47
 msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
@@ -2267,16 +2641,28 @@ msgstr "Numeral"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:324
+#: packages/extension/src/ui/components/NotificationUi.tsx:93
+#: packages/extension/src/ui/components/Tutorial.tsx:117
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:293
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:359
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:155
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:177
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/Popup.tsx:68
+#: packages/extension/src/ui/components/Popup.tsx:58
 msgid "Open App"
 msgstr "Open App"
 
 #: apps/web/src/features/review/components/chat-header-button.tsx:32
 msgid "Open chat"
 msgstr "Open chat"
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:227
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:344
+msgid "Open Files"
+msgstr "Open Files"
 
 #: apps/native/src/features/auth/components/login-email-sent-view.tsx:43
 msgid "Open Mail App"
@@ -2339,6 +2725,14 @@ msgstr "Other"
 #~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 #~ msgstr "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:156
+msgid "Overridden"
+msgstr "Overridden"
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:156
+msgid "Pages"
+msgstr "Pages"
+
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:90
 msgid "Pair the Flicktionary extension"
 msgstr "Pair the Flicktionary extension"
@@ -2380,6 +2774,14 @@ msgstr "Paste an article, comment, or post"
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:78
 msgid "Paste your text"
 msgstr "Paste your text"
+
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:232
+msgid "Path hash regex for subtitle detection"
+msgstr "Path hash regex for subtitle detection"
+
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:227
+msgid "Path regex for subtitle detection"
+msgstr "Path regex for subtitle detection"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:312
 msgid "Perfective"
@@ -2437,6 +2839,26 @@ msgstr "Pick your native language"
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:28
 #~ msgid "Play Store"
 #~ msgstr "Play Store"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:241
+msgid "Play/pause"
+msgstr "Play/pause"
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:387
+msgid "Playback Mode"
+msgstr "Playback Mode"
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:316
+msgid "Playback Rate"
+msgstr "Playback Rate"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:625
+msgid "Playback Rate: {rate}"
+msgstr "Playback Rate: {rate}"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:397
+msgid "Playback speed adjust step"
+msgstr "Playback speed adjust step"
 
 #: apps/native/src/features/auth/components/login-email-sent-view.tsx:40
 msgid "Please check your inbox and click on the link to continue"
@@ -2534,6 +2956,10 @@ msgstr "Preparing your answer…"
 msgid "Preposition"
 msgstr "Preposition"
 
+#: packages/extension/src/controllers/subtitle-controller.ts:629
+msgid "Press \"{keys}\" to toggle subtitle display"
+msgstr "Press \"{keys}\" to toggle subtitle display"
+
 #: apps/web/src/features/review/components/focus-view.tsx:246
 msgid "Previous card"
 msgstr "Previous card"
@@ -2609,16 +3035,33 @@ msgstr "Processing warnings"
 #~ msgstr "Processing your session…"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:205
 msgid "Profile"
 msgstr "Profile"
+
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:241
+msgid "Profile limit reached"
+msgstr "Profile limit reached"
+
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:162
+msgid "Profile Name"
+msgstr "Profile Name"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:46
 msgid "Profile, subscription, sign-in"
 msgstr "Profile, subscription, sign-in"
 
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:130
+msgid "Prompt on failure to auto-load subtitles"
+msgstr "Prompt on failure to auto-load subtitles"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:263
 msgid "Pronoun"
 msgstr "Pronoun"
+
+#: packages/asbplayer-common/components/About.tsx:277
+msgid "Purpose"
+msgstr "Purpose"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:441
 msgid "Quick gloss"
@@ -2651,6 +3094,10 @@ msgstr "Ready to practice"
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:33
 msgid "Recently added"
 msgstr "Recently added"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:154
+msgid "Recording"
+msgstr "Recording"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:33
 msgid "Redirecting..."
@@ -2694,8 +3141,17 @@ msgstr "Reject"
 msgid "Reject all"
 msgstr "Reject all"
 
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:203
+msgid "Remember subtitle offset"
+msgstr "Remember subtitle offset"
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:328
+msgid "Remember these track choices for this site"
+msgstr "Remember these track choices for this site"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:245
 msgid "Remove"
 msgstr "Remove"
 
@@ -2716,9 +3172,33 @@ msgstr "Remove session"
 msgid "Removing…"
 msgstr "Removing…"
 
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:255
+msgid "Render"
+msgstr "Render"
+
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:93
+msgid "Repeat"
+msgstr "Repeat"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:623
+msgid "Repeat playback: Off"
+msgstr "Repeat playback: Off"
+
+#: packages/extension/src/controllers/subtitle-controller.ts:621
+msgid "Repeat playback: On"
+msgstr "Repeat playback: On"
+
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx:55
 msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:208
+msgid "Reset"
+msgstr "Reset"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:390
+msgid "Reset subtitle offset"
+msgstr "Reset subtitle offset"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:259
 #: apps/web/src/features/practice/components/rate-sheet.tsx:222
@@ -2744,6 +3224,10 @@ msgstr "Retry"
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx:75
 msgid "Return to Login"
 msgstr "Return to Login"
+
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:200
+msgid "Revert"
+msgstr "Revert"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:182
 msgid "Review"
@@ -2797,6 +3281,10 @@ msgstr "Saving…"
 #~ msgid "Scan the QR code to download the app"
 #~ msgstr "Scan the QR code to download the app"
 
+#: packages/extension/src/ui/components/FtueUi.tsx:43
+msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
+msgstr "Scroll down for a quick intro, or check out the <0>user guide</0>."
+
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:33
 #~ msgid "Search a movie title…"
 #~ msgstr "Search a movie title…"
@@ -2821,6 +3309,10 @@ msgstr "Search movies…"
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
 
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:265
+msgid "Search shadow roots for video elements"
+msgstr "Search shadow roots for video elements"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:270
 msgid "Search terms…"
 msgstr "Search terms…"
@@ -2838,6 +3330,34 @@ msgstr "Searching OpenSubtitles…"
 msgid "Searching…"
 msgstr "Searching…"
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:301
+msgid "Seek backward"
+msgstr "Seek backward"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
+msgid "Seek forward"
+msgstr "Seek forward"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:342
+msgid "Seek interval (seconds)"
+msgstr "Seek interval (seconds)"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:366
+msgid "Seek to beginning of current/previous subtitle"
+msgstr "Seek to beginning of current/previous subtitle"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
+msgid "Seek to next subtitle"
+msgstr "Seek to next subtitle"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:302
+msgid "Seek to previous subtitle"
+msgstr "Seek to previous subtitle"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
 #~ msgid "segments"
@@ -2846,6 +3366,18 @@ msgstr "Searching…"
 #: apps/web/src/components/language-picker.tsx:53
 #~ msgid "Select a language"
 #~ msgstr "Select a language"
+
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:121
+msgid "Select a video element to sync it with asbplayer."
+msgstr "Select a video element to sync it with asbplayer."
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:237
+msgid "Select subtitle tracks to load."
+msgstr "Select subtitle tracks to load."
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:256
+msgid "Select Subtitles"
+msgstr "Select Subtitles"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:252
 msgid "Send"
@@ -2911,6 +3443,8 @@ msgid "Setting up account..."
 msgstr "Setting up account..."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:375
+#: packages/extension/src/ui/components/SettingsPage.tsx:78
 msgid "Settings"
 msgstr "Settings"
 
@@ -3069,6 +3603,22 @@ msgstr "Starting…"
 msgid "Stop drilling this term in active practice"
 msgstr "Stop drilling this term in active practice"
 
+#: packages/asbplayer-common/components/SettingsForm.tsx:246
+msgid "Streaming Video"
+msgstr "Streaming Video"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:65
+msgid "Style Key"
+msgstr "Style Key"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:104
+msgid "Style Value"
+msgstr "Style Value"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:219
+msgid "Styling"
+msgstr "Styling"
+
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
 msgid "Subscribe Now"
 msgstr "Subscribe Now"
@@ -3091,9 +3641,111 @@ msgstr "Subscription Required"
 msgid "Subscription Successful!"
 msgstr "Subscription Successful!"
 
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:465
+msgid "Subtitle Alignment"
+msgstr "Subtitle Alignment"
+
+#: packages/asbplayer-common/components/SettingsForm.tsx:243
+msgid "Subtitle Appearance"
+msgstr "Subtitle Appearance"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:320
+msgid "Subtitle Background Color"
+msgstr "Subtitle Background Color"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:330
+msgid "Subtitle Background Opacity"
+msgstr "Subtitle Background Opacity"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:434
+msgid "Subtitle blur"
+msgstr "Subtitle blur"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:224
+msgid "Subtitle Color"
+msgstr "Subtitle Color"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:349
+msgid "Subtitle Font Family"
+msgstr "Subtitle Font Family"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:250
+msgid "Subtitle Font Thickness"
+msgstr "Subtitle Font Thickness"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:335
+msgid "Subtitle Generation"
+msgstr "Subtitle Generation"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:234
+msgid "Subtitle HTML"
+msgstr "Subtitle HTML"
+
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:309
+msgid "Subtitle Offset"
+msgstr "Subtitle Offset"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:267
+msgid "Subtitle Outline Color"
+msgstr "Subtitle Outline Color"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:277
+msgid "Subtitle Outline Thickness"
+msgstr "Subtitle Outline Thickness"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:502
+msgid "Subtitle position offset from bottom"
+msgstr "Subtitle position offset from bottom"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:516
+msgid "Subtitle position offset from top"
+msgstr "Subtitle position offset from top"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:217
+msgid "Subtitle regex filter"
+msgstr "Subtitle regex filter"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:226
+msgid "Subtitle regex filter text replacement"
+msgstr "Subtitle regex filter text replacement"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:294
+msgid "Subtitle Shadow Color"
+msgstr "Subtitle Shadow Color"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:304
+msgid "Subtitle Shadow Thickness"
+msgstr "Subtitle Shadow Thickness"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:234
+msgid "Subtitle Size"
+msgstr "Subtitle Size"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
 #~ msgid "Subtitle source"
 #~ msgstr "Subtitle source"
+
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:25
+msgid "Subtitle Track"
+msgstr "Subtitle Track"
+
+#. placeholder {0}: i + 1
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:209
+msgid "Subtitle Track {0}"
+msgstr "Subtitle Track {0}"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:194
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:101
+msgid "Subtitles"
+msgstr "Subtitles"
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:277
+msgid "Subtitles must be loaded before you can start mining."
+msgstr "Subtitles must be loaded before you can start mining."
+
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:530
+msgid "Subtitles Width"
+msgstr "Subtitles Width"
 
 #: apps/native/src/config/react-query-config.ts:114
 #: apps/web/src/config/react-query-config.ts:125
@@ -3138,6 +3790,10 @@ msgstr "Target example"
 msgid "Target language"
 msgstr "Target language"
 
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:124
+msgid "Target language codes for machine translation"
+msgstr "Target language codes for machine translation"
+
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:90
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:72
 msgid "Tell us what you think or describe any issues you encountered..."
@@ -3181,6 +3837,10 @@ msgstr "Texts"
 msgid "Thank you for your feedback!"
 msgstr "Thank you for your feedback!"
 
+#: packages/extension/src/ui/components/Tutorial.tsx:179
+msgid "That's it for the basics! Feel free to play around on this page."
+msgstr "That's it for the basics! Feel free to play around on this page."
+
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:91
 #~ msgid "The chosen subtitle track must match this language."
 #~ msgstr "The chosen subtitle track must match this language."
@@ -3205,6 +3865,22 @@ msgstr "The extension could not complete pairing."
 msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
 
+#: packages/extension/src/ui/components/Tutorial.tsx:102
+msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
+msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
+
+#: packages/extension/src/ui/components/Tutorial.tsx:94
+msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
+msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
+
+#: packages/extension/src/ui/components/Tutorial.tsx:108
+msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
+msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:155
+msgid "Theme"
+msgstr "Theme"
+
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:51
 #~ msgid "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
 #~ msgstr "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
@@ -3217,6 +3893,10 @@ msgstr "There was an error sending the verification email. Please try again."
 #: apps/web/src/features/billing/components/pricing-view.tsx:91
 msgid "There was an error. Please contact support."
 msgstr "There was an error. Please contact support."
+
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:204
+msgid "These settings have been modified."
+msgstr "These settings have been modified."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:213
 msgid "Thinking…"
@@ -3277,6 +3957,51 @@ msgstr "To change your current plan type, please click on \"Manage Subscription\
 msgid "Today"
 msgstr "Today"
 
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:243
+msgid "Toggle auto-pause"
+msgstr "Toggle auto-pause"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:281
+msgid "Toggle condensed playback"
+msgstr "Toggle condensed playback"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:283
+msgid "Toggle fast forward playback"
+msgstr "Toggle fast forward playback"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:307
+msgid "Toggle repeat mode"
+msgstr "Toggle repeat mode"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:313
+msgid "Toggle subtitle track 1 in asbplayer"
+msgstr "Toggle subtitle track 1 in asbplayer"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:309
+msgid "Toggle subtitle track 1 in video"
+msgstr "Toggle subtitle track 1 in video"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:317
+msgid "Toggle subtitle track 2 in asbplayer"
+msgstr "Toggle subtitle track 2 in asbplayer"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:310
+msgid "Toggle subtitle track 2 in video"
+msgstr "Toggle subtitle track 2 in video"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:321
+msgid "Toggle subtitle track 3 in asbplayer"
+msgstr "Toggle subtitle track 3 in asbplayer"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:311
+msgid "Toggle subtitle track 3 in video"
+msgstr "Toggle subtitle track 3 in video"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:371
+msgid "Toggle subtitles"
+msgstr "Toggle subtitles"
+
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:26
 msgid "Too Many Requests"
 msgstr "Too Many Requests"
@@ -3289,13 +4014,30 @@ msgstr "Too many requests. Please try again later."
 msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
 msgstr "Too many requests. Please use the app in only one tab and device at a time and try again later."
 
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:490
+msgid "Top"
+msgstr "Top"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx:246
 msgid "Total"
 msgstr "Total"
 
+#. placeholder {0}: i + 1
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:42
+msgid "Track {0}"
+msgstr "Track {0}"
+
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:199
 #~ msgid "Track imported"
 #~ msgstr "Track imported"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:345
+msgid "Transcript Server API Key (optional)"
+msgstr "Transcript Server API Key (optional)"
+
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:338
+msgid "Transcript Server URL"
+msgstr "Transcript Server URL"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:186
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:70
@@ -3319,6 +4061,11 @@ msgstr "Triage"
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:151
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:76
+msgid "UI"
+msgstr "UI"
+
 #: apps/web/src/features/billing/api/portal-session-hooks.ts:14
 msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
 msgstr "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
@@ -3330,6 +4077,19 @@ msgstr "Unable to open app store"
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 msgid "Unable to open app store. Please manually update the app."
 msgstr "Unable to open app store. Please manually update the app."
+
+#. placeholder {0}: 1
+#. placeholder {0}: 2
+#. placeholder {0}: 3
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:325
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:329
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:333
+msgid "Unblur subtitle track {0} in asbplayer"
+msgstr "Unblur subtitle track {0} in asbplayer"
+
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:158
+msgid "Unbound"
+msgstr "Unbound"
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:35
 msgid "Unknown year"
@@ -3411,6 +4171,10 @@ msgstr "Use suggested"
 #~ msgid "Use suggested: {suggestedSurface}"
 #~ msgstr "Use suggested: {suggestedSurface}"
 
+#: packages/extension/src/ui/components/Tutorial.tsx:131
+msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
+msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
+
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
 msgstr "Use these options to test Sentry error reporting in your environment."
@@ -3423,7 +4187,7 @@ msgstr "Used as your L1 in the LLM prompts."
 msgid "User"
 msgstr "User"
 
-#: packages/extension/src/ui/components/Popup.tsx:71
+#: packages/extension/src/ui/components/Popup.tsx:61
 msgid "User guide"
 msgstr "User guide"
 
@@ -3464,6 +4228,14 @@ msgstr "Verify Your Email"
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx:94
 msgid "Verifying..."
 msgstr "Verifying..."
+
+#: packages/extension/src/ui/components/VideoSelectUi.tsx:131
+msgid "Video Element"
+msgstr "Video Element"
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+msgid "Video Name"
+msgstr "Video Name"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:40
 msgid "View Premium Demo"
@@ -3538,6 +4310,10 @@ msgstr "We've sent a verification email to:"
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:20
 msgid "We've sent a verification link to:"
 msgstr "We've sent a verification link to:"
+
+#: packages/extension/src/ui/components/FtueUi.tsx:38
+msgid "Welcome to asbplayer."
+msgstr "Welcome to asbplayer."
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:47
 msgid "Welcome to Flicktionary"

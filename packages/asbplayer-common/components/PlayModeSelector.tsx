@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 import List from '@mui/material/List'
 import MuiListItem, { ListItemProps } from '@mui/material/ListItem'
 import MuiListItemButton, { ListItemButtonProps } from '@mui/material/ListItemButton'
@@ -42,7 +42,6 @@ export default function PlayModeSelector({
   onClose,
   ...restOfPopoverProps
 }: Props) {
-  const { t } = useTranslation()
   return (
     <Popover
       disableEnforceFocus={true}
@@ -62,27 +61,37 @@ export default function PlayModeSelector({
       <List disablePadding dense style={listStyle}>
         <ListItem onClick={() => onPlayMode(PlayMode.normal)}>
           <ListItemButton selected={selectedPlayMode === PlayMode.normal}>
-            <ListItemText>{t('controls.normalMode')}</ListItemText>
+            <ListItemText>
+              <Trans>Normal</Trans>
+            </ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem onClick={() => onPlayMode(PlayMode.condensed)}>
           <ListItemButton dense selected={selectedPlayMode === PlayMode.condensed}>
-            <ListItemText>{t('controls.condensedMode')}</ListItemText>
+            <ListItemText>
+              <Trans>Condensed</Trans>
+            </ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem onClick={() => onPlayMode(PlayMode.fastForward)}>
           <ListItemButton selected={selectedPlayMode === PlayMode.fastForward}>
-            <ListItemText>{t('controls.fastForwardMode')}</ListItemText>
+            <ListItemText>
+              <Trans>Fast-forward</Trans>
+            </ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem onClick={() => onPlayMode(PlayMode.autoPause)}>
           <ListItemButton selected={selectedPlayMode === PlayMode.autoPause}>
-            <ListItemText>{t('controls.autoPauseMode')}</ListItemText>
+            <ListItemText>
+              <Trans>Auto-pause</Trans>
+            </ListItemText>
           </ListItemButton>
         </ListItem>
         <ListItem onClick={() => onPlayMode(PlayMode.repeat)}>
           <ListItemButton selected={selectedPlayMode === PlayMode.repeat}>
-            <ListItemText>{t('controls.repeatMode')}</ListItemText>
+            <ListItemText>
+              <Trans>Repeat</Trans>
+            </ListItemText>
           </ListItemButton>
         </ListItem>
       </List>

@@ -2,7 +2,7 @@ import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Tooltip from '@asbplayer-fork/common/components/Tooltip'
-import { useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 
 export interface TutorialBubbleProps {
   placement: 'left' | 'right' | 'top' | 'bottom' | 'bottom-start'
@@ -23,7 +23,6 @@ const TutorialBubble: React.FC<TutorialBubbleProps> = ({
   text,
   children,
 }) => {
-  const { t } = useTranslation()
   return (
     <Tooltip
       disabled={disabled}
@@ -40,7 +39,7 @@ const TutorialBubble: React.FC<TutorialBubbleProps> = ({
           <Typography variant='subtitle1'>{text}</Typography>
           {onConfirm && (
             <Button variant='contained' onClick={onConfirm} fullWidth>
-              {t('action.gotIt')}
+              <Trans>Got it</Trans>
             </Button>
           )}
         </Stack>

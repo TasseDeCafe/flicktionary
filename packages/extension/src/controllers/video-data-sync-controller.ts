@@ -22,8 +22,8 @@ import { base64ToBlob, bufferToBase64 } from '@asbplayer-fork/common/base64'
 import Binding from '../services/binding'
 import { currentPageDelegate } from '../services/pages'
 import UiFrame from '../services/ui-frame'
-import { fetchLocalization } from '../services/localization-fetcher'
-import i18n from 'i18next'
+import { i18n } from '../ui/lingui'
+import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
 import { isOnTutorialPage } from '@/services/tutorial'
 
@@ -44,7 +44,7 @@ async function html(lang: string) {
             </head>
             <body>
                 <div id="root" style="width:100%;height:100vh;"></div>
-                <script type="application/json" id="loc">${JSON.stringify(await fetchLocalization(lang))}</script>
+                <script type="application/json" id="loc">${JSON.stringify({ lang })}</script>
                 <script type="module" src="${browser.runtime.getURL('/video-data-sync-ui.js')}"></script>
             </body>
             </html>`
@@ -95,7 +95,7 @@ export default class VideoDataSyncController {
       id: '-',
       language: '-',
       url: '-',
-      label: i18n.t('extension.videoDataSync.emptySubtitleTrack'),
+      label: i18n._(msg`Empty`),
       extension: 'srt',
     }
     this._domain = new URL(window.location.href).host

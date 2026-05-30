@@ -1,6 +1,6 @@
 import { JSX } from 'react'
 import { MutablePageConfig, Page, PageConfig, PageSettings, YoutubePage } from '../settings'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import Dialog from '@mui/material/Dialog'
 import Toolbar from '@mui/material/Toolbar'
 import DialogContent from '@mui/material/DialogContent'
@@ -111,7 +111,7 @@ const PageSettingsForm = (props: PageSettingsFormProps) => {
 }
 
 const YoutubePageSettingsForm = (props: PageSettingsFormProps) => {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const { onPageChanged, page } = props
   const { targetLanguages } = page as YoutubePage
 
@@ -121,7 +121,7 @@ const YoutubePageSettingsForm = (props: PageSettingsFormProps) => {
       additionalControls={
         <ListField
           textFieldComponent={SettingsTextField}
-          label={t('extension.settings.pages.youtube.targetLanguages')}
+          label={t`Target language codes for machine translation`}
           items={targetLanguages ?? []}
           onItemsChange={(newTargetLanguages) => {
             if (newTargetLanguages.length <= youtubeTargetLanguageLimit) {
@@ -144,7 +144,7 @@ const DefaultPageSettingsForm = ({
   onClose,
   onPageChanged,
 }: PageSettingsFormProps) => {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const overrides = page.overrides
   const handleOverrideFieldChanged = <K extends keyof MutablePageConfig>(key: K, value: MutablePageConfig[K]) => {
     const newOverrides = { ...page.overrides, [key]: value }
@@ -197,16 +197,16 @@ const DefaultPageSettingsForm = ({
                     }
                     size='small'
                   >
-                    {t('action.revert')}
+                    <Trans>Revert</Trans>
                   </Button>
                 }
               >
-                {t('extension.settings.pages.overridesWarning')}
+                <Trans>These settings have been modified.</Trans>
               </Alert>
             )}
-            <TextField disabled label={t('extension.settings.pages.host')} value={defaultPageConfig.hostRegex} />
+            <TextField disabled label={t`Host regex`} value={defaultPageConfig.hostRegex} />
             <ListField
-              label={t('extension.settings.pages.additionalHosts')}
+              label={t`Additional hosts`}
               items={page.additionalHosts ?? []}
               onItemsChange={(additionalHosts) => {
                 if (totalLength(additionalHosts) > maxAdditionalHostsLength) {
@@ -224,12 +224,12 @@ const DefaultPageSettingsForm = ({
               }}
             />
             <TextField
-              label={t('extension.settings.pages.syncAllowedAtPath')}
+              label={t`Path regex for subtitle detection`}
               value={overrides?.syncAllowedAtPath ?? defaultPageConfig.syncAllowedAtPath ?? ''}
               onChange={(e) => handleOverrideFieldChanged('syncAllowedAtPath', e.target.value)}
             />
             <TextField
-              label={t('extension.settings.pages.syncAllowedAtHash')}
+              label={t`Path hash regex for subtitle detection`}
               value={overrides?.syncAllowedAtHash ?? defaultPageConfig.syncAllowedAtHash ?? ''}
               onChange={(e) => handleOverrideFieldChanged('syncAllowedAtHash', e.target.value)}
             />
@@ -262,7 +262,7 @@ const DefaultPageSettingsForm = ({
                   onChange={(e) => handleOverrideFieldChanged('searchShadowRootsForVideoElements', e.target.checked)}
                 />
               }
-              label={t('extension.settings.pages.searchShadowRootsForVideoElements')}
+              label={t`Search shadow roots for video elements`}
               labelPlacement='start'
             />
             <LabelWithHoverEffect
@@ -276,7 +276,7 @@ const DefaultPageSettingsForm = ({
                   onChange={(e) => handleOverrideFieldChanged('allowVideoElementsWithBlankSrc', e.target.checked)}
                 />
               }
-              label={t('extension.settings.pages.allowVideoElementsWithBlankSrc')}
+              label={t`Allow video elements with blank src`}
               labelPlacement='start'
             />
             <LabelWithHoverEffect
@@ -286,7 +286,7 @@ const DefaultPageSettingsForm = ({
                   onChange={(e) => handleOverrideFieldChanged('autoSyncEnabled', e.target.checked)}
                 />
               }
-              label={t('extension.settings.pages.autoSyncEnabled')}
+              label={t`Allow auto-loading of detected subtitles`}
               labelPlacement='start'
             />
             {/* {!isFirefoxBuild && browser.declarativeNetRequest && (
@@ -320,7 +320,9 @@ const DefaultPageSettingsForm = ({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>{t('action.ok')}</Button>
+          <Button onClick={onClose}>
+            <Trans>OK</Trans>
+          </Button>
         </DialogActions>
       </Dialog>
     </>

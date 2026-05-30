@@ -1,11 +1,16 @@
 import { createRoot } from 'react-dom/client'
+import { I18nProvider } from '@lingui/react'
 import Bridge from '../bridge'
-import { i18nInit } from '../i18n'
+import { i18n, setupLingui } from '../lingui'
 import NotificationUi from '../components/NotificationUi'
 
-export function renderNotificationUi(element: Element, lang: string, locStrings: any) {
+export function renderNotificationUi(element: Element, lang: string) {
   const bridge = new Bridge()
-  i18nInit(lang, locStrings)
-  createRoot(element).render(<NotificationUi bridge={bridge} />)
+  setupLingui(lang)
+  createRoot(element).render(
+    <I18nProvider i18n={i18n}>
+      <NotificationUi bridge={bridge} />
+    </I18nProvider>
+  )
   return bridge
 }

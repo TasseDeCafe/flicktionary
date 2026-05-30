@@ -10,7 +10,6 @@ import { SettingsProvider } from '@asbplayer-fork/common/settings'
 import { VideoElement } from '../ui/components/VideoSelectUi'
 import Binding from '../services/binding'
 import UiFrame from '../services/ui-frame'
-import { fetchLocalization } from '../services/localization-fetcher'
 import { ExtensionSettingsStorage } from '../services/extension-settings-storage'
 
 export default class VideoSelectController {
@@ -40,7 +39,7 @@ export default class VideoSelectController {
                 </head>
                 <body>
                     <div id="root" style="width:100%;height:100vh;"></div>
-                    <script type="application/json" id="loc">${JSON.stringify(await fetchLocalization(lang))}</script>
+                    <script type="application/json" id="loc">${JSON.stringify({ lang })}</script>
                     <script type="module" src="${browser.runtime.getURL('/video-select-ui.js')}"></script>
                 </body>
             </html>`

@@ -5,13 +5,9 @@ import LaunchIcon from '@mui/icons-material/Launch'
 import { useCallback } from 'react'
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
-import { useTranslation } from 'react-i18next'
-// POC: these two labels resolve through Lingui; the rest of the popup still uses
-// i18next (useTranslation) during the migration.
 import { Trans } from '@lingui/react/macro'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
-import { useI18n } from '../hooks/use-i18n'
 import { isMobile } from 'react-device-detect'
 import { useTheme } from '@mui/material/styles'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
@@ -44,8 +40,6 @@ const Popup = ({
   onOpenUserGuide,
   ...profilesContext
 }: Props) => {
-  const { t } = useTranslation()
-  const { initialized: i18nInitialized } = useI18n({ language: settings.language })
   const handleUnlockLocalFonts = useCallback(() => {
     browser.tabs.create({
       url: `${browser.runtime.getURL('/options.html')}#subtitle-appearance`,
@@ -55,10 +49,6 @@ const Popup = ({
   const { supportedLanguages } = useSupportedLanguages()
   const { localFontsAvailable, localFontsPermission, localFontFamilies } = useLocalFontFamilies()
   const theme = useTheme()
-
-  if (!i18nInitialized) {
-    return null
-  }
 
   return (
     <Paper>

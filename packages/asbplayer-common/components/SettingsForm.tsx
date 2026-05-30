@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useLingui } from '@lingui/react/macro'
 import { makeStyles } from 'tss-react/mui'
 import { useTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
@@ -194,7 +194,7 @@ export default function SettingsForm({
     },
     [onSettingsChanged]
   )
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const tabIndicesById = useMemo(() => {
     const tabs = [
       'subtitle-appearance',
@@ -240,12 +240,12 @@ export default function SettingsForm({
           marginRight: smallScreen ? 'auto' : 0,
         }}
       >
-        <Tab tabIndex={0} label={t('settings.subtitleAppearance')} id='subtitle-appearance' />
-        <Tab tabIndex={1} label={t('settings.keyboardShortcuts')} id='keyboard-shortcuts' />
-        {supportsDictionary && <Tab tabIndex={2} label={t('settings.annotation')} id='dictionary' />}
-        <Tab tabIndex={2 + Number(supportsDictionary)} label={t('settings.streamingVideo')} id='streaming-video' />
-        <Tab tabIndex={3 + Number(supportsDictionary)} label={t('settings.misc')} id='misc-settings' />
-        <Tab tabIndex={4 + Number(supportsDictionary)} label={t('about.title')} id='about' />
+        <Tab tabIndex={0} label={t`Subtitle Appearance`} id='subtitle-appearance' />
+        <Tab tabIndex={1} label={t`Keyboard Shortcuts`} id='keyboard-shortcuts' />
+        {supportsDictionary && <Tab tabIndex={2} label={t`Annotation`} id='dictionary' />}
+        <Tab tabIndex={2 + Number(supportsDictionary)} label={t`Streaming Video`} id='streaming-video' />
+        <Tab tabIndex={3 + Number(supportsDictionary)} label={t`Misc`} id='misc-settings' />
+        <Tab tabIndex={4 + Number(supportsDictionary)} label={t`About asbplayer`} id='about' />
       </Tabs>
       <TabPanel value={tabIndex} index={tabIndicesById['subtitle-appearance']} tabsOrientation={tabsOrientation}>
         <SubtitleAppearanceSettingsTab

@@ -5,7 +5,7 @@ export default defineUnlistedScript(() => {
   window.addEventListener('load', () => {
     const root = document.getElementById('root')!
     const loc = JSON.parse(document.getElementById('loc')!.innerHTML!)
-    const bridge = renderVideoSelectModeUi(root, loc.lang, loc.strings)
+    const bridge = renderVideoSelectModeUi(root, loc.lang)
     const listener = new FrameBridgeServer(bridge)
     listener.bind()
 

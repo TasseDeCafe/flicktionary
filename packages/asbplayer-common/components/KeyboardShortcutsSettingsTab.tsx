@@ -1,5 +1,5 @@
 import { AsbplayerSettings, KeyBindName } from '../settings'
-import { useTranslation } from 'react-i18next'
+import { useLingui } from '@lingui/react/macro'
 import { isMacOs } from 'react-device-detect'
 import { makeStyles } from 'tss-react/mui'
 import { useTheme } from '@mui/material/styles'
@@ -60,7 +60,7 @@ interface KeyBindFieldProps {
 }
 
 function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensionShortcuts }: KeyBindFieldProps) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const theme = useTheme<Theme>()
   const { classes } = useKeyBindFieldStyles()
   const [currentKeyString, setCurrentKeyString] = useState<string>(keys)
@@ -151,11 +151,11 @@ function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensi
   let placeholder: string
 
   if (editing) {
-    placeholder = t('settings.recordingBind')
+    placeholder = t`Recording`
   } else if (boundViaChrome) {
-    placeholder = t('settings.extensionOverriddenBind')
+    placeholder = t`Overridden`
   } else {
-    placeholder = t('settings.unboundBind')
+    placeholder = t`Unbound`
   }
 
   const firefoxExtensionShortcut = isFirefox && boundViaChrome
@@ -172,7 +172,7 @@ function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensi
             size='small'
             contentEditable={false}
             disabled={boundViaChrome}
-            helperText={boundViaChrome ? t('settings.extensionShortcut') : undefined}
+            helperText={boundViaChrome ? t`Extension shortcut` : undefined}
             value={currentKeyString}
             title={currentKeyString}
             color='primary'
@@ -186,7 +186,7 @@ function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensi
                       </IconButton>
                     )}
                     {firefoxExtensionShortcut && (
-                      <Tooltip title={t('settings.firefoxExtensionShortcutHelp')!}>
+                      <Tooltip title={t`Edit this shortcut from the Plugin manager at about:addons.`}>
                         <span>
                           <IconButton disabled={true}>
                             <EditIcon fontSize='small' />
@@ -222,7 +222,7 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
   extensionSupportsExportCardBind,
   onOpenChromeExtensionShortcuts,
 }) => {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const {
     autoPausePreference,
     fastForwardModePlaybackRate,
@@ -234,17 +234,17 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
   const keyBindProperties = useMemo<{ [key in AllKeyNames]: KeyBindProperties }>(
     () => ({
       selectSubtitleTrack: {
-        label: t('binds.extensionSelectSubtitleTrack')!,
+        label: t`Select subtitle tracks to load.`,
         boundViaChrome: true,
         hide: !extensionInstalled,
       },
-      togglePlay: { label: t('binds.togglePlay')!, boundViaChrome: false },
+      togglePlay: { label: t`Play/pause`, boundViaChrome: false },
       toggleAutoPause: {
-        label: t('binds.toggleAutoPause')!,
+        label: t`Toggle auto-pause`,
         boundViaChrome: false,
         additionalControl: (
           <KeyBindRelatedSetting
-            label={t('settings.autoPausePreference')}
+            label={t`Auto-pause preference`}
             control={
               <Grid2>
                 <RadioGroup row>
@@ -258,7 +258,7 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
                         }
                       />
                     }
-                    label={t('settings.autoPauseAtSubtitleStart')}
+                    label={t`At Subtitle Start`}
                   />
                   <LabelWithHoverEffect
                     control={
@@ -270,7 +270,7 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
                         }
                       />
                     }
-                    label={t('settings.autoPauseAtSubtitleEnd')}
+                    label={t`At Subtitle End`}
                   />
                 </RadioGroup>
               </Grid2>
@@ -278,13 +278,13 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           />
         ),
       },
-      toggleCondensedPlayback: { label: t('binds.toggleCondensedPlayback')!, boundViaChrome: false },
+      toggleCondensedPlayback: { label: t`Toggle condensed playback`, boundViaChrome: false },
       toggleFastForwardPlayback: {
-        label: t('binds.toggleFastForwardPlayback')!,
+        label: t`Toggle fast forward playback`,
         boundViaChrome: false,
         additionalControl: (
           <KeyBindRelatedSetting
-            label={t('settings.fastForwardModePlaybackRate')}
+            label={t`Fast-forward mode playback rate`}
             control={
               <SettingsTextField
                 type='number'
@@ -304,42 +304,42 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           />
         ),
       },
-      toggleRepeat: { label: t('binds.toggleRepeat')!, boundViaChrome: false },
-      toggleSubtitles: { label: t('binds.toggleSubtitles')!, boundViaChrome: false },
-      toggleVideoSubtitleTrack1: { label: t('binds.toggleVideoSubtitleTrack1')!, boundViaChrome: false },
-      toggleVideoSubtitleTrack2: { label: t('binds.toggleVideoSubtitleTrack2')!, boundViaChrome: false },
-      toggleVideoSubtitleTrack3: { label: t('binds.toggleVideoSubtitleTrack3')!, boundViaChrome: false },
+      toggleRepeat: { label: t`Toggle repeat mode`, boundViaChrome: false },
+      toggleSubtitles: { label: t`Toggle subtitles`, boundViaChrome: false },
+      toggleVideoSubtitleTrack1: { label: t`Toggle subtitle track 1 in video`, boundViaChrome: false },
+      toggleVideoSubtitleTrack2: { label: t`Toggle subtitle track 2 in video`, boundViaChrome: false },
+      toggleVideoSubtitleTrack3: { label: t`Toggle subtitle track 3 in video`, boundViaChrome: false },
       toggleAsbplayerSubtitleTrack1: {
-        label: t('binds.toggleAsbplayerSubtitleTrack1')!,
+        label: t`Toggle subtitle track 1 in asbplayer`,
         boundViaChrome: false,
       },
       toggleAsbplayerSubtitleTrack2: {
-        label: t('binds.toggleAsbplayerSubtitleTrack2')!,
+        label: t`Toggle subtitle track 2 in asbplayer`,
         boundViaChrome: false,
       },
       toggleAsbplayerSubtitleTrack3: {
-        label: t('binds.toggleAsbplayerSubtitleTrack3')!,
+        label: t`Toggle subtitle track 3 in asbplayer`,
         boundViaChrome: false,
       },
       unblurAsbplayerTrack1: {
-        label: t('binds.unblurAsbplayerTrack', { trackNumber: 1 })!,
+        label: t`Unblur subtitle track ${1} in asbplayer`,
         boundViaChrome: false,
       },
       unblurAsbplayerTrack2: {
-        label: t('binds.unblurAsbplayerTrack', { trackNumber: 2 })!,
+        label: t`Unblur subtitle track ${2} in asbplayer`,
         boundViaChrome: false,
       },
       unblurAsbplayerTrack3: {
-        label: t('binds.unblurAsbplayerTrack', { trackNumber: 3 })!,
+        label: t`Unblur subtitle track ${3} in asbplayer`,
         boundViaChrome: false,
       },
-      seekBackward: { label: t('binds.seekBackward')!, boundViaChrome: false },
+      seekBackward: { label: t`Seek backward`, boundViaChrome: false },
       seekForward: {
-        label: t('binds.seekForward')!,
+        label: t`Seek forward`,
         boundViaChrome: false,
         additionalControl: (
           <KeyBindRelatedSetting
-            label={t('settings.seekDuration')}
+            label={t`Seek interval (seconds)`}
             control={
               <SettingsTextField
                 type='number'
@@ -360,14 +360,14 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           />
         ),
       },
-      seekToPreviousSubtitle: { label: t('binds.seekToPreviousSubtitle')!, boundViaChrome: false },
-      seekToNextSubtitle: { label: t('binds.seekToNextSubtitle')!, boundViaChrome: false },
+      seekToPreviousSubtitle: { label: t`Seek to previous subtitle`, boundViaChrome: false },
+      seekToNextSubtitle: { label: t`Seek to next subtitle`, boundViaChrome: false },
       seekToBeginningOfCurrentSubtitle: {
-        label: t('binds.seekToBeginningOfCurrentOrPreviousSubtitle')!,
+        label: t`Seek to beginning of current/previous subtitle`,
         boundViaChrome: false,
         additionalControl: (
           <KeyBindRelatedSetting
-            label={t('settings.alwaysPlayOnSubtitleRepeat')}
+            label={t`Always play (unpause) after invoking above shortcut`}
             control={
               <Switch
                 checked={alwaysPlayOnSubtitleRepeat}
@@ -378,23 +378,23 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
         ),
       },
       adjustOffsetToPreviousSubtitle: {
-        label: t('binds.adjustOffsetToPreviousSubtitle')!,
+        label: t`Adjust subtitle offset so that previous subtitle is at current timestamp`,
         boundViaChrome: false,
       },
       adjustOffsetToNextSubtitle: {
-        label: t('binds.adjustOffsetToNextSubtitle')!,
+        label: t`Adjust subtitle offset so that next subtitle is at current timestamp`,
         boundViaChrome: false,
       },
-      increaseOffset: { label: t('binds.increaseOffset')!, boundViaChrome: false },
-      decreaseOffset: { label: t('binds.decreaseOffset')!, boundViaChrome: false },
-      resetOffset: { label: t('binds.resetOffset')!, boundViaChrome: false },
-      increasePlaybackRate: { label: t('binds.increasePlaybackRate')!, boundViaChrome: false },
+      increaseOffset: { label: t`Adjust subtitle offset by +100ms`, boundViaChrome: false },
+      decreaseOffset: { label: t`Adjust subtitle offset by -100ms`, boundViaChrome: false },
+      resetOffset: { label: t`Reset subtitle offset`, boundViaChrome: false },
+      increasePlaybackRate: { label: t`Increase playback rate`, boundViaChrome: false },
       decreasePlaybackRate: {
-        label: t('binds.decreasePlaybackRate')!,
+        label: t`Decrease playback rate`,
         boundViaChrome: false,
         additionalControl: (
           <KeyBindRelatedSetting
-            label={t('settings.speedChangeStep')}
+            label={t`Playback speed adjust step`}
             control={
               <SettingsTextField
                 type='number'
@@ -415,19 +415,19 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
         ),
       },
       moveBottomSubtitlesUp: {
-        label: t('binds.moveBottomSubtitlesUp')!,
+        label: t`Move bottom subtitles up`,
         boundViaChrome: false,
       },
       moveBottomSubtitlesDown: {
-        label: t('binds.moveBottomSubtitlesDown')!,
+        label: t`Move bottom subtitles down`,
         boundViaChrome: false,
       },
       moveTopSubtitlesUp: {
-        label: t('binds.moveTopSubtitlesUp')!,
+        label: t`Move top subtitles up`,
         boundViaChrome: false,
       },
       moveTopSubtitlesDown: {
-        label: t('binds.moveTopSubtitlesDown')!,
+        label: t`Move top subtitles down`,
         boundViaChrome: false,
       },
     }),
