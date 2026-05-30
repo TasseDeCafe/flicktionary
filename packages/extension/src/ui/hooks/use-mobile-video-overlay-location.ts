@@ -1,39 +1,39 @@
-import { CurrentTabMessage, MobileOverlayCommand } from '@asbplayer-fork/common';
-import { useEffect, useState } from 'react';
+import { CurrentTabMessage, MobileOverlayCommand } from '@asbplayer-fork/common'
+import { useEffect, useState } from 'react'
 
 export interface Location {
-    tabId: number;
-    src: string;
+  tabId: number
+  src: string
 }
 
 export const useMobileVideoOverlayLocation = () => {
-    const [location, setLocation] = useState<Location>();
+  const [location, setLocation] = useState<Location>()
 
-    useEffect(() => {
-        const init = async () => {
-            const command: MobileOverlayCommand<CurrentTabMessage> = {
-                sender: 'asbplayer-mobile-overlay',
-                message: {
-                    command: 'current-tab',
-                },
-            };
+  useEffect(() => {
+    const init = async () => {
+      const command: MobileOverlayCommand<CurrentTabMessage> = {
+        sender: 'asbplayer-mobile-overlay',
+        message: {
+          command: 'current-tab',
+        },
+      }
 
-            const tabId = (await browser.runtime.sendMessage(command)) as number | undefined;
+      const tabId = (await browser.runtime.sendMessage(command)) as number | undefined
 
-            if (tabId === undefined) {
-                return;
-            }
+      if (tabId === undefined) {
+        return
+      }
 
-            const src = new URLSearchParams(window.location.search).get('src');
+      const src = new URLSearchParams(window.location.search).get('src')
 
-            if (!src) {
-                return;
-            }
+      if (!src) {
+        return
+      }
 
-            setLocation({ src, tabId });
-        };
-        init();
-    }, []);
+      setLocation({ src, tabId })
+    }
+    init()
+  }, [])
 
-    return location;
-};
+  return location
+}

@@ -1,43 +1,43 @@
-const key = 'tabRequestingActiveTabPermission';
+const key = 'tabRequestingActiveTabPermission'
 
 interface SavedTab {
-    tabId: number;
-    src: string;
-    url?: string;
+  tabId: number
+  src: string
+  url?: string
 }
 
 export const getTabRequestingActiveTabPermission = async () => {
-    const result = await browser.storage.session.get(key);
-    const savedTab = (result ? result[key] : undefined) as SavedTab | undefined;
+  const result = await browser.storage.session.get(key)
+  const savedTab = (result ? result[key] : undefined) as SavedTab | undefined
 
-    if (savedTab === undefined || savedTab === null) {
-        return undefined;
-    }
+  if (savedTab === undefined || savedTab === null) {
+    return undefined
+  }
 
-    const currentTabInfo = await tabInfo(savedTab.tabId);
+  const currentTabInfo = await tabInfo(savedTab.tabId)
 
-    if (currentTabInfo === undefined || currentTabInfo.url !== savedTab.url) {
-        await browser.storage.session.remove(key);
-        return undefined;
-    }
+  if (currentTabInfo === undefined || currentTabInfo.url !== savedTab.url) {
+    await browser.storage.session.remove(key)
+    return undefined
+  }
 
-    return { tabId: savedTab.tabId, src: savedTab.src };
-};
+  return { tabId: savedTab.tabId, src: savedTab.src }
+}
 
 export const setRequestingActiveTabPermission = async (tabId: number, src: string, requesting: boolean) => {
-    if (requesting) {
-        const tab = await tabInfo(tabId);
+  if (requesting) {
+    const tab = await tabInfo(tabId)
 
-        if (tab === undefined) {
-            await browser.storage.session.remove(key);
-        } else {
-            await browser.storage.session.set({ [key]: { tabId, src, url: tab.url } });
-        }
+    if (tab === undefined) {
+      await browser.storage.session.remove(key)
     } else {
-        await browser.storage.session.remove(key);
+      await browser.storage.session.set({ [key]: { tabId, src, url: tab.url } })
     }
-};
+  } else {
+    await browser.storage.session.remove(key)
+  }
+}
 
 const tabInfo = async (tabId: number) => {
-    return await browser.tabs.get(tabId);
-};
+  return await browser.tabs.get(tabId)
+}

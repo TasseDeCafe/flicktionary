@@ -1,1 +1,1 @@
-export * from './blob-url';
+export * from './blob-url'

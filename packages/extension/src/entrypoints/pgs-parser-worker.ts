@@ -1,5 +1,5 @@
-import { onMessage } from '@asbplayer-fork/common/subtitle-reader/pgs-parser-worker';
+import { onMessage } from '@asbplayer-fork/common/subtitle-reader/pgs-parser-worker'
 
 export default defineUnlistedScript(() => {
-    onMessage();
-});
+  onMessage()
+})

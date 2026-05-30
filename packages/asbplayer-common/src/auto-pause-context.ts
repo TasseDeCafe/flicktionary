@@ -1,33 +1,33 @@
-import { SubtitleModel } from './model';
+import { SubtitleModel } from './model'
 
 export default class AutoPauseContext {
-    private lastStartedShowing?: SubtitleModel;
-    private lastWillStopShowing?: SubtitleModel;
+  private lastStartedShowing?: SubtitleModel
+  private lastWillStopShowing?: SubtitleModel
 
-    onStartedShowing?: () => void;
-    onWillStopShowing?: (subtitle: SubtitleModel) => void;
-    onNextToShow?: (subtitle: SubtitleModel) => void;
+  onStartedShowing?: () => void
+  onWillStopShowing?: (subtitle: SubtitleModel) => void
+  onNextToShow?: (subtitle: SubtitleModel) => void
 
-    willStopShowing(subtitle: SubtitleModel) {
-        if (subtitle.end === this.lastWillStopShowing?.end) {
-            return;
-        }
-
-        this.onWillStopShowing?.(subtitle);
-        this.lastWillStopShowing = subtitle;
+  willStopShowing(subtitle: SubtitleModel) {
+    if (subtitle.end === this.lastWillStopShowing?.end) {
+      return
     }
 
-    startedShowing(subtitle: SubtitleModel) {
-        if (subtitle.start === this.lastStartedShowing?.start) {
-            return;
-        }
+    this.onWillStopShowing?.(subtitle)
+    this.lastWillStopShowing = subtitle
+  }
 
-        this.onStartedShowing?.();
-        this.lastStartedShowing = subtitle;
+  startedShowing(subtitle: SubtitleModel) {
+    if (subtitle.start === this.lastStartedShowing?.start) {
+      return
     }
 
-    clear() {
-        this.lastStartedShowing = undefined;
-        this.lastWillStopShowing = undefined;
-    }
+    this.onStartedShowing?.()
+    this.lastStartedShowing = subtitle
+  }
+
+  clear() {
+    this.lastStartedShowing = undefined
+    this.lastWillStopShowing = undefined
+  }
 }

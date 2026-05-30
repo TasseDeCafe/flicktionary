@@ -10,7 +10,6 @@
         "@flatten-js/interval-tree": "1.0.19",
         "@mui/icons-material": "^6.4.8",
         "@mui/material": "^6.4.8",
-        "@mui/styles": "^6.4.8",
         "@qgustavor/srt-parser": "^2.0.0",
         "@types/semver": "^7.3.9",
         "ass-compiler": "0.1.1",
@@ -29,18 +28,28 @@
         "react-i18next": "^15.6.1",
         "sanitize-filename": "^1.6.3",
         "semver": "^7.3.7",
+        "tss-react": "catalog:",
         "url": "^0.11.3",
-        "uuid": "8.3.2",
         "videojs-vtt.js": "0.15.5"
     },
     "devDependencies": {
+        "@flicktionary/typescript-config": "workspace:*",
         "@types/videojs-vtt.js": "^0.15.3",
+        "@typescript-eslint/eslint-plugin": "catalog:",
+        "@typescript-eslint/parser": "catalog:",
         "core-js": "^3.44.0",
+        "eslint": "catalog:",
+        "eslint-config-prettier": "catalog:",
+        "eslint-plugin-import": "catalog:",
+        "eslint-plugin-prettier": "catalog:",
         "jsdom": "catalog:",
+        "prettier": "catalog:",
         "typescript": "~5.7.2",
         "vitest": "catalog:"
     },
     "scripts": {
+        "check:types": "tsc --noEmit",
+        "lint": "eslint . --fix",
         "test": "vitest",
         "test:run": "vitest run"
     }

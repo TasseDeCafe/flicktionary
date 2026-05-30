@@ -16,6 +16,9 @@
             "syncAllowedAtPath": "watch|shorts|embed",
             "autoSync": {
                 "enabled": true
+            },
+            "ignoreVideoElements": {
+                "closestSelector": "#inline-preview-player, #inline-player"
             }
         },
         {

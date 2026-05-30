@@ -1,1 +1,1 @@
-export * from './key-binder';
+export * from './key-binder'

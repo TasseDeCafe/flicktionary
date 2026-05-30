@@ -1,14 +1,18 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist",
-        "lib": ["DOM", "DOM.Iterable", "ESNext"],
-        "target": "ESNext",
-        "module": "ESNext",
-        "jsx": "react-jsx",
-        "esModuleInterop": true,
-        "strict": true,
-        "downlevelIteration": true,
-        "moduleResolution": "Node"
-    },
-    "include": ["./src/**/*", "decs.d.ts", "vite-env.d.ts"]
+  "extends": "@flicktionary/typescript-config/react-app.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "baseUrl": ".",
+    // Match the lib the extension compiles this package with (the fork uses
+    // newer APIs like String.replaceAll); the shared preset only ships ES2020.
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "paths": {
+      "@asbplayer-fork/common": ["./index.ts"],
+      "@asbplayer-fork/common/*": ["./*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
 }

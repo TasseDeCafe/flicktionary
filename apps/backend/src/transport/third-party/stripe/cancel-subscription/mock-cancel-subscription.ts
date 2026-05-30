@@ -1,4 +1,1 @@
-export const mockCancelSubscription = async (
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  subscriptionId: string
-): Promise<void> => {}
+export const mockCancelSubscription = async (subscriptionId: string): Promise<void> => {}
