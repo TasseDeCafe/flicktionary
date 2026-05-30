@@ -20,7 +20,7 @@
         "check:types": "tsc --noEmit",
         "postinstall": "wxt prepare",
         "check": "pnpm run lint && pnpm run check:types",
-        "lint": "echo 'lint skipped (legacy fork)'",
+        "lint": "eslint . --fix",
         "test": "vitest",
         "test:run": "vitest run"
     },
@@ -56,9 +56,16 @@
         "uuid": "^11.1.0"
     },
     "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "catalog:",
+        "@typescript-eslint/parser": "catalog:",
         "@vitejs/plugin-react": "catalog:",
         "@wxt-dev/module-react": "^1.1.3",
+        "eslint": "catalog:",
+        "eslint-config-prettier": "catalog:",
+        "eslint-plugin-import": "catalog:",
+        "eslint-plugin-prettier": "catalog:",
         "jsdom": "catalog:",
+        "prettier": "catalog:",
         "vite": "catalog:",
         "vite-tsconfig-paths": "catalog:",
         "vitest": "catalog:",

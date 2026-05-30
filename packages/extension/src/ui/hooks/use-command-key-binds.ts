@@ -1,25 +1,25 @@
-import { chromeCommandBindsToKeyBinds } from '@asbplayer-fork/common/settings';
-import { useEffect, useState } from 'react';
+import { chromeCommandBindsToKeyBinds } from '@asbplayer-fork/common/settings'
+import { useEffect, useState } from 'react'
 
 export const useCommandKeyBinds = () => {
-    const [commands, setCommands] = useState<{ [key: string]: string | undefined }>();
-    useEffect(() => {
-        if (browser.commands === undefined) {
-            setCommands({});
-            return;
+  const [commands, setCommands] = useState<{ [key: string]: string | undefined }>()
+  useEffect(() => {
+    if (browser.commands === undefined) {
+      setCommands({})
+      return
+    }
+
+    browser.commands.getAll().then((commands) => {
+      const commandsObj: any = {}
+
+      for (const c of commands) {
+        if (c.name && c.shortcut) {
+          commandsObj[c.name] = c.shortcut
         }
+      }
 
-        browser.commands.getAll().then((commands) => {
-            const commandsObj: any = {};
-
-            for (const c of commands) {
-                if (c.name && c.shortcut) {
-                    commandsObj[c.name] = c.shortcut;
-                }
-            }
-
-            setCommands(chromeCommandBindsToKeyBinds(commandsObj));
-        });
-    }, []);
-    return commands;
-};
+      setCommands(chromeCommandBindsToKeyBinds(commandsObj))
+    })
+  }, [])
+  return commands
+}

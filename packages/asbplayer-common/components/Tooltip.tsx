@@ -1,19 +1,19 @@
-import MuiTooltip, { TooltipProps } from '@mui/material/Tooltip';
+import MuiTooltip, { TooltipProps } from '@mui/material/Tooltip'
 
 interface ControllableTooltipProps extends TooltipProps {
-    disabled?: boolean;
+  disabled?: boolean
 }
 
 const Tooltip = ({ children, disabled, ...rest }: ControllableTooltipProps) => {
-    if (disabled) {
-        return children;
-    }
+  if (disabled) {
+    return children
+  }
 
-    return (
-        <MuiTooltip disableInteractive={true} {...rest}>
-            {children}
-        </MuiTooltip>
-    );
-};
+  return (
+    <MuiTooltip disableInteractive={true} {...rest}>
+      {children}
+    </MuiTooltip>
+  )
+}
 
-export default Tooltip;
+export default Tooltip

@@ -1,35 +1,35 @@
-import ThemeProvider from '@mui/material/styles/ThemeProvider';
-import CssBaseline from '@mui/material/CssBaseline';
-import { useSettings } from '../hooks/use-settings';
-import { useMemo } from 'react';
-import SettingsPage from './SettingsPage';
-import { createTheme } from '@asbplayer-fork/common/theme';
-import { StyledEngineProvider } from '@mui/material/styles';
+import ThemeProvider from '@mui/material/styles/ThemeProvider'
+import CssBaseline from '@mui/material/CssBaseline'
+import { useSettings } from '../hooks/use-settings'
+import { useMemo } from 'react'
+import SettingsPage from './SettingsPage'
+import { createTheme } from '@asbplayer-fork/common/theme'
+import { StyledEngineProvider } from '@mui/material/styles'
 
-const inTutorial = new URLSearchParams(window.location.search).get('tutorial') === 'true';
+const inTutorial = new URLSearchParams(window.location.search).get('tutorial') === 'true'
 
 const SettingsUi = () => {
-    const { dictionaryProvider, settings, onSettingsChanged, profileContext } = useSettings();
-    const theme = useMemo(() => settings && createTheme(settings.themeType), [settings]);
+  const { dictionaryProvider, settings, onSettingsChanged, profileContext } = useSettings()
+  const theme = useMemo(() => settings && createTheme(settings.themeType), [settings])
 
-    if (!settings || !theme) {
-        return null;
-    }
+  if (!settings || !theme) {
+    return null
+  }
 
-    return (
-        <StyledEngineProvider injectFirst>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <SettingsPage
-                    dictionaryProvider={dictionaryProvider}
-                    settings={settings}
-                    onSettingsChanged={onSettingsChanged}
-                    inTutorial={inTutorial}
-                    {...profileContext}
-                />
-            </ThemeProvider>
-        </StyledEngineProvider>
-    );
-};
+  return (
+    <StyledEngineProvider injectFirst>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SettingsPage
+          dictionaryProvider={dictionaryProvider}
+          settings={settings}
+          onSettingsChanged={onSettingsChanged}
+          inTutorial={inTutorial}
+          {...profileContext}
+        />
+      </ThemeProvider>
+    </StyledEngineProvider>
+  )
+}
 
-export default SettingsUi;
+export default SettingsUi

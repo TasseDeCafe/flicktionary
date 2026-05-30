@@ -1,6 +1,6 @@
-import { renderSettingsUi } from '@/ui/settings';
+import { renderSettingsUi } from '@/ui/settings'
 
 window.addEventListener('load', () => {
-    const root = document.getElementById('root')!;
-    renderSettingsUi(root);
-});
+  const root = document.getElementById('root')!
+  renderSettingsUi(root)
+})

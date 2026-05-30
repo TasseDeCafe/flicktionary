@@ -1,24 +1,24 @@
-import { AckTabsMessage, Command, Message } from '@asbplayer-fork/common';
-import TabRegistry from '../../services/tab-registry';
+import { AckTabsMessage, Command, Message } from '@asbplayer-fork/common'
+import TabRegistry from '../../services/tab-registry'
 
 export default class AsbplayerHeartbeatHandler {
-    private readonly tabRegistry: TabRegistry;
+  private readonly tabRegistry: TabRegistry
 
-    constructor(tabRegistry: TabRegistry) {
-        this.tabRegistry = tabRegistry;
-    }
+  constructor(tabRegistry: TabRegistry) {
+    this.tabRegistry = tabRegistry
+  }
 
-    get sender() {
-        return 'asbplayerv2';
-    }
+  get sender() {
+    return 'asbplayerv2'
+  }
 
-    get command() {
-        return 'ackTabs';
-    }
+  get command() {
+    return 'ackTabs'
+  }
 
-    handle(command: Command<Message>, sender: Browser.runtime.MessageSender) {
-        const message = command.message as AckTabsMessage;
-        this.tabRegistry.onAsbplayerAckTabs(sender.tab, message);
-        return false;
-    }
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender) {
+    const message = command.message as AckTabsMessage
+    this.tabRegistry.onAsbplayerAckTabs(sender.tab, message)
+    return false
+  }
 }

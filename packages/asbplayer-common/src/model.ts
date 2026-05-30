@@ -1,207 +1,207 @@
-type Profile = { name: string };
+type Profile = { name: string }
 
 export interface RectModel {
-    readonly left: number;
-    readonly top: number;
-    readonly width: number;
-    readonly height: number;
+  readonly left: number
+  readonly top: number
+  readonly width: number
+  readonly height: number
 }
 
 export interface DimensionsModel {
-    readonly width: number;
-    readonly height: number;
+  readonly width: number
+  readonly height: number
 }
 
 export interface SubtitleTextImage {
-    readonly dataUrl: string;
-    readonly screen: DimensionsModel;
-    readonly image: DimensionsModel;
+  readonly dataUrl: string
+  readonly screen: DimensionsModel
+  readonly image: DimensionsModel
 }
 
 export interface SubtitleModel {
-    readonly text: string;
-    readonly textImage?: SubtitleTextImage;
-    readonly start: number;
-    readonly end: number;
-    readonly originalStart: number;
-    readonly originalEnd: number;
-    readonly track: number;
-    readonly index?: number;
-    readonly richText?: string;
+  readonly text: string
+  readonly textImage?: SubtitleTextImage
+  readonly start: number
+  readonly end: number
+  readonly originalStart: number
+  readonly originalEnd: number
+  readonly track: number
+  readonly index?: number
+  readonly richText?: string
 }
 
 export interface IndexedSubtitleModel extends SubtitleModel {
-    readonly index: number;
+  readonly index: number
 }
 
 export interface RichSubtitleModel extends IndexedSubtitleModel {
-    richText?: string;
+  richText?: string
 }
 
 export interface CardTextFieldValues {
-    readonly word?: string;
-    readonly definition?: string;
-    readonly text?: string;
-    readonly customFieldValues?: { [fieldName: string]: string };
+  readonly word?: string
+  readonly definition?: string
+  readonly text?: string
+  readonly customFieldValues?: { [fieldName: string]: string }
 }
 
 export interface CardModel extends CardTextFieldValues {
-    readonly id?: string;
-    readonly subtitle: SubtitleModel;
-    readonly surroundingSubtitles: SubtitleModel[];
-    readonly subtitleFileName: string;
-    readonly url?: string;
-    readonly image?: ImageModel;
-    readonly audio?: AudioModel;
-    readonly file?: FileModel;
-    readonly mediaTimestamp: number;
+  readonly id?: string
+  readonly subtitle: SubtitleModel
+  readonly surroundingSubtitles: SubtitleModel[]
+  readonly subtitleFileName: string
+  readonly url?: string
+  readonly image?: ImageModel
+  readonly audio?: AudioModel
+  readonly file?: FileModel
+  readonly mediaTimestamp: number
 }
 
 export interface FileModel {
-    readonly name: string;
-    readonly blobUrl: string;
-    readonly playbackRate?: number;
-    readonly audioTrack?: string;
+  readonly name: string
+  readonly blobUrl: string
+  readonly playbackRate?: number
+  readonly audioTrack?: string
 }
 
 export enum ImageErrorCode {
-    captureFailed = 1,
-    fileLinkLost = 2,
+  captureFailed = 1,
+  fileLinkLost = 2,
 }
 
 export interface ImageModel {
-    readonly base64: string;
-    readonly extension: 'jpeg';
-    readonly error?: ImageErrorCode;
+  readonly base64: string
+  readonly extension: 'jpeg'
+  readonly error?: ImageErrorCode
 }
 
 export enum AudioErrorCode {
-    drmProtected = 1,
-    fileLinkLost = 2,
+  drmProtected = 1,
+  fileLinkLost = 2,
 }
 
 export interface AudioModel {
-    readonly base64: string;
-    readonly extension: 'webm' | 'mp3';
-    readonly paddingStart: number;
-    readonly paddingEnd: number;
-    readonly start?: number;
-    readonly end?: number;
-    readonly playbackRate?: number;
-    readonly error?: AudioErrorCode;
+  readonly base64: string
+  readonly extension: 'webm' | 'mp3'
+  readonly paddingStart: number
+  readonly paddingEnd: number
+  readonly start?: number
+  readonly end?: number
+  readonly playbackRate?: number
+  readonly error?: AudioErrorCode
 }
 
 export interface VideoDataSubtitleTrackDef {
-    label: string;
-    language?: string;
-    url: string | string[];
-    extension: string;
-    localFile?: boolean;
+  label: string
+  language?: string
+  url: string | string[]
+  extension: string
+  localFile?: boolean
 }
 
 export interface VideoDataSubtitleTrack extends VideoDataSubtitleTrackDef {
-    id: string;
+  id: string
 }
 
 export interface ConfirmedVideoDataSubtitleTrack extends VideoDataSubtitleTrack {
-    name: string;
+  name: string
 }
 
 export interface VideoData {
-    basename: string;
-    error?: string;
-    subtitles?: VideoDataSubtitleTrack[];
+  basename: string
+  error?: string
+  subtitles?: VideoDataSubtitleTrack[]
 }
 
 export enum VideoDataUiOpenReason {
-    miningCommand = 1,
-    failedToAutoLoadPreferredTrack = 2,
-    userRequested = 3,
+  miningCommand = 1,
+  failedToAutoLoadPreferredTrack = 2,
+  userRequested = 3,
 }
 
 export interface VideoDataUiSettings {
-    themeType?: string;
-    profiles: Profile[];
-    activeProfile?: string;
+  themeType?: string
+  profiles: Profile[]
+  activeProfile?: string
 }
 
 export interface VideoDataUiModel {
-    open?: boolean;
-    isLoading?: boolean;
-    suggestedName?: string;
-    subtitles?: VideoDataSubtitleTrack[];
-    error?: string;
-    selectedSubtitle?: string[];
-    showSubSelect?: boolean;
-    openReason?: VideoDataUiOpenReason;
-    openedFromAsbplayerId?: string;
-    defaultCheckboxState?: boolean;
-    settings: VideoDataUiSettings;
-    hasSeenFtue: boolean;
-    hideRememberTrackPreferenceToggle: boolean;
-    isYouTube?: boolean;
-    supadataApiKeyConfigured?: boolean;
-    isGeneratingSupadata?: boolean;
+  open?: boolean
+  isLoading?: boolean
+  suggestedName?: string
+  subtitles?: VideoDataSubtitleTrack[]
+  error?: string
+  selectedSubtitle?: string[]
+  showSubSelect?: boolean
+  openReason?: VideoDataUiOpenReason
+  openedFromAsbplayerId?: string
+  defaultCheckboxState?: boolean
+  settings: VideoDataUiSettings
+  hasSeenFtue: boolean
+  hideRememberTrackPreferenceToggle: boolean
+  isYouTube?: boolean
+  supadataApiKeyConfigured?: boolean
+  isGeneratingSupadata?: boolean
 }
 
 export interface VideoTabModel {
-    id: number; // Actually the tab ID
-    title?: string;
-    src: string; // Video src
-    subscribed: boolean; // Whether the video element is subscribed to extension messages
-    synced: boolean; // Whether the video element has received subtitles
-    syncedTimestamp?: number;
-    faviconUrl?: string;
+  id: number // Actually the tab ID
+  title?: string
+  src: string // Video src
+  subscribed: boolean // Whether the video element is subscribed to extension messages
+  synced: boolean // Whether the video element has received subtitles
+  syncedTimestamp?: number
+  faviconUrl?: string
 }
 
 export interface Rgb {
-    r: number;
-    g: number;
-    b: number;
+  r: number
+  g: number
+  b: number
 }
 
 export interface AudioTrackModel {
-    id: string;
-    label: string;
-    language: string;
+  id: string
+  label: string
+  language: string
 }
 
 export enum AutoPausePreference {
-    atStart = 1,
-    atEnd = 2,
+  atStart = 1,
+  atEnd = 2,
 }
 
 export enum SubtitleHtml {
-    remove = 0,
-    render = 1,
+  remove = 0,
+  render = 1,
 }
 
 export enum PlayMode {
-    normal = 1,
-    condensed = 2,
-    autoPause = 3,
-    fastForward = 4,
-    repeat = 5,
+  normal = 1,
+  condensed = 2,
+  autoPause = 3,
+  fastForward = 4,
+  repeat = 5,
 }
 
 export interface MobileOverlayModel {
-    offset: number;
-    playbackRate: number;
-    emptySubtitleTrack: boolean;
-    recordingEnabled: boolean;
-    recording: boolean;
-    previousSubtitleTimestamp?: number;
-    nextSubtitleTimestamp?: number;
-    currentTimestamp: number;
-    language?: string;
-    subtitleDisplaying: boolean;
-    subtitlesAreVisible: boolean;
-    themeType: 'dark' | 'light';
-    playMode: PlayMode;
+  offset: number
+  playbackRate: number
+  emptySubtitleTrack: boolean
+  recordingEnabled: boolean
+  recording: boolean
+  previousSubtitleTimestamp?: number
+  nextSubtitleTimestamp?: number
+  currentTimestamp: number
+  language?: string
+  subtitleDisplaying: boolean
+  subtitlesAreVisible: boolean
+  themeType: 'dark' | 'light'
+  playMode: PlayMode
 }
 
 export enum ControlType {
-    timeDisplay = 0,
-    subtitleOffset = 1,
-    playbackRate = 2,
+  timeDisplay = 0,
+  subtitleOffset = 1,
+  playbackRate = 2,
 }

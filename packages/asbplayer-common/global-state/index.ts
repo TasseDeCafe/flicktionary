@@ -4,17 +4,17 @@
 // not be affected by settings profiles. For example: FTUE state.
 
 export const initialGlobalState: GlobalState = {
-    ftueHasSeenAnkiDialogQuickSelectV2: false,
-    ftueHasSeenSubtitleTrackSelector: false,
-};
+  ftueHasSeenAnkiDialogQuickSelectV2: false,
+  ftueHasSeenSubtitleTrackSelector: false,
+}
 
 export interface GlobalState {
-    ftueHasSeenAnkiDialogQuickSelectV2: boolean;
-    ftueHasSeenSubtitleTrackSelector: boolean;
+  ftueHasSeenAnkiDialogQuickSelectV2: boolean
+  ftueHasSeenSubtitleTrackSelector: boolean
 }
 
 export interface GlobalStateProvider {
-    getAll: () => Promise<GlobalState>;
-    get: <K extends keyof GlobalState>(keys: K[]) => Promise<Pick<GlobalState, K>>;
-    set: (state: Partial<GlobalState>) => Promise<void>;
+  getAll: () => Promise<GlobalState>
+  get: <K extends keyof GlobalState>(keys: K[]) => Promise<Pick<GlobalState, K>>
+  set: (state: Partial<GlobalState>) => Promise<void>
 }

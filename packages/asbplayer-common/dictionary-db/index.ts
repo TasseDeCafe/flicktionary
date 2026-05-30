@@ -1,2 +1,2 @@
-export * from './dictionary-db';
-export * from './dictionary-provider';
+export * from './dictionary-db'
+export * from './dictionary-provider'

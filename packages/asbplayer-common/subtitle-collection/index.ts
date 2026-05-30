@@ -1,1 +1,1 @@
-export * from './subtitle-collection';
+export * from './subtitle-collection'

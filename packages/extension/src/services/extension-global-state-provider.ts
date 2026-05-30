@@ -1,28 +1,28 @@
-import { GlobalState, GlobalStateProvider, initialGlobalState } from '@asbplayer-fork/common/global-state';
-import { StorageArea } from './extension-settings-storage';
+import { GlobalState, GlobalStateProvider, initialGlobalState } from '@asbplayer-fork/common/global-state'
+import { StorageArea } from './extension-settings-storage'
 
 export class ExtensionGlobalStateProvider implements GlobalStateProvider {
-    private readonly _storage;
+  private readonly _storage
 
-    constructor(storage?: StorageArea) {
-        this._storage = storage ?? browser.storage.local;
+  constructor(storage?: StorageArea) {
+    this._storage = storage ?? browser.storage.local
+  }
+
+  async getAll() {
+    return (await this._storage.get(initialGlobalState)) as GlobalState
+  }
+
+  async get<K extends keyof GlobalState>(keys: K[]) {
+    const partialInitialGlobalState: Partial<GlobalState> = {}
+
+    for (const key of keys) {
+      partialInitialGlobalState[key] = initialGlobalState[key]
     }
 
-    async getAll() {
-        return (await this._storage.get(initialGlobalState)) as GlobalState;
-    }
+    return (await this._storage.get(partialInitialGlobalState)) as Pick<GlobalState, K>
+  }
 
-    async get<K extends keyof GlobalState>(keys: K[]) {
-        const partialInitialGlobalState: Partial<GlobalState> = {};
-
-        for (const key of keys) {
-            partialInitialGlobalState[key] = initialGlobalState[key];
-        }
-
-        return (await this._storage.get(partialInitialGlobalState)) as Pick<GlobalState, K>;
-    }
-
-    async set(state: Partial<GlobalState>) {
-        await this._storage.set(state);
-    }
+  async set(state: Partial<GlobalState>) {
+    await this._storage.set(state)
+  }
 }

@@ -1,12 +1,12 @@
-import { createRoot } from 'react-dom/client';
-import { PopupUi } from '../components/PopupUi';
-import { AsbplayerSettings } from '@asbplayer-fork/common/settings';
+import { createRoot } from 'react-dom/client'
+import { PopupUi } from '../components/PopupUi'
+import { AsbplayerSettings } from '@asbplayer-fork/common/settings'
 
 export interface PopupUiParameters {
-    currentSettings: AsbplayerSettings;
-    commands: any;
+  currentSettings: AsbplayerSettings
+  commands: any
 }
 
 export async function renderPopupUi(element: Element, { commands }: PopupUiParameters) {
-    createRoot(element).render(<PopupUi commands={commands} />);
+  createRoot(element).render(<PopupUi commands={commands} />)
 }

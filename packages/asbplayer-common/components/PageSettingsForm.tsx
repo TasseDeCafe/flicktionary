@@ -1,45 +1,45 @@
-import { JSX } from 'react';
-import { MutablePageConfig, Page, PageConfig, PageSettings, YoutubePage } from '../settings';
-import { useTranslation } from 'react-i18next';
-import Dialog from '@mui/material/Dialog';
-import Toolbar from '@mui/material/Toolbar';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import CloseIcon from '@mui/icons-material/Close';
-import IconButton from '@mui/material/IconButton';
-import TextField from './SettingsTextField';
-import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import Alert from '@mui/material/Alert';
-import LabelWithHoverEffect from './LabelWithHoverEffect';
-import { pageMetadata } from '../pages';
-import ListField from './ListField';
-import SettingsTextField from './SettingsTextField';
+import { JSX } from 'react'
+import { MutablePageConfig, Page, PageConfig, PageSettings, YoutubePage } from '../settings'
+import { useTranslation } from 'react-i18next'
+import Dialog from '@mui/material/Dialog'
+import Toolbar from '@mui/material/Toolbar'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import CloseIcon from '@mui/icons-material/Close'
+import IconButton from '@mui/material/IconButton'
+import TextField from './SettingsTextField'
+import Stack from '@mui/material/Stack'
+import Switch from '@mui/material/Switch'
+import Alert from '@mui/material/Alert'
+import LabelWithHoverEffect from './LabelWithHoverEffect'
+import { pageMetadata } from '../pages'
+import ListField from './ListField'
+import SettingsTextField from './SettingsTextField'
 
-const maxAdditionalHostsLength = 50;
-const youtubeTargetLanguageLimit = 3;
+const maxAdditionalHostsLength = 50
+const youtubeTargetLanguageLimit = 3
 
 const totalLength = (strings: string[]) => {
-    let total = 0;
+  let total = 0
 
-    for (const str of strings) {
-        total += str.length;
-    }
+  for (const str of strings) {
+    total += str.length
+  }
 
-    return total;
-};
+  return total
+}
 
 export interface PageSettingsFormProps {
-    open: boolean;
-    pageKey: keyof PageSettings;
-    page: Page;
-    defaultPageConfig: PageConfig;
-    additionalControls?: JSX.Element;
-    hasModifications: boolean;
-    onClose: () => void;
-    onPageChanged: <K extends keyof PageSettings>(key: K, page: PageSettings[K]) => void;
+  open: boolean
+  pageKey: keyof PageSettings
+  page: Page
+  defaultPageConfig: PageConfig
+  additionalControls?: JSX.Element
+  hasModifications: boolean
+  onClose: () => void
+  onPageChanged: <K extends keyof PageSettings>(key: K, page: PageSettings[K]) => void
 }
 
 // Commenting out "disable CSP" functionality in case it's useful later
@@ -103,65 +103,65 @@ export interface PageSettingsFormProps {
 // };
 
 const PageSettingsForm = (props: PageSettingsFormProps) => {
-    if (props.pageKey === 'youtube') {
-        return <YoutubePageSettingsForm {...props} />;
-    }
+  if (props.pageKey === 'youtube') {
+    return <YoutubePageSettingsForm {...props} />
+  }
 
-    return <DefaultPageSettingsForm {...props} />;
-};
+  return <DefaultPageSettingsForm {...props} />
+}
 
 const YoutubePageSettingsForm = (props: PageSettingsFormProps) => {
-    const { t } = useTranslation();
-    const { onPageChanged, page } = props;
-    const { targetLanguages } = page as YoutubePage;
+  const { t } = useTranslation()
+  const { onPageChanged, page } = props
+  const { targetLanguages } = page as YoutubePage
 
-    return (
-        <DefaultPageSettingsForm
-            {...props}
-            additionalControls={
-                <ListField
-                    textFieldComponent={SettingsTextField}
-                    label={t('extension.settings.pages.youtube.targetLanguages')}
-                    items={targetLanguages ?? []}
-                    onItemsChange={(newTargetLanguages) => {
-                        if (newTargetLanguages.length <= youtubeTargetLanguageLimit) {
-                            onPageChanged('youtube', { ...page, targetLanguages: newTargetLanguages });
-                        }
-                    }}
-                />
+  return (
+    <DefaultPageSettingsForm
+      {...props}
+      additionalControls={
+        <ListField
+          textFieldComponent={SettingsTextField}
+          label={t('extension.settings.pages.youtube.targetLanguages')}
+          items={targetLanguages ?? []}
+          onItemsChange={(newTargetLanguages) => {
+            if (newTargetLanguages.length <= youtubeTargetLanguageLimit) {
+              onPageChanged('youtube', { ...page, targetLanguages: newTargetLanguages })
             }
+          }}
         />
-    );
-};
+      }
+    />
+  )
+}
 
 const DefaultPageSettingsForm = ({
-    open,
-    pageKey,
-    page,
-    defaultPageConfig,
-    additionalControls,
-    hasModifications,
-    onClose,
-    onPageChanged,
+  open,
+  pageKey,
+  page,
+  defaultPageConfig,
+  additionalControls,
+  hasModifications,
+  onClose,
+  onPageChanged,
 }: PageSettingsFormProps) => {
-    const { t } = useTranslation();
-    const overrides = page.overrides;
-    const handleOverrideFieldChanged = <K extends keyof MutablePageConfig>(key: K, value: MutablePageConfig[K]) => {
-        const newOverrides = { ...page.overrides, [key]: value };
-        if (typeof newOverrides[key] === 'string' && newOverrides[key] === (defaultPageConfig[key] ?? '')) {
-            delete newOverrides[key];
-        } else if (typeof newOverrides[key] === 'boolean' && newOverrides[key] === (defaultPageConfig[key] ?? false)) {
-            delete newOverrides[key];
-        }
-        const newOverridesAreEmpty = Object.keys(newOverrides).length === 0;
-        onPageChanged(pageKey, { ...page, overrides: newOverridesAreEmpty ? undefined : newOverrides });
-    };
-    // const { disableCspDnrRule, createDisableCspDnrRule, deleteDisableCspDnrRule } = useDisableCspDnrRule(pageKey);
-    // const doNotAllowDisableCsp = page.additionalHosts !== undefined && page.additionalHosts.length > 0;
-    // const [confirmDisableCspDialogOpen, setConfirmDisableCspDialogOpen] = useState<boolean>(false);
-    return (
-        <>
-            {/* {browser.declarativeNetRequest && (
+  const { t } = useTranslation()
+  const overrides = page.overrides
+  const handleOverrideFieldChanged = <K extends keyof MutablePageConfig>(key: K, value: MutablePageConfig[K]) => {
+    const newOverrides = { ...page.overrides, [key]: value }
+    if (typeof newOverrides[key] === 'string' && newOverrides[key] === (defaultPageConfig[key] ?? '')) {
+      delete newOverrides[key]
+    } else if (typeof newOverrides[key] === 'boolean' && newOverrides[key] === (defaultPageConfig[key] ?? false)) {
+      delete newOverrides[key]
+    }
+    const newOverridesAreEmpty = Object.keys(newOverrides).length === 0
+    onPageChanged(pageKey, { ...page, overrides: newOverridesAreEmpty ? undefined : newOverrides })
+  }
+  // const { disableCspDnrRule, createDisableCspDnrRule, deleteDisableCspDnrRule } = useDisableCspDnrRule(pageKey);
+  // const doNotAllowDisableCsp = page.additionalHosts !== undefined && page.additionalHosts.length > 0;
+  // const [confirmDisableCspDialogOpen, setConfirmDisableCspDialogOpen] = useState<boolean>(false);
+  return (
+    <>
+      {/* {browser.declarativeNetRequest && (
                 <ConfirmDisableCspDialog
                     open={confirmDisableCspDialogOpen}
                     onConfirm={() => {
@@ -171,73 +171,69 @@ const DefaultPageSettingsForm = ({
                     onClose={() => setConfirmDisableCspDialogOpen(false)}
                 />
             )} */}
-            <Dialog fullWidth open={open} onClose={onClose}>
-                <Toolbar>
-                    <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                        {pageMetadata[pageKey].title}
-                    </Typography>
-                    <IconButton edge="end" onClick={onClose}>
-                        <CloseIcon />
-                    </IconButton>
-                </Toolbar>
-                <DialogContent>
-                    <Stack spacing={1}>
-                        {hasModifications && (
-                            <Alert
-                                severity="warning"
-                                action={
-                                    <Button
-                                        onClick={() =>
-                                            onPageChanged(pageKey, {
-                                                ...page,
-                                                overrides: undefined,
-                                                additionalHosts: undefined,
-                                                targetLanguages: undefined,
-                                            })
-                                        }
-                                        size="small"
-                                    >
-                                        {t('action.revert')}
-                                    </Button>
-                                }
-                            >
-                                {t('extension.settings.pages.overridesWarning')}
-                            </Alert>
-                        )}
-                        <TextField
-                            disabled
-                            label={t('extension.settings.pages.host')}
-                            value={defaultPageConfig.hostRegex}
-                        />
-                        <ListField
-                            label={t('extension.settings.pages.additionalHosts')}
-                            items={page.additionalHosts ?? []}
-                            onItemsChange={(additionalHosts) => {
-                                if (totalLength(additionalHosts) > maxAdditionalHostsLength) {
-                                    return;
-                                }
+      <Dialog fullWidth open={open} onClose={onClose}>
+        <Toolbar>
+          <Typography variant='h6' sx={{ flexGrow: 1 }}>
+            {pageMetadata[pageKey].title}
+          </Typography>
+          <IconButton edge='end' onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </Toolbar>
+        <DialogContent>
+          <Stack spacing={1}>
+            {hasModifications && (
+              <Alert
+                severity='warning'
+                action={
+                  <Button
+                    onClick={() =>
+                      onPageChanged(pageKey, {
+                        ...page,
+                        overrides: undefined,
+                        additionalHosts: undefined,
+                        targetLanguages: undefined,
+                      })
+                    }
+                    size='small'
+                  >
+                    {t('action.revert')}
+                  </Button>
+                }
+              >
+                {t('extension.settings.pages.overridesWarning')}
+              </Alert>
+            )}
+            <TextField disabled label={t('extension.settings.pages.host')} value={defaultPageConfig.hostRegex} />
+            <ListField
+              label={t('extension.settings.pages.additionalHosts')}
+              items={page.additionalHosts ?? []}
+              onItemsChange={(additionalHosts) => {
+                if (totalLength(additionalHosts) > maxAdditionalHostsLength) {
+                  return
+                }
 
-                                // if (disableCspDnrRule !== undefined) {
-                                //     deleteDisableCspDnrRule();
-                                // }
+                // if (disableCspDnrRule !== undefined) {
+                //     deleteDisableCspDnrRule();
+                // }
 
-                                onPageChanged(pageKey, {
-                                    ...page,
-                                    additionalHosts: additionalHosts.length === 0 ? undefined : additionalHosts,
-                                });
-                            }}
-                        />
-                        <TextField
-                            label={t('extension.settings.pages.syncAllowedAtPath')}
-                            value={overrides?.syncAllowedAtPath ?? defaultPageConfig.syncAllowedAtPath ?? ''}
-                            onChange={(e) => handleOverrideFieldChanged('syncAllowedAtPath', e.target.value)}
-                        />
-                        <TextField
-                            label={t('extension.settings.pages.syncAllowedAtHash')}
-                            value={overrides?.syncAllowedAtHash ?? defaultPageConfig.syncAllowedAtHash ?? ''}
-                            onChange={(e) => handleOverrideFieldChanged('syncAllowedAtHash', e.target.value)}
-                        />
-                        {/* <TextField
+                onPageChanged(pageKey, {
+                  ...page,
+                  additionalHosts: additionalHosts.length === 0 ? undefined : additionalHosts,
+                })
+              }}
+            />
+            <TextField
+              label={t('extension.settings.pages.syncAllowedAtPath')}
+              value={overrides?.syncAllowedAtPath ?? defaultPageConfig.syncAllowedAtPath ?? ''}
+              onChange={(e) => handleOverrideFieldChanged('syncAllowedAtPath', e.target.value)}
+            />
+            <TextField
+              label={t('extension.settings.pages.syncAllowedAtHash')}
+              value={overrides?.syncAllowedAtHash ?? defaultPageConfig.syncAllowedAtHash ?? ''}
+              onChange={(e) => handleOverrideFieldChanged('syncAllowedAtHash', e.target.value)}
+            />
+            {/* <TextField
                             label={t('extension.settings.pages.autoSyncVideoSrc')}
                             value={overrides?.autoSyncVideoSrc ?? defaultPageConfig.autoSyncVideoSrc ?? ''}
                             onChange={(e) => handleOverrideFieldChanged('autoSyncVideoSrc', e.target.value)}
@@ -254,53 +250,46 @@ const DefaultPageSettingsForm = ({
                             }
                             onChange={(e) => handleOverrideFieldChanged('ignoreVideoElementsClass', e.target.value)}
                         /> */}
-                        {additionalControls}
-                        <LabelWithHoverEffect
-                            control={
-                                <Switch
-                                    checked={
-                                        overrides?.searchShadowRootsForVideoElements ??
-                                        defaultPageConfig.searchShadowRootsForVideoElements ??
-                                        false
-                                    }
-                                    onChange={(e) =>
-                                        handleOverrideFieldChanged(
-                                            'searchShadowRootsForVideoElements',
-                                            e.target.checked
-                                        )
-                                    }
-                                />
-                            }
-                            label={t('extension.settings.pages.searchShadowRootsForVideoElements')}
-                            labelPlacement="start"
-                        />
-                        <LabelWithHoverEffect
-                            control={
-                                <Switch
-                                    checked={
-                                        overrides?.allowVideoElementsWithBlankSrc ??
-                                        defaultPageConfig.allowVideoElementsWithBlankSrc ??
-                                        false
-                                    }
-                                    onChange={(e) =>
-                                        handleOverrideFieldChanged('allowVideoElementsWithBlankSrc', e.target.checked)
-                                    }
-                                />
-                            }
-                            label={t('extension.settings.pages.allowVideoElementsWithBlankSrc')}
-                            labelPlacement="start"
-                        />
-                        <LabelWithHoverEffect
-                            control={
-                                <Switch
-                                    checked={overrides?.autoSyncEnabled ?? defaultPageConfig.autoSyncEnabled ?? false}
-                                    onChange={(e) => handleOverrideFieldChanged('autoSyncEnabled', e.target.checked)}
-                                />
-                            }
-                            label={t('extension.settings.pages.autoSyncEnabled')}
-                            labelPlacement="start"
-                        />
-                        {/* {!isFirefoxBuild && browser.declarativeNetRequest && (
+            {additionalControls}
+            <LabelWithHoverEffect
+              control={
+                <Switch
+                  checked={
+                    overrides?.searchShadowRootsForVideoElements ??
+                    defaultPageConfig.searchShadowRootsForVideoElements ??
+                    false
+                  }
+                  onChange={(e) => handleOverrideFieldChanged('searchShadowRootsForVideoElements', e.target.checked)}
+                />
+              }
+              label={t('extension.settings.pages.searchShadowRootsForVideoElements')}
+              labelPlacement='start'
+            />
+            <LabelWithHoverEffect
+              control={
+                <Switch
+                  checked={
+                    overrides?.allowVideoElementsWithBlankSrc ??
+                    defaultPageConfig.allowVideoElementsWithBlankSrc ??
+                    false
+                  }
+                  onChange={(e) => handleOverrideFieldChanged('allowVideoElementsWithBlankSrc', e.target.checked)}
+                />
+              }
+              label={t('extension.settings.pages.allowVideoElementsWithBlankSrc')}
+              labelPlacement='start'
+            />
+            <LabelWithHoverEffect
+              control={
+                <Switch
+                  checked={overrides?.autoSyncEnabled ?? defaultPageConfig.autoSyncEnabled ?? false}
+                  onChange={(e) => handleOverrideFieldChanged('autoSyncEnabled', e.target.checked)}
+                />
+              }
+              label={t('extension.settings.pages.autoSyncEnabled')}
+              labelPlacement='start'
+            />
+            {/* {!isFirefoxBuild && browser.declarativeNetRequest && (
                             <Tooltip
                                 disabled={!doNotAllowDisableCsp}
                                 title={t('extension.settings.pages.disableCspRestrictions')}
@@ -328,14 +317,14 @@ const DefaultPageSettingsForm = ({
                                 />
                             </Tooltip>
                         )} */}
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onClose}>{t('action.ok')}</Button>
-                </DialogActions>
-            </Dialog>
-        </>
-    );
-};
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>{t('action.ok')}</Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  )
+}
 
-export default PageSettingsForm;
+export default PageSettingsForm

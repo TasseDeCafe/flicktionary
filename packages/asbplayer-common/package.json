@@ -35,12 +35,20 @@
     },
     "devDependencies": {
         "@types/videojs-vtt.js": "^0.15.3",
+        "@typescript-eslint/eslint-plugin": "catalog:",
+        "@typescript-eslint/parser": "catalog:",
         "core-js": "^3.44.0",
+        "eslint": "catalog:",
+        "eslint-config-prettier": "catalog:",
+        "eslint-plugin-import": "catalog:",
+        "eslint-plugin-prettier": "catalog:",
         "jsdom": "catalog:",
+        "prettier": "catalog:",
         "typescript": "~5.7.2",
         "vitest": "catalog:"
     },
     "scripts": {
+        "lint": "eslint . --fix",
         "test": "vitest",
         "test:run": "vitest run"
     }

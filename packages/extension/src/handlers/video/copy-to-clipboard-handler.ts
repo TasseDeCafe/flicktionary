@@ -1,29 +1,29 @@
-import { Command, Message } from '@asbplayer-fork/common';
+import { Command, Message } from '@asbplayer-fork/common'
 
 export default class CopyToClipboardHandler {
-    constructor() {}
+  constructor() {}
 
-    get sender() {
-        return ['asbplayer-video', 'asbplayer-video-tab'];
+  get sender() {
+    return ['asbplayer-video', 'asbplayer-video-tab']
+  }
+
+  get command() {
+    return 'copy-to-clipboard'
+  }
+
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+    const tabId = sender.tab?.id
+
+    if (tabId === undefined) {
+      return
     }
 
-    get command() {
-        return 'copy-to-clipboard';
+    // Publish this command back to the tab so that the topmost window (i.e. non-iframe) can write the data to clipboard
+    const extensionToVideoCommand = {
+      sender: 'asbplayer-extension-to-video',
+      message: command.message,
     }
-
-    handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
-        const tabId = sender.tab?.id;
-
-        if (tabId === undefined) {
-            return;
-        }
-
-        // Publish this command back to the tab so that the topmost window (i.e. non-iframe) can write the data to clipboard
-        const extensionToVideoCommand = {
-            sender: 'asbplayer-extension-to-video',
-            message: command.message,
-        };
-        browser.tabs.sendMessage(tabId, extensionToVideoCommand);
-        return false;
-    }
+    browser.tabs.sendMessage(tabId, extensionToVideoCommand)
+    return false
+  }
 }
