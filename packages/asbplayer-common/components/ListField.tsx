@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { type TextFieldProps } from '@mui/material'
 import TextField from '@mui/material/TextField'
-import { useTranslation } from 'react-i18next'
+import { useLingui } from '@lingui/react/macro'
 
 function extractTagsFromString(value: string) {
   if (value === '') {
@@ -25,7 +25,7 @@ export interface Props {
 }
 
 export default function ListField({ items, onItemsChange, textFieldComponent, ...props }: Props & TextFieldProps) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const [value, setValue] = useState('')
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function ListField({ items, onItemsChange, textFieldComponent, ..
     [value, onItemsChange]
   )
 
-  const textFieldProps = { ...props, helperText: t('settings.tagsHelperText'), value, onChange: handleChange }
+  const textFieldProps = { ...props, helperText: t`Comma-separated list of strings`, value, onChange: handleChange }
 
   if (textFieldComponent) {
     return textFieldComponent(textFieldProps)

@@ -18,7 +18,7 @@ import CopyToClipboardHandler from '@/handlers/video/copy-to-clipboard-handler'
 import SettingsUpdatedHandler from '@/handlers/asbplayerv2/settings-updated-handler'
 import { Command, ExtensionToVideoCommand, Message, ToggleVideoSelectMessage } from '@asbplayer-fork/common'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
-import { fetchSupportedLanguages, primeLocalization } from '@/services/localization-fetcher'
+import { i18nConfig } from '@flicktionary/i18n/i18n-config'
 import VideoDisappearedHandler from '@/handlers/video/video-disappeared-handler'
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler'
@@ -54,21 +54,16 @@ export default defineBackground(() => {
 
   const settings = new SettingsProvider(new ExtensionSettingsStorage())
 
-  const startListener = async () => {
-    primeLocalization(await settings.getSingle('language'))
-  }
-
   const installListener = async (details: Browser.runtime.InstalledDetails) => {
     if (details.reason !== browser.runtime.OnInstalledReason.INSTALL) {
       return
     }
 
     const defaultUiLanguage = browser.i18n.getUILanguage()
-    const supportedLanguages = await fetchSupportedLanguages()
+    const supportedLanguages = i18nConfig.locales as readonly string[]
 
     if (supportedLanguages.includes(defaultUiLanguage)) {
       await settings.set({ language: defaultUiLanguage })
-      primeLocalization(defaultUiLanguage)
     }
 
     if (isMobile) {
@@ -94,7 +89,6 @@ export default defineBackground(() => {
 
   browser.runtime.onInstalled.addListener(installListener)
   browser.runtime.onInstalled.addListener(updateListener)
-  browser.runtime.onStartup.addListener(startListener)
 
   const tabRegistry = new TabRegistry(settings)
   const dictionaryDB = new DictionaryDB()

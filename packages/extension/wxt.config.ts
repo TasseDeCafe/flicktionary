@@ -1,13 +1,11 @@
 import { defineConfig } from 'wxt'
 import type { PublicPathEntry, ResolvedPublicFile, UserManifest, Wxt } from 'wxt'
 import type { Plugin } from 'vite'
+import babel from '@rolldown/plugin-babel'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const commonAssets = [
-  { srcDir: path.resolve(__dirname, '../asbplayer-common/locales'), destDir: 'asbplayer-locales' },
-  { srcDir: path.resolve(__dirname, '../asbplayer-common/assets'), destDir: 'assets' },
-]
+const commonAssets = [{ srcDir: path.resolve(__dirname, '../asbplayer-common/assets'), destDir: 'assets' }]
 
 const moveToPublicAssets = (srcPath: string, destPath: string, files: ResolvedPublicFile[]) => {
   const srcFiles = fs.readdirSync(srcPath)
@@ -69,6 +67,16 @@ const flicktionaryHostPermissions = [
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
+  // Lingui i18n (see the @rolldown/plugin-babel pass in `vite` below):
+  //  - The macro (<Trans>, t`…`, msg`…`) is transformed by a dedicated
+  //    @rolldown/plugin-babel pass, NOT @vitejs/plugin-react's `babel` option —
+  //    that option silently fails to apply the macro under WXT's Rolldown build,
+  //    leaving an `@lingui/react/macro` runtime stub that throws.
+  //  - Catalogs are imported as the *compiled* messages.ts, not the raw .po:
+  //    @lingui/vite-plugin's .po transform relies on `moduleType: "js"`, which
+  //    WXT's build pipeline drops, so .po catalogs bundle empty. Importing the
+  //    pre-compiled .ts sidesteps the plugin. Run
+  //    `pnpm --filter @flicktionary/i18n lingui:compile` after extracting.
   modules: ['@wxt-dev/module-react'],
   srcDir: 'src',
   vite: () => ({
@@ -78,8 +86,11 @@ export default defineConfig({
       },
     },
     // Keep emitted chunks ASCII so Chromium accepts content scripts in dev;
-    // see escapeNonAscii above.
-    plugins: [escapeNonAscii()],
+    // see escapeNonAscii above. The babel pass runs the Lingui macro
+    // (<Trans>, t`…`) — a dedicated @rolldown/plugin-babel pass, mirroring
+    // apps/web, because @vitejs/plugin-react's babel option does not reliably
+    // apply the macro under WXT's Rolldown build.
+    plugins: [escapeNonAscii(), babel({ plugins: ['@lingui/babel-plugin-lingui-macro'] })],
     // Also expose VITE_* env vars so the Doppler dev_personal config that
     // already drives apps/web's dev-tunnel mode (VITE_WEB_URL,
     // VITE_API_HOST, VITE_SUPABASE_*, VITE_IS_FOR_TUNNEL) works in the
@@ -119,7 +130,6 @@ export default defineConfig({
           resources: [
             'chunks/*',
             'fonts/*',
-            'asbplayer-locales/*',
             'icon/image.png',
             'netflix-page.js',
             'youtube-page.js',

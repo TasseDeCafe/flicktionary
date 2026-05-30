@@ -6,7 +6,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import TuneIcon from '@mui/icons-material/Tune'
 import { ControlType, MobileOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import { makeStyles } from 'tss-react/mui'
-import { useTranslation } from 'react-i18next'
+import { useLingui } from '@lingui/react/macro'
 import LogoIcon from './LogoIcon'
 import SubtitlesIcon from '@mui/icons-material/Subtitles'
 import SubtitlesOffIcon from './SubtitlesOffIcon'
@@ -292,29 +292,27 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
     }
   }, [numberControlType, handleDecrementOffset, handleIncrementPlaybackRate])
 
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const { leftNumberControlTitle, numberControlTitle, rightNumberControlTitle } = useMemo(() => {
     switch (numberControlType) {
       case ControlType.timeDisplay:
         return {
-          leftNumberControlTitle: model?.emptySubtitleTrack
-            ? t('binds.seekBackward')
-            : t('binds.seekToPreviousSubtitle'),
-          numberControlTitle: t('controls.currentTimestamp'),
-          rightNumberControlTitle: model?.emptySubtitleTrack ? t('binds.seekForward') : t('binds.seekToNextSubtitle'),
+          leftNumberControlTitle: model?.emptySubtitleTrack ? t`Seek backward` : t`Seek to previous subtitle`,
+          numberControlTitle: t`Current Timestamp`,
+          rightNumberControlTitle: model?.emptySubtitleTrack ? t`Seek forward` : t`Seek to next subtitle`,
         }
       case ControlType.subtitleOffset:
         return {
-          leftNumberControlTitle: t('action.increaseOffsetButton'),
-          numberControlTitle: t('controls.subtitleOffset'),
-          rightNumberControlTitle: t('action.decreaseOffsetButton'),
+          leftNumberControlTitle: t`Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms.`,
+          numberControlTitle: t`Subtitle Offset`,
+          rightNumberControlTitle: t`Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms.`,
         }
 
       case ControlType.playbackRate:
         return {
-          leftNumberControlTitle: t('binds.decreasePlaybackRate'),
-          numberControlTitle: t('controls.playbackRate'),
-          rightNumberControlTitle: t('binds.increasePlaybackRate'),
+          leftNumberControlTitle: t`Decrease playback rate`,
+          numberControlTitle: t`Playback Rate`,
+          rightNumberControlTitle: t`Increase playback rate`,
         }
     }
   }, [numberControlType, model, t])
@@ -357,7 +355,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
       <GridContainer ref={ref} direction='row' wrap='nowrap' className={containerClassName}>
         {onLoadSubtitles && (
           <Grid item>
-            <Tooltip {...defaultTooltipProps} title={t('action.loadSubtitles')!}>
+            <Tooltip {...defaultTooltipProps} title={t`Load Subtitles`}>
               <span>
                 <IconButton disabled={model.recording} onClick={onLoadSubtitles}>
                   <LogoIcon className={model.recording ? classes.inactiveButton : classes.button} />
@@ -368,7 +366,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
         )}
         {!model.emptySubtitleTrack && (
           <Grid item>
-            <Tooltip {...defaultTooltipProps} title={t('binds.toggleSubtitles')!}>
+            <Tooltip {...defaultTooltipProps} title={t`Toggle subtitles`}>
               <span>
                 <IconButton disabled={model.recording} onClick={onToggleSubtitles}>
                   {model.subtitlesAreVisible && (
@@ -384,7 +382,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
         )}
         {!model.emptySubtitleTrack && (
           <Grid item>
-            <Tooltip {...defaultTooltipProps} title={t('controls.playbackMode')!}>
+            <Tooltip {...defaultTooltipProps} title={t`Playback Mode`}>
               <span>
                 <IconButton disabled={model.recording} onClick={handleOpenPlayModeSelector}>
                   <TuneIcon className={model.recording ? classes.inactiveButton : classes.button} />

@@ -19,7 +19,7 @@ import {
 import { createTheme } from '@asbplayer-fork/common/theme'
 import { type PaletteMode } from '@mui/material/styles'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
-import { useTranslation } from 'react-i18next'
+import { useLingui } from '@lingui/react/macro'
 import type { Profile } from '@asbplayer-fork/common/settings'
 import { StyledEngineProvider } from '@mui/material/styles'
 
@@ -30,14 +30,14 @@ interface Props {
 const initialTrackIds = ['-', '-', '-']
 
 export default function VideoDataSyncUi({ bridge }: Props) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const [open, setOpen] = useState<boolean>(false)
   const [disabled, setDisabled] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [suggestedName, setSuggestedName] = useState<string>('')
   const [showSubSelect, setShowSubSelect] = useState<boolean>(true)
   const [subtitles, setSubtitles] = useState<VideoDataSubtitleTrack[]>([
-    { id: '-', language: '-', url: '-', label: t('extension.videoDataSync.emptySubtitleTrack'), extension: 'srt' },
+    { id: '-', language: '-', url: '-', label: t`Empty`, extension: 'srt' },
   ])
   const [selectedSubtitleTrackIds, setSelectedSubtitleTrackIds] = useState<string[]>(initialTrackIds)
   const [defaultCheckboxState, setDefaultCheckboxState] = useState<boolean>(false)
@@ -107,7 +107,7 @@ export default function VideoDataSyncUi({ bridge }: Props) {
             id: '-',
             language: '-',
             url: '-',
-            label: t('extension.videoDataSync.emptySubtitleTrack'),
+            label: t`Empty`,
             extension: 'srt',
           },
           ...model.subtitles,

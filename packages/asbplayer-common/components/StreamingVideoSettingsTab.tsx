@@ -7,7 +7,7 @@ import TableBody from '@mui/material/TableBody'
 import TableRowWithHoverEffect from './TableRowWithHoverEffect'
 import TableCell from '@mui/material/TableCell'
 import SwitchLabelWithHoverEffect from './SwitchLabelWithHoverEffect'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { AsbplayerSettings, Page, PageSettings, YoutubePage } from '../settings'
 import InputAdornment from '@mui/material/InputAdornment'
 import Paper from '@mui/material/Paper'
@@ -46,7 +46,7 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
   extensionSupportsPageSettings,
   pageConfigs,
 }) => {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const {
     streamingEnableOverlay,
     streamingDisplaySubtitles,
@@ -72,7 +72,9 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
         />
       )}
       <Stack spacing={1}>
-        <SettingsSection>{t('settings.ui')}</SettingsSection>
+        <SettingsSection>
+          <Trans>UI</Trans>
+        </SettingsSection>
         {extensionSupportsOverlay && (
           <SwitchLabelWithHoverEffect
             control={
@@ -81,7 +83,7 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
                 onChange={(e) => onSettingChanged('streamingEnableOverlay', e.target.checked)}
               />
             }
-            label={t('extension.settings.enableOverlay')}
+            label={t`Enable controls overlay`}
             labelPlacement='start'
           />
         )}
@@ -92,10 +94,12 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
               onChange={(e) => onSettingChanged('streamingDisplaySubtitles', e.target.checked)}
             />
           }
-          label={t('extension.settings.displaySubtitles')}
+          label={t`Display subtitles`}
           labelPlacement='start'
         />
-        <SettingsSection>{t('settings.subtitles')}</SettingsSection>
+        <SettingsSection>
+          <Trans>Subtitles</Trans>
+        </SettingsSection>
         <SwitchLabelWithHoverEffect
           control={
             <Switch
@@ -103,7 +107,7 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
               onChange={(e) => onSettingChanged('streamingSubsDragAndDrop', e.target.checked)}
             />
           }
-          label={t('extension.settings.dragAndDrop')}
+          label={t`Allow subtitle file drag-and-drop`}
           labelPlacement='start'
         />
         <SwitchLabelWithHoverEffect
@@ -113,7 +117,7 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
               onChange={(e) => onSettingChanged('streamingAutoSync', e.target.checked)}
             />
           }
-          label={t('extension.settings.autoLoadDetectedSubs')}
+          label={t`Auto-load detected subtitles`}
           labelPlacement='start'
         />
         <SwitchLabelWithHoverEffect
@@ -123,15 +127,17 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
               onChange={(e) => onSettingChanged('streamingAutoSyncPromptOnFailure', e.target.checked)}
             />
           }
-          label={t('extension.settings.autoLoadDetectedSubsFailure')}
+          label={t`Prompt on failure to auto-load subtitles`}
           labelPlacement='start'
         />
-        <SettingsSection>{t('settings.misc')}</SettingsSection>
+        <SettingsSection>
+          <Trans>Misc</Trans>
+        </SettingsSection>
         <SettingsTextField
           type='number'
           color='primary'
           fullWidth
-          label={t('extension.settings.condensedPlaybackMinSkipInterval')}
+          label={t`Condensed playback minimum skip interval`}
           value={streamingCondensedPlaybackMinimumSkipIntervalMs}
           onChange={(e) => onSettingChanged('streamingCondensedPlaybackMinimumSkipIntervalMs', Number(e.target.value))}
           slotProps={{
@@ -146,7 +152,9 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
         />
         {pageConfigs && (
           <>
-            <SettingsSection>{t('settings.pages')}</SettingsSection>
+            <SettingsSection>
+              <Trans>Pages</Trans>
+            </SettingsSection>
             <TableContainer variant='outlined' component={Paper} style={{ height: 'auto' }}>
               <Table>
                 <TableBody>

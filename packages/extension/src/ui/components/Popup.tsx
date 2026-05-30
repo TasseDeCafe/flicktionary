@@ -5,10 +5,9 @@ import LaunchIcon from '@mui/icons-material/Launch'
 import { useCallback } from 'react'
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
-import { useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
-import { useI18n } from '../hooks/use-i18n'
 import { isMobile } from 'react-device-detect'
 import { useTheme } from '@mui/material/styles'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
@@ -41,8 +40,6 @@ const Popup = ({
   onOpenUserGuide,
   ...profilesContext
 }: Props) => {
-  const { t } = useTranslation()
-  const { initialized: i18nInitialized } = useI18n({ language: settings.language })
   const handleUnlockLocalFonts = useCallback(() => {
     browser.tabs.create({
       url: `${browser.runtime.getURL('/options.html')}#subtitle-appearance`,
@@ -53,19 +50,15 @@ const Popup = ({
   const { localFontsAvailable, localFontsPermission, localFontFamilies } = useLocalFontFamilies()
   const theme = useTheme()
 
-  if (!i18nInitialized) {
-    return null
-  }
-
   return (
     <Paper>
       <Stack direction='column' spacing={1.5} sx={{ padding: theme.spacing(1.5) }}>
         <ButtonGroup fullWidth variant='contained' color='primary' orientation='horizontal'>
           <Button variant='contained' color='primary' startIcon={<LaunchIcon />} onClick={onOpenApp}>
-            {t('action.openApp')}
+            <Trans>Open App</Trans>
           </Button>
           <Button variant='contained' color='primary' startIcon={<TutorialIcon />} onClick={onOpenUserGuide}>
-            {t('action.userGuide')}
+            <Trans>User guide</Trans>
           </Button>
         </ButtonGroup>
         <FlicktionaryPairSection />

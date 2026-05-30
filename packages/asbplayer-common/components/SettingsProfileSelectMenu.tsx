@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import InputAdornment from '@mui/material/InputAdornment'
 import IconButton from '@mui/material/IconButton'
 import CheckIcon from '@mui/icons-material/Check'
@@ -9,7 +9,6 @@ import ClearIcon from '@mui/icons-material/Clear'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { makeStyles } from 'tss-react/mui'
 import { Profile } from '../settings'
-import type { TFunction } from 'i18next'
 
 const maxProfileNameLength = 16
 const maxProfiles = 5
@@ -45,7 +44,6 @@ interface ProfileMenuItemProps {
   onSetActiveProfile: (name: string | undefined) => void
   divider: boolean
   collapsed: boolean
-  t: TFunction
   className: string
 }
 
@@ -68,7 +66,6 @@ function renderMenuItem({
   divider,
   profile,
   collapsed,
-  t,
   className,
 }: ProfileMenuItemProps) {
   return (
@@ -87,7 +84,7 @@ function renderMenuItem({
         }}
         style={{ flexGrow: 1 }}
       >
-        {profile?.name ?? t('settings.defaultProfile')}
+        {profile?.name ?? <Trans>Default</Trans>}
       </div>
 
       {profile !== undefined && !collapsed && (
@@ -112,7 +109,7 @@ export default function SettingsProfileSelectMenu({
   onRemoveProfile,
   onSetActiveProfile,
 }: Props) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const { classes } = useStyles()
   const { classes: collapsedMenuItemStyles } = useMenuItemStyles({ collapsed: true })
   const { classes: expandedMenuItemStyles } = useMenuItemStyles({ collapsed: false })
@@ -162,8 +159,8 @@ export default function SettingsProfileSelectMenu({
           color='primary'
           variant='outlined'
           style={{ paddingRight: 0 }}
-          label={t('settings.profileName')}
-          placeholder={t('settings.enterProfileName')!}
+          label={t`Profile Name`}
+          placeholder={t`Enter profile name`}
           value={newProfile}
           onChange={(e) => {
             setNewProfile(e.target.value)
@@ -205,7 +202,7 @@ export default function SettingsProfileSelectMenu({
           size='small'
           color='primary'
           variant='outlined'
-          label={t('settings.activeProfile')}
+          label={t`Profile`}
           value={activeProfile ?? '-'}
           SelectProps={{
             renderValue: (option) => {
@@ -215,14 +212,13 @@ export default function SettingsProfileSelectMenu({
                 onRemoveProfile,
                 onSetActiveProfile,
                 collapsed: true,
-                t,
                 className: collapsedMenuItemStyles.root,
               })
             },
           }}
         >
           <MenuItem key={''} value={'-'} onClick={() => onSetActiveProfile(undefined)} style={{ minHeight: 'auto' }}>
-            {t('settings.defaultProfile')}
+            <Trans>Default</Trans>
           </MenuItem>
           {profiles.map((profile, index) => {
             return renderMenuItem({
@@ -231,7 +227,6 @@ export default function SettingsProfileSelectMenu({
               onRemoveProfile,
               onSetActiveProfile,
               collapsed: false,
-              t,
               className: expandedMenuItemStyles.root,
             })
           })}
@@ -243,7 +238,7 @@ export default function SettingsProfileSelectMenu({
             }}
             style={{ minHeight: 'auto', textAlign: 'center' }}
           >
-            {limitReached ? t('settings.profileLimitReached') : t('settings.newProfile')}
+            {limitReached ? <Trans>Profile limit reached</Trans> : <Trans>Add New Profile...</Trans>}
           </MenuItem>
         </TextField>
       )}

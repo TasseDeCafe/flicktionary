@@ -13,8 +13,7 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import IconButton from '@mui/material/IconButton'
-import { Trans } from 'react-i18next'
-import Link from '@mui/material/Link'
+import { Trans } from '@lingui/react/macro'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import { AsbPlayerToVideoCommandV2, RequestSubtitlesMessage, RequestSubtitlesResponse } from '@asbplayer-fork/common'
 import TutorialBubble from '@asbplayer-fork/common/components/TutorialBubble'
@@ -70,11 +69,11 @@ const ToolbarBubble: React.FC<{ show: boolean; onConfirm: () => void }> = ({ sho
       show={show}
       placement='bottom'
       text={
-        <Trans
-          i18nKey='ftue.toolbar'
-          components={[<b key={0}>asbplayer</b>, <b key={1}>Popup</b>, <p key={2} />]}
-          values={{ pin: isFirefox ? '⚙' : '📌' }}
-        />
+        <Trans>
+          Click the 🧩 icon in the toolbar, and select <b>asbplayer</b> to open the asbplayer <b>Popup</b>.
+          <p />
+          Use the {isFirefox ? '⚙' : '📌'} button to pin asbplayer to the toolbar for easy access.
+        </Trans>
       }
       onConfirm={onConfirm}
     >
@@ -92,28 +91,30 @@ const LoadSubtitlesDialog: React.FC<{ open: boolean; count?: number; onClose: ()
     <Dialog style={{ zIndex: zIndexTop }} open={open}>
       <DialogContent>
         {count === undefined && !isMobile && !isFirefox && (
-          <Trans
-            i18nKey='ftue.loadSubtitles'
-            components={[<b key={0}>Side Panel</b>, <p key={1} />, <b key={2}>Side Panel</b>, <b key={3}>Popup</b>]}
-          />
+          <Trans>
+            The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> the video and
+            choose the asbplayer <b>Load Subtitles</b> menu item.
+            <p />
+            Hint: asbplayer can also <b>auto-load</b> detected subtitles on supported sites.
+          </Trans>
         )}
         {count === undefined && !isMobile && isFirefox && (
-          <Trans
-            i18nKey='ftue.loadSubtitlesFirefox'
-            components={[<b key={0}>Right-click</b>, <b key={2}>context menu</b>]}
-          />
+          <Trans>
+            The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> on the video
+            and find the asbplayer <b>context menu</b> to load subtitles.
+          </Trans>
         )}
         {count === undefined && isMobile && (
-          <Trans
-            i18nKey='ftue.loadSubtitlesMobile'
-            components={[<b key={0}>asbplayer</b>, <b key={1}>extensions</b>]}
-          />
+          <Trans>
+            The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by
+            selecting <b>asbplayer</b> in the <b>extensions</b> menu.
+          </Trans>
         )}
       </DialogContent>
       {isFirefox && (
         <DialogActions>
           <Button onClick={onClose}>
-            <Trans i18nKey='action.ok' />
+            <Trans>OK</Trans>
           </Button>
         </DialogActions>
       )}
@@ -127,15 +128,10 @@ const OverlayBubble: React.FC<{ show: boolean; onConfirm: () => void }> = ({ sho
       show={show}
       placement='bottom'
       text={
-        <Trans
-          i18nKey='ftue.overlay'
-          components={[
-            <b key={0}>Video Overlay</b>,
-            <b key={1}>toggle</b>,
-            <b key={2}>mine</b>,
-            <b key={3}>switch playback modes</b>,
-          ]}
-        />
+        <Trans>
+          Use the <b>Video Overlay</b> to <b>mine</b> and <b>toggle</b> subtitles, <b>switch playback modes</b>, and
+          more.
+        </Trans>
       }
       onConfirm={onConfirm}
     >
@@ -157,15 +153,10 @@ const OverlayScrollBubble: React.FC<{ show: boolean; onConfirm: () => void }> = 
       show={show}
       placement='bottom'
       text={
-        <Trans
-          i18nKey={'ftue.overlayScroll'}
-          components={[
-            <b key={0}>Scroll</b>,
-            <b key={1}>subtitle navigation</b>,
-            <b key={2}>subtitle offset</b>,
-            <b key={3}>playback rate</b>,
-          ]}
-        />
+        <Trans>
+          <b>Scroll</b> the rightmost control to switch between <b>subtitle navigation</b>, <b>subtitle offset</b>, and{' '}
+          <b>playback rate</b> controls.
+        </Trans>
       }
       onConfirm={onConfirm}
     >
@@ -185,18 +176,7 @@ const FinishedDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open
   return (
     <Dialog open={open} style={{ zIndex: zIndexTop }}>
       <DialogContent>
-        <Trans
-          i18nKey={'ftue.congrats'}
-          components={[
-            <Link href='/options.html#about' target='_blank' rel='noreferrer' key={0}>
-              Settings
-            </Link>,
-            <p key={1} />,
-            <Link href='https://docs.asbplayer.dev/docs/intro/' target='_blank' rel='noreferrer' key={2}>
-              user guide
-            </Link>,
-          ]}
-        />
+        <Trans>That's it for the basics! Feel free to play around on this page.</Trans>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>OK</Button>

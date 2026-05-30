@@ -53,7 +53,7 @@ import WordInteractionController from '../controllers/word-interaction-controlle
 import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import { OffsetAnchor } from './element-overlay'
 import { ExtensionSettingsStorage } from './extension-settings-storage'
-import { i18nInit } from './i18n'
+import { setupLingui } from '../ui/lingui'
 import KeyBindings from './key-bindings'
 import { shouldShowUpdateAlert } from './update-alert'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
@@ -701,7 +701,7 @@ export default class Binding {
       this.mobileVideoOverlayController.unbind()
     }
 
-    await i18nInit(currentSettings.language)
+    setupLingui(currentSettings.language)
   }
 
   unbind() {

@@ -20,6 +20,8 @@ import { StyledEngineProvider } from '@mui/material/styles'
 import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db'
 import { ExtensionDictionaryStorage } from '@/services/extension-dictionary-storage'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
+import { I18nProvider } from '@lingui/react'
+import { i18n, setupLingui } from '../lingui'
 
 interface Props {
   commands: any
@@ -99,33 +101,39 @@ export function PopupUi({ commands }: Props) {
     return null
   }
 
+  // Activate the Lingui catalog for the user's language before mounting the
+  // provider. Idempotent; only re-activates when the locale changes.
+  setupLingui(settings.language)
+
   return (
-    <StyledEngineProvider injectFirst>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Paper
-          square
-          style={{
-            backgroundImage:
-              settings.themeType === 'dark'
-                ? 'linear-gradient(rgba(255, 255, 255, 0.165), rgba(255, 255, 255, 0.165))'
-                : 'none',
-            width: isMobile ? '100%' : 600,
-          }}
-        >
-          <Box>
-            <Popup
-              commands={commands}
-              settings={settings}
-              onSettingsChanged={handleSettingsChanged}
-              onOpenApp={handleOpenApp}
-              onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
-              onOpenUserGuide={handleOpenUserGuide}
-              {...profilesContext}
-            />
-          </Box>
-        </Paper>
-      </ThemeProvider>
-    </StyledEngineProvider>
+    <I18nProvider i18n={i18n}>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Paper
+            square
+            style={{
+              backgroundImage:
+                settings.themeType === 'dark'
+                  ? 'linear-gradient(rgba(255, 255, 255, 0.165), rgba(255, 255, 255, 0.165))'
+                  : 'none',
+              width: isMobile ? '100%' : 600,
+            }}
+          >
+            <Box>
+              <Popup
+                commands={commands}
+                settings={settings}
+                onSettingsChanged={handleSettingsChanged}
+                onOpenApp={handleOpenApp}
+                onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
+                onOpenUserGuide={handleOpenUserGuide}
+                {...profilesContext}
+              />
+            </Box>
+          </Paper>
+        </ThemeProvider>
+      </StyledEngineProvider>
+    </I18nProvider>
   )
 }

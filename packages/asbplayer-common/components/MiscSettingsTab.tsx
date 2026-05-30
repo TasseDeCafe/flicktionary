@@ -12,7 +12,7 @@ import SettingsTextField from './SettingsTextField'
 import SwitchLabelWithHoverEffect from './SwitchLabelWithHoverEffect'
 import LabelWithHoverEffect from './LabelWithHoverEffect'
 import { AsbplayerSettings, exportSettings, PauseOnHoverMode, validateSettings } from '../settings'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SubtitleHtml } from '..'
 import DownloadIcon from '@mui/icons-material/Download'
@@ -47,7 +47,7 @@ const MiscSettingTab: React.FC<Props> = ({
   extensionInstalled,
   extensionSupportsPauseOnHover,
 }) => {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const {
     themeType,
     language,
@@ -147,9 +147,13 @@ const MiscSettingTab: React.FC<Props> = ({
   return (
     <>
       <Stack spacing={1}>
-        <SettingsSection>{t('settings.ui')}</SettingsSection>
+        <SettingsSection>
+          <Trans>UI</Trans>
+        </SettingsSection>
         <FormControl>
-          <FormLabel>{t('settings.theme')}</FormLabel>
+          <FormLabel>
+            <Trans>Theme</Trans>
+          </FormLabel>
           <RadioGroup row>
             <LabelWithHoverEffect
               control={
@@ -159,7 +163,7 @@ const MiscSettingTab: React.FC<Props> = ({
                   onChange={(event) => event.target.checked && onSettingChanged('themeType', 'light')}
                 />
               }
-              label={t('settings.themeLight')}
+              label={t`Light`}
             />
             <LabelWithHoverEffect
               control={
@@ -169,13 +173,13 @@ const MiscSettingTab: React.FC<Props> = ({
                   onChange={(event) => event.target.checked && onSettingChanged('themeType', 'dark')}
                 />
               }
-              label={t('settings.themeDark')}
+              label={t`Dark`}
             />
           </RadioGroup>
         </FormControl>
         <SettingsTextField
           select
-          label={t('settings.language')}
+          label={t`Language`}
           value={language}
           color='primary'
           onChange={(event) => onSettingChanged('language', event.target.value)}
@@ -186,7 +190,9 @@ const MiscSettingTab: React.FC<Props> = ({
             </MenuItem>
           ))}
         </SettingsTextField>
-        <SettingsSection>{t('settings.subtitles')}</SettingsSection>
+        <SettingsSection>
+          <Trans>Subtitles</Trans>
+        </SettingsSection>
         <SwitchLabelWithHoverEffect
           control={
             <Switch
@@ -194,7 +200,7 @@ const MiscSettingTab: React.FC<Props> = ({
               onChange={(event) => onSettingChanged('rememberSubtitleOffset', event.target.checked)}
             />
           }
-          label={t('settings.rememberSubtitleOffset')}
+          label={t`Remember subtitle offset`}
           labelPlacement='start'
         />
         <SwitchLabelWithHoverEffect
@@ -204,11 +210,11 @@ const MiscSettingTab: React.FC<Props> = ({
               onChange={(event) => onSettingChanged('autoCopyCurrentSubtitle', event.target.checked)}
             />
           }
-          label={t('settings.autoCopy')}
+          label={t`Auto-copy current subtitle to clipboard`}
           labelPlacement='start'
         />
         <SettingsTextField
-          label={t('settings.subtitleRegexFilter')}
+          label={t`Subtitle regex filter`}
           fullWidth
           value={subtitleRegexFilter}
           color='primary'
@@ -217,14 +223,16 @@ const MiscSettingTab: React.FC<Props> = ({
           onChange={(event) => onSettingChanged('subtitleRegexFilter', event.target.value)}
         />
         <SettingsTextField
-          label={t('settings.subtitleRegexFilterTextReplacement')}
+          label={t`Subtitle regex filter text replacement`}
           fullWidth
           value={subtitleRegexFilterTextReplacement}
           color='primary'
           onChange={(event) => onSettingChanged('subtitleRegexFilterTextReplacement', event.target.value)}
         />
         <FormControl>
-          <FormLabel>{t('settings.subtitleHtml')}</FormLabel>
+          <FormLabel>
+            <Trans>Subtitle HTML</Trans>
+          </FormLabel>
           <RadioGroup row>
             <LabelWithHoverEffect
               control={
@@ -234,7 +242,7 @@ const MiscSettingTab: React.FC<Props> = ({
                   onChange={(event) => event.target.checked && onSettingChanged('subtitleHtml', SubtitleHtml.remove)}
                 />
               }
-              label={t('settings.subtitleHtmlRemove')}
+              label={t`Remove`}
             />
             <LabelWithHoverEffect
               control={
@@ -244,7 +252,7 @@ const MiscSettingTab: React.FC<Props> = ({
                   onChange={(event) => event.target.checked && onSettingChanged('subtitleHtml', SubtitleHtml.render)}
                 />
               }
-              label={t('settings.subtitleHtmlRender')}
+              label={t`Render`}
             />
           </RadioGroup>
         </FormControl>
@@ -255,12 +263,14 @@ const MiscSettingTab: React.FC<Props> = ({
               onChange={(event) => onSettingChanged('convertNetflixRuby', event.target.checked)}
             />
           }
-          label={t('settings.convertNetflixRuby')}
+          label={t`Detect and Display Ruby`}
           labelPlacement='start'
         />
         {(!extensionInstalled || extensionSupportsPauseOnHover) && (
           <FormControl>
-            <FormLabel component='legend'>{t('settings.pauseOnHoverMode')}</FormLabel>
+            <FormLabel component='legend'>
+              <Trans>Auto-pause when mousing over subtitles</Trans>
+            </FormLabel>
             <RadioGroup row={false}>
               <LabelWithHoverEffect
                 control={
@@ -272,7 +282,7 @@ const MiscSettingTab: React.FC<Props> = ({
                     }
                   />
                 }
-                label={t('pauseOnHoverMode.disabled')}
+                label={t`Disabled`}
               />
               <LabelWithHoverEffect
                 control={
@@ -284,7 +294,7 @@ const MiscSettingTab: React.FC<Props> = ({
                     }
                   />
                 }
-                label={t('pauseOnHoverMode.inAndOut')}
+                label={t`Enabled with auto-resume`}
               />
               <LabelWithHoverEffect
                 control={
@@ -296,14 +306,14 @@ const MiscSettingTab: React.FC<Props> = ({
                     }
                   />
                 }
-                label={t('pauseOnHoverMode.inNotOut')}
+                label={t`Enabled`}
               />
             </RadioGroup>
           </FormControl>
         )}
         {insideApp && (
           <SettingsTextField
-            label={t('settings.tabName')}
+            label={t`Name of the tab`}
             fullWidth
             value={tabName}
             color='primary'
@@ -321,16 +331,18 @@ const MiscSettingTab: React.FC<Props> = ({
           label='Enable word click mode'
           labelPlacement='start'
         />
-        <SettingsSection>{t('settings.subtitleGeneration')}</SettingsSection>
+        <SettingsSection>
+          <Trans>Subtitle Generation</Trans>
+        </SettingsSection>
         <SettingsTextField
-          label={t('settings.transcriptServerUrl')}
+          label={t`Transcript Server URL`}
           fullWidth
           value={transcriptServerUrl}
           color='primary'
           onChange={(event) => onSettingChanged('transcriptServerUrl', event.target.value)}
         />
         <SettingsTextField
-          label={t('settings.transcriptApiKey')}
+          label={t`Transcript Server API Key (optional)`}
           fullWidth
           type='password'
           value={transcriptApiKey}
@@ -359,13 +371,15 @@ const MiscSettingTab: React.FC<Props> = ({
             </ButtonGroup>
           </Stack>
         )}
-        <SettingsSection>{t('settings.title')}</SettingsSection>
+        <SettingsSection>
+          <Trans>Settings</Trans>
+        </SettingsSection>
         <Stack direction='row' spacing={1}>
           <Button variant='contained' color='primary' style={{ flex: 1 }} onClick={handleImportSettings}>
-            {t('action.importSettings')}
+            <Trans>Import Settings</Trans>
           </Button>
           <Button variant='contained' color='primary' style={{ flex: 1 }} onClick={handleExportSettings}>
-            {t('action.exportSettings')}
+            <Trans>Export Settings</Trans>
           </Button>
         </Stack>
       </Stack>

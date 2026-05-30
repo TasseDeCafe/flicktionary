@@ -17,7 +17,7 @@ import Switch from '@mui/material/Switch'
 import LabelWithHoverEffect from '@asbplayer-fork/common/components/LabelWithHoverEffect'
 import { ConfirmedVideoDataSubtitleTrack, VideoDataSubtitleTrack, VideoDataUiOpenReason } from '@asbplayer-fork/common'
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import MiniProfileSelector from '@asbplayer-fork/common/components/MiniProfileSelector'
 import type { Profile } from '@asbplayer-fork/common/settings'
 import Alert from '@mui/material/Alert'
@@ -106,7 +106,7 @@ export default function VideoDataSyncDialog({
   onDismissFtue,
   onGenerateSupadata,
 }: Props) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const [userSelectedSubtitleTrackIds, setUserSelectedSubtitleTrackIds] = useState(['-', '-', '-'])
   const [name, setName] = useState('')
   const [shouldRememberTrackChoices, setShouldRememberTrackChoices] = useState(false)
@@ -206,7 +206,7 @@ export default function VideoDataSyncDialog({
               error={!!error}
               color='primary'
               variant='filled'
-              label={`${t('extension.videoDataSync.subtitleTrack')} ${i + 1}`}
+              label={t`Subtitle Track ${i + 1}`}
               helperText={error || ''}
               value={subtitleTracks.find((track) => track.id === userSelectedSubtitleTrackIds[i])?.id ?? '-'}
               disabled={isLoading || disabled}
@@ -223,7 +223,9 @@ export default function VideoDataSyncDialog({
                   {subtitle.label}
                 </MenuItem>
               ))}
-              <MenuItem onClick={() => onOpenFile(i)}>{t('action.openFiles')}</MenuItem>
+              <MenuItem onClick={() => onOpenFile(i)}>
+                <Trans>Open Files</Trans>
+              </MenuItem>
             </TextField>
             {isLoading && (
               <span className={classes.spinner}>
@@ -251,7 +253,7 @@ export default function VideoDataSyncDialog({
     <Dialog disableRestoreFocus disableEnforceFocus fullWidth maxWidth='sm' open={open} onClose={onCancel}>
       <Toolbar>
         <Typography variant='h6' style={{ flexGrow: 1 }}>
-          {t('extension.videoDataSync.selectSubtitles')}
+          <Trans>Select Subtitles</Trans>
         </Typography>
         <MiniProfileSelector
           profiles={profiles}
@@ -271,10 +273,14 @@ export default function VideoDataSyncDialog({
       </Toolbar>
       <DialogContent>
         {openReason === VideoDataUiOpenReason.miningCommand && (
-          <DialogContentText>{t('extension.videoDataSync.loadSubtitlesFirst')}</DialogContentText>
+          <DialogContentText>
+            <Trans>Subtitles must be loaded before you can start mining.</Trans>
+          </DialogContentText>
         )}
         {openReason === VideoDataUiOpenReason.failedToAutoLoadPreferredTrack && (
-          <DialogContentText>{t('extension.videoDataSync.failedToAutoLoad')}</DialogContentText>
+          <DialogContentText>
+            <Trans>Could not auto-load subtitles in your preferred language.</Trans>
+          </DialogContentText>
         )}
         <form>
           <Grid container direction='column' spacing={2}>
@@ -284,11 +290,14 @@ export default function VideoDataSyncDialog({
                   severity='info'
                   action={
                     <Button onClick={onDismissFtue} size='small'>
-                      {t('action.ok')}
+                      <Trans>OK</Trans>
                     </Button>
                   }
                 >
-                  {t('extension.videoDataSync.ftue')}
+                  <Trans>
+                    Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles
+                    on every site. You can always load your own subtitle files.
+                  </Trans>
                 </Alert>
               </Grid>
             )}
@@ -299,7 +308,7 @@ export default function VideoDataSyncDialog({
                 multiline
                 color='primary'
                 variant='filled'
-                label={t('extension.videoDataSync.videoName')}
+                label={t`Video Name`}
                 value={name}
                 disabled={disabled}
                 onChange={(e) => setName(e.target.value)}
@@ -316,7 +325,7 @@ export default function VideoDataSyncDialog({
                       color='primary'
                     />
                   }
-                  label={t('extension.videoDataSync.rememberTrackPreference')}
+                  label={t`Remember these track choices for this site`}
                   labelPlacement='start'
                   style={{
                     display: 'flex',
@@ -332,22 +341,22 @@ export default function VideoDataSyncDialog({
       </DialogContent>
       <DialogActions>
         <Button disabled={disabled} onClick={() => onOpenFile()}>
-          {t('action.openFiles')}
+          <Trans>Open Files</Trans>
         </Button>
         {isYouTube && supadataApiKeyConfigured && onGenerateSupadata && (
           <Button disabled={disabled || isGeneratingSupadata} onClick={onGenerateSupadata}>
             {isGeneratingSupadata ? (
               <>
                 <CircularProgress size={16} style={{ marginRight: 8 }} />
-                {t('extension.videoDataSync.generatingSubtitles')}
+                <Trans>Generating...</Trans>
               </>
             ) : (
-              t('extension.videoDataSync.generateSubtitles')
+              <Trans>Generate Subtitles</Trans>
             )}
           </Button>
         )}
         <Button action={okActionRef} disabled={!trimmedName || disabled} onClick={handleOkButtonClick}>
-          {t('action.ok')}
+          <Trans>OK</Trans>
         </Button>
       </DialogActions>
     </Dialog>

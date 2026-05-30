@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { makeStyles } from 'tss-react/mui'
-import { useTranslation } from 'react-i18next'
+import { Trans } from '@lingui/react/macro'
 import Box from '@mui/material/Box'
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm'
 import Dialog from '@mui/material/Dialog'
@@ -8,7 +8,6 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import { useCommandKeyBinds } from '../hooks/use-command-key-binds'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
-import { useI18n } from '../hooks/use-i18n'
 import Paper from '@mui/material/Paper'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
@@ -43,7 +42,6 @@ interface Props {
 }
 
 const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
-  const { t } = useTranslation()
   const theme = useTheme()
   const { classes } = useStyles()
 
@@ -60,7 +58,6 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
     browser.tabs.create({ active: true, url: 'chrome://extensions/shortcuts' })
   }, [])
 
-  const { initialized: i18nInitialized } = useI18n({ language: settings?.language ?? 'en' })
   const section = useMemo(() => {
     if (location.hash && location.hash.startsWith('#')) {
       return location.hash.substring(1, location.hash.length)
@@ -70,14 +67,16 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
   }, [])
   const { supportedLanguages } = useSupportedLanguages()
 
-  if (!settings || !commands || !i18nInitialized) {
+  if (!settings || !commands) {
     return null
   }
 
   return (
     <Paper square style={{ height: '100vh' }}>
       <Dialog open={true} maxWidth='md' fullWidth className={classes.root} onClose={() => {}}>
-        <DialogTitle>{t('settings.title')}</DialogTitle>
+        <DialogTitle>
+          <Trans>Settings</Trans>
+        </DialogTitle>
         <DialogContent className={classes.content}>
           <SettingsForm
             extensionInstalled

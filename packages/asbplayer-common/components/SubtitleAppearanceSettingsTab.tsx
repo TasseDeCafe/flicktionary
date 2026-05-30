@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useLingui } from '@lingui/react/macro'
 import AddIcon from '@mui/icons-material/Add'
 import LockIcon from '@mui/icons-material/Lock'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -46,7 +46,7 @@ interface AddCustomStyleProps {
 }
 
 function AddCustomStyle({ styleKey, onStyleKey, onAddCustomStyle }: AddCustomStyleProps) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   return (
     <Autocomplete
       options={cssStyles}
@@ -62,8 +62,8 @@ function AddCustomStyle({ styleKey, onStyleKey, onAddCustomStyle }: AddCustomSty
       }}
       renderInput={(params) => (
         <SettingsTextField
-          placeholder={t('settings.styleKey')!}
-          label={t('settings.addCustomCss')}
+          placeholder={t`Style Key`}
+          label={t`Add Custom CSS`}
           color='primary'
           {...params}
           InputProps={{
@@ -95,13 +95,13 @@ interface CustomStyleSettingProps {
 }
 
 function CustomStyleSetting({ customStyle, onCustomStyle, onDelete }: CustomStyleSettingProps) {
-  const { t } = useTranslation()
+  const { t } = useLingui()
 
   return (
     <SettingsTextField
       color='primary'
-      label={t('settings.customCssField', { styleKey: customStyle.key })}
-      placeholder={t('settings.styleValue')!}
+      label={t`CSS: ${customStyle.key}`}
+      placeholder={t`Style Value`}
       value={customStyle.value}
       onChange={(e) => onCustomStyle({ key: customStyle.key, value: e.target.value })}
       slotProps={{
@@ -144,7 +144,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
   localFontFamilies,
   onUnlockLocalFonts,
 }) => {
-  const { t } = useTranslation()
+  const { t } = useLingui()
   const {
     subtitlePreview,
     imageBasedSubtitleScaleFactor,
@@ -205,7 +205,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
               onClick={handleResetSubtitleTrack}
               variant='outlined'
             >
-              {t('settings.reset')}
+              <Trans>Reset</Trans>
             </Button>
           )}
         </>
@@ -215,11 +215,13 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         text={subtitlePreview}
         onTextChanged={(text) => onSettingChanged('subtitlePreview', text)}
       />
-      <SettingsSection>{t('settings.styling')}</SettingsSection>
+      <SettingsSection>
+        <Trans>Styling</Trans>
+      </SettingsSection>
       {subtitleColor !== undefined && (
         <SettingsTextField
           type='color'
-          label={t('settings.subtitleColor')}
+          label={t`Subtitle Color`}
           fullWidth
           value={subtitleColor}
           color='primary'
@@ -229,7 +231,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleSize !== undefined && (
         <SettingsTextField
           type='number'
-          label={t('settings.subtitleSize')}
+          label={t`Subtitle Size`}
           fullWidth
           value={subtitleSize}
           color='primary'
@@ -245,7 +247,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleThickness !== undefined && (
         <>
           <Typography variant='subtitle2' color='textSecondary'>
-            {t('settings.subtitleThickness')}
+            <Trans>Subtitle Font Thickness</Trans>
           </Typography>
           <Slider
             color='primary'
@@ -262,7 +264,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleOutlineColor !== undefined && (
         <SettingsTextField
           type='color'
-          label={t('settings.subtitleOutlineColor')}
+          label={t`Subtitle Outline Color`}
           fullWidth
           value={subtitleOutlineColor}
           color='primary'
@@ -272,8 +274,8 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleOutlineThickness !== undefined && (
         <SettingsTextField
           type='number'
-          label={t('settings.subtitleOutlineThickness')}
-          helperText={t('settings.subtitleOutlineThicknessHelperText')}
+          label={t`Subtitle Outline Thickness`}
+          helperText={t`Adds an outline around subtitle text. If this causes overlapping lines, try using a different font.`}
           fullWidth
           value={subtitleOutlineThickness}
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleOutlineThickness', Number(event.target.value))}
@@ -289,7 +291,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleShadowColor !== undefined && (
         <SettingsTextField
           type='color'
-          label={t('settings.subtitleShadowColor')}
+          label={t`Subtitle Shadow Color`}
           fullWidth
           value={subtitleShadowColor}
           color='primary'
@@ -299,7 +301,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleShadowThickness !== undefined && (
         <SettingsTextField
           type='number'
-          label={t('settings.subtitleShadowThickness')}
+          label={t`Subtitle Shadow Thickness`}
           fullWidth
           value={subtitleShadowThickness}
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleShadowThickness', Number(event.target.value))}
@@ -315,7 +317,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleBackgroundColor !== undefined && (
         <SettingsTextField
           type='color'
-          label={t('settings.subtitleBackgroundColor')}
+          label={t`Subtitle Background Color`}
           fullWidth
           value={subtitleBackgroundColor}
           color='primary'
@@ -325,7 +327,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {subtitleBackgroundOpacity !== undefined && (
         <SettingsTextField
           type='number'
-          label={t('settings.subtitleBackgroundOpacity')}
+          label={t`Subtitle Background Opacity`}
           fullWidth
           slotProps={{
             htmlInput: {
@@ -343,11 +345,13 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       )}
       {subtitleFontFamily !== undefined && (
         <FormControl fullWidth>
-          <FormLabel>{t('settings.subtitleFontFamily')}</FormLabel>
+          <FormLabel>
+            <Trans>Subtitle Font Family</Trans>
+          </FormLabel>
           <SettingsTextField
             type='text'
             select={localFontFamilies.length > 0}
-            // label={t('settings.subtitleFontFamily')}
+            // label={t`Subtitle Font Family`}
             fullWidth
             value={subtitleFontFamily}
             color='primary'
@@ -356,7 +360,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
               input: {
                 endAdornment:
                   localFontFamilies.length === 0 && localFontsAvailable && localFontsPermission === 'prompt' ? (
-                    <Tooltip title={t('settings.unlockLocalFonts')!}>
+                    <Tooltip title={t`Click to unlock font menu`}>
                       <IconButton onClick={onUnlockLocalFonts}>
                         <LockIcon fontSize='small' />
                       </IconButton>
@@ -414,7 +418,10 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       )}
 
       {subtitleBlur !== undefined && (
-        <Tooltip placement='bottom-end' title={t('settings.subtitleBlurDescription')!}>
+        <Tooltip
+          placement='bottom-end'
+          title={t`Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover.`}
+        >
           <SwitchLabelWithHoverEffect
             control={
               <Switch
@@ -424,7 +431,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
                 }}
               />
             }
-            label={t('settings.subtitleBlur')}
+            label={t`Subtitle blur`}
             labelPlacement='start'
           />
         </Tooltip>
@@ -433,7 +440,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       {selectedSubtitleAppearanceTrack === undefined && (
         <SettingsTextField
           type='number'
-          label={t('settings.imageBasedSubtitleScaleFactor')}
+          label={t`Image-based Subtitle Scale Factor`}
           placeholder='Inherited'
           fullWidth
           slotProps={{
@@ -449,10 +456,14 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         />
       )}
 
-      <SettingsSection>{t('settings.layout')}</SettingsSection>
+      <SettingsSection>
+        <Trans>Layout</Trans>
+      </SettingsSection>
       {subtitleAlignment !== undefined && (
         <FormControl>
-          <FormLabel component='legend'>{t('settings.subtitleAlignment')}</FormLabel>
+          <FormLabel component='legend'>
+            <Trans>Subtitle Alignment</Trans>
+          </FormLabel>
           <RadioGroup row>
             <LabelWithHoverEffect
               control={
@@ -464,7 +475,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
                   }
                 />
               }
-              label={t('settings.subtitleAlignmentBottom')}
+              label={t`Bottom`}
             />
             <LabelWithHoverEffect
               control={
@@ -476,7 +487,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
                   }
                 />
               }
-              label={t('settings.subtitleAlignmentTop')}
+              label={t`Top`}
             />
           </RadioGroup>
         </FormControl>
@@ -488,7 +499,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
             type='number'
             color='primary'
             fullWidth
-            label={t('settings.subtitlePositionOffset')}
+            label={t`Subtitle position offset from bottom`}
             value={subtitlePositionOffset}
             slotProps={{
               htmlInput: {
@@ -502,7 +513,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
             type='number'
             color='primary'
             fullWidth
-            label={t('settings.topSubtitlePositionOffset')}
+            label={t`Subtitle position offset from top`}
             value={topSubtitlePositionOffset}
             slotProps={{
               htmlInput: {
@@ -516,7 +527,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
             <SettingsTextField
               color='primary'
               fullWidth
-              label={t('settings.subtitlesWidth')}
+              label={t`Subtitles Width`}
               disabled={subtitlesWidth === -1}
               value={subtitlesWidth === -1 ? 'auto' : subtitlesWidth}
               onChange={(e) => {

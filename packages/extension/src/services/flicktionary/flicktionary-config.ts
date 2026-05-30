@@ -1,15 +1,17 @@
 // Endpoints / keys used by the Flicktionary side of the extension.
 //
-// Mode selection mirrors the web app's pattern (apps/web/src/config/
-// environment-utils.ts): `import.meta.env.MODE` distinguishes production from
-// development, and `VITE_IS_FOR_TUNNEL=true` flips development into
-// development-tunnel — where URLs are read from VITE_* env vars supplied via
-// Doppler. WXT only exposes WXT_PUBLIC_* by default; wxt.config.ts adds
-// `VITE_` to vite's envPrefix so the existing Doppler config works unchanged.
-
-const mode = import.meta.env.MODE
-const isProduction = mode === 'production'
-const isDevelopmentTunnel = !isProduction && import.meta.env.VITE_IS_FOR_TUNNEL === 'true'
+// Every value comes from a WXT_PUBLIC_* env var injected by Doppler at build
+// time (WXT exposes WXT_PUBLIC_* to import.meta.env). The Doppler *config*
+// selects the environment — there is intentionally no mode/tunnel branching:
+//
+//   local dev : doppler run --project extension --config dev_personal -- wxt
+//   prod build: doppler run --project extension --config prd        -- wxt build
+//
+// There are deliberately NO hardcoded fallbacks. A missing var means a
+// misconfigured build, so we fail loudly rather than silently ship a broken
+// extension — which is exactly how pairing broke once: an unset Supabase URL
+// fell back to `https://placeholder.supabase.co` and the background
+// `verifyOtp` died with "Failed to fetch".
 
 export interface FlicktionaryConfig {
   apiHost: string
@@ -19,38 +21,23 @@ export interface FlicktionaryConfig {
   supabasePublishableKey: string
 }
 
-const productionConfig: FlicktionaryConfig = {
-  apiHost: 'https://api.flicktionary.app',
-  webUrl: 'https://app.flicktionary.app',
-  // Real values are wired in from env at packaging time (see scripts/package
-  // step / CI). The fallbacks here are placeholders to keep dev builds
-  // resolvable; we'll replace them with the actual prod project credentials
-  // before submitting to the store.
-  supabaseProjectUrl: import.meta.env.WXT_PUBLIC_SUPABASE_PROJECT_URL ?? 'https://placeholder.supabase.co',
-  supabasePublishableKey: import.meta.env.WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? 'placeholder-anon-key',
+const requireEnv = (name: string, value: string | undefined): string => {
+  if (!value) {
+    throw new Error(
+      `[flicktionary-config] Missing required env var ${name}. ` +
+        `Run under Doppler, e.g. \`doppler run --project extension --config dev_personal -- wxt\` (dev) ` +
+        `or \`doppler run --project extension --config prd -- wxt build\` (prod).`
+    )
+  }
+  return value
 }
 
-const developmentConfig: FlicktionaryConfig = {
-  apiHost: 'http://localhost:4003',
-  webUrl: 'http://localhost:5174',
-  supabaseProjectUrl: 'http://127.0.0.1:54321',
-  // Local Supabase anon key, stable across resets.
-  supabasePublishableKey: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
-}
-
-// Same shape, but URLs are pulled from VITE_* env vars (Doppler dev_personal)
-// to match each developer's personal *.flicktionary.dev tunnel. The supabase
-// instance is the local dev-tunnel one (port 34321).
-const developmentTunnelConfig: FlicktionaryConfig = {
-  ...developmentConfig,
-  apiHost: import.meta.env.VITE_API_HOST ?? developmentConfig.apiHost,
-  webUrl: import.meta.env.VITE_WEB_URL ?? developmentConfig.webUrl,
-  supabaseProjectUrl: import.meta.env.VITE_SUPABASE_PROJECT_URL ?? developmentConfig.supabaseProjectUrl,
-  supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? developmentConfig.supabasePublishableKey,
-}
-
-export const getFlicktionaryConfig = (): FlicktionaryConfig => {
-  if (isProduction) return productionConfig
-  if (isDevelopmentTunnel) return developmentTunnelConfig
-  return developmentConfig
-}
+export const getFlicktionaryConfig = (): FlicktionaryConfig => ({
+  apiHost: requireEnv('WXT_PUBLIC_API_HOST', import.meta.env.WXT_PUBLIC_API_HOST),
+  webUrl: requireEnv('WXT_PUBLIC_WEB_URL', import.meta.env.WXT_PUBLIC_WEB_URL),
+  supabaseProjectUrl: requireEnv('WXT_PUBLIC_SUPABASE_PROJECT_URL', import.meta.env.WXT_PUBLIC_SUPABASE_PROJECT_URL),
+  supabasePublishableKey: requireEnv(
+    'WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+    import.meta.env.WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  ),
+})
