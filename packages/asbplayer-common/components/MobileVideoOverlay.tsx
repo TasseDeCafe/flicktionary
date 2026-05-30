@@ -297,9 +297,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
     switch (numberControlType) {
       case ControlType.timeDisplay:
         return {
-          leftNumberControlTitle: model?.emptySubtitleTrack
-            ? t`Seek backward`
-            : t`Seek to previous subtitle`,
+          leftNumberControlTitle: model?.emptySubtitleTrack ? t`Seek backward` : t`Seek to previous subtitle`,
           numberControlTitle: t`Current Timestamp`,
           rightNumberControlTitle: model?.emptySubtitleTrack ? t`Seek forward` : t`Seek to next subtitle`,
         }
