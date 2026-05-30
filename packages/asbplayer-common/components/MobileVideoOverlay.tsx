@@ -5,7 +5,7 @@ import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import TuneIcon from '@mui/icons-material/Tune'
 import { ControlType, MobileOverlayModel, PlayMode } from '@asbplayer-fork/common'
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 import { useTranslation } from 'react-i18next'
 import LogoIcon from './LogoIcon'
 import SubtitlesIcon from '@mui/icons-material/Subtitles'
@@ -17,7 +17,7 @@ import Tooltip from './Tooltip'
 
 type Anchor = 'top' | 'bottom'
 
-const useStyles = makeStyles(({ anchor }: { anchor: Anchor }) => ({
+const useStyles = makeStyles<{ anchor: Anchor }>()((theme, { anchor }) => ({
   button: {
     color: 'white',
   },
@@ -101,7 +101,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
   }: Props,
   ref
 ) {
-  const classes = useStyles({ anchor })
+  const { classes } = useStyles({ anchor })
   const offsetInputRef = useRef<HTMLInputElement>(undefined)
   const playbackInputRef = useRef<HTMLInputElement>(undefined)
   const [playModeSelectorOpen, setPlayModeSelectorOpen] = useState<boolean>(false)

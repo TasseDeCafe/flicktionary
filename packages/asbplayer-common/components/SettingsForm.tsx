@@ -1,9 +1,8 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type CreateCSSProperties, makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 import { useTheme } from '@mui/material/styles'
 import Box from '@mui/material/Box'
-import { type Theme } from '@mui/material'
 import { AsbplayerSettings, PageConfig, PageSettings, Profile } from '@asbplayer-fork/common/settings'
 import { isNumeric } from '@asbplayer-fork/common/util'
 import Tab from '@mui/material/Tab'
@@ -20,40 +19,23 @@ interface StylesProps {
   heightConstrained?: boolean
 }
 
-const useStyles = makeStyles<Theme, StylesProps>((theme) => ({
-  root: ({ smallScreen }) => {
-    let styles: any = {
-      maxHeight: '100%',
-      height: 'calc(100% - 48px)',
-    }
-
-    if (!smallScreen) {
-      styles = { ...styles, flexGrow: 1, display: 'flex', height: '100%' }
-    }
-
-    return styles
+const useStyles = makeStyles<StylesProps>()((theme, { smallScreen, heightConstrained }) => ({
+  root: {
+    maxHeight: '100%',
+    height: 'calc(100% - 48px)',
+    ...(smallScreen ? {} : { flexGrow: 1, display: 'flex', height: '100%' }),
   },
-  tabs: ({ smallScreen, heightConstrained }) => {
-    let buttonStyles: React.CSSProperties = {
+  tabs: {
+    '& .MuiButtonBase-root': {
       paddingLeft: 0,
       paddingRight: theme.spacing(1),
-    }
-    if (heightConstrained) {
-      buttonStyles = { ...buttonStyles, minHeight: 38, fontSize: 12 }
-    }
-    let styles: CreateCSSProperties<StylesProps> = {
-      '& .MuiButtonBase-root': buttonStyles,
-      '& .MuiTab-root': {
-        minWidth: 120,
-        height: '100%',
-      },
-    }
-
-    if (!smallScreen) {
-      styles = { ...styles, minWidth: 120, width: 120 }
-    }
-
-    return styles
+      ...(heightConstrained ? { minHeight: 38, fontSize: 12 } : {}),
+    },
+    '& .MuiTab-root': {
+      minWidth: 120,
+      height: '100%',
+    },
+    ...(smallScreen ? {} : { minWidth: 120, width: 120 }),
   },
   formGroup: {
     '& .MuiTextField-root': {
@@ -103,8 +85,8 @@ interface PanelStyleProps {
   tabsOrientation: TabsOrientation
 }
 
-const usePanelStyles = makeStyles<Theme, PanelStyleProps>((theme: Theme) => ({
-  panel: ({ tabsOrientation }) => ({
+const usePanelStyles = makeStyles<PanelStyleProps>()((theme, { tabsOrientation }) => ({
+  panel: {
     paddingLeft: tabsOrientation === 'horizontal' ? theme.spacing(1) : theme.spacing(2),
     paddingRight: theme.spacing(1),
     paddingTop: tabsOrientation === 'horizontal' ? theme.spacing(1) : 0,
@@ -112,7 +94,7 @@ const usePanelStyles = makeStyles<Theme, PanelStyleProps>((theme: Theme) => ({
     maxHeight: '100%',
     height: '100%',
     width: '100%',
-  }),
+  },
 }))
 
 interface TabPanelProps {
@@ -126,7 +108,7 @@ const TabPanel = React.forwardRef<HTMLDivElement, TabPanelProps>(function TabPan
   { children, value, index, tabsOrientation, ...other }: TabPanelProps,
   ref
 ) {
-  const classes = usePanelStyles({ tabsOrientation })
+  const { classes } = usePanelStyles({ tabsOrientation })
   return (
     <Box ref={ref} className={classes.panel} hidden={value !== index} {...other}>
       {value === index && children}
@@ -205,7 +187,7 @@ export default function SettingsForm({
   const supportsDictionary = false
   const theme = useTheme()
   const smallScreen = useMediaQuery(theme.breakpoints.down(500)) && !forceVerticalTabs
-  const classes = useStyles({ smallScreen, heightConstrained })
+  const { classes } = useStyles({ smallScreen, heightConstrained })
   const handleSettingChanged = useCallback(
     async <K extends keyof AsbplayerSettings>(key: K, value: AsbplayerSettings[K]) => {
       onSettingsChanged({ [key]: value })

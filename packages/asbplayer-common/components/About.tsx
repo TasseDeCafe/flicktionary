@@ -10,7 +10,8 @@ import TableRow from '@mui/material/TableRow'
 import MuiTableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import Typography from '@mui/material/Typography'
-import { useTheme, withStyles } from '@mui/styles'
+import { withStyles } from 'tss-react/mui'
+import { useTheme } from '@mui/material/styles'
 import { type Theme } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import SettingsSection from './SettingsSection'
@@ -29,18 +30,18 @@ const Link = ({ children, ...props }: { children: React.ReactNode } & LinkProps)
   )
 }
 
-const TableCell = withStyles((theme) => ({
+const TableCell = withStyles(MuiTableCell, (theme) => ({
   head: {
     backgroundColor: theme.palette.action.hover,
   },
   root: {
     border: 0,
   },
-}))(MuiTableCell)
+}))
 
-const BorderedTableCell = withStyles((theme) => ({
+const BorderedTableCell = withStyles(MuiTableCell, () => ({
   root: {},
-}))(MuiTableCell)
+}))
 
 type Dependency = {
   name: string
