@@ -1,5 +1,6 @@
 import { defineConfig } from 'wxt'
 import type { PublicPathEntry, ResolvedPublicFile, UserManifest, Wxt } from 'wxt'
+import type { Plugin } from 'vite'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -26,6 +27,28 @@ const addToPublicPathsType = (srcPath: string, destPath: string, paths: PublicPa
 }
 
 const commonRoot = path.resolve(__dirname, '../asbplayer-common')
+
+// Escape every non-ASCII code unit in emitted chunks to a \uXXXX sequence.
+// WXT's dev bundler (rolldown) emits raw UTF-8 instead of ASCII like esbuild,
+// so bundled deps that embed exotic code points leak through. Notably
+// fast-xml-parser's XML 1.1 name-char table contains the Unicode non-character
+// U+EFFFF; it is well-formed UTF-8, but Chromium's content-script loader
+// (base::IsStringUTF8) rejects non-characters with "Could not load file … It
+// isn't UTF-8 encoded.", breaking content-script registration in dev. WXT's
+// built-in handling (wxt-dev/wxt#353, fixed in 0.20.22) doesn't cover this
+// astral case, so escape everything non-ASCII here — exactly what the prod
+// esbuild minify pass already does. Uses generateBundle (not renderChunk),
+// which is the hook rolldown honours for in-place chunk rewrites.
+const escapeNonAscii = (): Plugin => ({
+  name: 'escape-non-ascii-content-scripts',
+  generateBundle(_options, bundle) {
+    for (const chunk of Object.values(bundle)) {
+      if (chunk.type === 'chunk' && /[^\x00-\x7f]/.test(chunk.code)) {
+        chunk.code = chunk.code.replace(/[^\x00-\x7f]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`)
+      }
+    }
+  },
+})
 
 // Origins the background needs to call (pairing broker, oRPC backend, Supabase
 // auth) in production and during local development. Firefox already declares
@@ -54,6 +77,9 @@ export default defineConfig({
         '@asbplayer-fork/common': commonRoot,
       },
     },
+    // Keep emitted chunks ASCII so Chromium accepts content scripts in dev;
+    // see escapeNonAscii above.
+    plugins: [escapeNonAscii()],
     // Also expose VITE_* env vars so the Doppler dev_personal config that
     // already drives apps/web's dev-tunnel mode (VITE_WEB_URL,
     // VITE_API_HOST, VITE_SUPABASE_*, VITE_IS_FOR_TUNNEL) works in the

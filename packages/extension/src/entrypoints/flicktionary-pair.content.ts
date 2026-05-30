@@ -36,8 +36,10 @@ export default defineContentScript({
     'https://app.flicktionary.app/extension-pair*',
     // dev-tunnel cloudflare hosts (e.g. https://web-sebastien.flicktionary.dev)
     'https://*.flicktionary.dev/extension-pair*',
-    'http://localhost:5174/extension-pair*',
-    'http://localhost:4173/extension-pair*',
+    // Chrome match patterns can't include a port (it throws "Hostname cannot
+    // include a port"); a portless localhost host matches every port, covering
+    // both the web dev server (5174) and vite preview (4173).
+    'http://localhost/extension-pair*',
   ],
   runAt: 'document_idle',
 
