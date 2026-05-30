@@ -8,7 +8,7 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "build": "tsc && tsc-alias --project tsconfig.json",
+    "build": "pnpm run lingui:compile && tsc && tsc-alias --project tsconfig.json",
     "check:types": "tsc --noEmit",
     "test:watch": "vitest watch",
     "lingui:extract": "bash -lc 'cd ../.. && lingui extract'",

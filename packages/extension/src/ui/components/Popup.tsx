@@ -6,6 +6,9 @@ import { useCallback } from 'react'
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import { useTranslation } from 'react-i18next'
+// POC: these two labels resolve through Lingui; the rest of the popup still uses
+// i18next (useTranslation) during the migration.
+import { Trans } from '@lingui/react/macro'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import { useI18n } from '../hooks/use-i18n'
@@ -62,10 +65,10 @@ const Popup = ({
       <Stack direction='column' spacing={1.5} sx={{ padding: theme.spacing(1.5) }}>
         <ButtonGroup fullWidth variant='contained' color='primary' orientation='horizontal'>
           <Button variant='contained' color='primary' startIcon={<LaunchIcon />} onClick={onOpenApp}>
-            {t('action.openApp')}
+            <Trans>Open App</Trans>
           </Button>
           <Button variant='contained' color='primary' startIcon={<TutorialIcon />} onClick={onOpenUserGuide}>
-            {t('action.userGuide')}
+            <Trans>User guide</Trans>
           </Button>
         </ButtonGroup>
         <FlicktionaryPairSection />

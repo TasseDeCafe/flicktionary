@@ -30,6 +30,9 @@
         "@emotion/styled": "catalog:",
         "@floating-ui/dom": "catalog:",
         "@flicktionary/api-client": "workspace:*",
+        "@flicktionary/i18n": "workspace:*",
+        "@lingui/core": "catalog:",
+        "@lingui/react": "catalog:",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
         "@orpc/client": "catalog:",
@@ -55,6 +58,8 @@
         "uuid": "catalog:"
     },
     "devDependencies": {
+        "@lingui/babel-plugin-lingui-macro": "catalog:",
+        "@rolldown/plugin-babel": "catalog:",
         "@typescript-eslint/eslint-plugin": "catalog:",
         "@typescript-eslint/parser": "catalog:",
         "@vitejs/plugin-react": "catalog:",

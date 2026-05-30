@@ -11,8 +11,19 @@ export default defineConfig({
   catalogs: [
     {
       path: '<rootDir>/packages/i18n/locales/{locale}/messages',
-      include: ['<rootDir>/apps/web/src', '<rootDir>/apps/native/src', '<rootDir>/packages/i18n/src'],
-      exclude: ['**/node_modules/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+      include: [
+        '<rootDir>/apps/web/src',
+        '<rootDir>/apps/native/src',
+        '<rootDir>/packages/i18n/src',
+        '<rootDir>/packages/extension/src',
+        '<rootDir>/packages/asbplayer-common',
+      ],
+      exclude: [
+        '**/node_modules/**',
+        '**/*.test.{ts,tsx}',
+        '**/*.spec.{ts,tsx}',
+        '<rootDir>/packages/asbplayer-common/locales/**',
+      ],
     },
   ],
   format: formatter(),

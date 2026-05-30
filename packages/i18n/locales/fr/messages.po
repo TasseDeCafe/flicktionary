@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. js-lingui-explicit-id
+#: packages/extension/src/controllers/video-data-sync-controller.ts:98
+msgid "extension.videoDataSync.emptySubtitleTrack"
+msgstr ""
+
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
 #~ msgid "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
 #~ msgstr "- Accéder au service à des fins illégales ou en violation de toute loi locale, étatique, nationale ou internationale."
@@ -2263,6 +2268,10 @@ msgstr "Numéral"
 msgid "OK"
 msgstr "OK"
 
+#: packages/extension/src/ui/components/Popup.tsx:68
+msgid "Open App"
+msgstr "Ouvrir l'app"
+
 #: apps/web/src/features/review/components/chat-header-button.tsx:32
 msgid "Open chat"
 msgstr "Ouvrir le chat"
@@ -3411,6 +3420,10 @@ msgstr "Utilisée comme votre L1 dans les prompts LLM."
 #: apps/web/src/features/more/components/account-page.tsx:84
 msgid "User"
 msgstr "Utilisateur"
+
+#: packages/extension/src/ui/components/Popup.tsx:71
+msgid "User guide"
+msgstr "Guide d'utilisation"
 
 #: apps/native/src/features/user/api/user-hooks.ts:11
 #: apps/web/src/features/user/api/user-hooks.ts:26

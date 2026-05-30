@@ -20,7 +20,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "build/**"]
+      "outputs": ["dist/**", ".next/**", "build/**", "locales/**/*.ts"]
     },
     "test": {
       "dependsOn": ["^build"],

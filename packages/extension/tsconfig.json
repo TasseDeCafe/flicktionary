@@ -25,7 +25,9 @@
             "@asbplayer-fork/common": ["../asbplayer-common/index.ts"],
             "@asbplayer-fork/common/*": ["../asbplayer-common/*"],
             "@flicktionary/api-client/*": ["../api-client/src/*"],
-            "@flicktionary/core/*": ["../core/src/*"]
+            "@flicktionary/core/*": ["../core/src/*"],
+            "@flicktionary/i18n/locales/*": ["../i18n/locales/*"],
+            "@flicktionary/i18n/*": ["../i18n/src/*"]
         }
     }
 }
