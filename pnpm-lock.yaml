@@ -1447,6 +1447,9 @@ importers:
         specifier: 0.15.5
         version: 0.15.5
     devDependencies:
+      '@flicktionary/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       '@types/videojs-vtt.js':
         specifier: ^0.15.3
         version: 0.15.3

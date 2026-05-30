@@ -34,6 +34,7 @@
         "videojs-vtt.js": "0.15.5"
     },
     "devDependencies": {
+        "@flicktionary/typescript-config": "workspace:*",
         "@types/videojs-vtt.js": "^0.15.3",
         "@typescript-eslint/eslint-plugin": "catalog:",
         "@typescript-eslint/parser": "catalog:",
@@ -48,6 +49,7 @@
         "vitest": "catalog:"
     },
     "scripts": {
+        "check:types": "tsc --noEmit",
         "lint": "eslint . --fix",
         "test": "vitest",
         "test:run": "vitest run"

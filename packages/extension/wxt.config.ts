@@ -164,7 +164,7 @@ export default defineConfig({
     }
 
     if (browser === 'firefox') {
-      permissions = [...permissions, 'contextMenus', 'webRequest', 'webRequestBlocking', 'clipboardWrite']
+      permissions = [...permissions, 'contextMenus', 'clipboardWrite']
 
       manifest = {
         ...manifest,
@@ -180,7 +180,7 @@ export default defineConfig({
     }
 
     if (browser === 'firefox-android') {
-      permissions = [...permissions, 'webRequest', 'webRequestBlocking', 'clipboardWrite']
+      permissions = [...permissions, 'clipboardWrite']
 
       manifest = {
         ...manifest,
