@@ -57,7 +57,7 @@
     "babel-preset-expo": "catalog:",
     "class-variance-authority": "catalog:",
     "dayjs": "catalog:",
-    "expo": "55.0.9",
+    "expo": "catalog:",
     "expo-apple-authentication": "catalog:",
     "expo-application": "catalog:",
     "expo-constants": "catalog:",
