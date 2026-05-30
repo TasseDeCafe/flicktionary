@@ -52,6 +52,7 @@
         "react-i18next": "^15.6.1",
         "regenerator-runtime": "^0.14.1",
         "semver": "^7.7.2",
+        "tss-react": "catalog:",
         "typescript": "^5.8.3",
         "uuid": "^11.1.0"
     },

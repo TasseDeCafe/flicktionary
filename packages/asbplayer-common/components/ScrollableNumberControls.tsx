@@ -1,4 +1,4 @@
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 import PlaybackRateInput from './PlaybackRateInput'
 import SubtitleOffsetInput from './SubtitleOffsetInput'
 import TimeDisplay from './TimeDisplay'
@@ -8,7 +8,7 @@ import { ControlType } from '..'
 const containerHeight = 40
 const scrollThreshold = containerHeight / 2 + 1
 
-const useStyles = makeStyles(() => {
+const useStyles = makeStyles()(() => {
   return {
     container: {
       height: containerHeight,
@@ -62,7 +62,7 @@ const ScrollableNumberControls = ({
   initialControlType,
   onScrollTo,
 }: Props) => {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const [controlType, setControlType] = useState<ControlType>(ControlType.timeDisplay)
   const lastScrollTop = useRef<number>(0)
   const [initialScroll, setInitialScroll] = useState<InitialScrollState>(InitialScrollState.notStarted)

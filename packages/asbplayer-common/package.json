@@ -29,6 +29,7 @@
         "react-i18next": "^15.6.1",
         "sanitize-filename": "^1.6.3",
         "semver": "^7.3.7",
+        "tss-react": "catalog:",
         "url": "^0.11.3",
         "videojs-vtt.js": "0.15.5"
     },

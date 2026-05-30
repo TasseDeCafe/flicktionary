@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
-import makeStyles from '@mui/styles/makeStyles'
+import { makeStyles } from 'tss-react/mui'
 import Switch from '@mui/material/Switch'
 import LabelWithHoverEffect from '@asbplayer-fork/common/components/LabelWithHoverEffect'
 import { ConfirmedVideoDataSubtitleTrack, VideoDataSubtitleTrack, VideoDataUiOpenReason } from '@asbplayer-fork/common'
@@ -23,7 +23,7 @@ import type { Profile } from '@asbplayer-fork/common/settings'
 import Alert from '@mui/material/Alert'
 import { type ButtonBaseActions } from '@mui/material'
 
-const createClasses = makeStyles((theme) => ({
+const createClasses = makeStyles()((theme) => ({
   relative: {
     position: 'relative',
   },
@@ -111,7 +111,7 @@ export default function VideoDataSyncDialog({
   const [name, setName] = useState('')
   const [shouldRememberTrackChoices, setShouldRememberTrackChoices] = useState(false)
   const trimmedName = name.trim()
-  const classes = createClasses()
+  const { classes } = createClasses()
 
   useEffect(() => {
     if (open) {

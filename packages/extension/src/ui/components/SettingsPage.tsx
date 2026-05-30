@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm'
@@ -13,10 +13,10 @@ import Paper from '@mui/material/Paper'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
 import { AsbplayerSettings, Profile } from '@asbplayer-fork/common/settings'
-import { useTheme, type Theme } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import { settingsPageConfigs } from '@/services/pages'
 
-const useStyles = makeStyles<Theme>((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     '& .MuiPaper-root': {
       height: '100vh',
@@ -45,7 +45,7 @@ interface Props {
 const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
   const { t } = useTranslation()
   const theme = useTheme()
-  const classes = useStyles()
+  const { classes } = useStyles()
 
   const { updateLocalFontsPermission, updateLocalFonts, localFontsAvailable, localFontsPermission, localFontFamilies } =
     useLocalFontFamilies()

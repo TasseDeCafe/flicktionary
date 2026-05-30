@@ -1,4 +1,4 @@
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 
 function displayTime(milliseconds: number) {
   const seconds = Math.floor(milliseconds / 1000)
@@ -7,7 +7,7 @@ function displayTime(milliseconds: number) {
   return String(minutes) + ':' + String(secondsInMinute).padStart(2, '0')
 }
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   timeDisplay: {
     color: '#fff',
     display: 'flex',
@@ -26,7 +26,7 @@ interface Props extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElem
 }
 
 const TimeDisplay = ({ currentMilliseconds, totalMilliseconds, className, ...rest }: Props) => {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const actualClassName = className ? `${className} ${classes.timeDisplay}` : classes.timeDisplay
   const content =
     totalMilliseconds === undefined

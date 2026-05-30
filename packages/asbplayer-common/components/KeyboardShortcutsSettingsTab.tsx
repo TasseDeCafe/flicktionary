@@ -1,7 +1,8 @@
 import { AsbplayerSettings, KeyBindName } from '../settings'
 import { useTranslation } from 'react-i18next'
 import { isMacOs } from 'react-device-detect'
-import { makeStyles, useTheme } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
+import { useTheme } from '@mui/material/styles'
 import { type Theme } from '@mui/material'
 import { useOutsideClickListener } from '@asbplayer-fork/common/hooks'
 import hotkeys from 'hotkeys-js'
@@ -41,7 +42,7 @@ const modifierKeyReplacements: { [key: string]: string } = isMacOs
 
 const modifierKeys = ['⌃', '⇧', '⌥', 'ctrl', 'shift', 'alt', 'option', 'control', 'command', '⌘']
 
-const useKeyBindFieldStyles = makeStyles<Theme>((theme) => ({
+const useKeyBindFieldStyles = makeStyles()((theme) => ({
   container: {
     marginBottom: theme.spacing(1),
   },
@@ -61,7 +62,7 @@ interface KeyBindFieldProps {
 function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensionShortcuts }: KeyBindFieldProps) {
   const { t } = useTranslation()
   const theme = useTheme<Theme>()
-  const classes = useKeyBindFieldStyles()
+  const { classes } = useKeyBindFieldStyles()
   const [currentKeyString, setCurrentKeyString] = useState<string>(keys)
   const currentKeyStringRef = useRef<string>(undefined)
   currentKeyStringRef.current = currentKeyString

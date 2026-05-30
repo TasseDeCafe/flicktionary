@@ -1,8 +1,8 @@
 import Input, { InputProps } from '@mui/material/Input'
 import React, { MutableRefObject, useCallback, useEffect, useState } from 'react'
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   input: {
     height: '100%',
     display: 'flex',
@@ -41,7 +41,7 @@ export default React.forwardRef(function VideoControlInput(
   }: Props,
   ref
 ) {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const [inputWidth, setInputWidth] = useState<number>(5)
   const handleNumberInputClicked = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
     const inputElement = e.target as HTMLInputElement

@@ -6,13 +6,13 @@ import CssBaseline from '@mui/material/CssBaseline'
 import Paper from '@mui/material/Paper'
 import { useI18n } from '../hooks/use-i18n'
 import { createTheme } from '@asbplayer-fork/common/theme'
-import { makeStyles } from '@mui/styles'
+import { makeStyles } from 'tss-react/mui'
 import CenteredGridContainer from './CenteredGridContainer'
 import CenteredGridItem from './CenteredGridItem'
 import React, { useEffect, useState } from 'react'
 import Tutorial from './Tutorial'
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   container: {
     scrollSnapType: 'y mandatory',
     width: '100dvw',
@@ -69,7 +69,7 @@ const FtueUi = () => {
   const theme = createTheme('dark')
   const langParam = useLangParam()
   const { initialized: i18Initialized } = useI18n({ language: langParam ?? browser.i18n.getUILanguage() })
-  const classes = useStyles()
+  const { classes } = useStyles()
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
   const [hideWelcomePanel, setHideWelcomePanel] = useState<boolean>(false)
 

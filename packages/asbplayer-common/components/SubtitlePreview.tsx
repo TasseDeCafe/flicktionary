@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
-import { makeStyles } from '@mui/styles'
-import { type Theme } from '@mui/material'
+import { makeStyles } from 'tss-react/mui'
 import { SubtitleSettings, TextSubtitleSettings, textSubtitleSettingsForTrack } from '../settings'
 import { computeStyles } from '../util'
 
@@ -11,7 +10,7 @@ interface Props {
   onTextChanged: (text: string) => void
 }
 
-const useStyles = makeStyles<Theme>((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   subtitlePreview: {
     backgroundImage: `linear-gradient(45deg, ${theme.palette.action.disabledBackground} 25%, transparent 25%), linear-gradient(-45deg, ${theme.palette.action.disabledBackground} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${theme.palette.action.disabledBackground} 75%), linear-gradient(-45deg, transparent 75%,${theme.palette.action.disabledBackground} 75%)`,
     backgroundSize: '20px 20px',
@@ -107,7 +106,7 @@ const SubtitlePreviewInput = ({ text, className, textSubtitleSettings, onTextCha
 }
 
 export default function SubtitlePreview({ subtitleSettings, text, track, onTextChanged }: Props) {
-  const classes = useStyles()
+  const { classes } = useStyles()
   const inputClassName = (s: TextSubtitleSettings) =>
     s.subtitleBlur ? `${classes.subtitlePreviewInput} ${classes.blurred}` : classes.subtitlePreviewInput
   const textSubtitleSettings = textSubtitleSettingsForTrack(subtitleSettings, track)

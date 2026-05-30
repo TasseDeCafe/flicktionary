@@ -7,8 +7,7 @@ import IconButton from '@mui/material/IconButton'
 import CheckIcon from '@mui/icons-material/Check'
 import ClearIcon from '@mui/icons-material/Clear'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { makeStyles } from '@mui/styles'
-import { type Theme } from '@mui/material'
+import { makeStyles } from 'tss-react/mui'
 import { Profile } from '../settings'
 import type { TFunction } from 'i18next'
 
@@ -23,7 +22,7 @@ interface Props {
   onSetActiveProfile: (name: string | undefined) => void
 }
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   newProfileTextField: {
     '& .MuiInputBase-root': {
       paddingRight: 0,
@@ -50,16 +49,15 @@ interface ProfileMenuItemProps {
   className: string
 }
 
-const useMenuItemStyles = makeStyles<Theme, ProfileMenuStyleProps>(() => ({
-  root: ({ collapsed }) =>
-    collapsed
-      ? {
-          '&:hover': {
-            backgroundColor: 'transparent',
-          },
-          margin: 0,
-        }
-      : { margin: 0 },
+const useMenuItemStyles = makeStyles<ProfileMenuStyleProps>()((theme, { collapsed }) => ({
+  root: collapsed
+    ? {
+        '&:hover': {
+          backgroundColor: 'transparent',
+        },
+        margin: 0,
+      }
+    : { margin: 0 },
 }))
 
 // MUI requires <MenuItem> to be a direct descendent of the parent select menu.
@@ -115,9 +113,9 @@ export default function SettingsProfileSelectMenu({
   onSetActiveProfile,
 }: Props) {
   const { t } = useTranslation()
-  const classes = useStyles()
-  const collapsedMenuItemStyles = useMenuItemStyles({ collapsed: true })
-  const expandedMenuItemStyles = useMenuItemStyles({ collapsed: false })
+  const { classes } = useStyles()
+  const { classes: collapsedMenuItemStyles } = useMenuItemStyles({ collapsed: true })
+  const { classes: expandedMenuItemStyles } = useMenuItemStyles({ collapsed: false })
 
   const [addingNewProfile, setAddingNewProfile] = useState<boolean>(false)
   const newProfileInput = useRef<HTMLInputElement>(undefined)
