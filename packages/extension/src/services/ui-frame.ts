@@ -101,9 +101,7 @@ export default class UiFrame {
     document.body.appendChild(this._frame)
 
     if (isFirefoxBuild) {
-      // Firefox does not allow document.write() into the about:blank iframe.
-      // CSP headers are modified using the webRequest API to allow extension scripts to
-      // be loaded.
+      // Firefox does not allow document.write() into the about:blank iframe, so use srcdoc instead.
       this._frame.srcdoc = await this._html(this._language)
     } else {
       // On Chromium, use document.write() since it allows the loading of extension scripts

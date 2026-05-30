@@ -1,9 +1,4 @@
-import type {
-  Command,
-  Message,
-  ExportTranscriptCacheMessage,
-  ExportTranscriptCacheResponse,
-} from '@asbplayer-fork/common'
+import type { Command, Message, ExportTranscriptCacheResponse } from '@asbplayer-fork/common'
 import { getAllCachedTranscripts } from '@/services/transcript-cache'
 
 export default class ExportTranscriptCacheHandler {

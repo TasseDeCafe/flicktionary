@@ -16,8 +16,6 @@ import CssBaseline from '@mui/material/CssBaseline'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMobileVideoOverlayModel } from '../hooks/use-mobile-video-overlay-model'
 import { useMobileVideoOverlayLocation } from '../hooks/use-mobile-video-overlay-location'
-import { SettingsProvider } from '@asbplayer-fork/common/settings'
-import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
 import MobileVideoOverlay from '@asbplayer-fork/common/components/MobileVideoOverlay'
 import { useI18n } from '../hooks/use-i18n'
 import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
@@ -26,7 +24,6 @@ import { createTheme } from '@asbplayer-fork/common/theme'
 import type { PaletteMode } from '@mui/material/styles'
 import { StyledEngineProvider } from '@mui/material/styles'
 
-const settings = new SettingsProvider(new ExtensionSettingsStorage())
 const params = new URLSearchParams(location.search)
 const anchor = params.get('anchor') as 'top' | 'bottom'
 const tooltipsEnabled = params.get('tooltips') === 'true'

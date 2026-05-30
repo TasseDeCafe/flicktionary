@@ -15,7 +15,6 @@ import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/Setting
 import { AsbplayerSettings, Profile } from '@asbplayer-fork/common/settings'
 import { useTheme, type Theme } from '@mui/material/styles'
 import { settingsPageConfigs } from '@/services/pages'
-import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db'
 
 const useStyles = makeStyles<Theme>((theme) => ({
   root: {
@@ -33,7 +32,6 @@ const useStyles = makeStyles<Theme>((theme) => ({
 }))
 
 interface Props {
-  dictionaryProvider: DictionaryProvider
   settings: AsbplayerSettings
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   profiles: Profile[]
@@ -44,7 +42,7 @@ interface Props {
   onSetActiveProfile: (name: string | undefined) => void
 }
 
-const SettingsPage = ({ dictionaryProvider, settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
+const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
   const { t } = useTranslation()
   const theme = useTheme()
   const classes = useStyles()

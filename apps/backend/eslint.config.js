@@ -28,6 +28,9 @@ export default [
     rules: {
       ...tsPlugin.configs.recommended.rules,
       '@typescript-eslint/ban-ts-comment': 'off',
+      // Ignore unavoidable callback/interface params and catch bindings, so the
+      // rule only flags genuinely dead vars/imports.
+      '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       'prettier/prettier': [
         'error',
         {

@@ -31,7 +31,9 @@ module.exports = [
       // Pre-existing violations in the legacy asbplayer fork — surfaced as warnings
       // to clean up incrementally rather than blocking lint/check.
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      // Ignore unavoidable callback/interface params and catch bindings, so the
+      // rule only flags genuinely dead vars/imports.
+      '@typescript-eslint/no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }],
       '@typescript-eslint/ban-ts-comment': 'warn',
       'prettier/prettier': [
         'error',

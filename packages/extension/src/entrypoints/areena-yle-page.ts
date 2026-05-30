@@ -1,7 +1,7 @@
 import { VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { inferTracks, trackFromDef } from '@/pages/util'
 import { Parser } from 'm3u8-parser'
-import { fetchM3U8, subtitleTrackSegmentsFromM3U8 } from '@/pages/m3u8-util'
+import { fetchM3U8 } from '@/pages/m3u8-util'
 
 export interface Playlist {
   language: string

@@ -2,10 +2,8 @@ import Binding from '@/services/binding'
 import { PageDelegate, currentPageDelegate } from '@/services/pages'
 import VideoSelectController from '@/controllers/video-select-controller'
 import { CopyToClipboardMessage, CropAndResizeMessage } from '@asbplayer-fork/common'
-import { SettingsProvider } from '@asbplayer-fork/common/settings'
 import { FrameInfoBroadcaster, FrameInfoListener } from '@/services/frame-info'
 import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer'
-import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots'
 import { isFirefoxBuild } from '@/services/build-flags'
 
@@ -26,9 +24,6 @@ export default defineContentScript({
   runAt: 'document_idle',
 
   main(ctx: ContentScriptContext) {
-    const extensionSettingsStorage = new ExtensionSettingsStorage()
-    const settingsProvider = new SettingsProvider(extensionSettingsStorage)
-
     const hasValidVideoSource = (videoElement: HTMLVideoElement, page?: PageDelegate) => {
       if (page?.config?.allowVideoElementsWithBlankSrc) {
         return true

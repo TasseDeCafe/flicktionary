@@ -1,9 +1,4 @@
-import type {
-  Command,
-  Message,
-  ClearTranscriptCacheMessage,
-  ClearTranscriptCacheResponse,
-} from '@asbplayer-fork/common'
+import type { Command, Message, ClearTranscriptCacheResponse } from '@asbplayer-fork/common'
 import { clearTranscriptCache } from '@/services/transcript-cache'
 
 export default class ClearTranscriptCacheHandler {

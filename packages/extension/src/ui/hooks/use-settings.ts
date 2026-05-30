@@ -56,5 +56,5 @@ export const useSettings = () => {
     onProfileChanged: handleProfileChanged,
   })
 
-  return { dictionaryProvider, settings, onSettingsChanged, profileContext }
+  return { settings, onSettingsChanged, profileContext }
 }

@@ -1,4 +1,4 @@
-import { VideoData, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
+import { VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { trackFromDef } from '@/pages/util'
 
 export default defineUnlistedScript(() => {

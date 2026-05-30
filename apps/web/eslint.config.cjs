@@ -39,6 +39,9 @@ module.exports = [
     rules: {
       ...tsPlugin.configs.recommended.rules,
 
+      // Ignore unavoidable callback/interface params and catch bindings, so the
+      // rule only flags genuinely dead vars/imports.
+      '@typescript-eslint/no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       'react-refresh/only-export-components': [
         'warn',
         {
