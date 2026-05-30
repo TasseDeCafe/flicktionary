@@ -255,13 +255,20 @@ catalog:
 
 catalogMode: strict
 
-onlyBuiltDependencies:
-  - '@sentry-internal/node-cpu-profiler'
-  - '@sentry/cli'
-  - '@shopify/react-native-skia'
-  - '@swc/core'
-  - core-js
-  - esbuild
-  - protobufjs
-  - sharp
-  - unrs-resolver
+publicHoistPattern:
+  - '*react*'
+  - '*types*'
+  - webextension-polyfill
+  - wxt
+
+allowBuilds:
+  '@sentry-internal/node-cpu-profiler': true
+  '@sentry/cli': true
+  '@shopify/react-native-skia': true
+  '@swc/core': true
+  core-js: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  spawn-sync: false
+  unrs-resolver: true
