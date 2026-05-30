@@ -44,10 +44,7 @@ const escapeNonAscii = (): Plugin => ({
   generateBundle(_options, bundle) {
     for (const chunk of Object.values(bundle)) {
       if (chunk.type === 'chunk' && /[^\x00-\x7f]/.test(chunk.code)) {
-        chunk.code = chunk.code.replace(
-          /[^\x00-\x7f]/g,
-          (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`,
-        )
+        chunk.code = chunk.code.replace(/[^\x00-\x7f]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`)
       }
     }
   },
