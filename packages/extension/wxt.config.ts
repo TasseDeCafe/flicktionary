@@ -63,7 +63,7 @@ export default defineConfig({
   }),
   zip: {
     sourcesRoot: '..',
-    includeSources: ['../../patches/**', 'LICENSE.md'],
+    includeSources: ['LICENSE.md'],
   },
   hooks: {
     'build:publicAssets': (wxt: Wxt, files: ResolvedPublicFile[]) => {
@@ -81,7 +81,6 @@ export default defineConfig({
     let manifest: UserManifest = {
       name: 'asbplayer: Language-learning with subtitles',
       description: '__MSG_extensionDescription__',
-      version: '1.13.0',
       action: { default_title: 'asbplayer' },
       default_locale: 'en',
       icons: {
@@ -173,7 +172,6 @@ export default defineConfig({
         browser_specific_settings: {
           gecko: {
             id: '{e4b27483-2e73-4762-b2ec-8d988a143a40}',
-            update_url: 'https://killergerbah.github.io/asbplayer/firefox-extension-updates.json',
           },
         },
       }
