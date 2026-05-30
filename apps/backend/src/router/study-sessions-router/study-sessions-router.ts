@@ -286,6 +286,9 @@ export const StudySessionsRouter = (
               {
                 code: 'MISSING_CEFR',
                 message: `Set your ${getLanguageName(detectedLanguage)} level on flicktionary.app before saving from the extension.`,
+                // The extension reads this to offer an inline CEFR picker for
+                // the detected language rather than sending the user to the app.
+                targetLanguage: detectedLanguage,
               },
             ],
           },

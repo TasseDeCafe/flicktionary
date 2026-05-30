@@ -380,3 +380,70 @@
         transform: translateY(-10px);
     }
 }
+
+/* CEFR picker — shown over the video when a save hits MISSING_CEFR */
+.asbplayer-cefr-picker {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 16px !important;
+    width: 300px !important;
+    max-width: calc(100vw - 24px) !important;
+    background: rgba(20, 20, 20, 0.96) !important;
+    color: #fff !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5) !important;
+    pointer-events: auto !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+.asbplayer-cefr-picker__title {
+    margin: 0 !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+}
+.asbplayer-cefr-picker__subtitle {
+    margin: 0 !important;
+    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.65) !important;
+    line-height: 1.35 !important;
+}
+.asbplayer-cefr-picker__levels {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+}
+.asbplayer-cefr-picker__level {
+    appearance: none !important;
+    cursor: pointer !important;
+    padding: 10px 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 8px !important;
+    transition: background 0.12s ease, border-color 0.12s ease !important;
+}
+.asbplayer-cefr-picker__level:hover {
+    background: rgba(255, 255, 255, 0.22) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+.asbplayer-cefr-picker__footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+.asbplayer-cefr-picker__cancel {
+    appearance: none !important;
+    cursor: pointer !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    background: transparent !important;
+    border: none !important;
+}
+.asbplayer-cefr-picker__cancel:hover {
+    color: #fff !important;
+}

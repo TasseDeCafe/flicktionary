@@ -528,6 +528,27 @@ export interface SaveWordMessage extends MessageWithId {
 export interface SaveWordResponse {
   readonly success: boolean
   readonly error?: string
+  // Backend error code (e.g. 'MISSING_CEFR') so the content script can offer a
+  // recovery flow instead of just toasting the message.
+  readonly code?: string
+  // Detected target language for the save, surfaced on a 'MISSING_CEFR' failure
+  // so the in-video CEFR picker knows which language to set a level for.
+  readonly targetLanguage?: string
+}
+
+// Sets the user's CEFR level for a language from the content script. Backed by
+// the same `userPrefs.setCefrForLanguage` endpoint the web app's wizards use;
+// the content script can't reach the authed oRPC client directly, so it routes
+// through the background handler.
+export interface SetFlicktionaryCefrMessage extends MessageWithId {
+  readonly command: 'set-flicktionary-cefr'
+  readonly targetLanguage: string
+  readonly cefrLevel: string
+}
+
+export interface SetFlicktionaryCefrResponse {
+  readonly success: boolean
+  readonly error?: string
 }
 
 export interface RegisterFlicktionarySubtitlesMessage extends MessageWithId {

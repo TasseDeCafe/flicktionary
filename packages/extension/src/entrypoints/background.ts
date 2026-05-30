@@ -40,6 +40,7 @@ import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler'
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler'
 import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/register-subtitles-handler'
+import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler'
 import SupadataGenerateHandler from '@/handlers/supadata/supadata-generate-handler'
 import GetCachedTranscriptHandler from '@/handlers/video/get-cached-transcript-handler'
 import ExportTranscriptCacheHandler from '@/handlers/video/export-transcript-cache-handler'
@@ -131,6 +132,7 @@ export default defineBackground(() => {
     new SaveWordHandler(),
     new FlicktionaryPairHandler(),
     new RegisterFlicktionarySubtitlesHandler(),
+    new SetFlicktionaryCefrHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),
     new ExportTranscriptCacheHandler(),

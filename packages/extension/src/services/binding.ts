@@ -909,8 +909,9 @@ export default class Binding {
   }
 
   // Surfaces backend feedback once at video-load time. Only the unsupported
-  // case disables saving outright; missing-prefs is recoverable per-save, so
-  // we just inform and leave saving enabled (the save path re-reports it).
+  // case is handled here (it disables saving outright). MISSING_CEFR is left to
+  // the save path, which shows an inline CEFR picker on the first save attempt —
+  // toasting it at load too would be a redundant, non-actionable scare.
   private _handleFlicktionaryRegisterResponse(
     response: RegisterFlicktionarySubtitlesResponse | undefined,
     youtubeLanguageCode: string | undefined
@@ -924,11 +925,6 @@ export default class Binding {
         : `These subtitles are in a language Flicktionary doesn't support yet — saving is disabled for this video.`
       this._flicktionarySaveDisabledReason = reason
       this.wordInteractionController.showNotice(reason, true)
-      return
-    }
-
-    if (response.code === 'MISSING_CEFR' && response.error) {
-      this.wordInteractionController.showNotice(response.error, true)
     }
   }
 

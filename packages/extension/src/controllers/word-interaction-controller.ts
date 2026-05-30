@@ -6,9 +6,17 @@ import {
   SaveWordMessage,
   SaveWordResponse,
   SaveWordFlicktionaryVideoContext,
+  SetFlicktionaryCefrMessage,
+  SetFlicktionaryCefrResponse,
 } from '@asbplayer-fork/common'
 import { v4 as uuidv4 } from 'uuid'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
+import { describeLanguageCode } from '../services/flicktionary/youtube-context'
+
+// CEFR levels offered by the in-video picker, in ascending order. Mirrors the
+// web app's CEFR_LEVELS; kept local so the content script doesn't pull in the
+// web/core packages.
+const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 
 // The structured gloss rendered in the hover tooltip — mirrors the web app's
 // fast-gloss popover (selection + IPA + gloss + POS/register).
@@ -90,6 +98,9 @@ export default class WordInteractionController {
   private cachedGlosses: Map<string, GlossData> = new Map()
   private boundVideoTimeUpdate: (() => void) | null = null
   private boundVideoPlaying: (() => void) | null = null
+  // The in-video CEFR picker shown when a save fails with MISSING_CEFR; null
+  // when not displayed. Only one is ever mounted at a time.
+  private cefrPicker: HTMLElement | null = null
   private boundHandlers: {
     mouseEnter: (e: Event) => void
     mouseLeave: (e: Event) => void
@@ -648,7 +659,16 @@ export default class WordInteractionController {
     this._showNotification(text, isError)
   }
 
-  private async _saveWord(word: string, sentence: string, translation: string, segmentInfo?: SegmentInfo) {
+  private async _saveWord(
+    word: string,
+    sentence: string,
+    translation: string,
+    segmentInfo?: SegmentInfo,
+    // Set when this save is the automatic retry after the user picked a CEFR
+    // level. Prevents re-showing the picker if the save still fails for a
+    // prefs reason (e.g. native language unset) — we fall back to the message.
+    isCefrRetry = false
+  ) {
     const saveDisabledReason = this.getFlicktionarySaveDisabledReason()
     if (saveDisabledReason) {
       this._showNotification(saveDisabledReason, true)
@@ -678,12 +698,126 @@ export default class WordInteractionController {
 
     if (response.success) {
       this._showNotification(`Saved: ${word}`)
-    } else {
-      console.error('Failed to save word:', response.error)
-      this._showNotification(response.error || 'Could not save to Flicktionary.', true)
+      this._clearSelection()
+      return
     }
 
+    // No CEFR level set for this language yet — offer an inline picker so the
+    // user can set it without leaving the video, then retry the save. The
+    // selection is kept until the flow finishes (or is cancelled) so the retry
+    // has the same word in context.
+    if (response.code === 'MISSING_CEFR' && response.targetLanguage && !isCefrRetry) {
+      const targetLanguage = response.targetLanguage
+      this._showCefrPicker(targetLanguage, (cefrLevel) => {
+        void this._setCefrAndRetry(targetLanguage, cefrLevel, word, sentence, translation, segmentInfo)
+      })
+      return
+    }
+
+    console.error('Failed to save word:', response.error)
+    this._showNotification(response.error || 'Could not save to Flicktionary.', true)
     this._clearSelection()
+  }
+
+  // Sets the CEFR level for `targetLanguage` via the background handler, then
+  // retries the original save. A failure to set surfaces a toast and abandons
+  // the save (the user can try again).
+  private async _setCefrAndRetry(
+    targetLanguage: string,
+    cefrLevel: string,
+    word: string,
+    sentence: string,
+    translation: string,
+    segmentInfo?: SegmentInfo
+  ) {
+    const message: TabToExtensionCommand<SetFlicktionaryCefrMessage> = {
+      sender: 'asbplayer-video-tab',
+      message: {
+        command: 'set-flicktionary-cefr',
+        messageId: uuidv4(),
+        targetLanguage,
+        cefrLevel,
+      },
+    }
+
+    // `response` is undefined if no background handler answered (e.g. the
+    // service worker was mid-reload). Treat that as a failure rather than
+    // crashing on `.success`.
+    const response: SetFlicktionaryCefrResponse | undefined = await browser.runtime.sendMessage(message)
+    if (!response?.success) {
+      this._showNotification(response?.error || 'Could not set your level.', true)
+      this._clearSelection()
+      return
+    }
+
+    await this._saveWord(word, sentence, translation, segmentInfo, true)
+  }
+
+  // Renders the in-video CEFR picker (A1–C2) centered over the video. Plain DOM
+  // to match the existing toast/tooltip overlays. `onPick` fires with the chosen
+  // level after the picker is dismissed.
+  private _showCefrPicker(languageCode: string, onPick: (cefrLevel: string) => void) {
+    this._dismissCefrPicker()
+
+    const languageName = describeLanguageCode(languageCode) ?? languageCode.toUpperCase()
+
+    const picker = document.createElement('div')
+    picker.className = 'asbplayer-cefr-picker'
+
+    const title = document.createElement('p')
+    title.className = 'asbplayer-cefr-picker__title'
+    title.textContent = `Your ${languageName} level`
+
+    const subtitle = document.createElement('p')
+    subtitle.className = 'asbplayer-cefr-picker__subtitle'
+    subtitle.textContent = 'Set this once to start saving words from this language.'
+
+    const levels = document.createElement('div')
+    levels.className = 'asbplayer-cefr-picker__levels'
+    for (const level of CEFR_LEVELS) {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'asbplayer-cefr-picker__level'
+      button.textContent = level
+      button.addEventListener('click', () => {
+        this._dismissCefrPicker()
+        onPick(level)
+      })
+      levels.appendChild(button)
+    }
+
+    const footer = document.createElement('div')
+    footer.className = 'asbplayer-cefr-picker__footer'
+    const cancel = document.createElement('button')
+    cancel.type = 'button'
+    cancel.className = 'asbplayer-cefr-picker__cancel'
+    cancel.textContent = 'Cancel'
+    cancel.addEventListener('click', () => {
+      this._dismissCefrPicker()
+      this._clearSelection()
+    })
+    footer.appendChild(cancel)
+
+    picker.appendChild(title)
+    picker.appendChild(subtitle)
+    picker.appendChild(levels)
+    picker.appendChild(footer)
+    document.body.appendChild(picker)
+    this.cefrPicker = picker
+
+    // Center over the video, clamped into the viewport.
+    const videoRect = this.video.getBoundingClientRect()
+    const left = videoRect.left + videoRect.width / 2 - picker.offsetWidth / 2
+    const top = videoRect.top + videoRect.height / 2 - picker.offsetHeight / 2
+    picker.style.left = `${Math.max(12, left)}px`
+    picker.style.top = `${Math.max(12, top)}px`
+  }
+
+  private _dismissCefrPicker() {
+    if (this.cefrPicker) {
+      this.cefrPicker.remove()
+      this.cefrPicker = null
+    }
   }
 
   private async _saveSelectedWords() {

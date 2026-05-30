@@ -33,8 +33,12 @@ export default class SaveWordHandler {
         await this._saveToFlicktionary(message)
         sendResponse({ success: true })
       } catch (error) {
-        const { message: errorMessage } = extractFlicktionaryApiError(error, 'Failed to save to Flicktionary')
-        sendResponse({ success: false, error: errorMessage })
+        const {
+          code,
+          message: errorMessage,
+          targetLanguage,
+        } = extractFlicktionaryApiError(error, 'Failed to save to Flicktionary')
+        sendResponse({ success: false, code, error: errorMessage, targetLanguage })
       }
     })()
 
