@@ -176,9 +176,16 @@ export class CachingElementOverlay implements ElementOverlay {
     document.body.appendChild(container)
 
     const toggle = () => {
-      if (document.fullscreenElement) {
+      // Hide while the target video has no layout box (off-screen/paused in a
+      // virtualized feed, display:none, or detached pending cleanup). Otherwise
+      // the container below would be pinned to the page's top-left and show up
+      // as a stray duplicate overlay.
+      if (document.fullscreenElement || this._targetRectEmpty()) {
         container.style.setProperty('display', 'none', 'important')
       } else {
+        // Position before showing so it never flashes at the top-left when a
+        // video scrolls back into view.
+        this._applyContainerStyles(container)
         container.style.display = ''
 
         if (this.fullscreenContainerElement) {
@@ -362,8 +369,21 @@ export class CachingElementOverlay implements ElementOverlay {
     this.fullscreenContainerElement = undefined
   }
 
+  private _targetRectEmpty() {
+    const rect = this.targetElement.getBoundingClientRect()
+    return rect.width === 0 && rect.height === 0
+  }
+
   private _applyContainerStyles(container: HTMLElement) {
     const rect = this.targetElement.getBoundingClientRect()
+
+    // When the target video isn't laid out its rect is all zeros; positioning off
+    // that would pin the container to the page's top-left. Skip it — toggle()
+    // keeps the container hidden until the video has a real box again.
+    if (rect.width === 0 && rect.height === 0) {
+      return
+    }
+
     container.style.left = rect.left + rect.width / 2 + 'px'
 
     if (this.contentWidthPercentage === -1) {
