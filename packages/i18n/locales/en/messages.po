@@ -657,8 +657,8 @@ msgstr "Aspect pair (counterpart headword)"
 msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 msgstr "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 
-#: apps/web/src/features/auth/components/login-view.tsx:48
-#: apps/web/src/features/auth/components/login-view.tsx:60
+#: apps/web/src/features/auth/components/login-view.tsx:50
+#: apps/web/src/features/auth/components/login-view.tsx:62
 msgid "Authentication failed"
 msgstr "Authentication failed"
 
@@ -670,7 +670,7 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:77
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:88
 msgid "Back to login"
 msgstr "Back to login"
 
@@ -880,7 +880,7 @@ msgid "Context (optional)"
 msgstr "Context (optional)"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:94
-#: apps/web/src/features/auth/components/login-email-view.tsx:86
+#: apps/web/src/features/auth/components/login-email-view.tsx:89
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:40
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:98
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
@@ -897,18 +897,18 @@ msgstr "Continue active drill"
 msgid "Continue session"
 msgstr "Continue session"
 
-#: apps/web/src/features/auth/components/login-view.tsx:96
+#: apps/web/src/features/auth/components/login-view.tsx:98
 msgid "Continue with Apple"
 msgstr "Continue with Apple"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:68
 #: apps/native/src/features/auth/components/login-view.tsx:39
-#: apps/web/src/features/auth/components/login-view.tsx:85
+#: apps/web/src/features/auth/components/login-view.tsx:87
 msgid "Continue with Email"
 msgstr "Continue with Email"
 
 #: apps/native/src/features/auth/components/login-view.tsx:51
-#: apps/web/src/features/auth/components/login-view.tsx:90
+#: apps/web/src/features/auth/components/login-view.tsx:92
 msgid "Continue with Google"
 msgstr "Continue with Google"
 
@@ -1149,7 +1149,7 @@ msgid "Email"
 msgstr "Email"
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:74
-#: apps/web/src/features/auth/components/login-email-view.tsx:78
+#: apps/web/src/features/auth/components/login-email-view.tsx:81
 msgid "Email address"
 msgstr "Email address"
 
@@ -1941,7 +1941,7 @@ msgstr "Less formal:"
 #~ msgid "Level for {trackLanguage}: {cefrLabel}."
 #~ msgstr "Level for {trackLanguage}: {cefrLabel}."
 
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:75
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:86
 msgid "Link expired or invalid"
 msgstr "Link expired or invalid"
 
@@ -2438,8 +2438,8 @@ msgid "Please choose a .srt file."
 msgstr "Please choose a .srt file."
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:89
-#: apps/web/src/features/auth/components/login-email-view.tsx:47
-#: apps/web/src/features/auth/components/login-email-view.tsx:83
+#: apps/web/src/features/auth/components/login-email-view.tsx:49
+#: apps/web/src/features/auth/components/login-email-view.tsx:86
 msgid "Please enter a valid email address"
 msgstr "Please enter a valid email address"
 
@@ -2455,7 +2455,7 @@ msgstr "Please manage your subscription through the App Store or Google Play."
 msgid "Please manually update the app through your device's app store."
 msgstr "Please manually update the app through your device's app store."
 
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:76
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:87
 msgid "Please request a new verification link."
 msgstr "Please request a new verification link."
 
@@ -2853,7 +2853,7 @@ msgstr "Sending an email"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:142
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:77
-#: apps/web/src/features/auth/components/login-email-view.tsx:86
+#: apps/web/src/features/auth/components/login-email-view.tsx:89
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:123
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:64
 msgid "Sending..."
@@ -3435,11 +3435,11 @@ msgstr "Verification successful! Redirecting..."
 msgid "Verified against Wiktionary on {groundedDate}"
 msgstr "Verified against Wiktionary on {groundedDate}"
 
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:94
 msgid "Verify"
 msgstr "Verify"
 
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:81
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:92
 msgid "Verify your email"
 msgstr "Verify your email"
 
@@ -3448,7 +3448,7 @@ msgid "Verify Your Email"
 msgstr "Verify Your Email"
 
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx:69
-#: apps/web/src/features/auth/components/login-email-verify-view.tsx:83
+#: apps/web/src/features/auth/components/login-email-verify-view.tsx:94
 msgid "Verifying..."
 msgstr "Verifying..."
 

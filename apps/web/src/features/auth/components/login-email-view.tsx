@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { Route as loginEmailRoute } from '@/app/routes/login/email/index'
 import { z } from 'zod'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
 import { Button } from '@/components/ui/button.tsx'
@@ -15,6 +16,7 @@ export const LoginEmailView = () => {
   const { t } = useLingui()
 
   const navigate = useNavigate()
+  const { redirect } = loginEmailRoute.useSearch()
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState('')
   const trackingParams = useTrackingStore(
@@ -51,6 +53,7 @@ export const LoginEmailView = () => {
     POSTHOG_EVENTS.click('continue_with_email_button')
     sendVerificationEmail({
       email,
+      redirect,
       referral: trackingParams.referral,
       platform: 'web',
       utmSource: trackingParams.utmSource,

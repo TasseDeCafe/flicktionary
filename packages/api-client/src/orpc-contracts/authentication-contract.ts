@@ -26,6 +26,8 @@ export const authenticationContract = {
     .input(
       z.object({
         email: z.email(),
+        // Relative path to send the user to after the magic link is verified (e.g. /extension-pair?nonce=...).
+        redirect: z.string().optional(),
         referral: z.string().nullable(),
         utmSource: z.string().nullable(),
         utmMedium: z.string().nullable(),

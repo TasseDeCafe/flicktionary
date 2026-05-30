@@ -26,9 +26,11 @@ export const LoginView = () => {
 
   useEffect(() => {
     if (isSignedIn) {
-      navigate({ to: redirectTo })
+      // redirectTo may include a query string (e.g. /extension-pair?nonce=...), which
+      // navigate({ to }) does not parse — use a hard navigation to preserve it.
+      window.location.assign(redirectTo)
     }
-  }, [navigate, isSignedIn, redirectTo])
+  }, [isSignedIn, redirectTo])
 
   useEffect(() => {
     POSTHOG_EVENTS.viewPage()
@@ -73,7 +75,7 @@ export const LoginView = () => {
 
   const handleContinueWithEmailClick = () => {
     POSTHOG_EVENTS.click('continue_with_email_button')
-    navigate({ to: loginEmailRoute.to })
+    navigate({ to: loginEmailRoute.to, search: { redirect } })
   }
 
   if (!isSignedIn) {

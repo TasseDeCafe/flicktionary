@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_authenticated')({
     if (!session?.access_token) {
       throw redirect({
         to: '/login',
-        search: isSigningOut ? undefined : { redirect: location.pathname },
+        search: isSigningOut ? undefined : { redirect: location.href },
       })
     }
   },
