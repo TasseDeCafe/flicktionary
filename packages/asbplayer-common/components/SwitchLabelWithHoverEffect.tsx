@@ -1,4 +1,4 @@
-import styled from '@mui/styles/styled'
+import { styled } from '@mui/material/styles'
 import LabelWithHoverEffect from './LabelWithHoverEffect'
 
 const SwitchLabelWithHoverEffect = styled(LabelWithHoverEffect)(() => ({

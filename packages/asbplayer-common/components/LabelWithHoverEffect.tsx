@@ -1,8 +1,7 @@
 import FormControlLabel from '@mui/material/FormControlLabel'
-import styled from '@mui/styles/styled'
-import { type Theme } from '@mui/material'
+import { styled } from '@mui/material/styles'
 
-const LabelWithHoverEffect = styled(FormControlLabel)<Theme>(({ theme }) => ({
+const LabelWithHoverEffect = styled(FormControlLabel)(({ theme }) => ({
   '&:hover .MuiSwitch-thumb': {
     outline: `9px solid ${theme.palette.primary.main}29`,
   },
