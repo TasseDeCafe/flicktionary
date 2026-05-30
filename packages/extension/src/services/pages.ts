@@ -50,6 +50,9 @@ interface PageConfig {
     class?: string
     // Styles that should cause video elements to be ignored for binding
     style?: { [key: string]: string }
+    // Ignore video elements that have an ancestor matching this CSS selector
+    // (e.g. YouTube's inline hover-preview player)
+    closestSelector?: string
   }
 
   // Whether to hide "remember track preferences" toggle
@@ -152,6 +155,13 @@ export class PageDelegate {
     if (
       this.config.ignoreVideoElements.class !== undefined &&
       element.classList.contains(this.config.ignoreVideoElements.class)
+    ) {
+      return true
+    }
+
+    if (
+      this.config.ignoreVideoElements.closestSelector !== undefined &&
+      element.closest(this.config.ignoreVideoElements.closestSelector) !== null
     ) {
       return true
     }
