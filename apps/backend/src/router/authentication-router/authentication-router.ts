@@ -51,7 +51,10 @@ export const authenticationRouter = (): Router => {
         // We pass the platform here because it is ephemeral and shouldn't be stored in the user metadata
         // Supabase will only pass the metadata at user creation. Subsequent sign ins will not pass them.
         // TODO: we need to pass the referral here too, otherwise it is stripped when signing in from the native app
-        const emailRedirectTo = `${getConfig().webUrl}/login/email/verify?`
+        // Carry the post-login redirect (e.g. /extension-pair?nonce=...) through the magic link so the
+        // user lands back where they started after verifying. Supabase appends token_hash & co. after this.
+        const redirectParam = input.redirect ? `redirect=${encodeURIComponent(input.redirect)}&` : ''
+        const emailRedirectTo = `${getConfig().webUrl}/login/email/verify?${redirectParam}`
         const params = {
           email: input.email,
           options: {

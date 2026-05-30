@@ -21,6 +21,11 @@ export const LoginEmailVerifyView = () => {
 
   const searchParams = new URLSearchParams(location.search)
   const hash = searchParams.get('token_hash')
+  // Only allow same-origin relative paths (e.g. /extension-pair?nonce=...) to avoid an open redirect
+  // after authentication. Anything else falls back to the default destination.
+  const redirectParam = searchParams.get('redirect')
+  const redirectTo =
+    redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : null
 
   useEffect(() => {
     POSTHOG_EVENTS.viewPage()
@@ -50,6 +55,12 @@ export const LoginEmailVerifyView = () => {
       }
     },
     onSuccess: () => {
+      if (redirectTo) {
+        // redirectTo may include a query string (e.g. the pairing nonce), which navigate({ to }) does
+        // not parse — use a hard navigation to preserve it and let the auth guard re-run with the session.
+        window.location.assign(redirectTo)
+        return
+      }
       navigate({ to: sessionsRoute.to, replace: true })
     },
     onError: () => {
