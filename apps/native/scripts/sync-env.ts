@@ -129,10 +129,13 @@ const syncEnvironmentVariables = (environment: string) => {
     createEnvFile(filteredSecrets, publicKeys)
 
     console.log('🚀 Pushing public variables to EAS...')
-    execSync(`EAS_NON_INTERACTIVE=1 doppler run --project root --config dev_personal -- eas env:push ${environment} --path ${ENV_FILE_PATH}`, {
-      stdio: 'inherit',
-      env: { ...process.env, EAS_NON_INTERACTIVE: '1' },
-    })
+    execSync(
+      `EAS_NON_INTERACTIVE=1 doppler run --project root --config dev_personal -- eas env:push ${environment} --path ${ENV_FILE_PATH}`,
+      {
+        stdio: 'inherit',
+        env: { ...process.env, EAS_NON_INTERACTIVE: '1' },
+      }
+    )
 
     cleanupEnvFile()
   } else {
