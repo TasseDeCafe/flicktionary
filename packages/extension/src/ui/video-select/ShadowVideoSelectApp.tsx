@@ -15,9 +15,14 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import type { PaletteMode } from '@mui/material/styles'
 import { usePortalContainer } from '@asbplayer-fork/common/components/portal-container-context'
-import type { VideoElement } from '../components/VideoSelectUi'
 import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
 import { UpdateChannel } from '../shadow/model-store'
+
+// One detected <video> on the page, with a cropped screenshot for the picker.
+export interface VideoElement {
+  src: string
+  imageDataUrl: string
+}
 
 // The in-realm model (pushed as partials by the controller, formerly
 // UpdateStateMessage over the FrameBridge).

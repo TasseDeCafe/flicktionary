@@ -1,16 +1,8 @@
 import { createElement } from 'react'
-import {
-  MobileOverlayToVideoCommand,
-  MobileOverlayModel,
-  UpdateMobileOverlayModelMessage,
-  VideoToExtensionCommand,
-  PlayModeMessage,
-  ToggleSubtitlesMessage,
-} from '@asbplayer-fork/common'
+import { MobileOverlayModel, MobileOverlayToVideoCommand, ToggleSubtitlesMessage } from '@asbplayer-fork/common'
 import Binding from '../services/binding'
-import { CachingElementOverlay, OffsetAnchor } from '../services/element-overlay'
+import { OffsetAnchor } from '../services/element-overlay'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
-import { SHADOW_CONTROLS_OVERLAY_ENABLED } from '../services/flicktionary/shadow-ui-flags'
 import { mountVideoOverlayHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
 import { createModelStore, type ModelStore } from '../ui/shadow/model-store'
 import {
@@ -21,91 +13,45 @@ import {
 
 const smallScreenVideoHeightThreshold = 300
 
-// Marker for the in-realm controls overlay shadow host (flag-ON path), so a host
-// stranded by a previous content-script load / HMR is removed before remounting.
+// Marker for the in-realm controls overlay shadow host, so a host stranded by a
+// previous content-script load / HMR is removed before remounting.
 const CONTROLS_HOST_ATTR = 'data-asbplayer-mobile-overlay-host'
 
-interface FrameParams {
-  width: number
-  height: number
-  anchor: 'bottom' | 'top'
-  src: string
-  tooltips: boolean
-}
-
+// Over-video controls overlay, rendered in the content-script realm via a
+// fullscreen-aware, non-transformed Shadow DOM host (mountVideoOverlayHost). The
+// model flows through a per-controller store; commands are direct Binding calls.
 export class MobileVideoOverlayController {
   private readonly _context: Binding
-  private _overlay: CachingElementOverlay
+  private _offsetAnchor: OffsetAnchor
   private _pauseListener?: () => void
   private _playListener?: () => void
   private _seekedListener?: () => void
   private _forceHiding: boolean = false
   private _showing: boolean = false
-  private _uiInitialized: boolean = false
-  private _messageListener?: (
-    message: any,
-    sender: Browser.runtime.MessageSender,
-    sendResponse: (response?: any) => void
-  ) => void
   private _bound = false
-  private _frameParams?: FrameParams
 
-  // --- Shadow DOM (flag-ON) transport ---------------------------------------
-  // When SHADOW_CONTROLS_OVERLAY_ENABLED is on the controls overlay renders in
-  // the content-script realm via a Shadow DOM host instead of the iframe: the
-  // model flows through `_store` (replacing request/update-mobile-overlay-model)
-  // and commands are wired straight to the Binding (replacing the postMessage
-  // round trip). The iframe path below is untouched and stays the default.
-  private readonly _useShadow = SHADOW_CONTROLS_OVERLAY_ENABLED
   private _store?: ModelStore<MobileOverlayState>
   private _shadowHandle?: ShadowHostHandle
 
   constructor(context: Binding, offsetAnchor: OffsetAnchor) {
     this._context = context
-    this._overlay = MobileVideoOverlayController._elementOverlay(context.video, offsetAnchor)
-  }
-
-  private static _elementOverlay(video: HTMLMediaElement, offsetAnchor: OffsetAnchor) {
-    const containerClassName =
-      offsetAnchor === OffsetAnchor.top
-        ? 'asbplayer-mobile-video-overlay-container-top'
-        : 'asbplayer-mobile-video-overlay-container-bottom'
-    return new CachingElementOverlay({
-      targetElement: video,
-      nonFullscreenContainerClassName: containerClassName,
-      fullscreenContainerClassName: containerClassName,
-      nonFullscreenContentClassName: 'asbplayer-mobile-video-overlay',
-      fullscreenContentClassName: 'asbplayer-mobile-video-overlay',
-      offsetAnchor,
-      contentPositionOffset: 8,
-      contentWidthPercentage: -1,
-      onMouseOver: () => {},
-      onMouseOut: () => {},
-    })
+    this._offsetAnchor = offsetAnchor
   }
 
   set offsetAnchor(value: OffsetAnchor) {
-    if (this._overlay.offsetAnchor === value) {
+    if (this._offsetAnchor === value) {
       return
     }
 
-    this._overlay.dispose()
-    this._overlay = MobileVideoOverlayController._elementOverlay(this._context.video, value)
+    this._offsetAnchor = value
 
-    if (this._useShadow) {
-      // Remount the host so it re-anchors top/bottom; preserve showing state.
-      if (this._shadowHandle) {
-        this._unmountShadow()
-        this._mountShadow()
-        if (this._showing) {
-          this._doShow()
-        }
+    // Remount the host so it re-anchors top/bottom; preserve showing state.
+    if (this._shadowHandle) {
+      this._unmountShadow()
+      this._mountShadow()
+      if (this._showing) {
+        this._doShow()
       }
-      return
-    }
-
-    if (this._showing) {
-      this._doShow()
     }
   }
 
@@ -147,38 +93,12 @@ export class MobileVideoOverlayController {
     this._context.video.addEventListener('play', this._playListener)
     this._context.video.addEventListener('seeked', this._seekedListener)
 
-    if (this._useShadow) {
-      this._store = createModelStore<MobileOverlayState>({
-        model: undefined,
-        visible: false,
-        tooltipsEnabled: true,
-      })
-      this._mountShadow()
-    } else {
-      this._messageListener = (
-        message: any,
-        sender: Browser.runtime.MessageSender,
-        sendResponse: (response?: any) => void
-      ) => {
-        if (message.sender !== 'asbplayer-mobile-overlay-to-video' || message.src !== this._context.video.src) {
-          return
-        }
-
-        if (message.message.command === 'request-mobile-overlay-model') {
-          this._model().then(sendResponse)
-          this._uiInitialized = true
-          return true
-        }
-
-        if (message.message.command === 'playMode') {
-          const command = message as MobileOverlayToVideoCommand<PlayModeMessage>
-          this._context.playMode = command.message.playMode
-        } else if (message.message.command === 'hidden') {
-          this._doHide()
-        }
-      }
-      browser.runtime.onMessage.addListener(this._messageListener)
-    }
+    this._store = createModelStore<MobileOverlayState>({
+      model: undefined,
+      visible: false,
+      tooltipsEnabled: true,
+    })
+    this._mountShadow()
 
     this._bound = true
 
@@ -187,13 +107,10 @@ export class MobileVideoOverlayController {
     }
   }
 
-  // The command half of the bridge as direct Binding calls (flag-ON path). Each
-  // mirrors the effect the matching message used to trigger via the background
-  // handlers / binding.ts switch: seek -> seek, offset -> subtitleController
-  // .offset, playbackRate -> video.playbackRate, playMode -> playMode setter,
-  // load-subtitles -> showVideoDataDialog. toggle-subtitles still goes through
-  // the background handler (it toggles a setting and broadcasts to every video
-  // element), so it stays a src-only runtime message.
+  // Command callbacks wired straight to the Binding — each mirrors the effect the
+  // matching message used to trigger via the background handlers / binding.ts
+  // switch. toggle-subtitles stays a src-only runtime message (it toggles a
+  // setting and broadcasts to every video element through the background handler).
   private _shadowCommands(): MobileOverlayCommands {
     return {
       onLoadSubtitles: () => this._context.showVideoDataDialog(false),
@@ -221,7 +138,7 @@ export class MobileVideoOverlayController {
       return
     }
     const store = this._store
-    const anchor = this._overlay.offsetAnchor === OffsetAnchor.bottom ? 'bottom' : 'top'
+    const anchor = this._offsetAnchor === OffsetAnchor.bottom ? 'bottom' : 'top'
     const commands = this._shadowCommands()
     this._shadowHandle = mountVideoOverlayHost({
       hostAttribute: CONTROLS_HOST_ATTR,
@@ -263,25 +180,7 @@ export class MobileVideoOverlayController {
       return
     }
 
-    if (this._useShadow) {
-      await this._pushModel()
-      return
-    }
-
-    if (!this._uiInitialized) {
-      return
-    }
-
-    const model = await this._model()
-    const command: VideoToExtensionCommand<UpdateMobileOverlayModelMessage> = {
-      sender: 'asbplayer-video',
-      message: {
-        command: 'update-mobile-overlay-model',
-        model,
-      },
-      src: this._context.video.src,
-    }
-    browser.runtime.sendMessage(command)
+    await this._pushModel()
   }
 
   private async _model() {
@@ -319,17 +218,11 @@ export class MobileVideoOverlayController {
     this._show()
   }
 
+  // Clear the stale model on a subtitle reset. The host stays mounted (it's tied
+  // to the video lifecycle, not the subtitle load) and is repopulated by the next
+  // updateModel().
   disposeOverlay() {
-    if (this._useShadow) {
-      // No cached iframe DOM to drop; just clear the stale model. The host stays
-      // mounted (it's tied to the video lifecycle, not the subtitle load) and is
-      // repopulated by the next updateModel().
-      this._store?.set({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
-      return
-    }
-
-    this._overlay.dispose()
-    this._overlay = MobileVideoOverlayController._elementOverlay(this._context.video, this._overlay.offsetAnchor)
+    this._store?.set({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
   }
 
   private _show() {
@@ -341,70 +234,11 @@ export class MobileVideoOverlayController {
   }
 
   private _doShow() {
-    if (this._useShadow) {
-      if (!this._shadowHandle) {
-        this._mountShadow()
-      }
-      this._showing = true
-      void this._pushModel(true)
-      return
+    if (!this._shadowHandle) {
+      this._mountShadow()
     }
-
-    const frameParams = this._getFrameParams()
-    const { width, height, anchor, src, tooltips } = frameParams
-
-    if (this._frameParams !== undefined && this._differentFrameParams(frameParams, this._frameParams)) {
-      this._overlay.uncacheHtml()
-    }
-
-    this._overlay.setHtml([
-      {
-        key: 'ui',
-        html: () =>
-          `<iframe style="border: 0; color-scheme: normal; width: ${width}px; height: ${height}px" src="${browser.runtime.getURL(
-            '/mobile-video-overlay-ui.html'
-          )}?src=${src}&anchor=${anchor}&tooltips=${tooltips}"/>`,
-      },
-    ])
-
-    this._frameParams = frameParams
     this._showing = true
-  }
-
-  private _getFrameParams(): FrameParams {
-    const anchor = this._overlay.offsetAnchor === OffsetAnchor.bottom ? 'bottom' : 'top'
-    const videoRect = this._context.video.getBoundingClientRect()
-    const smallScreen = videoRect.height < smallScreenVideoHeightThreshold
-    const height = smallScreen ? 64 : 108
-    const tooltips = !smallScreen
-    const width = Math.min(window.innerWidth, 410)
-    const src = encodeURIComponent(this._context.video.src)
-
-    return { width, height, anchor, src, tooltips }
-  }
-
-  private _differentFrameParams(a: FrameParams, b: FrameParams) {
-    if (a.width !== b.width) {
-      return true
-    }
-
-    if (a.height !== b.height) {
-      return true
-    }
-
-    if (a.anchor !== b.anchor) {
-      return true
-    }
-
-    if (a.src !== b.src) {
-      return true
-    }
-
-    if (a.tooltips !== b.tooltips) {
-      return true
-    }
-
-    return false
+    void this._pushModel(true)
   }
 
   hide() {
@@ -424,16 +258,10 @@ export class MobileVideoOverlayController {
   }
 
   private _doHide() {
-    if (this._useShadow) {
-      const prev = this._store?.getSnapshot()
-      if (this._store && prev) {
-        this._store.set({ ...prev, visible: false })
-      }
-      this._showing = false
-      return
+    const prev = this._store?.getSnapshot()
+    if (this._store && prev) {
+      this._store.set({ ...prev, visible: false })
     }
-
-    this._overlay.hide()
     this._showing = false
   }
 
@@ -453,19 +281,8 @@ export class MobileVideoOverlayController {
       this._seekedListener = undefined
     }
 
-    if (this._messageListener) {
-      browser.runtime.onMessage.removeListener(this._messageListener)
-      this._messageListener = undefined
-    }
-
-    if (this._useShadow) {
-      this._unmountShadow()
-      this._store = undefined
-    } else {
-      this._overlay.dispose()
-      this._overlay = MobileVideoOverlayController._elementOverlay(this._context.video, this._overlay.offsetAnchor)
-    }
-
+    this._unmountShadow()
+    this._store = undefined
     this._showing = false
     this._bound = false
   }

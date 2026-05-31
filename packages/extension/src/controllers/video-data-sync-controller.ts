@@ -23,12 +23,10 @@ import { base64ToBlob, bufferToBase64 } from '@asbplayer-fork/common/base64'
 import { createElement } from 'react'
 import Binding from '../services/binding'
 import { currentPageDelegate } from '../services/pages'
-import UiFrame from '../services/ui-frame'
 import { i18n, setupLingui } from '../ui/lingui'
 import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
 import { isOnTutorialPage } from '@/services/tutorial'
-import { SHADOW_VIDEO_DATA_SYNC_ENABLED } from '@/services/flicktionary/shadow-ui-flags'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
 import {
   ShadowVideoDataSyncApp,
@@ -36,36 +34,17 @@ import {
   type VideoDataCommands,
 } from '@/ui/video-data-sync/ShadowVideoDataSyncApp'
 
-// Both the iframe FrameBridgeClient and the in-realm channel expose updateState,
-// so the controller can drive either through this minimal shape.
+// The in-realm model sink (the channel) exposes updateState; this minimal shape
+// is what the rest of the controller drives.
 interface VideoDataClient {
   updateState(state: Partial<VideoDataUiModel>): void
 }
 
-// Marker for the in-realm video-data-sync shadow host (flag-ON path).
+// Marker for the in-realm video-data-sync shadow host.
 const VIDEO_DATA_SYNC_HOST_ATTR = 'data-asbplayer-video-data-sync-host'
 
 declare global {
   function cloneInto(obj: any, targetScope: any, options?: any): any
-}
-
-async function html(lang: string) {
-  return `<!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <title>asbplayer - Video Data Sync</title>
-                <style>
-                    @import url(${browser.runtime.getURL('/fonts/fonts.css')});
-                </style>
-            </head>
-            <body>
-                <div id="root" style="width:100%;height:100vh;"></div>
-                <script type="application/json" id="loc">${JSON.stringify({ lang })}</script>
-                <script type="module" src="${browser.runtime.getURL('/video-data-sync-ui.js')}"></script>
-            </body>
-            </html>`
 }
 
 interface ShowOptions {
@@ -90,7 +69,6 @@ const globalStateProvider = new ExtensionGlobalStateProvider()
 export default class VideoDataSyncController {
   private readonly _context: Binding
   private readonly _domain: string
-  private readonly _frame: UiFrame
   private readonly _settings: SettingsProvider
 
   private _autoSync?: boolean
@@ -104,13 +82,10 @@ export default class VideoDataSyncController {
   private _dataReceivedListener?: (event: Event) => void
   private _isTutorial: boolean
 
-  // --- Shadow DOM (flag-ON) transport ---------------------------------------
-  // When SHADOW_VIDEO_DATA_SYNC_ENABLED is on, the subtitle-track dialog renders
-  // in the content-script realm via a fullscreen-aware modal shadow host. The
-  // model flows through `_channel` (mirroring updateState over the FrameBridge)
-  // and the UI commands are routed to the same `_handleUiCommand` the iframe
-  // onMessage path uses. The iframe path below is unchanged.
-  private readonly _useShadow = SHADOW_VIDEO_DATA_SYNC_ENABLED
+  // The subtitle-track dialog renders in the content-script realm via a
+  // fullscreen-aware modal shadow host. The model flows through `_channel`
+  // (partial updateState pushes) and the UI commands route through
+  // `_handleUiCommand`.
   private _channel?: VideoDataModelChannel
   private _shadowHandle?: ShadowHostHandle
   private _shadowOpen = false
@@ -128,7 +103,6 @@ export default class VideoDataSyncController {
       extension: 'srt',
     }
     this._domain = new URL(window.location.href).host
-    this._frame = new UiFrame(html)
     this._isTutorial = isOnTutorialPage()
   }
 
@@ -148,12 +122,10 @@ export default class VideoDataSyncController {
     this._dataReceivedListener = undefined
     this._syncedData = undefined
 
-    if (this._useShadow) {
-      this._shadowHandle?.unmount()
-      this._shadowHandle = undefined
-      this._channel = undefined
-      this._shadowOpen = false
-    }
+    this._shadowHandle?.unmount()
+    this._shadowHandle = undefined
+    this._channel = undefined
+    this._shadowOpen = false
   }
 
   updateSettings({ streamingAutoSync, streamingLastLanguagesSynced }: AsbplayerSettings) {
@@ -574,36 +546,20 @@ export default class VideoDataSyncController {
     })
   }
 
-  // The active model sink (iframe client or in-realm channel), or undefined when
-  // nothing is loaded yet.
+  // The active model sink (the in-realm channel), or undefined before mount.
   private _clientIfLoaded(): VideoDataClient | undefined {
-    return this._useShadow ? this._channel : this._frame.clientIfLoaded
+    return this._channel
   }
 
   // Whether the dialog is currently hidden.
   private _isHidden(): boolean {
-    return this._useShadow ? !this._shadowOpen : this._frame.hidden
+    return !this._shadowOpen
   }
 
   private async _client(): Promise<VideoDataClient> {
-    if (this._useShadow) {
-      await this._ensureShadowMounted()
-      this._shadowOpen = true
-      return this._channel!
-    }
-
-    this._frame.language = await this._settings.getSingle('language')
-    const isNewClient = await this._frame.bind()
-    const client = await this._frame.client()
-
-    if (isNewClient) {
-      client.onMessage(async (message) => {
-        await this._handleUiCommand(message)
-      })
-    }
-
-    this._frame.show()
-    return client
+    await this._ensureShadowMounted()
+    this._shadowOpen = true
+    return this._channel!
   }
 
   private _prepareShow() {
@@ -629,12 +585,8 @@ export default class VideoDataSyncController {
     this._context.subtitleController.forceHideSubtitles = false
     this._context.mobileVideoOverlayController.forceHide = false
 
-    if (this._useShadow) {
-      this._channel?.updateState({ open: false })
-      this._shadowOpen = false
-    } else {
-      this._frame?.hide()
-    }
+    this._channel?.updateState({ open: false })
+    this._shadowOpen = false
 
     if (this._fullscreenElement) {
       this._fullscreenElement.requestFullscreen()

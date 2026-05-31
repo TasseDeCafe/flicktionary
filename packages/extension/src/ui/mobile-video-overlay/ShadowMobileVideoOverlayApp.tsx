@@ -37,8 +37,7 @@ export interface ShadowMobileVideoOverlayAppProps {
 }
 
 // `initialControlType` / `onScrollToControlType` persist the user's last-used
-// scrollable control across renders via extension storage (carried over from the
-// iframe's MobileVideoOverlayUi verbatim).
+// scrollable control across renders via extension storage.
 const lastControlTypeKey = 'lastScrollableControlType'
 
 const fetchLastControlType = async (): Promise<ControlType | undefined> => {

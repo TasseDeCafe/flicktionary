@@ -3,7 +3,7 @@ import createCache, { type EmotionCache } from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 import ThemeProvider from '@mui/material/styles/ThemeProvider'
 import CssBaseline from '@mui/material/CssBaseline'
-import type { PaletteMode } from '@mui/material/styles'
+import type { PaletteMode, ThemeOptions } from '@mui/material/styles'
 import { createTheme } from '@asbplayer-fork/common/theme'
 import { PortalContainerContext } from '@asbplayer-fork/common/components/portal-container-context'
 import { I18nProvider } from '@lingui/react'
@@ -61,11 +61,10 @@ export function ShadowMuiProvider({
   // pins typography/icon sizes regardless of the host root. (Spacing is already
   // px in MUI.)
   const theme = useMemo(() => {
-    // pxToRem is read by MUI's createTypography at theme creation but is missing
-    // from the TypographyOptions input type (a known MUI typing gap), so build it
-    // as a variable to sidestep the object-literal excess-property check.
-    const typography = { pxToRem: (size: number) => `${size}px` }
-    return createTheme(themeType, { typography })
+    // pxToRem is honoured by MUI's createTypography at runtime but is absent from
+    // the TypographyOptions input type (a known MUI typing gap), so cast.
+    const overrides = { typography: { pxToRem: (size: number) => `${size}px` } } as unknown as ThemeOptions
+    return createTheme(themeType, overrides)
   }, [themeType])
 
   if (language) {

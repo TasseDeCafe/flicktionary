@@ -10,41 +10,35 @@ import {
   VideoSelectModeConfirmMessage,
 } from '@asbplayer-fork/common'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
-import { VideoElement } from '../ui/components/VideoSelectUi'
 import Binding from '../services/binding'
-import UiFrame from '../services/ui-frame'
 import { ExtensionSettingsStorage } from '../services/extension-settings-storage'
-import { SHADOW_VIDEO_SELECT_ENABLED } from '../services/flicktionary/shadow-ui-flags'
 import { setupLingui } from '../ui/lingui'
 import { mountModalHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
 import { createUpdateChannel, type UpdateChannel } from '../ui/shadow/model-store'
 import {
   ShadowVideoSelectApp,
+  type VideoElement,
   type VideoSelectCommands,
   type VideoSelectState,
 } from '../ui/video-select/ShadowVideoSelectApp'
 
-// Both FrameBridgeClient and the in-realm channel expose updateState, so the
-// controller can drive either through this minimal shape.
+// The in-realm channel exposes updateState; this minimal shape is what the rest
+// of the controller drives.
 interface VideoSelectClient {
   updateState(state: Partial<VideoSelectState>): void
 }
 
-// Marker for the in-realm video-select shadow host (flag-ON path).
+// Marker for the in-realm video-select shadow host.
 const VIDEO_SELECT_HOST_ATTR = 'data-asbplayer-video-select-host'
 
 export default class VideoSelectController {
   private readonly _bindings: Binding[]
-  private readonly _frame: UiFrame
   private readonly _settings: SettingsProvider = new SettingsProvider(new ExtensionSettingsStorage())
   private _subtitleFiles?: SubtitleFile[]
 
-  // --- Shadow DOM (flag-ON) transport ---------------------------------------
-  // When SHADOW_VIDEO_SELECT_ENABLED is on, the video-select dialog renders in
-  // the content-script realm via a fullscreen-aware modal shadow host. The model
-  // flows through `_channel` (mirroring updateState over the FrameBridge) and the
-  // UI commands route through `_handleUiCommand`. The iframe path is unchanged.
-  private readonly _useShadow = SHADOW_VIDEO_SELECT_ENABLED
+  // The video-select dialog renders in the content-script realm via a
+  // fullscreen-aware modal shadow host. The model flows through `_channel`
+  // (partial updateState pushes); UI commands route through `_handleUiCommand`.
   private _channel?: UpdateChannel<VideoSelectState>
   private _shadowHandle?: ShadowHostHandle
   private _shadowOpen = false
@@ -57,24 +51,6 @@ export default class VideoSelectController {
 
   constructor(bindings: Binding[]) {
     this._bindings = bindings
-    this._frame = new UiFrame(
-      async (lang) => `<!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="utf-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1" />
-                    <title>asbplayer - Video Select</title>
-                    <style>
-                        @import url(${browser.runtime.getURL('/fonts/fonts.css')});
-                    </style>
-                </head>
-                <body>
-                    <div id="root" style="width:100%;height:100vh;"></div>
-                    <script type="application/json" id="loc">${JSON.stringify({ lang })}</script>
-                    <script type="module" src="${browser.runtime.getURL('/video-select-ui.js')}"></script>
-                </body>
-            </html>`
-    )
   }
 
   bind() {
@@ -110,14 +86,10 @@ export default class VideoSelectController {
   }
 
   unbind() {
-    this._frame.unbind()
-
-    if (this._useShadow) {
-      this._shadowHandle?.unmount()
-      this._shadowHandle = undefined
-      this._channel = undefined
-      this._shadowOpen = false
-    }
+    this._shadowHandle?.unmount()
+    this._shadowHandle = undefined
+    this._channel = undefined
+    this._shadowOpen = false
 
     if (this.messageListener) {
       browser.runtime.onMessage.removeListener(this.messageListener)
@@ -242,40 +214,19 @@ export default class VideoSelectController {
   }
 
   private _isHidden(): boolean {
-    return this._useShadow ? !this._shadowOpen : this._frame.hidden
+    return !this._shadowOpen
   }
 
-  // Drive the dialog closed (model open:false + hide the host/frame).
+  // Drive the dialog closed (model open:false).
   private async _closeUi() {
-    if (this._useShadow) {
-      this._channel?.updateState({ open: false })
-      this._shadowOpen = false
-      return
-    }
-    const client = await this._frame.client()
-    client.updateState({ open: false })
-    this._frame.hide()
+    this._channel?.updateState({ open: false })
+    this._shadowOpen = false
   }
 
   private async _prepareAndShowFrame(): Promise<VideoSelectClient> {
-    if (this._useShadow) {
-      await this._ensureShadowMounted()
-      this._shadowOpen = true
-      return this._channel!
-    }
-
-    this._frame.language = await this._settings.getSingle('language')
-    const isNewClient = await this._frame.bind()
-    const client = await this._frame.client()
-
-    if (isNewClient) {
-      client.onMessage(async (message) => {
-        await this._handleUiCommand(message)
-      })
-    }
-
-    this._frame.show()
-    return client
+    await this._ensureShadowMounted()
+    this._shadowOpen = true
+    return this._channel!
   }
 
   private async _hideUi() {
