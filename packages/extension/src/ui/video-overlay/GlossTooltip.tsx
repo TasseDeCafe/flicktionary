@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
 import { GlossData, pickIpa } from '../../services/flicktionary/flicktionary-client'
 
@@ -23,11 +23,16 @@ export interface GlossTooltipProps {
 // legacy `display:flex !important` hide trap is gone.
 export function GlossTooltip({ anchor, word, content }: GlossTooltipProps) {
   const ref = useRef<HTMLDivElement>(null)
+  // Gate visibility until the async computePosition has placed the tooltip;
+  // otherwise it paints one frame at its initial top-left before moving (the
+  // brief viewport-corner flash). Reset whenever the anchor changes.
+  const [positioned, setPositioned] = useState(false)
 
   useEffect(() => {
     const tooltip = ref.current
     if (!tooltip) return
 
+    setPositioned(false)
     const update = () => {
       computePosition(anchor, tooltip, {
         strategy: 'fixed',
@@ -36,6 +41,7 @@ export function GlossTooltip({ anchor, word, content }: GlossTooltipProps) {
       }).then(({ x, y }) => {
         tooltip.style.left = `${x}px`
         tooltip.style.top = `${y}px`
+        setPositioned(true)
       })
     }
 
@@ -47,6 +53,7 @@ export function GlossTooltip({ anchor, word, content }: GlossTooltipProps) {
   return (
     <div
       ref={ref}
+      style={{ visibility: positioned ? 'visible' : 'hidden' }}
       className='pointer-events-none fixed left-0 top-0 z-[2147483647] flex max-w-[320px] flex-col gap-1 rounded-lg bg-black/90 px-3 py-2 text-sm leading-snug text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
     >
       <div className='text-[15px] font-semibold break-words text-white'>{word}</div>

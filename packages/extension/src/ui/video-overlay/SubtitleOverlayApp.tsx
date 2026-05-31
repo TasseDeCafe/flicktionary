@@ -69,6 +69,20 @@ interface SelectionState {
   headOrdinal: number
 }
 
+// Resolve a selection to the [min,max] word ordinals + the covered char range
+// (for highlighting the spaces between selected words) for a given line. Pure
+// and module-scoped so both the render path (state) and the imperative handlers
+// (a ref, to dodge stale closures) can call it.
+const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: LineToken[]) => {
+  if (!sel || sel.lineIndex !== lineIndex) return null
+  const minOrd = Math.min(sel.anchorOrdinal, sel.headOrdinal)
+  const maxOrd = Math.max(sel.anchorOrdinal, sel.headOrdinal)
+  const first = wordTokens[minOrd]
+  const last = wordTokens[maxOrd]
+  if (!first || !last) return null
+  return { minOrd, maxOrd, startCharStart: first.charStart, endCharEnd: last.charEnd, count: maxOrd - minOrd + 1 }
+}
+
 interface GlossState {
   lineIndex: number
   anchor: HTMLElement
@@ -115,6 +129,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoveredKey = useRef<string | null>(null)
+  // The word currently under the pointer (null when over nothing). Used so the
+  // window `mouseup` handler can open the chunk gloss on the word the pointer
+  // already sits on — `mouseenter` won't re-fire there after a drag-release.
+  const hoveredRef = useRef<{ tl: TokenizedLine; token: LineToken; element: HTMLElement } | null>(null)
+  // Mirror of `selection` for the imperative handlers (debounce / mouseup),
+  // which are registered once and would otherwise read a stale closure.
+  const selectionRef = useRef<SelectionState | null>(null)
   const selectingRef = useRef(false)
   const glossSeq = useRef(0)
   const glossCache = useRef<Map<string, GlossData>>(new Map())
@@ -129,6 +150,11 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     }
   }
 
+  const setSelectionBoth = useCallback((next: SelectionState | null) => {
+    selectionRef.current = next
+    setSelection(next)
+  }, [])
+
   const hideGloss = useCallback(() => {
     glossSeq.current += 1
     setGloss(null)
@@ -136,25 +162,16 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const clearSelection = useCallback(() => {
     selectingRef.current = false
-    setSelection(null)
-  }, [])
+    setSelectionBoth(null)
+  }, [setSelectionBoth])
 
   const showToast = useCallback((text: string, isError: boolean) => {
     toastSeq.current += 1
     setToast({ id: toastSeq.current, text, isError })
   }, [])
 
-  // Resolve the [min,max] selected word ordinals for a given line, plus the
-  // covered char range (for highlighting the spaces between selected words).
-  const selectionForLine = (lineIndex: number, wordTokens: LineToken[]) => {
-    if (!selection || selection.lineIndex !== lineIndex) return null
-    const minOrd = Math.min(selection.anchorOrdinal, selection.headOrdinal)
-    const maxOrd = Math.max(selection.anchorOrdinal, selection.headOrdinal)
-    const first = wordTokens[minOrd]
-    const last = wordTokens[maxOrd]
-    if (!first || !last) return null
-    return { minOrd, maxOrd, startCharStart: first.charStart, endCharEnd: last.charEnd, count: maxOrd - minOrd + 1 }
-  }
+  // Render-path range (reads the `selection` state so highlights re-render).
+  const selectionForLine = (lineIndex: number, wordTokens: LineToken[]) => rangeFor(selection, lineIndex, wordTokens)
 
   // ---- save flow -------------------------------------------------------------
 
@@ -199,7 +216,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const saveSelection = useCallback(
     (tl: TokenizedLine) => {
-      const range = selectionForLine(tl.line.index, tl.wordTokens)
+      const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
       if (!range) return
       const selectedWords = tl.wordTokens.slice(range.minOrd, range.maxOrd + 1)
       const words = selectedWords.map((w) => w.text).join(' ')
@@ -216,7 +233,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       }
       void handleOutcome({ word: words, sentence: tl.line.text, translation, segmentInfo, closures })
     },
-    [selection, closures, handleOutcome]
+    [closures, handleOutcome]
   )
 
   // ---- gloss (hover) flow ----------------------------------------------------
@@ -268,16 +285,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     [video]
   )
 
-  const onWordEnter = useCallback(
+  // Arm the 300ms hover debounce for the word under the pointer. On fire it
+  // opens the chunk gloss if that word is inside an active multi-word selection,
+  // else the single-word gloss. Reads selectionRef (live) so it's correct when
+  // called from `mouseup` after a drag. Stable identity (no selection dep).
+  const scheduleHoverGloss = useCallback(
     (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
       const key = `${tl.line.index}:${token.ordinal}`
-
-      // Drag-select: extend the active selection instead of glossing.
-      if (selectingRef.current && selection && selection.lineIndex === tl.line.index) {
-        setSelection({ ...selection, headOrdinal: token.ordinal })
-        return
-      }
-
       hoveredKey.current = key
       clearHoverTimer()
       hoverTimer.current = setTimeout(() => {
@@ -285,10 +299,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         // pointer is (still) on this word.
         if (!video.paused || hoveredKey.current !== key) return
 
-        const range = selectionForLine(tl.line.index, tl.wordTokens)
+        const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
         const overSelected = range && token.ordinal >= range.minOrd && token.ordinal <= range.maxOrd
         if (range && range.count > 1 && overSelected) {
-          // Chunk gloss: the whole selected phrase.
+          // Chunk gloss: the whole selected phrase, anchored at the pointer.
           const words = tl.wordTokens
             .slice(range.minOrd, range.maxOrd + 1)
             .map((w) => w.text)
@@ -299,7 +313,24 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         }
       }, HOVER_DEBOUNCE_MS)
     },
-    [video, selection, showGloss]
+    [video, showGloss]
+  )
+
+  const onWordEnter = useCallback(
+    (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
+      hoveredRef.current = { tl, token, element }
+
+      // Drag-select: extend the active selection.
+      if (selectingRef.current && selectionRef.current && selectionRef.current.lineIndex === tl.line.index) {
+        setSelectionBoth({ ...selectionRef.current, headOrdinal: token.ordinal })
+      }
+
+      // Always (re)arm the debounce for the word under the pointer. During a
+      // drag this is the word that, on release, becomes the chunk anchor — its
+      // pending timer is what opens the chunk gloss without a re-hover.
+      scheduleHoverGloss(tl, token, element)
+    },
+    [setSelectionBoth, scheduleHoverGloss]
   )
 
   const onWordLeave = useCallback(
@@ -307,34 +338,40 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const key = `${tl.line.index}:${token.ordinal}`
       clearHoverTimer()
       if (hoveredKey.current === key) hoveredKey.current = null
+      if (hoveredRef.current?.token === token) hoveredRef.current = null
 
       // For an active multi-word selection, let the chunk gloss persist (it
       // clears on selection change / play / subtitle change) — mirrors legacy.
-      const range = selectionForLine(tl.line.index, tl.wordTokens)
+      const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
       if (range && range.count > 1) return
 
       hideGloss()
     },
-    [selection, hideGloss]
+    [hideGloss]
   )
 
   const onWordContextMenu = useCallback(
     (tl: TokenizedLine, token: LineToken) => {
-      const range = selectionForLine(tl.line.index, tl.wordTokens)
+      const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
       if (range) {
         saveSelection(tl)
       } else {
         saveSingle(tl.line, token)
       }
     },
-    [selection, saveSelection, saveSingle]
+    [saveSelection, saveSingle]
   )
 
-  const onWordMouseDown = useCallback((tl: TokenizedLine, token: LineToken) => {
-    clearHoverTimer()
-    selectingRef.current = true
-    setSelection({ lineIndex: tl.line.index, anchorOrdinal: token.ordinal, headOrdinal: token.ordinal })
-  }, [])
+  const onWordMouseDown = useCallback(
+    (tl: TokenizedLine, token: LineToken) => {
+      // Suppress the single-word gloss while starting a (possible) drag; the
+      // mouseup handler re-arms the gloss for whatever ends up under the pointer.
+      clearHoverTimer()
+      selectingRef.current = true
+      setSelectionBoth({ lineIndex: tl.line.index, anchorOrdinal: token.ordinal, headOrdinal: token.ordinal })
+    },
+    [setSelectionBoth]
+  )
 
   // ---- CEFR retry ------------------------------------------------------------
 
@@ -363,14 +400,22 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   // ---- lifecycle effects -----------------------------------------------------
 
-  // End drag selection on mouseup anywhere.
+  // End drag selection on mouseup anywhere. If we were selecting and released
+  // over a word, re-arm the gloss for it — mouseenter won't re-fire on the word
+  // the pointer already sits on, so without this the chunk gloss never opens
+  // after a multi-word drag (you'd have to leave and re-enter a selected word).
   useEffect(() => {
     const onMouseUp = () => {
+      if (!selectingRef.current) return
       selectingRef.current = false
+      const hov = hoveredRef.current
+      if (hov) {
+        scheduleHoverGloss(hov.tl, hov.token, hov.element)
+      }
     }
     window.addEventListener('mouseup', onMouseUp, true)
     return () => window.removeEventListener('mouseup', onMouseUp, true)
-  }, [])
+  }, [scheduleHoverGloss])
 
   // Resuming playback clears the hover gloss and any selection (legacy parity).
   useEffect(() => {

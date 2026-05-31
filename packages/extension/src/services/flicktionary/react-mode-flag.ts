@@ -9,7 +9,7 @@ import { isYoutubeWatchPage } from './youtube-context'
 //
 // Default OFF — flip to true only for local YouTube testing. When false, the
 // host is never mounted and every video stays fully on the legacy DOM path.
-export const REACT_SUBTITLE_OVERLAY_ENABLED = false
+export const REACT_SUBTITLE_OVERLAY_ENABLED = true
 
 export interface ReactSubtitleEligibilityInput {
   subtitles: IndexedSubtitleModel[]

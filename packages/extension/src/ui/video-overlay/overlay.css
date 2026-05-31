@@ -22,6 +22,28 @@
      asbplayer-fade-in-out keyframe (translateY in, hold, translateY out). */
   --animate-overlay-toast: overlay-toast 1.5s ease both;
   --animate-overlay-toast-error: overlay-toast 3.5s ease both;
+
+  /* Pin the spacing + font-size scales to absolute px. Tailwind's defaults are
+     `rem`, which resolve against the host page's <html> font-size — and a Shadow
+     DOM can't shield `rem`. Host pages like YouTube set `html { font-size: 10px }`,
+     which would shrink every `text-sm` / `p-4` / `gap-2` in the overlay. px makes
+     the overlay chrome immune (matching the legacy all-px video.css). Subtitle
+     glyphs are unaffected — they come from computeStyles() inline. */
+  --spacing: 4px;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 1.4;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 16px;
+  --text-base--line-height: 1.5;
+  --text-lg: 18px;
+  --text-lg--line-height: 1.5;
+
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 }
 
 @keyframes overlay-toast {
