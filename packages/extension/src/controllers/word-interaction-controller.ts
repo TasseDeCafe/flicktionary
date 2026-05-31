@@ -1,38 +1,23 @@
 import {
-  TabToExtensionCommand,
-  FlicktionaryGlossMessage,
   FlicktionaryGlossResponse,
   FlicktionaryGlossIpa,
-  SaveWordMessage,
-  SaveWordResponse,
   SaveWordFlicktionaryVideoContext,
-  SetFlicktionaryCefrMessage,
-  SetFlicktionaryCefrResponse,
 } from '@asbplayer-fork/common'
-import { v4 as uuidv4 } from 'uuid'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
 import { describeLanguageCode } from '../services/flicktionary/youtube-context'
+// Messaging is shared with the React overlay (Option A) so the two interaction
+// paths can't drift. This controller keeps its DOM/UI orchestration; the actual
+// gloss/save/CEFR round-trips go through the framework-agnostic client.
+import {
+  CEFR_LEVELS,
+  GlossData,
+  SaveWordSegmentInfo,
+  requestGloss,
+  saveWord,
+  setCefr,
+} from '../services/flicktionary/flicktionary-client'
 
-// CEFR levels offered by the in-video picker, in ascending order. Mirrors the
-// web app's CEFR_LEVELS; kept local so the content script doesn't pull in the
-// web/core packages.
-const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
-
-// The structured gloss rendered in the hover tooltip — mirrors the web app's
-// fast-gloss popover (selection + IPA + gloss + POS/register).
-interface GlossData {
-  gloss: string
-  pos: string | null
-  register: string | null
-  ipa: FlicktionaryGlossIpa | null
-}
-
-interface SegmentInfo {
-  readonly startSegmentIndex: number
-  readonly endSegmentIndex: number | undefined
-  readonly startCharOffset: number
-  readonly endCharOffset: number
-}
+type SegmentInfo = SaveWordSegmentInfo
 
 // Read the (data-segment-index, data-char-start, data-char-end) trio the
 // tokenizer stamped onto each token span. These are the canonical coordinates
@@ -640,17 +625,7 @@ export default class WordInteractionController {
   }
 
   private async _requestGloss(word: string, sentence: string): Promise<FlicktionaryGlossResponse> {
-    const message: TabToExtensionCommand<FlicktionaryGlossMessage> = {
-      sender: 'asbplayer-video-tab',
-      message: {
-        command: 'flicktionary-gloss',
-        messageId: uuidv4(),
-        selectionText: word,
-        contextLine: sentence,
-      },
-    }
-
-    return await browser.runtime.sendMessage(message)
+    return await requestGloss(word, sentence)
   }
 
   // Show a styled toast from outside the controller (e.g. the binding's
@@ -669,54 +644,45 @@ export default class WordInteractionController {
     // prefs reason (e.g. native language unset) — we fall back to the message.
     isCefrRetry = false
   ) {
-    const saveDisabledReason = this.getFlicktionarySaveDisabledReason()
-    if (saveDisabledReason) {
-      this._showNotification(saveDisabledReason, true)
-      this._clearSelection()
-      return
-    }
-
-    const message: TabToExtensionCommand<SaveWordMessage> = {
-      sender: 'asbplayer-video-tab',
-      message: {
-        command: 'save-word',
-        messageId: uuidv4(),
-        word,
-        sentence,
-        translation,
-        videoTitle: this.getVideoTitle(),
-        videoUrl: this.getVideoUrl(),
-        segmentIndex: segmentInfo?.startSegmentIndex,
-        endSegmentIndex: segmentInfo?.endSegmentIndex,
-        startCharOffset: segmentInfo?.startCharOffset,
-        endCharOffset: segmentInfo?.endCharOffset,
-        flicktionaryVideo: this.getFlicktionaryVideoContext(),
+    const outcome = await saveWord({
+      word,
+      sentence,
+      translation,
+      segmentInfo,
+      isCefrRetry,
+      closures: {
+        getVideoTitle: this.getVideoTitle,
+        getVideoUrl: this.getVideoUrl,
+        getFlicktionaryVideoContext: this.getFlicktionaryVideoContext,
+        getFlicktionarySaveDisabledReason: this.getFlicktionarySaveDisabledReason,
       },
+    })
+
+    switch (outcome.kind) {
+      case 'disabled':
+        this._showNotification(outcome.reason, true)
+        this._clearSelection()
+        return
+      case 'saved':
+        this._showNotification(`Saved: ${outcome.word}`)
+        this._clearSelection()
+        return
+      // No CEFR level set for this language yet — offer an inline picker so the
+      // user can set it without leaving the video, then retry the save. The
+      // selection is kept until the flow finishes (or is cancelled) so the
+      // retry has the same word in context.
+      case 'missing-cefr': {
+        const targetLanguage = outcome.targetLanguage
+        this._showCefrPicker(targetLanguage, (cefrLevel) => {
+          void this._setCefrAndRetry(targetLanguage, cefrLevel, word, sentence, translation, segmentInfo)
+        })
+        return
+      }
+      case 'error':
+        this._showNotification(outcome.message, true)
+        this._clearSelection()
+        return
     }
-
-    const response: SaveWordResponse = await browser.runtime.sendMessage(message)
-
-    if (response.success) {
-      this._showNotification(`Saved: ${word}`)
-      this._clearSelection()
-      return
-    }
-
-    // No CEFR level set for this language yet — offer an inline picker so the
-    // user can set it without leaving the video, then retry the save. The
-    // selection is kept until the flow finishes (or is cancelled) so the retry
-    // has the same word in context.
-    if (response.code === 'MISSING_CEFR' && response.targetLanguage && !isCefrRetry) {
-      const targetLanguage = response.targetLanguage
-      this._showCefrPicker(targetLanguage, (cefrLevel) => {
-        void this._setCefrAndRetry(targetLanguage, cefrLevel, word, sentence, translation, segmentInfo)
-      })
-      return
-    }
-
-    console.error('Failed to save word:', response.error)
-    this._showNotification(response.error || 'Could not save to Flicktionary.', true)
-    this._clearSelection()
   }
 
   // Sets the CEFR level for `targetLanguage` via the background handler, then
@@ -730,22 +696,9 @@ export default class WordInteractionController {
     translation: string,
     segmentInfo?: SegmentInfo
   ) {
-    const message: TabToExtensionCommand<SetFlicktionaryCefrMessage> = {
-      sender: 'asbplayer-video-tab',
-      message: {
-        command: 'set-flicktionary-cefr',
-        messageId: uuidv4(),
-        targetLanguage,
-        cefrLevel,
-      },
-    }
-
-    // `response` is undefined if no background handler answered (e.g. the
-    // service worker was mid-reload). Treat that as a failure rather than
-    // crashing on `.success`.
-    const response: SetFlicktionaryCefrResponse | undefined = await browser.runtime.sendMessage(message)
-    if (!response?.success) {
-      this._showNotification(response?.error || 'Could not set your level.', true)
+    const result = await setCefr(targetLanguage, cefrLevel)
+    if (!result.ok) {
+      this._showNotification(result.message, true)
       this._clearSelection()
       return
     }
