@@ -2,4 +2,4 @@
 
 export VITE_IS_FOR_TUNNEL=true
 
-doppler run -- vite --host
+doppler run --project web --config dev_personal -- vite --host

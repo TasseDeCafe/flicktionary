@@ -57,7 +57,7 @@ fi
 # --- Phase 2: reset ------------------------------------------------------
 echo "→ Running supabase db reset (dev-tunnel)..."
 cd "$BACKEND_DIR/supabase/supabase-dev-tunnel/supabase"
-doppler run -- supabase db reset
+doppler run --project backend --config dev_personal -- supabase db reset
 
 # --- Phase 3: restore wiktionary -----------------------------------------
 if [ -s "$DUMP_FILE" ]; then

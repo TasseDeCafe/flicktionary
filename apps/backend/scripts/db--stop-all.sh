@@ -2,7 +2,7 @@
 
 cd supabase/supabase-dev/supabase &&
 # even though it's a stop command, supabase still requires us to set the env vars.
-doppler run -- supabase stop
+doppler run --project backend --config dev_personal -- supabase stop
 cd ../../../
 
 
@@ -13,5 +13,5 @@ cd ../../../
 
 cd supabase/supabase-dev-tunnel/supabase &&
 # even though it's a stop command, supabase still requires us to set the env vars.
-doppler run -- supabase stop
+doppler run --project backend --config dev_personal -- supabase stop
 cd ../../../

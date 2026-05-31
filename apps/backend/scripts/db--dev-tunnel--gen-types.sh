@@ -18,11 +18,11 @@ TYPES_DIR="$BACKEND_DIR/src/transport/database"
 cd "$BACKEND_DIR/supabase/supabase-dev-tunnel/supabase"
 
 echo "Generating public schema types..."
-doppler run -- supabase gen types typescript --local \
+doppler run --project backend --config dev_personal -- supabase gen types typescript --local \
   > "$TYPES_DIR/database.public.types.ts"
 
 echo "Generating auth schema types..."
-doppler run -- supabase gen types typescript --local --schema auth \
+doppler run --project backend --config dev_personal -- supabase gen types typescript --local --schema auth \
   > "$TYPES_DIR/database.auth.types.ts"
 
 # Raw generator output uses double quotes + semicolons; normalize to our
