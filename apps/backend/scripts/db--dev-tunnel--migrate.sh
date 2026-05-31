@@ -12,4 +12,4 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$BACKEND_DIR/supabase/supabase-dev-tunnel/supabase"
-doppler run -- supabase migration up
+doppler run --project backend --config dev_personal -- supabase migration up

@@ -1149,7 +1149,7 @@ msgstr "Couldn't start the session. Please try again."
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:303
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:301
 msgid "Current Timestamp"
 msgstr "Current Timestamp"
 
@@ -1196,12 +1196,12 @@ msgstr "Dark"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:310
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:308
 msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:315
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:313
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
@@ -2114,12 +2114,12 @@ msgstr "Importing…"
 msgid "Inanimate"
 msgstr "Inanimate"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:308
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:306
 msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:317
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:315
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
 
@@ -2289,7 +2289,7 @@ msgstr "LLM-suggested terms"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:360
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:358
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
@@ -2844,11 +2844,11 @@ msgstr "Pick your native language"
 msgid "Play/pause"
 msgstr "Play/pause"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:387
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:385
 msgid "Playback Mode"
 msgstr "Playback Mode"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:316
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:314
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
@@ -3331,12 +3331,12 @@ msgid "Searching…"
 msgstr "Searching…"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:301
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:300
 msgid "Seek backward"
 msgstr "Seek backward"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:302
 msgid "Seek forward"
 msgstr "Seek forward"
 
@@ -3349,12 +3349,12 @@ msgid "Seek to beginning of current/previous subtitle"
 msgstr "Seek to beginning of current/previous subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:302
 msgid "Seek to next subtitle"
 msgstr "Seek to next subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:302
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:300
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
@@ -3681,7 +3681,7 @@ msgstr "Subtitle Generation"
 msgid "Subtitle HTML"
 msgstr "Subtitle HTML"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:309
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:307
 msgid "Subtitle Offset"
 msgstr "Subtitle Offset"
 
@@ -3998,7 +3998,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:371
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:369
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
 
