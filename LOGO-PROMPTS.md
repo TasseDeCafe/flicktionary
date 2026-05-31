@@ -30,6 +30,31 @@ generator (Midjourney, DALL·E, Ideogram, etc.).
 
 > Minimalist app icon: a single rounded study card with one highlighted line and a small four-point spark in the corner, suggesting insight and memory. Flat vector, bold simple shapes, two or three flat colors, no gradients, no lettering. Even margins in a rounded square, optimized to remain recognizable at tiny icon sizes.
 
+### Variants
+
+The first generation (deep-blue rounded square, tilted white card, three lines with the
+middle one highlighted yellow, four-point spark top-right, a second card stacked behind)
+works well. These variants each change **one axis** so they can be compared. Palette
+default: deep blue ground, white card, yellow accent — restate or swap as you like.
+
+**3a — Simplified for small sizes** *(fewer elements, reads at 16px)*
+> Minimalist app icon: a single tilted rounded white study card on a deep blue rounded-square background, showing just two text lines — the lower one swept with a bold yellow highlight — and one small yellow four-point spark in the top-right corner. No second card. Flat vector, three flat colors, thick clean strokes, no gradients, no readable text, generous negative space. Optimized to stay crisp and legible at 16px.
+
+**3b — Highlighter swipe, not a solid bar** *(emphasizes the marking action)*
+> Minimalist app icon: a tilted white study card on a deep blue rounded square, with three short text lines; the middle line is overswept by a translucent yellow highlighter stroke that extends slightly past the text, like a real marker pass. Small yellow four-point spark in the corner. Flat vector, bold shapes, no gradients, no readable text. Crisp at small icon sizes.
+
+**3c — Bigger, bolder deck** *(leans into the SRS / review-stack idea)*
+> Minimalist app icon: a neat stack of three rounded study cards fanned slightly, the top card showing two lines with one highlighted in yellow, a yellow four-point spark above it. Deep blue rounded-square background, clear offset between cards so the stack reads even when small. Flat vector, three flat colors, thick edges, no gradients, no readable text. Recognizable at tiny sizes.
+
+**3d — Spark as the hero** *(insight-forward, card recedes)*
+> Minimalist app icon: a large bold yellow four-point spark centered over a single simple white study card with one highlighted line, on a deep blue rounded-square background. The spark is the dominant shape; the card is secondary. Flat vector, three flat colors, no gradients, no readable text, lots of negative space. Designed to pop at 16–32px.
+
+**3e — Straight-on, centered** *(calmer, more iconic, less playful)*
+> Minimalist app icon: a single centered, upright rounded white study card on a deep blue rounded-square background, two text lines with the lower one highlighted yellow, and a small yellow four-point spark in the top-right corner. Symmetrical, balanced, flat vector, three flat colors, no gradients, no readable text. Clean and legible at small icon sizes.
+
+**3f — Palette explorations** *(same composition, swap the ground/accent)*
+> Same tilted-card-with-spark composition as above, generated in these palettes — try each: (1) warm coral ground / cream card / teal highlight; (2) deep green ground / white card / amber highlight; (3) near-black ground / white card / bright lime highlight; (4) violet ground / white card / yellow highlight. Flat vector, three flat colors, no gradients, no readable text, crisp at small sizes.
+
 ## Concept 4 — Bookmark / tab marking a chunk
 *(extracting and keeping a piece of language)*
 
