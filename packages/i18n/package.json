@@ -11,9 +11,9 @@
     "build": "pnpm run lingui:compile && tsc && tsc-alias --project tsconfig.json",
     "check:types": "tsc --noEmit",
     "test:watch": "vitest watch",
-    "lingui:extract": "bash -lc 'cd ../.. && lingui extract'",
-    "lingui:watch": "bash -lc 'cd ../.. && lingui extract --watch'",
-    "lingui:compile": "bash -lc 'cd ../.. && lingui compile'",
+    "lingui:extract": "cd ../.. && pnpm exec lingui extract",
+    "lingui:watch": "cd ../.. && pnpm exec lingui extract --watch",
+    "lingui:compile": "cd ../.. && pnpm exec lingui compile",
     "translate": "doppler run --project backend --config dev_personal -- node scripts/translate-missing.mjs"
   },
   "devDependencies": {
