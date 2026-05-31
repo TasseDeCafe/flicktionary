@@ -2,6 +2,7 @@ import { defineConfig } from 'wxt'
 import type { PublicPathEntry, ResolvedPublicFile, UserManifest, Wxt } from 'wxt'
 import type { Plugin } from 'vite'
 import babel from '@rolldown/plugin-babel'
+import tailwindcss from '@tailwindcss/vite'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -79,6 +80,9 @@ export default defineConfig({
   //    `pnpm --filter @flicktionary/i18n lingui:compile` after extracting.
   modules: ['@wxt-dev/module-react'],
   srcDir: 'src',
+  webExt: {
+    disabled: true,
+  },
   vite: () => ({
     resolve: {
       alias: {
@@ -90,7 +94,11 @@ export default defineConfig({
     // (<Trans>, t`…`) — a dedicated @rolldown/plugin-babel pass, mirroring
     // apps/web, because @vitejs/plugin-react's babel option does not reliably
     // apply the macro under WXT's Rolldown build.
-    plugins: [escapeNonAscii(), babel({ plugins: ['@lingui/babel-plugin-lingui-macro'] })],
+    // Tailwind v4 (CSS-first, config-less) powers the React video-overlay PoC
+    // (ui/video-overlay): its overlay.css entry is imported `?inline` and the
+    // generated utilities are adopted into a Shadow DOM, so host-page CSS can't
+    // reach them and we escape the global all-`!important` video.css.
+    plugins: [tailwindcss(), escapeNonAscii(), babel({ plugins: ['@lingui/babel-plugin-lingui-macro'] })],
     // Also expose VITE_* env vars so the Doppler dev_personal config that
     // already drives apps/web's dev-tunnel mode (VITE_WEB_URL,
     // VITE_API_HOST, VITE_SUPABASE_*, VITE_IS_FOR_TUNNEL) works in the
@@ -153,10 +161,6 @@ export default defineConfig({
             'cijapanese-page.js',
             'anki-ui.js',
             'pgs-parser-worker.js',
-            'video-data-sync-ui.js',
-            'video-select-ui.js',
-            'notification-ui.js',
-            'mobile-video-overlay-ui.html',
             'page-favicons/*',
           ],
           matches: ['<all_urls>'],

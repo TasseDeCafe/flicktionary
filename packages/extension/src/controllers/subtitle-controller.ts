@@ -16,10 +16,11 @@ import {
   allTextSubtitleSettings,
 } from '@asbplayer-fork/common/settings'
 import { SubtitleCollection, SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection'
-import { arrayEquals, computeStyleString, surroundingSubtitles } from '@asbplayer-fork/common/util'
+import { arrayEquals, computeStyles, computeStyleString, surroundingSubtitles } from '@asbplayer-fork/common/util'
 import { i18n } from '@/ui/lingui'
 import { msg } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
+import type { CSSProperties } from 'react'
 import {
   CachingElementOverlay,
   ElementOverlay,
@@ -27,6 +28,10 @@ import {
   KeyedHtml,
   OffsetAnchor,
 } from '../services/element-overlay'
+import { SubtitleStore, SubtitleLineModel } from '../ui/video-overlay/subtitle-store'
+import { mountSubtitleOverlay, OverlayMountHandle } from '../ui/video-overlay/mount'
+import { isReactSubtitleEligible } from '../services/flicktionary/react-mode-flag'
+import { FlicktionaryVideoClosures } from '../services/flicktionary/flicktionary-client'
 
 const BOUNDING_BOX_PADDING = 25
 
@@ -52,6 +57,10 @@ export default class SubtitleController {
   private showingLoadedMessage: boolean
   private subtitleSettings?: SubtitleSettings
   private subtitleStyles?: string[]
+  // Object-form styles (computeStyles, NOT computeStyleString) for the React
+  // overlay — zero `!important`, applied inline so they win inside the shadow
+  // root in both fullscreen states. Parallel to subtitleStyles by track.
+  private subtitleStyleObjects?: CSSProperties[]
   private subtitleClasses?: string[]
   private notificationElementOverlayHideTimeout?: NodeJS.Timeout
   private subtitleCollection: SubtitleCollection<IndexedSubtitleModel>
@@ -75,6 +84,13 @@ export default class SubtitleController {
   wordClickEnabled: boolean
   refreshCurrentSubtitle: boolean
   _preCacheDom
+
+  // React + Shadow DOM overlay (Option A). Latched per video by Binding via
+  // evaluateReactMode(); when on, the loop pushes to `_subtitleStore` instead of
+  // rendering legacy HTML, and the legacy WordInteractionController is not bound.
+  private _reactMode = false
+  private _subtitleStore?: SubtitleStore
+  private _overlayMount?: OverlayMountHandle
 
   readonly autoPauseContext: AutoPauseContext = new AutoPauseContext()
 
@@ -127,6 +143,63 @@ export default class SubtitleController {
     this.autoPauseContext.clear()
   }
 
+  get reactMode() {
+    return this._reactMode
+  }
+
+  // Latch evaluation (plan #6). Called by Binding at the top of _updateSubtitles
+  // and _refreshSettings (after settings are applied), so it sees current
+  // alignment / wordClick / loaded cue types. Enters or exits React mode; never
+  // mixes per-render.
+  evaluateReactMode(closures: FlicktionaryVideoClosures) {
+    const eligible = isReactSubtitleEligible({
+      subtitles: this._subtitles,
+      wordClickEnabled: this.wordClickEnabled,
+      shouldRenderBottomOverlay: this.shouldRenderBottomOverlay,
+      shouldRenderTopOverlay: this.shouldRenderTopOverlay,
+    })
+
+    if (eligible && !this._reactMode) {
+      this._enterReactMode(closures)
+    } else if (!eligible && this._reactMode) {
+      this._exitReactMode()
+    }
+  }
+
+  private _enterReactMode(closures: FlicktionaryVideoClosures) {
+    const overlay = this.bottomSubtitlesElementOverlay
+    if (!(overlay instanceof CachingElementOverlay)) {
+      return
+    }
+
+    // Clear any legacy DOM the bottom overlay was showing, then stand up fresh
+    // containers + the persistent React host on a clean slate.
+    overlay.hide()
+    const host = overlay.mountPersistentHost()
+    this._subtitleStore = new SubtitleStore()
+    this._overlayMount = mountSubtitleOverlay(host, {
+      store: this._subtitleStore,
+      video: this.video as HTMLVideoElement,
+      closures,
+    })
+    this._reactMode = true
+    // Force the loop to re-push current subtitles into the store next tick.
+    this.showingSubtitles = undefined
+  }
+
+  private _exitReactMode() {
+    this._overlayMount?.unmount()
+    this._overlayMount = undefined
+    const overlay = this.bottomSubtitlesElementOverlay
+    if (overlay instanceof CachingElementOverlay) {
+      overlay.disposePersistentHost()
+    }
+    this._subtitleStore = undefined
+    this._reactMode = false
+    // Force the loop to re-render legacy HTML next tick.
+    this.showingSubtitles = undefined
+  }
+
   reset() {
     this.subtitles = []
     this.subtitleFileNames = undefined
@@ -134,6 +207,12 @@ export default class SubtitleController {
   }
 
   cacheHtml() {
+    // React mode renders from the store, not cached HTML strings; setHtml is a
+    // guarded no-op on a host-mounted overlay, so caching would be dead work.
+    if (this._reactMode) {
+      return
+    }
+
     const htmls = this._buildSubtitlesHtml(this.subtitles)
 
     if (this.shouldRenderBottomOverlay && this.bottomSubtitlesElementOverlay instanceof CachingElementOverlay) {
@@ -182,7 +261,16 @@ export default class SubtitleController {
     ) {
       this.subtitleStyles = styles
       this.subtitleClasses = classes
+      // Object-form styles for the React overlay (string `styles` are compared
+      // above for change detection; the objects are derived from the same
+      // settings so they change in lockstep).
+      this.subtitleStyleObjects = this._computeStyleObjects(newSubtitleSettings)
       this.cacheHtml()
+      // In React mode invalidate the showing set so the loop re-pushes lines
+      // with the new inline styles (cacheHtml is a no-op there).
+      if (this._reactMode) {
+        this.showingSubtitles = undefined
+      }
     }
 
     const newAlignments = allTextSubtitleSettings(newSubtitleSettings).map((s) => s.subtitleAlignment)
@@ -209,6 +297,36 @@ export default class SubtitleController {
 
   private _computeStyles(settings: SubtitleSettings) {
     return allTextSubtitleSettings(settings).map((s) => computeStyleString(s))
+  }
+
+  private _computeStyleObjects(settings: SubtitleSettings): CSSProperties[] {
+    // computeStyles emits an absolute font-size and the rest of the glyph
+    // styling as a React-shaped object (no `!important`); filtering of numeric
+    // keys that crash React is already done inside it.
+    return allTextSubtitleSettings(settings).map((s) => computeStyles(s) as CSSProperties)
+  }
+
+  private _reactStyleForTrack(track?: number): CSSProperties {
+    if (this.subtitleStyleObjects === undefined) {
+      return {}
+    }
+    if (track === undefined) {
+      return this.subtitleStyleObjects[0] ?? {}
+    }
+    return this.subtitleStyleObjects[track] ?? this.subtitleStyleObjects[0] ?? {}
+  }
+
+  private _pushReactSubtitles(subtitles: IndexedSubtitleModel[]) {
+    if (!this._subtitleStore) {
+      return
+    }
+    const lines: SubtitleLineModel[] = subtitles.map((subtitle) => ({
+      index: subtitle.index,
+      track: subtitle.track ?? 0,
+      text: subtitle.text,
+      style: this._reactStyleForTrack(subtitle.track),
+    }))
+    this._subtitleStore.setLines(lines)
   }
 
   private _computeClasses(settings: SubtitleSettings) {
@@ -309,8 +427,14 @@ export default class SubtitleController {
       }
 
       if (this.showingLoadedMessage) {
-        this._setSubtitlesHtml(this.bottomSubtitlesElementOverlay, [{ html: () => '' }])
-        this._setSubtitlesHtml(this.topSubtitlesElementOverlay, [{ html: () => '' }])
+        if (this._reactMode) {
+          // Invalidate so the block below re-pushes the real current subtitles
+          // over the loaded-message line (setHtml is a no-op in React mode).
+          this.showingSubtitles = undefined
+        } else {
+          this._setSubtitlesHtml(this.bottomSubtitlesElementOverlay, [{ html: () => '' }])
+          this._setSubtitlesHtml(this.topSubtitlesElementOverlay, [{ html: () => '' }])
+        }
         this.showingLoadedMessage = false
       }
 
@@ -350,27 +474,55 @@ export default class SubtitleController {
         (showOffset && offset !== this.showingOffset) || (!showOffset && this.showingOffset !== undefined)
 
       if ((!showOffset && !this._displaySubtitles) || this._forceHideSubtitles) {
-        this.bottomSubtitlesElementOverlay.hide()
-        this.topSubtitlesElementOverlay.hide()
+        if (this._reactMode) {
+          // Don't call hide() — that would dispose the host and leak the React
+          // root. Hiding goes through a store flag (the app renders nothing);
+          // the containers + host stay mounted.
+          this._subtitleStore?.setVisible(false)
+        } else {
+          this.bottomSubtitlesElementOverlay.hide()
+          this.topSubtitlesElementOverlay.hide()
+        }
       } else if (subtitlesAreNew || shouldRenderOffset || this.refreshCurrentSubtitle) {
         if (this.refreshCurrentSubtitle) this.refreshCurrentSubtitle = false
-        this._resetUnblurState()
-        if (this.shouldRenderBottomOverlay) {
+
+        if (this._reactMode) {
+          this._subtitleStore?.setVisible(true)
+          // React mode is latched to a single bottom track (plan #6); push only
+          // the bottom-aligned cues.
           const showingSubtitlesBottom = showingSubtitles.filter(
             (s) => this._getSubtitleTrackAlignment(s.track) === 'bottom'
           )
-          this._renderSubtitles(showingSubtitlesBottom, OffsetAnchor.bottom)
-        }
-        if (this.shouldRenderTopOverlay) {
-          const showingSubtitlesTop = showingSubtitles.filter((s) => this._getSubtitleTrackAlignment(s.track) === 'top')
-          this._renderSubtitles(showingSubtitlesTop, OffsetAnchor.top)
-        }
+          this._pushReactSubtitles(showingSubtitlesBottom)
 
-        if (showOffset) {
-          this._appendSubtitlesHtml(this._buildTextHtml(this._formatOffset(offset)))
-          this.showingOffset = offset
+          if (showOffset) {
+            this._subtitleStore?.setOffsetText(this._formatOffset(offset))
+            this.showingOffset = offset
+          } else {
+            this._subtitleStore?.setOffsetText(null)
+            this.showingOffset = undefined
+          }
         } else {
-          this.showingOffset = undefined
+          this._resetUnblurState()
+          if (this.shouldRenderBottomOverlay) {
+            const showingSubtitlesBottom = showingSubtitles.filter(
+              (s) => this._getSubtitleTrackAlignment(s.track) === 'bottom'
+            )
+            this._renderSubtitles(showingSubtitlesBottom, OffsetAnchor.bottom)
+          }
+          if (this.shouldRenderTopOverlay) {
+            const showingSubtitlesTop = showingSubtitles.filter(
+              (s) => this._getSubtitleTrackAlignment(s.track) === 'top'
+            )
+            this._renderSubtitles(showingSubtitlesTop, OffsetAnchor.top)
+          }
+
+          if (showOffset) {
+            this._appendSubtitlesHtml(this._buildTextHtml(this._formatOffset(offset)))
+            this.showingOffset = offset
+          } else {
+            this.showingOffset = undefined
+          }
         }
       }
     }, 100)
@@ -475,6 +627,10 @@ export default class SubtitleController {
   }
 
   unbind() {
+    // Unmount the React root + dispose the persistent host BEFORE the overlay's
+    // own dispose() tears down the containers, so the root is cleanly unmounted.
+    this._exitReactMode()
+
     if (this.subtitlesInterval) {
       clearInterval(this.subtitlesInterval)
       this.subtitlesInterval = undefined
@@ -667,6 +823,17 @@ export default class SubtitleController {
       if (offset !== 0) {
         loadedMessage += `<br>${this._formatOffset(offset)}`
       }
+    }
+
+    if (this._reactMode) {
+      // Push the loaded message as a transient store line. Newline-joined (not
+      // <br>) since React renders it as text under `white-space: pre-wrap`.
+      const text = loadedMessage.replace(/<br>/g, '\n')
+      this._subtitleStore?.setVisible(true)
+      this._subtitleStore?.setLines([{ index: -1, track: 0, text, style: this._reactStyleForTrack(0) }])
+      this.showingLoadedMessage = true
+      this.lastLoadedMessageTimestamp = Date.now()
+      return
     }
 
     const overlay =

@@ -52,6 +52,7 @@ import VideoDataSyncController from '../controllers/video-data-sync-controller'
 import WordInteractionController from '../controllers/word-interaction-controller'
 import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import { OffsetAnchor } from './element-overlay'
+import { FlicktionaryVideoClosures } from './flicktionary/flicktionary-client'
 import { ExtensionSettingsStorage } from './extension-settings-storage'
 import { setupLingui } from '../ui/lingui'
 import KeyBindings from './key-bindings'
@@ -636,6 +637,30 @@ export default class Binding {
     this.subscribed = true
   }
 
+  // The per-video closures the React overlay (and the legacy controller) use to
+  // build a self-contained SaveWordMessage. Stable getters reading live state.
+  private _flicktionaryClosures(): FlicktionaryVideoClosures {
+    return {
+      getVideoTitle: () => document.title,
+      getVideoUrl: () => window.location.href,
+      getFlicktionaryVideoContext: () => this._flicktionaryVideoContext,
+      getFlicktionarySaveDisabledReason: () => this._flicktionarySaveDisabledReason,
+    }
+  }
+
+  // Bind the legacy document-level word controller ONLY when word-click is on
+  // and React mode is OFF — React owns word interaction when latched on, and
+  // running both is unsafe (shadow-internal events retarget to the host, so the
+  // document delegation can't reliably see shadow words). bind()/unbind() are
+  // idempotent, so this is safe to call repeatedly.
+  private _syncWordInteractionController() {
+    if (this.subtitleController.wordClickEnabled && !this.subtitleController.reactMode) {
+      this.wordInteractionController.bind()
+    } else {
+      this.wordInteractionController.unbind()
+    }
+  }
+
   async _refreshSettings() {
     const currentSettings = await this.settings.getAll()
     this._seekDuration = currentSettings.seekDuration
@@ -667,6 +692,11 @@ export default class Binding {
 
     this.subtitleController.setSubtitleSettings(currentSettings)
 
+    // Re-evaluate the React latch now that alignment + wordClick + subtitles are
+    // current, BEFORE any legacy cacheHtml/refresh path runs against the bottom
+    // overlay (and before deciding whether to bind the legacy word controller).
+    this.subtitleController.evaluateReactMode(this._flicktionaryClosures())
+
     if (convertNetflixRubyChanged || subtitleHtmlChanged || wordClickEnabledChanged) {
       this.subtitleController.cacheHtml()
     }
@@ -682,15 +712,11 @@ export default class Binding {
       this.dragController.unbind()
     }
 
-    // Word-click mode binds whenever it's enabled. Both hover-gloss and
-    // right-click / chunk-select save now go through Flicktionary (the
-    // server glosses/translates with full context), so there's no separate
-    // LLM toggle to gate on.
-    if (currentSettings.wordClickEnabled) {
-      this.wordInteractionController.bind()
-    } else {
-      this.wordInteractionController.unbind()
-    }
+    // Word-click mode binds whenever it's enabled AND React mode is off. When
+    // React mode is latched on it owns word interaction; the legacy controller
+    // stays unbound (see _syncWordInteractionController). Both hover-gloss and
+    // right-click / chunk-select save go through Flicktionary either way.
+    this._syncWordInteractionController()
 
     if (currentSettings.streamingEnableOverlay) {
       this.mobileVideoOverlayController.offsetAnchor =
@@ -1014,6 +1040,13 @@ export default class Binding {
   private _updateSubtitles(subtitles: IndexedSubtitleModel[], subtitleFileNames: string[]) {
     this.subtitleController.subtitles = subtitles
     this.subtitleController.subtitleFileNames = subtitleFileNames
+
+    // Re-evaluate the React latch against the freshly-loaded cue types BEFORE
+    // any legacy cacheHtml/render path, then sync the legacy word controller (a
+    // newly-eligible video must unbind it; a newly-ineligible one must bind it).
+    this.subtitleController.evaluateReactMode(this._flicktionaryClosures())
+    this._syncWordInteractionController()
+
     this.subtitleController.cacheHtml()
 
     // Fire-and-forget: tell the background which session this video maps to

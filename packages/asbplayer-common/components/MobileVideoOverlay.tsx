@@ -14,6 +14,7 @@ import HoldableIconButton from './HoldableIconButton'
 import PlayModeSelector from './PlayModeSelector'
 import ScrollableNumberControls from './ScrollableNumberControls'
 import Tooltip from './Tooltip'
+import { usePortalContainer } from './portal-container-context'
 
 type Anchor = 'top' | 'bottom'
 
@@ -102,6 +103,9 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
   ref
 ) {
   const { classes } = useStyles({ anchor })
+  // When rendered inside a Shadow DOM (ShadowMuiProvider), MUI portals must land
+  // in the shadow root or they render unstyled; undefined => default body.
+  const portalContainer = usePortalContainer()
   const offsetInputRef = useRef<HTMLInputElement>(undefined)
   const playbackInputRef = useRef<HTMLInputElement>(undefined)
   const [playModeSelectorOpen, setPlayModeSelectorOpen] = useState<boolean>(false)
@@ -347,6 +351,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
     className: classes.tooltip,
     placement: anchor,
     disabled: !tooltipsEnabled,
+    slotProps: { popper: { container: portalContainer } },
   }
 
   const containerClassName = className === undefined ? classes.container : `${className} ${classes.container}`
@@ -445,6 +450,7 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
         <PlayModeSelector
           open={playModeSelectorOpen}
           anchorEl={playModeSelectorAnchorEl}
+          container={portalContainer}
           onClose={handleClosePlayModeSelector}
           selectedPlayMode={model.playMode}
           onPlayMode={handlePlayModeSelected}

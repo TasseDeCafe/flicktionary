@@ -1,5 +1,10 @@
 import { OffscreenDomCache } from '@asbplayer-fork/common'
 
+// Tags the single React content host placed inside a subtitle container by
+// `mountPersistentHost`. Used to keep the host out of the dom-cache recycling
+// loop (`_setChildren`) so its live React root is never detached.
+export const PERSISTENT_HOST_ATTR = 'data-asbplayer-react-host'
+
 export enum OffsetAnchor {
   bottom,
   top,
@@ -47,6 +52,10 @@ export class CachingElementOverlay implements ElementOverlay {
 
   private fullscreenContainerElement?: HTMLElement
   private defaultContentElement?: HTMLElement
+  // The React content host (Option A). While set, this overlay is in "React
+  // mode": setHtml/appendHtml become guarded no-ops, hide() no longer disposes,
+  // and _setChildren never recycles the host. Cleared by disposePersistentHost.
+  private persistentHostElement?: HTMLElement
   private nonFullscreenContainerElement?: HTMLElement
   private nonFullscreenElementFullscreenChangeListener?: (this: any, event: Event) => any
   private nonFullscreenStylesInterval?: NodeJS.Timeout
@@ -132,6 +141,13 @@ export class CachingElementOverlay implements ElementOverlay {
   }
 
   setHtml(htmls: KeyedHtml[]) {
+    // React mode owns this overlay's content. A stray legacy render
+    // (showLoadedMessage / offset / notification path) must not clobber the
+    // host or inject sibling nodes next to it — so swallow it here.
+    if (this.persistentHostElement) {
+      return
+    }
+
     if (document.fullscreenElement) {
       this._displayFullscreenContentElementsWithHtml(htmls)
     } else {
@@ -288,12 +304,25 @@ export class CachingElementOverlay implements ElementOverlay {
 
   private _setChildren(containerElement: HTMLElement, contentElements: HTMLElement[]) {
     while (containerElement.firstChild) {
-      this.domCache.return(containerElement.lastChild! as HTMLElement)
+      const last = containerElement.lastChild! as HTMLElement
+      // Defense in depth: should be unreachable while a host is mounted
+      // (setHtml is a guarded no-op), but never recycle the React host into the
+      // offscreen dom-cache — that detaches the live root. Bail instead.
+      if (this._isPersistentHost(last)) {
+        return
+      }
+      this.domCache.return(last)
     }
 
     for (const contentElement of contentElements) {
       containerElement.appendChild(contentElement)
     }
+  }
+
+  private _isPersistentHost(node: Node | null): node is HTMLElement {
+    return (
+      node instanceof HTMLElement && (node === this.persistentHostElement || node.hasAttribute(PERSISTENT_HOST_ATTR))
+    )
   }
 
   private _cachedContentElement(html: () => string, key: string | undefined) {
@@ -310,6 +339,11 @@ export class CachingElementOverlay implements ElementOverlay {
   }
 
   appendHtml(html: string) {
+    // See setHtml: no sibling injection while the React host owns this overlay.
+    if (this.persistentHostElement) {
+      return
+    }
+
     if (document.fullscreenElement) {
       this._appendHtml(`${html}\n`, this.fullscreenContentClassName, this._fullscreenContainerElement())
     } else {
@@ -336,7 +370,59 @@ export class CachingElementOverlay implements ElementOverlay {
     }
   }
 
+  // Eagerly create BOTH containers (so each registers its `fullscreenchange`
+  // listener and the existing `_transferChildren` path is live), then place a
+  // single plain <div> host as the only content child of the currently-active
+  // container. The host is tagged so `_setChildren` never recycles it; the
+  // caller attaches a shadow root and a React root to it. Returns the host.
+  //
+  // The transfer logic moves the host between containers on every fullscreen
+  // toggle WITHOUT any subtitle update — that's the whole reason both
+  // containers must exist up front (the lazy creation in setHtml would never
+  // run in React mode, stranding the host on fullscreen entry).
+  mountPersistentHost(): HTMLElement {
+    if (this.persistentHostElement) {
+      return this.persistentHostElement
+    }
+
+    // Force both containers (and their fullscreenchange listeners) into
+    // existence regardless of the current fullscreen state.
+    const nonFullscreenContainer = this._nonFullscreenContainerElement()
+    const fullscreenContainer = this._fullscreenContainerElement()
+
+    const host = document.createElement('div')
+    host.setAttribute(PERSISTENT_HOST_ATTR, '')
+    this.persistentHostElement = host
+
+    const activeContainer = document.fullscreenElement ? fullscreenContainer : nonFullscreenContainer
+    activeContainer.appendChild(host)
+
+    return host
+  }
+
+  // Tear down the React host (called on unbind, before the overlay's own
+  // dispose()). Removing the host and clearing the flag restores normal
+  // overlay semantics, so the subsequent dispose()/hide() cleans up containers.
+  disposePersistentHost() {
+    if (!this.persistentHostElement) {
+      return
+    }
+
+    this.persistentHostElement.remove()
+    this.persistentHostElement = undefined
+  }
+
   hide() {
+    // React mode: never dispose. Tearing down the containers here would detach
+    // the shadow host with no React unmount, leaking the root. Visibility in
+    // React mode is driven by a store flag (the app renders nothing); this is
+    // just defense in depth if a legacy force-hide path still calls hide().
+    if (this.persistentHostElement) {
+      this.nonFullscreenContainerElement?.style.setProperty('display', 'none', 'important')
+      this.fullscreenContainerElement?.style.setProperty('display', 'none', 'important')
+      return
+    }
+
     if (this.nonFullscreenElementFullscreenChangeListener) {
       document.removeEventListener('fullscreenchange', this.nonFullscreenElementFullscreenChangeListener)
     }

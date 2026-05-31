@@ -6,6 +6,7 @@ catalog:
   '@ai-sdk/anthropic': 3.0.64
   '@anthropic-ai/sdk': 0.64.0
   '@babel/plugin-transform-react-jsx': 7.28.6
+  '@emotion/cache': 11.14.0
   '@emotion/react': 11.14.0
   '@emotion/styled': 11.14.1
   '@expo/metro-runtime': 55.0.7

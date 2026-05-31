@@ -1,22 +1,47 @@
+import { createElement } from 'react'
 import {
   CaptureVisibleTabMessage,
   ForegroundToExtensionCommand,
+  Message,
   OpenAsbplayerSettingsMessage,
   SubtitleFile,
   TabToExtensionCommand,
+  VideoSelectModeCancelMessage,
   VideoSelectModeConfirmMessage,
 } from '@asbplayer-fork/common'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
-import { VideoElement } from '../ui/components/VideoSelectUi'
 import Binding from '../services/binding'
-import UiFrame from '../services/ui-frame'
 import { ExtensionSettingsStorage } from '../services/extension-settings-storage'
+import { setupLingui } from '../ui/lingui'
+import { mountModalHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
+import { createUpdateChannel, type UpdateChannel } from '../ui/shadow/model-store'
+import {
+  ShadowVideoSelectApp,
+  type VideoElement,
+  type VideoSelectCommands,
+  type VideoSelectState,
+} from '../ui/video-select/ShadowVideoSelectApp'
+
+// The in-realm channel exposes updateState; this minimal shape is what the rest
+// of the controller drives.
+interface VideoSelectClient {
+  updateState(state: Partial<VideoSelectState>): void
+}
+
+// Marker for the in-realm video-select shadow host.
+const VIDEO_SELECT_HOST_ATTR = 'data-asbplayer-video-select-host'
 
 export default class VideoSelectController {
   private readonly _bindings: Binding[]
-  private readonly _frame: UiFrame
   private readonly _settings: SettingsProvider = new SettingsProvider(new ExtensionSettingsStorage())
   private _subtitleFiles?: SubtitleFile[]
+
+  // The video-select dialog renders in the content-script realm via a
+  // fullscreen-aware modal shadow host. The model flows through `_channel`
+  // (partial updateState pushes); UI commands route through `_handleUiCommand`.
+  private _channel?: UpdateChannel<VideoSelectState>
+  private _shadowHandle?: ShadowHostHandle
+  private _shadowOpen = false
 
   private messageListener?: (
     request: any,
@@ -26,24 +51,6 @@ export default class VideoSelectController {
 
   constructor(bindings: Binding[]) {
     this._bindings = bindings
-    this._frame = new UiFrame(
-      async (lang) => `<!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="utf-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1" />
-                    <title>asbplayer - Video Select</title>
-                    <style>
-                        @import url(${browser.runtime.getURL('/fonts/fonts.css')});
-                    </style>
-                </head>
-                <body>
-                    <div id="root" style="width:100%;height:100vh;"></div>
-                    <script type="application/json" id="loc">${JSON.stringify({ lang })}</script>
-                    <script type="module" src="${browser.runtime.getURL('/video-select-ui.js')}"></script>
-                </body>
-            </html>`
-    )
   }
 
   bind() {
@@ -79,7 +86,10 @@ export default class VideoSelectController {
   }
 
   unbind() {
-    this._frame.unbind()
+    this._shadowHandle?.unmount()
+    this._shadowHandle = undefined
+    this._channel = undefined
+    this._shadowOpen = false
 
     if (this.messageListener) {
       browser.runtime.onMessage.removeListener(this.messageListener)
@@ -146,55 +156,85 @@ export default class VideoSelectController {
     client.updateState({ open: true, themeType, videoElements, openedFromMiningCommand })
   }
 
-  private async _prepareAndShowFrame() {
-    this._frame.language = await this._settings.getSingle('language')
-    const isNewClient = await this._frame.bind()
-    const client = await this._frame.client()
-
-    if (isNewClient) {
-      client.onMessage(async (message) => {
-        if (message.command === 'confirm') {
-          client.updateState({ open: false })
-          this._frame.hide()
-          const binding = this._bindings.find(
-            (b) => b.video.src === (message as VideoSelectModeConfirmMessage).selectedVideoElementSrc
-          )
-          if (binding !== undefined) {
-            if (this._subtitleFiles === undefined) {
-              binding.showVideoDataDialog(false)
-            } else {
-              binding.loadSubtitles(await this._filesForSubtitleFiles(this._subtitleFiles), false)
-              this._subtitleFiles = undefined
-            }
-          }
-        } else if (message.command === 'openSettings') {
-          const openSettingsCommand: TabToExtensionCommand<OpenAsbplayerSettingsMessage> = {
-            sender: 'asbplayer-video-tab',
-            message: {
-              command: 'open-asbplayer-settings',
-            },
-          }
-          browser.runtime.sendMessage(openSettingsCommand)
-        } else if (message.command === 'cancel') {
-          client.updateState({ open: false })
-          this._frame.hide()
+  // Handle a command from the UI — shared by the iframe onMessage path and the
+  // in-realm command callbacks so both transports run identical logic.
+  private async _handleUiCommand(message: Message) {
+    if (message.command === 'confirm') {
+      await this._closeUi()
+      const binding = this._bindings.find(
+        (b) => b.video.src === (message as VideoSelectModeConfirmMessage).selectedVideoElementSrc
+      )
+      if (binding !== undefined) {
+        if (this._subtitleFiles === undefined) {
+          binding.showVideoDataDialog(false)
+        } else {
+          binding.loadSubtitles(await this._filesForSubtitleFiles(this._subtitleFiles), false)
           this._subtitleFiles = undefined
         }
-      })
+      }
+    } else if (message.command === 'openSettings') {
+      const openSettingsCommand: TabToExtensionCommand<OpenAsbplayerSettingsMessage> = {
+        sender: 'asbplayer-video-tab',
+        message: {
+          command: 'open-asbplayer-settings',
+        },
+      }
+      browser.runtime.sendMessage(openSettingsCommand)
+    } else if (message.command === 'cancel') {
+      await this._closeUi()
+      this._subtitleFiles = undefined
     }
+  }
 
-    this._frame.show()
-    return client
+  private _shadowCommands(): VideoSelectCommands {
+    return {
+      onConfirm: (selectedVideoElementSrc) =>
+        void this._handleUiCommand({ command: 'confirm', selectedVideoElementSrc } as VideoSelectModeConfirmMessage),
+      onOpenSettings: () => void this._handleUiCommand({ command: 'openSettings' }),
+      onCancel: () => void this._handleUiCommand({ command: 'cancel' } as VideoSelectModeCancelMessage),
+    }
+  }
+
+  private async _ensureShadowMounted() {
+    if (!this._channel) {
+      this._channel = createUpdateChannel<VideoSelectState>()
+    }
+    if (this._shadowHandle) {
+      return
+    }
+    const language = await this._settings.getSingle('language')
+    setupLingui(language)
+    const channel = this._channel
+    const commands = this._shadowCommands()
+    this._shadowHandle = mountModalHost({
+      hostAttribute: VIDEO_SELECT_HOST_ATTR,
+      render: ({ shadowRoot, portalContainer }) =>
+        createElement(ShadowVideoSelectApp, { channel, shadowRoot, portalContainer, language, commands }),
+    })
+  }
+
+  private _isHidden(): boolean {
+    return !this._shadowOpen
+  }
+
+  // Drive the dialog closed (model open:false).
+  private async _closeUi() {
+    this._channel?.updateState({ open: false })
+    this._shadowOpen = false
+  }
+
+  private async _prepareAndShowFrame(): Promise<VideoSelectClient> {
+    await this._ensureShadowMounted()
+    this._shadowOpen = true
+    return this._channel!
   }
 
   private async _hideUi() {
-    if (this._frame.hidden) {
+    if (this._isHidden()) {
       return
     }
 
-    const client = await this._frame.client()
-    client.updateState({ open: false })
-    this._frame.hide()
+    await this._closeUi()
   }
 
   private async _filesForSubtitleFiles(subtitleFiles: SubtitleFile[]) {

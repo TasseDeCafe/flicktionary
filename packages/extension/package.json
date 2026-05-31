@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "doppler run --project extension --config dev_personal -- wxt",
+        "dev:tunnel": "pnpm run dev",
         "dev:firefox": "doppler run --project extension --config dev_personal -- wxt -b firefox",
         "dev:firefox-android": "doppler run --project extension --config dev_personal -- wxt -b firefox-android --mv2",
         "build": "wxt build",
@@ -24,6 +25,7 @@
     },
     "dependencies": {
         "@asbplayer-fork/common": "workspace:*",
+        "@emotion/cache": "catalog:",
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
         "@floating-ui/dom": "catalog:",
@@ -48,6 +50,7 @@
         "react-dom": "catalog:",
         "regenerator-runtime": "catalog:",
         "semver": "catalog:",
+        "tailwindcss": "catalog:",
         "tss-react": "catalog:",
         "typescript": "catalog:",
         "uuid": "catalog:"
@@ -55,6 +58,7 @@
     "devDependencies": {
         "@lingui/babel-plugin-lingui-macro": "catalog:",
         "@rolldown/plugin-babel": "catalog:",
+        "@tailwindcss/vite": "catalog:",
         "@typescript-eslint/eslint-plugin": "catalog:",
         "@typescript-eslint/parser": "catalog:",
         "@vitejs/plugin-react": "catalog:",

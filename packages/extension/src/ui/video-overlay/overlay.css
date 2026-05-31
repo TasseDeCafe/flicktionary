@@ -1,0 +1,66 @@
+/*
+ * Tailwind v4 entry for the React video-overlay PoC (Option A).
+ *
+ * This file is imported `?inline` by ui/video-overlay/mount.ts, turned into a
+ * `CSSStyleSheet` (replaceSync) and `adoptedStyleSheets`-attached to the
+ * subtitle and popover shadow roots. Because the sheet lives ONLY inside those
+ * shadow trees, every utility here is scoped to the overlay — host-page CSS
+ * can't reach in and our rules can't leak out. That isolation is the whole
+ * point: zero `!important`, no specificity war with YouTube/Netflix.
+ *
+ * Subtitle glyph styling (size/colour/outline/shadow/font) is NOT defined here
+ * — it comes from `computeStyles()` applied inline on each <SubtitleLine>, so it
+ * always wins inside the shadow root regardless of fullscreen state.
+ */
+@import 'tailwindcss';
+
+/* Tailwind v4 design tokens for the overlay's own chrome (tooltip / CEFR
+   picker / toast). Kept self-contained so the shadow tree needs no document
+   variables. */
+@theme {
+  /* Toast enter/leave used by <SaveToast>; mirrors the legacy
+     asbplayer-fade-in-out keyframe (translateY in, hold, translateY out). */
+  --animate-overlay-toast: overlay-toast 1.5s ease both;
+  --animate-overlay-toast-error: overlay-toast 3.5s ease both;
+
+  /* Pin the spacing + font-size scales to absolute px. Tailwind's defaults are
+     `rem`, which resolve against the host page's <html> font-size — and a Shadow
+     DOM can't shield `rem`. Host pages like YouTube set `html { font-size: 10px }`,
+     which would shrink every `text-sm` / `p-4` / `gap-2` in the overlay. px makes
+     the overlay chrome immune (matching the legacy all-px video.css). Subtitle
+     glyphs are unaffected — they come from computeStyles() inline. */
+  --spacing: 4px;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 1.4;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 16px;
+  --text-base--line-height: 1.5;
+  --text-lg: 18px;
+  --text-lg--line-height: 1.5;
+
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+}
+
+@keyframes overlay-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
