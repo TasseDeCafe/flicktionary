@@ -474,6 +474,49 @@ const listEligibleForLanguage = async (params: {
   `) as DbUserLookup[]
 }
 
+// Due/new ROWS for the no-LLM flashcard reviewer. Unlike listEligibleForLanguage
+// (which reads the frozen practice_session_chunks snapshot), this uses the SAME
+// live predicates as listDueSummary so the flashcard queue always reflects the
+// current srs clock — flashcards are sessionless. Two capped sub-selects merged
+// due-first then new (Anki-standard ordering). Due cards span review+learning;
+// new are never-reviewed (srs_state IS NULL). The two buckets are mutually
+// exclusive (null vs non-null srs_state), so no card appears twice.
+const listDueFlashcardsForLanguage = async (params: {
+  userId: string
+  targetLanguage: string
+  maxReviewTerms: number
+  maxNewTerms: number
+}): Promise<DbUserLookup[]> => {
+  if (params.maxReviewTerms <= 0 && params.maxNewTerms <= 0) return []
+  const [dueRows, newRows] = await Promise.all([
+    sql`
+      SELECT ul.*
+      FROM public.user_lookups ul
+      WHERE ul.user_id = ${params.userId}
+        AND ul.target_language = ${params.targetLanguage}
+        AND ul.count > 0
+        AND ul.deleted_at IS NULL
+        AND ul.srs_due IS NOT NULL
+        AND ul.srs_due <= NOW()
+        AND ul.srs_state IN ('new', 'review', 'learning', 'relearning')
+      ORDER BY ul.srs_due ASC, ul.headword ASC, ul.sense ASC
+      LIMIT ${params.maxReviewTerms}
+    ` as Promise<DbUserLookup[]>,
+    sql`
+      SELECT ul.*
+      FROM public.user_lookups ul
+      WHERE ul.user_id = ${params.userId}
+        AND ul.target_language = ${params.targetLanguage}
+        AND ul.count > 0
+        AND ul.deleted_at IS NULL
+        AND ul.srs_state IS NULL
+      ORDER BY ul.headword ASC, ul.sense ASC
+      LIMIT ${params.maxNewTerms}
+    ` as Promise<DbUserLookup[]>,
+  ])
+  return [...dueRows, ...newRows]
+}
+
 const findByKey = async (params: {
   userId: string
   targetLanguage: string
@@ -555,6 +598,43 @@ const initializeSrsStateForPool = async (params: { userLookupId: string; pool: P
     WHERE id = ${params.userLookupId}
       AND active_srs_state IS NULL
   `
+}
+
+// Atomic daily-new-cap guard for the flashcard reviewer. Introduces a
+// never-reviewed row into the passive pool (srs_state='new', due now, stamped
+// added_to_practice_at) ONLY IF, in the same statement, the day's introduced
+// count for this (user, language) is still under maxNewTerms. This must be
+// atomic at introduction time, not just at list time: two tabs/devices can each
+// fetch a batch and would otherwise both introduce past the cap. Returns true
+// when the row was introduced, false when the cap was already consumed (or the
+// row was not eligible — non-null state / deleted). The count predicate matches
+// listDueSummary's new_introduced_today_count.
+const initializeSrsStateIfUnderDailyCap = async (params: {
+  userLookupId: string
+  userId: string
+  targetLanguage: string
+  maxNewTerms: number
+}): Promise<boolean> => {
+  const rows = (await sql`
+    UPDATE public.user_lookups
+    SET srs_state = 'new',
+        srs_due = NOW(),
+        added_to_practice_at = NOW()
+    WHERE id = ${params.userLookupId}
+      AND user_id = ${params.userId}
+      AND srs_state IS NULL
+      AND deleted_at IS NULL
+      AND (
+        SELECT COUNT(*)
+        FROM public.user_lookups
+        WHERE user_id = ${params.userId}
+          AND target_language = ${params.targetLanguage}
+          AND added_to_practice_at >= CURRENT_DATE
+          AND added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
+      ) < ${params.maxNewTerms}
+    RETURNING id
+  `) as Array<{ id: string }>
+  return rows.length > 0
 }
 
 // Patch the SRS columns from a ts-fsrs Card object. Atomic update — call this
@@ -1142,6 +1222,12 @@ export interface UserLookupsRepositoryInterface {
     pool: PracticePool
     extraUserLookupIds?: string[]
   }) => Promise<DbUserLookup[]>
+  listDueFlashcardsForLanguage: (params: {
+    userId: string
+    targetLanguage: string
+    maxReviewTerms: number
+    maxNewTerms: number
+  }) => Promise<DbUserLookup[]>
   findByKey: (params: {
     userId: string
     targetLanguage: string
@@ -1152,6 +1238,12 @@ export interface UserLookupsRepositoryInterface {
   findByIdForUserIncludingDeleted: (id: string, userId: string) => Promise<DbUserLookup | null>
   initializeSrsState: (userLookupId: string) => Promise<void>
   initializeSrsStateForPool: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
+  initializeSrsStateIfUnderDailyCap: (params: {
+    userLookupId: string
+    userId: string
+    targetLanguage: string
+    maxNewTerms: number
+  }) => Promise<boolean>
   applyFsrsResult: (params: {
     userLookupId: string
     state: SrsState
@@ -1225,11 +1317,13 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     applyUnkeepTransition,
     listDueSummary,
     listEligibleForLanguage,
+    listDueFlashcardsForLanguage,
     findByKey,
     findByIdForUser,
     findByIdForUserIncludingDeleted,
     initializeSrsState,
     initializeSrsStateForPool,
+    initializeSrsStateIfUnderDailyCap,
     applyFsrsResult,
     applyFsrsResultForPool,
     setLearningMode,

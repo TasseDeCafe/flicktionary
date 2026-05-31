@@ -188,6 +188,34 @@ export const usePracticeFastGloss = () => {
   )
 }
 
+// No-LLM flashcard reviewer. Fetches a fresh due-first-then-new batch from
+// user_lookups. select unwraps the { data: { cards } } envelope. The view
+// iterates the batch locally; remounting refetches (already-rated cards drop).
+export const useFlashcards = (targetLanguage: string) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.practice.listFlashcards.queryOptions({
+      input: { targetLanguage },
+      select: (r) => r.data.cards,
+      meta: { errorMessage: t`Failed to load flashcards` },
+    })
+  )
+}
+
+export const useRateFlashcard = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.practice.rateFlashcard.mutationOptions({
+      onSuccess: () => {
+        // Refresh the landing's due/new counts (shared SRS budget).
+        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Failed to record rating` },
+    })
+  )
+}
+
 export const useFinalizePracticeText = (sessionId: string) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

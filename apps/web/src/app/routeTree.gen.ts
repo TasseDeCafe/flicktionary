@@ -40,6 +40,7 @@ import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
 import { Route as AuthenticatedAppPracticeLanguageTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/language/$targetLanguage'
+import { Route as AuthenticatedAppPracticeFlashcardsTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/flashcards/$targetLanguage'
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
 import { Route as AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/$cardId'
 
@@ -218,6 +219,12 @@ const AuthenticatedAppPracticeLanguageTargetLanguageRoute =
     path: '/practice/language/$targetLanguage',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppPracticeFlashcardsTargetLanguageRoute =
+  AuthenticatedAppPracticeFlashcardsTargetLanguageRouteImport.update({
+    id: '/practice/flashcards/$targetLanguage',
+    path: '/practice/flashcards/$targetLanguage',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsSessionIdReviewIndexRoute =
   AuthenticatedAppSessionsSessionIdReviewIndexRouteImport.update({
     id: '/sessions/$sessionId/review/',
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
+  '/practice/flashcards/$targetLanguage': typeof AuthenticatedAppPracticeFlashcardsTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -291,6 +299,7 @@ export interface FileRoutesByTo {
   '/practice': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
   '/vocabulary': typeof AuthenticatedAppVocabularyIndexRoute
+  '/practice/flashcards/$targetLanguage': typeof AuthenticatedAppPracticeFlashcardsTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -327,6 +336,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/_authenticated/_app/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
+  '/_authenticated/_app/practice/flashcards/$targetLanguage': typeof AuthenticatedAppPracticeFlashcardsTargetLanguageRoute
   '/_authenticated/_app/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/practice/'
     | '/sessions/'
     | '/vocabulary/'
+    | '/practice/flashcards/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId/'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/sessions'
     | '/vocabulary'
+    | '/practice/flashcards/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/practice/'
     | '/_authenticated/_app/sessions/'
     | '/_authenticated/_app/vocabulary/'
+    | '/_authenticated/_app/practice/flashcards/$targetLanguage'
     | '/_authenticated/_app/practice/language/$targetLanguage'
     | '/_authenticated/_app/sessions/$sessionId/processing'
     | '/_authenticated/_app/sessions/$sessionId/'
@@ -667,6 +680,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPracticeLanguageTargetLanguageRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/practice/flashcards/$targetLanguage': {
+      id: '/_authenticated/_app/practice/flashcards/$targetLanguage'
+      path: '/practice/flashcards/$targetLanguage'
+      fullPath: '/practice/flashcards/$targetLanguage'
+      preLoaderRoute: typeof AuthenticatedAppPracticeFlashcardsTargetLanguageRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/$sessionId/review/': {
       id: '/_authenticated/_app/sessions/$sessionId/review/'
       path: '/sessions/$sessionId/review'
@@ -697,6 +717,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPracticeIndexRoute: typeof AuthenticatedAppPracticeIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
   AuthenticatedAppVocabularyIndexRoute: typeof AuthenticatedAppVocabularyIndexRoute
+  AuthenticatedAppPracticeFlashcardsTargetLanguageRoute: typeof AuthenticatedAppPracticeFlashcardsTargetLanguageRoute
   AuthenticatedAppPracticeLanguageTargetLanguageRoute: typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
@@ -719,6 +740,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppPracticeIndexRoute: AuthenticatedAppPracticeIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,
   AuthenticatedAppVocabularyIndexRoute: AuthenticatedAppVocabularyIndexRoute,
+  AuthenticatedAppPracticeFlashcardsTargetLanguageRoute:
+    AuthenticatedAppPracticeFlashcardsTargetLanguageRoute,
   AuthenticatedAppPracticeLanguageTargetLanguageRoute:
     AuthenticatedAppPracticeLanguageTargetLanguageRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:

@@ -16,10 +16,13 @@ import type {
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
 import {
+  clampPracticeSessionLimits,
   STALE_SESSION_HOURS,
   startPracticeSession,
   type StartPracticeSessionDependencies,
 } from '../../service/practice/start-practice-session'
+import { rateFlashcard } from '../../service/practice/rate-flashcard'
+import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
   generateNextPracticeText,
   prepareNextPracticeText,
@@ -116,6 +119,21 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
     readAt: row.read_at ? new Date(row.read_at).toISOString() : null,
   }
 }
+
+// Maps a user_lookups row to the flashcard DTO. grammar JSONB is passed
+// through like toPracticeTextDto does; the contract's GrammarSchema validates it.
+const toFlashcardDto = (row: DbUserLookup) => ({
+  userLookupId: row.id,
+  headword: row.headword,
+  sense: row.sense ?? '',
+  translation: row.translation,
+  definition: row.definition,
+  targetExample: row.target_example,
+  nativeExample: row.native_example,
+  grammar: (row.grammar as Record<string, unknown> | null) ?? null,
+  srsState: row.srs_state,
+  targetLanguage: row.target_language,
+})
 
 // Builds the (headword, sense) -> content map for the row's annotations by
 // hitting user_lookups once per practice text. Returns an empty map when the
@@ -395,6 +413,43 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         ? await deps.practiceSessionsRepository.getSessionProgress(sessionId)
         : { completed: 0, target: 0 }
       return { data: { implicitGoodCount: result.implicitGoodCount, progress } }
+    }),
+
+    listFlashcards: implementer.listFlashcards.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      // Same caps wiring as start-practice-session: clamp the user's limits,
+      // then subtract today's introductions to get the remaining new allowance.
+      const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
+      const summary = (await deps.userLookupsRepository.listDueSummary(userId)).find(
+        (s) => s.targetLanguage === input.targetLanguage
+      )
+      const remainingDailyNew = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
+      const rows = await deps.userLookupsRepository.listDueFlashcardsForLanguage({
+        userId,
+        targetLanguage: input.targetLanguage,
+        maxReviewTerms: limits.maxReviewTerms,
+        maxNewTerms: remainingDailyNew,
+      })
+      return { data: { cards: rows.map(toFlashcardDto) } }
+    }),
+
+    rateFlashcard: implementer.rateFlashcard.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      // Pass the FULL clamped daily cap: the atomic guard does its own
+      // today-count comparison against it (subtracting here would double-count).
+      const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
+      const result = await rateFlashcard(input.userLookupId, userId, input.rating, limits.maxNewTerms, {
+        userLookupsRepository: deps.userLookupsRepository,
+      })
+      if (!result.ok) {
+        if (result.reason === 'lookup_not_found') {
+          throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
+        }
+        // daily_cap_reached: not an error — the new-card intro was refused by
+        // the cap. Respond 201 with no FSRS applied; the client drops the card.
+        return { data: { accepted: true as const, introducedNew: false, dailyCapReached: true } }
+      }
+      return { data: { accepted: true as const, introducedNew: result.introducedNew, dailyCapReached: false } }
     }),
   })
 
