@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@asbplayer-fork/common": "workspace:*",
+        "@emotion/cache": "catalog:",
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
         "@floating-ui/dom": "catalog:",

@@ -1,24 +1,11 @@
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import overlayCss from './overlay.css?inline'
+import { overlaySheet } from '../shadow/overlay-stylesheet'
 import { SubtitleStore } from './subtitle-store'
 import { SubtitleOverlayApp } from './SubtitleOverlayApp'
 import { FlicktionaryVideoClosures } from '../../services/flicktionary/flicktionary-client'
 
 const POPOVER_HOST_ATTR = 'data-asbplayer-react-popover-host'
-
-// One adopted stylesheet shared across all overlay shadow roots in this
-// document/realm. Tailwind's generated CSS is identical for every Binding, so a
-// single read-only CSSStyleSheet is enough — and adoptedStyleSheets can share
-// the same object between multiple shadow roots.
-let sheetCache: CSSStyleSheet | undefined
-const overlaySheet = (): CSSStyleSheet => {
-  if (!sheetCache) {
-    sheetCache = new CSSStyleSheet()
-    sheetCache.replaceSync(overlayCss)
-  }
-  return sheetCache
-}
 
 export interface OverlayMountOptions {
   store: SubtitleStore

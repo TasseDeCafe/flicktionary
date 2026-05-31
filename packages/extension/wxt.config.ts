@@ -80,6 +80,9 @@ export default defineConfig({
   //    `pnpm --filter @flicktionary/i18n lingui:compile` after extracting.
   modules: ['@wxt-dev/module-react'],
   srcDir: 'src',
+  webExt: {
+    disabled: true,
+  },
   vite: () => ({
     resolve: {
       alias: {

@@ -15,6 +15,9 @@ catalogs:
     '@babel/plugin-transform-react-jsx':
       specifier: 7.28.6
       version: 7.28.6
+    '@emotion/cache':
+      specifier: 11.14.0
+      version: 11.14.0
     '@emotion/react':
       specifier: 11.14.0
       version: 11.14.0
@@ -1592,6 +1595,9 @@ importers:
       '@asbplayer-fork/common':
         specifier: workspace:*
         version: link:../asbplayer-common
+      '@emotion/cache':
+        specifier: 'catalog:'
+        version: 11.14.0
       '@emotion/react':
         specifier: 'catalog:'
         version: 11.14.0(@types/react@19.2.14)(react@19.2.6)

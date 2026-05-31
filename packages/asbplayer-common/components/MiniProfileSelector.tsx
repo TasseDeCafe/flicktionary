@@ -6,6 +6,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import React, { useCallback, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
 import { Profile } from '../settings'
+import { usePortalContainer } from './portal-container-context'
 
 interface Props {
   profiles: Profile[]
@@ -16,6 +17,7 @@ interface Props {
 const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Props) => {
   const [open, setOpen] = useState<boolean>(false)
   const [anchorEl, setAnchorEl] = useState<HTMLElement>()
+  const portalContainer = usePortalContainer()
   const handleOpen = useCallback((e: React.MouseEvent) => {
     setAnchorEl(e.currentTarget as HTMLElement)
     setOpen(true)
@@ -34,7 +36,7 @@ const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Pr
 
   return (
     <>
-      <Popover open={open} anchorEl={anchorEl} onClose={handleClose}>
+      <Popover open={open} anchorEl={anchorEl} container={portalContainer} onClose={handleClose}>
         <List>
           <ListItem disablePadding onClick={() => handleSelect(undefined)}>
             <ListItemButton selected={activeProfile === undefined}>

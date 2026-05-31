@@ -3,6 +3,7 @@ import {
   ConfirmedVideoDataSubtitleTrack,
   GetCachedTranscriptMessage,
   GetCachedTranscriptResponse,
+  Message,
   OpenAsbplayerSettingsMessage,
   SerializedSubtitleFile,
   SettingsUpdatedMessage,
@@ -19,13 +20,30 @@ import {
 } from '@asbplayer-fork/common'
 import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/settings'
 import { base64ToBlob, bufferToBase64 } from '@asbplayer-fork/common/base64'
+import { createElement } from 'react'
 import Binding from '../services/binding'
 import { currentPageDelegate } from '../services/pages'
 import UiFrame from '../services/ui-frame'
-import { i18n } from '../ui/lingui'
+import { i18n, setupLingui } from '../ui/lingui'
 import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
 import { isOnTutorialPage } from '@/services/tutorial'
+import { SHADOW_VIDEO_DATA_SYNC_ENABLED } from '@/services/flicktionary/shadow-ui-flags'
+import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
+import {
+  ShadowVideoDataSyncApp,
+  VideoDataModelChannel,
+  type VideoDataCommands,
+} from '@/ui/video-data-sync/ShadowVideoDataSyncApp'
+
+// Both the iframe FrameBridgeClient and the in-realm channel expose updateState,
+// so the controller can drive either through this minimal shape.
+interface VideoDataClient {
+  updateState(state: Partial<VideoDataUiModel>): void
+}
+
+// Marker for the in-realm video-data-sync shadow host (flag-ON path).
+const VIDEO_DATA_SYNC_HOST_ATTR = 'data-asbplayer-video-data-sync-host'
 
 declare global {
   function cloneInto(obj: any, targetScope: any, options?: any): any
@@ -86,6 +104,17 @@ export default class VideoDataSyncController {
   private _dataReceivedListener?: (event: Event) => void
   private _isTutorial: boolean
 
+  // --- Shadow DOM (flag-ON) transport ---------------------------------------
+  // When SHADOW_VIDEO_DATA_SYNC_ENABLED is on, the subtitle-track dialog renders
+  // in the content-script realm via a fullscreen-aware modal shadow host. The
+  // model flows through `_channel` (mirroring updateState over the FrameBridge)
+  // and the UI commands are routed to the same `_handleUiCommand` the iframe
+  // onMessage path uses. The iframe path below is unchanged.
+  private readonly _useShadow = SHADOW_VIDEO_DATA_SYNC_ENABLED
+  private _channel?: VideoDataModelChannel
+  private _shadowHandle?: ShadowHostHandle
+  private _shadowOpen = false
+
   constructor(context: Binding, settings: SettingsProvider) {
     this._context = context
     this._settings = settings
@@ -118,18 +147,26 @@ export default class VideoDataSyncController {
 
     this._dataReceivedListener = undefined
     this._syncedData = undefined
+
+    if (this._useShadow) {
+      this._shadowHandle?.unmount()
+      this._shadowHandle = undefined
+      this._channel = undefined
+      this._shadowOpen = false
+    }
   }
 
   updateSettings({ streamingAutoSync, streamingLastLanguagesSynced }: AsbplayerSettings) {
     this._autoSync = streamingAutoSync
     this._lastLanguagesSynced = streamingLastLanguagesSynced
 
-    if (this._frame.clientIfLoaded !== undefined) {
+    const client = this._clientIfLoaded()
+    if (client !== undefined) {
       this._context.settings.getSingle('themeType').then((themeType) => {
         const profilesPromise = this._context.settings.profiles()
         const activeProfilePromise = this._context.settings.activeProfile()
         Promise.all([profilesPromise, activeProfilePromise]).then(([profiles, activeProfile]) => {
-          this._frame.clientIfLoaded?.updateState({
+          client.updateState({
             settings: {
               themeType,
               profiles,
@@ -371,7 +408,7 @@ export default class VideoDataSyncController {
           }
           await this._syncData([cachedTrack, this._emptySubtitle, this._emptySubtitle])
 
-          if (!this._frame.hidden) {
+          if (!this._isHidden()) {
             this._hideAndResume()
           }
           return
@@ -383,7 +420,7 @@ export default class VideoDataSyncController {
           const autoSelectedTracks: VideoDataSubtitleTrack[] = subs.autoSelectedTracks
           await this._syncData(autoSelectedTracks)
 
-          if (!this._frame.hidden) {
+          if (!this._isHidden()) {
             this._hideAndResume()
           }
         } else {
@@ -394,8 +431,11 @@ export default class VideoDataSyncController {
           }
         }
       }
-    } else if (this._frame.clientIfLoaded !== undefined) {
-      this._frame.clientIfLoaded.updateState(await this._buildModel({}))
+    } else {
+      const client = this._clientIfLoaded()
+      if (client !== undefined) {
+        client.updateState(await this._buildModel({}))
+      }
     }
   }
 
@@ -418,83 +458,147 @@ export default class VideoDataSyncController {
     return pageDelegate?.config?.key === 'youtube'
   }
 
-  private async _client() {
+  // Handle a command coming back from the UI — shared by the iframe onMessage
+  // path and the in-realm command callbacks (so both transports run identical
+  // logic).
+  private async _handleUiCommand(message: Message) {
+    if ('openSettings' === message.command) {
+      const openSettingsCommand: VideoToExtensionCommand<OpenAsbplayerSettingsMessage> = {
+        sender: 'asbplayer-video',
+        message: {
+          command: 'open-asbplayer-settings',
+        },
+        src: this._context.video.src,
+      }
+      browser.runtime.sendMessage(openSettingsCommand)
+      return
+    }
+
+    if ('activeProfile' === message.command) {
+      const activeProfileMessage = message as ActiveProfileMessage
+      await this._context.settings.setActiveProfile(activeProfileMessage.profile)
+      const settingsUpdatedCommand: VideoToExtensionCommand<SettingsUpdatedMessage> = {
+        sender: 'asbplayer-video',
+        message: {
+          command: 'settings-updated',
+        },
+        src: this._context.video.src,
+      }
+      browser.runtime.sendMessage(settingsUpdatedCommand)
+      return
+    }
+
+    if ('dismissFtue' === message.command) {
+      globalStateProvider.set({ ftueHasSeenSubtitleTrackSelector: true }).catch(console.error)
+      return
+    }
+
+    if ('generateSupadata' === message.command) {
+      this._handleSupadataGeneration()
+      return
+    }
+
+    let dataWasSynced = true
+
+    if ('confirm' === message.command) {
+      const confirmMessage = message as VideoDataUiBridgeConfirmMessage
+
+      if (confirmMessage.shouldRememberTrackChoices) {
+        this.lastLanguagesSynced = confirmMessage.data
+          .map((track) => track.language)
+          .filter((language) => language !== undefined) as string[]
+        await this._context.settings.set({ streamingLastLanguagesSynced: this._lastLanguagesSynced }).catch(() => {})
+      }
+
+      const data = confirmMessage.data as ConfirmedVideoDataSubtitleTrack[]
+
+      dataWasSynced = await this._syncDataArray(data, confirmMessage.syncWithAsbplayerId)
+    } else if ('openFile' === message.command) {
+      const openFileMessage = message as VideoDataUiBridgeOpenFileMessage
+      const subtitles = openFileMessage.subtitles as SerializedSubtitleFile[]
+
+      try {
+        await this._syncSubtitles(subtitles, false)
+        dataWasSynced = true
+      } catch (e) {
+        if (e instanceof Error) {
+          await this._reportError(e.message)
+        }
+      }
+    }
+
+    if (dataWasSynced) {
+      this._hideAndResume()
+    }
+  }
+
+  // The in-realm command callbacks: each constructs the same message shape the
+  // iframe used to post and routes it through the shared handler above.
+  private _shadowCommands(): VideoDataCommands {
+    return {
+      onOpenSettings: () => void this._handleUiCommand({ command: 'openSettings' }),
+      onCancel: () => void this._handleUiCommand({ command: 'cancel' }),
+      onConfirm: (data, shouldRememberTrackChoices, syncWithAsbplayerId) =>
+        void this._handleUiCommand({
+          command: 'confirm',
+          data,
+          shouldRememberTrackChoices,
+          syncWithAsbplayerId,
+        } as VideoDataUiBridgeConfirmMessage),
+      onOpenFile: (subtitles) =>
+        void this._handleUiCommand({ command: 'openFile', subtitles } as VideoDataUiBridgeOpenFileMessage),
+      onSetActiveProfile: (profile) =>
+        void this._handleUiCommand({ command: 'activeProfile', profile } as ActiveProfileMessage),
+      onDismissFtue: () => void this._handleUiCommand({ command: 'dismissFtue' }),
+      onGenerateSupadata: () => void this._handleUiCommand({ command: 'generateSupadata' }),
+    }
+  }
+
+  private async _ensureShadowMounted() {
+    if (!this._channel) {
+      this._channel = new VideoDataModelChannel()
+    }
+    if (this._shadowHandle) {
+      return
+    }
+    // Activate the user's locale for this realm before mounting (formerly the
+    // iframe's loc script).
+    const language = await this._settings.getSingle('language')
+    setupLingui(language)
+    const channel = this._channel
+    const commands = this._shadowCommands()
+    this._shadowHandle = mountModalHost({
+      hostAttribute: VIDEO_DATA_SYNC_HOST_ATTR,
+      render: ({ shadowRoot, portalContainer }) =>
+        createElement(ShadowVideoDataSyncApp, { channel, shadowRoot, portalContainer, language, commands }),
+    })
+  }
+
+  // The active model sink (iframe client or in-realm channel), or undefined when
+  // nothing is loaded yet.
+  private _clientIfLoaded(): VideoDataClient | undefined {
+    return this._useShadow ? this._channel : this._frame.clientIfLoaded
+  }
+
+  // Whether the dialog is currently hidden.
+  private _isHidden(): boolean {
+    return this._useShadow ? !this._shadowOpen : this._frame.hidden
+  }
+
+  private async _client(): Promise<VideoDataClient> {
+    if (this._useShadow) {
+      await this._ensureShadowMounted()
+      this._shadowOpen = true
+      return this._channel!
+    }
+
     this._frame.language = await this._settings.getSingle('language')
     const isNewClient = await this._frame.bind()
     const client = await this._frame.client()
 
     if (isNewClient) {
       client.onMessage(async (message) => {
-        if ('openSettings' === message.command) {
-          const openSettingsCommand: VideoToExtensionCommand<OpenAsbplayerSettingsMessage> = {
-            sender: 'asbplayer-video',
-            message: {
-              command: 'open-asbplayer-settings',
-            },
-            src: this._context.video.src,
-          }
-          browser.runtime.sendMessage(openSettingsCommand)
-          return
-        }
-
-        if ('activeProfile' === message.command) {
-          const activeProfileMessage = message as ActiveProfileMessage
-          await this._context.settings.setActiveProfile(activeProfileMessage.profile)
-          const settingsUpdatedCommand: VideoToExtensionCommand<SettingsUpdatedMessage> = {
-            sender: 'asbplayer-video',
-            message: {
-              command: 'settings-updated',
-            },
-            src: this._context.video.src,
-          }
-          browser.runtime.sendMessage(settingsUpdatedCommand)
-          return
-        }
-
-        if ('dismissFtue' === message.command) {
-          globalStateProvider.set({ ftueHasSeenSubtitleTrackSelector: true }).catch(console.error)
-          return
-        }
-
-        if ('generateSupadata' === message.command) {
-          this._handleSupadataGeneration()
-          return
-        }
-
-        let dataWasSynced = true
-
-        if ('confirm' === message.command) {
-          const confirmMessage = message as VideoDataUiBridgeConfirmMessage
-
-          if (confirmMessage.shouldRememberTrackChoices) {
-            this.lastLanguagesSynced = confirmMessage.data
-              .map((track) => track.language)
-              .filter((language) => language !== undefined) as string[]
-            await this._context.settings
-              .set({ streamingLastLanguagesSynced: this._lastLanguagesSynced })
-              .catch(() => {})
-          }
-
-          const data = confirmMessage.data as ConfirmedVideoDataSubtitleTrack[]
-
-          dataWasSynced = await this._syncDataArray(data, confirmMessage.syncWithAsbplayerId)
-        } else if ('openFile' === message.command) {
-          const openFileMessage = message as VideoDataUiBridgeOpenFileMessage
-          const subtitles = openFileMessage.subtitles as SerializedSubtitleFile[]
-
-          try {
-            await this._syncSubtitles(subtitles, false)
-            dataWasSynced = true
-          } catch (e) {
-            if (e instanceof Error) {
-              await this._reportError(e.message)
-            }
-          }
-        }
-
-        if (dataWasSynced) {
-          this._hideAndResume()
-        }
+        await this._handleUiCommand(message)
       })
     }
 
@@ -524,7 +628,13 @@ export default class VideoDataSyncController {
     this._context.keyBindings.bind(this._context)
     this._context.subtitleController.forceHideSubtitles = false
     this._context.mobileVideoOverlayController.forceHide = false
-    this._frame?.hide()
+
+    if (this._useShadow) {
+      this._channel?.updateState({ open: false })
+      this._shadowOpen = false
+    } else {
+      this._frame?.hide()
+    }
 
     if (this._fullscreenElement) {
       this._fullscreenElement.requestFullscreen()
@@ -737,21 +847,22 @@ export default class VideoDataSyncController {
 
   private async _reportError(error: string) {
     const client = await this._client()
-    const themeType = await this._context.settings.getSingle('themeType')
 
     this._prepareShow()
 
+    // Note: the legacy call also passed a top-level `themeType` here, but the UI
+    // only reads `settings.themeType`, so it was a no-op — dropped to satisfy the
+    // typed updateState (behaviour unchanged).
     return client.updateState({
       open: true,
       isLoading: false,
       showSubSelect: true,
       error,
-      themeType: themeType,
     })
   }
 
   private async _handleSupadataGeneration() {
-    const client = this._frame.clientIfLoaded
+    const client = this._clientIfLoaded()
     if (!client) {
       return
     }

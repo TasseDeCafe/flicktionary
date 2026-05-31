@@ -1,16 +1,6 @@
 import type { IndexedSubtitleModel } from '@asbplayer-fork/common'
 import { isYoutubeWatchPage } from './youtube-context'
 
-// Build-time flag for the React + Shadow DOM + Tailwind video-overlay PoC
-// (Option A). A module-level `const`, deliberately NOT an `AsbplayerSettings`
-// field: persisting it would trip the export/import unknown-key validation
-// trap (validateSettings throws on keys it doesn't know). Mirrors
-// services/build-flags.ts.
-//
-// Default OFF — flip to true only for local YouTube testing. When false, the
-// host is never mounted and every video stays fully on the legacy DOM path.
-export const REACT_SUBTITLE_OVERLAY_ENABLED = true
-
 export interface ReactSubtitleEligibilityInput {
   subtitles: IndexedSubtitleModel[]
   wordClickEnabled: boolean
@@ -20,9 +10,11 @@ export interface ReactSubtitleEligibilityInput {
   shouldRenderTopOverlay: boolean
 }
 
-// Strict, binding-level latch (plan #6). React mode is eligible ONLY when ALL
-// hold; otherwise the video stays fully legacy. Evaluated at subtitle load and
-// re-evaluated on settings-updated — never per-render — so image/rich/dual/top
+// Strict, binding-level latch. The React + Shadow DOM + Tailwind overlay is the
+// default for the YouTube bottom/plain-text/word-click happy path; every other
+// case (image/rich/dual/top cues, non-YouTube, word-click off) stays fully on
+// the legacy DOM path. This predicate is the SOLE gate — evaluated at subtitle
+// load and re-evaluated on settings-updated, never per-render — so non-eligible
 // cues can never be diverted into the React path.
 export const isReactSubtitleEligible = ({
   subtitles,
@@ -30,8 +22,6 @@ export const isReactSubtitleEligible = ({
   shouldRenderBottomOverlay,
   shouldRenderTopOverlay,
 }: ReactSubtitleEligibilityInput): boolean => {
-  if (!REACT_SUBTITLE_OVERLAY_ENABLED) return false
-
   // YouTube watch page only.
   if (!isYoutubeWatchPage()) return false
 

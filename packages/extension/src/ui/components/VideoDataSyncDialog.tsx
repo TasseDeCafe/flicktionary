@@ -15,6 +15,7 @@ import Typography from '@mui/material/Typography'
 import { makeStyles } from 'tss-react/mui'
 import Switch from '@mui/material/Switch'
 import LabelWithHoverEffect from '@asbplayer-fork/common/components/LabelWithHoverEffect'
+import { usePortalContainer } from '@asbplayer-fork/common/components/portal-container-context'
 import { ConfirmedVideoDataSubtitleTrack, VideoDataSubtitleTrack, VideoDataUiOpenReason } from '@asbplayer-fork/common'
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
@@ -107,6 +108,10 @@ export default function VideoDataSyncDialog({
   onGenerateSupadata,
 }: Props) {
   const { t } = useLingui()
+  // When rendered inside a Shadow DOM, the Dialog and the track-select dropdowns
+  // must portal into the shadow root (provided by ShadowMuiProvider) or they
+  // render unstyled outside it; undefined => default body for the iframe path.
+  const portalContainer = usePortalContainer()
   const [userSelectedSubtitleTrackIds, setUserSelectedSubtitleTrackIds] = useState(['-', '-', '-'])
   const [name, setName] = useState('')
   const [shouldRememberTrackChoices, setShouldRememberTrackChoices] = useState(false)
@@ -208,6 +213,7 @@ export default function VideoDataSyncDialog({
               variant='filled'
               label={t`Subtitle Track ${i + 1}`}
               helperText={error || ''}
+              SelectProps={{ MenuProps: { container: portalContainer } }}
               value={subtitleTracks.find((track) => track.id === userSelectedSubtitleTrackIds[i])?.id ?? '-'}
               disabled={isLoading || disabled}
               onChange={(e) =>
@@ -250,7 +256,15 @@ export default function VideoDataSyncDialog({
   }, [open, trimmedName, disabled])
 
   return (
-    <Dialog disableRestoreFocus disableEnforceFocus fullWidth maxWidth='sm' open={open} onClose={onCancel}>
+    <Dialog
+      disableRestoreFocus
+      disableEnforceFocus
+      container={portalContainer}
+      fullWidth
+      maxWidth='sm'
+      open={open}
+      onClose={onCancel}
+    >
       <Toolbar>
         <Typography variant='h6' style={{ flexGrow: 1 }}>
           <Trans>Select Subtitles</Trans>

@@ -1,6 +1,14 @@
+import { createElement } from 'react'
 import Binding from '../services/binding'
 import UiFrame from '../services/ui-frame'
 import FrameBridgeClient from '../services/frame-bridge-client'
+import { SHADOW_NOTIFICATION_ENABLED } from '../services/flicktionary/shadow-ui-flags'
+import { mountModalHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
+import { createModelStore, type ModelStore } from '../ui/shadow/model-store'
+import { ShadowNotificationApp, type NotificationState } from '../ui/notification/ShadowNotificationApp'
+
+// Marker for the in-realm notification shadow host (flag-ON path).
+const NOTIFICATION_HOST_ATTR = 'data-asbplayer-notification-host'
 
 export default class NotificationController {
   public onClose?: () => void
@@ -8,6 +16,16 @@ export default class NotificationController {
   private readonly _context: Binding
   private readonly _frame: UiFrame
   private _client?: FrameBridgeClient
+
+  // --- Shadow DOM (flag-ON) transport ---------------------------------------
+  // When SHADOW_NOTIFICATION_ENABLED is on, the notification/alert dialogs render
+  // in the content-script realm via a fullscreen-aware modal shadow host (the MUI
+  // Dialog brings its own backdrop/Escape/click-outside). The model flows through
+  // `_store` and `close` is a direct callback; the iframe path below is unchanged.
+  private readonly _useShadow = SHADOW_NOTIFICATION_ENABLED
+  private _store?: ModelStore<NotificationState>
+  private _shadowHandle?: ShadowHostHandle
+  private _showing = false
 
   constructor(context: Binding) {
     this._context = context
@@ -33,14 +51,36 @@ export default class NotificationController {
   }
 
   get showing() {
+    if (this._useShadow) {
+      return this._showing
+    }
     return !this._frame.hidden
   }
 
   hide() {
+    if (this._useShadow) {
+      this._resetShadowState()
+      this._showing = false
+      return
+    }
     this._frame.hide()
   }
 
   async show(titleLocKey: string, messageLocKey: string) {
+    if (this._useShadow) {
+      this._ensureMounted()
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
+      }
+
+      const { themeType, language } = await this._context.settings.get(['themeType', 'language'])
+      this._store!.set({ themeType, language, titleLocKey, messageLocKey, newVersion: undefined })
+      this._showing = true
+      this._context.pause()
+      return
+    }
+
     await this._prepareAndShowFrame('asbplayer-ui-frame')
 
     if (document.fullscreenElement) {
@@ -57,12 +97,60 @@ export default class NotificationController {
   }
 
   async updateAlert(newVersion: string) {
+    if (this._useShadow) {
+      this._ensureMounted()
+      const { themeType, language } = await this._context.settings.get(['themeType', 'language'])
+      this._store!.set({ themeType, language, titleLocKey: '', messageLocKey: '', newVersion })
+      return
+    }
+
     await this._prepareAndShowFrame('asbplayer-alert')
     this._client!.updateState({
       themeType: await this._context.settings.getSingle('themeType'),
       titleLocKey: '',
       messageLocKey: '',
       newVersion,
+    })
+  }
+
+  // Reset the dialog/snackbar to hidden while keeping the host mounted.
+  private _resetShadowState() {
+    const prev = this._store?.getSnapshot()
+    if (this._store && prev) {
+      this._store.set({ ...prev, titleLocKey: '', messageLocKey: '', newVersion: undefined })
+    }
+  }
+
+  // The `close` handler that the in-realm app calls (formerly the bridge 'close'
+  // message): undo the force-hides put up while the dialog showed, restore the
+  // controls, hide the dialog, and fire onClose. Mirrors _prepareAndShowFrame.
+  private _onShadowClose = () => {
+    this._context.subtitleController.forceHideSubtitles = false
+    this._context.mobileVideoOverlayController.forceHide = false
+    this._context.controlsController.show()
+    this._resetShadowState()
+    this._showing = false
+    this.onClose?.()
+  }
+
+  private _ensureMounted() {
+    if (this._shadowHandle) {
+      return
+    }
+    if (!this._store) {
+      this._store = createModelStore<NotificationState>({
+        themeType: 'dark',
+        language: 'en',
+        titleLocKey: '',
+        messageLocKey: '',
+        newVersion: undefined,
+      })
+    }
+    const store = this._store
+    this._shadowHandle = mountModalHost({
+      hostAttribute: NOTIFICATION_HOST_ATTR,
+      render: ({ shadowRoot, portalContainer }) =>
+        createElement(ShadowNotificationApp, { store, shadowRoot, portalContainer, onClose: this._onShadowClose }),
     })
   }
 
@@ -88,6 +176,13 @@ export default class NotificationController {
   }
 
   unbind() {
+    if (this._useShadow) {
+      this._shadowHandle?.unmount()
+      this._shadowHandle = undefined
+      this._store = undefined
+      this._showing = false
+      return
+    }
     this._frame?.unbind()
   }
 }
