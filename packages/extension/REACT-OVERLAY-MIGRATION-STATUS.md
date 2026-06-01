@@ -48,10 +48,12 @@ legacy is deleted. Deleting it (Phase 2c) is gated on finishing Phase 2b.
   - **Migrations applied to dev-tunnel.** Two: `…150000` (enum), `…150100`
     (index). Append-only — don't edit.
 - **Streaming title source.** Netflix's `document.title` is just "Netflix"; the
-  save title now uses the site page-script's clean `basename` (show + S01E02 +
-  episode), exposed via `VideoDataSyncController.videoBasename` and
-  `pickStreamingTitle()`, falling back to the scrubbed page title. (uncommitted
-  as of writing → commit when picked up)
+  save title is resolved by `pickStreamingTitle()` from layered candidates:
+  the page-script's clean `basename` (`VideoDataSyncController.videoBasename`),
+  then the loaded subtitle's "Video Name" (`binding.subtitleFileName(0)` — the
+  string shown in the Select Subtitles dialog, always set at register time),
+  then the scrubbed page title. The subtitle-name fallback is what actually
+  fires today (`videoBasename` was empty at register time in testing).
 - Incidental: gate truth-table test (`react-mode-flag.test.ts`); fixed one stale
   `GlossTooltip` comment.
 

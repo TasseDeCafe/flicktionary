@@ -916,13 +916,18 @@ export default class Binding {
         }
       } else {
         // Any other site (Netflix, Prime, …): identify the content by the
-        // subtitle contentHash. Prefer the site page-script's clean basename for
-        // the title (Netflix's document.title is just "Netflix"), falling back
-        // to the page title; url is the page URL.
+        // subtitle contentHash. Netflix's document.title is just "Netflix", so
+        // prefer the site page-script's clean basename, then the loaded
+        // subtitle's "Video Name" (always set by this point — see _updateSubtitles),
+        // then the page title. url is the page URL.
         const meta = getCurrentStreamingMetadata()
         context = {
           source: 'streaming',
-          videoTitle: pickStreamingTitle(this.videoDataSyncController.videoBasename, meta.videoTitle),
+          videoTitle: pickStreamingTitle(
+            this.videoDataSyncController.videoBasename,
+            this.subtitleFileName(0),
+            meta.videoTitle
+          ),
           videoUrl: meta.videoUrl,
           contentHash,
           segments,
