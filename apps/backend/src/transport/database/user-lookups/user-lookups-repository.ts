@@ -32,17 +32,12 @@ export type DueSummaryEntry = {
   nextLearningDueAt: string | null
   newCount: number
   newIntroducedTodayCount: number
-  // Passive pool active practice session id. Renamed from
-  // activePracticeSessionId so clients are explicit about which pool they're
-  // resuming.
-  passivePracticeSessionId: string | null
   // Active-drill pool counters. Parallel to the passive counters above but
   // computed off learning_mode = 'active' and active_srs_* state.
   activeTotal: number
   activeReviewDueCount: number
   activeLearningDueCount: number
   activeNewCount: number
-  activePracticeSessionId: string | null
 }
 
 export type RenameKeyResult = { ok: true } | { ok: false; reason: 'CONFLICT' }
@@ -364,25 +359,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
           AND ul.active_srs_state IS NULL
-      )::int AS active_new_count,
-      (
-        SELECT ps.id
-        FROM public.practice_sessions ps
-        WHERE ps.user_id = ${userId}
-          AND ps.target_language = ul.target_language
-          AND ps.status = 'active'
-          AND ps.pool = 'passive'
-        LIMIT 1
-      ) AS passive_practice_session_id,
-      (
-        SELECT ps.id
-        FROM public.practice_sessions ps
-        WHERE ps.user_id = ${userId}
-          AND ps.target_language = ul.target_language
-          AND ps.status = 'active'
-          AND ps.pool = 'active'
-        LIMIT 1
-      ) AS active_practice_session_id
+      )::int AS active_new_count
     FROM public.user_lookups ul
     WHERE ul.user_id = ${userId}
       AND ul.count > 0
@@ -401,119 +378,81 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       : null,
     newCount: row.new_count as number,
     newIntroducedTodayCount: row.new_introduced_today_count as number,
-    passivePracticeSessionId: (row.passive_practice_session_id as string | null) ?? null,
     activeTotal: row.active_total as number,
     activeReviewDueCount: row.active_review_due_count as number,
     activeLearningDueCount: row.active_learning_due_count as number,
     activeNewCount: row.active_new_count as number,
-    activePracticeSessionId: (row.active_practice_session_id as string | null) ?? null,
   }))
 }
 
-// Returns the rows eligible for the next practice text in this session,
-// pulled from the frozen capped-batch snapshot in practice_session_chunks.
-// We no longer consult the live srs_due clock — eligibility is whatever was
-// captured at session start, which is what makes the progress denominator
-// stable across the sitting and keeps late-keep cards from sneaking in.
+// The live review pool for a (language, pool), sliced by scope. This is the
+// single source for both render modes and the reading generator's candidate
+// set. It replaces both the frozen practice_session_chunks snapshot
+// (listEligibleForLanguage) and the passive-only flashcard query
+// (listDueFlashcardsForLanguage):
 //
-// `extraUserLookupIds` lets callers force-include rows even if they aren't
-// flagged eligible_at_start — used by Problem 3 to resurface chunks the user
-// rated `again`.
+//   - `pool` selects the SRS column family. The active pool additionally
+//     restricts to learning_mode='active' rows (the passive pool spans every
+//     kept term).
+//   - `scope` gates the two capped sub-selects: 'review_due' returns due rows
+//     only, 'learn_new' returns never-reviewed rows only, 'mixed' returns both
+//     merged due-first then new (Anki-standard ordering).
 //
-// `pool` selects which SRS column family drives the order-by: passive pool
-// uses srs_state/srs_due, active pool uses active_srs_state/active_srs_due.
-const listEligibleForLanguage = async (params: {
+// Due cards span review+learning; new are never-reviewed (state IS NULL). The
+// two buckets are mutually exclusive (null vs non-null state), so no row
+// appears twice.
+const listReviewTerms = async (params: {
   userId: string
   targetLanguage: string
-  practiceSessionId: string
   pool: PracticePool
-  extraUserLookupIds?: string[]
-}): Promise<DbUserLookup[]> => {
-  const extras = params.extraUserLookupIds ?? []
-  if (params.pool === 'passive') {
-    return (await sql`
-      SELECT ul.*
-      FROM public.user_lookups ul
-      JOIN public.practice_session_chunks psc
-        ON psc.user_lookup_id = ul.id
-       AND psc.practice_session_id = ${params.practiceSessionId}
-      WHERE ul.user_id = ${params.userId}
-        AND ul.target_language = ${params.targetLanguage}
-        AND ul.count > 0
-        AND ul.deleted_at IS NULL
-        AND (
-          psc.eligible_at_start = TRUE
-          OR ul.id = ANY(${extras}::uuid[])
-        )
-      ORDER BY
-        CASE WHEN ul.srs_state IS NULL THEN 1 ELSE 0 END ASC,
-        ul.srs_due ASC NULLS LAST,
-        ul.headword ASC,
-        ul.sense ASC
-    `) as DbUserLookup[]
-  }
-  return (await sql`
-    SELECT ul.*
-    FROM public.user_lookups ul
-    JOIN public.practice_session_chunks psc
-      ON psc.user_lookup_id = ul.id
-     AND psc.practice_session_id = ${params.practiceSessionId}
-    WHERE ul.user_id = ${params.userId}
-      AND ul.target_language = ${params.targetLanguage}
-      AND ul.count > 0
-      AND ul.deleted_at IS NULL
-      AND (
-        psc.eligible_at_start = TRUE
-        OR ul.id = ANY(${extras}::uuid[])
-      )
-    ORDER BY
-      CASE WHEN ul.active_srs_state IS NULL THEN 1 ELSE 0 END ASC,
-      ul.active_srs_due ASC NULLS LAST,
-      ul.headword ASC,
-      ul.sense ASC
-  `) as DbUserLookup[]
-}
-
-// Due/new ROWS for the no-LLM flashcard reviewer. Unlike listEligibleForLanguage
-// (which reads the frozen practice_session_chunks snapshot), this uses the SAME
-// live predicates as listDueSummary so the flashcard queue always reflects the
-// current srs clock — flashcards are sessionless. Two capped sub-selects merged
-// due-first then new (Anki-standard ordering). Due cards span review+learning;
-// new are never-reviewed (srs_state IS NULL). The two buckets are mutually
-// exclusive (null vs non-null srs_state), so no card appears twice.
-const listDueFlashcardsForLanguage = async (params: {
-  userId: string
-  targetLanguage: string
+  scope: 'review_due' | 'learn_new' | 'mixed'
   maxReviewTerms: number
   maxNewTerms: number
 }): Promise<DbUserLookup[]> => {
-  if (params.maxReviewTerms <= 0 && params.maxNewTerms <= 0) return []
-  const [dueRows, newRows] = await Promise.all([
-    sql`
-      SELECT ul.*
-      FROM public.user_lookups ul
-      WHERE ul.user_id = ${params.userId}
-        AND ul.target_language = ${params.targetLanguage}
-        AND ul.count > 0
-        AND ul.deleted_at IS NULL
-        AND ul.srs_due IS NOT NULL
-        AND ul.srs_due <= NOW()
-        AND ul.srs_state IN ('new', 'review', 'learning', 'relearning')
-      ORDER BY ul.srs_due ASC, ul.headword ASC, ul.sense ASC
-      LIMIT ${params.maxReviewTerms}
-    ` as Promise<DbUserLookup[]>,
-    sql`
-      SELECT ul.*
-      FROM public.user_lookups ul
-      WHERE ul.user_id = ${params.userId}
-        AND ul.target_language = ${params.targetLanguage}
-        AND ul.count > 0
-        AND ul.deleted_at IS NULL
-        AND ul.srs_state IS NULL
-      ORDER BY ul.headword ASC, ul.sense ASC
-      LIMIT ${params.maxNewTerms}
-    ` as Promise<DbUserLookup[]>,
-  ])
+  const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
+  const wantNew = params.scope === 'learn_new' || params.scope === 'mixed'
+  const reviewLimit = wantDue ? params.maxReviewTerms : 0
+  const newLimit = wantNew ? params.maxNewTerms : 0
+  if (reviewLimit <= 0 && newLimit <= 0) return []
+
+  const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
+  const stateCol = params.pool === 'active' ? sql`ul.active_srs_state` : sql`ul.srs_state`
+  const dueCol = params.pool === 'active' ? sql`ul.active_srs_due` : sql`ul.srs_due`
+
+  const dueRows =
+    reviewLimit > 0
+      ? ((await sql`
+          SELECT ul.*
+          FROM public.user_lookups ul
+          WHERE ul.user_id = ${params.userId}
+            AND ul.target_language = ${params.targetLanguage}
+            AND ul.count > 0
+            AND ul.deleted_at IS NULL
+            ${activeModeClause}
+            AND ${dueCol} IS NOT NULL
+            AND ${dueCol} <= NOW()
+            AND ${stateCol} IN ('new', 'review', 'learning', 'relearning')
+          ORDER BY ${dueCol} ASC, ul.headword ASC, ul.sense ASC
+          LIMIT ${reviewLimit}
+        `) as DbUserLookup[])
+      : []
+
+  const newRows =
+    newLimit > 0
+      ? ((await sql`
+          SELECT ul.*
+          FROM public.user_lookups ul
+          WHERE ul.user_id = ${params.userId}
+            AND ul.target_language = ${params.targetLanguage}
+            AND ul.count > 0
+            AND ul.deleted_at IS NULL
+            ${activeModeClause}
+            AND ${stateCol} IS NULL
+          ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
+          LIMIT ${newLimit}
+        `) as DbUserLookup[])
+      : []
+
   return [...dueRows, ...newRows]
 }
 
@@ -1224,16 +1163,11 @@ export interface UserLookupsRepositoryInterface {
   applyKeepTransition: (params: { userLookupId: string; cardId: string }) => Promise<void>
   applyUnkeepTransition: (params: { userLookupId: string }) => Promise<void>
   listDueSummary: (userId: string) => Promise<DueSummaryEntry[]>
-  listEligibleForLanguage: (params: {
+  listReviewTerms: (params: {
     userId: string
     targetLanguage: string
-    practiceSessionId: string
     pool: PracticePool
-    extraUserLookupIds?: string[]
-  }) => Promise<DbUserLookup[]>
-  listDueFlashcardsForLanguage: (params: {
-    userId: string
-    targetLanguage: string
+    scope: 'review_due' | 'learn_new' | 'mixed'
     maxReviewTerms: number
     maxNewTerms: number
   }) => Promise<DbUserLookup[]>
@@ -1325,8 +1259,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     applyKeepTransition,
     applyUnkeepTransition,
     listDueSummary,
-    listEligibleForLanguage,
-    listDueFlashcardsForLanguage,
+    listReviewTerms,
     findByKey,
     findByIdForUser,
     findByIdForUserIncludingDeleted,

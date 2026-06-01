@@ -29,8 +29,6 @@ export const PracticeLandingView = () => {
   }
 
   const getPassiveSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    if (entry.passivePracticeSessionId) return t`Session in progress`
-
     const dueTermCount = entry.reviewDueCount + entry.learningDueCount
     if (dueTermCount > 0 && maxReviewTerms > 0) return t`${dueTermCount} follow-up(s) due`
 

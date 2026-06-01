@@ -397,135 +397,6 @@ export type Database = {
           },
         ]
       }
-      practice_ratings: {
-        Row: {
-          headword: string
-          id: string
-          pool: string
-          practice_text_id: string
-          rated_at: string
-          rating: Database['public']['Enums']['practice_rating']
-          sense: string
-          target_language: string
-          user_id: string
-          user_lookup_id: string
-          was_explicit: boolean
-        }
-        Insert: {
-          headword: string
-          id?: string
-          pool?: string
-          practice_text_id: string
-          rated_at?: string
-          rating: Database['public']['Enums']['practice_rating']
-          sense?: string
-          target_language: string
-          user_id: string
-          user_lookup_id: string
-          was_explicit?: boolean
-        }
-        Update: {
-          headword?: string
-          id?: string
-          pool?: string
-          practice_text_id?: string
-          rated_at?: string
-          rating?: Database['public']['Enums']['practice_rating']
-          sense?: string
-          target_language?: string
-          user_id?: string
-          user_lookup_id?: string
-          was_explicit?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'practice_ratings_lookup_fkey'
-            columns: ['user_lookup_id']
-            isOneToOne: false
-            referencedRelation: 'user_lookups'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'practice_ratings_text_fkey'
-            columns: ['practice_text_id']
-            isOneToOne: false
-            referencedRelation: 'practice_texts'
-            referencedColumns: ['id']
-          },
-        ]
-      }
-      practice_session_chunks: {
-        Row: {
-          abandoned_at: string | null
-          eligible_at_start: boolean
-          practice_session_id: string
-          user_lookup_id: string
-        }
-        Insert: {
-          abandoned_at?: string | null
-          eligible_at_start: boolean
-          practice_session_id: string
-          user_lookup_id: string
-        }
-        Update: {
-          abandoned_at?: string | null
-          eligible_at_start?: boolean
-          practice_session_id?: string
-          user_lookup_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'practice_session_chunks_lookup_fkey'
-            columns: ['user_lookup_id']
-            isOneToOne: false
-            referencedRelation: 'user_lookups'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'practice_session_chunks_session_fkey'
-            columns: ['practice_session_id']
-            isOneToOne: false
-            referencedRelation: 'practice_sessions'
-            referencedColumns: ['id']
-          },
-        ]
-      }
-      practice_sessions: {
-        Row: {
-          ended_at: string | null
-          id: string
-          max_new_terms: number
-          max_review_terms: number
-          pool: string
-          started_at: string
-          status: Database['public']['Enums']['practice_session_status']
-          target_language: string
-          user_id: string
-        }
-        Insert: {
-          ended_at?: string | null
-          id?: string
-          max_new_terms?: number
-          max_review_terms?: number
-          pool?: string
-          started_at?: string
-          status?: Database['public']['Enums']['practice_session_status']
-          target_language: string
-          user_id: string
-        }
-        Update: {
-          ended_at?: string | null
-          id?: string
-          max_new_terms?: number
-          max_review_terms?: number
-          pool?: string
-          started_at?: string
-          status?: Database['public']['Enums']['practice_session_status']
-          target_language?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       practice_texts: {
         Row: {
           annotations: Json
@@ -535,11 +406,14 @@ export type Database = {
           generation_warning: string | null
           id: string
           ord: number
-          practice_session_id: string
+          pool: string
           read_at: string | null
           ready_at: string | null
+          scope: string | null
           skipped_chunks: Json
           status: Database['public']['Enums']['practice_text_status']
+          target_language: string
+          user_id: string
         }
         Insert: {
           annotations?: Json
@@ -549,11 +423,14 @@ export type Database = {
           generation_warning?: string | null
           id?: string
           ord: number
-          practice_session_id: string
+          pool?: string
           read_at?: string | null
           ready_at?: string | null
+          scope?: string | null
           skipped_chunks?: Json
           status?: Database['public']['Enums']['practice_text_status']
+          target_language: string
+          user_id: string
         }
         Update: {
           annotations?: Json
@@ -563,21 +440,16 @@ export type Database = {
           generation_warning?: string | null
           id?: string
           ord?: number
-          practice_session_id?: string
+          pool?: string
           read_at?: string | null
           ready_at?: string | null
+          scope?: string | null
           skipped_chunks?: Json
           status?: Database['public']['Enums']['practice_text_status']
+          target_language?: string
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: 'practice_texts_session_fkey'
-            columns: ['practice_session_id']
-            isOneToOne: false
-            referencedRelation: 'practice_sessions'
-            referencedColumns: ['id']
-          },
-        ]
+        Relationships: []
       }
       processing_jobs: {
         Row: {
@@ -1243,8 +1115,6 @@ export type Database = {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
       content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube'
-      practice_rating: 'again' | 'hard' | 'good' | 'easy'
-      practice_session_status: 'active' | 'completed' | 'abandoned'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
@@ -1531,8 +1401,6 @@ export const Constants = {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
       content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube'],
-      practice_rating: ['again', 'hard', 'good', 'easy'],
-      practice_session_status: ['active', 'completed', 'abandoned'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
       processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window', 'seed_card_chat'],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],

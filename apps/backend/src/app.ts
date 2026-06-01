@@ -62,9 +62,7 @@ import { CardsRepository } from './transport/database/cards/cards-repository'
 import { CardChatMessagesRepository } from './transport/database/card-chat-messages/card-chat-messages-repository'
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
-import { PracticeSessionsRepository } from './transport/database/practice-sessions/practice-sessions-repository'
 import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
-import { PracticeRatingsRepository } from './transport/database/practice-ratings/practice-ratings-repository'
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
@@ -256,9 +254,7 @@ export const buildApp = ({
   const cardChatMessagesRepository = CardChatMessagesRepository()
   const userTargetLanguagePrefsRepository = UserTargetLanguagePrefsRepository()
   const userLookupsRepository = UserLookupsRepository()
-  const practiceSessionsRepository = PracticeSessionsRepository()
   const practiceTextsRepository = PracticeTextsRepository()
-  const practiceRatingsRepository = PracticeRatingsRepository()
   const processingTelemetryRepository = ProcessingTelemetryRepository()
   const wiktionaryEntriesRepository = WiktionaryEntriesRepository()
   const processingJobsRepository = ProcessingJobsRepository()
@@ -268,28 +264,6 @@ export const buildApp = ({
   const setCardStatusDependencies = {
     cardsRepository,
     studySessionsRepository,
-    userLookupsRepository,
-  }
-
-  const startPracticeSessionDependencies = {
-    practiceSessionsRepository,
-    userLookupsRepository,
-    usersRepository,
-    userTargetLanguagePrefsRepository,
-  }
-
-  const generateNextPracticeTextDependencies = {
-    practiceSessionsRepository,
-    practiceTextsRepository,
-    practiceRatingsRepository,
-    userLookupsRepository,
-    usersRepository,
-    userTargetLanguagePrefsRepository,
-  }
-
-  const rateChunkDependencies = {
-    practiceTextsRepository,
-    practiceRatingsRepository,
     userLookupsRepository,
   }
 
@@ -386,16 +360,11 @@ export const buildApp = ({
   app.use(
     API_V1,
     PracticeRouter({
-      practiceSessionsRepository,
       practiceTextsRepository,
       userLookupsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
       wiktionaryEntriesRepository,
-      startPracticeSessionDependencies,
-      generateNextPracticeTextDependencies,
-      rateChunkDependencies,
-      finalizePracticeTextDependencies: rateChunkDependencies,
     })
   )
 

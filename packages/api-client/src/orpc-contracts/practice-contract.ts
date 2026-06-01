@@ -2,110 +2,122 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
-  FlashcardSchema,
   GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
+  PracticePoolSchema,
   PracticeRatingSchema,
-  PracticeSessionProgressSchema,
-  PracticeSessionSchema,
   PracticeTextSchema,
+  ReadingRatingSchema,
+  ReviewScopeSchema,
+  ReviewTermSchema,
 } from './common/flicktionary-schemas'
-
-export const PracticeSessionModeSchema = z.enum(['review_due', 'learn_new', 'learn_extra', 'mixed', 'active_drill'])
-export type PracticeSessionMode = z.infer<typeof PracticeSessionModeSchema>
 
 export const practiceContract = {
   // Per-language summary used by the Practice landing. Returns one row per
   // target_language the user has cards in, with daily review, intraday
-  // learning follow-up, new, and total counts.
+  // learning follow-up, new, and total counts (plus the active-pool mirror).
   dueSummary: oc
     .route({ method: 'GET', path: '/practice/due-summary', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({}))
     .output(z.object({ data: z.object({ perLanguage: z.array(PracticeDueSummaryEntrySchema) }) })),
 
-  // Resume-or-create. `resumed: true` means the caller is being handed an
-  // already-active session for this (user, target_language). The membership
-  // snapshot only gets created when a fresh session is inserted.
-  startSession: oc
-    .route({ method: 'POST', path: '/practice/sessions', successStatus: 201 })
+  // The live review pool for a (language, pool), sliced by scope. Feeds the
+  // flashcard queue directly; the reading generator uses the same query for its
+  // candidate set. Caps (daily-new remaining, max review) are applied
+  // server-side from the user's practice limits. No session — closing and
+  // reopening refetches a fresh slice (already-rated terms drop out naturally).
+  listReviewTerms: oc
+    .route({ method: 'GET', path: '/practice/review-terms', successStatus: 200 })
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ targetLanguage: z.string().min(1), mode: PracticeSessionModeSchema.default('review_due') }))
-    .output(z.object({ data: z.object({ sessionId: z.string().uuid(), resumed: z.boolean() }) })),
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        pool: PracticePoolSchema.default('passive'),
+        scope: ReviewScopeSchema.default('mixed'),
+      })
+    )
+    .output(z.object({ data: z.object({ terms: z.array(ReviewTermSchema) }) })),
 
-  abandonSession: oc
-    .route({ method: 'POST', path: '/practice/sessions/{sessionId}/abandon', successStatus: 200 })
+  // Grade a single term in flashcard mode. Applies FSRS directly to the pool's
+  // SRS columns (srs_* for passive, active_srs_* for active). New-term
+  // introductions (srs_state IS NULL) are gated by an atomic daily-cap guard
+  // for the passive pool; when the cap is already consumed the intro is refused
+  // and the response carries dailyCapReached=true (201, no FSRS applied) so the
+  // client drops the card. Active-pool introductions are not daily-capped.
+  rateTerm: oc
+    .route({ method: 'POST', path: '/practice/review-terms/{userLookupId}/ratings', successStatus: 201 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ sessionId: z.string().uuid() }))
-    .output(z.object({ data: z.object({ abandoned: z.boolean() }) })),
-
-  // Loads the practice_session + the most recent readable practice_text (if
-  // any). Used to bootstrap the session view on mount and to resume an
-  // in-progress session. The currentText (if returned) is server-side
-  // transitioned to status='reading'; closing and reopening the modal
-  // therefore lands on the same text rather than a successor pre-gen slot.
-  getSession: oc
-    .route({ method: 'GET', path: '/practice/sessions/{sessionId}', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ sessionId: z.string().uuid() }))
+    .input(
+      z.object({
+        userLookupId: z.string().uuid(),
+        rating: PracticeRatingSchema,
+        pool: PracticePoolSchema.default('passive'),
+      })
+    )
     .output(
       z.object({
         data: z.object({
-          session: PracticeSessionSchema,
-          currentText: PracticeTextSchema.nullable(),
-          progress: PracticeSessionProgressSchema,
+          accepted: z.literal(true),
+          introducedNew: z.boolean(),
+          dailyCapReached: z.boolean(),
         }),
       })
     ),
 
-  // Generates the next practice_text for a session — or returns done=true if
-  // there are no more due chunks not yet covered. Foreground path: returns
-  // an already-generated 'ready' slot instantly when one is queued, otherwise
-  // generates synchronously (with a 30s poll-and-takeover for slots a pre-gen
-  // worker is currently producing).
-  generateNextText: oc
-    .route({ method: 'POST', path: '/practice/sessions/{sessionId}/next-text', successStatus: 200 })
+  // Bootstrap or resume reading mode for a (language, pool): returns the
+  // in-progress 'reading' text if one exists, otherwise promotes a pre-generated
+  // slot or generates a fresh one from the scope-filtered candidate set. done=true
+  // when there is nothing left to review. Generation never introduces new terms —
+  // that happens at rate/advance time only.
+  generateNextReadingText: oc
+    .route({ method: 'POST', path: '/practice/reading-texts/generate', successStatus: 200 })
     .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ sessionId: z.string().uuid() }))
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        pool: PracticePoolSchema.default('passive'),
+        scope: ReviewScopeSchema.default('mixed'),
+      })
+    )
     .output(
       z.object({
         data: z.union([
-          z.object({
-            done: z.literal(false),
-            practiceText: PracticeTextSchema,
-            progress: PracticeSessionProgressSchema,
-          }),
-          z.object({ done: z.literal(true), progress: PracticeSessionProgressSchema }),
+          z.object({ done: z.literal(false), practiceText: PracticeTextSchema }),
+          z.object({ done: z.literal(true) }),
         ]),
       })
     ),
 
-  // Background pre-generation. Reserves the next slot if one is needed and
-  // kicks off LLM work in a detached promise. Never marks the session
-  // completed even if the chunk pool is empty (that's reserved for the
-  // foreground generateNextText after finalize). Returns the slot's current
+  // Background pre-generation. Reserves the next slot if one is needed and kicks
+  // off LLM work in a detached promise. `excludeUserLookupIds` carries the
+  // currently-reading text's term ids so the pre-gen doesn't re-embed words that
+  // are about to be rated by the pending advance. Returns the slot's current
   // status so the client can observe pre-gen progress if it cares.
-  prepareNextText: oc
-    .route({ method: 'POST', path: '/practice/sessions/{sessionId}/prepare-next-text', successStatus: 202 })
+  prepareNextReadingText: oc
+    .route({ method: 'POST', path: '/practice/reading-texts/prepare', successStatus: 202 })
     .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ sessionId: z.string().uuid() }))
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        pool: PracticePoolSchema.default('passive'),
+        scope: ReviewScopeSchema.default('mixed'),
+        excludeUserLookupIds: z.array(z.string().uuid()).default([]),
+      })
+    )
     .output(
       z.object({
         data: z.union([
@@ -117,12 +129,14 @@ export const practiceContract = {
       })
     ),
 
-  // Explicit rating — fires when the user taps a chunk and picks a rating in
-  // the rate sheet. wasExplicit=true server-side; the implicit-good ratings
-  // applied on session-advance are written by finalizeText. Returns the
-  // updated session progress so the bar moves on rating, not just on Next.
-  rateChunk: oc
-    .route({ method: 'POST', path: '/practice/texts/{textId}/ratings', successStatus: 201 })
+  // The single reading-mode mutation. The client owns per-text rating state and
+  // sends it all at once: `ratings` carries the explicit taps (by user_lookup
+  // id), every other annotation is advanced as implicit 'good'. Idempotent via
+  // the one-shot reading->done claim — a second call (double-click / retry)
+  // applies no FSRS and returns the already-reserved next text. Returns done=true
+  // when nothing else is left to review.
+  advanceReadingText: oc
+    .route({ method: 'POST', path: '/practice/reading-texts/{textId}/advance', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
@@ -131,16 +145,46 @@ export const practiceContract = {
     .input(
       z.object({
         textId: z.string().uuid(),
-        headword: z.string(),
-        sense: z.string(),
-        rating: PracticeRatingSchema,
+        pool: PracticePoolSchema.default('passive'),
+        scope: ReviewScopeSchema.default('mixed'),
+        ratings: z.array(ReadingRatingSchema).default([]),
       })
     )
     .output(
       z.object({
-        data: z.object({ accepted: z.literal(true), progress: PracticeSessionProgressSchema }),
+        data: z.union([
+          z.object({ done: z.literal(false), nextText: PracticeTextSchema, introduced: z.number().int() }),
+          z.object({ done: z.literal(true), introduced: z.number().int() }),
+        ]),
       })
     ),
+
+  // Reading history: past generated texts for a (language, pool), newest first.
+  // The texts double as history now that they're kept per (user, language, pool)
+  // instead of being garbage-collected with the session.
+  readingHistory: oc
+    .route({ method: 'GET', path: '/practice/reading-texts/history', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        pool: PracticePoolSchema.default('passive'),
+      })
+    )
+    .output(z.object({ data: z.object({ texts: z.array(PracticeTextSchema) }) })),
+
+  // Read-only fetch of a single past text (history detail / peek-back).
+  readingTextById: oc
+    .route({ method: 'GET', path: '/practice/reading-texts/{textId}', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ textId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ practiceText: PracticeTextSchema }) })),
 
   // Selection-driven gloss for a practice text. Re-uses the same Haiku prompt
   // as highlights.fastGloss, but keyed to a practice_text (so the LLM can use
@@ -166,61 +210,6 @@ export const practiceContract = {
           pos: z.string().nullable(),
           register: z.string().nullable(),
           ipa: GrammarIpaBagSchema.nullable(),
-        }),
-      })
-    ),
-
-  // User pressed Next: every annotation that wasn't explicitly rated gets an
-  // implicit-good. The text moves to status='done'. Returns authoritative
-  // progress so the client doesn't have to estimate distinct completed terms.
-  finalizeText: oc
-    .route({ method: 'POST', path: '/practice/texts/{textId}/finalize', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ textId: z.string().uuid() }))
-    .output(
-      z.object({
-        data: z.object({
-          implicitGoodCount: z.number().int(),
-          progress: PracticeSessionProgressSchema,
-        }),
-      })
-    ),
-
-  // No-LLM Anki-style flashcard reviewer. Returns a capped, due-first-then-new
-  // batch of cards straight from user_lookups — no practice_session row, no
-  // generated text. The client iterates the batch locally; closing + reopening
-  // refetches a fresh due batch (already-rated cards drop out naturally).
-  listFlashcards: oc
-    .route({ method: 'GET', path: '/practice/flashcards', successStatus: 200 })
-    .errors({
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ targetLanguage: z.string().min(1) }))
-    .output(z.object({ data: z.object({ cards: z.array(FlashcardSchema) }) })),
-
-  // Grade a flashcard. Applies FSRS directly to the passive srs_* columns (the
-  // shared SRS budget). New-card introductions are gated by an atomic daily-cap
-  // guard: when the cap is already consumed the intro is refused and the
-  // response carries dailyCapReached=true (201, no FSRS applied) so the client
-  // drops the card rather than treating it as an error.
-  rateFlashcard: oc
-    .route({ method: 'POST', path: '/practice/flashcards/{userLookupId}/ratings', successStatus: 201 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ userLookupId: z.string().uuid(), rating: PracticeRatingSchema }))
-    .output(
-      z.object({
-        data: z.object({
-          accepted: z.literal(true),
-          introducedNew: z.boolean(),
-          dailyCapReached: z.boolean(),
         }),
       })
     ),
