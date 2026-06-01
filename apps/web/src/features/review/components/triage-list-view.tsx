@@ -291,7 +291,11 @@ export const TriageListView = () => {
             disabled={keptCount === 0 || !session}
             onClick={() => {
               if (!session) return
-              void navigate({ to: '/practice/start', search: { lang: session.targetLanguage, mode: 'mixed' } })
+              void navigate({
+                to: '/practice/review/$targetLanguage',
+                params: { targetLanguage: session.targetLanguage },
+                search: { pool: 'passive', scope: 'mixed', mode: 'read' },
+              })
             }}
           >
             <Brain />

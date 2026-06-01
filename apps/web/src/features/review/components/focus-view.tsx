@@ -83,7 +83,7 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const { from, source, practiceSessionId } = useSearch({
+  const { from, source, practiceLang, practicePool } = useSearch({
     from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
   })
   const fromVocabulary = from === 'vocabulary'
@@ -112,9 +112,17 @@ export const FocusView = () => {
   const cursor = useMemo(() => buildKeptCardCursor(cards ?? [], cardId), [cards, cardId])
 
   // Preserve the `from` origin across prev/next so the close button still
-  // knows where to land after the user navigates around. Practice carries
-  // an additional practiceSessionId so the back-route resolves.
-  const search = from ? (fromPractice && practiceSessionId ? { from, practiceSessionId } : { from }) : undefined
+  // knows where to land after the user navigates around. Practice carries the
+  // language + pool so the back-route resolves to the sessionless review screen.
+  const search = from ? (fromPractice && practiceLang ? { from, practiceLang, practicePool } : { from }) : undefined
+  const backToPractice = () => {
+    if (!practiceLang) return
+    void navigate({
+      to: '/practice/review/$targetLanguage',
+      params: { targetLanguage: practiceLang },
+      search: { pool: practicePool ?? 'passive', scope: 'mixed', mode: 'read' },
+    })
+  }
   const goPrev = () => {
     if (cursor.prev) {
       void navigate({
@@ -187,8 +195,8 @@ export const FocusView = () => {
       void navigate({ to: '/vocabulary' })
       return
     }
-    if (from === 'practice' && practiceSessionId) {
-      void navigate({ to: '/practice/$practiceSessionId', params: { practiceSessionId } })
+    if (from === 'practice' && practiceLang) {
+      backToPractice()
       return
     }
     void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
@@ -385,12 +393,7 @@ export const FocusView = () => {
                       { chunkId: card.chunk.id, learningMode: 'active' },
                       {
                         onSuccess: () => {
-                          if (practiceSessionId) {
-                            void navigate({
-                              to: '/practice/$practiceSessionId',
-                              params: { practiceSessionId },
-                            })
-                          }
+                          backToPractice()
                         },
                       }
                     )
@@ -409,12 +412,7 @@ export const FocusView = () => {
                       { chunkId: card.chunk.id, learningMode: 'passive' },
                       {
                         onSuccess: () => {
-                          if (practiceSessionId) {
-                            void navigate({
-                              to: '/practice/$practiceSessionId',
-                              params: { practiceSessionId },
-                            })
-                          }
+                          backToPractice()
                         },
                       }
                     )

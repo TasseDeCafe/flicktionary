@@ -35,9 +35,9 @@ interface LookupSheetProps {
   open: boolean
   selection: PlainSelection | null
   practiceTextId: string | null
-  practiceSessionId: string
   practiceTextBody: string
   targetLanguage: string
+  pool: 'passive' | 'active'
   onClose: () => void
 }
 
@@ -47,9 +47,9 @@ export const LookupSheet = ({
   open,
   selection,
   practiceTextId,
-  practiceSessionId,
   practiceTextBody,
   targetLanguage,
+  pool,
   onClose,
 }: LookupSheetProps) => {
   const { t } = useLingui()
@@ -97,7 +97,7 @@ export const LookupSheet = ({
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId, cardId },
-      search: { from: 'practice' as const, practiceSessionId },
+      search: { from: 'practice' as const, practiceLang: targetLanguage, practicePool: pool },
     })
   }
 

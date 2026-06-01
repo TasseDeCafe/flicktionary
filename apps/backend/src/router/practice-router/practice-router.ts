@@ -4,62 +4,37 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  DbUserLookup,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import type {
-  PracticeSessionsRepositoryInterface,
-  DbPracticeSession,
-} from '../../transport/database/practice-sessions/practice-sessions-repository'
 import type {
   PracticeTextsRepositoryInterface,
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
+import { listReviewTerms } from '../../service/practice/list-review-terms'
+import { rateTerm } from '../../service/practice/rate-term'
+import { clampPracticeSessionLimits } from '../../service/practice/review-caps'
 import {
-  clampPracticeSessionLimits,
-  STALE_SESSION_HOURS,
-  startPracticeSession,
-  type StartPracticeSessionDependencies,
-} from '../../service/practice/start-practice-session'
-import { rateFlashcard } from '../../service/practice/rate-flashcard'
-import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
-import {
-  generateNextPracticeText,
-  prepareNextPracticeText,
-  type GenerateNextPracticeTextDependencies,
-} from '../../service/practice/generate-next-practice-text'
-import { rateChunk, type RateChunkDependencies } from '../../service/practice/rate-chunk'
-import {
-  finalizePracticeText,
-  type FinalizePracticeTextDependencies,
-} from '../../service/practice/finalize-practice-text'
+  generateReadingText,
+  prepareNextReadingText,
+  type GenerateReadingTextDependencies,
+} from '../../service/practice/generate-reading-text'
+import { advanceReadingText } from '../../service/practice/advance-reading-text'
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 
 export type PracticeRouterDependencies = {
-  practiceSessionsRepository: PracticeSessionsRepositoryInterface
   practiceTextsRepository: PracticeTextsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
-  startPracticeSessionDependencies: StartPracticeSessionDependencies
-  generateNextPracticeTextDependencies: GenerateNextPracticeTextDependencies
-  rateChunkDependencies: RateChunkDependencies
-  finalizePracticeTextDependencies: FinalizePracticeTextDependencies
 }
-
-const toPracticeSessionDto = (row: DbPracticeSession) => ({
-  id: row.id,
-  userId: row.user_id,
-  targetLanguage: row.target_language,
-  status: row.status,
-  pool: (row.pool as 'passive' | 'active') ?? 'passive',
-  startedAt: new Date(row.started_at).toISOString(),
-  endedAt: row.ended_at ? new Date(row.ended_at).toISOString() : null,
-})
 
 type RawAnnotation = {
   headword?: unknown
@@ -108,7 +83,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
   })
   return {
     id: row.id,
-    practiceSessionId: row.practice_session_id,
+    pool: (row.pool as 'passive' | 'active') ?? 'passive',
     ord: row.ord,
     status: row.status,
     body: row.body,
@@ -120,9 +95,9 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
   }
 }
 
-// Maps a user_lookups row to the flashcard DTO. grammar JSONB is passed
+// Maps a user_lookups row to the review-term DTO. grammar JSONB is passed
 // through like toPracticeTextDto does; the contract's GrammarSchema validates it.
-const toFlashcardDto = (row: DbUserLookup) => ({
+const toReviewTermDto = (row: DbUserLookup) => ({
   userLookupId: row.id,
   headword: row.headword,
   sense: row.sense ?? '',
@@ -172,196 +147,133 @@ const fetchAnnotationContent = async (
 export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const implementer = implement(practiceContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
+  const readingDeps: GenerateReadingTextDependencies = {
+    practiceTextsRepository: deps.practiceTextsRepository,
+    userLookupsRepository: deps.userLookupsRepository,
+    usersRepository: deps.usersRepository,
+    userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+  }
+  const capsDeps = {
+    usersRepository: deps.usersRepository,
+    userLookupsRepository: deps.userLookupsRepository,
+  }
+
+  // Shape a practice_text into its DTO, joining live annotation content.
+  const shapeText = async (text: DbPracticeText, userId: string, targetLanguage: string) => {
+    const contentByKey = await fetchAnnotationContent(text, userId, targetLanguage, deps.userLookupsRepository)
+    return toPracticeTextDto(text, contentByKey)
+  }
+
   const router = implementer.router({
     dueSummary: implementer.dueSummary.handler(async ({ context }) => {
       const userId = context.res.locals.userId
-      await deps.practiceSessionsRepository.abandonAllStaleForUser({
-        userId,
-        olderThanHours: STALE_SESSION_HOURS,
-      })
       const summary = await deps.userLookupsRepository.listDueSummary(userId)
       return { data: { perLanguage: summary } }
     }),
 
-    startSession: implementer.startSession.handler(async ({ input, context, errors }) => {
+    listReviewTerms: implementer.listReviewTerms.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const result = await startPracticeSession(
-        userId,
-        input.targetLanguage,
-        input.mode,
-        deps.startPracticeSessionDependencies
-      )
+      const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps)
+      return { data: { terms: rows.map(toReviewTermDto) } }
+    }),
+
+    rateTerm: implementer.rateTerm.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      // Pass the FULL clamped daily cap: the atomic guard does its own
+      // today-count comparison against it (subtracting here would double-count).
+      const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
+      const result = await rateTerm(input.userLookupId, userId, input.rating, input.pool, limits.maxNewTerms, {
+        userLookupsRepository: deps.userLookupsRepository,
+      })
       if (!result.ok) {
-        throw errors.BAD_REQUEST({
-          data: {
-            errors: [
-              {
-                message:
-                  result.reason === 'no_kept_cards'
-                    ? 'No kept cards in this language yet.'
-                    : result.reason === 'no_practice_terms'
-                      ? 'No terms match your current practice limits.'
-                      : 'Set your native language in settings before starting practice.',
-              },
-            ],
-          },
-        })
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
-      return { data: { sessionId: result.sessionId, resumed: result.resumed } }
-    }),
-
-    abandonSession: implementer.abandonSession.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const session = await deps.practiceSessionsRepository.findByIdForUser(input.sessionId, userId)
-      if (!session) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Practice session not found' }] },
-        })
-      }
-      const abandoned = await deps.practiceSessionsRepository.markAbandoned(input.sessionId, userId)
-      return { data: { abandoned } }
-    }),
-
-    getSession: implementer.getSession.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const session = await deps.practiceSessionsRepository.findByIdForUser(input.sessionId, userId)
-      if (!session) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Practice session not found' }] },
-        })
-      }
-      const currentText = await deps.practiceTextsRepository.selectAndMarkReading(session.id)
-      const contentByKey = currentText
-        ? await fetchAnnotationContent(currentText, userId, session.target_language, deps.userLookupsRepository)
-        : new Map<string, ChunkContent>()
-      const progress = await deps.practiceSessionsRepository.getSessionProgress(session.id)
       return {
-        data: {
-          session: toPracticeSessionDto(session),
-          currentText: currentText ? toPracticeTextDto(currentText, contentByKey) : null,
-          progress,
-        },
+        data: { accepted: true as const, introducedNew: result.introducedNew, dailyCapReached: result.dailyCapReached },
       }
     }),
 
-    generateNextText: implementer.generateNextText.handler(async ({ input, context, errors }) => {
+    generateNextReadingText: implementer.generateNextReadingText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await generateNextPracticeText(input.sessionId, userId, deps.generateNextPracticeTextDependencies)
+      const result = await generateReadingText(userId, input.targetLanguage, input.pool, input.scope, readingDeps)
       if (!result.ok) {
-        if (result.reason === 'session_not_found') {
-          throw errors.NOT_FOUND({
-            data: { errors: [{ message: 'Practice session not found' }] },
-          })
-        }
-        if (result.reason === 'session_completed' || result.reason === 'no_native_language') {
-          throw errors.BAD_REQUEST({
-            data: {
-              errors: [
-                {
-                  message:
-                    result.reason === 'session_completed'
-                      ? 'Practice session is no longer active.'
-                      : 'Native language pref missing.',
-                },
-              ],
-            },
-          })
+        if (result.reason === 'no_native_language') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
         }
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: result.warning ?? 'Practice text generation failed' }] },
         })
       }
-      const progress = await deps.practiceSessionsRepository.getSessionProgress(input.sessionId)
-      if ('done' in result && result.done) {
-        return { data: { done: true as const, progress } }
+      if (result.done) return { data: { done: true as const } }
+      return {
+        data: {
+          done: false as const,
+          practiceText: await shapeText(result.practiceText, userId, input.targetLanguage),
+        },
       }
-      if ('practiceText' in result && 'targetLanguage' in result) {
-        const contentByKey = await fetchAnnotationContent(
-          result.practiceText,
-          userId,
-          result.targetLanguage,
-          deps.userLookupsRepository
-        )
-        return {
-          data: {
-            done: false as const,
-            practiceText: toPracticeTextDto(result.practiceText, contentByKey),
-            progress,
-          },
-        }
-      }
-      // Should be unreachable given the foreground path always resolves to
-      // done or practiceText, but TypeScript needs the exit.
-      throw errors.INTERNAL_SERVER_ERROR({
-        data: { errors: [{ message: 'unexpected generateNextText result shape' }] },
-      })
     }),
 
-    prepareNextText: implementer.prepareNextText.handler(async ({ input, context, errors }) => {
+    prepareNextReadingText: implementer.prepareNextReadingText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await prepareNextPracticeText(input.sessionId, userId, deps.generateNextPracticeTextDependencies)
-      if (!result.ok) {
-        if (result.reason === 'session_not_found') {
-          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice session not found' }] } })
-        }
-        throw errors.BAD_REQUEST({
-          data: {
-            errors: [
-              {
-                message:
-                  result.reason === 'session_completed'
-                    ? 'Practice session is no longer active.'
-                    : 'Native language pref missing.',
-              },
-            ],
-          },
-        })
-      }
-      if ('noWork' in result) {
-        return { data: { status: 'no_work' as const } }
-      }
-      if ('alreadyReady' in result) {
-        return { data: { status: 'already_ready' as const, practiceTextId: result.practiceText.id } }
-      }
-      if ('alreadyGenerating' in result) {
-        return { data: { status: 'already_generating' as const, practiceTextId: result.practiceText.id } }
-      }
-      return { data: { status: 'queued' as const, practiceTextId: result.practiceText.id } }
-    }),
-
-    rateChunk: implementer.rateChunk.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const result = await rateChunk(
-        input.textId,
+      const result = await prepareNextReadingText(
         userId,
-        input.headword,
-        input.sense,
-        input.rating,
-        true,
-        deps.rateChunkDependencies
+        input.targetLanguage,
+        input.pool,
+        input.scope,
+        input.excludeUserLookupIds,
+        readingDeps
       )
       if (!result.ok) {
-        if (result.reason === 'text_not_found' || result.reason === 'lookup_not_found') {
-          throw errors.NOT_FOUND({
-            data: { errors: [{ message: result.reason }] },
-          })
+        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
+      }
+      if (result.status === 'no_work') return { data: { status: 'no_work' as const } }
+      return { data: { status: result.status, practiceTextId: result.practiceTextId } }
+    }),
+
+    advanceReadingText: implementer.advanceReadingText.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await advanceReadingText(userId, input.textId, input.pool, input.scope, input.ratings, readingDeps)
+      if (!result.ok) {
+        if (result.reason === 'text_not_found') {
+          throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
         }
-        if (result.reason === 'text_already_finalized') {
-          throw errors.BAD_REQUEST({
-            data: { errors: [{ message: 'Practice text is already finalized; rating refused.' }] },
-          })
+        if (result.reason === 'no_native_language') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
         }
-        throw errors.BAD_REQUEST({
-          data: { errors: [{ message: 'Chunk is not part of this practice text.' }] },
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: result.warning ?? 'Practice text generation failed' }] },
         })
       }
-      // Find the session for the just-rated text so we can compute progress.
+      if (result.done) return { data: { done: true as const, introduced: result.introduced } }
+      const found = await deps.practiceTextsRepository.findByIdForUser(result.practiceText.id, userId)
+      const targetLanguage = found?.targetLanguage ?? result.practiceText.target_language
+      return {
+        data: {
+          done: false as const,
+          nextText: await shapeText(result.practiceText, userId, targetLanguage),
+          introduced: result.introduced,
+        },
+      }
+    }),
+
+    readingHistory: implementer.readingHistory.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const rows = await deps.practiceTextsRepository.listHistory({
+        userId,
+        targetLanguage: input.targetLanguage,
+        pool: input.pool,
+      })
+      const texts = await Promise.all(rows.map((row) => shapeText(row, userId, input.targetLanguage)))
+      return { data: { texts } }
+    }),
+
+    readingTextById: implementer.readingTextById.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
       const found = await deps.practiceTextsRepository.findByIdForUser(input.textId, userId)
-      const sessionId = found?.practiceSessionId
-      const progress = sessionId
-        ? await deps.practiceSessionsRepository.getSessionProgress(sessionId)
-        : { completed: 0, target: 0 }
-      return { data: { accepted: true as const, progress } }
+      if (!found) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
+      }
+      return { data: { practiceText: await shapeText(found.practiceText, userId, found.targetLanguage) } }
     }),
 
     fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {
@@ -397,75 +309,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         wiktionaryEntriesRepository: deps.wiktionaryEntriesRepository,
       })
       return { data: { ...gloss, ipa } }
-    }),
-
-    finalizeText: implementer.finalizeText.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const result = await finalizePracticeText(input.textId, userId, deps.finalizePracticeTextDependencies)
-      if (!result.ok) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Practice text not found' }] },
-        })
-      }
-      const found = await deps.practiceTextsRepository.findByIdForUser(input.textId, userId)
-      const sessionId = found?.practiceSessionId
-      const progress = sessionId
-        ? await deps.practiceSessionsRepository.getSessionProgress(sessionId)
-        : { completed: 0, target: 0 }
-      return { data: { implicitGoodCount: result.implicitGoodCount, progress } }
-    }),
-
-    listFlashcards: implementer.listFlashcards.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const activeSession = await deps.practiceSessionsRepository.findActiveForUser({
-        userId,
-        targetLanguage: input.targetLanguage,
-        pool: 'passive',
-      })
-      if (activeSession) {
-        throw errors.BAD_REQUEST({
-          data: { errors: [{ message: 'End the active reading session before starting flashcards.' }] },
-        })
-      }
-      // Same caps wiring as start-practice-session: clamp the user's limits,
-      // then subtract today's introductions to get the remaining new allowance.
-      const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
-      const summary = (await deps.userLookupsRepository.listDueSummary(userId)).find(
-        (s) => s.targetLanguage === input.targetLanguage
-      )
-      const remainingDailyNew = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
-      const rows = await deps.userLookupsRepository.listDueFlashcardsForLanguage({
-        userId,
-        targetLanguage: input.targetLanguage,
-        maxReviewTerms: limits.maxReviewTerms,
-        maxNewTerms: remainingDailyNew,
-      })
-      return { data: { cards: rows.map(toFlashcardDto) } }
-    }),
-
-    rateFlashcard: implementer.rateFlashcard.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      // Pass the FULL clamped daily cap: the atomic guard does its own
-      // today-count comparison against it (subtracting here would double-count).
-      const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
-      const result = await rateFlashcard(input.userLookupId, userId, input.rating, limits.maxNewTerms, {
-        userLookupsRepository: deps.userLookupsRepository,
-        practiceSessionsRepository: deps.practiceSessionsRepository,
-      })
-      if (!result.ok) {
-        if (result.reason === 'lookup_not_found') {
-          throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
-        }
-        if (result.reason === 'passive_session_active') {
-          throw errors.BAD_REQUEST({
-            data: { errors: [{ message: 'End the active reading session before rating flashcards.' }] },
-          })
-        }
-        // daily_cap_reached: not an error — the new-card intro was refused by
-        // the cap. Respond 201 with no FSRS applied; the client drops the card.
-        return { data: { accepted: true as const, introducedNew: false, dailyCapReached: true } }
-      }
-      return { data: { accepted: true as const, introducedNew: result.introducedNew, dailyCapReached: false } }
     }),
   })
 

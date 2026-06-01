@@ -156,15 +156,15 @@ msgstr "(unset)"
 #~ msgid "{0} highlight(s)"
 #~ msgstr "{0} highlight(s)"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:49
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:47
 msgid "{activeCount} active"
 msgstr "{activeCount} active"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:306
+#: apps/web/src/features/practice/components/practice-language-view.tsx:178
 msgid "{activeDueCount} due, {activeNewCount} new"
 msgstr "{activeDueCount} due, {activeNewCount} new"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:307
+#: apps/web/src/features/practice/components/practice-language-view.tsx:179
 msgid "{activeTotal} active term(s). Nothing due right now."
 msgstr "{activeTotal} active term(s). Nothing due right now."
 
@@ -180,17 +180,17 @@ msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:38
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:36
 msgid "{dailyNewAvailable} new available"
 msgstr "{dailyNewAvailable} new available"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:114
+#: apps/web/src/features/practice/components/practice-language-view.tsx:62
 msgid "{dailyNewAvailable} new available today"
 msgstr "{dailyNewAvailable} new available today"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:119
-msgid "{dailyNewAvailable} new term(s) available today."
-msgstr "{dailyNewAvailable} new term(s) available today."
+#~ msgid "{dailyNewAvailable} new term(s) available today."
+#~ msgstr "{dailyNewAvailable} new term(s) available today."
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:70
 #~ msgid "{dailyNewAvailable} new today"
@@ -222,17 +222,21 @@ msgstr "{discount}% off with your referral forever!"
 msgid "{discountPercentage}% off thanks to your past referral!"
 msgstr "{discountPercentage}% off thanks to your past referral!"
 
+#: apps/web/src/features/practice/components/practice-language-view.tsx:61
+msgid "{dueTermCount} due"
+msgstr "{dueTermCount} due"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
 #~ msgid "{dueTermCount} follow-up(s)"
 #~ msgstr "{dueTermCount} follow-up(s)"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:35
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:33
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:113
-msgid "{dueTermCount} follow-up(s) ready"
-msgstr "{dueTermCount} follow-up(s) ready"
+#~ msgid "{dueTermCount} follow-up(s) ready"
+#~ msgstr "{dueTermCount} follow-up(s) ready"
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
@@ -268,16 +272,16 @@ msgstr "{highlightCount} highlight(s) saved."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:106
 #: apps/web/src/features/practice/components/practice-language-view.tsx:115
-msgid "{newCount} unseen"
-msgstr "{newCount} unseen"
+#~ msgid "{newCount} unseen"
+#~ msgstr "{newCount} unseen"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:56
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:458
-msgid "{ratedCount} of {totalCount} rated"
-msgstr "{ratedCount} of {totalCount} rated"
+#~ msgid "{ratedCount} of {totalCount} rated"
+#~ msgstr "{ratedCount} of {totalCount} rated"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:277
 #~ msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
@@ -292,8 +296,8 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgstr "{reviewDueCount} due"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:106
-msgid "{totalKept} total"
-msgstr "{totalKept} total"
+#~ msgid "{totalKept} total"
+#~ msgstr "{totalKept} total"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:47
 #~ msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
@@ -498,7 +502,7 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
-#: apps/web/src/features/review/components/focus-view.tsx:527
+#: apps/web/src/features/review/components/focus-view.tsx:525
 #: apps/web/src/features/review/components/triage-row.tsx:84
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:69
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
@@ -506,10 +510,10 @@ msgid "Active"
 msgstr "Active"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:304
-msgid "Active drill in progress"
-msgstr "Active drill in progress"
+#~ msgid "Active drill in progress"
+#~ msgstr "Active drill in progress"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:300
+#: apps/web/src/features/practice/components/practice-language-view.tsx:174
 msgid "Active vocabulary"
 msgstr "Active vocabulary"
 
@@ -535,11 +539,11 @@ msgstr "Add New Profile..."
 msgid "Add note"
 msgstr "Add note"
 
-#: apps/web/src/features/review/components/focus-view.tsx:400
+#: apps/web/src/features/review/components/focus-view.tsx:403
 msgid "Add to active vocabulary"
 msgstr "Add to active vocabulary"
 
-#: apps/web/src/features/review/components/focus-view.tsx:423
+#: apps/web/src/features/review/components/focus-view.tsx:421
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
@@ -599,10 +603,10 @@ msgstr "Again"
 msgid "All"
 msgstr "All"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:42
-#: apps/web/src/features/practice/components/practice-language-view.tsx:228
-#: apps/web/src/features/practice/components/practice-language-view.tsx:248
-#: apps/web/src/features/practice/components/practice-session-view.tsx:391
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:40
+#: apps/web/src/features/practice/components/practice-language-view.tsx:128
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:307
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:332
 msgid "All caught up"
 msgstr "All caught up"
 
@@ -618,7 +622,7 @@ msgstr "All caught up"
 #~ msgid "All caught up for today · {totalKept} total"
 #~ msgstr "All caught up for today · {totalKept} total"
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:139
 msgid "All done!"
 msgstr "All done!"
 
@@ -639,8 +643,8 @@ msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:360
-msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
-msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
+#~ msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
+#~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
 msgid "Always play (unpause) after invoking above shortcut"
@@ -805,9 +809,22 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:156
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:145
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
+
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:271
+msgid "Back to current card"
+msgstr "Back to current card"
+
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:391
+msgid "Back to current text"
+msgstr "Back to current text"
+
+#: apps/web/src/features/practice/components/reading-history-view.tsx:43
+msgid "Back to history"
+msgstr "Back to history"
 
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx:88
 msgid "Back to login"
@@ -817,9 +834,7 @@ msgstr "Back to login"
 msgid "Back to Login"
 msgstr "Back to Login"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:193
-#: apps/web/src/features/practice/components/practice-session-view.tsx:444
-#: apps/web/src/features/practice/components/practice-start-view.tsx:41
+#: apps/web/src/features/practice/components/practice-language-view.tsx:100
 msgid "Back to Practice"
 msgstr "Back to Practice"
 
@@ -878,8 +893,6 @@ msgstr "Browse community-uploaded tracks for this movie."
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:43
-#: apps/web/src/features/practice/components/practice-language-view.tsx:371
-#: apps/web/src/features/practice/components/practice-language-view.tsx:396
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:67
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:634
@@ -888,21 +901,21 @@ msgstr "Browse community-uploaded tracks for this movie."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: apps/web/src/features/review/components/focus-view.tsx:199
-#: apps/web/src/features/review/components/focus-view.tsx:206
-#: apps/web/src/features/review/components/focus-view.tsx:296
+#: apps/web/src/features/review/components/focus-view.tsx:207
+#: apps/web/src/features/review/components/focus-view.tsx:214
+#: apps/web/src/features/review/components/focus-view.tsx:304
 msgid "Card"
 msgstr "Card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:231
+#: apps/web/src/features/review/components/focus-view.tsx:239
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Card {cardPosition} of {cardTotal}"
 
-#: apps/web/src/features/review/components/focus-view.tsx:207
+#: apps/web/src/features/review/components/focus-view.tsx:215
 msgid "Card not found."
 msgstr "Card not found."
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:297
+#: apps/web/src/features/practice/components/review-queue-stats.tsx:31
 msgid "Cards left"
 msgstr "Cards left"
 
@@ -982,7 +995,7 @@ msgstr "Choose your plan"
 msgid "Clear search"
 msgstr "Clear search"
 
-#: apps/web/src/features/review/components/focus-view.tsx:357
+#: apps/web/src/features/review/components/focus-view.tsx:365
 msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 
@@ -1014,8 +1027,8 @@ msgid "Collocations"
 msgstr "Collocations"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:121
-msgid "Come back later. {followUpDelay}."
-msgstr "Come back later. {followUpDelay}."
+#~ msgid "Come back later. {followUpDelay}."
+#~ msgstr "Come back later. {followUpDelay}."
 
 #: packages/asbplayer-common/components/ListField.tsx:56
 msgid "Comma-separated list of strings"
@@ -1076,12 +1089,12 @@ msgid "Continue"
 msgstr "Continue"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:323
-msgid "Continue active drill"
-msgstr "Continue active drill"
+#~ msgid "Continue active drill"
+#~ msgstr "Continue active drill"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:74
-msgid "Continue session"
-msgstr "Continue session"
+#~ msgid "Continue session"
+#~ msgstr "Continue session"
 
 #: apps/web/src/features/auth/components/login-view.tsx:98
 msgid "Continue with Apple"
@@ -1159,8 +1172,8 @@ msgid "Could not set up your account. Please try restarting the app."
 msgstr "Could not set up your account. Please try restarting the app."
 
 #: apps/web/src/features/practice/components/practice-start-view.tsx:40
-msgid "Couldn't start the session. Please try again."
-msgstr "Couldn't start the session. Please try again."
+#~ msgid "Couldn't start the session. Please try again."
+#~ msgstr "Couldn't start the session. Please try again."
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
@@ -1189,7 +1202,7 @@ msgstr ""
 msgid "Customer Center"
 msgstr "Customer Center"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:40
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:38
 msgid "Daily new limit reached"
 msgstr "Daily new limit reached"
 
@@ -1197,11 +1210,15 @@ msgstr "Daily new limit reached"
 #~ msgid "Daily new limit reached · {newCount} unseen · {totalKept} total"
 #~ msgstr "Daily new limit reached · {newCount} unseen · {totalKept} total"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:120
-msgid "Daily new limit reached. You can learn more anyway."
-msgstr "Daily new limit reached. You can learn more anyway."
+#: apps/web/src/features/practice/components/practice-language-view.tsx:66
+msgid "Daily new limit reached."
+msgstr "Daily new limit reached."
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:154
+#: apps/web/src/features/practice/components/practice-language-view.tsx:120
+#~ msgid "Daily new limit reached. You can learn more anyway."
+#~ msgstr "Daily new limit reached. You can learn more anyway."
+
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:140
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
@@ -1269,7 +1286,7 @@ msgstr "Delete from vocabulary"
 msgid "Delete my account"
 msgstr "Delete my account"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:257
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:241
 msgid "Deleted \"{headword}\""
 msgstr "Deleted \"{headword}\""
 
@@ -1330,7 +1347,7 @@ msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgid "downloads"
 msgstr "downloads"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:344
+#: apps/web/src/features/practice/components/practice-language-view.tsx:184
 msgid "Drill active terms"
 msgstr "Drill active terms"
 
@@ -1431,34 +1448,34 @@ msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:399
-msgid "End & start flashcards"
-msgstr "End & start flashcards"
+#~ msgid "End & start flashcards"
+#~ msgstr "End & start flashcards"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:333
-msgid "End active drill"
-msgstr "End active drill"
+#~ msgid "End active drill"
+#~ msgstr "End active drill"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:316
 msgid "End of list"
 msgstr "End of list"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:358
-msgid "End practice session?"
-msgstr "End practice session?"
+#~ msgid "End practice session?"
+#~ msgstr "End practice session?"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:383
-msgid "End reading session?"
-msgstr "End reading session?"
+#~ msgid "End reading session?"
+#~ msgstr "End reading session?"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:273
 #: apps/web/src/features/practice/components/practice-language-view.tsx:374
-msgid "End session"
-msgstr "End session"
+#~ msgid "End session"
+#~ msgstr "End session"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:374
 #: apps/web/src/features/practice/components/practice-language-view.tsx:399
-msgid "Ending…"
-msgstr "Ending…"
+#~ msgid "Ending…"
+#~ msgstr "Ending…"
 
 #: apps/web/src/features/settings/components/english-ipa-dialect-selector.tsx:32
 #~ msgid "English IPA dialect"
@@ -1557,6 +1574,10 @@ msgstr "Extension shortcut"
 msgid "Extension version"
 msgstr "Extension version"
 
+#: apps/web/src/features/practice/api/practice-hooks.ts:78
+msgid "Failed to advance"
+msgstr "Failed to advance"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:403
 msgid "Failed to complete onboarding"
 msgstr "Failed to complete onboarding"
@@ -1573,20 +1594,20 @@ msgstr "Failed to create checkout session"
 msgid "Failed to create session"
 msgstr "Failed to create session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:153
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:142
+#: apps/web/src/features/practice/api/practice-hooks.ts:107
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:141
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:57
-msgid "Failed to end practice session"
-msgstr "Failed to end practice session"
+#~ msgid "Failed to end practice session"
+#~ msgstr "Failed to end practice session"
 
 #: apps/web/src/features/review/api/review-hooks.ts:274
 #~ msgid "Failed to export CSV"
 #~ msgstr "Failed to export CSV"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:97
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:96
 msgid "Failed to export vocabulary"
 msgstr "Failed to export vocabulary"
 
@@ -1595,19 +1616,19 @@ msgstr "Failed to export vocabulary"
 msgid "Failed to fetch subscription details"
 msgstr "Failed to fetch subscription details"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:186
+#: apps/web/src/features/practice/api/practice-hooks.ts:134
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:238
-msgid "Failed to finalize text"
-msgstr "Failed to finalize text"
+#~ msgid "Failed to finalize text"
+#~ msgstr "Failed to finalize text"
 
 #: apps/web/src/features/review/api/review-hooks.ts:186
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:98
+#: apps/web/src/features/practice/api/practice-hooks.ts:52
 msgid "Failed to generate next text"
 msgstr "Failed to generate next text"
 
@@ -1636,22 +1657,26 @@ msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:200
-msgid "Failed to load flashcards"
-msgstr "Failed to load flashcards"
+#~ msgid "Failed to load flashcards"
+#~ msgstr "Failed to load flashcards"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:332
 msgid "Failed to load highlights"
 msgstr "Failed to load highlights"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:89
+msgid "Failed to load history"
+msgstr "Failed to load history"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:13
 msgid "Failed to load languages"
 msgstr "Failed to load languages"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:70
-msgid "Failed to load practice session"
-msgstr "Failed to load practice session"
+#~ msgid "Failed to load practice session"
+#~ msgstr "Failed to load practice session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:20
+#: apps/web/src/features/practice/api/practice-hooks.ts:12
 msgid "Failed to load practice summary"
 msgstr "Failed to load practice summary"
 
@@ -1662,6 +1687,10 @@ msgstr "Failed to load preferences"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:254
 msgid "Failed to load processing status"
 msgstr "Failed to load processing status"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:26
+msgid "Failed to load review terms"
+msgstr "Failed to load review terms"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:177
 msgid "Failed to load session"
@@ -1703,8 +1732,7 @@ msgstr "Failed to mark chat read"
 msgid "Failed to open triage"
 msgstr "Failed to open triage"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:131
-#: apps/web/src/features/practice/api/practice-hooks.ts:214
+#: apps/web/src/features/practice/api/practice-hooks.ts:42
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
 
@@ -1732,7 +1760,7 @@ msgstr "Failed to rename term"
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:174
+#: apps/web/src/features/practice/api/practice-hooks.ts:123
 msgid "Failed to restore term"
 msgstr "Failed to restore term"
 
@@ -1770,8 +1798,8 @@ msgid "Failed to start pairing"
 msgstr "Failed to start pairing"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:38
-msgid "Failed to start practice session"
-msgstr "Failed to start practice session"
+#~ msgid "Failed to start practice session"
+#~ msgstr "Failed to start practice session"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:309
 #~ msgid "Failed to start processing"
@@ -1802,7 +1830,7 @@ msgstr "Failed to update English IPA dialect"
 msgid "Failed to update highlight"
 msgstr "Failed to update highlight"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:86
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:85
 msgid "Failed to update learning mode"
 msgstr "Failed to update learning mode"
 
@@ -1871,7 +1899,7 @@ msgstr "Feminine"
 msgid "Finding suggestions…"
 msgstr "Finding suggestions…"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:284
+#: apps/web/src/features/practice/components/practice-language-view.tsx:146
 msgid "Flashcards"
 msgstr "Flashcards"
 
@@ -1884,24 +1912,29 @@ msgstr "Flicktionary"
 #~ msgstr "Flicktionary - Perfect Your Accent with AI Voice Training"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:60
-msgid "Follow-up in {hoursUntilFollowUp} hr"
-msgstr "Follow-up in {hoursUntilFollowUp} hr"
+#~ msgid "Follow-up in {hoursUntilFollowUp} hr"
+#~ msgstr "Follow-up in {hoursUntilFollowUp} hr"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:58
-msgid "Follow-up in {minutesUntilFollowUp} min"
-msgstr "Follow-up in {minutesUntilFollowUp} min"
+#~ msgid "Follow-up in {minutesUntilFollowUp} min"
+#~ msgstr "Follow-up in {minutesUntilFollowUp} min"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:61
-msgid "Follow-up later"
-msgstr "Follow-up later"
+#~ msgid "Follow-up later"
+#~ msgstr "Follow-up later"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:290
+#: apps/web/src/features/practice/components/practice-language-view.tsx:164
 msgid "Follow-ups"
 msgstr "Follow-ups"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:416
 msgid "Form (e.g. был)"
 msgstr "Form (e.g. был)"
+
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:262
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:375
+msgid "Forward"
+msgstr "Forward"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:83
 msgid "Free for {NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
@@ -1919,7 +1952,7 @@ msgstr "Free-form notes that don't fit the structured fields above."
 msgid "Frequency"
 msgstr "Frequency"
 
-#: apps/web/src/features/review/components/focus-view.tsx:343
+#: apps/web/src/features/review/components/focus-view.tsx:351
 msgid "Full exploration"
 msgstr "Full exploration"
 
@@ -1940,7 +1973,7 @@ msgstr "General"
 msgid "Generate card"
 msgstr "Generate card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:367
+#: apps/web/src/features/review/components/focus-view.tsx:375
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
@@ -1948,7 +1981,7 @@ msgstr "Generate full exploration"
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
-#: apps/web/src/features/review/components/focus-view.tsx:355
+#: apps/web/src/features/review/components/focus-view.tsx:363
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
@@ -1961,8 +1994,8 @@ msgid "Generating..."
 msgstr "Generating..."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
-#: apps/web/src/features/practice/components/practice-session-view.tsx:486
-#: apps/web/src/features/review/components/focus-view.tsx:367
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:397
+#: apps/web/src/features/review/components/focus-view.tsx:375
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Generating…"
@@ -2098,6 +2131,15 @@ msgstr "Highlight saved"
 msgid "Highlights are enriched as you read. Triage is available immediately."
 msgstr "Highlights are enriched as you read. Triage is available immediately."
 
+#: apps/web/src/features/practice/components/practice-language-view.tsx:158
+#: apps/web/src/features/practice/components/practice-language-view.tsx:188
+msgid "History"
+msgstr "History"
+
+#: apps/web/src/features/practice/components/reading-history-view.tsx:66
+msgid "History · {languageName}"
+msgstr "History · {languageName}"
+
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:92
 msgid "Home"
 msgstr "Home"
@@ -2107,8 +2149,8 @@ msgid "Host regex"
 msgstr "Host regex"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:466
-msgid "How rating works on Next"
-msgstr "How rating works on Next"
+#~ msgid "How rating works on Next"
+#~ msgstr "How rating works on Next"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
 msgid "How your free trial works"
@@ -2265,7 +2307,7 @@ msgstr "Language preferences"
 
 #: apps/web/src/features/more/components/languages-page.tsx:14
 #: apps/web/src/features/more/components/more-tab-view.tsx:54
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:80
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:78
 msgid "Languages"
 msgstr "Languages"
 
@@ -2290,19 +2332,23 @@ msgid "Layout"
 msgstr "Layout"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:79
-msgid "Learn more anyway"
-msgstr "Learn more anyway"
+#~ msgid "Learn more anyway"
+#~ msgstr "Learn more anyway"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:139
+msgid "Learn new"
+msgstr "Learn new"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:92
-msgid "Learn new only"
-msgstr "Learn new only"
+#~ msgid "Learn new only"
+#~ msgstr "Learn new only"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:69
 #: apps/web/src/features/practice/components/practice-language-view.tsx:80
 #~ msgid "Learn new terms"
 #~ msgstr "Learn new terms"
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:282
+#: apps/web/src/features/practice/components/review-queue-stats.tsx:16
 msgid "Learning"
 msgstr "Learning"
 
@@ -2346,7 +2392,7 @@ msgstr "LLM-suggested terms"
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
-#: apps/web/src/features/review/components/focus-view.tsx:200
+#: apps/web/src/features/review/components/focus-view.tsx:208
 msgid "Loading card…"
 msgstr "Loading card…"
 
@@ -2359,12 +2405,20 @@ msgid "Loading chat…"
 msgstr "Loading chat…"
 
 #: apps/web/src/features/practice/components/flashcard-session-view.tsx:140
-msgid "Loading flashcards…"
-msgstr "Loading flashcards…"
+#~ msgid "Loading flashcards…"
+#~ msgstr "Loading flashcards…"
+
+#: apps/web/src/features/practice/components/reading-history-view.tsx:69
+msgid "Loading history…"
+msgstr "Loading history…"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:316
 msgid "Loading more…"
 msgstr "Loading more…"
+
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:130
+msgid "Loading review terms…"
+msgstr "Loading review terms…"
 
 #: apps/web/src/features/sessions/components/session-view.tsx:352
 msgid "Loading segments…"
@@ -2387,8 +2441,9 @@ msgstr "Loading..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:67
-#: apps/web/src/features/practice/components/practice-language-view.tsx:199
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:153
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:65
+#: apps/web/src/features/practice/components/practice-language-view.tsx:106
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:55
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
@@ -2442,6 +2497,14 @@ msgstr "Message to the founders"
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:134
 msgid "Misc"
 msgstr "Misc"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:137
+msgid "Mixed"
+msgstr "Mixed"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:143
+msgid "Mode"
+msgstr "Mode"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
 msgid "Monthly"
@@ -2539,7 +2602,7 @@ msgstr "Neuter"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:58
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:55
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:275
+#: apps/web/src/features/practice/components/review-queue-stats.tsx:9
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:67
 msgid "New"
 msgstr "New"
@@ -2561,17 +2624,21 @@ msgstr "New terms"
 msgid "New terms are capped per day. Follow-up sessions use up to this many review terms."
 msgstr "New terms are capped per day. Follow-up sessions use up to this many review terms."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:291
+#: apps/web/src/features/practice/components/practice-language-view.tsx:165
 msgid "New today"
 msgstr "New today"
 
-#: apps/web/src/features/review/components/focus-view.tsx:249
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:402
+msgid "Next"
+msgstr "Next"
+
+#: apps/web/src/features/review/components/focus-view.tsx:257
 msgid "Next card"
 msgstr "Next card"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:491
-msgid "Next text"
-msgstr "Next text"
+#~ msgid "Next text"
+#~ msgstr "Next text"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
 #~ msgid "No Card Required"
@@ -2590,8 +2657,8 @@ msgid "No cards yet. Select some highlights in the source text to generate new c
 msgstr "No cards yet. Select some highlights in the source text to generate new cards."
 
 #: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
-msgid "No flashcards are due right now."
-msgstr "No flashcards are due right now."
+#~ msgid "No flashcards are due right now."
+#~ msgstr "No flashcards are due right now."
 
 #: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
 #~ msgid "No highlight selected."
@@ -2614,9 +2681,13 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
+#: apps/web/src/features/practice/components/reading-history-view.tsx:72
+msgid "No past texts yet. Read some practice texts and they'll show up here."
+msgstr "No past texts yet. Read some practice texts and they'll show up here."
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx:122
-msgid "No practice terms are ready right now."
-msgstr "No practice terms are ready right now."
+#~ msgid "No practice terms are ready right now."
+#~ msgstr "No practice terms are ready right now."
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:60
 msgid "No sessions in this filter."
@@ -2634,6 +2705,14 @@ msgstr "No sessions yet. Start one to begin."
 msgid "No target languages yet. Preferences are set the first time you start a session in a new language."
 msgstr "No target languages yet. Preferences are set the first time you start a session in a new language."
 
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:139
+msgid "No terms are due right now."
+msgstr "No terms are due right now."
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:67
+msgid "No terms are ready right now."
+msgstr "No terms are ready right now."
+
 #: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:138
 #~ msgid "No text selected."
 #~ msgstr "No text selected."
@@ -2650,8 +2729,8 @@ msgstr "No videos detected."
 msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:71
-#: apps/web/src/features/practice/components/practice-language-view.tsx:203
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:69
+#: apps/web/src/features/practice/components/practice-language-view.tsx:110
 msgid "No vocabulary to practice yet"
 msgstr "No vocabulary to practice yet"
 
@@ -2812,12 +2891,12 @@ msgstr "Part of speech"
 msgid "Particle"
 msgstr "Particle"
 
-#: apps/web/src/features/review/components/focus-view.tsx:523
+#: apps/web/src/features/review/components/focus-view.tsx:521
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:68
 msgid "Passive"
 msgstr "Passive"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:213
+#: apps/web/src/features/practice/components/practice-language-view.tsx:120
 msgid "Passive vocabulary"
 msgstr "Passive vocabulary"
 
@@ -2967,10 +3046,8 @@ msgstr "Plural-only"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:60
-#: apps/web/src/features/practice/components/practice-language-view.tsx:76
-#: apps/web/src/features/practice/components/practice-session-view.tsx:365
-#: apps/web/src/features/practice/components/practice-start-view.tsx:36
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:58
+#: apps/web/src/features/practice/components/practice-language-view.tsx:154
 msgid "Practice"
 msgstr "Practice"
 
@@ -2988,7 +3065,7 @@ msgstr "Practice limits"
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:298
+#: apps/web/src/features/review/components/triage-list-view.tsx:302
 msgid "Practice your terms"
 msgstr "Practice your terms"
 
@@ -3007,12 +3084,16 @@ msgstr "Premium Features"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:366
 #: apps/web/src/features/practice/components/practice-start-view.tsx:45
-msgid "Preparing the session…"
-msgstr "Preparing the session…"
+#~ msgid "Preparing the session…"
+#~ msgstr "Preparing the session…"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:217
 msgid "Preparing your answer…"
 msgstr "Preparing your answer…"
+
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:300
+msgid "Preparing your text…"
+msgstr "Preparing your text…"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:262
 msgid "Preposition"
@@ -3022,7 +3103,8 @@ msgstr "Preposition"
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
-#: apps/web/src/features/review/components/focus-view.tsx:246
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:251
+#: apps/web/src/features/review/components/focus-view.tsx:254
 msgid "Previous card"
 msgstr "Previous card"
 
@@ -3037,6 +3119,10 @@ msgstr "Previous card"
 #: apps/web/src/features/sessions/components/process-button.tsx:59
 #~ msgid "Previous run produced no cards. Click to retry."
 #~ msgstr "Previous run produced no cards. Click to retry."
+
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:364
+msgid "Previous text"
+msgstr "Previous text"
 
 #: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:22
 #: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:80
@@ -3059,8 +3145,8 @@ msgstr "Primary"
 #~ msgid "Process"
 #~ msgstr "Process"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:73
-#: apps/web/src/features/practice/components/practice-language-view.tsx:205
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:71
+#: apps/web/src/features/practice/components/practice-language-view.tsx:112
 msgid "Process a session and keep some cards. They'll show up here automatically."
 msgstr "Process a session and keep some cards. They'll show up here automatically."
 
@@ -3146,11 +3232,15 @@ msgstr "Rate"
 #~ msgid "Rated terms keep their ratings; unrated terms stay available later"
 #~ msgstr "Rated terms keep their ratings; unrated terms stay available later"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:64
+#: apps/web/src/features/practice/components/practice-language-view.tsx:145
+msgid "Read"
+msgstr "Read"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx:62
 msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
 msgstr "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:227
+#: apps/web/src/features/practice/components/practice-language-view.tsx:128
 msgid "Ready to practice"
 msgstr "Ready to practice"
 
@@ -3195,7 +3285,7 @@ msgstr "Registering {movieTitle}…"
 #~ msgid "Registering movie…"
 #~ msgstr "Registering movie…"
 
-#: apps/web/src/features/review/components/focus-view.tsx:520
+#: apps/web/src/features/review/components/focus-view.tsx:518
 #: apps/web/src/features/review/components/triage-row.tsx:143
 msgid "Reject"
 msgstr "Reject"
@@ -3263,8 +3353,8 @@ msgstr "Reset"
 msgid "Reset subtitle offset"
 msgstr "Reset subtitle offset"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:259
 #: apps/web/src/features/practice/components/rate-sheet.tsx:222
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:243
 msgid "Restore"
 msgstr "Restore"
 
@@ -3292,7 +3382,8 @@ msgstr "Return to Login"
 msgid "Revert"
 msgstr "Revert"
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:289
+#: apps/web/src/features/practice/components/practice-language-view.tsx:138
+#: apps/web/src/features/practice/components/review-queue-stats.tsx:23
 #: apps/web/src/features/review/components/triage-list-view.tsx:182
 msgid "Review"
 msgstr "Review"
@@ -3302,8 +3393,8 @@ msgstr "Review"
 #~ msgstr "Review follow-ups"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:91
-msgid "Review only"
-msgstr "Review only"
+#~ msgid "Review only"
+#~ msgstr "Review only"
 
 #: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:78
 msgid "Review terms"
@@ -3346,6 +3437,10 @@ msgstr "Saving…"
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:25
 #~ msgid "Scan the QR code to download the app"
 #~ msgstr "Scan the QR code to download the app"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:135
+msgid "Scope"
+msgstr "Scope"
 
 #: packages/extension/src/ui/components/FtueUi.tsx:43
 msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
@@ -3473,8 +3568,8 @@ msgstr "Session"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:32
 #: apps/web/src/features/practice/components/practice-language-view.tsx:225
-msgid "Session in progress"
-msgstr "Session in progress"
+#~ msgid "Session in progress"
+#~ msgstr "Session in progress"
 
 #: apps/web/src/features/sessions/components/session-view.tsx:312
 msgid "Session not found."
@@ -3527,7 +3622,7 @@ msgstr "Short paraphrase in the target language."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:260
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:277
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -3621,7 +3716,7 @@ msgstr "Source"
 #~ msgid "Source was removed"
 #~ msgstr "Source was removed"
 
-#: apps/web/src/features/review/components/focus-view.tsx:231
+#: apps/web/src/features/review/components/focus-view.tsx:239
 msgid "Standalone"
 msgstr "Standalone"
 
@@ -3827,13 +3922,13 @@ msgid "Switch"
 msgstr "Switch"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:192
-#: apps/web/src/features/review/components/focus-view.tsx:445
+#: apps/web/src/features/review/components/focus-view.tsx:443
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to active vocabulary"
 msgstr "Switch to active vocabulary"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:201
-#: apps/web/src/features/review/components/focus-view.tsx:445
+#: apps/web/src/features/review/components/focus-view.tsx:443
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to passive vocabulary"
 msgstr "Switch to passive vocabulary"
@@ -3876,6 +3971,10 @@ msgstr "Term deleted"
 #: apps/web/src/features/practice/components/chunk-actions-sheet.tsx:35
 #~ msgid "Term options."
 #~ msgstr "Term options."
+
+#: apps/web/src/features/practice/components/reading-history-view.tsx:89
+msgid "terms"
+msgstr "terms"
 
 #: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:24
 #~ msgid "Terms and Conditions"
@@ -3986,7 +4085,7 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx:358
+#: apps/web/src/features/review/components/focus-view.tsx:366
 msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
 
@@ -4088,7 +4187,7 @@ msgstr "Too many requests. Please use the app in only one tab and device at a ti
 msgid "Top"
 msgstr "Top"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:293
+#: apps/web/src/features/practice/components/practice-language-view.tsx:167
 msgid "Total"
 msgstr "Total"
 
@@ -4169,13 +4268,13 @@ msgstr "Unknown year"
 msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:292
+#: apps/web/src/features/practice/components/practice-language-view.tsx:166
 msgid "Unseen"
 msgstr "Unseen"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:472
-msgid "Untapped terms count as 'good' when you advance to the next text."
-msgstr "Untapped terms count as 'good' when you advance to the next text."
+#~ msgid "Untapped terms count as 'good' when you advance to the next text."
+#~ msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
 #: apps/web/src/features/sessions/components/session-view.tsx:317
@@ -4437,7 +4536,7 @@ msgstr "Why does it appear in this particular form here?"
 msgid "Why this form?"
 msgstr "Why this form?"
 
-#: apps/web/src/features/review/components/focus-view.tsx:312
+#: apps/web/src/features/review/components/focus-view.tsx:320
 msgid "Wiktionary"
 msgstr "Wiktionary"
 
@@ -4467,8 +4566,8 @@ msgid "You can try again in {countdown} seconds"
 msgstr "You can try again in {countdown} seconds"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:385
-msgid "You have a reading session in progress. End it to start flashcards."
-msgstr "You have a reading session in progress. End it to start flashcards."
+#~ msgid "You have a reading session in progress. End it to start flashcards."
+#~ msgstr "You have a reading session in progress. End it to start flashcards."
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
 #: apps/web/src/features/billing/components/pricing-view.tsx:38
@@ -4487,7 +4586,8 @@ msgstr "You used your free trial"
 msgid "You're all set"
 msgstr "You're all set"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:393
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:309
+#: apps/web/src/features/practice/components/reading-mode-view.tsx:334
 msgid "You've reviewed every due term for this language. Come back later when more are ready."
 msgstr "You've reviewed every due term for this language. Come back later when more are ready."
 

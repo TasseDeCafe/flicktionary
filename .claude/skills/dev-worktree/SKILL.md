@@ -5,7 +5,7 @@ disable-model-invocation: true
 allowed-tools: Read, Bash(git:*), Bash(pnpm:*), Bash(doppler:*), Bash(ls:*)
 ---
 
-You are creating (or switching to) a git worktree set up for local development. A worktree is a second working directory backed by the same `.git`, on its own branch — ideal for a separate editor window with a clean context. The two non-obvious snags this skill handles are **Doppler auth** and **single-instance dev**.
+You are creating (or switching to) a git worktree set up for local development. A worktree is a second working directory backed by the same `.git`, on its own branch — ideal for a separate editor window with a clean context. The non-obvious snags this skill handles are **Doppler auth**, **gitignored codegen that doesn't carry into a worktree**, and **single-instance dev**.
 
 ## Why the naive approach fails (read before changing anything)
 
@@ -37,13 +37,19 @@ Ask the user for a branch/feature name if they didn't give one. Then, from anywh
    pnpm install
    ```
 
-4. **Give the worktree the Doppler token by path** (run from the worktree root). This copies the token from the primary checkout's scope; no secret is written into the repo:
+4. **Generate gitignored build artifacts.** `git worktree add` only checks out *tracked* files, so codegen output the primary checkout has lying around from past runs is absent here. The one that breaks `dev:tunnel` first is the Lingui-compiled catalogs `packages/i18n/locales/{en,fr}/messages.ts` (gitignored; only the `.po` sources are tracked) — without them the extension build dies with `Rolldown failed to resolve import "@flicktionary/i18n/locales/en/messages.ts" from packages/extension/src/ui/lingui.ts`. Compile them once:
+
+   ```bash
+   pnpm --filter @flicktionary/i18n run lingui:compile
+   ```
+
+5. **Give the worktree the Doppler token by path** (run from the worktree root). This copies the token from the primary checkout's scope; no secret is written into the repo:
 
    ```bash
    doppler configure set token "$(cd "$PRIMARY" && doppler configure get token --plain)" --scope "$(pwd)"
    ```
 
-5. **Verify auth resolves with no env var** before handing back (adjust project/config to this repo's actual values — check the dev scripts if unsure):
+6. **Verify auth resolves with no env var** before handing back (adjust project/config to this repo's actual values — check the dev scripts if unsure):
 
    ```bash
    env -u DOPPLER_TOKEN doppler secrets --project <root-project> --config <dev-config> --only-names >/dev/null && echo "doppler OK"
@@ -73,5 +79,6 @@ Use `git worktree remove`, not `rm -rf` (if you do delete manually, run `git wor
 
 The mechanics are general; only the specifics change. When reusing elsewhere, re-derive:
 - the project/config names the dev scripts pass to `doppler` (grep the scripts),
-- whether the project even uses Doppler (if not, steps 4–5 drop away),
+- whether the project even uses Doppler (if not, the Doppler steps drop away),
+- which gitignored build artifacts the dev/build needs (grep `.gitignore` for generated output, or just run the build once and see what fails to resolve) — step 4 is this repo's instance,
 - the "single-instance" constraint — it only applies if the project shares one tunnel token or binds fixed ports. Stateless dev servers can instead run on different ports in parallel.

@@ -291,8 +291,12 @@ export type StudySession = z.infer<typeof StudySessionSchema>
 export const PracticeRatingSchema = z.enum(['again', 'hard', 'good', 'easy'])
 export type PracticeRating = z.infer<typeof PracticeRatingSchema>
 
-export const PracticeSessionStatusSchema = z.enum(['active', 'completed', 'abandoned'])
-export type PracticeSessionStatus = z.infer<typeof PracticeSessionStatusSchema>
+// Which slice of the live SRS pool a review pulls. review_due = cards due now;
+// learn_new = never-reviewed cards up to the daily cap; mixed = both, due-first.
+// Generalizes the old session "mode" without the learn_extra/active_drill
+// variants (active is now expressed via `pool`, extra-learning is gone).
+export const ReviewScopeSchema = z.enum(['review_due', 'learn_new', 'mixed'])
+export type ReviewScope = z.infer<typeof ReviewScopeSchema>
 
 export const PracticeTextStatusSchema = z.enum(['pending', 'generating', 'ready', 'reading', 'done', 'failed'])
 export type PracticeTextStatus = z.infer<typeof PracticeTextStatusSchema>
@@ -332,7 +336,11 @@ export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 
 export const PracticeTextSchema = z.object({
   id: z.string().uuid(),
-  practiceSessionId: z.string().uuid(),
+  // 'passive' for normal SRS reviews, 'active' for the active-drill pool. The
+  // rating layer routes FSRS writes to srs_* or active_srs_* based on this.
+  // Replaces the old practiceSessionId now that reading is sessionless: texts
+  // are kept per (user, target_language, pool) and double as history.
+  pool: PracticePoolSchema,
   ord: z.number().int(),
   status: PracticeTextStatusSchema,
   body: z.string().nullable(),
@@ -343,19 +351,6 @@ export const PracticeTextSchema = z.object({
   readAt: z.string().nullable(),
 })
 export type PracticeText = z.infer<typeof PracticeTextSchema>
-
-export const PracticeSessionSchema = z.object({
-  id: z.string().uuid(),
-  userId: z.string().uuid(),
-  targetLanguage: z.string(),
-  status: PracticeSessionStatusSchema,
-  // 'passive' for normal SRS reviews, 'active' for the active-drill pool. The
-  // rating layer routes FSRS writes to srs_* or active_srs_* based on this.
-  pool: PracticePoolSchema,
-  startedAt: z.string(),
-  endedAt: z.string().nullable(),
-})
-export type PracticeSession = z.infer<typeof PracticeSessionSchema>
 
 export const PracticeDueSummaryEntrySchema = z.object({
   targetLanguage: z.string(),
@@ -368,9 +363,6 @@ export const PracticeDueSummaryEntrySchema = z.object({
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
-  // Passive-pool active practice session id. Renamed from
-  // activePracticeSessionId so clients are explicit about which pool to resume.
-  passivePracticeSessionId: z.string().uuid().nullable(),
   // Active-drill pool counters. activeTotal is the number of user_lookups
   // promoted to learning_mode='active'; the rest mirror the passive counts
   // but read from active_srs_* state.
@@ -378,25 +370,15 @@ export const PracticeDueSummaryEntrySchema = z.object({
   activeReviewDueCount: z.number().int(),
   activeLearningDueCount: z.number().int(),
   activeNewCount: z.number().int(),
-  activePracticeSessionId: z.string().uuid().nullable(),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
 
-// Session progress (Problem 1). Numerator = chunks resolved (rated
-// hard/good/easy at any point in the session, plus chunks the LLM abandoned
-// after two skips). Denominator = the eligible-at-start subset of the
-// frozen membership snapshot. Stable across the whole sitting.
-export const PracticeSessionProgressSchema = z.object({
-  completed: z.number().int(),
-  target: z.number().int(),
-})
-export type PracticeSessionProgress = z.infer<typeof PracticeSessionProgressSchema>
-
-// One card in the no-LLM Anki-style flashcard reviewer. All fields are read
-// straight off user_lookups — no generated text involved. `display_form` (when
-// present) lives inside `grammar` and is read client-side. `srsState` is null
-// for never-reviewed (new) cards.
-export const FlashcardSchema = z.object({
+// One term in the sessionless review queue (formerly Flashcard). All fields are
+// read straight off user_lookups — no generated text involved. The same row
+// feeds both render modes: the flashcard front/back and the reading generator's
+// candidate set. `display_form` (when present) lives inside `grammar` and is
+// read client-side. `srsState` is null for never-reviewed (new) terms.
+export const ReviewTermSchema = z.object({
   userLookupId: z.string().uuid(),
   headword: z.string(),
   sense: z.string(),
@@ -408,4 +390,13 @@ export const FlashcardSchema = z.object({
   srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
   targetLanguage: z.string(),
 })
-export type Flashcard = z.infer<typeof FlashcardSchema>
+export type ReviewTerm = z.infer<typeof ReviewTermSchema>
+
+// One explicit rating the client collected while reading a text, keyed by the
+// term's user_lookup id. Annotations absent from the list are advanced as
+// implicit 'good'. Sent in a single batch by advanceReadingText.
+export const ReadingRatingSchema = z.object({
+  userLookupId: z.string().uuid(),
+  rating: PracticeRatingSchema,
+})
+export type ReadingRating = z.infer<typeof ReadingRatingSchema>
