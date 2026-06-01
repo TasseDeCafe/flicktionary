@@ -16,13 +16,23 @@ legacy direct-DOM path. Update this as phases land.
   `check:types`, and `pnpm --filter backend db:dev:tunnel:gen-types` after a
   migration. Manual: regress YouTube; test Netflix/Prime (user-driven).
 
-## The headline goal (not reached yet)
+## The headline goal — REACHED (Phase 2c done)
 
-Legacy is still load-bearing: image/PGS + rich-text cues, subtitle blur,
-notifications/auto-copy/auto-pause, and any ineligible case still run on the
-legacy `WordInteractionController` + `ElementOverlay` HTML path. React is now the
-**default for the common case on every site** plus dual subtitles, but nothing
-legacy is deleted. Deleting it (Phase 2c) is gated on finishing Phase 2b.
+The React + Shadow-DOM overlay is now the **only** subtitle renderer. The legacy
+direct-DOM path is deleted: `WordInteractionController` (~814 lines), the gate
+(`react-mode-flag.ts`), `tokenizeToHtml`/`_buildTextHtml`, and every legacy
+render branch in `subtitle-controller.ts` are gone; `ensureReactOverlays` just
+keeps the hosts in sync with the current alignment (no eligibility latch). The
+**word-click setting was dropped** (word interaction is always on; the toggle +
+`wordClickEnabled` setting were removed, with `wordClickEnabled` kept in
+`ignoreKeys` for old-export back-compat). `richText` is no longer special-cased
+(no parser produces it). Image/PGS was deleted earlier.
+
+Remaining follow-up (not gating): a handful of now-dead light-DOM CSS rules in
+`video.content/video.css` (`.asbplayer-word`, `.asbplayer-save-notification`,
+`.asbplayer-subtitle-rich`/`.asbplayer-subtitle-text`, `.asbplayer-subtitles-blurred`)
+that styled the deleted legacy DOM — produced by no code now; safe to remove in
+a focused CSS pass with a visual check (CSS isn't covered by the build gate).
 
 ## ✅ Landed on this branch
 
@@ -57,35 +67,68 @@ legacy is deleted. Deleting it (Phase 2c) is gated on finishing Phase 2b.
 - Incidental: gate truth-table test (`react-mode-flag.test.ts`); fixed one stale
   `GlossTooltip` comment.
 
-## ⏳ Phase 2b remaining (unblocks the 2c deletion)
+## ✅ Phase 2b — complete (all three items resolved)
 
-Each is independently shippable; legacy stays the fallback until the matching
-gate predicate is relaxed. Data flows via `SubtitleLineModel` (`subtitle-store.ts`)
-→ `_pushReactSubtitles` → `SubtitleOverlayApp.tsx`.
+Each was independently shippable. Data flows via `SubtitleLineModel`
+(`subtitle-store.ts`) → `_pushReactSubtitles` → `SubtitleOverlayApp.tsx`. The
+three items below are now done — 1 by deletion, 2 by porting, 3 was already
+working (stale premise) + a small 2c-decoupling.
 
-1. **Image/PGS (`textImage`) + rich-text (`richText`) cues** — the meatiest.
-   Carry these on `SubtitleLineModel`; render images with
-   `imageBasedSubtitleScaleFactor` scaling (port from `subtitle-controller.ts`
-   legacy `_renderSubtitles`), rich text as sanitized HTML. Then drop the
-   plain-text-only checks from the gate.
-2. **Subtitle blur + unblur keybind** — add `blurred`/`classes` to
-   `SubtitleLineModel`, apply blur class in the Shadow-DOM overlay CSS, wire the
-   existing unblur keybind to the store.
-3. **Notification overlay / auto-copy / auto-pause under React mode** — these
-   only run on the legacy render path today; make them work when React is the
-   renderer.
+1. **~~Image/PGS (`textImage`) + rich-text (`richText`) cues~~ — resolved by
+   deletion, not by porting.** Image/PGS (`.sup`) was dormant upstream
+   machinery (manual file-load only; never served by any site) and was
+   **dropped entirely** — the `.sup` accept entry, PGS parser worker,
+   `textImage` model field/render branches, `imageBasedSubtitleScaleFactor`
+   setting (kept in `ignoreKeys` for back-compat), and the `pgs-parser` dep are
+   gone. `richText` is never populated by any parser, so nothing renders it; the
+   gate keeps a cheap `richText` guard as a safety net. **No image/rich-text
+   rendering work remains for the gate — this no longer blocks 2c.**
+2. **~~Subtitle blur + unblur keybind~~ — DONE.** `SubtitleLineModel` carries a
+   `blurred` flag; `_pushReactSubtitles` sets it from `_trackBlurEnabled(track)`
+   minus the per-cue `unblurredSubtitleTracks` map. The overlay renders
+   `blur-[10px] hover:blur-none` on the line (hover reveals, matching legacy
+   `.asbplayer-subtitles-blurred:hover`). `unblur(track)` re-pushes with the
+   track revealed under React mode; a new cue re-blurs (mirrors legacy
+   `_resetUnblurState`). NB: blur was never a gate predicate, so blurred cues
+   were silently rendering *unblurred* under React mode before this — a real
+   parity bug, now fixed. No gate change.
+3. **~~Notification overlay / auto-copy / auto-pause under React mode~~ — DONE
+   (the doc's premise was stale).** A prior refactor already hoisted these out
+   of the legacy render path, so all three work under React mode with no new
+   wiring:
+   - **Auto-copy** — `_autoCopyToClipboard` runs in the shared loop prologue
+     (before the React/legacy branch) and just posts a `copy-to-clipboard`
+     message; no DOM, no mode guard.
+   - **Auto-pause** — `autoPauseContext` is fed at the loop prologue
+     (`willStopShowing`/`startedShowing`); binding's `setPlayMode` callbacks have
+     no `_reactMode` guard.
+   - **Notifications** ("Auto-pause: On", etc.) — render via the separate
+     `notificationElementOverlay`, which `_enter/_exitReactMode` never touch.
+   The only real work: `notification()` used to build HTML via the legacy
+   `_buildTextHtml`/`tokenizeToHtml` (pointlessly tokenizing status text), which
+   2c deletes. Gave it a standalone `_buildNotificationHtml` (escaped text +
+   track-0 subtitle styling, no track class so never blurred). **This removes a
+   2c blocker — see below.**
 
-## 🔒 Phase 2c — delete legacy (the payoff)
+## ✅ Phase 2c — legacy deleted (the payoff) — DONE
 
-Once 2b reaches parity + cross-platform tested:
-
-- Delete `controllers/word-interaction-controller.ts` (~814 lines),
-  `tokenizeToHtml` (`services/word-tokenizer.ts`) + its only caller.
-- Remove legacy `ElementOverlay` HTML branches from `subtitle-controller.ts` and
-  the `_reactMode`/`evaluateReactMode`/`_enter`/`_exitReactMode` latch — React
-  becomes the unconditional renderer. Remove `_syncWordInteractionController`
-  (`binding.ts`). Delete `react-mode-flag.ts` (no longer a gate).
-- Keep the `ElementOverlay` persistent-host/fullscreen machinery React relies on.
+- Deleted `controllers/word-interaction-controller.ts` (~814 lines),
+  `tokenizeToHtml`/`escapeHtml` (`services/word-tokenizer.ts`), and `_buildTextHtml`.
+- Removed every legacy `ElementOverlay` HTML render branch from
+  `subtitle-controller.ts` (`_buildSubtitlesHtml`, `_renderSubtitles`,
+  `_resetUnblurState`, `_setSubtitlesHtml`, `_appendSubtitlesHtml`, `cacheHtml`,
+  `_subtitleClasses`) and the `_reactMode` latch. `evaluateReactMode` →
+  `ensureReactOverlays` (mount/remount to match alignment; no eligibility check).
+  Removed `_syncWordInteractionController` (`binding.ts`) + the
+  `WordInteractionController` field/construction. Deleted `react-mode-flag.ts`.
+- Word-click is always on: dropped the `wordClickEnabled` setting (interface,
+  default, schema → `ignoreKeys`, and the MiscSettingsTab toggle).
+- The unsupported-language load notice now routes through the kept notification
+  overlay (`subtitleController.showTextNotification`) instead of the deleted
+  controller's `showNotice`.
+- Kept the `ElementOverlay` persistent-host/fullscreen machinery React relies on.
+- Gate green (check:types / vitest both packages / build). **Pending: user
+  cross-platform manual verification**, then the dead-CSS follow-up above.
 
 ## 🧹 Untouched cleanup backlog (independent, ship anytime)
 

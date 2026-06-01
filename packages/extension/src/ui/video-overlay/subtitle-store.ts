@@ -10,6 +10,10 @@ export interface SubtitleLineModel {
   track: number
   text: string
   style: CSSProperties
+  // True when this track has subtitle-blur enabled and hasn't been
+  // keybind-unblurred for the current cue. Rendered as a CSS blur the viewer
+  // reveals by hovering — mirrors the legacy `asbplayer-subtitles-blurred`.
+  blurred: boolean
 }
 
 // Immutable snapshot consumed by `useSyncExternalStore`. The reference is only
@@ -32,7 +36,12 @@ const linesEqual = (a: SubtitleLineModel[], b: SubtitleLineModel[]): boolean => 
   if (a === b) return true
   if (a.length !== b.length) return false
   for (let i = 0; i < a.length; i++) {
-    if (a[i].index !== b[i].index || a[i].text !== b[i].text || a[i].style !== b[i].style) {
+    if (
+      a[i].index !== b[i].index ||
+      a[i].text !== b[i].text ||
+      a[i].style !== b[i].style ||
+      a[i].blurred !== b[i].blurred
+    ) {
       return false
     }
   }

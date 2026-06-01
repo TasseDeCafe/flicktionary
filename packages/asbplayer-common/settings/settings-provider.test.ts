@@ -145,7 +145,6 @@ const subtitleSettings = {
   subtitleBlur: false,
   subtitleAlignment: 'bottom' as SubtitleAlignment,
   subtitleCustomStyles: [],
-  imageBasedSubtitleScaleFactor: 1,
   subtitlePositionOffset: 70,
   topSubtitlePositionOffset: 70,
   subtitlesWidth: 100,

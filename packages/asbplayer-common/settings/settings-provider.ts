@@ -87,7 +87,6 @@ export const defaultSettings: AsbplayerSettings = {
   subtitleRegexFilterTextReplacement: '',
   convertNetflixRuby: false,
   language: 'en',
-  imageBasedSubtitleScaleFactor: 1,
   streamingAppUrl: 'https://app.asbplayer.dev',
   streamingDisplaySubtitles: true,
   streamingSubsDragAndDrop: true,
@@ -121,7 +120,6 @@ export const defaultSettings: AsbplayerSettings = {
     iwanttfc: {},
   },
   pauseOnHoverMode: PauseOnHoverMode.inAndOut,
-  wordClickEnabled: true,
   transcriptServerUrl: 'https://asbplayer-production.up.railway.app',
   transcriptApiKey: '',
 }

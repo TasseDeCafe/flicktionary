@@ -145,13 +145,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
   onUnlockLocalFonts,
 }) => {
   const { t } = useLingui()
-  const {
-    subtitlePreview,
-    imageBasedSubtitleScaleFactor,
-    subtitlePositionOffset,
-    topSubtitlePositionOffset,
-    subtitlesWidth,
-  } = settings
+  const { subtitlePreview, subtitlePositionOffset, topSubtitlePositionOffset, subtitlesWidth } = settings
   const [currentStyleKey, setCurrentStyleKey] = useState<string>(cssStyles[0])
   const [selectedSubtitleAppearanceTrack, setSelectedSubtitleAppearanceTrack] = useState<number>()
   const {
@@ -435,25 +429,6 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
             labelPlacement='start'
           />
         </Tooltip>
-      )}
-
-      {selectedSubtitleAppearanceTrack === undefined && (
-        <SettingsTextField
-          type='number'
-          label={t`Image-based Subtitle Scale Factor`}
-          placeholder='Inherited'
-          fullWidth
-          slotProps={{
-            htmlInput: {
-              min: 0,
-              max: 1,
-              step: 0.1,
-            },
-          }}
-          value={imageBasedSubtitleScaleFactor}
-          color='primary'
-          onChange={(event) => onSettingChanged('imageBasedSubtitleScaleFactor', Number(event.target.value))}
-        />
       )}
 
       <SettingsSection>

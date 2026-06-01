@@ -160,7 +160,6 @@ export default defineConfig({
             'hbo-max-page.js',
             'cijapanese-page.js',
             'anki-ui.js',
-            'pgs-parser-worker.js',
             'page-favicons/*',
           ],
           matches: ['<all_urls>'],

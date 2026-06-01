@@ -7,20 +7,8 @@ export interface RectModel {
   readonly height: number
 }
 
-export interface DimensionsModel {
-  readonly width: number
-  readonly height: number
-}
-
-export interface SubtitleTextImage {
-  readonly dataUrl: string
-  readonly screen: DimensionsModel
-  readonly image: DimensionsModel
-}
-
 export interface SubtitleModel {
   readonly text: string
-  readonly textImage?: SubtitleTextImage
   readonly start: number
   readonly end: number
   readonly originalStart: number

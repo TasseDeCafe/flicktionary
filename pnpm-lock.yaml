@@ -477,9 +477,6 @@ catalogs:
     openapi-typescript:
       specifier: 7.13.0
       version: 7.13.0
-    pgs-parser:
-      specifier: 0.1.0
-      version: 0.1.0
     postgres:
       specifier: 3.4.8
       version: 3.4.8
@@ -1497,9 +1494,6 @@ importers:
       jsonschema:
         specifier: 'catalog:'
         version: 1.5.0
-      pgs-parser:
-        specifier: 'catalog:'
-        version: 0.1.0
       react:
         specifier: 'catalog:'
         version: 19.2.6
@@ -10889,9 +10883,6 @@ packages:
   pg-types@2.2.0:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
     engines: {node: '>=4'}
-
-  pgs-parser@0.1.0:
-    resolution: {integrity: sha512-CmNdZsRFQeogcRMsGFq3hmL/hy8KjGQrZdFcgkTNwm28KUIxRfTJLN4h2X9DupkhNgLVtDRJQD/aJuQFq5tlHg==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -23809,8 +23800,6 @@ snapshots:
       postgres-bytea: 1.0.1
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
-
-  pgs-parser@0.1.0: {}
 
   picocolors@1.1.1: {}
 

@@ -100,7 +100,6 @@ const subtitleSettingsKeysObject: { [key in keyof SubtitleSettings]: boolean } =
   subtitleFontFamily: true,
   subtitleCustomStyles: true,
   subtitleBlur: true,
-  imageBasedSubtitleScaleFactor: true,
   subtitlePositionOffset: true, // bottom offset; name kept for backwards compatibility
   topSubtitlePositionOffset: true,
   subtitleAlignment: true,
@@ -134,7 +133,6 @@ export interface TextSubtitleSettings {
 }
 
 export interface SubtitleSettings extends TextSubtitleSettings {
-  readonly imageBasedSubtitleScaleFactor: number
   readonly subtitlePositionOffset: number
   readonly topSubtitlePositionOffset: number
 
@@ -183,14 +181,6 @@ export interface KeyBindSet {
   readonly moveBottomSubtitlesDown: KeyBind
   readonly moveTopSubtitlesUp: KeyBind
   readonly moveTopSubtitlesDown: KeyBind
-}
-
-// Word-click mode gates the in-subtitle token tokenizer used by both the
-// hover gloss and right-click save. The old self-hosted LLM knobs (API key /
-// endpoint / model) were removed when those features moved to the Flicktionary
-// backend.
-export interface WordInteractionSettings {
-  readonly wordClickEnabled: boolean
 }
 
 export interface TranscriptSettings {
@@ -273,13 +263,7 @@ export interface StreamingVideoSettings {
 export type KeyBindName = keyof KeyBindSet
 
 export interface AsbplayerSettings
-  extends
-    MiscSettings,
-    CaptureSettings,
-    SubtitleSettings,
-    StreamingVideoSettings,
-    WordInteractionSettings,
-    TranscriptSettings {
+  extends MiscSettings, CaptureSettings, SubtitleSettings, StreamingVideoSettings, TranscriptSettings {
   readonly subtitlePreview: string
 }
 

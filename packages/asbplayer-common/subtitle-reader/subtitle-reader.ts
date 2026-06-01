@@ -2,7 +2,7 @@ import { compile as parseAss } from 'ass-compiler'
 import SrtParser from '@qgustavor/srt-parser'
 import { WebVTT } from 'videojs-vtt.js'
 import { XMLParser } from 'fast-xml-parser'
-import { SubtitleHtml, SubtitleTextImage } from '@asbplayer-fork/common'
+import { SubtitleHtml } from '@asbplayer-fork/common'
 
 const vttClassRegex = /<(\/)?c(\.[^>]*)?>/g
 const assNewLineRegex = RegExp(/\\[nN]/, 'ig')
@@ -13,7 +13,6 @@ interface SubtitleNode {
   start: number
   end: number
   text: string
-  textImage?: SubtitleTextImage
   track: number
 }
 
@@ -60,7 +59,6 @@ export default class SubtitleReader {
   private readonly _textFilter?: TextFilter
   private readonly _removeXml: boolean
   private readonly _convertNetflixRuby: boolean
-  private readonly _pgsWorkerFactory: () => Promise<Worker>
   private xmlParser?: XMLParser
 
   constructor({
@@ -68,13 +66,11 @@ export default class SubtitleReader {
     regexFilterTextReplacement,
     subtitleHtml,
     convertNetflixRuby,
-    pgsParserWorkerFactory: pgsWorkerFactory,
   }: {
     regexFilter: string
     regexFilterTextReplacement: string
     subtitleHtml: SubtitleHtml
     convertNetflixRuby: boolean
-    pgsParserWorkerFactory: () => Promise<Worker>
   }) {
     let regex: RegExp | undefined
 
@@ -92,14 +88,12 @@ export default class SubtitleReader {
 
     this._removeXml = subtitleHtml === SubtitleHtml.remove
     this._convertNetflixRuby = convertNetflixRuby
-
-    this._pgsWorkerFactory = pgsWorkerFactory
   }
 
   async subtitles(files: File[], flatten?: boolean) {
     const allNodes = (await Promise.all(files.map((f, i) => this._subtitles(f, flatten === true ? 0 : i))))
       .flatMap((nodes) => nodes)
-      .filter((node) => node.textImage !== undefined || node.text !== '')
+      .filter((node) => node.text !== '')
       .sort((n1, n2) => n1.start - n2.start)
 
     if (flatten) {
@@ -122,10 +116,6 @@ export default class SubtitleReader {
   }
 
   private _isSame(a: SubtitleNode, b: SubtitleNode) {
-    if (a.textImage || b.textImage) {
-      return false
-    }
-
     return a.start === b.start && a.end === b.end && a.text === b.text
   }
 
@@ -338,10 +328,6 @@ export default class SubtitleReader {
       return subtitles
     }
 
-    if (file.name.endsWith('.sup')) {
-      return await this._parsePgs(file, track)
-    }
-
     if (file.name.endsWith('.dfxp') || file.name.endsWith('ttml2')) {
       const text = await file.text()
       const parser = new DOMParser()
@@ -383,54 +369,6 @@ export default class SubtitleReader {
     throw new Error('Unsupported subtitle file format')
   }
 
-  private _parsePgs(file: File, track: number): Promise<SubtitleNode[]> {
-    const subtitles: SubtitleNode[] = []
-    return new Promise(async (resolve, reject) => {
-      const worker = await this._pgsWorkerFactory()
-      worker.onmessage = async (e) => {
-        switch (e.data.command) {
-          case 'subtitle':
-            const subtitle = { ...e.data.subtitle, track }
-            const imageBlob = e.data.imageBlob
-            subtitle.textImage.dataUrl = await this._blobToDataUrl(imageBlob)
-            subtitles.push(subtitle)
-            break
-          case 'finished':
-            worker.terminate()
-            resolve(subtitles)
-            break
-          case 'error':
-            worker.terminate()
-            reject(e.data.error)
-            break
-        }
-      }
-      worker.onerror = (e) => {
-        const error = e?.error ?? new Error('PGS decoding failed: ' + e?.message)
-        reject(error)
-        worker.terminate()
-      }
-      const canvas = document.createElement('canvas')
-
-      // transferControlToOffscreen is not in lib.dom.d.ts
-      // @ts-ignore
-      const offscreenCanvas = canvas.transferControlToOffscreen()
-
-      // Node ReadableStream clashes with web ReadableStream
-      const fileStream = (await file.stream()) as unknown as ReadableStream
-      worker.postMessage({ fileStream, canvas: offscreenCanvas }, [fileStream, offscreenCanvas])
-    })
-  }
-
-  private _blobToDataUrl(blob: Blob) {
-    return new Promise((resolve, reject) => {
-      var reader = new FileReader()
-      reader.readAsDataURL(blob)
-      reader.onloadend = () => {
-        resolve(reader.result)
-      }
-    })
-  }
   private _parseTtmlTimestamp(timestamp: string) {
     const parts = timestamp.split(':')
     const milliseconds = Math.floor(parseFloat(parts[parts.length - 1]) * 1000)

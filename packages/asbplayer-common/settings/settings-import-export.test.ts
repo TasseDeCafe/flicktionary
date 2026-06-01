@@ -100,6 +100,8 @@ it('validates exported settings', () => {
     convertNetflixRuby: false,
     subtitleHtml: 1,
     language: 'en',
+    // Removed from the schema with .sup/PGS support; an old export still carries it.
+    // Validation must not throw — it's stripped via ignoreKeys (back-compat).
     imageBasedSubtitleScaleFactor: 1,
     streamingAppUrl: 'http://localhost:3000/asbplayer',
     streamingDisplaySubtitles: false,
