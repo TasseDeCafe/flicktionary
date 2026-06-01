@@ -9,7 +9,9 @@ export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
 }
 
-export type ApplyTermRatingResult = { ok: true; introducedNew: boolean } | { ok: false; reason: 'daily_cap_reached' }
+export type ApplyTermRatingResult =
+  | { ok: true; introducedNew: boolean }
+  | { ok: false; reason: 'daily_cap_reached' | 'not_in_active_pool' }
 
 // Apply one rating event to a user_lookup in the given pool. Shared by the
 // flashcard reviewer (rateTerm) and the reading-text finalizer
@@ -30,6 +32,10 @@ export const applyTermRating = async (params: {
   deps: RateTermDependencies
 }): Promise<ApplyTermRatingResult> => {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
+  if (pool === 'active' && lookup.learning_mode !== 'active') {
+    return { ok: false, reason: 'not_in_active_pool' }
+  }
+
   const introducedNew = pool === 'passive' ? lookup.srs_state == null : lookup.active_srs_state == null
 
   if (introducedNew) {
@@ -66,7 +72,7 @@ export const applyTermRating = async (params: {
 
 export type RateTermResult =
   | { ok: true; introducedNew: boolean; dailyCapReached: boolean }
-  | { ok: false; reason: 'lookup_not_found' }
+  | { ok: false; reason: 'lookup_not_found' | 'not_in_active_pool' }
 
 // Flashcard-mode single-card rating. Pool-parametrized; no practice_text / no
 // session. Daily-cap refusal is surfaced (not an error) so the client drops the
@@ -83,6 +89,7 @@ export const rateTerm = async (
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
 
   const result = await applyTermRating({ lookup, userId, rating, pool, maxNewTerms, deps })
+  if (!result.ok && result.reason === 'not_in_active_pool') return { ok: false, reason: 'not_in_active_pool' }
   if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true }
   return { ok: true, introducedNew: result.introducedNew, dailyCapReached: false }
 }

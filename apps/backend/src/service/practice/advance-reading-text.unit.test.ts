@@ -144,6 +144,32 @@ describe('advanceReadingText', () => {
     expect(findByKey).not.toHaveBeenCalled()
   })
 
+  it('skips annotations already reviewed after the text was prepared', async () => {
+    const { deps, applyFsrsResultForPool } = createDeps({ claimWins: true })
+    ;(deps.practiceTextsRepository.claimFinalize as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ...claimedText,
+      ready_at: '2026-05-12T00:00:00Z',
+    })
+    ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(
+      async ({ headword, sense }: { headword: string; sense: string }) => {
+        if (headword === laId) {
+          return makeLookup(laId, {
+            srs_state: 'review',
+            srs_due: '2026-05-12T00:00:00Z',
+            srs_last_review: '2026-05-12T00:05:00Z',
+          })
+        }
+        return makeLookup(lbId)
+      }
+    )
+
+    const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
+
+    expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
+    expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
+  })
+
   it('returns text_not_found when the text is missing or not owned', async () => {
     const { deps } = createDeps({ claimWins: true })
     ;(deps.practiceTextsRepository.findByIdForUser as ReturnType<typeof vi.fn>).mockResolvedValue(null)

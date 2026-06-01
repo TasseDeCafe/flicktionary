@@ -41,4 +41,25 @@ describe('listReviewTerms (service caps)', () => {
       expect.objectContaining({ pool: 'active', scope: 'review_due', maxReviewTerms: 300, maxNewTerms: 100 })
     )
   })
+
+  it('excludes terms already embedded in the current reading text', async () => {
+    const { deps, repoListReviewTerms } = createDeps(0)
+    ;(deps as ListReviewTermsDependencies).practiceTextsRepository = {
+      findCurrentReading: vi.fn().mockResolvedValue({
+        annotations: [{ headword: 'gato', sense: 'cat' }],
+      }),
+    } as unknown as ListReviewTermsDependencies['practiceTextsRepository']
+    ;(deps.userLookupsRepository.listChunkContentForKeys as unknown as ReturnType<typeof vi.fn>) = vi
+      .fn()
+      .mockResolvedValue([
+        { id: '00000000-0000-0000-0000-0000000000aa', headword: 'gato', sense: 'cat' },
+        { id: '00000000-0000-0000-0000-0000000000bb', headword: 'perro', sense: 'dog' },
+      ])
+
+    await listReviewTerms(userId, 'es', 'passive', 'mixed', deps)
+
+    expect(repoListReviewTerms).toHaveBeenCalledWith(
+      expect.objectContaining({ excludeUserLookupIds: ['00000000-0000-0000-0000-0000000000aa'] })
+    )
+  })
 })

@@ -97,7 +97,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
 
 // Maps a user_lookups row to the review-term DTO. grammar JSONB is passed
 // through like toPracticeTextDto does; the contract's GrammarSchema validates it.
-const toReviewTermDto = (row: DbUserLookup) => ({
+const toReviewTermDto = (row: DbUserLookup, pool: 'passive' | 'active') => ({
   userLookupId: row.id,
   headword: row.headword,
   sense: row.sense ?? '',
@@ -106,7 +106,7 @@ const toReviewTermDto = (row: DbUserLookup) => ({
   targetExample: row.target_example,
   nativeExample: row.native_example,
   grammar: (row.grammar as Record<string, unknown> | null) ?? null,
-  srsState: row.srs_state,
+  srsState: pool === 'active' ? row.active_srs_state : row.srs_state,
   targetLanguage: row.target_language,
 })
 
@@ -156,6 +156,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const capsDeps = {
     usersRepository: deps.usersRepository,
     userLookupsRepository: deps.userLookupsRepository,
+    practiceTextsRepository: deps.practiceTextsRepository,
   }
 
   // Shape a practice_text into its DTO, joining live annotation content.
@@ -174,7 +175,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     listReviewTerms: implementer.listReviewTerms.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
       const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps)
-      return { data: { terms: rows.map(toReviewTermDto) } }
+      return { data: { terms: rows.map((row) => toReviewTermDto(row, input.pool)) } }
     }),
 
     rateTerm: implementer.rateTerm.handler(async ({ input, context, errors }) => {
@@ -186,6 +187,9 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         userLookupsRepository: deps.userLookupsRepository,
       })
       if (!result.ok) {
+        if (result.reason === 'not_in_active_pool') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the active pool.' }] } })
+        }
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
       return {

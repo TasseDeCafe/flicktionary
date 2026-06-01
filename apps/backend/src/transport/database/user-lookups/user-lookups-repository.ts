@@ -408,6 +408,7 @@ const listReviewTerms = async (params: {
   scope: 'review_due' | 'learn_new' | 'mixed'
   maxReviewTerms: number
   maxNewTerms: number
+  excludeUserLookupIds?: string[]
 }): Promise<DbUserLookup[]> => {
   const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
   const wantNew = params.scope === 'learn_new' || params.scope === 'mixed'
@@ -418,6 +419,8 @@ const listReviewTerms = async (params: {
   const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
   const stateCol = params.pool === 'active' ? sql`ul.active_srs_state` : sql`ul.srs_state`
   const dueCol = params.pool === 'active' ? sql`ul.active_srs_due` : sql`ul.srs_due`
+  const excludedIds = params.excludeUserLookupIds ?? []
+  const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
 
   const dueRows =
     reviewLimit > 0
@@ -429,6 +432,7 @@ const listReviewTerms = async (params: {
             AND ul.count > 0
             AND ul.deleted_at IS NULL
             ${activeModeClause}
+            ${excludeClause}
             AND ${dueCol} IS NOT NULL
             AND ${dueCol} <= NOW()
             AND ${stateCol} IN ('new', 'review', 'learning', 'relearning')
@@ -447,6 +451,7 @@ const listReviewTerms = async (params: {
             AND ul.count > 0
             AND ul.deleted_at IS NULL
             ${activeModeClause}
+            ${excludeClause}
             AND ${stateCol} IS NULL
           ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
           LIMIT ${newLimit}
@@ -1170,6 +1175,7 @@ export interface UserLookupsRepositoryInterface {
     scope: 'review_due' | 'learn_new' | 'mixed'
     maxReviewTerms: number
     maxNewTerms: number
+    excludeUserLookupIds?: string[]
   }) => Promise<DbUserLookup[]>
   findByKey: (params: {
     userId: string

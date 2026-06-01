@@ -101,6 +101,14 @@ describe('rateTerm', () => {
     expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'active' }))
   })
 
+  it('refuses active-pool ratings for terms not promoted to active learning', async () => {
+    const { deps, initializeSrsStateForPool, applyFsrsResultForPool } = createDeps(makeLookup())
+    const result = await rateTerm(lookupId, userId, 'good', 'active', 20, deps)
+    expect(result).toEqual({ ok: false, reason: 'not_in_active_pool' })
+    expect(initializeSrsStateForPool).not.toHaveBeenCalled()
+    expect(applyFsrsResultForPool).not.toHaveBeenCalled()
+  })
+
   it('returns lookup_not_found when the term is missing', async () => {
     const { deps } = createDeps(null)
     const result = await rateTerm(lookupId, userId, 'good', 'passive', 20, deps)
