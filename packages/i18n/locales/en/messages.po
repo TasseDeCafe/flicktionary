@@ -160,11 +160,11 @@ msgstr "(unset)"
 msgid "{activeCount} active"
 msgstr "{activeCount} active"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:259
+#: apps/web/src/features/practice/components/practice-language-view.tsx:306
 msgid "{activeDueCount} due, {activeNewCount} new"
 msgstr "{activeDueCount} due, {activeNewCount} new"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:260
+#: apps/web/src/features/practice/components/practice-language-view.tsx:307
 msgid "{activeTotal} active term(s). Nothing due right now."
 msgstr "{activeTotal} active term(s). Nothing due right now."
 
@@ -184,11 +184,11 @@ msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgid "{dailyNewAvailable} new available"
 msgstr "{dailyNewAvailable} new available"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:110
+#: apps/web/src/features/practice/components/practice-language-view.tsx:114
 msgid "{dailyNewAvailable} new available today"
 msgstr "{dailyNewAvailable} new available today"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:115
+#: apps/web/src/features/practice/components/practice-language-view.tsx:119
 msgid "{dailyNewAvailable} new term(s) available today."
 msgstr "{dailyNewAvailable} new term(s) available today."
 
@@ -230,7 +230,7 @@ msgstr "{discountPercentage}% off thanks to your past referral!"
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:109
+#: apps/web/src/features/practice/components/practice-language-view.tsx:113
 msgid "{dueTermCount} follow-up(s) ready"
 msgstr "{dueTermCount} follow-up(s) ready"
 
@@ -266,8 +266,8 @@ msgstr "{highlightCount} highlight(s) saved."
 #~ msgid "{newCount} new"
 #~ msgstr "{newCount} new"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:102
-#: apps/web/src/features/practice/components/practice-language-view.tsx:111
+#: apps/web/src/features/practice/components/practice-language-view.tsx:106
+#: apps/web/src/features/practice/components/practice-language-view.tsx:115
 msgid "{newCount} unseen"
 msgstr "{newCount} unseen"
 
@@ -291,7 +291,7 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgid "{reviewDueCount} due"
 #~ msgstr "{reviewDueCount} due"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:102
+#: apps/web/src/features/practice/components/practice-language-view.tsx:106
 msgid "{totalKept} total"
 msgstr "{totalKept} total"
 
@@ -447,7 +447,7 @@ msgstr "A sentence using this term in its natural setting."
 msgid "A short label for this session"
 msgstr "A short label for this session"
 
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:114
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
 msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
 msgstr "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
 
@@ -505,11 +505,11 @@ msgstr "Actions in this section can lead to permanent data loss."
 msgid "Active"
 msgstr "Active"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:257
+#: apps/web/src/features/practice/components/practice-language-view.tsx:304
 msgid "Active drill in progress"
 msgstr "Active drill in progress"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:253
+#: apps/web/src/features/practice/components/practice-language-view.tsx:300
 msgid "Active vocabulary"
 msgstr "Active vocabulary"
 
@@ -600,8 +600,8 @@ msgid "All"
 msgstr "All"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:42
-#: apps/web/src/features/practice/components/practice-language-view.tsx:191
-#: apps/web/src/features/practice/components/practice-language-view.tsx:211
+#: apps/web/src/features/practice/components/practice-language-view.tsx:228
+#: apps/web/src/features/practice/components/practice-language-view.tsx:248
 #: apps/web/src/features/practice/components/practice-session-view.tsx:391
 msgid "All caught up"
 msgstr "All caught up"
@@ -617,6 +617,10 @@ msgstr "All caught up"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:65
 #~ msgid "All caught up for today · {totalKept} total"
 #~ msgstr "All caught up for today · {totalKept} total"
+
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
+msgid "All done!"
+msgstr "All done!"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:46
 #~ msgid "All highlights have been processed."
@@ -634,7 +638,7 @@ msgstr "Allow subtitle file drag-and-drop"
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:313
+#: apps/web/src/features/practice/components/practice-language-view.tsx:360
 msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
 msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
 
@@ -694,9 +698,14 @@ msgstr "App version"
 msgid "Are you absolutely sure?"
 msgstr "Are you absolutely sure?"
 
+#. placeholder {0}: state.newVersion
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:92
+msgid "asbplayer updated to version {0}. Check out the <0>release notes</0>."
+msgstr "asbplayer updated to version {0}. Check out the <0>release notes</0>."
+
 #: packages/extension/src/ui/components/NotificationUi.tsx:101
-msgid "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
-msgstr "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
+#~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
+#~ msgstr "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:190
 msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
@@ -743,11 +752,11 @@ msgstr "At Subtitle End"
 msgid "At Subtitle Start"
 msgstr "At Subtitle Start"
 
-#: packages/extension/src/ui/components/NotificationUi.tsx:33
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:44
 msgid "Audio recording enabled"
 msgstr "Audio recording enabled"
 
-#: packages/extension/src/ui/components/NotificationUi.tsx:34
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:45
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
 msgstr "Audio recording has been enabled for this tab. You can now begin mining."
 
@@ -760,7 +769,7 @@ msgstr "Authentication failed"
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:297
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
 msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 
@@ -780,11 +789,11 @@ msgstr "Auto-pause preference"
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Auto-pause when mousing over subtitles"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:611
+#: packages/extension/src/controllers/subtitle-controller.ts:767
 msgid "Auto-pause: Off"
 msgstr "Auto-pause: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:609
+#: packages/extension/src/controllers/subtitle-controller.ts:765
 msgid "Auto-pause: On"
 msgstr "Auto-pause: On"
 
@@ -796,6 +805,10 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:156
+msgid "Back to {languageName}"
+msgstr "Back to {languageName}"
+
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx:88
 msgid "Back to login"
 msgstr "Back to login"
@@ -804,7 +817,7 @@ msgstr "Back to login"
 msgid "Back to Login"
 msgstr "Back to Login"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:156
+#: apps/web/src/features/practice/components/practice-language-view.tsx:193
 #: apps/web/src/features/practice/components/practice-session-view.tsx:444
 #: apps/web/src/features/practice/components/practice-start-view.tsx:41
 msgid "Back to Practice"
@@ -865,7 +878,8 @@ msgstr "Browse community-uploaded tracks for this movie."
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:43
-#: apps/web/src/features/practice/components/practice-language-view.tsx:324
+#: apps/web/src/features/practice/components/practice-language-view.tsx:371
+#: apps/web/src/features/practice/components/practice-language-view.tsx:396
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:67
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:61
@@ -886,6 +900,10 @@ msgstr "Card {cardPosition} of {cardTotal}"
 #: apps/web/src/features/review/components/focus-view.tsx:207
 msgid "Card not found."
 msgstr "Card not found."
+
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:297
+msgid "Cards left"
+msgstr "Cards left"
 
 #: apps/landing-page/src/app/[lang]/layout.tsx:50
 #~ msgid "Category of the app"
@@ -967,7 +985,7 @@ msgstr "Clear search"
 msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 
-#: packages/extension/src/ui/components/NotificationUi.tsx:32
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
 msgid "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
 msgstr "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
 
@@ -994,7 +1012,7 @@ msgstr "Close"
 msgid "Collocations"
 msgstr "Collocations"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:117
+#: apps/web/src/features/practice/components/practice-language-view.tsx:121
 msgid "Come back later. {followUpDelay}."
 msgstr "Come back later. {followUpDelay}."
 
@@ -1014,11 +1032,11 @@ msgstr "Condensed"
 msgid "Condensed playback minimum skip interval"
 msgstr "Condensed playback minimum skip interval"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:615
+#: packages/extension/src/controllers/subtitle-controller.ts:771
 msgid "Condensed playback: Off"
 msgstr "Condensed playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:613
+#: packages/extension/src/controllers/subtitle-controller.ts:769
 msgid "Condensed playback: On"
 msgstr "Condensed playback: On"
 
@@ -1056,11 +1074,11 @@ msgstr "Context (optional)"
 msgid "Continue"
 msgstr "Continue"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:276
+#: apps/web/src/features/practice/components/practice-language-view.tsx:323
 msgid "Continue active drill"
 msgstr "Continue active drill"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:70
+#: apps/web/src/features/practice/components/practice-language-view.tsx:74
 msgid "Continue session"
 msgstr "Continue session"
 
@@ -1083,7 +1101,7 @@ msgstr "Continue with Google"
 #~ msgid "Copied!"
 #~ msgstr "Copied!"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:282
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:296
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Could not auto-load subtitles in your preferred language."
 
@@ -1149,7 +1167,7 @@ msgstr "Couldn't start the session. Please try again."
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:301
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:305
 msgid "Current Timestamp"
 msgstr "Current Timestamp"
 
@@ -1174,9 +1192,13 @@ msgstr "Daily new limit reached"
 #~ msgid "Daily new limit reached · {newCount} unseen · {totalKept} total"
 #~ msgstr "Daily new limit reached · {newCount} unseen · {totalKept} total"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:116
+#: apps/web/src/features/practice/components/practice-language-view.tsx:120
 msgid "Daily new limit reached. You can learn more anyway."
 msgstr "Daily new limit reached. You can learn more anyway."
+
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:154
+msgid "Daily new-card limit reached."
+msgstr "Daily new-card limit reached."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:84
 msgid "Danger zone"
@@ -1196,17 +1218,17 @@ msgstr "Dark"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:308
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:312
 msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:313
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:317
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:41
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:52
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:43
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:54
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:87
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:221
 msgid "Default"
@@ -1303,7 +1325,7 @@ msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgid "downloads"
 msgstr "downloads"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:297
+#: apps/web/src/features/practice/components/practice-language-view.tsx:344
 msgid "Drill active terms"
 msgstr "Drill active terms"
 
@@ -1381,13 +1403,13 @@ msgstr "Email link is invalid or has expired"
 msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
 
-#: packages/extension/src/controllers/video-data-sync-controller.ts:98
-#: packages/extension/src/ui/components/VideoDataSyncUi.tsx:40
-#: packages/extension/src/ui/components/VideoDataSyncUi.tsx:110
+#: packages/extension/src/controllers/video-data-sync-controller.ts:102
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:113
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:146
 msgid "Empty"
 msgstr "Empty"
 
-#: packages/extension/src/ui/components/NotificationUi.tsx:31
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:42
 msgid "Enable audio recording"
 msgstr "Enable audio recording"
 
@@ -1403,7 +1425,11 @@ msgstr "Enabled"
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:286
+#: apps/web/src/features/practice/components/practice-language-view.tsx:399
+msgid "End & start flashcards"
+msgstr "End & start flashcards"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:333
 msgid "End active drill"
 msgstr "End active drill"
 
@@ -1411,16 +1437,21 @@ msgstr "End active drill"
 msgid "End of list"
 msgstr "End of list"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:311
+#: apps/web/src/features/practice/components/practice-language-view.tsx:358
 msgid "End practice session?"
 msgstr "End practice session?"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:236
-#: apps/web/src/features/practice/components/practice-language-view.tsx:327
+#: apps/web/src/features/practice/components/practice-language-view.tsx:383
+msgid "End reading session?"
+msgstr "End reading session?"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:273
+#: apps/web/src/features/practice/components/practice-language-view.tsx:374
 msgid "End session"
 msgstr "End session"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:327
+#: apps/web/src/features/practice/components/practice-language-view.tsx:374
+#: apps/web/src/features/practice/components/practice-language-view.tsx:399
 msgid "Ending…"
 msgstr "Ending…"
 
@@ -1451,7 +1482,7 @@ msgstr "Enter profile name"
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:164
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:230
 msgid "Error"
 msgstr "Error"
 
@@ -1468,7 +1499,7 @@ msgstr "Error setting up account..."
 msgid "Error setting up user data"
 msgstr "Error setting up user data"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:627
+#: packages/extension/src/controllers/subtitle-controller.ts:783
 msgid "Error: {message}"
 msgstr "Error: {message}"
 
@@ -1563,7 +1594,7 @@ msgstr "Failed to fetch subscription details"
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:210
+#: apps/web/src/features/practice/api/practice-hooks.ts:238
 msgid "Failed to finalize text"
 msgstr "Failed to finalize text"
 
@@ -1598,6 +1629,10 @@ msgstr "Failed to load cards"
 #: apps/web/src/features/review/api/review-hooks.ts:126
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:200
+msgid "Failed to load flashcards"
+msgstr "Failed to load flashcards"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:332
 msgid "Failed to load highlights"
@@ -1664,6 +1699,7 @@ msgid "Failed to open triage"
 msgstr "Failed to open triage"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:131
+#: apps/web/src/features/practice/api/practice-hooks.ts:214
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
 
@@ -1793,11 +1829,11 @@ msgstr "Failed to upload subtitles"
 msgid "Failed to use suggestion"
 msgstr "Failed to use suggestion"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:619
+#: packages/extension/src/controllers/subtitle-controller.ts:775
 msgid "Fast forward playback: Off"
 msgstr "Fast forward playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:617
+#: packages/extension/src/controllers/subtitle-controller.ts:773
 msgid "Fast forward playback: On"
 msgstr "Fast forward playback: On"
 
@@ -1830,6 +1866,10 @@ msgstr "Feminine"
 msgid "Finding suggestions…"
 msgstr "Finding suggestions…"
 
+#: apps/web/src/features/practice/components/practice-language-view.tsx:284
+msgid "Flashcards"
+msgstr "Flashcards"
+
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
 msgid "Flicktionary"
 msgstr "Flicktionary"
@@ -1838,19 +1878,19 @@ msgstr "Flicktionary"
 #~ msgid "Flicktionary - Perfect Your Accent with AI Voice Training"
 #~ msgstr "Flicktionary - Perfect Your Accent with AI Voice Training"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:59
+#: apps/web/src/features/practice/components/practice-language-view.tsx:60
 msgid "Follow-up in {hoursUntilFollowUp} hr"
 msgstr "Follow-up in {hoursUntilFollowUp} hr"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:57
+#: apps/web/src/features/practice/components/practice-language-view.tsx:58
 msgid "Follow-up in {minutesUntilFollowUp} min"
 msgstr "Follow-up in {minutesUntilFollowUp} min"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:60
+#: apps/web/src/features/practice/components/practice-language-view.tsx:61
 msgid "Follow-up later"
 msgstr "Follow-up later"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:243
+#: apps/web/src/features/practice/components/practice-language-view.tsx:290
 msgid "Follow-ups"
 msgstr "Follow-ups"
 
@@ -1899,7 +1939,7 @@ msgstr "Generate card"
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:354
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:368
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
@@ -1911,7 +1951,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:365
 msgid "Generating..."
 msgstr "Generating..."
 
@@ -2114,12 +2154,12 @@ msgstr "Importing…"
 msgid "Inanimate"
 msgstr "Inanimate"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:306
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:310
 msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:315
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:319
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
 
@@ -2240,11 +2280,11 @@ msgstr "Later"
 msgid "Layout"
 msgstr "Layout"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:75
+#: apps/web/src/features/practice/components/practice-language-view.tsx:79
 msgid "Learn more anyway"
 msgstr "Learn more anyway"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:88
+#: apps/web/src/features/practice/components/practice-language-view.tsx:92
 msgid "Learn new only"
 msgstr "Learn new only"
 
@@ -2252,6 +2292,10 @@ msgstr "Learn new only"
 #: apps/web/src/features/practice/components/practice-language-view.tsx:80
 #~ msgid "Learn new terms"
 #~ msgstr "Learn new terms"
+
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:282
+msgid "Learning"
+msgstr "Learning"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:89
 msgid "Less formal:"
@@ -2289,7 +2333,7 @@ msgstr "LLM-suggested terms"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:358
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:363
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
@@ -2304,6 +2348,10 @@ msgstr "Loading cards…"
 #: apps/web/src/features/review/components/per-card-chat.tsx:187
 msgid "Loading chat…"
 msgstr "Loading chat…"
+
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:140
+msgid "Loading flashcards…"
+msgstr "Loading flashcards…"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:316
 msgid "Loading more…"
@@ -2331,7 +2379,7 @@ msgstr "Loading..."
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:67
-#: apps/web/src/features/practice/components/practice-language-view.tsx:162
+#: apps/web/src/features/practice/components/practice-language-view.tsx:199
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:55
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
@@ -2441,7 +2489,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Movies"
 
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:102
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:167
 msgid "Multiple Video Elements Detected"
 msgstr "Multiple Video Elements Detected"
 
@@ -2482,6 +2530,7 @@ msgstr "Neuter"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:58
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:55
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:275
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:67
 msgid "New"
 msgstr "New"
@@ -2503,7 +2552,7 @@ msgstr "New terms"
 msgid "New terms are capped per day. Follow-up sessions use up to this many review terms."
 msgstr "New terms are capped per day. Follow-up sessions use up to this many review terms."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:244
+#: apps/web/src/features/practice/components/practice-language-view.tsx:291
 msgid "New today"
 msgstr "New today"
 
@@ -2531,6 +2580,10 @@ msgstr "Next text"
 msgid "No cards yet. Select some highlights in the source text to generate new cards."
 msgstr "No cards yet. Select some highlights in the source text to generate new cards."
 
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
+msgid "No flashcards are due right now."
+msgstr "No flashcards are due right now."
+
 #: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
 #~ msgid "No highlight selected."
 #~ msgstr "No highlight selected."
@@ -2552,7 +2605,7 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:118
+#: apps/web/src/features/practice/components/practice-language-view.tsx:122
 msgid "No practice terms are ready right now."
 msgstr "No practice terms are ready right now."
 
@@ -2580,7 +2633,7 @@ msgstr "No target languages yet. Preferences are set the first time you start a 
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:172
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:238
 msgid "No videos detected."
 msgstr "No videos detected."
 
@@ -2589,7 +2642,7 @@ msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:71
-#: apps/web/src/features/practice/components/practice-language-view.tsx:166
+#: apps/web/src/features/practice/components/practice-language-view.tsx:203
 msgid "No vocabulary to practice yet"
 msgstr "No vocabulary to practice yet"
 
@@ -2642,12 +2695,12 @@ msgstr "Numeral"
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:324
-#: packages/extension/src/ui/components/NotificationUi.tsx:93
 #: packages/extension/src/ui/components/Tutorial.tsx:117
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:293
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:359
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:155
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:177
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:307
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:373
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:84
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:221
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:243
 msgid "OK"
 msgstr "OK"
 
@@ -2659,8 +2712,8 @@ msgstr "Open App"
 msgid "Open chat"
 msgstr "Open chat"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:227
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:344
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:233
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:358
 msgid "Open Files"
 msgstr "Open Files"
 
@@ -2755,7 +2808,7 @@ msgstr "Particle"
 msgid "Passive"
 msgstr "Passive"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:176
+#: apps/web/src/features/practice/components/practice-language-view.tsx:213
 msgid "Passive vocabulary"
 msgstr "Passive vocabulary"
 
@@ -2844,15 +2897,15 @@ msgstr "Pick your native language"
 msgid "Play/pause"
 msgstr "Play/pause"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:385
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:390
 msgid "Playback Mode"
 msgstr "Playback Mode"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:314
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:318
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:625
+#: packages/extension/src/controllers/subtitle-controller.ts:781
 msgid "Playback Rate: {rate}"
 msgstr "Playback Rate: {rate}"
 
@@ -2906,7 +2959,7 @@ msgstr "Plural-only"
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:60
-#: apps/web/src/features/practice/components/practice-language-view.tsx:72
+#: apps/web/src/features/practice/components/practice-language-view.tsx:76
 #: apps/web/src/features/practice/components/practice-session-view.tsx:365
 #: apps/web/src/features/practice/components/practice-start-view.tsx:36
 msgid "Practice"
@@ -2956,7 +3009,7 @@ msgstr "Preparing your answer…"
 msgid "Preposition"
 msgstr "Preposition"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:629
+#: packages/extension/src/controllers/subtitle-controller.ts:785
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
@@ -2998,7 +3051,7 @@ msgstr "Primary"
 #~ msgstr "Process"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:73
-#: apps/web/src/features/practice/components/practice-language-view.tsx:168
+#: apps/web/src/features/practice/components/practice-language-view.tsx:205
 msgid "Process a session and keep some cards. They'll show up here automatically."
 msgstr "Process a session and keep some cards. They'll show up here automatically."
 
@@ -3087,7 +3140,7 @@ msgstr "Rate"
 msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
 msgstr "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:190
+#: apps/web/src/features/practice/components/practice-language-view.tsx:227
 msgid "Ready to practice"
 msgstr "Ready to practice"
 
@@ -3145,7 +3198,7 @@ msgstr "Reject all"
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:328
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:342
 msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
@@ -3180,11 +3233,11 @@ msgstr "Render"
 msgid "Repeat"
 msgstr "Repeat"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:623
+#: packages/extension/src/controllers/subtitle-controller.ts:779
 msgid "Repeat playback: Off"
 msgstr "Repeat playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:621
+#: packages/extension/src/controllers/subtitle-controller.ts:777
 msgid "Repeat playback: On"
 msgstr "Repeat playback: On"
 
@@ -3229,6 +3282,7 @@ msgstr "Return to Login"
 msgid "Revert"
 msgstr "Revert"
 
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:289
 #: apps/web/src/features/review/components/triage-list-view.tsx:182
 msgid "Review"
 msgstr "Review"
@@ -3237,7 +3291,7 @@ msgstr "Review"
 #~ msgid "Review follow-ups"
 #~ msgstr "Review follow-ups"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:87
+#: apps/web/src/features/practice/components/practice-language-view.tsx:91
 msgid "Review only"
 msgstr "Review only"
 
@@ -3331,12 +3385,12 @@ msgid "Searching…"
 msgstr "Searching…"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:300
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
 msgid "Seek backward"
 msgstr "Seek backward"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:302
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:306
 msgid "Seek forward"
 msgstr "Seek forward"
 
@@ -3349,12 +3403,12 @@ msgid "Seek to beginning of current/previous subtitle"
 msgstr "Seek to beginning of current/previous subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:302
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:306
 msgid "Seek to next subtitle"
 msgstr "Seek to next subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:300
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
@@ -3367,7 +3421,7 @@ msgstr "Seek to previous subtitle"
 #~ msgid "Select a language"
 #~ msgstr "Select a language"
 
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:121
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:186
 msgid "Select a video element to sync it with asbplayer."
 msgstr "Select a video element to sync it with asbplayer."
 
@@ -3375,7 +3429,7 @@ msgstr "Select a video element to sync it with asbplayer."
 msgid "Select subtitle tracks to load."
 msgstr "Select subtitle tracks to load."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:256
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
 
@@ -3406,7 +3460,7 @@ msgid "Session"
 msgstr "Session"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:32
-#: apps/web/src/features/practice/components/practice-language-view.tsx:188
+#: apps/web/src/features/practice/components/practice-language-view.tsx:225
 msgid "Session in progress"
 msgstr "Session in progress"
 
@@ -3460,6 +3514,10 @@ msgstr "Short paraphrase in the target language."
 #: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:28
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
+
+#: apps/web/src/features/practice/components/flashcard-session-view.tsx:260
+msgid "Show answer"
+msgstr "Show answer"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:79
 #~ msgid "Show existing translations and generate translations for new cards"
@@ -3681,7 +3739,7 @@ msgstr "Subtitle Generation"
 msgid "Subtitle HTML"
 msgstr "Subtitle HTML"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:307
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:311
 msgid "Subtitle Offset"
 msgstr "Subtitle Offset"
 
@@ -3730,7 +3788,7 @@ msgid "Subtitle Track"
 msgstr "Subtitle Track"
 
 #. placeholder {0}: i + 1
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:209
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
 msgid "Subtitle Track {0}"
 msgstr "Subtitle Track {0}"
 
@@ -3739,7 +3797,7 @@ msgstr "Subtitle Track {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:277
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:291
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Subtitles must be loaded before you can start mining."
 
@@ -3998,7 +4056,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:369
+#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:374
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
 
@@ -4018,7 +4076,7 @@ msgstr "Too many requests. Please use the app in only one tab and device at a ti
 msgid "Top"
 msgstr "Top"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:246
+#: apps/web/src/features/practice/components/practice-language-view.tsx:293
 msgid "Total"
 msgstr "Total"
 
@@ -4099,7 +4157,7 @@ msgstr "Unknown year"
 msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:245
+#: apps/web/src/features/practice/components/practice-language-view.tsx:292
 msgid "Unseen"
 msgstr "Unseen"
 
@@ -4229,11 +4287,11 @@ msgstr "Verify Your Email"
 msgid "Verifying..."
 msgstr "Verifying..."
 
-#: packages/extension/src/ui/components/VideoSelectUi.tsx:131
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:131
 msgid "Video Element"
 msgstr "Video Element"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:325
 msgid "Video Name"
 msgstr "Video Name"
 
@@ -4395,6 +4453,10 @@ msgstr "You are now subscribed to Premium!"
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:34
 msgid "You can try again in {countdown} seconds"
 msgstr "You can try again in {countdown} seconds"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:385
+msgid "You have a reading session in progress. End it to start flashcards."
+msgstr "You have a reading session in progress. End it to start flashcards."
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
 #: apps/web/src/features/billing/components/pricing-view.tsx:38

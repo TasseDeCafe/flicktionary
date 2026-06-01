@@ -36,6 +36,37 @@ type QueueItem = {
   requeuedForAgain: boolean
 }
 
+type QueueCounts = {
+  new: number
+  learning: number
+  review: number
+}
+
+const getRemainingCounts = (queue: QueueItem[], index: number): QueueCounts =>
+  queue.slice(index).reduce<QueueCounts>(
+    (counts, item) => {
+      if (item.requeuedForAgain) {
+        counts.learning += 1
+        return counts
+      }
+      switch (item.card.srsState) {
+        case null:
+          counts.new += 1
+          break
+        case 'review':
+          counts.review += 1
+          break
+        case 'new':
+        case 'learning':
+        case 'relearning':
+          counts.learning += 1
+          break
+      }
+      return counts
+    },
+    { new: 0, learning: 0, review: 0 }
+  )
+
 export const FlashcardSessionView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
@@ -63,16 +94,12 @@ export const FlashcardSessionView = () => {
 
   const languageName = getLanguageName(targetLanguage)
   const current = queue[index]
+  const remainingCounts = getRemainingCounts(queue, index)
 
   const handleRate = (rating: RateValue) => {
     const item = queue[index]
     if (!item) return
     const { card } = item
-
-    // Single capped 'again' redrill — independent of the mutation's outcome.
-    if (rating === 'again' && !item.requeuedForAgain) {
-      setQueue((q) => [...q, { card, retryCount: item.retryCount, requeuedForAgain: true }])
-    }
 
     // Advance the UI immediately for responsiveness; the mutation runs in the
     // background with a safety net so a failure doesn't silently drop the card.
@@ -85,7 +112,16 @@ export const FlashcardSessionView = () => {
         onSuccess: (resp) => {
           // New-card intro refused by the daily cap: drop it (no re-queue) and
           // surface a one-time note.
-          if (resp.data.dailyCapReached && !capNoticeShown) setCapNoticeShown(true)
+          if (resp.data.dailyCapReached) {
+            if (!capNoticeShown) setCapNoticeShown(true)
+            return
+          }
+          // Single capped 'again' redrill — only after the rating is accepted.
+          // A refused daily-cap intro or failed mutation should not add the
+          // normal redrill copy on top of its own handling path.
+          if (rating === 'again' && !item.requeuedForAgain) {
+            setQueue((q) => [...q, { card, retryCount: item.retryCount, requeuedForAgain: true }])
+          }
         },
         onError: () => {
           // useRateFlashcard already toasts via meta.errorMessage. Re-append so
@@ -215,7 +251,8 @@ export const FlashcardSessionView = () => {
           </div>
         </div>
         <div className='border-t bg-white px-4 py-3'>
-          <div className='mx-auto w-full max-w-xl'>
+          <div className='mx-auto flex w-full max-w-xl flex-col gap-3'>
+            <FlashcardQueueStats counts={remainingCounts} />
             {revealed ? (
               <RateButtons onSelect={handleRate} />
             ) : (
@@ -227,5 +264,47 @@ export const FlashcardSessionView = () => {
         </div>
       </div>
     </ModalScreen>
+  )
+}
+
+const FlashcardQueueStats = ({ counts }: { counts: QueueCounts }) => {
+  const { t } = useLingui()
+  const items = [
+    {
+      key: 'new',
+      label: t`New`,
+      value: counts.new,
+      className: 'bg-blue-50 text-blue-700 ring-blue-100',
+      dotClassName: 'bg-blue-500',
+    },
+    {
+      key: 'learning',
+      label: t`Learning`,
+      value: counts.learning,
+      className: 'bg-rose-50 text-rose-700 ring-rose-100',
+      dotClassName: 'bg-rose-500',
+    },
+    {
+      key: 'review',
+      label: t`Review`,
+      value: counts.review,
+      className: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+      dotClassName: 'bg-emerald-500',
+    },
+  ]
+
+  return (
+    <div className='flex items-center justify-center gap-2' aria-label={t`Cards left`}>
+      {items.map((item) => (
+        <div
+          key={item.key}
+          className={`flex min-w-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ${item.className}`}
+        >
+          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${item.dotClassName}`} />
+          <span className='tabular-nums'>{item.value.toLocaleString()}</span>
+          <span>{item.label}</span>
+        </div>
+      ))}
+    </div>
   )
 }
