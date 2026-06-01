@@ -11,10 +11,10 @@ export interface ReactSubtitleEligibilityInput {
 
 // Strict, binding-level latch. The React + Shadow DOM + Tailwind overlay is the
 // default for the text/word-click happy path on ANY site, including dual
-// subtitles and multiple tracks; only image (PGS) / rich-text cues and the
-// word-click-off case stay on the legacy DOM path. This predicate is the SOLE
-// gate — evaluated at subtitle load and re-evaluated on settings-updated, never
-// per-render — so non-eligible cues can never be diverted into the React path.
+// subtitles and multiple tracks; only rich-text cues and the word-click-off
+// case stay on the legacy DOM path. This predicate is the SOLE gate — evaluated
+// at subtitle load and re-evaluated on settings-updated, never per-render — so
+// non-eligible cues can never be diverted into the React path.
 //
 // Note: this gates RENDERING + hover gloss, which are site-agnostic. Word
 // *saving* is still YouTube-only (the register/save backend contract is
@@ -35,9 +35,9 @@ export const isReactSubtitleEligible = ({
   // Something must be loaded to evaluate cue types against.
   if (!subtitles || subtitles.length === 0) return false
 
-  // Every loaded cue must be plain text — no image (PGS) or rich-text cue.
+  // Every loaded cue must be plain text — no rich-text cue. (richText is not
+  // populated by any current parser; this guard stays as a cheap safety net.)
   for (const subtitle of subtitles) {
-    if (subtitle.textImage) return false
     if (subtitle.richText) return false
   }
 

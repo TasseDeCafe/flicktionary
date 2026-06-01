@@ -305,7 +305,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
         ref={fileInputRef}
         onChange={handleFileInputChange}
         type='file'
-        accept='.srt,.ass,.vtt,.sup,.dfxp,.ttml2'
+        accept='.srt,.ass,.vtt,.dfxp,.ttml2'
         multiple
         hidden
       />

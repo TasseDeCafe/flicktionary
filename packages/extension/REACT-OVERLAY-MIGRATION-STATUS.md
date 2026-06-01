@@ -18,7 +18,7 @@ legacy direct-DOM path. Update this as phases land.
 
 ## The headline goal (not reached yet)
 
-Legacy is still load-bearing: image/PGS + rich-text cues, subtitle blur,
+Legacy is still load-bearing: rich-text cues, subtitle blur,
 notifications/auto-copy/auto-pause, and any ineligible case still run on the
 legacy `WordInteractionController` + `ElementOverlay` HTML path. React is now the
 **default for the common case on every site** plus dual subtitles, but nothing
@@ -63,11 +63,15 @@ Each is independently shippable; legacy stays the fallback until the matching
 gate predicate is relaxed. Data flows via `SubtitleLineModel` (`subtitle-store.ts`)
 → `_pushReactSubtitles` → `SubtitleOverlayApp.tsx`.
 
-1. **Image/PGS (`textImage`) + rich-text (`richText`) cues** — the meatiest.
-   Carry these on `SubtitleLineModel`; render images with
-   `imageBasedSubtitleScaleFactor` scaling (port from `subtitle-controller.ts`
-   legacy `_renderSubtitles`), rich text as sanitized HTML. Then drop the
-   plain-text-only checks from the gate.
+1. **~~Image/PGS (`textImage`) + rich-text (`richText`) cues~~ — resolved by
+   deletion, not by porting.** Image/PGS (`.sup`) was dormant upstream
+   machinery (manual file-load only; never served by any site) and was
+   **dropped entirely** — the `.sup` accept entry, PGS parser worker,
+   `textImage` model field/render branches, `imageBasedSubtitleScaleFactor`
+   setting (kept in `ignoreKeys` for back-compat), and the `pgs-parser` dep are
+   gone. `richText` is never populated by any parser, so nothing renders it; the
+   gate keeps a cheap `richText` guard as a safety net. **No image/rich-text
+   rendering work remains for the gate — this no longer blocks 2c.**
 2. **Subtitle blur + unblur keybind** — add `blurred`/`classes` to
    `SubtitleLineModel`, apply blur class in the Shadow-DOM overlay CSS, wire the
    existing unblur keybind to the store.

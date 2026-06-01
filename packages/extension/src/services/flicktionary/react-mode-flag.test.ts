@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { IndexedSubtitleModel } from '@asbplayer-fork/common'
 import { isReactSubtitleEligible } from './react-mode-flag.ts'
 
-// Minimal IndexedSubtitleModel fixtures — the gate only reads `track`,
-// `textImage`, and `richText`. Everything else is filler to satisfy the type.
+// Minimal IndexedSubtitleModel fixtures — the gate only reads `track` and
+// `richText`. Everything else is filler to satisfy the type.
 const sub = (over: Partial<IndexedSubtitleModel> = {}): IndexedSubtitleModel => ({
   index: 0,
   track: 0,
@@ -55,24 +55,6 @@ describe('isReactSubtitleEligible', () => {
 
   it('rejects when no subtitles are loaded', () => {
     expect(isReactSubtitleEligible({ ...eligibleInput, subtitles: [] })).toBe(false)
-  })
-
-  it('rejects image (PGS) cues', () => {
-    expect(
-      isReactSubtitleEligible({
-        ...eligibleInput,
-        subtitles: [
-          sub({
-            index: 0,
-            textImage: {
-              dataUrl: 'data:image/png;base64,',
-              screen: { width: 1, height: 1 },
-              image: { width: 1, height: 1 },
-            },
-          }),
-        ],
-      })
-    ).toBe(false)
   })
 
   it('rejects rich-text cues', () => {

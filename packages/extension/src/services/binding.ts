@@ -59,7 +59,6 @@ import { setupLingui } from '../ui/lingui'
 import KeyBindings from './key-bindings'
 import { shouldShowUpdateAlert } from './update-alert'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
-import { pgsParserWorkerFactory } from './pgs-parser-worker-factory'
 
 let netflix = false
 document.addEventListener('asbplayer-netflix-enabled', (e) => {
@@ -1035,7 +1034,6 @@ export default class Binding {
           regexFilterTextReplacement: subtitleRegexFilterTextReplacement,
           subtitleHtml: subtitleHtml,
           convertNetflixRuby: convertNetflixRuby,
-          pgsParserWorkerFactory: pgsParserWorkerFactory,
         })
         const offset = rememberSubtitleOffset ? lastSubtitleOffset : 0
         const subtitles = await reader.subtitles(files, flatten)
@@ -1044,7 +1042,6 @@ export default class Binding {
             start: s.start + offset,
             end: s.end + offset,
             text: s.text,
-            textImage: s.textImage,
             track: s.track,
             index,
             originalStart: s.start,

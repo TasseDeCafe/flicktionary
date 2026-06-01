@@ -220,9 +220,6 @@ const settingsSchema = {
     language: {
       type: 'string',
     },
-    imageBasedSubtitleScaleFactor: {
-      type: 'number',
-    },
     subtitleCustomStyles: {
       type: 'array',
       items: {
@@ -296,6 +293,9 @@ const settingsSchema = {
 // Top-level keys stripped before validation.
 const ignoreKeys: string[] = [
   'streamingPages', // Ignored due to security risk (e.g. disable CSP)
+  // Removed with .sup/PGS image-subtitle support. Kept here (not in the schema)
+  // so older settings exports that still carry it don't fail import validation.
+  'imageBasedSubtitleScaleFactor',
 ]
 
 const withIgnoredKeysRemoved = (settings: any) => {

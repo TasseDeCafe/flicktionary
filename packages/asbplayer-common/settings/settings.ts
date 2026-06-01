@@ -100,7 +100,6 @@ const subtitleSettingsKeysObject: { [key in keyof SubtitleSettings]: boolean } =
   subtitleFontFamily: true,
   subtitleCustomStyles: true,
   subtitleBlur: true,
-  imageBasedSubtitleScaleFactor: true,
   subtitlePositionOffset: true, // bottom offset; name kept for backwards compatibility
   topSubtitlePositionOffset: true,
   subtitleAlignment: true,
@@ -134,7 +133,6 @@ export interface TextSubtitleSettings {
 }
 
 export interface SubtitleSettings extends TextSubtitleSettings {
-  readonly imageBasedSubtitleScaleFactor: number
   readonly subtitlePositionOffset: number
   readonly topSubtitlePositionOffset: number
 

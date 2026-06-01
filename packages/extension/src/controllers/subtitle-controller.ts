@@ -649,29 +649,7 @@ export default class SubtitleController {
   private _buildSubtitlesHtml(subtitles: IndexedSubtitleModel[]) {
     return subtitles.map((subtitle) => {
       return {
-        html: () => {
-          if (subtitle.textImage) {
-            const className = this.subtitleClasses?.[subtitle.track] ?? ''
-            const imageScale =
-              ((this.subtitleSettings?.imageBasedSubtitleScaleFactor ?? 1) * this.video.getBoundingClientRect().width) /
-              subtitle.textImage.screen.width
-            const width = imageScale * subtitle.textImage.image.width
-
-            return `
-                            <div data-track="${
-                              subtitle.track ?? 0
-                            }" style="max-width:${width}px;margin:auto;" class="${className}"}">
-                                <img
-                                    style="width:100%;"
-                                    alt="subtitle"
-                                    src="${subtitle.textImage.dataUrl}"
-                                />
-                            </div>
-                        `
-          } else {
-            return this._buildTextHtml(subtitle.text, subtitle.track, subtitle.richText, subtitle.index)
-          }
-        },
+        html: () => this._buildTextHtml(subtitle.text, subtitle.track, subtitle.richText, subtitle.index),
         key: String(subtitle.index),
       }
     })
@@ -769,7 +747,6 @@ export default class SubtitleController {
 
     this.subtitles = this.subtitles.map((s) => ({
       text: s.text,
-      textImage: s.textImage,
       start: s.originalStart + offset,
       originalStart: s.originalStart,
       end: s.originalEnd + offset,
