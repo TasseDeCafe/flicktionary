@@ -50,7 +50,6 @@ import { MobileVideoOverlayController } from '../controllers/mobile-video-overla
 import NotificationController from '../controllers/notification-controller'
 import SubtitleController from '../controllers/subtitle-controller'
 import VideoDataSyncController from '../controllers/video-data-sync-controller'
-import WordInteractionController from '../controllers/word-interaction-controller'
 import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import { OffsetAnchor } from './element-overlay'
 import { FlicktionaryVideoClosures } from './flicktionary/flicktionary-client'
@@ -92,10 +91,9 @@ export default class Binding {
   readonly mobileGestureController: MobileGestureController
   readonly keyBindings: KeyBindings
   readonly settings: SettingsProvider
-  readonly wordInteractionController: WordInteractionController
 
   // Snapshot of the current YouTube video + parsed subtitles, populated by
-  // `_maybeRegisterFlicktionarySubtitles`. WordInteractionController reads
+  // `_maybeRegisterFlicktionarySubtitles`. The React subtitle overlay reads
   // this through a closure so SaveWordMessage can carry a self-contained
   // payload — letting the background recover when its session cache is cold.
   private _flicktionaryVideoContext: FlicktionaryVideoContext | undefined
@@ -107,8 +105,8 @@ export default class Binding {
   private _flicktionarySubtitleLanguageHint: string | undefined
 
   // When set, saving is disabled for the current video (its subtitles are in
-  // an unsupported language) and WordInteractionController surfaces this
-  // reason instead of attempting a save.
+  // an unsupported language) and the React overlay surfaces this reason
+  // instead of attempting a save.
   private _flicktionarySaveDisabledReason: string | undefined
 
   private maxImageWidth: number
@@ -148,13 +146,6 @@ export default class Binding {
     this.mobileVideoOverlayController = new MobileVideoOverlayController(this, OffsetAnchor.top)
     this.subtitleController.onOffsetChange = () => this.mobileVideoOverlayController.updateModel()
     this.mobileGestureController = new MobileGestureController(this)
-    this.wordInteractionController = new WordInteractionController(
-      video,
-      () => document.title,
-      () => window.location.href,
-      () => this._flicktionaryVideoContext,
-      () => this._flicktionarySaveDisabledReason
-    )
     this.maxImageWidth = 0
     this.maxImageHeight = 0
     this.autoPausePreference = AutoPausePreference.atEnd
@@ -648,19 +639,6 @@ export default class Binding {
     }
   }
 
-  // Bind the legacy document-level word controller ONLY when word-click is on
-  // and React mode is OFF — React owns word interaction when latched on, and
-  // running both is unsafe (shadow-internal events retarget to the host, so the
-  // document delegation can't reliably see shadow words). bind()/unbind() are
-  // idempotent, so this is safe to call repeatedly.
-  private _syncWordInteractionController() {
-    if (this.subtitleController.wordClickEnabled && !this.subtitleController.reactMode) {
-      this.wordInteractionController.bind()
-    } else {
-      this.wordInteractionController.unbind()
-    }
-  }
-
   async _refreshSettings() {
     const currentSettings = await this.settings.getAll()
     this._seekDuration = currentSettings.seekDuration
@@ -681,25 +659,10 @@ export default class Binding {
     this.subtitleController.surroundingSubtitlesTimeRadius = currentSettings.surroundingSubtitlesTimeRadius
     this.subtitleController.autoCopyCurrentSubtitle = currentSettings.autoCopyCurrentSubtitle
 
-    const wordClickEnabledChanged = this.subtitleController.wordClickEnabled !== currentSettings.wordClickEnabled
-    this.subtitleController.wordClickEnabled = currentSettings.wordClickEnabled
-
-    const convertNetflixRubyChanged = this.subtitleController.convertNetflixRuby !== currentSettings.convertNetflixRuby
-    this.subtitleController.convertNetflixRuby = currentSettings.convertNetflixRuby
-
-    const subtitleHtmlChanged = this.subtitleController.subtitleHtml !== currentSettings.subtitleHtml
-    this.subtitleController.subtitleHtml = currentSettings.subtitleHtml
-
     this.subtitleController.setSubtitleSettings(currentSettings)
 
-    // Re-evaluate the React latch now that alignment + wordClick + subtitles are
-    // current, BEFORE any legacy cacheHtml/refresh path runs against the bottom
-    // overlay (and before deciding whether to bind the legacy word controller).
-    this.subtitleController.evaluateReactMode(this._flicktionaryClosures())
-
-    if (convertNetflixRubyChanged || subtitleHtmlChanged || wordClickEnabledChanged) {
-      this.subtitleController.cacheHtml()
-    }
+    // Keep the React overlay hosts in sync now that alignment is current.
+    this.subtitleController.ensureReactOverlays(this._flicktionaryClosures())
 
     this.subtitleController.refresh()
 
@@ -711,12 +674,6 @@ export default class Binding {
     } else {
       this.dragController.unbind()
     }
-
-    // Word-click mode binds whenever it's enabled AND React mode is off. When
-    // React mode is latched on it owns word interaction; the legacy controller
-    // stays unbound (see _syncWordInteractionController). Both hover-gloss and
-    // right-click / chunk-select save go through Flicktionary either way.
-    this._syncWordInteractionController()
 
     if (currentSettings.streamingEnableOverlay) {
       this.mobileVideoOverlayController.offsetAnchor =
@@ -783,7 +740,6 @@ export default class Binding {
     this.mobileVideoOverlayController.unbind()
     this.mobileGestureController.unbind()
     this.notificationController.unbind()
-    this.wordInteractionController.unbind()
     this.subscribed = false
 
     const command: VideoToExtensionCommand<VideoDisappearedMessage> = {
@@ -975,7 +931,7 @@ export default class Binding {
         ? `Flicktionary doesn't support ${languageName} subtitles yet — saving is disabled for this video.`
         : `These subtitles are in a language Flicktionary doesn't support yet — saving is disabled for this video.`
       this._flicktionarySaveDisabledReason = reason
-      this.wordInteractionController.showNotice(reason, true)
+      this.subtitleController.showTextNotification(reason)
     }
   }
 
@@ -1064,13 +1020,8 @@ export default class Binding {
     this.subtitleController.subtitles = subtitles
     this.subtitleController.subtitleFileNames = subtitleFileNames
 
-    // Re-evaluate the React latch against the freshly-loaded cue types BEFORE
-    // any legacy cacheHtml/render path, then sync the legacy word controller (a
-    // newly-eligible video must unbind it; a newly-ineligible one must bind it).
-    this.subtitleController.evaluateReactMode(this._flicktionaryClosures())
-    this._syncWordInteractionController()
-
-    this.subtitleController.cacheHtml()
+    // Keep the React overlay hosts in sync with the freshly-loaded subtitles.
+    this.subtitleController.ensureReactOverlays(this._flicktionaryClosures())
 
     // Fire-and-forget: tell the background which session this video maps to
     // so save-word can cite real text_segments.id values without round

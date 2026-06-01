@@ -273,11 +273,8 @@ const settingsSchema = {
     pauseOnHoverMode: {
       type: 'number',
     },
-    // Flicktionary-added live settings (WordInteractionSettings / TranscriptSettings).
+    // Flicktionary-added live settings (TranscriptSettings).
     // Must be listed here or validateSettings throws 'Unknown key' on export/import.
-    wordClickEnabled: {
-      type: 'boolean',
-    },
     transcriptServerUrl: {
       type: 'string',
     },
@@ -296,6 +293,9 @@ const ignoreKeys: string[] = [
   // Removed with .sup/PGS image-subtitle support. Kept here (not in the schema)
   // so older settings exports that still carry it don't fail import validation.
   'imageBasedSubtitleScaleFactor',
+  // Removed when word-click became the only mode (legacy word-interaction path
+  // deleted). Same back-compat reason: old exports still carry it.
+  'wordClickEnabled',
 ]
 
 const withIgnoredKeysRemoved = (settings: any) => {

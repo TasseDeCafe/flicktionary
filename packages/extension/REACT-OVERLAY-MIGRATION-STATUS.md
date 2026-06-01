@@ -16,16 +16,23 @@ legacy direct-DOM path. Update this as phases land.
   `check:types`, and `pnpm --filter backend db:dev:tunnel:gen-types` after a
   migration. Manual: regress YouTube; test Netflix/Prime (user-driven).
 
-## The headline goal (Phase 2b complete; 2c deletion pending verification)
+## The headline goal — REACHED (Phase 2c done)
 
-Phase 2b is functionally done. The legacy `WordInteractionController` +
-`ElementOverlay` subtitle-rendering path is now load-bearing for only two
-gate-rejected cases: **word-click OFF**, and **rich-text cues** (`richText`,
-which no current parser ever produces — so this is a dormant safety net). Blur,
-dual subtitles, notifications, auto-copy and auto-pause all run under React
-mode; image/PGS was deleted outright. React is the **default for the common
-case on every site**. Nothing legacy is deleted yet — Phase 2c (the deletion)
-is now gated only on cross-platform manual verification, not on more building.
+The React + Shadow-DOM overlay is now the **only** subtitle renderer. The legacy
+direct-DOM path is deleted: `WordInteractionController` (~814 lines), the gate
+(`react-mode-flag.ts`), `tokenizeToHtml`/`_buildTextHtml`, and every legacy
+render branch in `subtitle-controller.ts` are gone; `ensureReactOverlays` just
+keeps the hosts in sync with the current alignment (no eligibility latch). The
+**word-click setting was dropped** (word interaction is always on; the toggle +
+`wordClickEnabled` setting were removed, with `wordClickEnabled` kept in
+`ignoreKeys` for old-export back-compat). `richText` is no longer special-cased
+(no parser produces it). Image/PGS was deleted earlier.
+
+Remaining follow-up (not gating): a handful of now-dead light-DOM CSS rules in
+`video.content/video.css` (`.asbplayer-word`, `.asbplayer-save-notification`,
+`.asbplayer-subtitle-rich`/`.asbplayer-subtitle-text`, `.asbplayer-subtitles-blurred`)
+that styled the deleted legacy DOM — produced by no code now; safe to remove in
+a focused CSS pass with a visual check (CSS isn't covered by the build gate).
 
 ## ✅ Landed on this branch
 
@@ -103,19 +110,25 @@ working (stale premise) + a small 2c-decoupling.
    track-0 subtitle styling, no track class so never blurred). **This removes a
    2c blocker — see below.**
 
-## 🔒 Phase 2c — delete legacy (the payoff)
+## ✅ Phase 2c — legacy deleted (the payoff) — DONE
 
-Once 2b reaches parity + cross-platform tested:
-
-- Delete `controllers/word-interaction-controller.ts` (~814 lines),
-  `tokenizeToHtml` (`services/word-tokenizer.ts`) + its only caller `_buildTextHtml`
-  (now used only by the legacy subtitle/offset/loaded-message branches below —
-  `notification()` was decoupled in 2b item 3, so deleting it is safe).
-- Remove legacy `ElementOverlay` HTML branches from `subtitle-controller.ts` and
-  the `_reactMode`/`evaluateReactMode`/`_enter`/`_exitReactMode` latch — React
-  becomes the unconditional renderer. Remove `_syncWordInteractionController`
-  (`binding.ts`). Delete `react-mode-flag.ts` (no longer a gate).
-- Keep the `ElementOverlay` persistent-host/fullscreen machinery React relies on.
+- Deleted `controllers/word-interaction-controller.ts` (~814 lines),
+  `tokenizeToHtml`/`escapeHtml` (`services/word-tokenizer.ts`), and `_buildTextHtml`.
+- Removed every legacy `ElementOverlay` HTML render branch from
+  `subtitle-controller.ts` (`_buildSubtitlesHtml`, `_renderSubtitles`,
+  `_resetUnblurState`, `_setSubtitlesHtml`, `_appendSubtitlesHtml`, `cacheHtml`,
+  `_subtitleClasses`) and the `_reactMode` latch. `evaluateReactMode` →
+  `ensureReactOverlays` (mount/remount to match alignment; no eligibility check).
+  Removed `_syncWordInteractionController` (`binding.ts`) + the
+  `WordInteractionController` field/construction. Deleted `react-mode-flag.ts`.
+- Word-click is always on: dropped the `wordClickEnabled` setting (interface,
+  default, schema → `ignoreKeys`, and the MiscSettingsTab toggle).
+- The unsupported-language load notice now routes through the kept notification
+  overlay (`subtitleController.showTextNotification`) instead of the deleted
+  controller's `showNotice`.
+- Kept the `ElementOverlay` persistent-host/fullscreen machinery React relies on.
+- Gate green (check:types / vitest both packages / build). **Pending: user
+  cross-platform manual verification**, then the dead-CSS follow-up above.
 
 ## 🧹 Untouched cleanup backlog (independent, ship anytime)
 

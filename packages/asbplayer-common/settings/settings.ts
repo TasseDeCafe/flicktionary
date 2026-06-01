@@ -183,14 +183,6 @@ export interface KeyBindSet {
   readonly moveTopSubtitlesDown: KeyBind
 }
 
-// Word-click mode gates the in-subtitle token tokenizer used by both the
-// hover gloss and right-click save. The old self-hosted LLM knobs (API key /
-// endpoint / model) were removed when those features moved to the Flicktionary
-// backend.
-export interface WordInteractionSettings {
-  readonly wordClickEnabled: boolean
-}
-
 export interface TranscriptSettings {
   readonly transcriptServerUrl: string
   readonly transcriptApiKey: string
@@ -276,7 +268,6 @@ export interface AsbplayerSettings
     CaptureSettings,
     SubtitleSettings,
     StreamingVideoSettings,
-    WordInteractionSettings,
     TranscriptSettings {
   readonly subtitlePreview: string
 }

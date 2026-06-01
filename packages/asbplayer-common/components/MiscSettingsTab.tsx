@@ -59,7 +59,6 @@ const MiscSettingTab: React.FC<Props> = ({
     subtitleHtml,
     convertNetflixRuby,
     pauseOnHoverMode,
-    wordClickEnabled,
     transcriptServerUrl,
     transcriptApiKey,
   } = settings
@@ -320,17 +319,6 @@ const MiscSettingTab: React.FC<Props> = ({
             onChange={(event) => onSettingChanged('tabName', event.target.value)}
           />
         )}
-        <SettingsSection>Word Learning</SettingsSection>
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={wordClickEnabled}
-              onChange={(event) => onSettingChanged('wordClickEnabled', event.target.checked)}
-            />
-          }
-          label='Enable word click mode'
-          labelPlacement='start'
-        />
         <SettingsSection>
           <Trans>Subtitle Generation</Trans>
         </SettingsSection>

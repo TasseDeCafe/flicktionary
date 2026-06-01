@@ -120,7 +120,6 @@ export const defaultSettings: AsbplayerSettings = {
     iwanttfc: {},
   },
   pauseOnHoverMode: PauseOnHoverMode.inAndOut,
-  wordClickEnabled: true,
   transcriptServerUrl: 'https://asbplayer-production.up.railway.app',
   transcriptApiKey: '',
 }

@@ -11,11 +11,10 @@ import {
 } from '@asbplayer-fork/common'
 import { v4 as uuidv4 } from 'uuid'
 
-// Framework-agnostic Flicktionary messaging, extracted from
-// WordInteractionController so the React overlay and the legacy DOM controller
-// can share one source of truth. These functions are pure async over
-// `browser.runtime.sendMessage` — they NEVER touch the DOM or show UI. All
-// presentation (tooltip / toast / CEFR picker) stays in the caller.
+// Framework-agnostic Flicktionary messaging used by the React subtitle overlay.
+// These functions are pure async over `browser.runtime.sendMessage` — they NEVER
+// touch the DOM or show UI. All presentation (tooltip / toast / CEFR picker)
+// stays in the caller.
 
 // Structured gloss for the hover tooltip — mirrors the web app's fast-gloss
 // popover (selection + IPA + gloss + POS/register).
