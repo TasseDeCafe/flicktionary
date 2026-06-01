@@ -35,6 +35,10 @@ import { FlicktionaryVideoClosures } from '../services/flicktionary/flicktionary
 
 const BOUNDING_BOX_PADDING = 25
 
+// Marks the React gloss popover root so the pause-on-hover resume check can
+// find it (see `intersects`). Kept in sync with GlossTooltip.tsx.
+const GLOSS_POPOVER_SELECTOR = '[data-flicktionary-gloss-popover]'
+
 const _intersects = (clientX: number, clientY: number, element: HTMLElement): boolean => {
   const rect = element.getBoundingClientRect()
   return (
@@ -901,6 +905,15 @@ export default class SubtitleController {
     const topContainer = this.topSubtitlesElementOverlay.containerElement
 
     if (topContainer !== undefined && _intersects(clientX, clientY, topContainer)) {
+      return true
+    }
+
+    // Hover bridge: while the React gloss popover is open, treat the pointer as
+    // still "on the subtitles" when it's over the popover. Without this, moving
+    // from the hovered word up to the popover (to click Save) exits the
+    // subtitle rect, auto-resumes playback, and dismisses the popover.
+    const popover = this._overlayMount?.popoverHost?.shadowRoot?.querySelector(GLOSS_POPOVER_SELECTOR)
+    if (popover instanceof HTMLElement && _intersects(clientX, clientY, popover)) {
       return true
     }
 

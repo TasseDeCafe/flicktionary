@@ -345,6 +345,8 @@ export const useCreateHighlight = (sessionId: string) => {
         })
       },
       meta: {
+        showSuccessToast: true,
+        successMessage: t`Highlight saved`,
         errorMessage: t`Failed to save highlight`,
       },
     })
@@ -473,6 +475,20 @@ export const useFastGloss = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.highlights.fastGloss.mutationOptions({
+      meta: {
+        errorMessage: t`Quick gloss failed`,
+      },
+    })
+  )
+}
+
+// Free, stateless gloss for an arbitrary selection in its sentence context.
+// Creates no rows and fires no enrich/card job — used for the preview-first
+// gloss sheet, where looking is free and only an explicit Save persists.
+export const useStatelessGloss = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.glosses.fastGloss.mutationOptions({
       meta: {
         errorMessage: t`Quick gloss failed`,
       },

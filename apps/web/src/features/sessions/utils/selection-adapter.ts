@@ -7,6 +7,9 @@ export type SelectionResult = {
   startOffset: number
   endOffset: number
   selectionText: string
+  // Display text of the segment the selection starts in — the sentence context
+  // passed to the free preview gloss (glosses.fastGloss).
+  contextLine: string
   // Snapshot of the selection's bounding box at the moment selection finished.
   // The floating sheet uses this to anchor itself on desktop; we capture here
   // because the painted selection clears once the sheet opens.
@@ -19,7 +22,7 @@ type SegmentLike = { id: string; text: string }
 // which the caller snapshots from the DOM.
 export type NormalizedSelection = Pick<
   SelectionResult,
-  'startSegmentId' | 'endSegmentId' | 'startOffset' | 'endOffset' | 'selectionText'
+  'startSegmentId' | 'endSegmentId' | 'startOffset' | 'endOffset' | 'selectionText' | 'contextLine'
 >
 
 // Maps the gesture's two word endpoints to a persisted selection. The user can
@@ -82,5 +85,10 @@ export const normalizeCrossSegmentSelection = (
   }
   const selectionText = parts.join('\n').trim()
 
-  return { startSegmentId, endSegmentId, startOffset, endOffset, selectionText }
+  // Sentence context for the stateless preview gloss: the full display text of
+  // the segment the selection starts in (the model only needs the immediate
+  // sentence, not the cross-segment span).
+  const contextLine = displayTextFor(segments[startIdx]!)
+
+  return { startSegmentId, endSegmentId, startOffset, endOffset, selectionText, contextLine }
 }

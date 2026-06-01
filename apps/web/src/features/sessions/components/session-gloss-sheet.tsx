@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronDown, ChevronUp, PencilLine, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, PencilLine, Save, Trash2 } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GhostCandidate, GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -27,6 +27,7 @@ import {
   useDeleteHighlight,
   useFastGloss,
   useGetUserPrefs,
+  useStatelessGloss,
   useSwitchGhost,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
@@ -166,6 +167,7 @@ export const SessionGlossSheet = ({
 
   const { mutateAsync: createHighlight } = useCreateHighlight(sessionId)
   const { mutateAsync: fetchGloss } = useFastGloss()
+  const { mutateAsync: fetchStatelessGloss } = useStatelessGloss()
   const { mutate: deleteHighlight, isPending: isDeleting } = useDeleteHighlight(sessionId)
   const { mutate: saveNoteAndTags, isPending: isSavingNote } = useUpdateHighlightNoteAndTags(sessionId)
   const { mutateAsync: switchGhost, isPending: isSwitching } = useSwitchGhost(sessionId)
@@ -198,11 +200,14 @@ export const SessionGlossSheet = ({
   const [expanded, setExpanded] = useState(false)
   // Set once a ghost has been adopted in this open session, to hide the action.
   const [adopted, setAdopted] = useState(false)
+  // True while an explicit Save (preview → saved) is creating the highlight.
+  const [isSaving, setIsSaving] = useState(false)
 
   useLayoutEffect(() => {
     if (!open) return
     setExpanded(false)
     setAdopted(false)
+    setIsSaving(false)
 
     if (existingHighlight) {
       setHighlightId(existingHighlight.id)
@@ -263,7 +268,11 @@ export const SessionGlossSheet = ({
     }
   }, [open, existingHighlight, sessionId, fetchGloss])
 
-  // Seed from a fresh selection: dedupe against the cache, otherwise create.
+  // Seed from a fresh selection. Preview-first: looking is free and ephemeral.
+  //  - If the selection matches an already-saved highlight → open in "saved"
+  //    mode (its gloss/note/tags, Remove/Edit available).
+  //  - Otherwise → open in "preview" mode: fetch a FREE stateless gloss and
+  //    create NO highlight. Persisting is the explicit Save action below.
   useEffect(() => {
     if (!open || !selection || existingHighlight) return
     let cancelled = false
@@ -272,47 +281,53 @@ export const SessionGlossSheet = ({
     setTags([])
     setExpanded(false)
     setGlossState({ kind: 'loading' })
+
+    // The dedup lookup reads synchronously from the cache, so we can settle the
+    // preview-vs-saved mode (and thus `highlightId`) before any await.
+    const cached = queryClient.getQueryData(orpcQuery.highlights.listBySession.key({ input: { sessionId } })) as
+      | { data: CachedHighlight[] }
+      | undefined
+    const match = findCachedHighlight(cached?.data, selection)
+    setHighlightId(match ? match.id : null)
+
     void (async () => {
       try {
-        const cached = queryClient.getQueryData(orpcQuery.highlights.listBySession.key({ input: { sessionId } })) as
-          | { data: CachedHighlight[] }
-          | undefined
-        const match = findCachedHighlight(cached?.data, selection)
-        let id: string
         if (match) {
-          id = match.id
+          // Saved mode: show cached metadata immediately, then refresh the gloss
+          // (this also enriches old rows with Wiktionary IPA).
           setNote(match.note ?? '')
           setTags(match.presetTags ?? [])
-          if (match.fastGloss) {
+          const cachedGloss = match.fastGloss ? parseCachedGloss(match.fastGloss) : null
+          if (cachedGloss) setGlossState({ kind: 'ready', ...cachedGloss, ipa: null })
+          try {
+            const res = await fetchGloss({ sessionId, highlightId: match.id })
             if (cancelled) return
-            setHighlightId(id)
-            setGlossState({ kind: 'ready', ...parseCachedGloss(match.fastGloss), ipa: null })
+            setGlossState({
+              kind: 'ready',
+              gloss: res.data.gloss,
+              pos: res.data.pos,
+              register: res.data.register,
+              ipa: res.data.ipa,
+            })
+          } catch {
+            if (!cancelled && !cachedGloss) setGlossState({ kind: 'error' })
           }
         } else {
-          const created = await createHighlight({
-            sessionId,
-            startSegmentId: selection.startSegmentId,
-            endSegmentId: selection.endSegmentId,
-            startOffset: selection.startOffset,
-            endOffset: selection.endOffset,
+          // Preview mode: free, stateless gloss — no highlight, no enrich job.
+          const res = await fetchStatelessGloss({
             selectionText: selection.selectionText,
-            note: null,
-            presetTags: [],
+            contextLine: selection.contextLine,
+            targetLanguage,
           })
           if (cancelled) return
-          id = created.data.id
+          setGlossState({
+            kind: 'ready',
+            gloss: res.data.gloss,
+            pos: res.data.pos,
+            register: res.data.register,
+            ipa: res.data.ipa,
+          })
         }
-        if (cancelled) return
-        setHighlightId(id)
-        const res = await fetchGloss({ sessionId, highlightId: id })
-        if (cancelled) return
-        setGlossState({
-          kind: 'ready',
-          gloss: res.data.gloss,
-          pos: res.data.pos,
-          register: res.data.register,
-          ipa: res.data.ipa,
-        })
       } catch {
         if (!cancelled) setGlossState({ kind: 'error' })
       }
@@ -327,12 +342,39 @@ export const SessionGlossSheet = ({
     selection?.endSegmentId,
     selection?.startOffset,
     selection?.endOffset,
+    selection?.contextLine,
     existingHighlight,
     sessionId,
-    createHighlight,
+    targetLanguage,
     fetchGloss,
+    fetchStatelessGloss,
     queryClient,
   ])
+
+  // Explicit Save: the only thing that persists a highlight (and fires the
+  // enrich/card job). Flips the sheet from preview into saved mode; the gloss
+  // already on screen stays. Note/tags editing then unlocks behind `highlightId`.
+  const handleSave = useCallback(async () => {
+    if (!selection || highlightId) return
+    setIsSaving(true)
+    try {
+      const created = await createHighlight({
+        sessionId,
+        startSegmentId: selection.startSegmentId,
+        endSegmentId: selection.endSegmentId,
+        startOffset: selection.startOffset,
+        endOffset: selection.endOffset,
+        selectionText: selection.selectionText,
+        note: null,
+        presetTags: [],
+      })
+      setHighlightId(created.data.id)
+    } catch {
+      // The mutation's meta.errorMessage surfaces a toast; stay in preview mode.
+    } finally {
+      setIsSaving(false)
+    }
+  }, [selection, highlightId, createHighlight, sessionId])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point
@@ -405,7 +447,33 @@ export const SessionGlossSheet = ({
   }
 
   const isReady = glossState.kind === 'ready'
+  // Preview mode = a fresh, unsaved selection. The gloss is a free, ephemeral
+  // lookup; nothing is persisted until the user clicks Save. Saved mode (an
+  // existing highlight or a just-saved selection) keeps the Remove/note actions.
+  const isPreview = !!selection && !existingHighlight && !highlightId
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
+
+  // Right-click while previewing saves — the explicit power-shortcut that
+  // mirrors the extension's right-click-to-save. The sheet is only open in
+  // preview mode because a word/chunk is selected, so a right-click is "save
+  // this".
+  //
+  // We act on the right-button `pointerdown`, NOT `contextmenu`: the floating
+  // sheet (Radix) dismisses on an outside `pointerdown` (capture phase), which
+  // flips `open` to false and tears this listener down BEFORE `contextmenu`
+  // ever fires. Handling pointerdown runs the save within that same dispatch.
+  // The save (createHighlight) and its success toast are driven by the global
+  // mutation cache, so they complete even though the sheet then closes.
+  useEffect(() => {
+    if (!open || !isPreview) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 2) return
+      e.preventDefault()
+      void handleSave()
+    }
+    document.addEventListener('pointerdown', onPointerDown, { capture: true })
+    return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
+  }, [open, isPreview, handleSave])
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const displayedIpa = isReady
     ? (pickIpa((glossState as Extract<GlossState, { kind: 'ready' }>).ipa, targetLanguage, englishIpaDialect) ?? null)
@@ -484,23 +552,27 @@ export const SessionGlossSheet = ({
                 </>
               )}
             </div>
-            <FloatingSheetExpandToggle
-              className='hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors'
-              ariaLabel={expanded ? t`Hide notes` : t`Show notes`}
-            >
-              {(isExpanded, isMobile) => {
-                // Mobile drawer grows upward visually → up arrow invites the
-                // expand. Desktop popover grows downward inside its content
-                // box → down arrow invites the expand. Either way the icon
-                // flips on toggle.
-                const pointsUp = isMobile ? !isExpanded : isExpanded
-                return pointsUp ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
-              }}
-            </FloatingSheetExpandToggle>
+            {/* Notes attach to a saved highlight, so the expand toggle only
+                appears once we're in saved mode (not during a free preview). */}
+            {!isPreview && (
+              <FloatingSheetExpandToggle
+                className='hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors'
+                ariaLabel={expanded ? t`Hide notes` : t`Show notes`}
+              >
+                {(isExpanded, isMobile) => {
+                  // Mobile drawer grows upward visually → up arrow invites the
+                  // expand. Desktop popover grows downward inside its content
+                  // box → down arrow invites the expand. Either way the icon
+                  // flips on toggle.
+                  const pointsUp = isMobile ? !isExpanded : isExpanded
+                  return pointsUp ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
+                }}
+              </FloatingSheetExpandToggle>
+            )}
           </div>
         </FloatingSheetHeader>
 
-        {suggestedGhost && !adopted && (
+        {suggestedGhost && !adopted && highlightId && (
           <FloatingSheetBody>
             {/* Label sits above the button; the button itself stays understated. Still
                 full-width so it's an easy tap target on mobile. */}
@@ -519,7 +591,9 @@ export const SessionGlossSheet = ({
 
         {glossState.kind === 'error' && (
           <FloatingSheetBody>
-            <p className='text-destructive'>{t`Could not fetch a gloss. The highlight is still saved.`}</p>
+            <p className='text-destructive'>
+              {isPreview ? t`Could not fetch a gloss.` : t`Could not fetch a gloss. The highlight is still saved.`}
+            </p>
           </FloatingSheetBody>
         )}
 
@@ -551,32 +625,49 @@ export const SessionGlossSheet = ({
 
         <FloatingSheetFooter>
           <div className='flex items-center justify-between gap-2'>
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              disabled={isDeleting || !highlightId}
-              onClick={handleRemove}
-              className='text-destructive hover:bg-destructive/10'
-            >
-              <Trash2 className='mr-1 h-4 w-4' />
-              {isDeleting ? t`Removing…` : t`Remove highlight`}
-            </Button>
-            {expanded ? (
-              <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
-                {isSavingNote ? t`Saving…` : t`Save note`}
-              </Button>
+            {isPreview ? (
+              // Preview mode: looking is free. Closing discards with nothing
+              // saved; Save is the explicit action that persists the highlight
+              // and fires the enrich/card job.
+              <>
+                <Button type='button' variant='ghost' size='sm' onClick={onClose}>
+                  {t`Cancel`}
+                </Button>
+                <Button type='button' size='sm' disabled={isSaving} onClick={() => void handleSave()}>
+                  <Save className='mr-1 h-4 w-4' />
+                  {isSaving ? t`Saving…` : t`Save`}
+                </Button>
+              </>
             ) : (
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                disabled={!highlightId}
-                onClick={() => setExpanded(true)}
-              >
-                <PencilLine className='h-4 w-4' />
-                {hasNoteDetails ? t`Edit note` : t`Add note`}
-              </Button>
+              <>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  disabled={isDeleting || !highlightId}
+                  onClick={handleRemove}
+                  className='text-destructive hover:bg-destructive/10'
+                >
+                  <Trash2 className='mr-1 h-4 w-4' />
+                  {isDeleting ? t`Removing…` : t`Remove highlight`}
+                </Button>
+                {expanded ? (
+                  <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
+                    {isSavingNote ? t`Saving…` : t`Save note`}
+                  </Button>
+                ) : (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={!highlightId}
+                    onClick={() => setExpanded(true)}
+                  >
+                    <PencilLine className='h-4 w-4' />
+                    {hasNoteDetails ? t`Edit note` : t`Add note`}
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </FloatingSheetFooter>

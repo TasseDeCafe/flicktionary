@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { getWordRanges } from './word-segmenter.ts'
+import { getWordRanges } from './word-segmenter'
 
 // Maps the returned ranges back to the substrings they cover, so assertions
 // read in terms of the actual word tokens rather than raw offsets.

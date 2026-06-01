@@ -2,7 +2,10 @@
   "extends": "@flicktionary/typescript-config/library.json",
   "compilerOptions": {
     "rootDir": ".",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    // Override the shared ES2020 lib so Intl.Segmenter's types
+    // (lib.es2022.intl.d.ts) are available; used by dom/word-segmenter.ts.
+    "lib": ["ES2022", "DOM"]
   },
   "include": ["."],
   "exclude": ["node_modules", "dist"],
