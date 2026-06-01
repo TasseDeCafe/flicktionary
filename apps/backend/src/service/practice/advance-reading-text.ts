@@ -1,5 +1,5 @@
 import type { DbPracticeText, ReadingGroup } from '../../transport/database/practice-texts/practice-texts-repository'
-import type { PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { DbUserLookup, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { ReadingRating, ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   produceNextReadable,
@@ -26,6 +26,31 @@ const readAnnotations = (text: DbPracticeText): Array<{ headword: string; sense:
       sense: typeof a.sense === 'string' ? a.sense : '',
     }))
     .filter((a) => a.headword.length > 0)
+}
+
+const dateValue = (value: string | Date | null | undefined): number | null => {
+  if (!value) return null
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) ? time : null
+}
+
+const wasReviewedAfterTextWasPrepared = (lookup: DbUserLookup, text: DbPracticeText, pool: PracticePool): boolean => {
+  const preparedAt = dateValue(text.ready_at) ?? dateValue(text.created_at)
+  if (preparedAt == null) return false
+  const lastReview = pool === 'active' ? dateValue(lookup.active_srs_last_review) : dateValue(lookup.srs_last_review)
+  return lastReview != null && lastReview > preparedAt
+}
+
+const isEligibleForScope = (lookup: DbUserLookup, pool: PracticePool, scope: ReviewScope, now: Date): boolean => {
+  if (pool === 'active' && lookup.learning_mode !== 'active') return false
+  const state = pool === 'active' ? lookup.active_srs_state : lookup.srs_state
+  const due = pool === 'active' ? lookup.active_srs_due : lookup.srs_due
+  const wantsNew = scope === 'learn_new' || scope === 'mixed'
+  const wantsDue = scope === 'review_due' || scope === 'mixed'
+  if (state == null) return wantsNew
+  if (!wantsDue || !due) return false
+  const dueAt = dateValue(due)
+  return dueAt != null && dueAt <= now.getTime()
 }
 
 // The single reading-mode mutation. Idempotent via the one-shot reading->done
@@ -63,6 +88,7 @@ export const advanceReadingText = async (
     // comparison against it (passing the remaining-new would double-count).
     const { maxNewTerms } = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
     const seen = new Set<string>()
+    const now = new Date()
     for (const ann of readAnnotations(claimed)) {
       const lookup = await deps.userLookupsRepository.findByKey({
         userId,
@@ -73,6 +99,8 @@ export const advanceReadingText = async (
       if (!lookup || seen.has(lookup.id)) continue
       seen.add(lookup.id)
       ratedLookupIds.push(lookup.id)
+      if (wasReviewedAfterTextWasPrepared(lookup, claimed, effectivePool)) continue
+      if (!isEligibleForScope(lookup, effectivePool, scope, now)) continue
       const rating = ratingByLookupId.get(lookup.id) ?? 'good'
       const result = await applyTermRating({ lookup, userId, rating, pool: effectivePool, maxNewTerms, deps })
       if (result.ok && result.introducedNew) introduced += 1
