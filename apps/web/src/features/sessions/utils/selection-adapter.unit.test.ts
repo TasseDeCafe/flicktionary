@@ -23,6 +23,7 @@ describe('normalizeCrossSegmentSelection', () => {
       startOffset: 6, // A's end-word (beta) start
       endOffset: 5, // B's anchor-word (gamma) end
       selectionText: 'beta\ngamma',
+      contextLine: 'alpha beta', // display text of the start segment (A)
     })
   })
 
@@ -36,6 +37,7 @@ describe('normalizeCrossSegmentSelection', () => {
       startOffset: 0,
       endOffset: 11,
       selectionText: 'alpha beta\ngamma delta',
+      contextLine: 'alpha beta', // display text of the start segment (A)
     })
   })
 
@@ -49,6 +51,7 @@ describe('normalizeCrossSegmentSelection', () => {
       startOffset: 0,
       endOffset: 10,
       selectionText: 'alpha beta',
+      contextLine: 'alpha beta', // display text of the start segment (A)
     })
   })
 
@@ -66,6 +69,7 @@ describe('normalizeCrossSegmentSelection', () => {
       startOffset: 6,
       endOffset: 10,
       selectionText: 'beta',
+      contextLine: 'alpha beta', // display text of the start segment (A)
     })
   })
 

@@ -15,6 +15,12 @@ export interface OverlayMountOptions {
 
 export interface OverlayMountHandle {
   unmount(): void
+  // The separate, non-transformed popover shadow host (gloss tooltip lives
+  // here). Exposed so the pause-on-hover resume check can treat the pointer as
+  // still "on the subtitles" while it's over the popover — that's the hover
+  // bridge that lets the user move from the word into the popover to click Save
+  // without the video resuming and dismissing it.
+  popoverHost: HTMLElement
 }
 
 // Attach a shadow root + React root to the persistent host (owned by
@@ -72,5 +78,6 @@ export function mountSubtitleOverlay(host: HTMLElement, options: OverlayMountOpt
       document.removeEventListener('fullscreenchange', onFullscreenChange)
       popoverHost.remove()
     },
+    popoverHost,
   }
 }

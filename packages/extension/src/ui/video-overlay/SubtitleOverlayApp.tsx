@@ -19,6 +19,10 @@ import { CefrPicker } from './CefrPicker'
 import { SaveToast } from './SaveToast'
 
 const HOVER_DEBOUNCE_MS = 300
+// Grace period after the pointer leaves a word before the gloss popover hides,
+// so the user can cross the gap into the popover (to click Save) without it
+// vanishing. Entering the popover cancels the hide.
+const GLOSS_HIDE_GRACE_MS = 150
 
 // One token of a subtitle line: a word (clickable) or the punctuation/space
 // between words. `charStart`/`charEnd` are offsets in the line text — they feed
@@ -83,12 +87,18 @@ const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: Lin
   return { minOrd, maxOrd, startCharStart: first.charStart, endCharEnd: last.charEnd, count: maxOrd - minOrd + 1 }
 }
 
+// What an explicit Save from the gloss popover should persist — captured when
+// the gloss opens, since `hoveredRef` is cleared by the time the pointer has
+// moved onto the popover.
+type GlossSaveTarget = { kind: 'single'; tl: TokenizedLine; token: LineToken } | { kind: 'chunk'; tl: TokenizedLine }
+
 interface GlossState {
   lineIndex: number
   anchor: HTMLElement
   word: string
   sentence: string
   content: GlossContent
+  save: GlossSaveTarget
 }
 
 interface ToastState {
@@ -128,6 +138,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const [cefr, setCefrState] = useState<CefrState | null>(null)
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Pending deferred hide of the gloss popover (the hover-bridge grace timer).
+  const glossHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoveredKey = useRef<string | null>(null)
   // The word currently under the pointer (null when over nothing). Used so the
   // window `mouseup` handler can open the chunk gloss on the word the pointer
@@ -155,10 +167,28 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     setSelection(next)
   }, [])
 
+  const cancelGlossHide = useCallback(() => {
+    if (glossHideTimer.current) {
+      clearTimeout(glossHideTimer.current)
+      glossHideTimer.current = null
+    }
+  }, [])
+
   const hideGloss = useCallback(() => {
+    cancelGlossHide()
     glossSeq.current += 1
     setGloss(null)
-  }, [])
+  }, [cancelGlossHide])
+
+  // Defer the hide so the pointer can cross the gap into the popover; entering
+  // the popover calls cancelGlossHide, leaving it (or this firing) hides.
+  const scheduleGlossHide = useCallback(() => {
+    cancelGlossHide()
+    glossHideTimer.current = setTimeout(() => {
+      glossHideTimer.current = null
+      hideGloss()
+    }, GLOSS_HIDE_GRACE_MS)
+  }, [cancelGlossHide, hideGloss])
 
   const clearSelection = useCallback(() => {
     selectingRef.current = false
@@ -239,17 +269,17 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // ---- gloss (hover) flow ----------------------------------------------------
 
   const showGloss = useCallback(
-    (lineIndex: number, anchor: HTMLElement, word: string, sentence: string) => {
+    (lineIndex: number, anchor: HTMLElement, word: string, sentence: string, save: GlossSaveTarget) => {
       const cacheKey = `${word}::${sentence}`
       const cached = glossCache.current.get(cacheKey)
       const seq = ++glossSeq.current
 
       if (cached) {
-        setGloss({ lineIndex, anchor, word, sentence, content: { status: 'ready', data: cached } })
+        setGloss({ lineIndex, anchor, word, sentence, save, content: { status: 'ready', data: cached } })
         return
       }
 
-      setGloss({ lineIndex, anchor, word, sentence, content: { status: 'loading' } })
+      setGloss({ lineIndex, anchor, word, sentence, save, content: { status: 'loading' } })
       ;(async () => {
         let response
         try {
@@ -270,13 +300,14 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
             ipa: response.ipa ?? null,
           }
           glossCache.current.set(cacheKey, data)
-          setGloss({ lineIndex, anchor, word, sentence, content: { status: 'ready', data } })
+          setGloss({ lineIndex, anchor, word, sentence, save, content: { status: 'ready', data } })
         } else {
           setGloss({
             lineIndex,
             anchor,
             word,
             sentence,
+            save,
             content: { status: 'error', message: response.error || 'No translation available' },
           })
         }
@@ -307,9 +338,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
             .slice(range.minOrd, range.maxOrd + 1)
             .map((w) => w.text)
             .join(' ')
-          showGloss(tl.line.index, element, words, tl.line.text)
+          showGloss(tl.line.index, element, words, tl.line.text, { kind: 'chunk', tl })
         } else {
-          showGloss(tl.line.index, element, token.text, tl.line.text)
+          showGloss(tl.line.index, element, token.text, tl.line.text, { kind: 'single', tl, token })
         }
       }, HOVER_DEBOUNCE_MS)
     },
@@ -318,6 +349,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const onWordEnter = useCallback(
     (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
+      // A fresh hover supersedes any pending deferred hide from a prior word.
+      cancelGlossHide()
       hoveredRef.current = { tl, token, element }
 
       // Drag-select: extend the active selection.
@@ -330,7 +363,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       // pending timer is what opens the chunk gloss without a re-hover.
       scheduleHoverGloss(tl, token, element)
     },
-    [setSelectionBoth, scheduleHoverGloss]
+    [setSelectionBoth, scheduleHoverGloss, cancelGlossHide]
   )
 
   const onWordLeave = useCallback(
@@ -345,9 +378,11 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
       if (range && range.count > 1) return
 
-      hideGloss()
+      // Deferred so the pointer can reach the popover (to click Save) before it
+      // hides — the popover's onMouseEnter cancels this.
+      scheduleGlossHide()
     },
-    [hideGloss]
+    [scheduleGlossHide]
   )
 
   const onWordContextMenu = useCallback(
@@ -475,12 +510,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                   const inRange =
                     range !== null && token.charStart >= range.startCharStart && token.charEnd <= range.endCharEnd
                   if (token.isWord) {
+                    // Round only the run's outer corners so a multi-word selection
+                    // reads as one continuous block (the flat backgrounds of the
+                    // interior words/spaces merge), while keeping each word a direct
+                    // child of the line — wrapping the run in a span would remount
+                    // the words and detach the gloss anchor.
                     return (
                       <Word
                         key={i}
                         word={token.text}
                         sentence={tl.line.text}
                         selected={inRange}
+                        roundStart={inRange && range !== null && token.charStart === range.startCharStart}
+                        roundEnd={inRange && range !== null && token.charEnd === range.endCharEnd}
                         onEnter={(el) => onWordEnter(tl, token, el)}
                         onLeave={() => onWordLeave(tl, token)}
                         onContextMenu={() => onWordContextMenu(tl, token)}
@@ -488,6 +530,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                       />
                     )
                   }
+                  // Whitespace/punctuation between selected words: flat background,
+                  // no rounding, so it fuses the adjacent words into one block.
                   return inRange ? (
                     <span key={i} className='bg-[rgba(255,255,0,0.35)]'>
                       {token.text}
@@ -511,7 +555,18 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       {createPortal(
         <>
           {snapshot.visible && gloss && (
-            <GlossTooltip anchor={gloss.anchor} word={gloss.word} content={gloss.content} />
+            <GlossTooltip
+              anchor={gloss.anchor}
+              word={gloss.word}
+              content={gloss.content}
+              onSave={() => {
+                if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl)
+                else saveSingle(gloss.save.tl.line, gloss.save.token)
+                hideGloss()
+              }}
+              onPointerEnter={cancelGlossHide}
+              onPointerLeave={scheduleGlossHide}
+            />
           )}
           {cefr && (
             <CefrPicker languageCode={cefr.targetLanguage} video={video} onPick={onCefrPick} onCancel={onCefrCancel} />

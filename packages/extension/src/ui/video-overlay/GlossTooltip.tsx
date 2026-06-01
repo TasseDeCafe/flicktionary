@@ -15,13 +15,20 @@ export interface GlossTooltipProps {
   anchor: HTMLElement
   word: string
   content: GlossContent
+  // Explicit save (mirrors the right-click power-shortcut): persists the
+  // highlight + enqueues the card job. Looking via hover stays free.
+  onSave: () => void
+  // Hover bridge: the pointer entering/leaving the popover. Entering cancels the
+  // pending hide so the user can reach the Save button; leaving dismisses it.
+  onPointerEnter: () => void
+  onPointerLeave: () => void
 }
 
 // Hover gloss popover — mirrors the web app's fast-gloss popover. Positioned
 // with @floating-ui/dom (fixed strategy, top placement, flip + shift), kept in
 // sync via autoUpdate. No `display` toggling: React mounts/unmounts it, so the
 // legacy `display:flex !important` hide trap is gone.
-export function GlossTooltip({ anchor, word, content }: GlossTooltipProps) {
+export function GlossTooltip({ anchor, word, content, onSave, onPointerEnter, onPointerLeave }: GlossTooltipProps) {
   const ref = useRef<HTMLDivElement>(null)
   // Gate visibility until the async computePosition has placed the tooltip;
   // otherwise it paints one frame at its initial top-left before moving (the
@@ -53,8 +60,11 @@ export function GlossTooltip({ anchor, word, content }: GlossTooltipProps) {
   return (
     <div
       ref={ref}
+      data-flicktionary-gloss-popover=''
+      onMouseEnter={onPointerEnter}
+      onMouseLeave={onPointerLeave}
       style={{ visibility: positioned ? 'visible' : 'hidden' }}
-      className='pointer-events-none fixed left-0 top-0 z-[2147483647] flex max-w-[320px] flex-col gap-1 rounded-lg bg-black/90 px-3 py-2 text-sm leading-snug text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
+      className='pointer-events-auto fixed left-0 top-0 z-[2147483647] flex max-w-[320px] flex-col gap-1 rounded-lg bg-black/90 px-3 py-2 text-sm leading-snug text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
     >
       <div className='text-[15px] font-semibold break-words text-white'>{word}</div>
 
@@ -86,6 +96,15 @@ export function GlossTooltip({ anchor, word, content }: GlossTooltipProps) {
           )}
         </>
       )}
+
+      {/* Explicit Save — discoverable counterpart to the right-click shortcut. */}
+      <button
+        type='button'
+        onClick={onSave}
+        className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
+      >
+        Save
+      </button>
     </div>
   )
 }
