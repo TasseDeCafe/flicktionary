@@ -37,7 +37,7 @@ import {
   normalizeYoutubeLanguageCode,
   toFlicktionarySegments,
 } from './flicktionary/youtube-context'
-import { getCurrentStreamingMetadata } from './flicktionary/page-context'
+import { getCurrentStreamingMetadata, pickStreamingTitle } from './flicktionary/page-context'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
 import { PauseOnHoverMode, SettingsProvider, SubtitleListPreference } from '@asbplayer-fork/common/settings'
 import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection'
@@ -916,11 +916,13 @@ export default class Binding {
         }
       } else {
         // Any other site (Netflix, Prime, …): identify the content by the
-        // subtitle contentHash; title/url are sniffed from the page.
+        // subtitle contentHash. Prefer the site page-script's clean basename for
+        // the title (Netflix's document.title is just "Netflix"), falling back
+        // to the page title; url is the page URL.
         const meta = getCurrentStreamingMetadata()
         context = {
           source: 'streaming',
-          videoTitle: meta.videoTitle,
+          videoTitle: pickStreamingTitle(this.videoDataSyncController.videoBasename, meta.videoTitle),
           videoUrl: meta.videoUrl,
           contentHash,
           segments,

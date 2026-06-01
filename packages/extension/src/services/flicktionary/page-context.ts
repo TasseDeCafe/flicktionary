@@ -18,3 +18,15 @@ export const getCurrentStreamingMetadata = (): FlicktionaryStreamingVideoMetadat
   const videoUrl = typeof window !== 'undefined' ? window.location.href : ''
   return { videoTitle, videoUrl }
 }
+
+// Prefer the site page-script's clean basename (e.g. Netflix's
+// "Show S01E02 Episode") when it's meaningful; otherwise fall back to the
+// scrubbed page title. Many sites (notably Netflix) leave document.title as the
+// bare site name during playback, so the basename is the better source when
+// present. A purely-numeric basename is a Netflix titleId placeholder
+// (metadata not ready yet) — treat it as no title and fall back.
+export const pickStreamingTitle = (basename: string | undefined, pageTitle: string): string => {
+  const cleaned = basename?.trim()
+  if (cleaned && !/^\d+$/.test(cleaned)) return cleaned
+  return pageTitle
+}
