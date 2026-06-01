@@ -49,6 +49,16 @@ const _intersects = (clientX: number, clientY: number, element: HTMLElement): bo
   )
 }
 
+// React mode can drive one or two overlay hosts at once — a bottom and/or a top
+// overlay — so dual subtitles render in their correct screen positions (each
+// ElementOverlay already owns its bottom/top positioning). Tracks are routed to
+// a host by their per-track alignment.
+type ReactOverlayKind = 'bottom' | 'top'
+interface ReactOverlayHandle {
+  store: SubtitleStore
+  mount: OverlayMountHandle
+}
+
 export default class SubtitleController {
   private readonly video: HTMLMediaElement
   private readonly settings: SettingsProvider
@@ -90,11 +100,12 @@ export default class SubtitleController {
   _preCacheDom
 
   // React + Shadow DOM overlay (Option A). Latched per video by Binding via
-  // evaluateReactMode(); when on, the loop pushes to `_subtitleStore` instead of
-  // rendering legacy HTML, and the legacy WordInteractionController is not bound.
+  // evaluateReactMode(); when on, the loop pushes cues to the per-alignment
+  // stores instead of rendering legacy HTML, and the legacy
+  // WordInteractionController is not bound. One mount per active overlay
+  // (bottom and/or top) keyed by alignment.
   private _reactMode = false
-  private _subtitleStore?: SubtitleStore
-  private _overlayMount?: OverlayMountHandle
+  private _reactOverlays: Partial<Record<ReactOverlayKind, ReactOverlayHandle>> = {}
 
   readonly autoPauseContext: AutoPauseContext = new AutoPauseContext()
 
@@ -160,48 +171,95 @@ export default class SubtitleController {
       subtitles: this._subtitles,
       wordClickEnabled: this.wordClickEnabled,
       shouldRenderBottomOverlay: this.shouldRenderBottomOverlay,
-      shouldRenderTopOverlay: this.shouldRenderTopOverlay,
     })
 
     if (eligible && !this._reactMode) {
       this._enterReactMode(closures)
     } else if (!eligible && this._reactMode) {
       this._exitReactMode()
+    } else if (eligible && this._reactMode && this._reactMountsStale()) {
+      // Alignment changed while in React mode (e.g. the user toggled a track to
+      // dual-subtitle): the set of hosts no longer matches the active overlays,
+      // so remount to add/drop the top host.
+      this._exitReactMode()
+      this._enterReactMode(closures)
     }
   }
 
+  // The overlays React mode should be driving, from the current per-track
+  // alignment. Bottom is required by the gate; top is added for dual subtitles.
+  private _activeReactKinds(): ReactOverlayKind[] {
+    const kinds: ReactOverlayKind[] = []
+    if (this.shouldRenderBottomOverlay) kinds.push('bottom')
+    if (this.shouldRenderTopOverlay) kinds.push('top')
+    return kinds
+  }
+
+  private _reactOverlayTarget(kind: ReactOverlayKind): ElementOverlay {
+    return kind === 'bottom' ? this.bottomSubtitlesElementOverlay : this.topSubtitlesElementOverlay
+  }
+
+  private _reactMountsStale(): boolean {
+    const mounted = Object.keys(this._reactOverlays) as ReactOverlayKind[]
+    const active = this._activeReactKinds()
+    if (mounted.length !== active.length) return true
+    return active.some((kind) => !this._reactOverlays[kind])
+  }
+
   private _enterReactMode(closures: FlicktionaryVideoClosures) {
-    const overlay = this.bottomSubtitlesElementOverlay
-    if (!(overlay instanceof CachingElementOverlay)) {
-      return
+    for (const kind of this._activeReactKinds()) {
+      const overlay = this._reactOverlayTarget(kind)
+      if (!(overlay instanceof CachingElementOverlay)) {
+        continue
+      }
+      // Clear any legacy DOM the overlay was showing, then stand up a fresh
+      // persistent React host on a clean slate.
+      overlay.hide()
+      const host = overlay.mountPersistentHost()
+      const store = new SubtitleStore()
+      const mount = mountSubtitleOverlay(host, {
+        store,
+        video: this.video as HTMLVideoElement,
+        closures,
+      })
+      this._reactOverlays[kind] = { store, mount }
     }
 
-    // Clear any legacy DOM the bottom overlay was showing, then stand up fresh
-    // containers + the persistent React host on a clean slate.
-    overlay.hide()
-    const host = overlay.mountPersistentHost()
-    this._subtitleStore = new SubtitleStore()
-    this._overlayMount = mountSubtitleOverlay(host, {
-      store: this._subtitleStore,
-      video: this.video as HTMLVideoElement,
-      closures,
-    })
+    // No eligible CachingElementOverlay mounted — stay on the legacy path.
+    if (Object.keys(this._reactOverlays).length === 0) {
+      return
+    }
     this._reactMode = true
-    // Force the loop to re-push current subtitles into the store next tick.
+    // Force the loop to re-push current subtitles into the stores next tick.
     this.showingSubtitles = undefined
   }
 
   private _exitReactMode() {
-    this._overlayMount?.unmount()
-    this._overlayMount = undefined
-    const overlay = this.bottomSubtitlesElementOverlay
-    if (overlay instanceof CachingElementOverlay) {
-      overlay.disposePersistentHost()
+    for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {
+      this._reactOverlays[kind]?.mount.unmount()
+      const overlay = this._reactOverlayTarget(kind)
+      if (overlay instanceof CachingElementOverlay) {
+        overlay.disposePersistentHost()
+      }
     }
-    this._subtitleStore = undefined
+    this._reactOverlays = {}
     this._reactMode = false
     // Force the loop to re-render legacy HTML next tick.
     this.showingSubtitles = undefined
+  }
+
+  private _forEachReactStore(fn: (store: SubtitleStore) => void) {
+    for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {
+      const handle = this._reactOverlays[kind]
+      if (handle) fn(handle.store)
+    }
+  }
+
+  // The transient "+250 ms" offset indicator anchors to a single overlay
+  // (bottom when present) — showing it on both would duplicate the line.
+  private _setReactOffsetText(text: string | null) {
+    const handle = this._reactOverlays.bottom ?? this._reactOverlays.top
+    handle?.store.setOffsetText(text)
   }
 
   reset() {
@@ -320,17 +378,20 @@ export default class SubtitleController {
     return this.subtitleStyleObjects[track] ?? this.subtitleStyleObjects[0] ?? {}
   }
 
-  private _pushReactSubtitles(subtitles: IndexedSubtitleModel[]) {
-    if (!this._subtitleStore) {
-      return
+  private _pushReactSubtitles(showingSubtitles: IndexedSubtitleModel[]) {
+    for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {
+      const handle = this._reactOverlays[kind]
+      if (!handle) continue
+      const lines: SubtitleLineModel[] = showingSubtitles
+        .filter((subtitle) => this._getSubtitleTrackAlignment(subtitle.track) === kind)
+        .map((subtitle) => ({
+          index: subtitle.index,
+          track: subtitle.track ?? 0,
+          text: subtitle.text,
+          style: this._reactStyleForTrack(subtitle.track),
+        }))
+      handle.store.setLines(lines)
     }
-    const lines: SubtitleLineModel[] = subtitles.map((subtitle) => ({
-      index: subtitle.index,
-      track: subtitle.track ?? 0,
-      text: subtitle.text,
-      style: this._reactStyleForTrack(subtitle.track),
-    }))
-    this._subtitleStore.setLines(lines)
   }
 
   private _computeClasses(settings: SubtitleSettings) {
@@ -482,7 +543,7 @@ export default class SubtitleController {
           // Don't call hide() — that would dispose the host and leak the React
           // root. Hiding goes through a store flag (the app renders nothing);
           // the containers + host stay mounted.
-          this._subtitleStore?.setVisible(false)
+          this._forEachReactStore((store) => store.setVisible(false))
         } else {
           this.bottomSubtitlesElementOverlay.hide()
           this.topSubtitlesElementOverlay.hide()
@@ -491,19 +552,15 @@ export default class SubtitleController {
         if (this.refreshCurrentSubtitle) this.refreshCurrentSubtitle = false
 
         if (this._reactMode) {
-          this._subtitleStore?.setVisible(true)
-          // React mode is latched to a single bottom track (plan #6); push only
-          // the bottom-aligned cues.
-          const showingSubtitlesBottom = showingSubtitles.filter(
-            (s) => this._getSubtitleTrackAlignment(s.track) === 'bottom'
-          )
-          this._pushReactSubtitles(showingSubtitlesBottom)
+          this._forEachReactStore((store) => store.setVisible(true))
+          // Route every showing cue to its overlay (bottom/top) by alignment.
+          this._pushReactSubtitles(showingSubtitles)
 
           if (showOffset) {
-            this._subtitleStore?.setOffsetText(this._formatOffset(offset))
+            this._setReactOffsetText(this._formatOffset(offset))
             this.showingOffset = offset
           } else {
-            this._subtitleStore?.setOffsetText(null)
+            this._setReactOffsetText(null)
             this.showingOffset = undefined
           }
         } else {
@@ -832,9 +889,17 @@ export default class SubtitleController {
     if (this._reactMode) {
       // Push the loaded message as a transient store line. Newline-joined (not
       // <br>) since React renders it as text under `white-space: pre-wrap`.
+      // Show it once (bottom overlay when present); clear any other overlay.
       const text = loadedMessage.replace(/<br>/g, '\n')
-      this._subtitleStore?.setVisible(true)
-      this._subtitleStore?.setLines([{ index: -1, track: 0, text, style: this._reactStyleForTrack(0) }])
+      const primary: ReactOverlayKind = this._reactOverlays.bottom ? 'bottom' : 'top'
+      for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {
+        const handle = this._reactOverlays[kind]
+        if (!handle) continue
+        handle.store.setVisible(true)
+        handle.store.setLines(
+          kind === primary ? [{ index: -1, track: 0, text, style: this._reactStyleForTrack(0) }] : []
+        )
+      }
       this.showingLoadedMessage = true
       this.lastLoadedMessageTimestamp = Date.now()
       return
@@ -908,13 +973,16 @@ export default class SubtitleController {
       return true
     }
 
-    // Hover bridge: while the React gloss popover is open, treat the pointer as
+    // Hover bridge: while a React gloss popover is open, treat the pointer as
     // still "on the subtitles" when it's over the popover. Without this, moving
     // from the hovered word up to the popover (to click Save) exits the
-    // subtitle rect, auto-resumes playback, and dismisses the popover.
-    const popover = this._overlayMount?.popoverHost?.shadowRoot?.querySelector(GLOSS_POPOVER_SELECTOR)
-    if (popover instanceof HTMLElement && _intersects(clientX, clientY, popover)) {
-      return true
+    // subtitle rect, auto-resumes playback, and dismisses the popover. Check
+    // every mounted overlay's popover host (bottom and/or top).
+    for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {
+      const popover = this._reactOverlays[kind]?.mount.popoverHost?.shadowRoot?.querySelector(GLOSS_POPOVER_SELECTOR)
+      if (popover instanceof HTMLElement && _intersects(clientX, clientY, popover)) {
+        return true
+      }
     }
 
     return false

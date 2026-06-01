@@ -497,7 +497,12 @@ export interface FlicktionaryGlossResponse {
 //    when its session cache is cold (e.g. the user saved before the
 //    register-subtitles ping had time to land).
 export interface SaveWordFlicktionaryVideoContext {
-  readonly youtubeVideoId: string
+  // Which ingestion flow this video uses: 'youtube' (keyed by youtubeVideoId)
+  // or 'streaming' (Netflix/Prime/…, keyed by the subtitle contentHash). The
+  // background routes the cold-start findOrCreate call accordingly.
+  readonly source: 'youtube' | 'streaming'
+  // Present only when source === 'youtube'.
+  readonly youtubeVideoId?: string
   readonly videoTitle: string
   readonly videoUrl: string
   // No language fields: the backend detects the subtitle language from the
@@ -553,7 +558,10 @@ export interface SetFlicktionaryCefrResponse {
 
 export interface RegisterFlicktionarySubtitlesMessage extends MessageWithId {
   readonly command: 'register-flicktionary-subtitles'
-  readonly youtubeVideoId: string
+  // Ingestion flow for this video — see SaveWordFlicktionaryVideoContext.source.
+  readonly source: 'youtube' | 'streaming'
+  // Present only when source === 'youtube'.
+  readonly youtubeVideoId?: string
   readonly videoTitle: string
   readonly videoUrl: string
   // BCP-47 language code of the selected YouTube caption track, when known.

@@ -16,8 +16,12 @@ export interface GlossTooltipProps {
   word: string
   content: GlossContent
   // Explicit save (mirrors the right-click power-shortcut): persists the
-  // highlight + enqueues the card job. Looking via hover stays free.
+  // highlighted word. Looking via hover stays free.
   onSave: () => void
+  // When set, saving is unavailable here (e.g. off YouTube, where saving isn't
+  // wired up yet). Render Save disabled with this reason instead of an active
+  // button — looking is still free, so the gloss above stays fully usable.
+  saveDisabledReason?: string | null
   // Hover bridge: the pointer entering/leaving the popover. Entering cancels the
   // pending hide so the user can reach the Save button; leaving dismisses it.
   onPointerEnter: () => void
@@ -28,7 +32,15 @@ export interface GlossTooltipProps {
 // with @floating-ui/dom (fixed strategy, top placement, flip + shift), kept in
 // sync via autoUpdate. No `display` toggling: React mounts/unmounts it, so the
 // legacy `display:flex !important` hide trap is gone.
-export function GlossTooltip({ anchor, word, content, onSave, onPointerEnter, onPointerLeave }: GlossTooltipProps) {
+export function GlossTooltip({
+  anchor,
+  word,
+  content,
+  onSave,
+  onPointerEnter,
+  onPointerLeave,
+  saveDisabledReason,
+}: GlossTooltipProps) {
   const ref = useRef<HTMLDivElement>(null)
   // Gate visibility until the async computePosition has placed the tooltip;
   // otherwise it paints one frame at its initial top-left before moving (the
@@ -97,14 +109,28 @@ export function GlossTooltip({ anchor, word, content, onSave, onPointerEnter, on
         </>
       )}
 
-      {/* Explicit Save — discoverable counterpart to the right-click shortcut. */}
-      <button
-        type='button'
-        onClick={onSave}
-        className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
-      >
-        Save
-      </button>
+      {/* Explicit Save — discoverable counterpart to the right-click shortcut.
+          Disabled (with a reason) where saving isn't available yet. */}
+      {saveDisabledReason ? (
+        <div className='mt-1.5 flex flex-col gap-1'>
+          <button
+            type='button'
+            disabled
+            className='self-start cursor-not-allowed rounded-md bg-white/10 px-2.5 py-1 text-[13px] font-semibold text-white/40'
+          >
+            Save
+          </button>
+          <div className='text-[12px] text-white/60'>{saveDisabledReason}</div>
+        </div>
+      ) : (
+        <button
+          type='button'
+          onClick={onSave}
+          className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
+        >
+          Save
+        </button>
+      )}
     </div>
   )
 }

@@ -1114,7 +1114,7 @@ export type Database = {
     Enums: {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
-      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube'
+      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
@@ -1400,7 +1400,7 @@ export const Constants = {
     Enums: {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
-      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube'],
+      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
       processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window', 'seed_card_chat'],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],

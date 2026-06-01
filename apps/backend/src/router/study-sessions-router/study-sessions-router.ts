@@ -81,6 +81,62 @@ export const StudySessionsRouter = (
 ): Router => {
   const implementer = implement(studySessionsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
+  // Shared front half of both extension ingestion flows (YouTube + streaming):
+  // detect the subtitle language and resolve the user's native + CEFR prefs for
+  // it. Returns a discriminated result so each handler can map a failure to its
+  // own typed `errors.*` (the language detected here is the single source of
+  // truth — content language AND session target language).
+  type ExtensionIngestPrefs =
+    | { ok: true; detectedLanguage: string; nativeLanguage: string; cefrLevel: string }
+    | { ok: false; reason: 'unsupported' }
+    | { ok: false; reason: 'missing-cefr'; targetLanguage: string }
+
+  const resolveExtensionIngestPrefs = async (
+    userId: string,
+    segments: ReadonlyArray<{ index: number; text: string; startMs: number; endMs: number }>
+  ): Promise<ExtensionIngestPrefs> => {
+    const detectedLanguage = await languageDetectionPass(buildDetectionSample(segments))
+    if (!detectedLanguage) return { ok: false, reason: 'unsupported' }
+
+    const [nativeLanguage, prefs] = await Promise.all([
+      usersRepository.getNativeLanguage(userId),
+      targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
+    ])
+    // native + CEFR live in user_prefs (set during onboarding), keyed by the
+    // language being studied. Without both we can't shape an enrichment-ready
+    // session — the extension prompts the user to set their level.
+    if (!nativeLanguage || !prefs?.cefr_level) {
+      return { ok: false, reason: 'missing-cefr', targetLanguage: detectedLanguage }
+    }
+    return { ok: true, detectedLanguage, nativeLanguage, cefrLevel: prefs.cefr_level }
+  }
+
+  // Build the UNPROCESSABLE_ENTITY error body for a failed prefs resolution.
+  // The handler throws its own typed `errors.UNPROCESSABLE_ENTITY({ data })` —
+  // this just shares the code/message shaping between the two ingest flows.
+  const ingestPrefsErrorData = (
+    prefs: { reason: 'unsupported' } | { reason: 'missing-cefr'; targetLanguage: string }
+  ) => {
+    if (prefs.reason === 'unsupported') {
+      return {
+        errors: [
+          { code: 'UNSUPPORTED_LANGUAGE', message: 'These subtitles are not in a language Flicktionary supports yet.' },
+        ],
+      }
+    }
+    return {
+      errors: [
+        {
+          code: 'MISSING_CEFR',
+          message: `Set your ${getLanguageName(prefs.targetLanguage)} level on flicktionary.app before saving from the extension.`,
+          // The extension reads this to offer an inline CEFR picker for the
+          // detected language rather than sending the user to the app.
+          targetLanguage: prefs.targetLanguage,
+        },
+      ],
+    }
+  }
+
   const router = implementer.router({
     list: implementer.list.handler(async ({ context }) => {
       const userId = context.res.locals.userId
@@ -252,48 +308,11 @@ export const StudySessionsRouter = (
     findOrCreateForYoutubeVideo: implementer.findOrCreateForYoutubeVideo.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
 
-      // Detect the language from the actual subtitle text. This is the single
-      // source of truth: the detected language is the content language AND the
-      // session target language (study Russian subs → Russian session). The
-      // pass only ever returns a supported ISO-639-1 code or null.
-      const detectedLanguage = await languageDetectionPass(buildDetectionSample(input.subtitles.segments))
-      if (!detectedLanguage) {
-        throw errors.UNPROCESSABLE_ENTITY({
-          data: {
-            errors: [
-              {
-                code: 'UNSUPPORTED_LANGUAGE',
-                message: 'These subtitles are not in a language Flicktionary supports yet.',
-              },
-            ],
-          },
-        })
+      const prefs = await resolveExtensionIngestPrefs(userId, input.subtitles.segments)
+      if (!prefs.ok) {
+        throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(prefs) })
       }
-
-      const [nativeLanguage, prefs] = await Promise.all([
-        usersRepository.getNativeLanguage(userId),
-        targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
-      ])
-      // native + CEFR live in user_prefs (set during onboarding), keyed by the
-      // language being studied. If either is missing for the detected
-      // language we can't shape an enrichment-ready session — the extension
-      // prompts the user to set their level for that language on
-      // flicktionary.app.
-      if (!nativeLanguage || !prefs?.cefr_level) {
-        throw errors.UNPROCESSABLE_ENTITY({
-          data: {
-            errors: [
-              {
-                code: 'MISSING_CEFR',
-                message: `Set your ${getLanguageName(detectedLanguage)} level on flicktionary.app before saving from the extension.`,
-                // The extension reads this to offer an inline CEFR picker for
-                // the detected language rather than sending the user to the app.
-                targetLanguage: detectedLanguage,
-              },
-            ],
-          },
-        })
-      }
+      const { detectedLanguage, nativeLanguage, cefrLevel } = prefs
 
       const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForYoutubeVideo({
         userId,
@@ -306,7 +325,7 @@ export const StudySessionsRouter = (
         subtitleSegments: input.subtitles.segments,
         nativeLanguage,
         targetLanguage: detectedLanguage,
-        cefrLevel: prefs.cefr_level,
+        cefrLevel,
       })
 
       // Stamp the most-recent target language so adhoc wizards and other
@@ -328,6 +347,47 @@ export const StudySessionsRouter = (
         },
       }
     }),
+
+    findOrCreateForStreamingVideo: implementer.findOrCreateForStreamingVideo.handler(
+      async ({ input, context, errors }) => {
+        const userId = context.res.locals.userId
+
+        const prefs = await resolveExtensionIngestPrefs(userId, input.subtitles.segments)
+        if (!prefs.ok) {
+          throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(prefs) })
+        }
+        const { detectedLanguage, nativeLanguage, cefrLevel } = prefs
+
+        const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForStreamingVideo({
+          userId,
+          videoTitle: input.videoTitle,
+          videoUrl: input.videoUrl,
+          contentHash: input.subtitles.contentHash,
+          subtitleLanguage: detectedLanguage,
+          subtitleSegments: input.subtitles.segments,
+          nativeLanguage,
+          targetLanguage: detectedLanguage,
+          cefrLevel,
+        })
+
+        void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
+          logWithSentry({
+            message: 'setLastTargetLanguage failed (streaming ingest)',
+            params: { userId, targetLanguage: detectedLanguage },
+            error,
+          })
+        })
+
+        return {
+          data: {
+            sessionId: session.id,
+            textTrackId: track.id,
+            contentSourceId: contentSource.id,
+            segments: segments.map(toSegmentDto),
+          },
+        }
+      }
+    ),
 
     remove: implementer.remove.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId

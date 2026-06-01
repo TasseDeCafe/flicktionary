@@ -53,8 +53,8 @@ export default class SaveWordHandler {
 
     const videoCtx = message.flicktionaryVideo
     if (!videoCtx) {
-      // Save originated without a YouTube subtitle context (e.g. the
-      // asbplayerv2 web app, or a video opened before subtitles loaded).
+      // Save originated without a subtitle context (e.g. the asbplayerv2 web
+      // app, or a video opened before subtitles loaded).
       throw new Error('Reload the video, then try saving again.')
     }
     if (
@@ -66,18 +66,26 @@ export default class SaveWordHandler {
     }
 
     const client = getFlicktionaryApiClient()
-    let cached = await lookupFlicktionarySession(videoCtx.youtubeVideoId, videoCtx.contentHash)
+    let cached = await lookupFlicktionarySession(videoCtx.source, videoCtx.contentHash)
 
     if (!cached) {
-      const { data } = await client.studySessions.findOrCreateForYoutubeVideo({
-        youtubeVideoId: videoCtx.youtubeVideoId,
-        videoTitle: videoCtx.videoTitle,
-        videoUrl: videoCtx.videoUrl,
-        subtitles: {
-          contentHash: videoCtx.contentHash,
-          segments: videoCtx.segments.map((s) => ({ ...s })),
-        },
-      })
+      const subtitles = {
+        contentHash: videoCtx.contentHash,
+        segments: videoCtx.segments.map((s) => ({ ...s })),
+      }
+      const { data } =
+        videoCtx.source === 'youtube' && videoCtx.youtubeVideoId
+          ? await client.studySessions.findOrCreateForYoutubeVideo({
+              youtubeVideoId: videoCtx.youtubeVideoId,
+              videoTitle: videoCtx.videoTitle,
+              videoUrl: videoCtx.videoUrl,
+              subtitles,
+            })
+          : await client.studySessions.findOrCreateForStreamingVideo({
+              videoTitle: videoCtx.videoTitle,
+              videoUrl: videoCtx.videoUrl,
+              subtitles,
+            })
       const segmentIdByIndex: Record<string, string> = {}
       for (const segment of data.segments) {
         segmentIdByIndex[String(segment.index)] = segment.id
@@ -88,7 +96,7 @@ export default class SaveWordHandler {
         contentSourceId: data.contentSourceId,
         segmentIdByIndex,
       }
-      await storeFlicktionarySession(videoCtx.youtubeVideoId, videoCtx.contentHash, cached)
+      await storeFlicktionarySession(videoCtx.source, videoCtx.contentHash, cached)
     }
 
     const startSegmentId = cached.segmentIdByIndex[String(message.segmentIndex)]

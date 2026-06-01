@@ -597,7 +597,7 @@ msgstr "Adverb"
 msgid "Again"
 msgstr "Again"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:40
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:41
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
 #: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:37
 msgid "All"
@@ -793,11 +793,11 @@ msgstr "Auto-pause preference"
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Auto-pause when mousing over subtitles"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:771
+#: packages/extension/src/controllers/subtitle-controller.ts:828
 msgid "Auto-pause: Off"
 msgstr "Auto-pause: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:769
+#: packages/extension/src/controllers/subtitle-controller.ts:826
 msgid "Auto-pause: On"
 msgstr "Auto-pause: On"
 
@@ -1046,11 +1046,11 @@ msgstr "Condensed"
 msgid "Condensed playback minimum skip interval"
 msgstr "Condensed playback minimum skip interval"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:775
+#: packages/extension/src/controllers/subtitle-controller.ts:832
 msgid "Condensed playback: Off"
 msgstr "Condensed playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:773
+#: packages/extension/src/controllers/subtitle-controller.ts:830
 msgid "Condensed playback: On"
 msgstr "Condensed playback: On"
 
@@ -1521,7 +1521,7 @@ msgstr "Error setting up account..."
 msgid "Error setting up user data"
 msgstr "Error setting up user data"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:787
+#: packages/extension/src/controllers/subtitle-controller.ts:844
 msgid "Error: {message}"
 msgstr "Error: {message}"
 
@@ -1862,11 +1862,11 @@ msgstr "Failed to upload subtitles"
 msgid "Failed to use suggestion"
 msgstr "Failed to use suggestion"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:779
+#: packages/extension/src/controllers/subtitle-controller.ts:836
 msgid "Fast forward playback: Off"
 msgstr "Fast forward playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:777
+#: packages/extension/src/controllers/subtitle-controller.ts:834
 msgid "Fast forward playback: On"
 msgstr "Fast forward playback: On"
 
@@ -2445,7 +2445,7 @@ msgstr "Loading..."
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:65
 #: apps/web/src/features/practice/components/practice-language-view.tsx:106
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:55
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:59
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "Loading…"
 msgstr "Loading…"
@@ -2557,7 +2557,7 @@ msgstr "Move top subtitles down"
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:43
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:44
 msgid "Movies"
 msgstr "Movies"
 
@@ -2689,11 +2689,11 @@ msgstr "No past texts yet. Read some practice texts and they'll show up here."
 #~ msgid "No practice terms are ready right now."
 #~ msgstr "No practice terms are ready right now."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:60
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:64
 msgid "No sessions in this filter."
 msgstr "No sessions in this filter."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:57
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:61
 msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
@@ -2993,7 +2993,7 @@ msgstr "Playback Mode"
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:785
+#: packages/extension/src/controllers/subtitle-controller.ts:842
 msgid "Playback Rate: {rate}"
 msgstr "Playback Rate: {rate}"
 
@@ -3099,7 +3099,7 @@ msgstr "Preparing your text…"
 msgid "Preposition"
 msgstr "Preposition"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:789
+#: packages/extension/src/controllers/subtitle-controller.ts:846
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
@@ -3316,7 +3316,7 @@ msgstr "Remove \"{sessionTitle}\"?"
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
-#: apps/web/src/features/sessions/components/session-card.tsx:65
+#: apps/web/src/features/sessions/components/session-card.tsx:70
 msgid "Remove session"
 msgstr "Remove session"
 
@@ -3333,11 +3333,11 @@ msgstr "Render"
 msgid "Repeat"
 msgstr "Repeat"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:783
+#: packages/extension/src/controllers/subtitle-controller.ts:840
 msgid "Repeat playback: Off"
 msgstr "Repeat playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:781
+#: packages/extension/src/controllers/subtitle-controller.ts:838
 msgid "Repeat playback: On"
 msgstr "Repeat playback: On"
 
@@ -3586,7 +3586,7 @@ msgstr "Session removed"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:37
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:38
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:35
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:36
 msgid "Sessions"
 msgstr "Sessions"
 
@@ -3767,6 +3767,10 @@ msgstr "Starting…"
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:49
 msgid "Stop drilling this term in active practice"
 msgstr "Stop drilling this term in active practice"
+
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:53
+msgid "Streaming"
+msgstr "Streaming"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:246
 msgid "Streaming Video"
@@ -3996,7 +4000,7 @@ msgstr "Test Frontend Unhandled Error"
 #~ msgid "Text imported"
 #~ msgstr "Text imported"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:46
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:47
 msgid "Texts"
 msgstr "Texts"
 
@@ -4278,7 +4282,7 @@ msgstr "Unseen"
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
 #: apps/web/src/features/sessions/components/session-view.tsx:317
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:70
 msgid "Untitled"
 msgstr "Untitled"
 
@@ -4635,6 +4639,6 @@ msgstr "Your name"
 msgid "your@email.com"
 msgstr "your@email.com"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:49
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:50
 msgid "YouTube"
 msgstr "YouTube"

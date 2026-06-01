@@ -1,13 +1,17 @@
-// In-memory + extension-local cache of "for this YouTube video + subtitle
-// hash, here is the Flicktionary session + the segment-index → segment-id map".
+// In-memory + extension-local cache of "for this video (by ingestion source +
+// subtitle hash), here is the Flicktionary session + the segment-index →
+// segment-id map".
 //
 // Populated by `register-flicktionary-subtitles` when subtitles load. Read by
 // the save-word path so each saved highlight cites a real `text_segments.id`
 // without a round trip per save. Survives background-script restarts via
 // `browser.storage.local`; survives Supabase token refresh because it's
 // independent of auth state.
+//
+// Keyed by (source, contentHash) so YouTube and streaming sessions never alias,
+// even in the (vanishingly unlikely) case of byte-identical subtitle content.
 
-const STORAGE_KEY = 'flicktionary.youtube-session-cache.v1'
+const STORAGE_KEY = 'flicktionary.session-cache.v2'
 
 export interface FlicktionaryYoutubeSessionCacheEntry {
   readonly sessionId: string
@@ -18,7 +22,7 @@ export interface FlicktionaryYoutubeSessionCacheEntry {
 
 type CacheMap = Record<string, FlicktionaryYoutubeSessionCacheEntry>
 
-const cacheKey = (videoId: string, contentHash: string) => `${videoId}:${contentHash}`
+const cacheKey = (source: string, contentHash: string) => `${source}:${contentHash}`
 
 let memoryCache: CacheMap | null = null
 
@@ -36,20 +40,20 @@ const writeCache = async (cache: CacheMap): Promise<void> => {
 }
 
 export const lookupFlicktionarySession = async (
-  videoId: string,
+  source: string,
   contentHash: string
 ): Promise<FlicktionaryYoutubeSessionCacheEntry | null> => {
   const cache = await readCache()
-  return cache[cacheKey(videoId, contentHash)] ?? null
+  return cache[cacheKey(source, contentHash)] ?? null
 }
 
 export const storeFlicktionarySession = async (
-  videoId: string,
+  source: string,
   contentHash: string,
   entry: FlicktionaryYoutubeSessionCacheEntry
 ): Promise<void> => {
   const cache = { ...(await readCache()) }
-  cache[cacheKey(videoId, contentHash)] = entry
+  cache[cacheKey(source, contentHash)] = entry
   await writeCache(cache)
 }
 

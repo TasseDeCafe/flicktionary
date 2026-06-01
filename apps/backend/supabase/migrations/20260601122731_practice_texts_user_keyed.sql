@@ -46,8 +46,20 @@ END)::practice_text_status
 WHERE status IN ('ready', 'pending', 'generating');
 
 -- Renumber ord densely within each (user, language, pool) group, chronological.
--- Distinct per group => also distinct within any single session, so the legacy
--- (practice_session_id, ord) unique still holds during the rewrite.
+--
+-- The legacy practice_texts_session_ord_unique (practice_session_id, ord) is
+-- still live here, and Postgres checks UNIQUE per-row (immediately), not at
+-- statement end. A direct renumber can therefore transiently collide: setting a
+-- row to ord=k clashes with a not-yet-updated sibling in the same session that
+-- still holds the old ord=k, even though the final per-group numbering is valid.
+--
+-- So bump every ord into a high, disjoint band first (adding a constant larger
+-- than any existing ord is a bijection that can't collide with the small
+-- originals or with already-bumped rows), then renumber down to dense values:
+-- not-yet-updated rows sit in the high band while updated rows hold distinct
+-- small ords, so every intermediate state is unique.
+UPDATE public.practice_texts SET ord = ord + 1000000000;
+
 WITH renum AS (
   SELECT id,
          ROW_NUMBER() OVER (

@@ -37,6 +37,7 @@ import {
   normalizeYoutubeLanguageCode,
   toFlicktionarySegments,
 } from './flicktionary/youtube-context'
+import { getCurrentStreamingMetadata, pickStreamingTitle } from './flicktionary/page-context'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
 import { PauseOnHoverMode, SettingsProvider, SubtitleListPreference } from '@asbplayer-fork/common/settings'
 import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection'
@@ -887,26 +888,50 @@ export default class Binding {
     try {
       this._flicktionaryVideoContext = undefined
       this._flicktionarySaveDisabledReason = undefined
-      if (!isYoutubeWatchPage()) return
       if (!subtitles || subtitles.length === 0) return
-      const videoMeta = getCurrentYoutubeMetadata()
-      if (!videoMeta) return
 
       const segments = toFlicktionarySegments(subtitles)
       if (segments.length === 0) return
 
       const contentHash = await computeSubtitlesContentHash(segments)
-      const youtubeLanguageCode = this._flicktionarySubtitleLanguageHint
 
-      // No language fields: the backend detects the subtitle language from
-      // the segment text and uses it as both the content and target
-      // language.
-      const context: FlicktionaryVideoContext = {
-        youtubeVideoId: videoMeta.youtubeVideoId,
-        videoTitle: videoMeta.videoTitle,
-        videoUrl: videoMeta.videoUrl,
-        contentHash,
-        segments,
+      // The backend detects the subtitle language from the segment text and
+      // uses it as both the content and target language. youtubeLanguageCode is
+      // display-only + YouTube-only (names the language in an "unsupported"
+      // notice); streaming carries no language hint.
+      const onYoutube = isYoutubeWatchPage()
+      const youtubeLanguageCode = onYoutube ? this._flicktionarySubtitleLanguageHint : undefined
+
+      let context: FlicktionaryVideoContext
+      if (onYoutube) {
+        const videoMeta = getCurrentYoutubeMetadata()
+        if (!videoMeta) return
+        context = {
+          source: 'youtube',
+          youtubeVideoId: videoMeta.youtubeVideoId,
+          videoTitle: videoMeta.videoTitle,
+          videoUrl: videoMeta.videoUrl,
+          contentHash,
+          segments,
+        }
+      } else {
+        // Any other site (Netflix, Prime, …): identify the content by the
+        // subtitle contentHash. Netflix's document.title is just "Netflix", so
+        // prefer the site page-script's clean basename, then the loaded
+        // subtitle's "Video Name" (always set by this point — see _updateSubtitles),
+        // then the page title. url is the page URL.
+        const meta = getCurrentStreamingMetadata()
+        context = {
+          source: 'streaming',
+          videoTitle: pickStreamingTitle(
+            this.videoDataSyncController.videoBasename,
+            this.subtitleFileName(0),
+            meta.videoTitle
+          ),
+          videoUrl: meta.videoUrl,
+          contentHash,
+          segments,
+        }
       }
       this._flicktionaryVideoContext = context
 
@@ -915,6 +940,7 @@ export default class Binding {
         message: {
           command: 'register-flicktionary-subtitles',
           messageId: uuidv4(),
+          source: context.source,
           youtubeVideoId: context.youtubeVideoId,
           videoTitle: context.videoTitle,
           videoUrl: context.videoUrl,

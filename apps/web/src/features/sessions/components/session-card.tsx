@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { FileText, MonitorPlay, Trash2 } from 'lucide-react'
+import { Clapperboard, FileText, MonitorPlay, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -26,6 +26,7 @@ export const SessionCard = ({ session, onRemove }: Props) => {
   const title = session.contentSourceTitle ?? t`Untitled`
   const isText = session.contentSourceType === 'text'
   const isYoutube = session.contentSourceType === 'youtube'
+  const isStreaming = session.contentSourceType === 'streaming'
   const metaParts = [session.contentSourceYear ?? null, session.targetLanguage.toUpperCase(), session.cefrLevel].filter(
     (v): v is string | number => v !== null && v !== ''
   )
@@ -48,6 +49,10 @@ export const SessionCard = ({ session, onRemove }: Props) => {
           ) : isYoutube ? (
             <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-red-100 text-red-700'>
               <MonitorPlay className='h-6 w-6' />
+            </div>
+          ) : isStreaming ? (
+            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-indigo-100 text-indigo-700'>
+              <Clapperboard className='h-6 w-6' />
             </div>
           ) : (
             <div className='bg-muted h-20 w-14 shrink-0 rounded' />

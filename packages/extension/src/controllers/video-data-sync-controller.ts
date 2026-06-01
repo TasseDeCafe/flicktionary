@@ -106,6 +106,14 @@ export default class VideoDataSyncController {
     this._isTutorial = isOnTutorialPage()
   }
 
+  // The clean human title for the current video as resolved by the site's
+  // page-script (show + "S01E02" + episode title on Netflix, etc.). Undefined
+  // for manually-loaded subtitle files. Used for the Flicktionary save title on
+  // streaming sites, where document.title is often just the site name.
+  get videoBasename(): string | undefined {
+    return this._syncedData?.basename
+  }
+
   private get lastLanguagesSynced(): string[] {
     return this._lastLanguagesSynced[this._domain] ?? []
   }
