@@ -263,12 +263,7 @@ export interface StreamingVideoSettings {
 export type KeyBindName = keyof KeyBindSet
 
 export interface AsbplayerSettings
-  extends
-    MiscSettings,
-    CaptureSettings,
-    SubtitleSettings,
-    StreamingVideoSettings,
-    TranscriptSettings {
+  extends MiscSettings, CaptureSettings, SubtitleSettings, StreamingVideoSettings, TranscriptSettings {
   readonly subtitlePreview: string
 }
 
