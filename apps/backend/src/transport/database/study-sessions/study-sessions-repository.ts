@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 
@@ -141,18 +142,126 @@ const getOrCreateAdhocStudySession = async (params: {
   })
 }
 
-// Idempotent ingestion entry point for the browser extension's YouTube flow.
+// Shared tail of both extension ingestion flows (YouTube + streaming). Once the
+// content_source row exists, the rest is identical: upsert the text_track,
+// insert segments on first sight, and find-or-create the study_session. Runs
+// inside the caller's transaction (`tx`).
 //
 // Identity model:
-// - One content_source per (user, youtubeVideoId).
+// - One content_source per source key (YouTube: (user, youtubeVideoId);
+//   streaming: (user, contentHash)) — the caller owns that upsert.
 // - One text_track per (content_source, subtitleLanguage, subtitleHash).
 //   Same subtitle content (byte-identical hash) → same track. Different content
 //   (e.g. regenerated/Whisper subtitles) → fresh track, leaving old highlights
 //   intact against the old track.
-// - One study_session per (user, text_track, target_language). The new partial
+// - One study_session per (user, text_track, target_language). The partial
 //   unique index `study_sessions_user_track_target_lang_unique` enforces this.
 //   We use `ON CONFLICT DO NOTHING + re-SELECT` so concurrent inserters don't
 //   poison the surrounding transaction with a unique-violation rollback.
+const completeExtensionIngest = async (
+  tx: postgres.Sql,
+  params: {
+    userId: string
+    contentSource: DbContentSource
+    subtitleLanguage: string
+    subtitleHash: string
+    subtitleSegments: ReadonlyArray<{ index: number; text: string; startMs: number; endMs: number }>
+    nativeLanguage: string
+    targetLanguage: string
+    cefrLevel: string
+  }
+): Promise<{
+  session: DbStudySession
+  track: DbTextTrack
+  contentSource: DbContentSource
+  segments: DbTextSegment[]
+}> => {
+  const contentSource = params.contentSource
+
+  const insertedTrack = (await tx`
+    INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+    VALUES (
+      ${contentSource.id},
+      'paste',
+      ${params.subtitleLanguage},
+      NULL,
+      ${params.subtitleHash}
+    )
+    ON CONFLICT (content_source_id, language, hash)
+      DO UPDATE SET hash = EXCLUDED.hash
+    RETURNING *
+  `) as DbTextTrack[]
+  const track = insertedTrack[0]
+  if (!track) throw new Error('completeExtensionIngest: track upsert returned no row')
+
+  // Insert segments only if this looks like a freshly-created track. The
+  // ON CONFLICT clause is still required: concurrent register/save cold-starts
+  // can both observe an empty track before either transaction commits.
+  const existingCount = (await tx`
+    SELECT COUNT(*)::int AS c FROM public.text_segments WHERE text_track_id = ${track.id}
+  `) as Array<{ c: number }>
+
+  if ((existingCount[0]?.c ?? 0) === 0 && params.subtitleSegments.length > 0) {
+    const rows = params.subtitleSegments.map((s) => ({
+      text_track_id: track.id,
+      index: s.index,
+      text: s.text,
+      start_ms: s.startMs,
+      end_ms: s.endMs,
+    }))
+    await tx`
+      INSERT INTO public.text_segments ${tx(rows, 'text_track_id', 'index', 'text', 'start_ms', 'end_ms')}
+      ON CONFLICT (text_track_id, index) DO NOTHING
+    `
+  }
+
+  const segments = (await tx`
+    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    FROM public.text_segments
+    WHERE text_track_id = ${track.id}
+    ORDER BY index ASC
+  `) as DbTextSegment[]
+
+  // ON CONFLICT DO NOTHING + re-SELECT avoids aborting the transaction on a
+  // concurrent insert race. The partial unique index serializes the
+  // operation; one inserter wins, the other reads the winner's row.
+  const insertedSession = (await tx`
+    INSERT INTO public.study_sessions (
+      user_id, content_source_id, text_track_id,
+      native_language, target_language, cefr_level
+    )
+    VALUES (
+      ${params.userId},
+      ${contentSource.id},
+      ${track.id},
+      ${params.nativeLanguage},
+      ${params.targetLanguage},
+      ${params.cefrLevel}
+    )
+    ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
+      DO NOTHING
+    RETURNING *
+  `) as DbStudySession[]
+
+  if (insertedSession[0]) {
+    return { session: insertedSession[0], track, contentSource, segments }
+  }
+
+  const existing = (await tx`
+    SELECT * FROM public.study_sessions
+    WHERE user_id = ${params.userId}
+      AND text_track_id = ${track.id}
+      AND target_language = ${params.targetLanguage}
+      AND deleted_at IS NULL
+    LIMIT 1
+  `) as DbStudySession[]
+  const session = existing[0]
+  if (!session) throw new Error('completeExtensionIngest: session upsert returned no row and re-SELECT was empty')
+  return { session, track, contentSource, segments }
+}
+
+// Idempotent ingestion entry point for the browser extension's YouTube flow.
+// content_source key: (user, youtubeVideoId).
 const getOrCreateForYoutubeVideo = async (params: {
   userId: string
   youtubeVideoId: string
@@ -195,86 +304,73 @@ const getOrCreateForYoutubeVideo = async (params: {
     const contentSource = insertedSource[0]
     if (!contentSource) throw new Error('getOrCreateForYoutubeVideo: content source upsert returned no row')
 
-    const insertedTrack = (await tx`
-      INSERT INTO public.text_tracks (content_source_id, source, language, external_id, hash)
+    return completeExtensionIngest(tx, {
+      userId: params.userId,
+      contentSource,
+      subtitleLanguage: params.subtitleLanguage,
+      subtitleHash: params.subtitleHash,
+      subtitleSegments: params.subtitleSegments,
+      nativeLanguage: params.nativeLanguage,
+      targetLanguage: params.targetLanguage,
+      cefrLevel: params.cefrLevel,
+    })
+  })
+}
+
+// Idempotent ingestion entry point for the extension's streaming-site flow
+// (Netflix, Prime, …). content_source key: (user, subtitle contentHash). No
+// per-site video id is parsed — the hash that already identifies the text_track
+// is reused as the source's natural key (see the streaming uniqueness index).
+const getOrCreateForStreamingVideo = async (params: {
+  userId: string
+  videoTitle: string
+  videoUrl: string
+  contentHash: string
+  subtitleLanguage: string
+  subtitleSegments: ReadonlyArray<{ index: number; text: string; startMs: number; endMs: number }>
+  nativeLanguage: string
+  targetLanguage: string
+  cefrLevel: string
+}): Promise<{
+  session: DbStudySession
+  track: DbTextTrack
+  contentSource: DbContentSource
+  segments: DbTextSegment[]
+}> => {
+  return await beginTx(async (tx) => {
+    const csMetadata = {
+      contentHash: params.contentHash,
+      videoTitle: params.videoTitle,
+      videoUrl: params.videoUrl,
+    }
+    const insertedSource = (await tx`
+      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
       VALUES (
-        ${contentSource.id},
-        'paste',
+        'streaming',
+        ${params.videoTitle},
         ${params.subtitleLanguage},
-        NULL,
-        ${params.subtitleHash}
+        ${tx.json(csMetadata)},
+        ${params.userId}
       )
-      ON CONFLICT (content_source_id, language, hash)
-        DO UPDATE SET hash = EXCLUDED.hash
+      ON CONFLICT (created_by_user_id, (metadata ->> 'contentHash')) WHERE type = 'streaming'
+        DO UPDATE SET
+          title = EXCLUDED.title,
+          metadata = public.content_sources.metadata || EXCLUDED.metadata
       RETURNING *
-    `) as DbTextTrack[]
-    const track = insertedTrack[0]
-    if (!track) throw new Error('getOrCreateForYoutubeVideo: track upsert returned no row')
+    `) as DbContentSource[]
+    const contentSource = insertedSource[0]
+    if (!contentSource) throw new Error('getOrCreateForStreamingVideo: content source upsert returned no row')
 
-    // Insert segments only if this looks like a freshly-created track. The
-    // ON CONFLICT clause is still required: concurrent register/save cold-starts
-    // can both observe an empty track before either transaction commits.
-    const existingCount = (await tx`
-      SELECT COUNT(*)::int AS c FROM public.text_segments WHERE text_track_id = ${track.id}
-    `) as Array<{ c: number }>
-
-    if ((existingCount[0]?.c ?? 0) === 0 && params.subtitleSegments.length > 0) {
-      const rows = params.subtitleSegments.map((s) => ({
-        text_track_id: track.id,
-        index: s.index,
-        text: s.text,
-        start_ms: s.startMs,
-        end_ms: s.endMs,
-      }))
-      await tx`
-        INSERT INTO public.text_segments ${tx(rows, 'text_track_id', 'index', 'text', 'start_ms', 'end_ms')}
-        ON CONFLICT (text_track_id, index) DO NOTHING
-      `
-    }
-
-    const segments = (await tx`
-      SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
-      FROM public.text_segments
-      WHERE text_track_id = ${track.id}
-      ORDER BY index ASC
-    `) as DbTextSegment[]
-
-    // ON CONFLICT DO NOTHING + re-SELECT avoids aborting the transaction on a
-    // concurrent insert race. The partial unique index serializes the
-    // operation; one inserter wins, the other reads the winner's row.
-    const insertedSession = (await tx`
-      INSERT INTO public.study_sessions (
-        user_id, content_source_id, text_track_id,
-        native_language, target_language, cefr_level
-      )
-      VALUES (
-        ${params.userId},
-        ${contentSource.id},
-        ${track.id},
-        ${params.nativeLanguage},
-        ${params.targetLanguage},
-        ${params.cefrLevel}
-      )
-      ON CONFLICT (user_id, text_track_id, target_language) WHERE deleted_at IS NULL
-        DO NOTHING
-      RETURNING *
-    `) as DbStudySession[]
-
-    if (insertedSession[0]) {
-      return { session: insertedSession[0], track, contentSource, segments }
-    }
-
-    const existing = (await tx`
-      SELECT * FROM public.study_sessions
-      WHERE user_id = ${params.userId}
-        AND text_track_id = ${track.id}
-        AND target_language = ${params.targetLanguage}
-        AND deleted_at IS NULL
-      LIMIT 1
-    `) as DbStudySession[]
-    const session = existing[0]
-    if (!session) throw new Error('getOrCreateForYoutubeVideo: session upsert returned no row and re-SELECT was empty')
-    return { session, track, contentSource, segments }
+    return completeExtensionIngest(tx, {
+      userId: params.userId,
+      contentSource,
+      subtitleLanguage: params.subtitleLanguage,
+      subtitleHash: params.contentHash,
+      subtitleSegments: params.subtitleSegments,
+      nativeLanguage: params.nativeLanguage,
+      targetLanguage: params.targetLanguage,
+      cefrLevel: params.cefrLevel,
+    })
   })
 }
 
@@ -447,6 +543,22 @@ export interface StudySessionsRepositoryInterface {
     contentSource: DbContentSource
     segments: DbTextSegment[]
   }>
+  getOrCreateForStreamingVideo: (params: {
+    userId: string
+    videoTitle: string
+    videoUrl: string
+    contentHash: string
+    subtitleLanguage: string
+    subtitleSegments: ReadonlyArray<{ index: number; text: string; startMs: number; endMs: number }>
+    nativeLanguage: string
+    targetLanguage: string
+    cefrLevel: string
+  }) => Promise<{
+    session: DbStudySession
+    track: DbTextTrack
+    contentSource: DbContentSource
+    segments: DbTextSegment[]
+  }>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
@@ -464,6 +576,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     insertStudySession,
     getOrCreateAdhocStudySession,
     getOrCreateForYoutubeVideo,
+    getOrCreateForStreamingVideo,
     findByIdForUser,
     findByIdForUserWithSource,
     hasTextTrackForUser,

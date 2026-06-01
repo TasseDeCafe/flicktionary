@@ -3,26 +3,28 @@ import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import { StudySessionSchema, TextSegmentSchema } from './common/flicktionary-schemas'
 
-// Payload caps for the YouTube ingestion endpoint. Most user-visible YouTube
-// subtitles fit well under both limits; outliers (very long lectures, dense
-// karaoke captions) route through the existing text-tracks upload pipeline.
-const YOUTUBE_MAX_SEGMENTS = 2000
+// Payload caps for the extension ingestion endpoints (YouTube + streaming).
+// Most user-visible subtitles fit well under both limits; outliers (very long
+// lectures, dense karaoke captions) route through the existing text-tracks
+// upload pipeline.
+const EXTENSION_MAX_SEGMENTS = 2000
 
-const YoutubeSubtitleSegmentSchema = z.object({
+const ExtensionSubtitleSegmentSchema = z.object({
   index: z.number().int().nonnegative(),
   text: z.string(),
   startMs: z.number().int().nonnegative(),
   endMs: z.number().int().nonnegative(),
 })
 
-const YoutubeSubtitlePayloadSchema = z.object({
+const ExtensionSubtitlePayloadSchema = z.object({
   // No language field: the backend detects the language from the segment text
   // (languageDetectionPass) and uses it as the content language AND the session
   // target language. This is the single source of truth — the extension can no
   // longer mislabel a track (see UNSUPPORTED_LANGUAGE below).
-  segments: z.array(YoutubeSubtitleSegmentSchema).max(YOUTUBE_MAX_SEGMENTS),
+  segments: z.array(ExtensionSubtitleSegmentSchema).max(EXTENSION_MAX_SEGMENTS),
   // sha256 of the canonical segments JSON the extension actually rendered.
-  // Same hash → same text_track row (idempotent re-register on reload).
+  // Same hash → same text_track row (idempotent re-register on reload). For the
+  // streaming flow this hash is ALSO the content_source natural key.
   contentHash: z.string().min(1),
 })
 
@@ -179,7 +181,7 @@ export const studySessionsContract = {
         youtubeVideoId: z.string().min(1),
         videoTitle: z.string().min(1),
         videoUrl: z.string().url(),
-        subtitles: YoutubeSubtitlePayloadSchema,
+        subtitles: ExtensionSubtitlePayloadSchema,
       })
     )
     .output(
@@ -190,6 +192,43 @@ export const studySessionsContract = {
           contentSourceId: z.string().uuid(),
           // Full segment list so the extension can resolve a clicked
           // segment-index → text_segments.id without per-highlight round trips.
+          segments: z.array(TextSegmentSchema),
+        }),
+      })
+    ),
+
+  // Streaming-site ingestion (Netflix, Prime, …) used by the browser extension.
+  // Same idempotent contract as the YouTube endpoint, but the content is keyed
+  // by the subtitle contentHash (no stable per-site video id is parsed): the
+  // hash is both the text_track hash AND the content_source natural key. Title
+  // is the page title; videoUrl is the page URL (display/back-link only).
+  // Language is still detected server-side from the segment text and used as the
+  // content + session target language; UNPROCESSABLE_ENTITY with 'MISSING_CEFR'
+  // / 'UNSUPPORTED_LANGUAGE' is returned exactly as in the YouTube flow.
+  findOrCreateForStreamingVideo: oc
+    .route({
+      method: 'POST',
+      path: '/study-sessions/find-or-create-for-streaming-video',
+      successStatus: 200,
+    })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        videoTitle: z.string().min(1),
+        videoUrl: z.string().url(),
+        subtitles: ExtensionSubtitlePayloadSchema,
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          sessionId: z.string().uuid(),
+          textTrackId: z.string().uuid(),
+          contentSourceId: z.string().uuid(),
           segments: z.array(TextSegmentSchema),
         }),
       })

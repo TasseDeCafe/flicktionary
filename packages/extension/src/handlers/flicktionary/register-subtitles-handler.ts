@@ -42,21 +42,29 @@ export default class RegisterFlicktionarySubtitlesHandler {
         }
 
         const client = getFlicktionaryApiClient()
-        const { data } = await client.studySessions.findOrCreateForYoutubeVideo({
-          youtubeVideoId: message.youtubeVideoId,
-          videoTitle: message.videoTitle,
-          videoUrl: message.videoUrl,
-          subtitles: {
-            contentHash: message.contentHash,
-            segments: message.segments.map((s) => ({ ...s })),
-          },
-        })
+        const subtitles = {
+          contentHash: message.contentHash,
+          segments: message.segments.map((s) => ({ ...s })),
+        }
+        const { data } =
+          message.source === 'youtube' && message.youtubeVideoId
+            ? await client.studySessions.findOrCreateForYoutubeVideo({
+                youtubeVideoId: message.youtubeVideoId,
+                videoTitle: message.videoTitle,
+                videoUrl: message.videoUrl,
+                subtitles,
+              })
+            : await client.studySessions.findOrCreateForStreamingVideo({
+                videoTitle: message.videoTitle,
+                videoUrl: message.videoUrl,
+                subtitles,
+              })
 
         const segmentIdByIndex: Record<string, string> = {}
         for (const segment of data.segments) {
           segmentIdByIndex[String(segment.index)] = segment.id
         }
-        await storeFlicktionarySession(message.youtubeVideoId, message.contentHash, {
+        await storeFlicktionarySession(message.source, message.contentHash, {
           sessionId: data.sessionId,
           textTrackId: data.textTrackId,
           contentSourceId: data.contentSourceId,

@@ -1,0 +1,12 @@
+-- Add 'streaming' to the content_source_type enum.
+--
+-- Generalizes the extension's word-saving beyond YouTube: subtitles served by
+-- streaming sites (Netflix, Prime, …) are ingested as their own content_source
+-- type. Unlike YouTube there is no stable per-site video id we parse, so the
+-- natural key is the subtitle content hash (see the companion index migration).
+--
+-- This value MUST be added in its own migration: Postgres forbids using a newly
+-- added enum label as a literal in the same transaction. The companion
+-- migration (partial unique index keyed off `type = 'streaming'`) references it
+-- as a literal, so it has to run after this one has committed.
+ALTER TYPE public.content_source_type ADD VALUE IF NOT EXISTS 'streaming';

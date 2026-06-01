@@ -4,7 +4,7 @@ import { useListStudySessions } from '../api/sessions-hooks'
 import { SessionCard } from './session-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 
-type Filter = 'all' | 'movie' | 'text' | 'youtube'
+type Filter = 'all' | 'movie' | 'text' | 'youtube' | 'streaming'
 
 type RemoveTarget = { id: string; title: string }
 
@@ -27,6 +27,7 @@ export const SessionsListView = () => {
       movie: all.filter((s) => s.contentSourceType === 'movie').length,
       text: all.filter((s) => s.contentSourceType === 'text').length,
       youtube: all.filter((s) => s.contentSourceType === 'youtube').length,
+      streaming: all.filter((s) => s.contentSourceType === 'streaming').length,
     }
   }, [data])
 
@@ -47,6 +48,9 @@ export const SessionsListView = () => {
           </FilterChip>
           <FilterChip active={filter === 'youtube'} onClick={() => setFilter('youtube')}>
             {t`YouTube`} ({counts.youtube})
+          </FilterChip>
+          <FilterChip active={filter === 'streaming'} onClick={() => setFilter('streaming')}>
+            {t`Streaming`} ({counts.streaming})
           </FilterChip>
         </div>
       )}
