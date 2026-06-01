@@ -415,8 +415,18 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       return { data: { implicitGoodCount: result.implicitGoodCount, progress } }
     }),
 
-    listFlashcards: implementer.listFlashcards.handler(async ({ input, context }) => {
+    listFlashcards: implementer.listFlashcards.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
+      const activeSession = await deps.practiceSessionsRepository.findActiveForUser({
+        userId,
+        targetLanguage: input.targetLanguage,
+        pool: 'passive',
+      })
+      if (activeSession) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'End the active reading session before starting flashcards.' }] },
+        })
+      }
       // Same caps wiring as start-practice-session: clamp the user's limits,
       // then subtract today's introductions to get the remaining new allowance.
       const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
@@ -440,10 +450,16 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
       const result = await rateFlashcard(input.userLookupId, userId, input.rating, limits.maxNewTerms, {
         userLookupsRepository: deps.userLookupsRepository,
+        practiceSessionsRepository: deps.practiceSessionsRepository,
       })
       if (!result.ok) {
         if (result.reason === 'lookup_not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
+        }
+        if (result.reason === 'passive_session_active') {
+          throw errors.BAD_REQUEST({
+            data: { errors: [{ message: 'End the active reading session before rating flashcards.' }] },
+          })
         }
         // daily_cap_reached: not an error — the new-card intro was refused by
         // the cap. Respond 201 with no FSRS applied; the client drops the card.

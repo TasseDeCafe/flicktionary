@@ -1,5 +1,5 @@
 import postgres from 'postgres'
-import { sql } from '../postgres-client'
+import { beginTx, sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
 
@@ -600,41 +600,50 @@ const initializeSrsStateForPool = async (params: { userLookupId: string; pool: P
   `
 }
 
-// Atomic daily-new-cap guard for the flashcard reviewer. Introduces a
+// Race-safe daily-new-cap guard for the flashcard reviewer. Introduces a
 // never-reviewed row into the passive pool (srs_state='new', due now, stamped
-// added_to_practice_at) ONLY IF, in the same statement, the day's introduced
-// count for this (user, language) is still under maxNewTerms. This must be
-// atomic at introduction time, not just at list time: two tabs/devices can each
-// fetch a batch and would otherwise both introduce past the cap. Returns true
-// when the row was introduced, false when the cap was already consumed (or the
-// row was not eligible — non-null state / deleted). The count predicate matches
-// listDueSummary's new_introduced_today_count.
+// added_to_practice_at) only when the day's introduced count for this
+// (user, language) is still under maxNewTerms.
+//
+// The advisory transaction lock serializes all flashcard introductions for the
+// same user/language. A single UPDATE with COUNT(*) still races across two
+// different target rows because each transaction can see the same pre-update
+// aggregate. The lock keeps the count + update decision one-at-a-time.
 const initializeSrsStateIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
   targetLanguage: string
   maxNewTerms: number
 }): Promise<boolean> => {
-  const rows = (await sql`
-    UPDATE public.user_lookups
-    SET srs_state = 'new',
-        srs_due = NOW(),
-        added_to_practice_at = NOW()
-    WHERE id = ${params.userLookupId}
-      AND user_id = ${params.userId}
-      AND srs_state IS NULL
-      AND deleted_at IS NULL
-      AND (
-        SELECT COUNT(*)
-        FROM public.user_lookups
-        WHERE user_id = ${params.userId}
-          AND target_language = ${params.targetLanguage}
-          AND added_to_practice_at >= CURRENT_DATE
-          AND added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
-      ) < ${params.maxNewTerms}
-    RETURNING id
-  `) as Array<{ id: string }>
-  return rows.length > 0
+  return await beginTx(async (tx) => {
+    await tx`
+      SELECT pg_advisory_xact_lock(hashtext(${`flashcards:${params.userId}:${params.targetLanguage}`}))
+    `
+    const rows = (await tx`
+      UPDATE public.user_lookups
+      SET srs_state = 'new',
+          srs_due = NOW(),
+          added_to_practice_at = NOW()
+      WHERE id = ${params.userLookupId}
+        AND user_id = ${params.userId}
+        AND target_language = ${params.targetLanguage}
+        AND count > 0
+        AND srs_state IS NULL
+        AND deleted_at IS NULL
+        AND (
+          SELECT COUNT(*)
+          FROM public.user_lookups
+          WHERE user_id = ${params.userId}
+            AND target_language = ${params.targetLanguage}
+            AND count > 0
+            AND deleted_at IS NULL
+            AND added_to_practice_at >= CURRENT_DATE
+            AND added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
+        ) < ${params.maxNewTerms}
+      RETURNING id
+    `) as Array<{ id: string }>
+    return rows.length > 0
+  })
 }
 
 // Patch the SRS columns from a ts-fsrs Card object. Atomic update — call this

@@ -195,7 +195,10 @@ export const practiceContract = {
   // refetches a fresh due batch (already-rated cards drop out naturally).
   listFlashcards: oc
     .route({ method: 'GET', path: '/practice/flashcards', successStatus: 200 })
-    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
     .input(z.object({ targetLanguage: z.string().min(1) }))
     .output(z.object({ data: z.object({ cards: z.array(FlashcardSchema) }) })),
 
@@ -208,6 +211,7 @@ export const practiceContract = {
     .route({ method: 'POST', path: '/practice/flashcards/{userLookupId}/ratings', successStatus: 201 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(z.object({ userLookupId: z.string().uuid(), rating: PracticeRatingSchema }))

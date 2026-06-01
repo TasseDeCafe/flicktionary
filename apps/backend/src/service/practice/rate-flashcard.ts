@@ -1,13 +1,15 @@
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { PracticeSessionsRepositoryInterface } from '../../transport/database/practice-sessions/practice-sessions-repository'
 import { applyRating, type AppRating } from './fsrs'
 
 export type RateFlashcardDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
+  practiceSessionsRepository: PracticeSessionsRepositoryInterface
 }
 
 export type RateFlashcardResult =
   | { ok: true; introducedNew: boolean }
-  | { ok: false; reason: 'lookup_not_found' | 'daily_cap_reached' }
+  | { ok: false; reason: 'lookup_not_found' | 'daily_cap_reached' | 'passive_session_active' }
 
 // Grade a single flashcard. Does NOT reuse rateChunk: that path requires a
 // practice_text + annotation match and logs to practice_ratings (whose
@@ -35,6 +37,13 @@ export const rateFlashcard = async (
 ): Promise<RateFlashcardResult> => {
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
+
+  const activeSession = await deps.practiceSessionsRepository.findActiveForUser({
+    userId,
+    targetLanguage: lookup.target_language,
+    pool: 'passive',
+  })
+  if (activeSession) return { ok: false, reason: 'passive_session_active' }
 
   const introducedNew = lookup.srs_state == null
   if (introducedNew) {

@@ -69,11 +69,6 @@ export const FlashcardSessionView = () => {
     if (!item) return
     const { card } = item
 
-    // Single capped 'again' redrill — independent of the mutation's outcome.
-    if (rating === 'again' && !item.requeuedForAgain) {
-      setQueue((q) => [...q, { card, retryCount: item.retryCount, requeuedForAgain: true }])
-    }
-
     // Advance the UI immediately for responsiveness; the mutation runs in the
     // background with a safety net so a failure doesn't silently drop the card.
     setRevealed(false)
@@ -85,7 +80,16 @@ export const FlashcardSessionView = () => {
         onSuccess: (resp) => {
           // New-card intro refused by the daily cap: drop it (no re-queue) and
           // surface a one-time note.
-          if (resp.data.dailyCapReached && !capNoticeShown) setCapNoticeShown(true)
+          if (resp.data.dailyCapReached) {
+            if (!capNoticeShown) setCapNoticeShown(true)
+            return
+          }
+          // Single capped 'again' redrill — only after the rating is accepted.
+          // A refused daily-cap intro or failed mutation should not add the
+          // normal redrill copy on top of its own handling path.
+          if (rating === 'again' && !item.requeuedForAgain) {
+            setQueue((q) => [...q, { card, retryCount: item.retryCount, requeuedForAgain: true }])
+          }
         },
         onError: () => {
           // useRateFlashcard already toasts via meta.errorMessage. Re-append so
