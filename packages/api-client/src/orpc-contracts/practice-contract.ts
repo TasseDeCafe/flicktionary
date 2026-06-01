@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
+  FlashcardSchema,
   GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
   PracticeRatingSchema,
@@ -184,6 +185,38 @@ export const practiceContract = {
         data: z.object({
           implicitGoodCount: z.number().int(),
           progress: PracticeSessionProgressSchema,
+        }),
+      })
+    ),
+
+  // No-LLM Anki-style flashcard reviewer. Returns a capped, due-first-then-new
+  // batch of cards straight from user_lookups — no practice_session row, no
+  // generated text. The client iterates the batch locally; closing + reopening
+  // refetches a fresh due batch (already-rated cards drop out naturally).
+  listFlashcards: oc
+    .route({ method: 'GET', path: '/practice/flashcards', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ targetLanguage: z.string().min(1) }))
+    .output(z.object({ data: z.object({ cards: z.array(FlashcardSchema) }) })),
+
+  // Grade a flashcard. Applies FSRS directly to the passive srs_* columns (the
+  // shared SRS budget). New-card introductions are gated by an atomic daily-cap
+  // guard: when the cap is already consumed the intro is refused and the
+  // response carries dailyCapReached=true (201, no FSRS applied) so the client
+  // drops the card rather than treating it as an error.
+  rateFlashcard: oc
+    .route({ method: 'POST', path: '/practice/flashcards/{userLookupId}/ratings', successStatus: 201 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ userLookupId: z.string().uuid(), rating: PracticeRatingSchema }))
+    .output(
+      z.object({
+        data: z.object({
+          accepted: z.literal(true),
+          introducedNew: z.boolean(),
+          dailyCapReached: z.boolean(),
         }),
       })
     ),

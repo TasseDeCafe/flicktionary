@@ -391,3 +391,21 @@ export const PracticeSessionProgressSchema = z.object({
   target: z.number().int(),
 })
 export type PracticeSessionProgress = z.infer<typeof PracticeSessionProgressSchema>
+
+// One card in the no-LLM Anki-style flashcard reviewer. All fields are read
+// straight off user_lookups — no generated text involved. `display_form` (when
+// present) lives inside `grammar` and is read client-side. `srsState` is null
+// for never-reviewed (new) cards.
+export const FlashcardSchema = z.object({
+  userLookupId: z.string().uuid(),
+  headword: z.string(),
+  sense: z.string(),
+  translation: z.string().nullable(),
+  definition: z.string().nullable(),
+  targetExample: z.string().nullable(),
+  nativeExample: z.string().nullable(),
+  grammar: GrammarSchema.nullable(),
+  srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
+  targetLanguage: z.string(),
+})
+export type Flashcard = z.infer<typeof FlashcardSchema>

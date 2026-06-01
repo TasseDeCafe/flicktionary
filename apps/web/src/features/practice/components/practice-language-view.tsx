@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, ChevronLeft, CircleCheck, Clock, Plus, RotateCcw, Star, XCircle } from 'lucide-react'
+import { Brain, ChevronLeft, CircleCheck, Clock, Layers, Plus, RotateCcw, Star, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   OverlayContent,
@@ -33,6 +33,7 @@ export const PracticeLanguageView = () => {
   const { data: prefs } = useGetUserPrefs()
   const { mutate: abandonSession, isPending: isEnding } = useAbandonPracticeSession()
   const [confirmEndOpen, setConfirmEndOpen] = useState(false)
+  const [confirmFlashcardsOpen, setConfirmFlashcardsOpen] = useState(false)
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
@@ -61,6 +62,9 @@ export const PracticeLanguageView = () => {
   }
 
   const hasReviewWork = dueTermCount > 0 && maxReviewTerms > 0
+  // Flashcards review the same due cards and introduce the same daily-capped new
+  // cards as reading, so it's offered whenever either has work.
+  const flashcardsEnabled = hasReviewWork || dailyNewAvailable > 0
 
   // Primary action is a single unified session: 'mixed' drills due follow-ups
   // first and then introduces the day's new terms in one sitting, so finishing
@@ -127,6 +131,39 @@ export const PracticeLanguageView = () => {
       to: '/practice/start',
       search: { lang: targetLanguage, mode },
     })
+  }
+
+  const goToFlashcards = () => {
+    void navigate({ to: '/practice/flashcards/$targetLanguage', params: { targetLanguage } })
+  }
+
+  // The reading flow snapshots eligible chunks at session start and ignores the
+  // live SRS clock for that sitting, so a card rated via flashcards would be
+  // re-rated (FSRS applied twice) when the reading session finalizes. Since the
+  // user picks one passive-review mode per sitting, make the two mutually
+  // exclusive: if a reading session is active, confirm + abandon it first.
+  const handleFlashcards = () => {
+    if (passiveSessionId) {
+      setConfirmFlashcardsOpen(true)
+      return
+    }
+    goToFlashcards()
+  }
+
+  const handleConfirmFlashcards = () => {
+    if (!passiveSessionId) {
+      goToFlashcards()
+      return
+    }
+    abandonSession(
+      { sessionId: passiveSessionId },
+      {
+        onSuccess: () => {
+          setConfirmFlashcardsOpen(false)
+          goToFlashcards()
+        },
+      }
+    )
   }
 
   // The "End session" controls only target the passive-pool session — the
@@ -236,6 +273,16 @@ export const PracticeLanguageView = () => {
                       {t`End session`}
                     </Button>
                   )}
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='lg'
+                    disabled={!flashcardsEnabled || isEnding}
+                    onClick={handleFlashcards}
+                  >
+                    <Layers className='h-4 w-4' />
+                    {t`Flashcards`}
+                  </Button>
                 </div>
               </section>
 
@@ -325,6 +372,31 @@ export const PracticeLanguageView = () => {
             </Button>
             <Button type='button' size='xl' variant='destructive' onClick={handleEndSession} disabled={isEnding}>
               {isEnding ? t`Ending…` : t`End session`}
+            </Button>
+          </OverlayFooter>
+        </OverlayContent>
+      </ResponsiveOverlay>
+
+      <ResponsiveOverlay open={confirmFlashcardsOpen} onOpenChange={setConfirmFlashcardsOpen}>
+        <OverlayContent>
+          <OverlayHeader>
+            <OverlayTitle>{t`End reading session?`}</OverlayTitle>
+            <OverlayDescription>
+              {t`You have a reading session in progress. End it to start flashcards.`}
+            </OverlayDescription>
+          </OverlayHeader>
+          <OverlayFooter>
+            <Button
+              type='button'
+              variant='outline'
+              size='xl'
+              onClick={() => setConfirmFlashcardsOpen(false)}
+              disabled={isEnding}
+            >
+              {t`Cancel`}
+            </Button>
+            <Button type='button' size='xl' onClick={handleConfirmFlashcards} disabled={isEnding}>
+              {isEnding ? t`Ending…` : t`End & start flashcards`}
             </Button>
           </OverlayFooter>
         </OverlayContent>
