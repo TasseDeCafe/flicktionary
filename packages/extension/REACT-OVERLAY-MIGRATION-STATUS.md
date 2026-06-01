@@ -16,13 +16,16 @@ legacy direct-DOM path. Update this as phases land.
   `check:types`, and `pnpm --filter backend db:dev:tunnel:gen-types` after a
   migration. Manual: regress YouTube; test Netflix/Prime (user-driven).
 
-## The headline goal (not reached yet)
+## The headline goal (Phase 2b complete; 2c deletion pending verification)
 
-Legacy is still load-bearing: rich-text cues, subtitle blur,
-notifications/auto-copy/auto-pause, and any ineligible case still run on the
-legacy `WordInteractionController` + `ElementOverlay` HTML path. React is now the
-**default for the common case on every site** plus dual subtitles, but nothing
-legacy is deleted. Deleting it (Phase 2c) is gated on finishing Phase 2b.
+Phase 2b is functionally done. The legacy `WordInteractionController` +
+`ElementOverlay` subtitle-rendering path is now load-bearing for only two
+gate-rejected cases: **word-click OFF**, and **rich-text cues** (`richText`,
+which no current parser ever produces — so this is a dormant safety net). Blur,
+dual subtitles, notifications, auto-copy and auto-pause all run under React
+mode; image/PGS was deleted outright. React is the **default for the common
+case on every site**. Nothing legacy is deleted yet — Phase 2c (the deletion)
+is now gated only on cross-platform manual verification, not on more building.
 
 ## ✅ Landed on this branch
 
@@ -57,11 +60,12 @@ legacy is deleted. Deleting it (Phase 2c) is gated on finishing Phase 2b.
 - Incidental: gate truth-table test (`react-mode-flag.test.ts`); fixed one stale
   `GlossTooltip` comment.
 
-## ⏳ Phase 2b remaining (unblocks the 2c deletion)
+## ✅ Phase 2b — complete (all three items resolved)
 
-Each is independently shippable; legacy stays the fallback until the matching
-gate predicate is relaxed. Data flows via `SubtitleLineModel` (`subtitle-store.ts`)
-→ `_pushReactSubtitles` → `SubtitleOverlayApp.tsx`.
+Each was independently shippable. Data flows via `SubtitleLineModel`
+(`subtitle-store.ts`) → `_pushReactSubtitles` → `SubtitleOverlayApp.tsx`. The
+three items below are now done — 1 by deletion, 2 by porting, 3 was already
+working (stale premise) + a small 2c-decoupling.
 
 1. **~~Image/PGS (`textImage`) + rich-text (`richText`) cues~~ — resolved by
    deletion, not by porting.** Image/PGS (`.sup`) was dormant upstream
@@ -81,16 +85,32 @@ gate predicate is relaxed. Data flows via `SubtitleLineModel` (`subtitle-store.t
    `_resetUnblurState`). NB: blur was never a gate predicate, so blurred cues
    were silently rendering *unblurred* under React mode before this — a real
    parity bug, now fixed. No gate change.
-3. **Notification overlay / auto-copy / auto-pause under React mode** — these
-   only run on the legacy render path today; make them work when React is the
-   renderer.
+3. **~~Notification overlay / auto-copy / auto-pause under React mode~~ — DONE
+   (the doc's premise was stale).** A prior refactor already hoisted these out
+   of the legacy render path, so all three work under React mode with no new
+   wiring:
+   - **Auto-copy** — `_autoCopyToClipboard` runs in the shared loop prologue
+     (before the React/legacy branch) and just posts a `copy-to-clipboard`
+     message; no DOM, no mode guard.
+   - **Auto-pause** — `autoPauseContext` is fed at the loop prologue
+     (`willStopShowing`/`startedShowing`); binding's `setPlayMode` callbacks have
+     no `_reactMode` guard.
+   - **Notifications** ("Auto-pause: On", etc.) — render via the separate
+     `notificationElementOverlay`, which `_enter/_exitReactMode` never touch.
+   The only real work: `notification()` used to build HTML via the legacy
+   `_buildTextHtml`/`tokenizeToHtml` (pointlessly tokenizing status text), which
+   2c deletes. Gave it a standalone `_buildNotificationHtml` (escaped text +
+   track-0 subtitle styling, no track class so never blurred). **This removes a
+   2c blocker — see below.**
 
 ## 🔒 Phase 2c — delete legacy (the payoff)
 
 Once 2b reaches parity + cross-platform tested:
 
 - Delete `controllers/word-interaction-controller.ts` (~814 lines),
-  `tokenizeToHtml` (`services/word-tokenizer.ts`) + its only caller.
+  `tokenizeToHtml` (`services/word-tokenizer.ts`) + its only caller `_buildTextHtml`
+  (now used only by the legacy subtitle/offset/loaded-message branches below —
+  `notification()` was decoupled in 2b item 3, so deleting it is safe).
 - Remove legacy `ElementOverlay` HTML branches from `subtitle-controller.ts` and
   the `_reactMode`/`evaluateReactMode`/`_enter`/`_exitReactMode` latch — React
   becomes the unconditional renderer. Remove `_syncWordInteractionController`

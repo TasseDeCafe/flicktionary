@@ -850,9 +850,19 @@ export default class SubtitleController {
     }
   }
 
+  // Notification text is plain status copy ("Auto-pause: On"), never word-clickable.
+  // Build it independently of the legacy subtitle _buildTextHtml / tokenizeToHtml
+  // path so notifications survive that path's removal (Phase 2c) — and so status
+  // text isn't pointlessly run through the word tokenizer. Keeps the track-0
+  // subtitle glyph styling the old path applied; no track class (so never blurred).
+  private _buildNotificationHtml(text: string): string {
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return `<span style="${this._subtitleStyles()}">${escaped}</span>`
+  }
+
   notification(locKey: string, replacements?: { [key: string]: string }) {
     const text = i18n._(this._notificationMessage(locKey, replacements ?? {}))
-    this.notificationElementOverlay.setHtml([{ html: () => this._buildTextHtml(text) }])
+    this.notificationElementOverlay.setHtml([{ html: () => this._buildNotificationHtml(text) }])
 
     if (this.notificationElementOverlayHideTimeout) {
       clearTimeout(this.notificationElementOverlayHideTimeout)
