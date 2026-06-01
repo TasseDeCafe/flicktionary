@@ -559,6 +559,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               anchor={gloss.anchor}
               word={gloss.word}
               content={gloss.content}
+              saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
               onSave={() => {
                 if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl)
                 else saveSingle(gloss.save.tl.line, gloss.save.token)
