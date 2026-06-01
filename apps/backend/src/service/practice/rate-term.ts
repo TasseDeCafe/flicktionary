@@ -9,9 +9,7 @@ export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
 }
 
-export type ApplyTermRatingResult =
-  | { ok: true; introducedNew: boolean }
-  | { ok: false; reason: 'daily_cap_reached' }
+export type ApplyTermRatingResult = { ok: true; introducedNew: boolean } | { ok: false; reason: 'daily_cap_reached' }
 
 // Apply one rating event to a user_lookup in the given pool. Shared by the
 // flashcard reviewer (rateTerm) and the reading-text finalizer

@@ -91,8 +91,9 @@ describe('rateTerm', () => {
   })
 
   it('routes active-pool ratings to the active SRS family with no daily cap', async () => {
-    const { deps, initializeSrsStateIfUnderDailyCap, initializeSrsStateForPool, applyFsrsResultForPool } =
-      createDeps(makeLookup({ learning_mode: 'active' }))
+    const { deps, initializeSrsStateIfUnderDailyCap, initializeSrsStateForPool, applyFsrsResultForPool } = createDeps(
+      makeLookup({ learning_mode: 'active' })
+    )
     const result = await rateTerm(lookupId, userId, 'good', 'active', 20, deps)
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false })
     expect(initializeSrsStateIfUnderDailyCap).not.toHaveBeenCalled()

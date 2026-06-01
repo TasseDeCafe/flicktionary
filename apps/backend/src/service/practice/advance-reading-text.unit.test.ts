@@ -77,7 +77,9 @@ const createDeps = (opts: { claimWins: boolean }) => {
     [`${laId}::s`]: makeLookup(laId, { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z' }),
     [`${lbId}::s`]: makeLookup(lbId),
   }
-  const findByKey = vi.fn(async ({ headword, sense }: { headword: string; sense: string }) => lookupsByKey[`${headword}::${sense}`] ?? null)
+  const findByKey = vi.fn(
+    async ({ headword, sense }: { headword: string; sense: string }) => lookupsByKey[`${headword}::${sense}`] ?? null
+  )
   const applyFsrsResultForPool = vi.fn().mockResolvedValue(undefined)
   const initializeSrsStateIfUnderDailyCap = vi.fn().mockResolvedValue(true)
   const claimFinalize = vi.fn().mockResolvedValue(opts.claimWins ? claimedText : null)

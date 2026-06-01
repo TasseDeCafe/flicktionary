@@ -11,7 +11,10 @@ import type {
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { generatePracticeText, type PracticeChunkInput } from '../../transport/third-party/anthropic/passes/generate-practice-text'
+import {
+  generatePracticeText,
+  type PracticeChunkInput,
+} from '../../transport/third-party/anthropic/passes/generate-practice-text'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { listReviewTerms } from './list-review-terms'
 
@@ -289,7 +292,8 @@ export const prepareNextReadingText = async (
     deps,
   })
     .then((result) => {
-      if (!result.ok) console.warn('reading pre-gen reported failure', { slotId: slot.practiceText.id, warning: result.warning })
+      if (!result.ok)
+        console.warn('reading pre-gen reported failure', { slotId: slot.practiceText.id, warning: result.warning })
     })
     .catch((err) => console.error('reading pre-gen threw', { slotId: slot.practiceText.id, err }))
 

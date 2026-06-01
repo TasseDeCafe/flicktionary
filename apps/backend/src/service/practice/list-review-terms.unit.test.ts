@@ -11,9 +11,7 @@ const createDeps = (introducedToday: number) => {
     },
     userLookupsRepository: {
       listReviewTerms: repoListReviewTerms,
-      listDueSummary: vi
-        .fn()
-        .mockResolvedValue([{ targetLanguage: 'es', newIntroducedTodayCount: introducedToday }]),
+      listDueSummary: vi.fn().mockResolvedValue([{ targetLanguage: 'es', newIntroducedTodayCount: introducedToday }]),
     },
   } as unknown as ListReviewTermsDependencies
   return { deps, repoListReviewTerms }

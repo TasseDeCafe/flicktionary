@@ -6,7 +6,10 @@ import {
   type PracticeSessionLimits,
   type UsersRepositoryInterface,
 } from '../../transport/database/users/users-repository'
-import type { PracticePool, UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type {
+  PracticePool,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 
 export const clampPracticeSessionLimits = (limits: PracticeSessionLimits): PracticeSessionLimits => {
   const maxNewTerms = Math.min(Math.max(Math.trunc(limits.maxNewTerms), 0), HARD_MAX_PRACTICE_NEW_TERMS)

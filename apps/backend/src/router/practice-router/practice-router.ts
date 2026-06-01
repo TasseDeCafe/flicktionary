@@ -205,7 +205,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         })
       }
       if (result.done) return { data: { done: true as const } }
-      return { data: { done: false as const, practiceText: await shapeText(result.practiceText, userId, input.targetLanguage) } }
+      return {
+        data: {
+          done: false as const,
+          practiceText: await shapeText(result.practiceText, userId, input.targetLanguage),
+        },
+      }
     }),
 
     prepareNextReadingText: implementer.prepareNextReadingText.handler(async ({ input, context, errors }) => {
