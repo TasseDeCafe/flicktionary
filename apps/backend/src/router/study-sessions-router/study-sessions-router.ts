@@ -114,7 +114,9 @@ export const StudySessionsRouter = (
   // Build the UNPROCESSABLE_ENTITY error body for a failed prefs resolution.
   // The handler throws its own typed `errors.UNPROCESSABLE_ENTITY({ data })` —
   // this just shares the code/message shaping between the two ingest flows.
-  const ingestPrefsErrorData = (prefs: { reason: 'unsupported' } | { reason: 'missing-cefr'; targetLanguage: string }) => {
+  const ingestPrefsErrorData = (
+    prefs: { reason: 'unsupported' } | { reason: 'missing-cefr'; targetLanguage: string }
+  ) => {
     if (prefs.reason === 'unsupported') {
       return {
         errors: [

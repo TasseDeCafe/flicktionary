@@ -64,7 +64,11 @@ describe('isReactSubtitleEligible', () => {
         subtitles: [
           sub({
             index: 0,
-            textImage: { dataUrl: 'data:image/png;base64,', screen: { width: 1, height: 1 }, image: { width: 1, height: 1 } },
+            textImage: {
+              dataUrl: 'data:image/png;base64,',
+              screen: { width: 1, height: 1 },
+              image: { width: 1, height: 1 },
+            },
           }),
         ],
       })
