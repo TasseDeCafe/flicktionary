@@ -389,6 +389,7 @@ export default class SubtitleController {
           track: subtitle.track ?? 0,
           text: subtitle.text,
           style: this._reactStyleForTrack(subtitle.track),
+          blurred: this._trackBlurEnabled(subtitle.track) && this.unblurredSubtitleTracks[subtitle.track ?? 0] !== true,
         }))
       handle.store.setLines(lines)
     }
@@ -400,6 +401,14 @@ export default class SubtitleController {
 
   private _computeClassesForTrack(settings: TextSubtitleSettings) {
     return settings.subtitleBlur ? 'asbplayer-subtitles-blurred' : ''
+  }
+
+  // Whether subtitle-blur is enabled for a track — the React equivalent of the
+  // legacy `asbplayer-subtitles-blurred` class lookup (same per-track source).
+  private _trackBlurEnabled(track?: number): boolean {
+    if (this.subtitleClasses === undefined) return false
+    const cls = this.subtitleClasses[track ?? 0] ?? this.subtitleClasses[0] ?? ''
+    return cls === 'asbplayer-subtitles-blurred'
   }
 
   private _getSubtitleTrackAlignment(trackIndex: number) {
@@ -552,6 +561,11 @@ export default class SubtitleController {
         if (this.refreshCurrentSubtitle) this.refreshCurrentSubtitle = false
 
         if (this._reactMode) {
+          // A new cue re-blurs any track the unblur keybind had revealed —
+          // mirrors the legacy _resetUnblurState() call in the branch below.
+          if (subtitlesAreNew) {
+            this.unblurredSubtitleTracks = {}
+          }
           this._forEachReactStore((store) => store.setVisible(true))
           // Route every showing cue to its overlay (bottom/top) by alignment.
           this._pushReactSubtitles(showingSubtitles)
@@ -727,6 +741,16 @@ export default class SubtitleController {
   }
 
   unblur(track: number) {
+    if (this._reactMode) {
+      // Mark the track revealed and re-push so the showing lines re-render
+      // unblurred. Resets on the next cue (see the loop's subtitlesAreNew path).
+      this.unblurredSubtitleTracks[track] = true
+      if (this.showingSubtitles) {
+        this._pushReactSubtitles(this.showingSubtitles)
+      }
+      return
+    }
+
     for (const element of [
       ...this.bottomSubtitlesElementOverlay.displayingElements(),
       ...this.topSubtitlesElementOverlay.displayingElements(),
@@ -874,7 +898,7 @@ export default class SubtitleController {
         if (!handle) continue
         handle.store.setVisible(true)
         handle.store.setLines(
-          kind === primary ? [{ index: -1, track: 0, text, style: this._reactStyleForTrack(0) }] : []
+          kind === primary ? [{ index: -1, track: 0, text, style: this._reactStyleForTrack(0), blurred: false }] : []
         )
       }
       this.showingLoadedMessage = true

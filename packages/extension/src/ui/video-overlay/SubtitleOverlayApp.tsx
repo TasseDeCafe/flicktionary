@@ -504,7 +504,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 key={tl.line.index}
                 data-track={tl.line.track}
                 style={tl.line.style}
-                className='px-2.5 leading-normal whitespace-pre-wrap'
+                className={`px-2.5 leading-normal whitespace-pre-wrap${
+                  tl.line.blurred ? ' blur-[10px] hover:blur-none' : ''
+                }`}
               >
                 {tl.tokens.map((token, i) => {
                   const inRange =

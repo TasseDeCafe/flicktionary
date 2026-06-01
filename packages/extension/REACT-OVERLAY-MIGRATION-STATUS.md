@@ -72,9 +72,15 @@ gate predicate is relaxed. Data flows via `SubtitleLineModel` (`subtitle-store.t
    gone. `richText` is never populated by any parser, so nothing renders it; the
    gate keeps a cheap `richText` guard as a safety net. **No image/rich-text
    rendering work remains for the gate — this no longer blocks 2c.**
-2. **Subtitle blur + unblur keybind** — add `blurred`/`classes` to
-   `SubtitleLineModel`, apply blur class in the Shadow-DOM overlay CSS, wire the
-   existing unblur keybind to the store.
+2. **~~Subtitle blur + unblur keybind~~ — DONE.** `SubtitleLineModel` carries a
+   `blurred` flag; `_pushReactSubtitles` sets it from `_trackBlurEnabled(track)`
+   minus the per-cue `unblurredSubtitleTracks` map. The overlay renders
+   `blur-[10px] hover:blur-none` on the line (hover reveals, matching legacy
+   `.asbplayer-subtitles-blurred:hover`). `unblur(track)` re-pushes with the
+   track revealed under React mode; a new cue re-blurs (mirrors legacy
+   `_resetUnblurState`). NB: blur was never a gate predicate, so blurred cues
+   were silently rendering *unblurred* under React mode before this — a real
+   parity bug, now fixed. No gate change.
 3. **Notification overlay / auto-copy / auto-pause under React mode** — these
    only run on the legacy render path today; make them work when React is the
    renderer.
