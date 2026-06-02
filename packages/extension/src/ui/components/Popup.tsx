@@ -13,6 +13,7 @@ import { useTheme } from '@mui/material/styles'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
 import { settingsPageConfigs } from '@/services/pages'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
+import { FlicktionaryImportSection } from './FlicktionaryImportSection'
 import Stack from '@mui/material/Stack'
 import TutorialIcon from '@asbplayer-fork/common/components/TutorialIcon'
 import Paper from '@mui/material/Paper'
@@ -62,6 +63,7 @@ const Popup = ({
           </Button>
         </ButtonGroup>
         <FlicktionaryPairSection />
+        <FlicktionaryImportSection />
         <Grid
           item
           style={{

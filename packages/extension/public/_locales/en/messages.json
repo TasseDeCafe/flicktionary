@@ -28,5 +28,11 @@
     },
     "contextMenuLoadSubtitles": {
         "message": "Load Subtitles"
+    },
+    "contextMenuImportArticle": {
+        "message": "Import article to Flicktionary"
+    },
+    "contextMenuImportSelection": {
+        "message": "Add selection to Flicktionary"
     }
 }

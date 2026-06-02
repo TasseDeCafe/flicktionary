@@ -41,6 +41,8 @@ import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler'
 import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/register-subtitles-handler'
 import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler'
+import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
+import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
 import SupadataGenerateHandler from '@/handlers/supadata/supadata-generate-handler'
 import GetCachedTranscriptHandler from '@/handlers/video/get-cached-transcript-handler'
 import ExportTranscriptCacheHandler from '@/handlers/video/export-transcript-cache-handler'
@@ -127,6 +129,7 @@ export default defineBackground(() => {
     new FlicktionaryPairHandler(),
     new RegisterFlicktionarySubtitlesHandler(),
     new SetFlicktionaryCefrHandler(),
+    new ImportArticleHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),
     new ExportTranscriptCacheHandler(),
@@ -157,9 +160,21 @@ export default defineBackground(() => {
       title: browser.i18n.getMessage('contextMenuLoadSubtitles'),
       contexts: ['page', 'video'],
     })
+    // Import the whole article (Readability) when right-clicking the page…
+    browser.contextMenus?.create({
+      id: 'flicktionary-import-article',
+      title: browser.i18n.getMessage('contextMenuImportArticle'),
+      contexts: ['page'],
+    })
+    // …or just the highlighted text when right-clicking a selection.
+    browser.contextMenus?.create({
+      id: 'flicktionary-import-selection',
+      title: browser.i18n.getMessage('contextMenuImportSelection'),
+      contexts: ['selection'],
+    })
   })
 
-  browser.contextMenus?.onClicked.addListener((info) => {
+  browser.contextMenus?.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'load-subtitles') {
       const toggleVideoSelectCommand: ExtensionToVideoCommand<ToggleVideoSelectMessage> = {
         sender: 'asbplayer-extension-to-video',
@@ -167,13 +182,24 @@ export default defineBackground(() => {
           command: 'toggle-video-select',
         },
       }
-      tabRegistry.publishCommandToVideoElementTabs((tab): ExtensionToVideoCommand<Message> | undefined => {
-        if (info.pageUrl !== tab.url) {
+      tabRegistry.publishCommandToVideoElementTabs((videoTab): ExtensionToVideoCommand<Message> | undefined => {
+        if (info.pageUrl !== videoTab.url) {
           return undefined
         }
 
         return toggleVideoSelectCommand
       })
+      return
+    }
+
+    if (info.menuItemId === 'flicktionary-import-article' && tab) {
+      void importArticleFromTab(tab)
+      return
+    }
+
+    if (info.menuItemId === 'flicktionary-import-selection' && tab) {
+      void importSelectionFromTab(tab, info.selectionText ?? '')
+      return
     }
   })
 

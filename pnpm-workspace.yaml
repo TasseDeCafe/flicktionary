@@ -27,6 +27,7 @@ catalog:
   '@lingui/react': 6.0.0
   '@lingui/swc-plugin': 6.0.0
   '@lingui/vite-plugin': 6.0.0
+  '@mozilla/readability': ^0.6.0
   '@mui/icons-material': 6.5.0
   '@mui/material': 6.5.0
   '@next/eslint-plugin-next': 16.2.1
