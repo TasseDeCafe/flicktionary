@@ -1,6 +1,5 @@
 import IconButton, { IconButtonProps } from '@mui/material/IconButton'
 import React, { useEffect, useCallback, useState } from 'react'
-import { isMobile } from 'react-device-detect'
 
 interface Props extends IconButtonProps {
   onHold?: (repetition: number) => void
@@ -49,18 +48,9 @@ const HoldableIconButton = ({ onHold, onClick, children, ...rest }: Props) => {
     return () => clearInterval(interval)
   }, [startTime, onHold, repetitions])
   return (
-    <>
-      {isMobile && (
-        <IconButton onTouchStart={handleMouseDown} onTouchEnd={handleMouseUp} onClick={() => {}} {...rest}>
-          {children}
-        </IconButton>
-      )}
-      {!isMobile && (
-        <IconButton onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onClick={() => {}} {...rest}>
-          {children}
-        </IconButton>
-      )}
-    </>
+    <IconButton onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onClick={() => {}} {...rest}>
+      {children}
+    </IconButton>
   )
 }
 

@@ -215,21 +215,6 @@ export default defineConfig({
       }
     }
 
-    if (browser === 'firefox-android') {
-      permissions = [...permissions, 'clipboardWrite']
-
-      manifest = {
-        ...manifest,
-        host_permissions: ['<all_urls>'],
-        browser_specific_settings: {
-          gecko: {
-            id: '{49de9206-c73e-4829-be4d-bda770d7f4b5}',
-          },
-          gecko_android: {},
-        },
-      }
-    }
-
     return {
       ...manifest,
       permissions,

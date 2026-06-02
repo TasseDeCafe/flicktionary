@@ -38,19 +38,16 @@ import {
   toFlicktionarySegments,
 } from './flicktionary/youtube-context'
 import { getCurrentStreamingMetadata, pickStreamingTitle } from './flicktionary/page-context'
-import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
 import { PauseOnHoverMode, SettingsProvider, SubtitleListPreference } from '@asbplayer-fork/common/settings'
 import { SubtitleSlice } from '@asbplayer-fork/common/subtitle-collection'
 import { SubtitleReader } from '@asbplayer-fork/common/subtitle-reader'
 import { seekWithNudge } from '@asbplayer-fork/common/util'
 import ControlsController from '../controllers/controls-controller'
 import DragController from '../controllers/drag-controller'
-import { MobileGestureController } from '../controllers/mobile-gesture-controller'
-import { MobileVideoOverlayController } from '../controllers/mobile-video-overlay-controller'
+import { VideoOverlayController } from '../controllers/video-overlay-controller'
 import NotificationController from '../controllers/notification-controller'
 import SubtitleController from '../controllers/subtitle-controller'
 import VideoDataSyncController from '../controllers/video-data-sync-controller'
-import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import { OffsetAnchor } from './element-overlay'
 import { FlicktionaryVideoClosures } from './flicktionary/flicktionary-client'
 import { ExtensionSettingsStorage } from './extension-settings-storage'
@@ -87,8 +84,7 @@ export default class Binding {
   readonly controlsController: ControlsController
   readonly dragController: DragController
   readonly notificationController: NotificationController
-  readonly mobileVideoOverlayController: MobileVideoOverlayController
-  readonly mobileGestureController: MobileGestureController
+  readonly videoOverlayController: VideoOverlayController
   readonly keyBindings: KeyBindings
   readonly settings: SettingsProvider
 
@@ -143,9 +139,8 @@ export default class Binding {
     this.dragController = new DragController(video)
     this.keyBindings = new KeyBindings()
     this.notificationController = new NotificationController(this)
-    this.mobileVideoOverlayController = new MobileVideoOverlayController(this, OffsetAnchor.top)
-    this.subtitleController.onOffsetChange = () => this.mobileVideoOverlayController.updateModel()
-    this.mobileGestureController = new MobileGestureController(this)
+    this.videoOverlayController = new VideoOverlayController(this, OffsetAnchor.top)
+    this.subtitleController.onOffsetChange = () => this.videoOverlayController.updateModel()
     this.maxImageWidth = 0
     this.maxImageHeight = 0
     this.autoPausePreference = AutoPausePreference.atEnd
@@ -299,7 +294,7 @@ export default class Binding {
 
     if (changed) {
       this._playMode = newPlayMode
-      this.mobileVideoOverlayController.updateModel()
+      this.videoOverlayController.updateModel()
     }
   }
 
@@ -347,18 +342,6 @@ export default class Binding {
     })
     this.subtitleController.bind()
     this.dragController.bind(this)
-    this.mobileGestureController.bind()
-
-    const seek = (forward: boolean) => {
-      const subtitle = adjacentSubtitle(forward, this.video.currentTime * 1000, this.subtitleController.subtitles)
-
-      if (subtitle !== null) {
-        this.seek(subtitle.start / 1000)
-      }
-    }
-
-    this.mobileGestureController.onSwipeLeft = () => seek(false)
-    this.mobileGestureController.onSwipeRight = () => seek(true)
   }
 
   _notifyReady() {
@@ -450,7 +433,7 @@ export default class Binding {
           rate: this.video.playbackRate.toFixed(1),
         })
       }
-      this.mobileVideoOverlayController.updateModel()
+      this.videoOverlayController.updateModel()
     }
 
     this.video.addEventListener('play', this.playListener)
@@ -673,12 +656,12 @@ export default class Binding {
     }
 
     if (currentSettings.streamingEnableOverlay) {
-      this.mobileVideoOverlayController.offsetAnchor =
+      this.videoOverlayController.offsetAnchor =
         currentSettings.subtitleAlignment === 'bottom' ? OffsetAnchor.top : OffsetAnchor.bottom
-      this.mobileVideoOverlayController.bind()
-      this.mobileVideoOverlayController.updateModel()
+      this.videoOverlayController.bind()
+      this.videoOverlayController.updateModel()
     } else {
-      this.mobileVideoOverlayController.unbind()
+      this.videoOverlayController.unbind()
     }
 
     setupLingui(currentSettings.language)
@@ -734,8 +717,7 @@ export default class Binding {
     this.dragController.unbind()
     this.keyBindings.unbind()
     this.videoDataSyncController.unbind()
-    this.mobileVideoOverlayController.unbind()
-    this.mobileGestureController.unbind()
+    this.videoOverlayController.unbind()
     this.notificationController.unbind()
     this.subscribed = false
 
@@ -1041,12 +1023,12 @@ export default class Binding {
     this._syncedTimestamp = Date.now()
 
     if (this.video.paused) {
-      this.mobileVideoOverlayController.show()
+      this.videoOverlayController.show()
     }
 
-    this.mobileVideoOverlayController.updateModel()
+    this.videoOverlayController.updateModel()
 
-    if (!isMobile && subtitles.length > 0) {
+    if (subtitles.length > 0) {
       this.settings
         .get(['streamingDisplaySubtitles', 'keyBindSet'])
         .then(({ streamingDisplaySubtitles, keyBindSet }) => {
@@ -1069,7 +1051,7 @@ export default class Binding {
     this.subtitleController.reset()
     this._synced = false
     this._syncedTimestamp = undefined
-    this.mobileVideoOverlayController.disposeOverlay()
+    this.videoOverlayController.disposeOverlay()
   }
 
   private _notifyRequestingActiveTabPermission(requesting: boolean) {

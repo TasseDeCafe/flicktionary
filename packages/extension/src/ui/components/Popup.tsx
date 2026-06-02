@@ -8,7 +8,6 @@ import ButtonGroup from '@mui/material/ButtonGroup'
 import { Trans } from '@lingui/react/macro'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
-import { isMobile } from 'react-device-detect'
 import { useTheme } from '@mui/material/styles'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
 import { settingsPageConfigs } from '@/services/pages'
@@ -68,7 +67,7 @@ const Popup = ({
         <Grid
           item
           style={{
-            height: isMobile ? 'auto' : 390,
+            height: 390,
           }}
         >
           <SettingsForm

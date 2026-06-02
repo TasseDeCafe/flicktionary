@@ -14,7 +14,6 @@ import Paper from '@mui/material/Paper'
 import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
 import Popup from './Popup'
 import { useRequestingActiveTabPermission } from '../hooks/use-requesting-active-tab-permission'
-import { isMobile } from 'react-device-detect'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
 import { StyledEngineProvider } from '@mui/material/styles'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
@@ -114,7 +113,7 @@ export function PopupUi({ commands }: Props) {
                 settings.themeType === 'dark'
                   ? 'linear-gradient(rgba(255, 255, 255, 0.165), rgba(255, 255, 255, 0.165))'
                   : 'none',
-              width: isMobile ? '100%' : 600,
+              width: 600,
             }}
           >
             <Box>

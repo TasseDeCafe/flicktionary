@@ -1,25 +1,24 @@
-import type { ControlType, MobileOverlayModel, PlayMode } from '@asbplayer-fork/common'
+import type { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import type { PaletteMode } from '@mui/material/styles'
-import MobileVideoOverlay from '@asbplayer-fork/common/components/MobileVideoOverlay'
-import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
+import VideoOverlay from '@asbplayer-fork/common/components/VideoOverlay'
 import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-scrollable-control-type'
 import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
 import { ModelStore, useModelStore } from '../shadow/model-store'
 
 // The in-realm replacement for the iframe model transport. The controller pushes
-// snapshots into the store (formerly the request/update-mobile-overlay-model
+// snapshots into the store (formerly the request/update-video-overlay-model
 // round trip); `visible` flips on pause/play (formerly mount/unmount of the
 // iframe); `tooltipsEnabled` is the small-screen flag the controller used to
 // bake into the iframe URL.
-export interface MobileOverlayState {
-  model: MobileOverlayModel | undefined
+export interface VideoOverlayState {
+  model: VideoOverlayModel | undefined
   visible: boolean
   tooltipsEnabled: boolean
 }
 
 // The command half of the bridge, now plain callbacks the controller wires
 // straight to the Binding (no postMessage round trip).
-export interface MobileOverlayCommands {
+export interface VideoOverlayCommands {
   onLoadSubtitles: () => void
   onOffset: (offset: number) => void
   onSeek: (timestampMs: number) => void
@@ -28,12 +27,12 @@ export interface MobileOverlayCommands {
   onToggleSubtitles: () => void
 }
 
-export interface ShadowMobileVideoOverlayAppProps {
-  store: ModelStore<MobileOverlayState>
+export interface ShadowVideoOverlayAppProps {
+  store: ModelStore<VideoOverlayState>
   shadowRoot: ShadowRoot
   portalContainer: HTMLElement
   anchor: 'top' | 'bottom'
-  commands: MobileOverlayCommands
+  commands: VideoOverlayCommands
 }
 
 // `initialControlType` / `onScrollToControlType` persist the user's last-used
@@ -49,16 +48,15 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
   await browser.storage.local.set({ [lastControlTypeKey]: controlType })
 }
 
-export function ShadowMobileVideoOverlayApp({
+export function ShadowVideoOverlayApp({
   store,
   shadowRoot,
   portalContainer,
   anchor,
   commands,
-}: ShadowMobileVideoOverlayAppProps) {
+}: ShadowVideoOverlayAppProps) {
   const { model, visible, tooltipsEnabled } = useModelStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
-    isMobile,
     saveLastControlType,
     fetchLastControlType,
   })
@@ -76,7 +74,7 @@ export function ShadowMobileVideoOverlayApp({
         // pointer events on the bar itself, else clicks pass through to the video
         // (toggling play, which hides the overlay).
         <div style={{ pointerEvents: 'auto' }}>
-          <MobileVideoOverlay
+          <VideoOverlay
             model={model}
             anchor={anchor}
             tooltipsEnabled={tooltipsEnabled}

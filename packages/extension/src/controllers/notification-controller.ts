@@ -62,7 +62,7 @@ export default class NotificationController {
   // the dialog showed, restore the controls, hide the dialog, and fire onClose.
   private _onClose = () => {
     this._context.subtitleController.forceHideSubtitles = false
-    this._context.mobileVideoOverlayController.forceHide = false
+    this._context.videoOverlayController.forceHide = false
     this._context.controlsController.show()
     this._resetState()
     this._showing = false

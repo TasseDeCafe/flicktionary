@@ -172,7 +172,7 @@ export enum PlayMode {
   repeat = 5,
 }
 
-export interface MobileOverlayModel {
+export interface VideoOverlayModel {
   offset: number
   playbackRate: number
   emptySubtitleTrack: boolean

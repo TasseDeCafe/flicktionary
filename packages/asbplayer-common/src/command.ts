@@ -62,11 +62,7 @@ export interface OffscreenDocumentToExtensionCommand<T extends Message> extends 
   readonly sender: 'asbplayer-offscreen-document'
 }
 
-export interface MobileOverlayToVideoCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer-mobile-overlay-to-video'
+export interface VideoOverlayToVideoCommand<T extends Message> extends Command<T> {
+  readonly sender: 'asbplayer-video-overlay-to-video'
   readonly src: string
-}
-
-export interface MobileOverlayCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer-mobile-overlay'
 }
