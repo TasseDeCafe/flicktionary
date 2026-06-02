@@ -472,8 +472,12 @@ msgstr "About"
 #~ msgstr "About | Flicktionary"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:248
-msgid "About asbplayer"
-msgstr "About asbplayer"
+#~ msgid "About asbplayer"
+#~ msgstr "About asbplayer"
+
+#: packages/asbplayer-common/components/SettingsForm.tsx:248
+msgid "About Flicktionary"
+msgstr "About Flicktionary"
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:38
 #~ msgid "About Us"
@@ -1332,8 +1336,8 @@ msgid "Deleting…"
 msgstr "Deleting…"
 
 #: packages/asbplayer-common/components/About.tsx:257
-msgid "Dependencies"
-msgstr "Dependencies"
+#~ msgid "Dependencies"
+#~ msgstr "Dependencies"
 
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
 msgid "Detect and Display Ruby"
@@ -2426,8 +2430,8 @@ msgstr "Less formal:"
 
 #: packages/asbplayer-common/components/About.tsx:227
 #: packages/asbplayer-common/components/About.tsx:267
-msgid "License"
-msgstr "License"
+#~ msgid "License"
+#~ msgstr "License"
 
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:165
 msgid "Light"
@@ -2626,8 +2630,8 @@ msgid "Multiple Video Elements Detected"
 msgstr "Multiple Video Elements Detected"
 
 #: packages/asbplayer-common/components/About.tsx:264
-msgid "Name"
-msgstr "Name"
+#~ msgid "Name"
+#~ msgstr "Name"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
@@ -3288,8 +3292,8 @@ msgid "Pronoun"
 msgstr "Pronoun"
 
 #: packages/asbplayer-common/components/About.tsx:270
-msgid "Purpose"
-msgstr "Purpose"
+#~ msgid "Purpose"
+#~ msgstr "Purpose"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:509
 msgid "Quick gloss"
