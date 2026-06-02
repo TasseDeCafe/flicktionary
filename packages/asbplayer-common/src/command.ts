@@ -66,7 +66,3 @@ export interface VideoOverlayToVideoCommand<T extends Message> extends Command<T
   readonly sender: 'asbplayer-video-overlay-to-video'
   readonly src: string
 }
-
-export interface VideoOverlayCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer-video-overlay'
-}

@@ -25,11 +25,9 @@ import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler'
 import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requesting-active-tab-permission'
 import AckMessageHandler from '@/handlers/video/ack-message-handler'
 import { isFirefoxBuild } from '@/services/build-flags'
-import CurrentTabHandler from '@/handlers/video-overlay/current-tab-handler'
 import { enqueueUpdateAlert } from '@/services/update-alert'
 import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-handler'
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
-import VideoOverlayForwarderHandler from '@/handlers/video-overlay/video-overlay-forwarder-handler'
 import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler'
 import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler'
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
@@ -101,8 +99,6 @@ export default defineBackground(() => {
     new PageConfigHandler(),
     new AsbplayerV2ToVideoCommandForwardingHandler(),
     new CaptureVisibleTabHandler(),
-    new CurrentTabHandler(),
-    new VideoOverlayForwarderHandler(),
     new FlicktionaryGlossHandler(),
     new SaveWordHandler(),
     new FlicktionaryPairHandler(),

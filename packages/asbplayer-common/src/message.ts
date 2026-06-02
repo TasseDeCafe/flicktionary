@@ -373,10 +373,6 @@ export interface NotifyErrorMessage extends Message {
   readonly message: string
 }
 
-export interface CurrentTabMessage extends Message {
-  readonly command: 'current-tab'
-}
-
 export interface NotificationDialogMessage extends Message {
   readonly command: 'notification-dialog'
   readonly titleLocKey: string
