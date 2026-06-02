@@ -1,16 +1,20 @@
 import { Command, Message } from '@asbplayer-fork/common'
 
-export default class CurrentTabHandler {
+export default class VideoOverlayForwarderHandler {
   get sender() {
-    return 'asbplayer-mobile-overlay'
+    return 'asbplayer-video-overlay-to-video'
   }
 
   get command() {
-    return 'current-tab'
+    return null
   }
 
   handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
-    sendResponse(sender.tab?.id)
+    if (sender.tab?.id === undefined) {
+      return
+    }
+
+    browser.tabs.sendMessage(sender.tab.id, command)
     return false
   }
 }

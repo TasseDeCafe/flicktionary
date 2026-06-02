@@ -20,7 +20,7 @@ export default class RefreshSettingsHandler {
     return [
       'asbplayer-popup',
       'asbplayer-settings',
-      'asbplayer-mobile-overlay',
+      'asbplayer-video-overlay',
       'asbplayer-video',
       'asbplayer-video-tab',
     ]

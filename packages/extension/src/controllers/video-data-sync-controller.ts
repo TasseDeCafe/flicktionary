@@ -585,13 +585,13 @@ export default class VideoDataSyncController {
 
     this._context.keyBindings.unbind()
     this._context.subtitleController.forceHideSubtitles = true
-    this._context.mobileVideoOverlayController.forceHide = true
+    this._context.videoOverlayController.forceHide = true
   }
 
   private _hideAndResume() {
     this._context.keyBindings.bind(this._context)
     this._context.subtitleController.forceHideSubtitles = false
-    this._context.mobileVideoOverlayController.forceHide = false
+    this._context.videoOverlayController.forceHide = false
 
     this._channel?.updateState({ open: false })
     this._shadowOpen = false

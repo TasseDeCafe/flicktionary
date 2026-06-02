@@ -1,26 +1,26 @@
 import { createElement } from 'react'
-import { MobileOverlayModel, MobileOverlayToVideoCommand, ToggleSubtitlesMessage } from '@asbplayer-fork/common'
+import { VideoOverlayModel, VideoOverlayToVideoCommand, ToggleSubtitlesMessage } from '@asbplayer-fork/common'
 import Binding from '../services/binding'
 import { OffsetAnchor } from '../services/element-overlay'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
 import { mountVideoOverlayHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
 import { createModelStore, type ModelStore } from '../ui/shadow/model-store'
 import {
-  ShadowMobileVideoOverlayApp,
-  type MobileOverlayCommands,
-  type MobileOverlayState,
-} from '../ui/mobile-video-overlay/ShadowMobileVideoOverlayApp'
+  ShadowVideoOverlayApp,
+  type VideoOverlayCommands,
+  type VideoOverlayState,
+} from '../ui/video-overlay/ShadowVideoOverlayApp'
 
 const smallScreenVideoHeightThreshold = 300
 
 // Marker for the in-realm controls overlay shadow host, so a host stranded by a
 // previous content-script load / HMR is removed before remounting.
-const CONTROLS_HOST_ATTR = 'data-asbplayer-mobile-overlay-host'
+const CONTROLS_HOST_ATTR = 'data-asbplayer-video-overlay-host'
 
 // Over-video controls overlay, rendered in the content-script realm via a
 // fullscreen-aware, non-transformed Shadow DOM host (mountVideoOverlayHost). The
 // model flows through a per-controller store; commands are direct Binding calls.
-export class MobileVideoOverlayController {
+export class VideoOverlayController {
   private readonly _context: Binding
   private _offsetAnchor: OffsetAnchor
   private _pauseListener?: () => void
@@ -30,7 +30,7 @@ export class MobileVideoOverlayController {
   private _showing: boolean = false
   private _bound = false
 
-  private _store?: ModelStore<MobileOverlayState>
+  private _store?: ModelStore<VideoOverlayState>
   private _shadowHandle?: ShadowHostHandle
 
   constructor(context: Binding, offsetAnchor: OffsetAnchor) {
@@ -93,7 +93,7 @@ export class MobileVideoOverlayController {
     this._context.video.addEventListener('play', this._playListener)
     this._context.video.addEventListener('seeked', this._seekedListener)
 
-    this._store = createModelStore<MobileOverlayState>({
+    this._store = createModelStore<VideoOverlayState>({
       model: undefined,
       visible: false,
       tooltipsEnabled: true,
@@ -111,7 +111,7 @@ export class MobileVideoOverlayController {
   // matching message used to trigger via the background handlers / binding.ts
   // switch. toggle-subtitles stays a src-only runtime message (it toggles a
   // setting and broadcasts to every video element through the background handler).
-  private _shadowCommands(): MobileOverlayCommands {
+  private _shadowCommands(): VideoOverlayCommands {
     return {
       onLoadSubtitles: () => this._context.showVideoDataDialog(false),
       onOffset: (offset: number) => this._context.subtitleController.offset(offset, false),
@@ -123,8 +123,8 @@ export class MobileVideoOverlayController {
         this._context.playMode = playMode
       },
       onToggleSubtitles: () => {
-        const command: MobileOverlayToVideoCommand<ToggleSubtitlesMessage> = {
-          sender: 'asbplayer-mobile-overlay-to-video',
+        const command: VideoOverlayToVideoCommand<ToggleSubtitlesMessage> = {
+          sender: 'asbplayer-video-overlay-to-video',
           message: { command: 'toggle-subtitles' },
           src: this._context.video.src,
         }
@@ -146,7 +146,7 @@ export class MobileVideoOverlayController {
       anchor,
       offset: 8,
       render: ({ shadowRoot, portalContainer }) =>
-        createElement(ShadowMobileVideoOverlayApp, { store, shadowRoot, portalContainer, anchor, commands }),
+        createElement(ShadowVideoOverlayApp, { store, shadowRoot, portalContainer, anchor, commands }),
     })
   }
 
@@ -192,7 +192,7 @@ export class MobileVideoOverlayController {
       'themeType',
       'streamingDisplaySubtitles',
     ])
-    const model: MobileOverlayModel = {
+    const model: VideoOverlayModel = {
       offset: subtitles.length === 0 ? 0 : subtitles[0].start - subtitles[0].originalStart,
       playbackRate: this._context.video.playbackRate,
       emptySubtitleTrack: subtitles.length === 0,

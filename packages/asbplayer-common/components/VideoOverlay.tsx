@@ -4,7 +4,7 @@ import IconButton from '@mui/material/IconButton'
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import TuneIcon from '@mui/icons-material/Tune'
-import { ControlType, MobileOverlayModel, PlayMode } from '@asbplayer-fork/common'
+import { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import { makeStyles } from 'tss-react/mui'
 import { useLingui } from '@lingui/react/macro'
 import LogoIcon from './LogoIcon'
@@ -71,7 +71,7 @@ const GridContainer = React.forwardRef<HTMLDivElement, GridContainerProps>(funct
 })
 
 interface Props {
-  model?: MobileOverlayModel
+  model?: VideoOverlayModel
   className?: string
   anchor: Anchor
   tooltipsEnabled: boolean
@@ -85,7 +85,7 @@ interface Props {
   onToggleSubtitles: () => void
 }
 
-const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function MobileVideoOverlay(
+const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverlay(
   {
     model,
     className,
@@ -475,4 +475,4 @@ const MobileVideoOverlay = React.forwardRef<HTMLDivElement, Props>(function Mobi
   )
 })
 
-export default MobileVideoOverlay
+export default VideoOverlay

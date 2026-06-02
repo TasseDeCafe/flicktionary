@@ -12,7 +12,7 @@ export default class ToggleSubtitlesHandler {
   }
 
   get sender() {
-    return ['asbplayer-video', 'asbplayer-mobile-overlay-to-video']
+    return ['asbplayer-video', 'asbplayer-video-overlay-to-video']
   }
 
   get command() {
