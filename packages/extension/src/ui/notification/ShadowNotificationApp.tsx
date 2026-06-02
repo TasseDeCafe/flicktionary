@@ -40,7 +40,7 @@ export interface ShadowNotificationAppProps {
 // ever sent — see services/binding.ts). Ported verbatim from NotificationUi.
 const dialogMessages: Record<string, MessageDescriptor> = {
   'activeTabPermissionRequest.title': msg`Enable audio recording`,
-  'activeTabPermissionRequest.prompt': msg`Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab.`,
+  'activeTabPermissionRequest.prompt': msg`Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab.`,
   'activeTabPermissionRequest.grantedTitle': msg`Audio recording enabled`,
   'activeTabPermissionRequest.grantedPrompt': msg`Audio recording has been enabled for this tab. You can now begin mining.`,
 }
@@ -90,7 +90,7 @@ function NotificationContent({ state, onClose }: { state: NotificationState; onC
         <Snackbar open={true} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} onClose={onClose}>
           <Alert icon={<LogoIcon />} severity='info' onClose={onClose}>
             <Trans>
-              asbplayer updated to version {state.newVersion}. Check out the{' '}
+              Flicktionary updated to version {state.newVersion}. Check out the{' '}
               <Link
                 color='primary'
                 target='_blank'

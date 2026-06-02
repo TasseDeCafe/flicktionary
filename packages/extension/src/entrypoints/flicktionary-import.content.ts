@@ -1,4 +1,7 @@
 import { defineContentScript } from '#imports'
+// `import type` only — the error code is a pure string-literal union, so nothing
+// runtime (and none of the ~120KB Lingui catalog) leaks into this always-injected
+// content bundle. The background localizes these codes.
 import type { ArticleExtractionResult } from '@/services/flicktionary/import-text'
 
 // Content script for the Flicktionary text-import flow. Runs in the top frame of
@@ -34,7 +37,7 @@ const extractArticle = async (): Promise<ArticleExtractionResult> => {
 
     const flatText = article?.textContent?.trim() ?? ''
     if (!article || flatText.length === 0) {
-      return { ok: false, error: 'Could not find a readable article on this page.' }
+      return { ok: false, errorCode: 'no-readable-article' }
     }
 
     let text = flatText
@@ -52,8 +55,8 @@ const extractArticle = async (): Promise<ArticleExtractionResult> => {
 
     const title = (article.title || document.title || 'Imported article').trim()
     return { ok: true, title, text }
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'Failed to extract article text.' }
+  } catch {
+    return { ok: false, errorCode: 'extract-failed' }
   }
 }
 

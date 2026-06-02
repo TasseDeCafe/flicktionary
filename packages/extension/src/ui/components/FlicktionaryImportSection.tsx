@@ -3,12 +3,14 @@ import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import Typography from '@mui/material/Typography'
+import { Trans, useLingui } from '@lingui/react/macro'
 
 // Popup affordance for importing the current page's article into Flicktionary.
 // Delegates to the background handler (which runs Readability in the active tab
 // and opens the new reading session); on success the new tab closes the popup,
 // so we only render inline feedback for the failure path.
 export const FlicktionaryImportSection = () => {
+  const { t } = useLingui()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -21,10 +23,10 @@ export const FlicktionaryImportSection = () => {
         message: { command: 'flicktionary-import-article' },
       })) as { success: boolean; error?: string } | undefined
       if (!response?.success) {
-        setError(response?.error ?? 'Could not import this page.')
+        setError(response?.error ?? t`Could not import this page.`)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not import this page.')
+      setError(e instanceof Error ? e.message : t`Could not import this page.`)
     } finally {
       setBusy(false)
     }
@@ -34,7 +36,7 @@ export const FlicktionaryImportSection = () => {
     <Paper variant='outlined' sx={{ p: 1.5 }}>
       <ButtonGroup fullWidth size='small' variant='outlined'>
         <Button onClick={handleImport} disabled={busy}>
-          {busy ? 'Importing…' : 'Import this article'}
+          {busy ? <Trans>Importing…</Trans> : <Trans>Import this article</Trans>}
         </Button>
       </ButtonGroup>
       {error && (

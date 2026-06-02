@@ -19,6 +19,8 @@ import SettingsUpdatedHandler from '@/handlers/asbplayerv2/settings-updated-hand
 import { Command, ExtensionToVideoCommand, Message, ToggleVideoSelectMessage } from '@asbplayer-fork/common'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
 import { i18nConfig } from '@flicktionary/i18n/i18n-config'
+import { msg } from '@lingui/core/macro'
+import { i18n, setupLingui } from '@/ui/lingui'
 import VideoDisappearedHandler from '@/handlers/video/video-disappeared-handler'
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler'
@@ -154,24 +156,65 @@ export default defineBackground(() => {
     }
   })
 
-  browser.runtime.onInstalled.addListener(() => {
-    browser.contextMenus?.create({
-      id: 'load-subtitles',
-      title: browser.i18n.getMessage('contextMenuLoadSubtitles'),
-      contexts: ['page', 'video'],
+  // Context-menu titles render through Lingui (the same en/fr catalog as the
+  // rest of the UI), not browser.i18n. They follow the in-app `language` setting
+  // rather than the browser UI language.
+  let currentMenuLanguage: string | undefined
+  // Serialize every (re)build through a single in-flight promise: a burst of
+  // storage changes must not interleave a removeAll() between another run's
+  // removeAll() and create() — that race would leave the menus missing.
+  let menuSetupPromise: Promise<void> = Promise.resolve()
+
+  const setupContextMenus = (): Promise<void> => {
+    menuSetupPromise = menuSetupPromise.then(async () => {
+      // Activate the locale even when context menus are unavailable (Firefox /
+      // mobile lack the permission) so background-originated toasts still localize.
+      currentMenuLanguage = await settings.getSingle('language')
+      setupLingui(currentMenuLanguage)
+      if (!browser.contextMenus) {
+        return
+      }
+      await browser.contextMenus.removeAll()
+      browser.contextMenus.create({
+        id: 'load-subtitles',
+        title: i18n._(msg`Load Subtitles`),
+        contexts: ['page', 'video'],
+      })
+      // Import the whole article (Readability) when right-clicking the page…
+      browser.contextMenus.create({
+        id: 'flicktionary-import-article',
+        title: i18n._(msg`Import article to Flicktionary`),
+        contexts: ['page'],
+      })
+      // …or just the highlighted text when right-clicking a selection.
+      browser.contextMenus.create({
+        id: 'flicktionary-import-selection',
+        title: i18n._(msg`Add selection to Flicktionary`),
+        contexts: ['selection'],
+      })
     })
-    // Import the whole article (Readability) when right-clicking the page…
-    browser.contextMenus?.create({
-      id: 'flicktionary-import-article',
-      title: browser.i18n.getMessage('contextMenuImportArticle'),
-      contexts: ['page'],
-    })
-    // …or just the highlighted text when right-clicking a selection.
-    browser.contextMenus?.create({
-      id: 'flicktionary-import-selection',
-      title: browser.i18n.getMessage('contextMenuImportSelection'),
-      contexts: ['selection'],
-    })
+    return menuSetupPromise
+  }
+
+  // MV3 doesn't persist context menus across browser restarts, so (re)build them
+  // on install/update and on every startup.
+  browser.runtime.onInstalled.addListener(() => void setupContextMenus())
+  browser.runtime.onStartup.addListener(() => void setupContextMenus())
+
+  // When the in-app language changes (settings live in storage.local), relabel
+  // the menus. Re-read the setting rather than parsing `changes` directly — the
+  // key may be profile-prefixed (e.g. `<profile>.language`).
+  browser.storage.onChanged.addListener((_changes, areaName) => {
+    if (areaName !== 'local') {
+      return
+    }
+    void (async () => {
+      const language = await settings.getSingle('language')
+      if (language === currentMenuLanguage) {
+        return
+      }
+      await setupContextMenus()
+    })()
   })
 
   browser.contextMenus?.onClicked.addListener((info, tab) => {

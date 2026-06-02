@@ -1,16 +1,35 @@
+import { msg } from '@lingui/core/macro'
+import { i18n } from '@/ui/lingui'
+import { activateBackgroundLocale } from '@/services/activate-background-locale'
 import { getFlicktionaryApiClient } from './flicktionary-api-client'
 import { getFlicktionaryAuth } from './auth-storage'
 import { getFlicktionaryConfig } from './flicktionary-config'
 import { extractFlicktionaryApiError } from './api-error'
 
+// Stable codes the content script returns instead of localized prose, so the
+// always-injected content bundle never pulls in the Lingui catalog. The
+// background (here) maps them to localized messages.
+export type ArticleExtractionErrorCode = 'no-readable-article' | 'extract-failed'
+
 // Result the import content script returns for an extraction request.
-export type ArticleExtractionResult = { ok: true; title: string; text: string } | { ok: false; error: string }
+export type ArticleExtractionResult =
+  | { ok: true; title: string; text: string }
+  | { ok: false; errorCode: ArticleExtractionErrorCode }
 
 export type ImportOutcome = { ok: true; sessionId: string } | { ok: false; error: string }
 
 const IMPORT_SENDER = 'flicktionary-extension-import'
 const EXTRACT_COMMAND = 'flicktionary-extract-article'
 const TOAST_COMMAND = 'flicktionary-import-toast'
+
+const extractionErrorMessage = (code: ArticleExtractionErrorCode): string => {
+  switch (code) {
+    case 'no-readable-article':
+      return i18n._(msg`Could not find a readable article on this page.`)
+    case 'extract-failed':
+      return i18n._(msg`Could not read this page.`)
+  }
+}
 
 interface ImportTextInput {
   title: string
@@ -26,7 +45,7 @@ interface ImportTextInput {
 const importTextToFlicktionary = async (input: ImportTextInput): Promise<string> => {
   const auth = await getFlicktionaryAuth()
   if (!auth) {
-    throw new Error('Pair with Flicktionary to import text.')
+    throw new Error(i18n._(msg`Sign in to Flicktionary to import text.`))
   }
   const { data } = await getFlicktionaryApiClient().studySessions.importText({
     title: input.title,
@@ -61,7 +80,7 @@ const deriveTitle = (raw: string, fallback: string): string => {
       .split('\n')
       .map((line) => line.trim())
       .find((line) => line.length > 0) ?? ''
-  return (firstLine || fallback || 'Imported text').slice(0, 200)
+  return (firstLine || fallback || i18n._(msg`Imported text`)).slice(0, 200)
 }
 
 const finishImport = async (tabId: number, input: ImportTextInput): Promise<ImportOutcome> => {
@@ -70,7 +89,7 @@ const finishImport = async (tabId: number, input: ImportTextInput): Promise<Impo
     await openFlicktionarySession(sessionId)
     return { ok: true, sessionId }
   } catch (error) {
-    const { message } = extractFlicktionaryApiError(error, 'Failed to import into Flicktionary.')
+    const { message } = extractFlicktionaryApiError(error, i18n._(msg`Failed to import into Flicktionary.`))
     await showToast(tabId, 'error', message)
     return { ok: false, error: message }
   }
@@ -83,8 +102,9 @@ export const importArticleFromTab = async (tab: {
   url?: string
   title?: string
 }): Promise<ImportOutcome> => {
+  await activateBackgroundLocale()
   if (tab.id === undefined) {
-    return { ok: false, error: 'No active tab to import from.' }
+    return { ok: false, error: i18n._(msg`No active tab to import from.`) }
   }
   let extracted: ArticleExtractionResult
   try {
@@ -95,10 +115,10 @@ export const importArticleFromTab = async (tab: {
   } catch {
     // The content script isn't reachable (e.g. a restricted page, or the tab was
     // loaded before the extension installed/updated).
-    return { ok: false, error: 'Reload the page, then try importing again.' }
+    return { ok: false, error: i18n._(msg`Reload the page, then try importing again.`) }
   }
   if (!extracted?.ok) {
-    const error = extracted?.error ?? 'Could not read this page.'
+    const error = extractionErrorMessage(extracted?.errorCode ?? 'extract-failed')
     await showToast(tab.id, 'error', error)
     return { ok: false, error }
   }
@@ -111,13 +131,14 @@ export const importSelectionFromTab = async (
   tab: { id?: number; title?: string },
   selectionText: string
 ): Promise<ImportOutcome> => {
+  await activateBackgroundLocale()
   if (tab.id === undefined) {
-    return { ok: false, error: 'No active tab.' }
+    return { ok: false, error: i18n._(msg`No active tab.`) }
   }
   const text = selectionText.trim()
   if (text.length === 0) {
-    await showToast(tab.id, 'error', 'Select some text first.')
+    await showToast(tab.id, 'error', i18n._(msg`Select some text first.`))
     return { ok: false, error: 'No text selected.' }
   }
-  return finishImport(tab.id, { title: deriveTitle(text, tab.title ?? 'Selection'), text })
+  return finishImport(tab.id, { title: deriveTitle(text, tab.title ?? i18n._(msg`Selection`)), text })
 }

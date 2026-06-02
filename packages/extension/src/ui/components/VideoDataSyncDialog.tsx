@@ -309,8 +309,8 @@ export default function VideoDataSyncDialog({
                   }
                 >
                   <Trans>
-                    Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles
-                    on every site. You can always load your own subtitle files.
+                    Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect
+                    subtitles on every site. You can always load your own subtitle files.
                   </Trans>
                 </Alert>
               </Grid>

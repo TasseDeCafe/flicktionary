@@ -200,8 +200,8 @@ const About = ({ appVersion, extensionVersion }: Props) => {
       <Box style={{ width: '100%', textAlign: 'center' }}>
         <LogoIcon style={{ width: 48, height: 48 }} />
         <br />
-        <Link variant='h5' href='https://github.com/killergerbah/asbplayer'>
-          asbplayer
+        <Link variant='h5' href='https://app.flicktionary.app'>
+          Flicktionary
         </Link>
         <br />
         {appVersion && (
@@ -223,101 +223,6 @@ const About = ({ appVersion, extensionVersion }: Props) => {
         )}
       </Box>
       <p />
-      <SettingsSection>
-        <Trans>License</Trans>
-      </SettingsSection>
-      <Paper variant='outlined' style={{ padding: theme.spacing(2), height: 'auto' }}>
-        <Typography variant='body2'>
-          MIT License
-          <br />
-          <br />
-          Copyright (c) 2020-2025 asbplayer authors
-          <br />
-          <br />
-          Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
-          documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without
-          limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
-          Software, and to permit persons to whom the Software is furnished to do so, subject to the following
-          conditions:
-          <br />
-          <br />
-          The above copyright notice and this permission notice shall be included in all copies or substantial portions
-          of the Software.
-          <br />
-          <br />
-          THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
-          NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
-          EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
-          AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
-          OR OTHER DEALINGS IN THE SOFTWARE.
-        </Typography>
-      </Paper>
-      <br />
-      <SettingsSection>
-        <Trans>Dependencies</Trans>
-      </SettingsSection>
-      <TableContainer variant='outlined' component={Paper} style={{ height: 'auto' }}>
-        <Table style={{ margin: 0, padding: 0 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <Trans>Name</Trans>
-              </TableCell>
-              <TableCell>
-                <Trans>License</Trans>
-              </TableCell>
-              <TableCell>
-                <Trans>Purpose</Trans>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {dependencies
-              .filter((d) => !d.extension || extensionVersion !== undefined)
-              .map((d, index) => {
-                let alreadyRenderedPurpose: boolean
-
-                if (renderedPurpose[d.purpose] === undefined) {
-                  alreadyRenderedPurpose = false
-                  purposeIndex++
-                } else {
-                  alreadyRenderedPurpose = true
-                }
-
-                renderedPurpose[d.purpose] = true
-
-                let CellComponent = TableCell
-                let nextPurpose = dependencies[index + 1]?.purpose
-
-                if (nextPurpose !== undefined && d.purpose !== nextPurpose) {
-                  CellComponent = BorderedTableCell
-                }
-
-                const isLastPurposeCell = d.purpose === dependencies[dependencies.length - 1].purpose
-
-                return (
-                  <TableRow key={d.name}>
-                    <CellComponent>
-                      {d.projectLink && <Link href={d.projectLink}>{d.name}</Link>}
-                      {!d.projectLink && d.name}
-                    </CellComponent>
-                    <CellComponent>
-                      <Link href={d.licenseLink}>{d.license}</Link>
-                    </CellComponent>
-                    {!alreadyRenderedPurpose && (
-                      <BorderedTableCell
-                        style={!isLastPurposeCell ? {} : { borderBottom: 0 }}
-                        rowSpan={dependencyPurposeCounts[d.purpose]}
-                      >
-                        {d.purpose}
-                      </BorderedTableCell>
-                    )}
-                  </TableRow>
-                )
-              })}
-          </TableBody>
-        </Table>
-      </TableContainer>
     </Box>
   )
 }

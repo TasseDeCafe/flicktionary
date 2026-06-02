@@ -1,8 +1,11 @@
 import type { Browser } from 'wxt/browser'
 import type { Command, Message, SetFlicktionaryCefrMessage, SetFlicktionaryCefrResponse } from '@asbplayer-fork/common'
+import { msg } from '@lingui/core/macro'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
+import { activateBackgroundLocale } from '../../services/activate-background-locale'
+import { i18n } from '../../ui/lingui'
 
 // Sets the user's CEFR level for a language on behalf of the content script's
 // in-video picker (shown when a save fails with 'MISSING_CEFR'). Wraps the same
@@ -26,9 +29,10 @@ export default class SetFlicktionaryCefrHandler {
 
     void (async () => {
       try {
+        await activateBackgroundLocale()
         const auth = await getFlicktionaryAuth()
         if (!auth) {
-          sendResponse({ success: false, error: 'Pair with Flicktionary to set your level.' })
+          sendResponse({ success: false, error: i18n._(msg`Sign in to Flicktionary to set your level.`) })
           return
         }
 

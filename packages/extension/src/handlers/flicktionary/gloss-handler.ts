@@ -1,8 +1,11 @@
 import type { Browser } from 'wxt/browser'
 import type { Command, Message, FlicktionaryGlossMessage, FlicktionaryGlossResponse } from '@asbplayer-fork/common'
+import { msg } from '@lingui/core/macro'
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { getFlicktionaryTargetLanguage } from '../../services/flicktionary/flicktionary-target-language'
+import { activateBackgroundLocale } from '../../services/activate-background-locale'
+import { i18n } from '../../ui/lingui'
 
 // Fetches a fast gloss for a hovered subtitle selection via Flicktionary's
 // stateless `glosses.fastGloss` endpoint. Replaces the old self-hosted
@@ -25,9 +28,10 @@ export default class FlicktionaryGlossHandler {
 
     void (async () => {
       try {
+        await activateBackgroundLocale()
         const auth = await getFlicktionaryAuth()
         if (!auth) {
-          sendResponse({ error: 'Pair with Flicktionary to translate.' })
+          sendResponse({ error: i18n._(msg`Sign in to Flicktionary to translate.`) })
           return
         }
         const targetLanguage = await getFlicktionaryTargetLanguage()

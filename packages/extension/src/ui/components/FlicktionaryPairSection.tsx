@@ -3,6 +3,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import Button from '@mui/material/Button'
+import { Plural, Trans } from '@lingui/react/macro'
 import { v4 as uuidv4 } from 'uuid'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client'
@@ -77,24 +78,25 @@ export const FlicktionaryPairSection = () => {
   return (
     <Paper variant='outlined' sx={{ p: 1.5 }}>
       <Typography variant='body2' sx={{ mb: 1 }}>
-        Flicktionary
+        <Trans>Flicktionary</Trans>
       </Typography>
       {auth ? (
         <>
           <Typography variant='caption' sx={{ display: 'block', mb: 1 }}>
-            Paired as {auth.email}
-            {` · ${highlightCount} ${highlightCount === 1 ? 'highlight' : 'highlights'} this session`}
+            <Trans>Signed in as {auth.email}</Trans>
+            {' · '}
+            <Plural value={highlightCount} one='# highlight this session' other='# highlights this session' />
           </Typography>
           <ButtonGroup fullWidth size='small' variant='outlined'>
             <Button color='error' onClick={handleUnpair}>
-              Unpair
+              <Trans>Sign out</Trans>
             </Button>
           </ButtonGroup>
         </>
       ) : (
         <ButtonGroup fullWidth size='small' variant='outlined'>
           <Button onClick={handlePair} disabled={pairing}>
-            {pairing ? 'Waiting…' : 'Pair with Flicktionary'}
+            {pairing ? <Trans>Signing in…</Trans> : <Trans>Sign in with Flicktionary</Trans>}
           </Button>
         </ButtonGroup>
       )}

@@ -245,7 +245,7 @@ export default function SettingsForm({
         {supportsDictionary && <Tab tabIndex={2} label={t`Annotation`} id='dictionary' />}
         <Tab tabIndex={2 + Number(supportsDictionary)} label={t`Streaming Video`} id='streaming-video' />
         <Tab tabIndex={3 + Number(supportsDictionary)} label={t`Misc`} id='misc-settings' />
-        <Tab tabIndex={4 + Number(supportsDictionary)} label={t`About asbplayer`} id='about' />
+        <Tab tabIndex={4 + Number(supportsDictionary)} label={t`About Flicktionary`} id='about' />
       </Tabs>
       <TabPanel value={tabIndex} index={tabIndicesById['subtitle-appearance']} tabsOrientation={tabsOrientation}>
         <SubtitleAppearanceSettingsTab
