@@ -339,7 +339,7 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgid "• Full communication records and interaction history"
 #~ msgstr "• Full communication records and interaction history"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:156
+#: packages/extension/src/ui/components/Tutorial.tsx:149
 msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
 msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
 
@@ -551,7 +551,7 @@ msgstr "Add New Profile..."
 msgid "Add note"
 msgstr "Add note"
 
-#: packages/extension/src/entrypoints/background.ts:180
+#: packages/extension/src/entrypoints/background.ts:165
 msgid "Add selection to Flicktionary"
 msgstr "Add selection to Flicktionary"
 
@@ -1031,7 +1031,7 @@ msgid "Click on the Flicktionary action button in the top-right of the browser w
 msgstr "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
 
 #. placeholder {0}: isFirefox ? '⚙' : '📌'
-#: packages/extension/src/ui/components/Tutorial.tsx:72
+#: packages/extension/src/ui/components/Tutorial.tsx:71
 msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
 msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
 
@@ -1225,7 +1225,7 @@ msgstr "Could not set up your account. Please try restarting the app."
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:305
+#: packages/asbplayer-common/components/VideoOverlay.tsx:305
 msgid "Current Timestamp"
 msgstr "Current Timestamp"
 
@@ -1280,12 +1280,12 @@ msgstr "Dark"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:312
+#: packages/asbplayer-common/components/VideoOverlay.tsx:312
 msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:317
+#: packages/asbplayer-common/components/VideoOverlay.tsx:317
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
@@ -2234,7 +2234,7 @@ msgstr "If you'd like to create a new account, you can sign up again."
 msgid "Imperfective"
 msgstr "Imperfective"
 
-#: packages/extension/src/entrypoints/background.ts:174
+#: packages/extension/src/entrypoints/background.ts:159
 msgid "Import article to Flicktionary"
 msgstr "Import article to Flicktionary"
 
@@ -2268,12 +2268,12 @@ msgstr "Importing…"
 msgid "Inanimate"
 msgstr "Inanimate"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:310
+#: packages/asbplayer-common/components/VideoOverlay.tsx:310
 msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:319
+#: packages/asbplayer-common/components/VideoOverlay.tsx:319
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
 
@@ -2451,8 +2451,8 @@ msgstr "LLM-suggested terms"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:363
-#: packages/extension/src/entrypoints/background.ts:168
+#: packages/asbplayer-common/components/VideoOverlay.tsx:363
+#: packages/extension/src/entrypoints/background.ts:153
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
@@ -2855,7 +2855,7 @@ msgstr "Numeral"
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:324
-#: packages/extension/src/ui/components/Tutorial.tsx:117
+#: packages/extension/src/ui/components/Tutorial.tsx:110
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:307
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:373
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:84
@@ -2864,7 +2864,7 @@ msgstr "Numeral"
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/Popup.tsx:60
+#: packages/extension/src/ui/components/Popup.tsx:59
 msgid "Open App"
 msgstr "Open App"
 
@@ -3069,11 +3069,11 @@ msgstr "Pick your native language"
 msgid "Play/pause"
 msgstr "Play/pause"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:390
+#: packages/asbplayer-common/components/VideoOverlay.tsx:390
 msgid "Playback Mode"
 msgstr "Playback Mode"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:318
+#: packages/asbplayer-common/components/VideoOverlay.tsx:318
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
@@ -3580,12 +3580,12 @@ msgid "Searching…"
 msgstr "Searching…"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
+#: packages/asbplayer-common/components/VideoOverlay.tsx:304
 msgid "Seek backward"
 msgstr "Seek backward"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:306
+#: packages/asbplayer-common/components/VideoOverlay.tsx:306
 msgid "Seek forward"
 msgstr "Seek forward"
 
@@ -3598,12 +3598,12 @@ msgid "Seek to beginning of current/previous subtitle"
 msgstr "Seek to beginning of current/previous subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:306
+#: packages/asbplayer-common/components/VideoOverlay.tsx:306
 msgid "Seek to next subtitle"
 msgstr "Seek to next subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:304
+#: packages/asbplayer-common/components/VideoOverlay.tsx:304
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
@@ -3980,7 +3980,7 @@ msgstr "Subtitle Generation"
 msgid "Subtitle HTML"
 msgstr "Subtitle HTML"
 
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:311
+#: packages/asbplayer-common/components/VideoOverlay.tsx:311
 msgid "Subtitle Offset"
 msgstr "Subtitle Offset"
 
@@ -4140,7 +4140,7 @@ msgstr "Texts"
 msgid "Thank you for your feedback!"
 msgstr "Thank you for your feedback!"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:179
+#: packages/extension/src/ui/components/Tutorial.tsx:172
 msgid "That's it for the basics! Feel free to play around on this page."
 msgstr "That's it for the basics! Feel free to play around on this page."
 
@@ -4168,17 +4168,17 @@ msgstr "The extension could not complete pairing."
 msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:102
+#: packages/extension/src/ui/components/Tutorial.tsx:101
 msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
 msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:94
+#: packages/extension/src/ui/components/Tutorial.tsx:93
 msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
 msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
 
 #: packages/extension/src/ui/components/Tutorial.tsx:108
-msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
-msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
+#~ msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
+#~ msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
 
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:154
 msgid "Theme"
@@ -4301,7 +4301,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/MobileVideoOverlay.tsx:374
+#: packages/asbplayer-common/components/VideoOverlay.tsx:374
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
 
@@ -4478,7 +4478,7 @@ msgstr "Use suggested"
 #~ msgid "Use suggested: {suggestedSurface}"
 #~ msgstr "Use suggested: {suggestedSurface}"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:131
+#: packages/extension/src/ui/components/Tutorial.tsx:124
 msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
 msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
 
@@ -4494,7 +4494,7 @@ msgstr "Used as your L1 in the LLM prompts."
 msgid "User"
 msgstr "User"
 
-#: packages/extension/src/ui/components/Popup.tsx:63
+#: packages/extension/src/ui/components/Popup.tsx:62
 msgid "User guide"
 msgstr "User guide"
 
