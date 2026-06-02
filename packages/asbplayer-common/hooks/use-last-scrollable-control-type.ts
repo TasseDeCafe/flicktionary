@@ -1,17 +1,13 @@
-import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ControlType } from '..'
 
 interface Params {
-  isMobile: boolean
   fetchLastControlType: () => Promise<ControlType | undefined>
   saveLastControlType: (controlType: ControlType) => void
 }
 
-export const useLastScrollableControlType = ({ isMobile, fetchLastControlType, saveLastControlType }: Params) => {
-  const defaultControlType = useMemo(
-    () => (isMobile ? ControlType.timeDisplay : ControlType.subtitleOffset),
-    [isMobile]
-  )
+export const useLastScrollableControlType = ({ fetchLastControlType, saveLastControlType }: Params) => {
+  const defaultControlType = ControlType.subtitleOffset
   const [lastControlType, setLastControlType] = useState<ControlType>(defaultControlType)
 
   useEffect(() => {

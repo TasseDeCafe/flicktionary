@@ -1,7 +1,6 @@
 import type { ControlType, MobileOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import type { PaletteMode } from '@mui/material/styles'
 import MobileVideoOverlay from '@asbplayer-fork/common/components/MobileVideoOverlay'
-import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-scrollable-control-type'
 import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
 import { ModelStore, useModelStore } from '../shadow/model-store'
@@ -58,7 +57,6 @@ export function ShadowMobileVideoOverlayApp({
 }: ShadowMobileVideoOverlayAppProps) {
   const { model, visible, tooltipsEnabled } = useModelStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
-    isMobile,
     saveLastControlType,
     fetchLastControlType,
   })

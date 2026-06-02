@@ -26,7 +26,6 @@ import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requestin
 import AckMessageHandler from '@/handlers/video/ack-message-handler'
 import { isFirefoxBuild } from '@/services/build-flags'
 import CurrentTabHandler from '@/handlers/mobile-overlay/current-tab-handler'
-import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import { enqueueUpdateAlert } from '@/services/update-alert'
 import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-handler'
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
@@ -62,16 +61,6 @@ export default defineBackground(() => {
 
     if (supportedLanguages.includes(defaultUiLanguage)) {
       await settings.set({ language: defaultUiLanguage })
-    }
-
-    if (isMobile) {
-      // Set reasonable defaults for mobile
-      await settings.set({
-        subtitleSize: 18,
-        subtitlePositionOffset: 25,
-        topSubtitlePositionOffset: 25,
-        subtitlesWidth: 100,
-      })
     }
 
     browser.tabs.create({ url: browser.runtime.getURL('/ftue-ui.html'), active: true })
@@ -155,8 +144,8 @@ export default defineBackground(() => {
 
   const setupContextMenus = (): Promise<void> => {
     menuSetupPromise = menuSetupPromise.then(async () => {
-      // Activate the locale even when context menus are unavailable (Firefox /
-      // mobile lack the permission) so background-originated toasts still localize.
+      // Activate the locale even when context menus are unavailable (Firefox
+      // can lack the permission) so background-originated toasts still localize.
       currentMenuLanguage = await settings.getSingle('language')
       setupLingui(currentMenuLanguage)
       if (!browser.contextMenus) {
@@ -258,38 +247,22 @@ export default defineBackground(() => {
 
   const action = browser.action || browser.browserAction
 
-  const defaultAction = (tab: Browser.tabs.Tab) => {
-    if (isMobile) {
-      if (tab.id !== undefined) {
-        const extensionToVideoCommand: ExtensionToVideoCommand<ToggleVideoSelectMessage> = {
-          sender: 'asbplayer-extension-to-video',
-          message: {
-            command: 'toggle-video-select',
-          },
-        }
-        browser.tabs.sendMessage(tab.id, extensionToVideoCommand)
-      }
-    } else {
-      action.openPopup()
-    }
-  }
-
   if (isFirefoxBuild) {
     let hasHostPermission = true
 
     browser.permissions.contains({ origins: ['<all_urls>'] }, (result) => {
       hasHostPermission = result
 
-      if (hasHostPermission && !isMobile) {
+      if (hasHostPermission) {
         action.setPopup({
           popup: 'popup-ui.html',
         })
       }
     })
 
-    action.onClicked.addListener(async (tab) => {
+    action.onClicked.addListener(async () => {
       if (hasHostPermission) {
-        defaultAction(tab)
+        action.openPopup()
       } else {
         try {
           const obtainedHostPermission = await browser.permissions.request({ origins: ['<all_urls>'] })
@@ -304,12 +277,10 @@ export default defineBackground(() => {
       }
     })
   } else {
-    if (!isMobile) {
-      action.setPopup({
-        popup: 'popup-ui.html',
-      })
-    }
+    action.setPopup({
+      popup: 'popup-ui.html',
+    })
 
-    action.onClicked.addListener(defaultAction)
+    action.onClicked.addListener(() => action.openPopup())
   }
 })

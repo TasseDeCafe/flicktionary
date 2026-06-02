@@ -8,7 +8,6 @@ import TabRegistry from '@/services/tab-registry'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import Dialog from '@mui/material/Dialog'
-import { isMobile } from 'react-device-detect'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -90,7 +89,7 @@ const LoadSubtitlesDialog: React.FC<{ open: boolean; count?: number; onClose: ()
   return (
     <Dialog style={{ zIndex: zIndexTop }} open={open}>
       <DialogContent>
-        {count === undefined && !isMobile && !isFirefox && (
+        {count === undefined && !isFirefox && (
           <Trans>
             The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> the video and
             choose the asbplayer <b>Load Subtitles</b> menu item.
@@ -98,16 +97,10 @@ const LoadSubtitlesDialog: React.FC<{ open: boolean; count?: number; onClose: ()
             Hint: asbplayer can also <b>auto-load</b> detected subtitles on supported sites.
           </Trans>
         )}
-        {count === undefined && !isMobile && isFirefox && (
+        {count === undefined && isFirefox && (
           <Trans>
             The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> on the video
             and find the asbplayer <b>context menu</b> to load subtitles.
-          </Trans>
-        )}
-        {count === undefined && isMobile && (
-          <Trans>
-            The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by
-            selecting <b>asbplayer</b> in the <b>extensions</b> menu.
           </Trans>
         )}
       </DialogContent>
@@ -188,12 +181,6 @@ const FinishedDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open
 const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, show }) => {
   const { loadedSubtitlesCount } = useExtensionState()
   const [step, setStep] = useState<Step>(Step.toolbar)
-
-  useEffect(() => {
-    if (step === Step.toolbar && isMobile) {
-      setStep(Step.loadSubtitles)
-    }
-  }, [step])
 
   useEffect(() => {
     if (step === Step.loadSubtitles && loadedSubtitlesCount !== undefined) {
