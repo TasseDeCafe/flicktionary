@@ -32,8 +32,6 @@ import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-ha
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
 import MobileOverlayForwarderHandler from '@/handlers/mobile-overlay/mobile-overlay-forwarder-handler'
 import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler'
-import { DictionaryDB } from '@asbplayer-fork/common/dictionary-db/dictionary-db'
-import DictionaryHandler from '@/handlers/dictionary/dictionary-handler'
 import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler'
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler'
@@ -91,7 +89,6 @@ export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(updateListener)
 
   const tabRegistry = new TabRegistry(settings)
-  const dictionaryDB = new DictionaryDB()
 
   const handlers: CommandHandler[] = [
     new VideoHeartbeatHandler(tabRegistry),
@@ -99,7 +96,6 @@ export default defineBackground(() => {
     new SyncHandler(tabRegistry),
     new OpenAsbplayerSettingsHandler(),
     new CopyToClipboardHandler(),
-    new DictionaryHandler(dictionaryDB),
     new VideoDisappearedHandler(tabRegistry),
     new RequestingActiveTabPermissionHandler(),
     new LoadSubtitlesHandler(tabRegistry),

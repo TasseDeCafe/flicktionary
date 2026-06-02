@@ -321,9 +321,6 @@ catalogs:
     dayjs:
       specifier: 1.11.20
       version: 1.11.20
-    dexie:
-      specifier: 4.4.3
-      version: 4.4.3
     eas-build-cache-provider:
       specifier: 18.0.2
       version: 18.0.2
@@ -1485,9 +1482,6 @@ importers:
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
-      dexie:
-        specifier: 'catalog:'
-        version: 4.4.3
       fast-xml-parser:
         specifier: 'catalog:'
         version: 5.8.0
@@ -7799,9 +7793,6 @@ packages:
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
-
-  dexie@4.4.3:
-    resolution: {integrity: sha512-N+3IGQ3HPlyO2YAkntGAwitm42BpBGV86MttzUMiRzWLa4NGh0pltVRcUVF4ybL/OnXjCrr9k7SDPIKkFYP2Lg==}
 
   dezalgo@1.0.4:
     resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
@@ -19656,8 +19647,6 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
-
-  dexie@4.4.3: {}
 
   dezalgo@1.0.4:
     dependencies:

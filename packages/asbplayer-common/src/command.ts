@@ -70,8 +70,3 @@ export interface MobileOverlayToVideoCommand<T extends Message> extends Command<
 export interface MobileOverlayCommand<T extends Message> extends Command<T> {
   readonly sender: 'asbplayer-mobile-overlay'
 }
-
-export interface DictionaryDBCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer-dictionary'
-  readonly useOriginTab?: boolean
-}

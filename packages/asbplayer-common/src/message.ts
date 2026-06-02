@@ -1,11 +1,8 @@
 import type {
-  ApplyStrategy,
   MiscSettings,
   PageSettings,
   SettingsFormPageConfig,
   SubtitleSettings,
-  TokenState,
-  TokenStatus,
 } from '../settings/settings'
 import {
   RectModel,
@@ -17,7 +14,6 @@ import {
   RichSubtitleModel,
 } from './model'
 import { AsbPlayerToVideoCommandV2 } from './command'
-import { DictionaryLocalTokenInput, DictionaryTokenRecord } from '../dictionary-db/dictionary-db'
 
 export interface Message {
   readonly command: string
@@ -395,48 +391,6 @@ export interface NotificationDialogMessage extends Message {
 
 export interface HiddenMessage extends Message {
   readonly command: 'hidden'
-}
-
-export interface DictionaryGetBulkMessage extends MessageWithId {
-  readonly command: 'dictionary-get-bulk'
-  readonly profile: string | undefined
-  readonly track: number
-  readonly tokens: string[]
-}
-
-export interface DictionaryGetByLemmaBulkMessage extends MessageWithId {
-  readonly command: 'dictionary-get-by-lemma-bulk'
-  readonly profile: string | undefined
-  readonly track: number
-  readonly lemmas: string[]
-}
-
-export interface DictionarySaveRecordLocalBulkMessage extends MessageWithId {
-  readonly command: 'dictionary-save-record-local-bulk'
-  readonly profile: string | undefined
-  readonly localTokenInputs: DictionaryLocalTokenInput[]
-  readonly applyStates: ApplyStrategy
-}
-
-export interface DictionaryDeleteRecordLocalBulkMessage extends MessageWithId {
-  readonly command: 'dictionary-delete-record-local-bulk'
-  readonly profile: string | undefined
-  readonly tokens: string[]
-}
-
-export interface DictionaryDeleteProfileMessage extends MessageWithId {
-  readonly command: 'dictionary-delete-profile'
-  readonly profile: string
-}
-
-export interface DictionaryExportRecordLocalBulkMessage extends MessageWithId {
-  readonly command: 'dictionary-export-record-local-bulk'
-}
-
-export interface DictionaryImportRecordLocalBulkMessage extends MessageWithId {
-  readonly command: 'dictionary-import-record-local-bulk'
-  readonly records: Partial<DictionaryTokenRecord>[]
-  readonly profiles: string[]
 }
 
 // Flicktionary hover-gloss messages. The content script asks the background to
