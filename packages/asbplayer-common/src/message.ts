@@ -1,9 +1,4 @@
-import type {
-  MiscSettings,
-  PageSettings,
-  SettingsFormPageConfig,
-  SubtitleSettings,
-} from '../settings/settings'
+import type { MiscSettings, PageSettings, SettingsFormPageConfig, SubtitleSettings } from '../settings/settings'
 import {
   RectModel,
   SubtitleModel,
@@ -66,7 +61,6 @@ export interface VideoHeartbeatMessage extends Message {
 export interface VideoDisappearedMessage extends Message {
   readonly command: 'video-disappeared'
 }
-
 
 export interface SettingsUpdatedMessage extends Message {
   readonly command: 'settings-updated'
