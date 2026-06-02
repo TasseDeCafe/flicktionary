@@ -65,7 +65,7 @@ export function PopupUi({ commands }: Props) {
   }, [])
 
   const handleOpenUserGuide = useCallback(() => {
-    browser.tabs.create({ active: true, url: 'https://www.flicktionary.app' })
+    browser.tabs.create({ active: true, url: 'https://app.flicktionary.app' })
   }, [])
 
   const { requestingActiveTabPermission, tabRequestingActiveTabPermission } = useRequestingActiveTabPermission()

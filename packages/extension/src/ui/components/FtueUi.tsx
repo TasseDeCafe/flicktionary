@@ -42,7 +42,7 @@ const WelcomeMessage: React.FC<{ className: string }> = ({ className }) => {
         <Typography variant='h6'>
           <Trans>
             Scroll down for a quick intro, or check out the{' '}
-            <Link color='primary' target='_blank' rel='noreferrer' href={'https://www.flicktionary.app'}>
+            <Link color='primary' target='_blank' rel='noreferrer' href={'https://app.flicktionary.app'}>
               user guide
             </Link>
             .
