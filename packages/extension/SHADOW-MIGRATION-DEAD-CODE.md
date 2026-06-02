@@ -11,7 +11,27 @@ harmless and out of that thread's scope. Clean them up here.
 > consumers) before removing anything shared — these types/handlers may still be
 > referenced outside `packages/extension`.
 
-## 1. Dead background handler: `update-mobile-overlay-model`
+## ✅ ALL FOUR ITEMS DONE (branch `cleanup/extension-dead-code`, 2026-06-02)
+
+All four items below were removed and the gate is green (`check:types` + `vitest`
++ `build` for both `packages/extension` and `packages/asbplayer-common`).
+
+**Companion found while doing #1/#2:** the mobile overlay's model flow is now
+store-based (`mobile-video-overlay-controller.ts` → `createModelStore` →
+`ShadowMobileVideoOverlayApp`), so the *request* half was dead too — its handler
+`handlers/mobile-overlay/request-model-handler.ts` (command
+`request-mobile-overlay-model`, never sent) and its message type
+`RequestMobileOverlayModelMessage` were removed alongside the documented `update`
+half.
+
+**Left in place (NOT cleanly dead — a separate audit):** `CurrentTabHandler`
+(`current-tab`) and `MobileOverlayForwarderHandler` (catch-all on sender
+`asbplayer-mobile-overlay-to-video`). The overlay still posts `toggle-subtitles`
+via that sender, which is caught earlier by `ToggleSubtitlesHandler` in the
+dispatch loop — so the forwarder's reachability depends on handler ordering.
+Removing them is runtime-risky (tsc won't catch it) and out of this scope.
+
+## ~~1. Dead background handler: `update-mobile-overlay-model`~~ — DONE
 
 The mobile controls overlay no longer posts `update-mobile-overlay-model` (the
 model now flows through an in-realm store), so its background handler never fires.
@@ -21,7 +41,7 @@ model now flows through an in-realm store), so its background handler never fire
 
 Risk: low (extension-only; the handler is unreachable).
 
-## 2. Unused mobile-overlay bridge message types (in `@asbplayer-fork/common`)
+## ~~2. Unused mobile-overlay bridge message types (in `@asbplayer-fork/common`)~~ — DONE
 
 No longer referenced anywhere in `packages/extension` (grep returns nothing):
 
@@ -37,7 +57,13 @@ Action: confirm no other package imports these, then prune from common.
 Risk: medium — shared package; grep the monorepo first. (Mind the settings-schema
 unknown-key trap if any of these ever touch `AsbplayerSettings`.)
 
-## 3. Dead WAR entry: `anki-ui.js`
+Removed: `UpdateMobileOverlayModelMessage`, `RequestMobileOverlayModelMessage`,
+`UpdateStateMessage` (message.ts), `VideoToMobileOverlayCommand` (command.ts), plus
+the now-unused `MobileOverlayModel` import in message.ts. None touched
+`AsbplayerSettings`. Three `// formerly UpdateStateMessage over the FrameBridge`
+comments were left as accurate historical notes.
+
+## ~~3. Dead WAR entry: `anki-ui.js`~~ — DONE
 
 `packages/extension/wxt.config.ts` `web_accessible_resources` still lists
 `'anki-ui.js'` (~line 162), but there is no `entrypoints/anki-ui/` and no Anki
@@ -47,7 +73,7 @@ from the Anki/mining removal effort — see the "Remove all Anki/mining" goal.)
 Action: confirm nothing references `anki-ui.js`, then remove the WAR line.
 Risk: low.
 
-## 4. Orphaned iframe CSS + guard: `.asbplayer-ui-frame`
+## ~~4. Orphaned iframe CSS + guard: `.asbplayer-ui-frame`~~ — DONE
 
 The `.asbplayer-ui-frame` class styled the (now-removed) injected UI iframes:
 

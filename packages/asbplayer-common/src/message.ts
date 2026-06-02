@@ -13,7 +13,6 @@ import {
   AudioTrackModel,
   ConfirmedVideoDataSubtitleTrack,
   PlayMode,
-  MobileOverlayModel,
   VideoTabModel,
   RichSubtitleModel,
 } from './model'
@@ -72,12 +71,6 @@ export interface VideoDisappearedMessage extends Message {
   readonly command: 'video-disappeared'
 }
 
-export interface HttpPostMessage extends MessageWithId {
-  readonly command: 'http-post'
-  readonly messageId: string
-  readonly url: string
-  readonly body: any
-}
 
 export interface SettingsUpdatedMessage extends Message {
   readonly command: 'settings-updated'
@@ -365,11 +358,6 @@ export interface ForwardCommandMessage extends Message {
   readonly commandToForward: AsbPlayerToVideoCommandV2<Message>
 }
 
-export interface UpdateStateMessage extends Message {
-  readonly command: 'updateState'
-  readonly state: any
-}
-
 export interface AckMessage extends MessageWithId {
   readonly command: 'ack-message'
 }
@@ -393,15 +381,6 @@ export interface JumpToSubtitleMessage extends Message {
 export interface NotifyErrorMessage extends Message {
   readonly command: 'notify-error'
   readonly message: string
-}
-
-export interface RequestMobileOverlayModelMessage extends Message {
-  readonly command: 'request-mobile-overlay-model'
-}
-
-export interface UpdateMobileOverlayModelMessage extends Message {
-  readonly command: 'update-mobile-overlay-model'
-  readonly model: MobileOverlayModel
 }
 
 export interface CurrentTabMessage extends Message {

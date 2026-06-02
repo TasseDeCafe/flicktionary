@@ -22,9 +22,10 @@ import { ExtensionDictionaryStorage } from '@/services/extension-dictionary-stor
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { I18nProvider } from '@lingui/react'
 import { i18n, setupLingui } from '../lingui'
+import type { PopupCommands } from '../popup'
 
 interface Props {
-  commands: any
+  commands: PopupCommands
 }
 
 const notifySettingsUpdated = () => {

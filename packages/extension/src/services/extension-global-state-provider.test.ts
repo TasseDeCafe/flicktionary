@@ -4,12 +4,12 @@ import { MockStorageArea } from './mock-storage-area'
 
 it('can retrieve list of keys', async () => {
   const provider = new ExtensionGlobalStateProvider(new MockStorageArea())
-  expect(await provider.get(['ftueHasSeenAnkiDialogQuickSelectV2'])).toEqual({
-    ftueHasSeenAnkiDialogQuickSelectV2: false,
+  expect(await provider.get(['ftueHasSeenSubtitleTrackSelector'])).toEqual({
+    ftueHasSeenSubtitleTrackSelector: false,
   })
-  await provider.set({ ftueHasSeenAnkiDialogQuickSelectV2: true })
-  expect(await provider.get(['ftueHasSeenAnkiDialogQuickSelectV2'])).toEqual({
-    ftueHasSeenAnkiDialogQuickSelectV2: true,
+  await provider.set({ ftueHasSeenSubtitleTrackSelector: true })
+  expect(await provider.get(['ftueHasSeenSubtitleTrackSelector'])).toEqual({
+    ftueHasSeenSubtitleTrackSelector: true,
   })
 })
 
@@ -21,7 +21,6 @@ it('can retrieve 0 keys', async () => {
 it('can retrieve all keys', async () => {
   const provider = new ExtensionGlobalStateProvider(new MockStorageArea())
   expect(await provider.getAll()).toEqual({
-    ftueHasSeenAnkiDialogQuickSelectV2: false,
     ftueHasSeenSubtitleTrackSelector: false,
   })
 })

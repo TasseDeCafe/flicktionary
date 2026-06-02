@@ -28,11 +28,11 @@ keeps the hosts in sync with the current alignment (no eligibility latch). The
 `ignoreKeys` for old-export back-compat). `richText` is no longer special-cased
 (no parser produces it). Image/PGS was deleted earlier.
 
-Remaining follow-up (not gating): a handful of now-dead light-DOM CSS rules in
-`video.content/video.css` (`.asbplayer-word`, `.asbplayer-save-notification`,
-`.asbplayer-subtitle-rich`/`.asbplayer-subtitle-text`, `.asbplayer-subtitles-blurred`)
-that styled the deleted legacy DOM — produced by no code now; safe to remove in
-a focused CSS pass with a visual check (CSS isn't covered by the build gate).
+Remaining follow-up (not gating): ~~a handful of now-dead light-DOM CSS rules~~ —
+**already done.** The legacy subtitle CSS rules (`.asbplayer-word`,
+`.asbplayer-save-notification`, `.asbplayer-subtitle-rich`/`.asbplayer-subtitle-text`,
+`.asbplayer-subtitles-blurred`) are no longer present in `video.content/video.css`;
+they were removed in an earlier pass. Nothing left to do here.
 
 ## ✅ Landed on this branch
 
@@ -130,19 +130,49 @@ working (stale premise) + a small 2c-decoupling.
 - Gate green (check:types / vitest both packages / build). **Pending: user
   cross-platform manual verification**, then the dead-CSS follow-up above.
 
-## 🧹 Untouched cleanup backlog (independent, ship anytime)
+## 🧹 Cleanup backlog — mostly DONE (branch `cleanup/extension-dead-code`, 2026-06-02)
 
-- **Phase 0 — confirmed-dead deletions:** Anki `http-post-handler` +
-  registration; `VideoDataUiOpenReason.miningCommand` plumbing; vestigial
-  `ftueHasSeenAnkiDialogQuickSelectV2`; `_pickIpa` dedup (import the exported
-  `pickIpa`); the "begin mining" string + a couple stale comments. **Do NOT
-  touch** `DictionaryTokenSource.ANKI_*` migrations or `settingsSchema`/
-  `ignoreKeys` retention (unknown-key import trap).
-- **Phase 1 — clarity + tests:** z-index constant (4× `2147483647`); type the
-  popup `commands: any`; verify+remove vestigial v1 `handlers/asbplayer/`; doc
-  comments; remaining targeted tests (`rangeFor`, Flicktionary auth refresh —
-  the gate test is already done).
-- **`SHADOW-MIGRATION-DEAD-CODE.md`** — its 4 items, still untouched.
+Gate green for the items below (`check:types` + `vitest` + `build`, both
+`packages/extension` and `packages/asbplayer-common`). **Pending: user
+cross-platform manual verification** (YouTube + Netflix/Prime).
+
+- **Phase 0 — confirmed-dead deletions:**
+  - ✅ Anki `http-post-handler` + registration — deleted (file, `background.ts`
+    import/registration, and the `HttpPostMessage` type in common).
+  - ✅ Vestigial `ftueHasSeenAnkiDialogQuickSelectV2` — removed from
+    `global-state` (interface + initial) and the provider test. No unknown-key
+    trap on global-state (plain `storage.get` with defaults).
+  - ⚠️ **`VideoDataUiOpenReason.miningCommand` — the doc was WRONG; this is LIVE,
+    NOT dead.** "Mining" here = asbplayer's copy-subtitle / screenshot /
+    audio-recording capture flow, which Flicktionary keeps. It drives the
+    video-select dialog on those commands. **Kept.**
+  - ⚠️ **`_pickIpa` dedup — stale premise.** No `_pickIpa` duplicate exists; only
+    the exported `pickIpa`, already imported directly. Nothing to do.
+  - ⚠️ **"begin mining" string — LIVE.** It's the audio-recording-granted
+    notification. **Kept.**
+  - **Honored:** did NOT touch `DictionaryTokenSource.ANKI_*` migrations,
+    `TOKEN_SOURCE_PRIORITY`, the Dexie v2 `ankiCards: null` migration, `cardIds`,
+    or `settingsSchema`/`ignoreKeys` retention.
+- **Phase 1 — clarity + tests:**
+  - ✅ z-index constant — `MAX_Z_INDEX` in `src/constants.ts`, used by the 3
+    JS/DOM-style sites (`shadow-host.ts` ×2, `flicktionary-import.content.ts`).
+    The `z-[2147483647]` Tailwind classes and `video.css` `!important` rules stay
+    literal (Tailwind JIT only extracts static class strings) — documented on the
+    constant.
+  - ✅ Popup `commands: any` — typed via a new `PopupCommands`
+    (`{ [name: string]: string | undefined }`) threaded through `popup/index.tsx`,
+    `PopupUi.tsx`, `Popup.tsx`, and `fetchShortcuts` in `popup-ui.ts`.
+  - ✅ Vestigial v1 `handlers/asbplayer/` — deleted (file + registration + the
+    now-unused `AsbPlayerToVideoCommand` v1 type in command.ts). v2
+    (`asbplayerv2/`) kept.
+  - ✅ Bonus: removed the `ankiSettings` no-op case in `binding.ts`.
+  - Still open: doc comments; remaining targeted tests (`rangeFor`, Flicktionary
+    auth refresh).
+- **`SHADOW-MIGRATION-DEAD-CODE.md`** — ✅ all 4 items DONE (see that file). Also
+  removed the dead *request* half (`request-model-handler.ts` +
+  `RequestMobileOverlayModelMessage`) the doc missed. Left `CurrentTabHandler` /
+  `MobileOverlayForwarderHandler` (not cleanly dead — handler-ordering-dependent;
+  separate audit).
 - Deferred: deep `asbplayer-common` vestigial-package audit; optional
   `SubtitleOverlayApp` hook/reducer extraction (only if 2b makes it unwieldy).
 

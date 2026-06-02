@@ -567,9 +567,6 @@ export default class Binding {
           case 'subtitleSettings':
             // ignore
             break
-          case 'ankiSettings':
-            // ignore
-            break
           case 'miscSettings':
             // ignore
             break
