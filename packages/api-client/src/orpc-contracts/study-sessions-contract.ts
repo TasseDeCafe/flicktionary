@@ -234,6 +234,45 @@ export const studySessionsContract = {
       })
     ),
 
+  // Text-import entry point used by the browser extension: a Readability-extracted
+  // article (sourceUrl set → content_source type 'article') or an arbitrary text
+  // selection (no sourceUrl → type 'text', semantically a paste). Idempotent by the
+  // hash of the parsed text: re-importing the same body returns the same
+  // session/track. Like the video flows, language is detected server-side and used
+  // as both the content language and the session target language — the extension
+  // sends no language. UNPROCESSABLE_ENTITY carries 'UNSUPPORTED_LANGUAGE' (e.g. a
+  // selection too short to detect) or 'MISSING_CEFR' exactly as the video flows do.
+  //
+  // The text bound is larger than the web app's paste wizard (20k): a full news
+  // article routinely runs longer, and this text arrives machine-extracted rather
+  // than hand-pasted.
+  importText: oc
+    .route({ method: 'POST', path: '/study-sessions/import-text', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      UNPROCESSABLE_ENTITY: { status: 422, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        title: z.string().trim().min(1).max(200),
+        text: z.string().min(1).max(100_000),
+        // Present for Readability article extraction (back-link + 'article' type);
+        // absent for a bare text selection (treated as a paste, type 'text').
+        sourceUrl: z.string().url().optional(),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          sessionId: z.string().uuid(),
+          contentSourceId: z.string().uuid(),
+          textTrackId: z.string().uuid(),
+          segmentCount: z.number().int(),
+        }),
+      })
+    ),
+
   // Soft-delete: hides the session from the user's list but keeps the underlying
   // content (cards, segments, content_source) so kept vocabulary can still
   // back-link to its source. Hard erasure is via account deletion.
