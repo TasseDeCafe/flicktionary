@@ -2,9 +2,7 @@ import TabRegistry from '@/services/tab-registry'
 import VideoHeartbeatHandler from '@/handlers/video/video-heartbeat-handler'
 import ToggleSubtitlesHandler from '@/handlers/video/toggle-subtitles-handler'
 import SyncHandler from '@/handlers/video/sync-handler'
-import HttpPostHandler from '@/handlers/video/http-post-handler'
 import VideoToAsbplayerCommandForwardingHandler from '@/handlers/video/video-to-asbplayer-command-forwarding-handler'
-import AsbplayerToVideoCommandForwardingHandler from '@/handlers/asbplayer/asbplayer-to-video-command-forwarding-handler'
 import AsbplayerV2ToVideoCommandForwardingHandler from '@/handlers/asbplayerv2/asbplayer-v2-to-video-command-forwarding-handler'
 import AsbplayerHeartbeatHandler from '@/handlers/asbplayerv2/asbplayer-heartbeat-handler'
 import RefreshSettingsHandler from '@/handlers/popup/refresh-settings-handler'
@@ -27,17 +25,13 @@ import LoadSubtitlesHandler from '@/handlers/asbplayerv2/load-subtitles-handler'
 import { RequestingActiveTabPermissionHandler } from '@/handlers/video/requesting-active-tab-permission'
 import AckMessageHandler from '@/handlers/video/ack-message-handler'
 import { isFirefoxBuild } from '@/services/build-flags'
-import RequestModelHandler from '@/handlers/mobile-overlay/request-model-handler'
 import CurrentTabHandler from '@/handlers/mobile-overlay/current-tab-handler'
-import UpdateMobileOverlayModelHandler from '@/handlers/video/update-mobile-overlay-model-handler'
 import { isMobile } from '@asbplayer-fork/common/device-detection/mobile'
 import { enqueueUpdateAlert } from '@/services/update-alert'
 import RequestSubtitlesHandler from '@/handlers/asbplayerv2/request-subtitles-handler'
 import RequestCurrentSubtitleHandler from '@/handlers/asbplayerv2/request-current-subtitle-handler'
 import MobileOverlayForwarderHandler from '@/handlers/mobile-overlay/mobile-overlay-forwarder-handler'
 import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler'
-import { DictionaryDB } from '@asbplayer-fork/common/dictionary-db/dictionary-db'
-import DictionaryHandler from '@/handlers/dictionary/dictionary-handler'
 import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler'
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler'
@@ -95,26 +89,21 @@ export default defineBackground(() => {
   browser.runtime.onInstalled.addListener(updateListener)
 
   const tabRegistry = new TabRegistry(settings)
-  const dictionaryDB = new DictionaryDB()
 
   const handlers: CommandHandler[] = [
     new VideoHeartbeatHandler(tabRegistry),
     new ToggleSubtitlesHandler(settings, tabRegistry),
     new SyncHandler(tabRegistry),
-    new HttpPostHandler(),
     new OpenAsbplayerSettingsHandler(),
     new CopyToClipboardHandler(),
-    new DictionaryHandler(dictionaryDB),
     new VideoDisappearedHandler(tabRegistry),
     new RequestingActiveTabPermissionHandler(),
     new LoadSubtitlesHandler(tabRegistry),
     new RequestSubtitlesHandler(),
     new RequestCurrentSubtitleHandler(),
     new AckMessageHandler(tabRegistry),
-    new UpdateMobileOverlayModelHandler(),
     new RefreshSettingsHandler(tabRegistry, settings),
     new VideoToAsbplayerCommandForwardingHandler(tabRegistry),
-    new AsbplayerToVideoCommandForwardingHandler(),
     new AsbplayerHeartbeatHandler(tabRegistry),
     new AckTabsHandler(tabRegistry),
     new SettingsUpdatedHandler(tabRegistry, settings),
@@ -123,7 +112,6 @@ export default defineBackground(() => {
     new PageConfigHandler(),
     new AsbplayerV2ToVideoCommandForwardingHandler(),
     new CaptureVisibleTabHandler(),
-    new RequestModelHandler(),
     new CurrentTabHandler(),
     new MobileOverlayForwarderHandler(),
     new FlicktionaryGlossHandler(),

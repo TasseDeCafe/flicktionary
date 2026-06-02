@@ -17,10 +17,11 @@ import { FlicktionaryImportSection } from './FlicktionaryImportSection'
 import Stack from '@mui/material/Stack'
 import TutorialIcon from '@asbplayer-fork/common/components/TutorialIcon'
 import Paper from '@mui/material/Paper'
+import type { PopupCommands } from '../popup'
 
 interface Props {
   settings: AsbplayerSettings
-  commands: any
+  commands: PopupCommands
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   onOpenApp: () => void
   onOpenExtensionShortcuts: () => void

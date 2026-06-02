@@ -17,14 +17,13 @@ import { useRequestingActiveTabPermission } from '../hooks/use-requesting-active
 import { isMobile } from 'react-device-detect'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
 import { StyledEngineProvider } from '@mui/material/styles'
-import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db'
-import { ExtensionDictionaryStorage } from '@/services/extension-dictionary-storage'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { I18nProvider } from '@lingui/react'
 import { i18n, setupLingui } from '../lingui'
+import type { PopupCommands } from '../popup'
 
 interface Props {
-  commands: any
+  commands: PopupCommands
 }
 
 const notifySettingsUpdated = () => {
@@ -38,7 +37,6 @@ const notifySettingsUpdated = () => {
 }
 
 export function PopupUi({ commands }: Props) {
-  const dictionaryProvider = useMemo(() => new DictionaryProvider(new ExtensionDictionaryStorage()), [])
   const settingsProvider = useMemo(() => new SettingsProvider(new ExtensionSettingsStorage()), [])
   const [settings, setSettings] = useState<AsbplayerSettings>()
   const theme = useMemo(() => settings && createTheme(settings.themeType), [settings])
@@ -92,7 +90,6 @@ export function PopupUi({ commands }: Props) {
   }, [settingsProvider])
 
   const profilesContext = useSettingsProfileContext({
-    dictionaryProvider,
     settingsProvider,
     onProfileChanged: handleProfileChanged,
   })

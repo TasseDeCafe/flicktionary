@@ -26,36 +26,6 @@ export interface MiscSettings {
   readonly pauseOnHoverMode: PauseOnHoverMode
 }
 
-export enum DictionaryTokenSource {
-  LOCAL = 0,
-  ANKI_WORD = 1,
-  ANKI_SENTENCE = 2,
-}
-
-export enum TokenStatus {
-  UNCOLLECTED = 0,
-  UNKNOWN = 1,
-  LEARNING = 2,
-  GRADUATED = 3,
-  YOUNG = 4,
-  MATURE = 5, // If ever adding more statuses, they should go last and getFullyKnownTokenStatus should be updated
-}
-
-export function getFullyKnownTokenStatus(): TokenStatus {
-  return TokenStatus.MATURE // If future statuses are optional, this logic may need to change
-}
-
-export enum TokenState {
-  IGNORED = 0, // If ever adding more states, they should go last (if adding colors for states, use a separate array from tokenStatusColors indexed by TokenState)
-}
-
-export enum ApplyStrategy {
-  ADD = 'ADD',
-  REMOVE = 'REMOVE',
-  REPLACE = 'REPLACE',
-  TOGGLE = 'TOGGLE',
-}
-
 // Image-capture + surrounding-subtitle geometry. These survived the Anki/mining
 // teardown because they feed live features: maxImageWidth/maxImageHeight drive
 // screenshot cropping (binding.ts) and surroundingSubtitles*Radius bound the

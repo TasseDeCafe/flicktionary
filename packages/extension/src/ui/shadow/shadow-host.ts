@@ -1,6 +1,7 @@
 import { createRoot, type Root } from 'react-dom/client'
 import type { ReactNode } from 'react'
 import { overlaySheet } from './overlay-stylesheet'
+import { MAX_Z_INDEX } from '@/constants'
 
 // The render callback receives the shadow root (for the emotion cache) and the
 // portal container element inside it (for MUI portals) — exactly the two props
@@ -101,7 +102,7 @@ export function mountModalHost(options: ModalHostOptions): ShadowHostHandle {
 
   host.style.setProperty('position', 'fixed')
   host.style.setProperty('inset', '0')
-  host.style.setProperty('z-index', '2147483647')
+  host.style.setProperty('z-index', String(MAX_Z_INDEX))
   host.style.setProperty('pointer-events', 'none')
   // The MUI Dialog (portalled) gets pointer events via portalContainer; a
   // non-portalled, fixed-positioned Snackbar/Alert renders inline under appRoot,
@@ -146,7 +147,7 @@ export function mountVideoOverlayHost(options: VideoOverlayHostOptions): ShadowH
   const { host, shadowRoot, appRoot, root } = createShadowHost(options)
 
   host.style.setProperty('position', 'fixed')
-  host.style.setProperty('z-index', '2147483647')
+  host.style.setProperty('z-index', String(MAX_Z_INDEX))
   host.style.setProperty('pointer-events', 'none')
 
   // Lay out the content inside the video box: full-bleed flex, centred

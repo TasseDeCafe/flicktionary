@@ -3,6 +3,7 @@ import { defineContentScript } from '#imports'
 // runtime (and none of the ~120KB Lingui catalog) leaks into this always-injected
 // content bundle. The background localizes these codes.
 import type { ArticleExtractionResult } from '@/services/flicktionary/import-text'
+import { MAX_Z_INDEX } from '@/constants'
 
 // Content script for the Flicktionary text-import flow. Runs in the top frame of
 // every page so the background can, on demand:
@@ -65,7 +66,7 @@ const showToast = (payload: ToastPayload): void => {
   el.textContent = payload.message
   Object.assign(el.style, {
     position: 'fixed',
-    zIndex: '2147483647',
+    zIndex: String(MAX_Z_INDEX),
     bottom: '20px',
     right: '20px',
     maxWidth: '320px',

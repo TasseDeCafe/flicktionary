@@ -5,12 +5,6 @@ export interface Command<T extends Message> {
   readonly message: T
 }
 
-export interface AsbPlayerToVideoCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer'
-  readonly tabId: number
-  readonly src?: string
-}
-
 export interface AsbPlayerToVideoCommandV2<T extends Message> extends Command<T> {
   readonly sender: 'asbplayerv2'
   readonly tabId: number
@@ -73,16 +67,6 @@ export interface MobileOverlayToVideoCommand<T extends Message> extends Command<
   readonly src: string
 }
 
-export interface VideoToMobileOverlayCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer-video-to-mobile-overlay'
-  readonly src: string
-}
-
 export interface MobileOverlayCommand<T extends Message> extends Command<T> {
   readonly sender: 'asbplayer-mobile-overlay'
-}
-
-export interface DictionaryDBCommand<T extends Message> extends Command<T> {
-  readonly sender: 'asbplayer-dictionary'
-  readonly useOriginTab?: boolean
 }

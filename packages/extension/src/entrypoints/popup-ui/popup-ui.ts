@@ -1,16 +1,16 @@
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
-import { renderPopupUi } from '@/ui/popup'
+import { renderPopupUi, type PopupCommands } from '@/ui/popup'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
 
-const fetchShortcuts = () => {
-  return new Promise((resolve, reject) => {
+const fetchShortcuts = (): Promise<PopupCommands> => {
+  return new Promise((resolve) => {
     if (browser.commands === undefined) {
       resolve({})
       return
     }
 
     browser.commands.getAll((commands) => {
-      const commandsObj: any = {}
+      const commandsObj: PopupCommands = {}
 
       for (const c of commands) {
         if (c.name && c.shortcut) {

@@ -44,7 +44,7 @@ export default class ControlsController {
 
     for (const p of this._samplePoints()) {
       for (const element of this._path(rootNode.elementFromPoint(p.x, p.y), rootNode)) {
-        if (element && !this._contains(this.elements, element) && !element.classList.contains('asbplayer-ui-frame')) {
+        if (element && !this._contains(this.elements, element)) {
           this.elements.push(element)
         }
       }

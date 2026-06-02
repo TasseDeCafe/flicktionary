@@ -159,7 +159,6 @@ export default defineConfig({
             'areena-yle-page.js',
             'hbo-max-page.js',
             'cijapanese-page.js',
-            'anki-ui.js',
             'page-favicons/*',
           ],
           matches: ['<all_urls>'],

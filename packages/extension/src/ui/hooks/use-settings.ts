@@ -3,14 +3,8 @@ import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/sett
 import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
-import { DictionaryProvider } from '@asbplayer-fork/common/dictionary-db'
-import { ExtensionDictionaryStorage } from '@/services/extension-dictionary-storage'
 
 export const useSettings = () => {
-  const dictionaryProvider = useMemo<DictionaryProvider>(
-    () => new DictionaryProvider(new ExtensionDictionaryStorage()),
-    []
-  )
   const settingsProvider = useMemo<SettingsProvider>(() => new SettingsProvider(new ExtensionSettingsStorage()), [])
   const [settings, setSettings] = useState<AsbplayerSettings>()
   const refreshSettings = useCallback(() => settingsProvider.getAll().then(setSettings), [settingsProvider])
@@ -51,7 +45,6 @@ export const useSettings = () => {
   }, [refreshSettings, notifySettingsUpdated])
 
   const profileContext = useSettingsProfileContext({
-    dictionaryProvider,
     settingsProvider,
     onProfileChanged: handleProfileChanged,
   })

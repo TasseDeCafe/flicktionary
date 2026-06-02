@@ -551,7 +551,7 @@ msgstr "Add New Profile..."
 msgid "Add note"
 msgstr "Add note"
 
-#: packages/extension/src/entrypoints/background.ts:192
+#: packages/extension/src/entrypoints/background.ts:180
 msgid "Add selection to Flicktionary"
 msgstr "Add selection to Flicktionary"
 
@@ -2234,7 +2234,7 @@ msgstr "If you'd like to create a new account, you can sign up again."
 msgid "Imperfective"
 msgstr "Imperfective"
 
-#: packages/extension/src/entrypoints/background.ts:186
+#: packages/extension/src/entrypoints/background.ts:174
 msgid "Import article to Flicktionary"
 msgstr "Import article to Flicktionary"
 
@@ -2452,7 +2452,7 @@ msgstr "LLM-suggested terms"
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
 #: packages/asbplayer-common/components/MobileVideoOverlay.tsx:363
-#: packages/extension/src/entrypoints/background.ts:180
+#: packages/extension/src/entrypoints/background.ts:168
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
@@ -2864,7 +2864,7 @@ msgstr "Numeral"
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/Popup.tsx:59
+#: packages/extension/src/ui/components/Popup.tsx:60
 msgid "Open App"
 msgstr "Open App"
 
@@ -4494,7 +4494,7 @@ msgstr "Used as your L1 in the LLM prompts."
 msgid "User"
 msgstr "User"
 
-#: packages/extension/src/ui/components/Popup.tsx:62
+#: packages/extension/src/ui/components/Popup.tsx:63
 msgid "User guide"
 msgstr "User guide"
 
