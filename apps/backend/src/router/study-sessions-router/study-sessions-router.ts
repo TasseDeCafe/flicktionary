@@ -17,6 +17,8 @@ import { logWithSentry } from '../../transport/third-party/sentry/error-monitori
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { parsePastedText } from '../../utils/text-paste-parser'
+import { createHash } from 'crypto'
 
 // languageDetectionPass reads the first ~1k chars; concatenating a few dozen
 // segments is more than enough to identify the language while keeping the
@@ -93,7 +95,9 @@ export const StudySessionsRouter = (
 
   const resolveExtensionIngestPrefs = async (
     userId: string,
-    segments: ReadonlyArray<{ index: number; text: string; startMs: number; endMs: number }>
+    // Only the segment text is read (for language detection); subtitle and text
+    // imports both satisfy this shape.
+    segments: ReadonlyArray<{ text: string }>
   ): Promise<ExtensionIngestPrefs> => {
     const detectedLanguage = await languageDetectionPass(buildDetectionSample(segments))
     if (!detectedLanguage) return { ok: false, reason: 'unsupported' }
@@ -120,7 +124,7 @@ export const StudySessionsRouter = (
     if (prefs.reason === 'unsupported') {
       return {
         errors: [
-          { code: 'UNSUPPORTED_LANGUAGE', message: 'These subtitles are not in a language Flicktionary supports yet.' },
+          { code: 'UNSUPPORTED_LANGUAGE', message: 'This content is not in a language Flicktionary supports yet.' },
         ],
       }
     }
@@ -388,6 +392,62 @@ export const StudySessionsRouter = (
         }
       }
     ),
+
+    importText: implementer.importText.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+
+      // One segment per non-empty line, same parser the web paste wizard uses, so
+      // a selection imported here reads identically to one pasted in the app.
+      const parsed = parsePastedText(input.text)
+      if (parsed.length === 0) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'No readable text found to import.' }] },
+        })
+      }
+
+      const prefs = await resolveExtensionIngestPrefs(userId, parsed)
+      if (!prefs.ok) {
+        throw errors.UNPROCESSABLE_ENTITY({ data: ingestPrefsErrorData(prefs) })
+      }
+      const { detectedLanguage, nativeLanguage, cefrLevel } = prefs
+
+      // Natural key for idempotent re-import: hash of the parsed segment text.
+      // Same normalization as the web paste dedup so identical bodies collapse.
+      const contentHash = createHash('sha256')
+        .update(parsed.map((s) => `|${s.text}`).join('\n'))
+        .digest('hex')
+
+      const sourceUrl = input.sourceUrl ?? null
+      const { session, track, contentSource, segments } = await studySessionsRepository.getOrCreateForImportedText({
+        userId,
+        type: sourceUrl ? 'article' : 'text',
+        title: input.title,
+        sourceUrl,
+        contentHash,
+        language: detectedLanguage,
+        segments: parsed,
+        nativeLanguage,
+        targetLanguage: detectedLanguage,
+        cefrLevel,
+      })
+
+      void usersRepository.setLastTargetLanguage(userId, detectedLanguage).catch((error) => {
+        logWithSentry({
+          message: 'setLastTargetLanguage failed (text import)',
+          params: { userId, targetLanguage: detectedLanguage },
+          error,
+        })
+      })
+
+      return {
+        data: {
+          sessionId: session.id,
+          contentSourceId: contentSource.id,
+          textTrackId: track.id,
+          segmentCount: segments.length,
+        },
+      }
+    }),
 
     remove: implementer.remove.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId

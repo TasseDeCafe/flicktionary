@@ -165,7 +165,9 @@ const completeExtensionIngest = async (
     contentSource: DbContentSource
     subtitleLanguage: string
     subtitleHash: string
-    subtitleSegments: ReadonlyArray<{ index: number; text: string; startMs: number; endMs: number }>
+    // Imported text (article/selection) has no timing, so startMs/endMs are null;
+    // subtitle flows pass real millisecond offsets. Stored verbatim either way.
+    subtitleSegments: ReadonlyArray<{ index: number; text: string; startMs: number | null; endMs: number | null }>
     nativeLanguage: string
     targetLanguage: string
     cefrLevel: string
@@ -374,6 +376,66 @@ const getOrCreateForStreamingVideo = async (params: {
   })
 }
 
+// Idempotent ingestion entry point for the browser extension's text-import flow:
+// a Readability-extracted article (type 'article', sourceUrl set) or an
+// arbitrary text selection (type 'text', sourceUrl null — semantically a paste).
+// content_source key: (user, contentHash), where contentHash is the SHA-256 of
+// the parsed text segments, reused as the text_track hash. Same body text → same
+// source/track/session. See content_sources_imported_text_user_content_hash_unique.
+const getOrCreateForImportedText = async (params: {
+  userId: string
+  type: 'article' | 'text'
+  title: string
+  sourceUrl: string | null
+  contentHash: string
+  language: string
+  segments: ReadonlyArray<{ index: number; text: string }>
+  nativeLanguage: string
+  targetLanguage: string
+  cefrLevel: string
+}): Promise<{
+  session: DbStudySession
+  track: DbTextTrack
+  contentSource: DbContentSource
+  segments: DbTextSegment[]
+}> => {
+  return await beginTx(async (tx) => {
+    const csMetadata = {
+      contentHash: params.contentHash,
+      sourceUrl: params.sourceUrl,
+    }
+    const insertedSource = (await tx`
+      INSERT INTO public.content_sources (type, title, language, metadata, created_by_user_id)
+      VALUES (
+        ${params.type},
+        ${params.title},
+        ${params.language},
+        ${tx.json(csMetadata)},
+        ${params.userId}
+      )
+      ON CONFLICT (created_by_user_id, (metadata ->> 'contentHash'))
+        WHERE type IN ('article', 'text') AND metadata ? 'contentHash'
+        DO UPDATE SET
+          title = EXCLUDED.title,
+          metadata = public.content_sources.metadata || EXCLUDED.metadata
+      RETURNING *
+    `) as DbContentSource[]
+    const contentSource = insertedSource[0]
+    if (!contentSource) throw new Error('getOrCreateForImportedText: content source upsert returned no row')
+
+    return completeExtensionIngest(tx, {
+      userId: params.userId,
+      contentSource,
+      subtitleLanguage: params.language,
+      subtitleHash: params.contentHash,
+      subtitleSegments: params.segments.map((s) => ({ ...s, startMs: null, endMs: null })),
+      nativeLanguage: params.nativeLanguage,
+      targetLanguage: params.targetLanguage,
+      cefrLevel: params.cefrLevel,
+    })
+  })
+}
+
 // Soft-deleted sessions are filtered out everywhere except softDelete itself
 // and the highlight/card chains, which keep working so kept vocabulary can
 // still back-link to its source. Hard erasure happens via account deletion
@@ -559,6 +621,23 @@ export interface StudySessionsRepositoryInterface {
     contentSource: DbContentSource
     segments: DbTextSegment[]
   }>
+  getOrCreateForImportedText: (params: {
+    userId: string
+    type: 'article' | 'text'
+    title: string
+    sourceUrl: string | null
+    contentHash: string
+    language: string
+    segments: ReadonlyArray<{ index: number; text: string }>
+    nativeLanguage: string
+    targetLanguage: string
+    cefrLevel: string
+  }) => Promise<{
+    session: DbStudySession
+    track: DbTextTrack
+    contentSource: DbContentSource
+    segments: DbTextSegment[]
+  }>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
@@ -577,6 +656,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     getOrCreateAdhocStudySession,
     getOrCreateForYoutubeVideo,
     getOrCreateForStreamingVideo,
+    getOrCreateForImportedText,
     findByIdForUser,
     findByIdForUserWithSource,
     hasTextTrackForUser,

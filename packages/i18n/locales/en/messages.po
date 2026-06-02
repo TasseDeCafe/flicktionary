@@ -238,6 +238,10 @@ msgstr "{dueTermCount} follow-up(s) due"
 #~ msgid "{dueTermCount} follow-up(s) ready"
 #~ msgstr "{dueTermCount} follow-up(s) ready"
 
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:88
+msgid "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
+msgstr "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
+
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
 msgstr "{highlightCount} highlight(s)"
@@ -452,8 +456,12 @@ msgid "A short label for this session"
 msgstr "A short label for this session"
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
-msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
-msgstr "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+#~ msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+#~ msgstr "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
+msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
+msgstr "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:79
 msgid "About"
@@ -464,8 +472,12 @@ msgstr "About"
 #~ msgstr "About | Flicktionary"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:248
-msgid "About asbplayer"
-msgstr "About asbplayer"
+#~ msgid "About asbplayer"
+#~ msgstr "About asbplayer"
+
+#: packages/asbplayer-common/components/SettingsForm.tsx:248
+msgid "About Flicktionary"
+msgstr "About Flicktionary"
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:38
 #~ msgid "About Us"
@@ -539,6 +551,10 @@ msgstr "Add New Profile..."
 msgid "Add note"
 msgstr "Add note"
 
+#: packages/extension/src/entrypoints/background.ts:192
+msgid "Add selection to Flicktionary"
+msgstr "Add selection to Flicktionary"
+
 #: apps/web/src/features/review/components/focus-view.tsx:403
 msgid "Add to active vocabulary"
 msgstr "Add to active vocabulary"
@@ -597,7 +613,7 @@ msgstr "Adverb"
 msgid "Again"
 msgstr "Again"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:41
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
 #: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:37
 msgid "All"
@@ -702,10 +718,13 @@ msgstr "App version"
 msgid "Are you absolutely sure?"
 msgstr "Are you absolutely sure?"
 
-#. placeholder {0}: state.newVersion
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:54
+msgid "Articles"
+msgstr "Articles"
+
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:92
-msgid "asbplayer updated to version {0}. Check out the <0>release notes</0>."
-msgstr "asbplayer updated to version {0}. Check out the <0>release notes</0>."
+#~ msgid "asbplayer updated to version {0}. Check out the <0>release notes</0>."
+#~ msgstr "asbplayer updated to version {0}. Check out the <0>release notes</0>."
 
 #: packages/extension/src/ui/components/NotificationUi.tsx:101
 #~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
@@ -774,8 +793,12 @@ msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
-msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+#~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+#~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
+msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
 
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:120
 msgid "Auto-load detected subtitles"
@@ -1000,8 +1023,12 @@ msgid "Click Generate full exploration to enrich this card with collocations, et
 msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
-msgid "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
-msgstr "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+#~ msgid "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+#~ msgstr "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
+msgid "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
+msgstr "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
 
 #. placeholder {0}: isFirefox ? '⚙' : '📌'
 #: packages/extension/src/ui/components/Tutorial.tsx:72
@@ -1135,9 +1162,18 @@ msgstr "Could not fetch a gloss. The highlight is still saved."
 msgid "Could not fetch a translation right now."
 msgstr "Could not fetch a translation right now."
 
+#: packages/extension/src/services/flicktionary/import-text.ts:28
+msgid "Could not find a readable article on this page."
+msgstr "Could not find a readable article on this page."
+
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:114
 msgid "Could not import the pasted text."
 msgstr "Could not import the pasted text."
+
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:26
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:29
+msgid "Could not import this page."
+msgstr "Could not import this page."
 
 #: apps/native/src/features/billing/hooks/use-paywall.ts:37
 msgid "Could not load payment options at this time (no offerings)."
@@ -1162,6 +1198,10 @@ msgstr "Could not open the link. Please visit our website to manage your subscri
 #: apps/native/src/features/profile/components/profile-view.tsx:71
 msgid "Could not open upgrade screen."
 msgstr "Could not open upgrade screen."
+
+#: packages/extension/src/services/flicktionary/import-text.ts:30
+msgid "Could not read this page."
+msgstr "Could not read this page."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:134
 msgid "Could not rename — please try again."
@@ -1296,8 +1336,8 @@ msgid "Deleting…"
 msgstr "Deleting…"
 
 #: packages/asbplayer-common/components/About.tsx:257
-msgid "Dependencies"
-msgstr "Dependencies"
+#~ msgid "Dependencies"
+#~ msgstr "Dependencies"
 
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
 msgid "Detect and Display Ruby"
@@ -1632,6 +1672,10 @@ msgstr "Failed to generate exploration"
 msgid "Failed to generate next text"
 msgstr "Failed to generate next text"
 
+#: packages/extension/src/services/flicktionary/import-text.ts:92
+msgid "Failed to import into Flicktionary."
+msgstr "Failed to import into Flicktionary."
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:136
 msgid "Failed to import pasted text"
 msgstr "Failed to import pasted text"
@@ -1904,12 +1948,18 @@ msgid "Flashcards"
 msgstr "Flashcards"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:81
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
 #: apps/landing-page/src/app/[lang]/page.tsx:16
 #~ msgid "Flicktionary - Perfect Your Accent with AI Voice Training"
 #~ msgstr "Flicktionary - Perfect Your Accent with AI Voice Training"
+
+#. placeholder {0}: state.newVersion
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:92
+msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
+msgstr "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:60
 #~ msgid "Follow-up in {hoursUntilFollowUp} hr"
@@ -2184,12 +2234,25 @@ msgstr "If you'd like to create a new account, you can sign up again."
 msgid "Imperfective"
 msgstr "Imperfective"
 
+#: packages/extension/src/entrypoints/background.ts:186
+msgid "Import article to Flicktionary"
+msgstr "Import article to Flicktionary"
+
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:367
 msgid "Import Settings"
 msgstr "Import Settings"
 
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:39
+msgid "Import this article"
+msgstr "Import this article"
+
+#: packages/extension/src/services/flicktionary/import-text.ts:83
+msgid "Imported text"
+msgstr "Imported text"
+
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:39
 msgid "Importing…"
 msgstr "Importing…"
 
@@ -2367,8 +2430,8 @@ msgstr "Less formal:"
 
 #: packages/asbplayer-common/components/About.tsx:227
 #: packages/asbplayer-common/components/About.tsx:267
-msgid "License"
-msgstr "License"
+#~ msgid "License"
+#~ msgstr "License"
 
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:165
 msgid "Light"
@@ -2389,6 +2452,7 @@ msgstr "LLM-suggested terms"
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
 #: packages/asbplayer-common/components/MobileVideoOverlay.tsx:363
+#: packages/extension/src/entrypoints/background.ts:180
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
@@ -2445,7 +2509,7 @@ msgstr "Loading..."
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:65
 #: apps/web/src/features/practice/components/practice-language-view.tsx:106
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:59
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:293
 msgid "Loading…"
 msgstr "Loading…"
@@ -2557,7 +2621,7 @@ msgstr "Move top subtitles down"
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:44
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:48
 msgid "Movies"
 msgstr "Movies"
 
@@ -2566,8 +2630,8 @@ msgid "Multiple Video Elements Detected"
 msgstr "Multiple Video Elements Detected"
 
 #: packages/asbplayer-common/components/About.tsx:264
-msgid "Name"
-msgstr "Name"
+#~ msgid "Name"
+#~ msgstr "Name"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
@@ -2640,6 +2704,14 @@ msgstr "Next card"
 #~ msgid "Next text"
 #~ msgstr "Next text"
 
+#: packages/extension/src/services/flicktionary/import-text.ts:107
+msgid "No active tab to import from."
+msgstr "No active tab to import from."
+
+#: packages/extension/src/services/flicktionary/import-text.ts:136
+msgid "No active tab."
+msgstr "No active tab."
+
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
 #~ msgid "No Card Required"
 #~ msgstr "No Card Required"
@@ -2689,11 +2761,11 @@ msgstr "No past texts yet. Read some practice texts and they'll show up here."
 #~ msgid "No practice terms are ready right now."
 #~ msgstr "No practice terms are ready right now."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:64
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:71
 msgid "No sessions in this filter."
 msgstr "No sessions in this filter."
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:61
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:68
 msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
@@ -2792,7 +2864,7 @@ msgstr "Numeral"
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/Popup.tsx:58
+#: packages/extension/src/ui/components/Popup.tsx:59
 msgid "Open App"
 msgstr "Open App"
 
@@ -2877,6 +2949,18 @@ msgstr "Pages"
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:90
 msgid "Pair the Flicktionary extension"
 msgstr "Pair the Flicktionary extension"
+
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
+#~ msgid "Pair with Flicktionary"
+#~ msgstr "Pair with Flicktionary"
+
+#: packages/extension/src/services/flicktionary/import-text.ts:58
+#~ msgid "Pair with Flicktionary to import text."
+#~ msgstr "Pair with Flicktionary to import text."
+
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:86
+#~ msgid "Paired as {0}"
+#~ msgstr "Paired as {0}"
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:93
 msgid "Pairing your browser extension..."
@@ -3208,8 +3292,8 @@ msgid "Pronoun"
 msgstr "Pronoun"
 
 #: packages/asbplayer-common/components/About.tsx:270
-msgid "Purpose"
-msgstr "Purpose"
+#~ msgid "Purpose"
+#~ msgstr "Purpose"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:509
 msgid "Quick gloss"
@@ -3294,6 +3378,10 @@ msgstr "Reject"
 msgid "Reject all"
 msgstr "Reject all"
 
+#: packages/extension/src/services/flicktionary/import-text.ts:118
+msgid "Reload the page, then try importing again."
+msgstr "Reload the page, then try importing again."
+
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:202
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
@@ -3316,7 +3404,7 @@ msgstr "Remove \"{sessionTitle}\"?"
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
-#: apps/web/src/features/sessions/components/session-card.tsx:70
+#: apps/web/src/features/sessions/components/session-card.tsx:75
 msgid "Remove session"
 msgstr "Remove session"
 
@@ -3529,8 +3617,16 @@ msgstr "Seek to previous subtitle"
 #~ msgstr "Select a language"
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:186
-msgid "Select a video element to sync it with asbplayer."
-msgstr "Select a video element to sync it with asbplayer."
+#~ msgid "Select a video element to sync it with asbplayer."
+#~ msgstr "Select a video element to sync it with asbplayer."
+
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:186
+msgid "Select a video element to sync it with Flicktionary."
+msgstr "Select a video element to sync it with Flicktionary."
+
+#: packages/extension/src/services/flicktionary/import-text.ts:140
+msgid "Select some text first."
+msgstr "Select some text first."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:237
 msgid "Select subtitle tracks to load."
@@ -3539,6 +3635,10 @@ msgstr "Select subtitle tracks to load."
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
+
+#: packages/extension/src/services/flicktionary/import-text.ts:143
+msgid "Selection"
+msgstr "Selection"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:252
 msgid "Send"
@@ -3586,7 +3686,7 @@ msgstr "Session removed"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:37
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:38
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:36
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:37
 msgid "Sessions"
 msgstr "Sessions"
 
@@ -3652,9 +3752,30 @@ msgstr "Show translations"
 #~ msgid "Sign in"
 #~ msgstr "Sign in"
 
+#: packages/extension/src/services/flicktionary/import-text.ts:48
+msgid "Sign in to Flicktionary to import text."
+msgstr "Sign in to Flicktionary to import text."
+
+#: packages/extension/src/handlers/saved-words/save-word-handler.ts:55
+msgid "Sign in to Flicktionary to save words."
+msgstr "Sign in to Flicktionary to save words."
+
+#: packages/extension/src/handlers/flicktionary/set-cefr-handler.ts:35
+msgid "Sign in to Flicktionary to set your level."
+msgstr "Sign in to Flicktionary to set your level."
+
+#: packages/extension/src/handlers/flicktionary/gloss-handler.ts:34
+msgid "Sign in to Flicktionary to translate."
+msgstr "Sign in to Flicktionary to translate."
+
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
+msgid "Sign in with Flicktionary"
+msgstr "Sign in with Flicktionary"
+
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:89
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:92
 msgid "Sign out"
 msgstr "Sign out"
 
@@ -3666,6 +3787,15 @@ msgstr "Sign out success"
 #: apps/web/src/features/auth/components/account-removed-view.tsx:35
 msgid "Sign up"
 msgstr "Sign up"
+
+#. placeholder {0}: auth.email
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:86
+msgid "Signed in as {0}"
+msgstr "Signed in as {0}"
+
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
+msgid "Signing in…"
+msgstr "Signing in…"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:350
 msgid "Singular-only"
@@ -3768,7 +3898,7 @@ msgstr "Starting…"
 msgid "Stop drilling this term in active practice"
 msgstr "Stop drilling this term in active practice"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:53
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:60
 msgid "Streaming"
 msgstr "Streaming"
 
@@ -4000,7 +4130,7 @@ msgstr "Test Frontend Unhandled Error"
 #~ msgid "Text imported"
 #~ msgstr "Text imported"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:47
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
 msgid "Texts"
 msgstr "Texts"
 
@@ -4272,6 +4402,10 @@ msgstr "Unknown year"
 msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:92
+#~ msgid "Unpair"
+#~ msgstr "Unpair"
+
 #: apps/web/src/features/practice/components/practice-language-view.tsx:166
 msgid "Unseen"
 msgstr "Unseen"
@@ -4282,7 +4416,7 @@ msgstr "Unseen"
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
 #: apps/web/src/features/sessions/components/session-view.tsx:317
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:70
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:77
 msgid "Untitled"
 msgstr "Untitled"
 
@@ -4360,7 +4494,7 @@ msgstr "Used as your L1 in the LLM prompts."
 msgid "User"
 msgstr "User"
 
-#: packages/extension/src/ui/components/Popup.tsx:61
+#: packages/extension/src/ui/components/Popup.tsx:62
 msgid "User guide"
 msgstr "User guide"
 
@@ -4425,6 +4559,10 @@ msgstr "Vocabulary"
 msgid "Vocabulary options"
 msgstr "Vocabulary options"
 
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
+#~ msgid "Waiting…"
+#~ msgstr "Waiting…"
+
 #: apps/native/src/features/profile/components/danger-zone-view.tsx:31
 #: apps/web/src/features/profile/components/danger-zone-view.tsx:19
 msgid "Warning"
@@ -4485,12 +4623,16 @@ msgid "We've sent a verification link to:"
 msgstr "We've sent a verification link to:"
 
 #: packages/extension/src/ui/components/FtueUi.tsx:38
-msgid "Welcome to asbplayer."
-msgstr "Welcome to asbplayer."
+#~ msgid "Welcome to asbplayer."
+#~ msgstr "Welcome to asbplayer."
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:47
 msgid "Welcome to Flicktionary"
 msgstr "Welcome to Flicktionary"
+
+#: packages/extension/src/ui/components/FtueUi.tsx:38
+msgid "Welcome to Flicktionary."
+msgstr "Welcome to Flicktionary."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
 #~ msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
@@ -4639,6 +4781,6 @@ msgstr "Your name"
 msgid "your@email.com"
 msgstr "your@email.com"
 
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx:50
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx:57
 msgid "YouTube"
 msgstr "YouTube"

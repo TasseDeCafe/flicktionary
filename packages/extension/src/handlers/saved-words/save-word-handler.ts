@@ -1,10 +1,13 @@
 import type { Browser } from 'wxt/browser'
 import type { Command, Message, SaveWordMessage, SaveWordResponse } from '@asbplayer-fork/common'
+import { msg } from '@lingui/core/macro'
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { lookupFlicktionarySession, storeFlicktionarySession } from '../../services/flicktionary/youtube-session-cache'
 import { incrementFlicktionarySessionHighlightCount } from '../../services/flicktionary/session-highlight-counter'
 import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
+import { activateBackgroundLocale } from '../../services/activate-background-locale'
+import { i18n } from '../../ui/lingui'
 
 // Saves a word-click / chunk selection as a Flicktionary highlight.
 //
@@ -30,6 +33,7 @@ export default class SaveWordHandler {
 
     void (async () => {
       try {
+        await activateBackgroundLocale()
         await this._saveToFlicktionary(message)
         sendResponse({ success: true })
       } catch (error) {
@@ -48,7 +52,7 @@ export default class SaveWordHandler {
   private async _saveToFlicktionary(message: SaveWordMessage): Promise<void> {
     const auth = await getFlicktionaryAuth()
     if (!auth) {
-      throw new Error('Pair with Flicktionary to save words.')
+      throw new Error(i18n._(msg`Sign in to Flicktionary to save words.`))
     }
 
     const videoCtx = message.flicktionaryVideo

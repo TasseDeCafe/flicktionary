@@ -1,16 +1,16 @@
 import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon'
+import { flicktionaryLogoDataUri } from './flicktionary-logo'
 
+// The Flicktionary mark is a two-colour raster (black wing + yellow beam), so it
+// can't be a single SVG path like the old asbplayer logo. We embed it as a data
+// URI inside SvgIcon — this keeps the component's fontSize-based sizing and API,
+// and renders identically in every bundle and shadow-DOM overlay. The white
+// rounded chip keeps the black part legible on dark surfaces (e.g. the video
+// controls overlay).
 const LogoIcon = ({ style, ...rest }: SvgIconProps) => {
   return (
-    <SvgIcon
-      viewBox='0 0 28 28'
-      style={{ background: 'linear-gradient(150deg, #ff1f62, #49007a 160%)', borderRadius: 3, ...style }}
-      {...rest}
-    >
-      <path
-        fill='white'
-        d='M 0 0 L 0 20 L 4 21 A 1 1 0 0 0 8 21 L 8 6 A 1 1 0 0 0 4 6 L 4 21 L 0 20 L 0 0 L 12 0 L 12 23 L 22 23 A 1 1 0 0 0 22 19 L 16 19 L 16 6 A 1 1 0 0 0 12 6 L 12 0 L 20 0 L 20 13 A 1 1 0 0 0 24 13 L 24 6 A 1 1 0 0 0 20 6 L 20 0'
-      />
+    <SvgIcon viewBox='0 0 28 28' style={{ background: '#fff', borderRadius: 3, ...style }} {...rest}>
+      <image href={flicktionaryLogoDataUri} x='1' y='1' width='26' height='26' />
     </SvgIcon>
   )
 }

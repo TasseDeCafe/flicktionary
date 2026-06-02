@@ -177,13 +177,13 @@ function VideoSelectContent({
             {openedFromMiningCommand ? (
               <DialogContentText>
                 <Trans>
-                  A video element must be synced with asbplayer before it can be mined. Select a video element to sync
-                  it with asbplayer.
+                  A video element must be synced with Flicktionary before it can be mined. Select a video element to
+                  sync it with Flicktionary.
                 </Trans>
               </DialogContentText>
             ) : (
               <DialogContentText>
-                <Trans>Select a video element to sync it with asbplayer.</Trans>
+                <Trans>Select a video element to sync it with Flicktionary.</Trans>
               </DialogContentText>
             )}
             <Grid container direction='column' spacing={2}>

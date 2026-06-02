@@ -124,9 +124,9 @@ export default defineConfig({
   },
   manifest: ({ browser, mode }) => {
     let manifest: UserManifest = {
-      name: 'asbplayer: Language-learning with subtitles',
+      name: 'Flicktionary',
       description: '__MSG_extensionDescription__',
-      action: { default_title: 'asbplayer' },
+      action: { default_title: 'Flicktionary' },
       default_locale: 'en',
       icons: {
         '16': 'icon/icon16.png',

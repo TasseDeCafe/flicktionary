@@ -4,7 +4,7 @@ import { useListStudySessions } from '../api/sessions-hooks'
 import { SessionCard } from './session-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 
-type Filter = 'all' | 'movie' | 'text' | 'youtube' | 'streaming'
+type Filter = 'all' | 'movie' | 'text' | 'article' | 'youtube' | 'streaming'
 
 type RemoveTarget = { id: string; title: string }
 
@@ -26,6 +26,7 @@ export const SessionsListView = () => {
       all: all.length,
       movie: all.filter((s) => s.contentSourceType === 'movie').length,
       text: all.filter((s) => s.contentSourceType === 'text').length,
+      article: all.filter((s) => s.contentSourceType === 'article').length,
       youtube: all.filter((s) => s.contentSourceType === 'youtube').length,
       streaming: all.filter((s) => s.contentSourceType === 'streaming').length,
     }
@@ -35,8 +36,11 @@ export const SessionsListView = () => {
     <div className='mx-auto max-w-4xl px-4 py-6'>
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
 
+      {/* Horizontally scrollable on narrow viewports: the chips never wrap or shrink,
+          and the row bleeds to the screen edges (-mx-4 px-4) so it scrolls cleanly past
+          the page padding. Scrollbar hidden for a native feel. */}
       {(data?.length ?? 0) > 0 && (
-        <div className='mt-4 flex gap-2'>
+        <div className='-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
             {t`All`} ({counts.all})
           </FilterChip>
@@ -45,6 +49,9 @@ export const SessionsListView = () => {
           </FilterChip>
           <FilterChip active={filter === 'text'} onClick={() => setFilter('text')}>
             {t`Texts`} ({counts.text})
+          </FilterChip>
+          <FilterChip active={filter === 'article'} onClick={() => setFilter('article')}>
+            {t`Articles`} ({counts.article})
           </FilterChip>
           <FilterChip active={filter === 'youtube'} onClick={() => setFilter('youtube')}>
             {t`YouTube`} ({counts.youtube})
@@ -96,7 +103,7 @@ const FilterChip = ({
   <button
     type='button'
     onClick={onClick}
-    className={`rounded-full px-3 py-1 text-sm transition-colors ${
+    className={`shrink-0 rounded-full px-3 py-1 text-sm whitespace-nowrap transition-colors ${
       active ? 'bg-yellow-400 font-medium text-yellow-950' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
     }`}
   >

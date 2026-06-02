@@ -35,14 +35,14 @@ const WelcomeMessage: React.FC<{ className: string }> = ({ className }) => {
       </CenteredGridItem>
       <CenteredGridItem>
         <Typography variant='h5'>
-          <Trans>Welcome to asbplayer.</Trans>
+          <Trans>Welcome to Flicktionary.</Trans>
         </Typography>
       </CenteredGridItem>
       <CenteredGridItem>
         <Typography variant='h6'>
           <Trans>
             Scroll down for a quick intro, or check out the{' '}
-            <Link color='primary' target='_blank' rel='noreferrer' href={'https://docs.asbplayer.dev/docs/intro/'}>
+            <Link color='primary' target='_blank' rel='noreferrer' href={'https://app.flicktionary.app'}>
               user guide
             </Link>
             .
