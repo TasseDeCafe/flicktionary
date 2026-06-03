@@ -3754,7 +3754,7 @@ msgid "Show translations"
 msgstr "Show translations"
 
 #: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:131
-#: packages/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:262
+#: packages/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:259
 msgid "Sign in"
 msgstr "Sign in"
 
