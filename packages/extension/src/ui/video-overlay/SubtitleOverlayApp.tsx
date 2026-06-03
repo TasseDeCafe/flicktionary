@@ -224,15 +224,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // Route through the page-global sonner toaster (viewport bottom-right). Lazily
   // ensure the singleton host exists before the first dispatch. When `action` is
   // given, sonner renders it as a button (used to offer Sign in on gated saves).
-  const showToast = useCallback(
-    (text: string, isError: boolean, action?: { label: string; onClick: () => void }) => {
-      ensureToasterHost()
-      const options = action ? { action } : undefined
-      if (isError) toast.error(text, options)
-      else toast.success(text, options)
-    },
-    []
-  )
+  const showToast = useCallback((text: string, isError: boolean, action?: { label: string; onClick: () => void }) => {
+    ensureToasterHost()
+    const options = action ? { action } : undefined
+    if (isError) toast.error(text, options)
+    else toast.success(text, options)
+  }, [])
 
   // Render-path range (reads the `selection` state so highlights re-render).
   const selectionForLine = (lineIndex: number, wordTokens: LineToken[]) => rangeFor(selection, lineIndex, wordTokens)
