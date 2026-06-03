@@ -46,6 +46,15 @@
   --radius-xl: 12px;
 }
 
+/* Hovering anywhere over the subtitle block bumps the background alpha by 0.1.
+   computeStyles emits the line background as
+   rgba(r, g, b, calc(var(--asb-bg-opacity) + var(--asb-bg-hover-boost, 0))); this
+   sets the boost on the wrapper, which the line divs inherit (same shadow tree —
+   no boundary to cross). rgba clamps the summed alpha >1 back to 1. */
+[data-asb-subtitles]:hover {
+  --asb-bg-hover-boost: 0.1;
+}
+
 @keyframes overlay-toast {
   0% {
     opacity: 0;

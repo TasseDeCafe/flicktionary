@@ -478,13 +478,16 @@ export class CachingElementOverlay implements ElementOverlay {
 
     container.style.left = rect.left + rect.width / 2 + 'px'
 
+    // Width is a CAP, not a fixed size: the inline-block container shrink-wraps to
+    // the subtitle text and only grows up to this max, so short lines ("Rachel")
+    // get a snug background box while long lines wrap at the configured width.
+    // -1 caps at the full video width; a percentage caps at that fraction of it.
     if (this.contentWidthPercentage === -1) {
       container.style.maxWidth = rect.width + 'px'
-      container.style.width = ''
     } else {
-      container.style.maxWidth = ''
-      container.style.width = Math.min(window.innerWidth, (rect.width * this.contentWidthPercentage) / 100) + 'px'
+      container.style.maxWidth = Math.min(window.innerWidth, (rect.width * this.contentWidthPercentage) / 100) + 'px'
     }
+    container.style.width = ''
 
     const clampedY = Math.max(rect.top + window.scrollY, 0)
 

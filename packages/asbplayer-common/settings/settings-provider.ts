@@ -13,7 +13,7 @@ import { AutoPausePreference, SubtitleHtml } from '..'
 const isMacOs = (navigator.userAgentData?.platform ?? navigator.platform)?.toUpperCase()?.indexOf('MAC') > -1
 
 const defaultSubtitleTextSettings = {
-  subtitleSize: 36,
+  subtitleSize: 46,
   subtitleColor: '#ffffff',
   subtitleThickness: 700,
   subtitleOutlineThickness: 0,
@@ -21,7 +21,7 @@ const defaultSubtitleTextSettings = {
   subtitleShadowThickness: 3,
   subtitleShadowColor: '#000000',
   subtitleBackgroundColor: '#000000',
-  subtitleBackgroundOpacity: 0,
+  subtitleBackgroundOpacity: 0.3,
   subtitleFontFamily: '',
   subtitlePreview: 'アあ安Aa',
   subtitleCustomStyles: [],
@@ -34,7 +34,7 @@ export const defaultSettings: AsbplayerSettings = {
   topSubtitlePositionOffset: 75,
   subtitleAlignment: 'bottom',
   subtitleTracksV2: [],
-  subtitlesWidth: -1,
+  subtitlesWidth: 60,
   maxImageWidth: 0,
   maxImageHeight: 0,
   surroundingSubtitlesCountRadius: 2,

@@ -290,6 +290,18 @@ export const SUBTITLE_SCALE_VAR = '--asb-video-scale'
 // renders as 36px on a 1920-wide video, and scales proportionally elsewhere).
 export const SUBTITLE_SCALE_REFERENCE_WIDTH = 1920
 
+// The configured subtitle-background alpha, emitted as a custom property so the
+// hover-boost below can be added to it in CSS.
+export const SUBTITLE_BG_OPACITY_VAR = '--asb-bg-opacity'
+
+// Added to the background alpha while the pointer is over the overlay container.
+// A :hover rule on the container sets it to 0.1; it inherits across the Shadow
+// DOM boundary into the subtitle line divs. Defaults to 0 (not hovering).
+export const SUBTITLE_BG_HOVER_BOOST_VAR = '--asb-bg-hover-boost'
+
+// How far the hover bumps the background alpha (rgba clamps the sum >1 to 1).
+export const SUBTITLE_BG_HOVER_BOOST = 0.1
+
 // Scale a px value by SUBTITLE_SCALE_VAR via CSS calc, so the math happens in CSS
 // against the live video size rather than being baked in here.
 const scaledPx = (px: number) => `calc(${px}px * var(${SUBTITLE_SCALE_VAR}, 1))`
@@ -327,10 +339,15 @@ export function computeStyles({
   }
 
   if (subtitleBackgroundOpacity > 0) {
-    const opacity = subtitleBackgroundOpacity
-    const color = subtitleBackgroundColor
-    const { r, g, b } = hexToRgb(color)
-    styles['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${opacity})`
+    const { r, g, b } = hexToRgb(subtitleBackgroundColor)
+    // Base alpha + an inherited hover boost (0 unless the container is hovered),
+    // so the background intensifies on hover purely in CSS.
+    styles[SUBTITLE_BG_OPACITY_VAR] = String(subtitleBackgroundOpacity)
+    styles['backgroundColor'] =
+      `rgba(${r}, ${g}, ${b}, calc(var(${SUBTITLE_BG_OPACITY_VAR}) + var(${SUBTITLE_BG_HOVER_BOOST_VAR}, 0)))`
+    // Rounded corners on the background box; em-based so it tracks the (already
+    // video-scaled) font size.
+    styles['borderRadius'] = '0.4em'
   }
 
   if (subtitleFontFamily && subtitleFontFamily.length > 0) {
