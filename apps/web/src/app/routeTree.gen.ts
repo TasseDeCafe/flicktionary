@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as FromLandingRouteImport } from './routes/from-landing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -44,6 +45,11 @@ import { Route as AuthenticatedAppPracticeHistoryTargetLanguageRouteImport } fro
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
 import { Route as AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/$cardId'
 
+const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
+  id: '/terms-of-service',
+  path: '/terms-of-service',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/extension-pair': typeof AuthenticatedExtensionPairRoute
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/'
     | '/from-landing'
     | '/privacy-policy'
+    | '/terms-of-service'
     | '/admin-settings'
     | '/extension-pair'
     | '/account/removed'
@@ -382,6 +392,7 @@ export interface FileRouteTypes {
     | '/'
     | '/from-landing'
     | '/privacy-policy'
+    | '/terms-of-service'
     | '/admin-settings'
     | '/extension-pair'
     | '/account/removed'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/from-landing'
     | '/privacy-policy'
+    | '/terms-of-service'
     | '/_authenticated/_app'
     | '/_authenticated/admin-settings'
     | '/_authenticated/extension-pair'
@@ -454,6 +466,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   FromLandingRoute: typeof FromLandingRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  TermsOfServiceRoute: typeof TermsOfServiceRoute
   AccountRemovedRoute: typeof AccountRemovedRoute
   LoginIndexRoute: typeof LoginIndexRoute
   LoginEmailSentRoute: typeof LoginEmailSentRoute
@@ -463,6 +476,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms-of-service': {
+      id: '/terms-of-service'
+      path: '/terms-of-service'
+      fullPath: '/terms-of-service'
+      preLoaderRoute: typeof TermsOfServiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy-policy': {
       id: '/privacy-policy'
       path: '/privacy-policy'
@@ -789,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   FromLandingRoute: FromLandingRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  TermsOfServiceRoute: TermsOfServiceRoute,
   AccountRemovedRoute: AccountRemovedRoute,
   LoginIndexRoute: LoginIndexRoute,
   LoginEmailSentRoute: LoginEmailSentRoute,

@@ -1,0 +1,196 @@
+---
+import { Image } from 'astro:assets'
+import Base from '../layouts/Base.astro'
+import subtitlePopover from '../assets/subtitle-popover.png'
+import vocabulary from '../assets/vocabulary.png'
+import practice from '../assets/practice.png'
+import aiChat from '../assets/ai-chat.png'
+import sessions from '../assets/sessions.png'
+import importArticle from '../assets/import-article.png'
+
+// TODO: set once the extension is live on the Chrome Web Store; the button is
+// hidden while this is empty.
+const chromeWebStoreUrl = ''
+
+const steps = [
+  {
+    title: 'Press play',
+    body: 'Add the browser extension and watch what you already watch — YouTube videos, streaming shows — with subtitles in the language you are learning.',
+  },
+  {
+    title: 'Click what you don’t know',
+    body: 'Click any word or phrase in the subtitles to get an instant, AI-generated explanation of what it means right there, in context. Save it in one click.',
+  },
+  {
+    title: 'Practice until it sticks',
+    body: 'Flicktionary schedules reviews of your saved words with spaced repetition, so the vocabulary from your shows actually ends up in your long-term memory.',
+  },
+]
+---
+
+<Base
+  title='Flicktionary — Learn languages from the videos you watch'
+  description='Flicktionary is a language-learning app and browser extension. Click words in video subtitles to see what they mean in context, save them, and remember them with spaced-repetition practice.'
+>
+  <main>
+    <!-- Hero -->
+    <section class='mx-auto w-full max-w-6xl px-6 pt-12 pb-16 sm:pt-20'>
+      <div class='mx-auto max-w-3xl text-center'>
+        <h1 class='text-4xl font-extrabold tracking-tight text-balance sm:text-5xl'>
+          Learn a language from the videos you <span class='underline decoration-brand decoration-8 underline-offset-4'>actually watch</span>
+        </h1>
+        <p class='mt-6 text-lg text-gray-600'>
+          Flicktionary turns videos, shows, and articles into your personal language course. Click any word in the
+          subtitles to see what it means in context, save it, and practice it later — until it sticks.
+        </p>
+        <div class='mt-8 flex flex-wrap items-center justify-center gap-4'>
+          <a
+            href='https://app.flicktionary.app'
+            class='rounded-full bg-ink px-7 py-3 font-semibold text-white transition hover:bg-black'
+          >
+            Open the web app
+          </a>
+          {
+            chromeWebStoreUrl && (
+              <a
+                href={chromeWebStoreUrl}
+                class='rounded-full border-2 border-ink px-7 py-3 font-semibold transition hover:bg-gray-50'
+              >
+                Get the Chrome extension
+              </a>
+            )
+          }
+        </div>
+      </div>
+      <div class='mx-auto mt-14 max-w-4xl overflow-hidden rounded-2xl border border-gray-200 shadow-xl'>
+        <Image
+          src={subtitlePopover}
+          alt='Flicktionary showing the meaning of a French phrase in a popover above YouTube subtitles'
+          widths={[640, 960, 1280]}
+          sizes='(min-width: 1024px) 896px, 100vw'
+          loading='eager'
+        />
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class='bg-gray-50'>
+      <div class='mx-auto w-full max-w-6xl px-6 py-16'>
+        <h2 class='text-center text-3xl font-bold tracking-tight'>How it works</h2>
+        <ol class='mt-10 grid gap-8 sm:grid-cols-3'>
+          {
+            steps.map((step, i) => (
+              <li class='rounded-2xl bg-white p-6 shadow-sm'>
+                <span class='flex size-9 items-center justify-center rounded-full bg-brand font-bold'>{i + 1}</span>
+                <h3 class='mt-4 text-lg font-semibold'>{step.title}</h3>
+                <p class='mt-2 text-gray-600'>{step.body}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class='mx-auto w-full max-w-6xl space-y-20 px-6 py-20'>
+      <div class='grid items-center gap-10 lg:grid-cols-2'>
+        <div>
+          <h2 class='text-2xl font-bold tracking-tight sm:text-3xl'>Every word you save, in one place</h2>
+          <p class='mt-4 text-gray-600'>
+            Each lookup you keep lands in your vocabulary, with its translation and the subtitle line it came from.
+            Filter by language, search your terms, and see at a glance what is due for review.
+          </p>
+        </div>
+        <Image
+          src={vocabulary}
+          alt='The Flicktionary vocabulary screen listing saved Spanish terms with translations and review badges'
+          widths={[640, 1280]}
+          sizes='(min-width: 1024px) 560px, 100vw'
+          class='rounded-2xl border border-gray-200 shadow-lg'
+        />
+      </div>
+
+      <div class='grid items-center gap-10 lg:grid-cols-2'>
+        <div class='lg:order-2'>
+          <h2 class='text-2xl font-bold tracking-tight sm:text-3xl'>Spaced repetition does the scheduling</h2>
+          <p class='mt-4 text-gray-600'>
+            Flicktionary tracks what you know and resurfaces each word right before you would forget it. Review in
+            reading mode or with flashcards, and promote the words you want to use — not just recognize — to your
+            active vocabulary.
+          </p>
+        </div>
+        <Image
+          src={practice}
+          alt='The Flicktionary practice screen for Russian showing words due for review'
+          widths={[640, 1280]}
+          sizes='(min-width: 1024px) 560px, 100vw'
+          class='rounded-2xl border border-gray-200 shadow-lg lg:order-1'
+        />
+      </div>
+
+      <div class='grid items-center gap-10 lg:grid-cols-2'>
+        <div>
+          <h2 class='text-2xl font-bold tracking-tight sm:text-3xl'>Ask the AI tutor anything</h2>
+          <p class='mt-4 text-gray-600'>
+            Wondering how a word differs from its synonym, or why a sentence uses that form? Every saved term comes
+            with an AI tutor that answers questions about meaning, nuance, grammar, and usage.
+          </p>
+        </div>
+        <Image
+          src={aiChat}
+          alt='A Flicktionary card for a Russian verb with an AI chat explaining the difference between two similar verbs'
+          widths={[640, 1280]}
+          sizes='(min-width: 1024px) 560px, 100vw'
+          class='rounded-2xl border border-gray-200 shadow-lg'
+        />
+      </div>
+
+      <div class='grid gap-10 lg:grid-cols-2'>
+        <div class='rounded-2xl bg-gray-50 p-8'>
+          <h2 class='text-xl font-bold tracking-tight'>Works for reading too</h2>
+          <p class='mt-3 text-gray-600'>
+            Import any article from the web with one click and study it the same way: look up words as you read and
+            save them for practice.
+          </p>
+          <Image
+            src={importArticle}
+            alt='The Flicktionary extension popup on a news site with an “Import this article” button'
+            widths={[640, 1280]}
+            sizes='(min-width: 1024px) 480px, 100vw'
+            class='mt-6 rounded-xl border border-gray-200 shadow'
+          />
+        </div>
+        <div class='rounded-2xl bg-gray-50 p-8'>
+          <h2 class='text-xl font-bold tracking-tight'>Everything you watch, organized</h2>
+          <p class='mt-3 text-gray-600'>
+            Each video or article becomes a session, labeled with its language and difficulty level, so you can pick
+            up where you left off.
+          </p>
+          <Image
+            src={sessions}
+            alt='The Flicktionary sessions screen listing watched videos with language and difficulty labels'
+            widths={[640, 1280]}
+            sizes='(min-width: 1024px) 480px, 100vw'
+            class='mt-6 rounded-xl border border-gray-200 shadow'
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class='bg-brand'>
+      <div class='mx-auto w-full max-w-6xl px-6 py-16 text-center'>
+        <h2 class='text-3xl font-extrabold tracking-tight'>Turn watch time into study time</h2>
+        <p class='mx-auto mt-3 max-w-xl text-gray-800'>
+          Bring the next video you watch, and leave with vocabulary you will remember.
+        </p>
+        <a
+          href='https://app.flicktionary.app'
+          class='mt-8 inline-block rounded-full bg-ink px-8 py-3 font-semibold text-white transition hover:bg-black'
+        >
+          Start learning with Flicktionary
+        </a>
+      </div>
+    </section>
+  </main>
+</Base>

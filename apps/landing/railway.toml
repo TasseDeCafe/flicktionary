@@ -1,0 +1,10 @@
+[build]
+builder = "railpack"
+buildCommand = "pnpm install --frozen-lockfile && pnpm turbo run build --filter=@flicktionary/landing"
+
+[deploy]
+startCommand = "node apps/landing/server.js"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
