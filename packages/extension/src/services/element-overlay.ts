@@ -1,4 +1,5 @@
 import { OffscreenDomCache } from '@asbplayer-fork/common'
+import { SUBTITLE_SCALE_VAR, SUBTITLE_SCALE_REFERENCE_WIDTH } from '@asbplayer-fork/common/util'
 
 // Tags the single React content host placed inside a subtitle container by
 // `mountPersistentHost`. Used to keep the host out of the dom-cache recycling
@@ -470,15 +471,23 @@ export class CachingElementOverlay implements ElementOverlay {
       return
     }
 
+    // Scale subtitle glyph sizes with the rendered video width. computeStyles emits
+    // its px sizes as calc(...px * var(--asb-video-scale, 1)); we feed the ratio here
+    // off the rect we already measured, so the font tracks window/fullscreen size.
+    container.style.setProperty(SUBTITLE_SCALE_VAR, String(rect.width / SUBTITLE_SCALE_REFERENCE_WIDTH))
+
     container.style.left = rect.left + rect.width / 2 + 'px'
 
+    // Width is a CAP, not a fixed size: the inline-block container shrink-wraps to
+    // the subtitle text and only grows up to this max, so short lines ("Rachel")
+    // get a snug background box while long lines wrap at the configured width.
+    // -1 caps at the full video width; a percentage caps at that fraction of it.
     if (this.contentWidthPercentage === -1) {
       container.style.maxWidth = rect.width + 'px'
-      container.style.width = ''
     } else {
-      container.style.maxWidth = ''
-      container.style.width = Math.min(window.innerWidth, (rect.width * this.contentWidthPercentage) / 100) + 'px'
+      container.style.maxWidth = Math.min(window.innerWidth, (rect.width * this.contentWidthPercentage) / 100) + 'px'
     }
+    container.style.width = ''
 
     const clampedY = Math.max(rect.top + window.scrollY, 0)
 

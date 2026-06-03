@@ -496,7 +496,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   return (
     <>
       {snapshot.visible && (
-        <div className='text-center'>
+        <div data-asb-subtitles className='text-center'>
           {tokenized.map((tl) => {
             const range = selectionForLine(tl.line.index, tl.wordTokens)
             return (
@@ -504,7 +504,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 key={tl.line.index}
                 data-track={tl.line.track}
                 style={tl.line.style}
-                className={`px-2.5 leading-normal whitespace-pre-wrap${
+                className={`px-2.5 py-0.5 leading-normal whitespace-pre-wrap${
                   tl.line.blurred ? ' blur-[10px] hover:blur-none' : ''
                 }`}
               >
