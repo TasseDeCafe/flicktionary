@@ -37,6 +37,7 @@ import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/regist
 import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
+import { isVideoPlatformUrl } from '@/services/pages'
 import SupadataGenerateHandler from '@/handlers/supadata/supadata-generate-handler'
 import GetCachedTranscriptHandler from '@/handlers/video/get-cached-transcript-handler'
 import ExportTranscriptCacheHandler from '@/handlers/video/export-transcript-cache-handler'
@@ -140,6 +141,24 @@ export default defineBackground(() => {
   // removeAll() and create() — that race would leave the menus missing.
   let menuSetupPromise: Promise<void> = Promise.resolve()
 
+  // The article/selection import menus are meaningless on streaming platforms
+  // (where the popup shows the subtitle UI instead), so hide them there. Matched
+  // at host level via the same registry the popup uses. Visibility resets to the
+  // created default on every rebuild, so this is re-applied at the end of
+  // setupContextMenus and whenever the active tab changes.
+  const updateImportMenuVisibility = async (url: string | undefined): Promise<void> => {
+    if (!browser.contextMenus) {
+      return
+    }
+    const visible = !(await isVideoPlatformUrl(url))
+    try {
+      await browser.contextMenus.update('flicktionary-import-article', { visible })
+      await browser.contextMenus.update('flicktionary-import-selection', { visible })
+    } catch {
+      // The menus may not exist yet (mid-rebuild) — the rebuild re-applies this.
+    }
+  }
+
   const setupContextMenus = (): Promise<void> => {
     menuSetupPromise = menuSetupPromise.then(async () => {
       // Activate the locale even when context menus are unavailable (Firefox
@@ -167,9 +186,24 @@ export default defineBackground(() => {
         title: i18n._(msg`Add selection to Flicktionary`),
         contexts: ['selection'],
       })
+      const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true })
+      await updateImportMenuVisibility(activeTab?.url)
     })
     return menuSetupPromise
   }
+
+  // Keep the import menus' visibility in sync with the foreground tab.
+  browser.tabs.onActivated.addListener(({ tabId }) => {
+    void browser.tabs
+      .get(tabId)
+      .then((tab) => updateImportMenuVisibility(tab.url))
+      .catch(() => {})
+  })
+  browser.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+    if (changeInfo.url && tab.active) {
+      void updateImportMenuVisibility(changeInfo.url)
+    }
+  })
 
   // MV3 doesn't persist context menus across browser restarts, so (re)build them
   // on install/update and on every startup.

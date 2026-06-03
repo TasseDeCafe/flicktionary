@@ -3,7 +3,7 @@ import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import Button from '@mui/material/Button'
-import { Plural, Trans } from '@lingui/react/macro'
+import { Trans } from '@lingui/react/macro'
 import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client'
 import {
   clearFlicktionaryAuth,
@@ -12,15 +12,10 @@ import {
   onFlicktionaryAuthChange,
 } from '@/services/flicktionary/auth-storage'
 import { openFlicktionaryPairingTab } from '@/services/flicktionary/start-pairing'
-import {
-  getFlicktionarySessionHighlightCount,
-  onFlicktionarySessionHighlightCountChange,
-} from '@/services/flicktionary/session-highlight-counter'
 
 export const FlicktionaryPairSection = () => {
   const [auth, setAuth] = useState<FlicktionaryAuthState | null>(null)
   const [pairing, setPairing] = useState(false)
-  const [highlightCount, setHighlightCount] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -30,20 +25,6 @@ export const FlicktionaryPairSection = () => {
     const unsubscribe = onFlicktionaryAuthChange((value) => {
       setAuth(value)
       setPairing(false)
-    })
-    return () => {
-      active = false
-      unsubscribe()
-    }
-  }, [])
-
-  useEffect(() => {
-    let active = true
-    void getFlicktionarySessionHighlightCount().then((value) => {
-      if (active) setHighlightCount(value)
-    })
-    const unsubscribe = onFlicktionarySessionHighlightCountChange((value) => {
-      setHighlightCount(value)
     })
     return () => {
       active = false
@@ -79,8 +60,6 @@ export const FlicktionaryPairSection = () => {
         <>
           <Typography variant='caption' sx={{ display: 'block', mb: 1 }}>
             <Trans>Signed in as {auth.email}</Trans>
-            {' · '}
-            <Plural value={highlightCount} one='# highlight this session' other='# highlights this session' />
           </Typography>
           <ButtonGroup fullWidth size='small' variant='outlined'>
             <Button color='error' onClick={handleUnpair}>
