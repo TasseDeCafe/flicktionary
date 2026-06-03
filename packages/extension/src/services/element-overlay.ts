@@ -1,9 +1,7 @@
-import { OffscreenDomCache } from '@asbplayer-fork/common'
 import { SUBTITLE_SCALE_VAR, SUBTITLE_SCALE_REFERENCE_WIDTH } from '@asbplayer-fork/common/util'
 
 // Tags the single React content host placed inside a subtitle container by
-// `mountPersistentHost`. Used to keep the host out of the dom-cache recycling
-// loop (`_setChildren`) so its live React root is never detached.
+// `mountPersistentHost`. The caller attaches a shadow + React root to it.
 export const PERSISTENT_HOST_ATTR = 'data-asbplayer-react-host'
 
 export enum OffsetAnchor {
@@ -11,17 +9,10 @@ export enum OffsetAnchor {
   top,
 }
 
-export interface KeyedHtml {
-  key?: string
-  html: () => string
-}
-
 export interface ElementOverlayParams {
   targetElement: HTMLElement
   nonFullscreenContainerClassName: string
-  nonFullscreenContentClassName: string
   fullscreenContainerClassName: string
-  fullscreenContentClassName: string
   offsetAnchor: OffsetAnchor
   contentPositionOffset?: number
   contentWidthPercentage: number
@@ -30,32 +21,29 @@ export interface ElementOverlayParams {
 }
 
 export interface ElementOverlay {
-  setHtml(htmls: KeyedHtml[]): void
-  appendHtml(html: string): void
   refresh(): void
   hide(): void
   dispose(): void
   nonFullscreenContainerClassName: string
-  nonFullscreenContentClassName: string
   fullscreenContainerClassName: string
-  fullscreenContentClassName: string
   offsetAnchor: OffsetAnchor
   contentPositionOffset: number
   contentWidthPercentage: number
-  displayingElements: () => Iterable<HTMLElement>
   containerElement: HTMLElement | undefined
 }
 
+// Owns the bottom/top subtitle containers that the React overlay host lives in.
+// The legacy HTML-rendering path (setHtml/appendHtml/dom-cache) is gone — the
+// React + Shadow DOM overlay is the only renderer, so this is purely the
+// container + fullscreen-transfer machinery that keeps the persistent host
+// positioned over the video in both fullscreen states.
 export class CachingElementOverlay implements ElementOverlay {
   private readonly targetElement: HTMLElement
 
-  private readonly domCache: OffscreenDomCache = new OffscreenDomCache()
-
   private fullscreenContainerElement?: HTMLElement
-  private defaultContentElement?: HTMLElement
   // The React content host (Option A). While set, this overlay is in "React
-  // mode": setHtml/appendHtml become guarded no-ops, hide() no longer disposes,
-  // and _setChildren never recycles the host. Cleared by disposePersistentHost.
+  // mode": hide() no longer disposes the containers. Cleared by
+  // disposePersistentHost.
   private persistentHostElement?: HTMLElement
   private nonFullscreenContainerElement?: HTMLElement
   private nonFullscreenElementFullscreenChangeListener?: (this: any, event: Event) => any
@@ -68,9 +56,7 @@ export class CachingElementOverlay implements ElementOverlay {
   private onMouseOut: (event: MouseEvent) => void
 
   nonFullscreenContainerClassName: string
-  nonFullscreenContentClassName: string
   fullscreenContainerClassName: string
-  fullscreenContentClassName: string
   offsetAnchor: OffsetAnchor = OffsetAnchor.bottom
   contentPositionOffset: number
   contentWidthPercentage: number
@@ -78,9 +64,7 @@ export class CachingElementOverlay implements ElementOverlay {
   constructor({
     targetElement,
     nonFullscreenContainerClassName,
-    nonFullscreenContentClassName,
     fullscreenContainerClassName,
-    fullscreenContentClassName,
     offsetAnchor,
     contentPositionOffset,
     contentWidthPercentage,
@@ -89,34 +73,12 @@ export class CachingElementOverlay implements ElementOverlay {
   }: ElementOverlayParams) {
     this.targetElement = targetElement
     this.nonFullscreenContainerClassName = nonFullscreenContainerClassName
-    this.nonFullscreenContentClassName = nonFullscreenContentClassName
     this.fullscreenContainerClassName = fullscreenContainerClassName
-    this.fullscreenContentClassName = fullscreenContentClassName
     this.offsetAnchor = offsetAnchor
     this.contentPositionOffset = contentPositionOffset ?? 75
     this.contentWidthPercentage = contentWidthPercentage
     this.onMouseOver = onMouseOver
     this.onMouseOut = onMouseOut
-  }
-
-  *displayingElements() {
-    function* grandChildren(container: HTMLElement) {
-      for (const content of container.childNodes) {
-        for (const el of content.childNodes) {
-          if (el instanceof HTMLElement) {
-            yield el as HTMLElement
-          }
-        }
-      }
-    }
-
-    const container = this.containerElement
-
-    if (container !== undefined) {
-      for (const el of grandChildren(container)) {
-        yield el
-      }
-    }
   }
 
   get containerElement() {
@@ -127,57 +89,6 @@ export class CachingElementOverlay implements ElementOverlay {
     }
 
     return undefined
-  }
-
-  uncacheHtml() {
-    this.domCache.clear()
-  }
-
-  uncacheHtmlKey(key: string) {
-    this.domCache.delete(key)
-  }
-
-  cacheHtml(key: string, html: string) {
-    this.domCache.add(key, html)
-  }
-
-  setHtml(htmls: KeyedHtml[]) {
-    // React mode owns this overlay's content. A stray legacy render
-    // (showLoadedMessage / offset / notification path) must not clobber the
-    // host or inject sibling nodes next to it — so swallow it here.
-    if (this.persistentHostElement) {
-      return
-    }
-
-    if (document.fullscreenElement) {
-      this._displayFullscreenContentElementsWithHtml(htmls)
-    } else {
-      this._displayNonFullscreenContentElementsWithHtml(htmls)
-    }
-  }
-
-  private _displayNonFullscreenContentElementsWithHtml(htmls: KeyedHtml[]) {
-    this._displayNonFullscreenContentElements(htmls.map((html) => this._cachedContentElement(html.html, html.key)))
-  }
-
-  private _displayNonFullscreenContentElements(contentElements: HTMLElement[]) {
-    for (const contentElement of contentElements) {
-      contentElement.className = this.nonFullscreenContentClassName
-    }
-
-    this._setChildren(this._nonFullscreenContainerElement(), contentElements)
-  }
-
-  private _displayFullscreenContentElementsWithHtml(htmls: KeyedHtml[]) {
-    this._displayFullscreenContentElements(htmls.map((html) => this._cachedContentElement(html.html, html.key)))
-  }
-
-  private _displayFullscreenContentElements(contentElements: HTMLElement[]) {
-    for (const contentElement of contentElements) {
-      contentElement.className = this.fullscreenContentClassName
-    }
-
-    this._setChildren(this._fullscreenContainerElement(), contentElements)
   }
 
   private _nonFullscreenContainerElement() {
@@ -303,64 +214,6 @@ export class CachingElementOverlay implements ElementOverlay {
     }
   }
 
-  private _setChildren(containerElement: HTMLElement, contentElements: HTMLElement[]) {
-    while (containerElement.firstChild) {
-      const last = containerElement.lastChild! as HTMLElement
-      // Defense in depth: should be unreachable while a host is mounted
-      // (setHtml is a guarded no-op), but never recycle the React host into the
-      // offscreen dom-cache — that detaches the live root. Bail instead.
-      if (this._isPersistentHost(last)) {
-        return
-      }
-      this.domCache.return(last)
-    }
-
-    for (const contentElement of contentElements) {
-      containerElement.appendChild(contentElement)
-    }
-  }
-
-  private _isPersistentHost(node: Node | null): node is HTMLElement {
-    return (
-      node instanceof HTMLElement && (node === this.persistentHostElement || node.hasAttribute(PERSISTENT_HOST_ATTR))
-    )
-  }
-
-  private _cachedContentElement(html: () => string, key: string | undefined) {
-    if (key === undefined) {
-      if (!this.defaultContentElement) {
-        this.defaultContentElement = document.createElement('div')
-      }
-
-      this.defaultContentElement.innerHTML = html()
-      return this.defaultContentElement
-    }
-
-    return this.domCache.get(key, html)
-  }
-
-  appendHtml(html: string) {
-    // See setHtml: no sibling injection while the React host owns this overlay.
-    if (this.persistentHostElement) {
-      return
-    }
-
-    if (document.fullscreenElement) {
-      this._appendHtml(`${html}\n`, this.fullscreenContentClassName, this._fullscreenContainerElement())
-    } else {
-      this._appendHtml(`${html}\n`, this.nonFullscreenContentClassName, this._nonFullscreenContainerElement())
-    }
-  }
-
-  private _appendHtml(html: string, className: string, container: HTMLElement) {
-    const breakLine = document.createElement('br')
-    const content = document.createElement('div')
-    content.innerHTML = html
-    content.className = className
-    container.appendChild(breakLine)
-    container.appendChild(content)
-  }
-
   refresh() {
     if (this.fullscreenContainerElement) {
       this._applyContainerStyles(this.fullscreenContainerElement)
@@ -372,15 +225,15 @@ export class CachingElementOverlay implements ElementOverlay {
   }
 
   // Eagerly create BOTH containers (so each registers its `fullscreenchange`
-  // listener and the existing `_transferChildren` path is live), then place a
-  // single plain <div> host as the only content child of the currently-active
-  // container. The host is tagged so `_setChildren` never recycles it; the
-  // caller attaches a shadow root and a React root to it. Returns the host.
+  // listener and the `_transferChildren` path is live), then place a single
+  // plain <div> host as the only content child of the currently-active
+  // container. The host is tagged with PERSISTENT_HOST_ATTR; the caller attaches
+  // a shadow root and a React root to it. Returns the host.
   //
   // The transfer logic moves the host between containers on every fullscreen
-  // toggle WITHOUT any subtitle update — that's the whole reason both
-  // containers must exist up front (the lazy creation in setHtml would never
-  // run in React mode, stranding the host on fullscreen entry).
+  // toggle WITHOUT any subtitle update — that's the whole reason both containers
+  // must exist up front (lazy creation would strand the host on fullscreen
+  // entry).
   mountPersistentHost(): HTMLElement {
     if (this.persistentHostElement) {
       return this.persistentHostElement
@@ -448,8 +301,6 @@ export class CachingElementOverlay implements ElementOverlay {
       clearInterval(this.fullscreenElementFullscreenPollingInterval)
     }
 
-    this.defaultContentElement?.remove()
-    this.defaultContentElement = undefined
     this.nonFullscreenContainerElement?.remove()
     this.nonFullscreenContainerElement = undefined
     this.fullscreenContainerElement?.remove()
@@ -512,6 +363,5 @@ export class CachingElementOverlay implements ElementOverlay {
 
   dispose() {
     this.hide()
-    this.domCache.clear()
   }
 }

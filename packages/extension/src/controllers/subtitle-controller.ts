@@ -22,7 +22,9 @@ import type { CSSProperties } from 'react'
 import { CachingElementOverlay, ElementOverlay, ElementOverlayParams, OffsetAnchor } from '../services/element-overlay'
 import { SubtitleStore, SubtitleLineModel } from '../ui/video-overlay/subtitle-store'
 import { mountSubtitleOverlay, OverlayMountHandle } from '../ui/video-overlay/mount'
+import { ensureToasterHost, setToasterTheme } from '../ui/video-overlay/toaster-host'
 import { FlicktionaryVideoClosures } from '../services/flicktionary/flicktionary-client'
+import { toast } from 'sonner'
 
 const BOUNDING_BOX_PADDING = 25
 
@@ -67,12 +69,10 @@ export default class SubtitleController {
   // root in both fullscreen states. Parallel to subtitleStyles by track.
   private subtitleStyleObjects?: CSSProperties[]
   private subtitleClasses?: string[]
-  private notificationElementOverlayHideTimeout?: NodeJS.Timeout
   private subtitleCollection: SubtitleCollection<IndexedSubtitleModel>
   private _subtitles: IndexedSubtitleModel[] = []
   private bottomSubtitlesElementOverlay: ElementOverlay
   private topSubtitlesElementOverlay: ElementOverlay
-  private notificationElementOverlay: ElementOverlay
   private shouldRenderBottomOverlay: boolean
   private shouldRenderTopOverlay: boolean
   private subtitleTrackAlignments: { [key: number]: SubtitleAlignment | undefined }
@@ -121,10 +121,9 @@ export default class SubtitleController {
     this.showingLoadedMessage = false
     this.autoCopyCurrentSubtitle = false
     this.refreshCurrentSubtitle = false
-    const { subtitlesElementOverlay, topSubtitlesElementOverlay, notificationElementOverlay } = this._overlays()
+    const { subtitlesElementOverlay, topSubtitlesElementOverlay } = this._overlays()
     this.bottomSubtitlesElementOverlay = subtitlesElementOverlay
     this.topSubtitlesElementOverlay = topSubtitlesElementOverlay
-    this.notificationElementOverlay = notificationElementOverlay
     this.subtitleCollection = new SubtitleCollection<IndexedSubtitleModel>({
       returnNextToShow: true,
       showingCheckRadiusMs: 150,
@@ -250,6 +249,11 @@ export default class SubtitleController {
     this.topSubtitlesElementOverlay.contentWidthPercentage = value
   }
 
+  // Keep the page-global sonner toaster in sync with the extension's themeType.
+  set toasterTheme(theme: 'dark' | 'light') {
+    setToasterTheme(theme)
+  }
+
   setSubtitleSettings(newSubtitleSettings: SubtitleSettings) {
     const styles = this._computeStyles(newSubtitleSettings)
     const classes = this._computeClasses(newSubtitleSettings)
@@ -277,14 +281,11 @@ export default class SubtitleController {
         'bottom' as SubtitleAlignment
       )
       this.shouldRenderTopOverlay = Object.values(this.subtitleTrackAlignments).includes('top' as SubtitleAlignment)
-      const { subtitleOverlayParams, topSubtitleOverlayParams, notificationOverlayParams } =
-        this._elementOverlayParams()
+      const { subtitleOverlayParams, topSubtitleOverlayParams } = this._elementOverlayParams()
       this._applyElementOverlayParams(this.bottomSubtitlesElementOverlay, subtitleOverlayParams)
       this._applyElementOverlayParams(this.topSubtitlesElementOverlay, topSubtitleOverlayParams)
-      this._applyElementOverlayParams(this.notificationElementOverlay, notificationOverlayParams)
       this.bottomSubtitlesElementOverlay.hide()
       this.topSubtitlesElementOverlay.hide()
-      this.notificationElementOverlay.hide()
     }
 
     this.unblurredSubtitleTracks = {}
@@ -353,9 +354,7 @@ export default class SubtitleController {
   private _applyElementOverlayParams(overlay: ElementOverlay, params: ElementOverlayParams) {
     overlay.offsetAnchor = params.offsetAnchor
     overlay.fullscreenContainerClassName = params.fullscreenContainerClassName
-    overlay.fullscreenContentClassName = params.fullscreenContentClassName
     overlay.nonFullscreenContainerClassName = params.nonFullscreenContainerClassName
-    overlay.nonFullscreenContentClassName = params.nonFullscreenContentClassName
   }
 
   set displaySubtitles(displaySubtitles: boolean) {
@@ -369,12 +368,11 @@ export default class SubtitleController {
   }
 
   private _overlays() {
-    const { subtitleOverlayParams, topSubtitleOverlayParams, notificationOverlayParams } = this._elementOverlayParams()
+    const { subtitleOverlayParams, topSubtitleOverlayParams } = this._elementOverlayParams()
 
     return {
       subtitlesElementOverlay: new CachingElementOverlay(subtitleOverlayParams),
       topSubtitlesElementOverlay: new CachingElementOverlay(topSubtitleOverlayParams),
-      notificationElementOverlay: new CachingElementOverlay(notificationOverlayParams),
     }
   }
 
@@ -382,9 +380,7 @@ export default class SubtitleController {
     const subtitleOverlayParams: ElementOverlayParams = {
       targetElement: this.video,
       nonFullscreenContainerClassName: 'asbplayer-subtitles-container-bottom',
-      nonFullscreenContentClassName: 'asbplayer-subtitles',
       fullscreenContainerClassName: 'asbplayer-subtitles-container-bottom',
-      fullscreenContentClassName: 'asbplayer-fullscreen-subtitles',
       offsetAnchor: OffsetAnchor.bottom,
       contentWidthPercentage: -1,
       onMouseOver: (event: MouseEvent) => this.onMouseOver?.(event),
@@ -393,40 +389,14 @@ export default class SubtitleController {
     const topSubtitleOverlayParams: ElementOverlayParams = {
       targetElement: this.video,
       nonFullscreenContainerClassName: 'asbplayer-subtitles-container-top',
-      nonFullscreenContentClassName: 'asbplayer-subtitles',
       fullscreenContainerClassName: 'asbplayer-subtitles-container-top',
-      fullscreenContentClassName: 'asbplayer-fullscreen-subtitles',
       offsetAnchor: OffsetAnchor.top,
       contentWidthPercentage: -1,
       onMouseOver: (event: MouseEvent) => this.onMouseOver?.(event),
       onMouseOut: (event: MouseEvent) => this.onMouseOut?.(event),
     }
-    const notificationOverlayParams: ElementOverlayParams =
-      this._getSubtitleTrackAlignment(0) === 'bottom'
-        ? {
-            targetElement: this.video,
-            nonFullscreenContainerClassName: 'asbplayer-notification-container-top',
-            nonFullscreenContentClassName: 'asbplayer-notification',
-            fullscreenContainerClassName: 'asbplayer-notification-container-top',
-            fullscreenContentClassName: 'asbplayer-notification',
-            offsetAnchor: OffsetAnchor.top,
-            contentWidthPercentage: -1,
-            onMouseOver: (event: MouseEvent) => this.onMouseOver?.(event),
-            onMouseOut: (event: MouseEvent) => this.onMouseOut?.(event),
-          }
-        : {
-            targetElement: this.video,
-            nonFullscreenContainerClassName: 'asbplayer-notification-container-bottom',
-            nonFullscreenContentClassName: 'asbplayer-notification',
-            fullscreenContainerClassName: 'asbplayer-notification-container-bottom',
-            fullscreenContentClassName: 'asbplayer-notification',
-            offsetAnchor: OffsetAnchor.bottom,
-            contentWidthPercentage: -1,
-            onMouseOver: (event: MouseEvent) => this.onMouseOver?.(event),
-            onMouseOut: (event: MouseEvent) => this.onMouseOut?.(event),
-          }
 
-    return { subtitleOverlayParams, topSubtitleOverlayParams, notificationOverlayParams }
+    return { subtitleOverlayParams, topSubtitleOverlayParams }
   }
 
   bind() {
@@ -544,14 +514,8 @@ export default class SubtitleController {
       this.subtitlesInterval = undefined
     }
 
-    if (this.notificationElementOverlayHideTimeout) {
-      clearTimeout(this.notificationElementOverlayHideTimeout)
-      this.notificationElementOverlayHideTimeout = undefined
-    }
-
     this.bottomSubtitlesElementOverlay.dispose()
     this.topSubtitlesElementOverlay.dispose()
-    this.notificationElementOverlay.dispose()
     this.onNextToShow = undefined
     this.onSlice = undefined
     this.onOffsetChange = undefined
@@ -562,7 +526,6 @@ export default class SubtitleController {
   refresh() {
     if (this.shouldRenderBottomOverlay) this.bottomSubtitlesElementOverlay.refresh()
     if (this.shouldRenderTopOverlay) this.topSubtitlesElementOverlay.refresh()
-    this.notificationElementOverlay.refresh()
   }
 
   currentSubtitle(): [IndexedSubtitleModel | null, SubtitleModel[] | null] {
@@ -690,36 +653,17 @@ export default class SubtitleController {
     }
   }
 
-  // Notification text is plain status copy ("Auto-pause: On"), never word-clickable.
-  // Built as a simple escaped span (no word tokenizer). Keeps the track-0 subtitle
-  // glyph styling; no track class (so it's never blurred).
-  private _buildNotificationHtml(text: string): string {
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    return `<span style="${this._subtitleStyles()}">${escaped}</span>`
-  }
-
-  // Render a transient notice in the notification overlay and auto-hide it.
-  private _showOverlayNotification(text: string, durationMs: number) {
-    this.notificationElementOverlay.setHtml([{ html: () => this._buildNotificationHtml(text) }])
-
-    if (this.notificationElementOverlayHideTimeout) {
-      clearTimeout(this.notificationElementOverlayHideTimeout)
-    }
-
-    this.notificationElementOverlayHideTimeout = setTimeout(() => {
-      this.notificationElementOverlay.hide()
-      this.notificationElementOverlayHideTimeout = undefined
-    }, durationMs)
-  }
-
   notification(locKey: string, replacements?: { [key: string]: string }) {
-    this._showOverlayNotification(i18n._(this._notificationMessage(locKey, replacements ?? {})), 3000)
+    ensureToasterHost()
+    toast(i18n._(this._notificationMessage(locKey, replacements ?? {})))
   }
 
   // One-off plain-text notice (e.g. the "saving disabled" reason on load), for
-  // dynamic text that isn't a known loc-key. Lingers a bit longer, like an error.
+  // dynamic text that isn't a known loc-key — surfaced as an error toast since
+  // it's the longer-lived "saving disabled" reason.
   showTextNotification(text: string) {
-    this._showOverlayNotification(text, 3500)
+    ensureToasterHost()
+    toast.error(text)
   }
 
   showLoadedMessage(nonEmptyTrackIndex: number[]) {
@@ -771,18 +715,6 @@ export default class SubtitleController {
     }
 
     return nonEmptySubtitleFileNames
-  }
-
-  private _subtitleStyles(track?: number) {
-    if (this.subtitleStyles === undefined) {
-      return ''
-    }
-
-    if (track === undefined) {
-      return this.subtitleStyles[0] ?? ''
-    }
-
-    return this.subtitleStyles[track] ?? this.subtitleStyles[0] ?? ''
   }
 
   intersects(clientX: number, clientY: number): boolean {

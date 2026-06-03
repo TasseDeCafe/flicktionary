@@ -2,7 +2,7 @@
 // overlays so they sit above any site content.
 //
 // NB: this constant only covers JS/DOM-style usages. The equivalent `z-[2147483647]`
-// Tailwind classes (SaveToast/CefrPicker/GlossTooltip) and the `!important` rules in
+// Tailwind classes (CefrPicker/GlossTooltip) and the `!important` rules in
 // video.content/video.css are kept literal — Tailwind's JIT only extracts static
 // class strings, so they can't reference this value and must be updated by hand.
 export const MAX_Z_INDEX = 2147483647
@@ -14,7 +14,7 @@ export const MAX_Z_INDEX = 2147483647
 // an always-on overlay at the max int covers them. ~1000 clears in-player
 // controls (z-index in the tens) while staying under YouTube's page UI. The host
 // gate lives in shadow-host.ts (controls pill) and a `html.asbplayer-youtube`
-// marker class set by the video content script (subtitle/notification CSS).
+// marker class set by the video content script (subtitle CSS).
 //
 // MAX_Z_INDEX is reserved for intentional, transient surfaces the user just
 // invoked (modals, toasts, the gloss tooltip/CEFR picker), which stay on top

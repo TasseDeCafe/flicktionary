@@ -638,6 +638,7 @@ export default class Binding {
     this.subtitleController.surroundingSubtitlesCountRadius = currentSettings.surroundingSubtitlesCountRadius
     this.subtitleController.surroundingSubtitlesTimeRadius = currentSettings.surroundingSubtitlesTimeRadius
     this.subtitleController.autoCopyCurrentSubtitle = currentSettings.autoCopyCurrentSubtitle
+    this.subtitleController.toasterTheme = currentSettings.themeType
 
     this.subtitleController.setSubtitleSettings(currentSettings)
 

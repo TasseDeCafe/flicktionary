@@ -14,96 +14,14 @@
     pointer-events: auto !important;
 }
 
-.asbplayer-subtitles {
-    position: relative !important;
-    text-align: center !important;
-    color: white;
-    font-size: 24px;
-    padding-left: 10px;
-    padding-right: 10px;
-    user-select: text !important;
-    cursor: text !important;
-    line-height: normal !important;
-    white-space: pre-wrap !important;
-}
-
-.asbplayer-notification-container-bottom {
-    position: absolute !important;
-    left: 50%;
-    transform: translate(-50%, -100%);
-    display: inline-block;
-    z-index: 2147483646 !important;
-}
-
-.asbplayer-notification-container-top {
-    position: absolute !important;
-    left: 50%;
-    transform: translate(-50%);
-    display: inline-block;
-    z-index: 2147483646 !important;
-}
-
-/* YouTube-only: drop the subtitle/notification overlays below YouTube's page
-   chrome (masthead/search autocomplete ~2022) so they don't cover page UI. The
+/* YouTube-only: drop the subtitle overlays below YouTube's page chrome
+   (masthead/search autocomplete ~2022) so they don't cover page UI. The
    `asbplayer-youtube` marker class is set on <html> by the video content script
    on YouTube hosts. z-index 999 = one below YOUTUBE_OVERLAY_Z_INDEX (the controls
    pill) so the pill wins on overlap. Everywhere else these stay at max int. */
 html.asbplayer-youtube .asbplayer-subtitles-container-bottom,
-html.asbplayer-youtube .asbplayer-subtitles-container-top,
-html.asbplayer-youtube .asbplayer-notification-container-bottom,
-html.asbplayer-youtube .asbplayer-notification-container-top {
+html.asbplayer-youtube .asbplayer-subtitles-container-top {
     z-index: 999 !important;
-}
-
-.asbplayer-notification {
-    text-align: center !important;
-    color: white;
-    text-shadow:
-        0 0 2px black,
-        0 0 2px black,
-        0 0 2px black,
-        0 0 2px black;
-    font-size: 24px;
-    padding-left: 10px;
-    padding-right: 10px;
-    line-height: normal !important;
-    white-space: pre-wrap !important;
-    user-select: none;
-    pointer-events: none;
-}
-
-.asbplayer-fullscreen-subtitles {
-    position: relative !important;
-    text-align: center !important;
-    color: white;
-    text-shadow:
-        0 0 2px black,
-        0 0 2px black,
-        0 0 2px black,
-        0 0 2px black;
-    font-size: 36px;
-    padding-left: 10px;
-    padding-right: 10px;
-    user-select: text !important;
-    cursor: text !important;
-    line-height: normal !important;
-    white-space: pre-wrap !important;
-}
-
-.asbplayer-subtitles ruby,
-.asbplayer-fullscreen-subtitles ruby {
-    ruby-position: over !important;
-}
-
-.asbplayer-subtitles rt,
-.asbplayer-fullscreen-subtitles rt {
-    font-size: 0.5em !important;
-    line-height: 1 !important;
-}
-
-.asbplayer-subtitles rb,
-.asbplayer-fullscreen-subtitles rb {
-    ruby-position: under !important;
 }
 
 .asbplayer-alert {

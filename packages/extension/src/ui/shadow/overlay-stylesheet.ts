@@ -1,4 +1,9 @@
 import overlayCss from '../video-overlay/overlay.css?inline'
+// sonner auto-injects this same CSS into document.head at runtime, but that copy
+// never reaches a shadow root — so we fold it into the adopted sheet ourselves
+// (raw string append, not an @import, to dodge Tailwind-v4 @import resolution).
+// The head copy is then a harmless duplicate. The toaster host adopts this sheet.
+import sonnerCss from 'sonner/dist/styles.css?inline'
 
 // One adopted stylesheet shared across every overlay shadow root in this
 // document/realm. Tailwind's generated CSS is identical for every Binding/host,
@@ -14,7 +19,7 @@ let sheetCache: CSSStyleSheet | undefined
 export const overlaySheet = (): CSSStyleSheet => {
   if (!sheetCache) {
     sheetCache = new CSSStyleSheet()
-    sheetCache.replaceSync(overlayCss)
+    sheetCache.replaceSync(overlayCss + '\n' + sonnerCss)
   }
   return sheetCache
 }
