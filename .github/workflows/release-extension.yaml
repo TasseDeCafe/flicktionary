@@ -63,3 +63,31 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             packages/extension/.output/*.zip
+
+      # Uploads the zip as a new draft and submits it for review; publishing
+      # happens automatically once the (asynchronous) review passes. Requires a
+      # one-time manual first upload in the CWS dashboard (the API cannot create
+      # new items) plus OAuth credentials — see publish-browser-extension's
+      # `init` walkthrough. Skips with a notice until the secrets exist so
+      # tagging still cuts a GitHub release without them.
+      #
+      # publish-browser-extension is pinned: 4.0.5 is the first line that runs
+      # on Node 24 (wxt's bundled 3.0.3 crashes at startup), and an unpinned
+      # `npx` would execute whatever the registry serves next.
+      - name: Submit to Chrome Web Store
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$CHROME_EXTENSION_ID" ]; then
+            echo "::notice::Chrome Web Store secrets not configured; skipping store submission"
+            exit 0
+          fi
+          npx -y publish-browser-extension@4.0.5 \
+            --chrome-zip packages/extension/.output/*-chrome.zip \
+            --chrome-extension-id "$CHROME_EXTENSION_ID" \
+            --chrome-client-id "$CHROME_CLIENT_ID" \
+            --chrome-client-secret "$CHROME_CLIENT_SECRET" \
+            --chrome-refresh-token "$CHROME_REFRESH_TOKEN"
