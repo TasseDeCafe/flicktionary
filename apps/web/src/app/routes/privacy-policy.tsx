@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PrivacyPolicyView } from '@/features/legal/components/privacy-policy-view'
 
-// Public (unauthenticated) — linked from the Chrome Web Store listing, so it
-// must be reachable without signing in.
+// The canonical privacy policy lives on the public landing site (apps/landing).
+// This route only exists so older links (e.g. the original Chrome Web Store
+// listing URL) keep working.
 export const Route = createFileRoute('/privacy-policy')({
-  component: PrivacyPolicyView,
+  beforeLoad: () => {
+    window.location.replace('https://flicktionary.app/privacy-policy')
+  },
 })

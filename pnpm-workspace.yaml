@@ -5,6 +5,7 @@ packages:
 catalog:
   '@ai-sdk/anthropic': 3.0.64
   '@anthropic-ai/sdk': 0.64.0
+  '@astrojs/check': 0.9.9
   '@babel/plugin-transform-react-jsx': 7.28.6
   '@emotion/cache': 11.14.0
   '@emotion/react': 11.14.0
@@ -113,6 +114,7 @@ catalog:
   '@wxt-dev/module-react': 1.2.2
   ai: 6.0.142
   ass-compiler: 0.1.1
+  astro: 6.4.4
   axios: 1.14.0
   babel-plugin-react-compiler: 1.0.0
   babel-preset-expo: 55.0.13
@@ -225,6 +227,7 @@ catalog:
   resend: 6.10.0
   sanitize-filename: 1.6.4
   semver: 7.7.4
+  sharp: 0.34.5
   sonner: 2.0.7
   sonner-native: 0.23.1
   stripe: 21.0.1
@@ -273,3 +276,6 @@ allowBuilds:
   sharp: true
   spawn-sync: false
   unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - astro@6.4.4

@@ -1,32 +1,33 @@
-// Static legal page — intentionally English-only and not Lingui-wrapped:
-// the privacy policy is a single canonical document (linked from the Chrome
-// Web Store listing), and machine-translated legal text could drift from the
-// authoritative wording.
+---
+import Base from '../layouts/Base.astro'
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <section className='space-y-3'>
-    <h2 className='text-xl font-semibold'>{title}</h2>
-    {children}
-  </section>
-)
+// Canonical copy of the privacy policy — the web app's /privacy-policy route
+// redirects here. Intentionally English-only: a single authoritative document,
+// linked from the Chrome Web Store listing and the Google OAuth consent screen.
+---
 
-export const PrivacyPolicyView = () => (
-  <main className='mx-auto max-w-3xl space-y-8 px-6 py-12 text-gray-800'>
-    <header className='space-y-2'>
-      <h1 className='text-3xl font-bold'>Flicktionary Privacy Policy</h1>
-      <p className='text-sm text-gray-500'>Last updated: June 3, 2026</p>
+<Base
+  title='Privacy Policy — Flicktionary'
+  description='How Flicktionary collects, uses, and protects your data.'
+>
+  <main class='mx-auto max-w-3xl space-y-8 px-6 py-12 text-gray-800'>
+    <header class='space-y-2'>
+      <h1 class='text-3xl font-bold'>Flicktionary Privacy Policy</h1>
+      <p class='text-sm text-gray-500'>Last updated: June 3, 2026</p>
     </header>
 
-    <Section title='1. Introduction'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>1. Introduction</h2>
       <p>
         Flicktionary (&ldquo;we&rdquo;, &ldquo;us&rdquo;) is a language-learning service consisting of the web app at
         flicktionary.app and a companion browser extension. We are committed to protecting your privacy. This policy
         explains what data we collect, how we use it, and the choices you have.
       </p>
-    </Section>
+    </section>
 
-    <Section title='2. Information we collect'>
-      <ul className='list-disc space-y-2 pl-6'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>2. Information we collect</h2>
+      <ul class='list-disc space-y-2 pl-6'>
         <li>
           <strong>Account information.</strong> Your email address and, depending on how you sign in (Google, Apple, or
           email), your name. Authentication is handled by our infrastructure provider Supabase; we never see or store
@@ -51,9 +52,10 @@ export const PrivacyPolicyView = () => (
           not use advertising cookies.
         </li>
       </ul>
-    </Section>
+    </section>
 
-    <Section title='3. The browser extension'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>3. The browser extension</h2>
       <p>
         The Flicktionary browser extension only transmits data when you explicitly use one of its features: when you
         look up or save a subtitle word or phrase, it sends the selected text, the surrounding subtitle line, and the
@@ -62,10 +64,11 @@ export const PrivacyPolicyView = () => (
         browsing history, does not read pages you visit beyond the features described above, and collects nothing
         without an explicit action from you.
       </p>
-    </Section>
+    </section>
 
-    <Section title='4. How we use your information'>
-      <ul className='list-disc space-y-2 pl-6'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>4. How we use your information</h2>
+      <ul class='list-disc space-y-2 pl-6'>
         <li>
           To provide the service: the content you save is processed, including by AI language-model providers (such as
           Anthropic), to generate the definitions, explanations, and study material you request.
@@ -75,9 +78,10 @@ export const PrivacyPolicyView = () => (
         <li>To understand how the service is used and improve it.</li>
         <li>To respond to your support requests and send you information relating to the service.</li>
       </ul>
-    </Section>
+    </section>
 
-    <Section title='5. Third-party service providers'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>5. Third-party service providers</h2>
       <p>
         We use a small number of service providers to operate Flicktionary: Supabase (authentication, database, and
         hosting), Stripe (payments), Anthropic (AI processing of the learning content you submit), PostHog (product
@@ -85,62 +89,66 @@ export const PrivacyPolicyView = () => (
         provide their services to us and are bound by their own confidentiality and data-protection obligations. We do
         not sell your personal data to anyone.
       </p>
-    </Section>
+    </section>
 
-    <Section title='6. Transfer of data'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>6. Transfer of data</h2>
       <p>
         Your information may be transferred to and processed on servers located outside of your state, province, or
         country, where data protection laws may differ from those in your jurisdiction. We take steps to ensure your
         data is treated securely and in accordance with this policy wherever it is processed.
       </p>
-    </Section>
+    </section>
 
-    <Section title='7. Disclosure of data'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>7. Disclosure of data</h2>
       <p>
         We may disclose your personal data where required to do so by law or in response to valid requests by public
         authorities.
       </p>
-    </Section>
+    </section>
 
-    <Section title='8. Security'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>8. Security</h2>
       <p>
         We use industry-standard measures to protect your data, including encryption in transit, access controls, and
         monitoring. No method of transmission or storage is 100% secure, but we work to protect your personal data
         proportionately to its sensitivity.
       </p>
-    </Section>
+    </section>
 
-    <Section title='9. Data retention'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>9. Data retention</h2>
       <p>
         We retain your data for as long as your account exists or as needed to provide the service and comply with our
         legal obligations. When you delete your account, your personal data is permanently removed.
       </p>
-    </Section>
+    </section>
 
-    <Section title='10. Your rights'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>10. Your rights</h2>
       <p>
         You can access and update your learning content and settings directly in the app at any time. You can delete
         your account from your profile settings, which permanently and irreversibly removes your account information and
         learning data. Depending on where you live, you may also have rights to request access to, correction of, or a
         copy of your personal data — contact us and we will honor these requests.
       </p>
-    </Section>
+    </section>
 
-    <Section title='11. Changes to this policy'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>11. Changes to this policy</h2>
       <p>
         We may update this policy from time to time. We will post any changes on this page and update the &ldquo;Last
         updated&rdquo; date above.
       </p>
-    </Section>
+    </section>
 
-    <Section title='12. Contact us'>
+    <section class='space-y-3'>
+      <h2 class='text-xl font-semibold'>12. Contact us</h2>
       <p>
-        Questions about this policy or your data? Email us at{' '}
-        <a className='text-blue-600 underline' href='mailto:support@flicktionary.app'>
-          support@flicktionary.app
-        </a>
-        .
+        Questions about this policy or your data? Email us at
+        <a class='text-blue-600 underline' href='mailto:support@flicktionary.app'>support@flicktionary.app</a>.
       </p>
-    </Section>
+    </section>
   </main>
-)
+</Base>

@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Brand colors sampled from the Flicktionary logo */
+  --color-brand: #ffc900;
+  --color-brand-dark: #e0b100;
+  --color-ink: #16161d;
+}
