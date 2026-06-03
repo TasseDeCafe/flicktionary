@@ -11,9 +11,18 @@ export interface FlicktionaryYoutubeVideoMetadata {
 
 const YOUTUBE_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'm.youtube.com', 'music.youtube.com'])
 
-export const isYoutubeWatchPage = (): boolean => {
+// Host-only check (no video-id requirement, unlike isYoutubeWatchPage). Used to
+// scope YouTube-specific overlay z-index tuning: YouTube's masthead/search
+// autocomplete sit at z-index ~2022, so the always-on overlays drop below that
+// here but stay at MAX_Z_INDEX everywhere else (Prime Video/Netflix players use
+// high-z chrome that would otherwise hide a low overlay).
+export const isYoutubeHost = (): boolean => {
   if (typeof window === 'undefined') return false
-  if (!YOUTUBE_HOSTS.has(window.location.hostname)) return false
+  return YOUTUBE_HOSTS.has(window.location.hostname)
+}
+
+export const isYoutubeWatchPage = (): boolean => {
+  if (!isYoutubeHost()) return false
   return getYoutubeVideoId() !== null
 }
 

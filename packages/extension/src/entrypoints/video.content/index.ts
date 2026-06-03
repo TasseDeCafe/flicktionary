@@ -6,6 +6,7 @@ import { FrameInfoBroadcaster, FrameInfoListener } from '@/services/frame-info'
 import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer'
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots'
 import { isFirefoxBuild } from '@/services/build-flags'
+import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
 
 import type { ContentScriptContext } from '#imports'
 import './video.css'
@@ -24,6 +25,13 @@ export default defineContentScript({
   runAt: 'document_idle',
 
   main(ctx: ContentScriptContext) {
+    // Marker class for YouTube-scoped overlay z-index (see video.css). Keeps the
+    // subtitle/notification overlays below YouTube's masthead/search chrome while
+    // leaving them at max int on every other site.
+    if (isYoutubeHost()) {
+      document.documentElement.classList.add('asbplayer-youtube')
+    }
+
     const hasValidVideoSource = (videoElement: HTMLVideoElement, page?: PageDelegate) => {
       if (page?.config?.allowVideoElementsWithBlankSrc) {
         return true
