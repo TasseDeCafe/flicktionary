@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as FromLandingRouteImport } from './routes/from-landing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -43,6 +44,11 @@ import { Route as AuthenticatedAppPracticeHistoryTargetLanguageRouteImport } fro
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
 import { Route as AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/$cardId'
 
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FromLandingRoute = FromLandingRouteImport.update({
   id: '/from-landing',
   path: '/from-landing',
@@ -234,6 +240,7 @@ const AuthenticatedAppSessionsSessionIdReviewCardIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/from-landing': typeof FromLandingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/from-landing': typeof FromLandingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/extension-pair': typeof AuthenticatedExtensionPairRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/from-landing'
+    | '/privacy-policy'
     | '/admin-settings'
     | '/extension-pair'
     | '/account/removed'
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/from-landing'
+    | '/privacy-policy'
     | '/admin-settings'
     | '/extension-pair'
     | '/account/removed'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/from-landing'
+    | '/privacy-policy'
     | '/_authenticated/_app'
     | '/_authenticated/admin-settings'
     | '/_authenticated/extension-pair'
@@ -441,6 +453,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   FromLandingRoute: typeof FromLandingRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   AccountRemovedRoute: typeof AccountRemovedRoute
   LoginIndexRoute: typeof LoginIndexRoute
   LoginEmailSentRoute: typeof LoginEmailSentRoute
@@ -450,6 +463,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/from-landing': {
       id: '/from-landing'
       path: '/from-landing'
@@ -768,6 +788,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   FromLandingRoute: FromLandingRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   AccountRemovedRoute: AccountRemovedRoute,
   LoginIndexRoute: LoginIndexRoute,
   LoginEmailSentRoute: LoginEmailSentRoute,
