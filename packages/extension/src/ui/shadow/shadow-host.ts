@@ -1,6 +1,6 @@
 import { createRoot, type Root } from 'react-dom/client'
 import type { ReactNode } from 'react'
-import { overlaySheet } from './overlay-stylesheet'
+import { applyOverlayStyles } from './overlay-stylesheet'
 import { MAX_Z_INDEX, YOUTUBE_OVERLAY_Z_INDEX } from '@/constants'
 import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
 
@@ -49,7 +49,7 @@ function createShadowHost(options: BaseShadowHostOptions): {
 
   const shadowRoot = host.attachShadow({ mode: 'open' })
   if (options.adoptTailwind) {
-    shadowRoot.adoptedStyleSheets = [overlaySheet()]
+    applyOverlayStyles(shadowRoot)
   }
 
   const appRoot = document.createElement('div')

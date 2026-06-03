@@ -218,17 +218,18 @@ export default class VideoDataSyncController {
       const videoUrl = window.location.href
       const messageId = `get-cached-${Date.now()}`
 
-      const response = await new Promise<GetCachedTranscriptResponse>((resolve) => {
-        const command: TabToExtensionCommand<GetCachedTranscriptMessage> = {
-          sender: 'asbplayer-video-tab',
-          message: {
-            command: 'get-cached-transcript',
-            messageId,
-            videoUrl,
-          },
-        }
-        browser.runtime.sendMessage(command, resolve)
-      })
+      const command: TabToExtensionCommand<GetCachedTranscriptMessage> = {
+        sender: 'asbplayer-video-tab',
+        message: {
+          command: 'get-cached-transcript',
+          messageId,
+          videoUrl,
+        },
+      }
+      // Promise-style sendMessage: Firefox's browser.runtime.sendMessage does
+      // not accept a response callback (it throws), and Chrome MV3 returns a
+      // promise when the callback is omitted.
+      const response: GetCachedTranscriptResponse = await browser.runtime.sendMessage(command)
 
       return response.subtitles
     } catch (error) {
@@ -834,17 +835,16 @@ export default class VideoDataSyncController {
       const videoUrl = window.location.href
       const messageId = `supadata-${Date.now()}`
 
-      const response = await new Promise<SupadataGenerateResponse>((resolve) => {
-        const command: TabToExtensionCommand<SupadataGenerateMessage> = {
-          sender: 'asbplayer-video-tab',
-          message: {
-            command: 'supadata-generate',
-            messageId,
-            videoUrl,
-          },
-        }
-        browser.runtime.sendMessage(command, resolve)
-      })
+      const command: TabToExtensionCommand<SupadataGenerateMessage> = {
+        sender: 'asbplayer-video-tab',
+        message: {
+          command: 'supadata-generate',
+          messageId,
+          videoUrl,
+        },
+      }
+      // Promise-style sendMessage — see _getCachedTranscript for the Firefox rationale.
+      const response: SupadataGenerateResponse = await browser.runtime.sendMessage(command)
 
       if (response.error) {
         await this._reportError(response.error)

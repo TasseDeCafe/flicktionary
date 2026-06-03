@@ -16,10 +16,28 @@ import sonnerCss from 'sonner/dist/styles.css?inline'
 // any net-new Tailwind chrome.
 let sheetCache: CSSStyleSheet | undefined
 
-export const overlaySheet = (): CSSStyleSheet => {
+const overlayCssText = () => overlayCss + '\n' + sonnerCss
+
+const overlaySheet = (): CSSStyleSheet => {
   if (!sheetCache) {
     sheetCache = new CSSStyleSheet()
-    sheetCache.replaceSync(overlayCss + '\n' + sonnerCss)
+    sheetCache.replaceSync(overlayCssText())
   }
   return sheetCache
+}
+
+// Apply the overlay styles to a shadow root. Prefer the shared adopted sheet,
+// but Firefox content scripts can't assign a sandbox-created CSSStyleSheet
+// through the page's Xray wrapper ("Accessing from Xray wrapper is not
+// supported", https://bugzilla.mozilla.org/show_bug.cgi?id=1751346) — fall back
+// to a <style> element there. The fallback duplicates the CSS text per shadow
+// root, which is fine: these hosts are few and long-lived.
+export const applyOverlayStyles = (shadowRoot: ShadowRoot): void => {
+  try {
+    shadowRoot.adoptedStyleSheets = [overlaySheet()]
+  } catch {
+    const style = document.createElement('style')
+    style.textContent = overlayCssText()
+    shadowRoot.appendChild(style)
+  }
 }
