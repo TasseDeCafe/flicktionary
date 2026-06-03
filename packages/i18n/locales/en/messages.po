@@ -816,11 +816,11 @@ msgstr "Auto-pause preference"
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Auto-pause when mousing over subtitles"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:669
+#: packages/extension/src/controllers/subtitle-controller.ts:632
 msgid "Auto-pause: Off"
 msgstr "Auto-pause: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:667
+#: packages/extension/src/controllers/subtitle-controller.ts:630
 msgid "Auto-pause: On"
 msgstr "Auto-pause: On"
 
@@ -1073,11 +1073,11 @@ msgstr "Condensed"
 msgid "Condensed playback minimum skip interval"
 msgstr "Condensed playback minimum skip interval"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:673
+#: packages/extension/src/controllers/subtitle-controller.ts:636
 msgid "Condensed playback: Off"
 msgstr "Condensed playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:671
+#: packages/extension/src/controllers/subtitle-controller.ts:634
 msgid "Condensed playback: On"
 msgstr "Condensed playback: On"
 
@@ -1561,7 +1561,7 @@ msgstr "Error setting up account..."
 msgid "Error setting up user data"
 msgstr "Error setting up user data"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:685
+#: packages/extension/src/controllers/subtitle-controller.ts:648
 msgid "Error: {message}"
 msgstr "Error: {message}"
 
@@ -1906,11 +1906,11 @@ msgstr "Failed to upload subtitles"
 msgid "Failed to use suggestion"
 msgstr "Failed to use suggestion"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:677
+#: packages/extension/src/controllers/subtitle-controller.ts:640
 msgid "Fast forward playback: Off"
 msgstr "Fast forward playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:675
+#: packages/extension/src/controllers/subtitle-controller.ts:638
 msgid "Fast forward playback: On"
 msgstr "Fast forward playback: On"
 
@@ -3077,7 +3077,7 @@ msgstr "Playback Mode"
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:683
+#: packages/extension/src/controllers/subtitle-controller.ts:646
 msgid "Playback Rate: {rate}"
 msgstr "Playback Rate: {rate}"
 
@@ -3183,7 +3183,7 @@ msgstr "Preparing your text…"
 msgid "Preposition"
 msgstr "Preposition"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:687
+#: packages/extension/src/controllers/subtitle-controller.ts:650
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
@@ -3421,11 +3421,11 @@ msgstr "Render"
 msgid "Repeat"
 msgstr "Repeat"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:681
+#: packages/extension/src/controllers/subtitle-controller.ts:644
 msgid "Repeat playback: Off"
 msgstr "Repeat playback: Off"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:679
+#: packages/extension/src/controllers/subtitle-controller.ts:642
 msgid "Repeat playback: On"
 msgstr "Repeat playback: On"
 

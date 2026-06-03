@@ -816,11 +816,11 @@ msgstr "Préférence de pause automatique"
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Pause automatique au survol des sous-titres"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:669
+#: packages/extension/src/controllers/subtitle-controller.ts:632
 msgid "Auto-pause: Off"
 msgstr "Pause automatique : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:667
+#: packages/extension/src/controllers/subtitle-controller.ts:630
 msgid "Auto-pause: On"
 msgstr "Pause automatique : Activé"
 
@@ -1073,11 +1073,11 @@ msgstr "Condensé"
 msgid "Condensed playback minimum skip interval"
 msgstr "Intervalle de saut minimal en lecture condensée"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:673
+#: packages/extension/src/controllers/subtitle-controller.ts:636
 msgid "Condensed playback: Off"
 msgstr "Lecture condensée : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:671
+#: packages/extension/src/controllers/subtitle-controller.ts:634
 msgid "Condensed playback: On"
 msgstr "Lecture condensée : Activée"
 
@@ -1559,7 +1559,7 @@ msgstr "Erreur lors de la configuration du compte..."
 msgid "Error setting up user data"
 msgstr "Erreur lors de la configuration des données utilisateur"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:685
+#: packages/extension/src/controllers/subtitle-controller.ts:648
 msgid "Error: {message}"
 msgstr "Erreur : {message}"
 
@@ -1904,11 +1904,11 @@ msgstr "Échec de l'envoi des sous-titres"
 msgid "Failed to use suggestion"
 msgstr "Échec de l'utilisation de la suggestion"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:677
+#: packages/extension/src/controllers/subtitle-controller.ts:640
 msgid "Fast forward playback: Off"
 msgstr "Lecture en avance rapide : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:675
+#: packages/extension/src/controllers/subtitle-controller.ts:638
 msgid "Fast forward playback: On"
 msgstr "Lecture en avance rapide : Activé"
 
@@ -3075,7 +3075,7 @@ msgstr "Mode de lecture"
 msgid "Playback Rate"
 msgstr "Vitesse de lecture"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:683
+#: packages/extension/src/controllers/subtitle-controller.ts:646
 msgid "Playback Rate: {rate}"
 msgstr "Vitesse de lecture : {rate}"
 
@@ -3181,7 +3181,7 @@ msgstr "Préparation de votre texte…"
 msgid "Preposition"
 msgstr "Préposition"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:687
+#: packages/extension/src/controllers/subtitle-controller.ts:650
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des sous-titres"
 
@@ -3419,11 +3419,11 @@ msgstr "Rendu"
 msgid "Repeat"
 msgstr "Répéter"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:681
+#: packages/extension/src/controllers/subtitle-controller.ts:644
 msgid "Repeat playback: Off"
 msgstr "Répéter la lecture : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:679
+#: packages/extension/src/controllers/subtitle-controller.ts:642
 msgid "Repeat playback: On"
 msgstr "Répéter la lecture : Activé"
 

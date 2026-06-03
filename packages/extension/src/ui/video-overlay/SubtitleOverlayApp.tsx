@@ -16,7 +16,8 @@ import { SubtitleLineModel, SubtitleStore } from './subtitle-store'
 import { Word } from './Word'
 import { GlossContent, GlossTooltip } from './GlossTooltip'
 import { CefrPicker } from './CefrPicker'
-import { SaveToast } from './SaveToast'
+import { toast } from 'sonner'
+import { ensureToasterHost } from './toaster-host'
 
 const HOVER_DEBOUNCE_MS = 300
 // Grace period after the pointer leaves a word before the gloss popover hides,
@@ -101,12 +102,6 @@ interface GlossState {
   save: GlossSaveTarget
 }
 
-interface ToastState {
-  id: number
-  text: string
-  isError: boolean
-}
-
 interface CefrState {
   targetLanguage: string
   pendingSave: SaveWordParams
@@ -134,7 +129,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const [selection, setSelection] = useState<SelectionState | null>(null)
   const [gloss, setGloss] = useState<GlossState | null>(null)
-  const [toast, setToast] = useState<ToastState | null>(null)
   const [cefr, setCefrState] = useState<CefrState | null>(null)
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -151,7 +145,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const selectingRef = useRef(false)
   const glossSeq = useRef(0)
   const glossCache = useRef<Map<string, GlossData>>(new Map())
-  const toastSeq = useRef(0)
 
   // ---- helpers ---------------------------------------------------------------
 
@@ -195,9 +188,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     setSelectionBoth(null)
   }, [setSelectionBoth])
 
+  // Route through the page-global sonner toaster (viewport bottom-right). Lazily
+  // ensure the singleton host exists before the first dispatch.
   const showToast = useCallback((text: string, isError: boolean) => {
-    toastSeq.current += 1
-    setToast({ id: toastSeq.current, text, isError })
+    ensureToasterHost()
+    if (isError) toast.error(text)
+    else toast.success(text)
   }, [])
 
   // Render-path range (reads the `selection` state so highlights re-render).
@@ -481,14 +477,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     }
   }, [snapshot.visible, hideGloss, clearSelection])
 
-  // Auto-dismiss the toast after its animation (1.5s success / 3.5s error).
-  useEffect(() => {
-    if (!toast) return
-    const duration = toast.isError ? 3500 : 1500
-    const id = setTimeout(() => setToast((t) => (t && t.id === toast.id ? null : t)), duration)
-    return () => clearTimeout(id)
-  }, [toast])
-
   // ---- render ----------------------------------------------------------------
 
   const lineStyleForOffset = snapshot.lines[0]?.style
@@ -574,7 +562,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           {cefr && (
             <CefrPicker languageCode={cefr.targetLanguage} video={video} onPick={onCefrPick} onCancel={onCefrCancel} />
           )}
-          {toast && <SaveToast key={toast.id} text={toast.text} isError={toast.isError} video={video} />}
         </>,
         popoverContainer
       )}

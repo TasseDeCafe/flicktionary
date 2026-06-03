@@ -48,6 +48,7 @@
         "react-dom": "catalog:",
         "regenerator-runtime": "catalog:",
         "semver": "catalog:",
+        "sonner": "catalog:",
         "tailwindcss": "catalog:",
         "tss-react": "catalog:",
         "typescript": "catalog:",
