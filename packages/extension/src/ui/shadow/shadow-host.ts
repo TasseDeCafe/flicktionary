@@ -1,7 +1,8 @@
 import { createRoot, type Root } from 'react-dom/client'
 import type { ReactNode } from 'react'
 import { overlaySheet } from './overlay-stylesheet'
-import { MAX_Z_INDEX } from '@/constants'
+import { MAX_Z_INDEX, YOUTUBE_OVERLAY_Z_INDEX } from '@/constants'
+import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
 
 // The render callback receives the shadow root (for the emotion cache) and the
 // portal container element inside it (for MUI portals) — exactly the two props
@@ -147,7 +148,10 @@ export function mountVideoOverlayHost(options: VideoOverlayHostOptions): ShadowH
   const { host, shadowRoot, appRoot, root } = createShadowHost(options)
 
   host.style.setProperty('position', 'fixed')
-  host.style.setProperty('z-index', String(MAX_Z_INDEX))
+  // On YouTube, drop below page chrome (search autocomplete etc.) so the overlay
+  // doesn't cover it; everywhere else stay at MAX_Z_INDEX (Prime/Netflix players
+  // use high-z chrome that would hide a low overlay). See YOUTUBE_OVERLAY_Z_INDEX.
+  host.style.setProperty('z-index', String(isYoutubeHost() ? YOUTUBE_OVERLAY_Z_INDEX : MAX_Z_INDEX))
   host.style.setProperty('pointer-events', 'none')
 
   // Lay out the content inside the video box: full-bleed flex, centred
