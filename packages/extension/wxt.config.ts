@@ -213,9 +213,20 @@ export default defineConfig({
         ...manifest,
         host_permissions: ['<all_urls>'],
         commands,
+        // about:addons shows the developer/homepage from here while unsigned;
+        // once published, AMO's listing data takes over.
+        homepage_url: 'https://app.flicktionary.app',
+        developer: {
+          name: 'Flicktionary',
+          url: 'https://app.flicktionary.app',
+        },
         browser_specific_settings: {
           gecko: {
-            id: '{e4b27483-2e73-4762-b2ec-8d988a143a40}',
+            // Flicktionary's own add-on ID. Deliberately NOT the upstream
+            // asbplayer GUID — reusing it made about:addons display asbplayer's
+            // AMO listing (description, author, rating), and AMO would reject
+            // an upload under a taken ID anyway.
+            id: 'extension@flicktionary.app',
           },
         },
       }
