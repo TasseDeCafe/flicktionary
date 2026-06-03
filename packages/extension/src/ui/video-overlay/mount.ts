@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import { overlaySheet } from '../shadow/overlay-stylesheet'
+import { applyOverlayStyles } from '../shadow/overlay-stylesheet'
 import { SubtitleStore } from './subtitle-store'
 import { SubtitleOverlayApp } from './SubtitleOverlayApp'
 import { FlicktionaryVideoClosures } from '../../services/flicktionary/flicktionary-client'
@@ -30,11 +30,9 @@ export interface OverlayMountHandle {
 // stay visible in fullscreen). Returns a handle whose unmount() tears
 // everything down — call it before ElementOverlay.disposePersistentHost().
 export function mountSubtitleOverlay(host: HTMLElement, options: OverlayMountOptions): OverlayMountHandle {
-  const sheet = overlaySheet()
-
   // Subtitle shadow tree on the persistent host.
   const subtitleShadow = host.attachShadow({ mode: 'open' })
-  subtitleShadow.adoptedStyleSheets = [sheet]
+  applyOverlayStyles(subtitleShadow)
   const subtitleRootEl = document.createElement('div')
   subtitleShadow.appendChild(subtitleRootEl)
 
@@ -47,7 +45,7 @@ export function mountSubtitleOverlay(host: HTMLElement, options: OverlayMountOpt
   const popoverHost = document.createElement('div')
   popoverHost.setAttribute(POPOVER_HOST_ATTR, '')
   const popoverShadow = popoverHost.attachShadow({ mode: 'open' })
-  popoverShadow.adoptedStyleSheets = [sheet]
+  applyOverlayStyles(popoverShadow)
   const popoverContainer = document.createElement('div')
   popoverShadow.appendChild(popoverContainer)
 

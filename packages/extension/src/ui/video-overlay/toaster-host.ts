@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { createRoot, Root } from 'react-dom/client'
 import { Toaster } from 'sonner'
-import { overlaySheet } from '../shadow/overlay-stylesheet'
+import { applyOverlayStyles } from '../shadow/overlay-stylesheet'
 
 // Mirrors the extension's `themeType` setting ('dark' | 'light').
 export type ToasterTheme = 'dark' | 'light'
@@ -64,7 +64,7 @@ export function ensureToasterHost(): void {
   const shadow = host.attachShadow({ mode: 'open' })
   // Adopt the overlay sheet (which now carries sonner's CSS) so the toaster is
   // styled inside the shadow root — sonner's head-injected copy can't reach in.
-  shadow.adoptedStyleSheets = [overlaySheet()]
+  applyOverlayStyles(shadow)
   const container = document.createElement('div')
   shadow.appendChild(container)
 
