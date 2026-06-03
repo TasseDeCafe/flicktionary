@@ -278,6 +278,22 @@ export function download(blob: Blob, name: string) {
   a.remove()
 }
 
+// CSS custom property carrying the video-size scale factor (rendered video width
+// / SUBTITLE_SCALE_REFERENCE_WIDTH). Set on the subtitle/notification overlay
+// container by the element-overlay positioning code, which already measures the
+// video rect. computeStyles multiplies its px-valued sizes by this so subtitles
+// scale with the video. Defaults to 1 wherever it isn't set (e.g. the settings
+// SubtitlePreview), so those surfaces keep rendering at the configured px size.
+export const SUBTITLE_SCALE_VAR = '--asb-video-scale'
+
+// The video width at which subtitleSize is taken literally (so subtitleSize=36
+// renders as 36px on a 1920-wide video, and scales proportionally elsewhere).
+export const SUBTITLE_SCALE_REFERENCE_WIDTH = 1920
+
+// Scale a px value by SUBTITLE_SCALE_VAR via CSS calc, so the math happens in CSS
+// against the live video size rather than being baked in here.
+const scaledPx = (px: number) => `calc(${px}px * var(${SUBTITLE_SCALE_VAR}, 1))`
+
 export function computeStyles({
   subtitleColor,
   subtitleSize,
@@ -293,20 +309,21 @@ export function computeStyles({
 }: TextSubtitleSettings) {
   const styles: { [key: string]: any } = {
     color: subtitleColor,
-    fontSize: `${subtitleSize}px`,
+    fontSize: scaledPx(subtitleSize),
     fontWeight: String(subtitleThickness),
   }
 
   if (subtitleOutlineThickness > 0) {
-    const thickness = subtitleOutlineThickness
+    const thickness = scaledPx(subtitleOutlineThickness)
     const color = subtitleOutlineColor
-    styles['WebkitTextStroke'] = `${color} ${thickness}px`
+    styles['WebkitTextStroke'] = `${color} ${thickness}`
     styles['paintOrder'] = `stroke fill`
   }
 
   if (subtitleShadowThickness > 0) {
-    styles['textShadow'] =
-      `0 0 ${subtitleShadowThickness}px ${subtitleShadowColor}, 0 0 ${subtitleShadowThickness}px ${subtitleShadowColor}, 0 0 ${subtitleShadowThickness}px ${subtitleShadowColor}, 0 0 ${subtitleShadowThickness}px ${subtitleShadowColor}`
+    const blur = scaledPx(subtitleShadowThickness)
+    const color = subtitleShadowColor
+    styles['textShadow'] = `0 0 ${blur} ${color}, 0 0 ${blur} ${color}, 0 0 ${blur} ${color}, 0 0 ${blur} ${color}`
   }
 
   if (subtitleBackgroundOpacity > 0) {

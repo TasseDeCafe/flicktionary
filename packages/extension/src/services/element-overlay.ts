@@ -1,4 +1,5 @@
 import { OffscreenDomCache } from '@asbplayer-fork/common'
+import { SUBTITLE_SCALE_VAR, SUBTITLE_SCALE_REFERENCE_WIDTH } from '@asbplayer-fork/common/util'
 
 // Tags the single React content host placed inside a subtitle container by
 // `mountPersistentHost`. Used to keep the host out of the dom-cache recycling
@@ -469,6 +470,11 @@ export class CachingElementOverlay implements ElementOverlay {
     if (rect.width === 0 && rect.height === 0) {
       return
     }
+
+    // Scale subtitle glyph sizes with the rendered video width. computeStyles emits
+    // its px sizes as calc(...px * var(--asb-video-scale, 1)); we feed the ratio here
+    // off the rect we already measured, so the font tracks window/fullscreen size.
+    container.style.setProperty(SUBTITLE_SCALE_VAR, String(rect.width / SUBTITLE_SCALE_REFERENCE_WIDTH))
 
     container.style.left = rect.left + rect.width / 2 + 'px'
 
