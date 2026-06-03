@@ -18,16 +18,19 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
-    # Production endpoints baked into the bundle. These are publishable (anon)
-    # values; if a secret is unset the config falls back to its placeholder.
-    env:
-      WXT_PUBLIC_SUPABASE_PROJECT_URL: ${{ secrets.WXT_PUBLIC_SUPABASE_PROJECT_URL }}
-      WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
+
+      # The WXT_PUBLIC_* endpoints baked into the bundle live in Doppler
+      # (project `extension`, config `prd`) — the same source local prod builds
+      # use, so there is exactly one copy to rotate. flicktionary-config.ts has
+      # NO fallbacks: a build without these vars throws at runtime, so the zips
+      # must be produced under `doppler run`. EXTENSION_PRD_DOPPLER_TOKEN is a
+      # read-only service token scoped to extension/prd, synced to GitHub via
+      # the root/prd Doppler project.
+      - uses: dopplerhq/cli-action@v3
 
       - uses: actions/setup-node@v4
         with:
@@ -50,10 +53,14 @@ jobs:
         run: pnpm --filter @flicktionary/extension check:types
 
       - name: Build Chrome zip
-        run: pnpm --filter @flicktionary/extension exec wxt zip
+        env:
+          DOPPLER_TOKEN: ${{ secrets.EXTENSION_PRD_DOPPLER_TOKEN }}
+        run: doppler run -- pnpm --filter @flicktionary/extension exec wxt zip
 
       - name: Build Firefox zip
-        run: pnpm --filter @flicktionary/extension exec wxt zip -b firefox
+        env:
+          DOPPLER_TOKEN: ${{ secrets.EXTENSION_PRD_DOPPLER_TOKEN }}
+        run: doppler run -- pnpm --filter @flicktionary/extension exec wxt zip -b firefox
 
       - name: Create GitHub Release
         env:
@@ -63,3 +70,31 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             packages/extension/.output/*.zip
+
+      # Uploads the zip as a new draft and submits it for review; publishing
+      # happens automatically once the (asynchronous) review passes. Requires a
+      # one-time manual first upload in the CWS dashboard (the API cannot create
+      # new items) plus OAuth credentials — see publish-browser-extension's
+      # `init` walkthrough. Skips with a notice until the secrets exist so
+      # tagging still cuts a GitHub release without them.
+      #
+      # publish-browser-extension is pinned: 4.0.5 is the first line that runs
+      # on Node 24 (wxt's bundled 3.0.3 crashes at startup), and an unpinned
+      # `npx` would execute whatever the registry serves next.
+      - name: Submit to Chrome Web Store
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$CHROME_EXTENSION_ID" ]; then
+            echo "::notice::Chrome Web Store secrets not configured; skipping store submission"
+            exit 0
+          fi
+          npx -y publish-browser-extension@4.0.5 \
+            --chrome-zip packages/extension/.output/*-chrome.zip \
+            --chrome-extension-id "$CHROME_EXTENSION_ID" \
+            --chrome-client-id "$CHROME_CLIENT_ID" \
+            --chrome-client-secret "$CHROME_CLIENT_SECRET" \
+            --chrome-refresh-token "$CHROME_REFRESH_TOKEN"
