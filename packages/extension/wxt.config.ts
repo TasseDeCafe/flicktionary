@@ -49,21 +49,34 @@ const escapeNonAscii = (): Plugin => ({
   },
 })
 
+// The Doppler config selects the environment (see flicktionary-config.ts) —
+// `prd` builds (build:prod, zip) get only production origins; every other
+// build (dev, dev:tunnel, build:dev) also gets the dev-tunnel/localhost
+// extras. Gating on the Doppler config rather than WXT's `mode` keeps
+// `build:dev` (production mode, dev_personal config) working against the
+// tunnel, while keeping dev hosts out of the store-submitted manifest —
+// the Chrome Web Store flags localhost/dev host permissions in review.
+const isProdEnvironment = process.env.DOPPLER_CONFIG === 'prd'
+
 // Origins the background needs to call (pairing broker, oRPC backend, Supabase
-// auth) in production and during local development. Firefox already declares
-// `<all_urls>` so these are folded in there transparently; Chrome requires the
-// explicit list to allow extension-origin XHRs.
+// auth). Firefox already declares `<all_urls>` so these are folded in there
+// transparently; Chrome requires the explicit list to allow extension-origin
+// XHRs.
 const flicktionaryHostPermissions = [
   'https://api.flicktionary.app/*',
   'https://app.flicktionary.app/*',
   'https://*.supabase.co/*',
-  // dev-tunnel cloudflare hosts (per-developer subdomains)
-  'https://*.flicktionary.dev/*',
-  'http://localhost:4002/*',
-  'http://localhost:4003/*',
-  'http://localhost:5174/*',
-  'http://127.0.0.1:34321/*',
-  'http://127.0.0.1:54321/*',
+  ...(isProdEnvironment
+    ? []
+    : [
+        // dev-tunnel cloudflare hosts (per-developer subdomains)
+        'https://*.flicktionary.dev/*',
+        'http://localhost:4002/*',
+        'http://localhost:4003/*',
+        'http://localhost:5174/*',
+        'http://127.0.0.1:34321/*',
+        'http://127.0.0.1:54321/*',
+      ]),
 ]
 
 // See https://wxt.dev/api/config.html
@@ -99,6 +112,13 @@ export default defineConfig({
     // generated utilities are adopted into a Shadow DOM, so host-page CSS can't
     // reach them and we escape the global all-`!important` video.css.
     plugins: [tailwindcss(), escapeNonAscii(), babel({ plugins: ['@lingui/babel-plugin-lingui-macro'] })],
+    // Compile-time flag for entrypoint options (e.g. the pairing content
+    // script's `matches`), where process.env isn't available. Same gate as
+    // flicktionaryHostPermissions above: dev-host match patterns count as
+    // host permissions in store review, so prd builds must not declare them.
+    define: {
+      __FLICKTIONARY_DEV_HOSTS__: JSON.stringify(!isProdEnvironment),
+    },
     // Also expose VITE_* env vars so the Doppler dev_personal config that
     // already drives apps/web's dev-tunnel mode (VITE_WEB_URL,
     // VITE_API_HOST, VITE_SUPABASE_*, VITE_IS_FOR_TUNNEL) works in the

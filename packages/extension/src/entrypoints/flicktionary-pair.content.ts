@@ -34,12 +34,19 @@ const isPairResponse = (value: unknown): value is { ok: boolean; error?: string 
 export default defineContentScript({
   matches: [
     'https://app.flicktionary.app/extension-pair*',
-    // dev-tunnel cloudflare hosts (e.g. https://web-sebastien.flicktionary.dev)
-    'https://*.flicktionary.dev/extension-pair*',
-    // Chrome match patterns can't include a port (it throws "Hostname cannot
-    // include a port"); a portless localhost host matches every port, covering
-    // both the web dev server (5174) and vite preview (4173).
-    'http://localhost/extension-pair*',
+    // Content-script match patterns count as host permissions in Chrome Web
+    // Store review, so dev hosts are compiled out of prd builds (the define
+    // mirrors the host_permissions gate in wxt.config.ts).
+    ...(__FLICKTIONARY_DEV_HOSTS__
+      ? [
+          // dev-tunnel cloudflare hosts (e.g. https://web-sebastien.flicktionary.dev)
+          'https://*.flicktionary.dev/extension-pair*',
+          // Chrome match patterns can't include a port (it throws "Hostname cannot
+          // include a port"); a portless localhost host matches every port, covering
+          // both the web dev server (5174) and vite preview (4173).
+          'http://localhost/extension-pair*',
+        ]
+      : []),
   ],
   runAt: 'document_idle',
 
