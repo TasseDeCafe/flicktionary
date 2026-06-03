@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Trans } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
 import { GlossData, pickIpa } from '../../services/flicktionary/flicktionary-client'
 
@@ -22,6 +23,12 @@ export interface GlossTooltipProps {
   // wired up yet). Render Save disabled with this reason instead of an active
   // button — looking is still free, so the gloss above stays fully usable.
   saveDisabledReason?: string | null
+  // Whether the user is paired ("signed in") with Flicktionary. When false,
+  // glossing and saving both fail, so we surface a Sign in button in place of
+  // Save (the gloss area already shows the "Sign in to translate" message).
+  signedIn: boolean
+  // Start the pairing flow (mirrors the popup's "Sign in with Flicktionary").
+  onSignIn: () => void
   // Hover bridge: the pointer entering/leaving the popover. Entering cancels the
   // pending hide so the user can reach the Save button; leaving dismisses it.
   onPointerEnter: () => void
@@ -40,6 +47,8 @@ export function GlossTooltip({
   onPointerEnter,
   onPointerLeave,
   saveDisabledReason,
+  signedIn,
+  onSignIn,
 }: GlossTooltipProps) {
   const ref = useRef<HTMLDivElement>(null)
   // Gate visibility until the async computePosition has placed the tooltip;
@@ -90,7 +99,7 @@ export function GlossTooltip({
         <>
           {ipaLabel && <div className='text-[13px] text-white/70'>{ipaLabel}</div>}
           <div className='text-sm break-words whitespace-pre-wrap text-white/90'>
-            {content.data.gloss || 'No translation available'}
+            {content.data.gloss || <Trans>No translation available</Trans>}
           </div>
           {(content.data.pos || content.data.register) && (
             <div className='mt-0.5 flex flex-wrap gap-1.5'>
@@ -109,16 +118,26 @@ export function GlossTooltip({
         </>
       )}
 
-      {/* Explicit Save — discoverable counterpart to the right-click shortcut.
-          Disabled (with a reason) where saving isn't available yet. */}
-      {saveDisabledReason ? (
+      {/* Not signed in → both glossing and saving fail, so offer Sign in in
+          place of Save (the gloss area shows the "Sign in to translate" note).
+          Otherwise the explicit Save — discoverable counterpart to the
+          right-click shortcut, disabled (with a reason) where unavailable. */}
+      {!signedIn ? (
+        <button
+          type='button'
+          onClick={onSignIn}
+          className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
+        >
+          <Trans>Sign in</Trans>
+        </button>
+      ) : saveDisabledReason ? (
         <div className='mt-1.5 flex flex-col gap-1'>
           <button
             type='button'
             disabled
             className='self-start cursor-not-allowed rounded-md bg-white/10 px-2.5 py-1 text-[13px] font-semibold text-white/40'
           >
-            Save
+            <Trans>Save</Trans>
           </button>
           <div className='text-[12px] text-white/60'>{saveDisabledReason}</div>
         </div>
@@ -128,7 +147,7 @@ export function GlossTooltip({
           onClick={onSave}
           className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
         >
-          Save
+          <Trans>Save</Trans>
         </button>
       )}
     </div>

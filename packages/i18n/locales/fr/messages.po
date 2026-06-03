@@ -238,7 +238,7 @@ msgstr "{dueTermCount} révision(s) en attente"
 #~ msgid "{dueTermCount} follow-up(s) ready"
 #~ msgstr "{dueTermCount} révision(s) prête(s)"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:88
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:83
 msgid "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
 msgstr "{highlightCount, plural, one {# surlignage cette session} other {# surlignages cette session}}"
 
@@ -551,7 +551,7 @@ msgstr "Ajouter un nouveau profil..."
 msgid "Add note"
 msgstr "Ajouter une note"
 
-#: packages/extension/src/entrypoints/background.ts:165
+#: packages/extension/src/entrypoints/background.ts:167
 msgid "Add selection to Flicktionary"
 msgstr "Ajouter la sélection à Flicktionary"
 
@@ -1946,7 +1946,7 @@ msgid "Flashcards"
 msgstr "Cartes mémoire"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:81
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:76
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
@@ -2232,7 +2232,7 @@ msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à
 msgid "Imperfective"
 msgstr "Imperfectif"
 
-#: packages/extension/src/entrypoints/background.ts:159
+#: packages/extension/src/entrypoints/background.ts:161
 msgid "Import article to Flicktionary"
 msgstr "Importer l’article dans Flicktionary"
 
@@ -2450,7 +2450,7 @@ msgstr "Termes suggérés par IA"
 #~ msgstr "Les termes suggérés par l'IA sont désactivés. Surlignez au moins un terme pour traiter cette session."
 
 #: packages/asbplayer-common/components/VideoOverlay.tsx:363
-#: packages/extension/src/entrypoints/background.ts:153
+#: packages/extension/src/entrypoints/background.ts:155
 msgid "Load Subtitles"
 msgstr "Charger des sous-titres"
 
@@ -2790,6 +2790,10 @@ msgstr "Aucun terme n'est prêt pour le moment."
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:65
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fichier .srt à la place."
+
+#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:102
+msgid "No translation available"
+msgstr "Aucune traduction disponible"
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:238
 msgid "No videos detected."
@@ -3492,6 +3496,8 @@ msgstr "RP"
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
+#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:140
+#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:150
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -3745,10 +3751,10 @@ msgstr "Afficher les termes suggérés pendant la lecture"
 msgid "Show translations"
 msgstr "Afficher les traductions"
 
-#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:35
-#: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:118
-#~ msgid "Sign in"
-#~ msgstr "Se connecter"
+#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:131
+#: packages/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:259
+msgid "Sign in"
+msgstr "Se connecter"
 
 #: packages/extension/src/services/flicktionary/import-text.ts:48
 msgid "Sign in to Flicktionary to import text."
@@ -3766,14 +3772,14 @@ msgstr "Connectez-vous à Flicktionary pour définir votre niveau."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Connectez-vous à Flicktionary pour traduire."
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:94
 msgid "Sign in with Flicktionary"
 msgstr "Se connecter à Flicktionary"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:89
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:92
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:87
 msgid "Sign out"
 msgstr "Déconnexion"
 
@@ -3787,11 +3793,11 @@ msgid "Sign up"
 msgstr "S'inscrire"
 
 #. placeholder {0}: auth.email
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:86
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:81
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:94
 msgid "Signing in…"
 msgstr "Connexion…"
 

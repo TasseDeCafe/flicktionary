@@ -3,6 +3,7 @@ import {
   FlicktionaryGlossMessage,
   FlicktionaryGlossResponse,
   FlicktionaryGlossIpa,
+  FlicktionaryStartPairingMessage,
   SaveWordMessage,
   SaveWordResponse,
   SaveWordFlicktionaryVideoContext,
@@ -65,6 +66,21 @@ export async function requestGloss(word: string, sentence: string): Promise<Flic
   }
 
   return await browser.runtime.sendMessage(message)
+}
+
+// Starts the Flicktionary pairing ("sign in") flow from the in-video overlay.
+// The overlay can't open a tab itself, so it asks the background to mint a nonce
+// and open the web pairing tab — same flow as the popup's sign-in button.
+export async function startFlicktionaryPairing(): Promise<void> {
+  const message: TabToExtensionCommand<FlicktionaryStartPairingMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'flicktionary-start-pairing',
+      messageId: uuidv4(),
+    },
+  }
+
+  await browser.runtime.sendMessage(message)
 }
 
 // Prefer General American, then Received Pronunciation, then an untagged entry

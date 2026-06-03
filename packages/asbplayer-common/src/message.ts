@@ -393,6 +393,18 @@ export interface FlicktionaryGlossMessage extends MessageWithId {
   readonly contextLine: string
 }
 
+// Asks the background to begin the Flicktionary pairing ("sign in") flow:
+// generate a nonce and open the web pairing tab. Sent from surfaces that can't
+// call `browser.tabs.create` themselves (the in-video overlay content script).
+export interface FlicktionaryStartPairingMessage extends MessageWithId {
+  readonly command: 'flicktionary-start-pairing'
+}
+
+export interface FlicktionaryStartPairingResponse {
+  readonly success: boolean
+  readonly error?: string
+}
+
 export interface FlicktionaryGlossIpa {
   readonly ga?: string | null
   readonly rp?: string | null

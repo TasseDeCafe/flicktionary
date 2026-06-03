@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { I18nProvider } from '@lingui/react'
+import { msg } from '@lingui/core/macro'
 import { i18n } from '../lingui'
 import { tokenizeText } from '../../services/word-tokenizer'
 import {
@@ -11,7 +12,9 @@ import {
   requestGloss,
   saveWord,
   setCefr,
+  startFlicktionaryPairing,
 } from '../../services/flicktionary/flicktionary-client'
+import { getFlicktionaryAuth, onFlicktionaryAuthChange } from '../../services/flicktionary/auth-storage'
 import { SubtitleLineModel, SubtitleStore } from './subtitle-store'
 import { Word } from './Word'
 import { GlossContent, GlossTooltip } from './GlossTooltip'
@@ -130,6 +133,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const [selection, setSelection] = useState<SelectionState | null>(null)
   const [gloss, setGloss] = useState<GlossState | null>(null)
   const [cefr, setCefrState] = useState<CefrState | null>(null)
+  // Flicktionary pairing ("sign in") state. Tracked from chrome.storage so the
+  // gloss popover / toasts can offer a Sign in button when saving & glossing are
+  // gated, and so they update live once pairing completes in the opened tab.
+  // Default true to avoid flashing a Sign in button before the (fast, local)
+  // read resolves. `signedInRef` mirrors it for the imperative save handlers.
+  const [signedIn, setSignedIn] = useState(true)
+  const signedInRef = useRef(true)
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Pending deferred hide of the gloss popover (the hover-bridge grace timer).
@@ -188,12 +198,37 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     setSelectionBoth(null)
   }, [setSelectionBoth])
 
+  // Mirror the Flicktionary auth state into local state + ref. The read and the
+  // change listener both hit chrome.storage.local (available in the content
+  // script), so pairing done in the opened tab flips this live.
+  useEffect(() => {
+    let active = true
+    const apply = (auth: unknown) => {
+      const value = auth !== null
+      signedInRef.current = value
+      if (active) setSignedIn(value)
+    }
+    void getFlicktionaryAuth().then(apply)
+    const unsubscribe = onFlicktionaryAuthChange(apply)
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
+
+  // Kick off pairing (mirrors the popup's "Sign in with Flicktionary" button).
+  const onSignIn = useCallback(() => {
+    void startFlicktionaryPairing()
+  }, [])
+
   // Route through the page-global sonner toaster (viewport bottom-right). Lazily
-  // ensure the singleton host exists before the first dispatch.
-  const showToast = useCallback((text: string, isError: boolean) => {
+  // ensure the singleton host exists before the first dispatch. When `action` is
+  // given, sonner renders it as a button (used to offer Sign in on gated saves).
+  const showToast = useCallback((text: string, isError: boolean, action?: { label: string; onClick: () => void }) => {
     ensureToasterHost()
-    if (isError) toast.error(text)
-    else toast.success(text)
+    const options = action ? { action } : undefined
+    if (isError) toast.error(text, options)
+    else toast.success(text, options)
   }, [])
 
   // Render-path range (reads the `selection` state so highlights re-render).
@@ -210,11 +245,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           clearSelection()
           break
         case 'disabled':
+          // Video-context gate (e.g. off YouTube), not an auth issue — no Sign in.
           showToast(outcome.reason, true)
           clearSelection()
           break
         case 'error':
-          showToast(outcome.message, true)
+          // Surfaces the "Sign in to Flicktionary to save words." error when the
+          // save is blocked on pairing — offer a Sign in action then, same flow
+          // as the popup button.
+          showToast(
+            outcome.message,
+            true,
+            signedInRef.current ? undefined : { label: i18n._(msg`Sign in`), onClick: onSignIn }
+          )
           clearSelection()
           break
         case 'missing-cefr':
@@ -223,7 +266,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           break
       }
     },
-    [showToast, clearSelection]
+    [showToast, clearSelection, onSignIn]
   )
 
   const saveSingle = useCallback(
@@ -550,6 +593,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               word={gloss.word}
               content={gloss.content}
               saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
+              signedIn={signedIn}
+              onSignIn={onSignIn}
               onSave={() => {
                 if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl)
                 else saveSingle(gloss.save.tl.line, gloss.save.token)
