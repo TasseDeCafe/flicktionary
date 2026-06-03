@@ -4,8 +4,6 @@ import Typography from '@mui/material/Typography'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import Button from '@mui/material/Button'
 import { Plural, Trans } from '@lingui/react/macro'
-import { v4 as uuidv4 } from 'uuid'
-import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client'
 import {
   clearFlicktionaryAuth,
@@ -13,7 +11,7 @@ import {
   getFlicktionaryAuth,
   onFlicktionaryAuthChange,
 } from '@/services/flicktionary/auth-storage'
-import { setPendingFlicktionaryPairNonce } from '@/services/flicktionary/pairing-nonce-storage'
+import { openFlicktionaryPairingTab } from '@/services/flicktionary/start-pairing'
 import {
   getFlicktionarySessionHighlightCount,
   onFlicktionarySessionHighlightCountChange,
@@ -56,10 +54,7 @@ export const FlicktionaryPairSection = () => {
   const handlePair = async () => {
     setPairing(true)
     try {
-      const nonce = uuidv4()
-      await setPendingFlicktionaryPairNonce(nonce)
-      const url = `${getFlicktionaryConfig().webUrl}/extension-pair?nonce=${encodeURIComponent(nonce)}`
-      await browser.tabs.create({ url, active: true })
+      await openFlicktionaryPairingTab()
     } catch (error) {
       console.error('Failed to start Flicktionary pairing', error)
       setPairing(false)
