@@ -4,7 +4,6 @@ import { msg } from '@lingui/core/macro'
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
 import { lookupFlicktionarySession, storeFlicktionarySession } from '../../services/flicktionary/youtube-session-cache'
-import { incrementFlicktionarySessionHighlightCount } from '../../services/flicktionary/session-highlight-counter'
 import { extractFlicktionaryApiError } from '../../services/flicktionary/api-error'
 import { activateBackgroundLocale } from '../../services/activate-background-locale'
 import { i18n } from '../../ui/lingui'
@@ -118,7 +117,5 @@ export default class SaveWordHandler {
       endOffset: message.endCharOffset,
       selectionText: message.word,
     })
-
-    await incrementFlicktionarySessionHighlightCount()
   }
 }

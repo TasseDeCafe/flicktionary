@@ -239,8 +239,8 @@ msgstr "{dueTermCount} follow-up(s) due"
 #~ msgstr "{dueTermCount} follow-up(s) ready"
 
 #: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:83
-msgid "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
-msgstr "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
+#~ msgid "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
+#~ msgstr "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
@@ -476,6 +476,7 @@ msgstr "About"
 #~ msgstr "About asbplayer"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:248
+#: packages/extension/src/ui/components/ImportPopup.tsx:57
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
 
@@ -551,7 +552,7 @@ msgstr "Add New Profile..."
 msgid "Add note"
 msgstr "Add note"
 
-#: packages/extension/src/entrypoints/background.ts:167
+#: packages/extension/src/entrypoints/background.ts:186
 msgid "Add selection to Flicktionary"
 msgstr "Add selection to Flicktionary"
 
@@ -788,7 +789,7 @@ msgstr "Audio recording has been enabled for this tab. You can now begin mining.
 msgid "Authentication failed"
 msgstr "Authentication failed"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:212
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
@@ -812,7 +813,7 @@ msgstr "Auto-pause"
 msgid "Auto-pause preference"
 msgstr "Auto-pause preference"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:271
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:234
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Auto-pause when mousing over subtitles"
 
@@ -1271,7 +1272,7 @@ msgstr "Danger zone"
 msgid "Danger Zone"
 msgstr "Danger Zone"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
+#: packages/asbplayer-common/components/UiSettings.tsx:52
 msgid "Dark"
 msgstr "Dark"
 
@@ -1339,7 +1340,7 @@ msgstr "Deleting…"
 #~ msgid "Dependencies"
 #~ msgstr "Dependencies"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:228
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
 
@@ -1347,7 +1348,7 @@ msgstr "Detect and Display Ruby"
 msgid "Detecting language…"
 msgstr "Detecting language…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:284
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:247
 msgid "Disabled"
 msgstr "Disabled"
 
@@ -1479,11 +1480,11 @@ msgstr "Enable audio recording"
 msgid "Enable controls overlay"
 msgstr "Enable controls overlay"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:308
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:271
 msgid "Enabled"
 msgstr "Enabled"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:296
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:259
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
@@ -1590,7 +1591,7 @@ msgstr "Explain"
 msgid "Explain this term in more depth."
 msgstr "Explain this term in more depth."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:370
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:333
 msgid "Export Settings"
 msgstr "Export Settings"
 
@@ -1948,7 +1949,7 @@ msgid "Flashcards"
 msgstr "Flashcards"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:76
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:57
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
@@ -2234,11 +2235,11 @@ msgstr "If you'd like to create a new account, you can sign up again."
 msgid "Imperfective"
 msgstr "Imperfective"
 
-#: packages/extension/src/entrypoints/background.ts:161
+#: packages/extension/src/entrypoints/background.ts:180
 msgid "Import article to Flicktionary"
 msgstr "Import article to Flicktionary"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:367
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:330
 msgid "Import Settings"
 msgstr "Import Settings"
 
@@ -2355,7 +2356,7 @@ msgid "Label (e.g. past.m)"
 msgstr "Label (e.g. past.m)"
 
 #: apps/web/src/components/language-option-list.tsx:52
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:181
+#: packages/asbplayer-common/components/UiSettings.tsx:58
 msgid "Language"
 msgstr "Language"
 
@@ -2433,7 +2434,7 @@ msgstr "Less formal:"
 #~ msgid "License"
 #~ msgstr "License"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:165
+#: packages/asbplayer-common/components/UiSettings.tsx:42
 msgid "Light"
 msgstr "Light"
 
@@ -2452,7 +2453,7 @@ msgstr "LLM-suggested terms"
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
 #: packages/asbplayer-common/components/VideoOverlay.tsx:363
-#: packages/extension/src/entrypoints/background.ts:155
+#: packages/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
@@ -2559,6 +2560,7 @@ msgstr "Message to the founders"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:247
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:134
+#: packages/extension/src/ui/components/ImportPopup.tsx:56
 msgid "Misc"
 msgstr "Misc"
 
@@ -2638,7 +2640,7 @@ msgstr "Multiple Video Elements Detected"
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:315
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:278
 msgid "Name of the tab"
 msgstr "Name of the tab"
 
@@ -2868,7 +2870,7 @@ msgstr "Numeral"
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/Popup.tsx:59
+#: packages/extension/src/ui/components/PopupHeader.tsx:14
 msgid "Open App"
 msgstr "Open App"
 
@@ -3386,7 +3388,7 @@ msgstr "Reject all"
 msgid "Reload the page, then try importing again."
 msgstr "Reload the page, then try importing again."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:202
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:165
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
 
@@ -3396,7 +3398,7 @@ msgstr "Remember these track choices for this site"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:244
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:207
 msgid "Remove"
 msgstr "Remove"
 
@@ -3417,7 +3419,7 @@ msgstr "Remove session"
 msgid "Removing…"
 msgstr "Removing…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:254
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:217
 msgid "Render"
 msgstr "Render"
 
@@ -3710,7 +3712,7 @@ msgid "Setting up account..."
 msgstr "Setting up account..."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:363
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
 #: packages/extension/src/ui/components/SettingsPage.tsx:78
 msgid "Settings"
 msgstr "Settings"
@@ -3762,7 +3764,7 @@ msgstr "Sign in"
 msgid "Sign in to Flicktionary to import text."
 msgstr "Sign in to Flicktionary to import text."
 
-#: packages/extension/src/handlers/saved-words/save-word-handler.ts:55
+#: packages/extension/src/handlers/saved-words/save-word-handler.ts:54
 msgid "Sign in to Flicktionary to save words."
 msgstr "Sign in to Flicktionary to save words."
 
@@ -3774,14 +3776,14 @@ msgstr "Sign in to Flicktionary to set your level."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Sign in to Flicktionary to translate."
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:94
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:73
 msgid "Sign in with Flicktionary"
 msgstr "Sign in with Flicktionary"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:89
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:87
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:66
 msgid "Sign out"
 msgstr "Sign out"
 
@@ -3795,11 +3797,11 @@ msgid "Sign up"
 msgstr "Sign up"
 
 #. placeholder {0}: auth.email
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:81
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 msgid "Signed in as {0}"
 msgstr "Signed in as {0}"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:94
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:73
 msgid "Signing in…"
 msgstr "Signing in…"
 
@@ -3978,11 +3980,11 @@ msgstr "Subtitle Font Family"
 msgid "Subtitle Font Thickness"
 msgstr "Subtitle Font Thickness"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:323
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:286
 msgid "Subtitle Generation"
 msgstr "Subtitle Generation"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:233
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:196
 msgid "Subtitle HTML"
 msgstr "Subtitle HTML"
 
@@ -4006,11 +4008,11 @@ msgstr "Subtitle position offset from bottom"
 msgid "Subtitle position offset from top"
 msgstr "Subtitle position offset from top"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:216
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:179
 msgid "Subtitle regex filter"
 msgstr "Subtitle regex filter"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:225
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:188
 msgid "Subtitle regex filter text replacement"
 msgstr "Subtitle regex filter text replacement"
 
@@ -4039,7 +4041,7 @@ msgstr "Subtitle Track"
 msgid "Subtitle Track {0}"
 msgstr "Subtitle Track {0}"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:193
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:156
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:101
 msgid "Subtitles"
 msgstr "Subtitles"
@@ -4186,7 +4188,7 @@ msgstr "The first step to using asbplayer is always to load subtitles onto a vid
 #~ msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
 #~ msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:154
+#: packages/asbplayer-common/components/UiSettings.tsx:31
 msgid "Theme"
 msgstr "Theme"
 
@@ -4340,11 +4342,11 @@ msgstr "Track {0}"
 #~ msgid "Track imported"
 #~ msgstr "Track imported"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:333
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:296
 msgid "Transcript Server API Key (optional)"
 msgstr "Transcript Server API Key (optional)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:289
 msgid "Transcript Server URL"
 msgstr "Transcript Server URL"
 
@@ -4370,8 +4372,8 @@ msgstr "Triage"
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:150
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:76
+#: packages/asbplayer-common/components/UiSettings.tsx:27
 msgid "UI"
 msgstr "UI"
 
@@ -4501,8 +4503,8 @@ msgid "User"
 msgstr "User"
 
 #: packages/extension/src/ui/components/Popup.tsx:62
-msgid "User guide"
-msgstr "User guide"
+#~ msgid "User guide"
+#~ msgstr "User guide"
 
 #: apps/native/src/features/user/api/user-hooks.ts:11
 #: apps/web/src/features/user/api/user-hooks.ts:26

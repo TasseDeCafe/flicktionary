@@ -99,15 +99,45 @@ async function pageConfigsMergedWithSettingsOverrides(): Promise<PageConfigFile>
   return { pages: mergedPages } as PageConfigFile
 }
 
+function matchPageConfig(pages: PageConfig[], host: string): PageConfig | undefined {
+  for (const page of pages) {
+    const regex = new RegExp(page.host)
+
+    if (regex.test(host) || (page.literalHosts !== undefined && page.literalHosts.includes(host))) {
+      return page
+    }
+  }
+
+  return undefined
+}
+
+// Host-level check usable outside content scripts (popup, background service
+// worker) where `window.location` is the extension's own URL. Returns true when
+// the given page URL belongs to a known streaming platform — including any hosts
+// the user added via settings overrides. Does NOT consider the tutorial page (it
+// isn't a real video platform); callers wanting that should use currentPageDelegate.
+export async function isVideoPlatformUrl(urlString: string | undefined): Promise<boolean> {
+  if (!urlString) {
+    return false
+  }
+
+  let urlObj: URL
+  try {
+    urlObj = new URL(urlString)
+  } catch {
+    return false
+  }
+
+  const mergedPageConfig = await pageConfigsMergedWithSettingsOverrides()
+  return matchPageConfig(mergedPageConfig.pages, urlObj.host) !== undefined
+}
+
 export async function currentPageDelegate(): Promise<PageDelegate | undefined> {
   const urlObj = new URL(window.location.href)
   const mergedPageConfig = await pageConfigsMergedWithSettingsOverrides()
-  for (const page of mergedPageConfig.pages) {
-    const regex = new RegExp(page.host)
-
-    if (regex.test(urlObj.host) || (page.literalHosts !== undefined && page.literalHosts.includes(urlObj.host))) {
-      return new PageDelegate(page, urlObj)
-    }
+  const matched = matchPageConfig(mergedPageConfig.pages, urlObj.host)
+  if (matched !== undefined) {
+    return new PageDelegate(matched, urlObj)
   }
 
   if (isOnTutorialPage()) {

@@ -12,7 +12,9 @@ import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/sett
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
+import { isVideoPlatformUrl } from '@/services/pages'
 import Popup from './Popup'
+import ImportPopup from './ImportPopup'
 import { useRequestingActiveTabPermission } from '../hooks/use-requesting-active-tab-permission'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
 import { StyledEngineProvider } from '@mui/material/styles'
@@ -38,11 +40,29 @@ const notifySettingsUpdated = () => {
 export function PopupUi({ commands }: Props) {
   const settingsProvider = useMemo(() => new SettingsProvider(new ExtensionSettingsStorage()), [])
   const [settings, setSettings] = useState<AsbplayerSettings>()
+  // Which popup to show is decided by the active tab: the full subtitle UI on
+  // known video platforms, the simpler article-import UI everywhere else.
+  // `undefined` while we resolve the active tab's URL.
+  const [isVideoPlatform, setIsVideoPlatform] = useState<boolean>()
   const theme = useMemo(() => settings && createTheme(settings.themeType), [settings])
 
   useEffect(() => {
     settingsProvider.getAll().then(setSettings)
   }, [settingsProvider])
+
+  useEffect(() => {
+    let active = true
+    void browser.tabs
+      .query({ active: true, currentWindow: true })
+      .then(([tab]) => isVideoPlatformUrl(tab?.url))
+      .catch(() => false)
+      .then((result) => {
+        if (active) setIsVideoPlatform(result)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleSettingsChanged = useCallback(
     async (changed: Partial<AsbplayerSettings>) => {
@@ -59,10 +79,6 @@ export function PopupUi({ commands }: Props) {
 
   const handleOpenApp = useCallback(() => {
     browser.tabs.create({ active: true, url: getFlicktionaryConfig().webUrl })
-  }, [])
-
-  const handleOpenUserGuide = useCallback(() => {
-    browser.tabs.create({ active: true, url: 'https://app.flicktionary.app' })
   }, [])
 
   const { requestingActiveTabPermission, tabRequestingActiveTabPermission } = useRequestingActiveTabPermission()
@@ -93,7 +109,7 @@ export function PopupUi({ commands }: Props) {
     onProfileChanged: handleProfileChanged,
   })
 
-  if (!settings || !theme || requestingActiveTabPermission === undefined) {
+  if (!settings || !theme || requestingActiveTabPermission === undefined || isVideoPlatform === undefined) {
     return null
   }
 
@@ -117,15 +133,18 @@ export function PopupUi({ commands }: Props) {
             }}
           >
             <Box>
-              <Popup
-                commands={commands}
-                settings={settings}
-                onSettingsChanged={handleSettingsChanged}
-                onOpenApp={handleOpenApp}
-                onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
-                onOpenUserGuide={handleOpenUserGuide}
-                {...profilesContext}
-              />
+              {isVideoPlatform ? (
+                <Popup
+                  commands={commands}
+                  settings={settings}
+                  onSettingsChanged={handleSettingsChanged}
+                  onOpenApp={handleOpenApp}
+                  onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
+                  {...profilesContext}
+                />
+              ) : (
+                <ImportPopup settings={settings} onSettingsChanged={handleSettingsChanged} onOpenApp={handleOpenApp} />
+              )}
             </Box>
           </Paper>
         </ThemeProvider>

@@ -2,7 +2,6 @@ import Button from '@mui/material/Button'
 import ButtonGroup from '@mui/material/ButtonGroup'
 import FormControl from '@mui/material/FormControl'
 import FormLabel from '@mui/material/FormLabel'
-import MenuItem from '@mui/material/MenuItem'
 import Radio from '@mui/material/Radio'
 import RadioGroup from '@mui/material/RadioGroup'
 import Switch from '@mui/material/Switch'
@@ -18,6 +17,7 @@ import { SubtitleHtml } from '..'
 import DownloadIcon from '@mui/icons-material/Download'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SettingsSection from './SettingsSection'
+import UiSettings from './UiSettings'
 
 function regexIsValid(regex: string) {
   try {
@@ -146,49 +146,12 @@ const MiscSettingTab: React.FC<Props> = ({
   return (
     <>
       <Stack spacing={1}>
-        <SettingsSection>
-          <Trans>UI</Trans>
-        </SettingsSection>
-        <FormControl>
-          <FormLabel>
-            <Trans>Theme</Trans>
-          </FormLabel>
-          <RadioGroup row>
-            <LabelWithHoverEffect
-              control={
-                <Radio
-                  checked={themeType === 'light'}
-                  value='light'
-                  onChange={(event) => event.target.checked && onSettingChanged('themeType', 'light')}
-                />
-              }
-              label={t`Light`}
-            />
-            <LabelWithHoverEffect
-              control={
-                <Radio
-                  checked={themeType === 'dark'}
-                  value='dark'
-                  onChange={(event) => event.target.checked && onSettingChanged('themeType', 'dark')}
-                />
-              }
-              label={t`Dark`}
-            />
-          </RadioGroup>
-        </FormControl>
-        <SettingsTextField
-          select
-          label={t`Language`}
-          value={language}
-          color='primary'
-          onChange={(event) => onSettingChanged('language', event.target.value)}
-        >
-          {supportedLanguages.map((s) => (
-            <MenuItem key={s} value={s}>
-              {s}
-            </MenuItem>
-          ))}
-        </SettingsTextField>
+        <UiSettings
+          themeType={themeType}
+          language={language}
+          supportedLanguages={supportedLanguages}
+          onSettingChanged={onSettingChanged}
+        />
         <SettingsSection>
           <Trans>Subtitles</Trans>
         </SettingsSection>
