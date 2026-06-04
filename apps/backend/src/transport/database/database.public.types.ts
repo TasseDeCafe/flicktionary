@@ -850,6 +850,9 @@ export type Database = {
       }
       user_lookups: {
         Row: {
+          active_leech_parked_at: string | null
+          active_leech_rehab_correct_days: number
+          active_leech_rehab_last_correct_on: string | null
           active_srs_difficulty: number | null
           active_srs_due: string | null
           active_srs_lapses: number
@@ -871,6 +874,9 @@ export type Database = {
           headword: string
           id: string
           learning_mode: string
+          leech_parked_at: string | null
+          leech_rehab_correct_days: number
+          leech_rehab_last_correct_on: string | null
           native_example: string | null
           sense: string
           srs_difficulty: number | null
@@ -886,6 +892,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_leech_parked_at?: string | null
+          active_leech_rehab_correct_days?: number
+          active_leech_rehab_last_correct_on?: string | null
           active_srs_difficulty?: number | null
           active_srs_due?: string | null
           active_srs_lapses?: number
@@ -907,6 +916,9 @@ export type Database = {
           headword: string
           id?: string
           learning_mode?: string
+          leech_parked_at?: string | null
+          leech_rehab_correct_days?: number
+          leech_rehab_last_correct_on?: string | null
           native_example?: string | null
           sense?: string
           srs_difficulty?: number | null
@@ -922,6 +934,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_leech_parked_at?: string | null
+          active_leech_rehab_correct_days?: number
+          active_leech_rehab_last_correct_on?: string | null
           active_srs_difficulty?: number | null
           active_srs_due?: string | null
           active_srs_lapses?: number
@@ -943,6 +958,9 @@ export type Database = {
           headword?: string
           id?: string
           learning_mode?: string
+          leech_parked_at?: string | null
+          leech_rehab_correct_days?: number
+          leech_rehab_last_correct_on?: string | null
           native_example?: string | null
           sense?: string
           srs_difficulty?: number | null

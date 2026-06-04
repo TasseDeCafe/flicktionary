@@ -35,6 +35,12 @@ const newRow: DbUserLookup = {
   active_srs_last_review: null,
   active_srs_reps: 0,
   active_srs_lapses: 0,
+  leech_parked_at: null,
+  leech_rehab_correct_days: 0,
+  leech_rehab_last_correct_on: null,
+  active_leech_parked_at: null,
+  active_leech_rehab_correct_days: 0,
+  active_leech_rehab_last_correct_on: null,
   created_at: '2026-01-01T00:00:00Z',
   deleted_at: null,
 }
