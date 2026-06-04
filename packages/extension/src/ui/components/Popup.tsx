@@ -1,16 +1,13 @@
-import Grid from '@mui/material/Grid'
 import { AsbplayerSettings, Profile, chromeCommandBindsToKeyBinds } from '@asbplayer-fork/common/settings'
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm'
 import { useCallback } from 'react'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
-import { useTheme } from '@mui/material/styles'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
 import { settingsPageConfigs } from '@/services/pages'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
 import { PopupHeader } from './PopupHeader'
-import Stack from '@mui/material/Stack'
-import Paper from '@mui/material/Paper'
+import { MuiSettingsIsland } from './MuiSettingsIsland'
 import type { PopupCommands } from '../popup'
 
 interface Props {
@@ -42,49 +39,47 @@ const Popup = ({
   }, [])
   const { supportedLanguages } = useSupportedLanguages()
   const { localFontsAvailable, localFontsPermission, localFontFamilies } = useLocalFontFamilies()
-  const theme = useTheme()
 
   return (
-    <Paper>
-      <Stack direction='column' spacing={1.5} sx={{ padding: theme.spacing(1.5) }}>
-        <PopupHeader onOpenApp={onOpenApp} />
-        <FlicktionaryPairSection />
-        <Grid
-          item
-          style={{
-            height: 390,
-          }}
-        >
-          <SettingsForm
-            heightConstrained
-            extensionInstalled
-            extensionVersion={browser.runtime.getManifest().version}
-            extensionSupportsOverlay
-            extensionSupportsTrackSpecificSettings
-            extensionSupportsSubtitlesWidthSetting
-            extensionSupportsPauseOnHover
-            extensionSupportsExportCardBind
-            extensionSupportsPageSettings
-            forceVerticalTabs={false}
-            chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
-            settings={settings}
-            profiles={profilesContext.profiles}
-            activeProfile={profilesContext.activeProfile}
-            pageConfigs={settingsPageConfigs}
-            localFontsAvailable={localFontsAvailable}
-            localFontsPermission={localFontsPermission}
-            localFontFamilies={localFontFamilies}
-            supportedLanguages={supportedLanguages}
-            onSettingsChanged={onSettingsChanged}
-            onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
-            onUnlockLocalFonts={handleUnlockLocalFonts}
-          />
-        </Grid>
-        <Grid item>
+    <div className='flex flex-col gap-3 p-3'>
+      <PopupHeader onOpenApp={onOpenApp} />
+      <FlicktionaryPairSection />
+      {/* SettingsForm + profile menu are still MUI until Phase G — they need
+          the legacy ThemeProvider island to keep dark mode / accents working. */}
+      <MuiSettingsIsland themeType={settings.themeType}>
+        {/* The island is a single flex child — restore the page's 12px rhythm
+            between the form and the profile menu inside it. */}
+        <div className='flex flex-col gap-3'>
+          <div className='h-[390px]'>
+            <SettingsForm
+              heightConstrained
+              extensionInstalled
+              extensionVersion={browser.runtime.getManifest().version}
+              extensionSupportsOverlay
+              extensionSupportsTrackSpecificSettings
+              extensionSupportsSubtitlesWidthSetting
+              extensionSupportsPauseOnHover
+              extensionSupportsExportCardBind
+              extensionSupportsPageSettings
+              forceVerticalTabs={false}
+              chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
+              settings={settings}
+              profiles={profilesContext.profiles}
+              activeProfile={profilesContext.activeProfile}
+              pageConfigs={settingsPageConfigs}
+              localFontsAvailable={localFontsAvailable}
+              localFontsPermission={localFontsPermission}
+              localFontFamilies={localFontFamilies}
+              supportedLanguages={supportedLanguages}
+              onSettingsChanged={onSettingsChanged}
+              onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
+              onUnlockLocalFonts={handleUnlockLocalFonts}
+            />
+          </div>
           <SettingsProfileSelectMenu {...profilesContext} />
-        </Grid>
-      </Stack>
-    </Paper>
+        </div>
+      </MuiSettingsIsland>
+    </div>
   )
 }
 

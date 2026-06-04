@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import Paper from '@mui/material/Paper'
-import Button from '@mui/material/Button'
-import ButtonGroup from '@mui/material/ButtonGroup'
-import Typography from '@mui/material/Typography'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { Button } from '@flicktionary/ui/components/button'
 
 // Popup affordance for importing the current page's article into Flicktionary.
 // Delegates to the background handler (which runs Readability in the active tab
@@ -33,17 +30,11 @@ export const FlicktionaryImportSection = () => {
   }
 
   return (
-    <Paper variant='outlined' sx={{ p: 1.5 }}>
-      <ButtonGroup fullWidth size='small' variant='outlined'>
-        <Button onClick={handleImport} disabled={busy}>
-          {busy ? <Trans>Importing…</Trans> : <Trans>Import this article</Trans>}
-        </Button>
-      </ButtonGroup>
-      {error && (
-        <Typography variant='caption' color='error' sx={{ display: 'block', mt: 1 }}>
-          {error}
-        </Typography>
-      )}
-    </Paper>
+    <div className='rounded-lg border p-3'>
+      <Button type='button' variant='outline' size='sm' className='w-full' onClick={handleImport} disabled={busy}>
+        {busy ? <Trans>Importing…</Trans> : <Trans>Import this article</Trans>}
+      </Button>
+      {error && <p className='text-destructive mt-2 text-xs'>{error}</p>}
+    </div>
   )
 }

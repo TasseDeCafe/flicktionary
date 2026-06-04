@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import ButtonGroup from '@mui/material/ButtonGroup'
-import Button from '@mui/material/Button'
 import { Trans } from '@lingui/react/macro'
+import { Button } from '@flicktionary/ui/components/button'
 import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client'
 import {
   clearFlicktionaryAuth,
@@ -52,28 +49,24 @@ export const FlicktionaryPairSection = () => {
   }
 
   return (
-    <Paper variant='outlined' sx={{ p: 1.5 }}>
-      <Typography variant='body2' sx={{ mb: 1 }}>
+    <div className='rounded-lg border p-3'>
+      <p className='mb-2 text-sm'>
         <Trans>Flicktionary</Trans>
-      </Typography>
+      </p>
       {auth ? (
         <>
-          <Typography variant='caption' sx={{ display: 'block', mb: 1 }}>
+          <p className='text-muted-foreground mb-2 text-xs'>
             <Trans>Signed in as {auth.email}</Trans>
-          </Typography>
-          <ButtonGroup fullWidth size='small' variant='outlined'>
-            <Button color='error' onClick={handleUnpair}>
-              <Trans>Sign out</Trans>
-            </Button>
-          </ButtonGroup>
+          </p>
+          <Button type='button' variant='outline' size='sm' className='text-destructive w-full' onClick={handleUnpair}>
+            <Trans>Sign out</Trans>
+          </Button>
         </>
       ) : (
-        <ButtonGroup fullWidth size='small' variant='outlined'>
-          <Button onClick={handlePair} disabled={pairing}>
-            {pairing ? <Trans>Signing in…</Trans> : <Trans>Sign in with Flicktionary</Trans>}
-          </Button>
-        </ButtonGroup>
+        <Button type='button' variant='outline' size='sm' className='w-full' onClick={handlePair} disabled={pairing}>
+          {pairing ? <Trans>Signing in…</Trans> : <Trans>Sign in with Flicktionary</Trans>}
+        </Button>
       )}
-    </Paper>
+    </div>
   )
 }

@@ -55,6 +55,7 @@ const DialogContent = ({
   children,
   showCloseButton = true,
   showOverlay = true,
+  overlayClassName,
   variant = 'center',
   container,
   ...props
@@ -64,6 +65,10 @@ const DialogContent = ({
   // their content don't want the dimming scrim — it flashes during the slide
   // animation and blocks scrolling the page behind. Pass false to drop it.
   showOverlay?: boolean
+  // Extra classes for the scrim — e.g. a z-index override when the dialog must
+  // stack above other max-z chrome (the extension FTUE page renders the real
+  // video overlay at z-2147483647 underneath its tutorial dialogs).
+  overlayClassName?: string
   variant?: keyof typeof dialogContentVariants
   // Portal target override. Defaults to the PortalContainerContext (set by the
   // extension's shadow surfaces), then Radix's document.body fallback.
@@ -72,7 +77,7 @@ const DialogContent = ({
   const contextContainer = usePortalContainer()
   return (
     <DialogPortal data-slot='dialog-portal' container={container ?? contextContainer ?? undefined}>
-      {showOverlay && <DialogOverlay />}
+      {showOverlay && <DialogOverlay className={overlayClassName} />}
       <DialogPrimitive.Content
         data-slot='dialog-content'
         className={cn(dialogContentBase, dialogContentVariants[variant], className)}

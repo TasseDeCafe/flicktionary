@@ -339,7 +339,7 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 #~ msgid "• Full communication records and interaction history"
 #~ msgstr "• Registres complets de communication et historique des interactions"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:149
+#: packages/extension/src/ui/components/Tutorial.tsx:156
 msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
 msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
 
@@ -476,7 +476,7 @@ msgstr "À propos"
 #~ msgstr "À propos d'asbplayer"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:248
-#: packages/extension/src/ui/components/ImportPopup.tsx:57
+#: packages/extension/src/ui/components/ImportPopup.tsx:45
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
@@ -797,7 +797,7 @@ msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 #~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 #~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:295
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
 msgstr "Les pistes de sous-titres détectées automatiquement peuvent être sélectionnées ici. Flicktionary ne sait pas détecter les sous-titres sur tous les sites. Vous pouvez toujours charger vos propres fichiers de sous-titres."
 
@@ -1032,7 +1032,7 @@ msgid "Click on the Flicktionary action button in the top-right of the browser w
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du navigateur pour activer l’enregistrement audio de cet onglet."
 
 #. placeholder {0}: isFirefox ? '⚙' : '📌'
-#: packages/extension/src/ui/components/Tutorial.tsx:71
+#: packages/extension/src/ui/components/Tutorial.tsx:66
 msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
 msgstr "Cliquez sur l'icône 🧩 dans la barre d'outils, puis sélectionnez <0>asbplayer</0> pour ouvrir le <1>Popup</1> d'asbplayer.<2/>Utilisez le bouton {0} pour épingler asbplayer à la barre d'outils et y accéder facilement."
 
@@ -1047,7 +1047,7 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:276
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:284
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:183
 msgid "Close"
@@ -1146,7 +1146,7 @@ msgstr "Continuer avec Google"
 #~ msgid "Copied!"
 #~ msgstr "Copié !"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:287
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:295
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Impossible de charger automatiquement les sous-titres dans la langue préférée."
 
@@ -1174,8 +1174,8 @@ msgstr "Impossible de trouver un article lisible sur cette page."
 msgid "Could not import the pasted text."
 msgstr "Impossible d'importer le texte collé."
 
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:23
 #: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:26
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:29
 msgid "Could not import this page."
 msgstr "Impossible d’importer cette page."
 
@@ -1950,7 +1950,7 @@ msgid "Flashcards"
 msgstr "Cartes mémoire"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:57
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:54
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
@@ -2029,7 +2029,7 @@ msgstr "Générer la carte"
 msgid "Generate full exploration"
 msgstr "Générer l'exploration complète"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:338
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:346
 msgid "Generate Subtitles"
 msgstr "Générer les sous-titres"
 
@@ -2041,7 +2041,7 @@ msgstr "Génération de l'exploration complète… cela prend quelques secondes.
 #~ msgid "Generating the next text…"
 #~ msgstr "Génération du prochain texte…"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:335
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
 msgid "Generating..."
 msgstr "Génération..."
 
@@ -2102,7 +2102,7 @@ msgstr "Aller au tri"
 msgid "Good"
 msgstr "Bien"
 
-#: packages/asbplayer-common/components/TutorialBubble.tsx:42
+#: packages/asbplayer-common/components/TutorialBubble.tsx:33
 msgid "Got it"
 msgstr "Got it"
 
@@ -2244,7 +2244,7 @@ msgstr "Importer l’article dans Flicktionary"
 msgid "Import Settings"
 msgstr "Importer les paramètres"
 
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:39
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Import this article"
 msgstr "Importer cet article"
 
@@ -2254,7 +2254,7 @@ msgstr "Texte importé"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:39
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Importing…"
 msgstr "Importation…"
 
@@ -2561,7 +2561,7 @@ msgstr "Message pour les fondateurs"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:247
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:134
-#: packages/extension/src/ui/components/ImportPopup.tsx:56
+#: packages/extension/src/ui/components/ImportPopup.tsx:42
 msgid "Misc"
 msgstr "Divers"
 
@@ -2862,16 +2862,16 @@ msgstr "Numéral"
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:324
-#: packages/extension/src/ui/components/Tutorial.tsx:110
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
+#: packages/extension/src/ui/components/Tutorial.tsx:116
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:228
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:239
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/PopupHeader.tsx:14
+#: packages/extension/src/ui/components/PopupHeader.tsx:15
 msgid "Open App"
 msgstr "Ouvrir l'app"
 
@@ -2880,7 +2880,7 @@ msgid "Open chat"
 msgstr "Ouvrir le chat"
 
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:328
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:336
 msgid "Open Files"
 msgstr "Ouvrir des fichiers"
 
@@ -3393,7 +3393,7 @@ msgstr "Rechargez la page, puis réessayez l’import."
 msgid "Remember subtitle offset"
 msgstr "Mémoriser le décalage des sous-titres"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:321
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:329
 msgid "Remember these track choices for this site"
 msgstr "Se souvenir de ces choix de piste pour ce site"
 
@@ -3539,7 +3539,7 @@ msgstr "Enregistrement…"
 msgid "Scope"
 msgstr "Portée"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:43
+#: packages/extension/src/ui/components/FtueUi.tsx:17
 msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
 msgstr "Scroll down for a quick intro, or check out the <0>user guide</0>."
 
@@ -3635,7 +3635,7 @@ msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:212
 msgid "Select a video element…"
-msgstr ""
+msgstr "Sélectionnez un élément vidéo…"
 
 #: packages/extension/src/services/flicktionary/import-text.ts:140
 msgid "Select some text first."
@@ -3645,7 +3645,7 @@ msgstr "Sélectionnez d’abord du texte."
 msgid "Select subtitle tracks to load."
 msgstr "Sélectionner les pistes de sous-titres à charger."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:260
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:268
 msgid "Select Subtitles"
 msgstr "Sélectionner des sous-titres"
 
@@ -3719,7 +3719,7 @@ msgstr "Configuration du compte..."
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
 #: packages/extension/src/ui/components/SettingsPage.tsx:78
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
 msgid "Settings"
 msgstr "Paramètres"
@@ -3783,14 +3783,14 @@ msgstr "Connectez-vous à Flicktionary pour définir votre niveau."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Connectez-vous à Flicktionary pour traduire."
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:73
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:67
 msgid "Sign in with Flicktionary"
 msgstr "Se connecter à Flicktionary"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:89
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:66
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 msgid "Sign out"
 msgstr "Déconnexion"
 
@@ -3804,11 +3804,11 @@ msgid "Sign up"
 msgstr "S'inscrire"
 
 #. placeholder {0}: auth.email
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:62
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:59
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:73
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:67
 msgid "Signing in…"
 msgstr "Connexion…"
 
@@ -4053,7 +4053,7 @@ msgstr "Piste des sous-titres {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:282
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:290
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer l’extraction."
 
@@ -4155,7 +4155,7 @@ msgstr "Textes"
 msgid "Thank you for your feedback!"
 msgstr "Merci pour votre retour !"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:172
+#: packages/extension/src/ui/components/Tutorial.tsx:188
 msgid "That's it for the basics! Feel free to play around on this page."
 msgstr "That's it for the basics! Feel free to play around on this page."
 
@@ -4183,11 +4183,11 @@ msgstr "L'extension n'a pas pu terminer l'appariement."
 msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:101
+#: packages/extension/src/ui/components/Tutorial.tsx:107
 msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
 msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:93
+#: packages/extension/src/ui/components/Tutorial.tsx:97
 msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
 msgstr "La première étape pour utiliser asbplayer est toujours de charger des sous-titres sur une vidéo. <0>Faites un clic droit</0> sur la vidéo et choisissez l'élément de menu <1>Charger les sous-titres</1> d'asbplayer.<2/>Astuce : asbplayer peut aussi <3>charger automatiquement</3> les sous-titres détectés sur les sites pris en charge."
 
@@ -4379,6 +4379,11 @@ msgstr "Tri"
 msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
 msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle langue pour commencer. Vous pouvez choisir la langue cible à chaque fois que vous ajoutez du nouveau contenu."
 
+#: packages/extension/src/ui/components/Tutorial.tsx:93
+#: packages/extension/src/ui/components/Tutorial.tsx:185
+msgid "Tutorial"
+msgstr "Tutoriel"
+
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:76
 #: packages/asbplayer-common/components/UiSettings.tsx:27
 msgid "UI"
@@ -4493,7 +4498,7 @@ msgstr "Utiliser la suggestion"
 #~ msgid "Use suggested: {suggestedSurface}"
 #~ msgstr ""
 
-#: packages/extension/src/ui/components/Tutorial.tsx:124
+#: packages/extension/src/ui/components/Tutorial.tsx:131
 msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
 msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
 
@@ -4555,7 +4560,7 @@ msgstr "Vérification..."
 msgid "Video Element"
 msgstr "Élément vidéo"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:308
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:316
 msgid "Video Name"
 msgstr "Nom de la vidéo"
 
@@ -4645,7 +4650,7 @@ msgstr "Nous avons envoyé un lien de vérification à :"
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:38
+#: packages/extension/src/ui/components/FtueUi.tsx:14
 msgid "Welcome to Flicktionary."
 msgstr "Bienvenue sur Flicktionary."
 

@@ -1,23 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import CssBaseline from '@mui/material/CssBaseline'
-import ThemeProvider from '@mui/material/styles/ThemeProvider'
 import {
   ExtensionToVideoCommand,
   GrantedActiveTabPermissionMessage,
   PopupToExtensionCommand,
   SettingsUpdatedMessage,
 } from '@asbplayer-fork/common'
-import { createTheme } from '@asbplayer-fork/common/theme'
 import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/settings'
-import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
+import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
 import { isVideoPlatformUrl } from '@/services/pages'
 import Popup from './Popup'
 import ImportPopup from './ImportPopup'
 import { useRequestingActiveTabPermission } from '../hooks/use-requesting-active-tab-permission'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
-import { StyledEngineProvider } from '@mui/material/styles'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { I18nProvider } from '@lingui/react'
 import { i18n, setupLingui } from '../lingui'
@@ -44,7 +40,6 @@ export function PopupUi({ commands }: Props) {
   // known video platforms, the simpler article-import UI everywhere else.
   // `undefined` while we resolve the active tab's URL.
   const [isVideoPlatform, setIsVideoPlatform] = useState<boolean>()
-  const theme = useMemo(() => settings && createTheme(settings.themeType), [settings])
 
   useEffect(() => {
     settingsProvider.getAll().then(setSettings)
@@ -109,7 +104,15 @@ export function PopupUi({ commands }: Props) {
     onProfileChanged: handleProfileChanged,
   })
 
-  if (!settings || !theme || requestingActiveTabPermission === undefined || isVideoPlatform === undefined) {
+  // Radix portals (selects, dialogs, tooltips) target document.body — outside
+  // the `dark`-classed root div below — so the dark scope must also land on
+  // <body> (same trap as portalContainer in the shadow surfaces).
+  const dark = settings?.themeType === 'dark'
+  useEffect(() => {
+    document.body.classList.toggle('dark', dark)
+  }, [dark])
+
+  if (!settings || requestingActiveTabPermission === undefined || isVideoPlatform === undefined) {
     return null
   }
 
@@ -117,38 +120,28 @@ export function PopupUi({ commands }: Props) {
   // provider. Idempotent; only re-activates when the locale changes.
   setupLingui(settings.language)
 
+  // Dark mode is the `.dark` class on the page root (tokens.css custom
+  // variant); bg/text tokens on the same element re-resolve under it.
   return (
     <I18nProvider i18n={i18n}>
-      <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Paper
-            square
-            style={{
-              backgroundImage:
-                settings.themeType === 'dark'
-                  ? 'linear-gradient(rgba(255, 255, 255, 0.165), rgba(255, 255, 255, 0.165))'
-                  : 'none',
-              width: 600,
-            }}
-          >
-            <Box>
-              {isVideoPlatform ? (
-                <Popup
-                  commands={commands}
-                  settings={settings}
-                  onSettingsChanged={handleSettingsChanged}
-                  onOpenApp={handleOpenApp}
-                  onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
-                  {...profilesContext}
-                />
-              ) : (
-                <ImportPopup settings={settings} onSettingsChanged={handleSettingsChanged} onOpenApp={handleOpenApp} />
-              )}
-            </Box>
-          </Paper>
-        </ThemeProvider>
-      </StyledEngineProvider>
+      <TooltipProvider>
+        <div
+          className={cn('bg-background text-foreground w-[600px] font-sans', settings.themeType === 'dark' && 'dark')}
+        >
+          {isVideoPlatform ? (
+            <Popup
+              commands={commands}
+              settings={settings}
+              onSettingsChanged={handleSettingsChanged}
+              onOpenApp={handleOpenApp}
+              onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
+              {...profilesContext}
+            />
+          ) : (
+            <ImportPopup settings={settings} onSettingsChanged={handleSettingsChanged} onOpenApp={handleOpenApp} />
+          )}
+        </div>
+      </TooltipProvider>
     </I18nProvider>
   )
 }

@@ -301,8 +301,8 @@ export default function VideoDataSyncDialog({
               <InfoIcon className='text-muted-foreground mt-0.5 size-4 shrink-0' />
               <p className='flex-1 text-sm'>
                 <Trans>
-                  Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect
-                  subtitles on every site. You can always load your own subtitle files.
+                  Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles
+                  on every site. You can always load your own subtitle files.
                 </Trans>
               </p>
               {/* type=button: inside the form, the default submit type would
