@@ -1,6 +1,6 @@
 This turborepo monorepo is the repo of Flicktionary.app. This is a work in progress, don't treat it like a polished product.
 
-The specs of the project are here: @SPEC.md, and I try to keep a log of the changes here: @RESUME.md. The specs should generally be up-to-date, but you can suggest changes if you notice differences in the actual codebase, or if you make a change that requires an update of the specs. Don't update by yourself, I will give you the green light.
+The specs of the project are here: @SPEC.md, and I try to keep a log of the changes here: @RESUME.md. The browser extension (`packages/extension`, a vendored asbplayer fork) has its own dedicated spec: `packages/extension/EXTENSION-SPEC.md` — the source of truth for extension behavior, architecture, fork lineage, and the do-not-reintroduce/donor-model policy. Read it before working on the extension. The specs should generally be up-to-date, but you can suggest changes if you notice differences in the actual codebase, or if you make a change that requires an update of the specs. Don't update by yourself, I will give you the green light.
 
 The following stack is used:
 
