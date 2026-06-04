@@ -258,7 +258,7 @@ msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:81
+#: apps/web/src/features/practice/components/strengthen-view.tsx:82
 msgid "{correctCount} of {total} correct."
 msgstr "{correctCount} of {total} correct."
 
@@ -803,7 +803,7 @@ msgstr "An error occurred while attempting to manage your subscription."
 msgid "An error occurred. Please try again."
 msgstr "An error occurred. Please try again."
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:111
+#: apps/web/src/features/practice/components/strengthen-view.tsx:121
 msgid "An exercise for “{currentHeadword}” is still being prepared. Check back "
 "in a minute."
 msgstr "An exercise for “{currentHeadword}” is still being prepared. Check back "
@@ -978,9 +978,9 @@ msgstr "Back"
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:180
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:185
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
-#: apps/web/src/features/practice/components/strengthen-view.tsx:61
-#: apps/web/src/features/practice/components/strengthen-view.tsx:71
-#: apps/web/src/features/practice/components/strengthen-view.tsx:86
+#: apps/web/src/features/practice/components/strengthen-view.tsx:62
+#: apps/web/src/features/practice/components/strengthen-view.tsx:72
+#: apps/web/src/features/practice/components/strengthen-view.tsx:87
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
@@ -1036,7 +1036,7 @@ msgstr "Billed yearly at €{yearlyPriceTotal}"
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Billed yearly: €{yearlyPriceFormatted}"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:51
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:79
 msgid "Bonus"
 msgstr "Bonus"
 
@@ -1138,8 +1138,8 @@ msgstr "Chat — new answer ready"
 msgid "Chat — preparing answer"
 msgstr "Chat — preparing answer"
 
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:93
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:84
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:67
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:67
 msgid "Check"
 msgstr "Check"
 
@@ -1151,7 +1151,7 @@ msgstr "Check your email"
 msgid "Checking app version..."
 msgstr "Checking app version..."
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:84
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:67
 msgid "Checking…"
 msgstr "Checking…"
 
@@ -1324,8 +1324,8 @@ msgstr "Continue with Google"
 #~ msgid "Copied!"
 #~ msgstr "Copied!"
 
-#: apps/web/src/features/practice/components/mc-exercise.tsx:91
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:79
+#: apps/web/src/features/practice/components/mc-exercise.tsx:108
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:107
 msgid "Correct!"
 msgstr "Correct!"
 
@@ -1400,7 +1400,7 @@ msgstr "Could not rename — please try again."
 msgid "Could not set up your account. Please try restarting the app."
 msgstr "Could not set up your account. Please try restarting the app."
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:59
+#: apps/web/src/features/practice/components/strengthen-view.tsx:60
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
@@ -1787,7 +1787,7 @@ msgstr "Every term you've kept, across every session. Tap a row to edit, or "
 msgid "Example"
 msgstr "Example"
 
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:83
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:111
 msgid "Expected:"
 msgstr "Expected:"
 
@@ -2412,7 +2412,7 @@ msgstr "Highlight saved"
 msgid "Highlights are enriched as you read. Triage is available immediately."
 msgstr "Highlights are enriched as you read. Triage is available immediately."
 
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:51
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:79
 msgid "Hint:"
 msgstr "Hint:"
 
@@ -2590,7 +2590,7 @@ msgstr "Keep as passive"
 msgid "Keep options"
 msgstr "Keep options"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:76
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:103
 msgid "Keep practicing this one."
 msgstr "Keep practicing this one."
 
@@ -2954,10 +2954,10 @@ msgstr "New terms are capped per day. Follow-up sessions use up to this many "
 msgid "New today"
 msgstr "New today"
 
-#: apps/web/src/features/practice/components/mc-exercise.tsx:95
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:88
+#: apps/web/src/features/practice/components/mc-exercise.tsx:56
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:56
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:402
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:79
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:56
 msgid "Next"
 msgstr "Next"
 
@@ -2969,7 +2969,7 @@ msgstr "Next card"
 #~ msgid "Next text"
 #~ msgstr "Next text"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:76
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:103
 msgid "Nice!"
 msgstr "Nice!"
 
@@ -3102,8 +3102,8 @@ msgstr "Normal"
 msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
 msgstr "Not found in Wiktionary — grammar fields are LLM-generated only"
 
-#: apps/web/src/features/practice/components/mc-exercise.tsx:91
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:79
+#: apps/web/src/features/practice/components/mc-exercise.tsx:108
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:107
 msgid "Not quite."
 msgstr "Not quite."
 
@@ -3124,7 +3124,7 @@ msgstr "Note saved"
 msgid "Notes"
 msgstr "Notes"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:69
+#: apps/web/src/features/practice/components/strengthen-view.tsx:70
 msgid "Nothing to strengthen right now."
 msgstr "Nothing to strengthen right now."
 
@@ -3473,7 +3473,7 @@ msgstr "Practice your terms"
 msgid "Premium Features"
 msgstr "Premium Features"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:55
+#: apps/web/src/features/practice/components/strengthen-view.tsx:56
 msgid "Preparing exercises…"
 msgstr "Preparing exercises…"
 
@@ -4141,7 +4141,10 @@ msgstr "Signing in…"
 msgid "Singular-only"
 msgstr "Singular-only"
 
+#: apps/web/src/features/practice/components/mc-exercise.tsx:60
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:70
 #: apps/web/src/features/practice/components/strengthen-view.tsx:114
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:70
 msgid "Skip"
 msgstr "Skip"
 
@@ -4254,11 +4257,11 @@ msgstr "Streaming Video"
 msgid "Strengthen"
 msgstr "Strengthen"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:53
+#: apps/web/src/features/practice/components/strengthen-view.tsx:54
 msgid "Strengthen · {languageName}"
 msgstr "Strengthen · {languageName}"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx:80
+#: apps/web/src/features/practice/components/strengthen-view.tsx:81
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
 
@@ -4785,7 +4788,7 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 msgid "Tutorial"
 msgstr "Tutorial"
 
-#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:63
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx:91
 msgid "Type the missing word…"
 msgstr "Type the missing word…"
 
@@ -4888,7 +4891,7 @@ msgstr "Upper intermediate — fluent on familiar topics, some abstract ideas."
 #~ msgid "Use"
 #~ msgstr "Use"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:55
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:83
 msgid "Use “{term}” in a sentence"
 msgstr "Use “{term}” in a sentence"
 
@@ -5193,7 +5196,7 @@ msgstr "Wiktionary, edited"
 msgid "Word or expression"
 msgstr "Word or expression"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:64
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:92
 msgid "Write your sentence…"
 msgstr "Write your sentence…"
 
