@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, type ReactNode } from 'react'
 import { I18nProvider } from '@lingui/react'
 import { PortalContainerContext } from '@flicktionary/ui/components/portal'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
@@ -34,9 +34,17 @@ export interface ShadowUiProviderProps {
 // SIBLING of the React root (see shadow-host.ts), so it would never inherit a
 // class from inside the React tree.
 export function ShadowUiProvider({ portalContainer, themeType, language, children }: ShadowUiProviderProps) {
-  if (language) {
-    setupLingui(language)
-  }
+  // NOT in the render body: when the locale actually changes, i18n.activate()
+  // emits a change event that setState()s every mounted <I18nProvider> —
+  // including ones in OTHER shadow-surface roots on the same page — which is a
+  // React violation ("cannot update a component while rendering a different
+  // component"). useLayoutEffect runs post-render but pre-paint, so the right
+  // catalog still lands before the first visible frame.
+  useLayoutEffect(() => {
+    if (language) {
+      setupLingui(language)
+    }
+  }, [language])
 
   const dark = themeType === 'dark'
 

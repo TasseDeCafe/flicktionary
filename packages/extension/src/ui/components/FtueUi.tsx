@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
 import { I18nProvider } from '@lingui/react'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
@@ -65,7 +65,11 @@ const FtueUi = () => {
     }
   }
 
-  setupLingui(langParam ?? browser.i18n.getUILanguage())
+  // Layout effect, not render body: i18n.activate() setState()s the mounted
+  // <I18nProvider>, which React forbids mid-render. Pre-paint, so no flash.
+  useLayoutEffect(() => {
+    setupLingui(langParam ?? browser.i18n.getUILanguage())
+  }, [langParam])
 
   return (
     <I18nProvider i18n={i18n}>

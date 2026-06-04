@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import {
   ExtensionToVideoCommand,
   GrantedActiveTabPermissionMessage,
@@ -112,13 +112,20 @@ export function PopupUi({ commands }: Props) {
     document.body.classList.toggle('dark', dark)
   }, [dark])
 
+  // Activate the Lingui catalog for the user's language. In a layout effect,
+  // NOT the render body: when the locale changes, i18n.activate() setState()s
+  // the mounted <I18nProvider>, which React forbids mid-render. Pre-paint, so
+  // no flash of untranslated strings.
+  const language = settings?.language
+  useLayoutEffect(() => {
+    if (language) {
+      setupLingui(language)
+    }
+  }, [language])
+
   if (!settings || requestingActiveTabPermission === undefined || isVideoPlatform === undefined) {
     return null
   }
-
-  // Activate the Lingui catalog for the user's language before mounting the
-  // provider. Idempotent; only re-activates when the locale changes.
-  setupLingui(settings.language)
 
   // Dark mode is the `.dark` class on the page root (tokens.css custom
   // variant); bg/text tokens on the same element re-resolve under it.
