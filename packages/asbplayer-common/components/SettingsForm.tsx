@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { Captions, Info, Keyboard, MonitorPlay, Settings2 } from 'lucide-react'
 import { AsbplayerSettings, PageConfig, PageSettings, Profile } from '@asbplayer-fork/common/settings'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@flicktionary/ui/components/tabs'
@@ -107,10 +108,17 @@ export default function SettingsForm({
 
   const vertical = !smallScreen
   const triggerClasses = cn(
-    // whitespace-normal overrides the trigger base's nowrap: long labels
-    // ("Subtitle Appearance") must wrap inside the fixed-width vertical list
-    // instead of bleeding out of it (the MUI tabs wrapped too).
-    vertical && 'w-full justify-start text-left whitespace-normal',
+    vertical &&
+      // Sidebar-nav style: ghost items on a transparent list, the active item
+      // gets a soft accent pill instead of the boxed white-card treatment.
+      // whitespace-normal overrides the trigger base's nowrap: long labels
+      // ("Subtitle Appearance") must wrap inside the fixed-width vertical list
+      // instead of bleeding out of it (the MUI tabs wrapped too).
+      cn(
+        'w-full justify-start gap-2.5 px-3 text-left whitespace-normal transition-colors',
+        'data-[state=inactive]:hover:bg-muted/60 data-[state=inactive]:hover:text-foreground',
+        'data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-none'
+      ),
     heightConstrained ? 'min-h-[38px] text-xs' : 'min-h-[42px] text-sm'
   )
   const panelClasses = cn('h-full max-h-full w-full overflow-y-auto', vertical ? 'pr-2 pl-4' : 'p-2')
@@ -120,22 +128,33 @@ export default function SettingsForm({
       value={tabValue}
       onValueChange={(value) => setTabValue(value as TabName)}
       orientation={vertical ? 'vertical' : 'horizontal'}
-      className={cn('h-full max-h-full', vertical ? 'flex-row gap-0' : 'flex-col gap-2')}
+      className={cn('h-full max-h-full', vertical ? 'flex-row gap-1' : 'flex-col gap-2')}
     >
-      <TabsList className={cn(vertical ? 'h-fit w-[130px] shrink-0 flex-col' : 'mx-auto max-w-full overflow-x-auto')}>
+      <TabsList
+        className={cn(
+          vertical
+            ? 'h-fit w-[164px] shrink-0 flex-col items-stretch gap-0.5 rounded-none bg-transparent p-0'
+            : 'mx-auto max-w-full overflow-x-auto'
+        )}
+      >
         <TabsTrigger value='subtitle-appearance' className={triggerClasses}>
+          <Captions />
           {t`Subtitle Appearance`}
         </TabsTrigger>
         <TabsTrigger value='keyboard-shortcuts' className={triggerClasses}>
+          <Keyboard />
           {t`Keyboard Shortcuts`}
         </TabsTrigger>
         <TabsTrigger value='streaming-video' className={triggerClasses}>
+          <MonitorPlay />
           {t`Streaming Video`}
         </TabsTrigger>
         <TabsTrigger value='misc-settings' className={triggerClasses}>
+          <Settings2 />
           {t`Misc`}
         </TabsTrigger>
         <TabsTrigger value='about' className={triggerClasses}>
+          <Info />
           {t`About Flicktionary`}
         </TabsTrigger>
       </TabsList>

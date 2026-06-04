@@ -46,25 +46,25 @@ catalogs:
       specifier: 6.0.0
       version: 6.0.0
     '@lingui/cli':
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.2.0
+      version: 6.2.0
     '@lingui/core':
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.2.0
+      version: 6.2.0
     '@lingui/format-po':
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.2.0
+      version: 6.2.0
     '@lingui/metro-transformer':
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.2.0
+      version: 6.2.0
     '@lingui/react':
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.2.0
+      version: 6.2.0
     '@lingui/vite-plugin':
-      specifier: 6.0.0
-      version: 6.0.0
+      specifier: 6.2.0
+      version: 6.2.0
     '@mozilla/readability':
-      specifier: ^0.6.0
+      specifier: 0.6.0
       version: 0.6.0
     '@orpc/client':
       specifier: 1.13.13
@@ -667,10 +667,10 @@ importers:
     devDependencies:
       '@lingui/cli':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/format-po':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@react-email/components':
         specifier: 'catalog:'
         version: 1.0.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -936,10 +936,10 @@ importers:
         version: 5.2.2(react-hook-form@7.72.0(react@19.2.6))
       '@lingui/core':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/react':
         specifier: 'catalog:'
-        version: 6.0.0(react@19.2.6)
+        version: 6.2.0(react@19.2.6)
       '@orpc/client':
         specifier: 'catalog:'
         version: 1.13.13(@opentelemetry/api@1.9.1)
@@ -1150,10 +1150,10 @@ importers:
         version: 6.0.0
       '@lingui/cli':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/metro-transformer':
         specifier: 'catalog:'
-        version: 6.0.0(@expo/metro-config@55.0.11(expo@55.0.9)(typescript@5.9.2))(expo@55.0.9)(react-native@0.83.4(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.6))
+        version: 6.2.0(@expo/metro-config@55.0.11(expo@55.0.9)(typescript@5.9.2))(expo@55.0.9)(react-native@0.83.4(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.6))
       '@tanstack/eslint-plugin-query':
         specifier: 'catalog:'
         version: 5.96.0(eslint@9.36.0(jiti@2.7.0))(typescript@5.9.2)
@@ -1237,10 +1237,10 @@ importers:
         version: 5.2.2(react-hook-form@7.72.0(react@19.2.6))
       '@lingui/core':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/react':
         specifier: 'catalog:'
-        version: 6.0.0(react@19.2.6)
+        version: 6.2.0(react@19.2.6)
       '@orpc/client':
         specifier: 'catalog:'
         version: 1.13.13(@opentelemetry/api@1.9.0)
@@ -1370,10 +1370,10 @@ importers:
         version: 6.0.0
       '@lingui/cli':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/vite-plugin':
         specifier: 'catalog:'
-        version: 6.0.0(@babel/core@7.29.0)(@lingui/babel-plugin-lingui-macro@6.0.0)(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 6.2.0(@babel/core@7.29.0)(@lingui/babel-plugin-lingui-macro@6.0.0)(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@rolldown/plugin-babel':
         specifier: 'catalog:'
         version: 0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -1467,7 +1467,7 @@ importers:
         version: link:../ui
       '@lingui/react':
         specifier: 'catalog:'
-        version: 6.0.0(react@19.2.6)
+        version: 6.2.0(react@19.2.6)
       '@qgustavor/srt-parser':
         specifier: 'catalog:'
         version: 2.0.0
@@ -1601,10 +1601,10 @@ importers:
         version: 1.7.6
       '@lingui/core':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/react':
         specifier: 'catalog:'
-        version: 6.0.0(react@19.2.6)
+        version: 6.2.0(react@19.2.6)
       '@mozilla/readability':
         specifier: 'catalog:'
         version: 0.6.0
@@ -1728,7 +1728,7 @@ importers:
     dependencies:
       '@lingui/core':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
     devDependencies:
       '@ai-sdk/anthropic':
         specifier: 'catalog:'
@@ -1741,13 +1741,13 @@ importers:
         version: 6.0.0
       '@lingui/cli':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/format-po':
         specifier: 'catalog:'
-        version: 6.0.0
+        version: 6.2.0
       '@lingui/vite-plugin':
         specifier: 'catalog:'
-        version: 6.0.0(@babel/core@7.29.0)(@lingui/babel-plugin-lingui-macro@6.0.0)(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 6.2.0(@babel/core@7.29.0)(@lingui/babel-plugin-lingui-macro@6.0.0)(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@vitejs/plugin-react':
         specifier: 'catalog:'
         version: 6.0.1(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -1782,7 +1782,7 @@ importers:
         version: link:../core
       '@lingui/react':
         specifier: 'catalog:'
-        version: 6.0.0(react@19.2.6)
+        version: 6.2.0(react@19.2.6)
       '@radix-ui/react-checkbox':
         specifier: 'catalog:'
         version: 1.3.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -3540,16 +3540,20 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@lingui/babel-plugin-extract-messages@6.0.0':
-    resolution: {integrity: sha512-c85SB/kcZY0b8uDje9JOPGAyQ7zTgmjx3N2e2dxNrnjA64fgqeyhJ1KAbHozEuHh7mGOgnv2jRXeAs+zS2okwg==}
+  '@lingui/babel-plugin-extract-messages@6.2.0':
+    resolution: {integrity: sha512-/iPL0DSvq6oZQjxLSHXofaxq18joGKEYzJjaZUWw9jdyWpRp1kNFMHPQVPbemVBR2PSJUNS7jlOu1iph7qtkrQ==}
     engines: {node: '>=22.19.0'}
 
   '@lingui/babel-plugin-lingui-macro@6.0.0':
     resolution: {integrity: sha512-a2Qf5hW1q2G4s5fCEOQq/uT4svEcmyVCLe02Jwnr/lmtCyHmfdNHgjVQB1EEEnEH0dSMDQRAubrLDDzjMxbX+w==}
     engines: {node: '>=22.19.0'}
 
-  '@lingui/cli@6.0.0':
-    resolution: {integrity: sha512-15ML0pQo47+OXLff2ML5p6BblQUC+4L4bSjBQChojhDEBml+X+oIgimIzYXUkiEJGEz/5Ja172eNCpTtFRqk2g==}
+  '@lingui/babel-plugin-lingui-macro@6.2.0':
+    resolution: {integrity: sha512-sZqrd+RFLOePcimYoyNWs7n8brfkD5MXKb9trYNaV+/obt3C02LEpLrdIqUvykpn5+NgeZY6H0x/HqaXTil5vA==}
+    engines: {node: '>=22.19.0'}
+
+  '@lingui/cli@6.2.0':
+    resolution: {integrity: sha512-47j2VnDCRAuxlwFnBshQqTGBmkiRvr2jUs7FzEHT0z/drCOhNwHoNCDDAGC/1SwsiK9kaeNZcObyZfrpe3z3PA==}
     engines: {node: '>=22.19.0'}
     hasBin: true
 
@@ -3557,8 +3561,12 @@ packages:
     resolution: {integrity: sha512-P7SvvG0Iu3U76XLtcdkKYYYNnk53yqRDnvdChpKY2EYiiYaQm3fl5yVC/yMhWAL5WKUH7fBvI6XUeXoxAGNyHw==}
     engines: {node: '>=22.19.0'}
 
-  '@lingui/core@6.0.0':
-    resolution: {integrity: sha512-2UcneQQhGAD0TLk5UmWspqrfULteqN0yxlDHAt/QNySXtXmfh+QoHHAOSVphbNOFBV2/w62XVROk10hRaQSmbg==}
+  '@lingui/conf@6.2.0':
+    resolution: {integrity: sha512-SVZlXH0MJgS6Cu9NFCtJeqT7VzbKp5VDQcd9j51x6lRCzknPJS4CjJ4GWzu0RHoTmtQyoADLzuQTPrzD0ommLA==}
+    engines: {node: '>=22.19.0'}
+
+  '@lingui/core@6.2.0':
+    resolution: {integrity: sha512-iNxDy9+GfwBGi9YVgAt7q0V7hA7kwt5t+akScFWvIyzII0KpMd4oLq0JyPsedsKloWVmL8V0PuvtThM0Ja4SWg==}
     engines: {node: '>=22.19.0'}
     peerDependencies:
       babel-plugin-macros: 2 || 3
@@ -3566,16 +3574,20 @@ packages:
       babel-plugin-macros:
         optional: true
 
-  '@lingui/format-po@6.0.0':
-    resolution: {integrity: sha512-PiNIdC4xUuZOsj6t71DMSIKDD28jdGuiXrllT9AXdvsikxW4RzoPjE6Zys+Csp4wcjjldxS0NV1BOmAGYyW+Sw==}
+  '@lingui/format-po@6.2.0':
+    resolution: {integrity: sha512-rchqiXGySJagw/sN+fL6Wi9A1hAooSO7B/5qPmHbH2DP5kGnMbE61MwqvhGaJQrWMtnac9AGz1PC4AKBWKVAZw==}
     engines: {node: '>=22.19.0'}
 
   '@lingui/message-utils@6.0.0':
     resolution: {integrity: sha512-7HhrNjY9tQFa4l2RuwfqK7C5PViZnUpWl6RnBjvYz4YOWjP/jJwwbbG2oOVJeAfeo93BAyiO91lPoZnlBPjDEw==}
     engines: {node: '>=22.19.0'}
 
-  '@lingui/metro-transformer@6.0.0':
-    resolution: {integrity: sha512-r0fTfawXkmuZ3Syfuh2OblSN18zozBFn95j1+aD1xCMI5scplMYatwy6BhuNukQnQgMCytWwszUDoEoO0Lre7A==}
+  '@lingui/message-utils@6.2.0':
+    resolution: {integrity: sha512-oFmD6xYO40kC/7qBdxieEVekoYNI0KWtizCOanrlT6RXYPSwn5hH4Hf6u0mErEf23m/zNGDMO+D6YNQ4z7IxwQ==}
+    engines: {node: '>=22.19.0'}
+
+  '@lingui/metro-transformer@6.2.0':
+    resolution: {integrity: sha512-yD/78m1XrxUvPCmvFc3YPYFiDha0NIVkgwtyWivvpHK3PRVszsezxTcLWglwZnQQgM8FpCDCIx06W8Tmj4z7Mw==}
     engines: {node: '>=22.19.0'}
     peerDependencies:
       '@expo/metro-config': '*'
@@ -3590,8 +3602,8 @@ packages:
       expo:
         optional: true
 
-  '@lingui/react@6.0.0':
-    resolution: {integrity: sha512-pjHVLSLeqLDGsy/MYyN3ohdWNwLMqrfGIKuEovU2/LPVd2bZpWTd4IlTtY9Z1RLXj5/p7nOaSsJnz8IyGT6DyQ==}
+  '@lingui/react@6.2.0':
+    resolution: {integrity: sha512-DDdzKgHG+j13qA4In3nqBCSJDhdW9baIx+0a9/5znoHlnJsR2VG3AqlAtCmuTMr7uhjzwuZYJgG2Ms718Rr39A==}
     engines: {node: '>=22.19.0'}
     peerDependencies:
       babel-plugin-macros: 2 || 3
@@ -3600,8 +3612,8 @@ packages:
       babel-plugin-macros:
         optional: true
 
-  '@lingui/vite-plugin@6.0.0':
-    resolution: {integrity: sha512-GsdePolPDnHwlBVVPcL0OvI8SdSpJl1APZ01RiSOtULWcG8TtG36rQOaGAnW5C/iqQNbXvFWErDrR9qzNZVv6g==}
+  '@lingui/vite-plugin@6.2.0':
+    resolution: {integrity: sha512-Ti1wFsY40LP7+aXoooZ/fp1HqKLABBibaBNlboUYogsw6vZFatc3ZRYjOs6WcKozzlcawz8IeznGbCtAn3WVnA==}
     engines: {node: '>=22.19.0'}
     peerDependencies:
       '@babel/core': ^7.29.0 || ^8.0.0-rc.1
@@ -9738,10 +9750,6 @@ packages:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
 
-  jiti@2.6.1:
-    resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
-    hasBin: true
-
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
@@ -11196,8 +11204,9 @@ packages:
     resolution: {integrity: sha512-NCrCHhWmnQklfH4MtJMRjZ2a8c80qXeMlQMv2uVp9ISJMTt562SbGd6n2oq0PaPgKm7Z6pL9E2UlLIhC+SHL3w==}
     engines: {node: '>=4.0.0'}
 
-  pofile@1.1.4:
-    resolution: {integrity: sha512-r6Q21sKsY1AjTVVjOuU02VYKVNQGJNQHjTIvs4dEbeuuYfxgYk/DGD2mqqq4RDaVkwdSq0VEtmQUOPe/wH8X3g==}
+  pofile-ts@4.0.3:
+    resolution: {integrity: sha512-sz1pnjgEfPyZ+QvaeX3NtCmbYnEvG01LZRLoN/uXoLtPZtxCIH5IctL7yXXc0fFyk/fqV6K8g3hlNfr6IJwupA==}
+    engines: {node: '>=20'}
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -13950,15 +13959,15 @@ snapshots:
 
   '@babel/generator@7.29.1':
     dependencies:
-      '@babel/parser': 7.29.0
-      '@babel/types': 7.29.0
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
       jsesc: 3.1.0
 
   '@babel/helper-annotate-as-pure@7.27.3':
     dependencies:
-      '@babel/types': 7.29.0
+      '@babel/types': 7.29.7
 
   '@babel/helper-compilation-targets@7.28.6':
     dependencies:
@@ -14091,7 +14100,7 @@ snapshots:
 
   '@babel/parser@7.29.0':
     dependencies:
-      '@babel/types': 7.29.0
+      '@babel/types': 7.29.7
 
   '@babel/parser@7.29.7':
     dependencies:
@@ -15744,7 +15753,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@lingui/babel-plugin-extract-messages@6.0.0': {}
+  '@lingui/babel-plugin-extract-messages@6.2.0': {}
 
   '@lingui/babel-plugin-lingui-macro@6.0.0':
     dependencies:
@@ -15755,23 +15764,32 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@lingui/cli@6.0.0':
+  '@lingui/babel-plugin-lingui-macro@6.2.0':
+    dependencies:
+      '@babel/core': 7.29.0
+      '@babel/types': 7.29.7
+      '@lingui/conf': 6.2.0
+      '@lingui/message-utils': 6.2.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@lingui/cli@6.2.0':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
-      '@babel/parser': 7.29.0
-      '@babel/types': 7.29.0
-      '@lingui/babel-plugin-extract-messages': 6.0.0
-      '@lingui/babel-plugin-lingui-macro': 6.0.0
-      '@lingui/conf': 6.0.0
-      '@lingui/core': 6.0.0
-      '@lingui/format-po': 6.0.0
-      '@lingui/message-utils': 6.0.0
+      '@babel/parser': 7.29.7
+      '@babel/types': 7.29.7
+      '@lingui/babel-plugin-extract-messages': 6.2.0
+      '@lingui/babel-plugin-lingui-macro': 6.2.0
+      '@lingui/conf': 6.2.0
+      '@lingui/core': 6.2.0
+      '@lingui/format-po': 6.2.0
+      '@lingui/message-utils': 6.2.0
       chokidar: 5.0.0
       cli-table3: 0.6.5
       commander: 14.0.3
       esbuild: 0.25.12
-      jiti: 2.6.1
+      jiti: 2.7.0
       micromatch: 4.0.8
       ms: 2.1.3
       normalize-path: 3.0.0
@@ -15786,22 +15804,29 @@ snapshots:
   '@lingui/conf@6.0.0':
     dependencies:
       jest-validate: 29.7.0
-      jiti: 2.6.1
+      jiti: 2.7.0
       lilconfig: 3.1.3
       normalize-path: 3.0.0
 
-  '@lingui/core@6.0.0':
+  '@lingui/conf@6.2.0':
     dependencies:
-      '@lingui/babel-plugin-lingui-macro': 6.0.0
-      '@lingui/message-utils': 6.0.0
+      jest-validate: 29.7.0
+      jiti: 2.7.0
+      lilconfig: 3.1.3
+      normalize-path: 3.0.0
+
+  '@lingui/core@6.2.0':
+    dependencies:
+      '@lingui/babel-plugin-lingui-macro': 6.2.0
+      '@lingui/message-utils': 6.2.0
     transitivePeerDependencies:
       - supports-color
 
-  '@lingui/format-po@6.0.0':
+  '@lingui/format-po@6.2.0':
     dependencies:
-      '@lingui/conf': 6.0.0
-      '@lingui/message-utils': 6.0.0
-      pofile: 1.1.4
+      '@lingui/conf': 6.2.0
+      '@lingui/message-utils': 6.2.0
+      pofile-ts: 4.0.3
 
   '@lingui/message-utils@6.0.0':
     dependencies:
@@ -15809,10 +15834,16 @@ snapshots:
       '@messageformat/parser': 5.1.1
       js-sha256: 0.10.1
 
-  '@lingui/metro-transformer@6.0.0(@expo/metro-config@55.0.11(expo@55.0.9)(typescript@5.9.2))(expo@55.0.9)(react-native@0.83.4(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.6))':
+  '@lingui/message-utils@6.2.0':
     dependencies:
-      '@lingui/cli': 6.0.0
-      '@lingui/conf': 6.0.0
+      '@messageformat/date-skeleton': 1.1.0
+      '@messageformat/parser': 5.1.1
+      js-sha256: 0.10.1
+
+  '@lingui/metro-transformer@6.2.0(@expo/metro-config@55.0.11(expo@55.0.9)(typescript@5.9.2))(expo@55.0.9)(react-native@0.83.4(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.6))':
+    dependencies:
+      '@lingui/cli': 6.2.0
+      '@lingui/conf': 6.2.0
       memoize-one: 6.0.0
       react-native: 0.83.4(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.6)
     optionalDependencies:
@@ -15822,18 +15853,18 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  '@lingui/react@6.0.0(react@19.2.6)':
+  '@lingui/react@6.2.0(react@19.2.6)':
     dependencies:
-      '@lingui/babel-plugin-lingui-macro': 6.0.0
-      '@lingui/core': 6.0.0
+      '@lingui/babel-plugin-lingui-macro': 6.2.0
+      '@lingui/core': 6.2.0
       react: 19.2.6
     transitivePeerDependencies:
       - supports-color
 
-  '@lingui/vite-plugin@6.0.0(@babel/core@7.29.0)(@lingui/babel-plugin-lingui-macro@6.0.0)(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@lingui/vite-plugin@6.2.0(@babel/core@7.29.0)(@lingui/babel-plugin-lingui-macro@6.0.0)(@rolldown/plugin-babel@0.2.2(@babel/core@7.29.0)(@babel/plugin-transform-runtime@7.29.0(@babel/core@7.29.0))(@babel/runtime@7.29.7)(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(rolldown@1.0.0-rc.12(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
-      '@lingui/cli': 6.0.0
-      '@lingui/conf': 6.0.0
+      '@lingui/cli': 6.2.0
+      '@lingui/conf': 6.2.0
       vite: 8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
     optionalDependencies:
       '@babel/core': 7.29.0
@@ -17377,7 +17408,7 @@ snapshots:
   '@react-native/codegen@0.83.4(@babel/core@7.29.0)':
     dependencies:
       '@babel/core': 7.29.0
-      '@babel/parser': 7.29.0
+      '@babel/parser': 7.29.7
       glob: 7.2.3
       hermes-parser: 0.32.0
       invariant: 2.2.4
@@ -18169,7 +18200,7 @@ snapshots:
     dependencies:
       '@jridgewell/remapping': 2.3.5
       enhanced-resolve: 5.20.0
-      jiti: 2.6.1
+      jiti: 2.7.0
       lightningcss: 1.31.1
       magic-string: 0.30.21
       source-map-js: 1.2.1
@@ -18415,7 +18446,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.29.0
       '@babel/generator': 7.29.1
-      '@babel/parser': 7.29.0
+      '@babel/parser': 7.29.7
       '@babel/types': 7.29.7
       ansis: 4.2.0
       babel-dead-code-elimination: 1.0.12
@@ -22747,7 +22778,7 @@ snapshots:
       '@babel/generator': 7.29.1
       '@babel/plugin-syntax-jsx': 7.28.6(@babel/core@7.29.0)
       '@babel/plugin-syntax-typescript': 7.28.6(@babel/core@7.29.0)
-      '@babel/types': 7.29.0
+      '@babel/types': 7.29.7
       '@jest/expect-utils': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
@@ -22842,8 +22873,6 @@ snapshots:
   jimp-compact@0.16.1: {}
 
   jiti@2.4.2: {}
-
-  jiti@2.6.1: {}
 
   jiti@2.7.0: {}
 
@@ -24794,7 +24823,7 @@ snapshots:
 
   pngjs@3.4.0: {}
 
-  pofile@1.1.4: {}
+  pofile-ts@4.0.3: {}
 
   possible-typed-array-names@1.1.0: {}
 
