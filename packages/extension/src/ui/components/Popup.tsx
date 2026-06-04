@@ -7,7 +7,7 @@ import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/Setting
 import { settingsPageConfigs } from '@/services/pages'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
 import { PopupHeader } from './PopupHeader'
-import { MuiSettingsIsland } from './MuiSettingsIsland'
+import { MuiSettingsIsland } from '@asbplayer-fork/common/components/MuiSettingsIsland'
 import type { PopupCommands } from '../popup'
 
 interface Props {
@@ -44,40 +44,35 @@ const Popup = ({
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} />
       <FlicktionaryPairSection />
-      {/* SettingsForm + profile menu are still MUI until Phase G — they need
-          the legacy ThemeProvider island to keep dark mode / accents working. */}
+      <div className='h-[390px]'>
+        <SettingsForm
+          heightConstrained
+          extensionInstalled
+          extensionVersion={browser.runtime.getManifest().version}
+          extensionSupportsOverlay
+          extensionSupportsTrackSpecificSettings
+          extensionSupportsSubtitlesWidthSetting
+          extensionSupportsPauseOnHover
+          extensionSupportsExportCardBind
+          extensionSupportsPageSettings
+          forceVerticalTabs={false}
+          chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
+          settings={settings}
+          profiles={profilesContext.profiles}
+          activeProfile={profilesContext.activeProfile}
+          pageConfigs={settingsPageConfigs}
+          localFontsAvailable={localFontsAvailable}
+          localFontsPermission={localFontsPermission}
+          localFontFamilies={localFontFamilies}
+          supportedLanguages={supportedLanguages}
+          onSettingsChanged={onSettingsChanged}
+          onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
+          onUnlockLocalFonts={handleUnlockLocalFonts}
+        />
+      </div>
+      {/* Still MUI until Phase G2. */}
       <MuiSettingsIsland themeType={settings.themeType}>
-        {/* The island is a single flex child — restore the page's 12px rhythm
-            between the form and the profile menu inside it. */}
-        <div className='flex flex-col gap-3'>
-          <div className='h-[390px]'>
-            <SettingsForm
-              heightConstrained
-              extensionInstalled
-              extensionVersion={browser.runtime.getManifest().version}
-              extensionSupportsOverlay
-              extensionSupportsTrackSpecificSettings
-              extensionSupportsSubtitlesWidthSetting
-              extensionSupportsPauseOnHover
-              extensionSupportsExportCardBind
-              extensionSupportsPageSettings
-              forceVerticalTabs={false}
-              chromeKeyBinds={chromeCommandBindsToKeyBinds(commands)}
-              settings={settings}
-              profiles={profilesContext.profiles}
-              activeProfile={profilesContext.activeProfile}
-              pageConfigs={settingsPageConfigs}
-              localFontsAvailable={localFontsAvailable}
-              localFontsPermission={localFontsPermission}
-              localFontFamilies={localFontFamilies}
-              supportedLanguages={supportedLanguages}
-              onSettingsChanged={onSettingsChanged}
-              onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
-              onUnlockLocalFonts={handleUnlockLocalFonts}
-            />
-          </div>
-          <SettingsProfileSelectMenu {...profilesContext} />
-        </div>
+        <SettingsProfileSelectMenu {...profilesContext} />
       </MuiSettingsIsland>
     </div>
   )

@@ -475,8 +475,8 @@ msgstr "À propos"
 #~ msgid "About asbplayer"
 #~ msgstr "À propos d'asbplayer"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:248
-#: packages/extension/src/ui/components/ImportPopup.tsx:45
+#: packages/asbplayer-common/components/SettingsForm.tsx:137
+#: packages/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
@@ -564,7 +564,7 @@ msgstr "Ajouter au vocabulaire actif"
 msgid "Add to passive vocabulary"
 msgstr "Ajouter au vocabulaire passif"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:209
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:124
 msgid "Additional hosts"
 msgstr "Additional hosts"
 
@@ -647,15 +647,15 @@ msgstr "Terminé !"
 #~ msgid "All highlights have been processed."
 #~ msgstr "Tous les surlignages ont été traités."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:289
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:163
 msgid "Allow auto-loading of detected subtitles"
 msgstr "Allow auto-loading of detected subtitles"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:110
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:83
 msgid "Allow subtitle file drag-and-drop"
 msgstr "Autoriser le glisser-déposer de fichiers de sous-titres"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:279
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:158
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
@@ -699,8 +699,8 @@ msgid "Animate"
 msgstr "Animé"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:245
-msgid "Annotation"
-msgstr "Annotation"
+#~ msgid "Annotation"
+#~ msgstr "Annotation"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:132
 msgid "Another term already exists with that headword and sense."
@@ -710,7 +710,7 @@ msgstr "Un autre terme existe déjà avec ce mot-vedette et ce sens."
 #~ msgid "App Store"
 #~ msgstr "App Store"
 
-#: packages/asbplayer-common/components/About.tsx:210
+#: packages/asbplayer-common/components/About.tsx:28
 msgid "App version"
 msgstr "Version de l'app"
 
@@ -789,7 +789,7 @@ msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez ma
 msgid "Authentication failed"
 msgstr "Échec de l'authentification"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:155
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 
@@ -801,7 +801,7 @@ msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
 msgstr "Les pistes de sous-titres détectées automatiquement peuvent être sélectionnées ici. Flicktionary ne sait pas détecter les sous-titres sur tous les sites. Vous pouvez toujours charger vos propres fichiers de sous-titres."
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:120
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:88
 msgid "Auto-load detected subtitles"
 msgstr "Chargement automatique des sous-titres détectés"
 
@@ -813,7 +813,7 @@ msgstr "Pause automatique"
 msgid "Auto-pause preference"
 msgstr "Préférence de pause automatique"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:234
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:189
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Pause automatique au survol des sous-titres"
 
@@ -1073,7 +1073,7 @@ msgstr "Commun"
 msgid "Condensed"
 msgstr "Condensé"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:140
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:105
 msgid "Condensed playback minimum skip interval"
 msgstr "Intervalle de saut minimal en lecture condensée"
 
@@ -1273,7 +1273,7 @@ msgstr "Zone dangereuse"
 msgid "Danger Zone"
 msgstr "Zone Dangereuse"
 
-#: packages/asbplayer-common/components/UiSettings.tsx:52
+#: packages/asbplayer-common/components/UiSettings.tsx:30
 msgid "Dark"
 msgstr "Sombre"
 
@@ -1341,7 +1341,7 @@ msgstr "Suppression…"
 #~ msgid "Dependencies"
 #~ msgstr "Dépendances"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:228
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:183
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
 
@@ -1349,7 +1349,7 @@ msgstr "Detect and Display Ruby"
 msgid "Detecting language…"
 msgstr "Détection de la langue…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:247
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:192
 msgid "Disabled"
 msgstr "Désactivé"
 
@@ -1357,7 +1357,7 @@ msgstr "Désactivé"
 msgid "Display form (e.g. stress-marked)"
 msgstr "Forme d'affichage (par ex. accentuée)"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:97
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:75
 msgid "Display subtitles"
 msgstr "Afficher les sous-titres"
 
@@ -1477,15 +1477,15 @@ msgstr "Vide"
 msgid "Enable audio recording"
 msgstr "Activer l'enregistrement audio"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:86
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:69
 msgid "Enable controls overlay"
 msgstr "Activer la superposition des commandes"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:271
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:194
 msgid "Enabled"
 msgstr "Activé"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:259
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:193
 msgid "Enabled with auto-resume"
 msgstr "Activé avec reprise automatique"
 
@@ -1592,7 +1592,7 @@ msgstr "Expliquer"
 msgid "Explain this term in more depth."
 msgstr "Expliquez ce terme plus en détail."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:333
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:266
 msgid "Export Settings"
 msgstr "Exporter les paramètres"
 
@@ -1612,7 +1612,7 @@ msgstr "Export en cours…"
 msgid "Extension shortcut"
 msgstr "Raccourci de l'extension"
 
-#: packages/asbplayer-common/components/About.tsx:218
+#: packages/asbplayer-common/components/About.tsx:34
 msgid "Extension version"
 msgstr "Version de l'extension"
 
@@ -2196,7 +2196,7 @@ msgstr "Historique · {languageName}"
 msgid "Home"
 msgstr "Accueil"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:207
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:122
 msgid "Host regex"
 msgstr "Host regex"
 
@@ -2240,7 +2240,7 @@ msgstr "Imperfectif"
 msgid "Import article to Flicktionary"
 msgstr "Importer l’article dans Flicktionary"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:330
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:263
 msgid "Import Settings"
 msgstr "Importer les paramètres"
 
@@ -2344,7 +2344,7 @@ msgstr "Garder comme passif"
 msgid "Keep options"
 msgstr "Options de conservation"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:244
+#: packages/asbplayer-common/components/SettingsForm.tsx:128
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
@@ -2357,7 +2357,7 @@ msgid "Label (e.g. past.m)"
 msgstr "Libellé (par ex. passé.m)"
 
 #: apps/web/src/components/language-option-list.tsx:52
-#: packages/asbplayer-common/components/UiSettings.tsx:58
+#: packages/asbplayer-common/components/UiSettings.tsx:35
 msgid "Language"
 msgstr "Langue"
 
@@ -2435,7 +2435,7 @@ msgstr "Moins formel :"
 #~ msgid "License"
 #~ msgstr "Licence"
 
-#: packages/asbplayer-common/components/UiSettings.tsx:42
+#: packages/asbplayer-common/components/UiSettings.tsx:29
 msgid "Light"
 msgstr "Clair"
 
@@ -2559,9 +2559,9 @@ msgstr "Peut-être plus tard"
 msgid "Message to the founders"
 msgstr "Message pour les fondateurs"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:247
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:134
-#: packages/extension/src/ui/components/ImportPopup.tsx:42
+#: packages/asbplayer-common/components/SettingsForm.tsx:134
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:98
+#: packages/extension/src/ui/components/ImportPopup.tsx:41
 msgid "Misc"
 msgstr "Divers"
 
@@ -2641,7 +2641,7 @@ msgstr "Plusieurs éléments vidéo détectés"
 msgid "Name (optional)"
 msgstr "Nom (optionnel)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:278
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:210
 msgid "Name of the tab"
 msgstr "Nom de l'onglet"
 
@@ -2861,7 +2861,7 @@ msgstr "Numéral"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:324
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:170
 #: packages/extension/src/ui/components/Tutorial.tsx:116
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
@@ -2949,7 +2949,7 @@ msgstr "Autre"
 msgid "Overridden"
 msgstr "Remplacé"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:156
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:112
 msgid "Pages"
 msgstr "Pages"
 
@@ -3007,11 +3007,11 @@ msgstr "Collez un article, un commentaire ou une publication"
 msgid "Paste your text"
 msgstr "Collez votre texte"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:232
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:143
 msgid "Path hash regex for subtitle detection"
 msgstr "Path hash regex for subtitle detection"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:227
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:138
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
@@ -3290,7 +3290,7 @@ msgstr "Nom du profil"
 msgid "Profile, subscription, sign-in"
 msgstr "Profil, abonnement, connexion"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:130
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:93
 msgid "Prompt on failure to auto-load subtitles"
 msgstr "Prompt on failure to auto-load subtitles"
 
@@ -3389,7 +3389,7 @@ msgstr "Tout rejeter"
 msgid "Reload the page, then try importing again."
 msgstr "Rechargez la page, puis réessayez l’import."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:165
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:150
 msgid "Remember subtitle offset"
 msgstr "Mémoriser le décalage des sous-titres"
 
@@ -3399,7 +3399,7 @@ msgstr "Se souvenir de ces choix de piste pour ce site"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:207
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -3420,7 +3420,7 @@ msgstr "Supprimer la session"
 msgid "Removing…"
 msgstr "Suppression…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:217
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:176
 msgid "Render"
 msgstr "Rendu"
 
@@ -3473,7 +3473,7 @@ msgstr "Réessayer"
 msgid "Return to Login"
 msgstr "Retour à la connexion"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:200
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:118
 msgid "Revert"
 msgstr "Revert"
 
@@ -3567,7 +3567,7 @@ msgstr "Rechercher des films…"
 msgid "Search OpenSubtitles"
 msgstr "Rechercher sur OpenSubtitles"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:265
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:149
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
@@ -3717,8 +3717,8 @@ msgid "Setting up account..."
 msgstr "Configuration du compte..."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
-#: packages/extension/src/ui/components/SettingsPage.tsx:78
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:259
+#: packages/extension/src/ui/components/SettingsPage.tsx:58
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
 msgid "Settings"
@@ -3917,7 +3917,7 @@ msgstr "Arrêter de pratiquer ce terme en pratique active"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:246
+#: packages/asbplayer-common/components/SettingsForm.tsx:131
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
@@ -3959,7 +3959,7 @@ msgstr "Abonnement réussi !"
 msgid "Subtitle Alignment"
 msgstr "Alignement des sous-titres"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:243
+#: packages/asbplayer-common/components/SettingsForm.tsx:125
 msgid "Subtitle Appearance"
 msgstr "Apparence des sous-titres"
 
@@ -3987,11 +3987,11 @@ msgstr "Famille de police des sous-titres"
 msgid "Subtitle Font Thickness"
 msgstr "Épaisseur de la police des sous-titres"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:286
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:216
 msgid "Subtitle Generation"
 msgstr "Génération des sous-titres"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:196
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:172
 msgid "Subtitle HTML"
 msgstr "Sous-titres HTML"
 
@@ -4015,11 +4015,11 @@ msgstr "Décalage de la position des sous-titres depuis le bas"
 msgid "Subtitle position offset from top"
 msgstr "Décalage de la position des sous-titres depuis le haut"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:179
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:160
 msgid "Subtitle regex filter"
 msgstr "Filtre regex des sous-titres"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:188
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:166
 msgid "Subtitle regex filter text replacement"
 msgstr "Remplacement de texte pour le filtre regex des sous-titres"
 
@@ -4048,8 +4048,8 @@ msgstr "Piste des sous-titres"
 msgid "Subtitle Track {0}"
 msgstr "Piste des sous-titres {0}"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:156
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:101
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:147
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:80
 msgid "Subtitles"
 msgstr "Subtitles"
 
@@ -4104,7 +4104,7 @@ msgstr "Exemple cible"
 msgid "Target language"
 msgstr "Langue cible"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:124
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:59
 msgid "Target language codes for machine translation"
 msgstr "Target language codes for machine translation"
 
@@ -4195,7 +4195,7 @@ msgstr "La première étape pour utiliser asbplayer est toujours de charger des 
 #~ msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
 #~ msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
 
-#: packages/asbplayer-common/components/UiSettings.tsx:31
+#: packages/asbplayer-common/components/UiSettings.tsx:26
 msgid "Theme"
 msgstr "Thème"
 
@@ -4212,7 +4212,7 @@ msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. 
 msgid "There was an error. Please contact support."
 msgstr "Il y a eu une erreur. Veuillez contacter le support."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:204
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:103
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
 
@@ -4349,11 +4349,11 @@ msgstr "Piste {0}"
 #~ msgid "Track imported"
 #~ msgstr "Piste importée"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:296
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:224
 msgid "Transcript Server API Key (optional)"
 msgstr "Clé API du serveur de transcription (facultatif)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:289
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:219
 msgid "Transcript Server URL"
 msgstr "URL du serveur de transcription"
 
@@ -4384,8 +4384,8 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle la
 msgid "Tutorial"
 msgstr "Tutoriel"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:76
-#: packages/asbplayer-common/components/UiSettings.tsx:27
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:65
+#: packages/asbplayer-common/components/UiSettings.tsx:22
 msgid "UI"
 msgstr "UI"
 

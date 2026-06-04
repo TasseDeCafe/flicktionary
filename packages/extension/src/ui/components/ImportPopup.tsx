@@ -8,7 +8,6 @@ import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
 import { FlicktionaryImportSection } from './FlicktionaryImportSection'
 import { PopupHeader } from './PopupHeader'
-import { MuiSettingsIsland } from './MuiSettingsIsland'
 
 interface Props {
   settings: AsbplayerSettings
@@ -45,21 +44,17 @@ const ImportPopup = ({ settings, onSettingsChanged, onOpenApp }: Props) => {
             {t`About Flicktionary`}
           </TabsTrigger>
         </TabsList>
-        {/* UiSettings/About are still MUI until Phase G — keep the legacy theme
-            island around them so dark mode / accents render correctly. */}
-        <MuiSettingsIsland themeType={settings.themeType}>
-          <TabsContent value='misc' className='min-w-0'>
-            <UiSettings
-              themeType={settings.themeType}
-              language={settings.language}
-              supportedLanguages={supportedLanguages}
-              onSettingChanged={handleSettingChanged}
-            />
-          </TabsContent>
-          <TabsContent value='about' className='min-w-0'>
-            <About extensionVersion={browser.runtime.getManifest().version} />
-          </TabsContent>
-        </MuiSettingsIsland>
+        <TabsContent value='misc' className='flex min-w-0 flex-col gap-2'>
+          <UiSettings
+            themeType={settings.themeType}
+            language={settings.language}
+            supportedLanguages={supportedLanguages}
+            onSettingChanged={handleSettingChanged}
+          />
+        </TabsContent>
+        <TabsContent value='about' className='min-w-0'>
+          <About extensionVersion={browser.runtime.getManifest().version} />
+        </TabsContent>
       </Tabs>
     </div>
   )

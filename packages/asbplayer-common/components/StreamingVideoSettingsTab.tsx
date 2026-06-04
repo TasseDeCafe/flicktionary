@@ -1,20 +1,9 @@
-import SettingsTextField from './SettingsTextField'
-import Stack from '@mui/material/Stack'
-import Switch from '@mui/material/Switch'
-import TableContainer from '@mui/material/TableContainer'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableRowWithHoverEffect from './TableRowWithHoverEffect'
-import TableCell from '@mui/material/TableCell'
-import SwitchLabelWithHoverEffect from './SwitchLabelWithHoverEffect'
+import { SlidersHorizontal } from 'lucide-react'
+import SettingsField from './SettingsField'
+import SettingsSwitchRow from './SettingsSwitchRow'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { AsbplayerSettings, Page, PageSettings, YoutubePage } from '../settings'
-import InputAdornment from '@mui/material/InputAdornment'
-import Paper from '@mui/material/Paper'
 import { pageMetadata } from '../pages'
-import Badge from '@mui/material/Badge'
-import IconButton from '@mui/material/IconButton'
-import TuneIcon from '@mui/icons-material/Tune'
 import { PageConfigMap } from './SettingsForm'
 import { useState } from 'react'
 import PageSettingsForm from './PageSettingsForm'
@@ -71,137 +60,88 @@ const StreamingVideoSettingsTab: React.FC<Props> = ({
           onPageChanged={(key, page) => onSettingsChanged({ streamingPages: { ...streamingPages, [key]: page } })}
         />
       )}
-      <Stack spacing={1}>
+      <div className='flex flex-col gap-2'>
         <SettingsSection>
           <Trans>UI</Trans>
         </SettingsSection>
         {extensionSupportsOverlay && (
-          <SwitchLabelWithHoverEffect
-            control={
-              <Switch
-                checked={streamingEnableOverlay}
-                onChange={(e) => onSettingChanged('streamingEnableOverlay', e.target.checked)}
-              />
-            }
+          <SettingsSwitchRow
             label={t`Enable controls overlay`}
-            labelPlacement='start'
+            checked={streamingEnableOverlay}
+            onCheckedChange={(checked) => onSettingChanged('streamingEnableOverlay', checked)}
           />
         )}
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={streamingDisplaySubtitles}
-              onChange={(e) => onSettingChanged('streamingDisplaySubtitles', e.target.checked)}
-            />
-          }
+        <SettingsSwitchRow
           label={t`Display subtitles`}
-          labelPlacement='start'
+          checked={streamingDisplaySubtitles}
+          onCheckedChange={(checked) => onSettingChanged('streamingDisplaySubtitles', checked)}
         />
         <SettingsSection>
           <Trans>Subtitles</Trans>
         </SettingsSection>
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={streamingSubsDragAndDrop}
-              onChange={(e) => onSettingChanged('streamingSubsDragAndDrop', e.target.checked)}
-            />
-          }
+        <SettingsSwitchRow
           label={t`Allow subtitle file drag-and-drop`}
-          labelPlacement='start'
+          checked={streamingSubsDragAndDrop}
+          onCheckedChange={(checked) => onSettingChanged('streamingSubsDragAndDrop', checked)}
         />
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={streamingAutoSync}
-              onChange={(e) => onSettingChanged('streamingAutoSync', e.target.checked)}
-            />
-          }
+        <SettingsSwitchRow
           label={t`Auto-load detected subtitles`}
-          labelPlacement='start'
+          checked={streamingAutoSync}
+          onCheckedChange={(checked) => onSettingChanged('streamingAutoSync', checked)}
         />
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={streamingAutoSyncPromptOnFailure}
-              onChange={(e) => onSettingChanged('streamingAutoSyncPromptOnFailure', e.target.checked)}
-            />
-          }
+        <SettingsSwitchRow
           label={t`Prompt on failure to auto-load subtitles`}
-          labelPlacement='start'
+          checked={streamingAutoSyncPromptOnFailure}
+          onCheckedChange={(checked) => onSettingChanged('streamingAutoSyncPromptOnFailure', checked)}
         />
         <SettingsSection>
           <Trans>Misc</Trans>
         </SettingsSection>
-        <SettingsTextField
+        <SettingsField
           type='number'
-          color='primary'
-          fullWidth
+          min={0}
+          step={1}
+          suffix='ms'
           label={t`Condensed playback minimum skip interval`}
           value={streamingCondensedPlaybackMinimumSkipIntervalMs}
           onChange={(e) => onSettingChanged('streamingCondensedPlaybackMinimumSkipIntervalMs', Number(e.target.value))}
-          slotProps={{
-            htmlInput: {
-              min: 0,
-              step: 1,
-            },
-            input: {
-              endAdornment: <InputAdornment position='end'>ms</InputAdornment>,
-            },
-          }}
         />
         {pageConfigs && (
           <>
             <SettingsSection>
               <Trans>Pages</Trans>
             </SettingsSection>
-            <TableContainer variant='outlined' component={Paper} style={{ height: 'auto' }}>
-              <Table>
-                <TableBody>
-                  {Object.keys(pageConfigs).map((key) => {
-                    const pageKey = key as keyof PageSettings
-                    const metadata = pageMetadata[pageKey]
-                    const page = settings.streamingPages[pageKey]
+            <div className='overflow-hidden rounded-lg border'>
+              {Object.keys(pageConfigs).map((key) => {
+                const pageKey = key as keyof PageSettings
+                const metadata = pageMetadata[pageKey]
+                const page = settings.streamingPages[pageKey]
 
-                    return (
-                      <TableRowWithHoverEffect
-                        key={key}
-                        onClick={() => {
-                          setPageSettingsFormKey(pageKey)
-                          setPageSettingsFormOpen(true)
-                        }}
-                      >
-                        <TableCell
-                          sx={{
-                            width: 48,
-                            background: `url(${pageConfigs[pageKey].faviconUrl})`,
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: '75%',
-                            backgroundSize: 24,
-                          }}
-                        />
-                        <TableCell align='left'>{metadata.title}</TableCell>
-                        <TableCell align='right'>
-                          <Badge
-                            invisible={!pageSettingsHasModifications(page)}
-                            color='warning'
-                            badgeContent=' '
-                            variant='dot'
-                          >
-                            <IconButton>
-                              <TuneIcon />
-                            </IconButton>
-                          </Badge>
-                        </TableCell>
-                      </TableRowWithHoverEffect>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                return (
+                  <button
+                    key={key}
+                    type='button'
+                    className='hover:bg-accent/50 flex w-full cursor-pointer items-center gap-3 border-b px-3 py-2 last:border-b-0'
+                    onClick={() => {
+                      setPageSettingsFormKey(pageKey)
+                      setPageSettingsFormOpen(true)
+                    }}
+                  >
+                    <img src={pageConfigs[pageKey].faviconUrl} alt='' className='size-6 shrink-0' />
+                    <span className='flex-1 text-left text-sm'>{metadata.title}</span>
+                    <span className='relative inline-flex'>
+                      <SlidersHorizontal className='text-muted-foreground size-4' />
+                      {pageSettingsHasModifications(page) && (
+                        <span className='absolute -top-1 -right-1 size-2 rounded-full bg-yellow-500' />
+                      )}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </>
         )}
-      </Stack>
+      </div>
     </>
   )
 }

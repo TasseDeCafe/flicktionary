@@ -1,122 +1,18 @@
-import React, { useCallback, useState, useEffect, useMemo } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { makeStyles } from 'tss-react/mui'
-import { useTheme } from '@mui/material/styles'
-import Box from '@mui/material/Box'
 import { AsbplayerSettings, PageConfig, PageSettings, Profile } from '@asbplayer-fork/common/settings'
-import { isNumeric } from '@asbplayer-fork/common/util'
-import Tab from '@mui/material/Tab'
-import Tabs from '@mui/material/Tabs'
-import useMediaQuery from '@mui/material/useMediaQuery'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@flicktionary/ui/components/tabs'
 import About from './About'
 import SubtitleAppearanceSettingsTab from './SubtitleAppearanceSettingsTab'
 import KeyboardShortcutsSettingsTab from './KeyboardShortcutsSettingsTab'
 import StreamingVideoSettingsTab from './StreamingVideoSettingsTab'
 import MiscSettingsTab from './MiscSettingsTab'
+import { MuiSettingsIsland } from './MuiSettingsIsland'
 
-interface StylesProps {
-  smallScreen: boolean
-  heightConstrained?: boolean
-}
+type TabName = 'subtitle-appearance' | 'keyboard-shortcuts' | 'streaming-video' | 'misc-settings' | 'about'
 
-const useStyles = makeStyles<StylesProps>()((theme, { smallScreen, heightConstrained }) => ({
-  root: {
-    maxHeight: '100%',
-    height: 'calc(100% - 48px)',
-    ...(smallScreen ? {} : { flexGrow: 1, display: 'flex', height: '100%' }),
-  },
-  tabs: {
-    '& .MuiButtonBase-root': {
-      paddingLeft: 0,
-      paddingRight: theme.spacing(1),
-      ...(heightConstrained ? { minHeight: 38, fontSize: 12 } : {}),
-    },
-    '& .MuiTab-root': {
-      minWidth: 120,
-      height: '100%',
-    },
-    ...(smallScreen ? {} : { minWidth: 120, width: 120 }),
-  },
-  formGroup: {
-    '& .MuiTextField-root': {
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-    },
-  },
-  subtitleSetting: {
-    '& .MuiTextField-root': {
-      marginTop: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-    },
-  },
-  subtitlePreview: {
-    backgroundImage: `linear-gradient(45deg, ${theme.palette.action.disabledBackground} 25%, transparent 25%), linear-gradient(-45deg, ${theme.palette.action.disabledBackground} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${theme.palette.action.disabledBackground} 75%), linear-gradient(-45deg, transparent 75%,${theme.palette.action.disabledBackground} 75%)`,
-    backgroundSize: '20px 20px',
-    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    maxWidth: '100%',
-    padding: 10,
-  },
-  subtitlePreviewInput: {
-    border: 'none',
-    width: '100%',
-    textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0)',
-    '&:focus': {
-      outline: 'none',
-    },
-  },
-  switchLabel: {
-    justifyContent: 'space-between',
-    marginLeft: 0,
-    marginRight: -8,
-  },
-  verticallyCentered: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-}))
-
-type TabsOrientation = 'horizontal' | 'vertical'
-
-interface PanelStyleProps {
-  tabsOrientation: TabsOrientation
-}
-
-const usePanelStyles = makeStyles<PanelStyleProps>()((theme, { tabsOrientation }) => ({
-  panel: {
-    paddingLeft: tabsOrientation === 'horizontal' ? theme.spacing(1) : theme.spacing(2),
-    paddingRight: theme.spacing(1),
-    paddingTop: tabsOrientation === 'horizontal' ? theme.spacing(1) : 0,
-    overflowY: 'scroll',
-    maxHeight: '100%',
-    height: '100%',
-    width: '100%',
-  },
-}))
-
-interface TabPanelProps {
-  children?: React.ReactNode
-  index: any
-  value: any
-  tabsOrientation: TabsOrientation
-}
-
-const TabPanel = React.forwardRef<HTMLDivElement, TabPanelProps>(function TabPanel(
-  { children, value, index, tabsOrientation, ...other }: TabPanelProps,
-  ref
-) {
-  const { classes } = usePanelStyles({ tabsOrientation })
-  return (
-    <Box ref={ref} className={classes.panel} hidden={value !== index} {...other}>
-      {value === index && children}
-    </Box>
-  )
-})
-
-type TabName = 'dictionary' | 'subtitle-appearance' | 'keyboard-shortcuts' | 'streaming-video' | 'misc-settings'
+const tabNames: TabName[] = ['subtitle-appearance', 'keyboard-shortcuts', 'streaming-video', 'misc-settings', 'about']
 
 interface SettingsFormPageConfig extends PageConfig {
   faviconUrl: string
@@ -153,13 +49,22 @@ interface Props {
   onUnlockLocalFonts: () => void
 }
 
-// Filter out keys that look like '0', '1', ... as those are invalid
-const cssStyles = Object.keys(document.body.style).filter((s) => !isNumeric(s))
+const useMatchMedia = (query: string) => {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+
+  useEffect(() => {
+    const mediaQueryList = window.matchMedia(query)
+    const handleChange = () => setMatches(mediaQueryList.matches)
+    mediaQueryList.addEventListener('change', handleChange)
+    handleChange()
+    return () => mediaQueryList.removeEventListener('change', handleChange)
+  }, [query])
+
+  return matches
+}
 
 export default function SettingsForm({
   settings,
-  profiles,
-  activeProfile,
   pageConfigs,
   extensionInstalled,
   extensionVersion,
@@ -178,16 +83,14 @@ export default function SettingsForm({
   localFontFamilies,
   supportedLanguages,
   forceVerticalTabs,
-  inTutorial,
   heightConstrained,
   onSettingsChanged,
   onOpenChromeExtensionShortcuts,
   onUnlockLocalFonts,
 }: Props) {
-  const supportsDictionary = false
-  const theme = useTheme()
-  const smallScreen = useMediaQuery(theme.breakpoints.down(500)) && !forceVerticalTabs
-  const { classes } = useStyles({ smallScreen, heightConstrained })
+  // Width-responsive like the MUI original (breakpoint 500px), except where the
+  // caller pins the orientation (the 600px-wide popup always fits vertical tabs).
+  const smallScreen = useMatchMedia('(max-width: 500px)') && !forceVerticalTabs
   const handleSettingChanged = useCallback(
     async <K extends keyof AsbplayerSettings>(key: K, value: AsbplayerSettings[K]) => {
       onSettingsChanged({ [key]: value })
@@ -195,83 +98,74 @@ export default function SettingsForm({
     [onSettingsChanged]
   )
   const { t } = useLingui()
-  const tabIndicesById = useMemo(() => {
-    const tabs = [
-      'subtitle-appearance',
-      'keyboard-shortcuts',
-      'dictionary',
-      'streaming-video',
-      'misc-settings',
-      'about',
-    ]
-
-    if (!supportsDictionary) {
-      tabs.splice(tabs.indexOf('dictionary'), 1)
-    }
-
-    return Object.fromEntries(tabs.map((tab, i) => [tab, i]))
-  }, [supportsDictionary])
+  const [tabValue, setTabValue] = useState<TabName>('subtitle-appearance')
 
   useEffect(() => {
-    if (!scrollToId) {
-      return
+    if (scrollToId && (tabNames as string[]).includes(scrollToId)) {
+      setTabValue(scrollToId as TabName)
     }
+  }, [scrollToId])
 
-    if (scrollToId in tabIndicesById) {
-      setTabIndex(tabIndicesById[scrollToId as TabName])
-    }
-  }, [scrollToId, tabIndicesById])
-
-  const [tabIndex, setTabIndex] = useState<number>(0)
-  const tabsOrientation = smallScreen ? 'horizontal' : 'vertical'
+  const vertical = !smallScreen
+  const triggerClasses = cn(
+    vertical && 'w-full justify-start',
+    heightConstrained ? 'min-h-[38px] text-xs' : 'min-h-[42px] text-sm'
+  )
+  const panelClasses = cn('h-full max-h-full w-full overflow-y-auto', vertical ? 'pr-2 pl-4' : 'p-2')
 
   return (
-    <div className={classes.root}>
-      <Tabs
-        orientation={tabsOrientation}
-        variant='scrollable'
-        value={tabIndex}
-        className={classes.tabs}
-        scrollButtons={false}
-        onChange={(event, index) => setTabIndex(index)}
-        style={{
-          maxWidth: '100vw',
-          marginLeft: smallScreen ? 'auto' : 0,
-          marginRight: smallScreen ? 'auto' : 0,
-        }}
-      >
-        <Tab tabIndex={0} label={t`Subtitle Appearance`} id='subtitle-appearance' />
-        <Tab tabIndex={1} label={t`Keyboard Shortcuts`} id='keyboard-shortcuts' />
-        {supportsDictionary && <Tab tabIndex={2} label={t`Annotation`} id='dictionary' />}
-        <Tab tabIndex={2 + Number(supportsDictionary)} label={t`Streaming Video`} id='streaming-video' />
-        <Tab tabIndex={3 + Number(supportsDictionary)} label={t`Misc`} id='misc-settings' />
-        <Tab tabIndex={4 + Number(supportsDictionary)} label={t`About Flicktionary`} id='about' />
-      </Tabs>
-      <TabPanel value={tabIndex} index={tabIndicesById['subtitle-appearance']} tabsOrientation={tabsOrientation}>
-        <SubtitleAppearanceSettingsTab
-          settings={settings}
-          onSettingChanged={handleSettingChanged}
-          onSettingsChanged={onSettingsChanged}
-          extensionInstalled={extensionInstalled}
-          extensionSupportsTrackSpecificSettings={extensionSupportsTrackSpecificSettings}
-          extensionSupportsSubtitlesWidthSetting={extensionSupportsSubtitlesWidthSetting}
-          localFontsAvailable={localFontsAvailable}
-          localFontsPermission={localFontsPermission}
-          localFontFamilies={localFontFamilies}
-          onUnlockLocalFonts={onUnlockLocalFonts}
-        />
-      </TabPanel>
-      <TabPanel value={tabIndex} index={tabIndicesById['keyboard-shortcuts']} tabsOrientation={tabsOrientation}>
-        <KeyboardShortcutsSettingsTab
-          settings={settings}
-          onSettingChanged={handleSettingChanged}
-          chromeKeyBinds={chromeKeyBinds}
-          extensionInstalled={extensionInstalled}
-          extensionSupportsExportCardBind={extensionSupportsExportCardBind}
-          onOpenChromeExtensionShortcuts={onOpenChromeExtensionShortcuts}
-        />
-      </TabPanel>
-      <TabPanel value={tabIndex} index={tabIndicesById['streaming-video']} tabsOrientation={tabsOrientation}>
+    <Tabs
+      value={tabValue}
+      onValueChange={(value) => setTabValue(value as TabName)}
+      orientation={vertical ? 'vertical' : 'horizontal'}
+      className={cn('h-full max-h-full', vertical ? 'flex-row gap-0' : 'flex-col gap-2')}
+    >
+      <TabsList className={cn(vertical ? 'h-fit w-[130px] shrink-0 flex-col' : 'mx-auto max-w-full overflow-x-auto')}>
+        <TabsTrigger value='subtitle-appearance' className={triggerClasses}>
+          {t`Subtitle Appearance`}
+        </TabsTrigger>
+        <TabsTrigger value='keyboard-shortcuts' className={triggerClasses}>
+          {t`Keyboard Shortcuts`}
+        </TabsTrigger>
+        <TabsTrigger value='streaming-video' className={triggerClasses}>
+          {t`Streaming Video`}
+        </TabsTrigger>
+        <TabsTrigger value='misc-settings' className={triggerClasses}>
+          {t`Misc`}
+        </TabsTrigger>
+        <TabsTrigger value='about' className={triggerClasses}>
+          {t`About Flicktionary`}
+        </TabsTrigger>
+      </TabsList>
+      {/* SubtitleAppearance + KeyboardShortcuts are still MUI until Phase G2 —
+          they need the legacy ThemeProvider island for dark mode / accents. */}
+      <MuiSettingsIsland themeType={settings.themeType}>
+        <TabsContent value='subtitle-appearance' className={panelClasses}>
+          <SubtitleAppearanceSettingsTab
+            settings={settings}
+            onSettingChanged={handleSettingChanged}
+            onSettingsChanged={onSettingsChanged}
+            extensionInstalled={extensionInstalled}
+            extensionSupportsTrackSpecificSettings={extensionSupportsTrackSpecificSettings}
+            extensionSupportsSubtitlesWidthSetting={extensionSupportsSubtitlesWidthSetting}
+            localFontsAvailable={localFontsAvailable}
+            localFontsPermission={localFontsPermission}
+            localFontFamilies={localFontFamilies}
+            onUnlockLocalFonts={onUnlockLocalFonts}
+          />
+        </TabsContent>
+        <TabsContent value='keyboard-shortcuts' className={panelClasses}>
+          <KeyboardShortcutsSettingsTab
+            settings={settings}
+            onSettingChanged={handleSettingChanged}
+            chromeKeyBinds={chromeKeyBinds}
+            extensionInstalled={extensionInstalled}
+            extensionSupportsExportCardBind={extensionSupportsExportCardBind}
+            onOpenChromeExtensionShortcuts={onOpenChromeExtensionShortcuts}
+          />
+        </TabsContent>
+      </MuiSettingsIsland>
+      <TabsContent value='streaming-video' className={panelClasses}>
         <StreamingVideoSettingsTab
           settings={settings}
           onSettingChanged={handleSettingChanged}
@@ -281,8 +175,8 @@ export default function SettingsForm({
           extensionSupportsPageSettings={extensionSupportsPageSettings}
           pageConfigs={pageConfigs}
         />
-      </TabPanel>
-      <TabPanel value={tabIndex} index={tabIndicesById['misc-settings']} tabsOrientation={tabsOrientation}>
+      </TabsContent>
+      <TabsContent value='misc-settings' className={panelClasses}>
         <MiscSettingsTab
           settings={settings}
           onSettingChanged={handleSettingChanged}
@@ -292,13 +186,13 @@ export default function SettingsForm({
           extensionInstalled={extensionInstalled}
           extensionSupportsPauseOnHover={extensionSupportsPauseOnHover}
         />
-      </TabPanel>
-      <TabPanel value={tabIndex} index={tabIndicesById['about']} tabsOrientation={tabsOrientation}>
+      </TabsContent>
+      <TabsContent value='about' className={panelClasses}>
         <About
           appVersion={insideApp ? appVersion : undefined}
           extensionVersion={extensionInstalled ? extensionVersion : undefined}
         />
-      </TabPanel>
-    </div>
+      </TabsContent>
+    </Tabs>
   )
 }

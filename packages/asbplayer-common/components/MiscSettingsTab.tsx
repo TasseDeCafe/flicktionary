@@ -1,21 +1,12 @@
-import Button from '@mui/material/Button'
-import ButtonGroup from '@mui/material/ButtonGroup'
-import FormControl from '@mui/material/FormControl'
-import FormLabel from '@mui/material/FormLabel'
-import Radio from '@mui/material/Radio'
-import RadioGroup from '@mui/material/RadioGroup'
-import Switch from '@mui/material/Switch'
-import Stack from '@mui/material/Stack'
-import Typography from '@mui/material/Typography'
-import SettingsTextField from './SettingsTextField'
-import SwitchLabelWithHoverEffect from './SwitchLabelWithHoverEffect'
-import LabelWithHoverEffect from './LabelWithHoverEffect'
+import { Download, Trash2 } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
+import SettingsField from './SettingsField'
+import SettingsSwitchRow from './SettingsSwitchRow'
+import SettingsRadioGroupField from './SettingsRadioGroupField'
 import { AsbplayerSettings, exportSettings, PauseOnHoverMode, validateSettings } from '../settings'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SubtitleHtml } from '..'
-import DownloadIcon from '@mui/icons-material/Download'
-import DeleteIcon from '@mui/icons-material/Delete'
 import SettingsSection from './SettingsSection'
 import UiSettings from './UiSettings'
 
@@ -145,7 +136,7 @@ const MiscSettingTab: React.FC<Props> = ({
 
   return (
     <>
-      <Stack spacing={1}>
+      <div className='flex flex-col gap-2'>
         <UiSettings
           themeType={themeType}
           language={language}
@@ -155,185 +146,133 @@ const MiscSettingTab: React.FC<Props> = ({
         <SettingsSection>
           <Trans>Subtitles</Trans>
         </SettingsSection>
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={rememberSubtitleOffset}
-              onChange={(event) => onSettingChanged('rememberSubtitleOffset', event.target.checked)}
-            />
-          }
+        <SettingsSwitchRow
           label={t`Remember subtitle offset`}
-          labelPlacement='start'
+          checked={rememberSubtitleOffset}
+          onCheckedChange={(checked) => onSettingChanged('rememberSubtitleOffset', checked)}
         />
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={autoCopyCurrentSubtitle}
-              onChange={(event) => onSettingChanged('autoCopyCurrentSubtitle', event.target.checked)}
-            />
-          }
+        <SettingsSwitchRow
           label={t`Auto-copy current subtitle to clipboard`}
-          labelPlacement='start'
+          checked={autoCopyCurrentSubtitle}
+          onCheckedChange={(checked) => onSettingChanged('autoCopyCurrentSubtitle', checked)}
         />
-        <SettingsTextField
+        <SettingsField
           label={t`Subtitle regex filter`}
-          fullWidth
           value={subtitleRegexFilter}
-          color='primary'
-          error={!validRegex}
-          helperText={validRegex ? undefined : 'Invalid regular expression'}
+          errorText={validRegex ? undefined : 'Invalid regular expression'}
           onChange={(event) => onSettingChanged('subtitleRegexFilter', event.target.value)}
         />
-        <SettingsTextField
+        <SettingsField
           label={t`Subtitle regex filter text replacement`}
-          fullWidth
           value={subtitleRegexFilterTextReplacement}
-          color='primary'
           onChange={(event) => onSettingChanged('subtitleRegexFilterTextReplacement', event.target.value)}
         />
-        <FormControl>
-          <FormLabel>
-            <Trans>Subtitle HTML</Trans>
-          </FormLabel>
-          <RadioGroup row>
-            <LabelWithHoverEffect
-              control={
-                <Radio
-                  checked={subtitleHtml === SubtitleHtml.remove}
-                  value={SubtitleHtml.remove}
-                  onChange={(event) => event.target.checked && onSettingChanged('subtitleHtml', SubtitleHtml.remove)}
-                />
-              }
-              label={t`Remove`}
-            />
-            <LabelWithHoverEffect
-              control={
-                <Radio
-                  checked={subtitleHtml === SubtitleHtml.render}
-                  value={SubtitleHtml.render}
-                  onChange={(event) => event.target.checked && onSettingChanged('subtitleHtml', SubtitleHtml.render)}
-                />
-              }
-              label={t`Render`}
-            />
-          </RadioGroup>
-        </FormControl>
-        <SwitchLabelWithHoverEffect
-          control={
-            <Switch
-              checked={convertNetflixRuby}
-              onChange={(event) => onSettingChanged('convertNetflixRuby', event.target.checked)}
-            />
+        <SettingsRadioGroupField
+          row
+          label={<Trans>Subtitle HTML</Trans>}
+          value={subtitleHtml === SubtitleHtml.remove ? 'remove' : 'render'}
+          options={[
+            { value: 'remove', label: t`Remove` },
+            { value: 'render', label: t`Render` },
+          ]}
+          onValueChange={(value) =>
+            onSettingChanged('subtitleHtml', value === 'remove' ? SubtitleHtml.remove : SubtitleHtml.render)
           }
+        />
+        <SettingsSwitchRow
           label={t`Detect and Display Ruby`}
-          labelPlacement='start'
+          checked={convertNetflixRuby}
+          onCheckedChange={(checked) => onSettingChanged('convertNetflixRuby', checked)}
         />
         {(!extensionInstalled || extensionSupportsPauseOnHover) && (
-          <FormControl>
-            <FormLabel component='legend'>
-              <Trans>Auto-pause when mousing over subtitles</Trans>
-            </FormLabel>
-            <RadioGroup row={false}>
-              <LabelWithHoverEffect
-                control={
-                  <Radio
-                    checked={pauseOnHoverMode === PauseOnHoverMode.disabled}
-                    value={PauseOnHoverMode.disabled}
-                    onChange={(event) =>
-                      event.target.checked && onSettingChanged('pauseOnHoverMode', PauseOnHoverMode.disabled)
-                    }
-                  />
-                }
-                label={t`Disabled`}
-              />
-              <LabelWithHoverEffect
-                control={
-                  <Radio
-                    checked={pauseOnHoverMode === PauseOnHoverMode.inAndOut}
-                    value={PauseOnHoverMode.inAndOut}
-                    onChange={(event) =>
-                      event.target.checked && onSettingChanged('pauseOnHoverMode', PauseOnHoverMode.inAndOut)
-                    }
-                  />
-                }
-                label={t`Enabled with auto-resume`}
-              />
-              <LabelWithHoverEffect
-                control={
-                  <Radio
-                    checked={pauseOnHoverMode === PauseOnHoverMode.inNotOut}
-                    value={PauseOnHoverMode.inNotOut}
-                    onChange={(event) =>
-                      event.target.checked && onSettingChanged('pauseOnHoverMode', PauseOnHoverMode.inNotOut)
-                    }
-                  />
-                }
-                label={t`Enabled`}
-              />
-            </RadioGroup>
-          </FormControl>
+          <SettingsRadioGroupField
+            label={<Trans>Auto-pause when mousing over subtitles</Trans>}
+            value={
+              pauseOnHoverMode === PauseOnHoverMode.disabled
+                ? 'disabled'
+                : pauseOnHoverMode === PauseOnHoverMode.inAndOut
+                  ? 'inAndOut'
+                  : 'inNotOut'
+            }
+            options={[
+              { value: 'disabled', label: t`Disabled` },
+              { value: 'inAndOut', label: t`Enabled with auto-resume` },
+              { value: 'inNotOut', label: t`Enabled` },
+            ]}
+            onValueChange={(value) =>
+              onSettingChanged(
+                'pauseOnHoverMode',
+                value === 'disabled'
+                  ? PauseOnHoverMode.disabled
+                  : value === 'inAndOut'
+                    ? PauseOnHoverMode.inAndOut
+                    : PauseOnHoverMode.inNotOut
+              )
+            }
+          />
         )}
         {insideApp && (
-          <SettingsTextField
+          <SettingsField
             label={t`Name of the tab`}
-            fullWidth
             value={tabName}
-            color='primary'
             onChange={(event) => onSettingChanged('tabName', event.target.value)}
           />
         )}
         <SettingsSection>
           <Trans>Subtitle Generation</Trans>
         </SettingsSection>
-        <SettingsTextField
+        <SettingsField
           label={t`Transcript Server URL`}
-          fullWidth
           value={transcriptServerUrl}
-          color='primary'
           onChange={(event) => onSettingChanged('transcriptServerUrl', event.target.value)}
         />
-        <SettingsTextField
+        <SettingsField
           label={t`Transcript Server API Key (optional)`}
-          fullWidth
           type='password'
           value={transcriptApiKey}
-          color='primary'
           onChange={(event) => onSettingChanged('transcriptApiKey', event.target.value)}
         />
         {!insideApp && (
-          <Stack spacing={1}>
-            <Typography variant='body2'>Cached Transcripts: {transcriptCacheCount}</Typography>
-            <ButtonGroup fullWidth size='small' variant='outlined'>
+          <div className='flex flex-col gap-2'>
+            <p className='text-sm'>Cached Transcripts: {transcriptCacheCount}</p>
+            <div className='flex gap-2'>
               <Button
-                startIcon={<DownloadIcon />}
+                type='button'
+                variant='outline'
+                size='sm'
+                className='flex-1'
                 onClick={handleExportTranscriptCache}
                 disabled={transcriptCacheCount === 0}
               >
+                <Download />
                 Export
               </Button>
               <Button
-                startIcon={<DeleteIcon />}
+                type='button'
+                variant='outline'
+                size='sm'
+                className='text-destructive flex-1'
                 onClick={handleClearTranscriptCache}
                 disabled={transcriptCacheCount === 0}
-                color='error'
               >
+                <Trash2 />
                 Clear
               </Button>
-            </ButtonGroup>
-          </Stack>
+            </div>
+          </div>
         )}
         <SettingsSection>
           <Trans>Settings</Trans>
         </SettingsSection>
-        <Stack direction='row' spacing={1}>
-          <Button variant='contained' color='primary' style={{ flex: 1 }} onClick={handleImportSettings}>
+        <div className='flex gap-2'>
+          <Button type='button' className='flex-1' onClick={handleImportSettings}>
             <Trans>Import Settings</Trans>
           </Button>
-          <Button variant='contained' color='primary' style={{ flex: 1 }} onClick={handleExportSettings}>
+          <Button type='button' className='flex-1' onClick={handleExportSettings}>
             <Trans>Export Settings</Trans>
           </Button>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
       <input
         ref={settingsFileInputRef}
         onChange={handleSettingsFileInputChange}

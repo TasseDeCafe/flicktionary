@@ -1,20 +1,20 @@
 import { useMemo, type ReactNode } from 'react'
 import ThemeProvider from '@mui/material/styles/ThemeProvider'
-import { createTheme } from '@asbplayer-fork/common/theme'
+import { createTheme } from '../theme'
 
 interface Props {
   themeType: 'dark' | 'light'
   children: ReactNode
 }
 
-// TEMPORARY Phase-F scaffolding, deleted with the rest of MUI in Phase G.
+// TEMPORARY scaffolding, deleted with the rest of MUI in Phase G2/G3.
 //
-// The popup pages are Radix/Tailwind now, but they still embed the MUI
-// settings subtrees (SettingsForm, SettingsProfileSelectMenu, UiSettings,
-// About) that only get rewritten in Phase G. Those components resolve their
-// palette/spacing from the nearest MUI ThemeProvider — without one they fall
-// back to MUI's default LIGHT theme, breaking dark mode and the yellow accent.
-// This island re-provides the legacy theme around just those subtrees.
+// The settings shell is Radix/Tailwind now, but the complex tabs
+// (SubtitleAppearance, KeyboardShortcuts) and SettingsProfileSelectMenu only
+// get rewritten in Phase G2. Those components resolve their palette/spacing
+// from the nearest MUI ThemeProvider — without one they fall back to MUI's
+// default LIGHT theme, breaking dark mode and the yellow accent. This island
+// re-provides the legacy theme around just those subtrees.
 //
 // No CssBaseline (Tailwind preflight owns the page base now) and no
 // StyledEngineProvider: emotion's styles are un-layered, so they beat
