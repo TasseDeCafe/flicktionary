@@ -1,25 +1,16 @@
 import { AsbplayerSettings, KeyBindName } from '../settings'
 import { useLingui } from '@lingui/react/macro'
 import { isMacOs } from 'react-device-detect'
-import { makeStyles } from 'tss-react/mui'
-import { useTheme } from '@mui/material/styles'
-import { type Theme } from '@mui/material'
 import { useOutsideClickListener } from '@asbplayer-fork/common/hooks'
 import hotkeys from 'hotkeys-js'
-import Grid2 from '@mui/material/Grid2'
-import Typography from '@mui/material/Typography'
-import InputAdornment from '@mui/material/InputAdornment'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import Radio from '@mui/material/Radio'
-import RadioGroup from '@mui/material/RadioGroup'
-import Switch from '@mui/material/Switch'
-import EditIcon from '@mui/icons-material/Edit'
-import SettingsTextField from './SettingsTextField'
+import { Pencil } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
+import { Input } from '@flicktionary/ui/components/input'
+import { Switch } from '@flicktionary/ui/components/switch'
+import { RadioGroup, RadioGroupItem } from '@flicktionary/ui/components/radio-group'
 import { isFirefox } from '../browser-detection'
-import React, { useMemo, useEffect, useCallback, useState, useRef } from 'react'
+import React, { useMemo, useEffect, useCallback, useState, useRef, useId } from 'react'
 import KeyBindRelatedSetting from './KeyBindRelatedSetting'
-import LabelWithHoverEffect from './LabelWithHoverEffect'
 import { AutoPausePreference } from '..'
 
 type AllKeyNames = KeyBindName | 'selectSubtitleTrack'
@@ -42,15 +33,6 @@ const modifierKeyReplacements: { [key: string]: string } = isMacOs
 
 const modifierKeys = ['⌃', '⇧', '⌥', 'ctrl', 'shift', 'alt', 'option', 'control', 'command', '⌘']
 
-const useKeyBindFieldStyles = makeStyles()((theme) => ({
-  container: {
-    marginBottom: theme.spacing(1),
-  },
-  labelItem: {
-    marginTop: theme.spacing(1),
-  },
-}))
-
 interface KeyBindFieldProps {
   label: string
   keys: string
@@ -61,8 +43,6 @@ interface KeyBindFieldProps {
 
 function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensionShortcuts }: KeyBindFieldProps) {
   const { t } = useLingui()
-  const theme = useTheme<Theme>()
-  const { classes } = useKeyBindFieldStyles()
   const [currentKeyString, setCurrentKeyString] = useState<string>(keys)
   const currentKeyStringRef = useRef<string>(undefined)
   currentKeyStringRef.current = currentKeyString
@@ -161,47 +141,79 @@ function KeyBindField({ label, keys, boundViaChrome, onKeysChange, onOpenExtensi
   const firefoxExtensionShortcut = isFirefox && boundViaChrome
 
   return (
-    <Grid2 container className={classes.container} wrap={'nowrap'} spacing={1}>
-      <Grid2 sx={{ '&:hover': { background: theme.palette.action.hover }, p: 1 }} container direction='row' size={12}>
-        <Grid2 className={classes.labelItem} size={7.5}>
-          <Typography>{label}</Typography>
-        </Grid2>
-        <Grid2 size='grow'>
-          <SettingsTextField
+    <div className='hover:bg-accent/50 mb-2 flex items-start gap-2 rounded-md p-2'>
+      <div className='w-3/5 shrink-0 pt-2 text-sm'>{label}</div>
+      <div className='flex flex-1 flex-col gap-1'>
+        <div className='relative'>
+          <Input
+            readOnly
             placeholder={placeholder}
-            size='small'
-            contentEditable={false}
             disabled={boundViaChrome}
-            helperText={boundViaChrome ? t`Extension shortcut` : undefined}
             value={currentKeyString}
             title={currentKeyString}
-            color='primary'
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position='end'>
-                    {!firefoxExtensionShortcut && (
-                      <IconButton ref={ref} sx={{ marginRight: -1 }} onClick={handleEditKeyBinding}>
-                        <EditIcon fontSize='small' />
-                      </IconButton>
-                    )}
-                    {firefoxExtensionShortcut && (
-                      <Tooltip title={t`Edit this shortcut from the Plugin manager at about:addons.`}>
-                        <span>
-                          <IconButton disabled={true}>
-                            <EditIcon fontSize='small' />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    )}
-                  </InputAdornment>
-                ),
-              },
-            }}
+            className='pr-9 text-sm'
           />
-        </Grid2>
-      </Grid2>
-    </Grid2>
+          <span className='absolute top-1/2 right-1 flex -translate-y-1/2 items-center'>
+            {!firefoxExtensionShortcut && (
+              <Button
+                ref={ref}
+                type='button'
+                variant='ghost'
+                size='icon-sm'
+                className='size-7 md:size-7'
+                onClick={handleEditKeyBinding}
+              >
+                <Pencil className='size-4' />
+              </Button>
+            )}
+            {firefoxExtensionShortcut && (
+              <span title={t`Edit this shortcut from the Plugin manager at about:addons.`}>
+                <Button type='button' variant='ghost' size='icon-sm' className='size-7 md:size-7' disabled>
+                  <Pencil className='size-4' />
+                </Button>
+              </span>
+            )}
+          </span>
+        </div>
+        {boundViaChrome && <p className='text-muted-foreground text-xs'>{t`Extension shortcut`}</p>}
+      </div>
+    </div>
+  )
+}
+
+interface AutoPausePreferenceSelectorProps {
+  autoPausePreference: AutoPausePreference
+  onAutoPausePreferenceChanged: (preference: AutoPausePreference) => void
+}
+
+const AutoPausePreferenceSelector = ({
+  autoPausePreference,
+  onAutoPausePreferenceChanged,
+}: AutoPausePreferenceSelectorProps) => {
+  const { t } = useLingui()
+  const id = useId()
+  const options = [
+    { value: AutoPausePreference.atStart, label: t`At Subtitle Start` },
+    { value: AutoPausePreference.atEnd, label: t`At Subtitle End` },
+  ]
+
+  return (
+    <RadioGroup
+      value={String(autoPausePreference)}
+      onValueChange={(value) => onAutoPausePreferenceChanged(Number(value) as AutoPausePreference)}
+      className='flex flex-row flex-wrap justify-end gap-x-4 gap-y-1'
+    >
+      {options.map((option) => (
+        <label
+          key={option.value}
+          htmlFor={`${id}-${option.value}`}
+          className='flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5'
+        >
+          <RadioGroupItem id={`${id}-${option.value}`} value={String(option.value)} />
+          <span className='text-sm'>{option.label}</span>
+        </label>
+      ))}
+    </RadioGroup>
   )
 }
 
@@ -246,34 +258,10 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           <KeyBindRelatedSetting
             label={t`Auto-pause preference`}
             control={
-              <Grid2>
-                <RadioGroup row>
-                  <LabelWithHoverEffect
-                    control={
-                      <Radio
-                        checked={autoPausePreference === AutoPausePreference.atStart}
-                        value={AutoPausePreference.atStart}
-                        onChange={(event) =>
-                          event.target.checked && onSettingChanged('autoPausePreference', AutoPausePreference.atStart)
-                        }
-                      />
-                    }
-                    label={t`At Subtitle Start`}
-                  />
-                  <LabelWithHoverEffect
-                    control={
-                      <Radio
-                        checked={autoPausePreference === AutoPausePreference.atEnd}
-                        value={AutoPausePreference.atEnd}
-                        onChange={(event) =>
-                          event.target.checked && onSettingChanged('autoPausePreference', AutoPausePreference.atEnd)
-                        }
-                      />
-                    }
-                    label={t`At Subtitle End`}
-                  />
-                </RadioGroup>
-              </Grid2>
+              <AutoPausePreferenceSelector
+                autoPausePreference={autoPausePreference}
+                onAutoPausePreferenceChanged={(preference) => onSettingChanged('autoPausePreference', preference)}
+              />
             }
           />
         ),
@@ -286,19 +274,14 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           <KeyBindRelatedSetting
             label={t`Fast-forward mode playback rate`}
             control={
-              <SettingsTextField
+              <Input
                 type='number'
-                fullWidth
+                className='max-w-28 text-sm'
                 value={fastForwardModePlaybackRate}
-                color='primary'
+                min={0.1}
+                max={5}
+                step={0.1}
                 onChange={(event) => onSettingChanged('fastForwardModePlaybackRate', Number(event.target.value))}
-                slotProps={{
-                  htmlInput: {
-                    min: 0.1,
-                    max: 5,
-                    step: 0.1,
-                  },
-                }}
               />
             }
           />
@@ -341,20 +324,14 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           <KeyBindRelatedSetting
             label={t`Seek interval (seconds)`}
             control={
-              <SettingsTextField
+              <Input
                 type='number'
-                size='small'
-                fullWidth
+                className='max-w-28 text-sm'
                 value={seekDuration}
-                color='primary'
+                min={1}
+                max={60}
+                step={1}
                 onChange={(event) => onSettingChanged('seekDuration', Number(event.target.value))}
-                slotProps={{
-                  htmlInput: {
-                    min: 1,
-                    max: 60,
-                    step: 1,
-                  },
-                }}
               />
             }
           />
@@ -371,7 +348,7 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
             control={
               <Switch
                 checked={alwaysPlayOnSubtitleRepeat}
-                onChange={(event) => onSettingChanged('alwaysPlayOnSubtitleRepeat', event.target.checked)}
+                onCheckedChange={(checked) => onSettingChanged('alwaysPlayOnSubtitleRepeat', checked)}
               />
             }
           />
@@ -396,19 +373,14 @@ const KeyboardShortcutsSettingsTab: React.FC<Props> = ({
           <KeyBindRelatedSetting
             label={t`Playback speed adjust step`}
             control={
-              <SettingsTextField
+              <Input
                 type='number'
-                fullWidth
+                className='max-w-28 text-sm'
                 value={speedChangeStep}
-                color='primary'
+                min={0.1}
+                max={1}
+                step={0.1}
                 onChange={(event) => onSettingChanged('speedChangeStep', Number(event.target.value))}
-                slotProps={{
-                  htmlInput: {
-                    min: 0.1,
-                    max: 1,
-                    step: 0.1,
-                  },
-                }}
               />
             }
           />

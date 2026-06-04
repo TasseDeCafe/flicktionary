@@ -7,7 +7,6 @@ import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/Setting
 import { settingsPageConfigs } from '@/services/pages'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
 import { PopupHeader } from './PopupHeader'
-import { MuiSettingsIsland } from '@asbplayer-fork/common/components/MuiSettingsIsland'
 import type { PopupCommands } from '../popup'
 
 interface Props {
@@ -70,10 +69,7 @@ const Popup = ({
           onUnlockLocalFonts={handleUnlockLocalFonts}
         />
       </div>
-      {/* Still MUI until Phase G2. */}
-      <MuiSettingsIsland themeType={settings.themeType}>
-        <SettingsProfileSelectMenu {...profilesContext} />
-      </MuiSettingsIsland>
+      <SettingsProfileSelectMenu {...profilesContext} />
     </div>
   )
 }

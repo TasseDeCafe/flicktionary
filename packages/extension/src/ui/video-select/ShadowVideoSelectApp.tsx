@@ -4,13 +4,7 @@ import { SettingsIcon, XIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
 import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@flicktionary/ui/components/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import { UpdateChannel } from '../shadow/model-store'
 
@@ -221,7 +215,9 @@ function VideoSelectContent({
                   </SelectContent>
                 </Select>
               </div>
-              {selectedVideoElement && <img className='w-full rounded-md' alt='' src={selectedVideoElement.imageDataUrl} />}
+              {selectedVideoElement && (
+                <img className='w-full rounded-md' alt='' src={selectedVideoElement.imageDataUrl} />
+              )}
             </div>
             <DialogFooter>
               <Button variant='ghost' onClick={onConfirm} disabled={selectedVideoElement === undefined}>

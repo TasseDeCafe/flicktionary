@@ -1,18 +1,10 @@
 import React, { useCallback, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import AddIcon from '@mui/icons-material/Add'
-import LockIcon from '@mui/icons-material/Lock'
-import ClearIcon from '@mui/icons-material/Clear'
-import EditIcon from '@mui/icons-material/Edit'
-import UndoIcon from '@mui/icons-material/Undo'
-import FormControl from '@mui/material/FormControl'
-import FormLabel from '@mui/material/FormLabel'
-import InputAdornment from '@mui/material/InputAdornment'
-import IconButton from '@mui/material/IconButton'
-import LabelWithHoverEffect from './LabelWithHoverEffect'
-import MenuItem from '@mui/material/MenuItem'
-import DeleteIcon from '@mui/icons-material/Delete'
-import Radio from '@mui/material/Radio'
+import { Lock, Pencil, Plus, Trash2, Undo2, X } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
+import { Label } from '@flicktionary/ui/components/label'
+import { Slider } from '@flicktionary/ui/components/slider'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
 import {
   AsbplayerSettings,
   TextSubtitleSettings,
@@ -22,22 +14,19 @@ import {
 } from '@asbplayer-fork/common/settings'
 import { isNumeric } from '@asbplayer-fork/common/util'
 import { CustomStyle } from '@asbplayer-fork/common/settings'
-import Typography from '@mui/material/Typography'
-import Switch from '@mui/material/Switch'
-import RadioGroup from '@mui/material/RadioGroup'
-import Tooltip from '@mui/material/Tooltip'
-import Autocomplete from '@mui/material/Autocomplete'
-import Slider from '@mui/material/Slider'
-import Button from '@mui/material/Button'
 import SubtitleAppearanceTrackSelector from './SubtitleAppearanceTrackSelector'
 import SubtitlePreview from './SubtitlePreview'
-import Stack from '@mui/material/Stack'
-import SettingsTextField from './SettingsTextField'
-import SwitchLabelWithHoverEffect from './SwitchLabelWithHoverEffect'
+import SettingsField from './SettingsField'
+import SettingsSelectField from './SettingsSelectField'
+import SettingsSwitchRow from './SettingsSwitchRow'
+import SettingsRadioGroupField from './SettingsRadioGroupField'
 import SettingsSection from './SettingsSection'
 
 // Filter out keys that look like '0', '1', ... as those are invalid
 const cssStyles = Object.keys(document.body.style).filter((s) => !isNumeric(s))
+
+// Compact icon button for input endAdornments (28px fits inside the h-9 input).
+const adornmentButtonClasses = 'size-7 md:size-7'
 
 interface AddCustomStyleProps {
   styleKey: string
@@ -45,46 +34,32 @@ interface AddCustomStyleProps {
   onAddCustomStyle: (styleKey: string) => void
 }
 
+// The MUI original was an Autocomplete; downgraded to a (typeahead-searchable)
+// select per the migration plan — cmdk is not in the catalog.
 function AddCustomStyle({ styleKey, onStyleKey, onAddCustomStyle }: AddCustomStyleProps) {
   const { t } = useLingui()
   return (
-    <Autocomplete
-      options={cssStyles}
-      value={styleKey}
-      fullWidth
-      disableClearable
-      clearOnEscape
-      clearOnBlur
-      forcePopupIcon={false}
-      onReset={() => onStyleKey('')}
-      onChange={(event, newValue) => {
-        onStyleKey(newValue ?? '')
-      }}
-      renderInput={(params) => (
-        <SettingsTextField
-          placeholder={t`Style Key`}
-          label={t`Add Custom CSS`}
-          color='primary'
-          {...params}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <InputAdornment position='end'>
-                <IconButton
-                  disabled={cssStyles.find((s) => s === styleKey) === undefined}
-                  onClick={() => {
-                    onAddCustomStyle(styleKey)
-                    onStyleKey(cssStyles[0])
-                  }}
-                >
-                  <AddIcon fontSize='small' />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-      )}
-    />
+    <div className='flex items-end gap-2'>
+      <SettingsSelectField
+        label={t`Add Custom CSS`}
+        value={styleKey}
+        options={cssStyles.map((s) => ({ value: s }))}
+        onValueChange={onStyleKey}
+      />
+      <Button
+        type='button'
+        variant='outline'
+        size='icon'
+        className='shrink-0'
+        disabled={cssStyles.find((s) => s === styleKey) === undefined}
+        onClick={() => {
+          onAddCustomStyle(styleKey)
+          onStyleKey(cssStyles[0])
+        }}
+      >
+        <Plus />
+      </Button>
+    </div>
   )
 }
 
@@ -98,23 +73,16 @@ function CustomStyleSetting({ customStyle, onCustomStyle, onDelete }: CustomStyl
   const { t } = useLingui()
 
   return (
-    <SettingsTextField
-      color='primary'
+    <SettingsField
       label={t`CSS: ${customStyle.key}`}
       placeholder={t`Style Value`}
       value={customStyle.value}
       onChange={(e) => onCustomStyle({ key: customStyle.key, value: e.target.value })}
-      slotProps={{
-        input: {
-          endAdornment: (
-            <InputAdornment position='end'>
-              <IconButton onClick={onDelete}>
-                <DeleteIcon fontSize='small' />
-              </IconButton>
-            </InputAdornment>
-          ),
-        },
-      }}
+      endAdornment={
+        <Button type='button' variant='ghost' size='icon-sm' className={adornmentButtonClasses} onClick={onDelete}>
+          <Trash2 className='size-4' />
+        </Button>
+      }
     />
   )
 }
@@ -185,7 +153,7 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
     selectedSubtitleAppearanceTrack !== undefined &&
     textSubtitleSettingsAreDirty(settings, selectedSubtitleAppearanceTrack)
   return (
-    <Stack spacing={1}>
+    <div className='flex flex-col gap-2'>
       {(!extensionInstalled || extensionSupportsTrackSpecificSettings) && (
         <>
           <SubtitleAppearanceTrackSelector
@@ -194,11 +162,12 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
           />
           {selectedSubtitleAppearanceTrack !== undefined && (
             <Button
-              startIcon={<UndoIcon />}
+              type='button'
+              variant='outline'
               disabled={!selectedSubtitleAppearanceTrackIsDirty}
               onClick={handleResetSubtitleTrack}
-              variant='outlined'
             >
+              <Undo2 />
               <Trans>Reset</Trans>
             </Button>
           )}
@@ -213,166 +182,135 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         <Trans>Styling</Trans>
       </SettingsSection>
       {subtitleColor !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='color'
           label={t`Subtitle Color`}
-          fullWidth
           value={subtitleColor}
-          color='primary'
+          className='cursor-pointer p-1'
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleColor', event.target.value)}
         />
       )}
       {subtitleSize !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='number'
           label={t`Subtitle Size`}
-          fullWidth
           value={subtitleSize}
-          color='primary'
+          min={1}
+          step={1}
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleSize', Number(event.target.value))}
-          slotProps={{
-            htmlInput: {
-              min: 1,
-              step: 1,
-            },
-          }}
         />
       )}
       {subtitleThickness !== undefined && (
-        <>
-          <Typography variant='subtitle2' color='textSecondary'>
+        <div className='flex flex-col gap-2'>
+          <Label>
             <Trans>Subtitle Font Thickness</Trans>
-          </Typography>
+            <span className='text-muted-foreground font-normal'>{subtitleThickness}</span>
+          </Label>
           <Slider
-            color='primary'
-            value={subtitleThickness}
-            onChange={(event, value) => handleSubtitleTextSettingChanged('subtitleThickness', value as number)}
+            value={[subtitleThickness]}
+            onValueChange={([value]) => handleSubtitleTextSettingChanged('subtitleThickness', value)}
             min={100}
             max={900}
             step={100}
-            marks
-            valueLabelDisplay='auto'
+            className='py-2'
           />
-        </>
+        </div>
       )}
       {subtitleOutlineColor !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='color'
           label={t`Subtitle Outline Color`}
-          fullWidth
           value={subtitleOutlineColor}
-          color='primary'
+          className='cursor-pointer p-1'
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleOutlineColor', event.target.value)}
         />
       )}
       {subtitleOutlineThickness !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='number'
           label={t`Subtitle Outline Thickness`}
           helperText={t`Adds an outline around subtitle text. If this causes overlapping lines, try using a different font.`}
-          fullWidth
           value={subtitleOutlineThickness}
+          min={0}
+          step={0.1}
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleOutlineThickness', Number(event.target.value))}
-          slotProps={{
-            htmlInput: {
-              min: 0,
-              step: 0.1,
-            },
-          }}
-          color='primary'
         />
       )}
       {subtitleShadowColor !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='color'
           label={t`Subtitle Shadow Color`}
-          fullWidth
           value={subtitleShadowColor}
-          color='primary'
+          className='cursor-pointer p-1'
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleShadowColor', event.target.value)}
         />
       )}
       {subtitleShadowThickness !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='number'
           label={t`Subtitle Shadow Thickness`}
-          fullWidth
           value={subtitleShadowThickness}
+          min={0}
+          step={0.1}
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleShadowThickness', Number(event.target.value))}
-          slotProps={{
-            htmlInput: {
-              min: 0,
-              step: 0.1,
-            },
-          }}
-          color='primary'
         />
       )}
       {subtitleBackgroundColor !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='color'
           label={t`Subtitle Background Color`}
-          fullWidth
           value={subtitleBackgroundColor}
-          color='primary'
+          className='cursor-pointer p-1'
           onChange={(event) => handleSubtitleTextSettingChanged('subtitleBackgroundColor', event.target.value)}
         />
       )}
       {subtitleBackgroundOpacity !== undefined && (
-        <SettingsTextField
+        <SettingsField
           type='number'
           label={t`Subtitle Background Opacity`}
-          fullWidth
-          slotProps={{
-            htmlInput: {
-              min: 0,
-              max: 1,
-              step: 0.1,
-            },
-          }}
+          min={0}
+          max={1}
+          step={0.1}
           value={subtitleBackgroundOpacity}
-          color='primary'
           onChange={(event) =>
             handleSubtitleTextSettingChanged('subtitleBackgroundOpacity', Number(event.target.value))
           }
         />
       )}
-      {subtitleFontFamily !== undefined && (
-        <FormControl fullWidth>
-          <FormLabel>
-            <Trans>Subtitle Font Family</Trans>
-          </FormLabel>
-          <SettingsTextField
-            type='text'
-            select={localFontFamilies.length > 0}
-            // label={t`Subtitle Font Family`}
-            fullWidth
+      {subtitleFontFamily !== undefined &&
+        (localFontFamilies.length > 0 ? (
+          <SettingsSelectField
+            label={<Trans>Subtitle Font Family</Trans>}
             value={subtitleFontFamily}
-            color='primary'
+            options={localFontFamilies.map((f) => ({ value: f }))}
+            onValueChange={(value) => handleSubtitleTextSettingChanged('subtitleFontFamily', value)}
+          />
+        ) : (
+          <SettingsField
+            type='text'
+            label={<Trans>Subtitle Font Family</Trans>}
+            value={subtitleFontFamily}
             onChange={(event) => handleSubtitleTextSettingChanged('subtitleFontFamily', event.target.value)}
-            slotProps={{
-              input: {
-                endAdornment:
-                  localFontFamilies.length === 0 && localFontsAvailable && localFontsPermission === 'prompt' ? (
-                    <Tooltip title={t`Click to unlock font menu`}>
-                      <IconButton onClick={onUnlockLocalFonts}>
-                        <LockIcon fontSize='small' />
-                      </IconButton>
-                    </Tooltip>
-                  ) : null,
-              },
-            }}
-          >
-            {localFontFamilies.length > 0
-              ? localFontFamilies.map((f) => (
-                  <MenuItem key={f} value={f}>
-                    {f}
-                  </MenuItem>
-                ))
-              : null}
-          </SettingsTextField>
-        </FormControl>
-      )}
+            endAdornment={
+              localFontsAvailable && localFontsPermission === 'prompt' ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon-sm'
+                      className={adornmentButtonClasses}
+                      onClick={onUnlockLocalFonts}
+                    >
+                      <Lock className='size-4' />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t`Click to unlock font menu`}</TooltipContent>
+                </Tooltip>
+              ) : undefined
+            }
+          />
+        ))}
 
       {subtitleCustomStyles !== undefined && (
         <>
@@ -412,22 +350,19 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
       )}
 
       {subtitleBlur !== undefined && (
-        <Tooltip
-          placement='bottom-end'
-          title={t`Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover.`}
-        >
-          <SwitchLabelWithHoverEffect
-            control={
-              <Switch
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <SettingsSwitchRow
+                label={t`Subtitle blur`}
                 checked={subtitleBlur}
-                onChange={(e) => {
-                  handleSubtitleTextSettingChanged('subtitleBlur', e.target.checked)
-                }}
+                onCheckedChange={(checked) => handleSubtitleTextSettingChanged('subtitleBlur', checked)}
               />
-            }
-            label={t`Subtitle blur`}
-            labelPlacement='start'
-          />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side='bottom' align='end'>
+            {t`Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover.`}
+          </TooltipContent>
         </Tooltip>
       )}
 
@@ -435,73 +370,38 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         <Trans>Layout</Trans>
       </SettingsSection>
       {subtitleAlignment !== undefined && (
-        <FormControl>
-          <FormLabel component='legend'>
-            <Trans>Subtitle Alignment</Trans>
-          </FormLabel>
-          <RadioGroup row>
-            <LabelWithHoverEffect
-              control={
-                <Radio
-                  checked={subtitleAlignment === 'bottom'}
-                  value={'bottom'}
-                  onChange={(event) =>
-                    event.target.checked && handleSubtitleTextSettingChanged('subtitleAlignment', 'bottom')
-                  }
-                />
-              }
-              label={t`Bottom`}
-            />
-            <LabelWithHoverEffect
-              control={
-                <Radio
-                  checked={subtitleAlignment === 'top'}
-                  value={'top'}
-                  onChange={(event) =>
-                    event.target.checked && handleSubtitleTextSettingChanged('subtitleAlignment', 'top')
-                  }
-                />
-              }
-              label={t`Top`}
-            />
-          </RadioGroup>
-        </FormControl>
+        <SettingsRadioGroupField
+          row
+          label={<Trans>Subtitle Alignment</Trans>}
+          value={subtitleAlignment}
+          options={[
+            { value: 'bottom', label: t`Bottom` },
+            { value: 'top', label: t`Top` },
+          ]}
+          onValueChange={(value) => handleSubtitleTextSettingChanged('subtitleAlignment', value)}
+        />
       )}
 
       {selectedSubtitleAppearanceTrack === undefined && (
         <>
-          <SettingsTextField
+          <SettingsField
             type='number'
-            color='primary'
-            fullWidth
             label={t`Subtitle position offset from bottom`}
             value={subtitlePositionOffset}
-            slotProps={{
-              htmlInput: {
-                min: 0,
-                step: 1,
-              },
-            }}
+            min={0}
+            step={1}
             onChange={(e) => onSettingChanged('subtitlePositionOffset', Number(e.target.value))}
           />
-          <SettingsTextField
+          <SettingsField
             type='number'
-            color='primary'
-            fullWidth
             label={t`Subtitle position offset from top`}
             value={topSubtitlePositionOffset}
-            slotProps={{
-              htmlInput: {
-                min: 0,
-                step: 1,
-              },
-            }}
+            min={0}
+            step={1}
             onChange={(e) => onSettingChanged('topSubtitlePositionOffset', Number(e.target.value))}
           />
           {(!extensionInstalled || extensionSupportsSubtitlesWidthSetting) && (
-            <SettingsTextField
-              color='primary'
-              fullWidth
+            <SettingsField
               label={t`Subtitles Width`}
               disabled={subtitlesWidth === -1}
               value={subtitlesWidth === -1 ? 'auto' : subtitlesWidth}
@@ -512,36 +412,35 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
                   onSettingChanged('subtitlesWidth', numberValue)
                 }
               }}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <>
-                      {subtitlesWidth === -1 && (
-                        <InputAdornment position='end'>
-                          <IconButton onClick={() => onSettingChanged('subtitlesWidth', 100)}>
-                            <EditIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      )}
-                      {subtitlesWidth !== -1 && (
-                        <>
-                          <InputAdornment position='end'>%</InputAdornment>
-                          <InputAdornment position='end'>
-                            <IconButton onClick={() => onSettingChanged('subtitlesWidth', -1)}>
-                              <ClearIcon />
-                            </IconButton>
-                          </InputAdornment>
-                        </>
-                      )}
-                    </>
-                  ),
-                },
-              }}
+              suffix={subtitlesWidth === -1 ? undefined : '%'}
+              endAdornment={
+                subtitlesWidth === -1 ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon-sm'
+                    className={adornmentButtonClasses}
+                    onClick={() => onSettingChanged('subtitlesWidth', 100)}
+                  >
+                    <Pencil className='size-4' />
+                  </Button>
+                ) : (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon-sm'
+                    className={adornmentButtonClasses}
+                    onClick={() => onSettingChanged('subtitlesWidth', -1)}
+                  >
+                    <X className='size-4' />
+                  </Button>
+                )
+              }
             />
           )}
         </>
       )}
-    </Stack>
+    </div>
   )
 }
 

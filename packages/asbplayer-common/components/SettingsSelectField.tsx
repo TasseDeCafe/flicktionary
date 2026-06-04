@@ -12,12 +12,13 @@ interface Props {
   value: string
   options: Option[]
   disabled?: boolean
+  helperText?: React.ReactNode
   onValueChange: (value: string) => void
 }
 
 // Tailwind replacement for the MUI `SettingsTextField select` pattern: a
 // label-above ui/select. Options with falsy labels render their value.
-const SettingsSelectField = ({ label, value, options, disabled, onValueChange }: Props) => {
+const SettingsSelectField = ({ label, value, options, disabled, helperText, onValueChange }: Props) => {
   const id = useId()
 
   return (
@@ -35,6 +36,7 @@ const SettingsSelectField = ({ label, value, options, disabled, onValueChange }:
           ))}
         </SelectContent>
       </Select>
+      {helperText !== undefined && <p className='text-muted-foreground text-xs'>{helperText}</p>}
     </div>
   )
 }

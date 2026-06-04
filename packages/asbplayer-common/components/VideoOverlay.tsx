@@ -321,17 +321,15 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
   return (
     <div
       ref={ref}
-      className={cn('inline-flex w-auto flex-row flex-nowrap items-center justify-center rounded-2xl bg-black/70', className)}
+      className={cn(
+        'inline-flex w-auto flex-row flex-nowrap items-center justify-center rounded-2xl bg-black/70',
+        className
+      )}
     >
       {onLoadSubtitles && (
         <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={t`Load Subtitles`}>
           <span>
-            <button
-              type='button'
-              className={iconButtonClassName}
-              disabled={model.recording}
-              onClick={onLoadSubtitles}
-            >
+            <button type='button' className={iconButtonClassName} disabled={model.recording} onClick={onLoadSubtitles}>
               <LogoIcon className={model.recording ? 'opacity-50' : undefined} />
             </button>
           </span>

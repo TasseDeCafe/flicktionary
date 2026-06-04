@@ -8,7 +8,6 @@ import SubtitleAppearanceSettingsTab from './SubtitleAppearanceSettingsTab'
 import KeyboardShortcutsSettingsTab from './KeyboardShortcutsSettingsTab'
 import StreamingVideoSettingsTab from './StreamingVideoSettingsTab'
 import MiscSettingsTab from './MiscSettingsTab'
-import { MuiSettingsIsland } from './MuiSettingsIsland'
 
 type TabName = 'subtitle-appearance' | 'keyboard-shortcuts' | 'streaming-video' | 'misc-settings' | 'about'
 
@@ -140,34 +139,30 @@ export default function SettingsForm({
           {t`About Flicktionary`}
         </TabsTrigger>
       </TabsList>
-      {/* SubtitleAppearance + KeyboardShortcuts are still MUI until Phase G2 —
-          they need the legacy ThemeProvider island for dark mode / accents. */}
-      <MuiSettingsIsland themeType={settings.themeType}>
-        <TabsContent value='subtitle-appearance' className={panelClasses}>
-          <SubtitleAppearanceSettingsTab
-            settings={settings}
-            onSettingChanged={handleSettingChanged}
-            onSettingsChanged={onSettingsChanged}
-            extensionInstalled={extensionInstalled}
-            extensionSupportsTrackSpecificSettings={extensionSupportsTrackSpecificSettings}
-            extensionSupportsSubtitlesWidthSetting={extensionSupportsSubtitlesWidthSetting}
-            localFontsAvailable={localFontsAvailable}
-            localFontsPermission={localFontsPermission}
-            localFontFamilies={localFontFamilies}
-            onUnlockLocalFonts={onUnlockLocalFonts}
-          />
-        </TabsContent>
-        <TabsContent value='keyboard-shortcuts' className={panelClasses}>
-          <KeyboardShortcutsSettingsTab
-            settings={settings}
-            onSettingChanged={handleSettingChanged}
-            chromeKeyBinds={chromeKeyBinds}
-            extensionInstalled={extensionInstalled}
-            extensionSupportsExportCardBind={extensionSupportsExportCardBind}
-            onOpenChromeExtensionShortcuts={onOpenChromeExtensionShortcuts}
-          />
-        </TabsContent>
-      </MuiSettingsIsland>
+      <TabsContent value='subtitle-appearance' className={panelClasses}>
+        <SubtitleAppearanceSettingsTab
+          settings={settings}
+          onSettingChanged={handleSettingChanged}
+          onSettingsChanged={onSettingsChanged}
+          extensionInstalled={extensionInstalled}
+          extensionSupportsTrackSpecificSettings={extensionSupportsTrackSpecificSettings}
+          extensionSupportsSubtitlesWidthSetting={extensionSupportsSubtitlesWidthSetting}
+          localFontsAvailable={localFontsAvailable}
+          localFontsPermission={localFontsPermission}
+          localFontFamilies={localFontFamilies}
+          onUnlockLocalFonts={onUnlockLocalFonts}
+        />
+      </TabsContent>
+      <TabsContent value='keyboard-shortcuts' className={panelClasses}>
+        <KeyboardShortcutsSettingsTab
+          settings={settings}
+          onSettingChanged={handleSettingChanged}
+          chromeKeyBinds={chromeKeyBinds}
+          extensionInstalled={extensionInstalled}
+          extensionSupportsExportCardBind={extensionSupportsExportCardBind}
+          onOpenChromeExtensionShortcuts={onOpenChromeExtensionShortcuts}
+        />
+      </TabsContent>
       <TabsContent value='streaming-video' className={panelClasses}>
         <StreamingVideoSettingsTab
           settings={settings}

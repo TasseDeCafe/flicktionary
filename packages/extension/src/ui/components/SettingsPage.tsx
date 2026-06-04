@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { Trans } from '@lingui/react/macro'
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm'
-import { MuiSettingsIsland } from '@asbplayer-fork/common/components/MuiSettingsIsland'
 import { useCommandKeyBinds } from '../hooks/use-command-key-binds'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
@@ -83,12 +82,9 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
             inTutorial={inTutorial}
           />
         </div>
-        {/* Still MUI until Phase G2. */}
-        <MuiSettingsIsland themeType={settings.themeType}>
-          <div className='px-4'>
-            <SettingsProfileSelectMenu {...profileContext} />
-          </div>
-        </MuiSettingsIsland>
+        <div className='px-4'>
+          <SettingsProfileSelectMenu {...profileContext} />
+        </div>
       </div>
     </div>
   )

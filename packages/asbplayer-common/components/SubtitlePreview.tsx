@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { makeStyles } from 'tss-react/mui'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { SubtitleSettings, TextSubtitleSettings, textSubtitleSettingsForTrack } from '../settings'
 import { computeStyles } from '../util'
 
@@ -10,32 +10,20 @@ interface Props {
   onTextChanged: (text: string) => void
 }
 
-const useStyles = makeStyles()((theme) => ({
-  subtitlePreview: {
-    backgroundImage: `linear-gradient(45deg, ${theme.palette.action.disabledBackground} 25%, transparent 25%), linear-gradient(-45deg, ${theme.palette.action.disabledBackground} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${theme.palette.action.disabledBackground} 75%), linear-gradient(-45deg, transparent 75%,${theme.palette.action.disabledBackground} 75%)`,
-    backgroundSize: '20px 20px',
-    backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    maxWidth: '100%',
-    padding: 10,
-  },
-  subtitlePreviewInput: {
-    border: 'none',
-    width: '100%',
-    textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0)',
-    '&:focus': {
-      outline: 'none',
-    },
-  },
-  blurred: {
-    filter: 'blur(10px)',
-    '&:hover': {
-      filter: 'none',
-    },
-  },
-}))
+// Checkerboard backdrop so subtitle colors read against both light and dark
+// content. The old MUI version used palette.action.disabledBackground; the
+// foreground token at 12% matches it in both themes.
+const checker = 'hsl(var(--foreground) / 0.12)'
+const checkerStyle: React.CSSProperties = {
+  backgroundImage: `linear-gradient(45deg, ${checker} 25%, transparent 25%), linear-gradient(-45deg, ${checker} 25%, transparent 25%), linear-gradient(45deg, transparent 75%, ${checker} 75%), linear-gradient(-45deg, transparent 75%, ${checker} 75%)`,
+  backgroundSize: '20px 20px',
+  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+}
+
+// Subtitle glyph styling comes from computeStyles() inline (exactly like the
+// real overlay); blur stays a class so hover can momentarily lift it.
+const inputClassName = (s: TextSubtitleSettings) =>
+  cn('w-full border-none bg-transparent text-center outline-none', s.subtitleBlur && 'blur-[10px] hover:blur-none')
 
 interface InputProps {
   text: string
@@ -106,9 +94,6 @@ const SubtitlePreviewInput = ({ text, className, textSubtitleSettings, onTextCha
 }
 
 export default function SubtitlePreview({ subtitleSettings, text, track, onTextChanged }: Props) {
-  const { classes } = useStyles()
-  const inputClassName = (s: TextSubtitleSettings) =>
-    s.subtitleBlur ? `${classes.subtitlePreviewInput} ${classes.blurred}` : classes.subtitlePreviewInput
   const textSubtitleSettings = textSubtitleSettingsForTrack(subtitleSettings, track)
   const {
     subtitleSize,
@@ -140,7 +125,7 @@ export default function SubtitlePreview({ subtitleSettings, text, track, onTextC
     subtitleBlur === undefined
   ) {
     return (
-      <div className={classes.subtitlePreview}>
+      <div className='my-2 max-w-full p-[10px]' style={checkerStyle}>
         {[...Array(subtitleSettings.subtitleTracksV2.length + 1).keys()].map((track) => {
           const textSubtitleSettings = textSubtitleSettingsForTrack(subtitleSettings, track) as TextSubtitleSettings
 
@@ -159,7 +144,7 @@ export default function SubtitlePreview({ subtitleSettings, text, track, onTextC
   }
 
   return (
-    <div className={classes.subtitlePreview}>
+    <div className='my-2 max-w-full p-[10px]' style={checkerStyle}>
       <SubtitlePreviewInput
         text={text}
         className={inputClassName(textSubtitleSettings as TextSubtitleSettings)}

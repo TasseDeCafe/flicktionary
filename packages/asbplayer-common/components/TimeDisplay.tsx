@@ -19,7 +19,10 @@ const TimeDisplay = ({ currentMilliseconds, totalMilliseconds, className, ...res
       : `${displayTime(currentMilliseconds)} / ${displayTime(totalMilliseconds)}`
   return (
     <div
-      className={cn('flex h-full cursor-default flex-col justify-center text-[20px] whitespace-nowrap text-white', className)}
+      className={cn(
+        'flex h-full cursor-default flex-col justify-center text-[20px] whitespace-nowrap text-white',
+        className
+      )}
       {...rest}
     >
       {`\n\n${content}\n\n`}

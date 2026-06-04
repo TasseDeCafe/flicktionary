@@ -475,7 +475,7 @@ msgstr "About"
 #~ msgid "About asbplayer"
 #~ msgstr "About asbplayer"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:137
+#: packages/asbplayer-common/components/SettingsForm.tsx:139
 #: packages/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
@@ -536,7 +536,7 @@ msgstr "Active vocabulary"
 msgid "Add a word"
 msgstr "Add a word"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:66
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:44
 msgid "Add Custom CSS"
 msgstr "Add Custom CSS"
 
@@ -544,7 +544,7 @@ msgstr "Add Custom CSS"
 msgid "Add form"
 msgstr "Add form"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:241
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:158
 msgid "Add New Profile..."
 msgstr "Add New Profile..."
 
@@ -568,7 +568,7 @@ msgstr "Add to passive vocabulary"
 msgid "Additional hosts"
 msgstr "Additional hosts"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:272
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:232
 msgid "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
 msgstr "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
 
@@ -576,19 +576,19 @@ msgstr "Adds an outline around subtitle text. If this causes overlapping lines, 
 msgid "Adjective"
 msgstr "Adjective"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:389
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:366
 msgid "Adjust subtitle offset by -100ms"
 msgstr "Adjust subtitle offset by -100ms"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:388
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:365
 msgid "Adjust subtitle offset by +100ms"
 msgstr "Adjust subtitle offset by +100ms"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:385
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:362
 msgid "Adjust subtitle offset so that next subtitle is at current timestamp"
 msgstr "Adjust subtitle offset so that next subtitle is at current timestamp"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:381
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:358
 msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
 msgstr "Adjust subtitle offset so that previous subtitle is at current timestamp"
 
@@ -616,7 +616,7 @@ msgstr "Again"
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:37
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:26
 msgid "All"
 msgstr "All"
 
@@ -647,7 +647,7 @@ msgstr "All done!"
 #~ msgid "All highlights have been processed."
 #~ msgstr "All highlights have been processed."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:163
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:165
 msgid "Allow auto-loading of detected subtitles"
 msgstr "Allow auto-loading of detected subtitles"
 
@@ -663,7 +663,7 @@ msgstr "Allow video elements with blank src"
 #~ msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
 #~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
 msgstr "Always play (unpause) after invoking above shortcut"
 
@@ -768,11 +768,11 @@ msgstr "Aspect pair (counterpart headword)"
 msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 msgstr "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:273
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:197
 msgid "At Subtitle End"
 msgstr "At Subtitle End"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:261
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:196
 msgid "At Subtitle Start"
 msgstr "At Subtitle Start"
 
@@ -809,7 +809,7 @@ msgstr "Auto-load detected subtitles"
 msgid "Auto-pause"
 msgstr "Auto-pause"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:247
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:259
 msgid "Auto-pause preference"
 msgstr "Auto-pause preference"
 
@@ -890,7 +890,7 @@ msgstr "Billed yearly at €{yearlyPriceTotal}"
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Billed yearly: €{yearlyPriceFormatted}"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:453
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:378
 msgid "Bottom"
 msgstr "Bottom"
 
@@ -962,7 +962,7 @@ msgstr "CEFR level"
 #~ msgid "Change"
 #~ msgstr "Change"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:28
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:22
 msgid "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
 msgstr "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
 
@@ -1040,7 +1040,7 @@ msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open 
 msgid "Click the link in the email to continue."
 msgstr "Click the link in the email to continue."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:357
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:308
 msgid "Click to unlock font menu"
 msgstr "Click to unlock font menu"
 
@@ -1061,7 +1061,7 @@ msgstr "Collocations"
 #~ msgid "Come back later. {followUpDelay}."
 #~ msgstr "Come back later. {followUpDelay}."
 
-#: packages/asbplayer-common/components/ListField.tsx:56
+#: packages/asbplayer-common/components/ListField.tsx:58
 msgid "Comma-separated list of strings"
 msgstr "Comma-separated list of strings"
 
@@ -1225,7 +1225,7 @@ msgstr "Could not set up your account. Please try restarting the app."
 #~ msgstr "Creating…"
 
 #. placeholder {0}: customStyle.key
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:103
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:77
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
@@ -1288,15 +1288,15 @@ msgstr "Dashboard"
 msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
 #: packages/asbplayer-common/components/VideoOverlay.tsx:281
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
 #: packages/asbplayer-common/components/MiniProfileSelector.tsx:36
 #: packages/asbplayer-common/components/MiniProfileSelector.tsx:45
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:87
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:221
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:122
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:128
 msgid "Default"
 msgstr "Default"
 
@@ -1351,7 +1351,7 @@ msgstr "Detect and Display Ruby"
 msgid "Detecting language…"
 msgstr "Detecting language…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:192
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:198
 msgid "Disabled"
 msgstr "Disabled"
 
@@ -1439,7 +1439,7 @@ msgstr "Edit note"
 msgid "Edit term"
 msgstr "Edit term"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:189
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:170
 msgid "Edit this shortcut from the Plugin manager at about:addons."
 msgstr "Edit this shortcut from the Plugin manager at about:addons."
 
@@ -1483,11 +1483,11 @@ msgstr "Enable audio recording"
 msgid "Enable controls overlay"
 msgstr "Enable controls overlay"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:194
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:200
 msgid "Enabled"
 msgstr "Enabled"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:193
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:199
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
@@ -1541,7 +1541,7 @@ msgstr "Enrichment failed"
 msgid "Enrichment has not started yet."
 msgstr "Enrichment has not started yet."
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:163
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:75
 msgid "Enter profile name"
 msgstr "Enter profile name"
 
@@ -1594,7 +1594,7 @@ msgstr "Explain"
 msgid "Explain this term in more depth."
 msgstr "Explain this term in more depth."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:266
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:272
 msgid "Export Settings"
 msgstr "Export Settings"
 
@@ -1610,7 +1610,7 @@ msgstr "Exported {chunkCount} term(s)"
 msgid "Exporting…"
 msgstr "Exporting…"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:175
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:178
 msgid "Extension shortcut"
 msgstr "Extension shortcut"
 
@@ -1926,7 +1926,7 @@ msgstr "Fast forward playback: On"
 msgid "Fast-forward"
 msgstr "Fast-forward"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:287
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:275
 msgid "Fast-forward mode playback rate"
 msgstr "Fast-forward mode playback rate"
 
@@ -2161,7 +2161,7 @@ msgstr "Hide notes"
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:417
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:364
 msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
 msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
 
@@ -2242,7 +2242,7 @@ msgstr "Imperfective"
 msgid "Import article to Flicktionary"
 msgstr "Import article to Flicktionary"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:263
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:269
 msgid "Import Settings"
 msgstr "Import Settings"
 
@@ -2276,7 +2276,7 @@ msgstr "Inanimate"
 msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:368
 #: packages/asbplayer-common/components/VideoOverlay.tsx:283
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
@@ -2346,7 +2346,7 @@ msgstr "Keep as passive"
 msgid "Keep options"
 msgstr "Keep options"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:128
+#: packages/asbplayer-common/components/SettingsForm.tsx:130
 msgid "Keyboard Shortcuts"
 msgstr "Keyboard Shortcuts"
 
@@ -2394,7 +2394,7 @@ msgstr "Last read"
 msgid "Later"
 msgstr "Later"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:435
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:370
 msgid "Layout"
 msgstr "Layout"
 
@@ -2561,7 +2561,7 @@ msgstr "Maybe later"
 msgid "Message to the founders"
 msgstr "Message to the founders"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:134
+#: packages/asbplayer-common/components/SettingsForm.tsx:136
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:98
 #: packages/extension/src/ui/components/ImportPopup.tsx:41
 msgid "Misc"
@@ -2602,11 +2602,11 @@ msgstr "More frequent synonym"
 msgid "More options"
 msgstr "More options"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:422
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:394
 msgid "Move bottom subtitles down"
 msgstr "Move bottom subtitles down"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:418
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:390
 msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
 
@@ -2618,11 +2618,11 @@ msgstr "Move this term back to passive review only."
 msgid "Move this term into the active drilling pool."
 msgstr "Move this term into the active drilling pool."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:430
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:402
 msgid "Move top subtitles down"
 msgstr "Move top subtitles down"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:426
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:398
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
@@ -2643,7 +2643,7 @@ msgstr "Multiple Video Elements Detected"
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:210
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:216
 msgid "Name of the tab"
 msgstr "Name of the tab"
 
@@ -2863,7 +2863,7 @@ msgstr "Numeral"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:170
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:172
 #: packages/extension/src/ui/components/Tutorial.tsx:116
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
@@ -2947,7 +2947,7 @@ msgstr "Other"
 #~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 #~ msgstr "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:156
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:136
 msgid "Overridden"
 msgstr "Overridden"
 
@@ -3074,7 +3074,7 @@ msgstr "Pick your native language"
 #~ msgid "Play Store"
 #~ msgstr "Play Store"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:241
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:253
 msgid "Play/pause"
 msgstr "Play/pause"
 
@@ -3090,7 +3090,7 @@ msgstr "Playback Rate"
 msgid "Playback Rate: {rate}"
 msgstr "Playback Rate: {rate}"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:397
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:374
 msgid "Playback speed adjust step"
 msgstr "Playback speed adjust step"
 
@@ -3276,15 +3276,15 @@ msgstr "Processing warnings"
 #~ msgstr "Processing your session…"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:205
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:117
 msgid "Profile"
 msgstr "Profile"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:241
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:158
 msgid "Profile limit reached"
 msgstr "Profile limit reached"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:162
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:74
 msgid "Profile Name"
 msgstr "Profile Name"
 
@@ -3341,7 +3341,7 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:154
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:134
 msgid "Recording"
 msgstr "Recording"
 
@@ -3442,11 +3442,11 @@ msgstr "Repeat playback: On"
 msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:202
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:171
 msgid "Reset"
 msgstr "Reset"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:390
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:367
 msgid "Reset subtitle offset"
 msgstr "Reset subtitle offset"
 
@@ -3590,30 +3590,30 @@ msgstr "Searching OpenSubtitles…"
 msgid "Searching…"
 msgstr "Searching…"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:319
 #: packages/asbplayer-common/components/VideoOverlay.tsx:268
 msgid "Seek backward"
 msgstr "Seek backward"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:321
 #: packages/asbplayer-common/components/VideoOverlay.tsx:270
 msgid "Seek forward"
 msgstr "Seek forward"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:342
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:325
 msgid "Seek interval (seconds)"
 msgstr "Seek interval (seconds)"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:366
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:343
 msgid "Seek to beginning of current/previous subtitle"
 msgstr "Seek to beginning of current/previous subtitle"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:341
 #: packages/asbplayer-common/components/VideoOverlay.tsx:270
 msgid "Seek to next subtitle"
 msgstr "Seek to next subtitle"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:340
 #: packages/asbplayer-common/components/VideoOverlay.tsx:268
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
@@ -3643,7 +3643,7 @@ msgstr "Select a video element…"
 msgid "Select some text first."
 msgstr "Select some text first."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:237
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:249
 msgid "Select subtitle tracks to load."
 msgstr "Select subtitle tracks to load."
 
@@ -3719,8 +3719,8 @@ msgid "Setting up account..."
 msgstr "Setting up account..."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:259
-#: packages/extension/src/ui/components/SettingsPage.tsx:58
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
+#: packages/extension/src/ui/components/SettingsPage.tsx:57
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
 msgid "Settings"
@@ -3919,19 +3919,19 @@ msgstr "Stop drilling this term in active practice"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:131
+#: packages/asbplayer-common/components/SettingsForm.tsx:133
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:65
-msgid "Style Key"
-msgstr "Style Key"
+#~ msgid "Style Key"
+#~ msgstr "Style Key"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:104
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:78
 msgid "Style Value"
 msgstr "Style Value"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:213
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:182
 msgid "Styling"
 msgstr "Styling"
 
@@ -3957,39 +3957,40 @@ msgstr "Subscription Required"
 msgid "Subscription Successful!"
 msgstr "Subscription Successful!"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:440
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:375
 msgid "Subtitle Alignment"
 msgstr "Subtitle Alignment"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:125
+#: packages/asbplayer-common/components/SettingsForm.tsx:127
 msgid "Subtitle Appearance"
 msgstr "Subtitle Appearance"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:314
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:261
 msgid "Subtitle Background Color"
 msgstr "Subtitle Background Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:324
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:270
 msgid "Subtitle Background Opacity"
 msgstr "Subtitle Background Opacity"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:428
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:357
 msgid "Subtitle blur"
 msgstr "Subtitle blur"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:218
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:187
 msgid "Subtitle Color"
 msgstr "Subtitle Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:343
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:283
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:291
 msgid "Subtitle Font Family"
 msgstr "Subtitle Font Family"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:244
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:206
 msgid "Subtitle Font Thickness"
 msgstr "Subtitle Font Thickness"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:216
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:222
 msgid "Subtitle Generation"
 msgstr "Subtitle Generation"
 
@@ -4001,19 +4002,19 @@ msgstr "Subtitle HTML"
 msgid "Subtitle Offset"
 msgstr "Subtitle Offset"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:261
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:222
 msgid "Subtitle Outline Color"
 msgstr "Subtitle Outline Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:271
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:231
 msgid "Subtitle Outline Thickness"
 msgstr "Subtitle Outline Thickness"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:477
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:389
 msgid "Subtitle position offset from bottom"
 msgstr "Subtitle position offset from bottom"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:491
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:397
 msgid "Subtitle position offset from top"
 msgstr "Subtitle position offset from top"
 
@@ -4025,15 +4026,15 @@ msgstr "Subtitle regex filter"
 msgid "Subtitle regex filter text replacement"
 msgstr "Subtitle regex filter text replacement"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:288
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:242
 msgid "Subtitle Shadow Color"
 msgstr "Subtitle Shadow Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:298
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:251
 msgid "Subtitle Shadow Thickness"
 msgstr "Subtitle Shadow Thickness"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:228
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:196
 msgid "Subtitle Size"
 msgstr "Subtitle Size"
 
@@ -4041,7 +4042,7 @@ msgstr "Subtitle Size"
 #~ msgid "Subtitle source"
 #~ msgstr "Subtitle source"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:25
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:18
 msgid "Subtitle Track"
 msgstr "Subtitle Track"
 
@@ -4059,7 +4060,7 @@ msgstr "Subtitles"
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Subtitles must be loaded before you can start mining."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:505
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:405
 msgid "Subtitles Width"
 msgstr "Subtitles Width"
 
@@ -4277,47 +4278,47 @@ msgstr "To change your current plan type, please click on \"Manage Subscription\
 msgid "Today"
 msgstr "Today"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:243
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:255
 msgid "Toggle auto-pause"
 msgstr "Toggle auto-pause"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:281
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:269
 msgid "Toggle condensed playback"
 msgstr "Toggle condensed playback"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:283
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:271
 msgid "Toggle fast forward playback"
 msgstr "Toggle fast forward playback"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:307
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:290
 msgid "Toggle repeat mode"
 msgstr "Toggle repeat mode"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:313
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:296
 msgid "Toggle subtitle track 1 in asbplayer"
 msgstr "Toggle subtitle track 1 in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:309
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:292
 msgid "Toggle subtitle track 1 in video"
 msgstr "Toggle subtitle track 1 in video"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:317
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:300
 msgid "Toggle subtitle track 2 in asbplayer"
 msgstr "Toggle subtitle track 2 in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:310
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:293
 msgid "Toggle subtitle track 2 in video"
 msgstr "Toggle subtitle track 2 in video"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:321
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:304
 msgid "Toggle subtitle track 3 in asbplayer"
 msgstr "Toggle subtitle track 3 in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:311
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:294
 msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:291
 #: packages/asbplayer-common/components/VideoOverlay.tsx:341
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
@@ -4334,7 +4335,7 @@ msgstr "Too many requests. Please try again later."
 msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
 msgstr "Too many requests. Please use the app in only one tab and device at a time and try again later."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:465
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:379
 msgid "Top"
 msgstr "Top"
 
@@ -4343,7 +4344,7 @@ msgid "Total"
 msgstr "Total"
 
 #. placeholder {0}: i + 1
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:42
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:29
 msgid "Track {0}"
 msgstr "Track {0}"
 
@@ -4351,11 +4352,11 @@ msgstr "Track {0}"
 #~ msgid "Track imported"
 #~ msgstr "Track imported"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:224
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:230
 msgid "Transcript Server API Key (optional)"
 msgstr "Transcript Server API Key (optional)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:219
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:225
 msgid "Transcript Server URL"
 msgstr "Transcript Server URL"
 
@@ -4406,13 +4407,13 @@ msgstr "Unable to open app store. Please manually update the app."
 #. placeholder {0}: 1
 #. placeholder {0}: 2
 #. placeholder {0}: 3
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:325
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:329
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:333
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:312
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:316
 msgid "Unblur subtitle track {0} in asbplayer"
 msgstr "Unblur subtitle track {0} in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:158
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:138
 msgid "Unbound"
 msgstr "Unbound"
 
