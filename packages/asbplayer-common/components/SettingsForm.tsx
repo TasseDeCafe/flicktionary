@@ -30,7 +30,6 @@ interface Props {
   extensionSupportsExportCardBind: boolean
   extensionSupportsPageSettings: boolean
   insideApp?: boolean
-  appVersion?: string
   settings: AsbplayerSettings
   profiles: Profile[]
   activeProfile?: string
@@ -75,7 +74,6 @@ export default function SettingsForm({
   extensionSupportsExportCardBind,
   extensionSupportsPageSettings,
   insideApp,
-  appVersion,
   scrollToId,
   chromeKeyBinds,
   localFontsAvailable,
@@ -205,10 +203,7 @@ export default function SettingsForm({
         />
       </TabsContent>
       <TabsContent value='about' className={panelClasses}>
-        <About
-          appVersion={insideApp ? appVersion : undefined}
-          extensionVersion={extensionInstalled ? extensionVersion : undefined}
-        />
+        <About extensionVersion={extensionInstalled ? extensionVersion : undefined} />
       </TabsContent>
     </Tabs>
   )
