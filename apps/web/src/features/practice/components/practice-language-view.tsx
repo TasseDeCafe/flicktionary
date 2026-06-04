@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronUp,
   CircleCheck,
+  Dumbbell,
   History,
   Layers,
   Sparkles,
@@ -72,6 +73,10 @@ export const PracticeLanguageView = () => {
     void navigate({ to: '/practice/history/$targetLanguage', params: { targetLanguage }, search: { pool } })
   }
 
+  const openStrengthen = (pool: PracticePool) => {
+    void navigate({ to: '/practice/strengthen/$targetLanguage', params: { targetLanguage }, search: { pool } })
+  }
+
   const statusLine = (() => {
     if (!entry) return ''
     if (hasPassiveWork) {
@@ -84,6 +89,21 @@ export const PracticeLanguageView = () => {
     if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached.`
     return t`No terms are ready right now.`
   })()
+
+  const renderParkedAffordance = (pool: PracticePool) => {
+    const parked = pool === 'passive' ? (entry?.parkedCount ?? 0) : (entry?.activeParkedCount ?? 0)
+    if (parked <= 0) return null
+    return (
+      <button
+        type='button'
+        onClick={() => openStrengthen(pool)}
+        className='mt-3 flex w-full items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-left text-sm text-violet-800 transition-colors hover:bg-violet-100'
+      >
+        <Dumbbell className='h-4 w-4 shrink-0' />
+        {t`${parked} word(s) parked — strengthen them`}
+      </button>
+    )
+  }
 
   const renderPoolActions = (pool: PracticePool) => {
     const moreOpen = moreOpenByPool[pool]
@@ -173,6 +193,7 @@ export const PracticeLanguageView = () => {
                       ? t`${activeDueCount} due, ${activeNewCount} new`
                       : t`${activeTotal} active term(s). Nothing due right now.`}
                   </p>
+                  {renderParkedAffordance('active')}
                   {renderPoolActions('active')}
                 </section>
               )}
@@ -190,6 +211,7 @@ export const PracticeLanguageView = () => {
                     {statusLine && <p className='text-muted-foreground mt-1 text-sm'>{statusLine}</p>}
                   </div>
                 </div>
+                {renderParkedAffordance('passive')}
                 {renderPoolActions('passive')}
               </section>
 

@@ -39,6 +39,7 @@ import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
+import { Route as AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/strengthen/$targetLanguage'
 import { Route as AuthenticatedAppPracticeReviewTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/review/$targetLanguage'
 import { Route as AuthenticatedAppPracticeLanguageTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/language/$targetLanguage'
 import { Route as AuthenticatedAppPracticeHistoryTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/history/$targetLanguage'
@@ -212,6 +213,12 @@ const AuthenticatedAppSessionsSessionIdProcessingRoute =
     path: '/sessions/$sessionId/processing',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppPracticeStrengthenTargetLanguageRoute =
+  AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport.update({
+    id: '/practice/strengthen/$targetLanguage',
+    path: '/practice/strengthen/$targetLanguage',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppPracticeReviewTargetLanguageRoute =
   AuthenticatedAppPracticeReviewTargetLanguageRouteImport.update({
     id: '/practice/review/$targetLanguage',
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
+  '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -308,6 +316,7 @@ export interface FileRoutesByTo {
   '/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
+  '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -346,6 +355,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/_authenticated/_app/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/_authenticated/_app/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
+  '/_authenticated/_app/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/_authenticated/_app/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -383,6 +393,7 @@ export interface FileRouteTypes {
     | '/practice/history/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/practice/review/$targetLanguage'
+    | '/practice/strengthen/$targetLanguage'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId/'
     | '/sessions/$sessionId/review/$cardId'
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/practice/history/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/practice/review/$targetLanguage'
+    | '/practice/strengthen/$targetLanguage'
     | '/sessions/$sessionId/processing'
     | '/sessions/$sessionId'
     | '/sessions/$sessionId/review/$cardId'
@@ -455,6 +467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/practice/history/$targetLanguage'
     | '/_authenticated/_app/practice/language/$targetLanguage'
     | '/_authenticated/_app/practice/review/$targetLanguage'
+    | '/_authenticated/_app/practice/strengthen/$targetLanguage'
     | '/_authenticated/_app/sessions/$sessionId/processing'
     | '/_authenticated/_app/sessions/$sessionId/'
     | '/_authenticated/_app/sessions/$sessionId/review/$cardId'
@@ -686,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/practice/strengthen/$targetLanguage': {
+      id: '/_authenticated/_app/practice/strengthen/$targetLanguage'
+      path: '/practice/strengthen/$targetLanguage'
+      fullPath: '/practice/strengthen/$targetLanguage'
+      preLoaderRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/practice/review/$targetLanguage': {
       id: '/_authenticated/_app/practice/review/$targetLanguage'
       path: '/practice/review/$targetLanguage'
@@ -738,6 +758,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPracticeHistoryTargetLanguageRoute: typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   AuthenticatedAppPracticeLanguageTargetLanguageRoute: typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   AuthenticatedAppPracticeReviewTargetLanguageRoute: typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
+  AuthenticatedAppPracticeStrengthenTargetLanguageRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
   AuthenticatedAppSessionsSessionIdReviewCardIdRoute: typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
@@ -762,6 +783,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppPracticeLanguageTargetLanguageRoute,
   AuthenticatedAppPracticeReviewTargetLanguageRoute:
     AuthenticatedAppPracticeReviewTargetLanguageRoute,
+  AuthenticatedAppPracticeStrengthenTargetLanguageRoute:
+    AuthenticatedAppPracticeStrengthenTargetLanguageRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:
     AuthenticatedAppSessionsSessionIdProcessingRoute,
   AuthenticatedAppSessionsSessionIdIndexRoute:

@@ -44,6 +44,33 @@ export const useRateTerm = () => {
   )
 }
 
+// Build a Strengthen session (gate exercises for parked leeches + bonus
+// exercises for this-session again/hard terms). POST because the server may
+// kick off background generation for cold banks.
+export const useStartStrengthenSession = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.startStrengthenSession.mutationOptions({
+      meta: { errorMessage: t`Failed to load exercises` },
+    })
+  )
+}
+
+// Grade one exercise answer. Invalidates the landing counts — a correct gate
+// answer can advance rehab (and graduation changes parked/due counts).
+export const useSubmitExerciseAnswer = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.practice.submitExerciseAnswer.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Failed to submit answer` },
+    })
+  )
+}
+
 // Bootstrap or resume the current reading text for a (language, pool).
 export const useGenerateNextReadingText = () => {
   const { t } = useLingui()

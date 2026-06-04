@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronLeft, ChevronRight, CircleCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
@@ -85,6 +85,10 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
   // Peek-back: how many cards behind the live index we're re-viewing read-only.
   const [peekBack, setPeekBack] = useState(0)
   const seededRef = useRef(false)
+  // Terms rated again/hard this session — offered post-session Strengthen
+  // exercises. Parked (leech) terms never enter this queue, so the set is
+  // non-leech by construction.
+  const sessionHardRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (seededRef.current || !cards) return
@@ -104,6 +108,10 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
 
     setRevealed(false)
     setIndex((i) => i + 1)
+
+    if (rating === 'again' || rating === 'hard') {
+      sessionHardRef.current.add(card.userLookupId)
+    }
 
     rateTerm(
       { userLookupId: card.userLookupId, rating, pool },
@@ -132,18 +140,43 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
 
   // Done: live queue exhausted (also the empty-batch / nothing-due case).
   if (!queue[index] && !isPeeking) {
+    const sessionHard = [...sessionHardRef.current]
+    const hardCount = sessionHard.length
+    const openStrengthen = () =>
+      void navigate({
+        to: '/practice/strengthen/$targetLanguage',
+        params: { targetLanguage },
+        search: { pool, sessionHard },
+      })
     return (
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
           <CircleCheck className='h-10 w-10 text-emerald-600' />
           <p className='text-lg font-semibold'>{queue.length === 0 ? t`No terms are due right now.` : t`All done!`}</p>
           {capNoticeShown && <p className='text-muted-foreground text-sm'>{t`Daily new-card limit reached.`}</p>}
+          {sessionHard.length > 0 && (
+            <p className='text-muted-foreground text-sm'>
+              {t`${hardCount} term(s) gave you trouble. A quick exercise round can lock them in — optional.`}
+            </p>
+          )}
         </div>
         <div className='border-t bg-white px-4 pt-2 pb-3'>
-          <div className='mx-auto w-full max-w-xl'>
-            <Button type='button' size='xl' className='w-full' onClick={close}>
-              {t`Back to ${languageName}`}
-            </Button>
+          <div className='mx-auto flex w-full max-w-xl flex-col gap-2'>
+            {sessionHard.length > 0 ? (
+              <>
+                <Button type='button' size='xl' className='w-full' onClick={openStrengthen}>
+                  <Dumbbell className='h-4 w-4' />
+                  {t`Strengthen`}
+                </Button>
+                <Button type='button' variant='outline' size='xl' className='w-full' onClick={close}>
+                  {t`Back to ${languageName}`}
+                </Button>
+              </>
+            ) : (
+              <Button type='button' size='xl' className='w-full' onClick={close}>
+                {t`Back to ${languageName}`}
+              </Button>
+            )}
           </div>
         </div>
       </div>
