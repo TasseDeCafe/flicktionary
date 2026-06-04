@@ -17,15 +17,15 @@ catalog:
   '@gorhom/bottom-sheet': 5.2.8
   '@hookform/resolvers': 5.2.2
   '@lingui/babel-plugin-lingui-macro': 6.0.0
-  '@lingui/cli': 6.0.0
-  '@lingui/core': 6.0.0
-  '@lingui/format-po': 6.0.0
-  '@lingui/loader': 6.0.0
-  '@lingui/metro-transformer': 6.0.0
-  '@lingui/react': 6.0.0
-  '@lingui/swc-plugin': 6.0.0
-  '@lingui/vite-plugin': 6.0.0
-  '@mozilla/readability': ^0.6.0
+  '@lingui/cli': 6.2.0
+  '@lingui/core': 6.2.0
+  '@lingui/format-po': 6.2.0
+  '@lingui/loader': 6.2.0
+  '@lingui/metro-transformer': 6.2.0
+  '@lingui/react': 6.2.0
+  '@lingui/swc-plugin': 6.2.0
+  '@lingui/vite-plugin': 6.2.0
+  '@mozilla/readability': 0.6.0
   '@next/eslint-plugin-next': 16.2.1
   '@orpc/client': 1.13.13
   '@orpc/contract': 1.13.13
