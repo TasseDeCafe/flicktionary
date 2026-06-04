@@ -614,7 +614,7 @@ msgstr "À propos"
 #~ msgid "About asbplayer"
 #~ msgstr "À propos d'asbplayer"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:158
+#: packages/asbplayer-common/components/SettingsForm.tsx:156
 #: packages/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
@@ -868,8 +868,8 @@ msgstr "Un autre terme existe déjà avec ce mot-vedette et ce sens."
 #~ msgstr "App Store"
 
 #: packages/asbplayer-common/components/About.tsx:28
-msgid "App version"
-msgstr "Version de l'app"
+#~ msgid "App version"
+#~ msgstr "Version de l'app"
 
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
@@ -1866,7 +1866,7 @@ msgstr "Export en cours…"
 msgid "Extension shortcut"
 msgstr "Raccourci de l'extension"
 
-#: packages/asbplayer-common/components/About.tsx:34
+#: packages/asbplayer-common/components/About.tsx:27
 msgid "Extension version"
 msgstr "Version de l'extension"
 
@@ -2652,7 +2652,7 @@ msgstr "Options de conservation"
 msgid "Keep practicing this one."
 msgstr "Continuez à pratiquer celui-ci."
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:146
+#: packages/asbplayer-common/components/SettingsForm.tsx:144
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
@@ -2875,7 +2875,7 @@ msgstr "Peut-être plus tard"
 msgid "Message to the founders"
 msgstr "Message pour les fondateurs"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:154
+#: packages/asbplayer-common/components/SettingsForm.tsx:152
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:98
 #: packages/extension/src/ui/components/ImportPopup.tsx:41
 msgid "Misc"
@@ -4326,7 +4326,7 @@ msgstr "Arrêter de pratiquer ce terme en pratique active"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:150
+#: packages/asbplayer-common/components/SettingsForm.tsx:148
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
@@ -4381,7 +4381,7 @@ msgstr "Abonnement réussi !"
 msgid "Subtitle Alignment"
 msgstr "Alignement des sous-titres"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:142
+#: packages/asbplayer-common/components/SettingsForm.tsx:140
 msgid "Subtitle Appearance"
 msgstr "Apparence des sous-titres"
 
