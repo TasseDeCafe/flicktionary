@@ -13,175 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. js-lingui-explicit-id
-#: packages/extension/src/controllers/video-data-sync-controller.ts:98
-#~ msgid "extension.videoDataSync.emptySubtitleTrack"
-#~ msgstr "extension.videoDataSync.emptySubtitleTrack"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
-#~ msgid "- Accessing the service for any illegal purpose or in violation of any "
-#~ "local, state, national, or international law."
-#~ msgstr "- Accessing the service for any illegal purpose or in violation of any "
-#~ "local, state, national, or international law."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:64
-#~ msgid "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our "
-#~ "resources."
-#~ msgstr "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our "
-#~ "resources."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:79
-#~ msgid "- Attempting to hack, destabilize, or introduce malicious software to "
-#~ "our website, or to compromise the security of our services in any way."
-#~ msgstr "- Attempting to hack, destabilize, or introduce malicious software to "
-#~ "our website, or to compromise the security of our services in any way."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:73
-#~ msgid "- Conducting any unauthorized activity that involves the service, "
-#~ "including but not limited to data theft, providing malware or spyware, "
-#~ "phishing, and other fraudulent activities."
-#~ msgstr "- Conducting any unauthorized activity that involves the service, "
-#~ "including but not limited to data theft, providing malware or spyware, "
-#~ "phishing, and other fraudulent activities."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:151
-#~ msgid "- Continuous security monitoring and automated threat detection systems"
-#~ msgstr "- Continuous security monitoring and automated threat detection systems"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:50
-#~ msgid "- Cookies and Tracking Technologies: We use cookies and similar "
-#~ "technologies to monitor and analyze service usage and to enhance user "
-#~ "experience. You may control the use of these technologies through your "
-#~ "browser settings."
-#~ msgstr "- Cookies and Tracking Technologies: We use cookies and similar "
-#~ "technologies to monitor and analyze service usage and to enhance user "
-#~ "experience. You may control the use of these technologies through your "
-#~ "browser settings."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:59
-#~ msgid "- Engaging in any activity that disrupts or interferes with our "
-#~ "resources, including servers and networks."
-#~ msgstr "- Engaging in any activity that disrupts or interferes with our "
-#~ "resources, including servers and networks."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:136
-#~ msgid "- Enterprise-grade encryption protocols for data transmission and "
-#~ "storage"
-#~ msgstr "- Enterprise-grade encryption protocols for data transmission and "
-#~ "storage"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:57
-#~ msgid "- Google/Apple/Email Authentication: We integrate industry standards to "
-#~ "streamline your sign-in process and enhance account security. We might "
-#~ "use your email address to send you notifications and emails, from which "
-#~ "you can always unsubscribe. We do not sell your email address. We also "
-#~ "do not share your email address with any third parties if it's not "
-#~ "strictly related to the basic functioning of our webapp."
-#~ msgstr "- Google/Apple/Email Authentication: We integrate industry standards to "
-#~ "streamline your sign-in process and enhance account security. We might "
-#~ "use your email address to send you notifications and emails, from which "
-#~ "you can always unsubscribe. We do not sell your email address. We also "
-#~ "do not share your email address with any third parties if it's not "
-#~ "strictly related to the basic functioning of our webapp."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:142
-#~ msgid "- Implementation of trusted, industry-standard security libraries and "
-#~ "frameworks, avoiding custom security implementations"
-#~ msgstr "- Implementation of trusted, industry-standard security libraries and "
-#~ "frameworks, avoiding custom security implementations"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:120
-#~ msgid "- Legal Requirements: We may disclose your data if required to do so by "
-#~ "law or in response to valid requests by public authorities (e.g., a "
-#~ "court or a government agency)."
-#~ msgstr "- Legal Requirements: We may disclose your data if required to do so by "
-#~ "law or in response to valid requests by public authorities (e.g., a "
-#~ "court or a government agency)."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:34
-#~ msgid "- Personal Information: We collect personal data such as your name, "
-#~ "email address, and other contact details when you register, subscribe to "
-#~ "our services, fill out forms, or interact with our platform in other "
-#~ "ways that require personal identification."
-#~ msgstr "- Personal Information: We collect personal data such as your name, "
-#~ "email address, and other contact details when you register, subscribe "
-#~ "to our services, fill out forms, or interact with our platform in other "
-#~ "ways that require personal identification."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:56
-#~ msgid "- Prohibited Activities: Users are prohibited from:"
-#~ msgstr "- Prohibited Activities: Users are prohibited from:"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:154
-#~ msgid "- Regular security training for our development and operations teams"
-#~ msgstr "- Regular security training for our development and operations teams"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:139
-#~ msgid "- Regular third-party security audits and penetration testing by "
-#~ "certified specialists"
-#~ msgstr "- Regular third-party security audits and penetration testing by "
-#~ "certified specialists"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:148
-#~ msgid "- Strict access controls and authentication mechanisms following OWASP "
-#~ "security guidelines"
-#~ msgstr "- Strict access controls and authentication mechanisms following OWASP "
-#~ "security guidelines"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:83
-#~ msgid "- To communicate with you, either directly or through one of our "
-#~ "partners, including for customer service, to provide you with updates "
-#~ "and other information relating to the service, and for marketing and "
-#~ "promotional purposes"
-#~ msgstr "- To communicate with you, either directly or through one of our "
-#~ "partners, including for customer service, to provide you with updates "
-#~ "and other information relating to the service, and for marketing and "
-#~ "promotional purposes"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:81
-#~ msgid "- To develop new products, services, features, and functionality"
-#~ msgstr "- To develop new products, services, features, and functionality"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:76
-#~ msgid "- To improve, personalize, and expand our services"
-#~ msgstr "- To improve, personalize, and expand our services"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:73
-#~ msgid "- To provide, operate, and maintain our services"
-#~ msgstr "- To provide, operate, and maintain our services"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:90
-#~ msgid "- To send you emails and notifications"
-#~ msgstr "- To send you emails and notifications"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:79
-#~ msgid "- To understand and analyze how you use our services"
-#~ msgstr "- To understand and analyze how you use our services"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:45
-#~ msgid "- Voice Recording: Users may not use the service to replicate or clone "
-#~ "voices of any individuals other than"
-#~ msgstr "- Voice Recording: Users may not use the service to replicate or clone "
-#~ "voices of any individuals other than"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:41
-#~ msgid "- Voice Recordings: To assist in pronunciation improvement, we collect "
-#~ "and analyze recordings of your voice. These are used to create "
-#~ "personalized voice clones. - App data: We collect and store data that "
-#~ "you input into the app for language learning purposes. This includes "
-#~ "your learning progress, custom settings, and interactions within the "
-#~ "app. This data is utilized to tailor and enhance your learning "
-#~ "experience, enabling personalized language learning pathways and "
-#~ "recommendations."
-#~ msgstr "- Voice Recordings: To assist in pronunciation improvement, we collect "
-#~ "and analyze recordings of your voice. These are used to create "
-#~ "personalized voice clones. - App data: We collect and store data that "
-#~ "you input into the app for language learning purposes. This includes "
-#~ "your learning progress, custom settings, and interactions within the "
-#~ "app. This data is utilized to tailor and enhance your learning "
-#~ "experience, enabling personalized language learning pathways and "
-#~ "recommendations."
-
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:130
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "“{headword}” keeps tripping you up — it's parked for rehab exercises."
@@ -196,28 +27,6 @@ msgstr "(Current)"
 msgid "(Expired)"
 msgstr "(Expired)"
 
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:127
-#~ msgid "(i) your access to or use of or inability to access or use the service;"
-#~ msgstr "(i) your access to or use of or inability to access or use the service;"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:130
-#~ msgid "(ii) any conduct or content of any third party on the service;"
-#~ msgstr "(ii) any conduct or content of any third party on the service;"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:133
-#~ msgid "(iii) any content obtained from the service; and"
-#~ msgstr "(iii) any content obtained from the service; and"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:136
-#~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or "
-#~ "content, whether based on warranty, contract, tort (including "
-#~ "negligence), or any other legal theory, whether or not we have been "
-#~ "informed of the possibility of such damage."
-#~ msgstr "(iv) unauthorized access, use, or alteration of your transmissions or "
-#~ "content, whether based on warranty, contract, tort (including "
-#~ "negligence), or any other legal theory, whether or not we have been "
-#~ "informed of the possibility of such damage."
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:256
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:309
@@ -225,14 +34,6 @@ msgstr "(Expired)"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:362
 msgid "(unset)"
 msgstr "(unset)"
-
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
-#~ msgid "{0} card(s) — of which {1} kept"
-#~ msgstr "{0} card(s) — of which {1} kept"
-
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:52
-#~ msgid "{0} highlight(s)"
-#~ msgstr "{0} highlight(s)"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:47
 msgid "{activeCount} active"
@@ -250,10 +51,6 @@ msgstr "{activeTotal} active term(s). Nothing due right now."
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
 msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:118
-#~ msgid "{charCount} / {MAX_LENGTH} characters"
-#~ msgstr "{charCount} / {MAX_LENGTH} characters"
-
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:90
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
@@ -269,14 +66,6 @@ msgstr "{dailyNewAvailable} new available"
 #: apps/web/src/features/practice/components/practice-language-view.tsx:85
 msgid "{dailyNewAvailable} new available today"
 msgstr "{dailyNewAvailable} new available today"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:119
-#~ msgid "{dailyNewAvailable} new term(s) available today."
-#~ msgstr "{dailyNewAvailable} new term(s) available today."
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:70
-#~ msgid "{dailyNewAvailable} new today"
-#~ msgstr "{dailyNewAvailable} new today"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:188
 msgid "{discount}% off with your referral for {durationLimit} months!"
@@ -308,17 +97,9 @@ msgstr "{discountPercentage}% off thanks to your past referral!"
 msgid "{dueTermCount} due"
 msgstr "{dueTermCount} due"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:69
-#~ msgid "{dueTermCount} follow-up(s)"
-#~ msgstr "{dueTermCount} follow-up(s)"
-
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:33
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:113
-#~ msgid "{dueTermCount} follow-up(s) ready"
-#~ msgstr "{dueTermCount} follow-up(s) ready"
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:175
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
@@ -326,50 +107,13 @@ msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 msgstr "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:83
-#~ msgid "{highlightCount, plural, one {# highlight this session} other {# "
-#~ "highlights this session}}"
-#~ msgstr "{highlightCount, plural, one {# highlight this session} other {# "
-#~ "highlights this session}}"
-
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
 msgstr "{highlightCount} highlight(s)"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:65
-#~ msgid "{highlightCount} highlight(s) ready."
-#~ msgstr "{highlightCount} highlight(s) ready."
-
 #: apps/web/src/features/sessions/components/triage-footer.tsx:22
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} highlight(s) saved."
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:62
-#~ msgid "{learningDueCount} follow-up(s)"
-#~ msgstr "{learningDueCount} follow-up(s)"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:143
-#~ msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with "
-#~ "your referral!"
-#~ msgstr "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with "
-#~ "your referral!"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:141
-#~ msgid "{monthlyDiscountPercentage}% off for 1 month with your referral!"
-#~ msgstr "{monthlyDiscountPercentage}% off for 1 month with your referral!"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:140
-#~ msgid "{monthlyDiscountPercentage}% off with your referral!"
-#~ msgstr "{monthlyDiscountPercentage}% off with your referral!"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:61
-#~ msgid "{newCount} new"
-#~ msgstr "{newCount} new"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:106
-#: apps/web/src/features/practice/components/practice-language-view.tsx:115
-#~ msgid "{newCount} unseen"
-#~ msgstr "{newCount} unseen"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:56
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
@@ -383,65 +127,9 @@ msgstr "{parked} word(s) parked — strengthen them"
 msgid "{parkedTotal} parked"
 msgstr "{parkedTotal} parked"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:458
-#~ msgid "{ratedCount} of {totalCount} rated"
-#~ msgstr "{ratedCount} of {totalCount} rated"
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:277
-#~ msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on "
-#~ "Next."
-#~ msgstr "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on "
-#~ "Next."
-
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:60
-#~ msgid "{reviewDueCount} due"
-#~ msgstr "{reviewDueCount} due"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:106
-#~ msgid "{totalKept} total"
-#~ msgstr "{totalKept} total"
-
-#: apps/web/src/features/sessions/components/triage-footer.tsx:47
-#~ msgid "{unprocessedHighlightCount} new highlight(s) still enriching."
-#~ msgstr "{unprocessedHighlightCount} new highlight(s) still enriching."
-
-#: apps/web/src/features/sessions/components/process-button.tsx:64
-#~ msgid "{unprocessedHighlightCount} new highlight(s) to process."
-#~ msgstr "{unprocessedHighlightCount} new highlight(s) to process."
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:125
-#~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with "
-#~ "your referral!"
-#~ msgstr "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with "
-#~ "your referral!"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:123
-#~ msgid "{yearlyDiscountPercentage}% off for 1 year with your referral!"
-#~ msgstr "{yearlyDiscountPercentage}% off for 1 year with your referral!"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:122
-#~ msgid "{yearlyDiscountPercentage}% off with your referral!"
-#~ msgstr "{yearlyDiscountPercentage}% off with your referral!"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:194
-#~ msgid "• All personal account information and system preferences"
-#~ msgstr "• All personal account information and system preferences"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:191
-#~ msgid "• Complete learning history and all accumulated progress data"
-#~ msgstr "• Complete learning history and all accumulated progress data"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:188
-#~ msgid "• Every voice recording and associated voice clone, without exception"
-#~ msgstr "• Every voice recording and associated voice clone, without exception"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:197
-#~ msgid "• Full communication records and interaction history"
-#~ msgstr "• Full communication records and interaction history"
 
 #: packages/extension/src/ui/components/Tutorial.tsx:156
 msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
@@ -467,85 +155,9 @@ msgstr "€{monthlyPriceFormatted}/month"
 msgid "€{yearlyPricePerMonth}/month"
 msgstr "€{yearlyPricePerMonth}/month"
 
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:21
-#~ msgid "1. Agreement to Terms"
-#~ msgstr "1. Agreement to Terms"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:21
-#~ msgid "1. Introduction"
-#~ msgstr "1. Introduction"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:208
-#~ msgid "10. Contact Us"
-#~ msgstr "10. Contact Us"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:30
-#~ msgid "2. Information Collection"
-#~ msgstr "2. Information Collection"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:30
-#~ msgid "2. Intellectual Property Rights"
-#~ msgstr "2. Intellectual Property Rights"
-
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:177
 msgid "3 examples"
 msgstr "3 examples"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:66
-#~ msgid "3. Use of Information"
-#~ msgstr "3. Use of Information"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:41
-#~ msgid "3. User Responsibilities"
-#~ msgstr "3. User Responsibilities"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:94
-#~ msgid "4. Transfer of Data"
-#~ msgstr "4. Transfer of Data"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:86
-#~ msgid "4. User Content"
-#~ msgstr "4. User Content"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:97
-#~ msgid "5. Account Termination"
-#~ msgstr "5. Account Termination"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:104
-#~ msgid "5. Third-Party Services:"
-#~ msgstr "5. Third-Party Services:"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:107
-#~ msgid "6. Disclaimer of Warranties"
-#~ msgstr "6. Disclaimer of Warranties"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:117
-#~ msgid "6. Disclosure of Data"
-#~ msgstr "6. Disclosure of Data"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:155
-#~ msgid "7 days free"
-#~ msgstr "7 days free"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:118
-#~ msgid "7. Limitation of Liability"
-#~ msgstr "7. Limitation of Liability"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:126
-#~ msgid "7. Security of Data"
-#~ msgstr "7. Security of Data"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:144
-#~ msgid "8. Contact Us"
-#~ msgstr "8. Contact Us"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:167
-#~ msgid "8. Data Retention"
-#~ msgstr "8. Data Retention"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:177
-#~ msgid "9. Your Rights"
-#~ msgstr "9. Your Rights"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:199
 msgid "A natural translation of the target example."
@@ -565,12 +177,6 @@ msgstr "A sentence using this term in its natural setting."
 msgid "A short label for this session"
 msgstr "A short label for this session"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
-#~ msgid "A video element must be synced with asbplayer before it can be mined. "
-#~ "Select a video element to sync it with asbplayer."
-#~ msgstr "A video element must be synced with asbplayer before it can be mined. "
-#~ "Select a video element to sync it with asbplayer."
-
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:185
 msgid "A video element must be synced with Flicktionary before it can be mined. "
 "Select a video element to sync it with Flicktionary."
@@ -581,22 +187,10 @@ msgstr "A video element must be synced with Flicktionary before it can be "
 msgid "About"
 msgstr "About"
 
-#: apps/landing-page/src/app/[lang]/about/page.tsx:15
-#~ msgid "About | Flicktionary"
-#~ msgstr "About | Flicktionary"
-
-#: packages/asbplayer-common/components/SettingsForm.tsx:248
-#~ msgid "About asbplayer"
-#~ msgstr "About asbplayer"
-
 #: packages/asbplayer-common/components/SettingsForm.tsx:156
 #: packages/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
-
-#: apps/landing-page/src/app/[lang]/about/page.tsx:38
-#~ msgid "About Us"
-#~ msgstr "About Us"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:36
 msgid "Access exclusive premium features available to subscribers."
@@ -611,10 +205,6 @@ msgstr "Account"
 #: apps/web/src/features/auth/components/account-removed-view.tsx:29
 msgid "Account Removed"
 msgstr "Account Removed"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:320
-#~ msgid "Actions for the current practice session."
-#~ msgstr "Actions for the current practice session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:53
 msgid "Actions for the selected vocabulary list."
@@ -635,10 +225,6 @@ msgstr "Actions in this section can lead to permanent data loss."
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:54
 msgid "Active"
 msgstr "Active"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:304
-#~ msgid "Active drill in progress"
-#~ msgstr "Active drill in progress"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:189
 msgid "Active vocabulary"
@@ -744,27 +330,9 @@ msgstr "All"
 msgid "All caught up"
 msgstr "All caught up"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:62
-#~ msgid "All caught up for today · {followUpDelay} · {totalKept} total"
-#~ msgstr "All caught up for today · {followUpDelay} · {totalKept} total"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:50
-#~ msgid "All caught up for today · {learningDueCount} follow-up(s) ready · "
-#~ "{totalKept} total"
-#~ msgstr "All caught up for today · {learningDueCount} follow-up(s) ready · "
-#~ "{totalKept} total"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:65
-#~ msgid "All caught up for today · {totalKept} total"
-#~ msgstr "All caught up for today · {totalKept} total"
-
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:171
 msgid "All done!"
 msgstr "All done!"
-
-#: apps/web/src/features/sessions/components/triage-footer.tsx:46
-#~ msgid "All highlights have been processed."
-#~ msgstr "All highlights have been processed."
 
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:168
 msgid "Allow auto-loading of detected subtitles"
@@ -777,12 +345,6 @@ msgstr "Allow subtitle file drag-and-drop"
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:161
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:360
-#~ msgid "Already-rated terms will keep their ratings. Unrated terms stay "
-#~ "available for later sessions."
-#~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay "
-#~ "available for later sessions."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
@@ -813,10 +375,6 @@ msgstr "An exercise for “{currentHeadword}” is still being prepared. Check b
 msgid "An unexpected error occurred"
 msgstr "An unexpected error occurred"
 
-#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:13
-#~ msgid "Android App"
-#~ msgstr "Android App"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:358
 msgid "Animacy"
 msgstr "Animacy"
@@ -825,21 +383,9 @@ msgstr "Animacy"
 msgid "Animate"
 msgstr "Animate"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:245
-#~ msgid "Annotation"
-#~ msgstr "Annotation"
-
 #: apps/web/src/features/review/components/editable-card-fields.tsx:132
 msgid "Another term already exists with that headword and sense."
 msgstr "Another term already exists with that headword and sense."
-
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:27
-#~ msgid "App Store"
-#~ msgstr "App Store"
-
-#: packages/asbplayer-common/components/About.tsx:28
-#~ msgid "App version"
-#~ msgstr "App version"
 
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
@@ -850,25 +396,11 @@ msgstr "Are you absolutely sure?"
 msgid "Articles"
 msgstr "Articles"
 
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:92
-#~ msgid "asbplayer updated to version {0}. Check out the <0>release notes</0>."
-#~ msgstr "asbplayer updated to version {0}. Check out the <0>release notes</0>."
-
-#: packages/extension/src/ui/components/NotificationUi.tsx:101
-#~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release "
-#~ "notes</0>."
-#~ msgstr "asbplayer updated to version {newVersion}. Check out the <0>release "
-#~ "notes</0>."
-
 #: apps/web/src/features/review/components/per-card-chat.tsx:190
 msgid "Ask a follow-up question about this term. The model already has the "
 "methodology, your profile, and the surrounding scene loaded."
 msgstr "Ask a follow-up question about this term. The model already has the "
 "methodology, your profile, and the surrounding scene loaded."
-
-#: apps/web/src/features/review/components/per-card-chat.tsx:141
-#~ msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
-#~ msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:249
 msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new "
@@ -892,10 +424,6 @@ msgstr "Aspect pair"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:321
 msgid "Aspect pair (counterpart headword)"
 msgstr "Aspect pair (counterpart headword)"
-
-#: apps/web/src/features/sessions/components/text-paste-input.tsx:120
-#~ msgid "At least {MIN_LENGTH} characters needed"
-#~ msgstr "At least {MIN_LENGTH} characters needed"
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:92
 msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
@@ -926,14 +454,6 @@ msgstr "Authentication failed"
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:155
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
-
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-#~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not "
-#~ "know how to detect subtitles on every site. You can always load your own "
-#~ "subtitle files."
-#~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not "
-#~ "know how to detect subtitles on every site. You can always load your "
-#~ "own subtitle files."
 
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
@@ -1020,10 +540,6 @@ msgstr "Beginner — basic phrases and immediate needs."
 msgid "best value"
 msgstr "best value"
 
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:129
-#~ msgid "Best Value"
-#~ msgstr "Best Value"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:313
 msgid "Biaspectual"
 msgstr "Biaspectual"
@@ -1031,10 +547,6 @@ msgstr "Biaspectual"
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:68
 msgid "Billed yearly at €{yearlyPriceTotal}"
 msgstr "Billed yearly at €{yearlyPriceTotal}"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:130
-#~ msgid "Billed yearly: €{yearlyPriceFormatted}"
-#~ msgstr "Billed yearly: €{yearlyPriceFormatted}"
 
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:79
 msgid "Bonus"
@@ -1051,21 +563,6 @@ msgstr "British"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:217
 msgid "Browse community-uploaded tracks for this movie."
 msgstr "Browse community-uploaded tracks for this movie."
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:84
-#~ msgid "Browse the full list."
-#~ msgstr "Browse the full list."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
-#~ msgid "By accessing and using our website, flicktionary.app, and any associated "
-#~ "services, you agree to be bound by these Terms of Service (\"Terms\")."
-#~ msgstr "By accessing and using our website, flicktionary.app, and any "
-#~ "associated services, you agree to be bound by these Terms of Service "
-#~ "(\"Terms\")."
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
-#~ msgid "Calibrates the difficult-words pass and the depth of explanations."
-#~ msgstr "Calibrates the difficult-words pass and the depth of explanations."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:150
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
@@ -1096,24 +593,9 @@ msgstr "Card not found."
 msgid "Cards left"
 msgstr "Cards left"
 
-#: apps/landing-page/src/app/[lang]/layout.tsx:50
-#~ msgid "Category of the app"
-#~ msgstr "Category of the app"
-
 #: apps/web/src/features/sessions/components/cefr-step.tsx:43
 msgid "CEFR level"
 msgstr "CEFR level"
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:31
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:42
-#~ msgid "CEFR level per language"
-#~ msgstr "CEFR level per language"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:162
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:212
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:105
-#~ msgid "Change"
-#~ msgstr "Change"
 
 #: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:22
 msgid "Changes settings for ALL tracks. Settings that already have "
@@ -1155,10 +637,6 @@ msgstr "Checking app version..."
 msgid "Checking…"
 msgstr "Checking…"
 
-#: apps/web/src/features/sessions/components/srt-upload-input.tsx:45
-#~ msgid "Choose .srt file"
-#~ msgstr "Choose .srt file"
-
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:103
 msgid "Choose a plan to unlock all features"
 msgstr "Choose a plan to unlock all features"
@@ -1167,21 +645,9 @@ msgstr "Choose a plan to unlock all features"
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
-#: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
-#~ msgid "Choose the perfect plan for your accent training journey. Flexible "
-#~ "pricing options to help you achieve your perfect accent with AI-powered "
-#~ "voice training."
-#~ msgstr "Choose the perfect plan for your accent training journey. Flexible "
-#~ "pricing options to help you achieve your perfect accent with AI-powered "
-#~ "voice training."
-
 #: apps/web/src/features/billing/components/pricing-view.tsx:140
 msgid "Choose your plan"
 msgstr "Choose your plan"
-
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:177
-#~ msgid "Choose Your Plan"
-#~ msgstr "Choose Your Plan"
 
 #: packages/ui/src/components/search-input.tsx:36
 msgid "Clear search"
@@ -1192,12 +658,6 @@ msgid "Click Generate full exploration to enrich this card with collocations, "
 "etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, "
 "etymology, register, IPA, and more."
-
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
-#~ msgid "Click on the asbplayer action button in the top-right of the browser "
-#~ "window to enable audio recording for this tab."
-#~ msgstr "Click on the asbplayer action button in the top-right of the browser "
-#~ "window to enable audio recording for this tab."
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
 msgid "Click on the Flicktionary action button in the top-right of the browser "
@@ -1234,10 +694,6 @@ msgstr "Close"
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:96
 msgid "Collocations"
 msgstr "Collocations"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:121
-#~ msgid "Come back later. {followUpDelay}."
-#~ msgstr "Come back later. {followUpDelay}."
 
 #: packages/asbplayer-common/components/ListField.tsx:58
 msgid "Comma-separated list of strings"
@@ -1297,14 +753,6 @@ msgstr "Context (optional)"
 msgid "Continue"
 msgstr "Continue"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:323
-#~ msgid "Continue active drill"
-#~ msgstr "Continue active drill"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:74
-#~ msgid "Continue session"
-#~ msgstr "Continue session"
-
 #: apps/web/src/features/auth/components/login-view.tsx:98
 msgid "Continue with Apple"
 msgstr "Continue with Apple"
@@ -1319,10 +767,6 @@ msgstr "Continue with Email"
 #: apps/web/src/features/auth/components/login-view.tsx:92
 msgid "Continue with Google"
 msgstr "Continue with Google"
-
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:29
-#~ msgid "Copied!"
-#~ msgstr "Copied!"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx:108
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:107
@@ -1404,15 +848,6 @@ msgstr "Could not set up your account. Please try restarting the app."
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
-#: apps/web/src/features/practice/components/practice-start-view.tsx:40
-#~ msgid "Couldn't start the session. Please try again."
-#~ msgstr "Couldn't start the session. Please try again."
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:247
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:134
-#~ msgid "Creating…"
-#~ msgstr "Creating…"
-
 #. placeholder {0}: customStyle.key
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:89
 msgid "CSS: {0}"
@@ -1437,17 +872,9 @@ msgstr "Customer Center"
 msgid "Daily new limit reached"
 msgstr "Daily new limit reached"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:59
-#~ msgid "Daily new limit reached · {newCount} unseen · {totalKept} total"
-#~ msgstr "Daily new limit reached · {newCount} unseen · {totalKept} total"
-
 #: apps/web/src/features/practice/components/practice-language-view.tsx:89
 msgid "Daily new limit reached."
 msgstr "Daily new limit reached."
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:120
-#~ msgid "Daily new limit reached. You can learn more anyway."
-#~ msgstr "Daily new limit reached. You can learn more anyway."
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:172
 msgid "Daily new-card limit reached."
@@ -1532,10 +959,6 @@ msgstr "Deleted \"{headword}\""
 msgid "Deleting…"
 msgstr "Deleting…"
 
-#: packages/asbplayer-common/components/About.tsx:257
-#~ msgid "Dependencies"
-#~ msgstr "Dependencies"
-
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:183
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
@@ -1556,10 +979,6 @@ msgstr "Display form (e.g. stress-marked)"
 msgid "Display subtitles"
 msgstr "Display subtitles"
 
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:141
-#~ msgid "Done"
-#~ msgstr "Done"
-
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:94
 msgid "Done. You can close this tab and return to the extension."
 msgstr "Done. You can close this tab and return to the extension."
@@ -1568,29 +987,9 @@ msgstr "Done. You can close this tab and return to the extension."
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 
-#: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:16
-#~ msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice "
-#~ "Training"
-#~ msgstr "Download Flicktionary - Flicktionary - Perfect Your Accent with AI "
-#~ "Voice Training"
-
-#: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:17
-#~ msgid "Download our mobile app to start perfecting your accent with AI voice "
-#~ "training"
-#~ msgstr "Download our mobile app to start perfecting your accent with AI voice "
-#~ "training"
-
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:23
-#~ msgid "Download the App"
-#~ msgstr "Download the App"
-
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:69
 msgid "downloads"
 msgstr "downloads"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:184
-#~ msgid "Drill active terms"
-#~ msgstr "Drill active terms"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:49
 msgid "Drill this term in active practice"
@@ -1619,10 +1018,6 @@ msgstr "e.g. подоконник, ran out of, à propos"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:325
 msgid "e.g. увидеть"
 msgstr "e.g. увидеть"
-
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
-#~ msgid "Each new session uses up to this many new terms and review terms."
-#~ msgstr "Each new session uses up to this many new terms and review terms."
 
 #: packages/ui/src/components/rate-buttons.tsx:23
 msgid "Easy"
@@ -1688,39 +1083,9 @@ msgstr "Enabled"
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:399
-#~ msgid "End & start flashcards"
-#~ msgstr "End & start flashcards"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:333
-#~ msgid "End active drill"
-#~ msgstr "End active drill"
-
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:316
 msgid "End of list"
 msgstr "End of list"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:358
-#~ msgid "End practice session?"
-#~ msgstr "End practice session?"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:383
-#~ msgid "End reading session?"
-#~ msgstr "End reading session?"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:273
-#: apps/web/src/features/practice/components/practice-language-view.tsx:374
-#~ msgid "End session"
-#~ msgstr "End session"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:374
-#: apps/web/src/features/practice/components/practice-language-view.tsx:399
-#~ msgid "Ending…"
-#~ msgstr "Ending…"
-
-#: apps/web/src/features/settings/components/english-ipa-dialect-selector.tsx:32
-#~ msgid "English IPA dialect"
-#~ msgstr "English IPA dialect"
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:29
 msgid "Enjoy unlimited access to all our premium features and content."
@@ -1848,14 +1213,6 @@ msgstr "Failed to create session"
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:57
-#~ msgid "Failed to end practice session"
-#~ msgstr "Failed to end practice session"
-
-#: apps/web/src/features/review/api/review-hooks.ts:274
-#~ msgid "Failed to export CSV"
-#~ msgstr "Failed to export CSV"
-
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:96
 msgid "Failed to export vocabulary"
 msgstr "Failed to export vocabulary"
@@ -1868,10 +1225,6 @@ msgstr "Failed to fetch subscription details"
 #: apps/web/src/features/practice/api/practice-hooks.ts:161
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:238
-#~ msgid "Failed to finalize text"
-#~ msgstr "Failed to finalize text"
 
 #: apps/web/src/features/review/api/review-hooks.ts:186
 msgid "Failed to generate exploration"
@@ -1913,10 +1266,6 @@ msgstr "Failed to load chat"
 msgid "Failed to load exercises"
 msgstr "Failed to load exercises"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:200
-#~ msgid "Failed to load flashcards"
-#~ msgstr "Failed to load flashcards"
-
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:332
 msgid "Failed to load highlights"
 msgstr "Failed to load highlights"
@@ -1928,10 +1277,6 @@ msgstr "Failed to load history"
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:13
 msgid "Failed to load languages"
 msgstr "Failed to load languages"
-
-#: apps/web/src/features/practice/api/practice-hooks.ts:70
-#~ msgid "Failed to load practice session"
-#~ msgstr "Failed to load practice session"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:12
 msgid "Failed to load practice summary"
@@ -2054,14 +1399,6 @@ msgstr "Failed to set native language"
 msgid "Failed to start pairing"
 msgstr "Failed to start pairing"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:38
-#~ msgid "Failed to start practice session"
-#~ msgstr "Failed to start practice session"
-
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
-#~ msgid "Failed to start processing"
-#~ msgstr "Failed to start processing"
-
 #: apps/web/src/features/practice/api/practice-hooks.ts:69
 msgid "Failed to submit answer"
 msgstr "Failed to submit answer"
@@ -2070,10 +1407,6 @@ msgstr "Failed to submit answer"
 #: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
 msgid "Failed to trigger Sentry message"
 msgstr "Failed to trigger Sentry message"
-
-#: apps/web/src/features/review/api/review-hooks.ts:211
-#~ msgid "Failed to update card fields"
-#~ msgstr "Failed to update card fields"
 
 #: apps/web/src/features/review/api/review-hooks.ts:87
 msgid "Failed to update card status"
@@ -2107,10 +1440,6 @@ msgstr "Failed to update practice limits"
 msgid "Failed to update show-translations setting"
 msgstr "Failed to update show-translations setting"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:417
-#~ msgid "Failed to update tap-to-translate setting"
-#~ msgstr "Failed to update tap-to-translate setting"
-
 #: apps/web/src/features/review/api/review-hooks.ts:220
 msgid "Failed to update term"
 msgstr "Failed to update term"
@@ -2131,10 +1460,6 @@ msgstr "Fast forward playback: Off"
 msgid "Fast forward playback: On"
 msgstr "Fast forward playback: On"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:75
-#~ msgid "Fast gloss when you select text mid-watch"
-#~ msgstr "Fast gloss when you select text mid-watch"
-
 #: packages/asbplayer-common/components/PlayModeSelector.tsx:60
 msgid "Fast-forward"
 msgstr "Fast-forward"
@@ -2143,53 +1468,24 @@ msgstr "Fast-forward"
 msgid "Fast-forward mode playback rate"
 msgstr "Fast-forward mode playback rate"
 
-#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:19
-#: apps/landing-page/src/app/[lang]/features/page.tsx:13
-#~ msgid "Features"
-#~ msgstr "Features"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:295
 msgid "Feminine"
 msgstr "Feminine"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:273
-#~ msgid "Finding more terms to suggest…"
-#~ msgstr "Finding more terms to suggest…"
-
 #: apps/web/src/features/sessions/components/triage-footer.tsx:38
 msgid "Finding suggestions…"
 msgstr "Finding suggestions…"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:146
-#~ msgid "Flashcards"
-#~ msgstr "Flashcards"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
 #: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:54
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
-#: apps/landing-page/src/app/[lang]/page.tsx:16
-#~ msgid "Flicktionary - Perfect Your Accent with AI Voice Training"
-#~ msgstr "Flicktionary - Perfect Your Accent with AI Voice Training"
-
 #. placeholder {0}: state.newVersion
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:104
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary updated to version {0}. Check out the <0>release "
 "notes</0>."
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:60
-#~ msgid "Follow-up in {hoursUntilFollowUp} hr"
-#~ msgstr "Follow-up in {hoursUntilFollowUp} hr"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:58
-#~ msgid "Follow-up in {minutesUntilFollowUp} min"
-#~ msgstr "Follow-up in {minutesUntilFollowUp} min"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:61
-#~ msgid "Follow-up later"
-#~ msgstr "Follow-up later"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:219
 msgid "Follow-ups"
@@ -2253,10 +1549,6 @@ msgstr "Generate Subtitles"
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:159
-#~ msgid "Generating the next text…"
-#~ msgstr "Generating the next text…"
-
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
 msgid "Generating..."
 msgstr "Generating..."
@@ -2272,38 +1564,17 @@ msgstr "Generating…"
 msgid "Get started"
 msgstr "Get started"
 
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:45
-#~ msgid "Get Started"
-#~ msgstr "Get Started"
-
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:24
-#~ msgid "Get the App"
-#~ msgstr "Get the App"
-
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:189
 msgid "Give me three more example sentences using it."
 msgstr "Give me three more example sentences using it."
-
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:186
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:418
-#~ msgid "Glossing…"
-#~ msgstr "Glossing…"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:41
 msgid "Go Back"
 msgstr "Go Back"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:198
-#~ msgid "Go back to the source view and click Retry processing to try again."
-#~ msgstr "Go back to the source view and click Retry processing to try again."
-
 #: apps/web/src/features/review/components/triage-list-view.tsx:205
 msgid "Go back to the source view to add or retry highlights."
 msgstr "Go back to the source view to add or retry highlights."
-
-#: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
-#~ msgid "Go to Dashboard"
-#~ msgstr "Go to Dashboard"
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:33
 msgid "Go to Sessions"
@@ -2363,12 +1634,6 @@ msgstr "Help us improve Flicktionary"
 msgid "HI"
 msgstr "HI"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:118
-#~ msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by "
-#~ "re-keeping it in a session."
-#~ msgstr "Hide \"{headword}\" from vocabulary and Practice? You can revive it by "
-#~ "re-keeping it in a session."
-
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:74
 msgid "Hide from vocabulary and Practice"
 msgstr "Hide from vocabulary and Practice"
@@ -2403,11 +1668,6 @@ msgstr "Hides this term from your vocabulary and Practice. You can revive it by 
 msgid "Highlight saved"
 msgstr "Highlight saved"
 
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:134
-#~ msgid "Highlight saved. Add a note or chips next time without tap-to-translate."
-#~ msgstr "Highlight saved. Add a note or chips next time without "
-#~ "tap-to-translate."
-
 #: apps/web/src/features/review/components/processing-view.tsx:21
 msgid "Highlights are enriched as you read. Triage is available immediately."
 msgstr "Highlights are enriched as you read. Triage is available immediately."
@@ -2432,10 +1692,6 @@ msgstr "Home"
 msgid "Host regex"
 msgstr "Host regex"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:466
-#~ msgid "How rating works on Next"
-#~ msgstr "How rating works on Next"
-
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
 msgid "How your free trial works"
 msgstr "How your free trial works"
@@ -2444,18 +1700,6 @@ msgstr "How your free trial works"
 msgid "Idiom"
 msgstr "Idiom"
 
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
-#~ msgid "If you have any questions about these Terms of Service, please contact "
-#~ "us via email contact@flicktionary.app"
-#~ msgstr "If you have any questions about these Terms of Service, please contact "
-#~ "us via email contact@flicktionary.app"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
-#~ msgid "If you have any questions about this Privacy Policy, please contact us "
-#~ "via email: contact@flicktionary.app"
-#~ msgstr "If you have any questions about this Privacy Policy, please contact us "
-#~ "via email: contact@flicktionary.app"
-
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
 msgstr "If you'd like to create a new account, sign up again below."
@@ -2463,10 +1707,6 @@ msgstr "If you'd like to create a new account, sign up again below."
 #: apps/native/src/features/auth/components/account-removed-view.tsx:25
 msgid "If you'd like to create a new account, you can sign up again."
 msgstr "If you'd like to create a new account, you can sign up again."
-
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:443
-#~ msgid "Image-based Subtitle Scale Factor"
-#~ msgstr "Image-based Subtitle Scale Factor"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:311
 msgid "Imperfective"
@@ -2493,22 +1733,6 @@ msgstr "Imported text"
 #: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Importing…"
 msgstr "Importing…"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
-#~ msgid "In no event shall flicktionary.app, nor its directors, employees, "
-#~ "partners, agents, suppliers, or affiliates, be liable for any indirect, "
-#~ "incidental, special, consequential, or punitive damages, including "
-#~ "without limitation, loss of profits, data, use, goodwill, or other "
-#~ "intangible losses, resulting from:"
-#~ msgstr "In no event shall flicktionary.app, nor its directors, employees, "
-#~ "partners, agents, suppliers, or affiliates, be liable for any indirect, "
-#~ "incidental, special, consequential, or punitive damages, including "
-#~ "without limitation, loss of profits, data, use, goodwill, or other "
-#~ "intangible losses, resulting from:"
-
-#: apps/landing-page/src/app/[lang]/layout.tsx:51
-#~ msgid "In-App Purchases"
-#~ msgstr "In-App Purchases"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:365
 msgid "Inanimate"
@@ -2548,10 +1772,6 @@ msgstr "Introduce your card details and get instant access"
 #: apps/native/src/config/react-query-config.ts:77
 msgid "Invalid token. Please sign in again."
 msgstr "Invalid token. Please sign in again."
-
-#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:13
-#~ msgid "iOS App"
-#~ msgstr "iOS App"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:233
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:77
@@ -2630,10 +1850,6 @@ msgstr "Languages"
 msgid "Last day to cancel before first charge"
 msgstr "Last day to cancel before first charge"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:290
-#~ msgid "Last highlight"
-#~ msgstr "Last highlight"
-
 #: apps/web/src/features/sessions/components/session-view.tsx:373
 msgid "Last read"
 msgstr "Last read"
@@ -2646,22 +1862,9 @@ msgstr "Later"
 msgid "Layout"
 msgstr "Layout"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:79
-#~ msgid "Learn more anyway"
-#~ msgstr "Learn more anyway"
-
 #: apps/web/src/features/practice/components/practice-language-view.tsx:153
 msgid "Learn new"
 msgstr "Learn new"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:92
-#~ msgid "Learn new only"
-#~ msgstr "Learn new only"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:69
-#: apps/web/src/features/practice/components/practice-language-view.tsx:80
-#~ msgid "Learn new terms"
-#~ msgstr "Learn new terms"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:16
 msgid "Learning"
@@ -2670,20 +1873,6 @@ msgstr "Learning"
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:89
 msgid "Less formal:"
 msgstr "Less formal:"
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:61
-#~ msgid "Let the model surface terms at your level on Process"
-#~ msgstr "Let the model surface terms at your level on Process"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
-#~ msgid "Level for {trackLanguage}: {cefrLabel}."
-#~ msgstr "Level for {trackLanguage}: {cefrLabel}."
-
-#: packages/asbplayer-common/components/About.tsx:227
-#: packages/asbplayer-common/components/About.tsx:267
-#~ msgid "License"
-#~ msgstr "License"
 
 #: packages/asbplayer-common/components/UiSettings.tsx:29
 msgid "Light"
@@ -2698,12 +1887,6 @@ msgstr "Link expired or invalid"
 #: apps/web/src/features/review/components/triage-list-view.tsx:255
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
-
-#: apps/web/src/features/sessions/components/process-button.tsx:56
-#~ msgid "LLM-suggested terms are off. Highlight at least one term to process this "
-#~ "session."
-#~ msgstr "LLM-suggested terms are off. Highlight at least one term to process "
-#~ "this session."
 
 #: packages/asbplayer-common/components/VideoOverlay.tsx:330
 #: packages/extension/src/entrypoints/background.ts:174
@@ -2721,10 +1904,6 @@ msgstr "Loading cards…"
 #: apps/web/src/features/review/components/per-card-chat.tsx:187
 msgid "Loading chat…"
 msgstr "Loading chat…"
-
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:140
-#~ msgid "Loading flashcards…"
-#~ msgstr "Loading flashcards…"
 
 #: apps/web/src/features/practice/components/reading-history-view.tsx:69
 msgid "Loading history…"
@@ -2745,10 +1924,6 @@ msgstr "Loading segments…"
 #: apps/web/src/features/sessions/components/session-view.tsx:305
 msgid "Loading session…"
 msgstr "Loading session…"
-
-#: apps/web/src/features/dashboard/components/dashboard-view.tsx:31
-#~ msgid "Loading subscription status..."
-#~ msgstr "Loading subscription status..."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:31
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:67
@@ -2772,10 +1947,6 @@ msgstr "Loading…"
 msgid "Looks like {suggestedLanguageName}"
 msgstr "Looks like {suggestedLanguageName}"
 
-#: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:200
-#~ msgid "Looks like {suggestedLanguageName} — switch?"
-#~ msgstr "Looks like {suggestedLanguageName} — switch?"
-
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:171
 msgid "Lookup"
 msgstr "Lookup"
@@ -2793,14 +1964,6 @@ msgstr "Manage Subscription"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:294
 msgid "Masculine"
 msgstr "Masculine"
-
-#: apps/landing-page/src/app/[lang]/page.tsx:18
-#~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice "
-#~ "speaking in your target language with your own voice. Try our free trial "
-#~ "today!"
-#~ msgstr "Master perfect pronunciation with AI-powered voice cloning. Practice "
-#~ "speaking in your target language with your own voice. Try our free "
-#~ "trial today!"
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx:33
 msgid "Mastery — virtually everything understood with ease."
@@ -2821,14 +1984,6 @@ msgstr "Message to the founders"
 msgid "Misc"
 msgstr "Misc"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:137
-#~ msgid "Mixed"
-#~ msgstr "Mixed"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:143
-#~ msgid "Mode"
-#~ msgstr "Mode"
-
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
 msgid "Monthly"
 msgstr "Monthly"
@@ -2847,10 +2002,6 @@ msgstr "More formal:"
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:94
 msgid "More frequent synonym"
 msgstr "More frequent synonym"
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:80
-#~ msgid "More languages"
-#~ msgstr "More languages"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:149
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:81
@@ -2889,10 +2040,6 @@ msgstr "Movies"
 msgid "Multiple Video Elements Detected"
 msgstr "Multiple Video Elements Detected"
 
-#: packages/asbplayer-common/components/About.tsx:264
-#~ msgid "Name"
-#~ msgstr "Name"
-
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
 msgid "Name (optional)"
@@ -2914,11 +2061,6 @@ msgstr "Native language"
 #: apps/web/src/features/more/components/more-tab-view.tsx:55
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:241
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:128
-#~ msgid "Native language: {nativeLanguage}."
-#~ msgstr "Native language: {nativeLanguage}."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:296
 msgid "Neuter"
@@ -2965,10 +2107,6 @@ msgstr "Next"
 msgid "Next card"
 msgstr "Next card"
 
-#: apps/web/src/features/practice/components/practice-session-view.tsx:491
-#~ msgid "Next text"
-#~ msgstr "Next text"
-
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:103
 msgid "Nice!"
 msgstr "Nice!"
@@ -2981,35 +2119,11 @@ msgstr "No active tab to import from."
 msgid "No active tab."
 msgstr "No active tab."
 
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:156
-#~ msgid "No Card Required"
-#~ msgstr "No Card Required"
-
-#: apps/web/src/features/sessions/components/triage-footer.tsx:45
-#~ msgid "No cards have been generated yet."
-#~ msgstr "No cards have been generated yet."
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:202
-#~ msgid "No cards yet. Process the session to generate them."
-#~ msgstr "No cards yet. Process the session to generate them."
-
 #: apps/web/src/features/review/components/triage-list-view.tsx:213
 msgid "No cards yet. Select some highlights in the source text to generate new "
 "cards."
 msgstr "No cards yet. Select some highlights in the source text to generate new "
 "cards."
-
-#: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
-#~ msgid "No flashcards are due right now."
-#~ msgstr "No flashcards are due right now."
-
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:105
-#~ msgid "No highlight selected."
-#~ msgstr "No highlight selected."
-
-#: apps/web/src/features/sessions/components/process-button.tsx:61
-#~ msgid "No highlights — the LLM will suggest terms based on your level."
-#~ msgstr "No highlights — the LLM will suggest terms based on your level."
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:22
 msgid "No highlights yet."
@@ -3028,10 +2142,6 @@ msgstr "No matches."
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:122
-#~ msgid "No practice terms are ready right now."
-#~ msgstr "No practice terms are ready right now."
-
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:71
 msgid "No sessions in this filter."
 msgstr "No sessions in this filter."
@@ -3039,12 +2149,6 @@ msgstr "No sessions in this filter."
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:68
 msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
-
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:33
-#~ msgid "No target languages yet. Levels are set the first time you start a "
-#~ "session in a new language."
-#~ msgstr "No target languages yet. Levels are set the first time you start a "
-#~ "session in a new language."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:53
 msgid "No target languages yet. Preferences are set the first time you start a "
@@ -3059,10 +2163,6 @@ msgstr "No terms are due right now."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:90
 msgid "No terms are ready right now."
 msgstr "No terms are ready right now."
-
-#: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:138
-#~ msgid "No text selected."
-#~ msgstr "No text selected."
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:65
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
@@ -3110,11 +2210,6 @@ msgstr "Not quite."
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:403
 msgid "Notable forms"
 msgstr "Notable forms"
-
-#: apps/web/src/features/sessions/components/highlight-action-menu.tsx:66
-#: apps/web/src/features/sessions/components/highlight-sheet.tsx:76
-#~ msgid "Note & tags"
-#~ msgstr "Note & tags"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:510
 msgid "Note saved"
@@ -3186,10 +2281,6 @@ msgstr "Opening triage"
 msgid "Opening…"
 msgstr "Opening…"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:100
-#~ msgid "OpenSubtitles search"
-#~ msgstr "OpenSubtitles search"
-
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:102
 msgid "OpenSubtitles search failed"
 msgstr "OpenSubtitles search failed"
@@ -3206,14 +2297,6 @@ msgstr "Optional contextual paraphrase in the target language."
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Optional note for the LLM (what specifically confuses you?)"
 
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:26
-#~ msgid "or copy links to"
-#~ msgstr "or copy links to"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:169
-#~ msgid "Original language"
-#~ msgstr "Original language"
-
 #: apps/web/src/features/review/components/grounding-badge.tsx:23
 msgid "Originally verified against Wiktionary on {groundedDate}, then edited"
 msgstr "Originally verified against Wiktionary on {groundedDate}, then edited"
@@ -3221,22 +2304,6 @@ msgstr "Originally verified against Wiktionary on {groundedDate}, then edited"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:269
 msgid "Other"
 msgstr "Other"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
-#~ msgid "Our security infrastructure is continuously monitored, evaluated, and "
-#~ "enhanced to meet evolving cybersecurity challenges. We maintain rigorous "
-#~ "standards in data protection and follow security best practices "
-#~ "recommended by leading technology security organizations. For complete "
-#~ "transparency, we acknowledge that all digital systems require ongoing "
-#~ "vigilance, which is why we've implemented comprehensive monitoring and "
-#~ "rapid response protocols."
-#~ msgstr "Our security infrastructure is continuously monitored, evaluated, and "
-#~ "enhanced to meet evolving cybersecurity challenges. We maintain "
-#~ "rigorous standards in data protection and follow security best "
-#~ "practices recommended by leading technology security organizations. For "
-#~ "complete transparency, we acknowledge that all digital systems require "
-#~ "ongoing vigilance, which is why we've implemented comprehensive "
-#~ "monitoring and rapid response protocols."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:136
 msgid "Overridden"
@@ -3249,18 +2316,6 @@ msgstr "Pages"
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:90
 msgid "Pair the Flicktionary extension"
 msgstr "Pair the Flicktionary extension"
-
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
-#~ msgid "Pair with Flicktionary"
-#~ msgstr "Pair with Flicktionary"
-
-#: packages/extension/src/services/flicktionary/import-text.ts:58
-#~ msgid "Pair with Flicktionary to import text."
-#~ msgstr "Pair with Flicktionary to import text."
-
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:86
-#~ msgid "Paired as {0}"
-#~ msgstr "Paired as {0}"
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:93
 msgid "Pairing your browser extension..."
@@ -3320,10 +2375,6 @@ msgstr "Permanently delete your account and all associated data"
 msgid "Phrase"
 msgstr "Phrase"
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:70
-#~ msgid "Pick"
-#~ msgstr "Pick"
-
 #: packages/asbplayer-common/components/SettingsColorField.tsx:42
 msgid "Pick a color"
 msgstr "Pick a color"
@@ -3366,10 +2417,6 @@ msgstr "Pick what to create next."
 #: apps/web/src/features/settings/components/native-language-selector.tsx:23
 msgid "Pick your native language"
 msgstr "Pick your native language"
-
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:28
-#~ msgid "Play Store"
-#~ msgstr "Play Store"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:253
 msgid "Play/pause"
@@ -3446,10 +2493,6 @@ msgstr "Practice"
 msgid "Practice limits"
 msgstr "Practice limits"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:287
-#~ msgid "Practice these terms"
-#~ msgstr "Practice these terms"
-
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:50
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:145
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:164
@@ -3460,14 +2503,6 @@ msgstr "Practice with a text"
 msgid "Practice your terms"
 msgstr "Practice your terms"
 
-#: apps/web/src/features/dashboard/components/dashboard-view.tsx:26
-#~ msgid "Premium"
-#~ msgstr "Premium"
-
-#: apps/web/src/features/premium-demo/components/premium-demo-view.tsx:44
-#~ msgid "Premium Demo"
-#~ msgstr "Premium Demo"
-
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:33
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:36
 msgid "Premium Features"
@@ -3476,11 +2511,6 @@ msgstr "Premium Features"
 #: apps/web/src/features/practice/components/strengthen-view.tsx:56
 msgid "Preparing exercises…"
 msgstr "Preparing exercises…"
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:366
-#: apps/web/src/features/practice/components/practice-start-view.tsx:45
-#~ msgid "Preparing the session…"
-#~ msgstr "Preparing the session…"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:217
 msgid "Preparing your answer…"
@@ -3503,42 +2533,13 @@ msgstr "Press \"{keys}\" to toggle subtitle display"
 msgid "Previous card"
 msgstr "Previous card"
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx:44
-#~ msgid "Previous processing failed. You can still open triage."
-#~ msgstr "Previous processing failed. You can still open triage."
-
-#: apps/web/src/features/sessions/components/process-button.tsx:58
-#~ msgid "Previous run failed. Click to retry."
-#~ msgstr "Previous run failed. Click to retry."
-
-#: apps/web/src/features/sessions/components/process-button.tsx:59
-#~ msgid "Previous run produced no cards. Click to retry."
-#~ msgstr "Previous run produced no cards. Click to retry."
-
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:364
 msgid "Previous text"
 msgstr "Previous text"
 
-#: apps/landing-page/src/app/[lang]/(navbar)/desktop-navbar.tsx:22
-#: apps/landing-page/src/app/[lang]/(navbar)/mobile-navbar.tsx:80
-#~ msgid "Pricing"
-#~ msgstr "Pricing"
-
-#: apps/landing-page/src/app/[lang]/pricing/page.tsx:14
-#~ msgid "Pricing | Flicktionary"
-#~ msgstr "Pricing | Flicktionary"
-
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:49
 msgid "Primary"
 msgstr "Primary"
-
-#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:21
-#~ msgid "Privacy Policy"
-#~ msgstr "Privacy Policy"
-
-#: apps/web/src/features/sessions/components/process-button.tsx:73
-#~ msgid "Process"
-#~ msgstr "Process"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:75
 #: apps/web/src/features/practice/components/practice-language-view.tsx:178
@@ -3553,33 +2554,17 @@ msgid "Process a session and keep some cards. They'll show up here, browsable "
 msgstr "Process a session and keep some cards. They'll show up here, browsable "
 "across every session."
 
-#: apps/web/src/features/sessions/components/process-button.tsx:72
-#~ msgid "Process new highlights"
-#~ msgstr "Process new highlights"
-
 #: apps/web/src/features/review/components/processing-view.tsx:16
 msgid "Processing"
 msgstr "Processing"
-
-#: apps/web/src/features/review/components/processing-view.tsx:43
-#~ msgid "Processing failed"
-#~ msgstr "Processing failed"
 
 #: apps/web/src/features/review/components/processing-view.tsx:19
 msgid "Processing has moved to the background"
 msgstr "Processing has moved to the background"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:308
-#~ msgid "Processing started"
-#~ msgstr "Processing started"
-
 #: apps/web/src/features/review/components/triage-list-view.tsx:198
 msgid "Processing warnings"
 msgstr "Processing warnings"
-
-#: apps/web/src/features/review/components/processing-view.tsx:33
-#~ msgid "Processing your session…"
-#~ msgstr "Processing your session…"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:117
@@ -3606,10 +2591,6 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: packages/asbplayer-common/components/About.tsx:270
-#~ msgid "Purpose"
-#~ msgstr "Purpose"
-
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:509
 msgid "Quick gloss"
 msgstr "Quick gloss"
@@ -3626,10 +2607,6 @@ msgstr "Quick gloss for the selected text."
 #: apps/web/src/features/practice/components/rate-sheet.tsx:121
 msgid "Rate"
 msgstr "Rate"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:326
-#~ msgid "Rated terms keep their ratings; unrated terms stay available later"
-#~ msgstr "Rated terms keep their ratings; unrated terms stay available later"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:135
 msgid "Read"
@@ -3683,10 +2660,6 @@ msgstr "Register alternatives"
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:186
 msgid "Registering {movieTitle}…"
 msgstr "Registering {movieTitle}…"
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:183
-#~ msgid "Registering movie…"
-#~ msgstr "Registering movie…"
 
 #: apps/web/src/features/practice/components/strengthen-view.tsx:106
 msgid "Rehab"
@@ -3783,14 +2756,6 @@ msgstr "Restoring…"
 msgid "Retry"
 msgstr "Retry"
 
-#: apps/web/src/features/sessions/components/process-button.tsx:70
-#~ msgid "Retry processing"
-#~ msgstr "Retry processing"
-
-#: apps/web/src/features/review/components/processing-view.tsx:47
-#~ msgid "Retrying…"
-#~ msgstr "Retrying…"
-
 #: apps/native/src/features/auth/components/login-email-verify-view.tsx:75
 msgid "Return to Login"
 msgstr "Return to Login"
@@ -3803,10 +2768,6 @@ msgstr "Revert"
 #: apps/web/src/features/review/components/triage-list-view.tsx:182
 msgid "Review"
 msgstr "Review"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:67
-#~ msgid "Review follow-ups"
-#~ msgstr "Review follow-ups"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:144
 msgid "Review only"
@@ -3852,29 +2813,13 @@ msgstr "Save to vocabulary"
 msgid "Saving…"
 msgstr "Saving…"
 
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:25
-#~ msgid "Scan the QR code to download the app"
-#~ msgstr "Scan the QR code to download the app"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:135
-#~ msgid "Scope"
-#~ msgstr "Scope"
-
 #: packages/extension/src/ui/components/FtueUi.tsx:17
 msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
 msgstr "Scroll down for a quick intro, or check out the <0>user guide</0>."
 
-#: apps/web/src/features/sessions/components/tmdb-search.tsx:33
-#~ msgid "Search a movie title…"
-#~ msgstr "Search a movie title…"
-
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:321
 msgid "Search failed"
 msgstr "Search failed"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:285
-#~ msgid "Search headword, translation, or definition…"
-#~ msgstr "Search headword, translation, or definition…"
 
 #: apps/web/src/components/language-option-list.tsx:49
 msgid "Search languages…"
@@ -3937,19 +2882,6 @@ msgstr "Seek to next subtitle"
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:201
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:94
-#~ msgid "segments"
-#~ msgstr "segments"
-
-#: apps/web/src/components/language-picker.tsx:53
-#~ msgid "Select a language"
-#~ msgstr "Select a language"
-
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:186
-#~ msgid "Select a video element to sync it with asbplayer."
-#~ msgstr "Select a video element to sync it with asbplayer."
-
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:190
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Select a video element to sync it with Flicktionary."
@@ -4000,19 +2932,9 @@ msgstr "Sending..."
 msgid "Session"
 msgstr "Session"
 
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:32
-#: apps/web/src/features/practice/components/practice-language-view.tsx:225
-#~ msgid "Session in progress"
-#~ msgstr "Session in progress"
-
 #: apps/web/src/features/sessions/components/session-view.tsx:312
 msgid "Session not found."
 msgstr "Session not found."
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:161
-#: apps/web/src/features/practice/components/practice-language-view.tsx:319
-#~ msgid "Session options"
-#~ msgstr "Session options"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:218
 msgid "Session removed"
@@ -4063,10 +2985,6 @@ msgstr "Show {filteredCount} filtered out (below your level)"
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:326
 msgid "Show answer"
 msgstr "Show answer"
-
-#: apps/web/src/features/more/components/more-tab-view.tsx:79
-#~ msgid "Show existing translations and generate translations for new cards"
-#~ msgstr "Show existing translations and generate translations for new cards"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:103
 msgid "Show existing translations and generate translations for new cards in "
@@ -4148,14 +3066,6 @@ msgstr "Singular-only"
 msgid "Skip"
 msgstr "Skip"
 
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:16
-#~ msgid "Some super cool text!"
-#~ msgstr "Some super cool text!"
-
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:13
-#~ msgid "Some super cool title!"
-#~ msgstr "Some super cool title!"
-
 #: apps/native/src/features/home/components/home-view.tsx:21
 msgid "Some text for the Home tab"
 msgstr "Some text for the Home tab"
@@ -4177,21 +3087,9 @@ msgstr "Something went wrong."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
-#: apps/web/src/features/review/components/processing-view.tsx:44
-#~ msgid "Something went wrong. You can retry or go back to the session."
-#~ msgstr "Something went wrong. You can retry or go back to the session."
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:251
-#~ msgid "Sort"
-#~ msgstr "Sort"
-
 #: apps/web/src/features/review/components/triage-list-view.tsx:178
 msgid "Source"
 msgstr "Source"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:45
-#~ msgid "Source was removed"
-#~ msgstr "Source was removed"
 
 #: apps/web/src/features/review/components/focus-view.tsx:239
 msgid "Standalone"
@@ -4213,14 +3111,6 @@ msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgid "Start a movie session"
 msgstr "Start a movie session"
 
-#: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:166
-#~ msgid "Start Free Trial"
-#~ msgstr "Start Free Trial"
-
-#: apps/web/src/features/practice/components/practice-landing-view.tsx:125
-#~ msgid "Start practice"
-#~ msgstr "Start practice"
-
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:151
 msgid "Start session"
 msgstr "Start session"
@@ -4236,10 +3126,6 @@ msgstr "Starting session…"
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:151
 msgid "Starting…"
 msgstr "Starting…"
-
-#: apps/web/src/features/sessions/components/session-card.tsx:57
-#~ msgid "Status"
-#~ msgstr "Status"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:49
 msgid "Stop drilling this term in active practice"
@@ -4264,10 +3150,6 @@ msgstr "Strengthen · {languageName}"
 #: apps/web/src/features/practice/components/strengthen-view.tsx:81
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
-
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:65
-#~ msgid "Style Key"
-#~ msgstr "Style Key"
 
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:90
 msgid "Style Value"
@@ -4380,10 +3262,6 @@ msgstr "Subtitle Shadow Thickness"
 msgid "Subtitle Size"
 msgstr "Subtitle Size"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:213
-#~ msgid "Subtitle source"
-#~ msgstr "Subtitle source"
-
 #: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:18
 msgid "Subtitle Track"
 msgstr "Subtitle Track"
@@ -4435,12 +3313,6 @@ msgstr "Switching…"
 msgid "Synonyms"
 msgstr "Synonyms"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:74
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
-#: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:18
-#~ msgid "Tap-to-translate"
-#~ msgstr "Tap-to-translate"
-
 #: apps/web/src/features/review/components/editable-card-fields.tsx:164
 msgid "Target example"
 msgstr "Target example"
@@ -4462,17 +3334,9 @@ msgstr "Tell us what you think or describe any issues you encountered..."
 msgid "Term deleted"
 msgstr "Term deleted"
 
-#: apps/web/src/features/practice/components/chunk-actions-sheet.tsx:35
-#~ msgid "Term options."
-#~ msgstr "Term options."
-
 #: apps/web/src/features/practice/components/reading-history-view.tsx:89
 msgid "terms"
 msgstr "terms"
-
-#: apps/landing-page/src/app/[lang]/(footer)/footer.tsx:24
-#~ msgid "Terms and Conditions"
-#~ msgstr "Terms and Conditions"
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:67
 msgid "Test Backend Sentry Message"
@@ -4485,10 +3349,6 @@ msgstr "Test Frontend Sentry Log"
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:66
 msgid "Test Frontend Unhandled Error"
 msgstr "Test Frontend Unhandled Error"
-
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:92
-#~ msgid "Text imported"
-#~ msgstr "Text imported"
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:51
 msgid "Texts"
@@ -4503,38 +3363,6 @@ msgstr "Thank you for your feedback!"
 #: packages/extension/src/ui/components/Tutorial.tsx:188
 msgid "That's it for the basics! Feel free to play around on this page."
 msgstr "That's it for the basics! Feel free to play around on this page."
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:91
-#~ msgid "The chosen subtitle track must match this language."
-#~ msgstr "The chosen subtitle track must match this language."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
-#~ msgid "The content, features, and functionality of our services, including but "
-#~ "not limited to text, graphics, logos, images, as well as the design, "
-#~ "selection, and arrangement thereof, are and will remain the exclusive "
-#~ "property of flicktionary.app and its licensors. These are protected by "
-#~ "copyright, trademark, and other intellectual property or proprietary "
-#~ "rights laws."
-#~ msgstr "The content, features, and functionality of our services, including but "
-#~ "not limited to text, graphics, logos, images, as well as the design, "
-#~ "selection, and arrangement thereof, are and will remain the exclusive "
-#~ "property of flicktionary.app and its licensors. These are protected by "
-#~ "copyright, trademark, and other intellectual property or proprietary "
-#~ "rights laws."
-
-#: apps/landing-page/src/app/[lang]/about/page.tsx:17
-#~ msgid "the creators of flicktionary.app here. We've been pouring our hearts "
-#~ "into developing the beta version of the app and your feedback is crucial "
-#~ "for us. We're excited to roll out new features soon, and we're always "
-#~ "looking for ways to improve the app."
-#~ msgstr "the creators of flicktionary.app here. We've been pouring our hearts "
-#~ "into developing the beta version of the app and your feedback is "
-#~ "crucial for us. We're excited to roll out new features soon, and we're "
-#~ "always looking for ways to improve the app."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
-#~ msgid "The data we collect serves several purposes:"
-#~ msgstr "The data we collect serves several purposes:"
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:40
 msgid "The extension could not complete pairing."
@@ -4562,23 +3390,9 @@ msgstr "The first step to using asbplayer is always to load subtitles onto a "
 "Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
 "detected subtitles on supported sites."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:108
-#~ msgid "The first step to using asbplayer is always to load subtitles onto a "
-#~ "video. Open the track selector by selecting <0>asbplayer</0> in the "
-#~ "<1>extensions</1> menu."
-#~ msgstr "The first step to using asbplayer is always to load subtitles onto a "
-#~ "video. Open the track selector by selecting <0>asbplayer</0> in the "
-#~ "<1>extensions</1> menu."
-
 #: packages/asbplayer-common/components/UiSettings.tsx:26
 msgid "Theme"
 msgstr "Theme"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:51
-#~ msgid "themselves. Each user must have the legal right to use all the voice "
-#~ "data they upload to our platform."
-#~ msgstr "themselves. Each user must have the legal right to use all the voice "
-#~ "data they upload to our platform."
 
 #: apps/native/src/features/auth/api/authentication-hooks.ts:15
 #: apps/web/src/features/auth/api/authentication-hooks.ts:16
@@ -4603,16 +3417,6 @@ msgid "This action cannot be undone. This will permanently delete your account "
 "and related data from our servers."
 msgstr "This action cannot be undone. This will permanently delete your account "
 "and related data from our servers."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
-#~ msgid "This automated deletion system is accessible 24/7 through your secure "
-#~ "account dashboard. For additional assistance, our dedicated privacy team "
-#~ "is available at contact@flicktionary.app to process your requests with "
-#~ "the same level of immediacy and thoroughness."
-#~ msgstr "This automated deletion system is accessible 24/7 through your secure "
-#~ "account dashboard. For additional assistance, our dedicated privacy "
-#~ "team is available at contact@flicktionary.app to process your requests "
-#~ "with the same level of immediacy and thoroughness."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
 #: apps/web/src/features/sessions/components/cefr-step.tsx:41
@@ -4641,19 +3445,11 @@ msgid "This screen is only accessible to subscribed users. You can showcase "
 msgstr "This screen is only accessible to subscribed users. You can showcase "
 "premium features here."
 
-#: apps/web/src/features/sessions/components/session-remove-dialog.tsx:60
-#~ msgid "This session is processing — wait for it to finish before removing."
-#~ msgstr "This session is processing — wait for it to finish before removing."
-
 #: apps/web/src/features/practice/components/rate-sheet.tsx:176
 msgid "This term is removed from your vocabulary. Restore it to keep "
 "practicing."
 msgstr "This term is removed from your vocabulary. Restore it to keep "
 "practicing."
-
-#: apps/web/src/features/review/components/processing-view.tsx:35
-#~ msgid "This usually takes 1–2 minutes. You can leave this page and come back."
-#~ msgstr "This usually takes 1–2 minutes. You can leave this page and come back."
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:98
 msgid "Title"
@@ -4746,10 +3542,6 @@ msgstr "Total"
 msgid "Track {0}"
 msgstr "Track {0}"
 
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:199
-#~ msgid "Track imported"
-#~ msgstr "Track imported"
-
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:230
 msgid "Transcript Server API Key (optional)"
 msgstr "Transcript Server API Key (optional)"
@@ -4832,17 +3624,9 @@ msgstr "Unknown year"
 msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:92
-#~ msgid "Unpair"
-#~ msgstr "Unpair"
-
 #: apps/web/src/features/practice/components/practice-language-view.tsx:221
 msgid "Unseen"
 msgstr "Unseen"
-
-#: apps/web/src/features/practice/components/practice-session-view.tsx:472
-#~ msgid "Untapped terms count as 'good' when you advance to the next text."
-#~ msgstr "Untapped terms count as 'good' when you advance to the next text."
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
 #: apps/web/src/features/sessions/components/session-view.tsx:317
@@ -4867,10 +3651,6 @@ msgstr "Upgrade to Premium"
 msgid "Upload"
 msgstr "Upload"
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:103
-#~ msgid "Upload .srt"
-#~ msgstr "Upload .srt"
-
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:223
 msgid "Upload a .srt file"
 msgstr "Upload a .srt file"
@@ -4887,10 +3667,6 @@ msgstr "Uploading…"
 msgid "Upper intermediate — fluent on familiar topics, some abstract ideas."
 msgstr "Upper intermediate — fluent on familiar topics, some abstract ideas."
 
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:138
-#~ msgid "Use"
-#~ msgstr "Use"
-
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:83
 msgid "Use “{term}” in a sentence"
 msgstr "Use “{term}” in a sentence"
@@ -4899,18 +3675,9 @@ msgstr "Use “{term}” in a sentence"
 msgid "Use a subtitle file you already have."
 msgstr "Use a subtitle file you already have."
 
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:33
-#: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:38
-#~ msgid "Use on Web"
-#~ msgstr "Use on Web"
-
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:579
 msgid "Use suggested"
 msgstr "Use suggested"
-
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:493
-#~ msgid "Use suggested: {suggestedSurface}"
-#~ msgstr "Use suggested: {suggestedSurface}"
 
 #: packages/extension/src/ui/components/Tutorial.tsx:131
 msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, "
@@ -4930,28 +3697,10 @@ msgstr "Used as your L1 in the LLM prompts."
 msgid "User"
 msgstr "User"
 
-#: packages/extension/src/ui/components/Popup.tsx:62
-#~ msgid "User guide"
-#~ msgstr "User guide"
-
 #: apps/native/src/features/user/api/user-hooks.ts:11
 #: apps/web/src/features/user/api/user-hooks.ts:26
 msgid "User setup complete"
 msgstr "User setup complete"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:89
-#~ msgid "Users retain all rights to any content they upload, submit, post, or "
-#~ "display on or through the service. By uploading this content, users "
-#~ "grant us a permission to use, reproduce, modify, publish, and display "
-#~ "this content in connection with the service. In particular, this content "
-#~ "will neither be sold or traded with any external service provider nor "
-#~ "made public without user\"s explicit consent"
-#~ msgstr "Users retain all rights to any content they upload, submit, post, or "
-#~ "display on or through the service. By uploading this content, users "
-#~ "grant us a permission to use, reproduce, modify, publish, and display "
-#~ "this content in connection with the service. In particular, this "
-#~ "content will neither be sold or traded with any external service "
-#~ "provider nor made public without user\"s explicit consent"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
 msgid "Verb"
@@ -5005,10 +3754,6 @@ msgstr "Vocabulary"
 msgid "Vocabulary options"
 msgstr "Vocabulary options"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:99
-#~ msgid "Waiting…"
-#~ msgstr "Waiting…"
-
 #: apps/native/src/features/profile/components/danger-zone-view.tsx:31
 #: apps/web/src/features/profile/components/danger-zone-view.tsx:19
 msgid "Warning"
@@ -5026,76 +3771,11 @@ msgstr "We couldn't prepare this answer. Save the note again to retry."
 msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "We did not hear back from a Flicktionary extension on this device."
 
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:107
-#~ msgid "We engage reputable third-party companies to facilitate our services "
-#~ "(\"Service Providers\"), provide the service on our behalf, perform "
-#~ "service-related services, and assist in analyzing how our service is "
-#~ "used. These third parties are carefully selected and have access to your "
-#~ "Personal Data only to perform specific tasks on our behalf. They are "
-#~ "contractually bound to maintain the confidentiality of your information "
-#~ "and are committed to complying with applicable privacy laws, ensuring "
-#~ "that your data is handled securely and responsibly."
-#~ msgstr "We engage reputable third-party companies to facilitate our services "
-#~ "(\"Service Providers\"), provide the service on our behalf, perform "
-#~ "service-related services, and assist in analyzing how our service is "
-#~ "used. These third parties are carefully selected and have access to "
-#~ "your Personal Data only to perform specific tasks on our behalf. They "
-#~ "are contractually bound to maintain the confidentiality of your "
-#~ "information and are committed to complying with applicable privacy "
-#~ "laws, ensuring that your data is handled securely and responsibly."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:180
-#~ msgid "We guarantee absolute control over your personal data through our "
-#~ "automated account management system. Our platform provides a dedicated "
-#~ "one-click deletion feature that ensures immediate and irreversible "
-#~ "removal of all your data from our systems. When activated, this "
-#~ "automated process permanently erases:"
-#~ msgstr "We guarantee absolute control over your personal data through our "
-#~ "automated account management system. Our platform provides a dedicated "
-#~ "one-click deletion feature that ensures immediate and irreversible "
-#~ "removal of all your data from our systems. When activated, this "
-#~ "automated process permanently erases:"
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:129
-#~ msgid "We implement and maintain robust security measures aligned with industry "
-#~ "best practices to protect your Personal Data. Our security "
-#~ "infrastructure includes:"
-#~ msgstr "We implement and maintain robust security measures aligned with "
-#~ "industry best practices to protect your Personal Data. Our security "
-#~ "infrastructure includes:"
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:100
-#~ msgid "We may terminate or suspend your account immediately, without prior "
-#~ "notice or liability, for any reason whatsoever, including without "
-#~ "limitation if you breach these Terms. Upon termination, your right to "
-#~ "use the service will cease immediately."
-#~ msgstr "We may terminate or suspend your account immediately, without prior "
-#~ "notice or liability, for any reason whatsoever, including without "
-#~ "limitation if you breach these Terms. Upon termination, your right to "
-#~ "use the service will cease immediately."
-
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:128
 msgid "We support .srt subtitle files. The language is detected automatically "
 "from the file contents."
 msgstr "We support .srt subtitle files. The language is detected automatically "
 "from the file contents."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:170
-#~ msgid "We will retain your Personal Data only for as long as is necessary for "
-#~ "the purposes set out in this Privacy Policy. We will retain and use your "
-#~ "Personal Data to the extent necessary to comply with our legal "
-#~ "obligations, resolve disputes, and enforce our legal agreements and "
-#~ "policies."
-#~ msgstr "We will retain your Personal Data only for as long as is necessary for "
-#~ "the purposes set out in this Privacy Policy. We will retain and use "
-#~ "your Personal Data to the extent necessary to comply with our legal "
-#~ "obligations, resolve disputes, and enforce our legal agreements and "
-#~ "policies."
-
-#: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
-#: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
-#~ msgid "We'll ask your level next."
-#~ msgstr "We'll ask your level next."
 
 #: apps/native/src/features/auth/components/account-removed-view.tsx:19
 #: apps/web/src/features/auth/components/account-removed-view.tsx:32
@@ -5110,10 +3790,6 @@ msgstr "We've sent a verification email to:"
 msgid "We've sent a verification link to:"
 msgstr "We've sent a verification link to:"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:38
-#~ msgid "Welcome to asbplayer."
-#~ msgstr "Welcome to asbplayer."
-
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:47
 msgid "Welcome to Flicktionary"
 msgstr "Welcome to Flicktionary"
@@ -5121,14 +3797,6 @@ msgstr "Welcome to Flicktionary"
 #: packages/extension/src/ui/components/FtueUi.tsx:14
 msgid "Welcome to Flicktionary."
 msgstr "Welcome to Flicktionary."
-
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
-#~ msgid "Welcome to flicktionary.app. We are committed to protecting your "
-#~ "privacy. This Privacy Policy outlines how we collect, handle, store, and "
-#~ "safeguard your personal data as you interact with our services."
-#~ msgstr "Welcome to flicktionary.app. We are committed to protecting your "
-#~ "privacy. This Privacy Policy outlines how we collect, handle, store, "
-#~ "and safeguard your personal data as you interact with our services."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:190
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
@@ -5147,26 +3815,6 @@ msgstr "What language do you speak natively? This is the language Flicktionary "
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:191
 msgid "What's the etymology or origin of this term?"
 msgstr "What's the etymology or origin of this term?"
-
-#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-#~ msgid "When on, processing a session lets the LLM scan the whole track and "
-#~ "suggest terms at your level. When off, only your manual highlights "
-#~ "become cards."
-#~ msgstr "When on, processing a session lets the LLM scan the whole track and "
-#~ "suggest terms at your level. When off, only your manual highlights "
-#~ "become cards."
-
-#: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:21
-#~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition "
-#~ "to creating the highlight."
-#~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition "
-#~ "to creating the highlight."
-
-#: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-#~ msgid "When on, the reader can underline suggested terms as you scroll. When "
-#~ "off, only your own highlights become cards."
-#~ msgstr "When on, the reader can underline suggested terms as you scroll. When "
-#~ "off, only your own highlights become cards."
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
@@ -5219,27 +3867,10 @@ msgstr "You are now subscribed to Premium!"
 msgid "You can try again in {countdown} seconds"
 msgstr "You can try again in {countdown} seconds"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:385
-#~ msgid "You have a reading session in progress. End it to start flashcards."
-#~ msgstr "You have a reading session in progress. End it to start flashcards."
-
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
 #: apps/web/src/features/billing/components/pricing-view.tsx:38
 msgid "You have already used your free trial."
 msgstr "You have already used your free trial."
-
-#: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:110
-#~ msgid "You understand and agree that your use of our service is at your sole "
-#~ "risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" "
-#~ "basis. We expressly disclaim all warranties, whether express or implied, "
-#~ "including, but not limited to, the implied warranties of "
-#~ "merchantability, fitness for a particular purpose, and non-infringement."
-#~ msgstr "You understand and agree that your use of our service is at your sole "
-#~ "risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" "
-#~ "basis. We expressly disclaim all warranties, whether express or "
-#~ "implied, including, but not limited to, the implied warranties of "
-#~ "merchantability, fitness for a particular purpose, and "
-#~ "non-infringement."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:96
 msgid "You used your free trial"
@@ -5277,14 +3908,6 @@ msgstr "your email address"
 msgid "Your highlights"
 msgstr "Your highlights"
 
-#: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:98
-#~ msgid "Your information, including Personal Data, may be transferred to and "
-#~ "maintained on computers located outside of your jurisdiction where data "
-#~ "protection laws may differ from those in your jurisdiction."
-#~ msgstr "Your information, including Personal Data, may be transferred to and "
-#~ "maintained on computers located outside of your jurisdiction where data "
-#~ "protection laws may differ from those in your jurisdiction."
-
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:34
 #: apps/web/src/features/sessions/components/cefr-step.tsx:40
 msgid "Your level in {languageName}"
@@ -5294,10 +3917,6 @@ msgstr "Your level in {languageName}"
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:101
 msgid "Your name"
 msgstr "Your name"
-
-#: apps/web/src/features/onboarding/components/onboarding-view.tsx:46
-#~ msgid "Your native language"
-#~ msgstr "Your native language"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:108
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:87
