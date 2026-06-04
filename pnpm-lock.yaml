@@ -1629,6 +1629,9 @@ importers:
       '@flicktionary/api-client':
         specifier: workspace:*
         version: link:../api-client
+      '@flicktionary/core':
+        specifier: workspace:*
+        version: link:../core
       '@flicktionary/i18n':
         specifier: workspace:*
         version: link:../i18n

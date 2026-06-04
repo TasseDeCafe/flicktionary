@@ -26,6 +26,7 @@
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
         "@flicktionary/api-client": "workspace:*",
+        "@flicktionary/core": "workspace:*",
         "@flicktionary/i18n": "workspace:*",
         "@flicktionary/ui": "workspace:*",
         "@floating-ui/dom": "catalog:",
