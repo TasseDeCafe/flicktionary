@@ -229,7 +229,8 @@ const readStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.map((v) => String(v)).filter((v) => v.length > 0) : []
 
 export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<GeneratedExercise> => {
-  const tool = args.type === 'mc_comprehension' ? buildComprehensionTool() : buildClozeTool(args.type === 'production_cloze')
+  const tool =
+    args.type === 'mc_comprehension' ? buildComprehensionTool() : buildClozeTool(args.type === 'production_cloze')
 
   const stream = getAnthropicClient().messages.stream({
     model: MODEL_OPUS,

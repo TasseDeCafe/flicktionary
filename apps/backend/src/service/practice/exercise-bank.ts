@@ -32,7 +32,7 @@ export type ExerciseBankDependencies = {
 // comprehension. Active (production): MC cloze + production cloze (typed).
 // Use-in-a-sentence ships for both pools but as ungated bonus only — its
 // LLM grading must never block a leech graduation.
-export const requiredExerciseTypes = (pool: PracticePool): ExerciseType[] =>
+const requiredExerciseTypes = (pool: PracticePool): ExerciseType[] =>
   pool === 'passive'
     ? ['mc_cloze', 'mc_comprehension', 'use_in_sentence']
     : ['mc_cloze', 'production_cloze', 'use_in_sentence']
@@ -49,7 +49,7 @@ const toTermInput = (lookup: DbUserLookup): ExerciseTermInput => ({
 // MAX_GEN_ATTEMPTS before marking the slot failed. The verifier runs in an
 // independent context and rejects any exercise where a distractor is also
 // acceptable — regeneration over repair, accuracy over cost.
-export const runExerciseGenerationForSlot = async (params: {
+const runExerciseGenerationForSlot = async (params: {
   slot: DbPracticeExercise
   lookup: DbUserLookup
   deps: ExerciseBankDependencies
@@ -158,7 +158,11 @@ export const ensureExerciseBank = async (params: {
 
 // Fire-and-forget warmer for rating triggers (again/hard in either render
 // mode) so post-session Strengthen exercises are ready when the session ends.
-export const warmExerciseBank = (params: { lookup: DbUserLookup; pool: PracticePool; deps: ExerciseBankDependencies }): void => {
+export const warmExerciseBank = (params: {
+  lookup: DbUserLookup
+  pool: PracticePool
+  deps: ExerciseBankDependencies
+}): void => {
   void ensureExerciseBank(params).catch((err) =>
     console.error('exercise bank warm-up threw', { userLookupId: params.lookup.id, err })
   )
@@ -178,7 +182,7 @@ export type StrengthenExerciseEntry = {
 }
 
 // Strip the answer truth out of a stored payload before serving.
-export const stripExercisePayload = (
+const stripExercisePayload = (
   exerciseType: ExerciseType,
   payload: Record<string, unknown>
 ): Record<string, unknown> => {
@@ -265,7 +269,9 @@ export const getStrengthenExercises = async (params: {
   // Parked terms never appear in the review queue, so the hard set is
   // non-leech by construction — but drop overlaps defensively anyway.
   const hardLookups = (
-    await Promise.all(params.sessionHardUserLookupIds.map((id) => deps.userLookupsRepository.findByIdForUser(id, userId)))
+    await Promise.all(
+      params.sessionHardUserLookupIds.map((id) => deps.userLookupsRepository.findByIdForUser(id, userId))
+    )
   ).filter(
     (row): row is DbUserLookup =>
       row != null &&

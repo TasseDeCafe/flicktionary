@@ -5,10 +5,8 @@ import type { PracticePool } from '../user-lookups/user-lookups-repository'
 
 export type DbPracticeExercise = Tables<'practice_exercises'>
 export type ExerciseType = Database['public']['Enums']['exercise_type']
-export type ExerciseStatus = Database['public']['Enums']['exercise_status']
 
-const slotLockKey = (userLookupId: string, pool: PracticePool): string =>
-  `practice_exercises:${userLookupId}:${pool}`
+const slotLockKey = (userLookupId: string, pool: PracticePool): string => `practice_exercises:${userLookupId}:${pool}`
 
 // Stale-slot recovery threshold. Exercise generation loops generate+verify up
 // to MAX_GEN_ATTEMPTS times against Opus, so it's slower than a single text

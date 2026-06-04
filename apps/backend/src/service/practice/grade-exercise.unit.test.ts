@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  damerauLevenshtein,
-  gradeMcAnswer,
-  gradeProductionClozeAnswer,
-  normalizeTypedAnswer,
-} from './grade-exercise'
+import { damerauLevenshtein, gradeMcAnswer, gradeProductionClozeAnswer, normalizeTypedAnswer } from './grade-exercise'
 
 describe('normalizeTypedAnswer', () => {
   it('strips diacritics, lowercases, and trims', () => {
