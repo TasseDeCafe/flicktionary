@@ -7,6 +7,11 @@ import { applyRating, type AppRating } from './fsrs'
 
 export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
+  // Optional fire-and-forget exercise-bank warmer. Both rating surfaces
+  // (flashcards via rateTerm, reading via advanceReadingText) share
+  // applyTermRating, so wiring it here covers again/hard triggers in both
+  // render modes. Absent in unit tests and callers that don't care.
+  warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void
 }
 
 export type ApplyTermRatingResult =
@@ -67,6 +72,13 @@ export const applyTermRating = async (params: {
     reps: result.reps,
     lapses: result.lapses,
   })
+
+  // Struggling term: pre-warm its exercise bank in the background so the
+  // post-session Strengthen list has something ready by session end.
+  if (rating === 'again' || rating === 'hard') {
+    deps.warmExerciseBank?.({ lookup, pool })
+  }
+
   return { ok: true, introducedNew }
 }
 

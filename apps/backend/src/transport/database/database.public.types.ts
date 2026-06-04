@@ -397,6 +397,68 @@ export type Database = {
           },
         ]
       }
+      practice_exercises: {
+        Row: {
+          created_at: string
+          exercise_type: Database['public']['Enums']['exercise_type']
+          gate_eligible: boolean
+          generation_token: string | null
+          generation_warning: string | null
+          id: string
+          payload: Json | null
+          pool: string
+          ready_at: string | null
+          seen_at: string | null
+          status: Database['public']['Enums']['exercise_status']
+          target_language: string
+          used_at: string | null
+          user_id: string
+          user_lookup_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_type: Database['public']['Enums']['exercise_type']
+          gate_eligible?: boolean
+          generation_token?: string | null
+          generation_warning?: string | null
+          id?: string
+          payload?: Json | null
+          pool: string
+          ready_at?: string | null
+          seen_at?: string | null
+          status?: Database['public']['Enums']['exercise_status']
+          target_language: string
+          used_at?: string | null
+          user_id: string
+          user_lookup_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_type?: Database['public']['Enums']['exercise_type']
+          gate_eligible?: boolean
+          generation_token?: string | null
+          generation_warning?: string | null
+          id?: string
+          payload?: Json | null
+          pool?: string
+          ready_at?: string | null
+          seen_at?: string | null
+          status?: Database['public']['Enums']['exercise_status']
+          target_language?: string
+          used_at?: string | null
+          user_id?: string
+          user_lookup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'practice_exercises_user_lookup_id_fkey'
+            columns: ['user_lookup_id']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       practice_texts: {
         Row: {
           annotations: Json
@@ -1133,6 +1195,8 @@ export type Database = {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
       content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming'
+      exercise_status: 'pending' | 'generating' | 'ready' | 'used' | 'failed'
+      exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
@@ -1419,6 +1483,8 @@ export const Constants = {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
       content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming'],
+      exercise_status: ['pending', 'generating', 'ready', 'used', 'failed'],
+      exercise_type: ['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
       processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window', 'seed_card_chat'],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],

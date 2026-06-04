@@ -377,6 +377,71 @@ export const PracticeDueSummaryEntrySchema = z.object({
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
 
+// =========================================================================
+// Strengthen exercises (leech rehab + post-session bonus)
+// =========================================================================
+
+export const ExerciseTypeSchema = z.enum(['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'])
+export type ExerciseType = z.infer<typeof ExerciseTypeSchema>
+
+// Served payloads are STRIPPED: answer / answerIndex / acceptedForms never
+// leave the server — grading is server-side only (submitExerciseAnswer).
+export const McClozePayloadSchema = z.object({
+  type: z.literal('mc_cloze'),
+  sentence: z.string(),
+  blankStart: z.number().int(),
+  blankEnd: z.number().int(),
+  options: z.array(z.string()).length(4),
+})
+export const McComprehensionPayloadSchema = z.object({
+  type: z.literal('mc_comprehension'),
+  sentence: z.string(),
+  prompt: z.string(),
+  options: z.array(z.string()).length(4),
+})
+export const ProductionClozePayloadSchema = z.object({
+  type: z.literal('production_cloze'),
+  sentence: z.string(),
+  blankStart: z.number().int(),
+  blankEnd: z.number().int(),
+  hint: z.string().nullable(),
+})
+export const UseInSentencePayloadSchema = z.object({
+  type: z.literal('use_in_sentence'),
+  prompt: z.string(),
+  term: z.string(),
+})
+export const StrengthenExercisePayloadSchema = z.discriminatedUnion('type', [
+  McClozePayloadSchema,
+  McComprehensionPayloadSchema,
+  ProductionClozePayloadSchema,
+  UseInSentencePayloadSchema,
+])
+export type StrengthenExercisePayload = z.infer<typeof StrengthenExercisePayloadSchema>
+
+// One Strengthen-session item. `track` separates the gated rehab path (parked
+// leeches) from the ungated bonus path (this-session again/hard terms).
+// status='generating' means the bank had nothing ready — the entry has no
+// exercise yet (exerciseId/exerciseType/payload null) and the client shows a
+// placeholder.
+export const StrengthenExerciseEntrySchema = z.object({
+  exerciseId: z.string().uuid().nullable(),
+  userLookupId: z.string().uuid(),
+  headword: z.string(),
+  sense: z.string(),
+  track: z.enum(['gate', 'bonus']),
+  status: z.enum(['ready', 'generating']),
+  exerciseType: ExerciseTypeSchema.nullable(),
+  payload: StrengthenExercisePayloadSchema.nullable(),
+})
+export type StrengthenExerciseEntry = z.infer<typeof StrengthenExerciseEntrySchema>
+
+export const ExerciseAnswerSchema = z.union([
+  z.object({ selectedIndex: z.number().int().min(0).max(3) }),
+  z.object({ text: z.string().trim().min(1).max(500) }),
+])
+export type ExerciseAnswer = z.infer<typeof ExerciseAnswerSchema>
+
 // One term in the sessionless review queue (formerly Flashcard). All fields are
 // read straight off user_lookups — no generated text involved. The same row
 // feeds both render modes: the flashcard front/back and the reading generator's

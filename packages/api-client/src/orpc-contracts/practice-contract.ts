@@ -2,6 +2,7 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
+  ExerciseAnswerSchema,
   GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
   PracticePoolSchema,
@@ -10,6 +11,7 @@ import {
   ReadingRatingSchema,
   ReviewScopeSchema,
   ReviewTermSchema,
+  StrengthenExerciseEntrySchema,
 } from './common/flicktionary-schemas'
 
 export const practiceContract = {
@@ -185,6 +187,55 @@ export const practiceContract = {
     })
     .input(z.object({ textId: z.string().uuid() }))
     .output(z.object({ data: z.object({ practiceText: PracticeTextSchema }) })),
+
+  // Build a Strengthen session: one gate exercise per parked (leech) term plus
+  // one bonus exercise per this-session again/hard term. Server-side it
+  // re-validates the client-supplied hard ids (ownership, language, pool) and
+  // returns 'generating' placeholders for terms whose bank isn't warm yet —
+  // never blocks on LLM work. Served payloads carry no answer fields.
+  startStrengthenSession: oc
+    .route({ method: 'POST', path: '/practice/strengthen/start', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        pool: PracticePoolSchema.default('passive'),
+        sessionHardUserLookupIds: z.array(z.string().uuid()).default([]),
+      })
+    )
+    .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
+
+  // Grade one exercise answer (server-side truth; the exercise is consumed on
+  // answer, so a retry/stale submit is rejected). MC types take selectedIndex,
+  // typed types take text. correctIndex / correctAnswer are revealed only in
+  // the response — after the exercise has been consumed.
+  submitExerciseAnswer: oc
+    .route({ method: 'POST', path: '/practice/exercises/{exerciseId}/answer', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        exerciseId: z.string().uuid(),
+        response: ExerciseAnswerSchema,
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          correct: z.boolean(),
+          feedback: z.string().nullable(),
+          gated: z.boolean(),
+          correctIndex: z.number().int().nullable(),
+          correctAnswer: z.string().nullable(),
+        }),
+      })
+    ),
 
   // Selection-driven gloss for a practice text. Re-uses the same Haiku prompt
   // as highlights.fastGloss, but keyed to a practice_text (so the LLM can use
