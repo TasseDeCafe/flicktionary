@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { usePortalContainer } from './portal'
 
 const Dialog = ({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) => (
   <DialogPrimitive.Root data-slot='dialog' {...props} />
@@ -53,6 +54,7 @@ const DialogContent = ({
   showCloseButton = true,
   showOverlay = true,
   variant = 'center',
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
@@ -61,27 +63,33 @@ const DialogContent = ({
   // animation and blocks scrolling the page behind. Pass false to drop it.
   showOverlay?: boolean
   variant?: keyof typeof dialogContentVariants
-}) => (
-  <DialogPortal data-slot='dialog-portal'>
-    {showOverlay && <DialogOverlay />}
-    <DialogPrimitive.Content
-      data-slot='dialog-content'
-      className={cn(dialogContentBase, dialogContentVariants[variant], className)}
-      {...props}
-    >
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close
-          data-slot='dialog-close'
-          className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-        >
-          <XIcon />
-          <span className='sr-only'>Close</span>
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-)
+  // Portal target override. Defaults to the PortalContainerContext (set by the
+  // extension's shadow surfaces), then Radix's document.body fallback.
+  container?: HTMLElement | null
+}) => {
+  const contextContainer = usePortalContainer()
+  return (
+    <DialogPortal data-slot='dialog-portal' container={container ?? contextContainer ?? undefined}>
+      {showOverlay && <DialogOverlay />}
+      <DialogPrimitive.Content
+        data-slot='dialog-content'
+        className={cn(dialogContentBase, dialogContentVariants[variant], className)}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close
+            data-slot='dialog-close'
+            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+          >
+            <XIcon />
+            <span className='sr-only'>Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+}
 
 const DialogHeader = ({ className, ...props }: React.ComponentProps<'div'>) => (
   <div data-slot='dialog-header' className={cn('flex flex-col gap-2 text-center sm:text-left', className)} {...props} />

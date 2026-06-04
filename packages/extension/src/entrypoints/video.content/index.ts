@@ -132,6 +132,13 @@ export default defineContentScript({
       const videoSelectController = new VideoSelectController(bindings)
       videoSelectController.bind()
 
+      if (import.meta.env.DEV && isParentDocument) {
+        // Gate-B test trigger for the Radix notification surface (the real
+        // trigger is buried in the legacy audio-recording path). Dev builds only.
+        const { mountNotificationTestButtons } = await import('@/dev/notification-test-buttons')
+        mountNotificationTestButtons(bindings)
+      }
+
       const messageListener = (
         request: any,
         sender: Browser.runtime.MessageSender,

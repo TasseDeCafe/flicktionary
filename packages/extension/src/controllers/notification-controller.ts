@@ -85,6 +85,9 @@ export default class NotificationController {
     const store = this._store
     this._shadowHandle = mountModalHost({
       hostAttribute: NOTIFICATION_HOST_ATTR,
+      // Radix/Tailwind surface: adopt the shared overlay sheet (tokens +
+      // utilities) instead of emotion.
+      adoptTailwind: true,
       render: ({ shadowRoot, portalContainer }) =>
         createElement(ShadowNotificationApp, { store, shadowRoot, portalContainer, onClose: this._onClose }),
     })
