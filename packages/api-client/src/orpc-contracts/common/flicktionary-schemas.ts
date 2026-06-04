@@ -363,6 +363,9 @@ export const PracticeDueSummaryEntrySchema = z.object({
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
+  // Leech-parked terms — excluded from every practice queue until rehab
+  // graduates them; the due counts above already exclude them.
+  parkedCount: z.number().int(),
   // Active-drill pool counters. activeTotal is the number of user_lookups
   // promoted to learning_mode='active'; the rest mirror the passive counts
   // but read from active_srs_* state.
@@ -370,6 +373,7 @@ export const PracticeDueSummaryEntrySchema = z.object({
   activeReviewDueCount: z.number().int(),
   activeLearningDueCount: z.number().int(),
   activeNewCount: z.number().int(),
+  activeParkedCount: z.number().int(),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
 

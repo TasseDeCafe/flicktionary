@@ -41,12 +41,16 @@ export const PracticeLandingView = () => {
   }
 
   const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    const passive = getPassiveSummaryLine(entry)
+    const parts = [getPassiveSummaryLine(entry)]
     if (entry.activeTotal > 0) {
       const activeCount = entry.activeTotal
-      return `${passive} • ${t`${activeCount} active`}`
+      parts.push(t`${activeCount} active`)
     }
-    return passive
+    const parkedTotal = entry.parkedCount + entry.activeParkedCount
+    if (parkedTotal > 0) {
+      parts.push(t`${parkedTotal} parked`)
+    }
+    return parts.join(' • ')
   }
 
   return (

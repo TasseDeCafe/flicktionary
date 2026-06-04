@@ -32,12 +32,16 @@ export type DueSummaryEntry = {
   nextLearningDueAt: string | null
   newCount: number
   newIntroducedTodayCount: number
+  // Leech-parked terms (excluded from every practice queue until rehab
+  // graduates them). The due/learning aggregates above already exclude them.
+  parkedCount: number
   // Active-drill pool counters. Parallel to the passive counters above but
   // computed off learning_mode = 'active' and active_srs_* state.
   activeTotal: number
   activeReviewDueCount: number
   activeLearningDueCount: number
   activeNewCount: number
+  activeParkedCount: number
 }
 
 export type RenameKeyResult = { ok: true } | { ok: false; reason: 'CONFLICT' }
@@ -327,39 +331,49 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
         WHERE ul.srs_state IN ('new', 'review')
           AND ul.srs_due IS NOT NULL
           AND ul.srs_due <= NOW()
+          AND ul.leech_parked_at IS NULL
       )::int AS review_due_count,
       COUNT(*) FILTER (
         WHERE ul.srs_state IN ('learning', 'relearning')
           AND ul.srs_due IS NOT NULL
           AND ul.srs_due <= NOW()
+          AND ul.leech_parked_at IS NULL
       )::int AS learning_due_count,
       MIN(ul.srs_due) FILTER (
         WHERE ul.srs_state IN ('learning', 'relearning')
           AND ul.srs_due IS NOT NULL
           AND ul.srs_due > NOW()
+          AND ul.leech_parked_at IS NULL
       ) AS next_learning_due_at,
       COUNT(*) FILTER (WHERE ul.srs_state IS NULL)::int AS new_count,
       COUNT(*) FILTER (
         WHERE ul.added_to_practice_at >= CURRENT_DATE
           AND ul.added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
       )::int AS new_introduced_today_count,
+      COUNT(*) FILTER (WHERE ul.leech_parked_at IS NOT NULL)::int AS parked_count,
       COUNT(*) FILTER (WHERE ul.learning_mode = 'active')::int AS active_total,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
           AND ul.active_srs_state IN ('new', 'review')
           AND ul.active_srs_due IS NOT NULL
           AND ul.active_srs_due <= NOW()
+          AND ul.active_leech_parked_at IS NULL
       )::int AS active_review_due_count,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
           AND ul.active_srs_state IN ('learning', 'relearning')
           AND ul.active_srs_due IS NOT NULL
           AND ul.active_srs_due <= NOW()
+          AND ul.active_leech_parked_at IS NULL
       )::int AS active_learning_due_count,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
           AND ul.active_srs_state IS NULL
-      )::int AS active_new_count
+      )::int AS active_new_count,
+      COUNT(*) FILTER (
+        WHERE ul.learning_mode = 'active'
+          AND ul.active_leech_parked_at IS NOT NULL
+      )::int AS active_parked_count
     FROM public.user_lookups ul
     WHERE ul.user_id = ${userId}
       AND ul.count > 0
@@ -378,10 +392,12 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       : null,
     newCount: row.new_count as number,
     newIntroducedTodayCount: row.new_introduced_today_count as number,
+    parkedCount: row.parked_count as number,
     activeTotal: row.active_total as number,
     activeReviewDueCount: row.active_review_due_count as number,
     activeLearningDueCount: row.active_learning_due_count as number,
     activeNewCount: row.active_new_count as number,
+    activeParkedCount: row.active_parked_count as number,
   }))
 }
 
@@ -419,6 +435,12 @@ const listReviewTerms = async (params: {
   const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
   const stateCol = params.pool === 'active' ? sql`ul.active_srs_state` : sql`ul.srs_state`
   const dueCol = params.pool === 'active' ? sql`ul.active_srs_due` : sql`ul.srs_due`
+  // Leech-parked terms leave BOTH render modes at once — flashcards and the
+  // reading-text generator's candidate set feed from this query. That's
+  // intentional: reading mode implicitly rates untapped annotations 'good' on
+  // advance, which must never mutate a parked term's FSRS. The only way back
+  // into rotation is rehab graduation.
+  const parkedCol = params.pool === 'active' ? sql`ul.active_leech_parked_at` : sql`ul.leech_parked_at`
   const excludedIds = params.excludeUserLookupIds ?? []
   const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
 
@@ -433,6 +455,7 @@ const listReviewTerms = async (params: {
             AND ul.deleted_at IS NULL
             ${activeModeClause}
             ${excludeClause}
+            AND ${parkedCol} IS NULL
             AND ${dueCol} IS NOT NULL
             AND ${dueCol} <= NOW()
             AND ${stateCol} IN ('new', 'review', 'learning', 'relearning')
@@ -452,6 +475,7 @@ const listReviewTerms = async (params: {
             AND ul.deleted_at IS NULL
             ${activeModeClause}
             ${excludeClause}
+            AND ${parkedCol} IS NULL
             AND ${stateCol} IS NULL
           ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
           LIMIT ${newLimit}
@@ -657,7 +681,14 @@ const applyFsrsResultForPool = async (params: {
 
 // Switch a user_lookup between passive and active learning modes. Demoting
 // active -> passive preserves active_srs_* so a future re-promotion resumes
-// the schedule. Returns the post-update row.
+// the schedule — but a REAL pool move resets the active leech-rehab state:
+// the active pool's membership was created/destroyed, so any in-flight rehab
+// progress (or parked flag) for that family is stale. The reset lives inside
+// this UPDATE (guarded by IS DISTINCT FROM) so every pool-move surface
+// (card triage, vocabulary tab) gets it, and idempotent "keep as active"
+// re-stamps — which call this with an unchanged mode — never wipe progress.
+// Passive rehab is untouched: passive membership never changes.
+// Returns the post-update row.
 const setLearningMode = async (params: {
   userLookupId: string
   userId: string
@@ -665,13 +696,101 @@ const setLearningMode = async (params: {
 }): Promise<DbUserLookup | null> => {
   const result = (await sql`
     UPDATE public.user_lookups
-    SET learning_mode = ${params.learningMode}
+    SET learning_mode = ${params.learningMode},
+        active_leech_parked_at = NULL,
+        active_leech_rehab_correct_days = 0,
+        active_leech_rehab_last_correct_on = NULL
     WHERE id = ${params.userLookupId}
       AND user_id = ${params.userId}
       AND deleted_at IS NULL
+      AND learning_mode IS DISTINCT FROM ${params.learningMode}
     RETURNING *
   `) as DbUserLookup[]
-  return result[0] ?? null
+  if (result[0]) return result[0]
+  // No mode change (idempotent re-stamp) — return the current row untouched.
+  return findByIdForUser(params.userLookupId, params.userId)
+}
+
+// =========================================================================
+// Leech parking / rehab
+// =========================================================================
+
+// Park a term out of the given pool's practice rotation. Zeroes any stale
+// rehab progress so the graduation ladder always starts at day 0. The
+// parked_at IS NULL guard makes a double-park (e.g. two racing rating events)
+// a no-op rather than a rehab-progress reset.
+const parkLeech = async (params: { userLookupId: string; pool: PracticePool }): Promise<void> => {
+  if (params.pool === 'passive') {
+    await sql`
+      UPDATE public.user_lookups
+      SET leech_parked_at = NOW(),
+          leech_rehab_correct_days = 0,
+          leech_rehab_last_correct_on = NULL
+      WHERE id = ${params.userLookupId}
+        AND leech_parked_at IS NULL
+    `
+    return
+  }
+  await sql`
+    UPDATE public.user_lookups
+    SET active_leech_parked_at = NOW(),
+        active_leech_rehab_correct_days = 0,
+        active_leech_rehab_last_correct_on = NULL
+    WHERE id = ${params.userLookupId}
+      AND active_leech_parked_at IS NULL
+  `
+}
+
+// One graduation-day credit for a correct gate-exercise answer. The
+// IS DISTINCT FROM CURRENT_DATE guard enforces at most one advance per server
+// calendar day — massed same-day correct answers count once. Returns the new
+// correct-day count, or null when no advance happened (already credited
+// today, or the term isn't parked in this pool).
+const advanceRehabDay = async (params: { userLookupId: string; pool: PracticePool }): Promise<number | null> => {
+  if (params.pool === 'passive') {
+    const rows = (await sql`
+      UPDATE public.user_lookups
+      SET leech_rehab_correct_days = leech_rehab_correct_days + 1,
+          leech_rehab_last_correct_on = CURRENT_DATE
+      WHERE id = ${params.userLookupId}
+        AND leech_parked_at IS NOT NULL
+        AND leech_rehab_last_correct_on IS DISTINCT FROM CURRENT_DATE
+      RETURNING leech_rehab_correct_days
+    `) as Array<{ leech_rehab_correct_days: number }>
+    return rows[0]?.leech_rehab_correct_days ?? null
+  }
+  const rows = (await sql`
+    UPDATE public.user_lookups
+    SET active_leech_rehab_correct_days = active_leech_rehab_correct_days + 1,
+        active_leech_rehab_last_correct_on = CURRENT_DATE
+    WHERE id = ${params.userLookupId}
+      AND active_leech_parked_at IS NOT NULL
+      AND active_leech_rehab_last_correct_on IS DISTINCT FROM CURRENT_DATE
+    RETURNING active_leech_rehab_correct_days
+  `) as Array<{ active_leech_rehab_correct_days: number }>
+  return rows[0]?.active_leech_rehab_correct_days ?? null
+}
+
+// Parked terms for the Strengthen session's gated track, oldest-parked first
+// so the longest-stranded terms get rehab attention first.
+const listParkedTerms = async (params: {
+  userId: string
+  targetLanguage: string
+  pool: PracticePool
+}): Promise<DbUserLookup[]> => {
+  const parkedCol = params.pool === 'active' ? sql`ul.active_leech_parked_at` : sql`ul.leech_parked_at`
+  const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
+  return (await sql`
+    SELECT ul.*
+    FROM public.user_lookups ul
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+      ${activeModeClause}
+      AND ${parkedCol} IS NOT NULL
+    ORDER BY ${parkedCol} ASC, ul.headword ASC, ul.sense ASC
+  `) as DbUserLookup[]
 }
 
 // Lightweight "vocabulary" view used by the practice-text generator's prompt
@@ -1219,6 +1338,9 @@ export interface UserLookupsRepositoryInterface {
     userId: string
     learningMode: LearningMode
   }) => Promise<DbUserLookup | null>
+  parkLeech: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
+  advanceRehabDay: (params: { userLookupId: string; pool: PracticePool }) => Promise<number | null>
+  listParkedTerms: (params: { userId: string; targetLanguage: string; pool: PracticePool }) => Promise<DbUserLookup[]>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
   listChunksForLanguage: (params: {
@@ -1275,6 +1397,9 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     applyFsrsResult,
     applyFsrsResultForPool,
     setLearningMode,
+    parkLeech,
+    advanceRehabDay,
+    listParkedTerms,
     listVocabularyForLanguage,
     listKeptChunksForExport,
     listChunksForLanguage,
