@@ -397,6 +397,68 @@ export type Database = {
           },
         ]
       }
+      practice_exercises: {
+        Row: {
+          created_at: string
+          exercise_type: Database['public']['Enums']['exercise_type']
+          gate_eligible: boolean
+          generation_token: string | null
+          generation_warning: string | null
+          id: string
+          payload: Json | null
+          pool: string
+          ready_at: string | null
+          seen_at: string | null
+          status: Database['public']['Enums']['exercise_status']
+          target_language: string
+          used_at: string | null
+          user_id: string
+          user_lookup_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_type: Database['public']['Enums']['exercise_type']
+          gate_eligible?: boolean
+          generation_token?: string | null
+          generation_warning?: string | null
+          id?: string
+          payload?: Json | null
+          pool: string
+          ready_at?: string | null
+          seen_at?: string | null
+          status?: Database['public']['Enums']['exercise_status']
+          target_language: string
+          used_at?: string | null
+          user_id: string
+          user_lookup_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_type?: Database['public']['Enums']['exercise_type']
+          gate_eligible?: boolean
+          generation_token?: string | null
+          generation_warning?: string | null
+          id?: string
+          payload?: Json | null
+          pool?: string
+          ready_at?: string | null
+          seen_at?: string | null
+          status?: Database['public']['Enums']['exercise_status']
+          target_language?: string
+          used_at?: string | null
+          user_id?: string
+          user_lookup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'practice_exercises_user_lookup_id_fkey'
+            columns: ['user_lookup_id']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       practice_texts: {
         Row: {
           annotations: Json
@@ -850,6 +912,9 @@ export type Database = {
       }
       user_lookups: {
         Row: {
+          active_leech_parked_at: string | null
+          active_leech_rehab_correct_days: number
+          active_leech_rehab_last_correct_on: string | null
           active_srs_difficulty: number | null
           active_srs_due: string | null
           active_srs_lapses: number
@@ -871,6 +936,9 @@ export type Database = {
           headword: string
           id: string
           learning_mode: string
+          leech_parked_at: string | null
+          leech_rehab_correct_days: number
+          leech_rehab_last_correct_on: string | null
           native_example: string | null
           sense: string
           srs_difficulty: number | null
@@ -886,6 +954,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_leech_parked_at?: string | null
+          active_leech_rehab_correct_days?: number
+          active_leech_rehab_last_correct_on?: string | null
           active_srs_difficulty?: number | null
           active_srs_due?: string | null
           active_srs_lapses?: number
@@ -907,6 +978,9 @@ export type Database = {
           headword: string
           id?: string
           learning_mode?: string
+          leech_parked_at?: string | null
+          leech_rehab_correct_days?: number
+          leech_rehab_last_correct_on?: string | null
           native_example?: string | null
           sense?: string
           srs_difficulty?: number | null
@@ -922,6 +996,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_leech_parked_at?: string | null
+          active_leech_rehab_correct_days?: number
+          active_leech_rehab_last_correct_on?: string | null
           active_srs_difficulty?: number | null
           active_srs_due?: string | null
           active_srs_lapses?: number
@@ -943,6 +1020,9 @@ export type Database = {
           headword?: string
           id?: string
           learning_mode?: string
+          leech_parked_at?: string | null
+          leech_rehab_correct_days?: number
+          leech_rehab_last_correct_on?: string | null
           native_example?: string | null
           sense?: string
           srs_difficulty?: number | null
@@ -1115,6 +1195,8 @@ export type Database = {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
       content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming'
+      exercise_status: 'pending' | 'generating' | 'ready' | 'used' | 'failed'
+      exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
       processing_job_kind: 'enrich_highlight' | 'discover_session' | 'nominate_window' | 'seed_card_chat'
       processing_job_status: 'pending' | 'processing' | 'done' | 'failed'
@@ -1401,6 +1483,8 @@ export const Constants = {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
       content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming'],
+      exercise_status: ['pending', 'generating', 'ready', 'used', 'failed'],
+      exercise_type: ['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],
       processing_job_kind: ['enrich_highlight', 'discover_session', 'nominate_window', 'seed_card_chat'],
       processing_job_status: ['pending', 'processing', 'done', 'failed'],

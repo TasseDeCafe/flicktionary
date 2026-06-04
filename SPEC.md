@@ -295,8 +295,8 @@ A separate top-level destination from the per-session review flow. Practice is *
 
 - **Pool source.** Every card with `status='kept'` flows into `user_lookup` automatically (the keep transition writes the row). `user_lookup` is the canonical "user vocabulary" record; it carries FSRS state per `(user_id, target_language, headword, sense)`.
 - **Passive vs active pools.** Every kept term participates in the passive (recognition) pool — that's what the existing `srs_*` columns track. Users can additionally promote a deliberate subset of terms to the **active** pool via `user_lookup.learning_mode = 'active'`; those terms enter a parallel active-drill pool with its own SRS state under `active_srs_*`. Active membership is additive — an active term still appears in the passive practice queue when its passive SRS state is due. The two pools are independent: rating in passive generated-text practice or flashcards only advances `srs_*`; rating in an active drill only advances `active_srs_*`. `practice_session.pool` carries the routing decision per generated-text session and gates which column family `rate-chunk` writes; flashcard ratings bypass `rate-chunk` and apply FSRS directly to the passive pool.
-- **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (session in progress / follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`. When the language has any active-pool terms the summary line appends `· N active`.
-- **Language action screen.** `/practice/language/$targetLanguage` splits the actions into two sections. **Passive vocabulary** owns the passive-pool actions: **Continue session** / **End session** when a passive reading session exists, otherwise the primary action is a single **Practice** button that starts a `mixed` generated-text session — due follow-ups first, then unseen terms up to the remaining daily new-term allowance, in one sitting — with **Review only** / **Learn new only** exposed as secondary buttons when both halves have work, or **Learn more anyway** when the daily new-term cap is reached and unseen terms remain. A secondary **Flashcards** button opens `/practice/flashcards/$targetLanguage`, a no-LLM front/back reviewer over the same passive SRS pool and daily new-term budget. Flashcards and passive reading sessions are mutually exclusive for a language: if a passive reading session is active, the UI asks the user to end it before entering flashcards, and the backend rejects direct flashcard list/rate requests while such a session exists so a snapshotted reading session cannot double-apply FSRS to cards already rated in flashcards. **Active vocabulary** (rendered only when `activeTotal > 0`) owns the active-pool actions: **Drill active terms** when active terms are due or new, **Continue active drill** / **End active drill** when an active drill is in progress. Because the per-language session uniqueness is per-pool, a passive generated-text session and an active drill can coexist for the same language; ending one does not touch the other.
+- **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`. When the language has any active-pool terms the summary line appends `· N active`; when any terms are leech-parked it appends `· N parked` (passive + active parked combined).
+- **Language action screen.** `/practice/language/$targetLanguage` shows one card per pool — **Active vocabulary** first (rendered only when `activeTotal > 0`), then **Passive vocabulary**. The system makes the strategic decision, not the user: each pool has a single primary **Practice** button that enters the unified review screen in **flashcards mode over the `mixed` scope** (due first, then new under the daily allowance; `{ pool, scope: 'mixed', mode: 'flashcards' }` is passed explicitly because the review route's Zod default is `mode: 'read'`). The Active primary button is always tappable — an empty queue lands on the flashcard view's existing "No terms are due right now" screen. Per-pool secondary actions: **History**, and a **More** disclosure (local per-pool boolean) exposing `Read` (`mixed` + reading mode), `Review only` (`review_due` + flashcards), `Learn new` (`learn_new` + flashcards). When a pool has leech-parked terms the card also shows an `N word(s) parked — strengthen them` affordance that opens the Strengthen route for that pool (see "Strengthen exercises + leech rehab"). The passive stat cards (Follow-ups / New today / Unseen / Total) render below the pool sections.
 - **Stale session URLs.** Reloading or deep-linking to `/practice/$sessionId` for a completed/abandoned session silently redirects back to that language's action screen. Background pre-generation is opportunistic and must not show user-facing errors for inactive sessions.
 - **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` snapshots due terms plus unseen passive terms up to the remaining daily new-term allowance — used by source/triage entry points and by the default **Practice** action on the language screen so a single session clears follow-ups and then introduces the day's new terms; `active_drill` snapshots only `learning_mode = 'active'` terms — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
 - **Session.** Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
@@ -309,6 +309,39 @@ A separate top-level destination from the per-session review flow. Practice is *
 - **Daily new-term budget.** Passive generated-text sessions and flashcards share the same daily new-term cap. Both count introductions by `added_to_practice_at` on non-deleted kept `user_lookups` rows. Generated-text sessions reserve a capped snapshot when the session starts and stamp new rows when they are first surfaced. Flashcards compute the remaining allowance at list time for the returned batch and also guard at rating time with an advisory transaction lock keyed by `(user, target_language)`, so concurrent tabs/devices cannot introduce two different new flashcards past the cap.
 - **FSRS.** `ts-fsrs` package, default parameters with `enable_fuzz: true`. The adapter at `apps/backend/src/service/practice/fsrs.ts` round-trips `user_lookups` rows ↔ `ts-fsrs` Card objects. Passive ratings other than `again` are floored to `now + 24h` (`MIN_PASSIVE_INTERVAL_MS`) so finishing a generated-text or flashcard sitting leaves no immediately-due straggler follow-ups; `again` keeps FSRS's native intraday interval (generated-text in-session redrill is rating-driven via the stubborn path; flashcards requeue one local copy after an accepted `again`; and an abandoned miss should stay due soon), and the active pool is never clamped.
 - **Out of scope (v2).** Pre-generation pipeline, coverage guarantee + cleanup pass for stubborn chunks, custom FSRS parameters, audio TTS. (The "remove from practice" affordance and the browseable "my vocabulary" view both shipped as the Vocabulary tab — see below.)
+
+### Strengthen exercises + leech rehab
+
+Post-session reinforcement layered on top of Practice. Two populations, one surface: **parked leeches** (gated rehab — the only way back into rotation) and **this-session again/hard terms** (ungated bonus practice). All constants live in `apps/backend/src/service/practice/leech-config.ts`.
+
+**Leech parking.**
+
+- A term whose FSRS lapses reach `LEECH_LAPSE_THRESHOLD = 4` is **parked** out of every practice queue. Detection lives in the shared `applyTermRating` path, so a lapse parks the term whether it came from a flashcard rating or a reading-text advance.
+- The park condition is a **new-lapse delta**, not an absolute check (`result.lapses > prevLapses && result.lapses >= threshold && !alreadyParked`, the pure `shouldParkLeech` helper). After graduation `lapses` stays ≥ the threshold forever, so only a rating that itself caused a fresh lapse can (re-)park; `good`/`easy` on a high-lapse graduated term never does. Parked state is an explicit per-pool timestamp (`leech_parked_at` / `active_leech_parked_at`), and the two pools park independently.
+- Parked terms leave **both render modes at once**: flashcards and the reading-text generator's candidate set both feed from `listReviewTerms`, which filters on the pool's parked column. This is intentional — reading mode implicitly rates untapped annotations `good` on advance, which must never mutate a parked term's FSRS. The due-summary aggregates also exclude parked rows (the landing never claims terms the queue refuses to serve) and expose `parkedCount` / `activeParkedCount` per language.
+- The flashcard client reacts to `rateTerm`'s `parked: true` output with a toast ("… keeps tripping you up — it's parked for rehab exercises") and skips the usual in-session `again` requeue for that card.
+- **Pool move resets active rehab.** A real `learning_mode` change clears the active parked/rehab columns; the reset is folded into the repo's `setLearningMode` UPDATE (guarded by `learning_mode IS DISTINCT FROM`), so both pool-move surfaces — triage keep-as-active and the Vocabulary tab — get it, while idempotent "keep as active" re-stamps don't wipe progress. Only the active family resets: passive membership never changes. Soft-deleting a parked term hides it everywhere via the existing `deleted_at` filters; restoring resumes with parked state intact (correct — it still needs rehab).
+
+**Exercise bank (`practice_exercise` table).**
+
+- Durable pre-generated exercises per `(user_lookup, pool, exercise_type)`, mirroring the `practice_texts` fencing lifecycle: `pending → generating` (mints a `generation_token`) `→ ready → used | failed`; stale pending/generating slots (> 300s) are fenced off and replaced; an advisory lock per `(term, pool)` makes concurrent ensure calls race-safe.
+- **Consume-on-answer.** Serving is read-only (deterministic lowest-`created_at` ready row), so refresh/abandon before answering re-serves the same exercise — no bank drain, no in-progress state machine. Submitting an answer consumes the row (`used`), which doubles as the stale-answer fence; the next attempt always gets a fresh exercise (anti-gaming for gates). **Skipping consumes nothing.**
+- Bank warm-up triggers, all fire-and-forget: an `again`/`hard` rating in either render mode (via an optional hook on `applyTermRating`), parking itself (gate exercises must exist before the user reaches Strengthen), and each consumed slot (refill, skipped on graduation).
+- **Pool-dependent exercise ladders.** Passive (recognition): `mc_cloze` + `mc_comprehension`. Active (production): `mc_cloze` + `production_cloze` (typed). `use_in_sentence` generates for both pools but is **ungated bonus only** (`gate_eligible = false`) — an LLM grading error must never block a graduation.
+- **Accuracy-first generation pipeline** (cost explicitly not a constraint): Opus GENERATE → independent-context Opus adversarial VERIFY, up to `MAX_GEN_ATTEMPTS = 3` full cycles before the slot fails. The verifier substitutes each distractor into the blank and fails the exercise if any substitution is grammatically valid AND semantically defensible; distractors must match the answer's POS and inflection/agreement (so grammar alone can't eliminate them) while being semantically wrong in that sentence; production-cloze blanks must be inflection-unambiguous from the sentence's cues. Blank offsets are computed server-side by substring search over the emitted `surface_form` (never LLM char arithmetic); options are shuffled server-side. Generation prompts work from headword + sense (+ definition/translation when present) — no dependency on stored examples. `use_in_sentence` payloads are built deterministically (no LLM at generation time).
+- **Grading is server-side only.** Served payloads are stripped of `answer` / `answerIndex` / `acceptedForms`; the truth (`correctIndex` / `correctAnswer`) is revealed only in the answer response, after the exercise is consumed. MC = index equality. Production cloze: NFD-normalize + strip diacritics + lowercase + trim, then exact match against accepted forms or Damerau-Levenshtein ≤ `PRODUCTION_CLOZE_MAX_EDIT_DISTANCE = 1` (local helper, no dependency) — a missing accent plus one typo still passes. Use-in-sentence: Sonnet-graded; a correct sentence in **any legitimate sense** passes (real production is the point; it's bonus-only), but when the sense differs from the stored one the feedback must say so and give an example in the stored sense; grading failures degrade to attempt-only ("feedback unavailable"), never an error.
+
+**Rehab graduation (the way back).**
+
+- Gate = a correct answer on a deterministic (`gate_eligible`) exercise for a parked term, applied by `submitExerciseAnswer` after consumption. Graduation requires correct gate answers on `LEECH_GRADUATION_DAYS = 3` **distinct server calendar days** (spaced, not massed): `advanceRehabDay` is guarded by `rehab_last_correct_on IS DISTINCT FROM CURRENT_DATE`, so massed same-day corrects count once. An incorrect answer consumes the exercise but never advances; a later same-day correct (on a fresh exercise) can still earn that day's credit.
+- **Escalating tiers**, derived from `rehab_correct_days` (no extra column): passive `mc_cloze → mc_comprehension → mc_cloze` (fresh); active `mc_cloze → production_cloze → production_cloze` (fresh). The Strengthen session serves the tier-typed gate exercise per parked term.
+- **Soft re-entry.** At the threshold, one UPDATE unparks and re-enters FSRS on a softened schedule: `state='review'`, `due = now + 24h`, `stability = SOFT_REENTRY_STABILITY (1)`, `difficulty = SOFT_REENTRY_DIFFICULTY (5)`, `last_review = now`; **reps/lapses unchanged** (history preserved — the explicit parked flag, not the lapse count, is the re-park gate). Direct column write, deliberately not routed through `applyRating`, so the `MIN_PASSIVE_INTERVAL_MS` floor doesn't interfere; `added_to_practice_at` is untouched, so the daily-new cap is unaffected. Re-parking after graduation fires only on the next fresh lapse.
+
+**Strengthen session (UI).**
+
+- Route: `/practice/strengthen/$targetLanguage` (Zod search: `pool`, optional `sessionHard` userLookupId array — carried in the URL so the list survives refresh). Entry points: the post-flashcard-session CTA (primary `Strengthen` button on the completion screen when the session produced again/hard terms; the back button is the skip path — v1 is flashcards-only, reading completion is unchanged though its ratings still warm bonus banks) and the per-pool parked affordance on the language screen.
+- `startStrengthenSession` re-validates the client-supplied hard ids server-side (ownership, language, `count > 0`, not deleted, `learning_mode='active'` when `pool='active'`; silently drops the rest) and returns one tier-typed gate exercise per parked term plus one bonus exercise per validated hard term. A term with nothing ready gets a **`generating` placeholder** (skippable) and a background bank top-up — the session never blocks on LLM work.
+- Exercise screens share an `ExerciseLayout`: scrollable content + a pinned bottom action bar (the flashcard-view pattern). Every unanswered exercise has a secondary **Skip** (non-consuming — it re-serves next session, so "I don't know" on a gate doesn't burn the fresh exercise or the day; to *see* the answer, submit a guess — that consumes and reveals). Cloze blanks render as literal underscores. MC answers highlight the correct option from the response's `correctIndex`; production cloze reveals `correctAnswer` on a miss; use-in-sentence is labelled **Bonus** and shows the LLM feedback. Gate answers render a "Day N of 3" rehab progress note from the response's `rehabCorrectDays`, and `graduated: true` renders a graduation celebration ("back in your practice rotation"); the dueSummary invalidation drops the parked counts.
 
 ### Vocabulary (browse + manage kept chunks)
 
@@ -623,6 +656,21 @@ user_lookup                          -- cross-source dedup + canonical user voca
   active_srs_last_review timestamptz?
   active_srs_reps     int default 0
   active_srs_lapses   int default 0
+  -- Leech-rehab state, per pool (passive unprefixed / active_*). See
+  -- "Strengthen exercises + leech rehab".
+  leech_parked_at     timestamptz?  -- set => excluded from every practice queue
+                                    -- (flashcards AND reading-text candidates)
+                                    -- until rehab graduates it. Explicit flag:
+                                    -- lapses stay >= threshold after graduation,
+                                    -- so a derived check would instantly re-park.
+  leech_rehab_correct_days int default 0
+                                    -- distinct calendar days with a correct gate
+                                    -- answer; doubles as the exercise-ladder tier
+  leech_rehab_last_correct_on date? -- server CURRENT_DATE of the last counted
+                                    -- credit; enforces one advance per day
+  active_leech_parked_at timestamptz?
+  active_leech_rehab_correct_days int default 0
+  active_leech_rehab_last_correct_on date?
   created_at          timestamptz   -- powers Vocabulary "Recently added" sort
   deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
   primary key (id)
@@ -677,6 +725,34 @@ practice_rating                      -- audit log of generated-text rating event
   rating              'again' | 'hard' | 'good' | 'easy'
   was_explicit        bool          -- false = implicit-good applied on Next-text advance
   rated_at            timestamptz
+
+practice_exercise                    -- durable pre-generated exercise bank for the
+                                     -- Strengthen surface (leech rehab gates +
+                                     -- post-session bonus). Fencing lifecycle
+                                     -- mirrors practice_text.
+  id                  uuid pk
+  user_id             uuid -> auth.users (ON DELETE CASCADE)
+  user_lookup_id      uuid -> user_lookup (ON DELETE CASCADE)
+  target_language     text
+  pool                'passive' | 'active'
+  exercise_type       'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
+  status              'pending' | 'generating' | 'ready' | 'used' | 'failed'
+  generation_token    uuid?         -- fencing token minted at claim; markReady /
+                                    -- markFailed verify it so crashed/raced
+                                    -- workers' late writes are fenced out
+  payload             jsonb         -- per-type shape; answer fields (answer /
+                                    -- answerIndex / acceptedForms) are stripped
+                                    -- server-side before serving
+  gate_eligible       bool          -- deterministic grading only (MC + production
+                                    -- cloze). LLM-graded use_in_sentence is false:
+                                    -- bonus-only, never gates a graduation
+  seen_at             timestamptz?
+  used_at             timestamptz?  -- consume-on-answer: stamped when an answer is
+                                    -- SUBMITTED, never when served. Refresh/abandon
+                                    -- re-serves the same row; skip consumes nothing
+  generation_warning  text?
+  created_at          timestamptz
+  ready_at            timestamptz?
 
 -- users (template table, extended with global Flicktionary prefs)
 users
@@ -930,4 +1006,4 @@ cached result instantly.
 - Multi-deck organization (per language pair, or by tag).
 - Spaced-repetition history pulled back from Anki to close the loop.
 - Practice v2: pre-generation pipeline (queue 2–3 texts ahead of the user), coverage-guarantee + cleanup pass for chunks the LLM persistently fails to fit naturally, custom FSRS parameters, audio TTS for generated texts, and richer flashcard options such as audio or typed answers. (The browseable "my vocabulary" list shipped as the Vocabulary tab — Delete there is the "remove from practice" affordance.)
-- Production-oriented active drills. v1 of the active pool reuses the same generated-text Practice experience — the active drill snapshots only `learning_mode='active'` rows and advances `active_srs_*`, but the reading UX is otherwise identical to passive practice. v2 explores drill formats that target production specifically (cloze, prompted recall, dictation/typing) so the active label cashes out as a different exercise rather than the same exercise over a different pool.
+- Production-oriented active drills. Partially shipped: the Strengthen surface now delivers typed production cloze, MC cloze/comprehension, and LLM-graded use-in-a-sentence — but only for leech-rehab gates and post-session again/hard bonus terms (see "Strengthen exercises + leech rehab"). v2 generalizes those exercise formats into the main active-drill loop (prompted recall, dictation/typing as a first-class drill mode) so the active label cashes out as a different exercise rather than the same exercise over a different pool. Also plausible: a Strengthen CTA on the reading-mode completion screen (v1 is flashcards-only) and tunable leech thresholds.

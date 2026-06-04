@@ -14,9 +14,19 @@ import type {
   PracticeTextsRepositoryInterface,
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
+import type { PracticeExercisesRepositoryInterface } from '../../transport/database/practice-exercises/practice-exercises-repository'
 import { listReviewTerms } from '../../service/practice/list-review-terms'
 import { rateTerm } from '../../service/practice/rate-term'
 import { clampPracticeSessionLimits } from '../../service/practice/review-caps'
+import {
+  ensureExerciseBank,
+  getStrengthenExercises,
+  warmExerciseBank,
+  type ExerciseBankDependencies,
+} from '../../service/practice/exercise-bank'
+import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
+import { applyGateAnswer } from '../../service/practice/rehab'
+import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
 import {
   generateReadingText,
   prepareNextReadingText,
@@ -30,6 +40,7 @@ import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-glos
 
 export type PracticeRouterDependencies = {
   practiceTextsRepository: PracticeTextsRepositoryInterface
+  practiceExercisesRepository: PracticeExercisesRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
@@ -147,11 +158,23 @@ const fetchAnnotationContent = async (
 export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const implementer = implement(practiceContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
+  const exerciseBankDeps: ExerciseBankDependencies = {
+    practiceExercisesRepository: deps.practiceExercisesRepository,
+    userLookupsRepository: deps.userLookupsRepository,
+    usersRepository: deps.usersRepository,
+    userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+  }
+  // Fire-and-forget warmer threaded into the shared rating path: again/hard
+  // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
+  const warmBank = (params: { lookup: DbUserLookup; pool: 'passive' | 'active' }) =>
+    warmExerciseBank({ ...params, deps: exerciseBankDeps })
+
   const readingDeps: GenerateReadingTextDependencies = {
     practiceTextsRepository: deps.practiceTextsRepository,
     userLookupsRepository: deps.userLookupsRepository,
     usersRepository: deps.usersRepository,
     userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+    warmExerciseBank: warmBank,
   }
   const capsDeps = {
     usersRepository: deps.usersRepository,
@@ -185,6 +208,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
       const result = await rateTerm(input.userLookupId, userId, input.rating, input.pool, limits.maxNewTerms, {
         userLookupsRepository: deps.userLookupsRepository,
+        warmExerciseBank: warmBank,
       })
       if (!result.ok) {
         if (result.reason === 'not_in_active_pool') {
@@ -193,7 +217,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
       return {
-        data: { accepted: true as const, introducedNew: result.introducedNew, dailyCapReached: result.dailyCapReached },
+        data: {
+          accepted: true as const,
+          introducedNew: result.introducedNew,
+          dailyCapReached: result.dailyCapReached,
+          parked: result.parked,
+        },
       }
     }),
 
@@ -278,6 +307,143 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
       }
       return { data: { practiceText: await shapeText(found.practiceText, userId, found.targetLanguage) } }
+    }),
+
+    startStrengthenSession: implementer.startStrengthenSession.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const exercises = await getStrengthenExercises({
+        userId,
+        targetLanguage: input.targetLanguage,
+        pool: input.pool,
+        sessionHardUserLookupIds: input.sessionHardUserLookupIds,
+        deps: exerciseBankDeps,
+      })
+      return {
+        data: {
+          exercises: exercises.map((entry) => ({
+            ...entry,
+            // The service strips payloads to the wire shape; the contract's
+            // discriminated union validates the result.
+            payload: entry.payload as never,
+          })),
+        },
+      }
+    }),
+
+    submitExerciseAnswer: implementer.submitExerciseAnswer.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const exercise = await deps.practiceExercisesRepository.findByIdForUser(input.exerciseId, userId)
+      if (!exercise) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Exercise not found' }] } })
+      }
+      if (exercise.status !== 'ready' || exercise.payload == null) {
+        // Already used/failed — stale answer (e.g. a second submit racing the
+        // first, or an answer for a consumed exercise after refresh).
+        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Exercise is no longer answerable' }] } })
+      }
+      const isMc = exercise.exercise_type === 'mc_cloze' || exercise.exercise_type === 'mc_comprehension'
+      const hasSelectedIndex = 'selectedIndex' in input.response
+      if (isMc !== hasSelectedIndex) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: `Response shape does not match exercise type ${exercise.exercise_type}` }] },
+        })
+      }
+
+      // Consume-on-answer. Losing this update means another submit won.
+      const consumed = await deps.practiceExercisesRepository.consumeExercise(exercise.id)
+      if (!consumed) {
+        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Exercise is no longer answerable' }] } })
+      }
+
+      const payload = exercise.payload as Record<string, unknown>
+      let correct = false
+      let feedback: string | null = null
+      let correctIndex: number | null = null
+      let correctAnswer: string | null = null
+
+      if (isMc && hasSelectedIndex && 'selectedIndex' in input.response) {
+        correctIndex = payload.answerIndex as number
+        correct = gradeMcAnswer({ answerIndex: correctIndex }, input.response.selectedIndex)
+      } else if (exercise.exercise_type === 'production_cloze' && 'text' in input.response) {
+        correctAnswer = payload.answer as string
+        correct = gradeProductionClozeAnswer(
+          { answer: correctAnswer, acceptedForms: (payload.acceptedForms as string[] | undefined) ?? [] },
+          input.response.text
+        )
+      } else if ('text' in input.response) {
+        // use_in_sentence — LLM-graded, NEVER gates. Grading failure degrades
+        // to attempt-only (counts as correct, no feedback) rather than blocking.
+        const lookup = await deps.userLookupsRepository.findByIdForUser(exercise.user_lookup_id, userId)
+        try {
+          const languagePrefs = await getLanguageMode({
+            userId,
+            targetLanguage: exercise.target_language,
+            usersRepository: deps.usersRepository,
+            targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+          })
+          if (!lookup || !languagePrefs.nativeLanguage) throw new Error('grading context unavailable')
+          const grade = await gradeUseInSentencePass({
+            headword: lookup.headword,
+            sense: lookup.sense ?? '',
+            userSentence: input.response.text,
+            targetLanguage: exercise.target_language,
+            nativeLanguage: languagePrefs.nativeLanguage,
+            cefrLevel: 'B1',
+            hideTranslationFields: languagePrefs.hideTranslationFields,
+            allowL1Notes: languagePrefs.allowL1Notes,
+          })
+          correct = grade.correct
+          feedback = grade.feedback || null
+        } catch (e) {
+          console.warn('use-in-sentence grading failed, degrading to attempt-only', { exerciseId: exercise.id, e })
+          correct = true
+          feedback = null
+        }
+      }
+
+      const exercisePool = exercise.pool as 'passive' | 'active'
+      const termLookup = await deps.userLookupsRepository.findByIdForUser(exercise.user_lookup_id, userId)
+
+      // Rehab: a gate exercise answered for a term parked in this pool drives
+      // the graduation ladder (one distinct-day credit per correct answer;
+      // soft re-entry at the threshold). Non-parked terms (bonus track) and
+      // ungated exercises are untouched.
+      let rehabCorrectDays: number | null = null
+      let graduated = false
+      if (consumed.gate_eligible && termLookup) {
+        const outcome = await applyGateAnswer({
+          lookup: termLookup,
+          pool: exercisePool,
+          correct,
+          deps: { userLookupsRepository: deps.userLookupsRepository },
+        })
+        rehabCorrectDays = outcome.rehabCorrectDays
+        graduated = outcome.graduated
+      }
+
+      // Replenish the consumed slot in the background so the next attempt for
+      // this term has a fresh exercise waiting. Skip on graduation — the term
+      // is back in normal rotation and the remaining bank stays for a
+      // potential future re-park.
+      if (termLookup && !graduated) {
+        void ensureExerciseBank({
+          lookup: termLookup,
+          pool: exercisePool,
+          deps: exerciseBankDeps,
+        }).catch((err) => console.error('exercise bank refill threw', { userLookupId: exercise.user_lookup_id, err }))
+      }
+
+      return {
+        data: {
+          correct,
+          feedback,
+          gated: consumed.gate_eligible,
+          correctIndex,
+          correctAnswer,
+          rehabCorrectDays,
+          graduated,
+        },
+      }
     }),
 
     fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { applyRating } from './fsrs'
+import { applyRating, softReentryResult } from './fsrs'
+import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
 import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
 
 const newRow: DbUserLookup = {
@@ -35,6 +36,12 @@ const newRow: DbUserLookup = {
   active_srs_last_review: null,
   active_srs_reps: 0,
   active_srs_lapses: 0,
+  leech_parked_at: null,
+  leech_rehab_correct_days: 0,
+  leech_rehab_last_correct_on: null,
+  active_leech_parked_at: null,
+  active_leech_rehab_correct_days: 0,
+  active_leech_rehab_last_correct_on: null,
   created_at: '2026-01-01T00:00:00Z',
   deleted_at: null,
 }
@@ -124,5 +131,21 @@ describe('applyRating', () => {
       expect(Number.isFinite(second.due.getTime())).toBe(true)
       expect(second.reps).toBeGreaterThan(first.reps)
     })
+  })
+})
+
+describe('softReentryResult', () => {
+  it('returns the softened schedule for a graduating leech (no reps/lapses — those stay untouched)', () => {
+    const now = new Date('2026-06-04T12:00:00Z')
+    const result = softReentryResult(now)
+    expect(result.state).toBe('review')
+    expect(result.due.getTime()).toBe(now.getTime() + 24 * 60 * 60 * 1000)
+    expect(result.stability).toBe(SOFT_REENTRY_STABILITY)
+    expect(result.difficulty).toBe(SOFT_REENTRY_DIFFICULTY)
+    expect(result.lastReview.getTime()).toBe(now.getTime())
+    // The result deliberately has no reps/lapses fields: unparkAndSoftReentry
+    // preserves history and the parked_at flag is the re-park gate.
+    expect('reps' in result).toBe(false)
+    expect('lapses' in result).toBe(false)
   })
 })

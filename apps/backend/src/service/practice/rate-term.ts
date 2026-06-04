@@ -4,13 +4,19 @@ import type {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { applyRating, type AppRating } from './fsrs'
+import { isParked, shouldParkLeech } from './leech-config'
 
 export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
+  // Optional fire-and-forget exercise-bank warmer. Both rating surfaces
+  // (flashcards via rateTerm, reading via advanceReadingText) share
+  // applyTermRating, so wiring it here covers again/hard triggers in both
+  // render modes. Absent in unit tests and callers that don't care.
+  warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void
 }
 
 export type ApplyTermRatingResult =
-  | { ok: true; introducedNew: boolean }
+  | { ok: true; introducedNew: boolean; parked: boolean }
   | { ok: false; reason: 'daily_cap_reached' | 'not_in_active_pool' }
 
 // Apply one rating event to a user_lookup in the given pool. Shared by the
@@ -34,6 +40,12 @@ export const applyTermRating = async (params: {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
   if (pool === 'active' && lookup.learning_mode !== 'active') {
     return { ok: false, reason: 'not_in_active_pool' }
+  }
+  if (isParked(lookup, pool)) {
+    // Stale queues can outlive parking: an old flashcard tab or an already
+    // generated reading text may still submit a rating after the term left
+    // rotation. Parked terms must not mutate FSRS until rehab graduates them.
+    return { ok: true, introducedNew: false, parked: true }
   }
 
   const introducedNew = pool === 'passive' ? lookup.srs_state == null : lookup.active_srs_state == null
@@ -67,11 +79,28 @@ export const applyTermRating = async (params: {
     reps: result.reps,
     lapses: result.lapses,
   })
-  return { ok: true, introducedNew }
+
+  // Leech detection — here in the shared path so a fresh lapse parks the term
+  // whether it came from flashcards or a reading-text advance. The condition
+  // is a new-lapse delta (see shouldParkLeech): historical lapses alone never
+  // park, so graduated terms survive good/easy ratings.
+  const parked = shouldParkLeech(lookup, result, pool)
+  if (parked) {
+    await deps.userLookupsRepository.parkLeech({ userLookupId: lookup.id, pool })
+  }
+
+  // Pre-warm the exercise bank in the background: a freshly parked leech needs
+  // its gate exercises, and a struggling (again/hard) term feeds the
+  // post-session Strengthen list.
+  if (parked || rating === 'again' || rating === 'hard') {
+    deps.warmExerciseBank?.({ lookup, pool })
+  }
+
+  return { ok: true, introducedNew, parked }
 }
 
 export type RateTermResult =
-  | { ok: true; introducedNew: boolean; dailyCapReached: boolean }
+  | { ok: true; introducedNew: boolean; dailyCapReached: boolean; parked: boolean }
   | { ok: false; reason: 'lookup_not_found' | 'not_in_active_pool' }
 
 // Flashcard-mode single-card rating. Pool-parametrized; no practice_text / no
@@ -90,6 +119,6 @@ export const rateTerm = async (
 
   const result = await applyTermRating({ lookup, userId, rating, pool, maxNewTerms, deps })
   if (!result.ok && result.reason === 'not_in_active_pool') return { ok: false, reason: 'not_in_active_pool' }
-  if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true }
-  return { ok: true, introducedNew: result.introducedNew, dailyCapReached: false }
+  if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true, parked: false }
+  return { ok: true, introducedNew: result.introducedNew, dailyCapReached: false, parked: result.parked }
 }

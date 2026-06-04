@@ -4,6 +4,7 @@ import type {
   PracticePool,
   SrsState,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
 
 const fsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
 
@@ -93,6 +94,29 @@ const MIN_PASSIVE_INTERVAL_MS = 24 * 60 * 60 * 1000
 // createEmptyCard provides the seed; the rating then transitions it into
 // learning/review with computed intervals. The pool argument selects which
 // SRS column family backs the card state.
+// SRS values for a leech graduating out of rehab. A softened schedule rather
+// than the pre-park one (which was demonstrably failing): review state, due
+// tomorrow, low stability, raised difficulty. reps/lapses are deliberately NOT
+// part of this result — history is preserved on the row, and the explicit
+// parked_at flag (not the lapse count) is the re-park gate. This is written
+// directly via unparkAndSoftReentry, NOT through applyRating, so the
+// MIN_PASSIVE_INTERVAL floor doesn't interfere and no FSRS transition runs.
+export type SoftReentryResult = {
+  state: SrsState
+  due: Date
+  stability: number
+  difficulty: number
+  lastReview: Date
+}
+
+export const softReentryResult = (now: Date): SoftReentryResult => ({
+  state: 'review',
+  due: new Date(now.getTime() + 24 * 60 * 60 * 1000),
+  stability: SOFT_REENTRY_STABILITY,
+  difficulty: SOFT_REENTRY_DIFFICULTY,
+  lastReview: now,
+})
+
 export const applyRating = (row: DbUserLookup, rating: AppRating, now: Date, pool: PracticePool): FsrsResult => {
   const existing = userLookupToFsrs(row, pool)
   const card: FsrsCard = existing ?? createEmptyCard(now)

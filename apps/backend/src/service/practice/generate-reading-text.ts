@@ -23,6 +23,9 @@ export type GenerateReadingTextDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  // Optional exercise-bank warmer threaded through to applyTermRating so
+  // reading-mode again/hard ratings pre-generate Strengthen exercises too.
+  warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void
   // Optional override for tests / future CEFR-specific tuning.
   chunksPerText?: number
 }
