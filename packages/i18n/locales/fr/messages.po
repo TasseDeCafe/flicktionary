@@ -797,7 +797,7 @@ msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 #~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 #~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:295
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
 msgstr "Les pistes de sous-titres détectées automatiquement peuvent être sélectionnées ici. Flicktionary ne sait pas détecter les sous-titres sur tous les sites. Vous pouvez toujours charger vos propres fichiers de sous-titres."
 
@@ -1047,6 +1047,7 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:276
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:183
 msgid "Close"
@@ -1145,7 +1146,7 @@ msgstr "Continuer avec Google"
 #~ msgid "Copied!"
 #~ msgstr "Copié !"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:296
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:287
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Impossible de charger automatiquement les sous-titres dans la langue préférée."
 
@@ -1290,8 +1291,8 @@ msgstr "Réduire le décalage pour que le sous-titre suivant soit à la position
 msgid "Decrease playback rate"
 msgstr "Diminuer la vitesse de lecture"
 
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:43
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:54
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:36
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:45
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:87
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:221
 msgid "Default"
@@ -1467,8 +1468,8 @@ msgid "Email Verification Sent"
 msgstr "Email de Vérification Envoyé"
 
 #: packages/extension/src/controllers/video-data-sync-controller.ts:102
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:113
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:146
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:101
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:134
 msgid "Empty"
 msgstr "Vide"
 
@@ -2028,7 +2029,7 @@ msgstr "Générer la carte"
 msgid "Generate full exploration"
 msgstr "Générer l'exploration complète"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:368
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:338
 msgid "Generate Subtitles"
 msgstr "Générer les sous-titres"
 
@@ -2040,7 +2041,7 @@ msgstr "Génération de l'exploration complète… cela prend quelques secondes.
 #~ msgid "Generating the next text…"
 #~ msgstr "Génération du prochain texte…"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:365
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:335
 msgid "Generating..."
 msgstr "Génération..."
 
@@ -2452,7 +2453,7 @@ msgstr "Termes suggérés par IA"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "Les termes suggérés par l'IA sont désactivés. Surlignez au moins un terme pour traiter cette session."
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:320
+#: packages/asbplayer-common/components/VideoOverlay.tsx:327
 #: packages/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Charger des sous-titres"
@@ -2862,8 +2863,8 @@ msgstr "Numéral"
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:324
 #: packages/extension/src/ui/components/Tutorial.tsx:110
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:307
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:373
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:228
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:239
@@ -2878,8 +2879,8 @@ msgstr "Ouvrir l'app"
 msgid "Open chat"
 msgstr "Ouvrir le chat"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:233
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:358
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:328
 msgid "Open Files"
 msgstr "Ouvrir des fichiers"
 
@@ -3075,7 +3076,7 @@ msgstr "Choisissez votre langue maternelle"
 msgid "Play/pause"
 msgstr "Lecture/Pause"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:363
+#: packages/asbplayer-common/components/VideoOverlay.tsx:370
 msgid "Playback Mode"
 msgstr "Mode de lecture"
 
@@ -3392,7 +3393,7 @@ msgstr "Rechargez la page, puis réessayez l’import."
 msgid "Remember subtitle offset"
 msgstr "Mémoriser le décalage des sous-titres"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:342
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:321
 msgid "Remember these track choices for this site"
 msgstr "Se souvenir de ces choix de piste pour ce site"
 
@@ -3644,7 +3645,7 @@ msgstr "Sélectionnez d’abord du texte."
 msgid "Select subtitle tracks to load."
 msgstr "Sélectionner les pistes de sous-titres à charger."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:260
 msgid "Select Subtitles"
 msgstr "Sélectionner des sous-titres"
 
@@ -3718,6 +3719,7 @@ msgstr "Configuration du compte..."
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
 #: packages/extension/src/ui/components/SettingsPage.tsx:78
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
 msgid "Settings"
 msgstr "Paramètres"
@@ -4042,7 +4044,7 @@ msgid "Subtitle Track"
 msgstr "Piste des sous-titres"
 
 #. placeholder {0}: i + 1
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:186
 msgid "Subtitle Track {0}"
 msgstr "Piste des sous-titres {0}"
 
@@ -4051,7 +4053,7 @@ msgstr "Piste des sous-titres {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:291
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:282
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer l’extraction."
 
@@ -4314,7 +4316,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Activer/désactiver la piste de sous-titres 3 dans la vidéo"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/VideoOverlay.tsx:334
+#: packages/asbplayer-common/components/VideoOverlay.tsx:341
 msgid "Toggle subtitles"
 msgstr "Activer les sous-titres"
 
@@ -4553,7 +4555,7 @@ msgstr "Vérification..."
 msgid "Video Element"
 msgstr "Élément vidéo"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:325
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:308
 msgid "Video Name"
 msgstr "Nom de la vidéo"
 

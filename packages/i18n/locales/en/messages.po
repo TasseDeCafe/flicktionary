@@ -797,7 +797,7 @@ msgstr "Auto-copy current subtitle to clipboard"
 #~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 #~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:295
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
 msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
 
@@ -1047,6 +1047,7 @@ msgstr "Click to unlock font menu"
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:276
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:183
 msgid "Close"
@@ -1145,7 +1146,7 @@ msgstr "Continue with Google"
 #~ msgid "Copied!"
 #~ msgstr "Copied!"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:296
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:287
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Could not auto-load subtitles in your preferred language."
 
@@ -1292,8 +1293,8 @@ msgstr "Decrease offset to so that next subtitle is at current position. Hold to
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:43
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:54
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:36
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:45
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:87
 #: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:221
 msgid "Default"
@@ -1469,8 +1470,8 @@ msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
 
 #: packages/extension/src/controllers/video-data-sync-controller.ts:102
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:113
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:146
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:101
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:134
 msgid "Empty"
 msgstr "Empty"
 
@@ -2030,7 +2031,7 @@ msgstr "Generate card"
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:368
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:338
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
@@ -2042,7 +2043,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:365
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:335
 msgid "Generating..."
 msgstr "Generating..."
 
@@ -2454,7 +2455,7 @@ msgstr "LLM-suggested terms"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:320
+#: packages/asbplayer-common/components/VideoOverlay.tsx:327
 #: packages/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
@@ -2864,8 +2865,8 @@ msgstr "Numeral"
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: packages/asbplayer-common/components/PageSettingsForm.tsx:324
 #: packages/extension/src/ui/components/Tutorial.tsx:110
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:307
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:373
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:228
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:239
@@ -2880,8 +2881,8 @@ msgstr "Open App"
 msgid "Open chat"
 msgstr "Open chat"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:233
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:358
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:328
 msgid "Open Files"
 msgstr "Open Files"
 
@@ -3077,7 +3078,7 @@ msgstr "Pick your native language"
 msgid "Play/pause"
 msgstr "Play/pause"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:363
+#: packages/asbplayer-common/components/VideoOverlay.tsx:370
 msgid "Playback Mode"
 msgstr "Playback Mode"
 
@@ -3394,7 +3395,7 @@ msgstr "Reload the page, then try importing again."
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:342
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:321
 msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
@@ -3646,7 +3647,7 @@ msgstr "Select some text first."
 msgid "Select subtitle tracks to load."
 msgstr "Select subtitle tracks to load."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:260
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
 
@@ -3720,6 +3721,7 @@ msgstr "Setting up account..."
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
 #: packages/extension/src/ui/components/SettingsPage.tsx:78
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
 msgid "Settings"
 msgstr "Settings"
@@ -4044,7 +4046,7 @@ msgid "Subtitle Track"
 msgstr "Subtitle Track"
 
 #. placeholder {0}: i + 1
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:186
 msgid "Subtitle Track {0}"
 msgstr "Subtitle Track {0}"
 
@@ -4053,7 +4055,7 @@ msgstr "Subtitle Track {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:291
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:282
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Subtitles must be loaded before you can start mining."
 
@@ -4316,7 +4318,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/VideoOverlay.tsx:334
+#: packages/asbplayer-common/components/VideoOverlay.tsx:341
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
 
@@ -4555,7 +4557,7 @@ msgstr "Verifying..."
 msgid "Video Element"
 msgstr "Video Element"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:325
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:308
 msgid "Video Name"
 msgstr "Video Name"
 

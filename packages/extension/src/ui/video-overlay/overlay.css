@@ -62,6 +62,11 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-2xl: 16px;
+
+  /* Container scale (max-w-md/lg on dialog variants) — rem like everything
+     else, so YouTube's 10px root squeezed dialogs to 320px before this pin. */
+  --container-md: 448px;
+  --container-lg: 512px;
 }
 
 /* Hovering anywhere over the subtitle block bumps the background alpha by 0.1.

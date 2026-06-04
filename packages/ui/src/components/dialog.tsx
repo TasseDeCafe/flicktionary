@@ -40,8 +40,10 @@ const dialogContentBase =
 // `right` is a full-height slide-in panel anchored to the right edge.
 // `fullScreen` covers the viewport and slides up from the bottom (mobile chat).
 const dialogContentVariants = {
+  // 32px margin allowance is px, not the upstream 2rem — rem resolves against
+  // the HOST page root font-size inside the extension's shadow surfaces.
   center:
-    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] left-[50%] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 sm:max-w-lg',
+    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] left-[50%] grid w-full max-w-[calc(100%-32px)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 sm:max-w-lg',
   right:
     'inset-y-0 right-0 flex h-dvh w-full max-w-md flex-col rounded-none border-l p-0 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
   fullScreen:
