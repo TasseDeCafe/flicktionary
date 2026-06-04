@@ -771,6 +771,52 @@ const advanceRehabDay = async (params: { userLookupId: string; pool: PracticePoo
   return rows[0]?.active_leech_rehab_correct_days ?? null
 }
 
+// Graduation: clear the pool's parked/rehab state and re-enter FSRS on a
+// softened schedule in ONE update. Direct column write — deliberately not
+// routed through applyFsrsResultForPool because reps/lapses must stay
+// UNCHANGED (history preserved; the explicit parked_at flag is the re-park
+// gate, not the lapse count). Also never touches added_to_practice_at, so the
+// daily-new cap is unaffected.
+const unparkAndSoftReentry = async (params: {
+  userLookupId: string
+  pool: PracticePool
+  state: SrsState
+  due: Date
+  stability: number
+  difficulty: number
+  lastReview: Date
+}): Promise<void> => {
+  if (params.pool === 'passive') {
+    await sql`
+      UPDATE public.user_lookups
+      SET srs_state = ${params.state},
+          srs_due = ${params.due.toISOString()},
+          srs_stability = ${params.stability},
+          srs_difficulty = ${params.difficulty},
+          srs_last_review = ${params.lastReview.toISOString()},
+          leech_parked_at = NULL,
+          leech_rehab_correct_days = 0,
+          leech_rehab_last_correct_on = NULL
+      WHERE id = ${params.userLookupId}
+        AND leech_parked_at IS NOT NULL
+    `
+    return
+  }
+  await sql`
+    UPDATE public.user_lookups
+    SET active_srs_state = ${params.state},
+        active_srs_due = ${params.due.toISOString()},
+        active_srs_stability = ${params.stability},
+        active_srs_difficulty = ${params.difficulty},
+        active_srs_last_review = ${params.lastReview.toISOString()},
+        active_leech_parked_at = NULL,
+        active_leech_rehab_correct_days = 0,
+        active_leech_rehab_last_correct_on = NULL
+    WHERE id = ${params.userLookupId}
+      AND active_leech_parked_at IS NOT NULL
+  `
+}
+
 // Parked terms for the Strengthen session's gated track, oldest-parked first
 // so the longest-stranded terms get rehab attention first.
 const listParkedTerms = async (params: {
@@ -1340,6 +1386,15 @@ export interface UserLookupsRepositoryInterface {
   }) => Promise<DbUserLookup | null>
   parkLeech: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
   advanceRehabDay: (params: { userLookupId: string; pool: PracticePool }) => Promise<number | null>
+  unparkAndSoftReentry: (params: {
+    userLookupId: string
+    pool: PracticePool
+    state: SrsState
+    due: Date
+    stability: number
+    difficulty: number
+    lastReview: Date
+  }) => Promise<void>
   listParkedTerms: (params: { userId: string; targetLanguage: string; pool: PracticePool }) => Promise<DbUserLookup[]>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
@@ -1399,6 +1454,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     setLearningMode,
     parkLeech,
     advanceRehabDay,
+    unparkAndSoftReentry,
     listParkedTerms,
     listVocabularyForLanguage,
     listKeptChunksForExport,

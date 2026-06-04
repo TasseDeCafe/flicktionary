@@ -70,6 +70,9 @@ export const practiceContract = {
           accepted: z.literal(true),
           introducedNew: z.boolean(),
           dailyCapReached: z.boolean(),
+          // True when this rating crossed the leech threshold and parked the
+          // term out of practice rotation (rehab gates are its way back).
+          parked: z.boolean(),
         }),
       })
     ),
@@ -233,6 +236,11 @@ export const practiceContract = {
           gated: z.boolean(),
           correctIndex: z.number().int().nullable(),
           correctAnswer: z.string().nullable(),
+          // Rehab progress after this answer. Non-null only for gate
+          // exercises on a parked term: the distinct-day count so far, and
+          // whether this answer graduated the term back into rotation.
+          rehabCorrectDays: z.number().int().nullable(),
+          graduated: z.boolean(),
         }),
       })
     ),

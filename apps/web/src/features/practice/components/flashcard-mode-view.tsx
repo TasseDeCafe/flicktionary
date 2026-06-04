@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
+import { toast } from 'sonner'
 import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
@@ -119,6 +120,13 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
             if (!capNoticeShown) setCapNoticeShown(true)
+            return
+          }
+          if (resp.data.parked) {
+            // The term crossed the leech threshold and left every practice
+            // queue — don't redrill it in-session; rehab gates bring it back.
+            const headword = card.headword
+            toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
             return
           }
           if (rating === 'again' && !item.requeuedForAgain) {

@@ -82,6 +82,7 @@ const createDeps = (opts: { claimWins: boolean }) => {
   )
   const applyFsrsResultForPool = vi.fn().mockResolvedValue(undefined)
   const initializeSrsStateIfUnderDailyCap = vi.fn().mockResolvedValue(true)
+  const parkLeech = vi.fn().mockResolvedValue(undefined)
   const claimFinalize = vi.fn().mockResolvedValue(opts.claimWins ? claimedText : null)
   const selectAndMarkReading = vi.fn().mockResolvedValue(nextText)
 
@@ -103,6 +104,7 @@ const createDeps = (opts: { claimWins: boolean }) => {
       initializeSrsStateIfUnderDailyCap,
       initializeSrsStateForPool: vi.fn(),
       applyFsrsResultForPool,
+      parkLeech,
       listReviewTerms: vi.fn().mockResolvedValue([]),
       listDueSummary: vi.fn().mockResolvedValue([]),
     },
@@ -115,7 +117,7 @@ const createDeps = (opts: { claimWins: boolean }) => {
     },
   } as unknown as AdvanceReadingTextDependencies
 
-  return { deps, findByKey, applyFsrsResultForPool, claimFinalize, selectAndMarkReading }
+  return { deps, findByKey, applyFsrsResultForPool, claimFinalize, selectAndMarkReading, parkLeech }
 }
 
 describe('advanceReadingText', () => {
@@ -168,6 +170,42 @@ describe('advanceReadingText', () => {
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
     expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
     expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
+  })
+
+  it("parks a leech when a reading-mode 'again' rating crosses the lapse threshold", async () => {
+    const { deps, parkLeech } = createDeps({ claimWins: true })
+    ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(
+      async ({ headword }: { headword: string }) => {
+        if (headword === laId) {
+          // One lapse away from the threshold (4); the explicit 'again' below
+          // is the fresh lapse that parks it.
+          return makeLookup(laId, {
+            srs_state: 'review',
+            srs_due: '2026-05-12T00:00:00Z',
+            srs_stability: 5,
+            srs_difficulty: 6,
+            srs_last_review: '2026-05-01T00:00:00Z',
+            srs_reps: 8,
+            srs_lapses: 3,
+          })
+        }
+        return makeLookup(lbId)
+      }
+    )
+
+    const result = await advanceReadingText(
+      userId,
+      textId,
+      'passive',
+      'mixed',
+      [{ userLookupId: laId, rating: 'again' }],
+      deps
+    )
+
+    expect(result.ok).toBe(true)
+    expect(parkLeech).toHaveBeenCalledWith({ userLookupId: laId, pool: 'passive' })
+    // The implicit-good term (lb) must not park.
+    expect(parkLeech).toHaveBeenCalledTimes(1)
   })
 
   it('returns text_not_found when the text is missing or not owned', async () => {

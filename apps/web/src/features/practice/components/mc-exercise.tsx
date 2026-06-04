@@ -6,7 +6,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
-import type { ExerciseAnswerData } from './strengthen-types'
+import { RehabProgressNote, type ExerciseAnswerData } from './strengthen-types'
 
 type McPayload = Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_comprehension' }>
 
@@ -90,6 +90,7 @@ export const McExercise = ({
             {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
             {result.correct ? t`Correct!` : t`Not quite.`}
           </div>
+          <RehabProgressNote data={result} />
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {t`Next`}
           </Button>

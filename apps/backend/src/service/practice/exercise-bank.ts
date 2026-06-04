@@ -19,6 +19,7 @@ import {
 import { verifyExercisePass } from '../../transport/third-party/anthropic/passes/verify-exercise-pass'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { MAX_GEN_ATTEMPTS } from './leech-config'
+import { gateTypeForTier, rehabCorrectDaysFor } from './rehab'
 
 export type ExerciseBankDependencies = {
   practiceExercisesRepository: PracticeExercisesRepositoryInterface
@@ -277,10 +278,13 @@ export const getStrengthenExercises = async (params: {
   const entries: StrengthenExerciseEntry[] = []
 
   for (const lookup of parked) {
+    // Tier-typed gate: the exercise type escalates with the term's rehab day
+    // count (recognition ladder for passive, production ladder for active).
     const exercise = await deps.practiceExercisesRepository.selectNextExercise({
       userLookupId: lookup.id,
       pool,
       gateEligible: true,
+      type: gateTypeForTier(pool, rehabCorrectDaysFor(lookup, pool)),
     })
     if (!exercise) void ensureExerciseBank({ lookup, pool, deps })
     entries.push(toEntry(lookup, 'gate', exercise))

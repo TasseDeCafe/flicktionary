@@ -25,6 +25,7 @@ import {
   type ExerciseBankDependencies,
 } from '../../service/practice/exercise-bank'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
+import { applyGateAnswer } from '../../service/practice/rehab'
 import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
 import {
   generateReadingText,
@@ -216,7 +217,12 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
       return {
-        data: { accepted: true as const, introducedNew: result.introducedNew, dailyCapReached: result.dailyCapReached },
+        data: {
+          accepted: true as const,
+          introducedNew: result.introducedNew,
+          dailyCapReached: result.dailyCapReached,
+          parked: result.parked,
+        },
       }
     }),
 
@@ -395,13 +401,34 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         }
       }
 
+      const exercisePool = exercise.pool as 'passive' | 'active'
+      const termLookup = await deps.userLookupsRepository.findByIdForUser(exercise.user_lookup_id, userId)
+
+      // Rehab: a gate exercise answered for a term parked in this pool drives
+      // the graduation ladder (one distinct-day credit per correct answer;
+      // soft re-entry at the threshold). Non-parked terms (bonus track) and
+      // ungated exercises are untouched.
+      let rehabCorrectDays: number | null = null
+      let graduated = false
+      if (consumed.gate_eligible && termLookup) {
+        const outcome = await applyGateAnswer({
+          lookup: termLookup,
+          pool: exercisePool,
+          correct,
+          deps: { userLookupsRepository: deps.userLookupsRepository },
+        })
+        rehabCorrectDays = outcome.rehabCorrectDays
+        graduated = outcome.graduated
+      }
+
       // Replenish the consumed slot in the background so the next attempt for
-      // this term has a fresh exercise waiting.
-      const lookupForRefill = await deps.userLookupsRepository.findByIdForUser(exercise.user_lookup_id, userId)
-      if (lookupForRefill) {
+      // this term has a fresh exercise waiting. Skip on graduation — the term
+      // is back in normal rotation and the remaining bank stays for a
+      // potential future re-park.
+      if (termLookup && !graduated) {
         void ensureExerciseBank({
-          lookup: lookupForRefill,
-          pool: exercise.pool as 'passive' | 'active',
+          lookup: termLookup,
+          pool: exercisePool,
           deps: exerciseBankDeps,
         }).catch((err) => console.error('exercise bank refill threw', { userLookupId: exercise.user_lookup_id, err }))
       }
@@ -413,6 +440,8 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
           gated: consumed.gate_eligible,
           correctIndex,
           correctAnswer,
+          rehabCorrectDays,
+          graduated,
         },
       }
     }),
