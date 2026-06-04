@@ -18,10 +18,46 @@ let sheetCache: CSSStyleSheet | undefined
 
 const overlayCssText = () => overlayCss + '\n' + sonnerCss
 
+// Custom-property registrations (`@property`) are per-DOCUMENT, and Chromium
+// ignores the at-rules when they arrive via a shadow-root stylesheet. Tailwind
+// v4 leans on them hard: utilities like `border` emit
+// `border-style: var(--tw-border-style)` whose `solid` lives in an @property
+// initial-value (its universal fallback block is @supports-gated to browsers
+// WITHOUT @property support, so Chrome never activates it). Unregistered, the
+// var() goes invalid at computed-value time and the whole declaration is
+// dropped — invisible borders, dead animate-in/out transitions. So walk the
+// parsed sheet and re-register every @property imperatively through the
+// document-global JS API.
+const registerPropertyRules = (rules: CSSRuleList): void => {
+  if (typeof CSSPropertyRule === 'undefined') {
+    return
+  }
+  for (const rule of rules) {
+    if (rule instanceof CSSPropertyRule) {
+      try {
+        CSS.registerProperty({
+          name: rule.name,
+          syntax: rule.syntax,
+          inherits: rule.inherits,
+          initialValue: rule.initialValue ?? undefined,
+        })
+      } catch {
+        // Already registered — by another overlay surface, by the host page
+        // using the same Tailwind vars, or by a browser that did honour the
+        // @property rule. Identical definitions, safe to skip.
+      }
+    } else if ('cssRules' in rule) {
+      // @property can sit inside @layer/@supports blocks; recurse.
+      registerPropertyRules((rule as CSSGroupingRule).cssRules)
+    }
+  }
+}
+
 const overlaySheet = (): CSSStyleSheet => {
   if (!sheetCache) {
     sheetCache = new CSSStyleSheet()
     sheetCache.replaceSync(overlayCssText())
+    registerPropertyRules(sheetCache.cssRules)
   }
   return sheetCache
 }
@@ -39,5 +75,10 @@ export const applyOverlayStyles = (shadowRoot: ShadowRoot): void => {
     const style = document.createElement('style')
     style.textContent = overlayCssText()
     shadowRoot.appendChild(style)
+    // The <style> fallback needs the same @property re-registration as the
+    // adopted sheet (registrations are per-document either way).
+    if (style.sheet) {
+      registerPropertyRules(style.sheet.cssRules)
+    }
   }
 }

@@ -459,7 +459,7 @@ msgstr "Un libellé court pour cette session"
 #~ msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
 #~ msgstr "Un élément vidéo doit être synchronisé avec asbplayer avant de pouvoir être extrait. Sélectionnez un élément vidéo pour le synchroniser avec asbplayer."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:191
 msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
@@ -1047,6 +1047,8 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:183
 msgid "Close"
 msgstr "Fermer"
 
@@ -1543,7 +1545,7 @@ msgstr "Entrer le nom du profil"
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:230
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 msgid "Error"
 msgstr "Erreur"
 
@@ -1956,7 +1958,7 @@ msgstr "Flicktionary"
 #~ msgstr "Flicktionary - Perfectionnez votre accent avec l'entraînement vocal par IA"
 
 #. placeholder {0}: state.newVersion
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:92
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:104
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les <0>notes de version</0>."
 
@@ -2625,7 +2627,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Films"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:167
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
 
@@ -2797,7 +2799,7 @@ msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fic
 msgid "No translation available"
 msgstr "Aucune traduction disponible"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:238
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:235
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
@@ -2862,9 +2864,9 @@ msgstr "Numéral"
 #: packages/extension/src/ui/components/Tutorial.tsx:110
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:307
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:373
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:84
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:221
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:243
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:228
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:239
 msgid "OK"
 msgstr "OK"
 
@@ -3626,9 +3628,13 @@ msgstr "Aller au sous-titre précédent"
 #~ msgid "Select a video element to sync it with asbplayer."
 #~ msgstr "Sélectionnez un élément vidéo pour le synchroniser avec asbplayer."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:186
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:196
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
+
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:212
+msgid "Select a video element…"
+msgstr ""
 
 #: packages/extension/src/services/flicktionary/import-text.ts:140
 msgid "Select some text first."
@@ -3712,6 +3718,7 @@ msgstr "Configuration du compte..."
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
 #: packages/extension/src/ui/components/SettingsPage.tsx:78
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -4542,7 +4549,7 @@ msgstr "Vérifiez Votre Email"
 msgid "Verifying..."
 msgstr "Vérification..."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:131
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:124
 msgid "Video Element"
 msgstr "Élément vidéo"
 

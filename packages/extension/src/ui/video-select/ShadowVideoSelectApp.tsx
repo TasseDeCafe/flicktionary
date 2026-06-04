@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import CloseIcon from '@mui/icons-material/Close'
-import SettingsIcon from '@mui/icons-material/Settings'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import Grid from '@mui/material/Grid'
-import IconButton from '@mui/material/IconButton'
-import MenuItem from '@mui/material/MenuItem'
-import TextField from '@mui/material/TextField'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import type { PaletteMode } from '@mui/material/styles'
-import { usePortalContainer } from '@asbplayer-fork/common/components/portal-container-context'
-import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
+import { SettingsIcon, XIcon } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
+import { Button } from '@flicktionary/ui/components/button'
+import { Label } from '@flicktionary/ui/components/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@flicktionary/ui/components/select'
+import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import { UpdateChannel } from '../shadow/model-store'
 
 // One detected <video> on the page, with a cropped screenshot for the picker.
@@ -28,7 +24,7 @@ export interface VideoElement {
 // UpdateStateMessage over the FrameBridge).
 export interface VideoSelectState {
   open: boolean
-  themeType: PaletteMode
+  themeType: 'dark' | 'light'
   videoElements: VideoElement[]
   openedFromMiningCommand: boolean
 }
@@ -47,17 +43,11 @@ export interface ShadowVideoSelectAppProps {
   commands: VideoSelectCommands
 }
 
-// Outer wrapper: provides the MUI/emotion/I18n context. It reads ONLY themeType
-// from the channel — the body's hooks (useLingui, MUI portals) must run INSIDE
-// this provider, so they live in VideoSelectBody below.
-export function ShadowVideoSelectApp({
-  channel,
-  shadowRoot,
-  portalContainer,
-  language,
-  commands,
-}: ShadowVideoSelectAppProps) {
-  const [themeType, setThemeType] = useState<PaletteMode>('dark')
+// Outer wrapper: provides the ui/I18n/portal context. It reads ONLY themeType
+// from the channel — the body's hooks (useLingui) must run INSIDE this
+// provider, so they live in VideoSelectBody below.
+export function ShadowVideoSelectApp({ channel, portalContainer, language, commands }: ShadowVideoSelectAppProps) {
+  const [themeType, setThemeType] = useState<'dark' | 'light'>('dark')
   useEffect(
     () =>
       channel.subscribe((state) => {
@@ -69,14 +59,9 @@ export function ShadowVideoSelectApp({
   )
 
   return (
-    <ShadowMuiProvider
-      shadowRoot={shadowRoot}
-      portalContainer={portalContainer}
-      themeType={themeType}
-      language={language}
-    >
+    <ShadowUiProvider portalContainer={portalContainer} themeType={themeType} language={language}>
       <VideoSelectBody channel={channel} commands={commands} />
-    </ShadowMuiProvider>
+    </ShadowUiProvider>
   )
 }
 
@@ -90,7 +75,9 @@ function VideoSelectBody({
   const { t } = useLingui()
   const [open, setOpen] = useState<boolean>(false)
   const [videoElements, setVideoElements] = useState<VideoElement[]>([])
-  const [selectedVideoElementSrc, setSelectedVideoElementSrc] = useState<string>('')
+  // Index into videoElements as a string ('' = no selection) — see the
+  // SelectItem comment for why values are indices rather than srcs.
+  const [selectedIndex, setSelectedIndex] = useState<string>('')
   const [openedFromMiningCommand, setOpenedFromMiningCommand] = useState<boolean>(false)
 
   // Apply each partial model exactly as VideoSelectUi's bridge listener did
@@ -102,7 +89,7 @@ function VideoSelectBody({
       }
       if (state.videoElements !== undefined) {
         setVideoElements(state.videoElements)
-        setSelectedVideoElementSrc('')
+        setSelectedIndex('')
       }
       if (state.openedFromMiningCommand !== undefined) {
         setOpenedFromMiningCommand(state.openedFromMiningCommand)
@@ -110,10 +97,15 @@ function VideoSelectBody({
     })
   }, [channel])
 
+  const selectedVideoElement = selectedIndex === '' ? undefined : videoElements[Number(selectedIndex)]
+
   const handleConfirm = useCallback(() => {
-    commands.onConfirm(selectedVideoElementSrc)
+    if (selectedVideoElement === undefined) {
+      return
+    }
+    commands.onConfirm(selectedVideoElement.src)
     setOpen(false)
-  }, [commands, selectedVideoElementSrc])
+  }, [commands, selectedVideoElement])
 
   const handleOpenSettings = useCallback(() => commands.onOpenSettings(), [commands])
   const handleCancel = useCallback(() => commands.onCancel(), [commands])
@@ -122,9 +114,10 @@ function VideoSelectBody({
     <VideoSelectContent
       open={open}
       videoElements={videoElements}
-      selectedVideoElementSrc={selectedVideoElementSrc}
+      selectedIndex={selectedIndex}
+      selectedVideoElement={selectedVideoElement}
       openedFromMiningCommand={openedFromMiningCommand}
-      onSelect={setSelectedVideoElementSrc}
+      onSelectIndex={setSelectedIndex}
       onConfirm={handleConfirm}
       onOpenSettings={handleOpenSettings}
       onCancel={handleCancel}
@@ -136,9 +129,10 @@ function VideoSelectBody({
 interface ContentProps {
   open: boolean
   videoElements: VideoElement[]
-  selectedVideoElementSrc: string
+  selectedIndex: string
+  selectedVideoElement: VideoElement | undefined
   openedFromMiningCommand: boolean
-  onSelect: (src: string) => void
+  onSelectIndex: (index: string) => void
   onConfirm: () => void
   onOpenSettings: () => void
   onCancel: () => void
@@ -148,103 +142,106 @@ interface ContentProps {
 function VideoSelectContent({
   open,
   videoElements,
-  selectedVideoElementSrc,
+  selectedIndex,
+  selectedVideoElement,
   openedFromMiningCommand,
-  onSelect,
+  onSelectIndex,
   onConfirm,
   onOpenSettings,
   onCancel,
   label,
 }: ContentProps) {
-  const portalContainer = usePortalContainer()
+  const hasVideos = videoElements.length > 0
 
   return (
-    <Dialog open={open} container={portalContainer} fullWidth maxWidth='sm'>
-      {videoElements.length > 0 && (
-        <>
-          <Toolbar>
-            <Typography variant='h6' style={{ flexGrow: 1 }}>
-              <Trans>Multiple Video Elements Detected</Trans>
-            </Typography>
-            <IconButton edge='end' onClick={() => onOpenSettings()}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onCancel()
+        }
+      }}
+    >
+      {/* The header carries its own settings + close icon buttons (the MUI
+          Toolbar layout), so the built-in close button is disabled. */}
+      <DialogContent showCloseButton={false}>
+        <div className='flex items-center gap-1'>
+          <DialogTitle className='flex-1'>
+            {hasVideos ? <Trans>Multiple Video Elements Detected</Trans> : <Trans>Error</Trans>}
+          </DialogTitle>
+          {hasVideos && (
+            <Button variant='ghost' size='icon' onClick={onOpenSettings}>
               <SettingsIcon />
-            </IconButton>
-            <IconButton edge='end' onClick={() => onCancel()}>
-              <CloseIcon />
-            </IconButton>
-          </Toolbar>
-          <DialogContent>
-            {openedFromMiningCommand ? (
-              <DialogContentText>
+              <span className='sr-only'>
+                <Trans>Settings</Trans>
+              </span>
+            </Button>
+          )}
+          <Button variant='ghost' size='icon' onClick={onCancel}>
+            <XIcon />
+            <span className='sr-only'>
+              <Trans>Close</Trans>
+            </span>
+          </Button>
+        </div>
+        {hasVideos ? (
+          <>
+            <DialogDescription>
+              {openedFromMiningCommand ? (
                 <Trans>
                   A video element must be synced with Flicktionary before it can be mined. Select a video element to
                   sync it with Flicktionary.
                 </Trans>
-              </DialogContentText>
-            ) : (
-              <DialogContentText>
+              ) : (
                 <Trans>Select a video element to sync it with Flicktionary.</Trans>
-              </DialogContentText>
-            )}
-            <Grid container direction='column' spacing={2}>
-              <Grid item style={{ maxWidth: '100%' }}>
-                <TextField
-                  select
-                  fullWidth
-                  color='primary'
-                  variant='filled'
-                  label={label}
-                  SelectProps={{ MenuProps: { container: portalContainer } }}
-                  value={selectedVideoElementSrc}
-                  onChange={(e) => onSelect(e.target.value)}
-                >
-                  {videoElements.map((v) => (
-                    <MenuItem value={v.src} key={v.src}>
-                      <img style={{ maxWidth: 20, marginRight: 12 }} src={v.imageDataUrl} />
-                      {v.src}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item style={{ maxWidth: '100%' }}>
-                {selectedVideoElementSrc !== '' && (
-                  <img
-                    style={{ width: '100%' }}
-                    src={videoElements.find((v) => v.src === selectedVideoElementSrc)!.imageDataUrl}
-                  />
-                )}
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={onConfirm}>
-              <Trans>OK</Trans>
-            </Button>
-          </DialogActions>
-        </>
-      )}
-      {videoElements.length === 0 && (
-        <>
-          <Toolbar>
-            <Typography variant='h6' style={{ flexGrow: 1 }}>
-              <Trans>Error</Trans>
-            </Typography>
-            <IconButton edge='end' onClick={() => onCancel()}>
-              <CloseIcon />
-            </IconButton>
-          </Toolbar>
-          <DialogContent>
-            <DialogContentText>
+              )}
+            </DialogDescription>
+            {/* min-w-0: the select trigger renders a whitespace-nowrap blob:
+                URL; without it this grid item's min-content width blows the
+                track past the dialog's max-width and every row bleeds out of
+                the painted box. */}
+            <div className='flex min-w-0 flex-col gap-4'>
+              <div className='flex flex-col gap-2'>
+                <Label>{label}</Label>
+                {/* Items are keyed by INDEX, not src: a Radix SelectItem throws
+                    on an empty-string value, and pages with
+                    allowVideoElementsWithBlankSrc legitimately produce src ''.
+                    (The empty string doubles as the no-selection sentinel.) */}
+                <Select value={selectedIndex} onValueChange={onSelectIndex}>
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder={<Trans>Select a video element…</Trans>} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {videoElements.map((v, i) => (
+                      <SelectItem value={String(i)} key={i}>
+                        <img className='max-w-5 shrink-0' src={v.imageDataUrl} alt='' />
+                        <span className='truncate'>{v.src}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedVideoElement && <img className='w-full rounded-md' alt='' src={selectedVideoElement.imageDataUrl} />}
+            </div>
+            <DialogFooter>
+              <Button variant='ghost' onClick={onConfirm} disabled={selectedVideoElement === undefined}>
+                <Trans>OK</Trans>
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogDescription>
               <Trans>No videos detected.</Trans>
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={onCancel}>
-              <Trans>OK</Trans>
-            </Button>
-          </DialogActions>
-        </>
-      )}
+            </DialogDescription>
+            <DialogFooter>
+              <Button variant='ghost' onClick={onCancel}>
+                <Trans>OK</Trans>
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
     </Dialog>
   )
 }
