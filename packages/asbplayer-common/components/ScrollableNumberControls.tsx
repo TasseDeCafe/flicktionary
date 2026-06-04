@@ -1,4 +1,3 @@
-import { makeStyles } from 'tss-react/mui'
 import PlaybackRateInput from './PlaybackRateInput'
 import SubtitleOffsetInput from './SubtitleOffsetInput'
 import TimeDisplay from './TimeDisplay'
@@ -8,28 +7,11 @@ import { ControlType } from '..'
 const containerHeight = 40
 const scrollThreshold = containerHeight / 2 + 1
 
-const useStyles = makeStyles()(() => {
-  return {
-    container: {
-      height: containerHeight,
-      overflowY: 'scroll',
-      scrollSnapType: 'y mandatory',
-      scrollbarWidth: 'none',
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-      textAlign: 'center',
-    },
-    child: {
-      scrollbarWidth: 'none',
-      scrollSnapAlign: 'center',
-      '&::-webkit-scrollbar': {
-        display: 'none',
-      },
-      scrollSnapStop: 'always',
-    },
-  }
-})
+// h-10 must stay in sync with containerHeight (40px — --spacing is px-pinned
+// to 4px inside the overlay shadow sheet, so h-10 is exactly 40px there).
+const containerClassName =
+  'h-10 snap-y snap-mandatory overflow-y-scroll text-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+const childClassName = 'snap-center [scroll-snap-stop:always] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 
 interface Props {
   offset: number
@@ -62,7 +44,6 @@ const ScrollableNumberControls = ({
   initialControlType,
   onScrollTo,
 }: Props) => {
-  const { classes } = useStyles()
   const [controlType, setControlType] = useState<ControlType>(ControlType.timeDisplay)
   const lastScrollTop = useRef<number>(0)
   const [initialScroll, setInitialScroll] = useState<InitialScrollState>(InitialScrollState.notStarted)
@@ -183,18 +164,18 @@ const ScrollableNumberControls = ({
   )
 
   return (
-    <div ref={handleDivRef} onScroll={handleScroll} className={classes.container}>
+    <div ref={handleDivRef} onScroll={handleScroll} className={containerClassName}>
       <TimeDisplay
         currentMilliseconds={currentMilliseconds}
         totalMilliseconds={totalMilliseconds}
-        className={classes.child}
+        className={childClassName}
       />
-      <SubtitleOffsetInput inputRef={offsetInputRef} offset={offset} onOffset={onOffset} className={classes.child} />
+      <SubtitleOffsetInput inputRef={offsetInputRef} offset={offset} onOffset={onOffset} className={childClassName} />
       <PlaybackRateInput
         inputRef={playbackRateInputRef}
         playbackRate={playbackRate}
         onPlaybackRate={onPlaybackRate}
-        className={classes.child}
+        className={childClassName}
       />
     </div>
   )

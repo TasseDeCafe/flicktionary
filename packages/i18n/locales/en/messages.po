@@ -805,7 +805,7 @@ msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does no
 msgid "Auto-load detected subtitles"
 msgstr "Auto-load detected subtitles"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:86
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:66
 msgid "Auto-pause"
 msgstr "Auto-pause"
 
@@ -1068,7 +1068,7 @@ msgstr "Comma-separated list of strings"
 msgid "Common"
 msgstr "Common"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:72
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:54
 msgid "Condensed"
 msgstr "Condensed"
 
@@ -1228,7 +1228,7 @@ msgstr "Could not set up your account. Please try restarting the app."
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:305
+#: packages/asbplayer-common/components/VideoOverlay.tsx:269
 msgid "Current Timestamp"
 msgstr "Current Timestamp"
 
@@ -1283,12 +1283,12 @@ msgstr "Dark"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:312
+#: packages/asbplayer-common/components/VideoOverlay.tsx:276
 msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
-#: packages/asbplayer-common/components/VideoOverlay.tsx:317
+#: packages/asbplayer-common/components/VideoOverlay.tsx:281
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
@@ -1921,7 +1921,7 @@ msgstr "Fast forward playback: On"
 #~ msgid "Fast gloss when you select text mid-watch"
 #~ msgstr "Fast gloss when you select text mid-watch"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:79
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:60
 msgid "Fast-forward"
 msgstr "Fast-forward"
 
@@ -2271,12 +2271,12 @@ msgstr "Importing…"
 msgid "Inanimate"
 msgstr "Inanimate"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:310
+#: packages/asbplayer-common/components/VideoOverlay.tsx:274
 msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
-#: packages/asbplayer-common/components/VideoOverlay.tsx:319
+#: packages/asbplayer-common/components/VideoOverlay.tsx:283
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
 
@@ -2454,7 +2454,7 @@ msgstr "LLM-suggested terms"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:363
+#: packages/asbplayer-common/components/VideoOverlay.tsx:320
 #: packages/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
@@ -2823,7 +2823,7 @@ msgstr "No vocabulary yet"
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:65
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:48
 msgid "Normal"
 msgstr "Normal"
 
@@ -3077,11 +3077,11 @@ msgstr "Pick your native language"
 msgid "Play/pause"
 msgstr "Play/pause"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:390
+#: packages/asbplayer-common/components/VideoOverlay.tsx:363
 msgid "Playback Mode"
 msgstr "Playback Mode"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:318
+#: packages/asbplayer-common/components/VideoOverlay.tsx:282
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
@@ -3425,7 +3425,7 @@ msgstr "Removing…"
 msgid "Render"
 msgstr "Render"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:93
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:69
 msgid "Repeat"
 msgstr "Repeat"
 
@@ -3590,12 +3590,12 @@ msgid "Searching…"
 msgstr "Searching…"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
-#: packages/asbplayer-common/components/VideoOverlay.tsx:304
+#: packages/asbplayer-common/components/VideoOverlay.tsx:268
 msgid "Seek backward"
 msgstr "Seek backward"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
-#: packages/asbplayer-common/components/VideoOverlay.tsx:306
+#: packages/asbplayer-common/components/VideoOverlay.tsx:270
 msgid "Seek forward"
 msgstr "Seek forward"
 
@@ -3608,12 +3608,12 @@ msgid "Seek to beginning of current/previous subtitle"
 msgstr "Seek to beginning of current/previous subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
-#: packages/asbplayer-common/components/VideoOverlay.tsx:306
+#: packages/asbplayer-common/components/VideoOverlay.tsx:270
 msgid "Seek to next subtitle"
 msgstr "Seek to next subtitle"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
-#: packages/asbplayer-common/components/VideoOverlay.tsx:304
+#: packages/asbplayer-common/components/VideoOverlay.tsx:268
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
@@ -3995,7 +3995,7 @@ msgstr "Subtitle Generation"
 msgid "Subtitle HTML"
 msgstr "Subtitle HTML"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:311
+#: packages/asbplayer-common/components/VideoOverlay.tsx:275
 msgid "Subtitle Offset"
 msgstr "Subtitle Offset"
 
@@ -4316,7 +4316,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/VideoOverlay.tsx:374
+#: packages/asbplayer-common/components/VideoOverlay.tsx:334
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
 

@@ -1,12 +1,16 @@
-import IconButton, { IconButtonProps } from '@mui/material/IconButton'
-import React, { useEffect, useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
-interface Props extends IconButtonProps {
+interface Props extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   onHold?: (repetition: number) => void
   onClick: () => void
   children: React.ReactNode
 }
 
+// Press-and-hold button: a press shorter than one 250ms repetition is a click;
+// anything longer fires `onHold` every 250ms until release. Pointer capture
+// keeps the release event on the button even when the pointer wanders off it
+// mid-hold (the old mouseup-on-button version kept repeating forever in that
+// case), and pointercancel/blur stop the hold too.
 const HoldableIconButton = ({ onHold, onClick, children, ...rest }: Props) => {
   const [startTime, setStartTime] = useState<number>()
 
@@ -19,7 +23,12 @@ const HoldableIconButton = ({ onHold, onClick, children, ...rest }: Props) => {
     return holdTime / 250
   }, [startTime])
 
-  const handleMouseUp = () => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setStartTime(Date.now())
+  }
+
+  const handlePointerUp = () => {
     const reps = repetitions()
 
     if (reps !== undefined && reps < 1) {
@@ -29,8 +38,8 @@ const HoldableIconButton = ({ onHold, onClick, children, ...rest }: Props) => {
     setStartTime(undefined)
   }
 
-  const handleMouseDown = () => {
-    setStartTime(Date.now())
+  const handlePointerCancel = () => {
+    setStartTime(undefined)
   }
 
   useEffect(() => {
@@ -47,10 +56,18 @@ const HoldableIconButton = ({ onHold, onClick, children, ...rest }: Props) => {
     }, 250)
     return () => clearInterval(interval)
   }, [startTime, onHold, repetitions])
+
   return (
-    <IconButton onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} onClick={() => {}} {...rest}>
+    <button
+      type='button'
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onBlur={handlePointerCancel}
+      {...rest}
+    >
       {children}
-    </IconButton>
+    </button>
   )
 }
 

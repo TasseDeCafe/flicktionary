@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { I18nProvider } from '@lingui/react'
 import { PortalContainerContext } from '@flicktionary/ui/components/portal'
+import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { i18n, setupLingui } from '../lingui'
 
@@ -47,7 +48,9 @@ export function ShadowUiProvider({ portalContainer, themeType, language, childre
   return (
     <I18nProvider i18n={i18n}>
       <PortalContainerContext.Provider value={portalContainer}>
-        <div className={cn(baseClasses, dark && 'dark')}>{children}</div>
+        <TooltipProvider>
+          <div className={cn(baseClasses, dark && 'dark')}>{children}</div>
+        </TooltipProvider>
       </PortalContainerContext.Provider>
     </I18nProvider>
   )

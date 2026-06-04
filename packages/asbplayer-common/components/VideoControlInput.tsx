@@ -1,21 +1,7 @@
-import Input, { InputProps } from '@mui/material/Input'
 import React, { MutableRefObject, useCallback, useEffect, useState } from 'react'
-import { makeStyles } from 'tss-react/mui'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
-const useStyles = makeStyles()(() => ({
-  input: {
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    fontSize: 20,
-    width: 100,
-    color: '#fff',
-    pointerEvents: 'auto',
-  },
-}))
-
-interface Props extends InputProps {
+interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   inputRef: MutableRefObject<HTMLInputElement | undefined>
   numberValue: number
   defaultNumberValue: number
@@ -26,22 +12,23 @@ interface Props extends InputProps {
   disableKeyEvents?: boolean
 }
 
-export default React.forwardRef(function VideoControlInput(
-  {
-    inputRef,
-    numberValue,
-    defaultNumberValue,
-    onNumberValue,
-    valueToPrettyString,
-    stringToValue,
-    rejectValue,
-    disableKeyEvents,
-    className,
-    ...rest
-  }: Props,
-  ref
-) {
-  const { classes } = useStyles()
+// Imperative number input for the controls overlay (offset / playback rate):
+// the value is written straight into the input element (not React state) so the
+// controller's model pushes don't fight an in-progress edit, and the input
+// blurs after every apply. Width tracks content in `ch` so the overlay bar
+// stays compact.
+export default function VideoControlInput({
+  inputRef,
+  numberValue,
+  defaultNumberValue,
+  onNumberValue,
+  valueToPrettyString,
+  stringToValue,
+  rejectValue,
+  disableKeyEvents,
+  className,
+  ...rest
+}: Props) {
   const [inputWidth, setInputWidth] = useState<number>(5)
   const handleNumberInputClicked = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
     const inputElement = e.target as HTMLInputElement
@@ -123,21 +110,22 @@ export default React.forwardRef(function VideoControlInput(
     }
   }, [tryApplyValue, disableKeyEvents, inputRef])
 
-  const actualClassName = className ? `${className} ${classes.input}` : classes.input
-
   return (
-    <Input
+    <input
       style={{
         width: `${inputWidth}ch`,
       }}
-      ref={ref}
-      inputRef={inputRef}
-      disableUnderline={true}
-      className={actualClassName}
+      ref={(el) => {
+        inputRef.current = el ?? undefined
+      }}
+      className={cn(
+        'pointer-events-auto h-full border-none bg-transparent text-center text-[20px] text-white outline-none placeholder:text-white/70',
+        className
+      )}
       onClick={handleNumberInputClicked}
       onBlur={handleNumberInputDeselected}
       onChange={(e) => setInputWidth(Math.max(5, e.target.value.length))}
       {...rest}
     />
   )
-})
+}

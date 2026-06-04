@@ -1,7 +1,9 @@
 {
   "extends": "@flicktionary/typescript-config/react-app.json",
   "compilerOptions": {
-    "rootDir": ".",
+    // No rootDir: this package never emits (react-app.json sets noEmit) and it
+    // now imports @flicktionary/ui|core sources from sibling workspaces, which
+    // a same-dir rootDir would reject (TS6059).
     "baseUrl": ".",
     // Match the lib the extension compiles this package with (the fork uses
     // newer APIs like String.replaceAll); the shared preset only ships ES2020.
@@ -10,7 +12,9 @@
     "noUnusedParameters": false,
     "paths": {
       "@asbplayer-fork/common": ["./index.ts"],
-      "@asbplayer-fork/common/*": ["./*"]
+      "@asbplayer-fork/common/*": ["./*"],
+      "@flicktionary/core/*": ["../core/src/*"],
+      "@flicktionary/ui/*": ["../ui/src/*"]
     }
   },
   "include": ["."],

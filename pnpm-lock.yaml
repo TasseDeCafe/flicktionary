@@ -1483,6 +1483,12 @@ importers:
       '@flatten-js/interval-tree':
         specifier: 'catalog:'
         version: 1.0.19
+      '@flicktionary/core':
+        specifier: workspace:*
+        version: link:../core
+      '@flicktionary/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@lingui/react':
         specifier: 'catalog:'
         version: 6.0.0(babel-plugin-macros@3.1.0)(react@19.2.6)
@@ -1513,6 +1519,9 @@ importers:
       jsonschema:
         specifier: 'catalog:'
         version: 1.5.0
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.7.0(react@19.2.6)
       react:
         specifier: 'catalog:'
         version: 19.2.6
@@ -1843,6 +1852,9 @@ importers:
       '@radix-ui/react-switch':
         specifier: 'catalog:'
         version: 1.2.6(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@radix-ui/react-tooltip':
+        specifier: 'catalog:'
+        version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1

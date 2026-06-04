@@ -19,6 +19,7 @@
     "@radix-ui/react-select": "catalog:",
     "@radix-ui/react-slot": "catalog:",
     "@radix-ui/react-switch": "catalog:",
+    "@radix-ui/react-tooltip": "catalog:",
     "class-variance-authority": "catalog:",
     "lucide-react": "catalog:",
     "react-hook-form": "catalog:",
