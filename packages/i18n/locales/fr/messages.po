@@ -654,7 +654,7 @@ msgstr "Vocabulaire actif"
 msgid "Add a word"
 msgstr "Ajouter un mot"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:44
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:56
 msgid "Add Custom CSS"
 msgstr "Ajouter un CSS personnalisé"
 
@@ -682,11 +682,11 @@ msgstr "Ajouter au vocabulaire actif"
 msgid "Add to passive vocabulary"
 msgstr "Ajouter au vocabulaire passif"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:124
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:127
 msgid "Additional hosts"
 msgstr "Additional hosts"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:232
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:240
 msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
 "try using a different font."
 msgstr "Ajoute un contour autour du texte des sous-titres. Si cela entraîne un "
@@ -772,7 +772,7 @@ msgstr "Terminé !"
 #~ msgid "All highlights have been processed."
 #~ msgstr "Tous les surlignages ont été traités."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:165
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:168
 msgid "Allow auto-loading of detected subtitles"
 msgstr "Allow auto-loading of detected subtitles"
 
@@ -780,7 +780,7 @@ msgstr "Allow auto-loading of detected subtitles"
 msgid "Allow subtitle file drag-and-drop"
 msgstr "Autoriser le glisser-déposer de fichiers de sous-titres"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:158
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:161
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
@@ -1036,7 +1036,7 @@ msgstr "Facturé annuellement à {yearlyPriceTotal} €"
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Facturé annuellement : {yearlyPriceFormatted} €"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:378
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:382
 msgid "Bottom"
 msgstr "Bas"
 
@@ -1207,7 +1207,7 @@ msgstr "Cliquez sur l'icône 🧩 dans la barre d'outils, puis sélectionnez "
 msgid "Click the link in the email to continue."
 msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:308
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:312
 msgid "Click to unlock font menu"
 msgstr "Cliquez pour déverrouiller le menu de police"
 
@@ -1399,7 +1399,7 @@ msgstr "Impossible de configurer votre compte. Veuillez redémarrer "
 #~ msgstr "Création…"
 
 #. placeholder {0}: customStyle.key
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:77
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:89
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
@@ -2358,7 +2358,7 @@ msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Masquer ce terme de la Pratique et du Vocabulaire. Vous pourrez le "
 "restaurer plus tard."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:364
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:368
 msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
 "mouse hover."
 msgstr "Masque les pistes de sous-titres sélectionnées en les floutant. Le flou "
@@ -2404,7 +2404,7 @@ msgstr "Historique · {languageName}"
 msgid "Home"
 msgstr "Accueil"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:122
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:125
 msgid "Host regex"
 msgstr "Host regex"
 
@@ -2618,7 +2618,7 @@ msgstr "Dernière lecture"
 msgid "Later"
 msgstr "Plus tard"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:370
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:374
 msgid "Layout"
 msgstr "Layout"
 
@@ -3106,7 +3106,7 @@ msgstr "Numéral"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:172
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:175
 #: packages/extension/src/ui/components/Tutorial.tsx:116
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
@@ -3268,11 +3268,11 @@ msgstr "Collez un article, un commentaire ou une publication"
 msgid "Paste your text"
 msgstr "Collez votre texte"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:143
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:146
 msgid "Path hash regex for subtitle detection"
 msgstr "Path hash regex for subtitle detection"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:138
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:141
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
@@ -3291,6 +3291,10 @@ msgstr "Expression"
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:70
 #~ msgid "Pick"
 #~ msgstr "Choisir"
+
+#: packages/asbplayer-common/components/SettingsColorField.tsx:42
+msgid "Pick a color"
+msgstr "Choisir une couleur"
 
 #: apps/web/src/components/language-select-field.tsx:34
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:188
@@ -3717,7 +3721,7 @@ msgstr "Répéter la lecture : Activé"
 msgid "Replace file ({fileName})"
 msgstr "Remplacer le fichier ({fileName})"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:171
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:183
 msgid "Reset"
 msgstr "Réinitialiser"
 
@@ -3750,7 +3754,7 @@ msgstr "Réessayer"
 msgid "Return to Login"
 msgstr "Retour à la connexion"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:118
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:121
 msgid "Revert"
 msgstr "Revert"
 
@@ -3845,7 +3849,7 @@ msgstr "Rechercher des films…"
 msgid "Search OpenSubtitles"
 msgstr "Rechercher sur OpenSubtitles"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:149
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:152
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
@@ -4210,11 +4214,11 @@ msgstr "Streaming vidéo"
 #~ msgid "Style Key"
 #~ msgstr "Clé de style"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:78
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:90
 msgid "Style Value"
 msgstr "Valeur du style"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:182
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:194
 msgid "Styling"
 msgstr "Styling"
 
@@ -4241,7 +4245,7 @@ msgstr "Abonnement Requis"
 msgid "Subscription Successful!"
 msgstr "Abonnement réussi !"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:375
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:379
 msgid "Subtitle Alignment"
 msgstr "Alignement des sous-titres"
 
@@ -4249,28 +4253,28 @@ msgstr "Alignement des sous-titres"
 msgid "Subtitle Appearance"
 msgstr "Apparence des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:261
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:266
 msgid "Subtitle Background Color"
 msgstr "Couleur de fond des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:270
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:274
 msgid "Subtitle Background Opacity"
 msgstr "Opacité de l'arrière-plan des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:357
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:361
 msgid "Subtitle blur"
 msgstr "Flou des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:187
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:198
 msgid "Subtitle Color"
 msgstr "Couleur des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:283
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:291
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:287
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:295
 msgid "Subtitle Font Family"
 msgstr "Famille de police des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:206
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:216
 msgid "Subtitle Font Thickness"
 msgstr "Épaisseur de la police des sous-titres"
 
@@ -4286,19 +4290,19 @@ msgstr "Sous-titres HTML"
 msgid "Subtitle Offset"
 msgstr "Décalage des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:222
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:231
 msgid "Subtitle Outline Color"
 msgstr "Couleur du contour des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:231
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:239
 msgid "Subtitle Outline Thickness"
 msgstr "Épaisseur du contour des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:389
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:393
 msgid "Subtitle position offset from bottom"
 msgstr "Décalage de la position des sous-titres depuis le bas"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:397
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:401
 msgid "Subtitle position offset from top"
 msgstr "Décalage de la position des sous-titres depuis le haut"
 
@@ -4310,15 +4314,15 @@ msgstr "Filtre regex des sous-titres"
 msgid "Subtitle regex filter text replacement"
 msgstr "Remplacement de texte pour le filtre regex des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:242
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:249
 msgid "Subtitle Shadow Color"
 msgstr "Couleur de l'ombre des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:251
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:257
 msgid "Subtitle Shadow Thickness"
 msgstr "Épaisseur des ombres des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:196
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:206
 msgid "Subtitle Size"
 msgstr "Taille des sous-titres"
 
@@ -4345,7 +4349,7 @@ msgid "Subtitles must be loaded before you can start mining."
 msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer "
 "l’extraction."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:405
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:409
 msgid "Subtitles Width"
 msgstr "Largeur des sous-titres"
 
@@ -4537,7 +4541,7 @@ msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. 
 msgid "There was an error. Please contact support."
 msgstr "Il y a eu une erreur. Veuillez contacter le support."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:103
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:106
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
 
@@ -4685,7 +4689,7 @@ msgid "Too many requests. Please use the app in only one tab and device at a "
 msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet "
 "et appareil à la fois et réessayer."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:379
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:383
 msgid "Top"
 msgstr "Haut"
 

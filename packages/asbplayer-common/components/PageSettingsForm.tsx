@@ -95,7 +95,10 @@ const DefaultPageSettingsForm = ({
     <Dialog open={open} onOpenChange={(nowOpen) => !nowOpen && onClose()}>
       <DialogContent className='flex max-h-[calc(100dvh-64px)] flex-col' aria-describedby={undefined}>
         <DialogTitle>{pageMetadata[pageKey].title}</DialogTitle>
-        <div className='flex min-h-0 flex-col gap-2 overflow-y-auto'>
+        {/* -mx-2/px-2 gives SettingsSwitchRow's -mx-2 hover wash room inside
+            the scrollport — without it the rows overflow horizontally and
+            force a scrollbar. */}
+        <div className='-mx-2 flex min-h-0 flex-col gap-2 overflow-y-auto px-2'>
           {hasModifications && (
             <div className='flex items-center gap-2 rounded-md border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm'>
               <TriangleAlert className='size-4 shrink-0 text-yellow-500' />

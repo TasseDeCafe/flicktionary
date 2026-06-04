@@ -16,14 +16,26 @@ import { isNumeric } from '@asbplayer-fork/common/util'
 import { CustomStyle } from '@asbplayer-fork/common/settings'
 import SubtitleAppearanceTrackSelector from './SubtitleAppearanceTrackSelector'
 import SubtitlePreview from './SubtitlePreview'
+import SettingsColorField from './SettingsColorField'
 import SettingsField from './SettingsField'
 import SettingsSelectField from './SettingsSelectField'
 import SettingsSwitchRow from './SettingsSwitchRow'
 import SettingsRadioGroupField from './SettingsRadioGroupField'
 import SettingsSection from './SettingsSection'
 
-// Filter out keys that look like '0', '1', ... as those are invalid
-const cssStyles = Object.keys(document.body.style).filter((s) => !isNumeric(s))
+// Build the list of camelCase CSS property names. Chrome exposes them as own
+// enumerable props of the style declaration (Object.keys would do), but
+// Firefox defines them on the prototype where only for..in finds them — so
+// walk the chain and keep string-valued keys, skipping the indexed entries
+// ('0', '1', ... for set properties) and non-property members (methods,
+// length, cssText).
+const bodyStyle = document.body.style as unknown as Record<string, unknown>
+const cssStyles: string[] = []
+for (const key in bodyStyle) {
+  if (!isNumeric(key) && key !== 'cssText' && typeof bodyStyle[key] === 'string') {
+    cssStyles.push(key)
+  }
+}
 
 // Compact icon button for input endAdornments (28px fits inside the h-9 input).
 const adornmentButtonClasses = 'size-7 md:size-7'
@@ -182,12 +194,10 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         <Trans>Styling</Trans>
       </SettingsSection>
       {subtitleColor !== undefined && (
-        <SettingsField
-          type='color'
+        <SettingsColorField
           label={t`Subtitle Color`}
           value={subtitleColor}
-          className='cursor-pointer p-1'
-          onChange={(event) => handleSubtitleTextSettingChanged('subtitleColor', event.target.value)}
+          onValueChange={(value) => handleSubtitleTextSettingChanged('subtitleColor', value)}
         />
       )}
       {subtitleSize !== undefined && (
@@ -217,12 +227,10 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         </div>
       )}
       {subtitleOutlineColor !== undefined && (
-        <SettingsField
-          type='color'
+        <SettingsColorField
           label={t`Subtitle Outline Color`}
           value={subtitleOutlineColor}
-          className='cursor-pointer p-1'
-          onChange={(event) => handleSubtitleTextSettingChanged('subtitleOutlineColor', event.target.value)}
+          onValueChange={(value) => handleSubtitleTextSettingChanged('subtitleOutlineColor', value)}
         />
       )}
       {subtitleOutlineThickness !== undefined && (
@@ -237,12 +245,10 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         />
       )}
       {subtitleShadowColor !== undefined && (
-        <SettingsField
-          type='color'
+        <SettingsColorField
           label={t`Subtitle Shadow Color`}
           value={subtitleShadowColor}
-          className='cursor-pointer p-1'
-          onChange={(event) => handleSubtitleTextSettingChanged('subtitleShadowColor', event.target.value)}
+          onValueChange={(value) => handleSubtitleTextSettingChanged('subtitleShadowColor', value)}
         />
       )}
       {subtitleShadowThickness !== undefined && (
@@ -256,12 +262,10 @@ const SubtitleAppearanceSettingsTab: React.FC<Props> = ({
         />
       )}
       {subtitleBackgroundColor !== undefined && (
-        <SettingsField
-          type='color'
+        <SettingsColorField
           label={t`Subtitle Background Color`}
           value={subtitleBackgroundColor}
-          className='cursor-pointer p-1'
-          onChange={(event) => handleSubtitleTextSettingChanged('subtitleBackgroundColor', event.target.value)}
+          onValueChange={(value) => handleSubtitleTextSettingChanged('subtitleBackgroundColor', value)}
         />
       )}
       {subtitleBackgroundOpacity !== undefined && (

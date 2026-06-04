@@ -18,6 +18,7 @@
     "hotkeys-js": "catalog:",
     "jsonschema": "catalog:",
     "react": "catalog:",
+    "react-colorful": "catalog:",
     "react-device-detect": "catalog:",
     "react-dom": "catalog:",
     "sanitize-filename": "catalog:",

@@ -7,7 +7,7 @@ import { StudySessionSchema, TextSegmentSchema } from './common/flicktionary-sch
 // Most user-visible subtitles fit well under both limits; outliers (very long
 // lectures, dense karaoke captions) route through the existing text-tracks
 // upload pipeline.
-const EXTENSION_MAX_SEGMENTS = 2000
+const EXTENSION_MAX_SEGMENTS = 10000
 
 const ExtensionSubtitleSegmentSchema = z.object({
   index: z.number().int().nonnegative(),
