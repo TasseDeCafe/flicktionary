@@ -96,6 +96,15 @@ export default defineConfig({
   webExt: {
     disabled: true,
   },
+  // AMO requires `browser_specific_settings.gecko.data_collection_permissions`
+  // for NEW extensions (Nov 2025+) — which categories Flicktionary must declare
+  // (the word-sync API sees subtitle text; auth goes through Supabase) is a
+  // product/privacy decision to make at Firefox submission time, not a build
+  // concern, so silence the dev-time nag until then. See
+  // https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/
+  suppressWarnings: {
+    firefoxDataCollection: true,
+  },
   vite: () => ({
     resolve: {
       alias: {

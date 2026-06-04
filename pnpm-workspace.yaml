@@ -275,3 +275,6 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - astro@6.4.4
+
+patchedDependencies:
+  '@radix-ui/react-dialog': patches/@radix-ui__react-dialog.patch
