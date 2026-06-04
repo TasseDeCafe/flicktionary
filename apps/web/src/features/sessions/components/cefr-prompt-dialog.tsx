@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Button } from '@flicktionary/ui/components/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@flicktionary/ui/components/dialog'
+import { Label } from '@flicktionary/ui/components/label'
+import { RadioGroup, RadioGroupItem } from '@flicktionary/ui/components/radio-group'
 
 type CefrLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 

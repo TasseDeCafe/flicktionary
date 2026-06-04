@@ -9,10 +9,10 @@ import {
   FloatingSheetHeader,
   FloatingSheetTitle,
   type FloatingSheetAnchor,
-} from '@/components/ui/floating-sheet'
-import { Button } from '@/components/ui/button'
-import { OverlayActionRow } from '@/components/ui/overlay-action-row'
-import { RateButtons, type RateValue } from '@/components/ui/rate-buttons'
+} from '@flicktionary/ui/components/floating-sheet'
+import { Button } from '@flicktionary/ui/components/button'
+import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
+import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar, LearningMode } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'

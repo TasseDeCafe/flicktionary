@@ -11,7 +11,7 @@ import {
   type FieldValues,
 } from 'react-hook-form'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Label } from '@/components/ui/label'
+import { Label } from './label'
 
 const Form = FormProvider
 

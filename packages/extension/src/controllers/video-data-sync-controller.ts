@@ -550,6 +550,9 @@ export default class VideoDataSyncController {
     const commands = this._shadowCommands()
     this._shadowHandle = mountModalHost({
       hostAttribute: VIDEO_DATA_SYNC_HOST_ATTR,
+      // Radix/Tailwind surface: adopt the shared overlay sheet (tokens +
+      // utilities) instead of emotion.
+      adoptTailwind: true,
       render: ({ shadowRoot, portalContainer }) =>
         createElement(ShadowVideoDataSyncApp, { channel, shadowRoot, portalContainer, language, commands }),
     })

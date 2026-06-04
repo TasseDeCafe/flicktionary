@@ -19,52 +19,94 @@ msgstr ""
 #~ msgstr "extension.videoDataSync.emptySubtitleTrack"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
-#~ msgid "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
-#~ msgstr "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
+#~ msgid "- Accessing the service for any illegal purpose or in violation of any "
+#~ "local, state, national, or international law."
+#~ msgstr "- Accessing the service for any illegal purpose or in violation of any "
+#~ "local, state, national, or international law."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:64
-#~ msgid "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our resources."
-#~ msgstr "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our resources."
+#~ msgid "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our "
+#~ "resources."
+#~ msgstr "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our "
+#~ "resources."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:79
-#~ msgid "- Attempting to hack, destabilize, or introduce malicious software to our website, or to compromise the security of our services in any way."
-#~ msgstr "- Attempting to hack, destabilize, or introduce malicious software to our website, or to compromise the security of our services in any way."
+#~ msgid "- Attempting to hack, destabilize, or introduce malicious software to "
+#~ "our website, or to compromise the security of our services in any way."
+#~ msgstr "- Attempting to hack, destabilize, or introduce malicious software to "
+#~ "our website, or to compromise the security of our services in any way."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:73
-#~ msgid "- Conducting any unauthorized activity that involves the service, including but not limited to data theft, providing malware or spyware, phishing, and other fraudulent activities."
-#~ msgstr "- Conducting any unauthorized activity that involves the service, including but not limited to data theft, providing malware or spyware, phishing, and other fraudulent activities."
+#~ msgid "- Conducting any unauthorized activity that involves the service, "
+#~ "including but not limited to data theft, providing malware or spyware, "
+#~ "phishing, and other fraudulent activities."
+#~ msgstr "- Conducting any unauthorized activity that involves the service, "
+#~ "including but not limited to data theft, providing malware or spyware, "
+#~ "phishing, and other fraudulent activities."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:151
 #~ msgid "- Continuous security monitoring and automated threat detection systems"
 #~ msgstr "- Continuous security monitoring and automated threat detection systems"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:50
-#~ msgid "- Cookies and Tracking Technologies: We use cookies and similar technologies to monitor and analyze service usage and to enhance user experience. You may control the use of these technologies through your browser settings."
-#~ msgstr "- Cookies and Tracking Technologies: We use cookies and similar technologies to monitor and analyze service usage and to enhance user experience. You may control the use of these technologies through your browser settings."
+#~ msgid "- Cookies and Tracking Technologies: We use cookies and similar "
+#~ "technologies to monitor and analyze service usage and to enhance user "
+#~ "experience. You may control the use of these technologies through your "
+#~ "browser settings."
+#~ msgstr "- Cookies and Tracking Technologies: We use cookies and similar "
+#~ "technologies to monitor and analyze service usage and to enhance user "
+#~ "experience. You may control the use of these technologies through your "
+#~ "browser settings."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:59
-#~ msgid "- Engaging in any activity that disrupts or interferes with our resources, including servers and networks."
-#~ msgstr "- Engaging in any activity that disrupts or interferes with our resources, including servers and networks."
+#~ msgid "- Engaging in any activity that disrupts or interferes with our "
+#~ "resources, including servers and networks."
+#~ msgstr "- Engaging in any activity that disrupts or interferes with our "
+#~ "resources, including servers and networks."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:136
-#~ msgid "- Enterprise-grade encryption protocols for data transmission and storage"
-#~ msgstr "- Enterprise-grade encryption protocols for data transmission and storage"
+#~ msgid "- Enterprise-grade encryption protocols for data transmission and "
+#~ "storage"
+#~ msgstr "- Enterprise-grade encryption protocols for data transmission and "
+#~ "storage"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:57
-#~ msgid "- Google/Apple/Email Authentication: We integrate industry standards to streamline your sign-in process and enhance account security. We might use your email address to send you notifications and emails, from which you can always unsubscribe. We do not sell your email address. We also do not share your email address with any third parties if it's not strictly related to the basic functioning of our webapp."
-#~ msgstr "- Google/Apple/Email Authentication: We integrate industry standards to streamline your sign-in process and enhance account security. We might use your email address to send you notifications and emails, from which you can always unsubscribe. We do not sell your email address. We also do not share your email address with any third parties if it's not strictly related to the basic functioning of our webapp."
+#~ msgid "- Google/Apple/Email Authentication: We integrate industry standards to "
+#~ "streamline your sign-in process and enhance account security. We might "
+#~ "use your email address to send you notifications and emails, from which "
+#~ "you can always unsubscribe. We do not sell your email address. We also "
+#~ "do not share your email address with any third parties if it's not "
+#~ "strictly related to the basic functioning of our webapp."
+#~ msgstr "- Google/Apple/Email Authentication: We integrate industry standards to "
+#~ "streamline your sign-in process and enhance account security. We might "
+#~ "use your email address to send you notifications and emails, from which "
+#~ "you can always unsubscribe. We do not sell your email address. We also "
+#~ "do not share your email address with any third parties if it's not "
+#~ "strictly related to the basic functioning of our webapp."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:142
-#~ msgid "- Implementation of trusted, industry-standard security libraries and frameworks, avoiding custom security implementations"
-#~ msgstr "- Implementation of trusted, industry-standard security libraries and frameworks, avoiding custom security implementations"
+#~ msgid "- Implementation of trusted, industry-standard security libraries and "
+#~ "frameworks, avoiding custom security implementations"
+#~ msgstr "- Implementation of trusted, industry-standard security libraries and "
+#~ "frameworks, avoiding custom security implementations"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:120
-#~ msgid "- Legal Requirements: We may disclose your data if required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency)."
-#~ msgstr "- Legal Requirements: We may disclose your data if required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency)."
+#~ msgid "- Legal Requirements: We may disclose your data if required to do so by "
+#~ "law or in response to valid requests by public authorities (e.g., a "
+#~ "court or a government agency)."
+#~ msgstr "- Legal Requirements: We may disclose your data if required to do so by "
+#~ "law or in response to valid requests by public authorities (e.g., a "
+#~ "court or a government agency)."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:34
-#~ msgid "- Personal Information: We collect personal data such as your name, email address, and other contact details when you register, subscribe to our services, fill out forms, or interact with our platform in other ways that require personal identification."
-#~ msgstr "- Personal Information: We collect personal data such as your name, email address, and other contact details when you register, subscribe to our services, fill out forms, or interact with our platform in other ways that require personal identification."
+#~ msgid "- Personal Information: We collect personal data such as your name, "
+#~ "email address, and other contact details when you register, subscribe to "
+#~ "our services, fill out forms, or interact with our platform in other "
+#~ "ways that require personal identification."
+#~ msgstr "- Personal Information: We collect personal data such as your name, "
+#~ "email address, and other contact details when you register, subscribe "
+#~ "to our services, fill out forms, or interact with our platform in other "
+#~ "ways that require personal identification."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:56
 #~ msgid "- Prohibited Activities: Users are prohibited from:"
@@ -75,16 +117,26 @@ msgstr ""
 #~ msgstr "- Regular security training for our development and operations teams"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:139
-#~ msgid "- Regular third-party security audits and penetration testing by certified specialists"
-#~ msgstr "- Regular third-party security audits and penetration testing by certified specialists"
+#~ msgid "- Regular third-party security audits and penetration testing by "
+#~ "certified specialists"
+#~ msgstr "- Regular third-party security audits and penetration testing by "
+#~ "certified specialists"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:148
-#~ msgid "- Strict access controls and authentication mechanisms following OWASP security guidelines"
-#~ msgstr "- Strict access controls and authentication mechanisms following OWASP security guidelines"
+#~ msgid "- Strict access controls and authentication mechanisms following OWASP "
+#~ "security guidelines"
+#~ msgstr "- Strict access controls and authentication mechanisms following OWASP "
+#~ "security guidelines"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:83
-#~ msgid "- To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the service, and for marketing and promotional purposes"
-#~ msgstr "- To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the service, and for marketing and promotional purposes"
+#~ msgid "- To communicate with you, either directly or through one of our "
+#~ "partners, including for customer service, to provide you with updates "
+#~ "and other information relating to the service, and for marketing and "
+#~ "promotional purposes"
+#~ msgstr "- To communicate with you, either directly or through one of our "
+#~ "partners, including for customer service, to provide you with updates "
+#~ "and other information relating to the service, and for marketing and "
+#~ "promotional purposes"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:81
 #~ msgid "- To develop new products, services, features, and functionality"
@@ -107,12 +159,28 @@ msgstr ""
 #~ msgstr "- To understand and analyze how you use our services"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:45
-#~ msgid "- Voice Recording: Users may not use the service to replicate or clone voices of any individuals other than"
-#~ msgstr "- Voice Recording: Users may not use the service to replicate or clone voices of any individuals other than"
+#~ msgid "- Voice Recording: Users may not use the service to replicate or clone "
+#~ "voices of any individuals other than"
+#~ msgstr "- Voice Recording: Users may not use the service to replicate or clone "
+#~ "voices of any individuals other than"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:41
-#~ msgid "- Voice Recordings: To assist in pronunciation improvement, we collect and analyze recordings of your voice. These are used to create personalized voice clones. - App data: We collect and store data that you input into the app for language learning purposes. This includes your learning progress, custom settings, and interactions within the app. This data is utilized to tailor and enhance your learning experience, enabling personalized language learning pathways and recommendations."
-#~ msgstr "- Voice Recordings: To assist in pronunciation improvement, we collect and analyze recordings of your voice. These are used to create personalized voice clones. - App data: We collect and store data that you input into the app for language learning purposes. This includes your learning progress, custom settings, and interactions within the app. This data is utilized to tailor and enhance your learning experience, enabling personalized language learning pathways and recommendations."
+#~ msgid "- Voice Recordings: To assist in pronunciation improvement, we collect "
+#~ "and analyze recordings of your voice. These are used to create "
+#~ "personalized voice clones. - App data: We collect and store data that "
+#~ "you input into the app for language learning purposes. This includes "
+#~ "your learning progress, custom settings, and interactions within the "
+#~ "app. This data is utilized to tailor and enhance your learning "
+#~ "experience, enabling personalized language learning pathways and "
+#~ "recommendations."
+#~ msgstr "- Voice Recordings: To assist in pronunciation improvement, we collect "
+#~ "and analyze recordings of your voice. These are used to create "
+#~ "personalized voice clones. - App data: We collect and store data that "
+#~ "you input into the app for language learning purposes. This includes "
+#~ "your learning progress, custom settings, and interactions within the "
+#~ "app. This data is utilized to tailor and enhance your learning "
+#~ "experience, enabling personalized language learning pathways and "
+#~ "recommendations."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
@@ -137,8 +205,14 @@ msgstr "(Expired)"
 #~ msgstr "(iii) any content obtained from the service; and"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:136
-#~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
-#~ msgstr "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
+#~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or "
+#~ "content, whether based on warranty, contract, tort (including "
+#~ "negligence), or any other legal theory, whether or not we have been "
+#~ "informed of the possibility of such damage."
+#~ msgstr "(iv) unauthorized access, use, or alteration of your transmissions or "
+#~ "content, whether based on warranty, contract, tort (including "
+#~ "negligence), or any other legal theory, whether or not we have been "
+#~ "informed of the possibility of such damage."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:256
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
@@ -239,8 +313,10 @@ msgstr "{dueTermCount} follow-up(s) due"
 #~ msgstr "{dueTermCount} follow-up(s) ready"
 
 #: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:83
-#~ msgid "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
-#~ msgstr "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
+#~ msgid "{highlightCount, plural, one {# highlight this session} other {# "
+#~ "highlights this session}}"
+#~ msgstr "{highlightCount, plural, one {# highlight this session} other {# "
+#~ "highlights this session}}"
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
@@ -259,8 +335,10 @@ msgstr "{highlightCount} highlight(s) saved."
 #~ msgstr "{learningDueCount} follow-up(s)"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:143
-#~ msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with your referral!"
-#~ msgstr "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with your referral!"
+#~ msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with "
+#~ "your referral!"
+#~ msgstr "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with "
+#~ "your referral!"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:141
 #~ msgid "{monthlyDiscountPercentage}% off for 1 month with your referral!"
@@ -288,8 +366,10 @@ msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 #~ msgstr "{ratedCount} of {totalCount} rated"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:277
-#~ msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
-#~ msgstr "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
+#~ msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on "
+#~ "Next."
+#~ msgstr "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on "
+#~ "Next."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
@@ -312,8 +392,10 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgstr "{unprocessedHighlightCount} new highlight(s) to process."
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:125
-#~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
-#~ msgstr "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
+#~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with "
+#~ "your referral!"
+#~ msgstr "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with "
+#~ "your referral!"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:123
 #~ msgid "{yearlyDiscountPercentage}% off for 1 year with your referral!"
@@ -339,9 +421,13 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgid "• Full communication records and interaction history"
 #~ msgstr "• Full communication records and interaction history"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:149
-msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
-msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
+#: packages/extension/src/ui/components/Tutorial.tsx:156
+msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
+"navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
+"controls."
+msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
+"navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
+"controls."
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:48
 msgid "⚠ LLM only"
@@ -444,8 +530,10 @@ msgid "A natural translation of the target example."
 msgstr "A natural translation of the target example."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:104
-msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
-msgstr "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
+msgid "A newer version of the app is required to continue. Please update to the "
+"latest version to access all features and improvements."
+msgstr "A newer version of the app is required to continue. Please update to "
+"the latest version to access all features and improvements."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:169
 msgid "A sentence using this term in its natural setting."
@@ -456,12 +544,16 @@ msgid "A short label for this session"
 msgstr "A short label for this session"
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
-#~ msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
-#~ msgstr "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+#~ msgid "A video element must be synced with asbplayer before it can be mined. "
+#~ "Select a video element to sync it with asbplayer."
+#~ msgstr "A video element must be synced with asbplayer before it can be mined. "
+#~ "Select a video element to sync it with asbplayer."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
-msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
-msgstr "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:185
+msgid "A video element must be synced with Flicktionary before it can be mined. "
+"Select a video element to sync it with Flicktionary."
+msgstr "A video element must be synced with Flicktionary before it can be "
+"mined. Select a video element to sync it with Flicktionary."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:79
 msgid "About"
@@ -475,8 +567,8 @@ msgstr "About"
 #~ msgid "About asbplayer"
 #~ msgstr "About asbplayer"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:248
-#: packages/extension/src/ui/components/ImportPopup.tsx:57
+#: packages/asbplayer-common/components/SettingsForm.tsx:158
+#: packages/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
 
@@ -536,7 +628,7 @@ msgstr "Active vocabulary"
 msgid "Add a word"
 msgstr "Add a word"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:66
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:44
 msgid "Add Custom CSS"
 msgstr "Add Custom CSS"
 
@@ -544,7 +636,7 @@ msgstr "Add Custom CSS"
 msgid "Add form"
 msgstr "Add form"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:241
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:158
 msgid "Add New Profile..."
 msgstr "Add New Profile..."
 
@@ -564,33 +656,36 @@ msgstr "Add to active vocabulary"
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:209
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:124
 msgid "Additional hosts"
 msgstr "Additional hosts"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:272
-msgid "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
-msgstr "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:232
+msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
+"try using a different font."
+msgstr "Adds an outline around subtitle text. If this causes overlapping lines, "
+"try using a different font."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:260
 msgid "Adjective"
 msgstr "Adjective"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:389
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:366
 msgid "Adjust subtitle offset by -100ms"
 msgstr "Adjust subtitle offset by -100ms"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:388
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:365
 msgid "Adjust subtitle offset by +100ms"
 msgstr "Adjust subtitle offset by +100ms"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:385
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:362
 msgid "Adjust subtitle offset so that next subtitle is at current timestamp"
 msgstr "Adjust subtitle offset so that next subtitle is at current timestamp"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:381
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:358
 msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
-msgstr "Adjust subtitle offset so that previous subtitle is at current timestamp"
+msgstr "Adjust subtitle offset so that previous subtitle is at current "
+"timestamp"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
 #: apps/web/src/features/more/components/more-tab-view.tsx:81
@@ -610,13 +705,13 @@ msgstr "Advanced — flexible, effective use in complex contexts."
 msgid "Adverb"
 msgstr "Adverb"
 
-#: apps/web/src/components/ui/rate-buttons.tsx:20
+#: packages/ui/src/components/rate-buttons.tsx:20
 msgid "Again"
 msgstr "Again"
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:37
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:26
 msgid "All"
 msgstr "All"
 
@@ -632,8 +727,10 @@ msgstr "All caught up"
 #~ msgstr "All caught up for today · {followUpDelay} · {totalKept} total"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:50
-#~ msgid "All caught up for today · {learningDueCount} follow-up(s) ready · {totalKept} total"
-#~ msgstr "All caught up for today · {learningDueCount} follow-up(s) ready · {totalKept} total"
+#~ msgid "All caught up for today · {learningDueCount} follow-up(s) ready · "
+#~ "{totalKept} total"
+#~ msgstr "All caught up for today · {learningDueCount} follow-up(s) ready · "
+#~ "{totalKept} total"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:65
 #~ msgid "All caught up for today · {totalKept} total"
@@ -647,23 +744,25 @@ msgstr "All done!"
 #~ msgid "All highlights have been processed."
 #~ msgstr "All highlights have been processed."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:289
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:165
 msgid "Allow auto-loading of detected subtitles"
 msgstr "Allow auto-loading of detected subtitles"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:110
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:83
 msgid "Allow subtitle file drag-and-drop"
 msgstr "Allow subtitle file drag-and-drop"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:279
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:158
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:360
-#~ msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
-#~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
+#~ msgid "Already-rated terms will keep their ratings. Unrated terms stay "
+#~ "available for later sessions."
+#~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay "
+#~ "available for later sessions."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
 msgstr "Always play (unpause) after invoking above shortcut"
 
@@ -699,8 +798,8 @@ msgid "Animate"
 msgstr "Animate"
 
 #: packages/asbplayer-common/components/SettingsForm.tsx:245
-msgid "Annotation"
-msgstr "Annotation"
+#~ msgid "Annotation"
+#~ msgstr "Annotation"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:132
 msgid "Another term already exists with that headword and sense."
@@ -710,7 +809,7 @@ msgstr "Another term already exists with that headword and sense."
 #~ msgid "App Store"
 #~ msgstr "App Store"
 
-#: packages/asbplayer-common/components/About.tsx:210
+#: packages/asbplayer-common/components/About.tsx:28
 msgid "App version"
 msgstr "App version"
 
@@ -728,20 +827,26 @@ msgstr "Articles"
 #~ msgstr "asbplayer updated to version {0}. Check out the <0>release notes</0>."
 
 #: packages/extension/src/ui/components/NotificationUi.tsx:101
-#~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
-#~ msgstr "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
+#~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release "
+#~ "notes</0>."
+#~ msgstr "asbplayer updated to version {newVersion}. Check out the <0>release "
+#~ "notes</0>."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:190
-msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
-msgstr "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
+msgid "Ask a follow-up question about this term. The model already has the "
+"methodology, your profile, and the surrounding scene loaded."
+msgstr "Ask a follow-up question about this term. The model already has the "
+"methodology, your profile, and the surrounding scene loaded."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:141
 #~ msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 #~ msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:249
-msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
-msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
+msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new "
+"line)"
+msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new "
+"line)"
 
 #: apps/web/src/features/review/components/chat-panel.tsx:119
 msgid "Ask follow-up questions about this term."
@@ -768,11 +873,11 @@ msgstr "Aspect pair (counterpart headword)"
 msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 msgstr "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:273
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:197
 msgid "At Subtitle End"
 msgstr "At Subtitle End"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:261
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:196
 msgid "At Subtitle Start"
 msgstr "At Subtitle Start"
 
@@ -782,38 +887,47 @@ msgstr "Audio recording enabled"
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:45
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
-msgstr "Audio recording has been enabled for this tab. You can now begin mining."
+msgstr "Audio recording has been enabled for this tab. You can now begin "
+"mining."
 
 #: apps/web/src/features/auth/components/login-view.tsx:50
 #: apps/web/src/features/auth/components/login-view.tsx:62
 msgid "Authentication failed"
 msgstr "Authentication failed"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:155
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-#~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
-#~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+#~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not "
+#~ "know how to detect subtitles on every site. You can always load your own "
+#~ "subtitle files."
+#~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not "
+#~ "know how to detect subtitles on every site. You can always load your "
+#~ "own subtitle files."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
-msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
+msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
+"not know how to detect subtitles on every site. You can always load your "
+"own subtitle files."
+msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does "
+"not know how to detect subtitles on every site. You can always load "
+"your own subtitle files."
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:120
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:88
 msgid "Auto-load detected subtitles"
 msgstr "Auto-load detected subtitles"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:86
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:66
 msgid "Auto-pause"
 msgstr "Auto-pause"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:247
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:259
 msgid "Auto-pause preference"
 msgstr "Auto-pause preference"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:234
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:189
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Auto-pause when mousing over subtitles"
 
@@ -890,7 +1004,7 @@ msgstr "Billed yearly at €{yearlyPriceTotal}"
 #~ msgid "Billed yearly: €{yearlyPriceFormatted}"
 #~ msgstr "Billed yearly: €{yearlyPriceFormatted}"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:453
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:378
 msgid "Bottom"
 msgstr "Bottom"
 
@@ -907,8 +1021,11 @@ msgstr "Browse community-uploaded tracks for this movie."
 #~ msgstr "Browse the full list."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
-#~ msgid "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
-#~ msgstr "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
+#~ msgid "By accessing and using our website, flicktionary.app, and any associated "
+#~ "services, you agree to be bound by these Terms of Service (\"Terms\")."
+#~ msgstr "By accessing and using our website, flicktionary.app, and any "
+#~ "associated services, you agree to be bound by these Terms of Service "
+#~ "(\"Terms\")."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
 #~ msgid "Calibrates the difficult-words pass and the depth of explanations."
@@ -962,9 +1079,11 @@ msgstr "CEFR level"
 #~ msgid "Change"
 #~ msgstr "Change"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:28
-msgid "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
-msgstr "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:22
+msgid "Changes settings for ALL tracks. Settings that already have "
+"track-specific values are hidden."
+msgstr "Changes settings for ALL tracks. Settings that already have "
+"track-specific values are hidden."
 
 #: apps/web/src/features/review/components/chat-panel.tsx:118
 #: apps/web/src/features/review/components/chat-panel.tsx:147
@@ -1004,8 +1123,12 @@ msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
 #: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
-#~ msgid "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
-#~ msgstr "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
+#~ msgid "Choose the perfect plan for your accent training journey. Flexible "
+#~ "pricing options to help you achieve your perfect accent with AI-powered "
+#~ "voice training."
+#~ msgstr "Choose the perfect plan for your accent training journey. Flexible "
+#~ "pricing options to help you achieve your perfect accent with AI-powered "
+#~ "voice training."
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:140
 msgid "Choose your plan"
@@ -1015,38 +1138,51 @@ msgstr "Choose your plan"
 #~ msgid "Choose Your Plan"
 #~ msgstr "Choose Your Plan"
 
-#: apps/web/src/components/ui/search-input.tsx:36
+#: packages/ui/src/components/search-input.tsx:36
 msgid "Clear search"
 msgstr "Clear search"
 
 #: apps/web/src/features/review/components/focus-view.tsx:365
-msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
-msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
+msgid "Click Generate full exploration to enrich this card with collocations, "
+"etymology, register, IPA, and more."
+msgstr "Click Generate full exploration to enrich this card with collocations, "
+"etymology, register, IPA, and more."
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
-#~ msgid "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
-#~ msgstr "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+#~ msgid "Click on the asbplayer action button in the top-right of the browser "
+#~ "window to enable audio recording for this tab."
+#~ msgstr "Click on the asbplayer action button in the top-right of the browser "
+#~ "window to enable audio recording for this tab."
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
-msgid "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
-msgstr "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
+msgid "Click on the Flicktionary action button in the top-right of the browser "
+"window to enable audio recording for this tab."
+msgstr "Click on the Flicktionary action button in the top-right of the browser "
+"window to enable audio recording for this tab."
 
 #. placeholder {0}: isFirefox ? '⚙' : '📌'
-#: packages/extension/src/ui/components/Tutorial.tsx:71
-msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
-msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
+#: packages/extension/src/ui/components/Tutorial.tsx:66
+msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open "
+"the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to "
+"the toolbar for easy access."
+msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open "
+"the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to "
+"the toolbar for easy access."
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
 msgid "Click the link in the email to continue."
 msgstr "Click the link in the email to continue."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:357
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:308
 msgid "Click to unlock font menu"
 msgstr "Click to unlock font menu"
 
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:284
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:177
 msgid "Close"
 msgstr "Close"
 
@@ -1058,7 +1194,7 @@ msgstr "Collocations"
 #~ msgid "Come back later. {followUpDelay}."
 #~ msgstr "Come back later. {followUpDelay}."
 
-#: packages/asbplayer-common/components/ListField.tsx:56
+#: packages/asbplayer-common/components/ListField.tsx:58
 msgid "Comma-separated list of strings"
 msgstr "Comma-separated list of strings"
 
@@ -1066,11 +1202,11 @@ msgstr "Comma-separated list of strings"
 msgid "Common"
 msgstr "Common"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:72
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:54
 msgid "Condensed"
 msgstr "Condensed"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:140
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:105
 msgid "Condensed playback minimum skip interval"
 msgstr "Condensed playback minimum skip interval"
 
@@ -1143,7 +1279,7 @@ msgstr "Continue with Google"
 #~ msgid "Copied!"
 #~ msgstr "Copied!"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:296
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:295
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Could not auto-load subtitles in your preferred language."
 
@@ -1171,8 +1307,8 @@ msgstr "Could not find a readable article on this page."
 msgid "Could not import the pasted text."
 msgstr "Could not import the pasted text."
 
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:23
 #: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:26
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:29
 msgid "Could not import this page."
 msgstr "Could not import this page."
 
@@ -1193,8 +1329,10 @@ msgid "Could not open customer center."
 msgstr "Could not open customer center."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:86
-msgid "Could not open the link. Please visit our website to manage your subscription."
-msgstr "Could not open the link. Please visit our website to manage your subscription."
+msgid "Could not open the link. Please visit our website to manage your "
+"subscription."
+msgstr "Could not open the link. Please visit our website to manage your "
+"subscription."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:71
 msgid "Could not open upgrade screen."
@@ -1222,20 +1360,18 @@ msgstr "Could not set up your account. Please try restarting the app."
 #~ msgstr "Creating…"
 
 #. placeholder {0}: customStyle.key
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:103
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:77
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:305
+#: packages/asbplayer-common/components/VideoOverlay.tsx:269
 msgid "Current Timestamp"
 msgstr "Current Timestamp"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:109
-msgid ""
-"Current version: {currentVersion}\n"
+msgid "Current version: {currentVersion}\n"
 "Required version: {requiredVersion}"
-msgstr ""
-"Current version: {currentVersion}\n"
+msgstr "Current version: {currentVersion}\n"
 "Required version: {requiredVersion}"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:102
@@ -1272,7 +1408,7 @@ msgstr "Danger zone"
 msgid "Danger Zone"
 msgstr "Danger Zone"
 
-#: packages/asbplayer-common/components/UiSettings.tsx:52
+#: packages/asbplayer-common/components/UiSettings.tsx:30
 msgid "Dark"
 msgstr "Dark"
 
@@ -1281,19 +1417,21 @@ msgstr "Dark"
 msgid "Dashboard"
 msgstr "Dashboard"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:312
-msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
-msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
+#: packages/asbplayer-common/components/VideoOverlay.tsx:276
+msgid "Decrease offset to so that next subtitle is at current position. Hold to "
+"decrease by 100ms."
+msgstr "Decrease offset to so that next subtitle is at current position. Hold "
+"to decrease by 100ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:393
-#: packages/asbplayer-common/components/VideoOverlay.tsx:317
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
+#: packages/asbplayer-common/components/VideoOverlay.tsx:281
 msgid "Decrease playback rate"
 msgstr "Decrease playback rate"
 
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:43
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:54
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:87
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:221
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:36
+#: packages/asbplayer-common/components/MiniProfileSelector.tsx:45
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:122
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:128
 msgid "Default"
 msgstr "Default"
 
@@ -1340,7 +1478,7 @@ msgstr "Deleting…"
 #~ msgid "Dependencies"
 #~ msgstr "Dependencies"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:228
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:183
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
 
@@ -1348,7 +1486,7 @@ msgstr "Detect and Display Ruby"
 msgid "Detecting language…"
 msgstr "Detecting language…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:247
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:198
 msgid "Disabled"
 msgstr "Disabled"
 
@@ -1356,7 +1494,7 @@ msgstr "Disabled"
 msgid "Display form (e.g. stress-marked)"
 msgstr "Display form (e.g. stress-marked)"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:97
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:75
 msgid "Display subtitles"
 msgstr "Display subtitles"
 
@@ -1373,12 +1511,16 @@ msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 
 #: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:16
-#~ msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
-#~ msgstr "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
+#~ msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice "
+#~ "Training"
+#~ msgstr "Download Flicktionary - Flicktionary - Perfect Your Accent with AI "
+#~ "Voice Training"
 
 #: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:17
-#~ msgid "Download our mobile app to start perfecting your accent with AI voice training"
-#~ msgstr "Download our mobile app to start perfecting your accent with AI voice training"
+#~ msgid "Download our mobile app to start perfecting your accent with AI voice "
+#~ "training"
+#~ msgstr "Download our mobile app to start perfecting your accent with AI voice "
+#~ "training"
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:23
 #~ msgid "Download the App"
@@ -1424,7 +1566,7 @@ msgstr "e.g. увидеть"
 #~ msgid "Each new session uses up to this many new terms and review terms."
 #~ msgstr "Each new session uses up to this many new terms and review terms."
 
-#: apps/web/src/components/ui/rate-buttons.tsx:23
+#: packages/ui/src/components/rate-buttons.tsx:23
 msgid "Easy"
 msgstr "Easy"
 
@@ -1436,7 +1578,7 @@ msgstr "Edit note"
 msgid "Edit term"
 msgstr "Edit term"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:189
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:170
 msgid "Edit this shortcut from the Plugin manager at about:addons."
 msgstr "Edit this shortcut from the Plugin manager at about:addons."
 
@@ -1467,8 +1609,8 @@ msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
 
 #: packages/extension/src/controllers/video-data-sync-controller.ts:102
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:113
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:146
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:101
+#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:134
 msgid "Empty"
 msgstr "Empty"
 
@@ -1476,15 +1618,15 @@ msgstr "Empty"
 msgid "Enable audio recording"
 msgstr "Enable audio recording"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:86
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:69
 msgid "Enable controls overlay"
 msgstr "Enable controls overlay"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:271
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:200
 msgid "Enabled"
 msgstr "Enabled"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:259
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:199
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
@@ -1538,14 +1680,14 @@ msgstr "Enrichment failed"
 msgid "Enrichment has not started yet."
 msgstr "Enrichment has not started yet."
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:163
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:75
 msgid "Enter profile name"
 msgstr "Enter profile name"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:230
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Error"
 msgstr "Error"
 
@@ -1572,12 +1714,16 @@ msgid "Etymology"
 msgstr "Etymology"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:61
-msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
-msgstr "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
+msgid "Even if you get charged you can request an unconditional refund. Just "
+"let us know by clicking the \"Contact Us\" button above."
+msgstr "Even if you get charged you can request an unconditional refund. Just "
+"let us know by clicking the \"Contact Us\" button above."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:259
-msgid "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
-msgstr "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
+msgid "Every term you've kept, across every session. Tap a row to edit, or open "
+"the menu for more options."
+msgstr "Every term you've kept, across every session. Tap a row to edit, or "
+"open the menu for more options."
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
 msgid "Example"
@@ -1591,7 +1737,7 @@ msgstr "Explain"
 msgid "Explain this term in more depth."
 msgstr "Explain this term in more depth."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:333
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:272
 msgid "Export Settings"
 msgstr "Export Settings"
 
@@ -1607,11 +1753,11 @@ msgstr "Exported {chunkCount} term(s)"
 msgid "Exporting…"
 msgstr "Exporting…"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:175
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:178
 msgid "Extension shortcut"
 msgstr "Extension shortcut"
 
-#: packages/asbplayer-common/components/About.tsx:218
+#: packages/asbplayer-common/components/About.tsx:34
 msgid "Extension version"
 msgstr "Extension version"
 
@@ -1919,11 +2065,11 @@ msgstr "Fast forward playback: On"
 #~ msgid "Fast gloss when you select text mid-watch"
 #~ msgstr "Fast gloss when you select text mid-watch"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:79
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:60
 msgid "Fast-forward"
 msgstr "Fast-forward"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:287
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:275
 msgid "Fast-forward mode playback rate"
 msgstr "Fast-forward mode playback rate"
 
@@ -1949,7 +2095,7 @@ msgid "Flashcards"
 msgstr "Flashcards"
 
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:57
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:54
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
@@ -1958,9 +2104,10 @@ msgstr "Flicktionary"
 #~ msgstr "Flicktionary - Perfect Your Accent with AI Voice Training"
 
 #. placeholder {0}: state.newVersion
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:92
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:104
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
-msgstr "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
+msgstr "Flicktionary updated to version {0}. Check out the <0>release "
+"notes</0>."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:60
 #~ msgid "Follow-up in {hoursUntilFollowUp} hr"
@@ -2028,7 +2175,7 @@ msgstr "Generate card"
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:368
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:346
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
@@ -2040,7 +2187,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 #~ msgid "Generating the next text…"
 #~ msgstr "Generating the next text…"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:365
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
 msgid "Generating..."
 msgstr "Generating..."
 
@@ -2097,11 +2244,11 @@ msgstr "Go to Sessions"
 msgid "Go to triage"
 msgstr "Go to triage"
 
-#: apps/web/src/components/ui/rate-buttons.tsx:22
+#: packages/ui/src/components/rate-buttons.tsx:22
 msgid "Good"
 msgstr "Good"
 
-#: packages/asbplayer-common/components/TutorialBubble.tsx:42
+#: packages/asbplayer-common/components/TutorialBubble.tsx:33
 msgid "Got it"
 msgstr "Got it"
 
@@ -2125,7 +2272,7 @@ msgstr "Grammar fields have been edited manually"
 msgid "Grammar notes"
 msgstr "Grammar notes"
 
-#: apps/web/src/components/ui/rate-buttons.tsx:21
+#: packages/ui/src/components/rate-buttons.tsx:21
 msgid "Hard"
 msgstr "Hard"
 
@@ -2143,8 +2290,10 @@ msgid "HI"
 msgstr "HI"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:118
-#~ msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by re-keeping it in a session."
-#~ msgstr "Hide \"{headword}\" from vocabulary and Practice? You can revive it by re-keeping it in a session."
+#~ msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by "
+#~ "re-keeping it in a session."
+#~ msgstr "Hide \"{headword}\" from vocabulary and Practice? You can revive it by "
+#~ "re-keeping it in a session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:74
 msgid "Hide from vocabulary and Practice"
@@ -2158,17 +2307,23 @@ msgstr "Hide notes"
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:417
-msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
-msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:364
+msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
+"mouse hover."
+msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
+"mouse hover."
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:38
-msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
-msgstr "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
+msgid "Hides this term from Practice and Vocabulary. You can restore it from "
+"the toast right after, or by re-keeping it in a session."
+msgstr "Hides this term from Practice and Vocabulary. You can restore it from "
+"the toast right after, or by re-keeping it in a session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:40
-msgid "Hides this term from your vocabulary and Practice. You can revive it by re-keeping it in a session."
-msgstr "Hides this term from your vocabulary and Practice. You can revive it by re-keeping it in a session."
+msgid "Hides this term from your vocabulary and Practice. You can revive it by "
+"re-keeping it in a session."
+msgstr "Hides this term from your vocabulary and Practice. You can revive it by "
+"re-keeping it in a session."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:349
 msgid "Highlight saved"
@@ -2176,7 +2331,8 @@ msgstr "Highlight saved"
 
 #: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:134
 #~ msgid "Highlight saved. Add a note or chips next time without tap-to-translate."
-#~ msgstr "Highlight saved. Add a note or chips next time without tap-to-translate."
+#~ msgstr "Highlight saved. Add a note or chips next time without "
+#~ "tap-to-translate."
 
 #: apps/web/src/features/review/components/processing-view.tsx:21
 msgid "Highlights are enriched as you read. Triage is available immediately."
@@ -2195,7 +2351,7 @@ msgstr "History · {languageName}"
 msgid "Home"
 msgstr "Home"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:207
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:122
 msgid "Host regex"
 msgstr "Host regex"
 
@@ -2212,12 +2368,16 @@ msgid "Idiom"
 msgstr "Idiom"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
-#~ msgid "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
-#~ msgstr "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
+#~ msgid "If you have any questions about these Terms of Service, please contact "
+#~ "us via email contact@flicktionary.app"
+#~ msgstr "If you have any questions about these Terms of Service, please contact "
+#~ "us via email contact@flicktionary.app"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
-#~ msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
-#~ msgstr "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
+#~ msgid "If you have any questions about this Privacy Policy, please contact us "
+#~ "via email: contact@flicktionary.app"
+#~ msgstr "If you have any questions about this Privacy Policy, please contact us "
+#~ "via email: contact@flicktionary.app"
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
@@ -2239,11 +2399,11 @@ msgstr "Imperfective"
 msgid "Import article to Flicktionary"
 msgstr "Import article to Flicktionary"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:330
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:269
 msgid "Import Settings"
 msgstr "Import Settings"
 
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:39
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Import this article"
 msgstr "Import this article"
 
@@ -2253,13 +2413,21 @@ msgstr "Imported text"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:39
+#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Importing…"
 msgstr "Importing…"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
-#~ msgid "In no event shall flicktionary.app, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
-#~ msgstr "In no event shall flicktionary.app, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
+#~ msgid "In no event shall flicktionary.app, nor its directors, employees, "
+#~ "partners, agents, suppliers, or affiliates, be liable for any indirect, "
+#~ "incidental, special, consequential, or punitive damages, including "
+#~ "without limitation, loss of profits, data, use, goodwill, or other "
+#~ "intangible losses, resulting from:"
+#~ msgstr "In no event shall flicktionary.app, nor its directors, employees, "
+#~ "partners, agents, suppliers, or affiliates, be liable for any indirect, "
+#~ "incidental, special, consequential, or punitive damages, including "
+#~ "without limitation, loss of profits, data, use, goodwill, or other "
+#~ "intangible losses, resulting from:"
 
 #: apps/landing-page/src/app/[lang]/layout.tsx:51
 #~ msgid "In-App Purchases"
@@ -2269,12 +2437,14 @@ msgstr "Importing…"
 msgid "Inanimate"
 msgstr "Inanimate"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:310
-msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
-msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
+#: packages/asbplayer-common/components/VideoOverlay.tsx:274
+msgid "Increase offset to so that previous subtitle is at current position. "
+"Hold to increase by 100ms."
+msgstr "Increase offset to so that previous subtitle is at current position. "
+"Hold to increase by 100ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:391
-#: packages/asbplayer-common/components/VideoOverlay.tsx:319
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:368
+#: packages/asbplayer-common/components/VideoOverlay.tsx:283
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
 
@@ -2343,7 +2513,7 @@ msgstr "Keep as passive"
 msgid "Keep options"
 msgstr "Keep options"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:244
+#: packages/asbplayer-common/components/SettingsForm.tsx:146
 msgid "Keyboard Shortcuts"
 msgstr "Keyboard Shortcuts"
 
@@ -2356,7 +2526,7 @@ msgid "Label (e.g. past.m)"
 msgstr "Label (e.g. past.m)"
 
 #: apps/web/src/components/language-option-list.tsx:52
-#: packages/asbplayer-common/components/UiSettings.tsx:58
+#: packages/asbplayer-common/components/UiSettings.tsx:35
 msgid "Language"
 msgstr "Language"
 
@@ -2391,7 +2561,7 @@ msgstr "Last read"
 msgid "Later"
 msgstr "Later"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:435
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:370
 msgid "Layout"
 msgstr "Layout"
 
@@ -2434,7 +2604,7 @@ msgstr "Less formal:"
 #~ msgid "License"
 #~ msgstr "License"
 
-#: packages/asbplayer-common/components/UiSettings.tsx:42
+#: packages/asbplayer-common/components/UiSettings.tsx:29
 msgid "Light"
 msgstr "Light"
 
@@ -2449,10 +2619,12 @@ msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:56
-#~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
-#~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
+#~ msgid "LLM-suggested terms are off. Highlight at least one term to process this "
+#~ "session."
+#~ msgstr "LLM-suggested terms are off. Highlight at least one term to process "
+#~ "this session."
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:363
+#: packages/asbplayer-common/components/VideoOverlay.tsx:330
 #: packages/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
@@ -2542,8 +2714,12 @@ msgid "Masculine"
 msgstr "Masculine"
 
 #: apps/landing-page/src/app/[lang]/page.tsx:18
-#~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
-#~ msgstr "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
+#~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice "
+#~ "speaking in your target language with your own voice. Try our free trial "
+#~ "today!"
+#~ msgstr "Master perfect pronunciation with AI-powered voice cloning. Practice "
+#~ "speaking in your target language with your own voice. Try our free "
+#~ "trial today!"
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx:33
 msgid "Mastery — virtually everything understood with ease."
@@ -2558,9 +2734,9 @@ msgstr "Maybe later"
 msgid "Message to the founders"
 msgstr "Message to the founders"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:247
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:134
-#: packages/extension/src/ui/components/ImportPopup.tsx:56
+#: packages/asbplayer-common/components/SettingsForm.tsx:154
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:98
+#: packages/extension/src/ui/components/ImportPopup.tsx:41
 msgid "Misc"
 msgstr "Misc"
 
@@ -2599,11 +2775,11 @@ msgstr "More frequent synonym"
 msgid "More options"
 msgstr "More options"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:422
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:394
 msgid "Move bottom subtitles down"
 msgstr "Move bottom subtitles down"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:418
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:390
 msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
 
@@ -2615,11 +2791,11 @@ msgstr "Move this term back to passive review only."
 msgid "Move this term into the active drilling pool."
 msgstr "Move this term into the active drilling pool."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:430
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:402
 msgid "Move top subtitles down"
 msgstr "Move top subtitles down"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:426
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:398
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
@@ -2627,7 +2803,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Movies"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:167
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Multiple Video Elements Detected"
 msgstr "Multiple Video Elements Detected"
 
@@ -2640,7 +2816,7 @@ msgstr "Multiple Video Elements Detected"
 msgid "Name (optional)"
 msgstr "Name (optional)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:278
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:216
 msgid "Name of the tab"
 msgstr "Name of the tab"
 
@@ -2687,8 +2863,10 @@ msgid "New terms"
 msgstr "New terms"
 
 #: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
-msgid "New terms are capped per day. Follow-up sessions use up to this many review terms."
-msgstr "New terms are capped per day. Follow-up sessions use up to this many review terms."
+msgid "New terms are capped per day. Follow-up sessions use up to this many "
+"review terms."
+msgstr "New terms are capped per day. Follow-up sessions use up to this many "
+"review terms."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:165
 msgid "New today"
@@ -2727,8 +2905,10 @@ msgstr "No active tab."
 #~ msgstr "No cards yet. Process the session to generate them."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:213
-msgid "No cards yet. Select some highlights in the source text to generate new cards."
-msgstr "No cards yet. Select some highlights in the source text to generate new cards."
+msgid "No cards yet. Select some highlights in the source text to generate new "
+"cards."
+msgstr "No cards yet. Select some highlights in the source text to generate new "
+"cards."
 
 #: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
 #~ msgid "No flashcards are due right now."
@@ -2772,12 +2952,16 @@ msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:33
-#~ msgid "No target languages yet. Levels are set the first time you start a session in a new language."
-#~ msgstr "No target languages yet. Levels are set the first time you start a session in a new language."
+#~ msgid "No target languages yet. Levels are set the first time you start a "
+#~ "session in a new language."
+#~ msgstr "No target languages yet. Levels are set the first time you start a "
+#~ "session in a new language."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:53
-msgid "No target languages yet. Preferences are set the first time you start a session in a new language."
-msgstr "No target languages yet. Preferences are set the first time you start a session in a new language."
+msgid "No target languages yet. Preferences are set the first time you start a "
+"session in a new language."
+msgstr "No target languages yet. Preferences are set the first time you start a "
+"session in a new language."
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:139
 msgid "No terms are due right now."
@@ -2799,7 +2983,7 @@ msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgid "No translation available"
 msgstr "No translation available"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:238
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:231
 msgid "No videos detected."
 msgstr "No videos detected."
 
@@ -2821,7 +3005,7 @@ msgstr "No vocabulary yet"
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:65
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:48
 msgid "Normal"
 msgstr "Normal"
 
@@ -2860,17 +3044,17 @@ msgstr "Numeral"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:324
-#: packages/extension/src/ui/components/Tutorial.tsx:110
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:307
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:373
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:84
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:221
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:243
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:172
+#: packages/extension/src/ui/components/Tutorial.tsx:116
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
+#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:224
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:235
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/PopupHeader.tsx:14
+#: packages/extension/src/ui/components/PopupHeader.tsx:15
 msgid "Open App"
 msgstr "Open App"
 
@@ -2878,8 +3062,8 @@ msgstr "Open App"
 msgid "Open chat"
 msgstr "Open chat"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:233
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:358
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:336
 msgid "Open Files"
 msgstr "Open Files"
 
@@ -2941,14 +3125,26 @@ msgid "Other"
 msgstr "Other"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
-#~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
-#~ msgstr "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
+#~ msgid "Our security infrastructure is continuously monitored, evaluated, and "
+#~ "enhanced to meet evolving cybersecurity challenges. We maintain rigorous "
+#~ "standards in data protection and follow security best practices "
+#~ "recommended by leading technology security organizations. For complete "
+#~ "transparency, we acknowledge that all digital systems require ongoing "
+#~ "vigilance, which is why we've implemented comprehensive monitoring and "
+#~ "rapid response protocols."
+#~ msgstr "Our security infrastructure is continuously monitored, evaluated, and "
+#~ "enhanced to meet evolving cybersecurity challenges. We maintain "
+#~ "rigorous standards in data protection and follow security best "
+#~ "practices recommended by leading technology security organizations. For "
+#~ "complete transparency, we acknowledge that all digital systems require "
+#~ "ongoing vigilance, which is why we've implemented comprehensive "
+#~ "monitoring and rapid response protocols."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:156
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:136
 msgid "Overridden"
 msgstr "Overridden"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:156
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:112
 msgid "Pages"
 msgstr "Pages"
 
@@ -3006,11 +3202,11 @@ msgstr "Paste an article, comment, or post"
 msgid "Paste your text"
 msgstr "Paste your text"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:232
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:143
 msgid "Path hash regex for subtitle detection"
 msgstr "Path hash regex for subtitle detection"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:227
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:138
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
@@ -3056,8 +3252,10 @@ msgid "Pick a subtitle track"
 msgstr "Pick a subtitle track"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:108
-msgid "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
-msgstr "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
+msgid "Pick the language of the movie you'll watch. Subtitles and explanations "
+"will be in this language."
+msgstr "Pick the language of the movie you'll watch. Subtitles and explanations "
+"will be in this language."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:71
 msgid "Pick what to create next."
@@ -3071,15 +3269,15 @@ msgstr "Pick your native language"
 #~ msgid "Play Store"
 #~ msgstr "Play Store"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:241
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:253
 msgid "Play/pause"
 msgstr "Play/pause"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:390
+#: packages/asbplayer-common/components/VideoOverlay.tsx:368
 msgid "Playback Mode"
 msgstr "Playback Mode"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:318
+#: packages/asbplayer-common/components/VideoOverlay.tsx:282
 msgid "Playback Rate"
 msgstr "Playback Rate"
 
@@ -3087,7 +3285,7 @@ msgstr "Playback Rate"
 msgid "Playback Rate: {rate}"
 msgstr "Playback Rate: {rate}"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:397
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:374
 msgid "Playback speed adjust step"
 msgstr "Playback speed adjust step"
 
@@ -3237,12 +3435,16 @@ msgstr "Primary"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:71
 #: apps/web/src/features/practice/components/practice-language-view.tsx:112
-msgid "Process a session and keep some cards. They'll show up here automatically."
-msgstr "Process a session and keep some cards. They'll show up here automatically."
+msgid "Process a session and keep some cards. They'll show up here "
+"automatically."
+msgstr "Process a session and keep some cards. They'll show up here "
+"automatically."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:11
-msgid "Process a session and keep some cards. They'll show up here, browsable across every session."
-msgstr "Process a session and keep some cards. They'll show up here, browsable across every session."
+msgid "Process a session and keep some cards. They'll show up here, browsable "
+"across every session."
+msgstr "Process a session and keep some cards. They'll show up here, browsable "
+"across every session."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:72
 #~ msgid "Process new highlights"
@@ -3273,15 +3475,15 @@ msgstr "Processing warnings"
 #~ msgstr "Processing your session…"
 
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:205
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:117
 msgid "Profile"
 msgstr "Profile"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:241
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:158
 msgid "Profile limit reached"
 msgstr "Profile limit reached"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:162
+#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:74
 msgid "Profile Name"
 msgstr "Profile Name"
 
@@ -3289,7 +3491,7 @@ msgstr "Profile Name"
 msgid "Profile, subscription, sign-in"
 msgstr "Profile, subscription, sign-in"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:130
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:93
 msgid "Prompt on failure to auto-load subtitles"
 msgstr "Prompt on failure to auto-load subtitles"
 
@@ -3327,8 +3529,12 @@ msgid "Read"
 msgstr "Read"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:62
-msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
-msgstr "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
+msgid "Read short generated texts that weave in your kept vocabulary. Tap a "
+"term to rate it; terms you don't tap are scored as recognized when you "
+"advance."
+msgstr "Read short generated texts that weave in your kept vocabulary. Tap a "
+"term to rate it; terms you don't tap are scored as recognized when you "
+"advance."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:128
 msgid "Ready to practice"
@@ -3338,7 +3544,7 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:154
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:134
 msgid "Recording"
 msgstr "Recording"
 
@@ -3388,17 +3594,17 @@ msgstr "Reject all"
 msgid "Reload the page, then try importing again."
 msgstr "Reload the page, then try importing again."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:165
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:150
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:342
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:329
 msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:207
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
 msgid "Remove"
 msgstr "Remove"
 
@@ -3419,11 +3625,11 @@ msgstr "Remove session"
 msgid "Removing…"
 msgstr "Removing…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:217
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:176
 msgid "Render"
 msgstr "Render"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:93
+#: packages/asbplayer-common/components/PlayModeSelector.tsx:69
 msgid "Repeat"
 msgstr "Repeat"
 
@@ -3439,11 +3645,11 @@ msgstr "Repeat playback: On"
 msgid "Replace file ({fileName})"
 msgstr "Replace file ({fileName})"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:202
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:171
 msgid "Reset"
 msgstr "Reset"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:390
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:367
 msgid "Reset subtitle offset"
 msgstr "Reset subtitle offset"
 
@@ -3472,7 +3678,7 @@ msgstr "Retry"
 msgid "Return to Login"
 msgstr "Return to Login"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:200
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:118
 msgid "Revert"
 msgstr "Revert"
 
@@ -3538,7 +3744,7 @@ msgstr "Saving…"
 msgid "Scope"
 msgstr "Scope"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:43
+#: packages/extension/src/ui/components/FtueUi.tsx:17
 msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
 msgstr "Scroll down for a quick intro, or check out the <0>user guide</0>."
 
@@ -3566,7 +3772,7 @@ msgstr "Search movies…"
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:265
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:149
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
@@ -3587,31 +3793,31 @@ msgstr "Searching OpenSubtitles…"
 msgid "Searching…"
 msgstr "Searching…"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:336
-#: packages/asbplayer-common/components/VideoOverlay.tsx:304
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:319
+#: packages/asbplayer-common/components/VideoOverlay.tsx:268
 msgid "Seek backward"
 msgstr "Seek backward"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:338
-#: packages/asbplayer-common/components/VideoOverlay.tsx:306
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:321
+#: packages/asbplayer-common/components/VideoOverlay.tsx:270
 msgid "Seek forward"
 msgstr "Seek forward"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:342
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:325
 msgid "Seek interval (seconds)"
 msgstr "Seek interval (seconds)"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:366
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:343
 msgid "Seek to beginning of current/previous subtitle"
 msgstr "Seek to beginning of current/previous subtitle"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:364
-#: packages/asbplayer-common/components/VideoOverlay.tsx:306
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:341
+#: packages/asbplayer-common/components/VideoOverlay.tsx:270
 msgid "Seek to next subtitle"
 msgstr "Seek to next subtitle"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:363
-#: packages/asbplayer-common/components/VideoOverlay.tsx:304
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:340
+#: packages/asbplayer-common/components/VideoOverlay.tsx:268
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
@@ -3628,19 +3834,23 @@ msgstr "Seek to previous subtitle"
 #~ msgid "Select a video element to sync it with asbplayer."
 #~ msgstr "Select a video element to sync it with asbplayer."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:186
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:190
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Select a video element to sync it with Flicktionary."
+
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:206
+msgid "Select a video element…"
+msgstr "Select a video element…"
 
 #: packages/extension/src/services/flicktionary/import-text.ts:140
 msgid "Select some text first."
 msgstr "Select some text first."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:237
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:249
 msgid "Select subtitle tracks to load."
 msgstr "Select subtitle tracks to load."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:270
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:268
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
 
@@ -3712,15 +3922,19 @@ msgid "Setting up account..."
 msgstr "Setting up account..."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:326
-#: packages/extension/src/ui/components/SettingsPage.tsx:78
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
+#: packages/extension/src/ui/components/SettingsPage.tsx:57
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:278
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 msgid "Settings"
 msgstr "Settings"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
-msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
-msgstr "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
+msgid "Share your feedback or suggest improvements to the founders. We read and "
+"reply to every submission!"
+msgstr "Share your feedback or suggest improvements to the founders. We read "
+"and reply to every submission!"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:180
 msgid "Short paraphrase in the target language."
@@ -3739,8 +3953,10 @@ msgstr "Show answer"
 #~ msgstr "Show existing translations and generate translations for new cards"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:103
-msgid "Show existing translations and generate translations for new cards in this language."
-msgstr "Show existing translations and generate translations for new cards in this language."
+msgid "Show existing translations and generate translations for new cards in "
+"this language."
+msgstr "Show existing translations and generate translations for new cards in "
+"this language."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:560
 msgid "Show notes"
@@ -3776,14 +3992,14 @@ msgstr "Sign in to Flicktionary to set your level."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Sign in to Flicktionary to translate."
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:73
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:67
 msgid "Sign in with Flicktionary"
 msgstr "Sign in with Flicktionary"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:89
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:66
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 msgid "Sign out"
 msgstr "Sign out"
 
@@ -3797,11 +4013,11 @@ msgid "Sign up"
 msgstr "Sign up"
 
 #. placeholder {0}: auth.email
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:62
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:59
 msgid "Signed in as {0}"
 msgstr "Signed in as {0}"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:73
+#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:67
 msgid "Signing in…"
 msgstr "Signing in…"
 
@@ -3910,19 +4126,19 @@ msgstr "Stop drilling this term in active practice"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:246
+#: packages/asbplayer-common/components/SettingsForm.tsx:150
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:65
-msgid "Style Key"
-msgstr "Style Key"
+#~ msgid "Style Key"
+#~ msgstr "Style Key"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:104
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:78
 msgid "Style Value"
 msgstr "Style Value"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:213
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:182
 msgid "Styling"
 msgstr "Styling"
 
@@ -3948,83 +4164,84 @@ msgstr "Subscription Required"
 msgid "Subscription Successful!"
 msgstr "Subscription Successful!"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:440
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:375
 msgid "Subtitle Alignment"
 msgstr "Subtitle Alignment"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:243
+#: packages/asbplayer-common/components/SettingsForm.tsx:142
 msgid "Subtitle Appearance"
 msgstr "Subtitle Appearance"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:314
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:261
 msgid "Subtitle Background Color"
 msgstr "Subtitle Background Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:324
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:270
 msgid "Subtitle Background Opacity"
 msgstr "Subtitle Background Opacity"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:428
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:357
 msgid "Subtitle blur"
 msgstr "Subtitle blur"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:218
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:187
 msgid "Subtitle Color"
 msgstr "Subtitle Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:343
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:283
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:291
 msgid "Subtitle Font Family"
 msgstr "Subtitle Font Family"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:244
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:206
 msgid "Subtitle Font Thickness"
 msgstr "Subtitle Font Thickness"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:286
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:222
 msgid "Subtitle Generation"
 msgstr "Subtitle Generation"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:196
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:172
 msgid "Subtitle HTML"
 msgstr "Subtitle HTML"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:311
+#: packages/asbplayer-common/components/VideoOverlay.tsx:275
 msgid "Subtitle Offset"
 msgstr "Subtitle Offset"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:261
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:222
 msgid "Subtitle Outline Color"
 msgstr "Subtitle Outline Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:271
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:231
 msgid "Subtitle Outline Thickness"
 msgstr "Subtitle Outline Thickness"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:477
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:389
 msgid "Subtitle position offset from bottom"
 msgstr "Subtitle position offset from bottom"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:491
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:397
 msgid "Subtitle position offset from top"
 msgstr "Subtitle position offset from top"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:179
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:160
 msgid "Subtitle regex filter"
 msgstr "Subtitle regex filter"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:188
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:166
 msgid "Subtitle regex filter text replacement"
 msgstr "Subtitle regex filter text replacement"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:288
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:242
 msgid "Subtitle Shadow Color"
 msgstr "Subtitle Shadow Color"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:298
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:251
 msgid "Subtitle Shadow Thickness"
 msgstr "Subtitle Shadow Thickness"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:228
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:196
 msgid "Subtitle Size"
 msgstr "Subtitle Size"
 
@@ -4032,25 +4249,25 @@ msgstr "Subtitle Size"
 #~ msgid "Subtitle source"
 #~ msgstr "Subtitle source"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:25
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:18
 msgid "Subtitle Track"
 msgstr "Subtitle Track"
 
 #. placeholder {0}: i + 1
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:186
 msgid "Subtitle Track {0}"
 msgstr "Subtitle Track {0}"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:156
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:101
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:147
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:80
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:291
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:290
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Subtitles must be loaded before you can start mining."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:505
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:405
 msgid "Subtitles Width"
 msgstr "Subtitles Width"
 
@@ -4097,7 +4314,7 @@ msgstr "Target example"
 msgid "Target language"
 msgstr "Target language"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:124
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:59
 msgid "Target language codes for machine translation"
 msgstr "Target language codes for machine translation"
 
@@ -4148,7 +4365,7 @@ msgstr "Texts"
 msgid "Thank you for your feedback!"
 msgstr "Thank you for your feedback!"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:172
+#: packages/extension/src/ui/components/Tutorial.tsx:188
 msgid "That's it for the basics! Feel free to play around on this page."
 msgstr "That's it for the basics! Feel free to play around on this page."
 
@@ -4157,12 +4374,28 @@ msgstr "That's it for the basics! Feel free to play around on this page."
 #~ msgstr "The chosen subtitle track must match this language."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
-#~ msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
-#~ msgstr "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
+#~ msgid "The content, features, and functionality of our services, including but "
+#~ "not limited to text, graphics, logos, images, as well as the design, "
+#~ "selection, and arrangement thereof, are and will remain the exclusive "
+#~ "property of flicktionary.app and its licensors. These are protected by "
+#~ "copyright, trademark, and other intellectual property or proprietary "
+#~ "rights laws."
+#~ msgstr "The content, features, and functionality of our services, including but "
+#~ "not limited to text, graphics, logos, images, as well as the design, "
+#~ "selection, and arrangement thereof, are and will remain the exclusive "
+#~ "property of flicktionary.app and its licensors. These are protected by "
+#~ "copyright, trademark, and other intellectual property or proprietary "
+#~ "rights laws."
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:17
-#~ msgid "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
-#~ msgstr "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+#~ msgid "the creators of flicktionary.app here. We've been pouring our hearts "
+#~ "into developing the beta version of the app and your feedback is crucial "
+#~ "for us. We're excited to roll out new features soon, and we're always "
+#~ "looking for ways to improve the app."
+#~ msgstr "the creators of flicktionary.app here. We've been pouring our hearts "
+#~ "into developing the beta version of the app and your feedback is "
+#~ "crucial for us. We're excited to roll out new features soon, and we're "
+#~ "always looking for ways to improve the app."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
 #~ msgid "The data we collect serves several purposes:"
@@ -4176,25 +4409,41 @@ msgstr "The extension could not complete pairing."
 msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:101
-msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
-msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
+#: packages/extension/src/ui/components/Tutorial.tsx:107
+msgid "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> on the video and find the asbplayer <1>context "
+"menu</1> to load subtitles."
+msgstr "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> on the video and find the asbplayer "
+"<1>context menu</1> to load subtitles."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:93
-msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
-msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
+#: packages/extension/src/ui/components/Tutorial.tsx:97
+msgid "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> the video and choose the asbplayer <1>Load "
+"Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
+"detected subtitles on supported sites."
+msgstr "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> the video and choose the asbplayer <1>Load "
+"Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
+"detected subtitles on supported sites."
 
 #: packages/extension/src/ui/components/Tutorial.tsx:108
-#~ msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
-#~ msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
+#~ msgid "The first step to using asbplayer is always to load subtitles onto a "
+#~ "video. Open the track selector by selecting <0>asbplayer</0> in the "
+#~ "<1>extensions</1> menu."
+#~ msgstr "The first step to using asbplayer is always to load subtitles onto a "
+#~ "video. Open the track selector by selecting <0>asbplayer</0> in the "
+#~ "<1>extensions</1> menu."
 
-#: packages/asbplayer-common/components/UiSettings.tsx:31
+#: packages/asbplayer-common/components/UiSettings.tsx:26
 msgid "Theme"
 msgstr "Theme"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:51
-#~ msgid "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
-#~ msgstr "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
+#~ msgid "themselves. Each user must have the legal right to use all the voice "
+#~ "data they upload to our platform."
+#~ msgstr "themselves. Each user must have the legal right to use all the voice "
+#~ "data they upload to our platform."
 
 #: apps/native/src/features/auth/api/authentication-hooks.ts:15
 #: apps/web/src/features/auth/api/authentication-hooks.ts:16
@@ -4205,7 +4454,7 @@ msgstr "There was an error sending the verification email. Please try again."
 msgid "There was an error. Please contact support."
 msgstr "There was an error. Please contact support."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:204
+#: packages/asbplayer-common/components/PageSettingsForm.tsx:103
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
 
@@ -4215,12 +4464,20 @@ msgstr "Thinking…"
 
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:58
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:43
-msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
-msgstr "This action cannot be undone. This will permanently delete your account and related data from our servers."
+msgid "This action cannot be undone. This will permanently delete your account "
+"and related data from our servers."
+msgstr "This action cannot be undone. This will permanently delete your account "
+"and related data from our servers."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
-#~ msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
-#~ msgstr "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
+#~ msgid "This automated deletion system is accessible 24/7 through your secure "
+#~ "account dashboard. For additional assistance, our dedicated privacy team "
+#~ "is available at contact@flicktionary.app to process your requests with "
+#~ "the same level of immediacy and thoroughness."
+#~ msgstr "This automated deletion system is accessible 24/7 through your secure "
+#~ "account dashboard. For additional assistance, our dedicated privacy "
+#~ "team is available at contact@flicktionary.app to process your requests "
+#~ "with the same level of immediacy and thoroughness."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
 #: apps/web/src/features/sessions/components/cefr-step.tsx:41
@@ -4228,24 +4485,36 @@ msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
 #: apps/web/src/features/review/components/focus-view.tsx:366
-msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
-msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
+msgid "This card looks incomplete. Re-process the session to populate its basic "
+"data, then come back to enrich it."
+msgstr "This card looks incomplete. Re-process the session to populate its "
+"basic data, then come back to enrich it."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:45
-msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
-msgstr "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
+msgid "This hides the session from your list. Your kept vocabulary stays in "
+"your collection. The source text is retained so you can trace your kept "
+"words back to where you learned them. To erase everything, delete your "
+"account."
+msgstr "This hides the session from your list. Your kept vocabulary stays in "
+"your collection. The source text is retained so you can trace your kept "
+"words back to where you learned them. To erase everything, delete your "
+"account."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
-msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
-msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
+msgid "This screen is only accessible to subscribed users. You can showcase "
+"premium features here."
+msgstr "This screen is only accessible to subscribed users. You can showcase "
+"premium features here."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:60
 #~ msgid "This session is processing — wait for it to finish before removing."
 #~ msgstr "This session is processing — wait for it to finish before removing."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:176
-msgid "This term is removed from your vocabulary. Restore it to keep practicing."
-msgstr "This term is removed from your vocabulary. Restore it to keep practicing."
+msgid "This term is removed from your vocabulary. Restore it to keep "
+"practicing."
+msgstr "This term is removed from your vocabulary. Restore it to keep "
+"practicing."
 
 #: apps/web/src/features/review/components/processing-view.tsx:35
 #~ msgid "This usually takes 1–2 minutes. You can leave this page and come back."
@@ -4261,55 +4530,57 @@ msgstr "TMDB search failed"
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:41
 #: apps/web/src/features/billing/components/pricing-view.tsx:40
-msgid "To change your current plan type, please click on \"Manage Subscription\"."
-msgstr "To change your current plan type, please click on \"Manage Subscription\"."
+msgid "To change your current plan type, please click on \"Manage "
+"Subscription\"."
+msgstr "To change your current plan type, please click on \"Manage "
+"Subscription\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
 msgid "Today"
 msgstr "Today"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:243
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:255
 msgid "Toggle auto-pause"
 msgstr "Toggle auto-pause"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:281
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:269
 msgid "Toggle condensed playback"
 msgstr "Toggle condensed playback"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:283
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:271
 msgid "Toggle fast forward playback"
 msgstr "Toggle fast forward playback"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:307
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:290
 msgid "Toggle repeat mode"
 msgstr "Toggle repeat mode"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:313
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:296
 msgid "Toggle subtitle track 1 in asbplayer"
 msgstr "Toggle subtitle track 1 in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:309
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:292
 msgid "Toggle subtitle track 1 in video"
 msgstr "Toggle subtitle track 1 in video"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:317
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:300
 msgid "Toggle subtitle track 2 in asbplayer"
 msgstr "Toggle subtitle track 2 in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:310
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:293
 msgid "Toggle subtitle track 2 in video"
 msgstr "Toggle subtitle track 2 in video"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:321
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:304
 msgid "Toggle subtitle track 3 in asbplayer"
 msgstr "Toggle subtitle track 3 in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:311
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:294
 msgid "Toggle subtitle track 3 in video"
 msgstr "Toggle subtitle track 3 in video"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/VideoOverlay.tsx:374
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:291
+#: packages/asbplayer-common/components/VideoOverlay.tsx:339
 msgid "Toggle subtitles"
 msgstr "Toggle subtitles"
 
@@ -4322,10 +4593,12 @@ msgid "Too many requests. Please try again later."
 msgstr "Too many requests. Please try again later."
 
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:28
-msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
-msgstr "Too many requests. Please use the app in only one tab and device at a time and try again later."
+msgid "Too many requests. Please use the app in only one tab and device at a "
+"time and try again later."
+msgstr "Too many requests. Please use the app in only one tab and device at a "
+"time and try again later."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:465
+#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:379
 msgid "Top"
 msgstr "Top"
 
@@ -4334,7 +4607,7 @@ msgid "Total"
 msgstr "Total"
 
 #. placeholder {0}: i + 1
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:42
+#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:29
 msgid "Track {0}"
 msgstr "Track {0}"
 
@@ -4342,11 +4615,11 @@ msgstr "Track {0}"
 #~ msgid "Track imported"
 #~ msgstr "Track imported"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:296
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:230
 msgid "Transcript Server API Key (optional)"
 msgstr "Transcript Server API Key (optional)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:289
+#: packages/asbplayer-common/components/MiscSettingsTab.tsx:225
 msgid "Transcript Server URL"
 msgstr "Transcript Server URL"
 
@@ -4369,17 +4642,27 @@ msgid "Triage"
 msgstr "Triage"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:68
-msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
-msgstr "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
+msgid "Try adding a movie or pasting a piece of text in any language to get "
+"started. You can pick the target language each time you add new content."
+msgstr "Try adding a movie or pasting a piece of text in any language to get "
+"started. You can pick the target language each time you add new "
+"content."
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:76
-#: packages/asbplayer-common/components/UiSettings.tsx:27
+#: packages/extension/src/ui/components/Tutorial.tsx:93
+#: packages/extension/src/ui/components/Tutorial.tsx:185
+msgid "Tutorial"
+msgstr "Tutorial"
+
+#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:65
+#: packages/asbplayer-common/components/UiSettings.tsx:22
 msgid "UI"
 msgstr "UI"
 
 #: apps/web/src/features/billing/api/portal-session-hooks.ts:14
-msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
-msgstr "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
+msgid "Unable to access your billing section at the moment. Please try again "
+"later or contact support if the issue persists."
+msgstr "Unable to access your billing section at the moment. Please try again "
+"later or contact support if the issue persists."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:64
 msgid "Unable to open app store"
@@ -4392,13 +4675,13 @@ msgstr "Unable to open app store. Please manually update the app."
 #. placeholder {0}: 1
 #. placeholder {0}: 2
 #. placeholder {0}: 3
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:325
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:329
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:333
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:312
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:316
 msgid "Unblur subtitle track {0} in asbplayer"
 msgstr "Unblur subtitle track {0} in asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:158
+#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:138
 msgid "Unbound"
 msgstr "Unbound"
 
@@ -4486,9 +4769,11 @@ msgstr "Use suggested"
 #~ msgid "Use suggested: {suggestedSurface}"
 #~ msgstr "Use suggested: {suggestedSurface}"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:124
-msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
-msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
+#: packages/extension/src/ui/components/Tutorial.tsx:131
+msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, "
+"<3>switch playback modes</3>, and more."
+msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> "
+"subtitles, <3>switch playback modes</3>, and more."
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
@@ -4512,8 +4797,18 @@ msgid "User setup complete"
 msgstr "User setup complete"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:89
-#~ msgid "Users retain all rights to any content they upload, submit, post, or display on or through the service. By uploading this content, users grant us a permission to use, reproduce, modify, publish, and display this content in connection with the service. In particular, this content will neither be sold or traded with any external service provider nor made public without user\"s explicit consent"
-#~ msgstr "Users retain all rights to any content they upload, submit, post, or display on or through the service. By uploading this content, users grant us a permission to use, reproduce, modify, publish, and display this content in connection with the service. In particular, this content will neither be sold or traded with any external service provider nor made public without user\"s explicit consent"
+#~ msgid "Users retain all rights to any content they upload, submit, post, or "
+#~ "display on or through the service. By uploading this content, users "
+#~ "grant us a permission to use, reproduce, modify, publish, and display "
+#~ "this content in connection with the service. In particular, this content "
+#~ "will neither be sold or traded with any external service provider nor "
+#~ "made public without user\"s explicit consent"
+#~ msgstr "Users retain all rights to any content they upload, submit, post, or "
+#~ "display on or through the service. By uploading this content, users "
+#~ "grant us a permission to use, reproduce, modify, publish, and display "
+#~ "this content in connection with the service. In particular, this "
+#~ "content will neither be sold or traded with any external service "
+#~ "provider nor made public without user\"s explicit consent"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
 msgid "Verb"
@@ -4544,11 +4839,11 @@ msgstr "Verify Your Email"
 msgid "Verifying..."
 msgstr "Verifying..."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:131
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:118
 msgid "Video Element"
 msgstr "Video Element"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:325
+#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:316
 msgid "Video Name"
 msgstr "Video Name"
 
@@ -4589,28 +4884,70 @@ msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "We did not hear back from a Flicktionary extension on this device."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:107
-#~ msgid "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
-#~ msgstr "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
+#~ msgid "We engage reputable third-party companies to facilitate our services "
+#~ "(\"Service Providers\"), provide the service on our behalf, perform "
+#~ "service-related services, and assist in analyzing how our service is "
+#~ "used. These third parties are carefully selected and have access to your "
+#~ "Personal Data only to perform specific tasks on our behalf. They are "
+#~ "contractually bound to maintain the confidentiality of your information "
+#~ "and are committed to complying with applicable privacy laws, ensuring "
+#~ "that your data is handled securely and responsibly."
+#~ msgstr "We engage reputable third-party companies to facilitate our services "
+#~ "(\"Service Providers\"), provide the service on our behalf, perform "
+#~ "service-related services, and assist in analyzing how our service is "
+#~ "used. These third parties are carefully selected and have access to "
+#~ "your Personal Data only to perform specific tasks on our behalf. They "
+#~ "are contractually bound to maintain the confidentiality of your "
+#~ "information and are committed to complying with applicable privacy "
+#~ "laws, ensuring that your data is handled securely and responsibly."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:180
-#~ msgid "We guarantee absolute control over your personal data through our automated account management system. Our platform provides a dedicated one-click deletion feature that ensures immediate and irreversible removal of all your data from our systems. When activated, this automated process permanently erases:"
-#~ msgstr "We guarantee absolute control over your personal data through our automated account management system. Our platform provides a dedicated one-click deletion feature that ensures immediate and irreversible removal of all your data from our systems. When activated, this automated process permanently erases:"
+#~ msgid "We guarantee absolute control over your personal data through our "
+#~ "automated account management system. Our platform provides a dedicated "
+#~ "one-click deletion feature that ensures immediate and irreversible "
+#~ "removal of all your data from our systems. When activated, this "
+#~ "automated process permanently erases:"
+#~ msgstr "We guarantee absolute control over your personal data through our "
+#~ "automated account management system. Our platform provides a dedicated "
+#~ "one-click deletion feature that ensures immediate and irreversible "
+#~ "removal of all your data from our systems. When activated, this "
+#~ "automated process permanently erases:"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:129
-#~ msgid "We implement and maintain robust security measures aligned with industry best practices to protect your Personal Data. Our security infrastructure includes:"
-#~ msgstr "We implement and maintain robust security measures aligned with industry best practices to protect your Personal Data. Our security infrastructure includes:"
+#~ msgid "We implement and maintain robust security measures aligned with industry "
+#~ "best practices to protect your Personal Data. Our security "
+#~ "infrastructure includes:"
+#~ msgstr "We implement and maintain robust security measures aligned with "
+#~ "industry best practices to protect your Personal Data. Our security "
+#~ "infrastructure includes:"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:100
-#~ msgid "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the service will cease immediately."
-#~ msgstr "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the service will cease immediately."
+#~ msgid "We may terminate or suspend your account immediately, without prior "
+#~ "notice or liability, for any reason whatsoever, including without "
+#~ "limitation if you breach these Terms. Upon termination, your right to "
+#~ "use the service will cease immediately."
+#~ msgstr "We may terminate or suspend your account immediately, without prior "
+#~ "notice or liability, for any reason whatsoever, including without "
+#~ "limitation if you breach these Terms. Upon termination, your right to "
+#~ "use the service will cease immediately."
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:128
-msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
-msgstr "We support .srt subtitle files. The language is detected automatically from the file contents."
+msgid "We support .srt subtitle files. The language is detected automatically "
+"from the file contents."
+msgstr "We support .srt subtitle files. The language is detected automatically "
+"from the file contents."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:170
-#~ msgid "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
-#~ msgstr "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
+#~ msgid "We will retain your Personal Data only for as long as is necessary for "
+#~ "the purposes set out in this Privacy Policy. We will retain and use your "
+#~ "Personal Data to the extent necessary to comply with our legal "
+#~ "obligations, resolve disputes, and enforce our legal agreements and "
+#~ "policies."
+#~ msgstr "We will retain your Personal Data only for as long as is necessary for "
+#~ "the purposes set out in this Privacy Policy. We will retain and use "
+#~ "your Personal Data to the extent necessary to comply with our legal "
+#~ "obligations, resolve disputes, and enforce our legal agreements and "
+#~ "policies."
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
@@ -4638,13 +4975,17 @@ msgstr "We've sent a verification link to:"
 msgid "Welcome to Flicktionary"
 msgstr "Welcome to Flicktionary"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:38
+#: packages/extension/src/ui/components/FtueUi.tsx:14
 msgid "Welcome to Flicktionary."
 msgstr "Welcome to Flicktionary."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
-#~ msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
-#~ msgstr "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
+#~ msgid "Welcome to flicktionary.app. We are committed to protecting your "
+#~ "privacy. This Privacy Policy outlines how we collect, handle, store, and "
+#~ "safeguard your personal data as you interact with our services."
+#~ msgstr "Welcome to flicktionary.app. We are committed to protecting your "
+#~ "privacy. This Privacy Policy outlines how we collect, handle, store, "
+#~ "and safeguard your personal data as you interact with our services."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:190
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
@@ -4655,24 +4996,34 @@ msgid "What language are you studying?"
 msgstr "What language are you studying?"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:48
-msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
-msgstr "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
+msgid "What language do you speak natively? This is the language Flicktionary "
+"will translate words and phrases into."
+msgstr "What language do you speak natively? This is the language Flicktionary "
+"will translate words and phrases into."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:191
 msgid "What's the etymology or origin of this term?"
 msgstr "What's the etymology or origin of this term?"
 
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-#~ msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
-#~ msgstr "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
+#~ msgid "When on, processing a session lets the LLM scan the whole track and "
+#~ "suggest terms at your level. When off, only your manual highlights "
+#~ "become cards."
+#~ msgstr "When on, processing a session lets the LLM scan the whole track and "
+#~ "suggest terms at your level. When off, only your manual highlights "
+#~ "become cards."
 
 #: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:21
-#~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
-#~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
+#~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition "
+#~ "to creating the highlight."
+#~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition "
+#~ "to creating the highlight."
 
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-#~ msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
-#~ msgstr "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
+#~ msgid "When on, the reader can underline suggested terms as you scroll. When "
+#~ "off, only your own highlights become cards."
+#~ msgstr "When on, the reader can underline suggested terms as you scroll. When "
+#~ "off, only your own highlights become cards."
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
@@ -4708,8 +5059,10 @@ msgstr "Yearly"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:105
 #: apps/web/src/features/more/components/account-page.tsx:41
-msgid "You are a special user with free access. You have no active subscription."
-msgstr "You are a special user with free access. You have no active subscription."
+msgid "You are a special user with free access. You have no active "
+"subscription."
+msgstr "You are a special user with free access. You have no active "
+"subscription."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:26
 msgid "You are now subscribed to Premium!"
@@ -4729,8 +5082,17 @@ msgid "You have already used your free trial."
 msgstr "You have already used your free trial."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:110
-#~ msgid "You understand and agree that your use of our service is at your sole risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. We expressly disclaim all warranties, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
-#~ msgstr "You understand and agree that your use of our service is at your sole risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. We expressly disclaim all warranties, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
+#~ msgid "You understand and agree that your use of our service is at your sole "
+#~ "risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" "
+#~ "basis. We expressly disclaim all warranties, whether express or implied, "
+#~ "including, but not limited to, the implied warranties of "
+#~ "merchantability, fitness for a particular purpose, and non-infringement."
+#~ msgstr "You understand and agree that your use of our service is at your sole "
+#~ "risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" "
+#~ "basis. We expressly disclaim all warranties, whether express or "
+#~ "implied, including, but not limited to, the implied warranties of "
+#~ "merchantability, fitness for a particular purpose, and "
+#~ "non-infringement."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:96
 msgid "You used your free trial"
@@ -4742,8 +5104,10 @@ msgstr "You're all set"
 
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:309
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:334
-msgid "You've reviewed every due term for this language. Come back later when more are ready."
-msgstr "You've reviewed every due term for this language. Come back later when more are ready."
+msgid "You've reviewed every due term for this language. Come back later when "
+"more are ready."
+msgstr "You've reviewed every due term for this language. Come back later when "
+"more are ready."
 
 #: apps/native/src/features/removals/api/removals-hooks.ts:13
 #: apps/web/src/features/removals/api/removals-hooks.ts:16
@@ -4767,8 +5131,12 @@ msgid "Your highlights"
 msgstr "Your highlights"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:98
-#~ msgid "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
-#~ msgstr "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
+#~ msgid "Your information, including Personal Data, may be transferred to and "
+#~ "maintained on computers located outside of your jurisdiction where data "
+#~ "protection laws may differ from those in your jurisdiction."
+#~ msgstr "Your information, including Personal Data, may be transferred to and "
+#~ "maintained on computers located outside of your jurisdiction where data "
+#~ "protection laws may differ from those in your jurisdiction."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:34
 #: apps/web/src/features/sessions/components/cefr-step.tsx:40

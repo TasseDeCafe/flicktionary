@@ -9,6 +9,7 @@
       "@flicktionary/core/*": ["../../packages/core/src/*"],
       "@flicktionary/i18n/locales/*": ["../../packages/i18n/locales/*"],
       "@flicktionary/i18n/*": ["../../packages/i18n/src/*"],
+      "@flicktionary/ui/*": ["../../packages/ui/src/*"],
       "@/*": ["./src/*"]
     }
   },

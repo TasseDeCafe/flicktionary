@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { useSearch } from '@tanstack/react-router'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx'
+import { Card, CardContent, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
 import { useMintExtensionSessionMutation } from '@/features/extension-pair/api/extension-auth-hooks'
 
 type Status = 'pairing' | 'sent' | 'no-extension' | 'error'

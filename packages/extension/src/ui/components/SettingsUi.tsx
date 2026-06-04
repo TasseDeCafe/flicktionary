@@ -1,38 +1,49 @@
-import ThemeProvider from '@mui/material/styles/ThemeProvider'
-import CssBaseline from '@mui/material/CssBaseline'
+import { useEffect, useLayoutEffect } from 'react'
 import { useSettings } from '../hooks/use-settings'
-import { useMemo } from 'react'
 import SettingsPage from './SettingsPage'
-import { createTheme } from '@asbplayer-fork/common/theme'
-import { StyledEngineProvider } from '@mui/material/styles'
 import { I18nProvider } from '@lingui/react'
+import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { i18n, setupLingui } from '../lingui'
 
 const inTutorial = new URLSearchParams(window.location.search).get('tutorial') === 'true'
 
 const SettingsUi = () => {
   const { settings, onSettingsChanged, profileContext } = useSettings()
-  const theme = useMemo(() => settings && createTheme(settings.themeType), [settings])
 
-  if (!settings || !theme) {
+  // Layout effect, not render body: i18n.activate() setState()s the mounted
+  // <I18nProvider>, which React forbids mid-render. Pre-paint, so no flash.
+  const language = settings?.language
+  useLayoutEffect(() => {
+    if (language) {
+      setupLingui(language)
+    }
+  }, [language])
+
+  // Radix portals (selects, dialogs, tooltips) target document.body — outside
+  // the `dark`-classed root div below — so the dark scope must also land on
+  // <body> (same trap as portalContainer in the shadow surfaces).
+  const dark = settings?.themeType === 'dark'
+  useEffect(() => {
+    document.body.classList.toggle('dark', dark)
+  }, [dark])
+
+  if (!settings) {
     return null
   }
 
-  setupLingui(settings.language)
-
   return (
     <I18nProvider i18n={i18n}>
-      <StyledEngineProvider injectFirst>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
+      <TooltipProvider>
+        <div className={cn('bg-background text-foreground font-sans', dark && 'dark')}>
           <SettingsPage
             settings={settings}
             onSettingsChanged={onSettingsChanged}
             inTutorial={inTutorial}
             {...profileContext}
           />
-        </ThemeProvider>
-      </StyledEngineProvider>
+        </div>
+      </TooltipProvider>
     </I18nProvider>
   )
 }

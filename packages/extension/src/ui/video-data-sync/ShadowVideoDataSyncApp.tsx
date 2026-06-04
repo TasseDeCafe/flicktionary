@@ -7,11 +7,10 @@ import {
   VideoDataUiOpenReason,
 } from '@asbplayer-fork/common'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
-import type { PaletteMode } from '@mui/material/styles'
 import type { Profile } from '@asbplayer-fork/common/settings'
 import { useLingui } from '@lingui/react/macro'
 import VideoDataSyncDialog from '../components/VideoDataSyncDialog'
-import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
+import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 
 // The in-realm replacement for the FrameBridge model transport. The controller
 // pushes partial VideoDataUiModel updates (formerly UpdateStateMessage over the
@@ -69,36 +68,25 @@ export interface ShadowVideoDataSyncAppProps {
 
 const initialTrackIds = ['-', '-', '-']
 
-// Outer wrapper: provides the MUI/emotion/I18n context. It reads ONLY themeType
-// from the channel (for the theme) — the body's hooks (useLingui, MUI portals)
-// must run INSIDE this provider, so they live in VideoDataSyncBody below.
-export function ShadowVideoDataSyncApp({
-  channel,
-  shadowRoot,
-  portalContainer,
-  language,
-  commands,
-}: ShadowVideoDataSyncAppProps) {
-  const [themeType, setThemeType] = useState<PaletteMode>('dark')
+// Outer wrapper: provides the ui/I18n/portal context. It reads ONLY themeType
+// from the channel (for the theme) — the body's hooks (useLingui) must run
+// INSIDE this provider, so they live in VideoDataSyncBody below.
+export function ShadowVideoDataSyncApp({ channel, portalContainer, language, commands }: ShadowVideoDataSyncAppProps) {
+  const [themeType, setThemeType] = useState<'dark' | 'light'>('dark')
   useEffect(
     () =>
       channel.subscribe((model) => {
         if (model.settings?.themeType !== undefined) {
-          setThemeType((model.settings.themeType as PaletteMode) ?? 'dark')
+          setThemeType((model.settings.themeType as 'dark' | 'light') ?? 'dark')
         }
       }),
     [channel]
   )
 
   return (
-    <ShadowMuiProvider
-      shadowRoot={shadowRoot}
-      portalContainer={portalContainer}
-      themeType={themeType}
-      language={language}
-    >
+    <ShadowUiProvider portalContainer={portalContainer} themeType={themeType} language={language}>
       <VideoDataSyncBody channel={channel} commands={commands} />
-    </ShadowMuiProvider>
+    </ShadowUiProvider>
   )
 }
 

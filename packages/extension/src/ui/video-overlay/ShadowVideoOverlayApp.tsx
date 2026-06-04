@@ -1,8 +1,7 @@
 import type { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
-import type { PaletteMode } from '@mui/material/styles'
 import VideoOverlay from '@asbplayer-fork/common/components/VideoOverlay'
 import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-scrollable-control-type'
-import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
+import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import { ModelStore, useModelStore } from '../shadow/model-store'
 
 // The in-realm replacement for the iframe model transport. The controller pushes
@@ -48,13 +47,7 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
   await browser.storage.local.set({ [lastControlTypeKey]: controlType })
 }
 
-export function ShadowVideoOverlayApp({
-  store,
-  shadowRoot,
-  portalContainer,
-  anchor,
-  commands,
-}: ShadowVideoOverlayAppProps) {
+export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands }: ShadowVideoOverlayAppProps) {
   const { model, visible, tooltipsEnabled } = useModelStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
     saveLastControlType,
@@ -62,10 +55,9 @@ export function ShadowVideoOverlayApp({
   })
 
   return (
-    <ShadowMuiProvider
-      shadowRoot={shadowRoot}
+    <ShadowUiProvider
       portalContainer={portalContainer}
-      themeType={(model?.themeType as PaletteMode) ?? 'dark'}
+      themeType={model?.themeType ?? 'dark'}
       language={model?.language ?? 'en'}
     >
       {visible && lastControlType !== undefined && model !== undefined && (
@@ -89,6 +81,6 @@ export function ShadowVideoOverlayApp({
           />
         </div>
       )}
-    </ShadowMuiProvider>
+    </ShadowUiProvider>
   )
 }

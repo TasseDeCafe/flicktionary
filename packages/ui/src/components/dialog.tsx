@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { XIcon } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { usePortalContainer } from './portal'
 
 const Dialog = ({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) => (
   <DialogPrimitive.Root data-slot='dialog' {...props} />
@@ -39,8 +40,10 @@ const dialogContentBase =
 // `right` is a full-height slide-in panel anchored to the right edge.
 // `fullScreen` covers the viewport and slides up from the bottom (mobile chat).
 const dialogContentVariants = {
+  // 32px margin allowance is px, not the upstream 2rem — rem resolves against
+  // the HOST page root font-size inside the extension's shadow surfaces.
   center:
-    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] left-[50%] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 sm:max-w-lg',
+    'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] left-[50%] grid w-full max-w-[calc(100%-32px)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 sm:max-w-lg',
   right:
     'inset-y-0 right-0 flex h-dvh w-full max-w-md flex-col rounded-none border-l p-0 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right',
   fullScreen:
@@ -52,7 +55,9 @@ const DialogContent = ({
   children,
   showCloseButton = true,
   showOverlay = true,
+  overlayClassName,
   variant = 'center',
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
@@ -60,28 +65,38 @@ const DialogContent = ({
   // their content don't want the dimming scrim — it flashes during the slide
   // animation and blocks scrolling the page behind. Pass false to drop it.
   showOverlay?: boolean
+  // Extra classes for the scrim — e.g. a z-index override when the dialog must
+  // stack above other max-z chrome (the extension FTUE page renders the real
+  // video overlay at z-2147483647 underneath its tutorial dialogs).
+  overlayClassName?: string
   variant?: keyof typeof dialogContentVariants
-}) => (
-  <DialogPortal data-slot='dialog-portal'>
-    {showOverlay && <DialogOverlay />}
-    <DialogPrimitive.Content
-      data-slot='dialog-content'
-      className={cn(dialogContentBase, dialogContentVariants[variant], className)}
-      {...props}
-    >
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close
-          data-slot='dialog-close'
-          className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-        >
-          <XIcon />
-          <span className='sr-only'>Close</span>
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
-  </DialogPortal>
-)
+  // Portal target override. Defaults to the PortalContainerContext (set by the
+  // extension's shadow surfaces), then Radix's document.body fallback.
+  container?: HTMLElement | null
+}) => {
+  const contextContainer = usePortalContainer()
+  return (
+    <DialogPortal data-slot='dialog-portal' container={container ?? contextContainer ?? undefined}>
+      {showOverlay && <DialogOverlay className={overlayClassName} />}
+      <DialogPrimitive.Content
+        data-slot='dialog-content'
+        className={cn(dialogContentBase, dialogContentVariants[variant], className)}
+        {...props}
+      >
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close
+            data-slot='dialog-close'
+            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+          >
+            <XIcon />
+            <span className='sr-only'>Close</span>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  )
+}
 
 const DialogHeader = ({ className, ...props }: React.ComponentProps<'div'>) => (
   <div data-slot='dialog-header' className={cn('flex flex-col gap-2 text-center sm:text-left', className)} {...props} />

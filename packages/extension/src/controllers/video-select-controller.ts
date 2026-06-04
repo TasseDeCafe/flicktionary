@@ -208,6 +208,9 @@ export default class VideoSelectController {
     const commands = this._shadowCommands()
     this._shadowHandle = mountModalHost({
       hostAttribute: VIDEO_SELECT_HOST_ATTR,
+      // Radix/Tailwind surface: adopt the shared overlay sheet (tokens +
+      // utilities) instead of emotion.
+      adoptTailwind: true,
       render: ({ shadowRoot, portalContainer }) =>
         createElement(ShadowVideoSelectApp, { channel, shadowRoot, portalContainer, language, commands }),
     })

@@ -1,34 +1,12 @@
 import { useCallback, useMemo } from 'react'
-import { makeStyles } from 'tss-react/mui'
 import { Trans } from '@lingui/react/macro'
-import Box from '@mui/material/Box'
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
 import { useCommandKeyBinds } from '../hooks/use-command-key-binds'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
-import Paper from '@mui/material/Paper'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
 import { AsbplayerSettings, Profile } from '@asbplayer-fork/common/settings'
-import { useTheme } from '@mui/material/styles'
 import { settingsPageConfigs } from '@/services/pages'
-
-const useStyles = makeStyles()((theme) => ({
-  root: {
-    '& .MuiPaper-root': {
-      height: '100vh',
-    },
-  },
-  content: {
-    maxHeight: '100%',
-  },
-  profilesContainer: {
-    paddingLeft: theme.spacing(4),
-    paddingRight: theme.spacing(4),
-  },
-}))
 
 interface Props {
   settings: AsbplayerSettings
@@ -41,10 +19,10 @@ interface Props {
   onSetActiveProfile: (name: string | undefined) => void
 }
 
+// The options page: a static, always-open "dialog" look (scrim + centered
+// panel), replicating the old always-open MUI Dialog without Radix — there is
+// nothing to dismiss or focus-trap on a dedicated page.
 const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
-  const theme = useTheme()
-  const { classes } = useStyles()
-
   const { updateLocalFontsPermission, updateLocalFonts, localFontsAvailable, localFontsPermission, localFontFamilies } =
     useLocalFontFamilies()
   const handleUnlockLocalFonts = useCallback(() => {
@@ -72,12 +50,13 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
   }
 
   return (
-    <Paper square style={{ height: '100vh' }}>
-      <Dialog open={true} maxWidth='md' fullWidth className={classes.root} onClose={() => {}}>
-        <DialogTitle>
+    <div className='bg-background relative h-dvh w-full'>
+      <div className='absolute inset-0 bg-black/50' />
+      <div className='bg-background relative mx-auto flex h-[calc(100dvh-64px)] w-[calc(100%-64px)] max-w-[900px] translate-y-8 flex-col gap-4 rounded-lg p-6 shadow-lg'>
+        <h1 className='text-lg leading-none font-semibold'>
           <Trans>Settings</Trans>
-        </DialogTitle>
-        <DialogContent className={classes.content}>
+        </h1>
+        <div className='min-h-0 flex-1'>
           <SettingsForm
             extensionInstalled
             extensionVersion={browser.runtime.getManifest().version}
@@ -102,12 +81,12 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
             scrollToId={section}
             inTutorial={inTutorial}
           />
-        </DialogContent>
-        <Box style={{ marginBottom: theme.spacing(2) }} className={classes.profilesContainer}>
+        </div>
+        <div className='px-4'>
           <SettingsProfileSelectMenu {...profileContext} />
-        </Box>
-      </Dialog>
-    </Paper>
+        </div>
+      </div>
+    </div>
   )
 }
 

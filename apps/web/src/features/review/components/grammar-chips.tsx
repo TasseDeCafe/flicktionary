@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@flicktionary/ui/components/badge'
 import { getEffectiveGrammarFields } from '@flicktionary/core/constants/language-grammar'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 

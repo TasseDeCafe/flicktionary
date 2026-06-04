@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { OptionCard } from '@/components/ui/option-card'
+import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { useImportFromOpenSubtitles, useSearchOpenSubtitles, useUploadSrt } from '../api/sessions-hooks'
 import { useDetectLanguage } from '../api/languages-hooks'
 import { SrtUploadInput } from './srt-upload-input'

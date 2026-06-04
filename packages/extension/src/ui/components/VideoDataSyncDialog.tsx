@@ -1,43 +1,28 @@
-import Button from '@mui/material/Button'
-import CircularProgress from '@mui/material/CircularProgress'
-import CloseIcon from '@mui/icons-material/Close'
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import Grid from '@mui/material/Grid'
-import IconButton from '@mui/material/IconButton'
-import SettingsIcon from '@mui/icons-material/Settings'
-import MenuItem from '@mui/material/MenuItem'
-import TextField from '@mui/material/TextField'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import { makeStyles } from 'tss-react/mui'
-import Switch from '@mui/material/Switch'
-import LabelWithHoverEffect from '@asbplayer-fork/common/components/LabelWithHoverEffect'
-import { usePortalContainer } from '@asbplayer-fork/common/components/portal-container-context'
+import { InfoIcon, Loader2Icon, SettingsIcon, XIcon } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
+import { Button } from '@flicktionary/ui/components/button'
+import { Label } from '@flicktionary/ui/components/label'
+import { Switch } from '@flicktionary/ui/components/switch'
+import { Textarea } from '@flicktionary/ui/components/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@flicktionary/ui/components/select'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ConfirmedVideoDataSubtitleTrack, VideoDataSubtitleTrack, VideoDataUiOpenReason } from '@asbplayer-fork/common'
 import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import MiniProfileSelector from '@asbplayer-fork/common/components/MiniProfileSelector'
 import type { Profile } from '@asbplayer-fork/common/settings'
-import Alert from '@mui/material/Alert'
-import { type ButtonBaseActions } from '@mui/material'
 
-const createClasses = makeStyles()((theme) => ({
-  relative: {
-    position: 'relative',
-  },
-  spinner: {
-    position: 'absolute',
-    right: 'calc(1em + 14px)',
-    top: 'calc(50% - 13px)',
-    fontSize: '1.5em',
-  },
-  hide: {
-    display: 'none',
-  },
-}))
+// Sentinel value for the action item at the bottom of each track select.
+// Radix select items must carry a non-empty unique value; this one is
+// intercepted in onValueChange and never stored as a selection.
+const OPEN_FILES_VALUE = '__open-files__'
 
 // An auto-calculated video name based on selected track
 function calculateVideoName(baseName: string, label: string, localFile: boolean | undefined) {
@@ -108,15 +93,10 @@ export default function VideoDataSyncDialog({
   onGenerateSupadata,
 }: Props) {
   const { t } = useLingui()
-  // When rendered inside a Shadow DOM, the Dialog and the track-select dropdowns
-  // must portal into the shadow root (provided by ShadowMuiProvider) or they
-  // render unstyled outside it; undefined => default body for the iframe path.
-  const portalContainer = usePortalContainer()
   const [userSelectedSubtitleTrackIds, setUserSelectedSubtitleTrackIds] = useState(['-', '-', '-'])
   const [name, setName] = useState('')
   const [shouldRememberTrackChoices, setShouldRememberTrackChoices] = useState(false)
   const trimmedName = name.trim()
-  const { classes } = createClasses()
 
   useEffect(() => {
     if (open) {
@@ -202,177 +182,176 @@ export default function VideoDataSyncDialog({
     const subtitleTrackSelectors = []
     for (let i = 0; i < numberOfSubtitleTrackSelectors; i++) {
       subtitleTrackSelectors.push(
-        <Grid item key={i} style={{ width: '100%' }}>
-          <div className={`${classes.relative}${!showSubSelect ? ` ${classes.hide}` : ''}`}>
-            <TextField
-              select
-              fullWidth
-              key={i}
-              error={!!error}
-              color='primary'
-              variant='filled'
-              label={t`Subtitle Track ${i + 1}`}
-              helperText={error || ''}
-              SelectProps={{ MenuProps: { container: portalContainer } }}
-              value={subtitleTracks.find((track) => track.id === userSelectedSubtitleTrackIds[i])?.id ?? '-'}
-              disabled={isLoading || disabled}
-              onChange={(e) =>
-                setUserSelectedSubtitleTrackIds((prevSelectedSubtitles) => {
-                  const newSelectedSubtitles = [...prevSelectedSubtitles]
-                  newSelectedSubtitles[i] = e.target.value
-                  return newSelectedSubtitles
-                })
+        <div key={i} className={cn('relative flex w-full flex-col gap-2', !showSubSelect && 'hidden')}>
+          <Label>{t`Subtitle Track ${i + 1}`}</Label>
+          <Select
+            value={subtitleTracks.find((track) => track.id === userSelectedSubtitleTrackIds[i])?.id ?? '-'}
+            disabled={isLoading || disabled}
+            onValueChange={(value) => {
+              if (value === OPEN_FILES_VALUE) {
+                onOpenFile(i)
+                return
               }
-            >
+              setUserSelectedSubtitleTrackIds((prevSelectedSubtitles) => {
+                const newSelectedSubtitles = [...prevSelectedSubtitles]
+                newSelectedSubtitles[i] = value
+                return newSelectedSubtitles
+              })
+            }}
+          >
+            <SelectTrigger className={cn('w-full', !!error && 'border-destructive')}>
+              <SelectValue />
+              {isLoading && <Loader2Icon className='size-4 animate-spin' />}
+            </SelectTrigger>
+            <SelectContent>
               {subtitleTracks.map((subtitle) => (
-                <MenuItem value={subtitle.id} key={subtitle.id}>
-                  {subtitle.label}
-                </MenuItem>
+                <SelectItem value={subtitle.id} key={subtitle.id}>
+                  <span className='truncate'>{subtitle.label}</span>
+                </SelectItem>
               ))}
-              <MenuItem onClick={() => onOpenFile(i)}>
+              <SelectSeparator />
+              <SelectItem value={OPEN_FILES_VALUE}>
                 <Trans>Open Files</Trans>
-              </MenuItem>
-            </TextField>
-            {isLoading && (
-              <span className={classes.spinner}>
-                <CircularProgress size={20} color='primary' />
-              </span>
-            )}
-          </div>
-        </Grid>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          {!!error && <p className='text-destructive text-sm'>{error}</p>}
+        </div>
       )
     }
     return subtitleTrackSelectors
   }
 
   const threeSubtitleTrackSelectors = generateSubtitleTrackSelectors(3)
-  const okActionRef = useRef<ButtonBaseActions | null>(null)
-  const videoNameRef = useRef<HTMLInputElement>(null)
+  const okButtonRef = useRef<HTMLButtonElement>(null)
+  const videoNameRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    if (open && trimmedName && !videoNameRef.current?.contains(document.activeElement) && !disabled) {
-      okActionRef.current?.focusVisible()
+    // Focus OK once the name is ready, but never steal focus while the user is
+    // editing the name field. document.activeElement only reports the shadow
+    // HOST from inside a shadow tree, so resolve the active element through the
+    // field's own root node (works for both Document and ShadowRoot).
+    const rootNode = videoNameRef.current?.getRootNode() as Document | ShadowRoot | undefined
+    const editingName =
+      videoNameRef.current !== null &&
+      rootNode?.activeElement !== null &&
+      rootNode?.activeElement !== undefined &&
+      videoNameRef.current?.contains(rootNode.activeElement)
+
+    if (open && trimmedName && !editingName && !disabled) {
+      okButtonRef.current?.focus()
     }
   }, [open, trimmedName, disabled])
 
   return (
     <Dialog
-      disableRestoreFocus
-      disableEnforceFocus
-      container={portalContainer}
-      fullWidth
-      maxWidth='sm'
       open={open}
-      onClose={onCancel}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onCancel()
+        }
+      }}
     >
-      <Toolbar>
-        <Typography variant='h6' style={{ flexGrow: 1 }}>
-          <Trans>Select Subtitles</Trans>
-        </Typography>
-        <MiniProfileSelector
-          profiles={profiles}
-          activeProfile={activeProfile}
-          onSetActiveProfile={onSetActiveProfile}
-        />
-        {onOpenSettings && (
-          <IconButton edge='end' onClick={onOpenSettings}>
+      {/* The header carries its own profile/settings/close controls (the MUI
+          Toolbar layout), so the built-in close button is disabled.
+          aria-describedby: Radix auto-points it at a description id even when
+          we render none (plain userRequested opens) — drop it then. The
+          console warnings Radix still emits in shadow roots are false
+          positives: its checks use document.getElementById, which can't see
+          into shadow trees, while the actual IDREFs resolve fine there. */}
+      <DialogContent
+        showCloseButton={false}
+        {...(openReason === VideoDataUiOpenReason.userRequested ? { 'aria-describedby': undefined } : {})}
+      >
+        <div className='flex min-w-0 items-center gap-1'>
+          <DialogTitle className='flex-1'>
+            <Trans>Select Subtitles</Trans>
+          </DialogTitle>
+          <MiniProfileSelector
+            profiles={profiles}
+            activeProfile={activeProfile}
+            onSetActiveProfile={onSetActiveProfile}
+          />
+          <Button variant='ghost' size='icon' onClick={onOpenSettings}>
             <SettingsIcon />
-          </IconButton>
-        )}
-        {onCancel && (
-          <IconButton edge='end' onClick={() => onCancel()}>
-            <CloseIcon />
-          </IconButton>
-        )}
-      </Toolbar>
-      <DialogContent>
+            <span className='sr-only'>
+              <Trans>Settings</Trans>
+            </span>
+          </Button>
+          <Button variant='ghost' size='icon' onClick={() => onCancel()}>
+            <XIcon />
+            <span className='sr-only'>
+              <Trans>Close</Trans>
+            </span>
+          </Button>
+        </div>
         {openReason === VideoDataUiOpenReason.miningCommand && (
-          <DialogContentText>
+          <DialogDescription>
             <Trans>Subtitles must be loaded before you can start mining.</Trans>
-          </DialogContentText>
+          </DialogDescription>
         )}
         {openReason === VideoDataUiOpenReason.failedToAutoLoadPreferredTrack && (
-          <DialogContentText>
+          <DialogDescription>
             <Trans>Could not auto-load subtitles in your preferred language.</Trans>
-          </DialogContentText>
+          </DialogDescription>
         )}
-        <form>
-          <Grid container direction='column' spacing={2}>
-            {!hasSeenFtue && (
-              <Grid item>
-                <Alert
-                  severity='info'
-                  action={
-                    <Button onClick={onDismissFtue} size='small'>
-                      <Trans>OK</Trans>
-                    </Button>
-                  }
-                >
-                  <Trans>
-                    Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect
-                    subtitles on every site. You can always load your own subtitle files.
-                  </Trans>
-                </Alert>
-              </Grid>
-            )}
-            <Grid item>
-              <TextField
-                ref={videoNameRef}
-                fullWidth
-                multiline
-                color='primary'
-                variant='filled'
-                label={t`Video Name`}
-                value={name}
-                disabled={disabled}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </Grid>
-            {threeSubtitleTrackSelectors}
-            {!hideRememberTrackPreferenceToggle && (
-              <Grid item>
-                <LabelWithHoverEffect
-                  control={
-                    <Switch
-                      checked={shouldRememberTrackChoices}
-                      onChange={handleRememberTrackChoices}
-                      color='primary'
-                    />
-                  }
-                  label={t`Remember these track choices for this site`}
-                  labelPlacement='start'
-                  style={{
-                    display: 'flex',
-                    marginLeft: 'auto',
-                    marginRight: '-13px',
-                    width: 'fit-content',
-                  }}
-                />
-              </Grid>
-            )}
-          </Grid>
+        <form className='flex min-w-0 flex-col gap-4'>
+          {!hasSeenFtue && (
+            <div className='bg-muted/50 flex items-start gap-3 rounded-md border p-3'>
+              <InfoIcon className='text-muted-foreground mt-0.5 size-4 shrink-0' />
+              <p className='flex-1 text-sm'>
+                <Trans>
+                  Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles
+                  on every site. You can always load your own subtitle files.
+                </Trans>
+              </p>
+              {/* type=button: inside the form, the default submit type would
+                  reload the host page on click. */}
+              <Button type='button' variant='ghost' size='sm' onClick={onDismissFtue}>
+                <Trans>OK</Trans>
+              </Button>
+            </div>
+          )}
+          <div className='flex flex-col gap-2'>
+            <Label htmlFor='video-data-sync-name'>{t`Video Name`}</Label>
+            <Textarea
+              id='video-data-sync-name'
+              ref={videoNameRef}
+              className='min-h-9'
+              value={name}
+              disabled={disabled}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          {threeSubtitleTrackSelectors}
+          {!hideRememberTrackPreferenceToggle && (
+            <Label className='ml-auto flex w-fit items-center gap-3'>
+              <Trans>Remember these track choices for this site</Trans>
+              <Switch checked={shouldRememberTrackChoices} onCheckedChange={handleRememberTrackChoices} />
+            </Label>
+          )}
         </form>
-      </DialogContent>
-      <DialogActions>
-        <Button disabled={disabled} onClick={() => onOpenFile()}>
-          <Trans>Open Files</Trans>
-        </Button>
-        {isYouTube && supadataApiKeyConfigured && onGenerateSupadata && (
-          <Button disabled={disabled || isGeneratingSupadata} onClick={onGenerateSupadata}>
-            {isGeneratingSupadata ? (
-              <>
-                <CircularProgress size={16} style={{ marginRight: 8 }} />
-                <Trans>Generating...</Trans>
-              </>
-            ) : (
-              <Trans>Generate Subtitles</Trans>
-            )}
+        <DialogFooter>
+          <Button variant='ghost' disabled={disabled} onClick={() => onOpenFile()}>
+            <Trans>Open Files</Trans>
           </Button>
-        )}
-        <Button action={okActionRef} disabled={!trimmedName || disabled} onClick={handleOkButtonClick}>
-          <Trans>OK</Trans>
-        </Button>
-      </DialogActions>
+          {isYouTube && supadataApiKeyConfigured && onGenerateSupadata && (
+            <Button variant='ghost' disabled={disabled || isGeneratingSupadata} onClick={onGenerateSupadata}>
+              {isGeneratingSupadata ? (
+                <>
+                  <Loader2Icon className='size-4 animate-spin' />
+                  <Trans>Generating...</Trans>
+                </>
+              ) : (
+                <Trans>Generate Subtitles</Trans>
+              )}
+            </Button>
+          )}
+          <Button variant='ghost' ref={okButtonRef} disabled={!trimmedName || disabled} onClick={handleOkButtonClick}>
+            <Trans>OK</Trans>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   )
 }

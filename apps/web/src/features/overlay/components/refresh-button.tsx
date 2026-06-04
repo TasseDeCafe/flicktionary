@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 
 interface RefreshButtonProps {
   disabled?: boolean

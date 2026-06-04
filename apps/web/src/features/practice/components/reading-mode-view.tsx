@@ -10,7 +10,7 @@ import type {
   PracticeText,
   ReviewScope,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
 import {
@@ -20,7 +20,7 @@ import {
   usePrepareNextReadingText,
   useRestoreChunkFromPractice,
 } from '../api/practice-hooks'
-import type { FloatingSheetAnchor } from '@/components/ui/floating-sheet'
+import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { AnnotatedText, type AnnotationInput, type PlainSelection } from './annotated-text'
 import { ChunkDeleteConfirmSheet } from './chunk-delete-confirm-sheet'
 import { LookupSheet } from './lookup-sheet'
@@ -28,7 +28,7 @@ import { PracticeLoader } from './practice-loader'
 import { RateSheet, type RateSheetChunkContent } from './rate-sheet'
 import { ReviewQueueStats } from './review-queue-stats'
 import type { QueueCounts } from './review-counts'
-import type { RateValue } from '@/components/ui/rate-buttons'
+import type { RateValue } from '@flicktionary/ui/components/rate-buttons'
 
 type ReadingModeViewProps = {
   targetLanguage: string

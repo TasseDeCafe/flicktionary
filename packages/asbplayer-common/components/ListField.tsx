@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { type TextFieldProps } from '@mui/material'
-import TextField from '@mui/material/TextField'
 import { useLingui } from '@lingui/react/macro'
+import SettingsField from './SettingsField'
 
 function extractTagsFromString(value: string) {
   if (value === '') {
@@ -19,12 +18,12 @@ function extractTagsFromString(value: string) {
 }
 
 export interface Props {
+  label: React.ReactNode
   items: string[]
-  textFieldComponent?: React.FC<TextFieldProps>
   onItemsChange: (tags: string[]) => void
 }
 
-export default function ListField({ items, onItemsChange, textFieldComponent, ...props }: Props & TextFieldProps) {
+export default function ListField({ label, items, onItemsChange }: Props) {
   const { t } = useLingui()
   const [value, setValue] = useState('')
 
@@ -37,7 +36,7 @@ export default function ListField({ items, onItemsChange, textFieldComponent, ..
   }, [value, items])
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       let currentValue = e.target.value
 
       if (value.length > currentValue.length && value.includes(currentValue) && currentValue.endsWith(',')) {
@@ -53,11 +52,12 @@ export default function ListField({ items, onItemsChange, textFieldComponent, ..
     [value, onItemsChange]
   )
 
-  const textFieldProps = { ...props, helperText: t`Comma-separated list of strings`, value, onChange: handleChange }
-
-  if (textFieldComponent) {
-    return textFieldComponent(textFieldProps)
-  }
-
-  return <TextField {...textFieldProps} />
+  return (
+    <SettingsField
+      label={label}
+      helperText={t`Comma-separated list of strings`}
+      value={value}
+      onChange={handleChange}
+    />
+  )
 }

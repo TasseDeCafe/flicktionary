@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { SUPPORTED_LANGUAGES, type SupportedLanguageCode } from '@flicktionary/core/constants/supported-languages'
-import { OptionCard } from '@/components/ui/option-card'
-import { SearchInput } from '@/components/ui/search-input'
+import { OptionCard } from '@flicktionary/ui/components/option-card'
+import { SearchInput } from '@flicktionary/ui/components/search-input'
 
 type Props = {
   value: string | null

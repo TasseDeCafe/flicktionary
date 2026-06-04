@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Film } from 'lucide-react'
-import { OptionCard } from '@/components/ui/option-card'
-import { SearchInput } from '@/components/ui/search-input'
+import { OptionCard } from '@flicktionary/ui/components/option-card'
+import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useSearchTmdb } from '../api/sessions-hooks'
 

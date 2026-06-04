@@ -1,11 +1,6 @@
-import FormControl from '@mui/material/FormControl'
-import FormLabel from '@mui/material/FormLabel'
-import MenuItem from '@mui/material/MenuItem'
-import Radio from '@mui/material/Radio'
-import RadioGroup from '@mui/material/RadioGroup'
-import SettingsTextField from './SettingsTextField'
-import LabelWithHoverEffect from './LabelWithHoverEffect'
 import SettingsSection from './SettingsSection'
+import SettingsSelectField from './SettingsSelectField'
+import SettingsRadioGroupField from './SettingsRadioGroupField'
 import { AsbplayerSettings } from '../settings'
 import { Trans, useLingui } from '@lingui/react/macro'
 
@@ -26,46 +21,22 @@ const UiSettings: React.FC<Props> = ({ themeType, language, supportedLanguages, 
       <SettingsSection>
         <Trans>UI</Trans>
       </SettingsSection>
-      <FormControl>
-        <FormLabel>
-          <Trans>Theme</Trans>
-        </FormLabel>
-        <RadioGroup row>
-          <LabelWithHoverEffect
-            control={
-              <Radio
-                checked={themeType === 'light'}
-                value='light'
-                onChange={(event) => event.target.checked && onSettingChanged('themeType', 'light')}
-              />
-            }
-            label={t`Light`}
-          />
-          <LabelWithHoverEffect
-            control={
-              <Radio
-                checked={themeType === 'dark'}
-                value='dark'
-                onChange={(event) => event.target.checked && onSettingChanged('themeType', 'dark')}
-              />
-            }
-            label={t`Dark`}
-          />
-        </RadioGroup>
-      </FormControl>
-      <SettingsTextField
-        select
+      <SettingsRadioGroupField
+        row
+        label={<Trans>Theme</Trans>}
+        value={themeType}
+        options={[
+          { value: 'light', label: t`Light` },
+          { value: 'dark', label: t`Dark` },
+        ]}
+        onValueChange={(value) => onSettingChanged('themeType', value)}
+      />
+      <SettingsSelectField
         label={t`Language`}
         value={language}
-        color='primary'
-        onChange={(event) => onSettingChanged('language', event.target.value)}
-      >
-        {supportedLanguages.map((s) => (
-          <MenuItem key={s} value={s}>
-            {s}
-          </MenuItem>
-        ))}
-      </SettingsTextField>
+        options={supportedLanguages.map((s) => ({ value: s }))}
+        onValueChange={(value) => onSettingChanged('language', value)}
+      />
     </>
   )
 }

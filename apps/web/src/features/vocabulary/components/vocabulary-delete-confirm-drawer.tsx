@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import {
   ResponsiveOverlay,
   OverlayContent,

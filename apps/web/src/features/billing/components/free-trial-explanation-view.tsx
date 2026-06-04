@@ -5,8 +5,8 @@ import { Route as freeTrialExplanationRoute } from '@/app/routes/_authenticated/
 import { NUMBER_OF_DAYS_IN_FREE_TRIAL, REFUND_PERIOD_IN_DAYS } from '@flicktionary/core/constants/pricing-constants.ts'
 import { useCheckoutMutation } from '@/features/checkout/api/checkout-hooks'
 import { useLingui } from '@lingui/react/macro'
-import { Button } from '@/components/ui/button.tsx'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx'
+import { Button } from '@flicktionary/ui/components/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
 
 const TimelineItem = ({ day, description }: { day: string; description: string }) => {
   return (

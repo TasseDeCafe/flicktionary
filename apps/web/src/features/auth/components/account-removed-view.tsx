@@ -4,8 +4,8 @@ import { useLingui } from '@lingui/react/macro'
 import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
 import { Route as loginRoute } from '@/app/routes/login/index'
 import { useAuthStore, getIsSignedIn } from '@/stores/auth-store'
-import { Button } from '@/components/ui/button.tsx'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.tsx'
+import { Button } from '@flicktionary/ui/components/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
 
 export const AccountRemovedView = () => {
   const navigate = useNavigate()

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Upload } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 
 type Props = {
   onLoaded: (srtContent: string, fileName: string) => void

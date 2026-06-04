@@ -1,8 +1,7 @@
-import type { InputProps } from '@mui/material/Input'
 import React, { MutableRefObject } from 'react'
 import VideoControlInput from './VideoControlInput'
 
-interface Props extends InputProps {
+interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   inputRef: MutableRefObject<HTMLInputElement | undefined>
   offset: number
   onOffset: (offset: number) => void
@@ -16,10 +15,9 @@ const valueToPrettyString = (v: number) => {
 const stringToValue = (s: string) => Number(s) * 1000
 const placeholder = '±' + Number(0).toFixed(2)
 
-export default React.forwardRef(function SubtitleOffsetInput({ inputRef, offset, onOffset, ...rest }: Props, ref) {
+export default function SubtitleOffsetInput({ inputRef, offset, onOffset, ...rest }: Props) {
   return (
     <VideoControlInput
-      ref={ref}
       inputRef={inputRef}
       defaultNumberValue={0}
       valueToPrettyString={valueToPrettyString}
@@ -30,4 +28,4 @@ export default React.forwardRef(function SubtitleOffsetInput({ inputRef, offset,
       {...rest}
     />
   )
-})
+}

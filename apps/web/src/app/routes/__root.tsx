@@ -3,7 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { OverlayController } from '@/features/overlay/components/overlay-controller'
 import { Toaster } from 'sonner'
 import { z } from 'zod'
-import { URL_OVERLAY_IDS } from '@/components/ui/overlay-ids'
+import { URL_OVERLAY_IDS } from '@flicktionary/ui/components/overlay-ids'
 import { getConfig } from '@/config/environment-config'
 
 const rootSearchSchema = z.object({

@@ -1,12 +1,9 @@
-import Button from '@mui/material/Button'
-import Popover from '@mui/material/Popover'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemButton from '@mui/material/ListItemButton'
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
+import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
+import { Button } from '@flicktionary/ui/components/button'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Profile } from '../settings'
-import { usePortalContainer } from './portal-container-context'
 
 interface Props {
   profiles: Profile[]
@@ -14,15 +11,13 @@ interface Props {
   onSetActiveProfile: (profile: string | undefined) => void
 }
 
+const itemClassName = 'hover:bg-accent hover:text-accent-foreground rounded-sm px-3 py-1.5 text-left text-sm'
+
+// Compact settings-profile switcher (Radix popover — formerly a MUI Popover
+// with a manual anchorEl). The content portals into the surface's portal
+// container via PopoverContent's context default.
 const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Props) => {
   const [open, setOpen] = useState<boolean>(false)
-  const [anchorEl, setAnchorEl] = useState<HTMLElement>()
-  const portalContainer = usePortalContainer()
-  const handleOpen = useCallback((e: React.MouseEvent) => {
-    setAnchorEl(e.currentTarget as HTMLElement)
-    setOpen(true)
-  }, [])
-  const handleClose = useCallback(() => setOpen(false), [])
   const handleSelect = useCallback(
     (p: Profile | undefined) => {
       setOpen(false)
@@ -35,25 +30,32 @@ const MiniProfileSelector = ({ profiles, activeProfile, onSetActiveProfile }: Pr
   }
 
   return (
-    <>
-      <Popover open={open} anchorEl={anchorEl} container={portalContainer} onClose={handleClose}>
-        <List>
-          <ListItem disablePadding onClick={() => handleSelect(undefined)}>
-            <ListItemButton selected={activeProfile === undefined}>
-              <Trans>Default</Trans>
-            </ListItemButton>
-          </ListItem>
-          {profiles.map((p) => (
-            <ListItem disablePadding key={p.name} onClick={() => handleSelect(p)}>
-              <ListItemButton selected={p.name === activeProfile}>{p.name}</ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Popover>
-      <Button color='inherit' variant='outlined' onClick={handleOpen}>
-        {activeProfile ?? <Trans>Default</Trans>}
-      </Button>
-    </>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant='outline' size='sm'>
+          {activeProfile ?? <Trans>Default</Trans>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align='end' className='flex w-auto min-w-32 flex-col p-1'>
+        <button
+          type='button'
+          className={cn(itemClassName, activeProfile === undefined && 'bg-accent text-accent-foreground')}
+          onClick={() => handleSelect(undefined)}
+        >
+          <Trans>Default</Trans>
+        </button>
+        {profiles.map((p) => (
+          <button
+            type='button'
+            key={p.name}
+            className={cn(itemClassName, p.name === activeProfile && 'bg-accent text-accent-foreground')}
+            onClick={() => handleSelect(p)}
+          >
+            {p.name}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
 

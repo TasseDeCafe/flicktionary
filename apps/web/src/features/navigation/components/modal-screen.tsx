@@ -2,7 +2,7 @@ import { type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronLeft, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 
 interface ModalScreenProps {
   // Always navigate to a known parent route — never `history.back()`. Deep-linked

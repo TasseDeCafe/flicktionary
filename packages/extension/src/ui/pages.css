@@ -1,0 +1,21 @@
+/*
+ * Tailwind v4 entry for the extension's NORMAL HTML pages (popup, FTUE and —
+ * from Phase G — options). Counterpart of video-overlay/overlay.css, which
+ * serves the shadow-DOM surfaces.
+ *
+ * Unlike overlay.css there is NO px-pin `@theme` block here: these are our own
+ * documents, nothing hostile sets a weird <html> font-size, so the standard
+ * rem-based Tailwind scales apply (matching the web app exactly). Likewise the
+ * `@property` registration workaround is unnecessary — document stylesheets
+ * register @property fine in Chromium.
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@flicktionary/ui/styles/tokens.css';
+
+/* Tailwind auto-scans only this workspace; the shared ui package and the
+   asbplayer-common components (TutorialBubble & co.) are outside it, so scan
+   them explicitly (relative paths — the package-name form doesn't resolve
+   through pnpm symlinks). */
+@source '../../../ui/src';
+@source '../../../asbplayer-common/components';

@@ -145,6 +145,9 @@ export class VideoOverlayController {
       video: this._context.video,
       anchor,
       offset: 8,
+      // Radix/Tailwind surface: adopt the shared overlay sheet (tokens +
+      // utilities) instead of emotion.
+      adoptTailwind: true,
       render: ({ shadowRoot, portalContainer }) =>
         createElement(ShadowVideoOverlayApp, { store, shadowRoot, portalContainer, anchor, commands }),
     })

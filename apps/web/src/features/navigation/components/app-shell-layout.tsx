@@ -3,7 +3,7 @@ import { useIsModalRoute } from '../hooks/use-is-modal-route'
 import { SidebarNav } from './sidebar-nav'
 import { BottomTabBar } from './bottom-tab-bar'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { FullViewLoader } from '@/components/ui/full-view-loader'
+import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
 
 const ONBOARDING_PATH = '/onboarding'
 

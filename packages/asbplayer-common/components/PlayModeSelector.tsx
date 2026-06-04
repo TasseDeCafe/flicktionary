@@ -1,100 +1,75 @@
 import React from 'react'
 import { Trans } from '@lingui/react/macro'
-import List from '@mui/material/List'
-import MuiListItem, { ListItemProps } from '@mui/material/ListItem'
-import MuiListItemButton, { ListItemButtonProps } from '@mui/material/ListItemButton'
-import Popover from '@mui/material/Popover'
-import type { PopoverProps } from '@mui/material/Popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { PlayMode } from '@asbplayer-fork/common'
-import ListItemText from '@mui/material/ListItemText'
 
-interface Props extends PopoverProps {
+interface Props {
   open: boolean
-  listStyle?: React.CSSProperties
-  anchorEl?: Element
+  onOpenChange: (open: boolean) => void
+  side: 'top' | 'bottom'
   selectedPlayMode?: PlayMode
   onPlayMode: (playMode: PlayMode) => void
-  onClose: () => void
+  // The trigger element (the play-mode button in the overlay bar).
+  children: React.ReactNode
 }
 
-const ListItem = ({ children, ...props }: ListItemProps) => {
-  return (
-    <MuiListItem disablePadding dense {...props}>
-      {children}
-    </MuiListItem>
-  )
-}
+const PlayModeItem = ({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) => (
+  <button
+    type='button'
+    onClick={onClick}
+    className={cn(
+      'hover:bg-accent hover:text-accent-foreground rounded-sm px-3 py-1.5 text-sm whitespace-nowrap',
+      selected && 'bg-accent text-accent-foreground'
+    )}
+  >
+    {children}
+  </button>
+)
 
-const ListItemButton = ({ children, ...props }: ListItemButtonProps) => {
+// Horizontal play-mode picker, anchored to its trigger (Radix popover —
+// formerly a MUI Popover with a manual anchorEl). The content portals into the
+// surface's portal container via PopoverContent's context default.
+export default function PlayModeSelector({ open, onOpenChange, side, selectedPlayMode, onPlayMode, children }: Props) {
   return (
-    <MuiListItemButton dense {...props}>
-      {children}
-    </MuiListItemButton>
-  )
-}
-
-export default function PlayModeSelector({
-  listStyle,
-  selectedPlayMode,
-  onPlayMode,
-  open,
-  anchorEl,
-  onClose,
-  ...restOfPopoverProps
-}: Props) {
-  return (
-    <Popover
-      disableEnforceFocus={true}
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'center',
-      }}
-      transformOrigin={{
-        vertical: 'bottom',
-        horizontal: 'center',
-      }}
-      {...restOfPopoverProps}
-    >
-      <List disablePadding dense style={listStyle}>
-        <ListItem onClick={() => onPlayMode(PlayMode.normal)}>
-          <ListItemButton selected={selectedPlayMode === PlayMode.normal}>
-            <ListItemText>
-              <Trans>Normal</Trans>
-            </ListItemText>
-          </ListItemButton>
-        </ListItem>
-        <ListItem onClick={() => onPlayMode(PlayMode.condensed)}>
-          <ListItemButton dense selected={selectedPlayMode === PlayMode.condensed}>
-            <ListItemText>
-              <Trans>Condensed</Trans>
-            </ListItemText>
-          </ListItemButton>
-        </ListItem>
-        <ListItem onClick={() => onPlayMode(PlayMode.fastForward)}>
-          <ListItemButton selected={selectedPlayMode === PlayMode.fastForward}>
-            <ListItemText>
-              <Trans>Fast-forward</Trans>
-            </ListItemText>
-          </ListItemButton>
-        </ListItem>
-        <ListItem onClick={() => onPlayMode(PlayMode.autoPause)}>
-          <ListItemButton selected={selectedPlayMode === PlayMode.autoPause}>
-            <ListItemText>
-              <Trans>Auto-pause</Trans>
-            </ListItemText>
-          </ListItemButton>
-        </ListItem>
-        <ListItem onClick={() => onPlayMode(PlayMode.repeat)}>
-          <ListItemButton selected={selectedPlayMode === PlayMode.repeat}>
-            <ListItemText>
-              <Trans>Repeat</Trans>
-            </ListItemText>
-          </ListItemButton>
-        </ListItem>
-      </List>
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent side={side} align='center' className='w-auto p-1'>
+        <div className='flex flex-row overflow-x-auto'>
+          <PlayModeItem selected={selectedPlayMode === PlayMode.normal} onClick={() => onPlayMode(PlayMode.normal)}>
+            <Trans>Normal</Trans>
+          </PlayModeItem>
+          <PlayModeItem
+            selected={selectedPlayMode === PlayMode.condensed}
+            onClick={() => onPlayMode(PlayMode.condensed)}
+          >
+            <Trans>Condensed</Trans>
+          </PlayModeItem>
+          <PlayModeItem
+            selected={selectedPlayMode === PlayMode.fastForward}
+            onClick={() => onPlayMode(PlayMode.fastForward)}
+          >
+            <Trans>Fast-forward</Trans>
+          </PlayModeItem>
+          <PlayModeItem
+            selected={selectedPlayMode === PlayMode.autoPause}
+            onClick={() => onPlayMode(PlayMode.autoPause)}
+          >
+            <Trans>Auto-pause</Trans>
+          </PlayModeItem>
+          <PlayModeItem selected={selectedPlayMode === PlayMode.repeat} onClick={() => onPlayMode(PlayMode.repeat)}>
+            <Trans>Repeat</Trans>
+          </PlayModeItem>
+        </div>
+      </PopoverContent>
     </Popover>
   )
 }

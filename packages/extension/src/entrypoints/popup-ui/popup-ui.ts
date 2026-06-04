@@ -1,6 +1,7 @@
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import { renderPopupUi, type PopupCommands } from '@/ui/popup'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
+import '@/ui/pages.css'
 
 const fetchShortcuts = (): Promise<PopupCommands> => {
   return new Promise((resolve) => {

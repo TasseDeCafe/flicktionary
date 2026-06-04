@@ -1,26 +1,26 @@
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogTitle from '@mui/material/DialogTitle'
-import Button from '@mui/material/Button'
-import Snackbar from '@mui/material/Snackbar'
-import Alert from '@mui/material/Alert'
-import Link from '@mui/material/Link'
-import type { PaletteMode } from '@mui/material/styles'
 import { Trans } from '@lingui/react/macro'
 import { msg } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
-import LogoIcon from '@asbplayer-fork/common/components/LogoIcon'
-import { usePortalContainer } from '@asbplayer-fork/common/components/portal-container-context'
+import { XIcon } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@flicktionary/ui/components/dialog'
+import { Button } from '@flicktionary/ui/components/button'
+import { flicktionaryLogoDataUri } from '@asbplayer-fork/common/components/flicktionary-logo'
 import { i18n } from '../lingui'
-import { ShadowMuiProvider } from '../shadow/ShadowMuiProvider'
+import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import { ModelStore, useModelStore } from '../shadow/model-store'
 
 // The in-realm replacement for NotificationUi's bridge transport: the model is a
 // store snapshot the controller pushes (formerly UpdateStateMessage over the
 // FrameBridge) and `close` is a plain callback (formerly bridge.sendMessageFromServer).
 export interface NotificationState {
-  themeType: PaletteMode
+  themeType: 'dark' | 'light'
   language: string
   titleLocKey: string
   messageLocKey: string
@@ -50,59 +50,82 @@ const localizeDialogKey = (locKey: string): string => {
   return descriptor ? i18n._(descriptor) : locKey
 }
 
-export function ShadowNotificationApp({ store, shadowRoot, portalContainer, onClose }: ShadowNotificationAppProps) {
+export function ShadowNotificationApp({ store, portalContainer, onClose }: ShadowNotificationAppProps) {
   const state = useModelStore(store)
   return (
-    <ShadowMuiProvider
-      shadowRoot={shadowRoot}
-      portalContainer={portalContainer}
-      themeType={state.themeType}
-      language={state.language}
-    >
+    <ShadowUiProvider portalContainer={portalContainer} themeType={state.themeType} language={state.language}>
       <NotificationContent state={state} onClose={onClose} />
-    </ShadowMuiProvider>
+    </ShadowUiProvider>
   )
 }
 
 function NotificationContent({ state, onClose }: { state: NotificationState; onClose: () => void }) {
-  // Portal the Dialog into the shadow root (provided by ShadowMuiProvider) so it
-  // keeps its emotion styles and stays out of the host page's transformed/CSS
-  // context. The Snackbar is fixed-positioned inline (no portal) and resolves
-  // against the viewport since the modal host carries no transform.
-  const portalContainer = usePortalContainer()
   const title = state.titleLocKey === '' ? '' : localizeDialogKey(state.titleLocKey)
   const message = state.messageLocKey === '' ? '' : localizeDialogKey(state.messageLocKey)
 
   return (
     <>
       {message && title && (
-        <Dialog open={true} container={portalContainer} disableEnforceFocus fullWidth maxWidth='sm' onClose={onClose}>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogContent>{message}</DialogContent>
-          <DialogActions>
-            <Button onClick={onClose}>
-              <Trans>OK</Trans>
-            </Button>
-          </DialogActions>
+        // The dialog content portals into portalContainer (via the
+        // PortalContainerContext default in ui/dialog), so it keeps the adopted
+        // Tailwind sheet and stays out of the host page's transformed/CSS
+        // context. Radix owns backdrop, Escape, outside-click and focus trap.
+        <Dialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) {
+              onClose()
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+            </DialogHeader>
+            <DialogDescription>{message}</DialogDescription>
+            <DialogFooter>
+              <Button variant='ghost' onClick={onClose}>
+                <Trans>OK</Trans>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       )}
       {state.newVersion && (
-        <Snackbar open={true} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} onClose={onClose}>
-          <Alert icon={<LogoIcon />} severity='info' onClose={onClose}>
-            <Trans>
-              Flicktionary updated to version {state.newVersion}. Check out the{' '}
-              <Link
-                color='primary'
-                target='_blank'
-                rel='noreferrer'
-                href={`https://github.com/TasseDeCafe/flicktionary/releases/tag/v${state.newVersion}`}
-              >
-                release notes
-              </Link>
-              .
-            </Trans>
-          </Alert>
-        </Snackbar>
+        // Update callout (formerly a MUI Snackbar+Alert): fixed-positioned
+        // inline (no portal) and resolves against the viewport since the modal
+        // host carries no transform; appRoot re-enables pointer events.
+        <div className='fixed bottom-8 left-1/2 z-50 -translate-x-1/2'>
+          <div className='bg-background flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg'>
+            {/* The mark is a two-colour raster (black wing + yellow beam); the
+                white chip keeps the black part legible on dark surfaces. */}
+            <img src={flicktionaryLogoDataUri} alt='' className='size-6 shrink-0 rounded-sm bg-white' />
+            <span className='text-sm'>
+              <Trans>
+                Flicktionary updated to version {state.newVersion}. Check out the{' '}
+                <a
+                  className='text-primary underline underline-offset-2'
+                  target='_blank'
+                  rel='noreferrer'
+                  href={`https://github.com/TasseDeCafe/flicktionary/releases/tag/v${state.newVersion}`}
+                >
+                  release notes
+                </a>
+                .
+              </Trans>
+            </span>
+            <button
+              type='button'
+              onClick={onClose}
+              className='text-muted-foreground hover:text-foreground -mr-1 shrink-0 rounded-sm p-1 transition-colors'
+            >
+              <XIcon className='size-4' />
+              <span className='sr-only'>
+                <Trans>Close</Trans>
+              </span>
+            </button>
+          </div>
+        </div>
       )}
     </>
   )

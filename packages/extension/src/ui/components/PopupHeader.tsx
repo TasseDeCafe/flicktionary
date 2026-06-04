@@ -1,5 +1,5 @@
-import Button from '@mui/material/Button'
-import LaunchIcon from '@mui/icons-material/Launch'
+import { ExternalLink } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
 import { Trans } from '@lingui/react/macro'
 
 interface Props {
@@ -10,7 +10,8 @@ interface Props {
 // opens the Flicktionary web app.
 export const PopupHeader = ({ onOpenApp }: Props) => {
   return (
-    <Button fullWidth variant='contained' color='primary' startIcon={<LaunchIcon />} onClick={onOpenApp}>
+    <Button type='button' className='w-full' onClick={onOpenApp}>
+      <ExternalLink />
       <Trans>Open App</Trans>
     </Button>
   )

@@ -1,55 +1,33 @@
-import Link from '@mui/material/Link'
-import Typography from '@mui/material/Typography'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
-import ThemeProvider from '@mui/material/styles/ThemeProvider'
-import CssBaseline from '@mui/material/CssBaseline'
-import Paper from '@mui/material/Paper'
-import { createTheme } from '@asbplayer-fork/common/theme'
-import { makeStyles } from 'tss-react/mui'
-import CenteredGridContainer from './CenteredGridContainer'
-import CenteredGridItem from './CenteredGridItem'
-import React, { useEffect, useState } from 'react'
-import Tutorial from './Tutorial'
 import { I18nProvider } from '@lingui/react'
+import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import Tutorial from './Tutorial'
 import { i18n, setupLingui } from '../lingui'
 
-const useStyles = makeStyles()({
-  container: {
-    scrollSnapType: 'y mandatory',
-    width: '100dvw',
-    height: '100dvh',
-    overflowY: 'scroll',
-  },
-  child: {
-    scrollSnapAlign: 'center',
-    width: '100dvw',
-    height: '100dvh',
-  },
-})
-
-const WelcomeMessage: React.FC<{ className: string }> = ({ className }) => {
+const WelcomeMessage: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <CenteredGridContainer className={className} direction='column'>
-      <CenteredGridItem>
-        <img style={{ width: 75 }} src={browser.runtime.getURL('/icon/image.png')} />
-      </CenteredGridItem>
-      <CenteredGridItem>
-        <Typography variant='h5'>
-          <Trans>Welcome to Flicktionary.</Trans>
-        </Typography>
-      </CenteredGridItem>
-      <CenteredGridItem>
-        <Typography variant='h6'>
-          <Trans>
-            Scroll down for a quick intro, or check out the{' '}
-            <Link color='primary' target='_blank' rel='noreferrer' href={'https://app.flicktionary.app'}>
-              user guide
-            </Link>
-            .
-          </Trans>
-        </Typography>
-      </CenteredGridItem>
-    </CenteredGridContainer>
+    <div className={cn('flex flex-col items-center justify-center gap-2 text-center', className)}>
+      <img className='w-[75px]' src={browser.runtime.getURL('/icon/image.png')} />
+      <h1 className='text-2xl'>
+        <Trans>Welcome to Flicktionary.</Trans>
+      </h1>
+      <h2 className='text-xl font-medium'>
+        <Trans>
+          Scroll down for a quick intro, or check out the{' '}
+          <a
+            className='text-primary underline underline-offset-4'
+            target='_blank'
+            rel='noreferrer'
+            href={'https://app.flicktionary.app'}
+          >
+            user guide
+          </a>
+          .
+        </Trans>
+      </h2>
+    </div>
   )
 }
 
@@ -59,12 +37,20 @@ const useLangParam = () => {
   return lang
 }
 
+// The first-time-user-experience page. Always dark (matches the old hardcoded
+// MUI dark theme).
 const FtueUi = () => {
-  const theme = createTheme('dark')
   const langParam = useLangParam()
-  const { classes } = useStyles()
   const [showTutorial, setShowTutorial] = useState<boolean>(false)
   const [hideWelcomePanel, setHideWelcomePanel] = useState<boolean>(false)
+
+  // Tutorial dialog/bubble content portals to document.body — OUTSIDE the
+  // `dark`-classed scroll container — so the dark scope must also land on
+  // <body>. The container keeps its own `dark` class to avoid a light-theme
+  // flash on the first paint (this effect runs post-render).
+  useEffect(() => {
+    document.body.classList.add('dark')
+  }, [])
 
   const handleContainerRef = (elm: HTMLDivElement | null) => {
     if (!elm) {
@@ -79,17 +65,23 @@ const FtueUi = () => {
     }
   }
 
-  setupLingui(langParam ?? browser.i18n.getUILanguage())
+  // Layout effect, not render body: i18n.activate() setState()s the mounted
+  // <I18nProvider>, which React forbids mid-render. Pre-paint, so no flash.
+  useLayoutEffect(() => {
+    setupLingui(langParam ?? browser.i18n.getUILanguage())
+  }, [langParam])
 
   return (
     <I18nProvider i18n={i18n}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Paper ref={handleContainerRef} className={classes.container} square>
-          {!hideWelcomePanel && <WelcomeMessage className={classes.child} />}
-          <Tutorial show={showTutorial} className={classes.child} />
-        </Paper>
-      </ThemeProvider>
+      <TooltipProvider>
+        <div
+          ref={handleContainerRef}
+          className='dark bg-background text-foreground h-dvh w-dvw snap-y snap-mandatory overflow-y-scroll font-sans'
+        >
+          {!hideWelcomePanel && <WelcomeMessage className='h-dvh w-dvw snap-center' />}
+          <Tutorial show={showTutorial} className='h-dvh w-dvw snap-center' />
+        </div>
+      </TooltipProvider>
     </I18nProvider>
   )
 }

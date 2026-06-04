@@ -3,7 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { BookOpen, Brain, Clapperboard, MoreHorizontal, Plus, type LucideIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { MainActionOverlay } from './main-action-overlay'
 
 type NavItem = {

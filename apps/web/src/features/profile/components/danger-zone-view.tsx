@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { useOverlayStore } from '@/features/overlay/stores/overlay-store'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { OverlayId } from '@/components/ui/overlay-ids'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
+import { Button } from '@flicktionary/ui/components/button'
+import { OverlayId } from '@flicktionary/ui/components/overlay-ids'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 
 export const DangerZoneView = () => {

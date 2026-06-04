@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { Label } from '@flicktionary/ui/components/label'
+import { Switch } from '@flicktionary/ui/components/switch'
 import {
   useSetCefrForLanguage,
   useSetEnglishIpaDialect,

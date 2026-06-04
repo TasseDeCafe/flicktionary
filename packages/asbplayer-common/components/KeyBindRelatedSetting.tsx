@@ -1,23 +1,17 @@
 import React from 'react'
-import Grid2 from '@mui/material/Grid2'
-import Typography from '@mui/material/Typography'
-import { type Theme, useTheme } from '@mui/material/styles'
 
 interface Props {
   label: React.ReactNode
   control: React.ReactNode
 }
 
+// A setting row attached to a keybind (e.g. "Seek interval" under the seek
+// shortcut): label left, control right, hover wash like the keybind rows.
 export default function KeyBindRelatedSetting({ label, control }: Props) {
-  const theme = useTheme<Theme>()
   return (
-    <Grid2 container wrap='nowrap' spacing={1} sx={{ '&:hover': { background: theme.palette.action.hover }, p: 1 }}>
-      <Grid2 size={7.5}>
-        <Typography>{label}</Typography>
-      </Grid2>
-      <Grid2 size='grow' sx={{ textAlign: 'right' }}>
-        {control}
-      </Grid2>
-    </Grid2>
+    <div className='hover:bg-accent/50 flex items-center gap-2 rounded-md p-2'>
+      <div className='w-3/5 shrink-0 text-sm'>{label}</div>
+      <div className='flex flex-1 justify-end text-right'>{control}</div>
+    </div>
   )
 }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { BookOpen, Brain, ChevronLeft, CircleCheck, History, Layers, Star } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import type {
   PracticeDueSummaryEntry,

@@ -1,26 +1,21 @@
-import { useTheme } from '@mui/material/styles'
-import Box from '@mui/material/Box'
-import Paper from '@mui/material/Paper'
 import React, { useState, useEffect, useRef } from 'react'
-import Fade from '@mui/material/Fade'
-import Button from '@mui/material/Button'
+import { Play } from 'lucide-react'
+import { Trans } from '@lingui/react/macro'
+import { Button } from '@flicktionary/ui/components/button'
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import TabRegistry from '@/services/tab-registry'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
-import Dialog from '@mui/material/Dialog'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import useMediaQuery from '@mui/material/useMediaQuery'
-import IconButton from '@mui/material/IconButton'
-import { Trans } from '@lingui/react/macro'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import { AsbPlayerToVideoCommandV2, RequestSubtitlesMessage, RequestSubtitlesResponse } from '@asbplayer-fork/common'
 import TutorialBubble from '@asbplayer-fork/common/components/TutorialBubble'
 import { isFirefox } from '@asbplayer-fork/common/browser-detection'
 
 const settingsProvider = new SettingsProvider(new ExtensionSettingsStorage())
 const tabRegistry = new TabRegistry(settingsProvider)
-const zIndexTop = 2147483648
+// One above the extension's own video overlay (z-2147483647), which this page
+// renders for real underneath the tutorial dialogs/bubbles.
+const zTopClass = 'z-[2147483648]'
 
 const useExtensionState = () => {
   const [loadedSubtitlesCount, setLoadedSubtitlesCount] = useState<number>()
@@ -87,30 +82,42 @@ const LoadSubtitlesDialog: React.FC<{ open: boolean; count?: number; onClose: ()
   onClose,
 }) => {
   return (
-    <Dialog style={{ zIndex: zIndexTop }} open={open}>
-      <DialogContent>
+    <Dialog open={open}>
+      <DialogContent
+        className={zTopClass}
+        overlayClassName={zTopClass}
+        showCloseButton={false}
+        aria-describedby={undefined}
+      >
+        <DialogTitle className='sr-only'>
+          <Trans>Tutorial</Trans>
+        </DialogTitle>
         {count === undefined && !isFirefox && (
-          <Trans>
-            The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> the video and
-            choose the asbplayer <b>Load Subtitles</b> menu item.
-            <p />
-            Hint: asbplayer can also <b>auto-load</b> detected subtitles on supported sites.
-          </Trans>
+          <div className='text-sm'>
+            <Trans>
+              The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> the video
+              and choose the asbplayer <b>Load Subtitles</b> menu item.
+              <p />
+              Hint: asbplayer can also <b>auto-load</b> detected subtitles on supported sites.
+            </Trans>
+          </div>
         )}
         {count === undefined && isFirefox && (
-          <Trans>
-            The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> on the video
-            and find the asbplayer <b>context menu</b> to load subtitles.
-          </Trans>
+          <div className='text-sm'>
+            <Trans>
+              The first step to using asbplayer is always to load subtitles onto a video. <b>Right-click</b> on the
+              video and find the asbplayer <b>context menu</b> to load subtitles.
+            </Trans>
+          </div>
+        )}
+        {isFirefox && (
+          <DialogFooter>
+            <Button type='button' variant='ghost' onClick={onClose}>
+              <Trans>OK</Trans>
+            </Button>
+          </DialogFooter>
         )}
       </DialogContent>
-      {isFirefox && (
-        <DialogActions>
-          <Button onClick={onClose}>
-            <Trans>OK</Trans>
-          </Button>
-        </DialogActions>
-      )}
     </Dialog>
   )
 }
@@ -167,18 +174,30 @@ const OverlayScrollBubble: React.FC<{ show: boolean; onConfirm: () => void }> = 
 
 const FinishedDialog: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   return (
-    <Dialog open={open} style={{ zIndex: zIndexTop }}>
-      <DialogContent>
-        <Trans>That's it for the basics! Feel free to play around on this page.</Trans>
+    <Dialog open={open}>
+      <DialogContent
+        className={zTopClass}
+        overlayClassName={zTopClass}
+        showCloseButton={false}
+        aria-describedby={undefined}
+      >
+        <DialogTitle className='sr-only'>
+          <Trans>Tutorial</Trans>
+        </DialogTitle>
+        <div className='text-sm'>
+          <Trans>That's it for the basics! Feel free to play around on this page.</Trans>
+        </div>
+        <DialogFooter>
+          <Button type='button' variant='ghost' onClick={onClose}>
+            OK
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>OK</Button>
-      </DialogActions>
     </Dialog>
   )
 }
 
-const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, show }) => {
+const Tutorial: React.FC<{ className?: string; show: boolean }> = ({ className, show }) => {
   const { loadedSubtitlesCount } = useExtensionState()
   const [step, setStep] = useState<Step>(Step.toolbar)
 
@@ -211,66 +230,59 @@ const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, s
     }
   }
 
-  const theme = useTheme()
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'))
   const [showLoadSubtitles, setShowLoadSubtitles] = useState<boolean>(true)
 
   return (
-    <Paper square sx={{ position: 'relative' }} className={className}>
+    <div className={cn('bg-background relative', className)}>
       {show && (
-        <Fade in={true}>
-          <Box
-            sx={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div style={{ width: isSmallScreen ? '100%' : '80%', maxHeight: '100dvh' }}>
-              <div style={{ position: 'relative', width: '100%', height: '100%', maxHeight: '100dvh' }}>
-                <video
-                  ref={(elm) => {
-                    videoRef.current = elm
+        <div className='animate-in fade-in absolute flex h-full w-full items-center justify-center duration-300'>
+          <div className='max-h-dvh w-full sm:w-[80%]'>
+            <div className='relative h-full max-h-dvh w-full'>
+              <video
+                ref={(elm) => {
+                  videoRef.current = elm
 
-                    if (elm) {
-                      elm.volume = Math.min(elm.volume, 0.5)
-                    }
-                  }}
-                  onPlay={() => setPlaying(true)}
-                  onPause={() => setPlaying(false)}
-                  style={{ width: '100%', maxHeight: '100dvh' }}
-                  src={browser.runtime.getURL('/assets/tutorial.mp4')}
-                  onClick={handleVideoClick}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    transform: 'translateY(-50%) translateX(-50%) scale(400%)',
-                    top: '50%',
-                    left: '50%',
-                  }}
-                >
-                  {!playing && (
-                    <IconButton onClick={() => videoRef.current?.play()}>
-                      <PlayArrowIcon />
-                    </IconButton>
-                  )}
-                </div>
-                <OverlayBubble
-                  show={show && step === Step.overlay}
-                  onConfirm={() => setStep(Step.overlayScrollControl)}
-                />
-                <OverlayScrollBubble
-                  show={show && step === Step.overlayScrollControl}
-                  onConfirm={() => setStep(Step.almostDone)}
-                />
+                  if (elm) {
+                    elm.volume = Math.min(elm.volume, 0.5)
+                  }
+                }}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
+                className='max-h-dvh w-full'
+                src={browser.runtime.getURL('/assets/tutorial.mp4')}
+                onClick={handleVideoClick}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  transform: 'translateY(-50%) translateX(-50%) scale(400%)',
+                  top: '50%',
+                  left: '50%',
+                }}
+              >
+                {!playing && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='icon'
+                    className='rounded-full'
+                    onClick={() => videoRef.current?.play()}
+                  >
+                    <Play className='size-6' />
+                  </Button>
+                )}
               </div>
+              <OverlayBubble
+                show={show && step === Step.overlay}
+                onConfirm={() => setStep(Step.overlayScrollControl)}
+              />
+              <OverlayScrollBubble
+                show={show && step === Step.overlayScrollControl}
+                onConfirm={() => setStep(Step.almostDone)}
+              />
             </div>
-          </Box>
-        </Fade>
+          </div>
+        </div>
       )}
       <ToolbarBubble show={show && step === Step.toolbar} onConfirm={() => setStep(Step.loadSubtitles)} />
       <LoadSubtitlesDialog
@@ -279,7 +291,7 @@ const Tutorial: React.FC<{ className: string; show: boolean }> = ({ className, s
         onClose={() => setShowLoadSubtitles(false)}
       />
       <FinishedDialog open={show && step === Step.almostDone} onClose={() => setStep(Step.done)} />
-    </Paper>
+    </div>
   )
 }
 

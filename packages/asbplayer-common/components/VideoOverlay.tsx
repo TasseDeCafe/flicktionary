@@ -1,74 +1,53 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
-import Grid, { GridProps } from '@mui/material/Grid'
-import IconButton from '@mui/material/IconButton'
-import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
-import NavigateNextIcon from '@mui/icons-material/NavigateNext'
-import TuneIcon from '@mui/icons-material/Tune'
+import React, { useCallback, useMemo, useState } from 'react'
+import { ChevronLeftIcon, ChevronRightIcon, SlidersHorizontalIcon, CaptionsIcon } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
 import { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
-import { makeStyles } from 'tss-react/mui'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { useLingui } from '@lingui/react/macro'
 import LogoIcon from './LogoIcon'
-import SubtitlesIcon from '@mui/icons-material/Subtitles'
 import SubtitlesOffIcon from './SubtitlesOffIcon'
 import HoldableIconButton from './HoldableIconButton'
 import PlayModeSelector from './PlayModeSelector'
 import ScrollableNumberControls from './ScrollableNumberControls'
-import Tooltip from './Tooltip'
-import { usePortalContainer } from './portal-container-context'
 
 type Anchor = 'top' | 'bottom'
 
-const useStyles = makeStyles<{ anchor: Anchor }>()((theme, { anchor }) => ({
-  button: {
-    color: 'white',
-  },
-  inactiveButton: {
-    color: 'rgba(120, 120, 120, 0.7)',
-  },
-  recordingButton: {
-    color: 'red',
-  },
-  container: {
-    display: 'inline-flex',
-    width: 'auto',
-    backgroundColor: 'rgba(0, 0, 0, .7)',
-    borderRadius: 16,
-  },
-  playModePopOver: {
-    '& .MuiPopover-paper': {
-      maxHeight: 'none',
-    },
-  },
-  tooltip: {
-    '& .MuiTooltip-tooltipPlacementTop':
-      anchor === 'top'
-        ? {
-            marginTop: 16,
-          }
-        : {},
-    '& .MuiTooltip-tooltipPlacementBottom':
-      anchor === 'bottom'
-        ? {
-            marginBottom: 16,
-          }
-        : {},
-  },
-}))
+// The overlay chrome is always white-on-black regardless of theme (it sits on
+// video), so these are hardcoded colours, not theme tokens — ported from the
+// old tss-react classes.
+const activeIconClassName = 'text-white'
+const inactiveIconClassName = 'text-[rgba(120,120,120,0.7)]'
 
-interface GridContainerProps extends GridProps {
+// MUI IconButton parity: 24px icon in a 40px circular hit target.
+const iconButtonClassName =
+  'inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-white/10 disabled:pointer-events-none [&_img]:size-6 [&_svg]:size-6'
+
+// Tooltip wrapper that can be disabled wholesale (small screens) and renders
+// its content into the surface's portal container via the context default.
+const OverlayTooltip = ({
+  title,
+  enabled,
+  side,
+  children,
+}: {
+  title: string
+  enabled: boolean
+  side: Anchor
   children: React.ReactNode
-}
+}) => {
+  if (!enabled) {
+    return children
+  }
 
-const GridContainer = React.forwardRef<HTMLDivElement, GridContainerProps>(function GridContainer(
-  { children, ...props }: GridContainerProps,
-  ref
-) {
   return (
-    <Grid ref={ref} container alignContent='center' justifyContent='center' {...props}>
-      {children}
-    </Grid>
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side={side} sideOffset={8}>
+        {title}
+      </TooltipContent>
+    </Tooltip>
   )
-})
+}
 
 interface Props {
   model?: VideoOverlayModel
@@ -102,14 +81,9 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
   }: Props,
   ref
 ) {
-  const { classes } = useStyles({ anchor })
-  // When rendered inside a Shadow DOM (ShadowMuiProvider), MUI portals must land
-  // in the shadow root or they render unstyled; undefined => default body.
-  const portalContainer = usePortalContainer()
-  const offsetInputRef = useRef<HTMLInputElement>(undefined)
-  const playbackInputRef = useRef<HTMLInputElement>(undefined)
+  const offsetInputRef = React.useRef<HTMLInputElement>(undefined)
+  const playbackInputRef = React.useRef<HTMLInputElement>(undefined)
   const [playModeSelectorOpen, setPlayModeSelectorOpen] = useState<boolean>(false)
-  const [playModeSelectorAnchorEl, setPlayModeSelectorAnchorEl] = useState<HTMLElement>()
   const [numberControlType, setNumberControlType] = useState<ControlType>(ControlType.timeDisplay)
 
   const handleScrollToControlType = useCallback(
@@ -119,16 +93,6 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
     },
     [onScrollToControlType]
   )
-
-  const handleClosePlayModeSelector = useCallback(() => {
-    setPlayModeSelectorOpen(false)
-    setPlayModeSelectorAnchorEl(undefined)
-  }, [])
-
-  const handleOpenPlayModeSelector = useCallback((e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    setPlayModeSelectorAnchorEl(e.currentTarget)
-    setPlayModeSelectorOpen(true)
-  }, [])
 
   const handlePlayModeSelected = useCallback(
     (playMode: PlayMode) => {
@@ -325,6 +289,13 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
     return null
   }
 
+  // Tooltips (like the play-mode popover) open toward the video INTERIOR: the
+  // bar sits flush against a video edge, so the anchor side has no room — a
+  // tooltip there lands outside the video where host-page chrome can overlap
+  // it (e.g. YouTube, where the overlay deliberately sits below the masthead
+  // z-index) and Radix's collision shifting makes the gap look inconsistent.
+  const tooltipSide: Anchor = anchor === 'bottom' ? 'top' : 'bottom'
+
   let rightNumberControlDisabled: boolean
   let leftNumberControlDisabled: boolean
 
@@ -347,131 +318,109 @@ const VideoOverlay = React.forwardRef<HTMLDivElement, Props>(function VideoOverl
       break
   }
 
-  const defaultTooltipProps = {
-    className: classes.tooltip,
-    placement: anchor,
-    disabled: !tooltipsEnabled,
-    slotProps: { popper: { container: portalContainer } },
-  }
-
-  const containerClassName = className === undefined ? classes.container : `${className} ${classes.container}`
   return (
-    <>
-      <GridContainer ref={ref} direction='row' wrap='nowrap' className={containerClassName}>
-        {onLoadSubtitles && (
-          <Grid item>
-            <Tooltip {...defaultTooltipProps} title={t`Load Subtitles`}>
-              <span>
-                <IconButton disabled={model.recording} onClick={onLoadSubtitles}>
-                  <LogoIcon className={model.recording ? classes.inactiveButton : classes.button} />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Grid>
-        )}
-        {!model.emptySubtitleTrack && (
-          <Grid item>
-            <Tooltip {...defaultTooltipProps} title={t`Toggle subtitles`}>
-              <span>
-                <IconButton disabled={model.recording} onClick={onToggleSubtitles}>
-                  {model.subtitlesAreVisible && (
-                    <SubtitlesOffIcon className={model.recording ? classes.inactiveButton : classes.button} />
-                  )}
-                  {!model.subtitlesAreVisible && (
-                    <SubtitlesIcon className={model.recording ? classes.inactiveButton : classes.button} />
-                  )}
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Grid>
-        )}
-        {!model.emptySubtitleTrack && (
-          <Grid item>
-            <Tooltip {...defaultTooltipProps} title={t`Playback Mode`}>
-              <span>
-                <IconButton disabled={model.recording} onClick={handleOpenPlayModeSelector}>
-                  <TuneIcon className={model.recording ? classes.inactiveButton : classes.button} />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Grid>
-        )}
-        {!model.recording && (
-          <>
-            <Grid item>
-              <Tooltip {...defaultTooltipProps} title={leftNumberControlTitle}>
-                <span>
-                  <HoldableIconButton
-                    onClick={handleLeftNumberControl}
-                    onHold={handleHoldLeftNumberControl}
-                    disabled={leftNumberControlDisabled}
-                  >
-                    <NavigateBeforeIcon
-                      className={leftNumberControlDisabled ? classes.inactiveButton : classes.button}
-                    />
-                  </HoldableIconButton>
-                </span>
-              </Tooltip>
-            </Grid>
-            <Tooltip {...defaultTooltipProps} title={numberControlTitle}>
-              <Grid item>
-                <ScrollableNumberControls
-                  offsetInputRef={offsetInputRef}
-                  playbackRateInputRef={playbackInputRef}
-                  offset={model.offset}
-                  onOffset={onOffset}
-                  playbackRate={model.playbackRate}
-                  onPlaybackRate={onPlaybackRate}
-                  initialControlType={initialControlType}
-                  onScrollTo={handleScrollToControlType}
-                  currentMilliseconds={model.currentTimestamp}
-                />
-              </Grid>
-            </Tooltip>
-            <Grid item>
-              <Tooltip {...defaultTooltipProps} title={rightNumberControlTitle}>
-                <span>
-                  <HoldableIconButton
-                    onClick={handleRightNumberControl}
-                    onHold={handleHoldRightNumberControl}
-                    disabled={rightNumberControlDisabled}
-                  >
-                    <NavigateNextIcon
-                      className={rightNumberControlDisabled ? classes.inactiveButton : classes.button}
-                    />
-                  </HoldableIconButton>
-                </span>
-              </Tooltip>
-            </Grid>
-          </>
-        )}
-      </GridContainer>
-      {playModeSelectorOpen && (
+    <div
+      ref={ref}
+      className={cn(
+        'inline-flex w-auto flex-row flex-nowrap items-center justify-center rounded-2xl bg-black/70',
+        className
+      )}
+    >
+      {onLoadSubtitles && (
+        <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={t`Load Subtitles`}>
+          <span>
+            <button type='button' className={iconButtonClassName} disabled={model.recording} onClick={onLoadSubtitles}>
+              <LogoIcon className={model.recording ? 'opacity-50' : undefined} />
+            </button>
+          </span>
+        </OverlayTooltip>
+      )}
+      {!model.emptySubtitleTrack && (
+        <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={t`Toggle subtitles`}>
+          <span>
+            <button
+              type='button'
+              className={iconButtonClassName}
+              disabled={model.recording}
+              onClick={onToggleSubtitles}
+            >
+              {model.subtitlesAreVisible && (
+                <SubtitlesOffIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+              )}
+              {!model.subtitlesAreVisible && (
+                <CaptionsIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+              )}
+            </button>
+          </span>
+        </OverlayTooltip>
+      )}
+      {!model.emptySubtitleTrack && (
         <PlayModeSelector
           open={playModeSelectorOpen}
-          anchorEl={playModeSelectorAnchorEl}
-          container={portalContainer}
-          onClose={handleClosePlayModeSelector}
+          onOpenChange={setPlayModeSelectorOpen}
+          side={anchor === 'bottom' ? 'top' : 'bottom'}
           selectedPlayMode={model.playMode}
           onPlayMode={handlePlayModeSelected}
-          listStyle={{
-            display: 'flex',
-            flexDirection: 'row',
-            padding: 0,
-            overflowX: 'auto',
-          }}
-          className={classes.playModePopOver}
-          anchorOrigin={{
-            vertical: 'center',
-            horizontal: 'center',
-          }}
-          transformOrigin={{
-            vertical: 'center',
-            horizontal: 'center',
-          }}
-        />
+        >
+          {/* PopoverTrigger(asChild) wraps the same tooltip+button structure
+              the other controls use; the tooltip trigger nests inside it. */}
+          <span>
+            <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={t`Playback Mode`}>
+              <span>
+                <button type='button' className={iconButtonClassName} disabled={model.recording}>
+                  <SlidersHorizontalIcon className={model.recording ? inactiveIconClassName : activeIconClassName} />
+                </button>
+              </span>
+            </OverlayTooltip>
+          </span>
+        </PlayModeSelector>
       )}
-    </>
+      {!model.recording && (
+        <>
+          <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={leftNumberControlTitle}>
+            <span>
+              <HoldableIconButton
+                className={iconButtonClassName}
+                onClick={handleLeftNumberControl}
+                onHold={handleHoldLeftNumberControl}
+                disabled={leftNumberControlDisabled}
+              >
+                <ChevronLeftIcon className={leftNumberControlDisabled ? inactiveIconClassName : activeIconClassName} />
+              </HoldableIconButton>
+            </span>
+          </OverlayTooltip>
+          <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={numberControlTitle}>
+            <div>
+              <ScrollableNumberControls
+                offsetInputRef={offsetInputRef}
+                playbackRateInputRef={playbackInputRef}
+                offset={model.offset}
+                onOffset={onOffset}
+                playbackRate={model.playbackRate}
+                onPlaybackRate={onPlaybackRate}
+                initialControlType={initialControlType}
+                onScrollTo={handleScrollToControlType}
+                currentMilliseconds={model.currentTimestamp}
+              />
+            </div>
+          </OverlayTooltip>
+          <OverlayTooltip enabled={tooltipsEnabled} side={tooltipSide} title={rightNumberControlTitle}>
+            <span>
+              <HoldableIconButton
+                className={iconButtonClassName}
+                onClick={handleRightNumberControl}
+                onHold={handleHoldRightNumberControl}
+                disabled={rightNumberControlDisabled}
+              >
+                <ChevronRightIcon
+                  className={rightNumberControlDisabled ? inactiveIconClassName : activeIconClassName}
+                />
+              </HoldableIconButton>
+            </span>
+          </OverlayTooltip>
+        </>
+      )}
+    </div>
   )
 })
 

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetStudySessionStatus } from '@/features/sessions/api/sessions-hooks'
 

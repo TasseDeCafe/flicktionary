@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Button } from '@/components/ui/button'
+import { Button } from './button'
 
 export type RateValue = 'again' | 'hard' | 'good' | 'easy'
 

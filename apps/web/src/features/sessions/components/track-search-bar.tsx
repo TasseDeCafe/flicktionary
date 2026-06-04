@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { SearchInput } from '@/components/ui/search-input'
+import { SearchInput } from '@flicktionary/ui/components/search-input'
 
 type Props = {
   value: string

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@flicktionary/ui/components/label'
+import { Input } from '@flicktionary/ui/components/input'
+import { Textarea } from '@flicktionary/ui/components/textarea'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 

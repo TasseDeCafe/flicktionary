@@ -1,22 +1,13 @@
 import { JSX } from 'react'
+import { TriangleAlert } from 'lucide-react'
 import { MutablePageConfig, Page, PageConfig, PageSettings, YoutubePage } from '../settings'
 import { Trans, useLingui } from '@lingui/react/macro'
-import Dialog from '@mui/material/Dialog'
-import Toolbar from '@mui/material/Toolbar'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
-import CloseIcon from '@mui/icons-material/Close'
-import IconButton from '@mui/material/IconButton'
-import TextField from './SettingsTextField'
-import Stack from '@mui/material/Stack'
-import Switch from '@mui/material/Switch'
-import Alert from '@mui/material/Alert'
-import LabelWithHoverEffect from './LabelWithHoverEffect'
+import { Button } from '@flicktionary/ui/components/button'
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
+import SettingsField from './SettingsField'
+import SettingsSwitchRow from './SettingsSwitchRow'
 import { pageMetadata } from '../pages'
 import ListField from './ListField'
-import SettingsTextField from './SettingsTextField'
 
 const maxAdditionalHostsLength = 50
 const youtubeTargetLanguageLimit = 3
@@ -42,65 +33,10 @@ export interface PageSettingsFormProps {
   onPageChanged: <K extends keyof PageSettings>(key: K, page: PageSettings[K]) => void
 }
 
-// Commenting out "disable CSP" functionality in case it's useful later
-// const useDisableCspDnrRule = (pageKey: keyof PageSettings) => {
-//     const [rule, setRule] = useState<Browser.declarativeNetRequest.Rule>();
-//     const refreshRule = useCallback(() => {
-//         setRule(undefined);
-
-//         if (browser.declarativeNetRequest) {
-//             browser.declarativeNetRequest.getDynamicRules().then((rules) => {
-//                 setRule(rules.find((r) => r.id === pageMetadata[pageKey].disableCspRuleId));
-//             });
-//         }
-//     }, [pageKey]);
-//     useEffect(() => refreshRule(), [refreshRule]);
-//     const createDisableCspDnrRule = useCallback(
-//         (hostRegex: string) => {
-//             if (!browser.declarativeNetRequest) {
-//                 return;
-//             }
-
-//             const ruleId = pageMetadata[pageKey].disableCspRuleId;
-//             browser.declarativeNetRequest
-//                 .updateDynamicRules({
-//                     addRules: [
-//                         {
-//                             id: ruleId,
-//                             condition: {
-//                                 regexFilter: hostRegex,
-//                             },
-//                             action: {
-//                                 type: chrome.declarativeNetRequest.RuleActionType.MODIFY_HEADERS,
-//                                 responseHeaders: [
-//                                     {
-//                                         header: 'content-security-policy',
-//                                         operation: chrome.declarativeNetRequest.HeaderOperation.REMOVE,
-//                                     },
-//                                 ],
-//                             },
-//                         },
-//                     ],
-//                 })
-//                 .then(refreshRule)
-//                 .catch(console.error);
-//         },
-//         [refreshRule, pageKey]
-//     );
-
-//     const deleteDisableCspDnrRule = useCallback(() => {
-//         if (!browser.declarativeNetRequest) {
-//             return;
-//         }
-
-//         const ruleId = pageMetadata[pageKey].disableCspRuleId;
-//         browser.declarativeNetRequest
-//             .updateDynamicRules({ removeRuleIds: [ruleId] })
-//             .then(refreshRule)
-//             .catch(console.error);
-//     }, [refreshRule, pageKey]);
-//     return { disableCspDnrRule: rule, createDisableCspDnrRule, deleteDisableCspDnrRule };
-// };
+// NOTE: the upstream fork carried a commented-out "disable CSP" feature here
+// (declarativeNetRequest dynamic rules gated behind a confirm dialog). It was
+// dropped with the MUI rewrite — recover it from git history if it ever comes
+// back: PageSettingsForm.tsx @ eb611898.
 
 const PageSettingsForm = (props: PageSettingsFormProps) => {
   if (props.pageKey === 'youtube') {
@@ -120,7 +56,6 @@ const YoutubePageSettingsForm = (props: PageSettingsFormProps) => {
       {...props}
       additionalControls={
         <ListField
-          textFieldComponent={SettingsTextField}
           label={t`Target language codes for machine translation`}
           items={targetLanguages ?? []}
           onItemsChange={(newTargetLanguages) => {
@@ -156,176 +91,89 @@ const DefaultPageSettingsForm = ({
     const newOverridesAreEmpty = Object.keys(newOverrides).length === 0
     onPageChanged(pageKey, { ...page, overrides: newOverridesAreEmpty ? undefined : newOverrides })
   }
-  // const { disableCspDnrRule, createDisableCspDnrRule, deleteDisableCspDnrRule } = useDisableCspDnrRule(pageKey);
-  // const doNotAllowDisableCsp = page.additionalHosts !== undefined && page.additionalHosts.length > 0;
-  // const [confirmDisableCspDialogOpen, setConfirmDisableCspDialogOpen] = useState<boolean>(false);
   return (
-    <>
-      {/* {browser.declarativeNetRequest && (
-                <ConfirmDisableCspDialog
-                    open={confirmDisableCspDialogOpen}
-                    onConfirm={() => {
-                        createDisableCspDnrRule(defaultPageConfig.hostRegex);
-                        setConfirmDisableCspDialogOpen(false);
-                    }}
-                    onClose={() => setConfirmDisableCspDialogOpen(false)}
-                />
-            )} */}
-      <Dialog fullWidth open={open} onClose={onClose}>
-        <Toolbar>
-          <Typography variant='h6' sx={{ flexGrow: 1 }}>
-            {pageMetadata[pageKey].title}
-          </Typography>
-          <IconButton edge='end' onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Toolbar>
-        <DialogContent>
-          <Stack spacing={1}>
-            {hasModifications && (
-              <Alert
-                severity='warning'
-                action={
-                  <Button
-                    onClick={() =>
-                      onPageChanged(pageKey, {
-                        ...page,
-                        overrides: undefined,
-                        additionalHosts: undefined,
-                        targetLanguages: undefined,
-                      })
-                    }
-                    size='small'
-                  >
-                    <Trans>Revert</Trans>
-                  </Button>
+    <Dialog open={open} onOpenChange={(nowOpen) => !nowOpen && onClose()}>
+      <DialogContent className='flex max-h-[calc(100dvh-64px)] flex-col' aria-describedby={undefined}>
+        <DialogTitle>{pageMetadata[pageKey].title}</DialogTitle>
+        <div className='flex min-h-0 flex-col gap-2 overflow-y-auto'>
+          {hasModifications && (
+            <div className='flex items-center gap-2 rounded-md border border-yellow-500/50 bg-yellow-500/10 p-3 text-sm'>
+              <TriangleAlert className='size-4 shrink-0 text-yellow-500' />
+              <span className='flex-1'>
+                <Trans>These settings have been modified.</Trans>
+              </span>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() =>
+                  onPageChanged(pageKey, {
+                    ...page,
+                    overrides: undefined,
+                    additionalHosts: undefined,
+                    targetLanguages: undefined,
+                  })
                 }
               >
-                <Trans>These settings have been modified.</Trans>
-              </Alert>
-            )}
-            <TextField disabled label={t`Host regex`} value={defaultPageConfig.hostRegex} />
-            <ListField
-              label={t`Additional hosts`}
-              items={page.additionalHosts ?? []}
-              onItemsChange={(additionalHosts) => {
-                if (totalLength(additionalHosts) > maxAdditionalHostsLength) {
-                  return
-                }
+                <Trans>Revert</Trans>
+              </Button>
+            </div>
+          )}
+          <SettingsField disabled label={t`Host regex`} value={defaultPageConfig.hostRegex} />
+          <ListField
+            label={t`Additional hosts`}
+            items={page.additionalHosts ?? []}
+            onItemsChange={(additionalHosts) => {
+              if (totalLength(additionalHosts) > maxAdditionalHostsLength) {
+                return
+              }
 
-                // if (disableCspDnrRule !== undefined) {
-                //     deleteDisableCspDnrRule();
-                // }
-
-                onPageChanged(pageKey, {
-                  ...page,
-                  additionalHosts: additionalHosts.length === 0 ? undefined : additionalHosts,
-                })
-              }}
-            />
-            <TextField
-              label={t`Path regex for subtitle detection`}
-              value={overrides?.syncAllowedAtPath ?? defaultPageConfig.syncAllowedAtPath ?? ''}
-              onChange={(e) => handleOverrideFieldChanged('syncAllowedAtPath', e.target.value)}
-            />
-            <TextField
-              label={t`Path hash regex for subtitle detection`}
-              value={overrides?.syncAllowedAtHash ?? defaultPageConfig.syncAllowedAtHash ?? ''}
-              onChange={(e) => handleOverrideFieldChanged('syncAllowedAtHash', e.target.value)}
-            />
-            {/* <TextField
-                            label={t('extension.settings.pages.autoSyncVideoSrc')}
-                            value={overrides?.autoSyncVideoSrc ?? defaultPageConfig.autoSyncVideoSrc ?? ''}
-                            onChange={(e) => handleOverrideFieldChanged('autoSyncVideoSrc', e.target.value)}
-                        />
-                        <TextField
-                            label={t('extension.settings.pages.autoSyncElementId')}
-                            value={overrides?.autoSyncElementId ?? defaultPageConfig.autoSyncElementId ?? ''}
-                            onChange={(e) => handleOverrideFieldChanged('autoSyncElementId', e.target.value)}
-                        />
-                        <TextField
-                            label={t('extension.settings.pages.ignoreVideoElementsClass')}
-                            value={
-                                overrides?.ignoreVideoElementsClass ?? defaultPageConfig.ignoreVideoElementsClass ?? ''
-                            }
-                            onChange={(e) => handleOverrideFieldChanged('ignoreVideoElementsClass', e.target.value)}
-                        /> */}
-            {additionalControls}
-            <LabelWithHoverEffect
-              control={
-                <Switch
-                  checked={
-                    overrides?.searchShadowRootsForVideoElements ??
-                    defaultPageConfig.searchShadowRootsForVideoElements ??
-                    false
-                  }
-                  onChange={(e) => handleOverrideFieldChanged('searchShadowRootsForVideoElements', e.target.checked)}
-                />
-              }
-              label={t`Search shadow roots for video elements`}
-              labelPlacement='start'
-            />
-            <LabelWithHoverEffect
-              control={
-                <Switch
-                  checked={
-                    overrides?.allowVideoElementsWithBlankSrc ??
-                    defaultPageConfig.allowVideoElementsWithBlankSrc ??
-                    false
-                  }
-                  onChange={(e) => handleOverrideFieldChanged('allowVideoElementsWithBlankSrc', e.target.checked)}
-                />
-              }
-              label={t`Allow video elements with blank src`}
-              labelPlacement='start'
-            />
-            <LabelWithHoverEffect
-              control={
-                <Switch
-                  checked={overrides?.autoSyncEnabled ?? defaultPageConfig.autoSyncEnabled ?? false}
-                  onChange={(e) => handleOverrideFieldChanged('autoSyncEnabled', e.target.checked)}
-                />
-              }
-              label={t`Allow auto-loading of detected subtitles`}
-              labelPlacement='start'
-            />
-            {/* {!isFirefoxBuild && browser.declarativeNetRequest && (
-                            <Tooltip
-                                disabled={!doNotAllowDisableCsp}
-                                title={t('extension.settings.pages.disableCspRestrictions')}
-                            >
-                                <LabelWithHoverEffect
-                                    control={
-                                        <Switch
-                                            disabled={doNotAllowDisableCsp}
-                                            checked={disableCspDnrRule !== undefined}
-                                            onClickCapture={(e) => {
-                                                if (disableCspDnrRule === undefined) {
-                                                    e.stopPropagation();
-                                                    setConfirmDisableCspDialogOpen(true);
-                                                }
-                                            }}
-                                            onChange={(e) => {
-                                                if (!e.target.checked) {
-                                                    deleteDisableCspDnrRule();
-                                                }
-                                            }}
-                                        />
-                                    }
-                                    label={t('extension.settings.pages.disableCsp')}
-                                    labelPlacement="start"
-                                />
-                            </Tooltip>
-                        )} */}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>
+              onPageChanged(pageKey, {
+                ...page,
+                additionalHosts: additionalHosts.length === 0 ? undefined : additionalHosts,
+              })
+            }}
+          />
+          <SettingsField
+            label={t`Path regex for subtitle detection`}
+            value={overrides?.syncAllowedAtPath ?? defaultPageConfig.syncAllowedAtPath ?? ''}
+            onChange={(e) => handleOverrideFieldChanged('syncAllowedAtPath', e.target.value)}
+          />
+          <SettingsField
+            label={t`Path hash regex for subtitle detection`}
+            value={overrides?.syncAllowedAtHash ?? defaultPageConfig.syncAllowedAtHash ?? ''}
+            onChange={(e) => handleOverrideFieldChanged('syncAllowedAtHash', e.target.value)}
+          />
+          {additionalControls}
+          <SettingsSwitchRow
+            label={t`Search shadow roots for video elements`}
+            checked={
+              overrides?.searchShadowRootsForVideoElements ??
+              defaultPageConfig.searchShadowRootsForVideoElements ??
+              false
+            }
+            onCheckedChange={(checked) => handleOverrideFieldChanged('searchShadowRootsForVideoElements', checked)}
+          />
+          <SettingsSwitchRow
+            label={t`Allow video elements with blank src`}
+            checked={
+              overrides?.allowVideoElementsWithBlankSrc ?? defaultPageConfig.allowVideoElementsWithBlankSrc ?? false
+            }
+            onCheckedChange={(checked) => handleOverrideFieldChanged('allowVideoElementsWithBlankSrc', checked)}
+          />
+          <SettingsSwitchRow
+            label={t`Allow auto-loading of detected subtitles`}
+            checked={overrides?.autoSyncEnabled ?? defaultPageConfig.autoSyncEnabled ?? false}
+            onCheckedChange={(checked) => handleOverrideFieldChanged('autoSyncEnabled', checked)}
+          />
+        </div>
+        <DialogFooter>
+          <Button type='button' variant='ghost' onClick={onClose}>
             <Trans>OK</Trans>
           </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
