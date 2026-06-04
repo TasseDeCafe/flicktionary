@@ -1,7 +1,18 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { BookOpen, Brain, ChevronLeft, CircleCheck, History, Layers, Star } from 'lucide-react'
+import {
+  BookOpen,
+  Brain,
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
+  CircleCheck,
+  History,
+  Layers,
+  Sparkles,
+  Star,
+} from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import type {
@@ -29,8 +40,12 @@ export const PracticeLanguageView = () => {
   const { data: summary, isLoading } = useDueSummary()
   const { data: prefs } = useGetUserPrefs()
 
-  const [scope, setScope] = useState<ReviewScope>('mixed')
-  const [mode, setMode] = useState<RenderMode>('read')
+  // Per-pool "More" disclosure. Lives on the parent because nested component
+  // definitions remount (and would drop their state) on every render.
+  const [moreOpenByPool, setMoreOpenByPool] = useState<Record<PracticePool, boolean>>({
+    passive: false,
+    active: false,
+  })
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
@@ -46,7 +61,10 @@ export const PracticeLanguageView = () => {
 
   const handleBack = () => void navigate({ to: '/practice' })
 
-  const enterReview = (pool: PracticePool) => {
+  // The primary button always enters flashcards over the mixed scope — the
+  // queue itself decides what to serve. The secondary disclosure exposes the
+  // explicit scope/mode combinations for users who want them.
+  const enterReview = (pool: PracticePool, scope: ReviewScope, mode: RenderMode) => {
     void navigate({ to: '/practice/review/$targetLanguage', params: { targetLanguage }, search: { pool, scope, mode } })
   }
 
@@ -67,30 +85,58 @@ export const PracticeLanguageView = () => {
     return t`No terms are ready right now.`
   })()
 
-  const ScopeButton = ({ value, label }: { value: ReviewScope; label: string }) => (
-    <button
-      type='button'
-      onClick={() => setScope(value)}
-      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-        scope === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-      }`}
-    >
-      {label}
-    </button>
-  )
-
-  const ModeButton = ({ value, label, icon }: { value: RenderMode; label: string; icon: React.ReactNode }) => (
-    <button
-      type='button'
-      onClick={() => setMode(value)}
-      className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-        mode === value ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  )
+  const renderPoolActions = (pool: PracticePool) => {
+    const moreOpen = moreOpenByPool[pool]
+    return (
+      <div className='mt-4 flex flex-col gap-2'>
+        <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
+          <Button type='button' size='lg' onClick={() => enterReview(pool, 'mixed', 'flashcards')}>
+            {pool === 'active' ? <Star className='h-4 w-4' /> : <Brain className='h-4 w-4' />}
+            {t`Practice`}
+          </Button>
+          <Button type='button' variant='outline' size='lg' onClick={() => openHistory(pool)}>
+            <History className='h-4 w-4' />
+            {t`History`}
+          </Button>
+          <Button
+            type='button'
+            variant='ghost'
+            size='lg'
+            onClick={() => setMoreOpenByPool((prev) => ({ ...prev, [pool]: !prev[pool] }))}
+          >
+            {moreOpen ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />}
+            {t`More`}
+          </Button>
+        </div>
+        {moreOpen && (
+          <div className='flex flex-wrap gap-2'>
+            <Button type='button' variant='outline' size='sm' onClick={() => enterReview(pool, 'mixed', 'read')}>
+              <BookOpen className='h-4 w-4' />
+              {t`Read`}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => enterReview(pool, 'review_due', 'flashcards')}
+            >
+              <Layers className='h-4 w-4' />
+              {t`Review only`}
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => enterReview(pool, 'learn_new', 'flashcards')}
+            >
+              <Sparkles className='h-4 w-4' />
+              {t`Learn new`}
+            </Button>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className='flex h-full flex-col'>
@@ -116,6 +162,21 @@ export const PracticeLanguageView = () => {
 
           {entry && (
             <>
+              {activeTotal > 0 && (
+                <section className='rounded-xl border bg-amber-50/40 p-4'>
+                  <h2 className='text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
+                    <Star className='h-3.5 w-3.5 text-amber-600' />
+                    {t`Active vocabulary`}
+                  </h2>
+                  <p className='text-sm text-gray-700'>
+                    {hasActiveWork
+                      ? t`${activeDueCount} due, ${activeNewCount} new`
+                      : t`${activeTotal} active term(s). Nothing due right now.`}
+                  </p>
+                  {renderPoolActions('active')}
+                </section>
+              )}
+
               <section className='rounded-xl border bg-white p-4'>
                 <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Passive vocabulary`}</h2>
                 <div className='flex items-start gap-3'>
@@ -129,35 +190,7 @@ export const PracticeLanguageView = () => {
                     {statusLine && <p className='text-muted-foreground mt-1 text-sm'>{statusLine}</p>}
                   </div>
                 </div>
-
-                <div className='mt-4 flex flex-col gap-3'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-muted-foreground text-xs font-medium'>{t`Scope`}</span>
-                    <div className='flex items-center gap-1 rounded-lg bg-gray-100 p-1'>
-                      <ScopeButton value='mixed' label={t`Mixed`} />
-                      <ScopeButton value='review_due' label={t`Review`} />
-                      <ScopeButton value='learn_new' label={t`Learn new`} />
-                    </div>
-                  </div>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-muted-foreground text-xs font-medium'>{t`Mode`}</span>
-                    <div className='flex items-center gap-1 rounded-lg bg-gray-100 p-1'>
-                      <ModeButton value='read' label={t`Read`} icon={<BookOpen className='h-4 w-4' />} />
-                      <ModeButton value='flashcards' label={t`Flashcards`} icon={<Layers className='h-4 w-4' />} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className='mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
-                  <Button type='button' size='lg' onClick={() => enterReview('passive')}>
-                    <Brain className='h-4 w-4' />
-                    {t`Practice`}
-                  </Button>
-                  <Button type='button' variant='outline' size='lg' onClick={() => openHistory('passive')}>
-                    <History className='h-4 w-4' />
-                    {t`History`}
-                  </Button>
-                </div>
+                {renderPoolActions('passive')}
               </section>
 
               <section className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
@@ -166,30 +199,6 @@ export const PracticeLanguageView = () => {
                 <PracticeMetric label={t`Unseen`} value={formatCount(entry.newCount)} />
                 <PracticeMetric label={t`Total`} value={formatCount(entry.totalKept)} />
               </section>
-
-              {activeTotal > 0 && (
-                <section className='rounded-xl border bg-amber-50/40 p-4'>
-                  <h2 className='text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
-                    <Star className='h-3.5 w-3.5 text-amber-600' />
-                    {t`Active vocabulary`}
-                  </h2>
-                  <p className='text-sm text-gray-700'>
-                    {hasActiveWork
-                      ? t`${activeDueCount} due, ${activeNewCount} new`
-                      : t`${activeTotal} active term(s). Nothing due right now.`}
-                  </p>
-                  <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
-                    <Button type='button' size='lg' disabled={!hasActiveWork} onClick={() => enterReview('active')}>
-                      <Star className='h-4 w-4' />
-                      {t`Drill active terms`}
-                    </Button>
-                    <Button type='button' variant='outline' size='lg' onClick={() => openHistory('active')}>
-                      <History className='h-4 w-4' />
-                      {t`History`}
-                    </Button>
-                  </div>
-                </section>
-              )}
             </>
           )}
         </div>
