@@ -1,7 +1,7 @@
 import { SearchIcon, X } from 'lucide-react'
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Input } from '@/components/ui/input'
+import { Input } from './input'
 
 type Props = {
   value: string

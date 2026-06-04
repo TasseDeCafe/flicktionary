@@ -1,5 +1,5 @@
 import { ComponentType, useEffect } from 'react'
-import { OverlayId, URL_OVERLAY_IDS } from '@/components/ui/overlay-ids'
+import { OverlayId, URL_OVERLAY_IDS } from '@flicktionary/ui/components/overlay-ids'
 import { SomethingWentWrongOverlayContent } from './something-went-wrong-overlay-content'
 import { ResponsiveOverlay } from '@/components/ui/responsive-overlay'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'

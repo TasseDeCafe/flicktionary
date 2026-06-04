@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type {
   Card,

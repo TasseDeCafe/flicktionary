@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Label } from '@/components/ui/label'
+import { Label } from '@flicktionary/ui/components/label'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { useSetNativeLanguage } from '@/features/sessions/api/sessions-hooks'
 

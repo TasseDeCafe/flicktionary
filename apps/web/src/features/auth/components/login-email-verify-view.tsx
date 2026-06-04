@@ -4,7 +4,7 @@ import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/session
 import { Route as loginRoute } from '@/app/routes/login/index'
 import { useNavigate } from '@tanstack/react-router'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events.ts'
-import { Button } from '@/components/ui/button.tsx'
+import { Button } from '@flicktionary/ui/components/button'
 import { useMutation } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 

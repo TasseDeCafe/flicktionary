@@ -6,18 +6,18 @@ import {
   useCloseOverlay,
 } from '@/components/ui/responsive-overlay'
 import { Loader2, Send } from 'lucide-react'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@flicktionary/ui/components/textarea'
+import { Input } from '@flicktionary/ui/components/input'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@flicktionary/ui/components/form'
 import { z } from 'zod'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { formSchema } from '@flicktionary/api-client/orpc-contracts/contact-email-contract'
 import { useSendContactEmail } from '@/features/contact/api/contact-hooks'
 import { useLingui } from '@lingui/react/macro'
 import { useAuthStore, getUserEmail, getUserName } from '@/stores/auth-store'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 
 export const ContactUsOverlayContent = () => {
   const { t } = useLingui()

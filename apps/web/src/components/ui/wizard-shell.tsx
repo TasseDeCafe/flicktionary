@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 
 type WizardAction = {

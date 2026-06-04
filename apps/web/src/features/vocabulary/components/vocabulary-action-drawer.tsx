@@ -8,7 +8,7 @@ import {
   OverlayHeader,
   OverlayTitle,
 } from '@/components/ui/responsive-overlay'
-import { OverlayActionRow } from '@/components/ui/overlay-action-row'
+import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
 import { useSetLearningMode } from '../api/vocabulary-hooks'
 
 interface VocabularyActionDrawerProps {

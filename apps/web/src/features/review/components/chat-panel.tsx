@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@flicktionary/ui/components/button'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@flicktionary/ui/components/dialog'
 import { useListChatForCard, useMarkChatRead } from '../api/review-hooks'
 import { PerCardChat } from './per-card-chat'
 

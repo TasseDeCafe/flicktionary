@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 import { getIsSignedIn, useAuthStore } from '@/stores/auth-store'
 import { useIsUserSetupComplete } from '@/features/user/api/user-hooks'
-import { FullViewLoader } from '@/components/ui/full-view-loader'
+import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
 
 export const AuthenticatedLayout = () => {
   const isSignedIn = useAuthStore(getIsSignedIn)

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { useIsMobile } from '@/hooks/use-is-mobile'
+import { useIsMobile } from '../hooks/use-is-mobile'
 
 export type FloatingSheetAnchor = HTMLElement | DOMRect | null
 

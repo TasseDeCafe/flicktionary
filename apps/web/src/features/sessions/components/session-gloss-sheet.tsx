@@ -6,9 +6,9 @@ import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GhostCandidate, GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@flicktionary/ui/components/badge'
+import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import {
   FloatingSheet,
@@ -20,8 +20,8 @@ import {
   FloatingSheetHeader,
   FloatingSheetTitle,
   type FloatingSheetAnchor,
-} from '@/components/ui/floating-sheet'
-import { Textarea } from '@/components/ui/textarea'
+} from '@flicktionary/ui/components/floating-sheet'
+import { Textarea } from '@flicktionary/ui/components/textarea'
 import {
   useCreateHighlight,
   useDeleteHighlight,

@@ -6,10 +6,10 @@ import {
   OverlayTitle,
   useCloseOverlay,
 } from '@/components/ui/responsive-overlay'
-import { Button } from '@/components/ui/button'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@flicktionary/ui/components/button'
+import { RadioGroup, RadioGroupItem } from '@flicktionary/ui/components/radio-group'
+import { Label } from '@flicktionary/ui/components/label'
+import { Badge } from '@flicktionary/ui/components/badge'
 import { getConfig } from '@/config/environment-config'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
 import { Route as freeTrialExplanationRoute } from '@/app/routes/_authenticated/pricing/free-trial-explanation'

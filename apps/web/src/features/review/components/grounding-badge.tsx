@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@flicktionary/ui/components/badge'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 
 type Props = {

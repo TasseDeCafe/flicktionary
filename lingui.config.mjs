@@ -15,6 +15,7 @@ export default defineConfig({
         '<rootDir>/apps/web/src',
         '<rootDir>/apps/native/src',
         '<rootDir>/packages/i18n/src',
+        '<rootDir>/packages/ui/src',
         '<rootDir>/packages/extension/src',
         '<rootDir>/packages/asbplayer-common',
       ],

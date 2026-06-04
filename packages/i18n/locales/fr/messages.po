@@ -610,7 +610,7 @@ msgstr "Avancé — utilisation flexible et efficace dans des contextes complexe
 msgid "Adverb"
 msgstr "Adverbe"
 
-#: apps/web/src/components/ui/rate-buttons.tsx:20
+#: packages/ui/src/components/rate-buttons.tsx:20
 msgid "Again"
 msgstr "Encore"
 
@@ -1015,7 +1015,7 @@ msgstr "Choisissez votre forfait"
 #~ msgid "Choose Your Plan"
 #~ msgstr "Choisissez votre formule"
 
-#: apps/web/src/components/ui/search-input.tsx:36
+#: packages/ui/src/components/search-input.tsx:36
 msgid "Clear search"
 msgstr "Effacer la recherche"
 
@@ -1422,7 +1422,7 @@ msgstr "p. ex. увидеть"
 #~ msgid "Each new session uses up to this many new terms and review terms."
 #~ msgstr "Chaque nouvelle session utilise jusqu'à ce nombre de nouveaux termes et de termes à réviser."
 
-#: apps/web/src/components/ui/rate-buttons.tsx:23
+#: packages/ui/src/components/rate-buttons.tsx:23
 msgid "Easy"
 msgstr "Facile"
 
@@ -2095,7 +2095,7 @@ msgstr "Aller aux Sessions"
 msgid "Go to triage"
 msgstr "Aller au tri"
 
-#: apps/web/src/components/ui/rate-buttons.tsx:22
+#: packages/ui/src/components/rate-buttons.tsx:22
 msgid "Good"
 msgstr "Bien"
 
@@ -2123,7 +2123,7 @@ msgstr "Les champs grammaticaux ont été modifiés manuellement"
 msgid "Grammar notes"
 msgstr "Notes grammaticales"
 
-#: apps/web/src/components/ui/rate-buttons.tsx:21
+#: packages/ui/src/components/rate-buttons.tsx:21
 msgid "Hard"
 msgstr "Difficile"
 

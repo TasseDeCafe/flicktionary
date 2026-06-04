@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Clapperboard, FileText, MonitorPlay, Newspaper, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@flicktionary/ui/components/button'
+import { Card, CardContent } from '@flicktionary/ui/components/card'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 type SessionRow = {

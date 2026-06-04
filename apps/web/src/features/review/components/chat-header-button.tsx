@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { MessageCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 
 type Props = {
   hasUnread: boolean

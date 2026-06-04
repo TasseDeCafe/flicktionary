@@ -6,8 +6,8 @@ import {
   OverlayTitle,
   useCloseOverlay,
 } from '@/components/ui/responsive-overlay'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@flicktionary/ui/components/button'
+import { Input } from '@flicktionary/ui/components/input'
 import { useDeleteAccount } from '@/features/removals/api/removals-hooks'
 import { useLingui } from '@lingui/react/macro'
 

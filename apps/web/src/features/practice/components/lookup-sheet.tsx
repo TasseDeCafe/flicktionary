@@ -6,9 +6,9 @@ import { Bookmark } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@flicktionary/ui/components/badge'
+import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import {
   FloatingSheet,
@@ -18,7 +18,7 @@ import {
   FloatingSheetFooter,
   FloatingSheetHeader,
   FloatingSheetTitle,
-} from '@/components/ui/floating-sheet'
+} from '@flicktionary/ui/components/floating-sheet'
 import { CefrPromptDialog } from '@/features/sessions/components/cefr-prompt-dialog'
 import { useGetUserPrefs, useSetCefrForLanguage } from '@/features/sessions/api/sessions-hooks'
 import { useCreateAdhocCard } from '@/features/vocabulary/api/adhoc-hooks'

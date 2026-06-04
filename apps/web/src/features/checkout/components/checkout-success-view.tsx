@@ -4,8 +4,8 @@ import { useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Route as sessionsRoute } from '@/app/routes/_authenticated/_app/sessions/index'
 import { POSTHOG_EVENTS } from '@/lib/analytics/posthog-events'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@flicktionary/ui/components/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@flicktionary/ui/components/card'
 
 export const CheckoutSuccessView = () => {
   const navigate = useNavigate()

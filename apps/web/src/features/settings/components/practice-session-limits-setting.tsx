@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
+import { Label } from '@flicktionary/ui/components/label'
+import { Input } from '@flicktionary/ui/components/input'
 import { useSetPracticeSessionLimits } from '@/features/sessions/api/sessions-hooks'
 import {
   PRACTICE_MAX_NEW_TERMS_LIMIT,

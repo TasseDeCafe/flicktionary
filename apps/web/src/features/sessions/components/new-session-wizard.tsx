@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Search, Upload } from 'lucide-react'
-import { OptionCard } from '@/components/ui/option-card'
+import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { LanguageOptionList } from '@/components/language-option-list'
 import {

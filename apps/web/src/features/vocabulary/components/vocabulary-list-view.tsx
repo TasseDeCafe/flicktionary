@@ -11,14 +11,14 @@ import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
-import { SearchInput } from '@/components/ui/search-input'
+import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
 import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
 import { VocabularyRow } from './vocabulary-row'
-import { Button } from '@/components/ui/button'
+import { Button } from '@flicktionary/ui/components/button'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 const ESTIMATED_ROW_HEIGHT = 72

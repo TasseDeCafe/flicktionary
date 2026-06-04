@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Button } from '@/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Button } from '@flicktionary/ui/components/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
 import { Check, ChevronDown, Loader2, RotateCw, Star, X } from 'lucide-react'
 import type {
   Card,

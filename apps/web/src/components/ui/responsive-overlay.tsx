@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from '@flicktionary/ui/components/dialog'
 import {
   Drawer,
   DrawerContent,
@@ -18,7 +18,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
-import { useIsMobile } from '@/hooks/use-is-mobile'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 
 // Context to share mobile state and close function with child components
 interface OverlayContextValue {

@@ -7,8 +7,8 @@ import {
   FloatingSheetHeader,
   FloatingSheetTitle,
   type FloatingSheetAnchor,
-} from '@/components/ui/floating-sheet'
-import { Button } from '@/components/ui/button'
+} from '@flicktionary/ui/components/floating-sheet'
+import { Button } from '@flicktionary/ui/components/button'
 
 interface ChunkDeleteConfirmSheetProps {
   open: boolean
