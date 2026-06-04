@@ -108,7 +108,10 @@ export default function SettingsForm({
 
   const vertical = !smallScreen
   const triggerClasses = cn(
-    vertical && 'w-full justify-start',
+    // whitespace-normal overrides the trigger base's nowrap: long labels
+    // ("Subtitle Appearance") must wrap inside the fixed-width vertical list
+    // instead of bleeding out of it (the MUI tabs wrapped too).
+    vertical && 'w-full justify-start text-left whitespace-normal',
     heightConstrained ? 'min-h-[38px] text-xs' : 'min-h-[42px] text-sm'
   )
   const panelClasses = cn('h-full max-h-full w-full overflow-y-auto', vertical ? 'pr-2 pl-4' : 'p-2')
