@@ -52,7 +52,19 @@ export function ShadowMuiProvider({
   children,
 }: ShadowMuiProviderProps) {
   const cache = useMemo<EmotionCache>(
-    () => createCache({ key: nextCacheKey(), container: shadowRoot, prepend: true }),
+    () =>
+      createCache({
+        key: nextCacheKey(),
+        container: shadowRoot,
+        prepend: true,
+        // Never use emotion's prod-default "speedy" mode (CSSOM insertRule):
+        // it leaves the injected <style> tags textually empty, and the
+        // fullscreenchange re-parenting in shadow-host.ts disconnects +
+        // reconnects the host, which discards each tag's stylesheet and
+        // re-parses its (empty) text — silently wiping every MUI style until
+        // a full reload. Non-speedy keeps rules as text, surviving any move.
+        speedy: false,
+      }),
     [shadowRoot]
   )
   // Inside a Shadow DOM, MUI's default `rem` typography resolves against the
