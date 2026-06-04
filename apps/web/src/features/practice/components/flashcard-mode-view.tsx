@@ -35,7 +35,8 @@ const MAX_RATE_RETRIES = 2
 type QueueItem = {
   card: ReviewTerm
   retryCount: number
-  // Whether this card has already been re-appended once for an 'again' rating.
+  // True for in-session redrill copies of 'again'-rated cards (classifies the
+  // item into the learning bucket of the remaining counts).
   requeuedForAgain: boolean
 }
 
@@ -129,7 +130,14 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
             toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
             return
           }
-          if (rating === 'again' && !item.requeuedForAgain) {
+          if (rating === 'again') {
+            // Anki-style: an 'again' card keeps coming back until it gets a
+            // non-'again' rating. Because every non-'again' passive rating is
+            // clamped to >= +24h, redrilling until passed guarantees a finished
+            // session leaves nothing immediately due — no straggler follow-ups
+            // resurfacing right after the post-session Strengthen round. The
+            // loop is user-controlled (rate it 'hard'+ to move on), and terms
+            // that keep lapsing across sessions get parked by the leech path.
             setQueue((q) => [...q, { card, retryCount: item.retryCount, requeuedForAgain: true }])
           }
         },

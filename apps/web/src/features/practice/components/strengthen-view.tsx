@@ -93,11 +93,18 @@ export const StrengthenView = () => {
 
         {current &&
           (() => {
+            // The headword IS the answer for cloze types (it fills the blank),
+            // so naming it in the header would give the exercise away. It's
+            // fine for mc_comprehension (the term is visible in the sentence),
+            // use_in_sentence (the term is the task), and generating
+            // placeholders (no exercise content shown).
+            const headerLeaksAnswer = current.exerciseType === 'mc_cloze' || current.exerciseType === 'production_cloze'
             const header = (
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
                   <Dumbbell className='h-3.5 w-3.5' />
-                  {current.track === 'gate' ? t`Rehab` : t`Practice`} · {current.headword}
+                  {current.track === 'gate' ? t`Rehab` : t`Practice`}
+                  {!headerLeaksAnswer && <> · {current.headword}</>}
                 </span>
                 <span className='text-muted-foreground text-xs tabular-nums'>
                   {index + 1} / {total}
