@@ -19,52 +19,94 @@ msgstr ""
 #~ msgstr "extension.videoDataSync.emptySubtitleTrack"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:67
-#~ msgid "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
-#~ msgstr "- Accessing the service for any illegal purpose or in violation of any local, state, national, or international law."
+#~ msgid "- Accessing the service for any illegal purpose or in violation of any "
+#~ "local, state, national, or international law."
+#~ msgstr "- Accessing the service for any illegal purpose or in violation of any "
+#~ "local, state, national, or international law."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:64
-#~ msgid "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our resources."
-#~ msgstr "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our resources."
+#~ msgid "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our "
+#~ "resources."
+#~ msgstr "- Attempting to copy, duplicate, reproduce, sell, trade, or resell our "
+#~ "resources."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:79
-#~ msgid "- Attempting to hack, destabilize, or introduce malicious software to our website, or to compromise the security of our services in any way."
-#~ msgstr "- Attempting to hack, destabilize, or introduce malicious software to our website, or to compromise the security of our services in any way."
+#~ msgid "- Attempting to hack, destabilize, or introduce malicious software to "
+#~ "our website, or to compromise the security of our services in any way."
+#~ msgstr "- Attempting to hack, destabilize, or introduce malicious software to "
+#~ "our website, or to compromise the security of our services in any way."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:73
-#~ msgid "- Conducting any unauthorized activity that involves the service, including but not limited to data theft, providing malware or spyware, phishing, and other fraudulent activities."
-#~ msgstr "- Conducting any unauthorized activity that involves the service, including but not limited to data theft, providing malware or spyware, phishing, and other fraudulent activities."
+#~ msgid "- Conducting any unauthorized activity that involves the service, "
+#~ "including but not limited to data theft, providing malware or spyware, "
+#~ "phishing, and other fraudulent activities."
+#~ msgstr "- Conducting any unauthorized activity that involves the service, "
+#~ "including but not limited to data theft, providing malware or spyware, "
+#~ "phishing, and other fraudulent activities."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:151
 #~ msgid "- Continuous security monitoring and automated threat detection systems"
 #~ msgstr "- Continuous security monitoring and automated threat detection systems"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:50
-#~ msgid "- Cookies and Tracking Technologies: We use cookies and similar technologies to monitor and analyze service usage and to enhance user experience. You may control the use of these technologies through your browser settings."
-#~ msgstr "- Cookies and Tracking Technologies: We use cookies and similar technologies to monitor and analyze service usage and to enhance user experience. You may control the use of these technologies through your browser settings."
+#~ msgid "- Cookies and Tracking Technologies: We use cookies and similar "
+#~ "technologies to monitor and analyze service usage and to enhance user "
+#~ "experience. You may control the use of these technologies through your "
+#~ "browser settings."
+#~ msgstr "- Cookies and Tracking Technologies: We use cookies and similar "
+#~ "technologies to monitor and analyze service usage and to enhance user "
+#~ "experience. You may control the use of these technologies through your "
+#~ "browser settings."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:59
-#~ msgid "- Engaging in any activity that disrupts or interferes with our resources, including servers and networks."
-#~ msgstr "- Engaging in any activity that disrupts or interferes with our resources, including servers and networks."
+#~ msgid "- Engaging in any activity that disrupts or interferes with our "
+#~ "resources, including servers and networks."
+#~ msgstr "- Engaging in any activity that disrupts or interferes with our "
+#~ "resources, including servers and networks."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:136
-#~ msgid "- Enterprise-grade encryption protocols for data transmission and storage"
-#~ msgstr "- Enterprise-grade encryption protocols for data transmission and storage"
+#~ msgid "- Enterprise-grade encryption protocols for data transmission and "
+#~ "storage"
+#~ msgstr "- Enterprise-grade encryption protocols for data transmission and "
+#~ "storage"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:57
-#~ msgid "- Google/Apple/Email Authentication: We integrate industry standards to streamline your sign-in process and enhance account security. We might use your email address to send you notifications and emails, from which you can always unsubscribe. We do not sell your email address. We also do not share your email address with any third parties if it's not strictly related to the basic functioning of our webapp."
-#~ msgstr "- Google/Apple/Email Authentication: We integrate industry standards to streamline your sign-in process and enhance account security. We might use your email address to send you notifications and emails, from which you can always unsubscribe. We do not sell your email address. We also do not share your email address with any third parties if it's not strictly related to the basic functioning of our webapp."
+#~ msgid "- Google/Apple/Email Authentication: We integrate industry standards to "
+#~ "streamline your sign-in process and enhance account security. We might "
+#~ "use your email address to send you notifications and emails, from which "
+#~ "you can always unsubscribe. We do not sell your email address. We also "
+#~ "do not share your email address with any third parties if it's not "
+#~ "strictly related to the basic functioning of our webapp."
+#~ msgstr "- Google/Apple/Email Authentication: We integrate industry standards to "
+#~ "streamline your sign-in process and enhance account security. We might "
+#~ "use your email address to send you notifications and emails, from which "
+#~ "you can always unsubscribe. We do not sell your email address. We also "
+#~ "do not share your email address with any third parties if it's not "
+#~ "strictly related to the basic functioning of our webapp."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:142
-#~ msgid "- Implementation of trusted, industry-standard security libraries and frameworks, avoiding custom security implementations"
-#~ msgstr "- Implementation of trusted, industry-standard security libraries and frameworks, avoiding custom security implementations"
+#~ msgid "- Implementation of trusted, industry-standard security libraries and "
+#~ "frameworks, avoiding custom security implementations"
+#~ msgstr "- Implementation of trusted, industry-standard security libraries and "
+#~ "frameworks, avoiding custom security implementations"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:120
-#~ msgid "- Legal Requirements: We may disclose your data if required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency)."
-#~ msgstr "- Legal Requirements: We may disclose your data if required to do so by law or in response to valid requests by public authorities (e.g., a court or a government agency)."
+#~ msgid "- Legal Requirements: We may disclose your data if required to do so by "
+#~ "law or in response to valid requests by public authorities (e.g., a "
+#~ "court or a government agency)."
+#~ msgstr "- Legal Requirements: We may disclose your data if required to do so by "
+#~ "law or in response to valid requests by public authorities (e.g., a "
+#~ "court or a government agency)."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:34
-#~ msgid "- Personal Information: We collect personal data such as your name, email address, and other contact details when you register, subscribe to our services, fill out forms, or interact with our platform in other ways that require personal identification."
-#~ msgstr "- Personal Information: We collect personal data such as your name, email address, and other contact details when you register, subscribe to our services, fill out forms, or interact with our platform in other ways that require personal identification."
+#~ msgid "- Personal Information: We collect personal data such as your name, "
+#~ "email address, and other contact details when you register, subscribe to "
+#~ "our services, fill out forms, or interact with our platform in other "
+#~ "ways that require personal identification."
+#~ msgstr "- Personal Information: We collect personal data such as your name, "
+#~ "email address, and other contact details when you register, subscribe "
+#~ "to our services, fill out forms, or interact with our platform in other "
+#~ "ways that require personal identification."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:56
 #~ msgid "- Prohibited Activities: Users are prohibited from:"
@@ -75,16 +117,26 @@ msgstr ""
 #~ msgstr "- Regular security training for our development and operations teams"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:139
-#~ msgid "- Regular third-party security audits and penetration testing by certified specialists"
-#~ msgstr "- Regular third-party security audits and penetration testing by certified specialists"
+#~ msgid "- Regular third-party security audits and penetration testing by "
+#~ "certified specialists"
+#~ msgstr "- Regular third-party security audits and penetration testing by "
+#~ "certified specialists"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:148
-#~ msgid "- Strict access controls and authentication mechanisms following OWASP security guidelines"
-#~ msgstr "- Strict access controls and authentication mechanisms following OWASP security guidelines"
+#~ msgid "- Strict access controls and authentication mechanisms following OWASP "
+#~ "security guidelines"
+#~ msgstr "- Strict access controls and authentication mechanisms following OWASP "
+#~ "security guidelines"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:83
-#~ msgid "- To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the service, and for marketing and promotional purposes"
-#~ msgstr "- To communicate with you, either directly or through one of our partners, including for customer service, to provide you with updates and other information relating to the service, and for marketing and promotional purposes"
+#~ msgid "- To communicate with you, either directly or through one of our "
+#~ "partners, including for customer service, to provide you with updates "
+#~ "and other information relating to the service, and for marketing and "
+#~ "promotional purposes"
+#~ msgstr "- To communicate with you, either directly or through one of our "
+#~ "partners, including for customer service, to provide you with updates "
+#~ "and other information relating to the service, and for marketing and "
+#~ "promotional purposes"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:81
 #~ msgid "- To develop new products, services, features, and functionality"
@@ -107,12 +159,28 @@ msgstr ""
 #~ msgstr "- To understand and analyze how you use our services"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:45
-#~ msgid "- Voice Recording: Users may not use the service to replicate or clone voices of any individuals other than"
-#~ msgstr "- Voice Recording: Users may not use the service to replicate or clone voices of any individuals other than"
+#~ msgid "- Voice Recording: Users may not use the service to replicate or clone "
+#~ "voices of any individuals other than"
+#~ msgstr "- Voice Recording: Users may not use the service to replicate or clone "
+#~ "voices of any individuals other than"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:41
-#~ msgid "- Voice Recordings: To assist in pronunciation improvement, we collect and analyze recordings of your voice. These are used to create personalized voice clones. - App data: We collect and store data that you input into the app for language learning purposes. This includes your learning progress, custom settings, and interactions within the app. This data is utilized to tailor and enhance your learning experience, enabling personalized language learning pathways and recommendations."
-#~ msgstr "- Voice Recordings: To assist in pronunciation improvement, we collect and analyze recordings of your voice. These are used to create personalized voice clones. - App data: We collect and store data that you input into the app for language learning purposes. This includes your learning progress, custom settings, and interactions within the app. This data is utilized to tailor and enhance your learning experience, enabling personalized language learning pathways and recommendations."
+#~ msgid "- Voice Recordings: To assist in pronunciation improvement, we collect "
+#~ "and analyze recordings of your voice. These are used to create "
+#~ "personalized voice clones. - App data: We collect and store data that "
+#~ "you input into the app for language learning purposes. This includes "
+#~ "your learning progress, custom settings, and interactions within the "
+#~ "app. This data is utilized to tailor and enhance your learning "
+#~ "experience, enabling personalized language learning pathways and "
+#~ "recommendations."
+#~ msgstr "- Voice Recordings: To assist in pronunciation improvement, we collect "
+#~ "and analyze recordings of your voice. These are used to create "
+#~ "personalized voice clones. - App data: We collect and store data that "
+#~ "you input into the app for language learning purposes. This includes "
+#~ "your learning progress, custom settings, and interactions within the "
+#~ "app. This data is utilized to tailor and enhance your learning "
+#~ "experience, enabling personalized language learning pathways and "
+#~ "recommendations."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
@@ -137,8 +205,14 @@ msgstr "(Expired)"
 #~ msgstr "(iii) any content obtained from the service; and"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:136
-#~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
-#~ msgstr "(iv) unauthorized access, use, or alteration of your transmissions or content, whether based on warranty, contract, tort (including negligence), or any other legal theory, whether or not we have been informed of the possibility of such damage."
+#~ msgid "(iv) unauthorized access, use, or alteration of your transmissions or "
+#~ "content, whether based on warranty, contract, tort (including "
+#~ "negligence), or any other legal theory, whether or not we have been "
+#~ "informed of the possibility of such damage."
+#~ msgstr "(iv) unauthorized access, use, or alteration of your transmissions or "
+#~ "content, whether based on warranty, contract, tort (including "
+#~ "negligence), or any other legal theory, whether or not we have been "
+#~ "informed of the possibility of such damage."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:256
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
@@ -239,8 +313,10 @@ msgstr "{dueTermCount} follow-up(s) due"
 #~ msgstr "{dueTermCount} follow-up(s) ready"
 
 #: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:83
-#~ msgid "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
-#~ msgstr "{highlightCount, plural, one {# highlight this session} other {# highlights this session}}"
+#~ msgid "{highlightCount, plural, one {# highlight this session} other {# "
+#~ "highlights this session}}"
+#~ msgstr "{highlightCount, plural, one {# highlight this session} other {# "
+#~ "highlights this session}}"
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
@@ -259,8 +335,10 @@ msgstr "{highlightCount} highlight(s) saved."
 #~ msgstr "{learningDueCount} follow-up(s)"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:143
-#~ msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with your referral!"
-#~ msgstr "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with your referral!"
+#~ msgid "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with "
+#~ "your referral!"
+#~ msgstr "{monthlyDiscountPercentage}% off for {monthlyDurationLimit} months with "
+#~ "your referral!"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:141
 #~ msgid "{monthlyDiscountPercentage}% off for 1 month with your referral!"
@@ -288,8 +366,10 @@ msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 #~ msgstr "{ratedCount} of {totalCount} rated"
 
 #: apps/web/src/features/practice/components/practice-session-view.tsx:277
-#~ msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
-#~ msgstr "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on Next."
+#~ msgid "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on "
+#~ "Next."
+#~ msgstr "{ratedCount} of {totalCount} rated. Untapped terms count as 'good' on "
+#~ "Next."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
@@ -312,8 +392,10 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgstr "{unprocessedHighlightCount} new highlight(s) to process."
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:125
-#~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
-#~ msgstr "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with your referral!"
+#~ msgid "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with "
+#~ "your referral!"
+#~ msgstr "{yearlyDiscountPercentage}% off for {yearlyDurationLimit} years with "
+#~ "your referral!"
 
 #: apps/landing-page/src/app/[lang]/(components)/(pricing)/pricing-section.tsx:123
 #~ msgid "{yearlyDiscountPercentage}% off for 1 year with your referral!"
@@ -340,8 +422,12 @@ msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 #~ msgstr "• Full communication records and interaction history"
 
 #: packages/extension/src/ui/components/Tutorial.tsx:156
-msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
-msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> controls."
+msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
+"navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
+"controls."
+msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
+"navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
+"controls."
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:48
 msgid "⚠ LLM only"
@@ -444,8 +530,10 @@ msgid "A natural translation of the target example."
 msgstr "A natural translation of the target example."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:104
-msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
-msgstr "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
+msgid "A newer version of the app is required to continue. Please update to the "
+"latest version to access all features and improvements."
+msgstr "A newer version of the app is required to continue. Please update to "
+"the latest version to access all features and improvements."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:169
 msgid "A sentence using this term in its natural setting."
@@ -456,12 +544,16 @@ msgid "A short label for this session"
 msgstr "A short label for this session"
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
-#~ msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
-#~ msgstr "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
+#~ msgid "A video element must be synced with asbplayer before it can be mined. "
+#~ "Select a video element to sync it with asbplayer."
+#~ msgstr "A video element must be synced with asbplayer before it can be mined. "
+#~ "Select a video element to sync it with asbplayer."
 
 #: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:185
-msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
-msgstr "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
+msgid "A video element must be synced with Flicktionary before it can be mined. "
+"Select a video element to sync it with Flicktionary."
+msgstr "A video element must be synced with Flicktionary before it can be "
+"mined. Select a video element to sync it with Flicktionary."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:79
 msgid "About"
@@ -475,7 +567,7 @@ msgstr "About"
 #~ msgid "About asbplayer"
 #~ msgstr "About asbplayer"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:139
+#: packages/asbplayer-common/components/SettingsForm.tsx:158
 #: packages/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
@@ -569,8 +661,10 @@ msgid "Additional hosts"
 msgstr "Additional hosts"
 
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:232
-msgid "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
-msgstr "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
+msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
+"try using a different font."
+msgstr "Adds an outline around subtitle text. If this causes overlapping lines, "
+"try using a different font."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:260
 msgid "Adjective"
@@ -590,7 +684,8 @@ msgstr "Adjust subtitle offset so that next subtitle is at current timestamp"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:358
 msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
-msgstr "Adjust subtitle offset so that previous subtitle is at current timestamp"
+msgstr "Adjust subtitle offset so that previous subtitle is at current "
+"timestamp"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
 #: apps/web/src/features/more/components/more-tab-view.tsx:81
@@ -632,8 +727,10 @@ msgstr "All caught up"
 #~ msgstr "All caught up for today · {followUpDelay} · {totalKept} total"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:50
-#~ msgid "All caught up for today · {learningDueCount} follow-up(s) ready · {totalKept} total"
-#~ msgstr "All caught up for today · {learningDueCount} follow-up(s) ready · {totalKept} total"
+#~ msgid "All caught up for today · {learningDueCount} follow-up(s) ready · "
+#~ "{totalKept} total"
+#~ msgstr "All caught up for today · {learningDueCount} follow-up(s) ready · "
+#~ "{totalKept} total"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:65
 #~ msgid "All caught up for today · {totalKept} total"
@@ -660,8 +757,10 @@ msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:360
-#~ msgid "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
-#~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay available for later sessions."
+#~ msgid "Already-rated terms will keep their ratings. Unrated terms stay "
+#~ "available for later sessions."
+#~ msgstr "Already-rated terms will keep their ratings. Unrated terms stay "
+#~ "available for later sessions."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
@@ -728,20 +827,26 @@ msgstr "Articles"
 #~ msgstr "asbplayer updated to version {0}. Check out the <0>release notes</0>."
 
 #: packages/extension/src/ui/components/NotificationUi.tsx:101
-#~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
-#~ msgstr "asbplayer updated to version {newVersion}. Check out the <0>release notes</0>."
+#~ msgid "asbplayer updated to version {newVersion}. Check out the <0>release "
+#~ "notes</0>."
+#~ msgstr "asbplayer updated to version {newVersion}. Check out the <0>release "
+#~ "notes</0>."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:190
-msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
-msgstr "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
+msgid "Ask a follow-up question about this term. The model already has the "
+"methodology, your profile, and the surrounding scene loaded."
+msgstr "Ask a follow-up question about this term. The model already has the "
+"methodology, your profile, and the surrounding scene loaded."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:141
 #~ msgid "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 #~ msgstr "Ask anything about this term… (Cmd/Ctrl+Enter to send)"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:249
-msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
-msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
+msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new "
+"line)"
+msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new "
+"line)"
 
 #: apps/web/src/features/review/components/chat-panel.tsx:119
 msgid "Ask follow-up questions about this term."
@@ -782,7 +887,8 @@ msgstr "Audio recording enabled"
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:45
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
-msgstr "Audio recording has been enabled for this tab. You can now begin mining."
+msgstr "Audio recording has been enabled for this tab. You can now begin "
+"mining."
 
 #: apps/web/src/features/auth/components/login-view.tsx:50
 #: apps/web/src/features/auth/components/login-view.tsx:62
@@ -794,12 +900,20 @@ msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-#~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
-#~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not know how to detect subtitles on every site. You can always load your own subtitle files."
+#~ msgid "Auto-detected subtitle tracks can be selected here. asbplayer does not "
+#~ "know how to detect subtitles on every site. You can always load your own "
+#~ "subtitle files."
+#~ msgstr "Auto-detected subtitle tracks can be selected here. asbplayer does not "
+#~ "know how to detect subtitles on every site. You can always load your "
+#~ "own subtitle files."
 
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
-msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
-msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
+msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
+"not know how to detect subtitles on every site. You can always load your "
+"own subtitle files."
+msgstr "Auto-detected subtitle tracks can be selected here. Flicktionary does "
+"not know how to detect subtitles on every site. You can always load "
+"your own subtitle files."
 
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:88
 msgid "Auto-load detected subtitles"
@@ -907,8 +1021,11 @@ msgstr "Browse community-uploaded tracks for this movie."
 #~ msgstr "Browse the full list."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:24
-#~ msgid "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
-#~ msgstr "By accessing and using our website, flicktionary.app, and any associated services, you agree to be bound by these Terms of Service (\"Terms\")."
+#~ msgid "By accessing and using our website, flicktionary.app, and any associated "
+#~ "services, you agree to be bound by these Terms of Service (\"Terms\")."
+#~ msgstr "By accessing and using our website, flicktionary.app, and any "
+#~ "associated services, you agree to be bound by these Terms of Service "
+#~ "(\"Terms\")."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:44
 #~ msgid "Calibrates the difficult-words pass and the depth of explanations."
@@ -963,8 +1080,10 @@ msgstr "CEFR level"
 #~ msgstr "Change"
 
 #: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:22
-msgid "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
-msgstr "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
+msgid "Changes settings for ALL tracks. Settings that already have "
+"track-specific values are hidden."
+msgstr "Changes settings for ALL tracks. Settings that already have "
+"track-specific values are hidden."
 
 #: apps/web/src/features/review/components/chat-panel.tsx:118
 #: apps/web/src/features/review/components/chat-panel.tsx:147
@@ -1004,8 +1123,12 @@ msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
 #: apps/landing-page/src/app/[lang]/pricing/page.tsx:16
-#~ msgid "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
-#~ msgstr "Choose the perfect plan for your accent training journey. Flexible pricing options to help you achieve your perfect accent with AI-powered voice training."
+#~ msgid "Choose the perfect plan for your accent training journey. Flexible "
+#~ "pricing options to help you achieve your perfect accent with AI-powered "
+#~ "voice training."
+#~ msgstr "Choose the perfect plan for your accent training journey. Flexible "
+#~ "pricing options to help you achieve your perfect accent with AI-powered "
+#~ "voice training."
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:140
 msgid "Choose your plan"
@@ -1020,21 +1143,31 @@ msgid "Clear search"
 msgstr "Clear search"
 
 #: apps/web/src/features/review/components/focus-view.tsx:365
-msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
-msgstr "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
+msgid "Click Generate full exploration to enrich this card with collocations, "
+"etymology, register, IPA, and more."
+msgstr "Click Generate full exploration to enrich this card with collocations, "
+"etymology, register, IPA, and more."
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
-#~ msgid "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
-#~ msgstr "Click on the asbplayer action button in the top-right of the browser window to enable audio recording for this tab."
+#~ msgid "Click on the asbplayer action button in the top-right of the browser "
+#~ "window to enable audio recording for this tab."
+#~ msgstr "Click on the asbplayer action button in the top-right of the browser "
+#~ "window to enable audio recording for this tab."
 
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
-msgid "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
-msgstr "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
+msgid "Click on the Flicktionary action button in the top-right of the browser "
+"window to enable audio recording for this tab."
+msgstr "Click on the Flicktionary action button in the top-right of the browser "
+"window to enable audio recording for this tab."
 
 #. placeholder {0}: isFirefox ? '⚙' : '📌'
 #: packages/extension/src/ui/components/Tutorial.tsx:66
-msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
-msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to the toolbar for easy access."
+msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open "
+"the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to "
+"the toolbar for easy access."
+msgstr "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open "
+"the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to "
+"the toolbar for easy access."
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
 msgid "Click the link in the email to continue."
@@ -1196,8 +1329,10 @@ msgid "Could not open customer center."
 msgstr "Could not open customer center."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:86
-msgid "Could not open the link. Please visit our website to manage your subscription."
-msgstr "Could not open the link. Please visit our website to manage your subscription."
+msgid "Could not open the link. Please visit our website to manage your "
+"subscription."
+msgstr "Could not open the link. Please visit our website to manage your "
+"subscription."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:71
 msgid "Could not open upgrade screen."
@@ -1234,11 +1369,9 @@ msgid "Current Timestamp"
 msgstr "Current Timestamp"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:109
-msgid ""
-"Current version: {currentVersion}\n"
+msgid "Current version: {currentVersion}\n"
 "Required version: {requiredVersion}"
-msgstr ""
-"Current version: {currentVersion}\n"
+msgstr "Current version: {currentVersion}\n"
 "Required version: {requiredVersion}"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:102
@@ -1285,8 +1418,10 @@ msgid "Dashboard"
 msgstr "Dashboard"
 
 #: packages/asbplayer-common/components/VideoOverlay.tsx:276
-msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
-msgstr "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
+msgid "Decrease offset to so that next subtitle is at current position. Hold to "
+"decrease by 100ms."
+msgstr "Decrease offset to so that next subtitle is at current position. Hold "
+"to decrease by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
 #: packages/asbplayer-common/components/VideoOverlay.tsx:281
@@ -1376,12 +1511,16 @@ msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 
 #: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:16
-#~ msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
-#~ msgstr "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice Training"
+#~ msgid "Download Flicktionary - Flicktionary - Perfect Your Accent with AI Voice "
+#~ "Training"
+#~ msgstr "Download Flicktionary - Flicktionary - Perfect Your Accent with AI "
+#~ "Voice Training"
 
 #: apps/landing-page/src/app/[lang]/qr-code-link/page.tsx:17
-#~ msgid "Download our mobile app to start perfecting your accent with AI voice training"
-#~ msgstr "Download our mobile app to start perfecting your accent with AI voice training"
+#~ msgid "Download our mobile app to start perfecting your accent with AI voice "
+#~ "training"
+#~ msgstr "Download our mobile app to start perfecting your accent with AI voice "
+#~ "training"
 
 #: apps/landing-page/src/app/[lang]/(components)/hero-section.tsx:23
 #~ msgid "Download the App"
@@ -1575,12 +1714,16 @@ msgid "Etymology"
 msgstr "Etymology"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:61
-msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
-msgstr "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
+msgid "Even if you get charged you can request an unconditional refund. Just "
+"let us know by clicking the \"Contact Us\" button above."
+msgstr "Even if you get charged you can request an unconditional refund. Just "
+"let us know by clicking the \"Contact Us\" button above."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:259
-msgid "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
-msgstr "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
+msgid "Every term you've kept, across every session. Tap a row to edit, or open "
+"the menu for more options."
+msgstr "Every term you've kept, across every session. Tap a row to edit, or "
+"open the menu for more options."
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
 msgid "Example"
@@ -1963,7 +2106,8 @@ msgstr "Flicktionary"
 #. placeholder {0}: state.newVersion
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:104
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
-msgstr "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
+msgstr "Flicktionary updated to version {0}. Check out the <0>release "
+"notes</0>."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:60
 #~ msgid "Follow-up in {hoursUntilFollowUp} hr"
@@ -2146,8 +2290,10 @@ msgid "HI"
 msgstr "HI"
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:118
-#~ msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by re-keeping it in a session."
-#~ msgstr "Hide \"{headword}\" from vocabulary and Practice? You can revive it by re-keeping it in a session."
+#~ msgid "Hide \"{headword}\" from vocabulary and Practice? You can revive it by "
+#~ "re-keeping it in a session."
+#~ msgstr "Hide \"{headword}\" from vocabulary and Practice? You can revive it by "
+#~ "re-keeping it in a session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:74
 msgid "Hide from vocabulary and Practice"
@@ -2162,16 +2308,22 @@ msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
 
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:364
-msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
-msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
+msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
+"mouse hover."
+msgstr "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
+"mouse hover."
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:38
-msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
-msgstr "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
+msgid "Hides this term from Practice and Vocabulary. You can restore it from "
+"the toast right after, or by re-keeping it in a session."
+msgstr "Hides this term from Practice and Vocabulary. You can restore it from "
+"the toast right after, or by re-keeping it in a session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:40
-msgid "Hides this term from your vocabulary and Practice. You can revive it by re-keeping it in a session."
-msgstr "Hides this term from your vocabulary and Practice. You can revive it by re-keeping it in a session."
+msgid "Hides this term from your vocabulary and Practice. You can revive it by "
+"re-keeping it in a session."
+msgstr "Hides this term from your vocabulary and Practice. You can revive it by "
+"re-keeping it in a session."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:349
 msgid "Highlight saved"
@@ -2179,7 +2331,8 @@ msgstr "Highlight saved"
 
 #: apps/web/src/features/sessions/components/tap-to-translate-sheet.tsx:134
 #~ msgid "Highlight saved. Add a note or chips next time without tap-to-translate."
-#~ msgstr "Highlight saved. Add a note or chips next time without tap-to-translate."
+#~ msgstr "Highlight saved. Add a note or chips next time without "
+#~ "tap-to-translate."
 
 #: apps/web/src/features/review/components/processing-view.tsx:21
 msgid "Highlights are enriched as you read. Triage is available immediately."
@@ -2215,12 +2368,16 @@ msgid "Idiom"
 msgstr "Idiom"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:147
-#~ msgid "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
-#~ msgstr "If you have any questions about these Terms of Service, please contact us via email contact@flicktionary.app"
+#~ msgid "If you have any questions about these Terms of Service, please contact "
+#~ "us via email contact@flicktionary.app"
+#~ msgstr "If you have any questions about these Terms of Service, please contact "
+#~ "us via email contact@flicktionary.app"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:211
-#~ msgid "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
-#~ msgstr "If you have any questions about this Privacy Policy, please contact us via email: contact@flicktionary.app"
+#~ msgid "If you have any questions about this Privacy Policy, please contact us "
+#~ "via email: contact@flicktionary.app"
+#~ msgstr "If you have any questions about this Privacy Policy, please contact us "
+#~ "via email: contact@flicktionary.app"
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
@@ -2261,8 +2418,16 @@ msgid "Importing…"
 msgstr "Importing…"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:121
-#~ msgid "In no event shall flicktionary.app, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
-#~ msgstr "In no event shall flicktionary.app, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:"
+#~ msgid "In no event shall flicktionary.app, nor its directors, employees, "
+#~ "partners, agents, suppliers, or affiliates, be liable for any indirect, "
+#~ "incidental, special, consequential, or punitive damages, including "
+#~ "without limitation, loss of profits, data, use, goodwill, or other "
+#~ "intangible losses, resulting from:"
+#~ msgstr "In no event shall flicktionary.app, nor its directors, employees, "
+#~ "partners, agents, suppliers, or affiliates, be liable for any indirect, "
+#~ "incidental, special, consequential, or punitive damages, including "
+#~ "without limitation, loss of profits, data, use, goodwill, or other "
+#~ "intangible losses, resulting from:"
 
 #: apps/landing-page/src/app/[lang]/layout.tsx:51
 #~ msgid "In-App Purchases"
@@ -2273,8 +2438,10 @@ msgid "Inanimate"
 msgstr "Inanimate"
 
 #: packages/asbplayer-common/components/VideoOverlay.tsx:274
-msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
-msgstr "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
+msgid "Increase offset to so that previous subtitle is at current position. "
+"Hold to increase by 100ms."
+msgstr "Increase offset to so that previous subtitle is at current position. "
+"Hold to increase by 100ms."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:368
 #: packages/asbplayer-common/components/VideoOverlay.tsx:283
@@ -2346,7 +2513,7 @@ msgstr "Keep as passive"
 msgid "Keep options"
 msgstr "Keep options"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:130
+#: packages/asbplayer-common/components/SettingsForm.tsx:146
 msgid "Keyboard Shortcuts"
 msgstr "Keyboard Shortcuts"
 
@@ -2452,8 +2619,10 @@ msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
 #: apps/web/src/features/sessions/components/process-button.tsx:56
-#~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
-#~ msgstr "LLM-suggested terms are off. Highlight at least one term to process this session."
+#~ msgid "LLM-suggested terms are off. Highlight at least one term to process this "
+#~ "session."
+#~ msgstr "LLM-suggested terms are off. Highlight at least one term to process "
+#~ "this session."
 
 #: packages/asbplayer-common/components/VideoOverlay.tsx:330
 #: packages/extension/src/entrypoints/background.ts:174
@@ -2545,8 +2714,12 @@ msgid "Masculine"
 msgstr "Masculine"
 
 #: apps/landing-page/src/app/[lang]/page.tsx:18
-#~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
-#~ msgstr "Master perfect pronunciation with AI-powered voice cloning. Practice speaking in your target language with your own voice. Try our free trial today!"
+#~ msgid "Master perfect pronunciation with AI-powered voice cloning. Practice "
+#~ "speaking in your target language with your own voice. Try our free trial "
+#~ "today!"
+#~ msgstr "Master perfect pronunciation with AI-powered voice cloning. Practice "
+#~ "speaking in your target language with your own voice. Try our free "
+#~ "trial today!"
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx:33
 msgid "Mastery — virtually everything understood with ease."
@@ -2561,7 +2734,7 @@ msgstr "Maybe later"
 msgid "Message to the founders"
 msgstr "Message to the founders"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:136
+#: packages/asbplayer-common/components/SettingsForm.tsx:154
 #: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:98
 #: packages/extension/src/ui/components/ImportPopup.tsx:41
 msgid "Misc"
@@ -2690,8 +2863,10 @@ msgid "New terms"
 msgstr "New terms"
 
 #: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
-msgid "New terms are capped per day. Follow-up sessions use up to this many review terms."
-msgstr "New terms are capped per day. Follow-up sessions use up to this many review terms."
+msgid "New terms are capped per day. Follow-up sessions use up to this many "
+"review terms."
+msgstr "New terms are capped per day. Follow-up sessions use up to this many "
+"review terms."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:165
 msgid "New today"
@@ -2730,8 +2905,10 @@ msgstr "No active tab."
 #~ msgstr "No cards yet. Process the session to generate them."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:213
-msgid "No cards yet. Select some highlights in the source text to generate new cards."
-msgstr "No cards yet. Select some highlights in the source text to generate new cards."
+msgid "No cards yet. Select some highlights in the source text to generate new "
+"cards."
+msgstr "No cards yet. Select some highlights in the source text to generate new "
+"cards."
 
 #: apps/web/src/features/practice/components/flashcard-session-view.tsx:152
 #~ msgid "No flashcards are due right now."
@@ -2775,12 +2952,16 @@ msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:33
-#~ msgid "No target languages yet. Levels are set the first time you start a session in a new language."
-#~ msgstr "No target languages yet. Levels are set the first time you start a session in a new language."
+#~ msgid "No target languages yet. Levels are set the first time you start a "
+#~ "session in a new language."
+#~ msgstr "No target languages yet. Levels are set the first time you start a "
+#~ "session in a new language."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:53
-msgid "No target languages yet. Preferences are set the first time you start a session in a new language."
-msgstr "No target languages yet. Preferences are set the first time you start a session in a new language."
+msgid "No target languages yet. Preferences are set the first time you start a "
+"session in a new language."
+msgstr "No target languages yet. Preferences are set the first time you start a "
+"session in a new language."
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:139
 msgid "No terms are due right now."
@@ -2944,8 +3125,20 @@ msgid "Other"
 msgstr "Other"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:158
-#~ msgid "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
-#~ msgstr "Our security infrastructure is continuously monitored, evaluated, and enhanced to meet evolving cybersecurity challenges. We maintain rigorous standards in data protection and follow security best practices recommended by leading technology security organizations. For complete transparency, we acknowledge that all digital systems require ongoing vigilance, which is why we've implemented comprehensive monitoring and rapid response protocols."
+#~ msgid "Our security infrastructure is continuously monitored, evaluated, and "
+#~ "enhanced to meet evolving cybersecurity challenges. We maintain rigorous "
+#~ "standards in data protection and follow security best practices "
+#~ "recommended by leading technology security organizations. For complete "
+#~ "transparency, we acknowledge that all digital systems require ongoing "
+#~ "vigilance, which is why we've implemented comprehensive monitoring and "
+#~ "rapid response protocols."
+#~ msgstr "Our security infrastructure is continuously monitored, evaluated, and "
+#~ "enhanced to meet evolving cybersecurity challenges. We maintain "
+#~ "rigorous standards in data protection and follow security best "
+#~ "practices recommended by leading technology security organizations. For "
+#~ "complete transparency, we acknowledge that all digital systems require "
+#~ "ongoing vigilance, which is why we've implemented comprehensive "
+#~ "monitoring and rapid response protocols."
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:136
 msgid "Overridden"
@@ -3059,8 +3252,10 @@ msgid "Pick a subtitle track"
 msgstr "Pick a subtitle track"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:108
-msgid "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
-msgstr "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
+msgid "Pick the language of the movie you'll watch. Subtitles and explanations "
+"will be in this language."
+msgstr "Pick the language of the movie you'll watch. Subtitles and explanations "
+"will be in this language."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:71
 msgid "Pick what to create next."
@@ -3240,12 +3435,16 @@ msgstr "Primary"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:71
 #: apps/web/src/features/practice/components/practice-language-view.tsx:112
-msgid "Process a session and keep some cards. They'll show up here automatically."
-msgstr "Process a session and keep some cards. They'll show up here automatically."
+msgid "Process a session and keep some cards. They'll show up here "
+"automatically."
+msgstr "Process a session and keep some cards. They'll show up here "
+"automatically."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:11
-msgid "Process a session and keep some cards. They'll show up here, browsable across every session."
-msgstr "Process a session and keep some cards. They'll show up here, browsable across every session."
+msgid "Process a session and keep some cards. They'll show up here, browsable "
+"across every session."
+msgstr "Process a session and keep some cards. They'll show up here, browsable "
+"across every session."
 
 #: apps/web/src/features/sessions/components/process-button.tsx:72
 #~ msgid "Process new highlights"
@@ -3330,8 +3529,12 @@ msgid "Read"
 msgstr "Read"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:62
-msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
-msgstr "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
+msgid "Read short generated texts that weave in your kept vocabulary. Tap a "
+"term to rate it; terms you don't tap are scored as recognized when you "
+"advance."
+msgstr "Read short generated texts that weave in your kept vocabulary. Tap a "
+"term to rate it; terms you don't tap are scored as recognized when you "
+"advance."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:128
 msgid "Ready to practice"
@@ -3728,8 +3931,10 @@ msgstr "Settings"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
-msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
-msgstr "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
+msgid "Share your feedback or suggest improvements to the founders. We read and "
+"reply to every submission!"
+msgstr "Share your feedback or suggest improvements to the founders. We read "
+"and reply to every submission!"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:180
 msgid "Short paraphrase in the target language."
@@ -3748,8 +3953,10 @@ msgstr "Show answer"
 #~ msgstr "Show existing translations and generate translations for new cards"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:103
-msgid "Show existing translations and generate translations for new cards in this language."
-msgstr "Show existing translations and generate translations for new cards in this language."
+msgid "Show existing translations and generate translations for new cards in "
+"this language."
+msgstr "Show existing translations and generate translations for new cards in "
+"this language."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:560
 msgid "Show notes"
@@ -3919,7 +4126,7 @@ msgstr "Stop drilling this term in active practice"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:133
+#: packages/asbplayer-common/components/SettingsForm.tsx:150
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
@@ -3961,7 +4168,7 @@ msgstr "Subscription Successful!"
 msgid "Subtitle Alignment"
 msgstr "Subtitle Alignment"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:127
+#: packages/asbplayer-common/components/SettingsForm.tsx:142
 msgid "Subtitle Appearance"
 msgstr "Subtitle Appearance"
 
@@ -4167,12 +4374,28 @@ msgstr "That's it for the basics! Feel free to play around on this page."
 #~ msgstr "The chosen subtitle track must match this language."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:33
-#~ msgid "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
-#~ msgstr "The content, features, and functionality of our services, including but not limited to text, graphics, logos, images, as well as the design, selection, and arrangement thereof, are and will remain the exclusive property of flicktionary.app and its licensors. These are protected by copyright, trademark, and other intellectual property or proprietary rights laws."
+#~ msgid "The content, features, and functionality of our services, including but "
+#~ "not limited to text, graphics, logos, images, as well as the design, "
+#~ "selection, and arrangement thereof, are and will remain the exclusive "
+#~ "property of flicktionary.app and its licensors. These are protected by "
+#~ "copyright, trademark, and other intellectual property or proprietary "
+#~ "rights laws."
+#~ msgstr "The content, features, and functionality of our services, including but "
+#~ "not limited to text, graphics, logos, images, as well as the design, "
+#~ "selection, and arrangement thereof, are and will remain the exclusive "
+#~ "property of flicktionary.app and its licensors. These are protected by "
+#~ "copyright, trademark, and other intellectual property or proprietary "
+#~ "rights laws."
 
 #: apps/landing-page/src/app/[lang]/about/page.tsx:17
-#~ msgid "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
-#~ msgstr "the creators of flicktionary.app here. We've been pouring our hearts into developing the beta version of the app and your feedback is crucial for us. We're excited to roll out new features soon, and we're always looking for ways to improve the app."
+#~ msgid "the creators of flicktionary.app here. We've been pouring our hearts "
+#~ "into developing the beta version of the app and your feedback is crucial "
+#~ "for us. We're excited to roll out new features soon, and we're always "
+#~ "looking for ways to improve the app."
+#~ msgstr "the creators of flicktionary.app here. We've been pouring our hearts "
+#~ "into developing the beta version of the app and your feedback is "
+#~ "crucial for us. We're excited to roll out new features soon, and we're "
+#~ "always looking for ways to improve the app."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:69
 #~ msgid "The data we collect serves several purposes:"
@@ -4187,24 +4410,40 @@ msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
 
 #: packages/extension/src/ui/components/Tutorial.tsx:107
-msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
-msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> on the video and find the asbplayer <1>context menu</1> to load subtitles."
+msgid "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> on the video and find the asbplayer <1>context "
+"menu</1> to load subtitles."
+msgstr "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> on the video and find the asbplayer "
+"<1>context menu</1> to load subtitles."
 
 #: packages/extension/src/ui/components/Tutorial.tsx:97
-msgid "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
-msgstr "The first step to using asbplayer is always to load subtitles onto a video. <0>Right-click</0> the video and choose the asbplayer <1>Load Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> detected subtitles on supported sites."
+msgid "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> the video and choose the asbplayer <1>Load "
+"Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
+"detected subtitles on supported sites."
+msgstr "The first step to using asbplayer is always to load subtitles onto a "
+"video. <0>Right-click</0> the video and choose the asbplayer <1>Load "
+"Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
+"detected subtitles on supported sites."
 
 #: packages/extension/src/ui/components/Tutorial.tsx:108
-#~ msgid "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
-#~ msgstr "The first step to using asbplayer is always to load subtitles onto a video. Open the track selector by selecting <0>asbplayer</0> in the <1>extensions</1> menu."
+#~ msgid "The first step to using asbplayer is always to load subtitles onto a "
+#~ "video. Open the track selector by selecting <0>asbplayer</0> in the "
+#~ "<1>extensions</1> menu."
+#~ msgstr "The first step to using asbplayer is always to load subtitles onto a "
+#~ "video. Open the track selector by selecting <0>asbplayer</0> in the "
+#~ "<1>extensions</1> menu."
 
 #: packages/asbplayer-common/components/UiSettings.tsx:26
 msgid "Theme"
 msgstr "Theme"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:51
-#~ msgid "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
-#~ msgstr "themselves. Each user must have the legal right to use all the voice data they upload to our platform."
+#~ msgid "themselves. Each user must have the legal right to use all the voice "
+#~ "data they upload to our platform."
+#~ msgstr "themselves. Each user must have the legal right to use all the voice "
+#~ "data they upload to our platform."
 
 #: apps/native/src/features/auth/api/authentication-hooks.ts:15
 #: apps/web/src/features/auth/api/authentication-hooks.ts:16
@@ -4225,12 +4464,20 @@ msgstr "Thinking…"
 
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:58
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:43
-msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
-msgstr "This action cannot be undone. This will permanently delete your account and related data from our servers."
+msgid "This action cannot be undone. This will permanently delete your account "
+"and related data from our servers."
+msgstr "This action cannot be undone. This will permanently delete your account "
+"and related data from our servers."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:201
-#~ msgid "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
-#~ msgstr "This automated deletion system is accessible 24/7 through your secure account dashboard. For additional assistance, our dedicated privacy team is available at contact@flicktionary.app to process your requests with the same level of immediacy and thoroughness."
+#~ msgid "This automated deletion system is accessible 24/7 through your secure "
+#~ "account dashboard. For additional assistance, our dedicated privacy team "
+#~ "is available at contact@flicktionary.app to process your requests with "
+#~ "the same level of immediacy and thoroughness."
+#~ msgstr "This automated deletion system is accessible 24/7 through your secure "
+#~ "account dashboard. For additional assistance, our dedicated privacy "
+#~ "team is available at contact@flicktionary.app to process your requests "
+#~ "with the same level of immediacy and thoroughness."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
 #: apps/web/src/features/sessions/components/cefr-step.tsx:41
@@ -4238,24 +4485,36 @@ msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
 #: apps/web/src/features/review/components/focus-view.tsx:366
-msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
-msgstr "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
+msgid "This card looks incomplete. Re-process the session to populate its basic "
+"data, then come back to enrich it."
+msgstr "This card looks incomplete. Re-process the session to populate its "
+"basic data, then come back to enrich it."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:45
-msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
-msgstr "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
+msgid "This hides the session from your list. Your kept vocabulary stays in "
+"your collection. The source text is retained so you can trace your kept "
+"words back to where you learned them. To erase everything, delete your "
+"account."
+msgstr "This hides the session from your list. Your kept vocabulary stays in "
+"your collection. The source text is retained so you can trace your kept "
+"words back to where you learned them. To erase everything, delete your "
+"account."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
-msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
-msgstr "This screen is only accessible to subscribed users. You can showcase premium features here."
+msgid "This screen is only accessible to subscribed users. You can showcase "
+"premium features here."
+msgstr "This screen is only accessible to subscribed users. You can showcase "
+"premium features here."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:60
 #~ msgid "This session is processing — wait for it to finish before removing."
 #~ msgstr "This session is processing — wait for it to finish before removing."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:176
-msgid "This term is removed from your vocabulary. Restore it to keep practicing."
-msgstr "This term is removed from your vocabulary. Restore it to keep practicing."
+msgid "This term is removed from your vocabulary. Restore it to keep "
+"practicing."
+msgstr "This term is removed from your vocabulary. Restore it to keep "
+"practicing."
 
 #: apps/web/src/features/review/components/processing-view.tsx:35
 #~ msgid "This usually takes 1–2 minutes. You can leave this page and come back."
@@ -4271,8 +4530,10 @@ msgstr "TMDB search failed"
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:41
 #: apps/web/src/features/billing/components/pricing-view.tsx:40
-msgid "To change your current plan type, please click on \"Manage Subscription\"."
-msgstr "To change your current plan type, please click on \"Manage Subscription\"."
+msgid "To change your current plan type, please click on \"Manage "
+"Subscription\"."
+msgstr "To change your current plan type, please click on \"Manage "
+"Subscription\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
 msgid "Today"
@@ -4332,8 +4593,10 @@ msgid "Too many requests. Please try again later."
 msgstr "Too many requests. Please try again later."
 
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:28
-msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
-msgstr "Too many requests. Please use the app in only one tab and device at a time and try again later."
+msgid "Too many requests. Please use the app in only one tab and device at a "
+"time and try again later."
+msgstr "Too many requests. Please use the app in only one tab and device at a "
+"time and try again later."
 
 #: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:379
 msgid "Top"
@@ -4379,8 +4642,11 @@ msgid "Triage"
 msgstr "Triage"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:68
-msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
-msgstr "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
+msgid "Try adding a movie or pasting a piece of text in any language to get "
+"started. You can pick the target language each time you add new content."
+msgstr "Try adding a movie or pasting a piece of text in any language to get "
+"started. You can pick the target language each time you add new "
+"content."
 
 #: packages/extension/src/ui/components/Tutorial.tsx:93
 #: packages/extension/src/ui/components/Tutorial.tsx:185
@@ -4393,8 +4659,10 @@ msgid "UI"
 msgstr "UI"
 
 #: apps/web/src/features/billing/api/portal-session-hooks.ts:14
-msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
-msgstr "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
+msgid "Unable to access your billing section at the moment. Please try again "
+"later or contact support if the issue persists."
+msgstr "Unable to access your billing section at the moment. Please try again "
+"later or contact support if the issue persists."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:64
 msgid "Unable to open app store"
@@ -4502,8 +4770,10 @@ msgstr "Use suggested"
 #~ msgstr "Use suggested: {suggestedSurface}"
 
 #: packages/extension/src/ui/components/Tutorial.tsx:131
-msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
-msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, <3>switch playback modes</3>, and more."
+msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, "
+"<3>switch playback modes</3>, and more."
+msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> "
+"subtitles, <3>switch playback modes</3>, and more."
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
@@ -4527,8 +4797,18 @@ msgid "User setup complete"
 msgstr "User setup complete"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:89
-#~ msgid "Users retain all rights to any content they upload, submit, post, or display on or through the service. By uploading this content, users grant us a permission to use, reproduce, modify, publish, and display this content in connection with the service. In particular, this content will neither be sold or traded with any external service provider nor made public without user\"s explicit consent"
-#~ msgstr "Users retain all rights to any content they upload, submit, post, or display on or through the service. By uploading this content, users grant us a permission to use, reproduce, modify, publish, and display this content in connection with the service. In particular, this content will neither be sold or traded with any external service provider nor made public without user\"s explicit consent"
+#~ msgid "Users retain all rights to any content they upload, submit, post, or "
+#~ "display on or through the service. By uploading this content, users "
+#~ "grant us a permission to use, reproduce, modify, publish, and display "
+#~ "this content in connection with the service. In particular, this content "
+#~ "will neither be sold or traded with any external service provider nor "
+#~ "made public without user\"s explicit consent"
+#~ msgstr "Users retain all rights to any content they upload, submit, post, or "
+#~ "display on or through the service. By uploading this content, users "
+#~ "grant us a permission to use, reproduce, modify, publish, and display "
+#~ "this content in connection with the service. In particular, this "
+#~ "content will neither be sold or traded with any external service "
+#~ "provider nor made public without user\"s explicit consent"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
 msgid "Verb"
@@ -4604,28 +4884,70 @@ msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "We did not hear back from a Flicktionary extension on this device."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:107
-#~ msgid "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
-#~ msgstr "We engage reputable third-party companies to facilitate our services (\"Service Providers\"), provide the service on our behalf, perform service-related services, and assist in analyzing how our service is used. These third parties are carefully selected and have access to your Personal Data only to perform specific tasks on our behalf. They are contractually bound to maintain the confidentiality of your information and are committed to complying with applicable privacy laws, ensuring that your data is handled securely and responsibly."
+#~ msgid "We engage reputable third-party companies to facilitate our services "
+#~ "(\"Service Providers\"), provide the service on our behalf, perform "
+#~ "service-related services, and assist in analyzing how our service is "
+#~ "used. These third parties are carefully selected and have access to your "
+#~ "Personal Data only to perform specific tasks on our behalf. They are "
+#~ "contractually bound to maintain the confidentiality of your information "
+#~ "and are committed to complying with applicable privacy laws, ensuring "
+#~ "that your data is handled securely and responsibly."
+#~ msgstr "We engage reputable third-party companies to facilitate our services "
+#~ "(\"Service Providers\"), provide the service on our behalf, perform "
+#~ "service-related services, and assist in analyzing how our service is "
+#~ "used. These third parties are carefully selected and have access to "
+#~ "your Personal Data only to perform specific tasks on our behalf. They "
+#~ "are contractually bound to maintain the confidentiality of your "
+#~ "information and are committed to complying with applicable privacy "
+#~ "laws, ensuring that your data is handled securely and responsibly."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:180
-#~ msgid "We guarantee absolute control over your personal data through our automated account management system. Our platform provides a dedicated one-click deletion feature that ensures immediate and irreversible removal of all your data from our systems. When activated, this automated process permanently erases:"
-#~ msgstr "We guarantee absolute control over your personal data through our automated account management system. Our platform provides a dedicated one-click deletion feature that ensures immediate and irreversible removal of all your data from our systems. When activated, this automated process permanently erases:"
+#~ msgid "We guarantee absolute control over your personal data through our "
+#~ "automated account management system. Our platform provides a dedicated "
+#~ "one-click deletion feature that ensures immediate and irreversible "
+#~ "removal of all your data from our systems. When activated, this "
+#~ "automated process permanently erases:"
+#~ msgstr "We guarantee absolute control over your personal data through our "
+#~ "automated account management system. Our platform provides a dedicated "
+#~ "one-click deletion feature that ensures immediate and irreversible "
+#~ "removal of all your data from our systems. When activated, this "
+#~ "automated process permanently erases:"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:129
-#~ msgid "We implement and maintain robust security measures aligned with industry best practices to protect your Personal Data. Our security infrastructure includes:"
-#~ msgstr "We implement and maintain robust security measures aligned with industry best practices to protect your Personal Data. Our security infrastructure includes:"
+#~ msgid "We implement and maintain robust security measures aligned with industry "
+#~ "best practices to protect your Personal Data. Our security "
+#~ "infrastructure includes:"
+#~ msgstr "We implement and maintain robust security measures aligned with "
+#~ "industry best practices to protect your Personal Data. Our security "
+#~ "infrastructure includes:"
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:100
-#~ msgid "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the service will cease immediately."
-#~ msgstr "We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach these Terms. Upon termination, your right to use the service will cease immediately."
+#~ msgid "We may terminate or suspend your account immediately, without prior "
+#~ "notice or liability, for any reason whatsoever, including without "
+#~ "limitation if you breach these Terms. Upon termination, your right to "
+#~ "use the service will cease immediately."
+#~ msgstr "We may terminate or suspend your account immediately, without prior "
+#~ "notice or liability, for any reason whatsoever, including without "
+#~ "limitation if you breach these Terms. Upon termination, your right to "
+#~ "use the service will cease immediately."
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:128
-msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
-msgstr "We support .srt subtitle files. The language is detected automatically from the file contents."
+msgid "We support .srt subtitle files. The language is detected automatically "
+"from the file contents."
+msgstr "We support .srt subtitle files. The language is detected automatically "
+"from the file contents."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:170
-#~ msgid "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
-#~ msgstr "We will retain your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your Personal Data to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our legal agreements and policies."
+#~ msgid "We will retain your Personal Data only for as long as is necessary for "
+#~ "the purposes set out in this Privacy Policy. We will retain and use your "
+#~ "Personal Data to the extent necessary to comply with our legal "
+#~ "obligations, resolve disputes, and enforce our legal agreements and "
+#~ "policies."
+#~ msgstr "We will retain your Personal Data only for as long as is necessary for "
+#~ "the purposes set out in this Privacy Policy. We will retain and use "
+#~ "your Personal Data to the extent necessary to comply with our legal "
+#~ "obligations, resolve disputes, and enforce our legal agreements and "
+#~ "policies."
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:242
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:129
@@ -4658,8 +4980,12 @@ msgid "Welcome to Flicktionary."
 msgstr "Welcome to Flicktionary."
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:24
-#~ msgid "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
-#~ msgstr "Welcome to flicktionary.app. We are committed to protecting your privacy. This Privacy Policy outlines how we collect, handle, store, and safeguard your personal data as you interact with our services."
+#~ msgid "Welcome to flicktionary.app. We are committed to protecting your "
+#~ "privacy. This Privacy Policy outlines how we collect, handle, store, and "
+#~ "safeguard your personal data as you interact with our services."
+#~ msgstr "Welcome to flicktionary.app. We are committed to protecting your "
+#~ "privacy. This Privacy Policy outlines how we collect, handle, store, "
+#~ "and safeguard your personal data as you interact with our services."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:190
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
@@ -4670,24 +4996,34 @@ msgid "What language are you studying?"
 msgstr "What language are you studying?"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:48
-msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
-msgstr "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
+msgid "What language do you speak natively? This is the language Flicktionary "
+"will translate words and phrases into."
+msgstr "What language do you speak natively? This is the language Flicktionary "
+"will translate words and phrases into."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:191
 msgid "What's the etymology or origin of this term?"
 msgstr "What's the etymology or origin of this term?"
 
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-#~ msgid "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
-#~ msgstr "When on, processing a session lets the LLM scan the whole track and suggest terms at your level. When off, only your manual highlights become cards."
+#~ msgid "When on, processing a session lets the LLM scan the whole track and "
+#~ "suggest terms at your level. When off, only your manual highlights "
+#~ "become cards."
+#~ msgstr "When on, processing a session lets the LLM scan the whole track and "
+#~ "suggest terms at your level. When off, only your manual highlights "
+#~ "become cards."
 
 #: apps/web/src/features/settings/components/tap-to-translate-toggle.tsx:21
-#~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
-#~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition to creating the highlight."
+#~ msgid "When on, selecting text mid-watch fires a fast Haiku gloss in addition "
+#~ "to creating the highlight."
+#~ msgstr "When on, selecting text mid-watch fires a fast Haiku gloss in addition "
+#~ "to creating the highlight."
 
 #: apps/web/src/features/settings/components/llm-highlights-toggle.tsx:21
-#~ msgid "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
-#~ msgstr "When on, the reader can underline suggested terms as you scroll. When off, only your own highlights become cards."
+#~ msgid "When on, the reader can underline suggested terms as you scroll. When "
+#~ "off, only your own highlights become cards."
+#~ msgstr "When on, the reader can underline suggested terms as you scroll. When "
+#~ "off, only your own highlights become cards."
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
@@ -4723,8 +5059,10 @@ msgstr "Yearly"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:105
 #: apps/web/src/features/more/components/account-page.tsx:41
-msgid "You are a special user with free access. You have no active subscription."
-msgstr "You are a special user with free access. You have no active subscription."
+msgid "You are a special user with free access. You have no active "
+"subscription."
+msgstr "You are a special user with free access. You have no active "
+"subscription."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:26
 msgid "You are now subscribed to Premium!"
@@ -4744,8 +5082,17 @@ msgid "You have already used your free trial."
 msgstr "You have already used your free trial."
 
 #: apps/landing-page/src/app/[lang]/terms-and-conditions/page.tsx:110
-#~ msgid "You understand and agree that your use of our service is at your sole risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. We expressly disclaim all warranties, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
-#~ msgstr "You understand and agree that your use of our service is at your sole risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" basis. We expressly disclaim all warranties, whether express or implied, including, but not limited to, the implied warranties of merchantability, fitness for a particular purpose, and non-infringement."
+#~ msgid "You understand and agree that your use of our service is at your sole "
+#~ "risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" "
+#~ "basis. We expressly disclaim all warranties, whether express or implied, "
+#~ "including, but not limited to, the implied warranties of "
+#~ "merchantability, fitness for a particular purpose, and non-infringement."
+#~ msgstr "You understand and agree that your use of our service is at your sole "
+#~ "risk. The service is provided on an \"AS IS\" and \"AS AVAILABLE\" "
+#~ "basis. We expressly disclaim all warranties, whether express or "
+#~ "implied, including, but not limited to, the implied warranties of "
+#~ "merchantability, fitness for a particular purpose, and "
+#~ "non-infringement."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:96
 msgid "You used your free trial"
@@ -4757,8 +5104,10 @@ msgstr "You're all set"
 
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:309
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:334
-msgid "You've reviewed every due term for this language. Come back later when more are ready."
-msgstr "You've reviewed every due term for this language. Come back later when more are ready."
+msgid "You've reviewed every due term for this language. Come back later when "
+"more are ready."
+msgstr "You've reviewed every due term for this language. Come back later when "
+"more are ready."
 
 #: apps/native/src/features/removals/api/removals-hooks.ts:13
 #: apps/web/src/features/removals/api/removals-hooks.ts:16
@@ -4782,8 +5131,12 @@ msgid "Your highlights"
 msgstr "Your highlights"
 
 #: apps/landing-page/src/app/[lang]/privacy-policy/page.tsx:98
-#~ msgid "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
-#~ msgstr "Your information, including Personal Data, may be transferred to and maintained on computers located outside of your jurisdiction where data protection laws may differ from those in your jurisdiction."
+#~ msgid "Your information, including Personal Data, may be transferred to and "
+#~ "maintained on computers located outside of your jurisdiction where data "
+#~ "protection laws may differ from those in your jurisdiction."
+#~ msgstr "Your information, including Personal Data, may be transferred to and "
+#~ "maintained on computers located outside of your jurisdiction where data "
+#~ "protection laws may differ from those in your jurisdiction."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:34
 #: apps/web/src/features/sessions/components/cefr-step.tsx:40
