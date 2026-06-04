@@ -22,12 +22,12 @@ const buildTool = (): Anthropic.Tool => ({
       correct: {
         type: 'boolean',
         description:
-          'true if the sentence uses the term in its stored sense, grammatically and naturally. Minor typos/diacritic slips do not fail a sentence; wrong sense, broken grammar around the term, or not using the term at all do.',
+          'true if the sentence uses the term grammatically and naturally in ANY legitimate standard sense of the term — not only the stored one. Minor typos/diacritic slips do not fail a sentence; broken grammar around the term, a non-existent sense, or not using the term at all do.',
       },
       feedback: {
         type: 'string',
         description:
-          'One or two short sentences of feedback: what worked, and the single most useful correction if any. Encouraging but concrete.',
+          'One or two short sentences of feedback: what worked, and the single most useful correction if any. If the sentence uses a legitimate sense DIFFERENT from the stored one, say so explicitly and give one short example in the stored sense. Encouraging but concrete.',
       },
     },
     required: ['correct', 'feedback'],
@@ -53,7 +53,11 @@ Learner's sentence:
 
 ${args.userSentence}
 
-Grade it. The bar: the term appears (inflection allowed), is used in the stored sense, and the sentence is grammatical and natural enough for CEFR ${args.cefrLevel}. Minor typos or missing diacritics are fine. Write the feedback in ${feedbackLanguage}.
+Grade it. The bar: the term appears (inflection allowed), is used in a legitimate standard sense, and the sentence is grammatical and natural enough for CEFR ${args.cefrLevel}. Minor typos or missing diacritics are fine.
+
+Sense handling: a correct sentence in a DIFFERENT legitimate sense than the stored one still passes (correct=true) — real production is the point — but the feedback must point out that the stored sense is the one this card tracks, and include one short example sentence in the stored sense. Only fail on senses that don't exist, broken grammar around the term, or the term not appearing.
+
+Write the feedback in ${feedbackLanguage}.
 
 Call ${TOOL_NAME}. Stop after the tool call.`
 

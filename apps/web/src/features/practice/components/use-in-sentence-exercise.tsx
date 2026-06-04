@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, MessageCircle, Sparkles } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
+import { ExerciseLayout } from './exercise-layout'
 import type { ExerciseAnswerData } from './strengthen-types'
 
 type UseInSentencePayload = Extract<StrengthenExercisePayload, { type: 'use_in_sentence' }>
@@ -12,14 +13,17 @@ type UseInSentencePayload = Extract<StrengthenExercisePayload, { type: 'use_in_s
 // Free production, LLM-graded — clearly labelled "bonus" and never part of a
 // rehab gate. Grading errors degrade server-side to attempt-only, so this
 // component can treat every response as a success with optional feedback.
+// Skipping never consumes — the same exercise re-serves next session.
 export const UseInSentenceExercise = ({
   exerciseId,
   payload,
+  header,
   onAnswered,
   onNext,
 }: {
   exerciseId: string
   payload: UseInSentencePayload
+  header: ReactNode
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
@@ -44,7 +48,31 @@ export const UseInSentenceExercise = ({
   }
 
   return (
-    <div className='flex w-full flex-col gap-5'>
+    <ExerciseLayout
+      header={header}
+      actions={
+        result ? (
+          <Button type='button' size='xl' className='w-full' onClick={onNext}>
+            {t`Next`}
+          </Button>
+        ) : (
+          <>
+            <Button
+              type='button'
+              size='xl'
+              className='w-full'
+              disabled={!text.trim() || isPending}
+              onClick={handleSubmit}
+            >
+              {isPending ? t`Checking…` : t`Check`}
+            </Button>
+            <Button type='button' variant='outline' size='xl' className='w-full' disabled={isPending} onClick={onNext}>
+              {t`Skip`}
+            </Button>
+          </>
+        )
+      }
+    >
       <div className='flex items-center gap-2'>
         <span className='inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700'>
           <Sparkles className='h-3 w-3' />
@@ -65,25 +93,16 @@ export const UseInSentenceExercise = ({
         className='resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none disabled:bg-gray-50'
       />
 
-      {result ? (
-        <div className='flex flex-col gap-3'>
-          <div className={cn('flex items-start gap-2 text-sm', result.correct ? 'text-emerald-700' : 'text-amber-700')}>
-            {result.correct ? (
-              <CircleCheck className='mt-0.5 h-4 w-4 shrink-0' />
-            ) : (
-              <MessageCircle className='mt-0.5 h-4 w-4 shrink-0' />
-            )}
-            <span>{result.feedback ?? (result.correct ? t`Nice!` : t`Keep practicing this one.`)}</span>
-          </div>
-          <Button type='button' size='xl' className='w-full' onClick={onNext}>
-            {t`Next`}
-          </Button>
+      {result && (
+        <div className={cn('flex items-start gap-2 text-sm', result.correct ? 'text-emerald-700' : 'text-amber-700')}>
+          {result.correct ? (
+            <CircleCheck className='mt-0.5 h-4 w-4 shrink-0' />
+          ) : (
+            <MessageCircle className='mt-0.5 h-4 w-4 shrink-0' />
+          )}
+          <span>{result.feedback ?? (result.correct ? t`Nice!` : t`Keep practicing this one.`)}</span>
         </div>
-      ) : (
-        <Button type='button' size='xl' className='w-full' disabled={!text.trim() || isPending} onClick={handleSubmit}>
-          {isPending ? t`Checking…` : t`Check`}
-        </Button>
       )}
-    </div>
+    </ExerciseLayout>
   )
 }

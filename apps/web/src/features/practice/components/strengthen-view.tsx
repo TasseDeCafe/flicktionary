@@ -8,6 +8,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useStartStrengthenSession } from '../api/practice-hooks'
 import { PracticeLoader } from './practice-loader'
+import { ExerciseLayout } from './exercise-layout'
 import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
@@ -90,59 +91,74 @@ export const StrengthenView = () => {
           </div>
         )}
 
-        {current && (
-          <div className='flex flex-1 flex-col overflow-hidden'>
-            <div className='flex-1 overflow-y-auto'>
-              <div className='mx-auto flex w-full max-w-xl flex-col gap-4 px-4 py-6'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
-                    <Dumbbell className='h-3.5 w-3.5' />
-                    {current.track === 'gate' ? t`Rehab` : t`Practice`} · {current.headword}
-                  </span>
-                  <span className='text-muted-foreground text-xs tabular-nums'>
-                    {index + 1} / {total}
-                  </span>
-                </div>
+        {current &&
+          (() => {
+            const header = (
+              <div className='flex items-center justify-between'>
+                <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
+                  <Dumbbell className='h-3.5 w-3.5' />
+                  {current.track === 'gate' ? t`Rehab` : t`Practice`} · {current.headword}
+                </span>
+                <span className='text-muted-foreground text-xs tabular-nums'>
+                  {index + 1} / {total}
+                </span>
+              </div>
+            )
 
-                {current.status === 'generating' || !current.exerciseId || !current.payload ? (
+            if (current.status === 'generating' || !current.exerciseId || !current.payload) {
+              return (
+                <ExerciseLayout
+                  header={header}
+                  actions={
+                    <Button type='button' variant='outline' size='xl' className='w-full' onClick={handleNext}>
+                      {t`Skip`}
+                    </Button>
+                  }
+                >
                   <div className='flex flex-col items-center gap-4 py-10 text-center'>
                     <Hourglass className='h-8 w-8 text-gray-400' />
                     <p className='text-muted-foreground text-sm'>
                       {t`An exercise for “${currentHeadword}” is still being prepared. Check back in a minute.`}
                     </p>
-                    <Button type='button' variant='outline' size='lg' onClick={handleNext}>
-                      {t`Skip`}
-                    </Button>
                   </div>
-                ) : current.payload.type === 'mc_cloze' || current.payload.type === 'mc_comprehension' ? (
-                  <McExercise
-                    key={current.exerciseId}
-                    exerciseId={current.exerciseId}
-                    payload={current.payload}
-                    onAnswered={handleAnswered}
-                    onNext={handleNext}
-                  />
-                ) : current.payload.type === 'production_cloze' ? (
-                  <ProductionClozeExercise
-                    key={current.exerciseId}
-                    exerciseId={current.exerciseId}
-                    payload={current.payload}
-                    onAnswered={handleAnswered}
-                    onNext={handleNext}
-                  />
-                ) : (
-                  <UseInSentenceExercise
-                    key={current.exerciseId}
-                    exerciseId={current.exerciseId}
-                    payload={current.payload}
-                    onAnswered={handleAnswered}
-                    onNext={handleNext}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+                </ExerciseLayout>
+              )
+            }
+            if (current.payload.type === 'mc_cloze' || current.payload.type === 'mc_comprehension') {
+              return (
+                <McExercise
+                  key={current.exerciseId}
+                  exerciseId={current.exerciseId}
+                  payload={current.payload}
+                  header={header}
+                  onAnswered={handleAnswered}
+                  onNext={handleNext}
+                />
+              )
+            }
+            if (current.payload.type === 'production_cloze') {
+              return (
+                <ProductionClozeExercise
+                  key={current.exerciseId}
+                  exerciseId={current.exerciseId}
+                  payload={current.payload}
+                  header={header}
+                  onAnswered={handleAnswered}
+                  onNext={handleNext}
+                />
+              )
+            }
+            return (
+              <UseInSentenceExercise
+                key={current.exerciseId}
+                exerciseId={current.exerciseId}
+                payload={current.payload}
+                header={header}
+                onAnswered={handleAnswered}
+                onNext={handleNext}
+              />
+            )
+          })()}
       </div>
     </ModalScreen>
   )

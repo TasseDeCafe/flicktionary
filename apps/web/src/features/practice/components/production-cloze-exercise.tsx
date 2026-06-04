@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, CircleX } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
@@ -6,21 +6,25 @@ import { Button } from '@flicktionary/ui/components/button'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
+import { ExerciseLayout } from './exercise-layout'
 import { RehabProgressNote, type ExerciseAnswerData } from './strengthen-types'
 
 type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'production_cloze' }>
 
 // Typed cloze: the learner produces the missing form. Accent-insensitive,
 // 1-typo-tolerant grading happens server-side; the canonical answer is
-// revealed in the response for learning value.
+// revealed in the response for learning value. Skipping never consumes — the
+// same exercise re-serves next session.
 export const ProductionClozeExercise = ({
   exerciseId,
   payload,
+  header,
   onAnswered,
   onNext,
 }: {
   exerciseId: string
   payload: ProductionClozePayload
+  header: ReactNode
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
@@ -44,7 +48,31 @@ export const ProductionClozeExercise = ({
   }
 
   return (
-    <div className='flex w-full flex-col gap-5'>
+    <ExerciseLayout
+      header={header}
+      actions={
+        result ? (
+          <Button type='button' size='xl' className='w-full' onClick={onNext}>
+            {t`Next`}
+          </Button>
+        ) : (
+          <>
+            <Button
+              type='button'
+              size='xl'
+              className='w-full'
+              disabled={!text.trim() || isPending}
+              onClick={handleSubmit}
+            >
+              {t`Check`}
+            </Button>
+            <Button type='button' variant='outline' size='xl' className='w-full' disabled={isPending} onClick={onNext}>
+              {t`Skip`}
+            </Button>
+          </>
+        )
+      }
+    >
       <BlankedSentence sentence={payload.sentence} blankStart={payload.blankStart} blankEnd={payload.blankEnd} />
       {payload.hint && (
         <p className='text-muted-foreground text-sm'>
@@ -67,7 +95,7 @@ export const ProductionClozeExercise = ({
         className='rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none disabled:bg-gray-50'
       />
 
-      {result ? (
+      {result && (
         <div className='flex flex-col gap-3'>
           <div
             className={cn(
@@ -84,15 +112,8 @@ export const ProductionClozeExercise = ({
             </p>
           )}
           <RehabProgressNote data={result} />
-          <Button type='button' size='xl' className='w-full' onClick={onNext}>
-            {t`Next`}
-          </Button>
         </div>
-      ) : (
-        <Button type='button' size='xl' className='w-full' disabled={!text.trim() || isPending} onClick={handleSubmit}>
-          {t`Check`}
-        </Button>
       )}
-    </div>
+    </ExerciseLayout>
   )
 }
