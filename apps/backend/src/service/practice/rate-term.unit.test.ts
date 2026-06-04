@@ -175,11 +175,15 @@ describe('rateTerm leech parking', () => {
     expect(parkLeech).not.toHaveBeenCalled()
   })
 
-  it('never double-parks a term already parked in the pool', async () => {
-    const { deps, parkLeech } = createDeps(reviewOverdue(5, { leech_parked_at: '2026-05-01T00:00:00Z' }))
+  it('accepts but does not mutate a stale rating for an already parked term', async () => {
+    const { deps, applyFsrsResultForPool, parkLeech, warmExerciseBank } = createDeps(
+      reviewOverdue(5, { leech_parked_at: '2026-05-01T00:00:00Z' })
+    )
     const result = await rateTerm(lookupId, userId, 'again', 'passive', 20, deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true })
+    expect(applyFsrsResultForPool).not.toHaveBeenCalled()
     expect(parkLeech).not.toHaveBeenCalled()
+    expect(warmExerciseBank).not.toHaveBeenCalled()
   })
 
   it('parks in the active pool off the active lapse family', async () => {

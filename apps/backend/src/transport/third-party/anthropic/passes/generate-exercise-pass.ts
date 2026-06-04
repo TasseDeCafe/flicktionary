@@ -226,7 +226,36 @@ const locateBlank = (sentence: string, surfaceForm: string): { blankStart: numbe
 }
 
 const readStringArray = (value: unknown): string[] =>
-  Array.isArray(value) ? value.map((v) => String(v)).filter((v) => v.length > 0) : []
+  Array.isArray(value) ? value.map((v) => String(v).trim()).filter((v) => v.length > 0) : []
+
+const optionKey = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toLowerCase()
+
+export const buildMultipleChoiceOptions = (
+  answer: string,
+  distractors: string[]
+): { options: string[]; answerIndex: number } => {
+  if (!answer.trim()) throw new Error('Exercise generation returned an empty answer option')
+  if (distractors.length !== 3) {
+    throw new Error(`Exercise generation returned ${distractors.length} distractors (expected 3)`)
+  }
+
+  const keyedOptions = [answer, ...distractors].map((option) => ({ option, key: optionKey(option) }))
+  if (keyedOptions.some(({ key }) => key.length === 0)) {
+    throw new Error('Exercise generation returned an empty multiple-choice option')
+  }
+  const uniqueKeys = new Set(keyedOptions.map(({ key }) => key))
+  if (uniqueKeys.size !== keyedOptions.length) {
+    throw new Error('Exercise generation returned duplicate or answer-equivalent multiple-choice options')
+  }
+
+  const options = shuffled(keyedOptions.map(({ option }) => option))
+  return { options, answerIndex: options.indexOf(answer) }
+}
 
 export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<GeneratedExercise> => {
   const tool =
@@ -260,11 +289,8 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
   if (args.type === 'mc_cloze') {
     const surfaceForm = String(input.surface_form ?? '')
     const distractors = readStringArray(input.distractors)
-    if (distractors.length !== 3) {
-      throw new Error(`Exercise generation returned ${distractors.length} distractors (expected 3)`)
-    }
     const { blankStart, blankEnd } = locateBlank(sentence, surfaceForm)
-    const options = shuffled([surfaceForm, ...distractors])
+    const { options, answerIndex } = buildMultipleChoiceOptions(surfaceForm, distractors)
     return {
       type: 'mc_cloze',
       payload: {
@@ -273,7 +299,7 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
         blankEnd,
         answer: surfaceForm,
         options,
-        answerIndex: options.indexOf(surfaceForm),
+        answerIndex,
       },
     }
   }
@@ -283,17 +309,14 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
     const correctOption = String(input.correct_option ?? '')
     const distractors = readStringArray(input.distractors)
     if (!prompt || !correctOption) throw new Error('Exercise generation returned an empty prompt/correct_option')
-    if (distractors.length !== 3) {
-      throw new Error(`Exercise generation returned ${distractors.length} distractors (expected 3)`)
-    }
-    const options = shuffled([correctOption, ...distractors])
+    const { options, answerIndex } = buildMultipleChoiceOptions(correctOption, distractors)
     return {
       type: 'mc_comprehension',
       payload: {
         sentence,
         prompt,
         options,
-        answerIndex: options.indexOf(correctOption),
+        answerIndex,
       },
     }
   }

@@ -268,10 +268,9 @@ export const getStrengthenExercises = async (params: {
   // scope server-side, silently dropping anything that doesn't check out.
   // Parked terms never appear in the review queue, so the hard set is
   // non-leech by construction — but drop overlaps defensively anyway.
+  const hardIds = Array.from(new Set(params.sessionHardUserLookupIds))
   const hardLookups = (
-    await Promise.all(
-      params.sessionHardUserLookupIds.map((id) => deps.userLookupsRepository.findByIdForUser(id, userId))
-    )
+    await Promise.all(hardIds.map((id) => deps.userLookupsRepository.findByIdForUser(id, userId)))
   ).filter(
     (row): row is DbUserLookup =>
       row != null &&

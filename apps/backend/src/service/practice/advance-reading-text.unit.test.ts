@@ -172,6 +172,29 @@ describe('advanceReadingText', () => {
     expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
   })
 
+  it('does not mutate FSRS for parked annotations from stale generated texts', async () => {
+    const { deps, applyFsrsResultForPool, parkLeech } = createDeps({ claimWins: true })
+    ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(
+      async ({ headword }: { headword: string }) => {
+        if (headword === laId) {
+          return makeLookup(laId, {
+            srs_state: 'review',
+            srs_due: '2026-05-12T00:00:00Z',
+            leech_parked_at: '2026-05-12T00:01:00Z',
+          })
+        }
+        return makeLookup(lbId)
+      }
+    )
+
+    const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
+
+    expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
+    expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
+    expect(parkLeech).not.toHaveBeenCalled()
+  })
+
   it("parks a leech when a reading-mode 'again' rating crosses the lapse threshold", async () => {
     const { deps, parkLeech } = createDeps({ claimWins: true })
     ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(

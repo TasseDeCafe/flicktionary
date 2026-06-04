@@ -206,7 +206,7 @@ export const practiceContract = {
       z.object({
         targetLanguage: z.string().min(1),
         pool: PracticePoolSchema.default('passive'),
-        sessionHardUserLookupIds: z.array(z.string().uuid()).default([]),
+        sessionHardUserLookupIds: z.array(z.string().uuid()).max(100).default([]),
       })
     )
     .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),

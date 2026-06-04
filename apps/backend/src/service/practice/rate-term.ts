@@ -4,7 +4,7 @@ import type {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { applyRating, type AppRating } from './fsrs'
-import { shouldParkLeech } from './leech-config'
+import { isParked, shouldParkLeech } from './leech-config'
 
 export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
@@ -40,6 +40,12 @@ export const applyTermRating = async (params: {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
   if (pool === 'active' && lookup.learning_mode !== 'active') {
     return { ok: false, reason: 'not_in_active_pool' }
+  }
+  if (isParked(lookup, pool)) {
+    // Stale queues can outlive parking: an old flashcard tab or an already
+    // generated reading text may still submit a rating after the term left
+    // rotation. Parked terms must not mutate FSRS until rehab graduates them.
+    return { ok: true, introducedNew: false, parked: true }
   }
 
   const introducedNew = pool === 'passive' ? lookup.srs_state == null : lookup.active_srs_state == null
