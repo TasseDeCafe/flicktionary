@@ -101,7 +101,7 @@ fi
 
 # Clean Lingui catalogs so dead entries don't linger
 echo "🧹 Cleaning Lingui catalogs..."
-if pnpm lingui extract; then
+if pnpm lingui extract --clean; then
   echo "✅ Lingui catalogs updated"
 else
   echo "❌ Lingui extract failed"
