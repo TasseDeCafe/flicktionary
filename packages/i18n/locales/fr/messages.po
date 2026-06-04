@@ -459,7 +459,7 @@ msgstr "Un libellé court pour cette session"
 #~ msgid "A video element must be synced with asbplayer before it can be mined. Select a video element to sync it with asbplayer."
 #~ msgstr "Un élément vidéo doit être synchronisé avec asbplayer avant de pouvoir être extrait. Sélectionnez un élément vidéo pour le synchroniser avec asbplayer."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:191
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:185
 msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
@@ -1049,7 +1049,7 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 #: apps/web/src/features/review/components/chat-panel.tsx:144
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:284
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:183
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:177
 msgid "Close"
 msgstr "Fermer"
 
@@ -1546,7 +1546,7 @@ msgstr "Entrer le nom du profil"
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Error"
 msgstr "Erreur"
 
@@ -2453,7 +2453,7 @@ msgstr "Termes suggérés par IA"
 #~ msgid "LLM-suggested terms are off. Highlight at least one term to process this session."
 #~ msgstr "Les termes suggérés par l'IA sont désactivés. Surlignez au moins un terme pour traiter cette session."
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:327
+#: packages/asbplayer-common/components/VideoOverlay.tsx:330
 #: packages/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Charger des sous-titres"
@@ -2628,7 +2628,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Films"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
 
@@ -2800,7 +2800,7 @@ msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fic
 msgid "No translation available"
 msgstr "Aucune traduction disponible"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:235
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:231
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
@@ -2866,8 +2866,8 @@ msgstr "Numéral"
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
 #: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:228
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:239
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:224
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:235
 msgid "OK"
 msgstr "OK"
 
@@ -3076,7 +3076,7 @@ msgstr "Choisissez votre langue maternelle"
 msgid "Play/pause"
 msgstr "Lecture/Pause"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:370
+#: packages/asbplayer-common/components/VideoOverlay.tsx:368
 msgid "Playback Mode"
 msgstr "Mode de lecture"
 
@@ -3629,11 +3629,11 @@ msgstr "Aller au sous-titre précédent"
 #~ msgid "Select a video element to sync it with asbplayer."
 #~ msgstr "Sélectionnez un élément vidéo pour le synchroniser avec asbplayer."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:196
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:190
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:212
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:206
 msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
@@ -3720,7 +3720,7 @@ msgstr "Configuration du compte..."
 #: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
 #: packages/extension/src/ui/components/SettingsPage.tsx:57
 #: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:278
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:176
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -4317,7 +4317,7 @@ msgid "Toggle subtitle track 3 in video"
 msgstr "Activer/désactiver la piste de sous-titres 3 dans la vidéo"
 
 #: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:291
-#: packages/asbplayer-common/components/VideoOverlay.tsx:341
+#: packages/asbplayer-common/components/VideoOverlay.tsx:339
 msgid "Toggle subtitles"
 msgstr "Activer les sous-titres"
 
@@ -4557,7 +4557,7 @@ msgstr "Vérifiez Votre Email"
 msgid "Verifying..."
 msgstr "Vérification..."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:124
+#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:118
 msgid "Video Element"
 msgstr "Élément vidéo"
 
