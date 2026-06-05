@@ -15,7 +15,7 @@ export const ProcessingView = () => {
   return (
     <ModalScreen onClose={() => navigate({ to: '/sessions' })} title={t`Processing`}>
       <div className='mx-auto flex w-full max-w-2xl flex-col gap-4 overflow-y-auto px-4 py-8'>
-        <div className='flex flex-col gap-3 rounded-md border bg-card p-6'>
+        <div className='bg-card flex flex-col gap-3 rounded-md border p-6'>
           <div className='font-medium'>{t`Processing has moved to the background`}</div>
           <p className='text-muted-foreground text-sm'>
             {t`Highlights are enriched as you read. Triage is available immediately.`}

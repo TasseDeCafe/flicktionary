@@ -305,11 +305,11 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         <div className='flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center'>
           <CheckCircle2 className='h-10 w-10 text-yellow-600 dark:text-yellow-400' />
           <h2 className='text-lg font-semibold'>{t`All caught up`}</h2>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             {t`You've reviewed every due term for this language. Come back later when more are ready.`}
           </p>
         </div>
-        <div className='border-t bg-background px-4 pt-2 pb-3'>
+        <div className='bg-background border-t px-4 pt-2 pb-3'>
           <div className='mx-auto w-full max-w-2xl'>
             <Button type='button' size='xl' className='w-full' onClick={close}>
               {t`Back to ${languageName}`}
@@ -330,7 +330,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
             <div className='flex flex-col items-center gap-3 rounded-xl border bg-yellow-50 p-8 text-center dark:bg-yellow-400/10'>
               <CheckCircle2 className='h-10 w-10 text-yellow-600 dark:text-yellow-400' />
               <h2 className='text-lg font-semibold'>{t`All caught up`}</h2>
-              <p className='text-sm text-muted-foreground'>
+              <p className='text-muted-foreground text-sm'>
                 {t`You've reviewed every due term for this language. Come back later when more are ready.`}
               </p>
             </div>
@@ -354,7 +354,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         </div>
       </div>
 
-      <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-background/95 px-4 pt-2 pb-3 backdrop-blur'>
+      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-2 pb-3 backdrop-blur'>
         <div className='mx-auto flex w-full max-w-2xl flex-col gap-3'>
           <div className='flex items-center justify-between gap-2'>
             <Button

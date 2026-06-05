@@ -47,7 +47,7 @@ export const BottomTabBar = () => {
     <>
       <nav
         aria-label={t`Primary`}
-        className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden'
+        className='bg-background fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t pb-[env(safe-area-inset-bottom)] md:hidden'
       >
         <TabLink tab={tabs[0]} isActive={isTabActive(tabs[0])} />
         <TabLink tab={tabs[1]} isActive={isTabActive(tabs[1])} />

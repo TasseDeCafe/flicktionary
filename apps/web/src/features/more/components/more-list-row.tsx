@@ -28,7 +28,8 @@ export const MoreListRow = ({
   const isInteractive = !!onPress
   // Default chevron when the row is pressable and no trailing slot was provided.
   const showDefaultChevron = showChevron ?? (isInteractive && !destructive)
-  const trailingNode = trailing ?? (showDefaultChevron ? <ChevronRight className='h-5 w-5 text-muted-foreground' /> : null)
+  const trailingNode =
+    trailing ?? (showDefaultChevron ? <ChevronRight className='text-muted-foreground h-5 w-5' /> : null)
   const Tag = isInteractive ? 'button' : 'div'
 
   return (

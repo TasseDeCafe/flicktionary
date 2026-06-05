@@ -169,12 +169,12 @@ export const PracticeLanguageView = () => {
             <h1 className='min-w-0 flex-1 truncate text-2xl font-bold'>{languageName}</h1>
           </header>
 
-          {isLoading && <div className='py-8 text-center text-sm text-muted-foreground'>{t`Loading…`}</div>}
+          {isLoading && <div className='text-muted-foreground py-8 text-center text-sm'>{t`Loading…`}</div>}
 
           {!isLoading && !entry && (
             <div className='rounded-xl border bg-yellow-50 p-6 dark:bg-yellow-400/10'>
               <h2 className='font-semibold'>{t`No vocabulary to practice yet`}</h2>
-              <p className='mt-2 text-sm text-muted-foreground'>
+              <p className='text-muted-foreground mt-2 text-sm'>
                 {t`Process a session and keep some cards. They'll show up here automatically.`}
               </p>
             </div>
@@ -188,7 +188,7 @@ export const PracticeLanguageView = () => {
                     <Star className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />
                     {t`Active vocabulary`}
                   </h2>
-                  <p className='text-sm text-foreground'>
+                  <p className='text-foreground text-sm'>
                     {hasActiveWork
                       ? t`${activeDueCount} due, ${activeNewCount} new`
                       : t`${activeTotal} active term(s). Nothing due right now.`}
@@ -198,7 +198,7 @@ export const PracticeLanguageView = () => {
                 </section>
               )}
 
-              <section className='rounded-xl border bg-card p-4'>
+              <section className='bg-card rounded-xl border p-4'>
                 <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Passive vocabulary`}</h2>
                 <div className='flex items-start gap-3'>
                   {hasPassiveWork ? (
@@ -230,7 +230,7 @@ export const PracticeLanguageView = () => {
 }
 
 const PracticeMetric = ({ label, value }: { label: string; value: string }) => (
-  <div className='rounded-xl border bg-card p-4'>
+  <div className='bg-card rounded-xl border p-4'>
     <div className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{label}</div>
     <div className='mt-2 text-2xl font-semibold tabular-nums'>{value}</div>
   </div>

@@ -613,7 +613,7 @@ export const SessionGlossSheet = ({
                 className={
                   tags.includes(tag)
                     ? 'rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs dark:bg-yellow-400/15'
-                    : 'rounded-full border px-3 py-1 text-xs hover:bg-accent'
+                    : 'hover:bg-accent rounded-full border px-3 py-1 text-xs'
                 }
               >
                 {presetLabels[tag]}

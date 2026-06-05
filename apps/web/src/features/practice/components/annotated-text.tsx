@@ -188,7 +188,7 @@ export const AnnotatedText = ({
             className={cn(
               'cursor-pointer rounded-sm transition-[background-color,box-shadow]',
               ann.deleted
-                ? 'text-muted-foreground line-through decoration-muted-foreground hover:bg-muted hover:shadow-[0_0_0_0.125rem_var(--color-muted)]'
+                ? 'text-muted-foreground decoration-muted-foreground hover:bg-muted line-through hover:shadow-[0_0_0_0.125rem_var(--color-muted)]'
                 : ann.rated
                   ? 'bg-muted text-muted-foreground underline decoration-dotted shadow-[0_0_0_0.125rem_var(--color-muted)]'
                   : 'bg-yellow-100 text-yellow-950 underline decoration-yellow-500 decoration-2 shadow-[0_0_0_0.125rem_var(--color-yellow-100)] hover:bg-yellow-200 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-200)]'

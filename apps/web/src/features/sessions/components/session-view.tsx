@@ -302,14 +302,14 @@ export const SessionView = () => {
   if (isSessionLoading) {
     return (
       <ModalScreen onClose={closeToSessions} title={t`Session`}>
-        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-muted-foreground'>{t`Loading session…`}</div>
+        <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Loading session…`}</div>
       </ModalScreen>
     )
   }
   if (!session) {
     return (
       <ModalScreen onClose={closeToSessions} title={t`Session`}>
-        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-muted-foreground'>{t`Session not found.`}</div>
+        <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Session not found.`}</div>
       </ModalScreen>
     )
   }
@@ -329,7 +329,7 @@ export const SessionView = () => {
 
   return (
     <ModalScreen onClose={closeToSessions} title={titleNode}>
-      <div className='border-b bg-background px-4 py-3'>
+      <div className='bg-background border-b px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
           <TrackSearchBar value={search} onChange={setSearch} />
         </div>
@@ -349,7 +349,7 @@ export const SessionView = () => {
         >
           <div className='mx-auto max-w-4xl'>
             {isSegmentsLoading ? (
-              <p className='text-sm text-muted-foreground'>{t`Loading segments…`}</p>
+              <p className='text-muted-foreground text-sm'>{t`Loading segments…`}</p>
             ) : (
               <SegmentList
                 segments={visibleSegments}

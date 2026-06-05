@@ -35,15 +35,15 @@ export const VocabularyRow = ({
   const preview = hideTranslationFields ? chunk.definition || '' : chunk.translation || chunk.definition || ''
 
   return (
-    <div style={style} className='flex items-stretch border-b border-border bg-card'>
+    <div style={style} className='border-border bg-card flex items-stretch border-b'>
       <button
         type='button'
         onClick={() => onTap(chunk)}
-        className='flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-accent active:bg-accent'
+        className='hover:bg-accent active:bg-accent flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left'
       >
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
           <div className='flex items-baseline gap-2'>
-            <span className='truncate text-sm font-semibold text-foreground'>{chunk.headword}</span>
+            <span className='text-foreground truncate text-sm font-semibold'>{chunk.headword}</span>
           </div>
           {preview && <span className='text-muted-foreground truncate text-xs'>{preview}</span>}
         </div>
@@ -69,7 +69,7 @@ export const VocabularyRow = ({
             </span>
           )}
           {chunk.count > 1 && (
-            <span className='rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground'>
+            <span className='bg-muted text-foreground rounded-full px-2 py-0.5 text-[10px] font-semibold'>
               ×{chunk.count}
             </span>
           )}
@@ -79,7 +79,7 @@ export const VocabularyRow = ({
         type='button'
         onClick={() => onOptions(chunk)}
         aria-label={t`More options`}
-        className='flex w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-accent active:bg-accent'
+        className='text-muted-foreground hover:bg-accent active:bg-accent flex w-10 shrink-0 items-center justify-center'
       >
         <MoreVertical className='h-5 w-5' />
       </button>

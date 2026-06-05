@@ -3,13 +3,7 @@ import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { AlertOctagon, Globe, Languages, LifeBuoy, LogOut, Palette, Sparkles, UserCircle, Wrench } from 'lucide-react'
 import { Switch } from '@flicktionary/ui/components/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@flicktionary/ui/components/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
 import { i18nConfig } from '@flicktionary/i18n/i18n-config'
 import { findSupportedLanguage } from '@flicktionary/core/constants/supported-languages'
 import { getUserEmail, useAuthStore } from '@/stores/auth-store'

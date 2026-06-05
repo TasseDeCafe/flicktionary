@@ -185,7 +185,7 @@ export const TriageListView = () => {
         </>
       }
     >
-      <div className='border-b bg-background px-4 py-3'>
+      <div className='bg-background border-b px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
           <SearchInput value={search} onChange={setSearch} placeholder={t`Search…`} />
         </div>
@@ -283,7 +283,7 @@ export const TriageListView = () => {
         </div>
       </div>
 
-      <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
         <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
           <Button
             size='xl'

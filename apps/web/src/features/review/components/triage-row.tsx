@@ -32,7 +32,7 @@ export const TriageEnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }:
       <div className='flex-1'>
         <span className='text-base font-medium'>{surfaceForm}</span>
         {status === 'failed' ? (
-          <p className='mt-1 text-sm text-destructive'>{t`Enrichment failed`}</p>
+          <p className='text-destructive mt-1 text-sm'>{t`Enrichment failed`}</p>
         ) : status === 'missing' ? (
           <p className='text-muted-foreground mt-1 text-sm'>{t`Enrichment has not started yet.`}</p>
         ) : (
@@ -72,7 +72,7 @@ export const TriageRow = ({ sessionId, card, hideTranslationFields = false, onSt
       <Link
         to='/sessions/$sessionId/review/$cardId'
         params={{ sessionId, cardId: card.id }}
-        className='-ml-2 block flex-1 rounded-md px-2 py-3 transition-colors hover:bg-accent active:bg-accent'
+        className='hover:bg-accent active:bg-accent -ml-2 block flex-1 rounded-md px-2 py-3 transition-colors'
       >
         <span className='text-base font-medium'>{card.chunk.headword || card.surfaceForm}</span>
         {card.chunk.headword && card.surfaceForm && card.chunk.headword !== card.surfaceForm && (

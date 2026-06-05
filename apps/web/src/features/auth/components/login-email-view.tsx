@@ -81,9 +81,9 @@ export const LoginEmailView = () => {
             placeholder={t`Email address`}
             value={email}
             onChange={handleEmailChange}
-            className='h-10 w-full rounded-md border border-input px-3 py-2 placeholder-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring focus:outline-none'
+            className='border-input placeholder-muted-foreground focus:border-ring focus:ring-ring h-10 w-full rounded-md border px-3 py-2 focus:ring-1 focus:outline-none'
           />
-          {emailError && <p className='text-xs text-destructive'>{t`Please enter a valid email address`}</p>}
+          {emailError && <p className='text-destructive text-xs'>{t`Please enter a valid email address`}</p>}
         </div>
         <Button disabled={isPending} onClick={handleContinue}>
           {isPending ? t`Sending...` : t`Continue`}

@@ -34,7 +34,7 @@ const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: Ch
     { value: 'due', label: t`Due soonest` },
   ]
   return (
-    <div className='flex gap-1 rounded-full bg-muted p-1'>
+    <div className='bg-muted flex gap-1 rounded-full p-1'>
       {options.map((opt) => {
         const isActive = opt.value === value
         return (
@@ -69,7 +69,7 @@ const LearningModeFilterPills = ({
     { value: 'active', label: t`Active` },
   ]
   return (
-    <div className='flex gap-1 rounded-full bg-muted p-1'>
+    <div className='bg-muted flex gap-1 rounded-full p-1'>
       {options.map((opt) => {
         const isActive = opt.value === value
         return (
@@ -277,7 +277,7 @@ export const VocabularyListView = () => {
       {showEmpty && <VocabularyEmptyState />}
 
       {showLanguageEmpty && (
-        <div className='rounded-xl border bg-muted p-6 text-center text-sm text-muted-foreground'>
+        <div className='bg-muted text-muted-foreground rounded-xl border p-6 text-center text-sm'>
           {debouncedSearch.length > 0 ? t`No matches.` : t`No vocabulary in this language yet.`}
         </div>
       )}
@@ -285,12 +285,12 @@ export const VocabularyListView = () => {
       {!showEmpty && !showLanguageEmpty && (
         <div
           ref={parentRef}
-          className='flex-1 overflow-y-auto rounded-xl border bg-card md:min-h-[60vh]'
+          className='bg-card flex-1 overflow-y-auto rounded-xl border md:min-h-[60vh]'
           aria-busy={isInitialLoad}
           onScroll={onParentScroll}
         >
           {isInitialLoad ? (
-            <div className='py-8 text-center text-sm text-muted-foreground'>{t`Loading…`}</div>
+            <div className='text-muted-foreground py-8 text-center text-sm'>{t`Loading…`}</div>
           ) : (
             <div
               style={{
@@ -312,7 +312,11 @@ export const VocabularyListView = () => {
                 }
                 if (isLoaderRow) {
                   return (
-                    <div key='loader' style={style} className='flex items-center justify-center text-xs text-muted-foreground'>
+                    <div
+                      key='loader'
+                      style={style}
+                      className='text-muted-foreground flex items-center justify-center text-xs'
+                    >
                       {hasNextPage ? t`Loading more…` : t`End of list`}
                     </div>
                   )

@@ -20,8 +20,8 @@ export const ModalScreen = ({ onClose, closeIcon = 'x', title, rightSlot, classN
   const Icon = closeIcon === 'x' ? X : ChevronLeft
   const closeLabel = closeIcon === 'x' ? t`Close` : t`Back`
   return (
-    <div className={cn('flex h-dvh flex-col bg-background', className)}>
-      <header className='flex h-14 shrink-0 items-center gap-2 border-b bg-background px-2'>
+    <div className={cn('bg-background flex h-dvh flex-col', className)}>
+      <header className='bg-background flex h-14 shrink-0 items-center gap-2 border-b px-2'>
         <Button variant='ghost' size='icon' onClick={onClose} aria-label={closeLabel}>
           <Icon className='size-6 md:size-5' />
         </Button>

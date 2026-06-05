@@ -111,7 +111,7 @@ export const ChatPanel = ({
         className='gap-0'
       >
         {/* Mirrors ModalScreen's header: close on the left, title beside it. */}
-        <header className='flex h-14 shrink-0 items-center gap-2 border-b bg-background px-2'>
+        <header className='bg-background flex h-14 shrink-0 items-center gap-2 border-b px-2'>
           <Button variant='ghost' size='icon' onClick={() => onOpenChange(false)} aria-label={t`Close`}>
             <X className='size-6 md:size-5' />
           </Button>
@@ -139,8 +139,8 @@ export const ChatSidePanel = ({
 }) => {
   const { t } = useLingui()
   return (
-    <aside className='flex h-dvh w-[28rem] shrink-0 flex-col border-l bg-background'>
-      <header className='flex h-14 shrink-0 items-center gap-2 border-b bg-background px-2'>
+    <aside className='bg-background flex h-dvh w-[28rem] shrink-0 flex-col border-l'>
+      <header className='bg-background flex h-14 shrink-0 items-center gap-2 border-b px-2'>
         <Button variant='ghost' size='icon' onClick={onClose} aria-label={t`Close`}>
           <X className='size-6 md:size-5' />
         </Button>

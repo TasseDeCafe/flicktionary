@@ -180,7 +180,7 @@ export const PerCardChat = ({ cardId, sessionId, highlightId, fill = false }: Pr
           ref={listRef}
           onScroll={refreshJump}
           className={cn(
-            'flex flex-col gap-2 overflow-y-auto rounded-md border bg-muted p-3',
+            'bg-muted flex flex-col gap-2 overflow-y-auto rounded-md border p-3',
             fill ? 'h-full' : 'max-h-[400px]'
           )}
         >
@@ -192,33 +192,36 @@ export const PerCardChat = ({ cardId, sessionId, highlightId, fill = false }: Pr
           )}
           {messages?.map((m) =>
             m.role === 'user' ? (
-              <div key={m.id} className='self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap dark:bg-blue-400/20'>
+              <div
+                key={m.id}
+                className='self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap dark:bg-blue-400/20'
+              >
                 {m.content}
               </div>
             ) : (
               <div key={m.id} ref={m.id === lastAssistantId ? lastReplyRef : undefined} className='flex flex-col'>
                 <MarkdownMessage
                   content={m.content}
-                  className='self-start rounded-lg bg-card px-3 py-2 text-sm shadow-sm'
+                  className='bg-card self-start rounded-lg px-3 py-2 text-sm shadow-sm'
                 />
               </div>
             )
           )}
           {optimisticUserContent && (
-            <div className='self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap dark:bg-blue-400/20 opacity-70'>
+            <div className='self-end rounded-lg bg-blue-100 px-3 py-2 text-sm whitespace-pre-wrap opacity-70 dark:bg-blue-400/20'>
               {optimisticUserContent}
             </div>
           )}
           {isPending && (
-            <div className='self-start rounded-lg bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm'>{t`Thinking…`}</div>
+            <div className='bg-card text-muted-foreground self-start rounded-lg px-3 py-2 text-sm shadow-sm'>{t`Thinking…`}</div>
           )}
           {isSeedPending && !isPending && (
-            <div className='self-start rounded-lg bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm'>
+            <div className='bg-card text-muted-foreground self-start rounded-lg px-3 py-2 text-sm shadow-sm'>
               {t`Preparing your answer…`}
             </div>
           )}
           {isSeedFailed && !isSeedPending && !isPending && (
-            <div className='self-start rounded-lg bg-card px-3 py-2 text-sm text-destructive shadow-sm'>
+            <div className='bg-card text-destructive self-start rounded-lg px-3 py-2 text-sm shadow-sm'>
               {t`We couldn't prepare this answer. Save the note again to retry.`}
             </div>
           )}

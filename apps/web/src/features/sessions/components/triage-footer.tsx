@@ -28,7 +28,7 @@ export const TriageFooter = ({ sessionId, highlightCount, isGeneratingCandidates
   }
 
   return (
-    <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-background/95 p-3 backdrop-blur'>
+    <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t p-3 backdrop-blur'>
       <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
         <span className='text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm'>
           {hint}

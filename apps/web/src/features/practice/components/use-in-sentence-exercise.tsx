@@ -90,7 +90,7 @@ export const UseInSentenceExercise = ({
         disabled={!!result || isPending}
         rows={3}
         placeholder={t`Write your sentence…`}
-        className='resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none disabled:bg-muted'
+        className='disabled:bg-muted resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />
 
       {result && (

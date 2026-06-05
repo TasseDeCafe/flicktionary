@@ -87,7 +87,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                         className={
                           active
                             ? 'rounded-md border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs font-semibold dark:bg-yellow-400/15'
-                            : 'rounded-md border px-3 py-1 text-xs transition-colors hover:bg-accent active:bg-accent disabled:opacity-50'
+                            : 'hover:bg-accent active:bg-accent rounded-md border px-3 py-1 text-xs transition-colors disabled:opacity-50'
                         }
                       >
                         {lvl}
@@ -134,7 +134,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                           className={
                             active
                               ? 'rounded-md border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs font-semibold dark:bg-yellow-400/15'
-                              : 'rounded-md border px-3 py-1 text-xs transition-colors hover:bg-accent active:bg-accent disabled:opacity-50'
+                              : 'hover:bg-accent active:bg-accent rounded-md border px-3 py-1 text-xs transition-colors disabled:opacity-50'
                           }
                         >
                           {opt.label}

@@ -20,7 +20,7 @@ export const ExerciseLayout = ({
         {children}
       </div>
     </div>
-    <div className='border-t bg-background px-4 pt-2 pb-3'>
+    <div className='bg-background border-t px-4 pt-2 pb-3'>
       <div className='mx-auto flex w-full max-w-xl flex-col gap-2'>{actions}</div>
     </div>
   </div>
