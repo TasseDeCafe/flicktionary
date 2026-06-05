@@ -14,7 +14,7 @@ export const BlankedSentence = ({
 }) => (
   <p className='text-lg leading-relaxed'>
     {sentence.slice(0, blankStart)}
-    <span aria-hidden className='mx-1 font-semibold tracking-wider text-gray-400 select-none'>
+    <span aria-hidden className='text-muted-foreground mx-1 font-semibold tracking-wider select-none'>
       ______
     </span>
     {sentence.slice(blankEnd)}

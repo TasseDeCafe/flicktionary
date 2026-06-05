@@ -57,8 +57,8 @@ export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands
   return (
     <ShadowUiProvider
       portalContainer={portalContainer}
-      themeType={model?.themeType ?? 'dark'}
-      language={model?.language ?? 'en'}
+      themeType={model?.themeType ?? 'system'}
+      language={model?.language ?? 'system'}
     >
       {visible && lastControlType !== undefined && model !== undefined && (
         // The host + appRoot are click-through (pointer-events:none) so the empty

@@ -16,6 +16,8 @@ type UserPrefsResponse = {
   englishIpaDialect: 'ga' | 'rp'
   practiceMaxNewTerms: number
   practiceMaxReviewTerms: number
+  uiTheme: 'light' | 'dark' | 'system' | null
+  uiLanguage: string | null
   targetLanguagePrefs: { targetLanguage: string; cefrLevel: string; showTranslationsEnabled: boolean }[]
 }
 
@@ -32,6 +34,8 @@ const buildPrefs = async (
     llmHighlightsEnabled,
     englishIpaDialect,
     practiceLimits,
+    uiTheme,
+    uiLanguage,
     targetPrefs,
   ] = await Promise.all([
     usersRepository.getNativeLanguage(userId),
@@ -41,6 +45,8 @@ const buildPrefs = async (
     usersRepository.getLlmHighlightsEnabled(userId),
     usersRepository.getEnglishIpaDialect(userId),
     usersRepository.getPracticeSessionLimits(userId),
+    usersRepository.getUiTheme(userId),
+    usersRepository.getUiLanguage(userId),
     prefsRepository.listForUser(userId),
   ])
   return {
@@ -52,6 +58,8 @@ const buildPrefs = async (
     englishIpaDialect,
     practiceMaxNewTerms: practiceLimits.maxNewTerms,
     practiceMaxReviewTerms: practiceLimits.maxReviewTerms,
+    uiTheme,
+    uiLanguage,
     targetLanguagePrefs: targetPrefs.map((p) => ({
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
@@ -163,6 +171,30 @@ export const UserPrefsRouter = (
       if (!ok) {
         throw errors.INTERNAL_SERVER_ERROR({
           data: { errors: [{ message: 'Failed to update English IPA dialect' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    setUiTheme: implementer.setUiTheme.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.setUiTheme(userId, input.uiTheme)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to update UI theme' }] },
+        })
+      }
+      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+      return { data: prefs }
+    }),
+
+    setUiLanguage: implementer.setUiLanguage.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const ok = await usersRepository.setUiLanguage(userId, input.uiLanguage)
+      if (!ok) {
+        throw errors.INTERNAL_SERVER_ERROR({
+          data: { errors: [{ message: 'Failed to update UI language' }] },
         })
       }
       const prefs = await buildPrefs(userId, usersRepository, prefsRepository)

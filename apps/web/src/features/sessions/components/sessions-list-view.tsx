@@ -104,7 +104,7 @@ const FilterChip = ({
     type='button'
     onClick={onClick}
     className={`shrink-0 rounded-full px-3 py-1 text-sm whitespace-nowrap transition-colors ${
-      active ? 'bg-yellow-400 font-medium text-yellow-950' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      active ? 'bg-yellow-400 font-medium text-yellow-950' : 'bg-muted text-foreground hover:bg-accent'
     }`}
   >
     {children}

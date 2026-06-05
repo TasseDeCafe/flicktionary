@@ -15,7 +15,7 @@ export const ProcessingView = () => {
   return (
     <ModalScreen onClose={() => navigate({ to: '/sessions' })} title={t`Processing`}>
       <div className='mx-auto flex w-full max-w-2xl flex-col gap-4 overflow-y-auto px-4 py-8'>
-        <div className='flex flex-col gap-3 rounded-md border bg-white p-6'>
+        <div className='bg-card flex flex-col gap-3 rounded-md border p-6'>
           <div className='font-medium'>{t`Processing has moved to the background`}</div>
           <p className='text-muted-foreground text-sm'>
             {t`Highlights are enriched as you read. Triage is available immediately.`}
@@ -31,9 +31,9 @@ export const ProcessingView = () => {
         </div>
 
         {warnings.length > 0 && (
-          <div className='rounded-md border bg-amber-50 p-4 text-sm'>
-            <div className='font-medium text-amber-800'>{t`Warnings`}</div>
-            <ul className='mt-1 list-disc pl-5 text-amber-700'>
+          <div className='rounded-md border bg-amber-50 p-4 text-sm dark:bg-amber-400/10'>
+            <div className='font-medium text-amber-800 dark:text-amber-300'>{t`Warnings`}</div>
+            <ul className='mt-1 list-disc pl-5 text-amber-700 dark:text-amber-300'>
               {warnings.map((w, i) => (
                 <li key={i}>{w}</li>
               ))}

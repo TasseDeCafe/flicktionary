@@ -7,6 +7,7 @@ import {
   clearPendingFlicktionaryPairNonce,
   getPendingFlicktionaryPairNonce,
 } from '../../services/flicktionary/pairing-nonce-storage'
+import { reconcileUiPrefsOnPairing } from '../../services/flicktionary/ui-prefs-sync'
 
 interface FlicktionaryPairMessage extends Message {
   command: 'flicktionary-pair'
@@ -72,6 +73,11 @@ export default class FlicktionaryPairHandler {
           expires_at: data.session.expires_at ?? undefined,
           user: { id: data.user.id, email: data.user.email ?? msg.email },
         })
+        // Pairing happens via the web page → this background handler while the
+        // popup is typically closed, so the UI-prefs reconcile lives here (NOT
+        // in the popup's auth-change listener). Fire-and-forget: pairing
+        // success must not depend on the prefs round-trip.
+        void reconcileUiPrefsOnPairing()
         sendResponse({ ok: true })
       } catch (error) {
         sendResponse({ ok: false, error: error instanceof Error ? error.message : 'Pairing failed' })

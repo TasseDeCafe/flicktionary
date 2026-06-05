@@ -20,8 +20,8 @@ export const VocabularyLanguageSwitcher = ({ languages, value, onChange }: Vocab
             className={cn(
               'rounded-full border px-3 py-1 text-xs font-semibold tracking-wider uppercase transition-colors',
               isActive
-                ? 'border-yellow-500 bg-yellow-100 text-yellow-900'
-                : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 active:bg-gray-100'
+                ? 'border-yellow-500 bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300'
+                : 'border-border bg-card text-muted-foreground hover:bg-accent active:bg-accent'
             )}
           >
             {lang}

@@ -22,7 +22,7 @@ export const AutoRejectedCollapsible = ({ sessionId, cards, hideTranslationField
   const filteredCount = cards.length
   if (filteredCount === 0) return null
   return (
-    <div className='mt-4 rounded-md border bg-gray-50/40'>
+    <div className='bg-muted/40 mt-4 rounded-md border'>
       <Button variant='ghost' className='w-full justify-start px-3 py-2 text-sm' onClick={() => setOpen((v) => !v)}>
         {open ? <ChevronDown className='mr-1 h-4 w-4' /> : <ChevronRight className='mr-1 h-4 w-4' />}
         {t`Show ${filteredCount} filtered out (below your level)`}

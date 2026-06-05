@@ -7,7 +7,7 @@ import {
   VideoDataUiOpenReason,
 } from '@asbplayer-fork/common'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
-import type { Profile } from '@asbplayer-fork/common/settings'
+import type { Profile, ThemeType } from '@asbplayer-fork/common/settings'
 import { useLingui } from '@lingui/react/macro'
 import VideoDataSyncDialog from '../components/VideoDataSyncDialog'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
@@ -72,12 +72,13 @@ const initialTrackIds = ['-', '-', '-']
 // from the channel (for the theme) — the body's hooks (useLingui) must run
 // INSIDE this provider, so they live in VideoDataSyncBody below.
 export function ShadowVideoDataSyncApp({ channel, portalContainer, language, commands }: ShadowVideoDataSyncAppProps) {
-  const [themeType, setThemeType] = useState<'dark' | 'light'>('dark')
+  // Raw setting value — ShadowUiProvider resolves 'system' in this realm.
+  const [themeType, setThemeType] = useState<ThemeType>('system')
   useEffect(
     () =>
       channel.subscribe((model) => {
         if (model.settings?.themeType !== undefined) {
-          setThemeType((model.settings.themeType as 'dark' | 'light') ?? 'dark')
+          setThemeType((model.settings.themeType as ThemeType) ?? 'system')
         }
       }),
     [channel]

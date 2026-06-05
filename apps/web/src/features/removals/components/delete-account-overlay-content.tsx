@@ -45,7 +45,7 @@ export const DeleteAccountOverlayContent = () => {
       </OverlayHeader>
       <div className='flex flex-col gap-4'>
         <div>
-          <p className='mb-2 text-sm text-gray-500'>{t`Please type "${EXPECTED_CONFIRMATION_TEXT}"`}</p>
+          <p className='text-muted-foreground mb-2 text-sm'>{t`Please type "${EXPECTED_CONFIRMATION_TEXT}"`}</p>
           <Input
             value={confirmationText}
             onChange={(e) => setConfirmationText(e.target.value)}

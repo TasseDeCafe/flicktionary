@@ -612,8 +612,8 @@ export const SessionGlossSheet = ({
                 onClick={() => toggleTag(tag)}
                 className={
                   tags.includes(tag)
-                    ? 'rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs'
-                    : 'rounded-full border px-3 py-1 text-xs hover:bg-gray-50'
+                    ? 'rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs dark:bg-yellow-400/15'
+                    : 'hover:bg-accent rounded-full border px-3 py-1 text-xs'
                 }
               >
                 {presetLabels[tag]}

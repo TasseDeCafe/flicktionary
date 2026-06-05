@@ -90,11 +90,16 @@ export const UseInSentenceExercise = ({
         disabled={!!result || isPending}
         rows={3}
         placeholder={t`Write your sentence…`}
-        className='resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none disabled:bg-gray-50'
+        className='disabled:bg-muted resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />
 
       {result && (
-        <div className={cn('flex items-start gap-2 text-sm', result.correct ? 'text-emerald-700' : 'text-amber-700')}>
+        <div
+          className={cn(
+            'flex items-start gap-2 text-sm',
+            result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'
+          )}
+        >
           {result.correct ? (
             <CircleCheck className='mt-0.5 h-4 w-4 shrink-0' />
           ) : (

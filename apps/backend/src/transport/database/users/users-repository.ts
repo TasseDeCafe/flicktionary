@@ -180,6 +180,36 @@ const setEnglishIpaDialect = async (userId: string, dialect: 'ga' | 'rp'): Promi
   return result.count === 1
 }
 
+const getUiTheme = async (userId: string): Promise<'light' | 'dark' | 'system' | null> => {
+  const result = (await sql`
+    SELECT ui_theme FROM public.users WHERE id = ${userId}
+  `) as { ui_theme: string | null }[]
+  const value = result[0]?.ui_theme
+  // NULL means "never explicitly set" — return as-is, no default coercion.
+  return value === 'light' || value === 'dark' || value === 'system' ? value : null
+}
+
+const setUiTheme = async (userId: string, uiTheme: 'light' | 'dark' | 'system' | null): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users SET ui_theme = ${uiTheme} WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
+const getUiLanguage = async (userId: string): Promise<string | null> => {
+  const result = (await sql`
+    SELECT ui_language FROM public.users WHERE id = ${userId}
+  `) as { ui_language: string | null }[]
+  return result[0]?.ui_language ?? null
+}
+
+const setUiLanguage = async (userId: string, uiLanguage: string | null): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.users SET ui_language = ${uiLanguage} WHERE id = ${userId}
+  `
+  return result.count === 1
+}
+
 const getPracticeSessionLimits = async (userId: string): Promise<PracticeSessionLimits> => {
   const result = (await sql`
     SELECT practice_max_new_terms, practice_max_review_terms
@@ -232,6 +262,10 @@ export interface UsersRepositoryInterface {
   setLlmHighlightsEnabled: (userId: string, enabled: boolean) => Promise<boolean>
   getEnglishIpaDialect: (userId: string) => Promise<'ga' | 'rp'>
   setEnglishIpaDialect: (userId: string, dialect: 'ga' | 'rp') => Promise<boolean>
+  getUiTheme: (userId: string) => Promise<'light' | 'dark' | 'system' | null>
+  setUiTheme: (userId: string, uiTheme: 'light' | 'dark' | 'system' | null) => Promise<boolean>
+  getUiLanguage: (userId: string) => Promise<string | null>
+  setUiLanguage: (userId: string, uiLanguage: string | null) => Promise<boolean>
   getPracticeSessionLimits: (userId: string) => Promise<PracticeSessionLimits>
   setPracticeSessionLimits: (userId: string, limits: PracticeSessionLimits) => Promise<boolean>
 }
@@ -256,6 +290,10 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setLlmHighlightsEnabled,
     getEnglishIpaDialect,
     setEnglishIpaDialect,
+    getUiTheme,
+    setUiTheme,
+    getUiLanguage,
+    setUiLanguage,
     getPracticeSessionLimits,
     setPracticeSessionLimits,
   }

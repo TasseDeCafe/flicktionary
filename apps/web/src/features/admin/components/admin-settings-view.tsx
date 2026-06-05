@@ -55,10 +55,18 @@ export const AdminSettingsView = () => {
                 Use these buttons to test Sentry error reporting in your environment.
               </p>
               <div className='flex flex-col gap-3 sm:flex-row'>
-                <Button onClick={handleTestSentryLog} variant='outline' className='border-blue-300 hover:bg-blue-50'>
+                <Button
+                  onClick={handleTestSentryLog}
+                  variant='outline'
+                  className='border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-400/10'
+                >
                   Test Frontend Sentry Log
                 </Button>
-                <Button onClick={handleTestSentryError} variant='outline' className='border-red-300 hover:bg-red-50'>
+                <Button
+                  onClick={handleTestSentryError}
+                  variant='outline'
+                  className='border-destructive/40 hover:bg-destructive/10'
+                >
                   Test Frontend Unhandled Error
                 </Button>
                 <Button

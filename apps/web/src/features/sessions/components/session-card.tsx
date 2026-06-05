@@ -33,7 +33,7 @@ export const SessionCard = ({ session, onRemove }: Props) => {
   )
 
   return (
-    <Card className='relative transition-colors hover:bg-gray-50 active:bg-gray-100'>
+    <Card className='hover:bg-accent active:bg-accent relative transition-colors'>
       <Link to='/sessions/$sessionId' params={{ sessionId: session.id }} className='block'>
         <CardContent className='flex items-center gap-4 p-4 pr-14'>
           {session.contentSourcePosterUrl ? (
@@ -44,19 +44,19 @@ export const SessionCard = ({ session, onRemove }: Props) => {
               loading='lazy'
             />
           ) : isText ? (
-            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-yellow-100 text-yellow-900'>
+            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300'>
               <FileText className='h-6 w-6' />
             </div>
           ) : isArticle ? (
-            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-sky-100 text-sky-700'>
+            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300'>
               <Newspaper className='h-6 w-6' />
             </div>
           ) : isYoutube ? (
-            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-red-100 text-red-700'>
+            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-red-100 text-red-700 dark:bg-red-400/15 dark:text-red-300'>
               <MonitorPlay className='h-6 w-6' />
             </div>
           ) : isStreaming ? (
-            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-indigo-100 text-indigo-700'>
+            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300'>
               <Clapperboard className='h-6 w-6' />
             </div>
           ) : (

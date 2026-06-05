@@ -81,7 +81,7 @@ export const StrengthenView = () => {
               <p className='text-lg font-semibold'>{t`Strengthening done!`}</p>
               <p className='text-muted-foreground text-sm'>{t`${correctCount} of ${total} correct.`}</p>
             </div>
-            <div className='border-t bg-white px-4 pt-2 pb-3'>
+            <div className='bg-background border-t px-4 pt-2 pb-3'>
               <div className='mx-auto w-full max-w-xl'>
                 <Button type='button' size='xl' className='w-full' onClick={close}>
                   {t`Back to ${languageName}`}
@@ -123,7 +123,7 @@ export const StrengthenView = () => {
                   }
                 >
                   <div className='flex flex-col items-center gap-4 py-10 text-center'>
-                    <Hourglass className='h-8 w-8 text-gray-400' />
+                    <Hourglass className='text-muted-foreground h-8 w-8' />
                     <p className='text-muted-foreground text-sm'>
                       {t`An exercise for “${currentHeadword}” is still being prepared. Check back in a minute.`}
                     </p>

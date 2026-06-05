@@ -92,7 +92,7 @@ export const ProductionClozeExercise = ({
         autoCapitalize='off'
         autoCorrect='off'
         spellCheck={false}
-        className='rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none disabled:bg-gray-50'
+        className='disabled:bg-muted rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />
 
       {result && (
@@ -100,7 +100,7 @@ export const ProductionClozeExercise = ({
           <div
             className={cn(
               'flex items-center gap-2 text-sm font-medium',
-              result.correct ? 'text-emerald-700' : 'text-red-700'
+              result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
             )}
           >
             {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}

@@ -1088,6 +1088,8 @@ export type Database = {
           referral: string | null
           stripe_customer_id: string | null
           tap_to_translate_enabled: boolean
+          ui_language: string | null
+          ui_theme: string | null
           utm_campaign: string | null
           utm_content: string | null
           utm_medium: string | null
@@ -1107,6 +1109,8 @@ export type Database = {
           referral?: string | null
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
+          ui_language?: string | null
+          ui_theme?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null
@@ -1126,6 +1130,8 @@ export type Database = {
           referral?: string | null
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
+          ui_language?: string | null
+          ui_theme?: string | null
           utm_campaign?: string | null
           utm_content?: string | null
           utm_medium?: string | null

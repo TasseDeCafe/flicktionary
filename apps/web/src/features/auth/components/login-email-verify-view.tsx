@@ -84,7 +84,7 @@ export const LoginEmailVerifyView = () => {
         {isError ? (
           <>
             <h1 className='text-xl font-semibold'>{t`Link expired or invalid`}</h1>
-            <p className='text-gray-600'>{t`Please request a new verification link.`}</p>
+            <p className='text-muted-foreground'>{t`Please request a new verification link.`}</p>
             <Button onClick={handleReturnToAuth}>{t`Back to login`}</Button>
           </>
         ) : (

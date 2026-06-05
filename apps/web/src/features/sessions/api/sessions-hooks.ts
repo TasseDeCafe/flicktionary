@@ -455,6 +455,47 @@ export const useSetEnglishIpaDialect = () => {
   )
 }
 
+export const useSetUiTheme = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.setUiTheme.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      // Invalidate on error too: the theme is applied optimistically, and
+      // <UserUiPrefsSync /> re-applies the server value on refetch, reverting
+      // a failed optimistic change.
+      onError: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to update theme`,
+      },
+    })
+  )
+}
+
+export const useSetUiLanguage = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.userPrefs.setUiLanguage.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      // Invalidate on error too: the locale is activated optimistically, and
+      // <UserUiPrefsSync /> re-applies the server value on refetch.
+      onError: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
+      },
+      meta: {
+        errorMessage: t`Failed to update interface language`,
+      },
+    })
+  )
+}
+
 export const useSetPracticeSessionLimits = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()

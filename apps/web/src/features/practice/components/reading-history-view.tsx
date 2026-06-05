@@ -37,7 +37,7 @@ export const ReadingHistoryView = () => {
     return (
       <ModalScreen onClose={() => setSelected(null)} title={languageName}>
         <div className='flex flex-1 flex-col overflow-hidden'>
-          <div className='border-b bg-white px-4 py-2'>
+          <div className='bg-background border-b px-4 py-2'>
             <Button type='button' variant='ghost' size='sm' onClick={() => setSelected(null)}>
               <ChevronLeft className='h-4 w-4' />
               {t`Back to history`}
@@ -68,7 +68,7 @@ export const ReadingHistoryView = () => {
         <div className='mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-6'>
           {isLoading && <PracticeLoader label={t`Loading history…`} />}
           {!isLoading && (!texts || texts.length === 0) && (
-            <div className='rounded-xl border bg-yellow-50 p-6 text-sm text-gray-700'>
+            <div className='text-foreground rounded-xl border bg-yellow-50 p-6 text-sm dark:bg-yellow-400/10'>
               {t`No past texts yet. Read some practice texts and they'll show up here.`}
             </div>
           )}
@@ -79,9 +79,9 @@ export const ReadingHistoryView = () => {
                 key={text.id}
                 type='button'
                 onClick={() => setSelected(text)}
-                className='flex w-full items-start gap-3 rounded-xl border bg-white p-4 text-left transition-colors hover:bg-gray-50'
+                className='bg-card hover:bg-accent flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors'
               >
-                <FileText className='mt-0.5 h-5 w-5 shrink-0 text-yellow-600' />
+                <FileText className='mt-0.5 h-5 w-5 shrink-0 text-yellow-600 dark:text-yellow-400' />
                 <div className='min-w-0 flex-1'>
                   <p className='line-clamp-2 text-sm'>{text.body ?? ''}</p>
                   <p className='text-muted-foreground mt-1 text-xs'>

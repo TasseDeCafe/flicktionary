@@ -52,9 +52,9 @@ export const WizardShell = ({
       rightSlot={rightSlot}
     >
       {showProgress && (
-        <div className='shrink-0 border-b bg-white/95 px-4 py-2 backdrop-blur'>
+        <div className='bg-background/95 shrink-0 border-b px-4 py-2 backdrop-blur'>
           <div className={cn('mx-auto flex w-full items-center gap-3', columnClass)}>
-            <div className='h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200'>
+            <div className='bg-muted h-1.5 flex-1 overflow-hidden rounded-full'>
               <div
                 className='h-full bg-yellow-500 transition-[width] duration-500 ease-out'
                 style={{ width: `${progressPct}%` }}
@@ -73,7 +73,7 @@ export const WizardShell = ({
         </div>
 
         {(primary || secondary) && (
-          <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+          <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
             <div className={cn('mx-auto flex w-full flex-col gap-2', columnClass)}>
               {primary && (
                 <Button

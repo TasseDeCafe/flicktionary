@@ -205,14 +205,14 @@ export const FocusView = () => {
   if (isLoading) {
     return (
       <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
-        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Loading card…`}</div>
+        <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Loading card…`}</div>
       </ModalScreen>
     )
   }
   if (!card) {
     return (
       <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
-        <div className='mx-auto max-w-4xl px-4 py-6 text-sm text-gray-500'>{t`Card not found.`}</div>
+        <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Card not found.`}</div>
       </ModalScreen>
     )
   }
@@ -301,7 +301,7 @@ export const FocusView = () => {
           <div className='flex-1 overflow-y-auto px-4 py-4'>
             <div className='mx-auto flex max-w-4xl flex-col gap-6'>
               <section>
-                <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Card`}</h2>
+                <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase'>{t`Card`}</h2>
                 <div className='mb-3 flex flex-wrap items-center gap-2'>
                   <GrammarChips grammar={card.chunk.grammar} targetLanguage={targetLanguage} />
                   <GroundingBadge
@@ -348,7 +348,7 @@ export const FocusView = () => {
                     fromVocabulary={fromVocabulary}
                   />
                 )}
-                <h2 className='mb-3 text-sm font-semibold tracking-wide text-gray-500 uppercase'>{t`Full exploration`}</h2>
+                <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase'>{t`Full exploration`}</h2>
                 {hasExtras ? (
                   <FullExplorationRenderer
                     card={card}
@@ -381,7 +381,7 @@ export const FocusView = () => {
           </div>
 
           {fromPractice && (
-            <div className='shrink-0 border-t bg-white px-4 py-3'>
+            <div className='bg-background shrink-0 border-t px-4 py-3'>
               <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
                 <Button
                   variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
@@ -428,7 +428,7 @@ export const FocusView = () => {
             (() => {
               const targetMode = card.chunk.learningMode === 'active' ? 'passive' : 'active'
               return (
-                <div className='shrink-0 border-t bg-white px-4 py-3'>
+                <div className='bg-background shrink-0 border-t px-4 py-3'>
                   <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
                     <Button
                       variant='outline'
@@ -511,7 +511,7 @@ const FocusActionBar = ({ card, pendingAction, onReject, onKeepPassive, onKeepAc
     : card.status === 'kept' && card.chunk.learningMode === 'active'
 
   return (
-    <div className='shrink-0 border-t bg-white px-4 py-3'>
+    <div className='bg-background shrink-0 border-t px-4 py-3'>
       <div className='mx-auto flex w-full max-w-4xl items-stretch gap-2'>
         <Button size='xl' variant={isRejected ? 'destructive' : 'outline'} className='flex-1' onClick={onReject}>
           <X className='mr-1 h-4 w-4' />

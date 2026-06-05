@@ -185,7 +185,7 @@ export const TriageListView = () => {
         </>
       }
     >
-      <div className='border-b bg-white px-4 py-3'>
+      <div className='bg-background border-b px-4 py-3'>
         <div className='mx-auto max-w-4xl'>
           <SearchInput value={search} onChange={setSearch} placeholder={t`Search…`} />
         </div>
@@ -194,9 +194,9 @@ export const TriageListView = () => {
       <div ref={scrollRef} onScroll={onScrollSave} className='flex-1 overflow-y-auto px-4 py-4'>
         <div className='mx-auto max-w-4xl'>
           {warnings.length > 0 && (
-            <div className='mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm'>
-              <div className='font-medium text-amber-800'>{t`Processing warnings`}</div>
-              <ul className='mt-1 list-disc pl-5 text-amber-700'>
+            <div className='mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-400/30 dark:bg-amber-400/10'>
+              <div className='font-medium text-amber-800 dark:text-amber-300'>{t`Processing warnings`}</div>
+              <ul className='mt-1 list-disc pl-5 text-amber-700 dark:text-amber-300'>
                 {warnings.map((w, i) => (
                   <li key={i}>{w}</li>
                 ))}
@@ -283,7 +283,7 @@ export const TriageListView = () => {
         </div>
       </div>
 
-      <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
+      <div className='bg-background/95 sticky right-0 bottom-0 left-0 z-10 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur'>
         <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
           <Button
             size='xl'

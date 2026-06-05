@@ -1,11 +1,21 @@
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { AlertOctagon, Languages, LifeBuoy, LogOut, Sparkles, UserCircle, Wrench } from 'lucide-react'
+import { AlertOctagon, Globe, Languages, LifeBuoy, LogOut, Palette, Sparkles, UserCircle, Wrench } from 'lucide-react'
 import { Switch } from '@flicktionary/ui/components/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
+import { i18nConfig } from '@flicktionary/i18n/i18n-config'
+import { findSupportedLanguage } from '@flicktionary/core/constants/supported-languages'
 import { getUserEmail, useAuthStore } from '@/stores/auth-store'
+import { useThemeStore, type ThemePref } from '@/stores/theme-store'
+import { activateLocale, resolveUiLocale } from '@/lib/i18n/i18n'
 import { checkIsTestUser } from '@/utils/test-users-utils'
-import { useGetUserPrefs, useSetLlmHighlightsEnabled } from '@/features/sessions/api/sessions-hooks'
+import {
+  useGetUserPrefs,
+  useSetLlmHighlightsEnabled,
+  useSetUiLanguage,
+  useSetUiTheme,
+} from '@/features/sessions/api/sessions-hooks'
 import { PracticeSessionLimitsSetting } from '@/features/settings/components/practice-session-limits-setting'
 import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-settings'
 import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/danger-zone'
@@ -21,6 +31,29 @@ export const MoreTabView = () => {
 
   const { data: prefs } = useGetUserPrefs()
   const { mutate: setLlmHighlights, isPending: isSavingLlm } = useSetLlmHighlightsEnabled()
+
+  const themePref = useThemeStore((state) => state.pref)
+  const setThemePref = useThemeStore((state) => state.setPref)
+  const { mutate: saveUiTheme } = useSetUiTheme()
+  const { mutate: saveUiLanguage } = useSetUiLanguage()
+
+  // 'system' when never set or explicitly System; otherwise the stored locale.
+  const uiLanguageValue =
+    prefs?.uiLanguage && (i18nConfig.locales as readonly string[]).includes(prefs.uiLanguage)
+      ? prefs.uiLanguage
+      : 'system'
+
+  const handleThemeChange = (value: string) => {
+    const pref = value as ThemePref
+    // Optimistic: apply instantly, the mutation's onError invalidation reverts.
+    setThemePref(pref)
+    saveUiTheme({ uiTheme: pref })
+  }
+
+  const handleUiLanguageChange = (value: string) => {
+    activateLocale(resolveUiLocale(value === 'system' ? 'system' : value))
+    saveUiLanguage({ uiLanguage: value })
+  }
 
   const handleSignOut = async () => {
     await signOut(() => navigate({ to: '/login' }))
@@ -47,6 +80,44 @@ export const MoreTabView = () => {
           label={t`Account`}
           description={t`Profile, subscription, sign-in`}
           onPress={() => navigate({ to: '/more/account' })}
+        />
+      </MoreListSection>
+
+      <MoreListSection title={t`Appearance`}>
+        <MoreListRow
+          icon={Palette}
+          label={t`Theme`}
+          trailing={
+            <Select value={themePref} onValueChange={handleThemeChange}>
+              <SelectTrigger size='sm' aria-label={t`Theme`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align='end'>
+                <SelectItem value='system'>{t`System`}</SelectItem>
+                <SelectItem value='light'>{t`Light`}</SelectItem>
+                <SelectItem value='dark'>{t`Dark`}</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        />
+        <MoreListRow
+          icon={Globe}
+          label={t`Interface language`}
+          trailing={
+            <Select value={uiLanguageValue} onValueChange={handleUiLanguageChange} disabled={!prefs}>
+              <SelectTrigger size='sm' aria-label={t`Interface language`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align='end'>
+                <SelectItem value='system'>{t`System`}</SelectItem>
+                {i18nConfig.locales.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {findSupportedLanguage(code)?.nativeName ?? code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
         />
       </MoreListSection>
 
