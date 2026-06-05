@@ -2,6 +2,7 @@ import SettingsSection from './SettingsSection'
 import SettingsSelectField from './SettingsSelectField'
 import SettingsRadioGroupField from './SettingsRadioGroupField'
 import { AsbplayerSettings } from '../settings'
+import { findSupportedLanguage } from '@flicktionary/core/constants/supported-languages'
 import { Trans, useLingui } from '@lingui/react/macro'
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
 // The non-subtitle "UI" settings block (theme + language). Shared between the
 // Misc tab of the full SettingsForm and the simpler import popup, which exposes
 // these as its only settings.
-const UiSettings: React.FC<Props> = ({ themeType, language, supportedLanguages, onSettingChanged }) => {
+const UiSettings = ({ themeType, language, supportedLanguages, onSettingChanged }: Props) => {
   const { t } = useLingui()
   return (
     <>
@@ -26,6 +27,7 @@ const UiSettings: React.FC<Props> = ({ themeType, language, supportedLanguages, 
         label={<Trans>Theme</Trans>}
         value={themeType}
         options={[
+          { value: 'system', label: t`System` },
           { value: 'light', label: t`Light` },
           { value: 'dark', label: t`Dark` },
         ]}
@@ -34,7 +36,13 @@ const UiSettings: React.FC<Props> = ({ themeType, language, supportedLanguages, 
       <SettingsSelectField
         label={t`Language`}
         value={language}
-        options={supportedLanguages.map((s) => ({ value: s }))}
+        options={[
+          { value: 'system', label: t`System` },
+          ...supportedLanguages.map((code) => ({
+            value: code,
+            label: findSupportedLanguage(code)?.nativeName ?? code,
+          })),
+        ]}
         onValueChange={(value) => onSettingChanged('language', value)}
       />
     </>

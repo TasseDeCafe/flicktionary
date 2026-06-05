@@ -3,7 +3,9 @@ import { I18nProvider } from '@lingui/react'
 import { PortalContainerContext } from '@flicktionary/ui/components/portal'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { type ThemeType } from '@asbplayer-fork/common/settings'
 import { i18n, setupLingui } from '../lingui'
+import { useResolvedTheme } from '../hooks/use-resolved-theme'
 
 // Base classes both top-level containers need: there is no <body> inside a
 // shadow tree to supply the shadcn base font/text colour, and `color` is
@@ -16,7 +18,9 @@ export interface ShadowUiProviderProps {
   // (dialog, popover, select, ...) target via PortalContainerContext. Pass the
   // portalContainer div from ShadowMountContext, never the ShadowRoot.
   portalContainer: HTMLElement
-  themeType: 'dark' | 'light'
+  // Raw setting value; 'system' resolves against this realm's matchMedia (and
+  // follows live OS changes) via useResolvedTheme.
+  themeType: ThemeType
   // Lingui locale to activate before mounting <I18nProvider> (per PopupUi). The
   // catalog is a per-realm singleton, so activate it here for every surface.
   language?: string
@@ -46,7 +50,7 @@ export function ShadowUiProvider({ portalContainer, themeType, language, childre
     }
   }, [language])
 
-  const dark = themeType === 'dark'
+  const dark = useResolvedTheme(themeType) === 'dark'
 
   useEffect(() => {
     portalContainer.classList.add('font-sans', 'text-foreground')

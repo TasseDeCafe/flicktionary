@@ -1,5 +1,6 @@
 import { i18n } from '@lingui/core'
 import { ENGLISH_LOCALE, FRENCH_LOCALE, i18nConfig, type Locale } from '@flicktionary/i18n/i18n-config'
+import { detectBrowserLocale } from '@flicktionary/i18n/detect-browser-locale'
 // Import the *compiled* catalogs (.ts), not the raw .po: WXT's Rolldown build
 // drops @lingui/vite-plugin's .po transform output, so .po would bundle empty.
 // Regenerate with `pnpm --filter @flicktionary/i18n lingui:compile`.
@@ -28,8 +29,12 @@ const catalogs: Record<Locale, typeof enMessages> = {
 i18n.load(catalogs)
 i18n.activate(ENGLISH_LOCALE)
 
+// 'system' (and any unknown value) resolves the browser locale at call time,
+// so the UI follows the OS/browser language until the user picks an explicit one.
 const toLocale = (language: string): Locale =>
-  (i18nConfig.locales as readonly string[]).includes(language) ? (language as Locale) : ENGLISH_LOCALE
+  (i18nConfig.locales as readonly string[]).includes(language)
+    ? (language as Locale)
+    : detectBrowserLocale(typeof navigator !== 'undefined' ? navigator.language : undefined)
 
 export const setupLingui = (language: string) => {
   const locale = toLocale(language)

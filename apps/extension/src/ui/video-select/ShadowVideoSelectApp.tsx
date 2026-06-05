@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } f
 import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
+import type { ThemeType } from '@asbplayer-fork/common/settings'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import { UpdateChannel } from '../shadow/model-store'
 
@@ -18,7 +19,8 @@ export interface VideoElement {
 // UpdateStateMessage over the FrameBridge).
 export interface VideoSelectState {
   open: boolean
-  themeType: 'dark' | 'light'
+  // Raw setting value — ShadowUiProvider resolves 'system' in this realm.
+  themeType: ThemeType
   videoElements: VideoElement[]
   openedFromMiningCommand: boolean
 }
@@ -41,7 +43,7 @@ export interface ShadowVideoSelectAppProps {
 // from the channel — the body's hooks (useLingui) must run INSIDE this
 // provider, so they live in VideoSelectBody below.
 export function ShadowVideoSelectApp({ channel, portalContainer, language, commands }: ShadowVideoSelectAppProps) {
-  const [themeType, setThemeType] = useState<'dark' | 'light'>('dark')
+  const [themeType, setThemeType] = useState<ThemeType>('system')
   useEffect(
     () =>
       channel.subscribe((state) => {

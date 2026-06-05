@@ -8,6 +8,7 @@ import { settingsPageConfigs } from '@/services/pages'
 import { useIsTestUser } from '../hooks/use-is-test-user'
 import { AdminSettingsTab } from './AdminSettingsTab'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
+import { FlicktionaryFinishSetupSection } from './FlicktionaryFinishSetupSection'
 import { PopupHeader } from './PopupHeader'
 import type { PopupCommands } from '../popup'
 
@@ -48,6 +49,7 @@ const Popup = ({
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
       <FlicktionaryPairSection />
+      <FlicktionaryFinishSetupSection />
       <div className='h-[390px]'>
         <SettingsForm
           heightConstrained

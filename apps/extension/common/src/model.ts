@@ -184,7 +184,9 @@ export interface VideoOverlayModel {
   language?: string
   subtitleDisplaying: boolean
   subtitlesAreVisible: boolean
-  themeType: 'dark' | 'light'
+  // Raw setting value — 'system' is resolved at the consumer edge (each realm's
+  // own matchMedia), never in controllers.
+  themeType: 'dark' | 'light' | 'system'
   playMode: PlayMode
 }
 

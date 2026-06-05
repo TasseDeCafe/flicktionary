@@ -7,7 +7,7 @@ export enum PauseOnHoverMode {
 }
 
 export interface MiscSettings {
-  readonly themeType: 'dark' | 'light'
+  readonly themeType: 'dark' | 'light' | 'system'
   readonly autoPausePreference: AutoPausePreference
   readonly seekDuration: number
   readonly speedChangeStep: number

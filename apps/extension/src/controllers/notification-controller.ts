@@ -75,8 +75,8 @@ export default class NotificationController {
     }
     if (!this._store) {
       this._store = createModelStore<NotificationState>({
-        themeType: 'dark',
-        language: 'en',
+        themeType: 'system',
+        language: 'system',
         titleLocKey: '',
         messageLocKey: '',
         newVersion: undefined,

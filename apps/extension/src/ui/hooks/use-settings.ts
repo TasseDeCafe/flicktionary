@@ -1,6 +1,7 @@
 import { Command, SettingsUpdatedMessage } from '@asbplayer-fork/common'
 import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/settings'
 import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
+import { pushUiPrefs, refreshUiPrefsFromServer } from '../../services/flicktionary/ui-prefs-sync'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
 
@@ -11,6 +12,16 @@ export const useSettings = () => {
 
   useEffect(() => {
     refreshSettings()
+  }, [refreshSettings])
+
+  // Pull server-set UI prefs (theme/language) on options-page open; re-read
+  // settings if anything changed locally.
+  useEffect(() => {
+    void refreshUiPrefsFromServer().then((changed) => {
+      if (changed) {
+        refreshSettings()
+      }
+    })
   }, [refreshSettings])
 
   useEffect(() => {
@@ -35,6 +46,8 @@ export const useSettings = () => {
     (settings: Partial<AsbplayerSettings>) => {
       setSettings((s) => ({ ...s!, ...settings }))
       settingsProvider.set(settings).then(() => notifySettingsUpdated())
+      // Write-through to the server when paired (fire-and-forget).
+      pushUiPrefs(settings)
     },
     [settingsProvider, notifySettingsUpdated]
   )

@@ -5,6 +5,7 @@ import { I18nProvider } from '@lingui/react'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { i18n, setupLingui } from '../lingui'
+import { useResolvedTheme } from '../hooks/use-resolved-theme'
 
 const SettingsUi = () => {
   const { settings, onSettingsChanged, profileContext } = useSettings()
@@ -21,7 +22,7 @@ const SettingsUi = () => {
   // Radix portals (selects, dialogs, tooltips) target document.body — outside
   // the `dark`-classed root div below — so the dark scope must also land on
   // <body> (same trap as portalContainer in the shadow surfaces).
-  const dark = settings?.themeType === 'dark'
+  const dark = useResolvedTheme(settings?.themeType) === 'dark'
   useEffect(() => {
     document.body.classList.toggle('dark', dark)
   }, [dark])
