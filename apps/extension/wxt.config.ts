@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const commonAssets = [{ srcDir: path.resolve(__dirname, '../asbplayer-common/assets'), destDir: 'assets' }]
+const commonAssets = [{ srcDir: path.resolve(__dirname, 'common/assets'), destDir: 'assets' }]
 
 const moveToPublicAssets = (srcPath: string, destPath: string, files: ResolvedPublicFile[]) => {
   const srcFiles = fs.readdirSync(srcPath)
@@ -25,7 +25,11 @@ const addToPublicPathsType = (srcPath: string, destPath: string, paths: PublicPa
   }
 }
 
-const commonRoot = path.resolve(__dirname, '../asbplayer-common')
+// The vendored asbplayer `common/` tree lives inside this package; the
+// @asbplayer-fork/common alias (here + tsconfig paths) keeps import lines
+// identical to the pre-merge two-package layout and close to upstream's
+// @project/common, so per-file diffs against upstream stay clean.
+const commonRoot = path.resolve(__dirname, 'common')
 
 // Escape every non-ASCII code unit in emitted chunks to a \uXXXX sequence.
 // WXT's dev bundler (rolldown) emits raw UTF-8 instead of ASCII like esbuild,
@@ -136,7 +140,9 @@ export default defineConfig({
     envPrefix: ['WXT_', 'VITE_'],
   }),
   zip: {
-    sourcesRoot: '..',
+    // Repo root, so the AMO source zip contains every workspace package the
+    // build needs (this package plus packages/core|ui|i18n|api-client).
+    sourcesRoot: '../..',
     includeSources: ['LICENSE.md'],
   },
   hooks: {

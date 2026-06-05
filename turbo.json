@@ -69,10 +69,10 @@
       "dependsOn": ["@flicktionary/api-client#build"],
       "inputs": [
         "src/**",
+        "common/**",
         "public/**",
         "wxt.config.ts",
-        "tsconfig.json",
-        "../asbplayer-common/**"
+        "tsconfig.json"
       ],
       "outputs": [".output/**", ".wxt/**"]
     },

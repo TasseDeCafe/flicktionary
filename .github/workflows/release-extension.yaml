@@ -2,7 +2,7 @@ name: Release extension
 
 # Cut a release by tagging a commit with the extension version, e.g.:
 #   git tag v0.0.2 && git push origin v0.0.2
-# The tag (minus the leading "v") must match packages/extension/package.json's
+# The tag (minus the leading "v") must match apps/extension/package.json's
 # "version" — that same value becomes the manifest version and the version shown
 # in the in-app "asbplayer updated to version X" toast, whose "release notes"
 # link points at this release's page.
@@ -42,9 +42,9 @@ jobs:
       - name: Verify tag matches package version
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p "require('./packages/extension/package.json').version")"
+          PKG_VERSION="$(node -p "require('./apps/extension/package.json').version")"
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match packages/extension/package.json version $PKG_VERSION"
+            echo "::error::Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match apps/extension/package.json version $PKG_VERSION"
             exit 1
           fi
           echo "Releasing extension version $PKG_VERSION"
@@ -69,7 +69,7 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
-            packages/extension/.output/*.zip
+            apps/extension/.output/*.zip
 
       # Uploads the zip as a new draft and submits it for review; publishing
       # happens automatically once the (asynchronous) review passes. Requires a
@@ -93,7 +93,7 @@ jobs:
             exit 0
           fi
           npx -y publish-browser-extension@4.0.5 \
-            --chrome-zip packages/extension/.output/*-chrome.zip \
+            --chrome-zip apps/extension/.output/*-chrome.zip \
             --chrome-extension-id "$CHROME_EXTENSION_ID" \
             --chrome-client-id "$CHROME_CLIENT_ID" \
             --chrome-client-secret "$CHROME_CLIENT_SECRET" \

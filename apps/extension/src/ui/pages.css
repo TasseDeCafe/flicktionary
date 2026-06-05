@@ -13,9 +13,10 @@
 @import 'tw-animate-css';
 @import '@flicktionary/ui/styles/tokens.css';
 
-/* Tailwind auto-scans only this workspace; the shared ui package and the
-   asbplayer-common components (TutorialBubble & co.) are outside it, so scan
-   them explicitly (relative paths — the package-name form doesn't resolve
-   through pnpm symlinks). */
-@source '../../../ui/src';
-@source '../../../asbplayer-common/components';
+/* Tailwind auto-scans only this package; the shared ui package is outside it,
+   so scan it explicitly (relative path — the package-name form doesn't resolve
+   through pnpm symlinks). The vendored common components (TutorialBubble & co.)
+   live inside the package now, but stay listed so we don't depend on
+   auto-detection picking them up. */
+@source '../../../../packages/ui/src';
+@source '../../common/components';

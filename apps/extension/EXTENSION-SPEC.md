@@ -62,11 +62,13 @@ subsystems are **removed — do not reintroduce**:
    onto the Flicktionary backend (Supabase auth + oRPC API) and migrated the
    entire UI stack (see "Architecture").
 
-Packages: `packages/extension` (`@flicktionary/extension`, WXT) +
-`packages/asbplayer-common` (`@asbplayer-fork/common`, the shared
-subtitle/settings/message layer). Upstream's `@project/*` scope became
-`@asbplayer-fork/*`, so file-level diffing against the donor works but a git
-merge never will.
+Package: `apps/extension` (`@flicktionary/extension`, WXT). Upstream's
+`common/` tree is vendored intact at `apps/extension/common/` (the shared
+subtitle/settings/message layer) and imported as `@asbplayer-fork/common` — a
+local alias (tsconfig `paths` + a Vite alias in `wxt.config.ts`), not a
+workspace package. Upstream's `@project/*` scope became `@asbplayer-fork/*`,
+and `common/X` maps 1:1 to `apps/extension/common/X`, so file-level diffing
+against the donor works but a git merge never will.
 
 License: asbplayer is MIT — keep `LICENSE.md` and the About attribution; the
 store zip bundles the license (`zip.includeSources` in `wxt.config.ts`).
@@ -265,7 +267,7 @@ regex filter, transcript-server config, transcript-cache management), About.
   removing a settings field, prune the schema too; when adding one, add it or
   export breaks (this bit us: `wordClickEnabled`/`transcriptServerUrl`/
   `transcriptApiKey` once missing made fresh-install export throw).
-- **Settings model** (`asbplayer-common/settings/settings.ts`):
+- **Settings model** (`common/settings/settings.ts`):
   `MiscSettings` + `SubtitleSettings` + `KeyBindSettings` +
   `StreamingVideoSettings` + `CaptureSettings` (the 4 surviving capture-geometry
   fields) + `TranscriptSettings`.
