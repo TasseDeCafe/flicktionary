@@ -13,16 +13,16 @@ export const DangerZoneView = () => {
 
   return (
     <ModalScreen onClose={() => navigate({ to: '/more' })} closeIcon='chevron' title={t`Danger Zone`}>
-      <main className='flex-1 overflow-y-auto bg-red-50 p-4'>
+      <main className='flex-1 overflow-y-auto bg-destructive/5 p-4'>
         <div className='mx-auto flex w-full max-w-2xl flex-col gap-6'>
           <div className='px-2'>
-            <h2 className='mb-2 text-lg font-medium text-red-800'>{t`Warning`}</h2>
-            <p className='text-red-600'>{t`Actions in this section can lead to permanent data loss.`}</p>
+            <h2 className='mb-2 text-lg font-medium text-destructive'>{t`Warning`}</h2>
+            <p className='text-destructive'>{t`Actions in this section can lead to permanent data loss.`}</p>
           </div>
 
-          <Card className='border-red-200 bg-white'>
+          <Card className='border-destructive/30 bg-card'>
             <CardHeader className='pb-0'>
-              <CardTitle className='text-base text-red-600'>{t`Delete my account`}</CardTitle>
+              <CardTitle className='text-base text-destructive'>{t`Delete my account`}</CardTitle>
               <CardDescription>{t`Permanently delete your account and all associated data`}</CardDescription>
             </CardHeader>
             <CardContent className='pt-4'>
