@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Captions, Info, Keyboard, MonitorPlay, Settings2 } from 'lucide-react'
+import { Captions, Info, Keyboard, MonitorPlay, Settings2, Wrench } from 'lucide-react'
 import { AsbplayerSettings, PageConfig, PageSettings, Profile } from '@asbplayer-fork/common/settings'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@flicktionary/ui/components/tabs'
@@ -10,7 +10,7 @@ import KeyboardShortcutsSettingsTab from './KeyboardShortcutsSettingsTab'
 import StreamingVideoSettingsTab from './StreamingVideoSettingsTab'
 import MiscSettingsTab from './MiscSettingsTab'
 
-type TabName = 'subtitle-appearance' | 'keyboard-shortcuts' | 'streaming-video' | 'misc-settings' | 'about'
+type TabName = 'subtitle-appearance' | 'keyboard-shortcuts' | 'streaming-video' | 'misc-settings' | 'about' | 'admin'
 
 const tabNames: TabName[] = ['subtitle-appearance', 'keyboard-shortcuts', 'streaming-video', 'misc-settings', 'about']
 
@@ -43,6 +43,9 @@ interface Props {
   forceVerticalTabs?: boolean
   inTutorial?: boolean
   heightConstrained?: boolean
+  // Flicktionary divergence: when set, an admin-only "Admin" tab renders this
+  // node (the popup passes it for test-user accounts; see AdminSettingsTab).
+  adminTab?: React.ReactNode
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   onOpenChromeExtensionShortcuts: () => void
   onUnlockLocalFonts: () => void
@@ -82,6 +85,7 @@ export default function SettingsForm({
   supportedLanguages,
   forceVerticalTabs,
   heightConstrained,
+  adminTab,
   onSettingsChanged,
   onOpenChromeExtensionShortcuts,
   onUnlockLocalFonts,
@@ -103,6 +107,14 @@ export default function SettingsForm({
       setTabValue(scrollToId as TabName)
     }
   }, [scrollToId])
+
+  // The admin tab can vanish while selected (unpairing drops test-user
+  // status); don't leave the form stuck on a tab with no trigger or content.
+  useEffect(() => {
+    if (adminTab === undefined && tabValue === 'admin') {
+      setTabValue('subtitle-appearance')
+    }
+  }, [adminTab, tabValue])
 
   const vertical = !smallScreen
   const triggerClasses = cn(
@@ -155,6 +167,13 @@ export default function SettingsForm({
           <Info />
           {t`About Flicktionary`}
         </TabsTrigger>
+        {adminTab !== undefined && (
+          <TabsTrigger value='admin' className={triggerClasses}>
+            <Wrench />
+            {/* Intentionally untranslated: admin/test-user only. */}
+            Admin
+          </TabsTrigger>
+        )}
       </TabsList>
       <TabsContent value='subtitle-appearance' className={panelClasses}>
         <SubtitleAppearanceSettingsTab
@@ -205,6 +224,11 @@ export default function SettingsForm({
       <TabsContent value='about' className={panelClasses}>
         <About extensionVersion={extensionInstalled ? extensionVersion : undefined} />
       </TabsContent>
+      {adminTab !== undefined && (
+        <TabsContent value='admin' className={panelClasses}>
+          {adminTab}
+        </TabsContent>
+      )}
     </Tabs>
   )
 }

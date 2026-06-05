@@ -30,7 +30,8 @@
     "db:wipe": "pnpm --filter @flicktionary/backend db:dev:tunnel:wipe",
     "db:migrate": "pnpm --filter @flicktionary/backend db:dev:tunnel:migrate",
     "prepare": "husky",
-    "generate:logos": "scripts/generate-logos.sh"
+    "generate:logos": "scripts/generate-logos.sh",
+    "test-users": "node scripts/test-users.mjs"
   },
   "devDependencies": {
     "@lingui/cli": "catalog:",

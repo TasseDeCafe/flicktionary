@@ -188,12 +188,12 @@ msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
 "pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser "
 "avec Flicktionary."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:79
+#: apps/web/src/features/more/components/more-tab-view.tsx:81
 msgid "About"
 msgstr "À propos"
 
-#: apps/extension/common/components/SettingsForm.tsx:156
-#: apps/extension/src/ui/components/ImportPopup.tsx:44
+#: apps/extension/common/components/SettingsForm.tsx:168
+#: apps/extension/src/ui/components/ImportPopup.tsx:56
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
@@ -203,7 +203,7 @@ msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les "
 "abonnés."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:45
+#: apps/web/src/features/more/components/more-tab-view.tsx:47
 msgid "Account"
 msgstr "Compte"
 
@@ -304,7 +304,7 @@ msgstr "Ajuster le décalage des sous-titres pour que le sous-titre précédent 
 "soit à l’horodatage actuel"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
+#: apps/web/src/features/more/components/more-tab-view.tsx:86
 msgid "Admin settings"
 msgstr "Paramètres administrateur"
 
@@ -738,7 +738,7 @@ msgstr "Confirmer la suppression"
 msgid "Conjunction"
 msgstr "Conjonction"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:80
+#: apps/web/src/features/more/components/more-tab-view.tsx:82
 msgid "Contact us"
 msgstr "Nous contacter"
 
@@ -896,7 +896,7 @@ msgstr "Limite quotidienne de nouveaux termes atteinte."
 msgid "Daily new-card limit reached."
 msgstr "Limite quotidienne de nouvelles cartes atteinte."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:84
+#: apps/web/src/features/more/components/more-tab-view.tsx:92
 msgid "Danger zone"
 msgstr "Zone dangereuse"
 
@@ -1551,7 +1551,7 @@ msgstr "GA"
 msgid "Gender"
 msgstr "Genre"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:42
+#: apps/web/src/features/more/components/more-tab-view.tsx:44
 msgid "General"
 msgstr "Général"
 
@@ -1841,7 +1841,7 @@ msgstr "Options de conservation"
 msgid "Keep practicing this one."
 msgstr "Continuez à pratiquer celui-ci."
 
-#: apps/extension/common/components/SettingsForm.tsx:144
+#: apps/extension/common/components/SettingsForm.tsx:156
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
@@ -1868,7 +1868,7 @@ msgid "Language preferences"
 msgstr "Préférences linguistiques"
 
 #: apps/web/src/features/more/components/languages-page.tsx:14
-#: apps/web/src/features/more/components/more-tab-view.tsx:54
+#: apps/web/src/features/more/components/more-tab-view.tsx:56
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:82
 msgid "Languages"
 msgstr "Langues"
@@ -1909,8 +1909,8 @@ msgstr "Clair"
 msgid "Link expired or invalid"
 msgstr "Lien expiré ou invalide"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:60
-#: apps/web/src/features/more/components/more-tab-view.tsx:67
+#: apps/web/src/features/more/components/more-tab-view.tsx:62
+#: apps/web/src/features/more/components/more-tab-view.tsx:69
 #: apps/web/src/features/review/components/triage-list-view.tsx:255
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
@@ -2006,9 +2006,9 @@ msgstr "Peut-être plus tard"
 msgid "Message to the founders"
 msgstr "Message pour les fondateurs"
 
-#: apps/extension/common/components/SettingsForm.tsx:152
+#: apps/extension/common/components/SettingsForm.tsx:164
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx:98
-#: apps/extension/src/ui/components/ImportPopup.tsx:41
+#: apps/extension/src/ui/components/ImportPopup.tsx:52
 msgid "Misc"
 msgstr "Divers"
 
@@ -2016,7 +2016,7 @@ msgstr "Divers"
 msgid "Monthly"
 msgstr "Mensuel"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:40
+#: apps/web/src/features/more/components/more-tab-view.tsx:42
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
 #: apps/web/src/features/practice/components/practice-language-view.tsx:128
@@ -2086,7 +2086,7 @@ msgstr "Exemple en langue maternelle"
 msgid "Native language"
 msgstr "Langue maternelle"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:55
+#: apps/web/src/features/more/components/more-tab-view.tsx:57
 msgid "Native language and CEFR levels"
 msgstr "Langue maternelle et niveaux CECRL"
 
@@ -2614,7 +2614,7 @@ msgstr "Limite de profil atteinte"
 msgid "Profile Name"
 msgstr "Nom du profil"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:46
+#: apps/web/src/features/more/components/more-tab-view.tsx:48
 msgid "Profile, subscription, sign-in"
 msgstr "Profil, abonnement, connexion"
 
@@ -3000,7 +3000,7 @@ msgstr "Configuration du compte..."
 #: apps/extension/src/ui/components/SettingsPage.tsx:57
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
-#: apps/web/src/features/more/components/more-tab-view.tsx:51
+#: apps/web/src/features/more/components/more-tab-view.tsx:53
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -3033,7 +3033,7 @@ msgstr "Afficher les traductions existantes et générer des traductions pour le
 msgid "Show notes"
 msgstr "Afficher les notes"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:61
+#: apps/web/src/features/more/components/more-tab-view.tsx:63
 msgid "Show suggested terms while reading"
 msgstr "Afficher les termes suggérés pendant la lecture"
 
@@ -3070,12 +3070,12 @@ msgstr "Se connecter à Flicktionary"
 #: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:89
+#: apps/web/src/features/more/components/more-tab-view.tsx:97
 msgid "Sign out"
 msgstr "Déconnexion"
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:25
+#: apps/web/src/features/more/components/more-tab-view.tsx:27
 msgid "Sign out success"
 msgstr "Déconnexion réussie"
 
@@ -3172,7 +3172,7 @@ msgstr "Arrêter de pratiquer ce terme en pratique active"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: apps/extension/common/components/SettingsForm.tsx:148
+#: apps/extension/common/components/SettingsForm.tsx:160
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
@@ -3223,7 +3223,7 @@ msgstr "Abonnement réussi !"
 msgid "Subtitle Alignment"
 msgstr "Alignement des sous-titres"
 
-#: apps/extension/common/components/SettingsForm.tsx:140
+#: apps/extension/common/components/SettingsForm.tsx:152
 msgid "Subtitle Appearance"
 msgstr "Apparence des sous-titres"
 

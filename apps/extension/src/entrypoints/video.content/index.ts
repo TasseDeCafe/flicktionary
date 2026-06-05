@@ -6,6 +6,7 @@ import { FrameInfoBroadcaster, FrameInfoListener } from '@/services/frame-info'
 import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer'
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots'
 import { isFirefoxBuild } from '@/services/build-flags'
+import { getDevToolsState, onDevToolsStateChange } from '@/services/flicktionary/dev-tools-storage'
 import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
 
 import type { ContentScriptContext } from '#imports'
@@ -132,11 +133,32 @@ export default defineContentScript({
       const videoSelectController = new VideoSelectController(bindings)
       videoSelectController.bind()
 
-      if (import.meta.env.DEV && isParentDocument) {
-        // Gate-B test trigger for the Radix notification surface (the real
-        // trigger is buried in the legacy audio-recording path). Dev builds only.
-        const { mountNotificationTestButtons } = await import('@/dev/notification-test-buttons')
-        mountNotificationTestButtons(bindings)
+      if (isParentDocument) {
+        // Test trigger for the Radix notification surface (the real trigger is
+        // buried in the legacy audio-recording path). Driven live by the
+        // popup's admin-only dev-tools toggle — off by default, so nothing
+        // mounts (or even loads the chunk) for regular users.
+        const applyNotificationTestButtons = async (enabled: boolean, mounted: boolean) => {
+          if (enabled) {
+            const { mountNotificationTestButtons } = await import('@/dev/notification-test-buttons')
+            mountNotificationTestButtons(bindings)
+          } else if (mounted) {
+            const { unmountNotificationTestButtons } = await import('@/dev/notification-test-buttons')
+            unmountNotificationTestButtons()
+          }
+          return enabled
+        }
+
+        let testButtonsMounted = false
+        void getDevToolsState().then(async (state) => {
+          testButtonsMounted = await applyNotificationTestButtons(state.notificationTestButtonsEnabled, false)
+        })
+        onDevToolsStateChange(async (state) => {
+          testButtonsMounted = await applyNotificationTestButtons(
+            state.notificationTestButtonsEnabled,
+            testButtonsMounted
+          )
+        })
       }
 
       const messageListener = (

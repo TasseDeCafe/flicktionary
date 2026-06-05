@@ -183,12 +183,12 @@ msgid "A video element must be synced with Flicktionary before it can be mined. 
 msgstr "A video element must be synced with Flicktionary before it can be "
 "mined. Select a video element to sync it with Flicktionary."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:79
+#: apps/web/src/features/more/components/more-tab-view.tsx:81
 msgid "About"
 msgstr "About"
 
-#: apps/extension/common/components/SettingsForm.tsx:156
-#: apps/extension/src/ui/components/ImportPopup.tsx:44
+#: apps/extension/common/components/SettingsForm.tsx:168
+#: apps/extension/src/ui/components/ImportPopup.tsx:56
 msgid "About Flicktionary"
 msgstr "About Flicktionary"
 
@@ -197,7 +197,7 @@ msgid "Access exclusive premium features available to subscribers."
 msgstr "Access exclusive premium features available to subscribers."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:45
+#: apps/web/src/features/more/components/more-tab-view.tsx:47
 msgid "Account"
 msgstr "Account"
 
@@ -296,7 +296,7 @@ msgstr "Adjust subtitle offset so that previous subtitle is at current "
 "timestamp"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
+#: apps/web/src/features/more/components/more-tab-view.tsx:86
 msgid "Admin settings"
 msgstr "Admin settings"
 
@@ -727,7 +727,7 @@ msgstr "Confirm deletion"
 msgid "Conjunction"
 msgstr "Conjunction"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:80
+#: apps/web/src/features/more/components/more-tab-view.tsx:82
 msgid "Contact us"
 msgstr "Contact us"
 
@@ -880,7 +880,7 @@ msgstr "Daily new limit reached."
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:84
+#: apps/web/src/features/more/components/more-tab-view.tsx:92
 msgid "Danger zone"
 msgstr "Danger zone"
 
@@ -1529,7 +1529,7 @@ msgstr "GA"
 msgid "Gender"
 msgstr "Gender"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:42
+#: apps/web/src/features/more/components/more-tab-view.tsx:44
 msgid "General"
 msgstr "General"
 
@@ -1814,7 +1814,7 @@ msgstr "Keep options"
 msgid "Keep practicing this one."
 msgstr "Keep practicing this one."
 
-#: apps/extension/common/components/SettingsForm.tsx:144
+#: apps/extension/common/components/SettingsForm.tsx:156
 msgid "Keyboard Shortcuts"
 msgstr "Keyboard Shortcuts"
 
@@ -1841,7 +1841,7 @@ msgid "Language preferences"
 msgstr "Language preferences"
 
 #: apps/web/src/features/more/components/languages-page.tsx:14
-#: apps/web/src/features/more/components/more-tab-view.tsx:54
+#: apps/web/src/features/more/components/more-tab-view.tsx:56
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:82
 msgid "Languages"
 msgstr "Languages"
@@ -1882,8 +1882,8 @@ msgstr "Light"
 msgid "Link expired or invalid"
 msgstr "Link expired or invalid"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:60
-#: apps/web/src/features/more/components/more-tab-view.tsx:67
+#: apps/web/src/features/more/components/more-tab-view.tsx:62
+#: apps/web/src/features/more/components/more-tab-view.tsx:69
 #: apps/web/src/features/review/components/triage-list-view.tsx:255
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
@@ -1978,9 +1978,9 @@ msgstr "Maybe later"
 msgid "Message to the founders"
 msgstr "Message to the founders"
 
-#: apps/extension/common/components/SettingsForm.tsx:152
+#: apps/extension/common/components/SettingsForm.tsx:164
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx:98
-#: apps/extension/src/ui/components/ImportPopup.tsx:41
+#: apps/extension/src/ui/components/ImportPopup.tsx:52
 msgid "Misc"
 msgstr "Misc"
 
@@ -1988,7 +1988,7 @@ msgstr "Misc"
 msgid "Monthly"
 msgstr "Monthly"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:40
+#: apps/web/src/features/more/components/more-tab-view.tsx:42
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
 #: apps/web/src/features/practice/components/practice-language-view.tsx:128
@@ -2058,7 +2058,7 @@ msgstr "Native example"
 msgid "Native language"
 msgstr "Native language"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:55
+#: apps/web/src/features/more/components/more-tab-view.tsx:57
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
@@ -2579,7 +2579,7 @@ msgstr "Profile limit reached"
 msgid "Profile Name"
 msgstr "Profile Name"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:46
+#: apps/web/src/features/more/components/more-tab-view.tsx:48
 msgid "Profile, subscription, sign-in"
 msgstr "Profile, subscription, sign-in"
 
@@ -2963,7 +2963,7 @@ msgstr "Setting up account..."
 #: apps/extension/src/ui/components/SettingsPage.tsx:57
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
-#: apps/web/src/features/more/components/more-tab-view.tsx:51
+#: apps/web/src/features/more/components/more-tab-view.tsx:53
 msgid "Settings"
 msgstr "Settings"
 
@@ -2996,7 +2996,7 @@ msgstr "Show existing translations and generate translations for new cards in "
 msgid "Show notes"
 msgstr "Show notes"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:61
+#: apps/web/src/features/more/components/more-tab-view.tsx:63
 msgid "Show suggested terms while reading"
 msgstr "Show suggested terms while reading"
 
@@ -3033,12 +3033,12 @@ msgstr "Sign in with Flicktionary"
 #: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:89
+#: apps/web/src/features/more/components/more-tab-view.tsx:97
 msgid "Sign out"
 msgstr "Sign out"
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:25
+#: apps/web/src/features/more/components/more-tab-view.tsx:27
 msgid "Sign out success"
 msgstr "Sign out success"
 
@@ -3135,7 +3135,7 @@ msgstr "Stop drilling this term in active practice"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: apps/extension/common/components/SettingsForm.tsx:148
+#: apps/extension/common/components/SettingsForm.tsx:160
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
@@ -3185,7 +3185,7 @@ msgstr "Subscription Successful!"
 msgid "Subtitle Alignment"
 msgstr "Subtitle Alignment"
 
-#: apps/extension/common/components/SettingsForm.tsx:140
+#: apps/extension/common/components/SettingsForm.tsx:152
 msgid "Subtitle Appearance"
 msgstr "Subtitle Appearance"
 

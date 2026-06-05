@@ -158,10 +158,14 @@ export default defineConfig({
     },
   },
   manifest: ({ browser, mode }) => {
+    // Make dev-server builds visually distinct in chrome://extensions /
+    // about:addons when installed next to the store build.
+    const name = mode === 'development' ? 'DEV - Flicktionary' : 'Flicktionary'
+
     let manifest: UserManifest = {
-      name: 'Flicktionary',
+      name,
       description: '__MSG_extensionDescription__',
-      action: { default_title: 'Flicktionary' },
+      action: { default_title: name },
       default_locale: 'en',
       icons: {
         '16': 'icon/icon16.png',

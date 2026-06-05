@@ -278,6 +278,16 @@ Two variants, switched by the active tab's URL (`PopupUi.tsx`):
 - **On any other page:** OPEN APP, pairing section, **"Import this article"**,
   and slim Misc (theme/language) + About tabs.
 
+On video pages, paired accounts on the test-user allow-list also get an
+**Admin** tab (`AdminSettingsTab`, `SettingsForm`'s `adminTab` prop): debugging
+toggles persisted in `flicktionary.devTools.v1` (`dev-tools-storage.ts`,
+deliberately outside settings/profiles/export, like auth). The allow-list ships
+as `WXT_PUBLIC_HASHED_EMAILS_OF_TEST_USERS` (sha256 of lowercased email — same
+scheme as the web app's `VITE_HASHED_EMAILS_OF_TEST_USERS`; the backend keeps
+the plaintext `EMAILS_OF_TEST_USERS`). Currently one toggle: the floating
+notification/dialog test buttons on video pages (`dev/notification-test-buttons.ts`),
+off by default, mounted/unmounted live by the content script in any build.
+
 ### Article import
 
 The import button injects `flicktionary-import.content.ts`, which clones the
@@ -353,7 +363,7 @@ extension typecheck sees them.
 
 | Store | Contents |
 |---|---|
-| `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, cached target language, pairing nonces |
+| `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, `flicktionary.devTools.v1` admin debug toggles, cached target language, pairing nonces |
 | IndexedDB `asbplayer-transcript-cache` | generated Whisper SRTs per video id |
 | In-memory only | gloss cache, session/segment-id cache |
 

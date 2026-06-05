@@ -24,7 +24,7 @@ const ENV_FILE_PATH = path.join(__dirname, '.env.doppler')
 const cleanupExistingMount = (): void => {
   try {
     // Try to remove any existing mount that might be left over
-    execSync('doppler run --project root --config dev_personal clean', { stdio: 'pipe' })
+    execSync('doppler run --project native --config dev_personal clean', { stdio: 'pipe' })
   } catch {
     // Ignore errors here as the command might fail if there's no mount to clean
   }
@@ -32,7 +32,7 @@ const cleanupExistingMount = (): void => {
 
 const getDopplerSecrets = (): DopplerSecrets => {
   try {
-    const output = execSync('doppler secrets --json --project root --config prd', { encoding: 'utf-8' })
+    const output = execSync('doppler secrets --json --project native --config prd', { encoding: 'utf-8' })
     return JSON.parse(output)
   } catch (error) {
     console.error('Failed to get Doppler secrets:', error)
@@ -130,7 +130,7 @@ const syncEnvironmentVariables = (environment: string) => {
 
     console.log('🚀 Pushing public variables to EAS...')
     execSync(
-      `EAS_NON_INTERACTIVE=1 doppler run --project root --config dev_personal -- eas env:push ${environment} --path ${ENV_FILE_PATH}`,
+      `EAS_NON_INTERACTIVE=1 doppler run --project native --config dev_personal -- eas env:push ${environment} --path ${ENV_FILE_PATH}`,
       {
         stdio: 'inherit',
         env: { ...process.env, EAS_NON_INTERACTIVE: '1' },
@@ -153,13 +153,13 @@ const syncEnvironmentVariables = (environment: string) => {
     if (easVariableNames.has(key)) {
       console.log(`Updating secret variable ${key}...`)
       execSync(
-        `EAS_NON_INTERACTIVE=1 doppler run --project root --config dev_personal -- eas env:update ${environment} --variable-environment ${environment} --variable-name ${key} --value "${value}" --visibility secret --non-interactive`,
+        `EAS_NON_INTERACTIVE=1 doppler run --project native --config dev_personal -- eas env:update ${environment} --variable-environment ${environment} --variable-name ${key} --value "${value}" --visibility secret --non-interactive`,
         { stdio: 'inherit' }
       )
     } else {
       console.log(`Creating secret variable ${key}...`)
       execSync(
-        `EAS_NON_INTERACTIVE=1 doppler run --project root --config dev_personal -- eas env:create ${environment} --name ${key} --value "${value}" --visibility secret --non-interactive`,
+        `EAS_NON_INTERACTIVE=1 doppler run --project native --config dev_personal -- eas env:create ${environment} --name ${key} --value "${value}" --visibility secret --non-interactive`,
         { stdio: 'inherit' }
       )
     }

@@ -19,6 +19,13 @@ export interface FlicktionaryConfig {
   supabaseProjectUrl: string
   /** Anon (publishable) key — safe to ship in a public extension bundle. */
   supabasePublishableKey: string
+  /**
+   * SHA-256 hashes (lowercased, trimmed email) of admin/test-user emails —
+   * gates the popup's Admin tab. Same scheme as the web app's
+   * VITE_HASHED_EMAILS_OF_TEST_USERS; the backend holds the plaintext list
+   * (EMAILS_OF_TEST_USERS), only hashes ship in public bundles.
+   */
+  hashedEmailsOfTestUsers: string[]
 }
 
 const requireEnv = (name: string, value: string | undefined): string => {
@@ -40,4 +47,11 @@ export const getFlicktionaryConfig = (): FlicktionaryConfig => ({
     'WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
     import.meta.env.WXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   ),
+  // Deliberately NOT requireEnv (the one exception to the fail-loudly rule
+  // above): an empty admin list is a valid state — it only hides the popup's
+  // Admin tab — and must not brick a build whose Doppler config lacks the var.
+  hashedEmailsOfTestUsers: (import.meta.env.WXT_PUBLIC_HASHED_EMAILS_OF_TEST_USERS ?? '')
+    .split(',')
+    .map((hash: string) => hash.trim())
+    .filter((hash: string) => hash.length > 0),
 })
