@@ -17,6 +17,8 @@ const UserPrefsSchema = z.object({
   englishIpaDialect: z.enum(['ga', 'rp']),
   practiceMaxNewTerms: z.number().int(),
   practiceMaxReviewTerms: z.number().int(),
+  uiTheme: z.enum(['light', 'dark', 'system']).nullable(),
+  uiLanguage: z.string().nullable(),
   targetLanguagePrefs: z.array(TargetLanguagePrefSchema),
 })
 
@@ -85,5 +87,17 @@ export const userPrefsContract = {
     .route({ method: 'PUT', path: '/user-prefs/english-ipa-dialect', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({ dialect: z.enum(['ga', 'rp']) }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  setUiTheme: oc
+    .route({ method: 'PUT', path: '/user-prefs/ui-theme', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ uiTheme: z.enum(['light', 'dark', 'system']).nullable() }))
+    .output(z.object({ data: UserPrefsSchema })),
+
+  setUiLanguage: oc
+    .route({ method: 'PUT', path: '/user-prefs/ui-language', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(z.object({ uiLanguage: z.string().min(1).nullable() }))
     .output(z.object({ data: UserPrefsSchema })),
 } as const
