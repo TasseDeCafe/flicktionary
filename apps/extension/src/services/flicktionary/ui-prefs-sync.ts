@@ -22,8 +22,7 @@ type UserPrefs = Awaited<ReturnType<ReturnType<typeof getFlicktionaryApiClient>[
 
 const settingsProvider = new SettingsProvider(new ExtensionSettingsStorage())
 
-const isThemeType = (value: unknown): value is ThemeType =>
-  value === 'light' || value === 'dark' || value === 'system'
+const isThemeType = (value: unknown): value is ThemeType => value === 'light' || value === 'dark' || value === 'system'
 
 // One getPrefs per popup/options open, shared between the UI-prefs refresh and
 // the JIT native-language picker (same memo pattern as

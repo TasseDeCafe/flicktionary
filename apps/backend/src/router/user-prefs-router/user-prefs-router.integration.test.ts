@@ -27,9 +27,7 @@ describe('user-prefs-router', async () => {
   })
 
   test('when user is unauthenticated', async () => {
-    const response = await request(testApp)
-      .get('/api/v1/user-prefs')
-      .set({ Authorization: 'Bearer wrong-token' })
+    const response = await request(testApp).get('/api/v1/user-prefs').set({ Authorization: 'Bearer wrong-token' })
 
     expect(response.status).toBe(401)
   })

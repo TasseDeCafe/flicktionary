@@ -7,9 +7,7 @@ export type ResolvedTheme = 'dark' | 'light'
 // point a message was built.
 export const resolveTheme = (themeType: ThemeType): ResolvedTheme => {
   if (themeType === 'system') {
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light'
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   }
   return themeType
 }

@@ -38,7 +38,10 @@ const UiSettings = ({ themeType, language, supportedLanguages, onSettingChanged 
         value={language}
         options={[
           { value: 'system', label: t`System` },
-          ...supportedLanguages.map((code) => ({ value: code, label: findSupportedLanguage(code)?.nativeName ?? code })),
+          ...supportedLanguages.map((code) => ({
+            value: code,
+            label: findSupportedLanguage(code)?.nativeName ?? code,
+          })),
         ]}
         onValueChange={(value) => onSettingChanged('language', value)}
       />
