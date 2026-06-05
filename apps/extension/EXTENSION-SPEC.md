@@ -70,6 +70,16 @@ workspace package. Upstream's `@project/*` scope became `@asbplayer-fork/*`,
 and `common/X` maps 1:1 to `apps/extension/common/X`, so file-level diffing
 against the donor works but a git merge never will.
 
+The `common/` folder is purely a **provenance boundary** — there is no build or
+package reason for it. Upstream needed `common` because it had a second
+consumer (the asbplayer web app, which upstream keeps at `common/app`); we
+deleted that consumer, so the folder survives only to mark "donor code, shaped
+like upstream — diff before you touch it". Its `src/` subfolder is upstream's
+own quirk: `common` is a multi-entry package whose root entry (`index.ts`)
+re-exports `src/*` (the core model/message/command types), while `settings/`,
+`key-binder/` etc. are sub-path entries. Don't "fix" the layout — the mapping
+is the point (see the divergence map below for when that stops being true).
+
 License: asbplayer is MIT — keep `LICENSE.md` and the About attribution; the
 store zip bundles the license (`zip.includeSources` in `wxt.config.ts`).
 
@@ -100,6 +110,34 @@ Porting checklist, every time a donor file comes in:
 2. Check it against the "What it isn't" list above — make sure it doesn't drag
    a removed feature (mining/recording/Anki/dictionary/mobile hooks) back in.
 3. Gate: `pnpm build` + `pnpm check:types` + the verification golden path below.
+
+#### Divergence map of `common/` (measured 2026-06)
+
+Raw `diff` against the donor lies: the fork's prettier (`semi: false`,
+`printWidth: 120`) differs from upstream's, so every line "changes". Normalize
+the donor file through our config first:
+
+```
+pnpm exec prettier --config .prettierrc.cjs --stdin-filepath <file>.ts \
+  < $DONOR/common/<file>.ts | diff common/<file>.ts -
+```
+
+Measured that way against the reference copy (`~/Documents/asbplayer`),
+`common/` splits into two populations — this decides whether a donor diff is
+worth reading at all:
+
+| Area | Divergence | Harvest stance |
+| --- | --- | --- |
+| `base64/`, `blob-url/`, `browser-detection/`, `subtitle-collection/`, `pages/` | **0 lines** | still pristine donor code — take upstream fixes near-verbatim |
+| `util/` (~10%), `subtitle-reader/` (~14%) | light | the harvest sweet spot (subtitle-parsing fixes) — diff and port hunks |
+| `key-binder/` (~40%), `src/model.ts` (~50%) | heavy | port by hand only, hunk by hunk |
+| `settings/`, `src/message.ts` | rewritten | fork-owned (Anki strip + Flicktionary rewiring) — donor diffs rarely useful |
+| `components/`, `hooks/`, `global-state/` | fork-native | MUI→Radix/Tailwind rewrite; several files have no upstream counterpart — do not harvest |
+
+If the first two rows ever stop mattering (we'd no longer take an upstream
+subtitle-reader/pages fix), the reason to keep `common/` mirroring upstream
+disappears — at that point distributing it into `src/` by domain is the right
+cleanup.
 
 ## Architecture
 
