@@ -28,12 +28,12 @@ export const TriageFooter = ({ sessionId, highlightCount, isGeneratingCandidates
   }
 
   return (
-    <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-white/95 p-3 backdrop-blur'>
+    <div className='sticky right-0 bottom-0 left-0 z-10 border-t bg-background/95 p-3 backdrop-blur'>
       <div className='mx-auto flex max-w-4xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
         <span className='text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm'>
           {hint}
           {isGeneratingCandidates && (
-            <span className='flex items-center gap-1.5 text-amber-700'>
+            <span className='flex items-center gap-1.5 text-amber-700 dark:text-amber-300'>
               <Loader2 className='size-3.5 animate-spin' />
               {t`Finding suggestions…`}
             </span>

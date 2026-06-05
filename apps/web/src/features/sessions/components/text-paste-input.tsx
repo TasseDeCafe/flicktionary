@@ -89,7 +89,7 @@ export const TextPasteFields = ({
         <div className='text-muted-foreground flex justify-between text-xs'>
           <span>{t`${charCount} / ${TEXT_PASTE_MAX_LENGTH} characters`}</span>
           {charCount > 0 && charCount < TEXT_PASTE_MIN_LENGTH && (
-            <span className='text-amber-700'>{t`At least ${TEXT_PASTE_MIN_LENGTH} characters needed`}</span>
+            <span className='text-amber-700 dark:text-amber-300'>{t`At least ${TEXT_PASTE_MIN_LENGTH} characters needed`}</span>
           )}
         </div>
       </div>
