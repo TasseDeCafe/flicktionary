@@ -1,5 +1,10 @@
 # Releasing the extension
 
+Store listing text (the dashboard description fields) is maintained in
+[`STORE-LISTING.md`](./STORE-LISTING.md) — edit there, then paste into the
+dashboard. It also records the CWS keyword-spam constraint that got a draft
+rejected.
+
 ## Normal release flow
 
 1. Bump `version` in `apps/extension/package.json` (Chrome requires strictly increasing versions).
