@@ -205,7 +205,7 @@ msgstr "Un libellé court pour cette session"
 msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
+#: apps/web/src/features/more/components/more-tab-view.tsx:158
 msgid "About"
 msgstr "À propos"
 
@@ -219,7 +219,7 @@ msgid "Access exclusive premium features available to subscribers."
 msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les abonnés."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:47
+#: apps/web/src/features/more/components/more-tab-view.tsx:86
 msgid "Account"
 msgstr "Compte"
 
@@ -315,7 +315,7 @@ msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
 msgstr "Ajuster le décalage des sous-titres pour que le sous-titre précédent soit à l’horodatage actuel"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:86
+#: apps/web/src/features/more/components/more-tab-view.tsx:163
 msgid "Admin settings"
 msgstr "Paramètres administrateur"
 
@@ -403,6 +403,10 @@ msgstr "Animé"
 #: apps/web/src/features/review/components/editable-card-fields.tsx:132
 msgid "Another term already exists with that headword and sense."
 msgstr "Un autre terme existe déjà avec ce mot-vedette et ce sens."
+
+#: apps/web/src/features/more/components/more-tab-view.tsx:92
+msgid "Appearance"
+msgstr "Apparence"
 
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:56
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:41
@@ -724,7 +728,7 @@ msgstr "Confirmer la suppression"
 msgid "Conjunction"
 msgstr "Conjonction"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:82
+#: apps/web/src/features/more/components/more-tab-view.tsx:159
 msgid "Contact us"
 msgstr "Nous contacter"
 
@@ -881,7 +885,7 @@ msgstr "Limite quotidienne de nouveaux termes atteinte."
 msgid "Daily new-card limit reached."
 msgstr "Limite quotidienne de nouvelles cartes atteinte."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:92
+#: apps/web/src/features/more/components/more-tab-view.tsx:169
 msgid "Danger zone"
 msgstr "Zone dangereuse"
 
@@ -891,6 +895,7 @@ msgid "Danger Zone"
 msgstr "Zone Dangereuse"
 
 #: apps/extension/common/components/UiSettings.tsx:30
+#: apps/web/src/features/more/components/more-tab-view.tsx:104
 msgid "Dark"
 msgstr "Sombre"
 
@@ -1313,7 +1318,7 @@ msgstr "Échec du chargement des sessions"
 msgid "Failed to load subtitle segments"
 msgstr "Échec du chargement des segments de sous-titres"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:551
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:592
 msgid "Failed to load suggestions"
 msgstr "Échec du chargement des suggestions"
 
@@ -1345,7 +1350,7 @@ msgstr "Échec de l'enregistrement du film"
 msgid "Failed to register text"
 msgstr "Échec de l'enregistrement du texte"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:528
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:569
 msgid "Failed to remove highlight"
 msgstr "Échec de la suppression du surlignage"
 
@@ -1357,7 +1362,7 @@ msgstr "Échec de la suppression de la session"
 msgid "Failed to rename term"
 msgstr "Échec du renommage du terme"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:568
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:609
 msgid "Failed to request suggestions"
 msgstr "Échec de la demande de suggestions"
 
@@ -1419,9 +1424,13 @@ msgstr "Échec de la mise à jour des statuts des cartes"
 msgid "Failed to update English IPA dialect"
 msgstr "Échec de la mise à jour du dialecte API anglais"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:511
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:552
 msgid "Failed to update highlight"
 msgstr "Échec de la mise à jour de la surbrillance"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:493
+msgid "Failed to update interface language"
+msgstr "Échec de la mise à jour de la langue de l'interface"
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:85
 msgid "Failed to update learning mode"
@@ -1431,7 +1440,7 @@ msgstr "Échec de la mise à jour du mode d'apprentissage"
 msgid "Failed to update LLM-highlights setting"
 msgstr "Échec de la mise à jour du paramètre de surlignage par LLM"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:467
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:508
 msgid "Failed to update practice limits"
 msgstr "Échec de la mise à jour des limites de pratique"
 
@@ -1443,11 +1452,15 @@ msgstr "Échec de la mise à jour du paramètre d'affichage des traductions"
 msgid "Failed to update term"
 msgstr "Échec de la mise à jour du terme"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:473
+msgid "Failed to update theme"
+msgstr "Échec de la mise à jour du thème"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:124
 msgid "Failed to upload subtitles"
 msgstr "Échec de l'envoi des sous-titres"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:588
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:629
 msgid "Failed to use suggestion"
 msgstr "Échec de l'utilisation de la suggestion"
 
@@ -1476,7 +1489,7 @@ msgid "Finding suggestions…"
 msgstr "Recherche de suggestions…"
 
 #: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:54
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:52
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
@@ -1535,7 +1548,7 @@ msgstr "GA"
 msgid "Gender"
 msgstr "Genre"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:44
+#: apps/web/src/features/more/components/more-tab-view.tsx:83
 msgid "General"
 msgstr "Général"
 
@@ -1767,6 +1780,11 @@ msgstr "Initialisation..."
 msgid "Install the Flicktionary extension and pin it to your browser toolbar for easy access."
 msgstr "Installez l'extension Flicktionary et épinglez-la à la barre d'outils de votre navigateur pour un accès facile."
 
+#: apps/web/src/features/more/components/more-tab-view.tsx:111
+#: apps/web/src/features/more/components/more-tab-view.tsx:114
+msgid "Interface language"
+msgstr "Langue de l'interface"
+
 #: apps/web/src/features/sessions/components/cefr-step.tsx:27
 msgid "Intermediate — handle most travel and everyday topics."
 msgstr "Intermédiaire — gérer la plupart des voyages et sujets quotidiens."
@@ -1816,7 +1834,7 @@ msgstr "Garder comme passif"
 msgid "Keep options"
 msgstr "Options de conservation"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:103
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:108
 msgid "Keep practicing this one."
 msgstr "Continuez à pratiquer celui-ci."
 
@@ -1847,7 +1865,7 @@ msgid "Language preferences"
 msgstr "Préférences linguistiques"
 
 #: apps/web/src/features/more/components/languages-page.tsx:14
-#: apps/web/src/features/more/components/more-tab-view.tsx:56
+#: apps/web/src/features/more/components/more-tab-view.tsx:133
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:82
 msgid "Languages"
 msgstr "Langues"
@@ -1885,6 +1903,7 @@ msgid "Less formal:"
 msgstr "Moins formel :"
 
 #: apps/extension/common/components/UiSettings.tsx:29
+#: apps/web/src/features/more/components/more-tab-view.tsx:103
 msgid "Light"
 msgstr "Clair"
 
@@ -1892,8 +1911,8 @@ msgstr "Clair"
 msgid "Link expired or invalid"
 msgstr "Lien expiré ou invalide"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:62
-#: apps/web/src/features/more/components/more-tab-view.tsx:69
+#: apps/web/src/features/more/components/more-tab-view.tsx:139
+#: apps/web/src/features/more/components/more-tab-view.tsx:146
 #: apps/web/src/features/review/components/triage-list-view.tsx:255
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
@@ -2002,9 +2021,9 @@ msgstr "Divers"
 msgid "Monthly"
 msgstr "Mensuel"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:42
+#: apps/web/src/features/more/components/more-tab-view.tsx:81
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:43
 #: apps/web/src/features/practice/components/practice-language-view.tsx:128
 msgid "More"
 msgstr "Plus"
@@ -2076,7 +2095,7 @@ msgstr "Exemple en langue maternelle"
 msgid "Native language"
 msgstr "Langue maternelle"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:57
+#: apps/web/src/features/more/components/more-tab-view.tsx:134
 msgid "Native language and CEFR levels"
 msgstr "Langue maternelle et niveaux CECRL"
 
@@ -2085,7 +2104,7 @@ msgid "Neuter"
 msgstr "Neutre"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:58
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:55
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:57
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:9
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:67
 msgid "New"
@@ -2123,7 +2142,7 @@ msgstr "Suivant"
 msgid "Next card"
 msgstr "Carte suivante"
 
-#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:103
+#: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:108
 msgid "Nice!"
 msgstr "Super !"
 
@@ -2223,7 +2242,7 @@ msgstr "Pas tout à fait."
 msgid "Notable forms"
 msgstr "Formes remarquables"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:510
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:551
 msgid "Note saved"
 msgstr "Note enregistrée"
 
@@ -2507,7 +2526,7 @@ msgid "Plural-only"
 msgstr "Pluriel uniquement"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:39
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:62
 #: apps/web/src/features/practice/components/practice-language-view.tsx:115
 #: apps/web/src/features/practice/components/strengthen-view.tsx:106
@@ -2600,7 +2619,7 @@ msgstr "Limite de profil atteinte"
 msgid "Profile Name"
 msgstr "Nom du profil"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:48
+#: apps/web/src/features/more/components/more-tab-view.tsx:87
 msgid "Profile, subscription, sign-in"
 msgstr "Profil, abonnement, connexion"
 
@@ -2616,8 +2635,8 @@ msgstr "Pronom"
 msgid "Quick gloss"
 msgstr "Glose rapide"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:479
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:493
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:520
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:534
 msgid "Quick gloss failed"
 msgstr "Glose rapide échouée"
 
@@ -2956,7 +2975,7 @@ msgid "Session removed"
 msgstr "Session supprimée"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:37
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:38
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:40
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:37
 msgid "Sessions"
 msgstr "Sessions"
@@ -2978,7 +2997,7 @@ msgstr "Configuration du compte..."
 #: apps/extension/src/ui/components/SettingsPage.tsx:58
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
-#: apps/web/src/features/more/components/more-tab-view.tsx:53
+#: apps/web/src/features/more/components/more-tab-view.tsx:130
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -3011,7 +3030,7 @@ msgstr "Afficher les traductions existantes et générer des traductions pour le
 msgid "Show notes"
 msgstr "Afficher les notes"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:63
+#: apps/web/src/features/more/components/more-tab-view.tsx:140
 msgid "Show suggested terms while reading"
 msgstr "Afficher les termes suggérés pendant la lecture"
 
@@ -3049,12 +3068,12 @@ msgstr "Se connecter à Flicktionary"
 #: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:97
+#: apps/web/src/features/more/components/more-tab-view.tsx:174
 msgid "Sign out"
 msgstr "Déconnexion"
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:27
+#: apps/web/src/features/more/components/more-tab-view.tsx:66
 msgid "Sign out success"
 msgstr "Déconnexion réussie"
 
@@ -3329,6 +3348,11 @@ msgstr "Basculement…"
 msgid "Synonyms"
 msgstr "Synonymes"
 
+#: apps/web/src/features/more/components/more-tab-view.tsx:102
+#: apps/web/src/features/more/components/more-tab-view.tsx:118
+msgid "System"
+msgstr "Système"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx:164
 msgid "Target example"
 msgstr "Exemple cible"
@@ -3393,6 +3417,8 @@ msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
 #: apps/extension/common/components/UiSettings.tsx:26
+#: apps/web/src/features/more/components/more-tab-view.tsx:95
+#: apps/web/src/features/more/components/more-tab-view.tsx:98
 msgid "Theme"
 msgstr "Thème"
 
@@ -3720,7 +3746,7 @@ msgid "View Premium Demo"
 msgstr "Voir la démo Premium"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:39
-#: apps/web/src/features/navigation/components/sidebar-nav.tsx:40
+#: apps/web/src/features/navigation/components/sidebar-nav.tsx:42
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:245
 msgid "Vocabulary"
 msgstr "Vocabulaire"
