@@ -15,7 +15,8 @@ msgstr ""
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:130
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
-msgstr "« {headword} » vous pose problème — il est mis de côté pour des exercices de révision."
+msgstr "« {headword} » vous pose problème — il est mis de côté pour des "
+"exercices de révision."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:63
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:71
@@ -69,11 +70,13 @@ msgstr "{dailyNewAvailable} nouvelles disponibles aujourd'hui"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:188
 msgid "{discount}% off with your referral for {durationLimit} months!"
-msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} mois !"
+msgstr "{discount} % de réduction grâce à votre parrainage pendant "
+"{durationLimit} mois !"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:210
 msgid "{discount}% off with your referral for {durationLimit} years!"
-msgstr "{discount} % de réduction grâce à votre parrainage pendant {durationLimit} ans !"
+msgstr "{discount} % de réduction grâce à votre parrainage pendant "
+"{durationLimit} ans !"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:186
 msgid "{discount}% off with your referral for 1 month!"
@@ -102,8 +105,10 @@ msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} révision(s) en attente"
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:175
-msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock them in — optional."
-msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices rapide peut les consolider — facultatif."
+msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
+"them in — optional."
+msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices "
+"rapide peut les consolider — facultatif."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:53
 msgid "{highlightCount} highlight(s)"
@@ -130,40 +135,68 @@ msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:113
-msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a longer phrase."
-msgstr "<0>Cliquez</0> sur un mot pour le sélectionner, ou <1>appuyez et faites glisser</1> pour sélectionner une phrase plus longue."
+msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a "
+"longer phrase."
+msgstr "<0>Cliquez</0> sur un mot pour le sélectionner, ou <1>appuyez et faites "
+"glisser</1> pour sélectionner une phrase plus longue."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:107
-msgid "<0>Hover</0> a word in the subtitles to see an instant definition with pronunciation. The video pauses while you hover, and resumes when you move away."
-msgstr "<0>Survolez</0> un mot dans les sous-titres pour voir une définition instantanée avec la prononciation. La vidéo se met en pause pendant le survol et reprend lorsque vous vous éloignez."
+msgid "<0>Hover</0> a word in the subtitles to see an instant definition with "
+"pronunciation. The video pauses while you hover, and resumes when you "
+"move away."
+msgstr "<0>Survolez</0> un mot dans les sous-titres pour voir une définition "
+"instantanée avec la prononciation. La vidéo se met en pause pendant le "
+"survol et reprend lorsque vous vous éloignez."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:187
-msgid "<0>No subtitles appear</0> — make sure the platform is supported and the video actually has subtitle tracks. You can always load a subtitle file manually by dropping it onto the video."
-msgstr "<0>Aucun sous-titre n'apparaît</0> — assurez-vous que la plateforme est prise en charge et que la vidéo dispose bien de pistes de sous-titres. Vous pouvez toujours charger un fichier de sous-titres manuellement en le déposant sur la vidéo."
+msgid "<0>No subtitles appear</0> — make sure the platform is supported and the "
+"video actually has subtitle tracks. You can always load a subtitle file "
+"manually by dropping it onto the video."
+msgstr "<0>Aucun sous-titre n'apparaît</0> — assurez-vous que la plateforme est "
+"prise en charge et que la vidéo dispose bien de pistes de sous-titres. "
+"Vous pouvez toujours charger un fichier de sous-titres manuellement en "
+"le déposant sur la vidéo."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:155
-msgid "<0>Practice</0> — exercises built from your saved words to review and strengthen what you learned."
-msgstr "<0>Pratiquer</0> — des exercices créés à partir de vos mots sauvegardés pour réviser et renforcer ce que vous avez appris."
+msgid "<0>Practice</0> — exercises built from your saved words to review and "
+"strengthen what you learned."
+msgstr "<0>Pratiquer</0> — des exercices créés à partir de vos mots sauvegardés "
+"pour réviser et renforcer ce que vous avez appris."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:118
-msgid "<0>Right-click</0> the selection and choose <1>Save</1>. The word or phrase is stored in your account together with the sentence it appeared in."
-msgstr "<0>Faites un clic droit</0> sur la sélection et choisissez <1>Enregistrer</1>. Le mot ou l'expression est stocké dans votre compte avec la phrase dans laquelle il apparaît."
+msgid "<0>Right-click</0> the selection and choose <1>Save</1>. The word or "
+"phrase is stored in your account together with the sentence it appeared "
+"in."
+msgstr "<0>Faites un clic droit</0> sur la sélection et choisissez "
+"<1>Enregistrer</1>. Le mot ou l'expression est stocké dans votre compte "
+"avec la phrase dans laquelle il apparaît."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:199
-msgid "<0>Saved words don't show up</0> — they appear here in the web app, not in the extension. Open the app and check your latest session."
-msgstr "<0>Les mots enregistrés n'apparaissent pas</0> — ils apparaissent ici dans l'application web, pas dans l'extension. Ouvrez l'application et consultez votre dernière session."
+msgid "<0>Saved words don't show up</0> — they appear here in the web app, not "
+"in the extension. Open the app and check your latest session."
+msgstr "<0>Les mots enregistrés n'apparaissent pas</0> — ils apparaissent ici "
+"dans l'application web, pas dans l'extension. Ouvrez l'application et "
+"consultez votre dernière session."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:193
-msgid "<0>Saving is disabled</0> — sign in via the extension popup. If a video's language isn't supported yet, you'll see a notice and saving stays off for that video."
-msgstr "<0>L'enregistrement est désactivé</0> — connectez-vous via la popup de l'extension. Si la langue d'une vidéo n'est pas encore prise en charge, vous verrez un avis et l'enregistrement restera désactivé pour cette vidéo."
+msgid "<0>Saving is disabled</0> — sign in via the extension popup. If a "
+"video's language isn't supported yet, you'll see a notice and saving "
+"stays off for that video."
+msgstr "<0>L'enregistrement est désactivé</0> — connectez-vous via la popup de "
+"l'extension. Si la langue d'une vidéo n'est pas encore prise en charge, "
+"vous verrez un avis et l'enregistrement restera désactivé pour cette "
+"vidéo."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:145
-msgid "<0>Sessions</0> — every video you watched and article you imported, with the words you saved in each."
-msgstr "<0>Sessions</0> — chaque vidéo que vous avez regardée et article que vous avez importé, avec les mots que vous avez sauvegardés dans chacun."
+msgid "<0>Sessions</0> — every video you watched and article you imported, with "
+"the words you saved in each."
+msgstr "<0>Sessions</0> — chaque vidéo que vous avez regardée et article que "
+"vous avez importé, avec les mots que vous avez sauvegardés dans chacun."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:150
 msgid "<0>Vocabulary</0> — all your saved words and phrases in one place."
-msgstr "<0>Vocabulaire</0> — tous vos mots et expressions sauvegardés en un seul endroit."
+msgstr "<0>Vocabulaire</0> — tous vos mots et expressions sauvegardés en un "
+"seul endroit."
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:48
 msgid "⚠ LLM only"
@@ -190,8 +223,11 @@ msgid "A natural translation of the target example."
 msgstr "Une traduction naturelle de l'exemple cible."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:104
-msgid "A newer version of the app is required to continue. Please update to the latest version to access all features and improvements."
-msgstr "Une version plus récente de l'application est requise pour continuer. Veuillez mettre à jour vers la dernière version pour accéder à toutes les fonctionnalités et améliorations."
+msgid "A newer version of the app is required to continue. Please update to the "
+"latest version to access all features and improvements."
+msgstr "Une version plus récente de l'application est requise pour continuer. "
+"Veuillez mettre à jour vers la dernière version pour accéder à toutes "
+"les fonctionnalités et améliorations."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:169
 msgid "A sentence using this term in its natural setting."
@@ -202,8 +238,11 @@ msgid "A short label for this session"
 msgstr "Un libellé court pour cette session"
 
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:187
-msgid "A video element must be synced with Flicktionary before it can be mined. Select a video element to sync it with Flicktionary."
-msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
+msgid "A video element must be synced with Flicktionary before it can be mined. "
+"Select a video element to sync it with Flicktionary."
+msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
+"pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser "
+"avec Flicktionary."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:81
 msgid "About"
@@ -216,7 +255,8 @@ msgstr "À propos de Flicktionary"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:36
 msgid "Access exclusive premium features available to subscribers."
-msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les abonnés."
+msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les "
+"abonnés."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
 #: apps/web/src/features/more/components/more-tab-view.tsx:47
@@ -239,7 +279,8 @@ msgstr "Actions pour ce terme de vocabulaire."
 #: apps/native/src/features/profile/components/danger-zone-view.tsx:32
 #: apps/web/src/features/profile/components/danger-zone-view.tsx:20
 msgid "Actions in this section can lead to permanent data loss."
-msgstr "Les actions dans cette section peuvent entraîner une perte définitive de données."
+msgstr "Les actions dans cette section peuvent entraîner une perte définitive "
+"de données."
 
 #: apps/web/src/features/review/components/focus-view.tsx:525
 #: apps/web/src/features/review/components/triage-row.tsx:84
@@ -291,8 +332,10 @@ msgid "Additional hosts"
 msgstr "Additional hosts"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:240
-msgid "Adds an outline around subtitle text. If this causes overlapping lines, try using a different font."
-msgstr "Ajoute un contour autour du texte des sous-titres. Si cela entraîne un chevauchement des lignes, essayez d’utiliser une police différente."
+msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
+"try using a different font."
+msgstr "Ajoute un contour autour du texte des sous-titres. Si cela entraîne un "
+"chevauchement des lignes, essayez d’utiliser une police différente."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:260
 msgid "Adjective"
@@ -308,11 +351,13 @@ msgstr "Ajuster le décalage des sous-titres de +100 ms."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:362
 msgid "Adjust subtitle offset so that next subtitle is at current timestamp"
-msgstr "Ajuster le décalage des sous-titres pour que le sous-titre suivant soit à l’horodatage actuel"
+msgstr "Ajuster le décalage des sous-titres pour que le sous-titre suivant soit "
+"à l’horodatage actuel"
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:358
 msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
-msgstr "Ajuster le décalage des sous-titres pour que le sous-titre précédent soit à l’horodatage actuel"
+msgstr "Ajuster le décalage des sous-titres pour que le sous-titre précédent "
+"soit à l’horodatage actuel"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
 #: apps/web/src/features/more/components/more-tab-view.tsx:86
@@ -367,7 +412,8 @@ msgstr "Allow video elements with blank src"
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
-msgstr "Toujours lancer la lecture après avoir invoqué \"Aller au début du sous-titre actuel/précédent\""
+msgstr "Toujours lancer la lecture après avoir invoqué \"Aller au début du "
+"sous-titre actuel/précédent\""
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:40
 msgid "American"
@@ -385,8 +431,10 @@ msgid "An error occurred. Please try again."
 msgstr "Une erreur s'est produite. Veuillez réessayer."
 
 #: apps/web/src/features/practice/components/strengthen-view.tsx:128
-msgid "An exercise for “{currentHeadword}” is still being prepared. Check back in a minute."
-msgstr "Un exercice pour « {currentHeadword} » est encore en cours de préparation. Revenez dans une minute."
+msgid "An exercise for “{currentHeadword}” is still being prepared. Check back "
+"in a minute."
+msgstr "Un exercice pour « {currentHeadword} » est encore en cours de "
+"préparation. Revenez dans une minute."
 
 #: apps/native/src/features/auth/components/login-email-view.tsx:49
 msgid "An unexpected error occurred"
@@ -414,12 +462,16 @@ msgid "Articles"
 msgstr "Articles"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:190
-msgid "Ask a follow-up question about this term. The model already has the methodology, your profile, and the surrounding scene loaded."
-msgstr "Posez une question complémentaire sur ce terme. Le modèle a déjà chargé la méthodologie, votre profil et la scène environnante."
+msgid "Ask a follow-up question about this term. The model already has the "
+"methodology, your profile, and the surrounding scene loaded."
+msgstr "Posez une question complémentaire sur ce terme. Le modèle a déjà chargé "
+"la méthodologie, votre profil et la scène environnante."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:249
-msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new line)"
-msgstr "Posez n'importe quelle question sur ce terme… (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"
+msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new "
+"line)"
+msgstr "Posez n'importe quelle question sur ce terme… (Entrée pour envoyer, "
+"Maj+Entrée pour une nouvelle ligne)"
 
 #: apps/web/src/features/review/components/chat-panel.tsx:119
 msgid "Ask follow-up questions about this term."
@@ -456,7 +508,8 @@ msgstr "Enregistrement audio activé"
 
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:47
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
-msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez maintenant commencer l’extraction."
+msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
+"maintenant commencer l’extraction."
 
 #: apps/web/src/features/auth/components/login-view.tsx:50
 #: apps/web/src/features/auth/components/login-view.tsx:62
@@ -468,8 +521,13 @@ msgid "Auto-copy current subtitle to clipboard"
 msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:303
-msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does not know how to detect subtitles on every site. You can always load your own subtitle files."
-msgstr "Les pistes de sous-titres détectées automatiquement peuvent être sélectionnées ici. Flicktionary ne sait pas détecter les sous-titres sur tous les sites. Vous pouvez toujours charger vos propres fichiers de sous-titres."
+msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
+"not know how to detect subtitles on every site. You can always load your "
+"own subtitle files."
+msgstr "Les pistes de sous-titres détectées automatiquement peuvent être "
+"sélectionnées ici. Flicktionary ne sait pas détecter les sous-titres "
+"sur tous les sites. Vous pouvez toujours charger vos propres fichiers "
+"de sous-titres."
 
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx:88
 msgid "Auto-load detected subtitles"
@@ -606,8 +664,10 @@ msgid "CEFR level"
 msgstr "Niveau CECRL"
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:22
-msgid "Changes settings for ALL tracks. Settings that already have track-specific values are hidden."
-msgstr "Modifie les paramètres pour TOUTES les pistes. Les paramètres qui ont déjà des valeurs spécifiques à une piste sont masqués."
+msgid "Changes settings for ALL tracks. Settings that already have "
+"track-specific values are hidden."
+msgstr "Modifie les paramètres pour TOUTES les pistes. Les paramètres qui ont "
+"déjà des valeurs spécifiques à une piste sont masqués."
 
 #: apps/web/src/features/review/components/chat-panel.tsx:118
 #: apps/web/src/features/review/components/chat-panel.tsx:147
@@ -668,12 +728,16 @@ msgid "Clear search"
 msgstr "Effacer la recherche"
 
 #: apps/web/src/features/review/components/focus-view.tsx:365
-msgid "Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more."
-msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte avec des collocations, l'étymologie, le registre, l'API et plus encore."
+msgid "Click Generate full exploration to enrich this card with collocations, "
+"etymology, register, IPA, and more."
+msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte "
+"avec des collocations, l'étymologie, le registre, l'API et plus encore."
 
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:45
-msgid "Click on the Flicktionary action button in the top-right of the browser window to enable audio recording for this tab."
-msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du navigateur pour activer l’enregistrement audio de cet onglet."
+msgid "Click on the Flicktionary action button in the top-right of the browser "
+"window to enable audio recording for this tab."
+msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
+"navigateur pour activer l’enregistrement audio de cet onglet."
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
 msgid "Click the link in the email to continue."
@@ -776,7 +840,8 @@ msgstr "Correct !"
 
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:295
 msgid "Could not auto-load subtitles in your preferred language."
-msgstr "Impossible de charger automatiquement les sous-titres dans la langue préférée."
+msgstr "Impossible de charger automatiquement les sous-titres dans la langue "
+"préférée."
 
 #: apps/native/src/features/billing/hooks/use-paywall.ts:60
 msgid "Could not display payment options at this time."
@@ -788,7 +853,8 @@ msgstr "Impossible de récupérer une glose."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:595
 msgid "Could not fetch a gloss. The highlight is still saved."
-msgstr "Impossible de récupérer une glose. Le surlignage est toujours enregistré."
+msgstr "Impossible de récupérer une glose. Le surlignage est toujours "
+"enregistré."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:213
 msgid "Could not fetch a translation right now."
@@ -809,11 +875,13 @@ msgstr "Impossible d’importer cette page."
 
 #: apps/native/src/features/billing/hooks/use-paywall.ts:37
 msgid "Could not load payment options at this time (no offerings)."
-msgstr "Impossible de charger les options de paiement en ce moment (aucune offre)."
+msgstr "Impossible de charger les options de paiement en ce moment (aucune "
+"offre)."
 
 #: apps/native/src/features/billing/hooks/use-paywall.ts:45
 msgid "Could not load payment options. Please try again later."
-msgstr "Impossible de charger les options de paiement. Veuillez réessayer plus tard."
+msgstr "Impossible de charger les options de paiement. Veuillez réessayer plus "
+"tard."
 
 #: apps/web/src/features/more/components/account-page.tsx:62
 msgid "Could not open billing settings."
@@ -824,8 +892,10 @@ msgid "Could not open customer center."
 msgstr "Impossible d'ouvrir le centre client."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:86
-msgid "Could not open the link. Please visit our website to manage your subscription."
-msgstr "Impossible d'ouvrir le lien. Veuillez visiter notre site web pour gérer votre abonnement."
+msgid "Could not open the link. Please visit our website to manage your "
+"subscription."
+msgstr "Impossible d'ouvrir le lien. Veuillez visiter notre site web pour gérer "
+"votre abonnement."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:71
 msgid "Could not open upgrade screen."
@@ -845,7 +915,8 @@ msgstr "Impossible d'enregistrer. Veuillez réessayer."
 
 #: apps/native/src/features/auth/components/user-setup-gate.tsx:79
 msgid "Could not set up your account. Please try restarting the app."
-msgstr "Impossible de configurer votre compte. Veuillez redémarrer l'application."
+msgstr "Impossible de configurer votre compte. Veuillez redémarrer "
+"l'application."
 
 #: apps/web/src/features/practice/components/strengthen-view.tsx:60
 msgid "Couldn't load exercises."
@@ -855,8 +926,8 @@ msgstr "Impossible de charger les exercices."
 msgid "Create an account (or sign in) here in the web app."
 msgstr "Créez un compte (ou connectez-vous) ici dans l'application web."
 
-#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:89
 #. placeholder {0}: customStyle.key
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:89
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
@@ -865,12 +936,10 @@ msgid "Current Timestamp"
 msgstr "Horodatage actuel"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:109
-msgid ""
-"Current version: {currentVersion}\n"
+msgid "Current version: {currentVersion}\n"
 "Required version: {requiredVersion}"
-msgstr ""
-"Version actuelle : {currentVersion}\\n"
-"Version requise : {requiredVersion}"
+msgstr "Version actuelle : {currentVersion}\\nVersion requise : "
+"{requiredVersion}"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:102
 #: apps/native/src/features/profile/components/profile-view.tsx:120
@@ -912,8 +981,10 @@ msgid "Day {days} of 3 — come back tomorrow for the next step."
 msgstr "Jour {days} sur 3 — revenez demain pour la prochaine étape."
 
 #: apps/extension/common/components/VideoOverlay.tsx:276
-msgid "Decrease offset to so that next subtitle is at current position. Hold to decrease by 100ms."
-msgstr "Réduire le décalage pour que le sous-titre suivant soit à la position actuelle. Maintenez appuyé pour réduire de 100 ms."
+msgid "Decrease offset to so that next subtitle is at current position. Hold to "
+"decrease by 100ms."
+msgstr "Réduire le décalage pour que le sous-titre suivant soit à la position "
+"actuelle. Maintenez appuyé pour réduire de 100 ms."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:370
 #: apps/extension/common/components/VideoOverlay.tsx:281
@@ -992,7 +1063,8 @@ msgstr "Terminé. Vous pouvez fermer cet onglet et retourner à l'extension."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:62
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
-msgstr "Télécharger tous les termes conservés pour {languageName} au format CSV (compatible Anki)"
+msgstr "Télécharger tous les termes conservés pour {languageName} au format CSV "
+"(compatible Anki)"
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:69
 msgid "downloads"
@@ -1040,7 +1112,8 @@ msgstr "Modifier le terme"
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:170
 msgid "Edit this shortcut from the Plugin manager at about:addons."
-msgstr "Modifiez ce raccourci depuis le gestionnaire d’extensions à l’adresse about:addons."
+msgstr "Modifiez ce raccourci depuis le gestionnaire d’extensions à l’adresse "
+"about:addons."
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:41
 msgid "Edited"
@@ -1096,7 +1169,8 @@ msgstr "Fin de la liste"
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:29
 msgid "Enjoy unlimited access to all our premium features and content."
-msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus premium."
+msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus "
+"premium."
 
 #: apps/web/src/features/review/components/triage-row.tsx:41
 msgid "Enriching…"
@@ -1144,16 +1218,25 @@ msgid "Etymology"
 msgstr "Étymologie"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:61
-msgid "Even if you get charged you can request an unconditional refund. Just let us know by clicking the \"Contact Us\" button above."
-msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement inconditionnel. Il suffit de nous le faire savoir en cliquant sur le bouton « Nous contacter » ci-dessus."
+msgid "Even if you get charged you can request an unconditional refund. Just "
+"let us know by clicking the \"Contact Us\" button above."
+msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement "
+"inconditionnel. Il suffit de nous le faire savoir en cliquant sur le "
+"bouton « Nous contacter » ci-dessus."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:259
-msgid "Every term you've kept, across every session. Tap a row to edit, or open the menu for more options."
-msgstr "Tous les termes que vous avez conservés, dans toutes les sessions. Appuyez sur une ligne pour modifier ou ouvrez le menu pour plus d'options."
+msgid "Every term you've kept, across every session. Tap a row to edit, or open "
+"the menu for more options."
+msgstr "Tous les termes que vous avez conservés, dans toutes les sessions. "
+"Appuyez sur une ligne pour modifier ou ouvrez le menu pour plus "
+"d'options."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:49
-msgid "Everything you save lands in the web app, where you can review your sessions, browse your vocabulary, and practice what you collected."
-msgstr "Tout ce que vous enregistrez apparaît dans l'application web, où vous pouvez consulter vos sessions, parcourir votre vocabulaire et pratiquer ce que vous avez collecté."
+msgid "Everything you save lands in the web app, where you can review your "
+"sessions, browse your vocabulary, and practice what you collected."
+msgstr "Tout ce que vous enregistrez apparaît dans l'application web, où vous "
+"pouvez consulter vos sessions, parcourir votre vocabulaire et pratiquer "
+"ce que vous avez collecté."
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
 msgid "Example"
@@ -1255,7 +1338,8 @@ msgstr "Échec de l'importation des sous-titres"
 
 #: apps/native/src/features/auth/components/revenuecat-initializer.tsx:38
 msgid "Failed to initialize payment system. Please restart the app."
-msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer l'application."
+msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer "
+"l'application."
 
 #: apps/web/src/features/review/api/review-hooks.ts:60
 msgid "Failed to load card"
@@ -1493,13 +1577,16 @@ msgid "Flicktionary"
 msgstr "Flicktionary"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:37
-msgid "Flicktionary has two parts that work together: a <0>browser extension</0> and this <1>web app</1>."
-msgstr "Flicktionary se compose de deux parties qui fonctionnent ensemble : une <0>extension de navigateur</0> et cette <1>application web</1>."
+msgid "Flicktionary has two parts that work together: a <0>browser "
+"extension</0> and this <1>web app</1>."
+msgstr "Flicktionary se compose de deux parties qui fonctionnent ensemble : une "
+"<0>extension de navigateur</0> et cette <1>application web</1>."
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:106
 #. placeholder {0}: state.newVersion
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:106
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
-msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les <0>notes de version</0>."
+msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
+"<0>notes de version</0>."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:20
 msgid "Flicktionary User Guide"
@@ -1662,19 +1749,27 @@ msgstr "Masquer les notes"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:210
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
-msgstr "Masquer ce terme de la Pratique et du Vocabulaire. Vous pourrez le restaurer plus tard."
+msgstr "Masquer ce terme de la Pratique et du Vocabulaire. Vous pourrez le "
+"restaurer plus tard."
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:368
-msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on mouse hover."
-msgstr "Masque les pistes de sous-titres sélectionnées en les floutant. Le flou est supprimé au survol de la souris."
+msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
+"mouse hover."
+msgstr "Masque les pistes de sous-titres sélectionnées en les floutant. Le flou "
+"est supprimé au survol de la souris."
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:38
-msgid "Hides this term from Practice and Vocabulary. You can restore it from the toast right after, or by re-keeping it in a session."
-msgstr "Masque ce terme de la Pratique et du Vocabulaire. Vous pouvez le restaurer depuis la notification juste après, ou en le conservant à nouveau dans une session."
+msgid "Hides this term from Practice and Vocabulary. You can restore it from "
+"the toast right after, or by re-keeping it in a session."
+msgstr "Masque ce terme de la Pratique et du Vocabulaire. Vous pouvez le "
+"restaurer depuis la notification juste après, ou en le conservant à "
+"nouveau dans une session."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:40
-msgid "Hides this term from your vocabulary and Practice. You can revive it by re-keeping it in a session."
-msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le restaurer en le conservant à nouveau dans une session."
+msgid "Hides this term from your vocabulary and Practice. You can revive it by "
+"re-keeping it in a session."
+msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le "
+"restaurer en le conservant à nouveau dans une session."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:349
 msgid "Highlight saved"
@@ -1682,7 +1777,8 @@ msgstr "Surlignage enregistré"
 
 #: apps/web/src/features/review/components/processing-view.tsx:21
 msgid "Highlights are enriched as you read. Triage is available immediately."
-msgstr "Les surlignages sont enrichis au fur et à mesure de votre lecture. Le tri est disponible immédiatement."
+msgstr "Les surlignages sont enrichis au fur et à mesure de votre lecture. Le "
+"tri est disponible immédiatement."
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:79
 msgid "Hint:"
@@ -1714,11 +1810,13 @@ msgstr "Expression idiomatique"
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx:33
 msgid "If you'd like to create a new account, sign up again below."
-msgstr "Si vous souhaitez créer un nouveau compte, inscrivez-vous à nouveau ci-dessous."
+msgstr "Si vous souhaitez créer un nouveau compte, inscrivez-vous à nouveau "
+"ci-dessous."
 
 #: apps/native/src/features/auth/components/account-removed-view.tsx:25
 msgid "If you'd like to create a new account, you can sign up again."
-msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à nouveau."
+msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à "
+"nouveau."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:311
 msgid "Imperfective"
@@ -1755,8 +1853,10 @@ msgid "Inanimate"
 msgstr "Inanimé"
 
 #: apps/extension/common/components/VideoOverlay.tsx:274
-msgid "Increase offset to so that previous subtitle is at current position. Hold to increase by 100ms."
-msgstr "Augmenter le décalage pour que le sous-titre précédent soit à la position actuelle. Maintenez appuyé pour augmenter de 100 ms."
+msgid "Increase offset to so that previous subtitle is at current position. "
+"Hold to increase by 100ms."
+msgstr "Augmenter le décalage pour que le sous-titre précédent soit à la "
+"position actuelle. Maintenez appuyé pour augmenter de 100 ms."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:368
 #: apps/extension/common/components/VideoOverlay.tsx:283
@@ -1776,8 +1876,10 @@ msgid "Initializing..."
 msgstr "Initialisation..."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:62
-msgid "Install the Flicktionary extension and pin it to your browser toolbar for easy access."
-msgstr "Installez l'extension Flicktionary et épinglez-la à la barre d'outils de votre navigateur pour un accès facile."
+msgid "Install the Flicktionary extension and pin it to your browser toolbar "
+"for easy access."
+msgstr "Installez l'extension Flicktionary et épinglez-la à la barre d'outils "
+"de votre navigateur pour un accès facile."
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx:27
 msgid "Intermediate — handle most travel and everyday topics."
@@ -1881,8 +1983,10 @@ msgid "Layout"
 msgstr "Layout"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:23
-msgid "Learn a language from the videos you already watch and the articles you already read."
-msgstr "Apprenez une langue grâce aux vidéos que vous regardez déjà et aux articles que vous lisez déjà."
+msgid "Learn a language from the videos you already watch and the articles you "
+"already read."
+msgstr "Apprenez une langue grâce aux vidéos que vous regardez déjà et aux "
+"articles que vous lisez déjà."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:153
 msgid "Learn new"
@@ -1979,7 +2083,8 @@ msgstr "Recherche"
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:98
 msgid "Make sure the extension is installed and try again from its popup."
-msgstr "Assurez-vous que l'extension est installée et réessayez depuis sa popup."
+msgstr "Assurez-vous que l'extension est installée et réessayez depuis sa "
+"popup."
 
 #: apps/native/src/features/profile/components/profile-view.tsx:122
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:104
@@ -2035,8 +2140,15 @@ msgid "More options"
 msgstr "Plus d'options"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:174
-msgid "Most playback actions have editable keyboard shortcuts — seeking by subtitle, adjusting subtitle offset, toggling subtitles, changing playback rate, and more. Check the Keyboard Shortcuts tab in the settings."
-msgstr "La plupart des actions de lecture disposent de raccourcis clavier modifiables — navigation par sous-titre, ajustement du décalage des sous-titres, activation/désactivation des sous-titres, changement de la vitesse de lecture, et plus encore. Consultez l'onglet Raccourcis clavier dans les paramètres."
+msgid "Most playback actions have editable keyboard shortcuts — seeking by "
+"subtitle, adjusting subtitle offset, toggling subtitles, changing "
+"playback rate, and more. Check the Keyboard Shortcuts tab in the "
+"settings."
+msgstr "La plupart des actions de lecture disposent de raccourcis clavier "
+"modifiables — navigation par sous-titre, ajustement du décalage des "
+"sous-titres, activation/désactivation des sous-titres, changement de la "
+"vitesse de lecture, et plus encore. Consultez l'onglet Raccourcis "
+"clavier dans les paramètres."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:394
 msgid "Move bottom subtitles down"
@@ -2119,8 +2231,10 @@ msgid "New terms"
 msgstr "Nouveaux termes"
 
 #: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
-msgid "New terms are capped per day. Follow-up sessions use up to this many review terms."
-msgstr "Les nouveaux termes sont limités par jour. Les sessions de suivi utilisent jusqu'à ce nombre de termes de révision."
+msgid "New terms are capped per day. Follow-up sessions use up to this many "
+"review terms."
+msgstr "Les nouveaux termes sont limités par jour. Les sessions de suivi "
+"utilisent jusqu'à ce nombre de termes de révision."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:220
 msgid "New today"
@@ -2150,8 +2264,10 @@ msgid "No active tab."
 msgstr "Aucun onglet actif."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:213
-msgid "No cards yet. Select some highlights in the source text to generate new cards."
-msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte source pour générer de nouvelles cartes."
+msgid "No cards yet. Select some highlights in the source text to generate new "
+"cards."
+msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte "
+"source pour générer de nouvelles cartes."
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx:22
 msgid "No highlights yet."
@@ -2168,7 +2284,8 @@ msgstr "Aucun résultat."
 
 #: apps/web/src/features/practice/components/reading-history-view.tsx:72
 msgid "No past texts yet. Read some practice texts and they'll show up here."
-msgstr "Aucun texte précédent pour le moment. Lisez des textes d'exercice et ils apparaîtront ici."
+msgstr "Aucun texte précédent pour le moment. Lisez des textes d'exercice et "
+"ils apparaîtront ici."
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:71
 msgid "No sessions in this filter."
@@ -2179,8 +2296,10 @@ msgid "No sessions yet. Start one to begin."
 msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:53
-msgid "No target languages yet. Preferences are set the first time you start a session in a new language."
-msgstr "Aucune langue cible pour l'instant. Les préférences sont définies la première fois que vous démarrez une session dans une nouvelle langue."
+msgid "No target languages yet. Preferences are set the first time you start a "
+"session in a new language."
+msgstr "Aucune langue cible pour l'instant. Les préférences sont définies la "
+"première fois que vous démarrez une session dans une nouvelle langue."
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:171
 msgid "No terms are due right now."
@@ -2192,7 +2311,8 @@ msgstr "Aucun terme n'est prêt pour le moment."
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:65
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
-msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un fichier .srt à la place."
+msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un "
+"fichier .srt à la place."
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:102
 msgid "No translation available"
@@ -2273,12 +2393,26 @@ msgid "OK"
 msgstr "OK"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:131
-msgid "On any non-video page, open the extension popup and choose <0>Import this article</0>. Flicktionary extracts the article text and creates a reading session in the web app. To import only part of a page, select the text first."
-msgstr "Sur n'importe quelle page non-vidéo, ouvrez le popup de l'extension et choisissez <0>Importer cet article</0>. Flicktionary extrait le texte de l'article et crée une session de lecture dans l'application web. Pour importer seulement une partie d'une page, sélectionnez d'abord le texte."
+msgid "On any non-video page, open the extension popup and choose <0>Import "
+"this article</0>. Flicktionary extracts the article text and creates a "
+"reading session in the web app. To import only part of a page, select "
+"the text first."
+msgstr "Sur n'importe quelle page non-vidéo, ouvrez le popup de l'extension et "
+"choisissez <0>Importer cet article</0>. Flicktionary extrait le texte "
+"de l'article et crée une session de lecture dans l'application web. "
+"Pour importer seulement une partie d'une page, sélectionnez d'abord le "
+"texte."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:86
-msgid "Open a video on a supported platform. The first time, a dialog asks which subtitle track to load; after that, your last-used language loads automatically. You can also load your own subtitle file by drag-and-dropping it onto the video."
-msgstr "Ouvrez une vidéo sur une plateforme prise en charge. La première fois, une boîte de dialogue demande quelle piste de sous-titres charger ; après cela, votre dernière langue utilisée se charge automatiquement. Vous pouvez également charger votre propre fichier de sous-titres en le glissant-déposant sur la vidéo."
+msgid "Open a video on a supported platform. The first time, a dialog asks "
+"which subtitle track to load; after that, your last-used language loads "
+"automatically. You can also load your own subtitle file by "
+"drag-and-dropping it onto the video."
+msgstr "Ouvrez une vidéo sur une plateforme prise en charge. La première fois, "
+"une boîte de dialogue demande quelle piste de sous-titres charger ; "
+"après cela, votre dernière langue utilisée se charge automatiquement. "
+"Vous pouvez également charger votre propre fichier de sous-titres en le "
+"glissant-déposant sur la vidéo."
 
 #: apps/extension/src/ui/components/PopupHeader.tsx:17
 msgid "Open App"
@@ -2307,12 +2441,17 @@ msgid "Open source"
 msgstr "Ouvrir la source"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:68
-msgid "Open the extension popup and choose <0>Sign in with Flicktionary</0>. A pairing page opens in the web app and connects the extension to your account automatically."
-msgstr "Ouvrez le popup de l'extension et choisissez <0>Se connecter avec Flicktionary</0>. Une page d'appairage s'ouvre dans l'application web et connecte automatiquement l'extension à votre compte."
+msgid "Open the extension popup and choose <0>Sign in with Flicktionary</0>. A "
+"pairing page opens in the web app and connects the extension to your "
+"account automatically."
+msgstr "Ouvrez le popup de l'extension et choisissez <0>Se connecter avec "
+"Flicktionary</0>. Une page d'appairage s'ouvre dans l'application web "
+"et connecte automatiquement l'extension à votre compte."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:185
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
-msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une exploration complète."
+msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une "
+"exploration complète."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:370
 msgid "Opening triage"
@@ -2340,7 +2479,8 @@ msgstr "Note optionnelle pour le LLM (qu'est-ce qui vous confond précisément ?
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:23
 msgid "Originally verified against Wiktionary on {groundedDate}, then edited"
-msgstr "Initialement vérifié par rapport au Wiktionnaire le {groundedDate}, puis modifié"
+msgstr "Initialement vérifié par rapport au Wiktionnaire le {groundedDate}, "
+"puis modifié"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:269
 msgid "Other"
@@ -2446,8 +2586,10 @@ msgid "Pick a subtitle track"
 msgstr "Choisir une piste de sous-titres"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:108
-msgid "Pick the language of the movie you'll watch. Subtitles and explanations will be in this language."
-msgstr "Choisissez la langue du film que vous allez regarder. Les sous-titres et les explications seront dans cette langue."
+msgid "Pick the language of the movie you'll watch. Subtitles and explanations "
+"will be in this language."
+msgstr "Choisissez la langue du film que vous allez regarder. Les sous-titres "
+"et les explications seront dans cette langue."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:71
 msgid "Pick what to create next."
@@ -2479,7 +2621,8 @@ msgstr "Incrément de réglage de la vitesse de lecture"
 
 #: apps/native/src/features/auth/components/login-email-sent-view.tsx:40
 msgid "Please check your inbox and click on the link to continue"
-msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour continuer"
+msgstr "Veuillez vérifier votre boîte de réception et cliquer sur le lien pour "
+"continuer"
 
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx:20
 msgid "Please choose a .srt file."
@@ -2501,7 +2644,8 @@ msgstr "Veuillez gérer votre abonnement via l'App Store ou Google Play."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:64
 msgid "Please manually update the app through your device's app store."
-msgstr "Veuillez mettre à jour manuellement l'application via le magasin d'applications de votre appareil."
+msgstr "Veuillez mettre à jour manuellement l'application via le magasin "
+"d'applications de votre appareil."
 
 #: apps/web/src/features/auth/components/login-email-verify-view.tsx:87
 msgid "Please request a new verification link."
@@ -2565,7 +2709,8 @@ msgstr "Préposition"
 
 #: apps/extension/src/controllers/subtitle-controller.ts:651
 msgid "Press \"{keys}\" to toggle subtitle display"
-msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des sous-titres"
+msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des "
+"sous-titres"
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:300
 #: apps/web/src/features/review/components/focus-view.tsx:254
@@ -2582,12 +2727,16 @@ msgstr "Principal"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:75
 #: apps/web/src/features/practice/components/practice-language-view.tsx:178
-msgid "Process a session and keep some cards. They'll show up here automatically."
-msgstr "Traitez une session et conservez quelques cartes. Elles apparaîtront ici automatiquement."
+msgid "Process a session and keep some cards. They'll show up here "
+"automatically."
+msgstr "Traitez une session et conservez quelques cartes. Elles apparaîtront "
+"ici automatiquement."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-empty-state.tsx:11
-msgid "Process a session and keep some cards. They'll show up here, browsable across every session."
-msgstr "Traitez une session et conservez des cartes. Elles apparaîtront ici, consultables dans toutes les sessions."
+msgid "Process a session and keep some cards. They'll show up here, browsable "
+"across every session."
+msgstr "Traitez une session et conservez des cartes. Elles apparaîtront ici, "
+"consultables dans toutes les sessions."
 
 #: apps/web/src/features/review/components/processing-view.tsx:16
 msgid "Processing"
@@ -2648,8 +2797,12 @@ msgid "Read"
 msgstr "Lire"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:66
-msgid "Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance."
-msgstr "Lisez de courts textes générés qui intègrent votre vocabulaire enregistré. Appuyez sur un terme pour l'évaluer ; les termes non appuyés sont considérés comme reconnus lorsque vous avancez."
+msgid "Read short generated texts that weave in your kept vocabulary. Tap a "
+"term to rate it; terms you don't tap are scored as recognized when you "
+"advance."
+msgstr "Lisez de courts textes générés qui intègrent votre vocabulaire "
+"enregistré. Appuyez sur un terme pour l'évaluer ; les termes non "
+"appuyés sont considérés comme reconnus lorsque vous avancez."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:210
 msgid "Ready to practice"
@@ -2697,8 +2850,10 @@ msgid "Rehab"
 msgstr "Récup"
 
 #: apps/web/src/features/practice/components/strengthen-types.tsx:36
-msgid "Rehab progress: day {days} of 3. A correct answer today still counts — try again with a fresh exercise."
-msgstr "Progrès de réhabilitation : jour {days} sur 3. Une bonne réponse aujourd'hui compte toujours — réessayez avec un nouvel exercice."
+msgid "Rehab progress: day {days} of 3. A correct answer today still counts — "
+"try again with a fresh exercise."
+msgstr "Progrès de réhabilitation : jour {days} sur 3. Une bonne réponse "
+"aujourd'hui compte toujours — réessayez avec un nouvel exercice."
 
 #: apps/web/src/features/review/components/focus-view.tsx:518
 #: apps/web/src/features/review/components/triage-row.tsx:143
@@ -2827,7 +2982,8 @@ msgstr "Enregistrer un terme"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx:59
 msgid "Save a term you heard or saw, no source needed"
-msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source nécessaire"
+msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source "
+"nécessaire"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:656
 msgid "Save note"
@@ -2977,7 +3133,8 @@ msgstr "Sessions"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:64
 msgid "Set your CEFR level and translation behavior for each target language."
-msgstr "Définissez votre niveau CECR et le comportement de traduction pour chaque langue cible."
+msgstr "Définissez votre niveau CECR et le comportement de traduction pour "
+"chaque langue cible."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:127
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:117
@@ -3002,8 +3159,10 @@ msgstr "Paramètres et raccourcis clavier"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
-msgid "Share your feedback or suggest improvements to the founders. We read and reply to every submission!"
-msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous lisons et répondons à chaque message !"
+msgid "Share your feedback or suggest improvements to the founders. We read and "
+"reply to every submission!"
+msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous "
+"lisons et répondons à chaque message !"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:180
 msgid "Short paraphrase in the target language."
@@ -3018,8 +3177,10 @@ msgid "Show answer"
 msgstr "Afficher la réponse"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:103
-msgid "Show existing translations and generate translations for new cards in this language."
-msgstr "Afficher les traductions existantes et générer des traductions pour les nouvelles cartes dans cette langue."
+msgid "Show existing translations and generate translations for new cards in "
+"this language."
+msgstr "Afficher les traductions existantes et générer des traductions pour les "
+"nouvelles cartes dans cette langue."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:560
 msgid "Show notes"
@@ -3076,8 +3237,8 @@ msgstr "Déconnexion réussie"
 msgid "Sign up"
 msgstr "S'inscrire"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:59
 #. placeholder {0}: auth.email
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:59
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
 
@@ -3199,7 +3360,8 @@ msgstr "S'abonner pour accéder aux fonctionnalités premium"
 
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx:37
 msgid "Subscribe to unlock premium features and get the most out of the app."
-msgstr "Abonnez-vous pour débloquer les fonctionnalités premium et tirer le meilleur parti de l'application."
+msgstr "Abonnez-vous pour débloquer les fonctionnalités premium et tirer le "
+"meilleur parti de l'application."
 
 #: apps/native/src/features/billing/hooks/use-paywall.ts:37
 #: apps/native/src/features/billing/hooks/use-paywall.ts:45
@@ -3296,8 +3458,8 @@ msgstr "Taille des sous-titres"
 msgid "Subtitle Track"
 msgstr "Piste des sous-titres"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:186
 #. placeholder {0}: i + 1
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:186
 msgid "Subtitle Track {0}"
 msgstr "Piste des sous-titres {0}"
 
@@ -3308,7 +3470,8 @@ msgstr "Subtitles"
 
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:290
 msgid "Subtitles must be loaded before you can start mining."
-msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer l’extraction."
+msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer "
+"l’extraction."
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:409
 msgid "Subtitles Width"
@@ -3400,12 +3563,26 @@ msgid "The extension could not complete pairing."
 msgstr "L'extension n'a pas pu terminer l'appariement."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:42
-msgid "The extension overlays interactive subtitles on streaming video (YouTube, Netflix, and many other platforms). Hover any word for an instant definition, and save the words and phrases you want to learn. It can also import articles from any web page."
-msgstr "L'extension superpose des sous-titres interactifs sur les vidéos en streaming (YouTube, Netflix et de nombreuses autres plateformes). Survolez n'importe quel mot pour une définition instantanée et enregistrez les mots et expressions que vous souhaitez apprendre. Elle peut également importer des articles depuis n'importe quelle page web."
+msgid "The extension overlays interactive subtitles on streaming video "
+"(YouTube, Netflix, and many other platforms). Hover any word for an "
+"instant definition, and save the words and phrases you want to learn. It "
+"can also import articles from any web page."
+msgstr "L'extension superpose des sous-titres interactifs sur les vidéos en "
+"streaming (YouTube, Netflix et de nombreuses autres plateformes). "
+"Survolez n'importe quel mot pour une définition instantanée et "
+"enregistrez les mots et expressions que vous souhaitez apprendre. Elle "
+"peut également importer des articles depuis n'importe quelle page web."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:167
-msgid "The extension popup contains the full settings: subtitle appearance (with live preview), keyboard shortcuts, streaming-video behavior, and more. You can keep several settings profiles and switch between them from the popup."
-msgstr "La fenêtre contextuelle de l'extension contient tous les paramètres : apparence des sous-titres (avec aperçu en direct), raccourcis clavier, comportement des vidéos en streaming, et plus encore. Vous pouvez conserver plusieurs profils de paramètres et basculer entre eux depuis la fenêtre contextuelle."
+msgid "The extension popup contains the full settings: subtitle appearance "
+"(with live preview), keyboard shortcuts, streaming-video behavior, and "
+"more. You can keep several settings profiles and switch between them "
+"from the popup."
+msgstr "La fenêtre contextuelle de l'extension contient tous les paramètres : "
+"apparence des sous-titres (avec aperçu en direct), raccourcis clavier, "
+"comportement des vidéos en streaming, et plus encore. Vous pouvez "
+"conserver plusieurs profils de paramètres et basculer entre eux depuis "
+"la fenêtre contextuelle."
 
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx:25
 msgid "The file appears to be empty."
@@ -3418,7 +3595,8 @@ msgstr "Thème"
 #: apps/native/src/features/auth/api/authentication-hooks.ts:15
 #: apps/web/src/features/auth/api/authentication-hooks.ts:16
 msgid "There was an error sending the verification email. Please try again."
-msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. Veuillez réessayer."
+msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. "
+"Veuillez réessayer."
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:91
 msgid "There was an error. Please contact support."
@@ -3434,29 +3612,44 @@ msgstr "Réflexion en cours…"
 
 #: apps/native/src/features/removals/components/delete-account-sheet-content.tsx:58
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:43
-msgid "This action cannot be undone. This will permanently delete your account and related data from our servers."
-msgstr "Cette action est irréversible. Cela supprimera définitivement votre compte et les données associées de nos serveurs."
+msgid "This action cannot be undone. This will permanently delete your account "
+"and related data from our servers."
+msgstr "Cette action est irréversible. Cela supprimera définitivement votre "
+"compte et les données associées de nos serveurs."
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:37
 #: apps/web/src/features/sessions/components/cefr-step.tsx:41
 msgid "This calibrates the difficult-words pass and the depth of explanations."
-msgstr "Cela calibre le passage des mots difficiles et la profondeur des explications."
+msgstr "Cela calibre le passage des mots difficiles et la profondeur des "
+"explications."
 
 #: apps/web/src/features/review/components/focus-view.tsx:366
-msgid "This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it."
-msgstr "Cette carte semble incomplète. Retraitez la session pour remplir ses données de base, puis revenez pour l'enrichir."
+msgid "This card looks incomplete. Re-process the session to populate its basic "
+"data, then come back to enrich it."
+msgstr "Cette carte semble incomplète. Retraitez la session pour remplir ses "
+"données de base, puis revenez pour l'enrichir."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:45
-msgid "This hides the session from your list. Your kept vocabulary stays in your collection. The source text is retained so you can trace your kept words back to where you learned them. To erase everything, delete your account."
-msgstr "Cela masque la session de votre liste. Votre vocabulaire conservé reste dans votre collection. Le texte source est conservé afin que vous puissiez retracer vos mots conservés jusqu'à l'endroit où vous les avez appris. Pour tout effacer, supprimez votre compte."
+msgid "This hides the session from your list. Your kept vocabulary stays in "
+"your collection. The source text is retained so you can trace your kept "
+"words back to where you learned them. To erase everything, delete your "
+"account."
+msgstr "Cela masque la session de votre liste. Votre vocabulaire conservé reste "
+"dans votre collection. Le texte source est conservé afin que vous "
+"puissiez retracer vos mots conservés jusqu'à l'endroit où vous les avez "
+"appris. Pour tout effacer, supprimez votre compte."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx:38
-msgid "This screen is only accessible to subscribed users. You can showcase premium features here."
-msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous pouvez présenter les fonctionnalités premium ici."
+msgid "This screen is only accessible to subscribed users. You can showcase "
+"premium features here."
+msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous "
+"pouvez présenter les fonctionnalités premium ici."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:176
-msgid "This term is removed from your vocabulary. Restore it to keep practicing."
-msgstr "Ce terme a été supprimé de votre vocabulaire. Restaurez-le pour continuer à pratiquer."
+msgid "This term is removed from your vocabulary. Restore it to keep "
+"practicing."
+msgstr "Ce terme a été supprimé de votre vocabulaire. Restaurez-le pour "
+"continuer à pratiquer."
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:98
 msgid "Title"
@@ -3468,8 +3661,10 @@ msgstr "La recherche TMDB a échoué"
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:41
 #: apps/web/src/features/billing/components/pricing-view.tsx:40
-msgid "To change your current plan type, please click on \"Manage Subscription\"."
-msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer l'Abonnement\"."
+msgid "To change your current plan type, please click on \"Manage "
+"Subscription\"."
+msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer "
+"l'Abonnement\"."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:54
 msgid "Today"
@@ -3529,8 +3724,10 @@ msgid "Too many requests. Please try again later."
 msgstr "Trop de requêtes. Veuillez réessayer plus tard."
 
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:28
-msgid "Too many requests. Please use the app in only one tab and device at a time and try again later."
-msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet et appareil à la fois et réessayer."
+msgid "Too many requests. Please use the app in only one tab and device at a "
+"time and try again later."
+msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet "
+"et appareil à la fois et réessayer."
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:383
 msgid "Top"
@@ -3540,8 +3737,8 @@ msgstr "Haut"
 msgid "Total"
 msgstr "Total"
 
-#: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:29
 #. placeholder {0}: i + 1
+#: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:29
 msgid "Track {0}"
 msgstr "Piste {0}"
 
@@ -3565,7 +3762,8 @@ msgstr "Traduction dans votre langue maternelle."
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:182
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:199
 msgid "Translation lookup and save action for the selected text."
-msgstr "Recherche de traduction et action de sauvegarde pour le texte sélectionné."
+msgstr "Recherche de traduction et action de sauvegarde pour le texte "
+"sélectionné."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:172
 msgid "Triage"
@@ -3576,8 +3774,11 @@ msgid "Troubleshooting"
 msgstr "Dépannage"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:68
-msgid "Try adding a movie or pasting a piece of text in any language to get started. You can pick the target language each time you add new content."
-msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle langue pour commencer. Vous pouvez choisir la langue cible à chaque fois que vous ajoutez du nouveau contenu."
+msgid "Try adding a movie or pasting a piece of text in any language to get "
+"started. You can pick the target language each time you add new content."
+msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle "
+"langue pour commencer. Vous pouvez choisir la langue cible à chaque "
+"fois que vous ajoutez du nouveau contenu."
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:91
 msgid "Type the missing word…"
@@ -3589,8 +3790,11 @@ msgid "UI"
 msgstr "UI"
 
 #: apps/web/src/features/billing/api/portal-session-hooks.ts:14
-msgid "Unable to access your billing section at the moment. Please try again later or contact support if the issue persists."
-msgstr "Impossible d'accéder à votre section de facturation en ce moment. Veuillez réessayer plus tard ou contacter le support si le problème persiste."
+msgid "Unable to access your billing section at the moment. Please try again "
+"later or contact support if the issue persists."
+msgstr "Impossible d'accéder à votre section de facturation en ce moment. "
+"Veuillez réessayer plus tard ou contacter le support si le problème "
+"persiste."
 
 #: apps/native/src/components/gates/force-update-gate.tsx:64
 msgid "Unable to open app store"
@@ -3598,14 +3802,15 @@ msgstr "Impossible d'ouvrir le magasin d'applications"
 
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 msgid "Unable to open app store. Please manually update the app."
-msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour manuellement l'application."
+msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour "
+"manuellement l'application."
 
-#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:312
-#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:316
 #. placeholder {0}: 1
 #. placeholder {0}: 2
 #. placeholder {0}: 3
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:308
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:312
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:316
 msgid "Unblur subtitle track {0} in asbplayer"
 msgstr "Retirer le flou de la piste de sous-titres {0} dans asbplayer"
 
@@ -3662,7 +3867,8 @@ msgstr "Téléchargement…"
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx:29
 msgid "Upper intermediate — fluent on familiar topics, some abstract ideas."
-msgstr "Intermédiaire supérieur — courant sur des sujets familiers, quelques idées abstraites."
+msgstr "Intermédiaire supérieur — courant sur des sujets familiers, quelques "
+"idées abstraites."
 
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx:83
 msgid "Use “{term}” in a sentence"
@@ -3678,7 +3884,8 @@ msgstr "Utiliser la suggestion"
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
-msgstr "Utilisez ces options pour tester le rapport d'erreurs Sentry dans votre environnement."
+msgstr "Utilisez ces options pour tester le rapport d'erreurs Sentry dans votre "
+"environnement."
 
 #: apps/web/src/features/settings/components/native-language-selector.tsx:18
 msgid "Used as your L1 in the LLM prompts."
@@ -3764,20 +3971,25 @@ msgstr "Regarder des vidéos"
 
 #: apps/web/src/features/review/components/per-card-chat.tsx:222
 msgid "We couldn't prepare this answer. Save the note again to retry."
-msgstr "Nous n'avons pas pu préparer cette réponse. Enregistrez à nouveau la note pour réessayer."
+msgstr "Nous n'avons pas pu préparer cette réponse. Enregistrez à nouveau la "
+"note pour réessayer."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:97
 msgid "We did not hear back from a Flicktionary extension on this device."
-msgstr "Nous n'avons pas reçu de réponse de l'extension Flicktionary sur cet appareil."
+msgstr "Nous n'avons pas reçu de réponse de l'extension Flicktionary sur cet "
+"appareil."
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:128
-msgid "We support .srt subtitle files. The language is detected automatically from the file contents."
-msgstr "Nous prenons en charge les fichiers de sous-titres .srt. La langue est détectée automatiquement à partir du contenu du fichier."
+msgid "We support .srt subtitle files. The language is detected automatically "
+"from the file contents."
+msgstr "Nous prenons en charge les fichiers de sous-titres .srt. La langue est "
+"détectée automatiquement à partir du contenu du fichier."
 
 #: apps/native/src/features/auth/components/account-removed-view.tsx:19
 #: apps/web/src/features/auth/components/account-removed-view.tsx:32
 msgid "We're sorry to see you go. Your account has been successfully removed."
-msgstr "Nous sommes désolés de vous voir partir. Votre compte a été supprimé avec succès."
+msgstr "Nous sommes désolés de vous voir partir. Votre compte a été supprimé "
+"avec succès."
 
 #: apps/native/src/features/auth/components/login-email-sent-view.tsx:37
 msgid "We've sent a verification email to:"
@@ -3808,16 +4020,26 @@ msgid "What language are you studying?"
 msgstr "Quelle langue étudiez-vous ?"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:48
-msgid "What language do you speak natively? This is the language Flicktionary will translate words and phrases into."
-msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle Flicktionary traduira les mots et les phrases."
+msgid "What language do you speak natively? This is the language Flicktionary "
+"will translate words and phrases into."
+msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle "
+"Flicktionary traduira les mots et les phrases."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:191
 msgid "What's the etymology or origin of this term?"
 msgstr "Quelle est l'étymologie ou l'origine de ce terme ?"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:93
-msgid "When you pause the video, a <0>controls overlay</0> appears: toggle subtitles, switch playback modes, adjust subtitle timing, and change the playback rate. Scroll the rightmost control to switch between subtitle navigation, subtitle offset, and playback rate."
-msgstr "Lorsque vous mettez la vidéo en pause, une <0>superposition de contrôles</0> apparaît : activez ou désactivez les sous-titres, changez de mode de lecture, ajustez le timing des sous-titres et modifiez la vitesse de lecture. Faites défiler le contrôle le plus à droite pour basculer entre la navigation par sous-titres, le décalage des sous-titres et la vitesse de lecture."
+msgid "When you pause the video, a <0>controls overlay</0> appears: toggle "
+"subtitles, switch playback modes, adjust subtitle timing, and change the "
+"playback rate. Scroll the rightmost control to switch between subtitle "
+"navigation, subtitle offset, and playback rate."
+msgstr "Lorsque vous mettez la vidéo en pause, une <0>superposition de "
+"contrôles</0> apparaît : activez ou désactivez les sous-titres, changez "
+"de mode de lecture, ajustez le timing des sous-titres et modifiez la "
+"vitesse de lecture. Faites défiler le contrôle le plus à droite pour "
+"basculer entre la navigation par sous-titres, le décalage des "
+"sous-titres et la vitesse de lecture."
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
@@ -3857,8 +4079,10 @@ msgstr "Annuel"
 
 #: apps/native/src/features/profile/components/profile-view.tsx:105
 #: apps/web/src/features/more/components/account-page.tsx:41
-msgid "You are a special user with free access. You have no active subscription."
-msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez pas d'abonnement actif."
+msgid "You are a special user with free access. You have no active "
+"subscription."
+msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez pas "
+"d'abonnement actif."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx:26
 msgid "You are now subscribed to Premium!"
@@ -3869,8 +4093,10 @@ msgid "You can try again in {countdown} seconds"
 msgstr "Vous pourrez réessayer dans {countdown} secondes"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:75
-msgid "You can watch videos with subtitles without signing in — but saving words requires a paired account."
-msgstr "Vous pouvez regarder des vidéos avec sous-titres sans vous connecter — mais enregistrer des mots nécessite un compte associé."
+msgid "You can watch videos with subtitles without signing in — but saving "
+"words requires a paired account."
+msgstr "Vous pouvez regarder des vidéos avec sous-titres sans vous connecter — "
+"mais enregistrer des mots nécessite un compte associé."
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
 #: apps/web/src/features/billing/components/pricing-view.tsx:38
@@ -3887,8 +4113,10 @@ msgstr "Vous êtes prêt"
 
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:309
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:334
-msgid "You've reviewed every due term for this language. Come back later when more are ready."
-msgstr "Vous avez révisé tous les termes dus pour cette langue. Revenez plus tard lorsque d'autres seront prêts."
+msgid "You've reviewed every due term for this language. Come back later when "
+"more are ready."
+msgstr "Vous avez révisé tous les termes dus pour cette langue. Revenez plus "
+"tard lorsque d'autres seront prêts."
 
 #: apps/native/src/features/removals/api/removals-hooks.ts:13
 #: apps/web/src/features/removals/api/removals-hooks.ts:16
