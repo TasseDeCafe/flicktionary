@@ -111,7 +111,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
   const [hasSeenFtue, setHasSeenFtue] = useState<boolean>()
   const [hideRememberTrackPreferenceToggle, setHideRememberTrackPreferenceToggle] = useState<boolean>()
   const [isYouTube, setIsYouTube] = useState<boolean>(false)
-  const [supadataApiKeyConfigured, setSupadataApiKeyConfigured] = useState<boolean>(false)
+  const [canGenerateTranscripts, setCanGenerateTranscripts] = useState<boolean>(false)
   const [isGeneratingSupadata, setIsGeneratingSupadata] = useState<boolean>(false)
 
   // Apply each partial model exactly as the bridge listener did in VideoDataSyncUi.
@@ -171,8 +171,8 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
       if (model.isYouTube !== undefined) {
         setIsYouTube(model.isYouTube)
       }
-      if (model.supadataApiKeyConfigured !== undefined) {
-        setSupadataApiKeyConfigured(model.supadataApiKeyConfigured)
+      if (model.canGenerateTranscripts !== undefined) {
+        setCanGenerateTranscripts(model.canGenerateTranscripts)
       }
       if (model.isGeneratingSupadata !== undefined) {
         setIsGeneratingSupadata(model.isGeneratingSupadata)
@@ -279,7 +279,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
         hasSeenFtue={hasSeenFtue}
         hideRememberTrackPreferenceToggle={hideRememberTrackPreferenceToggle}
         isYouTube={isYouTube}
-        supadataApiKeyConfigured={supadataApiKeyConfigured}
+        canGenerateTranscripts={canGenerateTranscripts}
         isGeneratingSupadata={isGeneratingSupadata}
         onCancel={handleCancel}
         onOpenFile={handleOpenFile}

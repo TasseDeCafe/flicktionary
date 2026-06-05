@@ -16,6 +16,7 @@ interface Props {
   commands: PopupCommands
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   onOpenApp: () => void
+  onOpenUserGuide: () => void
   onOpenExtensionShortcuts: () => void
   profiles: Profile[]
   activeProfile?: string
@@ -28,6 +29,7 @@ const Popup = ({
   settings,
   commands,
   onOpenApp,
+  onOpenUserGuide,
   onSettingsChanged,
   onOpenExtensionShortcuts,
   ...profilesContext
@@ -44,7 +46,7 @@ const Popup = ({
 
   return (
     <div className='flex flex-col gap-3 p-3'>
-      <PopupHeader onOpenApp={onOpenApp} />
+      <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
       <FlicktionaryPairSection />
       <div className='h-[390px]'>
         <SettingsForm
@@ -68,6 +70,7 @@ const Popup = ({
           localFontFamilies={localFontFamilies}
           supportedLanguages={supportedLanguages}
           adminTab={isTestUser ? <AdminSettingsTab /> : undefined}
+          showSubtitleGeneration={isTestUser}
           onSettingsChanged={onSettingsChanged}
           onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
           onUnlockLocalFonts={handleUnlockLocalFonts}

@@ -15,13 +15,14 @@ interface Props {
   settings: AsbplayerSettings
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   onOpenApp: () => void
+  onOpenUserGuide: () => void
 }
 
 // Simplified popup shown on non-video pages: sign-in + article import, plus the
 // two settings that still apply off-platform (UI theme/language) and the About
 // section. Deliberately separate from the full video Popup to keep the two
 // surfaces from entangling.
-const ImportPopup = ({ settings, onSettingsChanged, onOpenApp }: Props) => {
+const ImportPopup = ({ settings, onSettingsChanged, onOpenApp, onOpenUserGuide }: Props) => {
   const { t } = useLingui()
   const { supportedLanguages } = useSupportedLanguages()
 
@@ -42,7 +43,7 @@ const ImportPopup = ({ settings, onSettingsChanged, onOpenApp }: Props) => {
 
   return (
     <div className='flex flex-col gap-3 p-3'>
-      <PopupHeader onOpenApp={onOpenApp} />
+      <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
       <FlicktionaryPairSection />
       <FlicktionaryImportSection />
       <Tabs defaultValue='misc' orientation='vertical' className='flex-row gap-1'>

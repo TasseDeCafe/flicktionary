@@ -1,6 +1,5 @@
 import pagesConfig from '../pages.json'
 import type { PublicPath } from 'wxt/browser'
-import { isOnTutorialPage } from './tutorial'
 import { ExtensionSettingsStorage } from './extension-settings-storage'
 import { SettingsProvider } from '@asbplayer-fork/common/settings/settings-provider'
 import { SettingsFormPageConfig, PageSettings } from '@asbplayer-fork/common/settings'
@@ -114,8 +113,7 @@ function matchPageConfig(pages: PageConfig[], host: string): PageConfig | undefi
 // Host-level check usable outside content scripts (popup, background service
 // worker) where `window.location` is the extension's own URL. Returns true when
 // the given page URL belongs to a known streaming platform — including any hosts
-// the user added via settings overrides. Does NOT consider the tutorial page (it
-// isn't a real video platform); callers wanting that should use currentPageDelegate.
+// the user added via settings overrides.
 export async function isVideoPlatformUrl(urlString: string | undefined): Promise<boolean> {
   if (!urlString) {
     return false
@@ -138,20 +136,6 @@ export async function currentPageDelegate(): Promise<PageDelegate | undefined> {
   const matched = matchPageConfig(mergedPageConfig.pages, urlObj.host)
   if (matched !== undefined) {
     return new PageDelegate(matched, urlObj)
-  }
-
-  if (isOnTutorialPage()) {
-    return new PageDelegate(
-      {
-        host: window.location.host,
-        pageScript: 'asbplayer-tutorial-page.js',
-        syncAllowedAtPath: '.*',
-        autoSync: {
-          enabled: false,
-        },
-      },
-      urlObj
-    )
   }
 
   return undefined

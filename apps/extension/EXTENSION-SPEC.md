@@ -172,11 +172,10 @@ cleanup.
     HBO Max, Stremio, CIJapanese. Each answers `asbplayer-get-synced-data` with
     the platform's subtitle track list. Adding a platform = one page script +
     one `pages.json` row (donor-harvestable).
-  - `popup-ui`, `options`, `ftue-ui` — extension pages (popup, settings, tutorial).
+  - `popup-ui`, `options`, `ftue-ui` — extension pages (popup, settings, welcome).
   - `flicktionary-pair.content.ts` — URL-restricted to the web app's
     `/extension-pair` route; forwards the pairing payload to the background.
   - `flicktionary-import.content.ts` — injected on demand for article import.
-  - `asbplayer-tutorial-page.ts` — serves the bundled tutorial video/SRT to the FTUE.
 
 ## Feature spec
 
@@ -205,6 +204,11 @@ language auto-loads without a dialog. YouTube additionally offers:
   `supadata-generate-handler` POSTs the video URL, gets SRT back), cached
   per-video-id in IndexedDB (`asbplayer-transcript-cache` — the extension's only
   IndexedDB use; cache management lives in the Misc settings tab).
+  **Test-user only**: the transcript server scrapes YouTube with the
+  developer's own credentials (yt-dlp), so non-test users get neither the
+  Generate button (`canGenerateTranscripts` in the dialog model) nor the
+  Misc-tab Subtitle Generation section, and the background handler refuses
+  the request outright (the authoritative gate).
 
 Subtitle files can also be drag-and-dropped or loaded via the context menu /
 `Ctrl+Shift+F` video-select. All upstream playback machinery is kept: offset
@@ -272,11 +276,11 @@ despite its upstream "mobile overlay" ancestry.
 
 Two variants, switched by the active tab's URL (`PopupUi.tsx`):
 
-- **On a supported video page:** OPEN APP header (→ Flicktionary web app),
-  pairing section, the full embedded settings form, and the settings-profile
-  switcher.
-- **On any other page:** OPEN APP, pairing section, **"Import this article"**,
-  and slim Misc (theme/language) + About tabs.
+- **On a supported video page:** OPEN APP + USER GUIDE header (→ Flicktionary
+  web app / its public `/user-guide` page), pairing section, the full embedded
+  settings form, and the settings-profile switcher.
+- **On any other page:** the same header, pairing section, **"Import this
+  article"**, and slim Misc (theme/language) + About tabs.
 
 On video pages, paired accounts on the test-user allow-list also get an
 **Admin** tab (`AdminSettingsTab`, `SettingsForm`'s `adminTab` prop): debugging
@@ -297,6 +301,8 @@ the background calls `studySessions.importText({title, text, sourceUrl})`. The
 backend detects language, segments, and creates a session; success opens it in
 a new tab. A selection-based path imports highlighted text as a paste (no
 sourceUrl). Errors show inline in the popup with retry, plus an on-page toast.
+Both paths check pairing up front — a signed-out user gets a sign-in prompt
+before any extraction is attempted.
 
 ### Settings, profiles & options page
 
@@ -304,7 +310,8 @@ The options page and the popup share `SettingsForm`. Tabs: subtitle appearance
 (with live preview), keyboard shortcuts, streaming-video behavior (display
 subtitles, overlay, auto-sync, condensed-playback interval, per-site page
 settings), Misc (theme, language, playback steps, pause-on-hover mode, subtitle
-regex filter, transcript-server config, transcript-cache management), About.
+regex filter, and — test-user only — transcript-server config +
+transcript-cache management), About.
 
 - **Profiles** — full settings profiles, switchable from the popup; stored with
   settings in `chrome.storage.local` (`ExtensionSettingsStorage`, profiles under
@@ -334,10 +341,12 @@ position nudges. All editable in the shortcuts tab. The mining-era binds
 
 ### FTUE
 
-First install opens the tutorial page: a bundled video + SRT
-(`asbplayer-tutorial-page.ts` answers the synced-data event like a platform page
-script), walking through pin-the-extension → load subtitles (advances when a
-track actually loads) → the controls overlay → the overlay's scroll control.
+First install opens the welcome page (`ftue-ui.html`): a static greeting that
+links to the web app's public `/user-guide` page. The upstream interactive
+tutorial (bundled video + SRT, `asbplayer-tutorial-page.ts`, scroll-triggered
+walkthrough bubbles) was removed 2026-06 — the user guide replaced it. The
+`ftueHasSeenSubtitleTrackSelector` first-run hint in the track-selector dialog
+is unrelated and stays.
 
 ## Backend API surface (preserve or stub)
 

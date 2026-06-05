@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UserGuideRouteImport } from './routes/user-guide'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as FromLandingRouteImport } from './routes/from-landing'
@@ -46,6 +47,11 @@ import { Route as AuthenticatedAppPracticeHistoryTargetLanguageRouteImport } fro
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
 import { Route as AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/$cardId'
 
+const UserGuideRoute = UserGuideRouteImport.update({
+  id: '/user-guide',
+  path: '/user-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
   id: '/terms-of-service',
   path: '/terms-of-service',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/user-guide': typeof UserGuideRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/user-guide': typeof UserGuideRoute
   '/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/extension-pair': typeof AuthenticatedExtensionPairRoute
   '/account/removed': typeof AccountRemovedRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/from-landing': typeof FromLandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/user-guide': typeof UserGuideRoute
   '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/admin-settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/extension-pair': typeof AuthenticatedExtensionPairRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/from-landing'
     | '/privacy-policy'
     | '/terms-of-service'
+    | '/user-guide'
     | '/admin-settings'
     | '/extension-pair'
     | '/account/removed'
@@ -404,6 +414,7 @@ export interface FileRouteTypes {
     | '/from-landing'
     | '/privacy-policy'
     | '/terms-of-service'
+    | '/user-guide'
     | '/admin-settings'
     | '/extension-pair'
     | '/account/removed'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/from-landing'
     | '/privacy-policy'
     | '/terms-of-service'
+    | '/user-guide'
     | '/_authenticated/_app'
     | '/_authenticated/admin-settings'
     | '/_authenticated/extension-pair'
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   FromLandingRoute: typeof FromLandingRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
+  UserGuideRoute: typeof UserGuideRoute
   AccountRemovedRoute: typeof AccountRemovedRoute
   LoginIndexRoute: typeof LoginIndexRoute
   LoginEmailSentRoute: typeof LoginEmailSentRoute
@@ -489,6 +502,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/user-guide': {
+      id: '/user-guide'
+      path: '/user-guide'
+      fullPath: '/user-guide'
+      preLoaderRoute: typeof UserGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms-of-service': {
       id: '/terms-of-service'
       path: '/terms-of-service'
@@ -833,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   FromLandingRoute: FromLandingRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,
+  UserGuideRoute: UserGuideRoute,
   AccountRemovedRoute: AccountRemovedRoute,
   LoginIndexRoute: LoginIndexRoute,
   LoginEmailSentRoute: LoginEmailSentRoute,

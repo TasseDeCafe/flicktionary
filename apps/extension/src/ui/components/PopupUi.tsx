@@ -76,6 +76,10 @@ export function PopupUi({ commands }: Props) {
     browser.tabs.create({ active: true, url: getFlicktionaryConfig().webUrl })
   }, [])
 
+  const handleOpenUserGuide = useCallback(() => {
+    browser.tabs.create({ active: true, url: `${getFlicktionaryConfig().webUrl}/user-guide` })
+  }, [])
+
   const { requestingActiveTabPermission, tabRequestingActiveTabPermission } = useRequestingActiveTabPermission()
 
   useEffect(() => {
@@ -141,11 +145,17 @@ export function PopupUi({ commands }: Props) {
               settings={settings}
               onSettingsChanged={handleSettingsChanged}
               onOpenApp={handleOpenApp}
+              onOpenUserGuide={handleOpenUserGuide}
               onOpenExtensionShortcuts={handleOpenExtensionShortcuts}
               {...profilesContext}
             />
           ) : (
-            <ImportPopup settings={settings} onSettingsChanged={handleSettingsChanged} onOpenApp={handleOpenApp} />
+            <ImportPopup
+              settings={settings}
+              onSettingsChanged={handleSettingsChanged}
+              onOpenApp={handleOpenApp}
+              onOpenUserGuide={handleOpenUserGuide}
+            />
           )}
         </div>
       </TooltipProvider>

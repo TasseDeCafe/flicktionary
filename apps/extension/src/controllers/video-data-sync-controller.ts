@@ -26,7 +26,7 @@ import { currentPageDelegate } from '../services/pages'
 import { i18n, setupLingui } from '../ui/lingui'
 import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
-import { isOnTutorialPage } from '@/services/tutorial'
+import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
 import {
   ShadowVideoDataSyncApp,
@@ -80,7 +80,6 @@ export default class VideoDataSyncController {
   private _activeElement?: Element
   private _autoSyncAttempted: boolean = false
   private _dataReceivedListener?: (event: Event) => void
-  private _isTutorial: boolean
 
   // The subtitle-track dialog renders in the content-script realm via a
   // fullscreen-aware modal shadow host. The model flows through `_channel`
@@ -103,7 +102,6 @@ export default class VideoDataSyncController {
       extension: 'srt',
     }
     this._domain = new URL(window.location.href).host
-    this._isTutorial = isOnTutorialPage()
   }
 
   // The clean human title for the current video as resolved by the site's
@@ -261,27 +259,28 @@ export default class VideoDataSyncController {
 
     // If cached track exists, pre-select it
     let autoSelectedTrackIds: string[]
-    if (this._isTutorial) {
-      // '1' is the ID of the non-empty track in the tutorial
-      // See asbplayer-tutorial-page.ts
-      autoSelectedTrackIds = ['1', '-', '-']
-    } else if (cachedTranscript) {
+    if (cachedTranscript) {
       // Pre-select the cached Whisper track
       autoSelectedTrackIds = ['cached-whisper', '-', '-']
     } else {
       autoSelectedTrackIds = autoSelectedTracks.map((subtitle) => subtitle.id || '-')
     }
 
-    const defaultCheckboxState = !this._isTutorial && subs.completeMatch
+    const defaultCheckboxState = subs.completeMatch
     const themeType = await this._context.settings.getSingle('themeType')
     const profilesPromise = this._context.settings.profiles()
     const activeProfilePromise = this._context.settings.activeProfile()
     const hasSeenFtue = (await globalStateProvider.get(['ftueHasSeenSubtitleTrackSelector']))
       .ftueHasSeenSubtitleTrackSelector
-    const hideRememberTrackPreferenceToggle = this._isTutorial || (await this._pageHidesTrackPrefToggle())
+    const hideRememberTrackPreferenceToggle = await this._pageHidesTrackPrefToggle()
     const transcriptServerUrl =
       (await this._context.settings.getSingle('transcriptServerUrl')) || 'https://asbplayer-production.up.railway.app'
-    const supadataApiKeyConfigured = !!transcriptServerUrl
+    // Whisper generation is test-user only for now: the transcript server uses
+    // the developer's own YouTube credentials (yt-dlp), so exposing the button
+    // to everyone risks a YouTube ban. The background handler enforces the same
+    // gate; this one just keeps the button honest. (The button is YouTube-only,
+    // so the check's secure-context requirement is always met where it shows.)
+    const canGenerateTranscripts = !!transcriptServerUrl && (await checkCurrentUserIsTestUser())
     return this._syncedData
       ? {
           isLoading: this._syncedData.subtitles === undefined,
@@ -299,7 +298,7 @@ export default class VideoDataSyncController {
           hasSeenFtue,
           hideRememberTrackPreferenceToggle,
           isYouTube,
-          supadataApiKeyConfigured,
+          canGenerateTranscripts,
           ...additionalFields,
         }
       : {
@@ -319,7 +318,7 @@ export default class VideoDataSyncController {
           hasSeenFtue,
           hideRememberTrackPreferenceToggle,
           isYouTube,
-          supadataApiKeyConfigured,
+          canGenerateTranscripts,
           ...additionalFields,
         }
   }

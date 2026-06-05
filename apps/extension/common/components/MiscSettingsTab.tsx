@@ -27,6 +27,9 @@ interface Props {
   insideApp?: boolean
   extensionInstalled?: boolean
   extensionSupportsPauseOnHover?: boolean
+  // Flicktionary divergence: the Whisper transcript server uses the
+  // developer's own YouTube credentials, so its settings are test-user only.
+  showSubtitleGeneration?: boolean
 }
 
 const MiscSettingTab: React.FC<Props> = ({
@@ -37,6 +40,7 @@ const MiscSettingTab: React.FC<Props> = ({
   insideApp,
   extensionInstalled,
   extensionSupportsPauseOnHover,
+  showSubtitleGeneration,
 }) => {
   const { t } = useLingui()
   const {
@@ -218,48 +222,52 @@ const MiscSettingTab: React.FC<Props> = ({
             onChange={(event) => onSettingChanged('tabName', event.target.value)}
           />
         )}
-        <SettingsSection>
-          <Trans>Subtitle Generation</Trans>
-        </SettingsSection>
-        <SettingsField
-          label={t`Transcript Server URL`}
-          value={transcriptServerUrl}
-          onChange={(event) => onSettingChanged('transcriptServerUrl', event.target.value)}
-        />
-        <SettingsField
-          label={t`Transcript Server API Key (optional)`}
-          type='password'
-          value={transcriptApiKey}
-          onChange={(event) => onSettingChanged('transcriptApiKey', event.target.value)}
-        />
-        {!insideApp && (
-          <div className='flex flex-col gap-2'>
-            <p className='text-sm'>Cached Transcripts: {transcriptCacheCount}</p>
-            <div className='flex gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='flex-1'
-                onClick={handleExportTranscriptCache}
-                disabled={transcriptCacheCount === 0}
-              >
-                <Download />
-                Export
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='text-destructive flex-1'
-                onClick={handleClearTranscriptCache}
-                disabled={transcriptCacheCount === 0}
-              >
-                <Trash2 />
-                Clear
-              </Button>
-            </div>
-          </div>
+        {showSubtitleGeneration && (
+          <>
+            <SettingsSection>
+              <Trans>Subtitle Generation</Trans>
+            </SettingsSection>
+            <SettingsField
+              label={t`Transcript Server URL`}
+              value={transcriptServerUrl}
+              onChange={(event) => onSettingChanged('transcriptServerUrl', event.target.value)}
+            />
+            <SettingsField
+              label={t`Transcript Server API Key (optional)`}
+              type='password'
+              value={transcriptApiKey}
+              onChange={(event) => onSettingChanged('transcriptApiKey', event.target.value)}
+            />
+            {!insideApp && (
+              <div className='flex flex-col gap-2'>
+                <p className='text-sm'>Cached Transcripts: {transcriptCacheCount}</p>
+                <div className='flex gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='flex-1'
+                    onClick={handleExportTranscriptCache}
+                    disabled={transcriptCacheCount === 0}
+                  >
+                    <Download />
+                    Export
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='text-destructive flex-1'
+                    onClick={handleClearTranscriptCache}
+                    disabled={transcriptCacheCount === 0}
+                  >
+                    <Trash2 />
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
         <SettingsSection>
           <Trans>Settings</Trans>

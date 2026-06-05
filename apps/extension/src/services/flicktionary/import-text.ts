@@ -73,6 +73,19 @@ const showToast = async (tabId: number, kind: 'success' | 'error', message: stri
   }
 }
 
+// Both import paths require a paired account. Checked up front — before any
+// content-script round trip — so a signed-out user always gets a sign-in
+// prompt rather than an extraction-layer error (e.g. "reload the page" when
+// the content script isn't reachable).
+const requireSignIn = async (tabId: number): Promise<ImportOutcome | null> => {
+  if (await getFlicktionaryAuth()) {
+    return null
+  }
+  const error = i18n._(msg`Sign in to Flicktionary to import text.`)
+  await showToast(tabId, 'error', error)
+  return { ok: false, error }
+}
+
 const deriveTitle = (raw: string, fallback: string): string => {
   const firstLine =
     raw
@@ -106,6 +119,10 @@ export const importArticleFromTab = async (tab: {
   if (tab.id === undefined) {
     return { ok: false, error: i18n._(msg`No active tab to import from.`) }
   }
+  const signedOut = await requireSignIn(tab.id)
+  if (signedOut) {
+    return signedOut
+  }
   let extracted: ArticleExtractionResult
   try {
     extracted = (await browser.tabs.sendMessage(tab.id, {
@@ -134,6 +151,10 @@ export const importSelectionFromTab = async (
   await activateBackgroundLocale()
   if (tab.id === undefined) {
     return { ok: false, error: i18n._(msg`No active tab.`) }
+  }
+  const signedOut = await requireSignIn(tab.id)
+  if (signedOut) {
+    return signedOut
   }
   const text = selectionText.trim()
   if (text.length === 0) {
