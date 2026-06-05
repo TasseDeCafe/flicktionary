@@ -3,7 +3,8 @@ import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { AlertOctagon, Languages, LifeBuoy, LogOut, Sparkles, UserCircle, Wrench } from 'lucide-react'
 import { Switch } from '@flicktionary/ui/components/switch'
-import { useAuthStore } from '@/stores/auth-store'
+import { getUserEmail, useAuthStore } from '@/stores/auth-store'
+import { checkIsTestUser } from '@/utils/test-users-utils'
 import { useGetUserPrefs, useSetLlmHighlightsEnabled } from '@/features/sessions/api/sessions-hooks'
 import { PracticeSessionLimitsSetting } from '@/features/settings/components/practice-session-limits-setting'
 import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-settings'
@@ -16,6 +17,7 @@ export const MoreTabView = () => {
   const navigate = useNavigate()
   const router = useRouter()
   const signOut = useAuthStore((state) => state.signOut)
+  const isTestUser = checkIsTestUser(useAuthStore(getUserEmail))
 
   const { data: prefs } = useGetUserPrefs()
   const { mutate: setLlmHighlights, isPending: isSavingLlm } = useSetLlmHighlightsEnabled()
@@ -78,7 +80,13 @@ export const MoreTabView = () => {
 
       <MoreListSection title={t`About`}>
         <MoreListRow icon={LifeBuoy} label={t`Contact us`} onPress={handleContactUs} />
-        <MoreListRow icon={Wrench} label={t`Admin settings`} onPress={() => navigate({ to: AdminSettingsRoute.to })} />
+        {isTestUser && (
+          <MoreListRow
+            icon={Wrench}
+            label={t`Admin settings`}
+            onPress={() => navigate({ to: AdminSettingsRoute.to })}
+          />
+        )}
         <MoreListRow
           icon={AlertOctagon}
           label={t`Danger zone`}

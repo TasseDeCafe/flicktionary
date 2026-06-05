@@ -25,12 +25,12 @@ else
 fi
 
 echo "Fetching $PLATFORM device ID from Doppler ($DOPPLER_SECRET_NAME)..."
-DEVICE_ID=$(doppler run --project root --config dev_personal -- doppler secrets get "$DOPPLER_SECRET_NAME" --plain 2>/dev/null)
+DEVICE_ID=$(doppler run --project native --config dev_personal -- doppler secrets get "$DOPPLER_SECRET_NAME" --plain 2>/dev/null)
 
 if [ -n "$DEVICE_ID" ]; then
   echo "Found device ID: $DEVICE_ID. Running on $PLATFORM device..."
-  APP_VARIANT=development doppler run --project root --config dev_personal -- npx expo run:"$EXPO_PLATFORM_COMMAND" --device "$DEVICE_ID"
+  APP_VARIANT=development doppler run --project native --config dev_personal -- npx expo run:"$EXPO_PLATFORM_COMMAND" --device "$DEVICE_ID"
 else
   echo "No device ID found in Doppler for $DOPPLER_SECRET_NAME. Falling back to interactive $PLATFORM device selection."
-  APP_VARIANT=development doppler run --project root --config dev_personal -- npx expo run:"$EXPO_PLATFORM_COMMAND" --device
+  APP_VARIANT=development doppler run --project native --config dev_personal -- npx expo run:"$EXPO_PLATFORM_COMMAND" --device
 fi

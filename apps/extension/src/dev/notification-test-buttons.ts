@@ -1,13 +1,16 @@
 import type Binding from '@/services/binding'
 
-// Dev-only helper for Gate B of the Radix/Tailwind migration: the notification
-// dialog's real trigger (activeTabPermissionRequest) is buried in a legacy
-// audio-recording path, so mount two floating buttons that drive
-// NotificationController directly on the first live binding. Gated on
-// `import.meta.env.DEV` at the call site — never part of a production build.
+const ATTR = 'data-flicktionary-dev-notification-test'
+
+// Admin-only debugging helper (originally Gate B of the Radix/Tailwind
+// migration): the notification dialog's real trigger
+// (activeTabPermissionRequest) is buried in a legacy audio-recording path, so
+// mount two floating buttons that drive NotificationController directly on the
+// first live binding. Gated at the call site on the Admin-tab toggle
+// (dev-tools-storage), which only test-user accounts can flip — off by
+// default in every build.
 export function mountNotificationTestButtons(bindings: Binding[]): void {
-  const ATTR = 'data-flicktionary-dev-notification-test'
-  document.querySelectorAll(`[${ATTR}]`).forEach((el) => el.remove())
+  unmountNotificationTestButtons()
 
   const wrapper = document.createElement('div')
   wrapper.setAttribute(ATTR, '')
@@ -43,4 +46,8 @@ export function mountNotificationTestButtons(bindings: Binding[]): void {
   })
 
   document.body.appendChild(wrapper)
+}
+
+export function unmountNotificationTestButtons(): void {
+  document.querySelectorAll(`[${ATTR}]`).forEach((el) => el.remove())
 }

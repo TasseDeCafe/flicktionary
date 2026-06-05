@@ -5,6 +5,8 @@ import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
 import { settingsPageConfigs } from '@/services/pages'
+import { useIsTestUser } from '../hooks/use-is-test-user'
+import { AdminSettingsTab } from './AdminSettingsTab'
 import { FlicktionaryPairSection } from './FlicktionaryPairSection'
 import { PopupHeader } from './PopupHeader'
 import type { PopupCommands } from '../popup'
@@ -38,6 +40,7 @@ const Popup = ({
   }, [])
   const { supportedLanguages } = useSupportedLanguages()
   const { localFontsAvailable, localFontsPermission, localFontFamilies } = useLocalFontFamilies()
+  const isTestUser = useIsTestUser()
 
   return (
     <div className='flex flex-col gap-3 p-3'>
@@ -64,6 +67,7 @@ const Popup = ({
           localFontsPermission={localFontsPermission}
           localFontFamilies={localFontFamilies}
           supportedLanguages={supportedLanguages}
+          adminTab={isTestUser ? <AdminSettingsTab /> : undefined}
           onSettingsChanged={onSettingsChanged}
           onOpenChromeExtensionShortcuts={onOpenExtensionShortcuts}
           onUnlockLocalFonts={handleUnlockLocalFonts}
