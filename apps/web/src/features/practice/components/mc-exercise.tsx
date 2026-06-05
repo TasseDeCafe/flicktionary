@@ -83,10 +83,10 @@ export const McExercise = ({
               onClick={() => handleSelect(index)}
               className={cn(
                 'rounded-lg border px-4 py-3 text-left text-base transition-colors',
-                !result && 'hover:bg-gray-50 active:bg-gray-100',
-                isSelected && !result && 'border-gray-900',
-                result && isCorrectOption && 'border-emerald-600 bg-emerald-50',
-                result && isSelected && !isCorrectOption && 'border-red-500 bg-red-50',
+                !result && 'hover:bg-accent active:bg-accent',
+                isSelected && !result && 'border-foreground',
+                result && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
+                result && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-400/15',
                 result && !isSelected && !isCorrectOption && 'opacity-60'
               )}
             >
@@ -101,7 +101,7 @@ export const McExercise = ({
           <div
             className={cn(
               'flex items-center gap-2 text-sm font-medium',
-              result.correct ? 'text-emerald-700' : 'text-red-700'
+              result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
             )}
           >
             {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}

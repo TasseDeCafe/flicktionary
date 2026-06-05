@@ -62,16 +62,16 @@ export const PracticeLandingView = () => {
             <h1 className='text-2xl font-bold'>{t`Practice`}</h1>
           </header>
 
-          <p className='text-sm text-gray-600'>
+          <p className='text-sm text-muted-foreground'>
             {t`Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance.`}
           </p>
 
-          {isLoading && <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>}
+          {isLoading && <div className='py-8 text-center text-sm text-muted-foreground'>{t`Loading…`}</div>}
 
           {!isLoading && (!summary || summary.length === 0) && (
-            <div className='rounded-xl border bg-yellow-50 p-6'>
+            <div className='rounded-xl border bg-yellow-50 p-6 dark:bg-yellow-400/10'>
               <h2 className='font-semibold'>{t`No vocabulary to practice yet`}</h2>
-              <p className='mt-2 text-sm text-gray-700'>
+              <p className='mt-2 text-sm text-muted-foreground'>
                 {t`Process a session and keep some cards. They'll show up here automatically.`}
               </p>
             </div>
@@ -80,7 +80,7 @@ export const PracticeLandingView = () => {
           {!isLoading && summary && summary.length > 0 && (
             <section className='flex flex-col gap-2'>
               <h2 className='text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase'>{t`Languages`}</h2>
-              <div className='divide-y divide-gray-100 overflow-hidden rounded-xl border bg-white'>
+              <div className='divide-y divide-border overflow-hidden rounded-xl border bg-card'>
                 {summary.map((entry) => {
                   const summaryLine = getSummaryLine(entry)
                   return (
@@ -88,13 +88,13 @@ export const PracticeLandingView = () => {
                       key={entry.targetLanguage}
                       type='button'
                       onClick={() => handlePickLanguage(entry.targetLanguage)}
-                      className='flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-gray-50 active:bg-gray-100'
+                      className='flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-accent active:bg-accent'
                     >
                       <div className='flex min-w-0 flex-1 flex-col'>
                         <span className='text-sm font-medium'>{getLanguageName(entry.targetLanguage)}</span>
                         <span className='text-muted-foreground text-xs'>{summaryLine}</span>
                       </div>
-                      <ChevronRight className='h-5 w-5 shrink-0 text-gray-400' />
+                      <ChevronRight className='h-5 w-5 shrink-0 text-muted-foreground' />
                     </button>
                   )
                 })}
