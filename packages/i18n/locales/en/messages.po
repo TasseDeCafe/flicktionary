@@ -2212,7 +2212,7 @@ msgstr "Nice!"
 msgid "No active tab to import from."
 msgstr "No active tab to import from."
 
-#: apps/extension/src/services/flicktionary/import-text.ts:149
+#: apps/extension/src/services/flicktionary/import-text.ts:153
 msgid "No active tab."
 msgstr "No active tab."
 
@@ -2808,7 +2808,7 @@ msgstr "Reject"
 msgid "Reject all"
 msgstr "Reject all"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:131
+#: apps/extension/src/services/flicktionary/import-text.ts:135
 msgid "Reload the page, then try importing again."
 msgstr "Reload the page, then try importing again."
 
@@ -3018,7 +3018,7 @@ msgstr "Select a video element to sync it with Flicktionary."
 msgid "Select a video element…"
 msgstr "Select a video element…"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:153
+#: apps/extension/src/services/flicktionary/import-text.ts:161
 msgid "Select some text first."
 msgstr "Select some text first."
 
@@ -3030,7 +3030,7 @@ msgstr "Select subtitle tracks to load."
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:156
+#: apps/extension/src/services/flicktionary/import-text.ts:164
 msgid "Selection"
 msgstr "Selection"
 
