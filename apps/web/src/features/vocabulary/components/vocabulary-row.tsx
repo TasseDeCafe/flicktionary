@@ -35,21 +35,21 @@ export const VocabularyRow = ({
   const preview = hideTranslationFields ? chunk.definition || '' : chunk.translation || chunk.definition || ''
 
   return (
-    <div style={style} className='flex items-stretch border-b border-gray-100 bg-white'>
+    <div style={style} className='flex items-stretch border-b border-border bg-card'>
       <button
         type='button'
         onClick={() => onTap(chunk)}
-        className='flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 active:bg-gray-100'
+        className='flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-accent active:bg-accent'
       >
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
           <div className='flex items-baseline gap-2'>
-            <span className='truncate text-sm font-semibold text-gray-900'>{chunk.headword}</span>
+            <span className='truncate text-sm font-semibold text-foreground'>{chunk.headword}</span>
           </div>
           {preview && <span className='text-muted-foreground truncate text-xs'>{preview}</span>}
         </div>
         <div className='flex shrink-0 items-center gap-2'>
           {chunk.learningMode === 'active' && (
-            <span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-amber-800 uppercase'>
+            <span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-amber-800 uppercase dark:bg-amber-400/15 dark:text-amber-300'>
               <Star className='h-3 w-3' />
               {t`Active`}
             </span>
@@ -58,9 +58,9 @@ export const VocabularyRow = ({
             <span
               className={cn(
                 'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase',
-                due.tone === 'due' && 'bg-red-100 text-red-800',
-                due.tone === 'new' && 'bg-yellow-100 text-yellow-800',
-                due.tone === 'scheduled' && 'bg-gray-100 text-gray-700'
+                due.tone === 'due' && 'bg-red-100 text-red-800 dark:bg-red-400/15 dark:text-red-300',
+                due.tone === 'new' && 'bg-yellow-100 text-yellow-800 dark:bg-yellow-400/15 dark:text-yellow-300',
+                due.tone === 'scheduled' && 'bg-muted text-foreground'
               )}
             >
               {due.tone === 'due' && t`Due`}
@@ -69,7 +69,7 @@ export const VocabularyRow = ({
             </span>
           )}
           {chunk.count > 1 && (
-            <span className='rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-700'>
+            <span className='rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground'>
               ×{chunk.count}
             </span>
           )}
@@ -79,7 +79,7 @@ export const VocabularyRow = ({
         type='button'
         onClick={() => onOptions(chunk)}
         aria-label={t`More options`}
-        className='flex w-10 shrink-0 items-center justify-center text-gray-500 hover:bg-gray-50 active:bg-gray-100'
+        className='flex w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-accent active:bg-accent'
       >
         <MoreVertical className='h-5 w-5' />
       </button>

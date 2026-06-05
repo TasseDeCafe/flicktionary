@@ -34,7 +34,7 @@ const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: Ch
     { value: 'due', label: t`Due soonest` },
   ]
   return (
-    <div className='flex gap-1 rounded-full bg-gray-100 p-1'>
+    <div className='flex gap-1 rounded-full bg-muted p-1'>
       {options.map((opt) => {
         const isActive = opt.value === value
         return (
@@ -44,7 +44,7 @@ const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: Ch
             onClick={() => onChange(opt.value)}
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              isActive ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {opt.label}
@@ -69,7 +69,7 @@ const LearningModeFilterPills = ({
     { value: 'active', label: t`Active` },
   ]
   return (
-    <div className='flex gap-1 rounded-full bg-gray-100 p-1'>
+    <div className='flex gap-1 rounded-full bg-muted p-1'>
       {options.map((opt) => {
         const isActive = opt.value === value
         return (
@@ -79,7 +79,7 @@ const LearningModeFilterPills = ({
             onClick={() => onChange(opt.value)}
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              isActive ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {opt.label}
@@ -277,7 +277,7 @@ export const VocabularyListView = () => {
       {showEmpty && <VocabularyEmptyState />}
 
       {showLanguageEmpty && (
-        <div className='rounded-xl border bg-gray-50 p-6 text-center text-sm text-gray-600'>
+        <div className='rounded-xl border bg-muted p-6 text-center text-sm text-muted-foreground'>
           {debouncedSearch.length > 0 ? t`No matches.` : t`No vocabulary in this language yet.`}
         </div>
       )}
@@ -285,12 +285,12 @@ export const VocabularyListView = () => {
       {!showEmpty && !showLanguageEmpty && (
         <div
           ref={parentRef}
-          className='flex-1 overflow-y-auto rounded-xl border bg-white md:min-h-[60vh]'
+          className='flex-1 overflow-y-auto rounded-xl border bg-card md:min-h-[60vh]'
           aria-busy={isInitialLoad}
           onScroll={onParentScroll}
         >
           {isInitialLoad ? (
-            <div className='py-8 text-center text-sm text-gray-500'>{t`Loading…`}</div>
+            <div className='py-8 text-center text-sm text-muted-foreground'>{t`Loading…`}</div>
           ) : (
             <div
               style={{
@@ -312,7 +312,7 @@ export const VocabularyListView = () => {
                 }
                 if (isLoaderRow) {
                   return (
-                    <div key='loader' style={style} className='flex items-center justify-center text-xs text-gray-500'>
+                    <div key='loader' style={style} className='flex items-center justify-center text-xs text-muted-foreground'>
                       {hasNextPage ? t`Loading more…` : t`End of list`}
                     </div>
                   )
