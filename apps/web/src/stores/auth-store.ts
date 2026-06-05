@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js'
 import { supabaseClient } from '@/lib/transport/supabase-client'
 import { queryClient } from '@/config/react-query-config'
 import { clearSentryUser } from '@/lib/analytics/sentry-initializer'
+import { useThemeStore } from '@/stores/theme-store'
 import posthog from 'posthog-js'
 
 type AuthStore = {
@@ -57,6 +58,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     queryClient.clear()
     posthog.reset()
     window.localStorage.clear()
+    // localStorage.clear() wiped the resolved-theme cache; re-write it so the
+    // next load doesn't flash. The DB value re-applies on next sign-in.
+    useThemeStore.getState().recache()
     onComplete?.()
   },
 }))

@@ -12,6 +12,7 @@ import posthog from 'posthog-js'
 import { router } from './router'
 import { SessionInitializer } from '@/features/auth/components/session-initializer'
 import { UserSetupGate } from '@/features/auth/components/user-setup-gate'
+import { UserUiPrefsSync } from '@/features/settings/components/user-ui-prefs-sync'
 
 validateConfig(getConfig())
 
@@ -30,6 +31,7 @@ export const App = () => {
     <PostHogProviderWrapper>
       <I18nProvider i18n={i18n}>
         <QueryClientProvider client={queryClient}>
+          <UserUiPrefsSync />
           <SessionInitializer>
             <UserSetupGate>
               <RouterProvider router={router} />

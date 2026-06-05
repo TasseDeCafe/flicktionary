@@ -8,6 +8,21 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#FACC15" />
 
+    <!-- Apply the cached resolved theme before first paint to avoid a flash.
+         Kept in sync by apps/web/src/stores/theme-store.ts (key: flick.theme.resolved). -->
+    <script>
+      try {
+        var resolved = localStorage.getItem('flick.theme.resolved')
+        if (resolved !== 'dark' && resolved !== 'light') {
+          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+        if (resolved === 'dark') {
+          document.documentElement.classList.add('dark')
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#030711')
+        }
+      } catch (e) {}
+    </script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flicktionary — learn languages from movies and texts</title>
 
