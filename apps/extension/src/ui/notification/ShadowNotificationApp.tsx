@@ -12,6 +12,7 @@ import {
 } from '@flicktionary/ui/components/dialog'
 import { Button } from '@flicktionary/ui/components/button'
 import { flicktionaryLogoDataUri } from '@asbplayer-fork/common/components/flicktionary-logo'
+import type { ThemeType } from '@asbplayer-fork/common/settings'
 import { i18n } from '../lingui'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import { ModelStore, useModelStore } from '../shadow/model-store'
@@ -20,7 +21,8 @@ import { ModelStore, useModelStore } from '../shadow/model-store'
 // store snapshot the controller pushes (formerly UpdateStateMessage over the
 // FrameBridge) and `close` is a plain callback (formerly bridge.sendMessageFromServer).
 export interface NotificationState {
-  themeType: 'dark' | 'light'
+  // Raw setting value — ShadowUiProvider resolves 'system' in this realm.
+  themeType: ThemeType
   language: string
   titleLocKey: string
   messageLocKey: string

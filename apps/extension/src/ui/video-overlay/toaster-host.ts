@@ -1,10 +1,12 @@
 import { createElement } from 'react'
 import { createRoot, Root } from 'react-dom/client'
 import { Toaster } from 'sonner'
+import { resolveTheme } from '@asbplayer-fork/common/settings'
 import { applyOverlayStyles } from '../shadow/overlay-stylesheet'
 
-// Mirrors the extension's `themeType` setting ('dark' | 'light').
-export type ToasterTheme = 'dark' | 'light'
+// Mirrors the extension's `themeType` setting. 'system' is resolved here
+// (this realm's matchMedia) when the theme is set.
+export type ToasterTheme = 'dark' | 'light' | 'system'
 
 const TOASTER_HOST_ATTR = 'data-asbplayer-toaster-host'
 
@@ -24,11 +26,11 @@ interface ToasterHost {
 // imperatively, so the (non-React) SubtitleController can drive it.
 let singleton: ToasterHost | undefined
 
-// Current toaster theme. We pass this to sonner EXPLICITLY rather than using its
-// `theme="system"` — `system` tracks the OS via matchMedia, but we want to
-// follow the extension's own themeType setting. Defaults to dark (the
-// extension's default) until _refreshSettings pushes the real value.
-let currentTheme: ToasterTheme = 'dark'
+// Current RESOLVED toaster theme. We pass this to sonner EXPLICITLY rather than
+// using its `theme="system"` — we resolve 'system' ourselves in setToasterTheme
+// so all theme handling goes through the shared resolveTheme. Defaults to the
+// resolved system theme until _refreshSettings pushes the real value.
+let currentTheme: 'dark' | 'light' = resolveTheme('system')
 
 // sonner sets `data-sonner-theme` from this prop; the palette for both themes is
 // in the adopted stylesheet, so the toaster is colored correctly in the shadow root.
@@ -38,13 +40,15 @@ function renderToaster(root: Root): void {
   )
 }
 
-// Follow the extension's themeType. Re-renders the live toaster if it exists, so
-// a settings change recolors toasts without recreating the host.
+// Follow the extension's themeType (callers pass the raw setting; 'system' is
+// resolved here). Re-renders the live toaster if it exists, so a settings
+// change recolors toasts without recreating the host.
 export function setToasterTheme(theme: ToasterTheme): void {
-  if (theme === currentTheme) {
+  const resolved = resolveTheme(theme)
+  if (resolved === currentTheme) {
     return
   }
-  currentTheme = theme
+  currentTheme = resolved
   if (singleton) {
     renderToaster(singleton.root)
   }

@@ -13,6 +13,7 @@ import { isVideoPlatformUrl } from '@/services/pages'
 import Popup from './Popup'
 import ImportPopup from './ImportPopup'
 import { useRequestingActiveTabPermission } from '../hooks/use-requesting-active-tab-permission'
+import { useResolvedTheme } from '../hooks/use-resolved-theme'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
 import { I18nProvider } from '@lingui/react'
@@ -111,7 +112,8 @@ export function PopupUi({ commands }: Props) {
   // Radix portals (selects, dialogs, tooltips) target document.body — outside
   // the `dark`-classed root div below — so the dark scope must also land on
   // <body> (same trap as portalContainer in the shadow surfaces).
-  const dark = settings?.themeType === 'dark'
+  const resolvedTheme = useResolvedTheme(settings?.themeType)
+  const dark = resolvedTheme === 'dark'
   useEffect(() => {
     document.body.classList.toggle('dark', dark)
   }, [dark])
@@ -136,9 +138,7 @@ export function PopupUi({ commands }: Props) {
   return (
     <I18nProvider i18n={i18n}>
       <TooltipProvider>
-        <div
-          className={cn('bg-background text-foreground w-[600px] font-sans', settings.themeType === 'dark' && 'dark')}
-        >
+        <div className={cn('bg-background text-foreground w-[600px] font-sans', dark && 'dark')}>
           {isVideoPlatform ? (
             <Popup
               commands={commands}

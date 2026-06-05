@@ -250,7 +250,8 @@ export default class SubtitleController {
   }
 
   // Keep the page-global sonner toaster in sync with the extension's themeType.
-  set toasterTheme(theme: 'dark' | 'light') {
+  // Raw setting value — 'system' is resolved inside setToasterTheme.
+  set toasterTheme(theme: 'dark' | 'light' | 'system') {
     setToasterTheme(theme)
   }
 

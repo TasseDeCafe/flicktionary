@@ -16,7 +16,6 @@ import CopyToClipboardHandler from '@/handlers/video/copy-to-clipboard-handler'
 import SettingsUpdatedHandler from '@/handlers/asbplayerv2/settings-updated-handler'
 import { Command, ExtensionToVideoCommand, Message, ToggleVideoSelectMessage } from '@asbplayer-fork/common'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
-import { i18nConfig } from '@flicktionary/i18n/i18n-config'
 import { msg } from '@lingui/core/macro'
 import { i18n, setupLingui } from '@/ui/lingui'
 import VideoDisappearedHandler from '@/handlers/video/video-disappeared-handler'
@@ -56,13 +55,8 @@ export default defineBackground(() => {
       return
     }
 
-    const defaultUiLanguage = browser.i18n.getUILanguage()
-    const supportedLanguages = i18nConfig.locales as readonly string[]
-
-    if (supportedLanguages.includes(defaultUiLanguage)) {
-      await settings.set({ language: defaultUiLanguage })
-    }
-
+    // No install-time language write: the 'system' default resolves the
+    // browser locale at runtime, which keeps following it if it changes.
     browser.tabs.create({ url: browser.runtime.getURL('/ftue-ui.html'), active: true })
   }
 
