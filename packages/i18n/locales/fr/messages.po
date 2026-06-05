@@ -134,13 +134,53 @@ msgstr "{parkedTotal} en pause"
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 
-#: apps/extension/src/ui/components/Tutorial.tsx:156
-msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
-"navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
-"controls."
-msgstr "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
-"navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
-"controls."
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:113
+msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a "
+"longer phrase."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:107
+msgid "<0>Hover</0> a word in the subtitles to see an instant definition with "
+"pronunciation. The video pauses while you hover, and resumes when you "
+"move away."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:187
+msgid "<0>No subtitles appear</0> — make sure the platform is supported and the "
+"video actually has subtitle tracks. You can always load a subtitle file "
+"manually by dropping it onto the video."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:155
+msgid "<0>Practice</0> — exercises built from your saved words to review and "
+"strengthen what you learned."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:118
+msgid "<0>Right-click</0> the selection and choose <1>Save</1>. The word or "
+"phrase is stored in your account together with the sentence it appeared "
+"in."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:199
+msgid "<0>Saved words don't show up</0> — they appear here in the web app, not "
+"in the extension. Open the app and check your latest session."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:193
+msgid "<0>Saving is disabled</0> — sign in via the extension popup. If a "
+"video's language isn't supported yet, you'll see a notice and saving "
+"stays off for that video."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:145
+msgid "<0>Sessions</0> — every video you watched and article you imported, with "
+"the words you saved in each."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:150
+msgid "<0>Vocabulary</0> — all your saved words and phrases in one place."
+msgstr ""
 
 #: apps/web/src/features/review/components/grounding-badge.tsx:48
 msgid "⚠ LLM only"
@@ -192,8 +232,8 @@ msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
 msgid "About"
 msgstr "À propos"
 
-#: apps/extension/common/components/SettingsForm.tsx:168
-#: apps/extension/src/ui/components/ImportPopup.tsx:56
+#: apps/extension/common/components/SettingsForm.tsx:171
+#: apps/extension/src/ui/components/ImportPopup.tsx:57
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
@@ -460,7 +500,7 @@ msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
 msgid "Authentication failed"
 msgstr "Échec de l'authentification"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:155
+#: apps/extension/common/components/MiscSettingsTab.tsx:159
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 
@@ -485,7 +525,7 @@ msgstr "Pause automatique"
 msgid "Auto-pause preference"
 msgstr "Préférence de pause automatique"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:189
+#: apps/extension/common/components/MiscSettingsTab.tsx:193
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Pause automatique au survol des sous-titres"
 
@@ -635,6 +675,10 @@ msgstr "Chat — préparation de la réponse"
 msgid "Check"
 msgstr "Vérifier"
 
+#: apps/extension/src/ui/components/FtueUi.tsx:38
+msgid "Check out the <0>user guide</0> to get started."
+msgstr ""
+
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:19
 msgid "Check your email"
 msgstr "Vérifiez votre e-mail"
@@ -674,16 +718,6 @@ msgid "Click on the Flicktionary action button in the top-right of the browser "
 "window to enable audio recording for this tab."
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
 "navigateur pour activer l’enregistrement audio de cet onglet."
-
-#. placeholder {0}: isFirefox ? '⚙' : '📌'
-#: apps/extension/src/ui/components/Tutorial.tsx:66
-msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open "
-"the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to "
-"the toolbar for easy access."
-msgstr "Cliquez sur l'icône 🧩 dans la barre d'outils, puis sélectionnez "
-"<0>asbplayer</0> pour ouvrir le <1>Popup</1> d'asbplayer.<2/>Utilisez "
-"le bouton {0} pour épingler asbplayer à la barre d'outils et y accéder "
-"facilement."
 
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx:22
 msgid "Click the link in the email to continue."
@@ -864,6 +898,10 @@ msgstr "Impossible de configurer votre compte. Veuillez redémarrer "
 msgid "Couldn't load exercises."
 msgstr "Impossible de charger les exercices."
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:65
+msgid "Create an account (or sign in) here in the web app."
+msgstr ""
+
 #. placeholder {0}: customStyle.key
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:89
 msgid "CSS: {0}"
@@ -975,7 +1013,7 @@ msgstr "Supprimé « {headword} »"
 msgid "Deleting…"
 msgstr "Suppression…"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:183
+#: apps/extension/common/components/MiscSettingsTab.tsx:187
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
 
@@ -983,7 +1021,7 @@ msgstr "Detect and Display Ruby"
 msgid "Detecting language…"
 msgstr "Détection de la langue…"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:198
+#: apps/extension/common/components/MiscSettingsTab.tsx:202
 msgid "Disabled"
 msgstr "Désactivé"
 
@@ -1079,7 +1117,7 @@ msgstr "Le lien n'est pas valide ou a expiré"
 msgid "Email Verification Sent"
 msgstr "Email de Vérification Envoyé"
 
-#: apps/extension/src/controllers/video-data-sync-controller.ts:102
+#: apps/extension/src/controllers/video-data-sync-controller.ts:101
 #: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:101
 #: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:134
 msgid "Empty"
@@ -1093,11 +1131,11 @@ msgstr "Activer l'enregistrement audio"
 msgid "Enable controls overlay"
 msgstr "Activer la superposition des commandes"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:200
+#: apps/extension/common/components/MiscSettingsTab.tsx:204
 msgid "Enabled"
 msgstr "Activé"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:199
+#: apps/extension/common/components/MiscSettingsTab.tsx:203
 msgid "Enabled with auto-resume"
 msgstr "Activé avec reprise automatique"
 
@@ -1169,6 +1207,11 @@ msgstr "Tous les termes que vous avez conservés, dans toutes les sessions. "
 "Appuyez sur une ligne pour modifier ou ouvrez le menu pour plus "
 "d'options."
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:49
+msgid "Everything you save lands in the web app, where you can review your "
+"sessions, browse your vocabulary, and practice what you collected."
+msgstr ""
+
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
 msgid "Example"
 msgstr "Exemple"
@@ -1185,7 +1228,7 @@ msgstr "Expliquer"
 msgid "Explain this term in more depth."
 msgstr "Expliquez ce terme plus en détail."
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:272
+#: apps/extension/common/components/MiscSettingsTab.tsx:280
 msgid "Export Settings"
 msgstr "Exporter les paramètres"
 
@@ -1255,7 +1298,7 @@ msgstr "Échec de la génération de l'exploration"
 msgid "Failed to generate next text"
 msgstr "Échec de la génération du texte suivant"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:92
+#: apps/extension/src/services/flicktionary/import-text.ts:105
 msgid "Failed to import into Flicktionary."
 msgstr "Échec de l’import dans Flicktionary."
 
@@ -1503,11 +1546,20 @@ msgstr "Recherche de suggestions…"
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:37
+msgid "Flicktionary has two parts that work together: a <0>browser "
+"extension</0> and this <1>web app</1>."
+msgstr ""
+
 #. placeholder {0}: state.newVersion
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:104
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
 "<0>notes de version</0>."
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:20
+msgid "Flicktionary User Guide"
+msgstr ""
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:219
 msgid "Follow-ups"
@@ -1586,6 +1638,10 @@ msgstr "Génération…"
 msgid "Get started"
 msgstr "Commencer"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:57
+msgid "Getting started"
+msgstr ""
+
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:189
 msgid "Give me three more example sentences using it."
 msgstr "Donne-moi trois autres exemples de phrases l'utilisant."
@@ -1610,10 +1666,6 @@ msgstr "Aller au tri"
 #: packages/ui/src/components/rate-buttons.tsx:22
 msgid "Good"
 msgstr "Bien"
-
-#: apps/extension/common/components/TutorialBubble.tsx:33
-msgid "Got it"
-msgstr "Got it"
 
 #: apps/web/src/features/review/components/grammar-chips.tsx:104
 msgid "Government"
@@ -1743,7 +1795,7 @@ msgstr "Imperfectif"
 msgid "Import article to Flicktionary"
 msgstr "Importer l’article dans Flicktionary"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:269
+#: apps/extension/common/components/MiscSettingsTab.tsx:277
 msgid "Import Settings"
 msgstr "Importer les paramètres"
 
@@ -1751,9 +1803,13 @@ msgstr "Importer les paramètres"
 msgid "Import this article"
 msgstr "Importer cet article"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:83
+#: apps/extension/src/services/flicktionary/import-text.ts:96
 msgid "Imported text"
 msgstr "Texte importé"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:127
+msgid "Importing articles"
+msgstr ""
 
 #: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
@@ -1787,6 +1843,11 @@ msgstr "Initialisation des paiements..."
 #: apps/native/src/features/auth/components/session-initializer.tsx:27
 msgid "Initializing..."
 msgstr "Initialisation..."
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:62
+msgid "Install the Flicktionary extension and pin it to your browser toolbar "
+"for easy access."
+msgstr ""
 
 #: apps/web/src/features/sessions/components/cefr-step.tsx:27
 msgid "Intermediate — handle most travel and everyday topics."
@@ -1841,7 +1902,7 @@ msgstr "Options de conservation"
 msgid "Keep practicing this one."
 msgstr "Continuez à pratiquer celui-ci."
 
-#: apps/extension/common/components/SettingsForm.tsx:156
+#: apps/extension/common/components/SettingsForm.tsx:159
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
@@ -1888,6 +1949,11 @@ msgstr "Plus tard"
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:374
 msgid "Layout"
 msgstr "Layout"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:23
+msgid "Learn a language from the videos you already watch and the articles you "
+"already read."
+msgstr ""
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:153
 msgid "Learn new"
@@ -1970,6 +2036,10 @@ msgstr "Chargement..."
 msgid "Loading…"
 msgstr "Chargement…"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:102
+msgid "Looking up and saving words"
+msgstr ""
+
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:203
 msgid "Looks like {suggestedLanguageName}"
 msgstr "On dirait {suggestedLanguageName}"
@@ -2006,9 +2076,9 @@ msgstr "Peut-être plus tard"
 msgid "Message to the founders"
 msgstr "Message pour les fondateurs"
 
-#: apps/extension/common/components/SettingsForm.tsx:164
+#: apps/extension/common/components/SettingsForm.tsx:167
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx:98
-#: apps/extension/src/ui/components/ImportPopup.tsx:52
+#: apps/extension/src/ui/components/ImportPopup.tsx:53
 msgid "Misc"
 msgstr "Divers"
 
@@ -2035,6 +2105,13 @@ msgstr "Synonyme plus fréquent"
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:81
 msgid "More options"
 msgstr "Plus d'options"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:174
+msgid "Most playback actions have editable keyboard shortcuts — seeking by "
+"subtitle, adjusting subtitle offset, toggling subtitles, changing "
+"playback rate, and more. Check the Keyboard Shortcuts tab in the "
+"settings."
+msgstr ""
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:394
 msgid "Move bottom subtitles down"
@@ -2073,7 +2150,7 @@ msgstr "Plusieurs éléments vidéo détectés"
 msgid "Name (optional)"
 msgstr "Nom (optionnel)"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:216
+#: apps/extension/common/components/MiscSettingsTab.tsx:220
 msgid "Name of the tab"
 msgstr "Nom de l'onglet"
 
@@ -2139,11 +2216,11 @@ msgstr "Carte suivante"
 msgid "Nice!"
 msgstr "Super !"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:107
+#: apps/extension/src/services/flicktionary/import-text.ts:120
 msgid "No active tab to import from."
 msgstr "Aucun onglet actif à importer."
 
-#: apps/extension/src/services/flicktionary/import-text.ts:136
+#: apps/extension/src/services/flicktionary/import-text.ts:149
 msgid "No active tab."
 msgstr "Aucun onglet actif."
 
@@ -2266,7 +2343,6 @@ msgid "Numeral"
 msgstr "Numéral"
 
 #: apps/extension/common/components/PageSettingsForm.tsx:175
-#: apps/extension/src/ui/components/Tutorial.tsx:116
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:311
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:351
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:88
@@ -2277,7 +2353,21 @@ msgstr "Numéral"
 msgid "OK"
 msgstr "OK"
 
-#: apps/extension/src/ui/components/PopupHeader.tsx:15
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:131
+msgid "On any non-video page, open the extension popup and choose <0>Import "
+"this article</0>. Flicktionary extracts the article text and creates a "
+"reading session in the web app. To import only part of a page, select "
+"the text first."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:86
+msgid "Open a video on a supported platform. The first time, a dialog asks "
+"which subtitle track to load; after that, your last-used language loads "
+"automatically. You can also load your own subtitle file by "
+"drag-and-dropping it onto the video."
+msgstr ""
+
+#: apps/extension/src/ui/components/PopupHeader.tsx:17
 msgid "Open App"
 msgstr "Ouvrir l'app"
 
@@ -2290,6 +2380,10 @@ msgstr "Ouvrir le chat"
 msgid "Open Files"
 msgstr "Ouvrir des fichiers"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:28
+msgid "Open Flicktionary"
+msgstr ""
+
 #: apps/native/src/features/auth/components/login-email-sent-view.tsx:43
 msgid "Open Mail App"
 msgstr "Ouvrir l'Application Mail"
@@ -2298,6 +2392,12 @@ msgstr "Ouvrir l'Application Mail"
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:66
 msgid "Open source"
 msgstr "Ouvrir la source"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:68
+msgid "Open the extension popup and choose <0>Sign in with Flicktionary</0>. A "
+"pairing page opens in the web app and connects the extension to your "
+"account automatically."
+msgstr ""
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:185
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
@@ -2715,11 +2815,11 @@ msgstr "Rejeter"
 msgid "Reject all"
 msgstr "Tout rejeter"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:118
+#: apps/extension/src/services/flicktionary/import-text.ts:131
 msgid "Reload the page, then try importing again."
 msgstr "Rechargez la page, puis réessayez l’import."
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:150
+#: apps/extension/common/components/MiscSettingsTab.tsx:154
 msgid "Remember subtitle offset"
 msgstr "Mémoriser le décalage des sous-titres"
 
@@ -2727,7 +2827,7 @@ msgstr "Mémoriser le décalage des sous-titres"
 msgid "Remember these track choices for this site"
 msgstr "Se souvenir de ces choix de piste pour ce site"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:175
+#: apps/extension/common/components/MiscSettingsTab.tsx:179
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Remove"
@@ -2750,7 +2850,7 @@ msgstr "Supprimer la session"
 msgid "Removing…"
 msgstr "Suppression…"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:176
+#: apps/extension/common/components/MiscSettingsTab.tsx:180
 msgid "Render"
 msgstr "Rendu"
 
@@ -2812,6 +2912,10 @@ msgstr "Révision seulement"
 msgid "Review terms"
 msgstr "Termes à réviser"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:140
+msgid "Reviewing and practicing"
+msgstr ""
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:237
 msgid "RP"
 msgstr "RP"
@@ -2848,10 +2952,6 @@ msgstr "Enregistrer dans le vocabulaire"
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Saving…"
 msgstr "Enregistrement…"
-
-#: apps/extension/src/ui/components/FtueUi.tsx:17
-msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
-msgstr "Scroll down for a quick intro, or check out the <0>user guide</0>."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:321
 msgid "Search failed"
@@ -2926,7 +3026,7 @@ msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary
 msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:140
+#: apps/extension/src/services/flicktionary/import-text.ts:153
 msgid "Select some text first."
 msgstr "Sélectionnez d’abord du texte."
 
@@ -2938,7 +3038,7 @@ msgstr "Sélectionner les pistes de sous-titres à charger."
 msgid "Select Subtitles"
 msgstr "Sélectionner des sous-titres"
 
-#: apps/extension/src/services/flicktionary/import-text.ts:143
+#: apps/extension/src/services/flicktionary/import-text.ts:156
 msgid "Selection"
 msgstr "Sélection"
 
@@ -2996,13 +3096,17 @@ msgstr "Définissez d'abord votre langue maternelle."
 msgid "Setting up account..."
 msgstr "Configuration du compte..."
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:265
-#: apps/extension/src/ui/components/SettingsPage.tsx:57
+#: apps/extension/common/components/MiscSettingsTab.tsx:273
+#: apps/extension/src/ui/components/SettingsPage.tsx:58
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:278
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 #: apps/web/src/features/more/components/more-tab-view.tsx:53
 msgid "Settings"
 msgstr "Paramètres"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:163
+msgid "Settings and keyboard shortcuts"
+msgstr ""
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:80
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:58
@@ -3048,6 +3152,7 @@ msgid "Sign in"
 msgstr "Se connecter"
 
 #: apps/extension/src/services/flicktionary/import-text.ts:48
+#: apps/extension/src/services/flicktionary/import-text.ts:84
 msgid "Sign in to Flicktionary to import text."
 msgstr "Connectez-vous à Flicktionary pour importer du texte."
 
@@ -3172,7 +3277,7 @@ msgstr "Arrêter de pratiquer ce terme en pratique active"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: apps/extension/common/components/SettingsForm.tsx:160
+#: apps/extension/common/components/SettingsForm.tsx:163
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
@@ -3223,7 +3328,7 @@ msgstr "Abonnement réussi !"
 msgid "Subtitle Alignment"
 msgstr "Alignement des sous-titres"
 
-#: apps/extension/common/components/SettingsForm.tsx:152
+#: apps/extension/common/components/SettingsForm.tsx:155
 msgid "Subtitle Appearance"
 msgstr "Apparence des sous-titres"
 
@@ -3252,11 +3357,11 @@ msgstr "Famille de police des sous-titres"
 msgid "Subtitle Font Thickness"
 msgstr "Épaisseur de la police des sous-titres"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:222
+#: apps/extension/common/components/MiscSettingsTab.tsx:228
 msgid "Subtitle Generation"
 msgstr "Génération des sous-titres"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:172
+#: apps/extension/common/components/MiscSettingsTab.tsx:176
 msgid "Subtitle HTML"
 msgstr "Sous-titres HTML"
 
@@ -3280,11 +3385,11 @@ msgstr "Décalage de la position des sous-titres depuis le bas"
 msgid "Subtitle position offset from top"
 msgstr "Décalage de la position des sous-titres depuis le haut"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:160
+#: apps/extension/common/components/MiscSettingsTab.tsx:164
 msgid "Subtitle regex filter"
 msgstr "Filtre regex des sous-titres"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:166
+#: apps/extension/common/components/MiscSettingsTab.tsx:170
 msgid "Subtitle regex filter text replacement"
 msgstr "Remplacement de texte pour le filtre regex des sous-titres"
 
@@ -3309,7 +3414,7 @@ msgstr "Piste des sous-titres"
 msgid "Subtitle Track {0}"
 msgstr "Piste des sous-titres {0}"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:147
+#: apps/extension/common/components/MiscSettingsTab.tsx:151
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx:80
 msgid "Subtitles"
 msgstr "Subtitles"
@@ -3399,37 +3504,27 @@ msgstr "Textes"
 msgid "Thank you for your feedback!"
 msgstr "Merci pour votre retour !"
 
-#: apps/extension/src/ui/components/Tutorial.tsx:188
-msgid "That's it for the basics! Feel free to play around on this page."
-msgstr "That's it for the basics! Feel free to play around on this page."
-
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:40
 msgid "The extension could not complete pairing."
 msgstr "L'extension n'a pas pu terminer l'appariement."
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:42
+msgid "The extension overlays interactive subtitles on streaming video "
+"(YouTube, Netflix, and many other platforms). Hover any word for an "
+"instant definition, and save the words and phrases you want to learn. It "
+"can also import articles from any web page."
+msgstr ""
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:167
+msgid "The extension popup contains the full settings: subtitle appearance "
+"(with live preview), keyboard shortcuts, streaming-video behavior, and "
+"more. You can keep several settings profiles and switch between them "
+"from the popup."
+msgstr ""
+
 #: apps/web/src/features/sessions/components/srt-upload-input.tsx:25
 msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
-
-#: apps/extension/src/ui/components/Tutorial.tsx:107
-msgid "The first step to using asbplayer is always to load subtitles onto a "
-"video. <0>Right-click</0> on the video and find the asbplayer <1>context "
-"menu</1> to load subtitles."
-msgstr "The first step to using asbplayer is always to load subtitles onto a "
-"video. <0>Right-click</0> on the video and find the asbplayer "
-"<1>context menu</1> to load subtitles."
-
-#: apps/extension/src/ui/components/Tutorial.tsx:97
-msgid "The first step to using asbplayer is always to load subtitles onto a "
-"video. <0>Right-click</0> the video and choose the asbplayer <1>Load "
-"Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
-"detected subtitles on supported sites."
-msgstr "La première étape pour utiliser asbplayer est toujours de charger des "
-"sous-titres sur une vidéo. <0>Faites un clic droit</0> sur la vidéo et "
-"choisissez l'élément de menu <1>Charger les sous-titres</1> "
-"d'asbplayer.<2/>Astuce : asbplayer peut aussi <3>charger "
-"automatiquement</3> les sous-titres détectés sur les sites pris en "
-"charge."
 
 #: apps/extension/common/components/UiSettings.tsx:26
 msgid "Theme"
@@ -3585,11 +3680,11 @@ msgstr "Total"
 msgid "Track {0}"
 msgstr "Piste {0}"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:230
+#: apps/extension/common/components/MiscSettingsTab.tsx:236
 msgid "Transcript Server API Key (optional)"
 msgstr "Clé API du serveur de transcription (facultatif)"
 
-#: apps/extension/common/components/MiscSettingsTab.tsx:225
+#: apps/extension/common/components/MiscSettingsTab.tsx:231
 msgid "Transcript Server URL"
 msgstr "URL du serveur de transcription"
 
@@ -3612,17 +3707,16 @@ msgstr "Recherche de traduction et action de sauvegarde pour le texte "
 msgid "Triage"
 msgstr "Tri"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:182
+msgid "Troubleshooting"
+msgstr ""
+
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx:68
 msgid "Try adding a movie or pasting a piece of text in any language to get "
 "started. You can pick the target language each time you add new content."
 msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle "
 "langue pour commencer. Vous pouvez choisir la langue cible à chaque "
 "fois que vous ajoutez du nouveau contenu."
-
-#: apps/extension/src/ui/components/Tutorial.tsx:93
-#: apps/extension/src/ui/components/Tutorial.tsx:185
-msgid "Tutorial"
-msgstr "Tutoriel"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:91
 msgid "Type the missing word…"
@@ -3726,12 +3820,6 @@ msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
 msgid "Use suggested"
 msgstr "Utiliser la suggestion"
 
-#: apps/extension/src/ui/components/Tutorial.tsx:131
-msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, "
-"<3>switch playback modes</3>, and more."
-msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> "
-"subtitles, <3>switch playback modes</3>, and more."
-
 #: apps/native/src/features/admin/components/admin-settings-view.tsx:62
 msgid "Use these options to test Sentry error reporting in your environment."
 msgstr "Utilisez ces options pour tester le rapport d'erreurs Sentry dans votre "
@@ -3744,6 +3832,10 @@ msgstr "Utilisée comme votre L1 dans les prompts LLM."
 #: apps/web/src/features/more/components/account-page.tsx:84
 msgid "User"
 msgstr "Utilisateur"
+
+#: apps/extension/src/ui/components/PopupHeader.tsx:21
+msgid "User Guide"
+msgstr ""
 
 #: apps/native/src/features/user/api/user-hooks.ts:11
 #: apps/web/src/features/user/api/user-hooks.ts:26
@@ -3811,6 +3903,10 @@ msgstr "Attention"
 msgid "Warnings"
 msgstr "Avertissements"
 
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:82
+msgid "Watching videos"
+msgstr ""
+
 #: apps/web/src/features/review/components/per-card-chat.tsx:222
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "Nous n'avons pas pu préparer cette réponse. Enregistrez à nouveau la "
@@ -3845,13 +3941,17 @@ msgstr "Nous avons envoyé un lien de vérification à :"
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
 
-#: apps/extension/src/ui/components/FtueUi.tsx:14
+#: apps/extension/src/ui/components/FtueUi.tsx:35
 msgid "Welcome to Flicktionary."
 msgstr "Bienvenue sur Flicktionary."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:190
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
 msgstr "Quels sont les synonymes ou quasi-synonymes, et en quoi diffèrent-ils ?"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:33
+msgid "What is Flicktionary?"
+msgstr ""
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:107
 msgid "What language are you studying?"
@@ -3866,6 +3966,13 @@ msgstr "Quelle est votre langue maternelle ? C'est la langue dans laquelle "
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:191
 msgid "What's the etymology or origin of this term?"
 msgstr "Quelle est l'étymologie ou l'origine de ce terme ?"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:93
+msgid "When you pause the video, a <0>controls overlay</0> appears: toggle "
+"subtitles, switch playback modes, adjust subtitle timing, and change the "
+"playback rate. Scroll the rightmost control to switch between subtitle "
+"navigation, subtitle offset, and playback rate."
+msgstr ""
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:235
 msgid "Where did you hear this? Paste a sentence or leave blank."
@@ -3917,6 +4024,11 @@ msgstr "Vous êtes maintenant abonné à Premium !"
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx:34
 msgid "You can try again in {countdown} seconds"
 msgstr "Vous pourrez réessayer dans {countdown} secondes"
+
+#: apps/web/src/features/user-guide/components/user-guide-view.tsx:75
+msgid "You can watch videos with subtitles without signing in — but saving "
+"words requires a paired account."
+msgstr ""
 
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx:39
 #: apps/web/src/features/billing/components/pricing-view.tsx:38

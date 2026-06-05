@@ -55,7 +55,7 @@ interface Props {
   hasSeenFtue?: boolean
   hideRememberTrackPreferenceToggle?: boolean
   isYouTube?: boolean
-  supadataApiKeyConfigured?: boolean
+  canGenerateTranscripts?: boolean
   isGeneratingSupadata?: boolean
   onCancel: () => void
   onOpenFile: (track?: number) => void
@@ -82,7 +82,7 @@ export default function VideoDataSyncDialog({
   hasSeenFtue,
   hideRememberTrackPreferenceToggle,
   isYouTube,
-  supadataApiKeyConfigured,
+  canGenerateTranscripts,
   isGeneratingSupadata,
   onCancel,
   onOpenFile,
@@ -335,7 +335,7 @@ export default function VideoDataSyncDialog({
           <Button variant='ghost' disabled={disabled} onClick={() => onOpenFile()}>
             <Trans>Open Files</Trans>
           </Button>
-          {isYouTube && supadataApiKeyConfigured && onGenerateSupadata && (
+          {isYouTube && canGenerateTranscripts && onGenerateSupadata && (
             <Button variant='ghost' disabled={disabled || isGeneratingSupadata} onClick={onGenerateSupadata}>
               {isGeneratingSupadata ? (
                 <>

@@ -1,5 +1,6 @@
 import type { Command, Message, SupadataGenerateMessage, SupadataGenerateResponse } from '@asbplayer-fork/common'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
+import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
 import { getCachedTranscript, cacheTranscript } from '@/services/transcript-cache'
 
 interface TranscriptRequest {
@@ -39,6 +40,15 @@ export default class SupadataGenerateHandler {
   }
 
   private async _handleRequest(videoUrl: string, sendResponse: (r?: SupadataGenerateResponse) => void) {
+    // Test-user only (the authoritative gate; the UI also hides the Generate
+    // button): the transcript server fetches YouTube data with the developer's
+    // own credentials via yt-dlp, so opening this to everyone risks getting
+    // those credentials banned by YouTube.
+    if (!(await checkCurrentUserIsTestUser())) {
+      sendResponse({ error: 'Subtitle generation is limited to test users' })
+      return
+    }
+
     // Check cache first
     try {
       const cached = await getCachedTranscript(videoUrl)

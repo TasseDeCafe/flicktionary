@@ -6,8 +6,6 @@ import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { i18n, setupLingui } from '../lingui'
 
-const inTutorial = new URLSearchParams(window.location.search).get('tutorial') === 'true'
-
 const SettingsUi = () => {
   const { settings, onSettingsChanged, profileContext } = useSettings()
 
@@ -36,12 +34,7 @@ const SettingsUi = () => {
     <I18nProvider i18n={i18n}>
       <TooltipProvider>
         <div className={cn('bg-background text-foreground font-sans', dark && 'dark')}>
-          <SettingsPage
-            settings={settings}
-            onSettingsChanged={onSettingsChanged}
-            inTutorial={inTutorial}
-            {...profileContext}
-          />
+          <SettingsPage settings={settings} onSettingsChanged={onSettingsChanged} {...profileContext} />
         </div>
       </TooltipProvider>
     </I18nProvider>

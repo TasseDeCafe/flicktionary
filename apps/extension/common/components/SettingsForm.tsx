@@ -41,11 +41,13 @@ interface Props {
   localFontFamilies: string[]
   supportedLanguages: string[]
   forceVerticalTabs?: boolean
-  inTutorial?: boolean
   heightConstrained?: boolean
   // Flicktionary divergence: when set, an admin-only "Admin" tab renders this
   // node (the popup passes it for test-user accounts; see AdminSettingsTab).
   adminTab?: React.ReactNode
+  // Flicktionary divergence: show the Misc tab's Subtitle Generation section
+  // (Whisper transcript server) — test-user only, see MiscSettingsTab.
+  showSubtitleGeneration?: boolean
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   onOpenChromeExtensionShortcuts: () => void
   onUnlockLocalFonts: () => void
@@ -86,6 +88,7 @@ export default function SettingsForm({
   forceVerticalTabs,
   heightConstrained,
   adminTab,
+  showSubtitleGeneration,
   onSettingsChanged,
   onOpenChromeExtensionShortcuts,
   onUnlockLocalFonts,
@@ -219,6 +222,7 @@ export default function SettingsForm({
           insideApp={insideApp}
           extensionInstalled={extensionInstalled}
           extensionSupportsPauseOnHover={extensionSupportsPauseOnHover}
+          showSubtitleGeneration={showSubtitleGeneration}
         />
       </TabsContent>
       <TabsContent value='about' className={panelClasses}>

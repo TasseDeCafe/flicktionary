@@ -1,3 +1,4 @@
+import { getFlicktionaryAuth } from './auth-storage'
 import { getFlicktionaryConfig } from './flicktionary-config'
 
 // Mirrors the web app's checkIsTestUser (apps/web/src/utils/test-users-utils.ts):
@@ -18,5 +19,17 @@ export const checkIsTestUser = async (email: string): Promise<boolean> => {
   if (hashedEmailsOfTestUsers.length === 0) {
     return false
   }
+  // crypto.subtle is undefined outside secure contexts — i.e. in content
+  // scripts on plain-http pages (self-hosted Emby/Jellyfin). Degrade to "not a
+  // test user" there; the background (always secure) is the authoritative gate.
+  if (!globalThis.crypto?.subtle) {
+    return false
+  }
   return hashedEmailsOfTestUsers.includes(await hashEmail(email))
+}
+
+/** Test-user check for the currently paired account; false while unpaired. */
+export const checkCurrentUserIsTestUser = async (): Promise<boolean> => {
+  const auth = await getFlicktionaryAuth()
+  return auth === null ? false : checkIsTestUser(auth.email)
 }

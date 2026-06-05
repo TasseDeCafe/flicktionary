@@ -128,7 +128,7 @@ export interface VideoDataUiModel {
   hasSeenFtue: boolean
   hideRememberTrackPreferenceToggle: boolean
   isYouTube?: boolean
-  supadataApiKeyConfigured?: boolean
+  canGenerateTranscripts?: boolean
   isGeneratingSupadata?: boolean
 }
 

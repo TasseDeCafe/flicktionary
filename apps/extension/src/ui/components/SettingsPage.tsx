@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { Trans } from '@lingui/react/macro'
 import SettingsForm from '@asbplayer-fork/common/components/SettingsForm'
 import { useCommandKeyBinds } from '../hooks/use-command-key-binds'
+import { useIsTestUser } from '../hooks/use-is-test-user'
 import { useLocalFontFamilies } from '@asbplayer-fork/common/hooks'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import SettingsProfileSelectMenu from '@asbplayer-fork/common/components/SettingsProfileSelectMenu'
@@ -13,7 +14,6 @@ interface Props {
   onSettingsChanged: (settings: Partial<AsbplayerSettings>) => void
   profiles: Profile[]
   activeProfile?: string
-  inTutorial?: boolean
   onNewProfile: (name: string) => void
   onRemoveProfile: (name: string) => void
   onSetActiveProfile: (name: string | undefined) => void
@@ -22,7 +22,7 @@ interface Props {
 // The options page: a static, always-open "dialog" look (scrim + centered
 // panel), replicating the old always-open MUI Dialog without Radix — there is
 // nothing to dismiss or focus-trap on a dedicated page.
-const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileContext }: Props) => {
+const SettingsPage = ({ settings, onSettingsChanged, ...profileContext }: Props) => {
   const { updateLocalFontsPermission, updateLocalFonts, localFontsAvailable, localFontsPermission, localFontFamilies } =
     useLocalFontFamilies()
   const handleUnlockLocalFonts = useCallback(() => {
@@ -31,6 +31,7 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
   }, [updateLocalFontsPermission, updateLocalFonts])
 
   const commands = useCommandKeyBinds()
+  const isTestUser = useIsTestUser()
 
   const handleOpenExtensionShortcuts = useCallback(() => {
     browser.tabs.create({ active: true, url: 'chrome://extensions/shortcuts' })
@@ -79,7 +80,7 @@ const SettingsPage = ({ settings, inTutorial, onSettingsChanged, ...profileConte
             supportedLanguages={supportedLanguages}
             onUnlockLocalFonts={handleUnlockLocalFonts}
             scrollToId={section}
-            inTutorial={inTutorial}
+            showSubtitleGeneration={isTestUser}
           />
         </div>
         <div className='px-4'>
