@@ -73,7 +73,7 @@ export const AccountPage = () => {
     <ModalScreen onClose={() => navigate({ to: '/more' })} closeIcon='chevron' title={t`Account`}>
       <div className='mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 overflow-y-auto px-4 py-6'>
         <div className='flex items-center gap-4'>
-          <div className='flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-100'>
+          <div className='flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-muted'>
             {avatarUrl ? (
               <img src={avatarUrl} alt={t`Avatar`} className='h-full w-full object-cover' />
             ) : (
@@ -89,10 +89,10 @@ export const AccountPage = () => {
         <button
           onClick={handleBillingClick}
           disabled={isSubscriptionLoading || isCustomerPortalPending}
-          className='flex w-full items-center justify-between rounded-xl border bg-white px-4 py-4 text-left hover:bg-gray-50 disabled:opacity-50'
+          className='flex w-full items-center justify-between rounded-xl border bg-card px-4 py-4 text-left hover:bg-accent disabled:opacity-50'
         >
           <span className='font-medium'>{getBillingLabel()}</span>
-          <ChevronRight className='h-5 w-5 text-gray-400' />
+          <ChevronRight className='h-5 w-5 text-muted-foreground' />
         </button>
       </div>
     </ModalScreen>

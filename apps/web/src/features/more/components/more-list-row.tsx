@@ -28,7 +28,7 @@ export const MoreListRow = ({
   const isInteractive = !!onPress
   // Default chevron when the row is pressable and no trailing slot was provided.
   const showDefaultChevron = showChevron ?? (isInteractive && !destructive)
-  const trailingNode = trailing ?? (showDefaultChevron ? <ChevronRight className='h-5 w-5 text-gray-400' /> : null)
+  const trailingNode = trailing ?? (showDefaultChevron ? <ChevronRight className='h-5 w-5 text-muted-foreground' /> : null)
   const Tag = isInteractive ? 'button' : 'div'
 
   return (
@@ -38,15 +38,15 @@ export const MoreListRow = ({
       disabled={isInteractive ? disabled : undefined}
       className={cn(
         'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
-        isInteractive && 'hover:bg-gray-50 active:bg-gray-100 disabled:opacity-50',
-        destructive && 'text-red-600'
+        isInteractive && 'hover:bg-accent active:bg-accent disabled:opacity-50',
+        destructive && 'text-destructive'
       )}
     >
       {Icon && (
         <span
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
-            destructive ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-700'
+            destructive ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground'
           )}
         >
           <Icon className='h-4 w-4' />

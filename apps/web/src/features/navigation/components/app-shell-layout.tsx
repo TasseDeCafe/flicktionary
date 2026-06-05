@@ -28,7 +28,7 @@ export const AppShellLayout = () => {
 
   return (
     <div className='flex h-dvh overflow-hidden'>
-      <aside className='hidden w-64 shrink-0 border-r bg-white md:block'>
+      <aside className='hidden w-64 shrink-0 border-r bg-background md:block'>
         <SidebarNav />
       </aside>
       <div className='flex flex-1 flex-col overflow-hidden'>

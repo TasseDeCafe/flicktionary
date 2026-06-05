@@ -20,7 +20,9 @@ const NavLink = ({ item, isActive }: { item: NavItem; isActive: boolean }) => {
       to={item.to}
       className={cn(
         'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-        isActive ? 'bg-yellow-100 text-yellow-900' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        isActive
+          ? 'bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300'
+          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
       )}
     >
       <Icon className='h-5 w-5' strokeWidth={2} />

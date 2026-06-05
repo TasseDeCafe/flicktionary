@@ -19,7 +19,7 @@ const TabLink = ({ tab, isActive }: { tab: TabConfig; isActive: boolean }) => {
       to={tab.to}
       className={cn(
         'flex flex-1 flex-col items-center justify-center gap-1 text-xs font-medium transition-colors',
-        isActive ? 'text-yellow-900' : 'text-gray-500'
+        isActive ? 'text-yellow-900 dark:text-yellow-400' : 'text-muted-foreground'
       )}
     >
       <Icon className='h-5 w-5' strokeWidth={isActive ? 2.5 : 2} />
@@ -47,7 +47,7 @@ export const BottomTabBar = () => {
     <>
       <nav
         aria-label={t`Primary`}
-        className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-white pb-[env(safe-area-inset-bottom)] md:hidden'
+        className='fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden'
       >
         <TabLink tab={tabs[0]} isActive={isTabActive(tabs[0])} />
         <TabLink tab={tabs[1]} isActive={isTabActive(tabs[1])} />
