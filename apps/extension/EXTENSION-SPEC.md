@@ -191,6 +191,13 @@ settings export. The popup shows the paired email + sign-out (revokes the
 session server-side via `extensionAuth.revokeSession`). Auth state changes
 propagate live to open overlays via a storage subscription.
 
+Right after the session persists, the background handler reconciles the
+server-synced UI prefs (`ui-prefs-sync.ts`): for each of theme/interface
+language, a server `NULL` ("never explicitly set" — distinct from an explicit
+`'system'`) pushes the local value up; a server value pulls down into local
+settings. Sign-out keeps the last local values; the server value re-applies on
+next pairing.
+
 ### Subtitle loading (video-data-sync)
 
 On video detection the page script supplies available tracks; the track-selection
@@ -282,6 +289,15 @@ Two variants, switched by the active tab's URL (`PopupUi.tsx`):
 - **On any other page:** the same header, pairing section, **"Import this
   article"**, and slim Misc (theme/language) + About tabs.
 
+Both variants also show a **"Finish setup"** section
+(`FlicktionaryFinishSetupSection`) when paired with `nativeLanguage === NULL`
+(a user who paired without completing web onboarding — glosses would fail with
+`BAD_REQUEST`): a native-language select (`SUPPORTED_LANGUAGES` native names)
+that calls `userPrefs.setNativeLanguage` and hides itself. Keyed on
+`nativeLanguage === null`, NOT `isOnboarded` — web onboarding remains the full
+flow; this only unblocks lookups. Popup open also refreshes the UI prefs from
+the server (one shared `getPrefs` per open, memo invalidated on auth change).
+
 On video pages, paired accounts on the test-user allow-list also get an
 **Admin** tab (`AdminSettingsTab`, `SettingsForm`'s `adminTab` prop): debugging
 toggles persisted in `flicktionary.devTools.v1` (`dev-tools-storage.ts`,
@@ -328,6 +344,18 @@ transcript-cache management), About.
   fields) + `TranscriptSettings`.
 - **Defaults tuned for the common case:** `streamingAutoSync` on,
   `pauseOnHoverMode: inAndOut`, overlay on.
+- **Theme & interface language:** `themeType` is `'dark' | 'light' | 'system'`
+  and `language` accepts `'system'` — both default to `'system'` (there is no
+  install-time language write; `'system'` resolves the browser locale/OS theme
+  at runtime). `'system'` flows through controller messages **unresolved** and
+  resolves at each realm's consumer edge (`resolveTheme`/`useResolvedTheme`,
+  live matchMedia follow); the sonner toaster resolves inside `setToasterTheme`.
+  When paired, theme/language are **person-level**: changes from the popup and
+  options-page sinks write through to the server (`userPrefs.setUiTheme`/
+  `setUiLanguage`, fire-and-forget, no retry queue, last-write-wins across
+  browsers), and popup/options open pulls non-NULL server values down. Settings
+  stay profile-scoped in storage; server→local writes go through
+  `settingsProvider.set` and never push back (no loops).
 
 ### Keyboard shortcuts
 
@@ -362,6 +390,9 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
 | `studySessions.importText` | article/selection import |
 | `highlights.create` | saving a word/chunk |
+| `userPrefs.getPrefs` | UI-prefs refresh on popup/options open; `nativeLanguage === null` gates the finish-setup section |
+| `userPrefs.setUiTheme` / `userPrefs.setUiLanguage` | write-through + pairing reconcile of theme/interface language (NULL round-trip supported) |
+| `userPrefs.setNativeLanguage` | JIT native-language picker |
 
 Plus Supabase auth (`verifyOtp`, publishable key in `flicktionary-config.ts`),
 the web app's `/extension-pair` route, and the external Whisper transcript
@@ -390,9 +421,20 @@ No learning data is stored locally; highlights live in the backend.
 5. Pause → controls overlay appears; toggle-subtitles works.
 6. Popup: pairing status, settings tabs, profile switching/deletion.
 7. On a news article: popup import creates a session.
-8. **Firefox build** (`build:firefox`, `web-ext run`) — smoke-test manually;
-   Firefox-only failure modes (Xray wrappers, promise-only `sendMessage`) are
-   invisible to CI.
+8. Theme: default System follows the OS (flip the OS theme live — popup,
+   options, and shadow overlays follow); explicit Light/Dark sticks. Language
+   System follows the browser locale; explicit Français switches the UI.
+9. Sync: pair with server-NULL prefs → local values pushed (PUT in Network);
+   pair with server-set prefs → local pulled; change theme/language while
+   paired → PUT fires; a second browser pulls on popup open.
+10. JIT picker: pair an account with `native_language` NULL → "Finish setup"
+    shows in both popup variants → picking a language calls
+    `setNativeLanguage`, the section hides, and glosses work.
+11. **Firefox build** (`build:firefox`, `web-ext run`) — smoke-test manually;
+    Firefox-only failure modes (Xray wrappers, promise-only `sendMessage`) are
+    invisible to CI. For this feature: matchMedia in popup/options AND inside
+    shadow-DOM overlays, `.dark` toggling on shadow roots, orpc sync calls,
+    JIT-picker Radix portal rendering.
 
 ## Known engineering traps
 

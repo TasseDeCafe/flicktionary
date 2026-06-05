@@ -16,6 +16,7 @@ import { useRequestingActiveTabPermission } from '../hooks/use-requesting-active
 import { useResolvedTheme } from '../hooks/use-resolved-theme'
 import { useSettingsProfileContext } from '@asbplayer-fork/common/hooks/use-settings-profile-context'
 import { getFlicktionaryConfig } from '@/services/flicktionary/flicktionary-config'
+import { pushUiPrefs, refreshUiPrefsFromServer } from '@/services/flicktionary/ui-prefs-sync'
 import { I18nProvider } from '@lingui/react'
 import { i18n, setupLingui } from '../lingui'
 import type { PopupCommands } from '../popup'
@@ -46,6 +47,17 @@ export function PopupUi({ commands }: Props) {
     settingsProvider.getAll().then(setSettings)
   }, [settingsProvider])
 
+  // Pull server-set UI prefs (theme/language) on popup open; re-read settings
+  // if anything changed locally.
+  useEffect(() => {
+    void refreshUiPrefsFromServer().then((changed) => {
+      if (changed) {
+        settingsProvider.getAll().then(setSettings)
+        notifySettingsUpdated()
+      }
+    })
+  }, [settingsProvider])
+
   useEffect(() => {
     let active = true
     void browser.tabs
@@ -65,6 +77,8 @@ export function PopupUi({ commands }: Props) {
       setSettings((old: any) => ({ ...old, ...changed }))
       await settingsProvider.set(changed)
       notifySettingsUpdated()
+      // Write-through to the server when paired (fire-and-forget).
+      pushUiPrefs(changed)
     },
     [settingsProvider]
   )
