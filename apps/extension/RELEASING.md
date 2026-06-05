@@ -2,7 +2,7 @@
 
 ## Normal release flow
 
-1. Bump `version` in `packages/extension/package.json` (Chrome requires strictly increasing versions).
+1. Bump `version` in `apps/extension/package.json` (Chrome requires strictly increasing versions).
 2. Tag and push — the tag (minus `v`) must match the package version:
 
    ```bash
@@ -78,7 +78,7 @@ follows the official docs: <https://developer.chrome.com/docs/webstore/using-api
 ### Verifying credentials without submitting anything
 
 ```bash
-cd packages/extension
+cd apps/extension
 doppler run --project extension --config prd -- pnpm exec wxt zip
 doppler run --project root --config prd -- \
   npx -y publish-browser-extension@4.0.5 --dry-run --chrome-zip .output/*-chrome.zip

@@ -37,7 +37,7 @@ Ask the user for a branch/feature name if they didn't give one. Then, from anywh
    pnpm install
    ```
 
-4. **Generate gitignored build artifacts.** `git worktree add` only checks out *tracked* files, so codegen output the primary checkout has lying around from past runs is absent here. The one that breaks `dev:tunnel` first is the Lingui-compiled catalogs `packages/i18n/locales/{en,fr}/messages.ts` (gitignored; only the `.po` sources are tracked) — without them the extension build dies with `Rolldown failed to resolve import "@flicktionary/i18n/locales/en/messages.ts" from packages/extension/src/ui/lingui.ts`. Compile them once:
+4. **Generate gitignored build artifacts.** `git worktree add` only checks out *tracked* files, so codegen output the primary checkout has lying around from past runs is absent here. The one that breaks `dev:tunnel` first is the Lingui-compiled catalogs `packages/i18n/locales/{en,fr}/messages.ts` (gitignored; only the `.po` sources are tracked) — without them the extension build dies with `Rolldown failed to resolve import "@flicktionary/i18n/locales/en/messages.ts" from apps/extension/src/ui/lingui.ts`. Compile them once:
 
    ```bash
    pnpm --filter @flicktionary/i18n run lingui:compile

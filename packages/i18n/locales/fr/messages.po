@@ -134,7 +134,7 @@ msgstr "{parkedTotal} en pause"
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:156
+#: apps/extension/src/ui/components/Tutorial.tsx:156
 msgid "<0>Scroll</0> the rightmost control to switch between <1>subtitle "
 "navigation</1>, <2>subtitle offset</2>, and <3>playback rate</3> "
 "controls."
@@ -181,7 +181,7 @@ msgstr "Une phrase utilisant ce terme dans son contexte naturel."
 msgid "A short label for this session"
 msgstr "Un libellé court pour cette session"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:185
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:185
 msgid "A video element must be synced with Flicktionary before it can be mined. "
 "Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
@@ -192,8 +192,8 @@ msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
 msgid "About"
 msgstr "À propos"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:156
-#: packages/extension/src/ui/components/ImportPopup.tsx:44
+#: apps/extension/common/components/SettingsForm.tsx:156
+#: apps/extension/src/ui/components/ImportPopup.tsx:44
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
@@ -243,7 +243,7 @@ msgstr "Vocabulaire actif"
 msgid "Add a word"
 msgstr "Ajouter un mot"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:56
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:56
 msgid "Add Custom CSS"
 msgstr "Ajouter un CSS personnalisé"
 
@@ -251,7 +251,7 @@ msgstr "Ajouter un CSS personnalisé"
 msgid "Add form"
 msgstr "Ajouter une forme"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:158
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:158
 msgid "Add New Profile..."
 msgstr "Ajouter un nouveau profil..."
 
@@ -259,7 +259,7 @@ msgstr "Ajouter un nouveau profil..."
 msgid "Add note"
 msgstr "Ajouter une note"
 
-#: packages/extension/src/entrypoints/background.ts:186
+#: apps/extension/src/entrypoints/background.ts:186
 msgid "Add selection to Flicktionary"
 msgstr "Ajouter la sélection à Flicktionary"
 
@@ -271,11 +271,11 @@ msgstr "Ajouter au vocabulaire actif"
 msgid "Add to passive vocabulary"
 msgstr "Ajouter au vocabulaire passif"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:127
+#: apps/extension/common/components/PageSettingsForm.tsx:127
 msgid "Additional hosts"
 msgstr "Additional hosts"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:240
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:240
 msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
 "try using a different font."
 msgstr "Ajoute un contour autour du texte des sous-titres. Si cela entraîne un "
@@ -285,20 +285,20 @@ msgstr "Ajoute un contour autour du texte des sous-titres. Si cela entraîne un 
 msgid "Adjective"
 msgstr "Adjectif"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:366
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:366
 msgid "Adjust subtitle offset by -100ms"
 msgstr "Ajuster le décalage des sous-titres par -100ms"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:365
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:365
 msgid "Adjust subtitle offset by +100ms"
 msgstr "Ajuster le décalage des sous-titres de +100 ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:362
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:362
 msgid "Adjust subtitle offset so that next subtitle is at current timestamp"
 msgstr "Ajuster le décalage des sous-titres pour que le sous-titre suivant soit "
 "à l’horodatage actuel"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:358
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:358
 msgid "Adjust subtitle offset so that previous subtitle is at current timestamp"
 msgstr "Ajuster le décalage des sous-titres pour que le sous-titre précédent "
 "soit à l’horodatage actuel"
@@ -325,9 +325,9 @@ msgstr "Adverbe"
 msgid "Again"
 msgstr "Encore"
 
+#: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:26
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:45
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:26
 msgid "All"
 msgstr "Tout"
 
@@ -342,19 +342,19 @@ msgstr "Tout est à jour"
 msgid "All done!"
 msgstr "Terminé !"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:168
+#: apps/extension/common/components/PageSettingsForm.tsx:168
 msgid "Allow auto-loading of detected subtitles"
 msgstr "Allow auto-loading of detected subtitles"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:83
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:83
 msgid "Allow subtitle file drag-and-drop"
 msgstr "Autoriser le glisser-déposer de fichiers de sous-titres"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:161
+#: apps/extension/common/components/PageSettingsForm.tsx:161
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:347
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
 msgstr "Toujours lancer la lecture après avoir invoqué \"Aller au début du "
 "sous-titre actuel/précédent\""
@@ -438,19 +438,19 @@ msgstr "Paire aspectuelle (mot-vedette correspondant)"
 msgid "At least {TEXT_PASTE_MIN_LENGTH} characters needed"
 msgstr "Au moins {TEXT_PASTE_MIN_LENGTH} caractères requis"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:197
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:197
 msgid "At Subtitle End"
 msgstr "À la fin des sous-titres"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:196
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:196
 msgid "At Subtitle Start"
 msgstr "Au début des sous-titres"
 
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:44
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:44
 msgid "Audio recording enabled"
 msgstr "Enregistrement audio activé"
 
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:45
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:45
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
 msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
 "maintenant commencer l’extraction."
@@ -460,11 +460,11 @@ msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
 msgid "Authentication failed"
 msgstr "Échec de l'authentification"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:155
+#: apps/extension/common/components/MiscSettingsTab.tsx:155
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:303
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:303
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
 "not know how to detect subtitles on every site. You can always load your "
 "own subtitle files."
@@ -473,27 +473,27 @@ msgstr "Les pistes de sous-titres détectées automatiquement peuvent être "
 "sur tous les sites. Vous pouvez toujours charger vos propres fichiers "
 "de sous-titres."
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:88
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:88
 msgid "Auto-load detected subtitles"
 msgstr "Chargement automatique des sous-titres détectés"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:66
+#: apps/extension/common/components/PlayModeSelector.tsx:66
 msgid "Auto-pause"
 msgstr "Pause automatique"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:259
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:259
 msgid "Auto-pause preference"
 msgstr "Préférence de pause automatique"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:189
+#: apps/extension/common/components/MiscSettingsTab.tsx:189
 msgid "Auto-pause when mousing over subtitles"
 msgstr "Pause automatique au survol des sous-titres"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:632
+#: apps/extension/src/controllers/subtitle-controller.ts:632
 msgid "Auto-pause: Off"
 msgstr "Pause automatique : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:630
+#: apps/extension/src/controllers/subtitle-controller.ts:630
 msgid "Auto-pause: On"
 msgstr "Pause automatique : Activé"
 
@@ -562,7 +562,7 @@ msgstr "Facturé annuellement à {yearlyPriceTotal} €"
 msgid "Bonus"
 msgstr "Bonus"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:382
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:382
 msgid "Bottom"
 msgstr "Bas"
 
@@ -607,7 +607,7 @@ msgstr "Cartes restantes"
 msgid "CEFR level"
 msgstr "Niveau CECRL"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:22
+#: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:22
 msgid "Changes settings for ALL tracks. Settings that already have "
 "track-specific values are hidden."
 msgstr "Modifie les paramètres pour TOUTES les pistes. Les paramètres qui ont "
@@ -669,14 +669,14 @@ msgid "Click Generate full exploration to enrich this card with collocations, "
 msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte "
 "avec des collocations, l'étymologie, le registre, l'API et plus encore."
 
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:43
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:43
 msgid "Click on the Flicktionary action button in the top-right of the browser "
 "window to enable audio recording for this tab."
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
 "navigateur pour activer l’enregistrement audio de cet onglet."
 
 #. placeholder {0}: isFirefox ? '⚙' : '📌'
-#: packages/extension/src/ui/components/Tutorial.tsx:66
+#: apps/extension/src/ui/components/Tutorial.tsx:66
 msgid "Click the 🧩 icon in the toolbar, and select <0>asbplayer</0> to open "
 "the asbplayer <1>Popup</1>.<2/>Use the {0} button to pin asbplayer to "
 "the toolbar for easy access."
@@ -689,16 +689,16 @@ msgstr "Cliquez sur l'icône 🧩 dans la barre d'outils, puis sélectionnez "
 msgid "Click the link in the email to continue."
 msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:312
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:312
 msgid "Click to unlock font menu"
 msgstr "Cliquez pour déverrouiller le menu de police"
 
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:284
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:124
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:177
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:284
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:124
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:177
 msgid "Close"
 msgstr "Fermer"
 
@@ -706,7 +706,7 @@ msgstr "Fermer"
 msgid "Collocations"
 msgstr "Cooccurrences"
 
-#: packages/asbplayer-common/components/ListField.tsx:58
+#: apps/extension/common/components/ListField.tsx:58
 msgid "Comma-separated list of strings"
 msgstr "Liste de chaînes séparées par des virgules"
 
@@ -714,19 +714,19 @@ msgstr "Liste de chaînes séparées par des virgules"
 msgid "Common"
 msgstr "Commun"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:54
+#: apps/extension/common/components/PlayModeSelector.tsx:54
 msgid "Condensed"
 msgstr "Condensé"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:105
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:105
 msgid "Condensed playback minimum skip interval"
 msgstr "Intervalle de saut minimal en lecture condensée"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:636
+#: apps/extension/src/controllers/subtitle-controller.ts:636
 msgid "Condensed playback: Off"
 msgstr "Lecture condensée : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:634
+#: apps/extension/src/controllers/subtitle-controller.ts:634
 msgid "Condensed playback: On"
 msgstr "Lecture condensée : Activée"
 
@@ -784,7 +784,7 @@ msgstr "Continuer avec Google"
 msgid "Correct!"
 msgstr "Correct !"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:295
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:295
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Impossible de charger automatiquement les sous-titres dans la langue "
 "préférée."
@@ -806,7 +806,7 @@ msgstr "Impossible de récupérer une glose. Le surlignage est toujours "
 msgid "Could not fetch a translation right now."
 msgstr "Impossible de récupérer une traduction pour le moment."
 
-#: packages/extension/src/services/flicktionary/import-text.ts:28
+#: apps/extension/src/services/flicktionary/import-text.ts:28
 msgid "Could not find a readable article on this page."
 msgstr "Impossible de trouver un article lisible sur cette page."
 
@@ -814,8 +814,8 @@ msgstr "Impossible de trouver un article lisible sur cette page."
 msgid "Could not import the pasted text."
 msgstr "Impossible d'importer le texte collé."
 
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:23
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:26
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:23
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:26
 msgid "Could not import this page."
 msgstr "Impossible d’importer cette page."
 
@@ -847,7 +847,7 @@ msgstr "Impossible d'ouvrir le lien. Veuillez visiter notre site web pour gérer
 msgid "Could not open upgrade screen."
 msgstr "Impossible d'ouvrir l'écran de mise à niveau."
 
-#: packages/extension/src/services/flicktionary/import-text.ts:30
+#: apps/extension/src/services/flicktionary/import-text.ts:30
 msgid "Could not read this page."
 msgstr "Impossible de lire cette page."
 
@@ -865,11 +865,11 @@ msgid "Couldn't load exercises."
 msgstr "Impossible de charger les exercices."
 
 #. placeholder {0}: customStyle.key
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:89
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:89
 msgid "CSS: {0}"
 msgstr "CSS: {0}"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:269
+#: apps/extension/common/components/VideoOverlay.tsx:269
 msgid "Current Timestamp"
 msgstr "Horodatage actuel"
 
@@ -905,7 +905,7 @@ msgstr "Zone dangereuse"
 msgid "Danger Zone"
 msgstr "Zone Dangereuse"
 
-#: packages/asbplayer-common/components/UiSettings.tsx:30
+#: apps/extension/common/components/UiSettings.tsx:30
 msgid "Dark"
 msgstr "Sombre"
 
@@ -918,21 +918,21 @@ msgstr "Tableau de bord"
 msgid "Day {days} of 3 — come back tomorrow for the next step."
 msgstr "Jour {days} sur 3 — revenez demain pour la prochaine étape."
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:276
+#: apps/extension/common/components/VideoOverlay.tsx:276
 msgid "Decrease offset to so that next subtitle is at current position. Hold to "
 "decrease by 100ms."
 msgstr "Réduire le décalage pour que le sous-titre suivant soit à la position "
 "actuelle. Maintenez appuyé pour réduire de 100 ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:370
-#: packages/asbplayer-common/components/VideoOverlay.tsx:281
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:370
+#: apps/extension/common/components/VideoOverlay.tsx:281
 msgid "Decrease playback rate"
 msgstr "Diminuer la vitesse de lecture"
 
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:36
-#: packages/asbplayer-common/components/MiniProfileSelector.tsx:45
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:122
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:128
+#: apps/extension/common/components/MiniProfileSelector.tsx:36
+#: apps/extension/common/components/MiniProfileSelector.tsx:45
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:122
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:128
 msgid "Default"
 msgstr "Défaut"
 
@@ -975,7 +975,7 @@ msgstr "Supprimé « {headword} »"
 msgid "Deleting…"
 msgstr "Suppression…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:183
+#: apps/extension/common/components/MiscSettingsTab.tsx:183
 msgid "Detect and Display Ruby"
 msgstr "Detect and Display Ruby"
 
@@ -983,7 +983,7 @@ msgstr "Detect and Display Ruby"
 msgid "Detecting language…"
 msgstr "Détection de la langue…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:198
+#: apps/extension/common/components/MiscSettingsTab.tsx:198
 msgid "Disabled"
 msgstr "Désactivé"
 
@@ -991,7 +991,7 @@ msgstr "Désactivé"
 msgid "Display form (e.g. stress-marked)"
 msgstr "Forme d'affichage (par ex. accentuée)"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:75
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:75
 msgid "Display subtitles"
 msgstr "Afficher les sous-titres"
 
@@ -1048,7 +1048,7 @@ msgstr "Modifier la note"
 msgid "Edit term"
 msgstr "Modifier le terme"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:170
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:170
 msgid "Edit this shortcut from the Plugin manager at about:addons."
 msgstr "Modifiez ce raccourci depuis le gestionnaire d’extensions à l’adresse "
 "about:addons."
@@ -1079,25 +1079,25 @@ msgstr "Le lien n'est pas valide ou a expiré"
 msgid "Email Verification Sent"
 msgstr "Email de Vérification Envoyé"
 
-#: packages/extension/src/controllers/video-data-sync-controller.ts:102
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:101
-#: packages/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:134
+#: apps/extension/src/controllers/video-data-sync-controller.ts:102
+#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:101
+#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:134
 msgid "Empty"
 msgstr "Vide"
 
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:42
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:42
 msgid "Enable audio recording"
 msgstr "Activer l'enregistrement audio"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:69
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:69
 msgid "Enable controls overlay"
 msgstr "Activer la superposition des commandes"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:200
+#: apps/extension/common/components/MiscSettingsTab.tsx:200
 msgid "Enabled"
 msgstr "Activé"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:199
+#: apps/extension/common/components/MiscSettingsTab.tsx:199
 msgid "Enabled with auto-resume"
 msgstr "Activé avec reprise automatique"
 
@@ -1122,14 +1122,14 @@ msgstr "Échec de l'enrichissement"
 msgid "Enrichment has not started yet."
 msgstr "L'enrichissement n'a pas encore commencé."
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:75
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:75
 msgid "Enter profile name"
 msgstr "Entrer le nom du profil"
 
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Error"
 msgstr "Erreur"
 
@@ -1146,7 +1146,7 @@ msgstr "Erreur lors de la configuration du compte..."
 msgid "Error setting up user data"
 msgstr "Erreur lors de la configuration des données utilisateur"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:648
+#: apps/extension/src/controllers/subtitle-controller.ts:648
 msgid "Error: {message}"
 msgstr "Erreur : {message}"
 
@@ -1185,7 +1185,7 @@ msgstr "Expliquer"
 msgid "Explain this term in more depth."
 msgstr "Expliquez ce terme plus en détail."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:272
+#: apps/extension/common/components/MiscSettingsTab.tsx:272
 msgid "Export Settings"
 msgstr "Exporter les paramètres"
 
@@ -1201,11 +1201,11 @@ msgstr "Exporté {chunkCount} terme(s)"
 msgid "Exporting…"
 msgstr "Export en cours…"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:178
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:178
 msgid "Extension shortcut"
 msgstr "Raccourci de l'extension"
 
-#: packages/asbplayer-common/components/About.tsx:27
+#: apps/extension/common/components/About.tsx:27
 msgid "Extension version"
 msgstr "Version de l'extension"
 
@@ -1255,7 +1255,7 @@ msgstr "Échec de la génération de l'exploration"
 msgid "Failed to generate next text"
 msgstr "Échec de la génération du texte suivant"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:92
+#: apps/extension/src/services/flicktionary/import-text.ts:92
 msgid "Failed to import into Flicktionary."
 msgstr "Échec de l’import dans Flicktionary."
 
@@ -1474,19 +1474,19 @@ msgstr "Échec de l'envoi des sous-titres"
 msgid "Failed to use suggestion"
 msgstr "Échec de l'utilisation de la suggestion"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:640
+#: apps/extension/src/controllers/subtitle-controller.ts:640
 msgid "Fast forward playback: Off"
 msgstr "Lecture en avance rapide : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:638
+#: apps/extension/src/controllers/subtitle-controller.ts:638
 msgid "Fast forward playback: On"
 msgstr "Lecture en avance rapide : Activé"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:60
+#: apps/extension/common/components/PlayModeSelector.tsx:60
 msgid "Fast-forward"
 msgstr "Avance rapide"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:275
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:275
 msgid "Fast-forward mode playback rate"
 msgstr "Vitesse de lecture en mode rapide"
 
@@ -1498,13 +1498,13 @@ msgstr "Féminin"
 msgid "Finding suggestions…"
 msgstr "Recherche de suggestions…"
 
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:54
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:50
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:54
 msgid "Flicktionary"
 msgstr "Flicktionary"
 
 #. placeholder {0}: state.newVersion
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:104
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:104
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
 "<0>notes de version</0>."
@@ -1563,7 +1563,7 @@ msgstr "Générer la carte"
 msgid "Generate full exploration"
 msgstr "Générer l'exploration complète"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:346
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:346
 msgid "Generate Subtitles"
 msgstr "Générer les sous-titres"
 
@@ -1571,7 +1571,7 @@ msgstr "Générer les sous-titres"
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Génération de l'exploration complète… cela prend quelques secondes."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:343
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:343
 msgid "Generating..."
 msgstr "Génération..."
 
@@ -1611,7 +1611,7 @@ msgstr "Aller au tri"
 msgid "Good"
 msgstr "Bien"
 
-#: packages/asbplayer-common/components/TutorialBubble.tsx:33
+#: apps/extension/common/components/TutorialBubble.tsx:33
 msgid "Got it"
 msgstr "Got it"
 
@@ -1669,7 +1669,7 @@ msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Masquer ce terme de la Pratique et du Vocabulaire. Vous pourrez le "
 "restaurer plus tard."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:368
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:368
 msgid "Hides selected subtitle tracks by blurring them. Can be un-blurred on "
 "mouse hover."
 msgstr "Masque les pistes de sous-titres sélectionnées en les floutant. Le flou "
@@ -1713,7 +1713,7 @@ msgstr "Historique · {languageName}"
 msgid "Home"
 msgstr "Accueil"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:125
+#: apps/extension/common/components/PageSettingsForm.tsx:125
 msgid "Host regex"
 msgstr "Host regex"
 
@@ -1739,25 +1739,25 @@ msgstr "Si vous souhaitez créer un nouveau compte, vous pouvez vous inscrire à
 msgid "Imperfective"
 msgstr "Imperfectif"
 
-#: packages/extension/src/entrypoints/background.ts:180
+#: apps/extension/src/entrypoints/background.ts:180
 msgid "Import article to Flicktionary"
 msgstr "Importer l’article dans Flicktionary"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:269
+#: apps/extension/common/components/MiscSettingsTab.tsx:269
 msgid "Import Settings"
 msgstr "Importer les paramètres"
 
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Import this article"
 msgstr "Importer cet article"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:83
+#: apps/extension/src/services/flicktionary/import-text.ts:83
 msgid "Imported text"
 msgstr "Texte importé"
 
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
-#: packages/extension/src/ui/components/FlicktionaryImportSection.tsx:35
 msgid "Importing…"
 msgstr "Importation…"
 
@@ -1765,14 +1765,14 @@ msgstr "Importation…"
 msgid "Inanimate"
 msgstr "Inanimé"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:274
+#: apps/extension/common/components/VideoOverlay.tsx:274
 msgid "Increase offset to so that previous subtitle is at current position. "
 "Hold to increase by 100ms."
 msgstr "Augmenter le décalage pour que le sous-titre précédent soit à la "
 "position actuelle. Maintenez appuyé pour augmenter de 100 ms."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:368
-#: packages/asbplayer-common/components/VideoOverlay.tsx:283
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:368
+#: apps/extension/common/components/VideoOverlay.tsx:283
 msgid "Increase playback rate"
 msgstr "Augmenter la vitesse de lecture"
 
@@ -1841,7 +1841,7 @@ msgstr "Options de conservation"
 msgid "Keep practicing this one."
 msgstr "Continuez à pratiquer celui-ci."
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:144
+#: apps/extension/common/components/SettingsForm.tsx:144
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
@@ -1853,8 +1853,8 @@ msgstr "Notes L1"
 msgid "Label (e.g. past.m)"
 msgstr "Libellé (par ex. passé.m)"
 
+#: apps/extension/common/components/UiSettings.tsx:35
 #: apps/web/src/components/language-option-list.tsx:52
-#: packages/asbplayer-common/components/UiSettings.tsx:35
 msgid "Language"
 msgstr "Langue"
 
@@ -1885,7 +1885,7 @@ msgstr "Dernière lecture"
 msgid "Later"
 msgstr "Plus tard"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:374
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:374
 msgid "Layout"
 msgstr "Layout"
 
@@ -1901,7 +1901,7 @@ msgstr "Apprentissage"
 msgid "Less formal:"
 msgstr "Moins formel :"
 
-#: packages/asbplayer-common/components/UiSettings.tsx:29
+#: apps/extension/common/components/UiSettings.tsx:29
 msgid "Light"
 msgstr "Clair"
 
@@ -1915,8 +1915,8 @@ msgstr "Lien expiré ou invalide"
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:330
-#: packages/extension/src/entrypoints/background.ts:174
+#: apps/extension/common/components/VideoOverlay.tsx:330
+#: apps/extension/src/entrypoints/background.ts:174
 msgid "Load Subtitles"
 msgstr "Charger des sous-titres"
 
@@ -2006,9 +2006,9 @@ msgstr "Peut-être plus tard"
 msgid "Message to the founders"
 msgstr "Message pour les fondateurs"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:152
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:98
-#: packages/extension/src/ui/components/ImportPopup.tsx:41
+#: apps/extension/common/components/SettingsForm.tsx:152
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:98
+#: apps/extension/src/ui/components/ImportPopup.tsx:41
 msgid "Misc"
 msgstr "Divers"
 
@@ -2036,11 +2036,11 @@ msgstr "Synonyme plus fréquent"
 msgid "More options"
 msgstr "Plus d'options"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:394
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:394
 msgid "Move bottom subtitles down"
 msgstr "Move bottom subtitles down"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:390
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:390
 msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
 
@@ -2052,11 +2052,11 @@ msgstr "Renvoyer ce terme à la révision passive uniquement."
 msgid "Move this term into the active drilling pool."
 msgstr "Déplacer ce terme vers le pool d'entraînement actif."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:402
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:402
 msgid "Move top subtitles down"
 msgstr "Move top subtitles down"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:398
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:398
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
@@ -2064,7 +2064,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Films"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
 
@@ -2073,7 +2073,7 @@ msgstr "Plusieurs éléments vidéo détectés"
 msgid "Name (optional)"
 msgstr "Nom (optionnel)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:216
+#: apps/extension/common/components/MiscSettingsTab.tsx:216
 msgid "Name of the tab"
 msgstr "Nom de l'onglet"
 
@@ -2139,11 +2139,11 @@ msgstr "Carte suivante"
 msgid "Nice!"
 msgstr "Super !"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:107
+#: apps/extension/src/services/flicktionary/import-text.ts:107
 msgid "No active tab to import from."
 msgstr "Aucun onglet actif à importer."
 
-#: packages/extension/src/services/flicktionary/import-text.ts:136
+#: apps/extension/src/services/flicktionary/import-text.ts:136
 msgid "No active tab."
 msgstr "Aucun onglet actif."
 
@@ -2198,11 +2198,11 @@ msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un "
 "fichier .srt à la place."
 
-#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:102
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:102
 msgid "No translation available"
 msgstr "Aucune traduction disponible"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:231
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:231
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
@@ -2224,7 +2224,7 @@ msgstr "Aucun vocabulaire pour l'instant"
 msgid "No Wiktionary IPA"
 msgstr "Pas d'API Wiktionary"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:48
+#: apps/extension/common/components/PlayModeSelector.tsx:48
 msgid "Normal"
 msgstr "Normal"
 
@@ -2265,19 +2265,19 @@ msgstr "Nombre uniquement"
 msgid "Numeral"
 msgstr "Numéral"
 
+#: apps/extension/common/components/PageSettingsForm.tsx:175
+#: apps/extension/src/ui/components/Tutorial.tsx:116
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:311
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:351
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:88
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:224
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:235
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:175
-#: packages/extension/src/ui/components/Tutorial.tsx:116
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:351
-#: packages/extension/src/ui/notification/ShadowNotificationApp.tsx:88
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:224
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:235
 msgid "OK"
 msgstr "OK"
 
-#: packages/extension/src/ui/components/PopupHeader.tsx:15
+#: apps/extension/src/ui/components/PopupHeader.tsx:15
 msgid "Open App"
 msgstr "Ouvrir l'app"
 
@@ -2285,8 +2285,8 @@ msgstr "Ouvrir l'app"
 msgid "Open chat"
 msgstr "Ouvrir le chat"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:214
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:336
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:214
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:336
 msgid "Open Files"
 msgstr "Ouvrir des fichiers"
 
@@ -2337,11 +2337,11 @@ msgstr "Initialement vérifié par rapport au Wiktionnaire le {groundedDate}, "
 msgid "Other"
 msgstr "Autre"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:136
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:136
 msgid "Overridden"
 msgstr "Remplacé"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:112
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:112
 msgid "Pages"
 msgstr "Pages"
 
@@ -2387,11 +2387,11 @@ msgstr "Collez un article, un commentaire ou une publication"
 msgid "Paste your text"
 msgstr "Collez votre texte"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:146
+#: apps/extension/common/components/PageSettingsForm.tsx:146
 msgid "Path hash regex for subtitle detection"
 msgstr "Path hash regex for subtitle detection"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:141
+#: apps/extension/common/components/PageSettingsForm.tsx:141
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
@@ -2407,7 +2407,7 @@ msgstr "Supprimer définitivement votre compte et toutes les données associées
 msgid "Phrase"
 msgstr "Expression"
 
-#: packages/asbplayer-common/components/SettingsColorField.tsx:42
+#: apps/extension/common/components/SettingsColorField.tsx:42
 msgid "Pick a color"
 msgstr "Choisir une couleur"
 
@@ -2450,23 +2450,23 @@ msgstr "Choisissez quoi créer ensuite."
 msgid "Pick your native language"
 msgstr "Choisissez votre langue maternelle"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:253
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:253
 msgid "Play/pause"
 msgstr "Lecture/Pause"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:368
+#: apps/extension/common/components/VideoOverlay.tsx:368
 msgid "Playback Mode"
 msgstr "Mode de lecture"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:282
+#: apps/extension/common/components/VideoOverlay.tsx:282
 msgid "Playback Rate"
 msgstr "Vitesse de lecture"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:646
+#: apps/extension/src/controllers/subtitle-controller.ts:646
 msgid "Playback Rate: {rate}"
 msgstr "Vitesse de lecture : {rate}"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:374
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:374
 msgid "Playback speed adjust step"
 msgstr "Incrément de réglage de la vitesse de lecture"
 
@@ -2558,7 +2558,7 @@ msgstr "Préparation de votre texte…"
 msgid "Preposition"
 msgstr "Préposition"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:650
+#: apps/extension/src/controllers/subtitle-controller.ts:650
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des "
 "sous-titres"
@@ -2601,16 +2601,16 @@ msgstr "Le traitement s'effectue en arrière-plan"
 msgid "Processing warnings"
 msgstr "Avertissements de traitement"
 
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:117
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:117
 msgid "Profile"
 msgstr "Profil"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:158
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:158
 msgid "Profile limit reached"
 msgstr "Limite de profil atteinte"
 
-#: packages/asbplayer-common/components/SettingsProfileSelectMenu.tsx:74
+#: apps/extension/common/components/SettingsProfileSelectMenu.tsx:74
 msgid "Profile Name"
 msgstr "Nom du profil"
 
@@ -2618,7 +2618,7 @@ msgstr "Nom du profil"
 msgid "Profile, subscription, sign-in"
 msgstr "Profil, abonnement, connexion"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:93
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:93
 msgid "Prompt on failure to auto-load subtitles"
 msgstr "Prompt on failure to auto-load subtitles"
 
@@ -2663,7 +2663,7 @@ msgstr "Prêt à pratiquer"
 msgid "Recently added"
 msgstr "Récemment ajouté"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:134
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:134
 msgid "Recording"
 msgstr "Enregistrement"
 
@@ -2715,21 +2715,21 @@ msgstr "Rejeter"
 msgid "Reject all"
 msgstr "Tout rejeter"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:118
+#: apps/extension/src/services/flicktionary/import-text.ts:118
 msgid "Reload the page, then try importing again."
 msgstr "Rechargez la page, puis réessayez l’import."
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:150
+#: apps/extension/common/components/MiscSettingsTab.tsx:150
 msgid "Remember subtitle offset"
 msgstr "Mémoriser le décalage des sous-titres"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:329
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:329
 msgid "Remember these track choices for this site"
 msgstr "Se souvenir de ces choix de piste pour ce site"
 
+#: apps/extension/common/components/MiscSettingsTab.tsx:175
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:175
 msgid "Remove"
 msgstr "Supprimer"
 
@@ -2750,19 +2750,19 @@ msgstr "Supprimer la session"
 msgid "Removing…"
 msgstr "Suppression…"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:176
+#: apps/extension/common/components/MiscSettingsTab.tsx:176
 msgid "Render"
 msgstr "Rendu"
 
-#: packages/asbplayer-common/components/PlayModeSelector.tsx:69
+#: apps/extension/common/components/PlayModeSelector.tsx:69
 msgid "Repeat"
 msgstr "Répéter"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:644
+#: apps/extension/src/controllers/subtitle-controller.ts:644
 msgid "Repeat playback: Off"
 msgstr "Répéter la lecture : Désactivé"
 
-#: packages/extension/src/controllers/subtitle-controller.ts:642
+#: apps/extension/src/controllers/subtitle-controller.ts:642
 msgid "Repeat playback: On"
 msgstr "Répéter la lecture : Activé"
 
@@ -2770,11 +2770,11 @@ msgstr "Répéter la lecture : Activé"
 msgid "Replace file ({fileName})"
 msgstr "Remplacer le fichier ({fileName})"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:183
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:183
 msgid "Reset"
 msgstr "Réinitialiser"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:367
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:367
 msgid "Reset subtitle offset"
 msgstr "Réinitialiser le décalage des sous-titres"
 
@@ -2795,7 +2795,7 @@ msgstr "Réessayer"
 msgid "Return to Login"
 msgstr "Retour à la connexion"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:121
+#: apps/extension/common/components/PageSettingsForm.tsx:121
 msgid "Revert"
 msgstr "Revert"
 
@@ -2816,10 +2816,10 @@ msgstr "Termes à réviser"
 msgid "RP"
 msgstr "RP"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:140
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:150
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
-#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:140
-#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:150
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -2849,7 +2849,7 @@ msgstr "Enregistrer dans le vocabulaire"
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:17
+#: apps/extension/src/ui/components/FtueUi.tsx:17
 msgid "Scroll down for a quick intro, or check out the <0>user guide</0>."
 msgstr "Scroll down for a quick intro, or check out the <0>user guide</0>."
 
@@ -2869,7 +2869,7 @@ msgstr "Rechercher des films…"
 msgid "Search OpenSubtitles"
 msgstr "Rechercher sur OpenSubtitles"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:152
+#: apps/extension/common/components/PageSettingsForm.tsx:152
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
@@ -2890,55 +2890,55 @@ msgstr "Recherche sur OpenSubtitles…"
 msgid "Searching…"
 msgstr "Recherche en cours…"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:319
-#: packages/asbplayer-common/components/VideoOverlay.tsx:268
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:319
+#: apps/extension/common/components/VideoOverlay.tsx:268
 msgid "Seek backward"
 msgstr "Sauter à l'envers"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:321
-#: packages/asbplayer-common/components/VideoOverlay.tsx:270
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:321
+#: apps/extension/common/components/VideoOverlay.tsx:270
 msgid "Seek forward"
 msgstr "Sauter vers l'avant"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:325
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:325
 msgid "Seek interval (seconds)"
 msgstr "Intervalle de recherche (en secondes)"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:343
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:343
 msgid "Seek to beginning of current/previous subtitle"
 msgstr "Aller au début du sous-titre actuel/précédent"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:341
-#: packages/asbplayer-common/components/VideoOverlay.tsx:270
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:341
+#: apps/extension/common/components/VideoOverlay.tsx:270
 msgid "Seek to next subtitle"
 msgstr "Aller au sous-titre suivant"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:340
-#: packages/asbplayer-common/components/VideoOverlay.tsx:268
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:340
+#: apps/extension/common/components/VideoOverlay.tsx:268
 msgid "Seek to previous subtitle"
 msgstr "Aller au sous-titre précédent"
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:190
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:190
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:206
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:206
 msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:140
+#: apps/extension/src/services/flicktionary/import-text.ts:140
 msgid "Select some text first."
 msgstr "Sélectionnez d’abord du texte."
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:249
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:249
 msgid "Select subtitle tracks to load."
 msgstr "Sélectionner les pistes de sous-titres à charger."
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:268
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:268
 msgid "Select Subtitles"
 msgstr "Sélectionner des sous-titres"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:143
+#: apps/extension/src/services/flicktionary/import-text.ts:143
 msgid "Selection"
 msgstr "Sélection"
 
@@ -2996,11 +2996,11 @@ msgstr "Définissez d'abord votre langue maternelle."
 msgid "Setting up account..."
 msgstr "Configuration du compte..."
 
+#: apps/extension/common/components/MiscSettingsTab.tsx:265
+#: apps/extension/src/ui/components/SettingsPage.tsx:57
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:278
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 #: apps/web/src/features/more/components/more-tab-view.tsx:51
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:265
-#: packages/extension/src/ui/components/SettingsPage.tsx:57
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:278
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:170
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -3042,35 +3042,35 @@ msgstr "Afficher les termes suggérés pendant la lecture"
 msgid "Show translations"
 msgstr "Afficher les traductions"
 
-#: packages/extension/src/ui/video-overlay/GlossTooltip.tsx:131
-#: packages/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:259
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:131
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:259
 msgid "Sign in"
 msgstr "Se connecter"
 
-#: packages/extension/src/services/flicktionary/import-text.ts:48
+#: apps/extension/src/services/flicktionary/import-text.ts:48
 msgid "Sign in to Flicktionary to import text."
 msgstr "Connectez-vous à Flicktionary pour importer du texte."
 
-#: packages/extension/src/handlers/saved-words/save-word-handler.ts:54
+#: apps/extension/src/handlers/saved-words/save-word-handler.ts:54
 msgid "Sign in to Flicktionary to save words."
 msgstr "Connectez-vous à Flicktionary pour enregistrer des mots."
 
-#: packages/extension/src/handlers/flicktionary/set-cefr-handler.ts:35
+#: apps/extension/src/handlers/flicktionary/set-cefr-handler.ts:35
 msgid "Sign in to Flicktionary to set your level."
 msgstr "Connectez-vous à Flicktionary pour définir votre niveau."
 
-#: packages/extension/src/handlers/flicktionary/gloss-handler.ts:34
+#: apps/extension/src/handlers/flicktionary/gloss-handler.ts:34
 msgid "Sign in to Flicktionary to translate."
 msgstr "Connectez-vous à Flicktionary pour traduire."
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:67
 msgid "Sign in with Flicktionary"
 msgstr "Se connecter à Flicktionary"
 
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:89
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 msgid "Sign out"
 msgstr "Déconnexion"
 
@@ -3084,11 +3084,11 @@ msgid "Sign up"
 msgstr "S'inscrire"
 
 #. placeholder {0}: auth.email
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:59
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:59
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
 
-#: packages/extension/src/ui/components/FlicktionaryPairSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:67
 msgid "Signing in…"
 msgstr "Connexion…"
 
@@ -3172,7 +3172,7 @@ msgstr "Arrêter de pratiquer ce terme en pratique active"
 msgid "Streaming"
 msgstr "Streaming"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:148
+#: apps/extension/common/components/SettingsForm.tsx:148
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
@@ -3188,11 +3188,11 @@ msgstr "Renforcer · {languageName}"
 msgid "Strengthening done!"
 msgstr "Renforcement terminé !"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:90
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:90
 msgid "Style Value"
 msgstr "Valeur du style"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:194
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:194
 msgid "Styling"
 msgstr "Styling"
 
@@ -3219,107 +3219,107 @@ msgstr "Abonnement Requis"
 msgid "Subscription Successful!"
 msgstr "Abonnement réussi !"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:379
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:379
 msgid "Subtitle Alignment"
 msgstr "Alignement des sous-titres"
 
-#: packages/asbplayer-common/components/SettingsForm.tsx:140
+#: apps/extension/common/components/SettingsForm.tsx:140
 msgid "Subtitle Appearance"
 msgstr "Apparence des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:266
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:266
 msgid "Subtitle Background Color"
 msgstr "Couleur de fond des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:274
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:274
 msgid "Subtitle Background Opacity"
 msgstr "Opacité de l'arrière-plan des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:361
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:361
 msgid "Subtitle blur"
 msgstr "Flou des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:198
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:198
 msgid "Subtitle Color"
 msgstr "Couleur des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:287
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:295
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:287
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:295
 msgid "Subtitle Font Family"
 msgstr "Famille de police des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:216
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:216
 msgid "Subtitle Font Thickness"
 msgstr "Épaisseur de la police des sous-titres"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:222
+#: apps/extension/common/components/MiscSettingsTab.tsx:222
 msgid "Subtitle Generation"
 msgstr "Génération des sous-titres"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:172
+#: apps/extension/common/components/MiscSettingsTab.tsx:172
 msgid "Subtitle HTML"
 msgstr "Sous-titres HTML"
 
-#: packages/asbplayer-common/components/VideoOverlay.tsx:275
+#: apps/extension/common/components/VideoOverlay.tsx:275
 msgid "Subtitle Offset"
 msgstr "Décalage des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:231
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:231
 msgid "Subtitle Outline Color"
 msgstr "Couleur du contour des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:239
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:239
 msgid "Subtitle Outline Thickness"
 msgstr "Épaisseur du contour des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:393
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:393
 msgid "Subtitle position offset from bottom"
 msgstr "Décalage de la position des sous-titres depuis le bas"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:401
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:401
 msgid "Subtitle position offset from top"
 msgstr "Décalage de la position des sous-titres depuis le haut"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:160
+#: apps/extension/common/components/MiscSettingsTab.tsx:160
 msgid "Subtitle regex filter"
 msgstr "Filtre regex des sous-titres"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:166
+#: apps/extension/common/components/MiscSettingsTab.tsx:166
 msgid "Subtitle regex filter text replacement"
 msgstr "Remplacement de texte pour le filtre regex des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:249
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:249
 msgid "Subtitle Shadow Color"
 msgstr "Couleur de l'ombre des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:257
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:257
 msgid "Subtitle Shadow Thickness"
 msgstr "Épaisseur des ombres des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:206
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:206
 msgid "Subtitle Size"
 msgstr "Taille des sous-titres"
 
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:18
+#: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:18
 msgid "Subtitle Track"
 msgstr "Piste des sous-titres"
 
 #. placeholder {0}: i + 1
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:186
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:186
 msgid "Subtitle Track {0}"
 msgstr "Piste des sous-titres {0}"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:147
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:80
+#: apps/extension/common/components/MiscSettingsTab.tsx:147
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:80
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:290
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:290
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer "
 "l’extraction."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:409
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:409
 msgid "Subtitles Width"
 msgstr "Largeur des sous-titres"
 
@@ -3360,7 +3360,7 @@ msgstr "Exemple cible"
 msgid "Target language"
 msgstr "Langue cible"
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:59
+#: apps/extension/common/components/PageSettingsForm.tsx:59
 msgid "Target language codes for machine translation"
 msgstr "Target language codes for machine translation"
 
@@ -3399,7 +3399,7 @@ msgstr "Textes"
 msgid "Thank you for your feedback!"
 msgstr "Merci pour votre retour !"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:188
+#: apps/extension/src/ui/components/Tutorial.tsx:188
 msgid "That's it for the basics! Feel free to play around on this page."
 msgstr "That's it for the basics! Feel free to play around on this page."
 
@@ -3411,7 +3411,7 @@ msgstr "L'extension n'a pas pu terminer l'appariement."
 msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:107
+#: apps/extension/src/ui/components/Tutorial.tsx:107
 msgid "The first step to using asbplayer is always to load subtitles onto a "
 "video. <0>Right-click</0> on the video and find the asbplayer <1>context "
 "menu</1> to load subtitles."
@@ -3419,7 +3419,7 @@ msgstr "The first step to using asbplayer is always to load subtitles onto a "
 "video. <0>Right-click</0> on the video and find the asbplayer "
 "<1>context menu</1> to load subtitles."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:97
+#: apps/extension/src/ui/components/Tutorial.tsx:97
 msgid "The first step to using asbplayer is always to load subtitles onto a "
 "video. <0>Right-click</0> the video and choose the asbplayer <1>Load "
 "Subtitles</1> menu item.<2/>Hint: asbplayer can also <3>auto-load</3> "
@@ -3431,7 +3431,7 @@ msgstr "La première étape pour utiliser asbplayer est toujours de charger des 
 "automatiquement</3> les sous-titres détectés sur les sites pris en "
 "charge."
 
-#: packages/asbplayer-common/components/UiSettings.tsx:26
+#: apps/extension/common/components/UiSettings.tsx:26
 msgid "Theme"
 msgstr "Thème"
 
@@ -3445,7 +3445,7 @@ msgstr "Une erreur s'est produite lors de l'envoi de l'e-mail de vérification. 
 msgid "There was an error. Please contact support."
 msgstr "Il y a eu une erreur. Veuillez contacter le support."
 
-#: packages/asbplayer-common/components/PageSettingsForm.tsx:106
+#: apps/extension/common/components/PageSettingsForm.tsx:106
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
 
@@ -3513,48 +3513,48 @@ msgstr "Pour changer votre plan actuel, veuillez cliquer sur \"Gérer "
 msgid "Today"
 msgstr "Aujourd'hui"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:255
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:255
 msgid "Toggle auto-pause"
 msgstr "Activer/désactiver la pause automatique"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:269
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:269
 msgid "Toggle condensed playback"
 msgstr "Activer/désactiver la lecture condensée"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:271
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:271
 msgid "Toggle fast forward playback"
 msgstr "Activer/désactiver la lecture accélérée"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:290
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:290
 msgid "Toggle repeat mode"
 msgstr "Activer/désactiver le mode répétition"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:296
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:296
 msgid "Toggle subtitle track 1 in asbplayer"
 msgstr "Activer/désactiver la piste de sous-titres 1 dans asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:292
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:292
 msgid "Toggle subtitle track 1 in video"
 msgstr "Activer/désactiver la piste de sous-titres 1 dans la vidéo"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:300
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:300
 msgid "Toggle subtitle track 2 in asbplayer"
 msgstr "Activer/désactiver la piste de sous-titres 2 dans asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:293
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:293
 msgid "Toggle subtitle track 2 in video"
 msgstr "Activer/désactiver la piste de sous-titres 2 dans la vidéo"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:304
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:304
 msgid "Toggle subtitle track 3 in asbplayer"
 msgstr "Activer/désactiver la piste de sous-titres 3 dans asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:294
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:294
 msgid "Toggle subtitle track 3 in video"
 msgstr "Activer/désactiver la piste de sous-titres 3 dans la vidéo"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:291
-#: packages/asbplayer-common/components/VideoOverlay.tsx:339
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:291
+#: apps/extension/common/components/VideoOverlay.tsx:339
 msgid "Toggle subtitles"
 msgstr "Activer les sous-titres"
 
@@ -3572,7 +3572,7 @@ msgid "Too many requests. Please use the app in only one tab and device at a "
 msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet "
 "et appareil à la fois et réessayer."
 
-#: packages/asbplayer-common/components/SubtitleAppearanceSettingsTab.tsx:383
+#: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:383
 msgid "Top"
 msgstr "Haut"
 
@@ -3581,15 +3581,15 @@ msgid "Total"
 msgstr "Total"
 
 #. placeholder {0}: i + 1
-#: packages/asbplayer-common/components/SubtitleAppearanceTrackSelector.tsx:29
+#: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:29
 msgid "Track {0}"
 msgstr "Piste {0}"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:230
+#: apps/extension/common/components/MiscSettingsTab.tsx:230
 msgid "Transcript Server API Key (optional)"
 msgstr "Clé API du serveur de transcription (facultatif)"
 
-#: packages/asbplayer-common/components/MiscSettingsTab.tsx:225
+#: apps/extension/common/components/MiscSettingsTab.tsx:225
 msgid "Transcript Server URL"
 msgstr "URL du serveur de transcription"
 
@@ -3619,8 +3619,8 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle "
 "langue pour commencer. Vous pouvez choisir la langue cible à chaque "
 "fois que vous ajoutez du nouveau contenu."
 
-#: packages/extension/src/ui/components/Tutorial.tsx:93
-#: packages/extension/src/ui/components/Tutorial.tsx:185
+#: apps/extension/src/ui/components/Tutorial.tsx:93
+#: apps/extension/src/ui/components/Tutorial.tsx:185
 msgid "Tutorial"
 msgstr "Tutoriel"
 
@@ -3628,8 +3628,8 @@ msgstr "Tutoriel"
 msgid "Type the missing word…"
 msgstr "Tapez le mot manquant…"
 
-#: packages/asbplayer-common/components/StreamingVideoSettingsTab.tsx:65
-#: packages/asbplayer-common/components/UiSettings.tsx:22
+#: apps/extension/common/components/StreamingVideoSettingsTab.tsx:65
+#: apps/extension/common/components/UiSettings.tsx:22
 msgid "UI"
 msgstr "UI"
 
@@ -3652,13 +3652,13 @@ msgstr "Impossible d'ouvrir le magasin d'applications. Veuillez mettre à jour "
 #. placeholder {0}: 1
 #. placeholder {0}: 2
 #. placeholder {0}: 3
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:308
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:312
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:316
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:308
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:312
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:316
 msgid "Unblur subtitle track {0} in asbplayer"
 msgstr "Retirer le flou de la piste de sous-titres {0} dans asbplayer"
 
-#: packages/asbplayer-common/components/KeyboardShortcutsSettingsTab.tsx:138
+#: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:138
 msgid "Unbound"
 msgstr "Non lié"
 
@@ -3726,7 +3726,7 @@ msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
 msgid "Use suggested"
 msgstr "Utiliser la suggestion"
 
-#: packages/extension/src/ui/components/Tutorial.tsx:131
+#: apps/extension/src/ui/components/Tutorial.tsx:131
 msgid "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> subtitles, "
 "<3>switch playback modes</3>, and more."
 msgstr "Use the <0>Video Overlay</0> to <1>mine</1> and <2>toggle</2> "
@@ -3779,11 +3779,11 @@ msgstr "Vérifiez Votre Email"
 msgid "Verifying..."
 msgstr "Vérification..."
 
-#: packages/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:118
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:118
 msgid "Video Element"
 msgstr "Élément vidéo"
 
-#: packages/extension/src/ui/components/VideoDataSyncDialog.tsx:316
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:316
 msgid "Video Name"
 msgstr "Nom de la vidéo"
 
@@ -3845,7 +3845,7 @@ msgstr "Nous avons envoyé un lien de vérification à :"
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
 
-#: packages/extension/src/ui/components/FtueUi.tsx:14
+#: apps/extension/src/ui/components/FtueUi.tsx:14
 msgid "Welcome to Flicktionary."
 msgstr "Bienvenue sur Flicktionary."
 

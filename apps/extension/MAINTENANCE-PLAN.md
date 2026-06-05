@@ -206,7 +206,7 @@ bundle size dropped.
 - **Settings import of old exports** must degrade gracefully (Phase E migration) —
   this is the one user-facing breakage if missed.
 - **tsc won't catch removals.** After each phase, grep for the deleted symbol
-  across `src` + `asbplayer-common/src` to find stragglers the build tolerated.
+  across `src` + `common/src` to find stragglers the build tolerated.
 - **`copy-history` records `CardModel`.** If we keep any copy/recording feature,
   its IndexedDB schema changes — verify the side panel handles records without the
   card shape, or remove copy-history with recording in Phase D.

@@ -22,13 +22,13 @@
             "@@/*": ["./*"],
             "~~": ["."],
             "~~/*": ["./*"],
-            "@asbplayer-fork/common": ["../asbplayer-common/index.ts"],
-            "@asbplayer-fork/common/*": ["../asbplayer-common/*"],
-            "@flicktionary/api-client/*": ["../api-client/src/*"],
-            "@flicktionary/core/*": ["../core/src/*"],
-            "@flicktionary/i18n/locales/*": ["../i18n/locales/*"],
-            "@flicktionary/i18n/*": ["../i18n/src/*"],
-            "@flicktionary/ui/*": ["../ui/src/*"]
+            "@asbplayer-fork/common": ["./common/index.ts"],
+            "@asbplayer-fork/common/*": ["./common/*"],
+            "@flicktionary/api-client/*": ["../../packages/api-client/src/*"],
+            "@flicktionary/core/*": ["../../packages/core/src/*"],
+            "@flicktionary/i18n/locales/*": ["../../packages/i18n/locales/*"],
+            "@flicktionary/i18n/*": ["../../packages/i18n/src/*"],
+            "@flicktionary/ui/*": ["../../packages/ui/src/*"]
         }
     }
 }
