@@ -11,6 +11,7 @@ describe('parseBasicDataChunks', () => {
         surface_form: 'se fundía con',
         segment_id: '00000000-0000-0000-0000-000000000001',
         translation: 'to merge with',
+        surface_translation: 'merged with',
         definition: 'volverse uno con algo',
         target_example: 'El sonido se fundía con el silencio.',
         native_example: 'The sound merged with the silence.',
@@ -26,6 +27,7 @@ describe('parseBasicDataChunks', () => {
         surfaceForm: 'se fundía con',
         segmentId: '00000000-0000-0000-0000-000000000001',
         translation: 'to merge with',
+        surfaceTranslation: 'merged with',
         definition: 'volverse uno con algo',
         targetExample: 'El sonido se fundía con el silencio.',
         nativeExample: 'The sound merged with the silence.',
@@ -78,6 +80,7 @@ describe('parseBasicDataChunks', () => {
     const [parsed] = parseBasicDataChunks(raw)
     expect(parsed.sense).toBe('')
     expect(parsed.translation).toBeNull()
+    expect(parsed.surfaceTranslation).toBeNull()
     expect(parsed.definition).toBeNull()
     expect(parsed.targetExample).toBeNull()
     expect(parsed.nativeExample).toBeNull()

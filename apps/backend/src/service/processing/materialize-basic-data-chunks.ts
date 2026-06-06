@@ -37,6 +37,24 @@ export const buildBasicDataGrammarPatch = (
   return Object.keys(patch).length > 0 ? patch : null
 }
 
+// grammar.studied_form carries the inflected surface form + its in-context
+// translation so the review front can drill the exact form the user selected
+// (behind the user's grammar.study_form_enabled toggle). Emitted only when the
+// form actually differs from the lemma, and never overwriting a form the user
+// has already enabled studying — a later highlight of a different inflection
+// of the same lemma must not silently retarget the card front.
+export const buildStudiedFormPatch = (
+  chunk: Pick<BasicDataChunk, 'headword' | 'surfaceForm' | 'surfaceTranslation'>,
+  existingGrammar: unknown
+): Record<string, unknown> | null => {
+  const form = chunk.surfaceForm.trim()
+  if (!form || form === chunk.headword.trim()) return null
+  if (!chunk.surfaceTranslation) return null
+  const grammar = existingGrammar && typeof existingGrammar === 'object' ? (existingGrammar as Record<string, unknown>) : {}
+  if (grammar.study_form_enabled) return null
+  return { studied_form: { form, translation: chunk.surfaceTranslation } }
+}
+
 // Writes basic-data-pass output to the DB: upserts user_lookups, fills first-time
 // content, and inserts cards in 'pending' status (or 'auto_rejected' for
 // below-CEFR rows). Also covers the fallback path where the model dropped a
@@ -92,7 +110,12 @@ export const materializeBasicDataChunks = async (params: {
     })
     const alreadyGrounded = lookup.grounded_at !== null
     const grammarUserEdited = lookup.grammar_user_edited_at !== null
-    const grammarPatch = buildBasicDataGrammarPatch(chunk.grammar, alreadyGrounded, grammarUserEdited)
+    const studiedFormPatch = hideTranslationFields ? null : buildStudiedFormPatch(chunk, lookup.grammar)
+    const grammarPatch = buildBasicDataGrammarPatch(
+      studiedFormPatch ? { ...(chunk.grammar ?? {}), ...studiedFormPatch } : chunk.grammar,
+      alreadyGrounded,
+      grammarUserEdited
+    )
     if (!touchedLookups.has(lookup.id)) {
       const llmPos = typeof chunk.grammar?.pos === 'string' ? (chunk.grammar.pos as string) : null
       touchedLookups.set(lookup.id, {

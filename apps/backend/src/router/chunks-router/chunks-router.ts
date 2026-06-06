@@ -83,8 +83,14 @@ const encodeCursor = (cursor: ChunksCursor | null): string | null => {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
 }
 
+// Keys written by the focus view's "study this form" toggle. They are study
+// preferences, not linguistic facts — writing them must not stamp
+// grammar_user_edited_at, which would pin the whole bag against future
+// LLM/grounding merges just because the user flipped a display toggle.
+const STUDY_FORM_GRAMMAR_KEYS = new Set(['studied_form', 'study_form_enabled'])
+
 const hasGrammarPatch = (patch: Record<string, unknown> | null | undefined): boolean =>
-  !!patch && Object.keys(patch).length > 0
+  !!patch && Object.keys(patch).some((key) => !STUDY_FORM_GRAMMAR_KEYS.has(key))
 
 export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterface): Router => {
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
