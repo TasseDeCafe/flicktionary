@@ -273,6 +273,9 @@ export interface VideoDataUiBridgeConfirmMessage extends Message {
   readonly data: ConfirmedVideoDataSubtitleTrack[]
   readonly shouldRememberTrackChoices: boolean
   readonly syncWithAsbplayerId?: string
+  // State of the translation toggles at confirm time — persisted to
+  // settings.streamingTranslationMode so the choice survives dialog reopens.
+  readonly translationMode?: 'off' | 'machine' | 'human'
 }
 
 export interface VideoDataUiBridgeOpenFileMessage extends Message {

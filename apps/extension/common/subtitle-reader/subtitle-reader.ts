@@ -3,6 +3,7 @@ import SrtParser from '@qgustavor/srt-parser'
 import { WebVTT } from 'videojs-vtt.js'
 import { XMLParser } from 'fast-xml-parser'
 import { SubtitleHtml } from '@asbplayer-fork/common'
+import { MIN_TIMED_WORDS_FOR_CHUNKING, TimedWord, chunkTimedWords } from './asr-chunker'
 
 const vttClassRegex = /<(\/)?c(\.[^>]*)?>/g
 const assNewLineRegex = RegExp(/\\[nN]/, 'ig')
@@ -208,6 +209,10 @@ export default class SubtitleReader {
       const xml = this._xmlParser().parse(text)
       const subtitleRows = xml['timedtext']['body']['p']
       const subtitles: SubtitleNode[] = []
+      // Word stream for ASR re-chunking (built alongside the per-row cues;
+      // which representation is used is decided after the loop).
+      const timedWords: TimedWord[] = []
+      let explicitlyTimedWordCount = 0
 
       for (let i = 0; i < subtitleRows.length; i++) {
         const row = subtitleRows[i]
@@ -224,6 +229,9 @@ export default class SubtitleReader {
         }
 
         let parts = []
+        // Raw tokens of this row with their relative offsets (ASR payloads
+        // time every token but the row-initial one).
+        const rowTokens: { text: string; offset: number | undefined }[] = []
 
         if (typeof row['#text'] === 'string') {
           parts.push(row['#text'])
@@ -236,12 +244,17 @@ export default class SubtitleReader {
             for (const word of row['s']) {
               if (typeof word === 'string') {
                 parts.push(word)
+                rowTokens.push({ text: word, offset: undefined })
               } else if (typeof word['#text'] === 'string') {
                 parts.push(word['#text'])
+                const offset = typeof word['@_t'] === 'string' ? Number(word['@_t']) : undefined
+                rowTokens.push({ text: word['#text'], offset: Number.isNaN(offset) ? undefined : offset })
               }
             }
           } else if (typeof words['#text'] === 'string') {
             parts.push(words['#text'])
+            const offset = typeof words['@_t'] === 'string' ? Number(words['@_t']) : undefined
+            rowTokens.push({ text: words['#text'], offset: Number.isNaN(offset) ? undefined : offset })
           }
         }
 
@@ -261,13 +274,52 @@ export default class SubtitleReader {
             }
           }
 
+          const rowEnd = start + duration
+
+          if (rowTokens.length > 0) {
+            let lastWordStart = start
+            for (let tokenIndex = 0; tokenIndex < rowTokens.length; tokenIndex++) {
+              const token = rowTokens[tokenIndex]
+              if (token.text.trim().length === 0) {
+                continue
+              }
+              if (token.offset !== undefined) {
+                ++explicitlyTimedWordCount
+              }
+              // Monotonic clamp: untimed tokens inherit the previous start.
+              const wordStart = Math.max(lastWordStart, token.offset !== undefined ? start + token.offset : start)
+              lastWordStart = wordStart
+              timedWords.push({
+                start: wordStart,
+                text: token.text,
+                rowInitial: tokenIndex === 0,
+                rowEnd,
+              })
+            }
+          } else {
+            // Row without word tokens ([music], [applause], ...) — kept as a
+            // standalone cue and never merged with speech.
+            timedWords.push({ start, text, rowInitial: true, rowEnd, barrier: true })
+          }
+
           subtitles.push({
             start,
-            end: start + duration,
+            end: rowEnd,
             text: this._filterText(text),
             track,
           })
         }
+      }
+
+      // Auto-generated tracks time (nearly) every token; manually-authored
+      // srv3 tracks don't. Only re-chunk when the signal is clearly there.
+      if (explicitlyTimedWordCount >= MIN_TIMED_WORDS_FOR_CHUNKING) {
+        return chunkTimedWords(timedWords).map((chunk) => ({
+          start: chunk.start,
+          end: chunk.end,
+          text: this._filterText(chunk.text),
+          track,
+        }))
       }
 
       return subtitles

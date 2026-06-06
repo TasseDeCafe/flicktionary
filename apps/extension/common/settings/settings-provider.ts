@@ -96,6 +96,7 @@ export const defaultSettings: AsbplayerSettings = {
   streamingCondensedPlaybackMinimumSkipIntervalMs: 1000,
   streamingSubtitleListPreference: SubtitleListPreference.noSubtitleList,
   streamingEnableOverlay: true,
+  streamingTranslationMode: 'off',
   streamingPages: {
     netflix: {},
     youtube: {},

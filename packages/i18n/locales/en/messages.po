@@ -235,7 +235,7 @@ msgid "A video element must be synced with Flicktionary before it can be mined. 
 msgstr "A video element must be synced with Flicktionary before it can be "
 "mined. Select a video element to sync it with Flicktionary."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:158
+#: apps/web/src/features/more/components/more-tab-view.tsx:152
 msgid "About"
 msgstr "About"
 
@@ -249,7 +249,7 @@ msgid "Access exclusive premium features available to subscribers."
 msgstr "Access exclusive premium features available to subscribers."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:86
+#: apps/web/src/features/more/components/more-tab-view.tsx:80
 msgid "Account"
 msgstr "Account"
 
@@ -316,7 +316,7 @@ msgstr "Add to active vocabulary"
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:127
+#: apps/extension/common/components/PageSettingsForm.tsx:133
 msgid "Additional hosts"
 msgstr "Additional hosts"
 
@@ -348,7 +348,7 @@ msgstr "Adjust subtitle offset so that previous subtitle is at current "
 "timestamp"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:163
+#: apps/web/src/features/more/components/more-tab-view.tsx:157
 msgid "Admin settings"
 msgstr "Admin settings"
 
@@ -386,7 +386,7 @@ msgstr "All caught up"
 msgid "All done!"
 msgstr "All done!"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:168
+#: apps/extension/common/components/PageSettingsForm.tsx:174
 msgid "Allow auto-loading of detected subtitles"
 msgstr "Allow auto-loading of detected subtitles"
 
@@ -394,7 +394,7 @@ msgstr "Allow auto-loading of detected subtitles"
 msgid "Allow subtitle file drag-and-drop"
 msgstr "Allow subtitle file drag-and-drop"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:161
+#: apps/extension/common/components/PageSettingsForm.tsx:167
 msgid "Allow video elements with blank src"
 msgstr "Allow video elements with blank src"
 
@@ -439,7 +439,7 @@ msgstr "Animate"
 msgid "Another term already exists with that headword and sense."
 msgstr "Another term already exists with that headword and sense."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:92
+#: apps/web/src/features/more/components/more-tab-view.tsx:86
 msgid "Appearance"
 msgstr "Appearance"
 
@@ -458,7 +458,7 @@ msgid "Ask a follow-up question about this term. The model already has the "
 msgstr "Ask a follow-up question about this term. The model already has the "
 "methodology, your profile, and the surrounding scene loaded."
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:249
+#: apps/web/src/features/review/components/per-card-chat.tsx:252
 msgid "Ask anything about this term… (Enter to send, Shift+Enter for a new "
 "line)"
 msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new "
@@ -511,7 +511,7 @@ msgstr "Authentication failed"
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:303
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:460
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
 "not know how to detect subtitles on every site. You can always load your "
 "own subtitle files."
@@ -737,7 +737,7 @@ msgstr "Click the link in the email to continue."
 msgid "Click to unlock font menu"
 msgstr "Click to unlock font menu"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:284
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:441
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:126
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
@@ -782,7 +782,7 @@ msgstr "Confirm deletion"
 msgid "Conjunction"
 msgstr "Conjunction"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:159
+#: apps/web/src/features/more/components/more-tab-view.tsx:153
 msgid "Contact us"
 msgstr "Contact us"
 
@@ -828,7 +828,7 @@ msgstr "Continue with Google"
 msgid "Correct!"
 msgstr "Correct!"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:295
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:452
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Could not auto-load subtitles in your preferred language."
 
@@ -943,7 +943,7 @@ msgstr "Daily new limit reached."
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:169
+#: apps/web/src/features/more/components/more-tab-view.tsx:163
 msgid "Danger zone"
 msgstr "Danger zone"
 
@@ -953,7 +953,7 @@ msgid "Danger Zone"
 msgstr "Danger Zone"
 
 #: apps/extension/common/components/UiSettings.tsx:32
-#: apps/web/src/features/more/components/more-tab-view.tsx:104
+#: apps/web/src/features/more/components/more-tab-view.tsx:98
 msgid "Dark"
 msgstr "Dark"
 
@@ -1125,9 +1125,9 @@ msgstr "Email link is invalid or has expired"
 msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
 
-#: apps/extension/src/controllers/video-data-sync-controller.ts:101
+#: apps/extension/src/controllers/video-data-sync-controller.ts:102
 #: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:102
-#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:135
+#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:137
 msgid "Empty"
 msgstr "Empty"
 
@@ -1147,7 +1147,7 @@ msgstr "Enabled"
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:316
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:320
 msgid "End of list"
 msgstr "End of list"
 
@@ -1621,7 +1621,7 @@ msgstr "GA"
 msgid "Gender"
 msgstr "Gender"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:83
+#: apps/web/src/features/more/components/more-tab-view.tsx:77
 msgid "General"
 msgstr "General"
 
@@ -1633,7 +1633,7 @@ msgstr "Generate card"
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:346
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:553
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
@@ -1641,7 +1641,7 @@ msgstr "Generate Subtitles"
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:343
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:550
 msgid "Generating..."
 msgstr "Generating..."
 
@@ -1780,13 +1780,17 @@ msgstr "History · {languageName}"
 msgid "Home"
 msgstr "Home"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:125
+#: apps/extension/common/components/PageSettingsForm.tsx:131
 msgid "Host regex"
 msgstr "Host regex"
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
 msgid "How your free trial works"
 msgstr "How your free trial works"
+
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:522
+msgid "Human translation"
+msgstr "Human translation"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:268
 msgid "Idiom"
@@ -1863,8 +1867,8 @@ msgid "Install the Flicktionary extension and pin it to your browser toolbar "
 msgstr "Install the Flicktionary extension and pin it to your browser toolbar "
 "for easy access."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:111
-#: apps/web/src/features/more/components/more-tab-view.tsx:114
+#: apps/web/src/features/more/components/more-tab-view.tsx:105
+#: apps/web/src/features/more/components/more-tab-view.tsx:108
 msgid "Interface language"
 msgstr "Interface language"
 
@@ -1889,7 +1893,7 @@ msgstr "IPA"
 msgid "IPA dialect"
 msgstr "IPA dialect"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:236
+#: apps/web/src/features/review/components/per-card-chat.tsx:239
 msgid "Jump to latest"
 msgstr "Jump to latest"
 
@@ -1948,7 +1952,7 @@ msgid "Language preferences"
 msgstr "Language preferences"
 
 #: apps/web/src/features/more/components/languages-page.tsx:14
-#: apps/web/src/features/more/components/more-tab-view.tsx:133
+#: apps/web/src/features/more/components/more-tab-view.tsx:127
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:82
 msgid "Languages"
 msgstr "Languages"
@@ -1988,7 +1992,7 @@ msgid "Less formal:"
 msgstr "Less formal:"
 
 #: apps/extension/common/components/UiSettings.tsx:31
-#: apps/web/src/features/more/components/more-tab-view.tsx:103
+#: apps/web/src/features/more/components/more-tab-view.tsx:97
 msgid "Light"
 msgstr "Light"
 
@@ -1996,8 +2000,8 @@ msgstr "Light"
 msgid "Link expired or invalid"
 msgstr "Link expired or invalid"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:139
-#: apps/web/src/features/more/components/more-tab-view.tsx:146
+#: apps/web/src/features/more/components/more-tab-view.tsx:133
+#: apps/web/src/features/more/components/more-tab-view.tsx:140
 #: apps/web/src/features/review/components/triage-list-view.tsx:255
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
@@ -2023,7 +2027,7 @@ msgstr "Loading chat…"
 msgid "Loading history…"
 msgstr "Loading history…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:316
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:320
 msgid "Loading more…"
 msgstr "Loading more…"
 
@@ -2069,6 +2073,10 @@ msgstr "Looks like {suggestedLanguageName}"
 msgid "Lookup"
 msgstr "Lookup"
 
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:513
+msgid "Machine translation"
+msgstr "Machine translation"
+
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:98
 msgid "Make sure the extension is installed and try again from its popup."
 msgstr "Make sure the extension is installed and try again from its popup."
@@ -2106,7 +2114,7 @@ msgstr "Misc"
 msgid "Monthly"
 msgstr "Monthly"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
+#: apps/web/src/features/more/components/more-tab-view.tsx:75
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:43
 #: apps/web/src/features/practice/components/practice-language-view.tsx:128
@@ -2188,7 +2196,7 @@ msgstr "Native example"
 msgid "Native language"
 msgstr "Native language"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:134
+#: apps/web/src/features/more/components/more-tab-view.tsx:128
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
@@ -2328,6 +2336,10 @@ msgstr "No Wiktionary IPA"
 msgid "Normal"
 msgstr "Normal"
 
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:526
+msgid "not available"
+msgstr "not available"
+
 #: apps/web/src/features/review/components/grounding-badge.tsx:47
 msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
 msgstr "Not found in Wiktionary — grammar fields are LLM-generated only"
@@ -2365,9 +2377,9 @@ msgstr "Number-only"
 msgid "Numeral"
 msgstr "Numeral"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:175
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:311
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:351
+#: apps/extension/common/components/PageSettingsForm.tsx:181
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:468
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:558
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:90
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:226
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:237
@@ -2404,8 +2416,8 @@ msgstr "Open App"
 msgid "Open chat"
 msgstr "Open chat"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:214
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:336
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:370
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:543
 msgid "Open Files"
 msgstr "Open Files"
 
@@ -2516,11 +2528,11 @@ msgstr "Paste an article, comment, or post"
 msgid "Paste your text"
 msgstr "Paste your text"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:146
+#: apps/extension/common/components/PageSettingsForm.tsx:152
 msgid "Path hash regex for subtitle detection"
 msgstr "Path hash regex for subtitle detection"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:141
+#: apps/extension/common/components/PageSettingsForm.tsx:147
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
@@ -2673,7 +2685,7 @@ msgstr "Premium Features"
 msgid "Preparing exercises…"
 msgstr "Preparing exercises…"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:217
+#: apps/web/src/features/review/components/per-card-chat.tsx:220
 msgid "Preparing your answer…"
 msgstr "Preparing your answer…"
 
@@ -2740,7 +2752,7 @@ msgstr "Profile limit reached"
 msgid "Profile Name"
 msgstr "Profile Name"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:87
+#: apps/web/src/features/more/components/more-tab-view.tsx:81
 msgid "Profile, subscription, sign-in"
 msgstr "Profile, subscription, sign-in"
 
@@ -2849,7 +2861,7 @@ msgstr "Reload the page, then try importing again."
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:329
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:536
 msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
@@ -2921,7 +2933,7 @@ msgstr "Retry"
 msgid "Return to Login"
 msgstr "Return to Login"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:121
+#: apps/extension/common/components/PageSettingsForm.tsx:127
 msgid "Revert"
 msgstr "Revert"
 
@@ -2994,7 +3006,7 @@ msgstr "Search movies…"
 msgid "Search OpenSubtitles"
 msgstr "Search OpenSubtitles"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:152
+#: apps/extension/common/components/PageSettingsForm.tsx:158
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
@@ -3043,6 +3055,10 @@ msgstr "Seek to next subtitle"
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:496
+msgid "Select a language"
+msgstr "Select a language"
+
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:192
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Select a video element to sync it with Flicktionary."
@@ -3059,7 +3075,7 @@ msgstr "Select some text first."
 msgid "Select subtitle tracks to load."
 msgstr "Select subtitle tracks to load."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:268
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:425
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
 
@@ -3067,7 +3083,7 @@ msgstr "Select Subtitles"
 msgid "Selection"
 msgstr "Selection"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:252
+#: apps/web/src/features/review/components/per-card-chat.tsx:255
 msgid "Send"
 msgstr "Send"
 
@@ -3122,9 +3138,9 @@ msgstr "Setting up account..."
 
 #: apps/extension/common/components/MiscSettingsTab.tsx:273
 #: apps/extension/src/ui/components/SettingsPage.tsx:58
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:278
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:435
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:172
-#: apps/web/src/features/more/components/more-tab-view.tsx:130
+#: apps/web/src/features/more/components/more-tab-view.tsx:124
 msgid "Settings"
 msgstr "Settings"
 
@@ -3161,7 +3177,7 @@ msgstr "Show existing translations and generate translations for new cards in "
 msgid "Show notes"
 msgstr "Show notes"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:140
+#: apps/web/src/features/more/components/more-tab-view.tsx:134
 msgid "Show suggested terms while reading"
 msgstr "Show suggested terms while reading"
 
@@ -3199,12 +3215,12 @@ msgstr "Sign in with Flicktionary"
 #: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:174
+#: apps/web/src/features/more/components/more-tab-view.tsx:168
 msgid "Sign out"
 msgstr "Sign out"
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:66
+#: apps/web/src/features/more/components/more-tab-view.tsx:60
 msgid "Sign out success"
 msgstr "Sign out success"
 
@@ -3433,7 +3449,7 @@ msgid "Subtitle Track"
 msgstr "Subtitle Track"
 
 #. placeholder {0}: i + 1
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:186
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:342
 msgid "Subtitle Track {0}"
 msgstr "Subtitle Track {0}"
 
@@ -3442,7 +3458,7 @@ msgstr "Subtitle Track {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:290
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:447
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Subtitles must be loaded before you can start mining."
 
@@ -3481,8 +3497,8 @@ msgstr "Synonyms"
 
 #: apps/extension/common/components/UiSettings.tsx:30
 #: apps/extension/common/components/UiSettings.tsx:40
-#: apps/web/src/features/more/components/more-tab-view.tsx:102
-#: apps/web/src/features/more/components/more-tab-view.tsx:118
+#: apps/web/src/features/more/components/more-tab-view.tsx:96
+#: apps/web/src/features/more/components/more-tab-view.tsx:112
 msgid "System"
 msgstr "System"
 
@@ -3494,7 +3510,7 @@ msgstr "Target example"
 msgid "Target language"
 msgstr "Target language"
 
-#: apps/extension/common/components/PageSettingsForm.tsx:59
+#: apps/extension/common/components/PageSettingsForm.tsx:65
 msgid "Target language codes for machine translation"
 msgstr "Target language codes for machine translation"
 
@@ -3562,8 +3578,8 @@ msgid "The file appears to be empty."
 msgstr "The file appears to be empty."
 
 #: apps/extension/common/components/UiSettings.tsx:27
-#: apps/web/src/features/more/components/more-tab-view.tsx:95
-#: apps/web/src/features/more/components/more-tab-view.tsx:98
+#: apps/web/src/features/more/components/more-tab-view.tsx:89
+#: apps/web/src/features/more/components/more-tab-view.tsx:92
 msgid "Theme"
 msgstr "Theme"
 
@@ -3576,11 +3592,11 @@ msgstr "There was an error sending the verification email. Please try again."
 msgid "There was an error. Please contact support."
 msgstr "There was an error. Please contact support."
 
-#: apps/extension/common/components/PageSettingsForm.tsx:106
+#: apps/extension/common/components/PageSettingsForm.tsx:112
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:213
+#: apps/web/src/features/review/components/per-card-chat.tsx:216
 msgid "Thinking…"
 msgstr "Thinking…"
 
@@ -3731,6 +3747,10 @@ msgstr "Translation"
 #: apps/web/src/features/review/components/editable-card-fields.tsx:190
 msgid "Translation in your native language."
 msgstr "Translation in your native language."
+
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:488
+msgid "Translation language"
+msgstr "Translation language"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:182
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:199
@@ -3905,7 +3925,7 @@ msgstr "Verifying..."
 msgid "Video Element"
 msgstr "Video Element"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:316
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:473
 msgid "Video Name"
 msgstr "Video Name"
 
@@ -3937,7 +3957,7 @@ msgstr "Warnings"
 msgid "Watching videos"
 msgstr "Watching videos"
 
-#: apps/web/src/features/review/components/per-card-chat.tsx:222
+#: apps/web/src/features/review/components/per-card-chat.tsx:225
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "We couldn't prepare this answer. Save the note again to retry."
 

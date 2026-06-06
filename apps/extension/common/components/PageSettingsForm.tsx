@@ -1,6 +1,13 @@
 import { JSX } from 'react'
 import { TriangleAlert } from 'lucide-react'
-import { MutablePageConfig, Page, PageConfig, PageSettings, YoutubePage } from '../settings'
+import {
+  MutablePageConfig,
+  Page,
+  PageConfig,
+  PageSettings,
+  YOUTUBE_TARGET_LANGUAGE_LIMIT,
+  YoutubePage,
+} from '../settings'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
@@ -10,7 +17,6 @@ import { pageMetadata } from '../pages'
 import ListField from './ListField'
 
 const maxAdditionalHostsLength = 50
-const youtubeTargetLanguageLimit = 3
 
 const totalLength = (strings: string[]) => {
   let total = 0
@@ -59,7 +65,7 @@ const YoutubePageSettingsForm = (props: PageSettingsFormProps) => {
           label={t`Target language codes for machine translation`}
           items={targetLanguages ?? []}
           onItemsChange={(newTargetLanguages) => {
-            if (newTargetLanguages.length <= youtubeTargetLanguageLimit) {
+            if (newTargetLanguages.length <= YOUTUBE_TARGET_LANGUAGE_LIMIT) {
               onPageChanged('youtube', { ...page, targetLanguages: newTargetLanguages })
             }
           }}
