@@ -98,9 +98,9 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
               </div>
               <div className='flex items-center justify-between gap-3 border-t pt-3'>
                 <div className='flex flex-col gap-1'>
-                  <span className='text-sm font-medium'>{t`Show translations`}</span>
+                  <span className='text-sm font-medium'>{t`Generate translations`}</span>
                   <p className='text-muted-foreground text-xs'>
-                    {t`Show existing translations and generate translations for new cards in this language.`}
+                    {t`Generate translations for new cards in this language. You can always add a translation to a card manually.`}
                   </p>
                 </div>
                 <Switch
@@ -109,7 +109,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                   onCheckedChange={(checked) =>
                     setShowTranslations({ targetLanguage: p.targetLanguage, enabled: checked })
                   }
-                  aria-label={t`Show translations`}
+                  aria-label={t`Generate translations`}
                 />
               </div>
               {p.targetLanguage === 'en' && (

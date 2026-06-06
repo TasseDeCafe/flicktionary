@@ -9,16 +9,20 @@ export type CardSlotKey =
   | 'headword' // target headword (display_form when present)
   | 'ipa' // pickIpa(grammar.ipa, lang, dialect); renders only if available
   | 'targetExample' // target-language example sentence
-  | 'translation' // headword translation (L1); only when !hideTranslationFields
-  | 'nativeExample' // example translation; only when !hideTranslationFields
-  | 'definition' // target-language definition; the L1=L2 / translations-OFF gloss
+  | 'translation' // headword translation (L1); presence-based — with translations OFF it only exists if manually entered
+  | 'nativeExample' // example translation; presence-based, same rule
+  | 'definition' // target-language definition; primary gloss when translations are OFF, fallback gloss otherwise
   | 'grammar' // GrammarChips (already POS+language filtered)
 
 export type CardFaceConfig = { front: readonly CardSlotKey[]; back: readonly CardSlotKey[] }
 
+// Back order is definition-first: definition and translation only co-render
+// in the translations-OFF + manual-translation case, where definition stays
+// the primary (immersion-first) gloss. With translations ON only one of the
+// two resolves, so the order is invisible there.
 export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
   front: ['headword', 'targetExample'],
-  back: ['translation', 'definition', 'nativeExample', 'grammar'],
+  back: ['definition', 'translation', 'nativeExample', 'grammar'],
 }
 
 // Languages absent here use the default. ru/en (Kaikki languages) carry a
@@ -27,11 +31,11 @@ export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
 export const LANGUAGE_CARD_FACE: Partial<Record<SupportedLanguageCode, CardFaceConfig>> = {
   ru: {
     front: ['headword', 'ipa', 'targetExample'],
-    back: ['translation', 'definition', 'nativeExample', 'grammar'],
+    back: ['definition', 'translation', 'nativeExample', 'grammar'],
   },
   en: {
     front: ['headword', 'ipa', 'targetExample'],
-    back: ['translation', 'definition', 'nativeExample', 'grammar'],
+    back: ['definition', 'translation', 'nativeExample', 'grammar'],
   },
 }
 
@@ -52,11 +56,13 @@ export type CardSlotConditions = {
   hasGrammarChips: boolean
 }
 
-// Drop slots whose data is missing or whose condition excludes them. The
-// translation/definition fork mirrors rate-sheet.tsx's `translation ||
-// definition` gloss behaviour: definition shows when translations are hidden
-// AND as the fallback gloss when translations are on but the card has no
-// translation — so a gloss always appears if any exists.
+// Drop slots whose data is missing or whose condition excludes them.
+// translation/nativeExample are presence-based: with translations OFF they are
+// never auto-generated, so a stored value is a manual one the user wants on
+// the card. Definition stays the primary gloss when translations are hidden
+// (manual translation renders below it) and is the fallback gloss when
+// translations are on but the card has no translation — so a gloss always
+// appears if any exists.
 export const resolveCardSlots = (slots: readonly CardSlotKey[], cond: CardSlotConditions): CardSlotKey[] =>
   slots.filter((slot) => {
     switch (slot) {
@@ -67,9 +73,9 @@ export const resolveCardSlots = (slots: readonly CardSlotKey[], cond: CardSlotCo
       case 'targetExample':
         return cond.hasTargetExample
       case 'translation':
-        return !cond.hideTranslationFields && cond.hasTranslation
+        return cond.hasTranslation
       case 'nativeExample':
-        return !cond.hideTranslationFields && cond.hasNativeExample
+        return cond.hasNativeExample
       case 'definition':
         return (cond.hideTranslationFields || !cond.hasTranslation) && cond.hasDefinition
       case 'grammar':

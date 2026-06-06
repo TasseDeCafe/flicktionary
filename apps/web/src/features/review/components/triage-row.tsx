@@ -10,8 +10,9 @@ import type {
   LearningMode,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
-const getBackPreview = (card: Card, hideTranslationFields: boolean): string => {
-  if (hideTranslationFields) return card.chunk.definition || ''
+// Presence-based: with the translations pref off, `translation` is only ever
+// set manually — when present it's worth surfacing over the definition.
+const getBackPreview = (card: Card): string => {
   return card.chunk.translation || card.chunk.definition || ''
 }
 
@@ -55,17 +56,16 @@ export const TriageEnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }:
 type Props = {
   sessionId: string
   card: Card
-  hideTranslationFields?: boolean
   onStatusChange: (cardId: string, status: CardStatus, learningMode?: LearningMode) => void
 }
 
-export const TriageRow = ({ sessionId, card, hideTranslationFields = false, onStatusChange }: Props) => {
+export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
   const { t } = useLingui()
   const [menuOpen, setMenuOpen] = useState(false)
   const isKept = card.status === 'kept'
   const isActive = isKept && card.chunk.learningMode === 'active'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
-  const preview = getBackPreview(card, hideTranslationFields)
+  const preview = getBackPreview(card)
 
   return (
     <div className='flex items-start gap-3 border-b'>

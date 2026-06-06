@@ -12,12 +12,8 @@ import { TextSegmentsRepositoryInterface } from '../../transport/database/text-s
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
-import { getLanguageMode } from '../user-prefs/language-mode'
-import {
-  sanitizeExplorationExtrasForLanguageMode,
-  sanitizeTextFieldsForLanguageMode,
-} from '../user-prefs/language-output-guards'
-import type { LanguageOutputMode } from '../user-prefs/language-output-guards'
+import { getLanguageMode, type LanguageMode } from '../user-prefs/language-mode'
+import { sanitizeExplorationExtrasForLanguageMode } from '../user-prefs/language-output-guards'
 
 export type RunCardChatDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -83,7 +79,7 @@ const updateCardFieldsTool: Anthropic.Tool = {
   },
 }
 
-const renderCardForChat = (card: DbCardWithChunk, mode: LanguageOutputMode): string => {
+const renderCardForChat = (card: DbCardWithChunk, mode: LanguageMode): string => {
   const lines = [
     `- headword: ${card.chunk.headword}`,
     `- sense: ${card.chunk.sense || '(none)'}`,
@@ -91,9 +87,18 @@ const renderCardForChat = (card: DbCardWithChunk, mode: LanguageOutputMode): str
     `- definition: ${card.chunk.definition ?? '(none)'}`,
     `- target_example: ${card.chunk.target_example ?? '(none)'}`,
   ]
-  if (!mode.hideTranslationFields) {
-    lines.push(`- translation: ${card.chunk.translation ?? '(none)'}`)
-    lines.push(`- native_example: ${card.chunk.native_example ?? '(none)'}`)
+  // sameLanguage: translation fields are meaningless — never surface them.
+  // Translations-off: surface only values that exist (manually entered), so
+  // the model can discuss/edit them without being tempted to backfill the
+  // empty ones unprompted.
+  if (!mode.sameLanguage) {
+    if (!mode.hideTranslationFields) {
+      lines.push(`- translation: ${card.chunk.translation ?? '(none)'}`)
+      lines.push(`- native_example: ${card.chunk.native_example ?? '(none)'}`)
+    } else {
+      if (card.chunk.translation !== null) lines.push(`- translation: ${card.chunk.translation}`)
+      if (card.chunk.native_example !== null) lines.push(`- native_example: ${card.chunk.native_example}`)
+    }
   }
   const grammar = (card.chunk.grammar ?? {}) as Record<string, unknown>
   if (Object.keys(grammar).length > 0) {
@@ -116,7 +121,7 @@ const renderCardForChat = (card: DbCardWithChunk, mode: LanguageOutputMode): str
 const buildSeedUserTurn = (
   card: DbCardWithChunk,
   surroundingSegmentsBlock: string,
-  mode: LanguageOutputMode,
+  mode: LanguageMode,
   allowCardEdits: boolean,
   replyLanguage: string
 ): string => {
@@ -134,11 +139,18 @@ ${surroundingSegmentsBlock}`
   if (!allowCardEdits) return `${header}\n\nRespond in ${replyLanguage}.`
 
   const editableFields = mode.hideTranslationFields
-    ? 'definition, target-language example, grammar, etc.'
+    ? mode.sameLanguage
+      ? 'definition, target-language example, grammar, etc.'
+      : 'definition, target-language example, grammar, translation (on request), etc.'
     : 'translation, example sentence, definition, etc.'
-  const translationModeNote = mode.hideTranslationFields
-    ? `\nTranslation fields are hidden for this target language: do not call \`${UPDATE_TOOL_NAME}\` with translation or native_example. If the learner explicitly asks for a native-language translation, you may answer conversationally, but do not store or backfill those card fields.`
-    : ''
+  // sameLanguage: translation fields never apply. Translations-off is only a
+  // generation pref — the model must not backfill unprompted, but an explicit
+  // learner request to add/change a translation is honoured.
+  const translationModeNote = mode.sameLanguage
+    ? `\nTranslation fields do not apply for this card (the learner's native language is the target language): do not call \`${UPDATE_TOOL_NAME}\` with translation or native_example.`
+    : mode.hideTranslationFields
+      ? `\nTranslations are not auto-generated for this target language (learner preference). Do not populate translation or native_example unprompted — but if the learner explicitly asks you to add or change a translation or a native-language example, call \`${UPDATE_TOOL_NAME}\` with those fields.`
+      : ''
 
   return `${header}
 
@@ -343,10 +355,10 @@ export const runCardChat = async (
   if (toolUse && toolUse.type === 'tool_use' && toolUse.name === UPDATE_TOOL_NAME) {
     const parsed = parseToolInput(toolUse.input)
     if (parsed) {
-      const hiddenTranslationPatchAttempted =
-        languagePrefs.hideTranslationFields &&
-        (parsed.patch.translation !== null || parsed.patch.nativeExample !== null)
-      if (languagePrefs.hideTranslationFields) {
+      // Translation fields are blocked only for sameLanguage (where they are
+      // meaningless). With translations-off they pass through — the seed turn
+      // instructs the model to set them only on explicit learner request.
+      if (languagePrefs.sameLanguage) {
         parsed.patch.translation = null
         parsed.patch.nativeExample = null
         parsed.changedFieldNames = parsed.changedFieldNames.filter(
@@ -357,15 +369,6 @@ export const runCardChat = async (
       if (parsed.patch.extrasPatch === null) {
         parsed.changedFieldNames = parsed.changedFieldNames.filter((name) => name !== 'extras')
       }
-      const sanitizedText = sanitizeTextFieldsForLanguageMode(
-        {
-          translation: parsed.patch.translation,
-          nativeExample: parsed.patch.nativeExample,
-        },
-        languagePrefs
-      )
-      parsed.patch.translation = sanitizedText.translation ?? null
-      parsed.patch.nativeExample = sanitizedText.nativeExample ?? null
       // surface_form lives on the card itself; everything else lives on the
       // canonical chunk (user_lookups). We split the patch across the two
       // repositories accordingly.
@@ -378,8 +381,7 @@ export const runCardChat = async (
         parsed.patch.targetExample !== null ||
         parsed.patch.nativeExample !== null ||
         parsed.patch.extrasPatch !== null ||
-        parsed.patch.grammarPatch !== null ||
-        hiddenTranslationPatchAttempted
+        parsed.patch.grammarPatch !== null
       if (contentTouched) {
         await deps.userLookupsRepository.updateContent({
           id: card.user_lookup_id,
@@ -387,8 +389,6 @@ export const runCardChat = async (
           definition: parsed.patch.definition,
           targetExample: parsed.patch.targetExample,
           nativeExample: parsed.patch.nativeExample,
-          clearTranslation: languagePrefs.hideTranslationFields,
-          clearNativeExample: languagePrefs.hideTranslationFields,
           explorationExtrasPatch: parsed.patch.extrasPatch,
           grammarPatch: parsed.patch.grammarPatch,
         })

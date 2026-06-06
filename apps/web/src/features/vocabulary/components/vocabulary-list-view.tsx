@@ -9,8 +9,6 @@ import type { ChunkRow, LearningMode } from '@flicktionary/api-client/orpc-contr
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/vocabulary-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
-import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
@@ -129,14 +127,6 @@ export const VocabularyListView = () => {
     hasNextPage,
     fetchNextPage,
   } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch, learningMode })
-  const { data: userPrefs } = useGetUserPrefs()
-  const nativeLanguage = userPrefs?.nativeLanguage ?? null
-  const sameLanguage =
-    !!nativeLanguage &&
-    !!selectedLanguage &&
-    nativeLanguage.trim().toLowerCase() === selectedLanguage.trim().toLowerCase()
-  const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, selectedLanguage)
-
   const rows: ChunkRow[] = useMemo(() => {
     if (!data) return []
     return data.pages.flatMap((page) => page.rows)
@@ -326,7 +316,6 @@ export const VocabularyListView = () => {
                   <VocabularyRow
                     key={chunk.id}
                     chunk={chunk}
-                    hideTranslationFields={hideTranslationFields}
                     onTap={handleRowTap}
                     onOptions={handleRowOptions}
                     style={style}

@@ -17,7 +17,6 @@ import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar, LearningMode } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { StressMarkedText } from './stress-marked-text'
 
 export type RateSheetChunkContent = {
@@ -107,17 +106,10 @@ export const RateSheet = ({
     if (!open) setMode('rate')
   }, [open])
 
-  const nativeLanguage = userPrefs?.nativeLanguage ?? null
-  const sameLanguage =
-    !!nativeLanguage &&
-    !!chunk?.targetLanguage &&
-    nativeLanguage.trim().toLowerCase() === chunk.targetLanguage.trim().toLowerCase()
-  const hideTranslationFields =
-    sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, chunk?.targetLanguage ?? null)
-  // Translation wins for the description slot; definition is the L1=L2 / no-translations fallback.
-  const description = hideTranslationFields
-    ? chunk?.definition || null
-    : chunk?.translation || chunk?.definition || null
+  // Translation wins for the description slot; definition is the fallback.
+  // Presence-based: with the translations pref off, a stored translation is a
+  // manual one the user wants to see.
+  const description = chunk?.translation || chunk?.definition || null
   const titleText = chunk?.displayForm || chunk?.headword || t`Rate`
   const showOverflow = !!chunk && !chunk.isDeleted && mode === 'rate'
 
@@ -165,7 +157,7 @@ export const RateSheet = ({
           <div className='flex flex-col gap-3 px-2 pb-2 text-sm'>
             <p className='border-l-2 border-yellow-300 pl-3 italic'>
               {chunk.targetExample}
-              {!hideTranslationFields && chunk.nativeExample && (
+              {chunk.nativeExample && (
                 <span className='text-muted-foreground mt-1 block not-italic'>{chunk.nativeExample}</span>
               )}
             </p>

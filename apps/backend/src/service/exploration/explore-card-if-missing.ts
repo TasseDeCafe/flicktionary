@@ -94,15 +94,16 @@ export const exploreCardIfMissing = async (
       await deps.cardsRepository.updateFields(cardId, { surfaceForm: enrichment.surface_form })
     }
 
-    // Content + extras + grammar live on the canonical chunk.
+    // Content + extras + grammar live on the canonical chunk. When translations
+    // are disabled the sanitized fields are null, and updateContent's COALESCE
+    // semantics preserve whatever is stored — so a manually-entered translation
+    // survives enrichment instead of being scrubbed.
     await deps.userLookupsRepository.updateContent({
       id: card.user_lookup_id,
       translation: sanitizedText.translation,
       definition: enrichment.definition,
       targetExample: enrichment.target_example,
       nativeExample: sanitizedText.nativeExample,
-      clearTranslation: languagePrefs.hideTranslationFields,
-      clearNativeExample: languagePrefs.hideTranslationFields,
       explorationExtrasPatch: sanitizedExtras,
       grammarPatch: Object.keys(enrichment.grammar).length > 0 ? enrichment.grammar : null,
     })

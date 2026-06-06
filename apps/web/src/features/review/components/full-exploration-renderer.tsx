@@ -31,25 +31,20 @@ type Props = {
   // the grammar chips. Suppresses the extras.ipa section so we don't show
   // pronunciation twice on the same card.
   hideExtrasIpa?: boolean
-  // True when same-language or the user has the show-translations pref off.
-  // Suppresses translation and native_example sections.
-  hideTranslationFields?: boolean
   showL1Notes?: boolean
 }
 
-export const FullExplorationRenderer = ({
-  card,
-  hideExtrasIpa = false,
-  hideTranslationFields = false,
-  showL1Notes = true,
-}: Props) => {
+export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, showL1Notes = true }: Props) => {
   const { t } = useLingui()
   const extras = card.chunk.explorationExtras ?? {}
 
+  // Translation/native_example render presence-based: with the translations
+  // pref off they're never auto-generated, so a stored value is a manual one
+  // the user wants to see.
   const definition = asString(card.chunk.definition)
-  const translation = hideTranslationFields ? null : asString(card.chunk.translation)
+  const translation = asString(card.chunk.translation)
   const targetExample = asString(card.chunk.targetExample)
-  const nativeExample = hideTranslationFields ? null : asString(card.chunk.nativeExample)
+  const nativeExample = asString(card.chunk.nativeExample)
 
   const ipa = hideExtrasIpa ? null : asString(extras.ipa)
   const frequency = asString(extras.frequency)
