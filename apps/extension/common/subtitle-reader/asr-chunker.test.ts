@@ -15,7 +15,11 @@ const word = (start: number, text: string, opts: Partial<TimedWord> = {}): Timed
 // A speech run at the given cadence, one row per call; first token row-initial.
 const row = (start: number, cadence: number, tokens: string[], opts: Partial<TimedWord> = {}): TimedWord[] =>
   tokens.map((t, i) =>
-    word(start + i * cadence, i === 0 ? t : ` ${t}`, { ...opts, rowInitial: i === 0, rowEnd: opts.rowEnd ?? start + tokens.length * cadence + 1000 })
+    word(start + i * cadence, i === 0 ? t : ` ${t}`, {
+      ...opts,
+      rowInitial: i === 0,
+      rowEnd: opts.rowEnd ?? start + tokens.length * cadence + 1000,
+    })
   )
 
 const texts = (words: TimedWord[]) => chunkTimedWords(words).map((c) => c.text)
