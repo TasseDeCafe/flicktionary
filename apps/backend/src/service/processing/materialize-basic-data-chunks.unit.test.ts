@@ -142,7 +142,9 @@ describe('buildStudiedFormPatch', () => {
   })
 
   it('never retargets a form the user has enabled studying', () => {
-    expect(buildStudiedFormPatch(inflected, { study_form_enabled: true, studied_form: { form: 'посмотрел' } })).toBeNull()
+    expect(
+      buildStudiedFormPatch(inflected, { study_form_enabled: true, studied_form: { form: 'посмотрел' } })
+    ).toBeNull()
   })
 })
 

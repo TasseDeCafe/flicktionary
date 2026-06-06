@@ -50,7 +50,8 @@ export const buildStudiedFormPatch = (
   const form = chunk.surfaceForm.trim()
   if (!form || form === chunk.headword.trim()) return null
   if (!chunk.surfaceTranslation) return null
-  const grammar = existingGrammar && typeof existingGrammar === 'object' ? (existingGrammar as Record<string, unknown>) : {}
+  const grammar =
+    existingGrammar && typeof existingGrammar === 'object' ? (existingGrammar as Record<string, unknown>) : {}
   if (grammar.study_form_enabled) return null
   return { studied_form: { form, translation: chunk.surfaceTranslation } }
 }
