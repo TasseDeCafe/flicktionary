@@ -155,11 +155,9 @@ export const RateSheet = ({
 
         {mode === 'rate' && chunk?.targetExample && !chunk.isDeleted && (
           <div className='flex flex-col gap-3 px-2 pb-2 text-sm'>
-            <p className='border-l-2 border-yellow-300 pl-3 italic'>
+            <p className='border-l-2 border-yellow-300 pl-3'>
               {chunk.targetExample}
-              {chunk.nativeExample && (
-                <span className='text-muted-foreground mt-1 block not-italic'>{chunk.nativeExample}</span>
-              )}
+              {chunk.nativeExample && <span className='text-muted-foreground mt-1 block'>{chunk.nativeExample}</span>}
             </p>
           </div>
         )}

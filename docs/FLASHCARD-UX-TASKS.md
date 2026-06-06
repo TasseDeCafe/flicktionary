@@ -41,33 +41,30 @@ Pointers:
 
 ## 2. Russian passive vocab: hide stress + IPA on front
 
-**Status:** todo
+**Status:** done (this branch)
 
-For Russian passive cards, the front currently shows the stressed display form
-(`находи́ться`) and IPA — both leak the answer to "how is this pronounced". They should only
-be revealed on the back (after Show answer / rating).
+For Russian cards, the front showed the stressed display form (`находи́ться`) and IPA — both
+leak the answer to "how is this pronounced". They are now revealed with the back.
 
-Pointers:
+Implementation:
 
-- Russian front config includes the `ipa` slot: `card-face-config.ts` (~lines 32–35) — move it
-  to back for Russian.
-- Stress marks come pre-embedded in `grammar.display_form` (rendered via `StressMarkedText`,
-  `stress-marked-text.tsx`); the **headword** slot falls back to the plain (unstressed)
-  headword — on the front, render plain headword; on the back, the stressed display form.
-- Scope: Russian only, passive pool (active front won't show the term at all after task 1).
+- `card-face-config.ts`: ru config moved the `ipa` slot front → back (first back slot) and
+  gained `hideStressOnFront: true` on `CardFaceConfig`.
+- `flashcard-mode-view.tsx`: the headword slot strips the combining acute (U+0301,
+  `stripStressMarks`) while the back is hidden; on reveal the stressed form swaps in place.
+  Applies to `studied_form` fronts too.
+- Scope: Russian only (en keeps front IPA), both pools — moot for active once task 1 flips
+  the front. The reading-mode `rate-sheet.tsx` intentionally still shows stress/IPA in its
+  title (it's not a recall test).
 
 ## 3. Example sentence: bigger, not italic
 
-**Status:** todo
+**Status:** done (this branch)
 
-Target-language example is too small and italic. Current styling in
-`flashcard-mode-view.tsx`:
-
-- target example (~line 247): `border-l-2 border-yellow-300 pl-3 text-left text-sm italic`
-- native example (~line 253): `text-muted-foreground pl-3 text-left text-sm not-italic`
-
-Drop the italic, bump `text-sm` up (e.g. `text-base`/`text-lg` — eyeball it). Small, can ride
-along with task 1 or 2 in the same PR.
+In `flashcard-mode-view.tsx`, both example slots went `text-sm` → `text-base` and the target
+example dropped `italic` (translation stays `text-lg`, so the hierarchy holds). The same
+yellow-border example block in `rate-sheet.tsx` (reading mode) was de-italicized for
+consistency (size untouched — compact sheet).
 
 ## 4. Bug: daily review limit refills on refresh
 

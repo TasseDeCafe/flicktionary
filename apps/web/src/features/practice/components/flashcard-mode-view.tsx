@@ -32,6 +32,11 @@ import { useListReviewTerms, useRateTerm } from '../api/practice-hooks'
 // (so it isn't silently lost) — capped so a hard failure can't loop forever.
 const MAX_RATE_RETRIES = 2
 
+// Russian display forms carry a combining acute (U+0301) marking stress
+// (e.g. находи́ться). Languages with hideStressOnFront strip it on the front
+// so the pronunciation isn't given away before the reveal.
+const stripStressMarks = (text: string) => text.replace(/\u0301/g, '')
+
 type QueueItem = {
   card: ReviewTerm
   retryCount: number
@@ -234,15 +239,17 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
 
   const renderSlot = (slot: CardSlotKey) => {
     switch (slot) {
-      case 'headword':
+      case 'headword': {
+        const fullForm = studiedForm ? studiedForm.form : card.grammar?.display_form || card.headword
         return (
           <StressMarkedText
             key='headword'
-            text={studiedForm ? studiedForm.form : card.grammar?.display_form || card.headword}
+            text={faceConfig.hideStressOnFront && !showBack ? stripStressMarks(fullForm) : fullForm}
             lang={targetLanguage}
             className='text-2xl font-bold'
           />
         )
+      }
       case 'ipa':
         return ipa ? (
           <div key='ipa' className='text-muted-foreground flex items-center justify-center gap-1.5 text-sm'>
@@ -252,13 +259,13 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
         ) : null
       case 'targetExample':
         return card.targetExample ? (
-          <p key='targetExample' className='border-l-2 border-yellow-300 pl-3 text-left text-sm italic'>
+          <p key='targetExample' className='border-l-2 border-yellow-300 pl-3 text-left text-base'>
             {card.targetExample}
           </p>
         ) : null
       case 'nativeExample':
         return card.nativeExample ? (
-          <p key='nativeExample' className='text-muted-foreground pl-3 text-left text-sm not-italic'>
+          <p key='nativeExample' className='text-muted-foreground pl-3 text-left text-base'>
             {card.nativeExample}
           </p>
         ) : null

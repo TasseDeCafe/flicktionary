@@ -14,7 +14,14 @@ export type CardSlotKey =
   | 'definition' // target-language definition; primary gloss when translations are OFF, fallback gloss otherwise
   | 'grammar' // GrammarChips (already POS+language filtered)
 
-export type CardFaceConfig = { front: readonly CardSlotKey[]; back: readonly CardSlotKey[] }
+export type CardFaceConfig = {
+  front: readonly CardSlotKey[]
+  back: readonly CardSlotKey[]
+  // When true, the front renders the headword without combining stress marks
+  // (U+0301) and the stressed display_form swaps in on reveal — for languages
+  // (Russian) where stress position is part of the answer.
+  hideStressOnFront?: boolean
+}
 
 // Back order is definition-first: definition and translation only co-render
 // in the translations-OFF + manual-translation case, where definition stays
@@ -26,12 +33,16 @@ export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
 }
 
 // Languages absent here use the default. ru/en (Kaikki languages) carry a
-// Wiktionary-grounded `grammar.ipa`, so they surface IPA on the front; other
-// languages have no ipa bag and the slot falls out naturally via pickIpa.
+// Wiktionary-grounded `grammar.ipa`; other languages have no ipa bag and the
+// slot falls out naturally via pickIpa. English surfaces IPA on the front
+// (spelling doesn't give pronunciation away); Russian defers it to the back —
+// stress position + IPA *are* part of the answer on a recognition card, so
+// the front shows the unstressed form and reveals both with the back.
 export const LANGUAGE_CARD_FACE: Partial<Record<SupportedLanguageCode, CardFaceConfig>> = {
   ru: {
-    front: ['headword', 'ipa', 'targetExample'],
-    back: ['definition', 'translation', 'nativeExample', 'grammar'],
+    front: ['headword', 'targetExample'],
+    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar'],
+    hideStressOnFront: true,
   },
   en: {
     front: ['headword', 'ipa', 'targetExample'],
