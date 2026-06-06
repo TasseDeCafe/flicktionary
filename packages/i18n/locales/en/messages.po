@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:130
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:167
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 
@@ -101,7 +101,7 @@ msgstr "{dueTermCount} due"
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:175
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:202
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 msgstr "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
@@ -387,7 +387,7 @@ msgstr "All"
 msgid "All caught up"
 msgstr "All caught up"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:171
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:198
 msgid "All done!"
 msgstr "All done!"
 
@@ -556,8 +556,8 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:188
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:193
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:215
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:220
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 #: apps/web/src/features/practice/components/strengthen-view.tsx:62
 #: apps/web/src/features/practice/components/strengthen-view.tsx:72
@@ -565,7 +565,7 @@ msgstr "Back"
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:340
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
 msgid "Back to current card"
 msgstr "Back to current card"
 
@@ -943,7 +943,7 @@ msgstr "Daily new limit reached"
 msgid "Daily new limit reached."
 msgstr "Daily new limit reached."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:172
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:199
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
@@ -1008,7 +1008,7 @@ msgstr "Delete"
 msgid "Delete \"{headword}\"?"
 msgstr "Delete \"{headword}\"?"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:201
+#: apps/web/src/features/practice/components/rate-sheet.tsx:199
 msgid "Delete from vocabulary"
 msgstr "Delete from vocabulary"
 
@@ -1095,7 +1095,7 @@ msgstr "Easy"
 msgid "Edit note"
 msgstr "Edit note"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:176
+#: apps/web/src/features/practice/components/rate-sheet.tsx:174
 msgid "Edit term"
 msgstr "Edit term"
 
@@ -1590,7 +1590,7 @@ msgstr "Form (e.g. был)"
 msgid "Form translation"
 msgstr "Form translation"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:331
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:367
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Forward"
@@ -1748,7 +1748,7 @@ msgstr "Hide from vocabulary and Practice"
 msgid "Hide notes"
 msgstr "Hide notes"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:202
+#: apps/web/src/features/practice/components/rate-sheet.tsx:200
 msgid "Hide this term from Practice and Vocabulary. You can restore it later."
 msgstr "Hide this term from Practice and Vocabulary. You can restore it later."
 
@@ -2045,7 +2045,7 @@ msgstr "Loading history…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:154
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:181
 msgid "Loading review terms…"
 msgstr "Loading review terms…"
 
@@ -2066,7 +2066,7 @@ msgstr "Loading..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:202
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:229
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
 #: apps/web/src/features/practice/components/practice-language-view.tsx:172
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
@@ -2166,11 +2166,11 @@ msgstr "Move bottom subtitles down"
 msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:194
+#: apps/web/src/features/practice/components/rate-sheet.tsx:192
 msgid "Move this term back to passive review only."
 msgstr "Move this term back to passive review only."
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:185
+#: apps/web/src/features/practice/components/rate-sheet.tsx:183
 msgid "Move this term into the active drilling pool."
 msgstr "Move this term into the active drilling pool."
 
@@ -2309,7 +2309,7 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:171
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:198
 msgid "No terms are due right now."
 msgstr "No terms are due right now."
 
@@ -2457,7 +2457,7 @@ msgstr "Open the extension popup and choose <0>Sign in with Flicktionary</0>. A 
 "pairing page opens in the web app and connects the extension to your "
 "account automatically."
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:177
+#: apps/web/src/features/practice/components/rate-sheet.tsx:175
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 
@@ -2716,7 +2716,7 @@ msgstr "Preposition"
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:320
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:356
 #: apps/web/src/features/review/components/focus-view.tsx:261
 msgid "Previous card"
 msgstr "Previous card"
@@ -2931,12 +2931,12 @@ msgstr "Reset"
 msgid "Reset subtitle offset"
 msgstr "Reset subtitle offset"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:214
+#: apps/web/src/features/practice/components/rate-sheet.tsx:212
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:243
 msgid "Restore"
 msgstr "Restore"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:214
+#: apps/web/src/features/practice/components/rate-sheet.tsx:212
 msgid "Restoring…"
 msgstr "Restoring…"
 
@@ -3178,7 +3178,7 @@ msgstr "Short paraphrase in the target language."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:346
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:382
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -3326,7 +3326,7 @@ msgstr "Streaming"
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:185
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:212
 msgid "Strengthen"
 msgstr "Strengthen"
 
@@ -3484,13 +3484,13 @@ msgstr "Success!"
 msgid "Switch"
 msgstr "Switch"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:184
+#: apps/web/src/features/practice/components/rate-sheet.tsx:182
 #: apps/web/src/features/review/components/focus-view.tsx:445
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to active vocabulary"
 msgstr "Switch to active vocabulary"
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:193
+#: apps/web/src/features/practice/components/rate-sheet.tsx:191
 #: apps/web/src/features/review/components/focus-view.tsx:445
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to passive vocabulary"
@@ -3639,7 +3639,7 @@ msgid "This screen is only accessible to subscribed users. You can showcase "
 msgstr "This screen is only accessible to subscribed users. You can showcase "
 "premium features here."
 
-#: apps/web/src/features/practice/components/rate-sheet.tsx:168
+#: apps/web/src/features/practice/components/rate-sheet.tsx:166
 msgid "This term is removed from your vocabulary. Restore it to keep "
 "practicing."
 msgstr "This term is removed from your vocabulary. Restore it to keep "

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_CARD_FACE_CONFIG, resolveCardSlots, type CardSlotConditions } from './card-face-config'
+import {
+  ACTIVE_CARD_FACE_CONFIG,
+  DEFAULT_CARD_FACE_CONFIG,
+  getCardFaceConfig,
+  resolveCardSlots,
+  type CardSlotConditions,
+} from './card-face-config'
 
 const cond = (overrides: Partial<CardSlotConditions>): CardSlotConditions => ({
   hideTranslationFields: false,
@@ -54,5 +60,41 @@ describe('resolveCardSlots', () => {
     const front = resolveCardSlots(['headword', 'ipa', 'targetExample'], cond({}))
     expect(front).toEqual(['headword'])
     expect(resolveCardSlots(back, cond({}))).toEqual([])
+  })
+})
+
+describe('active card face', () => {
+  it('getCardFaceConfig returns the active config for any language', () => {
+    expect(getCardFaceConfig('ru', 'active')).toBe(ACTIVE_CARD_FACE_CONFIG)
+    expect(getCardFaceConfig('de', 'active')).toBe(ACTIVE_CARD_FACE_CONFIG)
+    expect(getCardFaceConfig(null, 'active')).toBe(ACTIVE_CARD_FACE_CONFIG)
+  })
+
+  it('front prompts with the translation when translations are on', () => {
+    const slots = resolveCardSlots(
+      ACTIVE_CARD_FACE_CONFIG.front,
+      cond({ hasTranslation: true, hasDefinition: true, hasNativeExample: true })
+    )
+    expect(slots).toEqual(['translation', 'nativeExample'])
+  })
+
+  it('front falls back to the definition when translations are off', () => {
+    const slots = resolveCardSlots(
+      ACTIVE_CARD_FACE_CONFIG.front,
+      cond({ hideTranslationFields: true, hasDefinition: true })
+    )
+    expect(slots).toEqual(['definition'])
+  })
+
+  it('front resolves empty when the card has no gloss data (caller falls back to passive layout)', () => {
+    expect(resolveCardSlots(ACTIVE_CARD_FACE_CONFIG.front, cond({}))).toEqual([])
+  })
+
+  it('back reveals the term, pronunciation and target example', () => {
+    const slots = resolveCardSlots(
+      ACTIVE_CARD_FACE_CONFIG.back,
+      cond({ hasIpa: true, hasTargetExample: true, hasGrammarChips: true })
+    )
+    expect(slots).toEqual(['headword', 'ipa', 'targetExample', 'grammar'])
   })
 })
