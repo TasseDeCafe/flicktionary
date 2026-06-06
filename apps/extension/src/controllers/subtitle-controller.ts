@@ -22,7 +22,7 @@ import type { CSSProperties } from 'react'
 import { CachingElementOverlay, ElementOverlay, ElementOverlayParams, OffsetAnchor } from '../services/element-overlay'
 import { SubtitleStore, SubtitleLineModel } from '../ui/video-overlay/subtitle-store'
 import { mountSubtitleOverlay, OverlayMountHandle } from '../ui/video-overlay/mount'
-import { ensureToasterHost, setToasterTheme } from '../ui/video-overlay/toaster-host'
+import { dispatchToast, setToasterTheme } from '../ui/video-overlay/toaster-host'
 import { FlicktionaryVideoClosures } from '../services/flicktionary/flicktionary-client'
 import { toast } from 'sonner'
 
@@ -655,16 +655,15 @@ export default class SubtitleController {
   }
 
   notification(locKey: string, replacements?: { [key: string]: string }) {
-    ensureToasterHost()
-    toast(i18n._(this._notificationMessage(locKey, replacements ?? {})))
+    const text = i18n._(this._notificationMessage(locKey, replacements ?? {}))
+    dispatchToast(() => toast(text))
   }
 
   // One-off plain-text notice (e.g. the "saving disabled" reason on load), for
   // dynamic text that isn't a known loc-key — surfaced as an error toast since
   // it's the longer-lived "saving disabled" reason.
   showTextNotification(text: string) {
-    ensureToasterHost()
-    toast.error(text)
+    dispatchToast(() => toast.error(text))
   }
 
   showLoadedMessage(nonEmptyTrackIndex: number[]) {

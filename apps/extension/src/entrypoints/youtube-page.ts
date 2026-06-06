@@ -251,12 +251,19 @@ const publishCurrentTracks = async ({
 
 export default defineUnlistedScript(() => {
   let lastVideoIdDispatched: string | undefined
+  // The extension reads the target languages from settings and sends them with
+  // each request; the page realm can't read settings itself, so the interval
+  // republish below reuses the last requested codes. Publishing without them
+  // would drop the `>> code` variants and break remembered-track auto-sync on
+  // SPA navigations.
+  let lastTargetTranslationLanguageCodes: string[] = []
 
   document.addEventListener(
     'asbplayer-get-synced-data',
     async (e) => {
       const targetTranslationLanguageCodes: string[] =
         ((e as CustomEvent).detail?.targetTranslationLanguageCodes as string[] | undefined) ?? []
+      lastTargetTranslationLanguageCodes = targetTranslationLanguageCodes
       lastVideoIdDispatched = await publishCurrentTracks({ targetTranslationLanguageCodes })
     },
     false
@@ -274,7 +281,9 @@ export default defineUnlistedScript(() => {
       publishing = true
       const videoId = inferVideoId()
       if (lastVideoIdDispatched && videoId && lastVideoIdDispatched !== videoId) {
-        lastVideoIdDispatched = await publishCurrentTracks({ targetTranslationLanguageCodes: [] })
+        lastVideoIdDispatched = await publishCurrentTracks({
+          targetTranslationLanguageCodes: lastTargetTranslationLanguageCodes,
+        })
       }
     } finally {
       publishing = false

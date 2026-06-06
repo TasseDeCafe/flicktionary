@@ -175,6 +175,9 @@ cleanup.
   - `popup-ui`, `options`, `ftue-ui` — extension pages (popup, settings, welcome).
   - `flicktionary-pair.content.ts` — URL-restricted to the web app's
     `/extension-pair` route; forwards the pairing payload to the background.
+    Runs at `document_start` — the pair page posts its one-shot message within
+    a few hundred ms of booting, so a listener registered at `document_idle`
+    loses the race and pairing silently times out.
   - `flicktionary-import.content.ts` — injected on demand for article import.
 
 ## Feature spec
@@ -183,7 +186,9 @@ cleanup.
 
 Sign-in is by Supabase magic link, brokered by the web app: the popup's
 "Sign in with Flicktionary" mints a nonce and opens `/extension-pair`; the page
-posts `{tokenHash, email, nonce}`; the pairing content script forwards it; the
+posts `{tokenHash, email, nonce}`; the pairing content script forwards it (a
+stale/expired nonce — 2min TTL — is acked back `ok: false` so the page errors
+instead of hanging); the
 background runs `verifyOtp` and persists the session in its own
 `browser.storage.local` namespace (`flicktionary.auth.v1`) — deliberately
 **outside** the settings provider, so it is never profile-synced or included in
@@ -233,7 +238,12 @@ language auto-loads without a dialog. YouTube additionally offers:
   `streamingPages.youtube.targetLanguages` (most-recent-first, limit 3 — the
   same setting the YouTube page-settings form edits): the page script then
   publishes `>> code` variants on future videos, which is what lets
-  remembered track choices auto-sync. Translated tracks carry interpolated
+  remembered track choices auto-sync. **Republish trap:** the target codes
+  ride on each `asbplayer-get-synced-data` request (the page realm can't read
+  settings); the page script's 500ms videoId-change republish (Shorts/SPA
+  navigations) must reuse the last requested codes — publishing with `[]`
+  drops the `>>` variants from whichever publish wins the auto-sync race and
+  the dialog reopens despite a remembered translated track. Translated tracks carry interpolated
   per-word timing + punctuation, so ASR re-chunking applies to them too,
 - **Whisper transcript generation** via an external transcript server
   (`TranscriptSettings`: `transcriptServerUrl`/`transcriptApiKey`; the
@@ -309,6 +319,12 @@ resolves to an exact `text_segments` row + offsets.
   drops a toast and clears the selection. Signed-out → a "Sign in" action;
   registration-failed → disabled Save with the reason. The save calls
   `highlights.create({sessionId, start/endSegmentId, offsets, selectionText})`.
+  **Toast cold-start trap:** sonner's `toast()` publishes to subscribers only
+  (no replay), and the page-global Toaster host is created lazily — a bare
+  `ensureToasterHost(); toast(...)` drops the page's first toast (the save
+  succeeds with no visual cue). All toast call sites go through
+  `dispatchToast()` (`toaster-host.ts`), which queues until the Toaster's
+  subscription is live.
 - **CEFR picker** — if a save bounces with `MISSING_CEFR`, an over-video A1–C2
   grid appears; picking a level calls `extensionAuth.setCefrLevel` and retries
   the save.
