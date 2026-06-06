@@ -373,10 +373,17 @@ export default class VideoDataSyncController {
       completeMatch: false,
     }
 
-    const emptyChoice = this.lastLanguagesSynced.some((lang) => lang !== '-') === undefined
+    // Entries are slot-wise: '-' means "leave this slot empty". A remembered
+    // list with no real language in it (never remembered, or remembered with
+    // every slot Empty) can't auto-load anything: when the video has tracks on
+    // offer it must NOT count as a complete match — '-' matches anything, so
+    // it would silently sync nothing and suppress the prompt-on-failure dialog
+    // on every video. With no tracks available it does count as complete, so
+    // subtitle-less videos don't nag.
+    const hasRealChoice = this.lastLanguagesSynced.some((lang) => lang !== '-')
 
-    if (!tracks_list.length && emptyChoice) {
-      tracks.completeMatch = true
+    if (!hasRealChoice) {
+      tracks.completeMatch = tracks_list.length === 0
     } else {
       let matches: number = 0
       for (let i = 0; i < this.lastLanguagesSynced.length; i++) {
@@ -527,9 +534,14 @@ export default class VideoDataSyncController {
       const confirmMessage = message as VideoDataUiBridgeConfirmMessage
 
       if (confirmMessage.shouldRememberTrackChoices) {
-        this.lastLanguagesSynced = confirmMessage.data
+        const languages = confirmMessage.data
           .map((track) => track.language)
-          .filter((language) => language !== undefined) as string[]
+          .filter((language): language is string => language !== undefined)
+        // All-Empty choices would otherwise be stored as ['-','-'], which
+        // matches every video and silently suppresses the track dialog forever
+        // (see _matchLastSyncedWithAvailableTracks). Treat "remember nothing"
+        // as clearing the per-site preference instead.
+        this.lastLanguagesSynced = languages.some((language) => language !== '-') ? languages : []
         await this._context.settings.set({ streamingLastLanguagesSynced: this._lastLanguagesSynced }).catch(() => {})
       }
 

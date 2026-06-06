@@ -208,7 +208,15 @@ next pairing.
 On video detection the page script supplies available tracks; the track-selection
 dialog (shadow modal) offers up to three simultaneous tracks with per-domain
 "remember my choice". With `streamingAutoSync` (default **on**) the last-used
-language auto-loads without a dialog. YouTube additionally offers:
+language auto-loads without a dialog; on a failed match,
+`streamingAutoSyncPromptOnFailure` (default **on**) opens the dialog.
+**Remembered-list semantics:** entries are slot-wise, `'-'` = "leave this slot
+empty". A list with no real language (never remembered, or remembered
+all-Empty — stored as `[]`; confirm normalizes all-`'-'` to `[]`) is never a
+complete match while the video offers tracks, so the dialog prompts; it IS
+complete when the video has no tracks, so subtitle-less videos don't nag.
+(`'-'` would otherwise match anything: `['-','-']` used to complete-match
+every video, silently syncing nothing and suppressing the dialog forever.) YouTube additionally offers:
 
 - **translation controls** (Language Reactor-style; YouTube only): on YouTube
   the dialog renders TWO track selectors and the third slot holds a
@@ -338,7 +346,10 @@ resolves to an exact `text_segments` row + offsets.
 `VideoOverlayController` (default-on via `streamingEnableOverlay`) shows a
 control bar over the video on pause: load/toggle subtitles, playback-mode
 switches, offset/playback-rate/subtitle-navigation scroller. Desktop feature —
-despite its upstream "mobile overlay" ancestry.
+despite its upstream "mobile overlay" ancestry. It shows whether or not
+subtitles are synced (`emptySubtitleTrack` model state) — it hosts the Load
+Subtitles button, the only path back into the track dialog, so gating it on
+synced would strand users who cancel the dialog.
 
 ### Other shadow surfaces
 

@@ -228,8 +228,13 @@ export class VideoOverlayController {
     this._store?.set({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
   }
 
+  // No `synced` gate: the overlay must show on pause even before any subtitles
+  // are loaded — it hosts the Load Subtitles button, the only way back into the
+  // track dialog (the model's `emptySubtitleTrack` state covers the unsynced
+  // UI). Gating on synced left the controls unreachable after cancelling the
+  // track dialog.
   private _show() {
-    if (!this._context.synced || this._forceHiding) {
+    if (this._forceHiding) {
       return
     }
 
@@ -253,10 +258,6 @@ export class VideoOverlayController {
   }
 
   private _hide() {
-    if (!this._context.synced) {
-      return
-    }
-
     this._doHide()
   }
 
