@@ -237,7 +237,7 @@ msgstr "Une phrase utilisant ce terme dans son contexte naturel."
 msgid "A short label for this session"
 msgstr "Un libellé court pour cette session"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:187
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:143
 msgid "A video element must be synced with Flicktionary before it can be mined. "
 "Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
@@ -506,11 +506,11 @@ msgstr "À la fin des sous-titres"
 msgid "At Subtitle Start"
 msgstr "Au début des sous-titres"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:46
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:50
 msgid "Audio recording enabled"
 msgstr "Enregistrement audio activé"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:47
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:51
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
 msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
 "maintenant commencer l’extraction."
@@ -737,7 +737,7 @@ msgid "Click Generate full exploration to enrich this card with collocations, "
 msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte "
 "avec des collocations, l'étymologie, le registre, l'API et plus encore."
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:45
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:49
 msgid "Click on the Flicktionary action button in the top-right of the browser "
 "window to enable audio recording for this tab."
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
@@ -752,8 +752,8 @@ msgid "Click to unlock font menu"
 msgstr "Cliquez pour déverrouiller le menu de police"
 
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:450
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:126
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:130
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:135
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
@@ -1150,7 +1150,7 @@ msgstr "Email de Vérification Envoyé"
 msgid "Empty"
 msgstr "Vide"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:44
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:48
 msgid "Enable audio recording"
 msgstr "Activer l'enregistrement audio"
 
@@ -1191,7 +1191,7 @@ msgstr "L'enrichissement n'a pas encore commencé."
 msgid "Enter profile name"
 msgstr "Entrer le nom du profil"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:166
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:122
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
@@ -1590,7 +1590,7 @@ msgstr "Flicktionary se compose de deux parties qui fonctionnent ensemble : une 
 "<0>extension de navigateur</0> et cette <1>application web</1>."
 
 #. placeholder {0}: state.newVersion
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:106
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:110
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
 "<0>notes de version</0>."
@@ -2199,7 +2199,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Films"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:166
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:122
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
 
@@ -2339,7 +2339,7 @@ msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un "
 msgid "No translation available"
 msgstr "Aucune traduction disponible"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:233
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:189
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
@@ -2409,9 +2409,9 @@ msgstr "Numéral"
 #: apps/extension/common/components/PageSettingsForm.tsx:181
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:477
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:567
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:90
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:226
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:237
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:94
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:182
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:193
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 msgid "OK"
@@ -3096,11 +3096,11 @@ msgstr "Aller au sous-titre précédent"
 msgid "Select a language"
 msgstr "Sélectionner une langue"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:192
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:148
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:208
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
@@ -3177,7 +3177,7 @@ msgstr "Configuration du compte..."
 #: apps/extension/common/components/MiscSettingsTab.tsx:273
 #: apps/extension/src/ui/components/SettingsPage.tsx:58
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:444
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:172
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:128
 #: apps/web/src/features/more/components/more-tab-view.tsx:124
 msgid "Settings"
 msgstr "Paramètres"
@@ -3967,7 +3967,7 @@ msgstr "Vérifiez Votre Email"
 msgid "Verifying..."
 msgstr "Vérification..."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:120
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:76
 msgid "Video Element"
 msgstr "Élément vidéo"
 
