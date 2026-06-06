@@ -14,16 +14,16 @@ import Binding from '../services/binding'
 import { ExtensionSettingsStorage } from '../services/extension-settings-storage'
 import { setupLingui } from '../ui/lingui'
 import { mountModalHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
-import { createUpdateChannel, type UpdateChannel } from '../ui/shadow/model-store'
+import { ShadowVideoSelectApp, type VideoSelectCommands } from '../ui/video-select/ShadowVideoSelectApp'
 import {
-  ShadowVideoSelectApp,
+  createVideoSelectStore,
   type VideoElement,
-  type VideoSelectCommands,
   type VideoSelectState,
-} from '../ui/video-select/ShadowVideoSelectApp'
+  type VideoSelectStore,
+} from '../ui/video-select/video-select-store'
 
-// The in-realm channel exposes updateState; this minimal shape is what the rest
-// of the controller drives.
+// The in-realm model sink (the store's updateState action); this minimal shape
+// is what the rest of the controller drives.
 interface VideoSelectClient {
   updateState(state: Partial<VideoSelectState>): void
 }
@@ -37,9 +37,10 @@ export default class VideoSelectController {
   private _subtitleFiles?: SubtitleFile[]
 
   // The video-select dialog renders in the content-script realm via a
-  // fullscreen-aware modal shadow host. The model flows through `_channel`
-  // (partial updateState pushes); UI commands route through `_handleUiCommand`.
-  private _channel?: UpdateChannel<VideoSelectState>
+  // fullscreen-aware modal shadow host. The model flows through `_store`
+  // (partial pushes via the store's updateState action); UI commands route
+  // through `_handleUiCommand`.
+  private _store?: VideoSelectStore
   private _shadowHandle?: ShadowHostHandle
   private _shadowOpen = false
 
@@ -88,7 +89,7 @@ export default class VideoSelectController {
   unbind() {
     this._shadowHandle?.unmount()
     this._shadowHandle = undefined
-    this._channel = undefined
+    this._store = undefined
     this._shadowOpen = false
 
     if (this.messageListener) {
@@ -196,15 +197,15 @@ export default class VideoSelectController {
   }
 
   private async _ensureShadowMounted() {
-    if (!this._channel) {
-      this._channel = createUpdateChannel<VideoSelectState>()
+    if (!this._store) {
+      this._store = createVideoSelectStore()
     }
     if (this._shadowHandle) {
       return
     }
     const language = await this._settings.getSingle('language')
     setupLingui(language)
-    const channel = this._channel
+    const store = this._store
     const commands = this._shadowCommands()
     this._shadowHandle = mountModalHost({
       hostAttribute: VIDEO_SELECT_HOST_ATTR,
@@ -212,7 +213,7 @@ export default class VideoSelectController {
       // utilities) instead of emotion.
       adoptTailwind: true,
       render: ({ shadowRoot, portalContainer }) =>
-        createElement(ShadowVideoSelectApp, { channel, shadowRoot, portalContainer, language, commands }),
+        createElement(ShadowVideoSelectApp, { store, shadowRoot, portalContainer, language, commands }),
     })
   }
 
@@ -222,14 +223,14 @@ export default class VideoSelectController {
 
   // Drive the dialog closed (model open:false).
   private async _closeUi() {
-    this._channel?.updateState({ open: false })
+    this._store?.getState().updateState({ open: false })
     this._shadowOpen = false
   }
 
   private async _prepareAndShowFrame(): Promise<VideoSelectClient> {
     await this._ensureShadowMounted()
     this._shadowOpen = true
-    return this._channel!
+    return this._store!.getState()
   }
 
   private async _hideUi() {
