@@ -32,6 +32,19 @@ export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
   back: ['definition', 'translation', 'nativeExample', 'grammar'],
 }
 
+// Active (production) cards flip the direction: the front prompts with the
+// gloss — translation, or definition as the fallback per the same resolver
+// rules as the default back — plus the example translation; the back reveals
+// the term, its pronunciation and the target example. Language-independent:
+// the ipa slot falls out naturally for languages without an ipa bag, and
+// stress never needs hiding because the headword only appears on the back.
+// A card with no gloss data at all resolves to an empty front — callers fall
+// back to the recognition (passive) layout for that card.
+export const ACTIVE_CARD_FACE_CONFIG: CardFaceConfig = {
+  front: ['definition', 'translation', 'nativeExample'],
+  back: ['headword', 'ipa', 'targetExample', 'grammar'],
+}
+
 // Languages absent here use the default. ru/en (Kaikki languages) carry a
 // Wiktionary-grounded `grammar.ipa`; other languages have no ipa bag and the
 // slot falls out naturally via pickIpa. English surfaces IPA on the front
@@ -50,7 +63,11 @@ export const LANGUAGE_CARD_FACE: Partial<Record<SupportedLanguageCode, CardFaceC
   },
 }
 
-export const getCardFaceConfig = (code: string | undefined | null): CardFaceConfig => {
+export const getCardFaceConfig = (
+  code: string | undefined | null,
+  pool: 'passive' | 'active' = 'passive'
+): CardFaceConfig => {
+  if (pool === 'active') return ACTIVE_CARD_FACE_CONFIG
   if (!code) return DEFAULT_CARD_FACE_CONFIG
   return LANGUAGE_CARD_FACE[code as SupportedLanguageCode] ?? DEFAULT_CARD_FACE_CONFIG
 }

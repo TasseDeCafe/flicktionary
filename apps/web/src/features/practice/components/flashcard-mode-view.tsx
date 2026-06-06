@@ -87,6 +87,9 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
 
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [index, setIndex] = useState(0)
+  // Mirror of `index` for async rate callbacks: rolling back an optimistic
+  // redrill copy must know whether the copy was already consumed.
+  const indexRef = useRef(0)
   const [revealed, setRevealed] = useState(false)
   const [capNoticeShown, setCapNoticeShown] = useState(false)
   // Peek-back: how many cards behind the live index we're re-viewing read-only.
@@ -115,9 +118,36 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
 
     setRevealed(false)
     setIndex((i) => i + 1)
+    indexRef.current += 1
 
     if (rating === 'again' || rating === 'hard') {
       sessionHardRef.current.add(card.userLookupId)
+    }
+
+    // Anki-style: an 'again' card keeps coming back until it gets a
+    // non-'again' rating. Because every non-'again' passive rating is
+    // clamped to >= +24h, redrilling until passed guarantees a finished
+    // session leaves nothing immediately due — no straggler follow-ups
+    // resurfacing right after the post-session Strengthen round. The
+    // loop is user-controlled (rate it 'hard'+ to move on), and terms
+    // that keep lapsing across sessions get parked by the leech path.
+    //
+    // The redrill copy is appended in the same render as the index advance —
+    // requeueing on mutation success made the Learning pill dip and bounce
+    // back a beat later. Rolled back (by identity) on the outcomes that must
+    // not redrill: cap-rejected rating, leech parking, mutation error.
+    const redrill: QueueItem | null =
+      rating === 'again' ? { card, retryCount: item.retryCount, requeuedForAgain: true } : null
+    if (redrill) setQueue((q) => [...q, redrill])
+    const dropRedrill = () => {
+      if (!redrill) return
+      setQueue((q) => {
+        const position = q.indexOf(redrill)
+        // Already consumed (re-rated before the response landed): removing it
+        // now would shift the queue under the live index onto the wrong card.
+        if (position === -1 || position < indexRef.current) return q
+        return q.filter((queued) => queued !== redrill)
+      })
     }
 
     rateTerm(
@@ -125,28 +155,20 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
       {
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
+            dropRedrill()
             if (!capNoticeShown) setCapNoticeShown(true)
             return
           }
           if (resp.data.parked) {
             // The term crossed the leech threshold and left every practice
             // queue — don't redrill it in-session; rehab gates bring it back.
+            dropRedrill()
             const headword = card.headword
             toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
-            return
-          }
-          if (rating === 'again') {
-            // Anki-style: an 'again' card keeps coming back until it gets a
-            // non-'again' rating. Because every non-'again' passive rating is
-            // clamped to >= +24h, redrilling until passed guarantees a finished
-            // session leaves nothing immediately due — no straggler follow-ups
-            // resurfacing right after the post-session Strengthen round. The
-            // loop is user-controlled (rate it 'hard'+ to move on), and terms
-            // that keep lapsing across sessions get parked by the leech path.
-            setQueue((q) => [...q, { card, retryCount: item.retryCount, requeuedForAgain: true }])
           }
         },
         onError: () => {
+          dropRedrill()
           if (item.retryCount < MAX_RATE_RETRIES) {
             setQueue((q) => [...q, { card, retryCount: item.retryCount + 1, requeuedForAgain: item.requeuedForAgain }])
           }
@@ -231,13 +253,18 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
     hasGrammarChips: !!card.grammar,
   }
 
-  const faceConfig = getCardFaceConfig(targetLanguage)
-  const frontSlots = resolveCardSlots(faceConfig.front, cond)
+  // Active fronts are gloss-only; a card with no translation, no definition
+  // and no example translation would render a blank front — fall back to the
+  // recognition (passive) layout for that card.
+  const poolConfig = getCardFaceConfig(targetLanguage, pool)
+  const poolFront = resolveCardSlots(poolConfig.front, cond)
+  const faceConfig = poolFront.length > 0 ? poolConfig : getCardFaceConfig(targetLanguage, 'passive')
+  const frontSlots = poolFront.length > 0 ? poolFront : resolveCardSlots(faceConfig.front, cond)
   const backSlots = resolveCardSlots(faceConfig.back, cond)
   // Peeked cards are always shown fully (front + back), read-only.
   const showBack = revealed || isPeeking
 
-  const renderSlot = (slot: CardSlotKey) => {
+  const renderSlot = (slot: CardSlotKey, face: 'front' | 'back') => {
     switch (slot) {
       case 'headword': {
         const fullForm = studiedForm ? studiedForm.form : card.grammar?.display_form || card.headword
@@ -278,8 +305,10 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
         ) : null
       }
       case 'definition':
+        // On an active front the definition is the prompt itself (translation
+        // fallback), so it gets prompt sizing instead of footnote sizing.
         return card.definition ? (
-          <p key='definition' className='text-muted-foreground text-sm'>
+          <p key='definition' className={face === 'front' ? 'text-lg' : 'text-muted-foreground text-sm'}>
             {card.definition}
           </p>
         ) : null
@@ -298,7 +327,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
     <div className='flex flex-1 flex-col overflow-hidden'>
       <div className='flex-1 overflow-y-auto'>
         <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8 text-center'>
-          {frontSlots.map(renderSlot)}
+          {frontSlots.map((slot) => renderSlot(slot, 'front'))}
           {showBack && (
             <>
               <div className='my-2 w-full border-t' />
@@ -312,7 +341,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
                   {card.translation ? ` — ${card.translation}` : null}
                 </p>
               )}
-              {backSlots.map(renderSlot)}
+              {backSlots.map((slot) => renderSlot(slot, 'back'))}
             </>
           )}
         </div>

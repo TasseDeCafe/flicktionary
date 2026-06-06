@@ -20,24 +20,25 @@ Key code map (shared by most tasks):
 
 ## 1. Active vocab: flip card front/back
 
-**Status:** todo
+**Status:** done (this branch)
 
-Active-vocabulary flashcards should test production, not recognition:
+Active-vocabulary flashcards now test production, not recognition.
 
-- **Front:** translation of the term + translation of the example sentence.
-  Fallback when translations are off/missing (per-language "generate translations" pref):
-  show the **definition** instead (and skip/fall back gracefully for the example translation).
-- **Back:** the term (headword) + the target-language example sentence.
+Implementation:
 
-Pointers:
-
-- Front/back slot ordering comes from `card-face-config.ts`; today the config is keyed by
-  language, not by pool. Likely needs pool-aware configs (active vs passive) or a separate
-  active-vocab config.
-- Slot rendering (headword / ipa / targetExample / nativeExample / translation / definition):
-  `flashcard-mode-view.tsx` ~lines 222–278.
-- Translation-off fallback already exists for the **definition** slot (fallback gloss when
-  translations disabled) — reuse that logic for the new front.
+- `card-face-config.ts`: new language-independent `ACTIVE_CARD_FACE_CONFIG`
+  (front `['definition', 'translation', 'nativeExample']`, back
+  `['headword', 'ipa', 'targetExample', 'grammar']`); `getCardFaceConfig(code, pool)` grew a
+  pool param (defaults to `'passive'`).
+- Translations-off/missing fallback reuses the existing gloss resolver rules: translation is
+  the prompt when present, definition otherwise (definition-first when translations are off +
+  a manual translation exists). Definition gets prompt sizing (`text-lg`) on the front via a
+  face param on `renderSlot`.
+- Safety: a card with no translation, no definition and no example translation resolves to an
+  empty active front — `flashcard-mode-view.tsx` falls back to the passive (recognition)
+  layout for that card.
+- Russian stress/IPA need no special-casing on active cards: the headword only appears on the
+  back. `studied_form` cards prompt with the form's in-context translation.
 
 ## 2. Russian passive vocab: hide stress + IPA on front
 
@@ -94,18 +95,17 @@ the same caps). Worth planning these three together even if shipped separately.
 
 ## 5. Learning counter flickers when failing a card
 
-**Status:** todo
+**Status:** done (this branch)
 
-Failing a card makes the Learning pill go 35 → 34 → 35. Cause is structural, not a bug:
+Failing a card made the Learning pill go 35 → 34 → 35: counts derive from the local queue
+(`getRemainingCounts()`), the index advance rendered immediately but the `again`-redrill copy
+was only appended on mutation success.
 
-- Counts are derived from the **local queue** via `getRemainingCounts()`
-  (`flashcard-mode-view.tsx` ~lines 43–66).
-- Rating `again` removes the card (count drops), then re-appends it with
-  `requeuedForAgain: true` (~line 141), which counts as learning again (count back up).
-
-Fix direction: compute the post-rating queue (removal + requeue) in one state update so the
-intermediate value never renders, or derive counts in a way that keeps the failed card
-counted continuously.
+Fix: the redrill copy is appended **optimistically in the same render** as the index advance
+(React batches both setState calls), so the count never dips. It's rolled back by object
+identity on the outcomes that must not redrill (cap-rejected rating, leech parking, mutation
+error), guarded by an `indexRef` so a copy the user already consumed before a slow response
+is never removed (that would shift the queue under the live index).
 
 ## 6. Allow re-rating from history (undo / change rating)
 
