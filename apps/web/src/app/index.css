@@ -43,3 +43,9 @@ body {
 [data-word-selected='true'] {
   background-color: var(--color-sky-200);
 }
+
+/* Dark mode keeps the light foreground text, so the paint must be a dim
+   translucent wash rather than a light fill (white-on-sky-200 is unreadable). */
+.dark [data-word-selected='true'] {
+  background-color: color-mix(in oklab, var(--color-sky-400) 25%, transparent);
+}
