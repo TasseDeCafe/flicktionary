@@ -377,6 +377,10 @@ export const PracticeDueSummaryEntrySchema = z.object({
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
+  // Review-state cards rated today (the spent daily review budget, counted
+  // off the rating-event log). Lets the landing distinguish "limit reached"
+  // from "all caught up" when due work exists beyond the budget.
+  reviewedTodayCount: z.number().int(),
   // Leech-parked terms — excluded from every practice queue until rehab
   // graduates them; the due counts above already exclude them.
   parkedCount: z.number().int(),

@@ -10,6 +10,7 @@ import type {
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   generatePracticeText,
@@ -23,6 +24,9 @@ export type GenerateReadingTextDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  // Review-budget source for the candidate-set caps (resolveReviewCaps) and
+  // the event log written by the reading finalizer's ratings.
+  practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   // Optional exercise-bank warmer threaded through to applyTermRating so
   // reading-mode again/hard ratings pre-generate Strengthen exercises too.
   warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void

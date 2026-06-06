@@ -6,10 +6,14 @@ import {
   resolveLanguagePrefs,
   type GenerateReadingTextDependencies,
 } from './generate-reading-text'
-import { applyTermRating } from './rate-term'
+import { applyTermRating, type WithTransaction } from './rate-term'
 import { clampPracticeSessionLimits } from './review-caps'
 
-export type AdvanceReadingTextDependencies = GenerateReadingTextDependencies
+// The finalizer additionally needs the transaction runner so each applied
+// rating's FSRS write + event-log row commit atomically (see applyTermRating).
+export type AdvanceReadingTextDependencies = GenerateReadingTextDependencies & {
+  withTransaction: WithTransaction
+}
 
 export type AdvanceReadingTextResult =
   | { ok: true; done: false; practiceText: DbPracticeText; introduced: number }
@@ -102,7 +106,18 @@ export const advanceReadingText = async (
       if (wasReviewedAfterTextWasPrepared(lookup, claimed, effectivePool)) continue
       if (!isEligibleForScope(lookup, effectivePool, scope, now)) continue
       const rating = ratingByLookupId.get(lookup.id) ?? 'good'
-      const result = await applyTermRating({ lookup, userId, rating, pool: effectivePool, maxNewTerms, deps })
+      // Reading mode NEVER bypasses the daily-new cap — the learn-new bypass is
+      // a flashcards-only affordance (driven by rateTerm's learnNewSession).
+      const result = await applyTermRating({
+        lookup,
+        userId,
+        rating,
+        pool: effectivePool,
+        maxNewTerms,
+        wasExplicit: ratingByLookupId.has(lookup.id),
+        practiceTextId: claimed.id,
+        deps,
+      })
       if (result.ok && result.introducedNew) introduced += 1
     }
   }

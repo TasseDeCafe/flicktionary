@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:167
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:176
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "« {headword} » vous pose problème — il est mis de côté pour des "
 "exercices de révision."
@@ -40,11 +40,11 @@ msgstr "(non défini)"
 msgid "{activeCount} active"
 msgstr "{activeCount} actif(s)"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:193
+#: apps/web/src/features/practice/components/practice-language-view.tsx:221
 msgid "{activeDueCount} due, {activeNewCount} new"
 msgstr "{activeDueCount} à réviser, {activeNewCount} nouveaux"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:194
+#: apps/web/src/features/practice/components/practice-language-view.tsx:222
 msgid "{activeTotal} active term(s). Nothing due right now."
 msgstr "{activeTotal} terme(s) actif(s). Rien à réviser pour le moment."
 
@@ -64,7 +64,7 @@ msgstr "{correctCount} sur {total} correctes."
 msgid "{dailyNewAvailable} new available"
 msgstr "{dailyNewAvailable} nouveau(x) disponible(s)"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:85
+#: apps/web/src/features/practice/components/practice-language-view.tsx:102
 msgid "{dailyNewAvailable} new available today"
 msgstr "{dailyNewAvailable} nouvelles disponibles aujourd'hui"
 
@@ -96,7 +96,7 @@ msgstr "{discount}% de réduction avec votre parrainage à vie !"
 msgid "{discountPercentage}% off thanks to your past referral!"
 msgstr "{discountPercentage} % de réduction grâce à votre ancien parrainage !"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:84
+#: apps/web/src/features/practice/components/practice-language-view.tsx:101
 msgid "{dueTermCount} due"
 msgstr "{dueTermCount} en attente"
 
@@ -104,7 +104,7 @@ msgstr "{dueTermCount} en attente"
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} révision(s) en attente"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:202
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:219
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices "
@@ -118,11 +118,21 @@ msgstr "{highlightCount} surlignage(s)"
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} surlignage(s) enregistré(s)."
 
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:42
+msgid "{newCount} unseen term(s) available. How many do you want to learn now? "
+"They count toward today's introductions."
+msgstr "{newCount} terme(s) jamais vu(s) disponible(s). Combien voulez-vous en "
+"apprendre maintenant ? Ils comptent dans les introductions du jour."
+
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:56
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:103
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:48
+msgid "{option} terms"
+msgstr "{option} termes"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:121
 msgid "{parked} word(s) parked — strengthen them"
 msgstr "{parked} mot(s) en pause — renforcez-les"
 
@@ -290,7 +300,7 @@ msgstr "Les actions dans cette section peuvent entraîner une perte définitive 
 msgid "Active"
 msgstr "Actif"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:189
+#: apps/web/src/features/practice/components/practice-language-view.tsx:217
 msgid "Active vocabulary"
 msgstr "Vocabulaire actif"
 
@@ -392,14 +402,18 @@ msgstr "Encore"
 msgid "All"
 msgstr "Tout"
 
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:53
+msgid "All {newCount}"
+msgstr "Tous les {newCount}"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:40
-#: apps/web/src/features/practice/components/practice-language-view.tsx:210
+#: apps/web/src/features/practice/components/practice-language-view.tsx:238
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:307
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:332
 msgid "All caught up"
 msgstr "Tout est à jour"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:198
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:215
 msgid "All done!"
 msgstr "Terminé !"
 
@@ -570,8 +584,8 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Retour"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:215
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:220
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:232
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:237
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 #: apps/web/src/features/practice/components/strengthen-view.tsx:62
 #: apps/web/src/features/practice/components/strengthen-view.tsx:72
@@ -579,7 +593,7 @@ msgstr "Retour"
 msgid "Back to {languageName}"
 msgstr "Retour à {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:393
 msgid "Back to current card"
 msgstr "Retour à la carte actuelle"
 
@@ -599,7 +613,7 @@ msgstr "Retour à la connexion"
 msgid "Back to Login"
 msgstr "Retour à la connexion"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:166
+#: apps/web/src/features/practice/components/practice-language-view.tsx:194
 msgid "Back to Practice"
 msgstr "Retour à la pratique"
 
@@ -958,13 +972,17 @@ msgstr "Centre Client"
 msgid "Daily new limit reached"
 msgstr "Limite quotidienne de nouveaux termes atteinte"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:89
+#: apps/web/src/features/practice/components/practice-language-view.tsx:107
 msgid "Daily new limit reached."
 msgstr "Limite quotidienne de nouveaux termes atteinte."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:199
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:216
 msgid "Daily new-card limit reached."
 msgstr "Limite quotidienne de nouvelles cartes atteinte."
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:106
+msgid "Daily review limit reached."
+msgstr "Limite quotidienne de révisions atteinte."
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:163
 msgid "Danger zone"
@@ -1286,7 +1304,7 @@ msgstr "Raccourci de l'extension"
 msgid "Extension version"
 msgstr "Version de l'extension"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:105
+#: apps/web/src/features/practice/api/practice-hooks.ts:108
 msgid "Failed to advance"
 msgstr "Échec de l'avancement"
 
@@ -1306,7 +1324,7 @@ msgstr "Échec de la création de la session de paiement"
 msgid "Failed to create session"
 msgstr "Échec de la création de la session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:134
+#: apps/web/src/features/practice/api/practice-hooks.ts:137
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:141
 msgid "Failed to delete term"
 msgstr "Échec de la suppression du terme"
@@ -1320,7 +1338,7 @@ msgstr "Échec de l'export du vocabulaire"
 msgid "Failed to fetch subscription details"
 msgstr "Échec de la récupération des détails de l'abonnement"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:161
+#: apps/web/src/features/practice/api/practice-hooks.ts:164
 msgid "Failed to fetch translation"
 msgstr "Échec de la récupération de la traduction"
 
@@ -1328,7 +1346,7 @@ msgstr "Échec de la récupération de la traduction"
 msgid "Failed to generate exploration"
 msgstr "Échec de la génération de l'exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:79
+#: apps/web/src/features/practice/api/practice-hooks.ts:82
 msgid "Failed to generate next text"
 msgstr "Échec de la génération du texte suivant"
 
@@ -1361,7 +1379,7 @@ msgstr "Échec du chargement des cartes"
 msgid "Failed to load chat"
 msgstr "Échec du chargement de la discussion"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:54
+#: apps/web/src/features/practice/api/practice-hooks.ts:57
 msgid "Failed to load exercises"
 msgstr "Échec du chargement des exercices"
 
@@ -1369,7 +1387,7 @@ msgstr "Échec du chargement des exercices"
 msgid "Failed to load highlights"
 msgstr "Échec du chargement des surlignages"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:116
+#: apps/web/src/features/practice/api/practice-hooks.ts:119
 msgid "Failed to load history"
 msgstr "Échec du chargement de l'historique"
 
@@ -1389,7 +1407,7 @@ msgstr "Échec du chargement des préférences"
 msgid "Failed to load processing status"
 msgstr "Échec du chargement de l'état de traitement"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:26
+#: apps/web/src/features/practice/api/practice-hooks.ts:29
 msgid "Failed to load review terms"
 msgstr "Échec du chargement des termes à réviser"
 
@@ -1433,7 +1451,7 @@ msgstr "Échec du marquage du chat comme lu"
 msgid "Failed to open triage"
 msgstr "Échec de l'ouverture du tri"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:42
+#: apps/web/src/features/practice/api/practice-hooks.ts:45
 msgid "Failed to record rating"
 msgstr "Échec de l'enregistrement de l'évaluation"
 
@@ -1461,7 +1479,7 @@ msgstr "Échec du renommage du terme"
 msgid "Failed to request suggestions"
 msgstr "Échec de la demande de suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:150
+#: apps/web/src/features/practice/api/practice-hooks.ts:153
 msgid "Failed to restore term"
 msgstr "Échec de la restauration du terme"
 
@@ -1494,7 +1512,7 @@ msgstr "Échec de la définition du niveau CECR"
 msgid "Failed to set native language"
 msgstr "Échec de la définition de la langue maternelle"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:69
+#: apps/web/src/features/practice/api/practice-hooks.ts:72
 msgid "Failed to submit answer"
 msgstr "Échec de l'envoi de la réponse"
 
@@ -1604,7 +1622,7 @@ msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
 msgid "Flicktionary User Guide"
 msgstr "Guide d'utilisation de Flicktionary"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:219
+#: apps/web/src/features/practice/components/practice-language-view.tsx:247
 msgid "Follow-ups"
 msgstr "Révisions"
 
@@ -1616,7 +1634,7 @@ msgstr "Forme (par ex. был)"
 msgid "Form translation"
 msgstr "Traduction de la forme"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:367
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:384
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Suivant"
@@ -1811,7 +1829,7 @@ msgstr "Les surlignages sont enrichis au fur et à mesure de votre lecture. Le "
 msgid "Hint:"
 msgstr "Indice :"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:119
+#: apps/web/src/features/practice/components/practice-language-view.tsx:137
 msgid "History"
 msgstr "Historique"
 
@@ -2024,9 +2042,13 @@ msgid "Learn a language from the videos you already watch and the articles you "
 msgstr "Apprenez une langue grâce aux vidéos que vous regardez déjà et aux "
 "articles que vous lisez déjà."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:153
+#: apps/web/src/features/practice/components/practice-language-view.tsx:181
 msgid "Learn new"
 msgstr "Apprendre nouveau"
+
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:40
+msgid "Learn new terms"
+msgstr "Apprendre de nouveaux termes"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:16
 msgid "Learning"
@@ -2076,7 +2098,7 @@ msgstr "Chargement de l'historique…"
 msgid "Loading more…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:181
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:190
 msgid "Loading review terms…"
 msgstr "Chargement des termes à réviser…"
 
@@ -2097,9 +2119,9 @@ msgstr "Chargement..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:229
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:246
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
-#: apps/web/src/features/practice/components/practice-language-view.tsx:172
+#: apps/web/src/features/practice/components/practice-language-view.tsx:200
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:283
@@ -2163,7 +2185,7 @@ msgstr "Mensuel"
 #: apps/web/src/features/more/components/more-tab-view.tsx:75
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:43
-#: apps/web/src/features/practice/components/practice-language-view.tsx:128
+#: apps/web/src/features/practice/components/practice-language-view.tsx:146
 msgid "More"
 msgstr "Plus"
 
@@ -2278,7 +2300,7 @@ msgid "New terms are capped per day. Follow-up sessions use up to this many "
 msgstr "Les nouveaux termes sont limités par jour. Les sessions de suivi "
 "utilisent jusqu'à ce nombre de termes de révision."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:220
+#: apps/web/src/features/practice/components/practice-language-view.tsx:248
 msgid "New today"
 msgstr "Nouveaux aujourd'hui"
 
@@ -2324,10 +2346,18 @@ msgstr "Aucune langue trouvée."
 msgid "No matches."
 msgstr "Aucun résultat."
 
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:201
+msgid "No new terms to learn."
+msgstr "Aucun nouveau terme à apprendre."
+
 #: apps/web/src/features/practice/components/reading-history-view.tsx:72
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "Aucun texte précédent pour le moment. Lisez des textes d'exercice et "
 "ils apparaîtront ici."
+
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:203
+msgid "No reviews are due right now."
+msgstr "Aucune révision à faire pour le moment."
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:71
 msgid "No sessions in this filter."
@@ -2343,11 +2373,11 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "Aucune langue cible pour l'instant. Les préférences sont définies la "
 "première fois que vous démarrez une session dans une nouvelle langue."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:198
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:204
 msgid "No terms are due right now."
 msgstr "Aucun terme n'est dû pour le moment."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:90
+#: apps/web/src/features/practice/components/practice-language-view.tsx:108
 msgid "No terms are ready right now."
 msgstr "Aucun terme n'est prêt pour le moment."
 
@@ -2369,7 +2399,7 @@ msgid "No vocabulary in this language yet."
 msgstr "Aucun vocabulaire dans cette langue pour le moment."
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:73
-#: apps/web/src/features/practice/components/practice-language-view.tsx:176
+#: apps/web/src/features/practice/components/practice-language-view.tsx:204
 msgid "No vocabulary to practice yet"
 msgstr "Aucun vocabulaire à pratiquer pour le moment"
 
@@ -2562,7 +2592,7 @@ msgstr "Particule"
 msgid "Passive"
 msgstr "Passif"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:202
+#: apps/web/src/features/practice/components/practice-language-view.tsx:230
 msgid "Passive vocabulary"
 msgstr "Vocabulaire passif"
 
@@ -2713,7 +2743,7 @@ msgstr "Pluriel uniquement"
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:38
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:41
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:62
-#: apps/web/src/features/practice/components/practice-language-view.tsx:115
+#: apps/web/src/features/practice/components/practice-language-view.tsx:133
 #: apps/web/src/features/practice/components/strengthen-view.tsx:106
 msgid "Practice"
 msgstr "Pratique"
@@ -2758,7 +2788,7 @@ msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des "
 "sous-titres"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:356
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:373
 #: apps/web/src/features/review/components/focus-view.tsx:261
 msgid "Previous card"
 msgstr "Carte précédente"
@@ -2772,7 +2802,7 @@ msgid "Primary"
 msgstr "Principal"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:75
-#: apps/web/src/features/practice/components/practice-language-view.tsx:178
+#: apps/web/src/features/practice/components/practice-language-view.tsx:206
 msgid "Process a session and keep some cards. They'll show up here "
 "automatically."
 msgstr "Traitez une session et conservez quelques cartes. Elles apparaîtront "
@@ -2838,7 +2868,7 @@ msgstr "Glose rapide pour le texte sélectionné."
 msgid "Rate"
 msgstr "Noter"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:135
+#: apps/web/src/features/practice/components/practice-language-view.tsx:153
 msgid "Read"
 msgstr "Lire"
 
@@ -2850,7 +2880,7 @@ msgstr "Lisez de courts textes générés qui intègrent votre vocabulaire "
 "enregistré. Appuyez sur un terme pour l'évaluer ; les termes non "
 "appuyés sont considérés comme reconnus lorsque vous avancez."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:210
+#: apps/web/src/features/practice/components/practice-language-view.tsx:238
 msgid "Ready to practice"
 msgstr "Prêt à pratiquer"
 
@@ -2999,7 +3029,7 @@ msgstr "Revert"
 msgid "Review"
 msgstr "Réviser"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:144
+#: apps/web/src/features/practice/components/practice-language-view.tsx:162
 msgid "Review only"
 msgstr "Révision seulement"
 
@@ -3222,7 +3252,7 @@ msgstr "Courte paraphrase dans la langue cible."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Afficher {filteredCount} filtrés (en dessous de votre niveau)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:382
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:399
 msgid "Show answer"
 msgstr "Afficher la réponse"
 
@@ -3370,7 +3400,7 @@ msgstr "Streaming"
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:212
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:229
 msgid "Strengthen"
 msgstr "Renforcer"
 
@@ -3777,7 +3807,7 @@ msgstr "Trop de requêtes. Veuillez utiliser l'application dans un seul onglet "
 msgid "Top"
 msgstr "Haut"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:222
+#: apps/web/src/features/practice/components/practice-language-view.tsx:250
 msgid "Total"
 msgstr "Total"
 
@@ -3880,7 +3910,7 @@ msgstr "Année inconnue"
 msgid "Unlock Premium"
 msgstr "Débloquer Premium"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:221
+#: apps/web/src/features/practice/components/practice-language-view.tsx:249
 msgid "Unseen"
 msgstr "Non vus"
 

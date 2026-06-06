@@ -15,6 +15,7 @@ import {
   Star,
 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import type {
   PracticeDueSummaryEntry,
@@ -23,6 +24,7 @@ import type {
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { useDueSummary } from '../api/practice-hooks'
+import { LearnNewBatchSheet } from './learn-new-batch-sheet'
 
 type RenderMode = 'read' | 'flashcards'
 
@@ -47,13 +49,21 @@ export const PracticeLanguageView = () => {
     passive: false,
     active: false,
   })
+  // Learn-new batch sheet state — on the parent for the same remount reason.
+  const [learnNewSheet, setLearnNewSheet] = useState<{ pool: PracticePool; anchor: FloatingSheetAnchor } | null>(null)
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
   const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
+  const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
 
   const dailyNewAvailable = entry ? getDailyNewAvailable(entry, maxNewTerms) : 0
-  const dueTermCount = entry ? entry.reviewDueCount + entry.learningDueCount : 0
+  // The review-due count is capped by what's left of today's review budget —
+  // due cards beyond the spent budget won't be served until tomorrow, so the
+  // landing must not advertise them as ready work.
+  const reviewBudgetLeft = Math.max(0, maxReviewTerms - (entry?.reviewedTodayCount ?? 0))
+  const servableReviewDue = entry ? Math.min(entry.reviewDueCount, reviewBudgetLeft) : 0
+  const dueTermCount = entry ? servableReviewDue + entry.learningDueCount : 0
   const activeTotal = entry?.activeTotal ?? 0
   const activeDueCount = entry ? entry.activeReviewDueCount + entry.activeLearningDueCount : 0
   const activeNewCount = entry?.activeNewCount ?? 0
@@ -65,8 +75,12 @@ export const PracticeLanguageView = () => {
   // The primary button always enters flashcards over the mixed scope — the
   // queue itself decides what to serve. The secondary disclosure exposes the
   // explicit scope/mode combinations for users who want them.
-  const enterReview = (pool: PracticePool, scope: ReviewScope, mode: RenderMode) => {
-    void navigate({ to: '/practice/review/$targetLanguage', params: { targetLanguage }, search: { pool, scope, mode } })
+  const enterReview = (pool: PracticePool, scope: ReviewScope, mode: RenderMode, count?: number) => {
+    void navigate({
+      to: '/practice/review/$targetLanguage',
+      params: { targetLanguage },
+      search: { pool, scope, mode, count },
+    })
   }
 
   const openHistory = (pool: PracticePool) => {
@@ -77,6 +91,9 @@ export const PracticeLanguageView = () => {
     void navigate({ to: '/practice/strengthen/$targetLanguage', params: { targetLanguage }, search: { pool } })
   }
 
+  // Precedence once nothing is servable: review-limit reached (due work exists
+  // only beyond the spent budget) > new-limit reached > all caught up.
+  // Learning follow-ups due always count as servable work (budget-exempt).
   const statusLine = (() => {
     if (!entry) return ''
     if (hasPassiveWork) {
@@ -86,6 +103,7 @@ export const PracticeLanguageView = () => {
       ].filter((p): p is string => p != null)
       return parts.join(' · ')
     }
+    if (entry.reviewDueCount > 0 && reviewBudgetLeft <= 0) return t`Daily review limit reached.`
     if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached.`
     return t`No terms are ready right now.`
   })()
@@ -97,7 +115,7 @@ export const PracticeLanguageView = () => {
       <button
         type='button'
         onClick={() => openStrengthen(pool)}
-        className='mt-3 flex w-full items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-left text-sm text-violet-800 transition-colors hover:bg-violet-100'
+        className='mt-3 flex w-full items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-left text-sm text-violet-800 transition-colors hover:bg-violet-100 active:bg-violet-100'
       >
         <Dumbbell className='h-4 w-4 shrink-0' />
         {t`${parked} word(s) parked — strengthen them`}
@@ -147,7 +165,17 @@ export const PracticeLanguageView = () => {
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => enterReview(pool, 'learn_new', 'flashcards')}
+              disabled={pool === 'passive' ? (entry?.newCount ?? 0) === 0 : activeNewCount === 0}
+              onClick={(event) => {
+                // Passive learn-new picks a batch size first (the chosen N
+                // bypasses the daily-new budget). The active pool has no daily
+                // cap, so it enters directly like before.
+                if (pool === 'passive') {
+                  setLearnNewSheet({ pool, anchor: event.currentTarget.getBoundingClientRect() })
+                  return
+                }
+                enterReview(pool, 'learn_new', 'flashcards')
+              }}
             >
               <Sparkles className='h-4 w-4' />
               {t`Learn new`}
@@ -221,6 +249,19 @@ export const PracticeLanguageView = () => {
                 <PracticeMetric label={t`Unseen`} value={formatCount(entry.newCount)} />
                 <PracticeMetric label={t`Total`} value={formatCount(entry.totalKept)} />
               </section>
+
+              <LearnNewBatchSheet
+                open={learnNewSheet != null}
+                onOpenChange={(open) => {
+                  if (!open) setLearnNewSheet(null)
+                }}
+                anchor={learnNewSheet?.anchor ?? null}
+                newCount={entry.newCount}
+                onConfirm={(batchSize) => {
+                  setLearnNewSheet(null)
+                  enterReview(learnNewSheet?.pool ?? 'passive', 'learn_new', 'flashcards', batchSize)
+                }}
+              />
             </>
           )}
         </div>

@@ -64,6 +64,7 @@ import { UserTargetLanguagePrefsRepository } from './transport/database/user-tar
 import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
 import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
 import { PracticeExercisesRepository } from './transport/database/practice-exercises/practice-exercises-repository'
+import { PracticeRatingEventsRepository } from './transport/database/practice-rating-events/practice-rating-events-repository'
 import { ProcessingTelemetryRepository } from './transport/database/processing-telemetry/processing-telemetry-repository'
 import { WiktionaryEntriesRepository } from './transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { ProcessingJobsRepository } from './transport/database/processing-jobs/processing-jobs-repository'
@@ -257,6 +258,7 @@ export const buildApp = ({
   const userLookupsRepository = UserLookupsRepository()
   const practiceTextsRepository = PracticeTextsRepository()
   const practiceExercisesRepository = PracticeExercisesRepository()
+  const practiceRatingEventsRepository = PracticeRatingEventsRepository()
   const processingTelemetryRepository = ProcessingTelemetryRepository()
   const wiktionaryEntriesRepository = WiktionaryEntriesRepository()
   const processingJobsRepository = ProcessingJobsRepository()
@@ -364,6 +366,7 @@ export const buildApp = ({
     PracticeRouter({
       practiceTextsRepository,
       practiceExercisesRepository,
+      practiceRatingEventsRepository,
       userLookupsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,

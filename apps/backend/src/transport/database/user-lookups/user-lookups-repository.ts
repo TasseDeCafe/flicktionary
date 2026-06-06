@@ -410,31 +410,42 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
 //   - `pool` selects the SRS column family. The active pool additionally
 //     restricts to learning_mode='active' rows (the passive pool spans every
 //     kept term).
-//   - `scope` gates the two capped sub-selects: 'review_due' returns due rows
+//   - `scope` gates the capped sub-selects: 'review_due' returns due rows
 //     only, 'learn_new' returns never-reviewed rows only, 'mixed' returns both
 //     merged due-first then new (Anki-standard ordering).
 //
-// Due cards span review+learning; new are never-reviewed (state IS NULL). The
-// two buckets are mutually exclusive (null vs non-null state), so no row
-// appears twice.
+// Due cards are split into two independently-capped buckets, mirroring
+// listDueSummary's state grouping: review-state ('new','review') rows consume
+// the daily review budget (maxReviewTerms = the remaining budget), while
+// learning-state ('learning','relearning') intraday follow-ups are exempt
+// (maxLearningTerms = a hard ceiling) so a spent budget can never strand a
+// failed card's 10-minute relearning step until tomorrow. The two sub-selects
+// are merged due-first via UNION ALL + outer ORDER BY.
+//
+// New rows are never-reviewed (state IS NULL). The buckets are mutually
+// exclusive (null vs disjoint state sets), so no row appears twice.
 const listReviewTerms = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
   scope: 'review_due' | 'learn_new' | 'mixed'
   maxReviewTerms: number
+  maxLearningTerms: number
   maxNewTerms: number
   excludeUserLookupIds?: string[]
 }): Promise<DbUserLookup[]> => {
   const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
   const wantNew = params.scope === 'learn_new' || params.scope === 'mixed'
   const reviewLimit = wantDue ? params.maxReviewTerms : 0
+  const learningLimit = wantDue ? params.maxLearningTerms : 0
   const newLimit = wantNew ? params.maxNewTerms : 0
-  if (reviewLimit <= 0 && newLimit <= 0) return []
+  if (reviewLimit <= 0 && learningLimit <= 0 && newLimit <= 0) return []
 
   const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
   const stateCol = params.pool === 'active' ? sql`ul.active_srs_state` : sql`ul.srs_state`
   const dueCol = params.pool === 'active' ? sql`ul.active_srs_due` : sql`ul.srs_due`
+  // Bare (un-prefixed) due column for the outer ORDER BY over the UNION.
+  const outerDueCol = params.pool === 'active' ? sql`active_srs_due` : sql`srs_due`
   // Leech-parked terms leave BOTH render modes at once — flashcards and the
   // reading-text generator's candidate set feed from this query. That's
   // intentional: reading mode implicitly rates untapped annotations 'good' on
@@ -445,22 +456,45 @@ const listReviewTerms = async (params: {
   const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
 
   const dueRows =
-    reviewLimit > 0
+    reviewLimit > 0 || learningLimit > 0
       ? ((await sql`
-          SELECT ul.*
-          FROM public.user_lookups ul
-          WHERE ul.user_id = ${params.userId}
-            AND ul.target_language = ${params.targetLanguage}
-            AND ul.count > 0
-            AND ul.deleted_at IS NULL
-            ${activeModeClause}
-            ${excludeClause}
-            AND ${parkedCol} IS NULL
-            AND ${dueCol} IS NOT NULL
-            AND ${dueCol} <= NOW()
-            AND ${stateCol} IN ('new', 'review', 'learning', 'relearning')
-          ORDER BY ${dueCol} ASC, ul.headword ASC, ul.sense ASC
-          LIMIT ${reviewLimit}
+          SELECT *
+          FROM (
+            (
+              SELECT ul.*
+              FROM public.user_lookups ul
+              WHERE ul.user_id = ${params.userId}
+                AND ul.target_language = ${params.targetLanguage}
+                AND ul.count > 0
+                AND ul.deleted_at IS NULL
+                ${activeModeClause}
+                ${excludeClause}
+                AND ${parkedCol} IS NULL
+                AND ${dueCol} IS NOT NULL
+                AND ${dueCol} <= NOW()
+                AND ${stateCol} IN ('new', 'review')
+              ORDER BY ${dueCol} ASC, ul.headword ASC, ul.sense ASC
+              LIMIT ${reviewLimit}
+            )
+            UNION ALL
+            (
+              SELECT ul.*
+              FROM public.user_lookups ul
+              WHERE ul.user_id = ${params.userId}
+                AND ul.target_language = ${params.targetLanguage}
+                AND ul.count > 0
+                AND ul.deleted_at IS NULL
+                ${activeModeClause}
+                ${excludeClause}
+                AND ${parkedCol} IS NULL
+                AND ${dueCol} IS NOT NULL
+                AND ${dueCol} <= NOW()
+                AND ${stateCol} IN ('learning', 'relearning')
+              ORDER BY ${dueCol} ASC, ul.headword ASC, ul.sense ASC
+              LIMIT ${learningLimit}
+            )
+          ) merged
+          ORDER BY ${outerDueCol} ASC, headword ASC, sense ASC
         `) as DbUserLookup[])
       : []
 
@@ -577,11 +611,17 @@ const initializeSrsStateForPool = async (params: { userLookupId: string; pool: P
 // same user/language. A single UPDATE with COUNT(*) still races across two
 // different target rows because each transaction can see the same pre-update
 // aggregate. The lock keeps the count + update decision one-at-a-time.
+//
+// `bypassCap` (an explicit learn-new session) drops ONLY the < maxNewTerms
+// predicate: the lock, the srs_state IS NULL guard and the
+// added_to_practice_at stamp all stay, so bypassed introductions still count
+// toward today (mixed scope won't re-add more on top).
 const initializeSrsStateIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
   targetLanguage: string
   maxNewTerms: number
+  bypassCap?: boolean
 }): Promise<boolean> => {
   return await beginTx(async (tx) => {
     await tx`
@@ -599,15 +639,18 @@ const initializeSrsStateIfUnderDailyCap = async (params: {
         AND srs_state IS NULL
         AND deleted_at IS NULL
         AND (
-          SELECT COUNT(*)
-          FROM public.user_lookups
-          WHERE user_id = ${params.userId}
-            AND target_language = ${params.targetLanguage}
-            AND count > 0
-            AND deleted_at IS NULL
-            AND added_to_practice_at >= CURRENT_DATE
-            AND added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
-        ) < ${params.maxNewTerms}
+          ${params.bypassCap ?? false}
+          OR (
+            SELECT COUNT(*)
+            FROM public.user_lookups
+            WHERE user_id = ${params.userId}
+              AND target_language = ${params.targetLanguage}
+              AND count > 0
+              AND deleted_at IS NULL
+              AND added_to_practice_at >= CURRENT_DATE
+              AND added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
+          ) < ${params.maxNewTerms}
+        )
       RETURNING id
     `) as Array<{ id: string }>
     return rows.length > 0
@@ -641,19 +684,24 @@ const applyFsrsResult = async (params: {
 
 // Pool-aware FSRS patch. The passive pool path matches applyFsrsResult; the
 // active pool path writes the same fields under their active_srs_* names.
-const applyFsrsResultForPool = async (params: {
-  userLookupId: string
-  pool: PracticePool
-  state: SrsState
-  due: Date
-  stability: number
-  difficulty: number
-  lastReview: Date
-  reps: number
-  lapses: number
-}): Promise<void> => {
+// `executor` defaults to the pooled connection; pass a transaction (beginTx's
+// tx) so the patch commits atomically with its practice_rating_events row.
+const applyFsrsResultForPool = async (
+  params: {
+    userLookupId: string
+    pool: PracticePool
+    state: SrsState
+    due: Date
+    stability: number
+    difficulty: number
+    lastReview: Date
+    reps: number
+    lapses: number
+  },
+  executor: postgres.Sql = sql
+): Promise<void> => {
   if (params.pool === 'passive') {
-    await sql`
+    await executor`
       UPDATE public.user_lookups
       SET srs_state = ${params.state},
           srs_due = ${params.due.toISOString()},
@@ -666,7 +714,7 @@ const applyFsrsResultForPool = async (params: {
     `
     return
   }
-  await sql`
+  await executor`
     UPDATE public.user_lookups
     SET active_srs_state = ${params.state},
         active_srs_due = ${params.due.toISOString()},
@@ -1339,6 +1387,7 @@ export interface UserLookupsRepositoryInterface {
     pool: PracticePool
     scope: 'review_due' | 'learn_new' | 'mixed'
     maxReviewTerms: number
+    maxLearningTerms: number
     maxNewTerms: number
     excludeUserLookupIds?: string[]
   }) => Promise<DbUserLookup[]>
@@ -1357,6 +1406,7 @@ export interface UserLookupsRepositoryInterface {
     userId: string
     targetLanguage: string
     maxNewTerms: number
+    bypassCap?: boolean
   }) => Promise<boolean>
   applyFsrsResult: (params: {
     userLookupId: string
@@ -1368,17 +1418,20 @@ export interface UserLookupsRepositoryInterface {
     reps: number
     lapses: number
   }) => Promise<void>
-  applyFsrsResultForPool: (params: {
-    userLookupId: string
-    pool: PracticePool
-    state: SrsState
-    due: Date
-    stability: number
-    difficulty: number
-    lastReview: Date
-    reps: number
-    lapses: number
-  }) => Promise<void>
+  applyFsrsResultForPool: (
+    params: {
+      userLookupId: string
+      pool: PracticePool
+      state: SrsState
+      due: Date
+      stability: number
+      difficulty: number
+      lastReview: Date
+      reps: number
+      lapses: number
+    },
+    executor?: postgres.Sql
+  ) => Promise<void>
   setLearningMode: (params: {
     userLookupId: string
     userId: string

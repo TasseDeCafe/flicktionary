@@ -83,6 +83,7 @@ const createDeps = (opts: { claimWins: boolean }) => {
   const applyFsrsResultForPool = vi.fn().mockResolvedValue(undefined)
   const initializeSrsStateIfUnderDailyCap = vi.fn().mockResolvedValue(true)
   const parkLeech = vi.fn().mockResolvedValue(undefined)
+  const insertRatingEvent = vi.fn().mockResolvedValue(undefined)
   const claimFinalize = vi.fn().mockResolvedValue(opts.claimWins ? claimedText : null)
   const selectAndMarkReading = vi.fn().mockResolvedValue(nextText)
 
@@ -115,9 +116,25 @@ const createDeps = (opts: { claimWins: boolean }) => {
     userTargetLanguagePrefsRepository: {
       getShowTranslationsEnabled: vi.fn().mockResolvedValue(true),
     },
+    practiceRatingEventsRepository: {
+      insert: insertRatingEvent,
+      countReviewBudgetConsumedToday: vi.fn().mockResolvedValue(0),
+      countReviewBudgetConsumedTodayByLanguage: vi.fn().mockResolvedValue(new Map()),
+    },
+    // Unit fake: run the callback with no real executor — repo mocks ignore it.
+    withTransaction: (fn: (tx: undefined) => Promise<unknown>) => fn(undefined),
   } as unknown as AdvanceReadingTextDependencies
 
-  return { deps, findByKey, applyFsrsResultForPool, claimFinalize, selectAndMarkReading, parkLeech }
+  return {
+    deps,
+    findByKey,
+    applyFsrsResultForPool,
+    claimFinalize,
+    selectAndMarkReading,
+    parkLeech,
+    insertRatingEvent,
+    initializeSrsStateIfUnderDailyCap,
+  }
 }
 
 describe('advanceReadingText', () => {
@@ -169,7 +186,7 @@ describe('advanceReadingText', () => {
 
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
     expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
   })
 
   it('does not mutate FSRS for parked annotations from stale generated texts', async () => {
@@ -191,7 +208,7 @@ describe('advanceReadingText', () => {
 
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
     expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
     expect(parkLeech).not.toHaveBeenCalled()
   })
 
@@ -236,5 +253,53 @@ describe('advanceReadingText', () => {
     ;(deps.practiceTextsRepository.findByIdForUser as ReturnType<typeof vi.fn>).mockResolvedValue(null)
     const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
     expect(result).toEqual({ ok: false, reason: 'text_not_found' })
+  })
+
+  it('logs explicit taps wasExplicit:true and untapped annotations wasExplicit:false, with the text id', async () => {
+    const { deps, insertRatingEvent } = createDeps({ claimWins: true })
+    const result = await advanceReadingText(
+      userId,
+      textId,
+      'passive',
+      'mixed',
+      [{ userLookupId: laId, rating: 'again' }],
+      deps
+    )
+    expect(result.ok).toBe(true)
+    expect(insertRatingEvent).toHaveBeenCalledTimes(2)
+    expect(insertRatingEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userLookupId: laId,
+        rating: 'again',
+        wasExplicit: true,
+        practiceTextId: textId,
+      }),
+      undefined
+    )
+    expect(insertRatingEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userLookupId: lbId,
+        rating: 'good',
+        wasExplicit: false,
+        wasIntroduction: true,
+        practiceTextId: textId,
+      }),
+      undefined
+    )
+  })
+
+  it('learn_new scope does NOT bypass the daily-new cap (the bypass is flashcards-only)', async () => {
+    const { deps, initializeSrsStateIfUnderDailyCap, applyFsrsResultForPool, insertRatingEvent } = createDeps({
+      claimWins: true,
+    })
+    initializeSrsStateIfUnderDailyCap.mockResolvedValue(false)
+    const result = await advanceReadingText(userId, textId, 'passive', 'learn_new', [], deps)
+    expect(result.ok).toBe(true)
+    // lb is the only learn_new-eligible annotation (la is scheduled); its
+    // introduction is refused at the guard — no bypass, no FSRS, no event.
+    expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
+    expect(applyFsrsResultForPool).not.toHaveBeenCalled()
+    expect(insertRatingEvent).not.toHaveBeenCalled()
+    if (result.ok && !result.done) expect(result.introduced).toBe(0)
   })
 })

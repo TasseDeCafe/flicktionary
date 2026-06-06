@@ -74,13 +74,16 @@ type FlashcardModeViewProps = {
   targetLanguage: string
   pool: PracticePool
   scope: ReviewScope
+  // Explicit learn-new batch size (learn_new scope only) — picked on the
+  // landing's batch sheet, forwarded to listReviewTerms as newBatchSize.
+  count?: number
 }
 
-export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardModeViewProps) => {
+export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: FlashcardModeViewProps) => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { data: userPrefs } = useGetUserPrefs()
-  const { data: cards, isLoading } = useListReviewTerms(targetLanguage, pool, scope)
+  const { data: cards, isLoading } = useListReviewTerms(targetLanguage, pool, scope, count)
   const { mutate: rateTerm } = useRateTerm()
   const languageName = getLanguageName(targetLanguage)
   const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
@@ -151,7 +154,13 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
     }
 
     rateTerm(
-      { userLookupId: card.userLookupId, rating, pool },
+      // learnNewSession lets introductions in an explicit learn-new session
+      // bypass the daily-new cap (they still count toward today's intros).
+      // Gated on `count` to mirror the fetch-time bypass (requestedNewCount):
+      // only the batch-sheet flow supplies it, so a direct/bookmarked
+      // learn_new URL without a chosen batch stays within the daily budget at
+      // rating time too.
+      { userLookupId: card.userLookupId, rating, pool, learnNewSession: scope === 'learn_new' && count != null },
       {
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
@@ -185,6 +194,14 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
   if (!queue[index] && !isPeeking) {
     const sessionHard = [...sessionHardRef.current]
     const hardCount = sessionHard.length
+    // Scope-aware empty copy: a scoped queue being empty doesn't mean nothing
+    // is due — learn_new with no unseen terms must not claim "nothing due".
+    const emptyQueueLabel =
+      scope === 'learn_new'
+        ? t`No new terms to learn.`
+        : scope === 'review_due'
+          ? t`No reviews are due right now.`
+          : t`No terms are due right now.`
     const openStrengthen = () =>
       void navigate({
         to: '/practice/strengthen/$targetLanguage',
@@ -195,7 +212,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
           <CircleCheck className='h-10 w-10 text-emerald-600' />
-          <p className='text-lg font-semibold'>{queue.length === 0 ? t`No terms are due right now.` : t`All done!`}</p>
+          <p className='text-lg font-semibold'>{queue.length === 0 ? emptyQueueLabel : t`All done!`}</p>
           {capNoticeShown && <p className='text-muted-foreground text-sm'>{t`Daily new-card limit reached.`}</p>}
           {sessionHard.length > 0 && (
             <p className='text-muted-foreground text-sm'>

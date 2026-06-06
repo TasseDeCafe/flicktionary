@@ -459,6 +459,93 @@ export type Database = {
           },
         ]
       }
+      practice_rating_events: {
+        Row: {
+          caused_parking: boolean
+          headword: string
+          id: string
+          pool: string
+          practice_text_id: string | null
+          prev_srs_difficulty: number | null
+          prev_srs_due: string | null
+          prev_srs_lapses: number | null
+          prev_srs_last_review: string | null
+          prev_srs_reps: number | null
+          prev_srs_stability: number | null
+          prev_srs_state: Database['public']['Enums']['srs_state'] | null
+          rated_at: string
+          rating: string
+          reverted_at: string | null
+          sense: string
+          target_language: string
+          user_id: string
+          user_lookup_id: string
+          was_explicit: boolean
+          was_introduction: boolean
+        }
+        Insert: {
+          caused_parking?: boolean
+          headword: string
+          id?: string
+          pool: string
+          practice_text_id?: string | null
+          prev_srs_difficulty?: number | null
+          prev_srs_due?: string | null
+          prev_srs_lapses?: number | null
+          prev_srs_last_review?: string | null
+          prev_srs_reps?: number | null
+          prev_srs_stability?: number | null
+          prev_srs_state?: Database['public']['Enums']['srs_state'] | null
+          rated_at?: string
+          rating: string
+          reverted_at?: string | null
+          sense?: string
+          target_language: string
+          user_id: string
+          user_lookup_id: string
+          was_explicit: boolean
+          was_introduction: boolean
+        }
+        Update: {
+          caused_parking?: boolean
+          headword?: string
+          id?: string
+          pool?: string
+          practice_text_id?: string | null
+          prev_srs_difficulty?: number | null
+          prev_srs_due?: string | null
+          prev_srs_lapses?: number | null
+          prev_srs_last_review?: string | null
+          prev_srs_reps?: number | null
+          prev_srs_stability?: number | null
+          prev_srs_state?: Database['public']['Enums']['srs_state'] | null
+          rated_at?: string
+          rating?: string
+          reverted_at?: string | null
+          sense?: string
+          target_language?: string
+          user_id?: string
+          user_lookup_id?: string
+          was_explicit?: boolean
+          was_introduction?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'practice_rating_events_lookup_fkey'
+            columns: ['user_lookup_id']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'practice_rating_events_text_fkey'
+            columns: ['practice_text_id']
+            isOneToOne: false
+            referencedRelation: 'practice_texts'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       practice_texts: {
         Row: {
           annotations: Json
