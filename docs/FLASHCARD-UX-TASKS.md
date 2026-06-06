@@ -22,7 +22,7 @@ Key code map (shared by most tasks):
 
 ## 1. Active vocab: flip card front/back
 
-**Status:** done (this branch)
+**Status:** done (PR #107)
 
 Active-vocabulary flashcards now test production, not recognition.
 
@@ -44,7 +44,7 @@ Implementation:
 
 ## 2. Russian passive vocab: hide stress + IPA on front
 
-**Status:** done (this branch)
+**Status:** done (PR #107)
 
 For Russian cards, the front showed the stressed display form (`находи́ться`) and IPA — both
 leak the answer to "how is this pronounced". They are now revealed with the back.
@@ -62,7 +62,7 @@ Implementation:
 
 ## 3. Example sentence: bigger, not italic
 
-**Status:** done (this branch)
+**Status:** done (PR #107)
 
 In `flashcard-mode-view.tsx`, both example slots went `text-sm` → `text-base` and the target
 example dropped `italic` (translation stays `text-lg`, so the hierarchy holds). The same
@@ -71,7 +71,7 @@ consistency (size untouched — compact sheet).
 
 ## 4. Bug: daily review limit refills on refresh
 
-**Status:** done (feat/practice-caps-rework, with task 9)
+**Status:** done (PR #108, with task 9)
 
 Implemented via a new append-only `practice_rating_events` table (the old
 `practice_ratings` audit table was dropped with the session machinery — nothing
@@ -92,31 +92,9 @@ with pre-rating SRS snapshots so task 6 (undo) can build on it.
 - Reading mode shares `listReviewTerms`, so it now honors the review budget
   too (intended; user-visible).
 
-**Reading of the problem confirmed.** The daily limits (`practice_max_new_terms`,
-`practice_max_review_terms` on `users`) are applied as **query LIMITs at fetch time**, not as
-a budget decremented by reviews done today:
-
-- `listReviewTerms()` → `resolveReviewCaps()` (`review-caps.ts` ~lines 34–49): only **new
-  introductions** are tracked against the day (`newIntroducedTodayCount` from
-  `added_to_practice_at >= CURRENT_DATE` in `user-lookups-repository.ts` ~lines 349–352).
-- **Reviews are not counted at all** — the review cap is just `LIMIT maxReviewTerms` on the
-  due-cards query. With 150 due and a limit of 100: fetch → 100, review 50, refresh →
-  the query again returns `LIMIT 100` from the remaining ~100 due cards → "100 left".
-
-Fix direction: track reviews done today per (user, language, pool) — the immutable
-`practice_ratings` audit table already records every rating with timestamps, so a
-`COUNT(*) ... WHERE created_at >= CURRENT_DATE` (careful: explicit vs implicit ratings,
-in-session `again` redrills shouldn't double-count) can feed
-`remainingReviews = maxReviewTerms - reviewedTodayCount`, mirroring how new-card
-introductions already work. Decide timezone semantics (DB `CURRENT_DATE` is what the
-new-card cap already uses — stay consistent).
-
-Depends on / interacts with: task 8 (limits become per-language) and task 9 (Learn-new uses
-the same caps). Worth planning these three together even if shipped separately.
-
 ## 5. Learning counter flickers when failing a card
 
-**Status:** done (this branch)
+**Status:** done (PR #107)
 
 Failing a card made the Learning pill go 35 → 34 → 35: counts derive from the local queue
 (`getRemainingCounts()`), the index advance rendered immediately but the `again`-redrill copy
@@ -130,22 +108,60 @@ is never removed (that would shift the queue under the live index).
 
 ## 6. Allow re-rating from history (undo / change rating)
 
-**Status:** todo — needs a plan
+**Status:** todo — needs a plan, but the data foundation shipped in PR #108 (task 4/9)
 
-Today the back-chevron is a read-only peek (`peekBack` state, `flashcard-mode-view.tsx`
-~lines 87–88, 301–315). Ratings are immutable one-way writes (`applyTermRating`); there is no
-undo endpoint.
+Today the back-chevron is a read-only peek (`peekBack` state in
+`flashcard-mode-view.tsx`). There is no undo endpoint yet — but everything an undo needs to
+*restore* is now recorded.
 
-Needs:
+### What PR #108 already provides
 
-- Backend: an undo/re-rate operation. FSRS state is overwritten on rating, so undo requires
-  either storing the pre-rating SRS snapshot (e.g. on `practice_ratings`) to restore, or
-  recomputing. Also must roll back side effects: lapse count, leech parking, daily-cap
-  introduction count for new cards.
-- Frontend: turn the peeked card into an interactive card (re-show rating buttons), then
-  reconcile the local queue (e.g. a card re-rated `again` must be requeued; one re-rated
-  `good` that was requeued must be removed).
-- Anki semantics for reference: undo restores the card's previous state and review log entry.
+`practice_rating_events` (migration `20260606222256`, repo
+`apps/backend/src/transport/database/practice-rating-events/practice-rating-events-repository.ts`)
+logs one row per **applied** rating — flashcards AND reading advances, both pools — written
+**in the same transaction as the FSRS write** (`withTransaction` on `RateTermDependencies`;
+executor pattern: `applyFsrsResultForPool(params, tx)` / `insert(params, tx)`). Designed for
+undo:
+
+- **`prev_srs_*` snapshot** (state/due/stability/difficulty/last_review/reps/lapses) of the
+  rated pool's SRS family at rating start. The `pool` column says which column family to
+  restore into (`srs_*` vs `active_srs_*`). Plain restore — no FSRS recomputation needed.
+- **`was_introduction`** (term was state-NULL): undo on a **passive** event additionally
+  clears `srs_*` + `added_to_practice_at` (refunds the daily-new budget — that count comes
+  from `added_to_practice_at >= CURRENT_DATE`); on an **active** event clears `active_srs_*`
+  only (`added_to_practice_at` is never stamped for active intros).
+- **`caused_parking`**: undo must un-park + zero the pool-prefixed rehab columns. No
+  pre-rating parked/rehab snapshot exists because none is needed — the queue excludes parked
+  terms and parked no-ops don't log, so they're constants NULL/0 at event time.
+- **`reverted_at`** tombstone: stamp it on undo (append-only table — never delete). The
+  review-budget counts (`countReviewBudgetConsumedToday*`) already filter
+  `reverted_at IS NULL`, so reverting **automatically refunds the review budget** — no extra
+  bookkeeping.
+- Index `(user_lookup_id, rated_at DESC)` for "latest event for this card".
+- Invariant: **no event rows exist for refusals** (cap-refusal, parked no-op,
+  not-in-active-pool) — every logged event represents an applied FSRS write, so every event
+  is undoable.
+- `was_explicit` / `practice_text_id` distinguish flashcard ratings from reading-mode
+  implicit 'good's, if undo should be flashcards-only at first.
+
+### Still needed
+
+- **Backend undo endpoint**, one transaction: load the latest `reverted_at IS NULL` event for
+  (user_lookup, pool); restore `prev_srs_*`; apply the `was_introduction` /
+  `caused_parking` side effects above; stamp `reverted_at`. Guard: only the **latest** event
+  per (lookup, pool) is safely undoable — an older event's snapshot would clobber later
+  ratings' state. Re-rate = undo + fresh `rateTerm` (Anki semantics).
+- **Known gaps (accepted in #108, re-check at undo time):** `parkLeech` runs as a separate
+  write *after* the event tx commits, so a crash can leave `caused_parking=true` with the
+  term not actually parked (un-parking an unparked term is a no-op — harmless). Exercise-bank
+  warming and rehab-day advances are fire-and-forget and NOT logged — out of undo scope.
+- **Frontend:** turn the peeked card interactive (re-show rating buttons), then reconcile the
+  local queue: a card re-rated `again` must be requeued; an `again`-redrill copy of a card
+  re-rated `good`+ must be removed (see the `dropRedrill` identity/`indexRef` machinery from
+  task 5 — same constraints apply). Mind `sessionHardRef` (again/hard set feeding
+  Strengthen) on re-rate.
+- Lapse counts restore via `prev_srs_lapses`, which keeps `shouldParkLeech`'s new-lapse-delta
+  logic consistent after an undo.
 
 This is one of the demanding ones — write a plan first. Pairs naturally with task 7.
 
@@ -181,6 +197,15 @@ Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users`
   `supabase migration new` from dev-tunnel.
 - Backend: `resolveReviewCaps()` + the rate-term daily-cap check must read per-language
   limits; clamping logic (`clampPracticeSessionLimits`, 0–100 / 0–300) moves with it.
+- Post-#108 note: both daily budgets are already **counted** per (user, language, pool) —
+  introductions via `added_to_practice_at`, reviews via
+  `practiceRatingEventsRepository.countReviewBudgetConsumedToday`. Only the **limits** are
+  global. `getPracticeSessionLimits` + `clampPracticeSessionLimits` have exactly three
+  consumers to repoint at per-language values: `resolveReviewCaps` (fetch caps), the
+  `rateTerm` handler in `practice-router.ts` (rating-time new-cap guard), and
+  `advanceReadingText` (reading-time guard). The landing/`unified-review-view` also read
+  `prefs.practiceMaxNewTerms`/`practiceMaxReviewTerms` client-side for the status line and
+  drifting counts — those need the per-language values too.
 - Contract changes in `user-prefs-contract.ts` (extend the per-language prefs endpoints, drop
   or deprecate the global one) → rebuild api-client.
 - UI: move the two inputs from global settings into each language card in the Languages
@@ -190,7 +215,7 @@ Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users`
 
 ## 9. "Learn new" says "No terms are due" despite thousands of unlearned terms
 
-**Status:** done (feat/practice-caps-rework, with task 4)
+**Status:** done (PR #108, with task 4)
 
 "Learn new" (passive pool) now opens a FloatingSheet to pick a batch size
 (5/10/15/20, plus "All N" when ≤ 20 unseen; disabled at 0 unseen). The chosen
@@ -207,25 +232,12 @@ read+learn_new session stays within the daily budget. Empty-state copy is now
 scope-aware ("No new terms to learn." / "No reviews are due right now."). The
 active pool keeps direct entry (it has no daily cap).
 
-`Learn new` (`practice-language-view.tsx` ~lines 146–154) enters scope `learn_new`, which is
-capped by the **remaining daily new-card budget** (`resolveReviewCaps`, `review-caps.ts`
-~line 47). Once today's new-card cap is consumed, `newLimit=0` → empty queue → "No terms are
-due right now", even with 2500+ never-introduced terms.
-
-Intent of the button: learn **more** new terms on demand, beyond the daily drip. Fix
-direction: `learn_new` scope should bypass (or extend) the daily cap — explicit user intent,
-like Anki's "Custom study → increase today's new card limit". Decide whether the extra
-introductions still count toward today's count (they should, so `mixed` doesn't re-add more)
-and whether to confirm/ask "Learn N more?". Also fix the misleading empty-state copy.
-
-Interacts with task 4/8 (caps logic) — coordinate.
-
 ---
 
 ## Suggested PR grouping
 
-1. **PR A (small, UI-only):** tasks 2 + 3 (Russian front, example styling)
-2. **PR B (UI):** task 1 (active card flip) — possibly with 5 (counter flicker)
-3. **PR C (caps rework):** tasks 4 + 9 (review budget tracking + learn-new bypass) — plan first
-4. **PR D (migration):** task 8 (per-language limits) — plan first; lands cleanly before or after C, but coordinate the caps code
-5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — plan first
+1. ~~**PR A (small, UI-only):** tasks 2 + 3 (Russian front, example styling)~~ — done, PR #107
+2. ~~**PR B (UI):** task 1 (active card flip) — possibly with 5 (counter flicker)~~ — done, PR #107
+3. ~~**PR C (caps rework):** tasks 4 + 9 (review budget tracking + learn-new bypass)~~ — done, PR #108
+4. **PR D (migration):** task 8 (per-language limits) — plan first; the caps code from #108 is the integration point (see post-#108 note in task 8)
+5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — plan first; the rating-event log from #108 is the undo foundation (see task 6)
