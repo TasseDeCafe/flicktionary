@@ -238,7 +238,20 @@ all-Empty — stored as `[]`; confirm normalizes all-`'-'` to `[]`) is never a
 complete match while the video offers tracks, so the dialog prompts; it IS
 complete when the video has no tracks, so subtitle-less videos don't nag.
 (`'-'` would otherwise match anything: `['-','-']` used to complete-match
-every video, silently syncing nothing and suppressing the dialog forever.) YouTube additionally offers:
+every video, silently syncing nothing and suppressing the dialog forever.)
+**Reopen semantics:** while subtitles are loaded, reopening the dialog shows
+the tracks actually synced (the controller records them per video;
+`services/synced-track-resolution.ts`), NOT the remembered-language match —
+that alone shows Empty with the remember toggle off, and confirming it
+unloads the playing subtitles (and clears the per-site preference via the
+all-Empty rule above). Resolution is by **stable identity** (language +
+asr-ness, label tiebreak), never raw id: track ids embed the signed timedtext
+URL and the page script republishes the same logical tracks with fresh
+signatures, so exact-id matching goes stale across publish generations.
+Switching a selector back to Empty + OK remains the explicit unload path.
+Local-file and Whisper-generated loads aren't in the page's track list, so
+the reopened dialog falls back to the auto-match for those. YouTube
+additionally offers:
 
 - **translation controls** (Language Reactor-style; YouTube only): on YouTube
   the dialog renders TWO track selectors and the third slot holds a
@@ -564,3 +577,9 @@ Hard-won; check these before "fixing" related symptoms.
   removing anything.
 - Settings schema is strict both ways (see "Settings" above).
 - Never call `i18n.activate()` in a render body (use an effect).
+- A subtitle track id (`language:label:url`) is NOT stable on YouTube: the URL
+  carries per-request signed params (`signature`/`expire`/`pot`), and the page
+  script republishes (get-synced-data requests + the 500ms videoId-change
+  watcher) with freshly-signed URLs — the same logical track changes id across
+  publish generations. Never persist or compare raw ids across publishes; use
+  language + asr-ness (see `services/synced-track-resolution.ts`).
