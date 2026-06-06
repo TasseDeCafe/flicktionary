@@ -3225,7 +3225,7 @@ msgid "Show translations"
 msgstr "Afficher les traductions"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:131
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:262
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:252
 msgid "Sign in"
 msgstr "Se connecter"
 
