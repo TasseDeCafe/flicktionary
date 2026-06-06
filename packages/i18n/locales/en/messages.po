@@ -511,7 +511,7 @@ msgstr "Authentication failed"
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Auto-copy current subtitle to clipboard"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:460
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:469
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
 "not know how to detect subtitles on every site. You can always load your "
 "own subtitle files."
@@ -737,7 +737,7 @@ msgstr "Click the link in the email to continue."
 msgid "Click to unlock font menu"
 msgstr "Click to unlock font menu"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:441
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:450
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:126
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
@@ -828,7 +828,7 @@ msgstr "Continue with Google"
 msgid "Correct!"
 msgstr "Correct!"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:452
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:461
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Could not auto-load subtitles in your preferred language."
 
@@ -1043,7 +1043,7 @@ msgstr "Display form (e.g. stress-marked)"
 msgid "Display subtitles"
 msgstr "Display subtitles"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:94
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:96
 msgid "Done. You can close this tab and return to the extension."
 msgstr "Done. You can close this tab and return to the extension."
 
@@ -1126,8 +1126,8 @@ msgid "Email Verification Sent"
 msgstr "Email Verification Sent"
 
 #: apps/extension/src/controllers/video-data-sync-controller.ts:102
-#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:102
-#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:137
+#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:103
+#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:139
 msgid "Empty"
 msgstr "Empty"
 
@@ -1465,10 +1465,6 @@ msgstr "Failed to set CEFR level"
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:71
-msgid "Failed to start pairing"
-msgstr "Failed to start pairing"
-
 #: apps/web/src/features/practice/api/practice-hooks.ts:69
 msgid "Failed to submit answer"
 msgstr "Failed to submit answer"
@@ -1633,7 +1629,7 @@ msgstr "Generate card"
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:553
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:562
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
@@ -1641,7 +1637,7 @@ msgstr "Generate Subtitles"
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:550
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:559
 msgid "Generating..."
 msgstr "Generating..."
 
@@ -1788,7 +1784,7 @@ msgstr "Host regex"
 msgid "How your free trial works"
 msgstr "How your free trial works"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:522
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:531
 msgid "Human translation"
 msgstr "Human translation"
 
@@ -2073,11 +2069,11 @@ msgstr "Looks like {suggestedLanguageName}"
 msgid "Lookup"
 msgstr "Lookup"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:513
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:522
 msgid "Machine translation"
 msgstr "Machine translation"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:98
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:100
 msgid "Make sure the extension is installed and try again from its popup."
 msgstr "Make sure the extension is installed and try again from its popup."
 
@@ -2336,7 +2332,7 @@ msgstr "No Wiktionary IPA"
 msgid "Normal"
 msgstr "Normal"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:526
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:535
 msgid "not available"
 msgstr "not available"
 
@@ -2378,8 +2374,8 @@ msgid "Numeral"
 msgstr "Numeral"
 
 #: apps/extension/common/components/PageSettingsForm.tsx:181
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:468
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:558
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:477
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:567
 #: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:90
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:226
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:237
@@ -2416,8 +2412,8 @@ msgstr "Open App"
 msgid "Open chat"
 msgstr "Open chat"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:370
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:543
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:379
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:552
 msgid "Open Files"
 msgstr "Open Files"
 
@@ -2486,11 +2482,11 @@ msgstr "Overridden"
 msgid "Pages"
 msgstr "Pages"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:90
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:92
 msgid "Pair the Flicktionary extension"
 msgstr "Pair the Flicktionary extension"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:93
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:95
 msgid "Pairing your browser extension..."
 msgstr "Pairing your browser extension..."
 
@@ -2861,7 +2857,7 @@ msgstr "Reload the page, then try importing again."
 msgid "Remember subtitle offset"
 msgstr "Remember subtitle offset"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:536
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:545
 msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
@@ -3055,7 +3051,7 @@ msgstr "Seek to next subtitle"
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:496
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:505
 msgid "Select a language"
 msgstr "Select a language"
 
@@ -3075,7 +3071,7 @@ msgstr "Select some text first."
 msgid "Select subtitle tracks to load."
 msgstr "Select subtitle tracks to load."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:425
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:434
 msgid "Select Subtitles"
 msgstr "Select Subtitles"
 
@@ -3138,7 +3134,7 @@ msgstr "Setting up account..."
 
 #: apps/extension/common/components/MiscSettingsTab.tsx:273
 #: apps/extension/src/ui/components/SettingsPage.tsx:58
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:435
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:444
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:172
 #: apps/web/src/features/more/components/more-tab-view.tsx:124
 msgid "Settings"
@@ -3187,7 +3183,7 @@ msgid "Show translations"
 msgstr "Show translations"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:131
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:259
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:262
 msgid "Sign in"
 msgstr "Sign in"
 
@@ -3257,7 +3253,7 @@ msgstr "Some text for the Home tab"
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:103
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:105
 msgid "Something went wrong while pairing."
 msgstr "Something went wrong while pairing."
 
@@ -3449,7 +3445,7 @@ msgid "Subtitle Track"
 msgstr "Subtitle Track"
 
 #. placeholder {0}: i + 1
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:342
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:351
 msgid "Subtitle Track {0}"
 msgstr "Subtitle Track {0}"
 
@@ -3458,7 +3454,7 @@ msgstr "Subtitle Track {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:447
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:456
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Subtitles must be loaded before you can start mining."
 
@@ -3548,10 +3544,6 @@ msgstr "Texts"
 #: apps/web/src/features/contact/api/contact-hooks.ts:15
 msgid "Thank you for your feedback!"
 msgstr "Thank you for your feedback!"
-
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:40
-msgid "The extension could not complete pairing."
-msgstr "The extension could not complete pairing."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx:42
 msgid "The extension overlays interactive subtitles on streaming video "
@@ -3748,7 +3740,7 @@ msgstr "Translation"
 msgid "Translation in your native language."
 msgstr "Translation in your native language."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:488
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:497
 msgid "Translation language"
 msgstr "Translation language"
 
@@ -3925,7 +3917,7 @@ msgstr "Verifying..."
 msgid "Video Element"
 msgstr "Video Element"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:473
+#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:482
 msgid "Video Name"
 msgstr "Video Name"
 
@@ -3961,7 +3953,7 @@ msgstr "Watching videos"
 msgid "We couldn't prepare this answer. Save the note again to retry."
 msgstr "We couldn't prepare this answer. Save the note again to retry."
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:97
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx:99
 msgid "We did not hear back from a Flicktionary extension on this device."
 msgstr "We did not hear back from a Flicktionary extension on this device."
 
