@@ -12,11 +12,28 @@
 // never sees it, but it survives extension reloads.
 
 import { getFlicktionaryApiClient } from './flicktionary-api-client'
+import { onFlicktionaryAuthChange } from './auth-storage'
 
 const STORAGE_KEY = 'flicktionary.target-language.v1'
 const NATIVE_STORAGE_KEY = 'flicktionary.native-language.v1'
 
+// `undefined` = unknown (next read refetches), `null` = known "no language"
+// (short-circuits the refetch), string = cached language.
 let memory: string | null | undefined = undefined
+
+// Re-pairing as a different user must not keep serving the previous user's
+// target/native language: reset to `undefined` (NOT `null`, which would mean a
+// *known* "no language" and skip the refetch) and drop the storage cache so
+// the next gloss/save bootstraps fresh prefs. Same module-level subscription
+// pattern as ui-prefs-sync.
+export const resetFlicktionaryLanguageCache = async (): Promise<void> => {
+  memory = undefined
+  await browser.storage.local.remove([STORAGE_KEY, NATIVE_STORAGE_KEY])
+}
+
+onFlicktionaryAuthChange(() => {
+  void resetFlicktionaryLanguageCache()
+})
 
 const fetchAndCacheBootstrapPrefs = async (): Promise<{ primary: string | null }> => {
   const { data } = await getFlicktionaryApiClient().extensionAuth.bootstrapPrefs()
@@ -68,9 +85,4 @@ export const getCachedFlicktionaryNativeLanguage = async (): Promise<string | nu
 export const setFlicktionaryTargetLanguage = async (language: string): Promise<void> => {
   memory = language
   await browser.storage.local.set({ [STORAGE_KEY]: language })
-}
-
-export const clearFlicktionaryTargetLanguage = async (): Promise<void> => {
-  memory = null
-  await browser.storage.local.remove([STORAGE_KEY, NATIVE_STORAGE_KEY])
 }
