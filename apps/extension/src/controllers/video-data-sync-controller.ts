@@ -28,6 +28,7 @@ import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
 import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
 import { getCachedFlicktionaryNativeLanguage } from '@/services/flicktionary/flicktionary-target-language'
+import { normalizeSyncedTracks, resolveSyncedTrackId } from '@/services/synced-track-resolution'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
 import { ShadowVideoDataSyncApp, type VideoDataCommands } from '@/ui/video-data-sync/ShadowVideoDataSyncApp'
 import { createVideoDataSyncStore, type VideoDataSyncStore } from '@/ui/video-data-sync/video-data-sync-store'
@@ -73,6 +74,15 @@ export default class VideoDataSyncController {
   private _lastLanguagesSynced: { [key: string]: string[] }
   private _emptySubtitle: VideoDataSubtitleTrack
   private _syncedData?: VideoData
+  // Slot-ordered tracks last synced for THIS video (_emptySubtitle for empty
+  // slots). Reopening the dialog must reflect what is actually loaded — the
+  // remembered-language match alone shows Empty while subtitles play, and
+  // confirming that Empty selection unloads them (and, with the remember
+  // toggle on, silently clears the per-site language preference). Full tracks,
+  // not just ids: a track id embeds the signed timedtext URL, and the page
+  // republishes the same logical tracks with fresh URLs (new ids), so resolving
+  // a recorded track against the current list needs the stable fields too.
+  private _lastSyncedTracks?: VideoDataSubtitleTrack[]
   private _wasPaused?: boolean
   private _fullscreenElement?: Element
   private _activeElement?: Element
@@ -125,6 +135,7 @@ export default class VideoDataSyncController {
 
     this._dataReceivedListener = undefined
     this._syncedData = undefined
+    this._lastSyncedTracks = undefined
 
     this._shadowHandle?.unmount()
     this._shadowHandle = undefined
@@ -167,6 +178,8 @@ export default class VideoDataSyncController {
 
     this._syncedData = undefined
     this._autoSyncAttempted = false
+    // New video context — what was loaded for the previous one is irrelevant.
+    this._lastSyncedTracks = undefined
 
     if (!this._dataReceivedListener) {
       this._dataReceivedListener = (event: Event) => {
@@ -279,9 +292,13 @@ export default class VideoDataSyncController {
     const subs = this._matchLastSyncedWithAvailableTracks(subtitleTrackChoices)
     const autoSelectedTracks: VideoDataSubtitleTrack[] = subs.autoSelectedTracks
 
-    // If cached track exists, pre-select it
     let autoSelectedTrackIds: string[]
-    if (cachedTranscript) {
+    if (this._lastSyncedTracks !== undefined) {
+      // Subtitles are already loaded for this video: reflect them (resolved
+      // against the available tracks) rather than the remembered-language
+      // match, so reopening the dialog and pressing OK is a no-op.
+      autoSelectedTrackIds = this._lastSyncedTracks.map((track) => resolveSyncedTrackId(track, subtitleTrackChoices))
+    } else if (cachedTranscript) {
       // Pre-select the cached Whisper track
       autoSelectedTrackIds = ['cached-whisper', '-', '-']
     } else {
@@ -572,6 +589,9 @@ export default class VideoDataSyncController {
 
       try {
         await this._syncSubtitles(subtitles, false)
+        // Loaded files aren't in the page's track list — the reopened dialog
+        // can't represent them, so fall back to the auto-match.
+        this._lastSyncedTracks = undefined
         dataWasSynced = true
       } catch (e) {
         if (e instanceof Error) {
@@ -720,6 +740,7 @@ export default class VideoDataSyncController {
         subtitles,
         data.some((track) => typeof track.url === 'object')
       )
+      this._recordSyncedTracks(data)
       return true
     } catch (error) {
       if (typeof (error as Error).message !== 'undefined') {
@@ -728,6 +749,12 @@ export default class VideoDataSyncController {
 
       return false
     }
+  }
+
+  // Remember the slot-ordered tracks just synced so the reopened dialog shows
+  // them (see services/synced-track-resolution.ts).
+  private _recordSyncedTracks(data: VideoDataSubtitleTrack[]) {
+    this._lastSyncedTracks = normalizeSyncedTracks(data, this._emptySubtitle)
   }
 
   private async _syncDataArray(data: ConfirmedVideoDataSubtitleTrack[], syncWithAsbplayerId?: string) {
@@ -748,6 +775,7 @@ export default class VideoDataSyncController {
         data.some((track) => typeof track.url === 'object'),
         syncWithAsbplayerId
       )
+      this._recordSyncedTracks(data)
       return true
     } catch (error) {
       if (typeof (error as Error).message !== 'undefined') {
@@ -945,6 +973,8 @@ export default class VideoDataSyncController {
         ]
 
         await this._syncSubtitles(subtitleFiles, false)
+        // The generated track isn't in the page's track list — see openFile.
+        this._lastSyncedTracks = undefined
         client.updateState({ isGeneratingSupadata: false })
         this._hideAndResume()
       }

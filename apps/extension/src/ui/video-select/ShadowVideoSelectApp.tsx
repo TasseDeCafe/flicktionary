@@ -1,29 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { useStore } from 'zustand'
 import { SettingsIcon, XIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
 import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
-import type { ThemeType } from '@asbplayer-fork/common/settings'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
-import { UpdateChannel } from '../shadow/model-store'
+import type { VideoElement, VideoSelectStore } from './video-select-store'
 
-// One detected <video> on the page, with a cropped screenshot for the picker.
-export interface VideoElement {
-  src: string
-  imageDataUrl: string
-}
-
-// The in-realm model (pushed as partials by the controller, formerly
-// UpdateStateMessage over the FrameBridge).
-export interface VideoSelectState {
-  open: boolean
-  // Raw setting value — ShadowUiProvider resolves 'system' in this realm.
-  themeType: ThemeType
-  videoElements: VideoElement[]
-  openedFromMiningCommand: boolean
-}
+export type { VideoElement, VideoSelectState } from './video-select-store'
 
 export interface VideoSelectCommands {
   onConfirm: (selectedVideoElementSrc: string) => void
@@ -32,7 +18,7 @@ export interface VideoSelectCommands {
 }
 
 export interface ShadowVideoSelectAppProps {
-  channel: UpdateChannel<VideoSelectState>
+  store: VideoSelectStore
   shadowRoot: ShadowRoot
   portalContainer: HTMLElement
   language: string
@@ -40,68 +26,38 @@ export interface ShadowVideoSelectAppProps {
 }
 
 // Outer wrapper: provides the ui/I18n/portal context. It reads ONLY themeType
-// from the channel — the body's hooks (useLingui) must run INSIDE this
+// from the store — the body's hooks (useLingui) must run INSIDE this
 // provider, so they live in VideoSelectBody below.
-export function ShadowVideoSelectApp({ channel, portalContainer, language, commands }: ShadowVideoSelectAppProps) {
-  const [themeType, setThemeType] = useState<ThemeType>('system')
-  useEffect(
-    () =>
-      channel.subscribe((state) => {
-        if (state.themeType !== undefined) {
-          setThemeType(state.themeType)
-        }
-      }),
-    [channel]
-  )
+export function ShadowVideoSelectApp({ store, portalContainer, language, commands }: ShadowVideoSelectAppProps) {
+  const themeType = useStore(store, (s) => s.themeType)
 
   return (
     <ShadowUiProvider portalContainer={portalContainer} themeType={themeType} language={language}>
-      <VideoSelectBody channel={channel} commands={commands} />
+      <VideoSelectBody store={store} commands={commands} />
     </ShadowUiProvider>
   )
 }
 
-function VideoSelectBody({
-  channel,
-  commands,
-}: {
-  channel: UpdateChannel<VideoSelectState>
-  commands: VideoSelectCommands
-}) {
+function VideoSelectBody({ store, commands }: { store: VideoSelectStore; commands: VideoSelectCommands }) {
   const { t } = useLingui()
-  const [open, setOpen] = useState<boolean>(false)
-  const [videoElements, setVideoElements] = useState<VideoElement[]>([])
-  // Index into videoElements as a string ('' = no selection) — see the
-  // SelectItem comment for why values are indices rather than srcs.
-  const [selectedIndex, setSelectedIndex] = useState<string>('')
-  const [openedFromMiningCommand, setOpenedFromMiningCommand] = useState<boolean>(false)
-
-  // Apply each partial model exactly as VideoSelectUi's bridge listener did
-  // (themeType is handled by the outer wrapper).
-  useEffect(() => {
-    return channel.subscribe((state: Partial<VideoSelectState>) => {
-      if (state.open !== undefined) {
-        setOpen(state.open)
-      }
-      if (state.videoElements !== undefined) {
-        setVideoElements(state.videoElements)
-        setSelectedIndex('')
-      }
-      if (state.openedFromMiningCommand !== undefined) {
-        setOpenedFromMiningCommand(state.openedFromMiningCommand)
-      }
-    })
-  }, [channel])
+  const open = useStore(store, (s) => s.open)
+  const videoElements = useStore(store, (s) => s.videoElements)
+  // Lives in the store so a videoElements push resets it atomically — see
+  // video-select-store.ts.
+  const selectedIndex = useStore(store, (s) => s.selectedIndex)
+  const openedFromMiningCommand = useStore(store, (s) => s.openedFromMiningCommand)
 
   const selectedVideoElement = selectedIndex === '' ? undefined : videoElements[Number(selectedIndex)]
+
+  const handleSelectIndex = useCallback((index: string) => store.getState().setSelectedIndex(index), [store])
 
   const handleConfirm = useCallback(() => {
     if (selectedVideoElement === undefined) {
       return
     }
     commands.onConfirm(selectedVideoElement.src)
-    setOpen(false)
-  }, [commands, selectedVideoElement])
+    store.getState().updateState({ open: false })
+  }, [store, commands, selectedVideoElement])
 
   const handleOpenSettings = useCallback(() => commands.onOpenSettings(), [commands])
   const handleCancel = useCallback(() => commands.onCancel(), [commands])
@@ -113,7 +69,7 @@ function VideoSelectBody({
       selectedIndex={selectedIndex}
       selectedVideoElement={selectedVideoElement}
       openedFromMiningCommand={openedFromMiningCommand}
-      onSelectIndex={setSelectedIndex}
+      onSelectIndex={handleSelectIndex}
       onConfirm={handleConfirm}
       onOpenSettings={handleOpenSettings}
       onCancel={handleCancel}

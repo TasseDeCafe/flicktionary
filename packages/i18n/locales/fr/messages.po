@@ -237,7 +237,7 @@ msgstr "Une phrase utilisant ce terme dans son contexte naturel."
 msgid "A short label for this session"
 msgstr "Un libellé court pour cette session"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:187
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:143
 msgid "A video element must be synced with Flicktionary before it can be mined. "
 "Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
@@ -506,11 +506,11 @@ msgstr "À la fin des sous-titres"
 msgid "At Subtitle Start"
 msgstr "Au début des sous-titres"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:46
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:50
 msgid "Audio recording enabled"
 msgstr "Enregistrement audio activé"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:47
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:51
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
 msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
 "maintenant commencer l’extraction."
@@ -719,7 +719,7 @@ msgstr "Choisissez un plan pour débloquer toutes les fonctionnalités"
 msgid "Choose subtitles"
 msgstr "Choisir les sous-titres"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:63
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:66
 msgid "Choose your native language to enable lookups."
 msgstr "Choisissez votre langue maternelle pour activer les recherches."
 
@@ -737,7 +737,7 @@ msgid "Click Generate full exploration to enrich this card with collocations, "
 msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte "
 "avec des collocations, l'étymologie, le registre, l'API et plus encore."
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:45
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:49
 msgid "Click on the Flicktionary action button in the top-right of the browser "
 "window to enable audio recording for this tab."
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
@@ -752,8 +752,8 @@ msgid "Click to unlock font menu"
 msgstr "Cliquez pour déverrouiller le menu de police"
 
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:450
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:126
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:179
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:130
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:135
 #: apps/web/src/features/navigation/components/modal-screen.tsx:21
 #: apps/web/src/features/review/components/chat-panel.tsx:115
 #: apps/web/src/features/review/components/chat-panel.tsx:144
@@ -872,8 +872,7 @@ msgstr "Impossible de trouver un article lisible sur cette page."
 msgid "Could not import the pasted text."
 msgstr "Impossible d'importer le texte collé."
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:23
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:26
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:19
 msgid "Could not import this page."
 msgstr "Impossible d’importer cette page."
 
@@ -913,7 +912,7 @@ msgstr "Impossible de lire cette page."
 msgid "Could not rename — please try again."
 msgstr "Impossible de renommer — veuillez réessayer."
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:79
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:82
 msgid "Could not save. Please try again."
 msgstr "Impossible d'enregistrer. Veuillez réessayer."
 
@@ -1146,12 +1145,12 @@ msgstr "Le lien n'est pas valide ou a expiré"
 msgid "Email Verification Sent"
 msgstr "Email de Vérification Envoyé"
 
-#: apps/extension/src/controllers/video-data-sync-controller.ts:99
+#: apps/extension/src/controllers/video-data-sync-controller.ts:109
 #: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:82
 msgid "Empty"
 msgstr "Vide"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:44
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:48
 msgid "Enable audio recording"
 msgstr "Activer l'enregistrement audio"
 
@@ -1192,7 +1191,7 @@ msgstr "L'enrichissement n'a pas encore commencé."
 msgid "Enter profile name"
 msgstr "Entrer le nom du profil"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:166
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:122
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 #: apps/native/src/features/billing/hooks/use-paywall.ts:65
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:14
@@ -1575,11 +1574,11 @@ msgstr "Féminin"
 msgid "Finding suggestions…"
 msgstr "Recherche de suggestions…"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:60
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:63
 msgid "Finish setup"
 msgstr "Terminer la configuration"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:54
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:58
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:52
 msgid "Flicktionary"
 msgstr "Flicktionary"
@@ -1591,7 +1590,7 @@ msgstr "Flicktionary se compose de deux parties qui fonctionnent ensemble : une 
 "<0>extension de navigateur</0> et cette <1>application web</1>."
 
 #. placeholder {0}: state.newVersion
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:106
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:110
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
 "<0>notes de version</0>."
@@ -1842,7 +1841,7 @@ msgstr "Importer l’article dans Flicktionary"
 msgid "Import Settings"
 msgstr "Importer les paramètres"
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:38
 msgid "Import this article"
 msgstr "Importer cet article"
 
@@ -1854,7 +1853,7 @@ msgstr "Texte importé"
 msgid "Importing articles"
 msgstr "Importer des articles"
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:38
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
 msgid "Importing…"
@@ -2200,7 +2199,7 @@ msgstr "Move top subtitles up"
 msgid "Movies"
 msgstr "Films"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:166
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:122
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
 
@@ -2217,8 +2216,8 @@ msgstr "Nom de l'onglet"
 msgid "Native example"
 msgstr "Exemple en langue maternelle"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:66
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:69
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:70
 #: apps/web/src/features/settings/components/native-language-selector.tsx:17
 #: apps/web/src/features/settings/components/native-language-selector.tsx:21
 msgid "Native language"
@@ -2340,7 +2339,7 @@ msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un "
 msgid "No translation available"
 msgstr "Aucune traduction disponible"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:233
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:189
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
@@ -2410,9 +2409,9 @@ msgstr "Numéral"
 #: apps/extension/common/components/PageSettingsForm.tsx:181
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:477
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:567
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:90
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:226
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:237
+#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx:94
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:182
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:193
 #: apps/native/src/components/gates/force-update-gate.tsx:65
 #: apps/native/src/components/gates/force-update-gate.tsx:70
 msgid "OK"
@@ -3097,11 +3096,11 @@ msgstr "Aller au sous-titre précédent"
 msgid "Select a language"
 msgstr "Sélectionner une langue"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:192
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:148
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:208
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:164
 msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
@@ -3178,7 +3177,7 @@ msgstr "Configuration du compte..."
 #: apps/extension/common/components/MiscSettingsTab.tsx:273
 #: apps/extension/src/ui/components/SettingsPage.tsx:58
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:444
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:172
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:128
 #: apps/web/src/features/more/components/more-tab-view.tsx:124
 msgid "Settings"
 msgstr "Paramètres"
@@ -3226,7 +3225,7 @@ msgid "Show translations"
 msgstr "Afficher les traductions"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:131
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:262
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:252
 msgid "Sign in"
 msgstr "Se connecter"
 
@@ -3247,11 +3246,11 @@ msgstr "Connectez-vous à Flicktionary pour définir votre niveau."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Connectez-vous à Flicktionary pour traduire."
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:71
 msgid "Sign in with Flicktionary"
 msgstr "Se connecter à Flicktionary"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:66
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:168
@@ -3268,11 +3267,11 @@ msgid "Sign up"
 msgstr "S'inscrire"
 
 #. placeholder {0}: auth.email
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:59
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:63
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:71
 msgid "Signing in…"
 msgstr "Connexion…"
 
@@ -3300,6 +3299,7 @@ msgstr "Une erreur s'est produite"
 msgid "Something went wrong while pairing."
 msgstr "Une erreur s'est produite lors de l'appairage."
 
+#: apps/extension/src/ui/query/query-client.ts:38
 #: apps/web/src/config/react-query-config.ts:30
 msgid "Something went wrong."
 msgstr "Une erreur s'est produite."
@@ -3967,7 +3967,7 @@ msgstr "Vérifiez Votre Email"
 msgid "Verifying..."
 msgstr "Vérification..."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:120
+#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:76
 msgid "Video Element"
 msgstr "Élément vidéo"
 

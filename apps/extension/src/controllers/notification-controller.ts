@@ -1,8 +1,12 @@
 import { createElement } from 'react'
+import { createStore } from 'zustand/vanilla'
 import Binding from '../services/binding'
 import { mountModalHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
-import { createModelStore, type ModelStore } from '../ui/shadow/model-store'
-import { ShadowNotificationApp, type NotificationState } from '../ui/notification/ShadowNotificationApp'
+import {
+  ShadowNotificationApp,
+  type NotificationState,
+  type NotificationStore,
+} from '../ui/notification/ShadowNotificationApp'
 
 // Marker for the in-realm notification shadow host.
 const NOTIFICATION_HOST_ATTR = 'data-asbplayer-notification-host'
@@ -14,7 +18,7 @@ export default class NotificationController {
   public onClose?: () => void
 
   private readonly _context: Binding
-  private _store?: ModelStore<NotificationState>
+  private _store?: NotificationStore
   private _shadowHandle?: ShadowHostHandle
   private _showing = false
 
@@ -39,7 +43,7 @@ export default class NotificationController {
     }
 
     const { themeType, language } = await this._context.settings.get(['themeType', 'language'])
-    this._store!.set({ themeType, language, titleLocKey, messageLocKey, newVersion: undefined })
+    this._store!.setState({ themeType, language, titleLocKey, messageLocKey, newVersion: undefined })
     this._showing = true
     this._context.pause()
   }
@@ -47,15 +51,12 @@ export default class NotificationController {
   async updateAlert(newVersion: string) {
     this._ensureMounted()
     const { themeType, language } = await this._context.settings.get(['themeType', 'language'])
-    this._store!.set({ themeType, language, titleLocKey: '', messageLocKey: '', newVersion })
+    this._store!.setState({ themeType, language, titleLocKey: '', messageLocKey: '', newVersion })
   }
 
   // Reset the dialog/snackbar to hidden while keeping the host mounted.
   private _resetState() {
-    const prev = this._store?.getSnapshot()
-    if (this._store && prev) {
-      this._store.set({ ...prev, titleLocKey: '', messageLocKey: '', newVersion: undefined })
-    }
+    this._store?.setState({ titleLocKey: '', messageLocKey: '', newVersion: undefined })
   }
 
   // The `close` handler the in-realm app calls: undo the force-hides put up while
@@ -74,13 +75,13 @@ export default class NotificationController {
       return
     }
     if (!this._store) {
-      this._store = createModelStore<NotificationState>({
+      this._store = createStore<NotificationState>(() => ({
         themeType: 'system',
         language: 'system',
         titleLocKey: '',
         messageLocKey: '',
         newVersion: undefined,
-      })
+      }))
     }
     const store = this._store
     this._shadowHandle = mountModalHost({

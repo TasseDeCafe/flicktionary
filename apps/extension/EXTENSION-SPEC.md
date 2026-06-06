@@ -152,13 +152,35 @@ cleanup.
   `@rolldown/plugin-babel` pass).
 - **All injected UI is in-realm Shadow DOM** (no iframes — the upstream
   FrameBridge transport was deleted). Shared infra in `src/ui/shadow/`:
-  `shadow-host.ts` (modal + video-positioned hosts), `model-store.ts`
-  (snapshot/delta state channels between controllers and React),
+  `shadow-host.ts` (modal + video-positioned hosts),
   `overlay-stylesheet.ts` (`applyOverlayStyles` — adopts the Tailwind sheet,
   falls back to `<style>` on Firefox Xray, re-registers `@property` rules via
   `CSS.registerProperty` so Tailwind borders/animations work in shadow roots),
   `shadow-ui-provider.tsx`. Any new shadow surface must mount through
   `applyOverlayStyles` + `ShadowUiProvider`.
+- **State: zustand + TanStack Query** (same stack as `apps/web`; the hand-rolled
+  `model-store.ts` snapshot/delta channels are gone). Controller→React models
+  are **per-controller zustand vanilla stores** — never module singletons, so
+  multiple videos/dialogs on a page stay independent: `video-data-sync-store.ts`
+  and `video-select-store.ts` expose a channel-compatible `updateState(partial)`
+  action (video-data-sync prunes stale track selections on `subtitles` deltas;
+  video-select resets `selectedIndex` on `videoElements` deltas), while the
+  notification and controls-overlay controllers push snapshots with `setState`.
+  The subtitle overlay's pointer state (`selection`/`selecting`/`hovered`/
+  `signedIn`) is a per-mount store (`overlay-interaction-store.ts`): imperative
+  handlers read `getState()` (no stale closures), rendering subscribes only to
+  `selection`/`signedIn`. Server state is TanStack Query, one client per realm:
+  popup and options each create a `makeExtensionQueryClient()`
+  (`ui/query/query-client.ts` — meta-driven sonner error toasts, shared
+  `queryRetryHandler`; both page roots mount their own `<Toaster />`), and the
+  content-script realm has the module-level `glossQueryClient`
+  (`ui/video-overlay/gloss-query-client.ts`). **Exceptions, on purpose:**
+  `subtitle-store.ts` (`SubtitleStore`) stays a hand-rolled
+  `useSyncExternalStore` store — it's fed by the subtitle controller's 100 ms
+  tick behind a controller-side `linesEqual` equality guard, and migrating it
+  risks re-render storms for zero payoff; the overlay's `saveWord`/`setCefr`
+  flows stay plain async (discriminated-union outcomes, never throw — not
+  mutations).
 - **Entrypoints** (`src/entrypoints/`):
   - `background.ts` — message-router service worker; all handlers under
     `src/handlers/` (groups: `asbplayerv2`, `video`, `popup`, `flicktionary`,
@@ -320,7 +342,15 @@ resolves to an exact `text_segments` row + offsets.
   (selection + context line + target language) and shows a floating tooltip
   (floating-ui, in a separate non-transformed popover shadow host): word, IPA
   (GA → RP → untagged preference), one-line gloss, POS and register badges.
-  Results are cached in-memory by `word::sentence`; nothing is persisted.
+  The lookup is a TanStack Query (`use-gloss.ts`) keyed
+  `['gloss', word, sentence]` on the realm-wide `glossQueryClient`: successes
+  cache (`staleTime: Infinity`, 30 min gcTime — re-hover is instant), errors
+  THROW and are never cached (re-hover refetches; a "Sign in to translate"
+  error must not survive sign-in). The key omits the auth/target-language
+  context the background derives, so the client is **cleared on any auth
+  change**; the background's target/native-language cache also resets on auth
+  change (`resetFlicktionaryLanguageCache` — to `undefined`, not `null`, which
+  would mean a known "no language" and skip the refetch). Nothing is persisted.
 - **Selection** — click selects a word; press-and-drag extends to a contiguous
   multi-word (even multi-segment) chunk, highlighted in yellow.
 - **Save** — right-click (word or selection) shows the Save action; success
@@ -484,7 +514,7 @@ extension typecheck sees them.
 |---|---|
 | `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, `flicktionary.devTools.v1` admin debug toggles, cached target language, pairing nonces |
 | IndexedDB `asbplayer-transcript-cache` | generated Whisper SRTs per video id |
-| In-memory only | gloss cache, session/segment-id cache |
+| In-memory only | gloss query cache (`glossQueryClient`, cleared on auth change), session/segment-id cache |
 
 No learning data is stored locally; highlights live in the backend.
 

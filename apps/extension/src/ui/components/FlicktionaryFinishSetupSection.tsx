@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { SUPPORTED_LANGUAGES } from '@flicktionary/core/constants/supported-languages'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
 import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client'
@@ -14,44 +15,46 @@ import { getUiPrefsSnapshot, invalidateUiPrefsSnapshot } from '@/services/flickt
 // flow, this only unblocks glosses.
 export const FlicktionaryFinishSetupSection = () => {
   const { t } = useLingui()
-  const [needsNativeLanguage, setNeedsNativeLanguage] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(false)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    let active = true
-    const check = () => {
-      void getUiPrefsSnapshot().then((prefs) => {
-        if (active) setNeedsNativeLanguage(prefs !== null && prefs.nativeLanguage === null)
-      })
-    }
-    check()
-    // Re-evaluate when pairing/unpairing happens while the popup is open (the
-    // snapshot memo is invalidated by the same auth-change event).
-    const unsubscribe = onFlicktionaryAuthChange(() => check())
-    return () => {
-      active = false
-      unsubscribe()
-    }
-  }, [])
+  // getUiPrefsSnapshot resolves null when unpaired and swallows fetch failures
+  // (returning null), so this query never errors.
+  const prefsQuery = useQuery({
+    queryKey: ['uiPrefs'],
+    queryFn: getUiPrefsSnapshot,
+  })
+
+  // Re-evaluate when pairing/unpairing happens while the popup is open (the
+  // snapshot memo is invalidated by the same auth-change event).
+  useEffect(
+    () =>
+      onFlicktionaryAuthChange(() => {
+        void queryClient.invalidateQueries({ queryKey: ['uiPrefs'] })
+      }),
+    [queryClient]
+  )
+
+  const saveMutation = useMutation({
+    mutationFn: (code: string) => getFlicktionaryApiClient().userPrefs.setNativeLanguage({ nativeLanguage: code }),
+    // The inline "Could not save" message below handles the failure path.
+    meta: { showErrorToast: false },
+    onError: (error) => console.warn('Failed to set native language', error),
+    onSuccess: (_data, code) => {
+      // Patch the cached prefs so the section hides immediately (the old code
+      // flipped its local flag synchronously), then invalidate both layers.
+      queryClient.setQueryData(['uiPrefs'], (old: Awaited<ReturnType<typeof getUiPrefsSnapshot>>) =>
+        old ? { ...old, nativeLanguage: code } : old
+      )
+      invalidateUiPrefsSnapshot()
+      void queryClient.invalidateQueries({ queryKey: ['uiPrefs'] })
+    },
+  })
+
+  const prefs = prefsQuery.data
+  const needsNativeLanguage = prefs != null && prefs.nativeLanguage === null
 
   if (!needsNativeLanguage) {
     return null
-  }
-
-  const handlePick = async (code: string) => {
-    setSaving(true)
-    setError(false)
-    try {
-      await getFlicktionaryApiClient().userPrefs.setNativeLanguage({ nativeLanguage: code })
-      invalidateUiPrefsSnapshot()
-      setNeedsNativeLanguage(false)
-    } catch (err) {
-      console.warn('Failed to set native language', err)
-      setError(true)
-    } finally {
-      setSaving(false)
-    }
   }
 
   return (
@@ -62,7 +65,7 @@ export const FlicktionaryFinishSetupSection = () => {
       <p className='text-muted-foreground mb-2 text-xs'>
         <Trans>Choose your native language to enable lookups.</Trans>
       </p>
-      <Select disabled={saving} onValueChange={handlePick}>
+      <Select disabled={saveMutation.isPending} onValueChange={(code) => saveMutation.mutate(code)}>
         <SelectTrigger className='w-full' aria-label={t`Native language`}>
           <SelectValue placeholder={t`Native language`} />
         </SelectTrigger>
@@ -74,7 +77,7 @@ export const FlicktionaryFinishSetupSection = () => {
           ))}
         </SelectContent>
       </Select>
-      {error && (
+      {saveMutation.isError && (
         <p className='text-destructive mt-2 text-xs'>
           <Trans>Could not save. Please try again.</Trans>
         </p>

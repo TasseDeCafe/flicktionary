@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
+import { useMutation } from '@tanstack/react-query'
 import { Button } from '@flicktionary/ui/components/button'
 import { getFlicktionaryApiClient } from '@/services/flicktionary/flicktionary-api-client'
 import {
@@ -39,14 +40,17 @@ export const FlicktionaryPairSection = () => {
     }
   }
 
-  const handleUnpair = async () => {
-    try {
-      await getFlicktionaryApiClient().extensionAuth.revokeSession({})
-    } catch (error) {
-      console.warn('Failed to revoke Flicktionary session before unpairing', error)
-    }
-    await clearFlicktionaryAuth()
-  }
+  const unpairMutation = useMutation({
+    mutationFn: () => getFlicktionaryApiClient().extensionAuth.revokeSession({}),
+    // Sign-out must always succeed locally — a failed revoke (expired token,
+    // offline) only gets a console.warn, never a toast, and the local auth is
+    // cleared regardless (same semantics as the old try/catch).
+    meta: { showErrorToast: false },
+    onError: (error) => console.warn('Failed to revoke Flicktionary session before unpairing', error),
+    onSettled: () => clearFlicktionaryAuth(),
+  })
+
+  const handleUnpair = () => unpairMutation.mutate()
 
   return (
     <div className='rounded-lg border p-3'>

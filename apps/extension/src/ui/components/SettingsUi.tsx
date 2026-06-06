@@ -3,6 +3,7 @@ import { useSettings } from '../hooks/use-settings'
 import SettingsPage from './SettingsPage'
 import { I18nProvider } from '@lingui/react'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
+import { Toaster } from 'sonner'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { i18n, setupLingui } from '../lingui'
 import { useResolvedTheme } from '../hooks/use-resolved-theme'
@@ -36,6 +37,9 @@ const SettingsUi = () => {
       <TooltipProvider>
         <div className={cn('bg-background text-foreground font-sans', dark && 'dark')}>
           <SettingsPage settings={settings} onSettingsChanged={onSettingsChanged} {...profileContext} />
+          {/* Host for the query/mutation error toasts (meta-driven, see
+              makeExtensionQueryClient) — without it toast.error is a no-op. */}
+          <Toaster theme={dark ? 'dark' : 'light'} position='bottom-right' />
         </div>
       </TooltipProvider>
     </I18nProvider>

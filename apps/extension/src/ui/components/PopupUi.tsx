@@ -7,6 +7,7 @@ import {
 } from '@asbplayer-fork/common'
 import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/settings'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
+import { Toaster } from 'sonner'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ExtensionSettingsStorage } from '../../services/extension-settings-storage'
 import { isVideoPlatformUrl } from '@/services/pages'
@@ -171,6 +172,9 @@ export function PopupUi({ commands }: Props) {
               onOpenUserGuide={handleOpenUserGuide}
             />
           )}
+          {/* Host for the query/mutation error toasts (meta-driven, see
+              makeExtensionQueryClient) — without it toast.error is a no-op. */}
+          <Toaster theme={dark ? 'dark' : 'light'} position='bottom-center' />
         </div>
       </TooltipProvider>
     </I18nProvider>

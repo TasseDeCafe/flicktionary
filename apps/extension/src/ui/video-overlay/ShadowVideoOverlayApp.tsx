@@ -1,19 +1,22 @@
 import type { ControlType, VideoOverlayModel, PlayMode } from '@asbplayer-fork/common'
 import VideoOverlay from '@asbplayer-fork/common/components/VideoOverlay'
 import useLastScrollableControlType from '@asbplayer-fork/common/hooks/use-last-scrollable-control-type'
+import { useStore } from 'zustand'
+import type { StoreApi } from 'zustand/vanilla'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
-import { ModelStore, useModelStore } from '../shadow/model-store'
 
 // The in-realm replacement for the iframe model transport. The controller pushes
-// snapshots into the store (formerly the request/update-video-overlay-model
+// snapshots into the zustand store (formerly the request/update-video-overlay-model
 // round trip); `visible` flips on pause/play (formerly mount/unmount of the
 // iframe); `tooltipsEnabled` is the small-screen flag the controller used to
-// bake into the iframe URL.
+// bake into the iframe URL. Per-controller store, never a module singleton.
 export interface VideoOverlayState {
   model: VideoOverlayModel | undefined
   visible: boolean
   tooltipsEnabled: boolean
 }
+
+export type VideoOverlayStore = StoreApi<VideoOverlayState>
 
 // The command half of the bridge, now plain callbacks the controller wires
 // straight to the Binding (no postMessage round trip).
@@ -27,7 +30,7 @@ export interface VideoOverlayCommands {
 }
 
 export interface ShadowVideoOverlayAppProps {
-  store: ModelStore<VideoOverlayState>
+  store: VideoOverlayStore
   shadowRoot: ShadowRoot
   portalContainer: HTMLElement
   anchor: 'top' | 'bottom'
@@ -48,7 +51,7 @@ const saveLastControlType = async (controlType: ControlType): Promise<void> => {
 }
 
 export function ShadowVideoOverlayApp({ store, portalContainer, anchor, commands }: ShadowVideoOverlayAppProps) {
-  const { model, visible, tooltipsEnabled } = useModelStore(store)
+  const { model, visible, tooltipsEnabled } = useStore(store)
   const { lastControlType, setLastControlType } = useLastScrollableControlType({
     saveLastControlType,
     fetchLastControlType,

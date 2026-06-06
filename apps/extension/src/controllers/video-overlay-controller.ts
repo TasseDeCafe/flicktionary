@@ -3,12 +3,13 @@ import { VideoOverlayModel, VideoOverlayToVideoCommand, ToggleSubtitlesMessage }
 import Binding from '../services/binding'
 import { OffsetAnchor } from '../services/element-overlay'
 import { adjacentSubtitle } from '@asbplayer-fork/common/key-binder'
+import { createStore } from 'zustand/vanilla'
 import { mountVideoOverlayHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
-import { createModelStore, type ModelStore } from '../ui/shadow/model-store'
 import {
   ShadowVideoOverlayApp,
   type VideoOverlayCommands,
   type VideoOverlayState,
+  type VideoOverlayStore,
 } from '../ui/video-overlay/ShadowVideoOverlayApp'
 
 const smallScreenVideoHeightThreshold = 300
@@ -30,7 +31,7 @@ export class VideoOverlayController {
   private _showing: boolean = false
   private _bound = false
 
-  private _store?: ModelStore<VideoOverlayState>
+  private _store?: VideoOverlayStore
   private _shadowHandle?: ShadowHostHandle
 
   constructor(context: Binding, offsetAnchor: OffsetAnchor) {
@@ -93,11 +94,11 @@ export class VideoOverlayController {
     this._context.video.addEventListener('play', this._playListener)
     this._context.video.addEventListener('seeked', this._seekedListener)
 
-    this._store = createModelStore<VideoOverlayState>({
+    this._store = createStore<VideoOverlayState>(() => ({
       model: undefined,
       visible: false,
       tooltipsEnabled: true,
-    })
+    }))
     this._mountShadow()
 
     this._bound = true
@@ -165,11 +166,10 @@ export class VideoOverlayController {
       return
     }
     const model = await this._model()
-    const prev = this._store.getSnapshot()
-    this._store.set({
+    this._store.setState({
       model,
       tooltipsEnabled: this._tooltipsEnabled(),
-      visible: visible ?? prev.visible,
+      visible: visible ?? this._store.getState().visible,
     })
   }
 
@@ -225,7 +225,7 @@ export class VideoOverlayController {
   // to the video lifecycle, not the subtitle load) and is repopulated by the next
   // updateModel().
   disposeOverlay() {
-    this._store?.set({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
+    this._store?.setState({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
   }
 
   // No `synced` gate: the overlay must show on pause even before any subtitles
@@ -262,10 +262,7 @@ export class VideoOverlayController {
   }
 
   private _doHide() {
-    const prev = this._store?.getSnapshot()
-    if (this._store && prev) {
-      this._store.set({ ...prev, visible: false })
-    }
+    this._store?.setState({ visible: false })
     this._showing = false
   }
 

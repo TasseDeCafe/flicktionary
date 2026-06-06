@@ -13,13 +13,15 @@ import {
 import { Button } from '@flicktionary/ui/components/button'
 import { flicktionaryLogoDataUri } from '@asbplayer-fork/common/components/flicktionary-logo'
 import type { ThemeType } from '@asbplayer-fork/common/settings'
+import { useStore } from 'zustand'
+import type { StoreApi } from 'zustand/vanilla'
 import { i18n } from '../lingui'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
-import { ModelStore, useModelStore } from '../shadow/model-store'
 
 // The in-realm replacement for NotificationUi's bridge transport: the model is a
-// store snapshot the controller pushes (formerly UpdateStateMessage over the
-// FrameBridge) and `close` is a plain callback (formerly bridge.sendMessageFromServer).
+// zustand store snapshot the controller pushes (formerly UpdateStateMessage over
+// the FrameBridge) and `close` is a plain callback (formerly
+// bridge.sendMessageFromServer). Per-controller store, never a module singleton.
 export interface NotificationState {
   // Raw setting value — ShadowUiProvider resolves 'system' in this realm.
   themeType: ThemeType
@@ -29,8 +31,10 @@ export interface NotificationState {
   newVersion?: string
 }
 
+export type NotificationStore = StoreApi<NotificationState>
+
 export interface ShadowNotificationAppProps {
-  store: ModelStore<NotificationState>
+  store: NotificationStore
   shadowRoot: ShadowRoot
   portalContainer: HTMLElement
   onClose: () => void
@@ -53,7 +57,7 @@ const localizeDialogKey = (locKey: string): string => {
 }
 
 export function ShadowNotificationApp({ store, portalContainer, onClose }: ShadowNotificationAppProps) {
-  const state = useModelStore(store)
+  const state = useStore(store)
   return (
     <ShadowUiProvider portalContainer={portalContainer} themeType={state.themeType} language={state.language}>
       <NotificationContent state={state} onClose={onClose} />

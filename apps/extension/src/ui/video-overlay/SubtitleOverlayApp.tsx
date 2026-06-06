@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { I18nProvider } from '@lingui/react'
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
+import { useStore } from 'zustand'
 import { msg } from '@lingui/core/macro'
 import { i18n } from '../lingui'
 import { tokenizeText } from '../../services/word-tokenizer'
@@ -9,7 +11,6 @@ import {
   GlossData,
   SaveWordParams,
   SaveWordSegmentInfo,
-  requestGloss,
   saveWord,
   setCefr,
   startFlicktionaryPairing,
@@ -21,6 +22,9 @@ import { GlossContent, GlossTooltip } from './GlossTooltip'
 import { CefrPicker } from './CefrPicker'
 import { toast } from 'sonner'
 import { dispatchToast } from './toaster-host'
+import { glossQueryClient } from './gloss-query-client'
+import { glossQueryKey, useGloss } from './use-gloss'
+import { createOverlayInteractionStore, SelectionState } from './overlay-interaction-store'
 
 const HOVER_DEBOUNCE_MS = 300
 // Grace period after the pointer leaves a word before the gloss popover hides,
@@ -43,6 +47,13 @@ interface TokenizedLine {
   line: SubtitleLineModel
   tokens: LineToken[]
   wordTokens: LineToken[]
+}
+
+// The hovered-word shape held by the interaction store.
+interface HoveredWord {
+  tl: TokenizedLine
+  token: LineToken
+  element: HTMLElement
 }
 
 const tokenizeLine = (line: SubtitleLineModel): TokenizedLine => {
@@ -70,17 +81,10 @@ const tokenizeLine = (line: SubtitleLineModel): TokenizedLine => {
   return { line, tokens, wordTokens }
 }
 
-// Active drag/click selection within a single line, by word ordinal.
-interface SelectionState {
-  lineIndex: number
-  anchorOrdinal: number
-  headOrdinal: number
-}
-
 // Resolve a selection to the [min,max] word ordinals + the covered char range
 // (for highlighting the spaces between selected words) for a given line. Pure
-// and module-scoped so both the render path (state) and the imperative handlers
-// (a ref, to dodge stale closures) can call it.
+// and module-scoped so both the render path (subscribed state) and the
+// imperative handlers (store.getState(), to dodge stale closures) can call it.
 const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: LineToken[]) => {
   if (!sel || sel.lineIndex !== lineIndex) return null
   const minOrd = Math.min(sel.anchorOrdinal, sel.headOrdinal)
@@ -92,16 +96,18 @@ const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: Lin
 }
 
 // What an explicit Save from the gloss popover should persist — captured when
-// the gloss opens, since `hoveredRef` is cleared by the time the pointer has
-// moved onto the popover.
+// the gloss opens, since the hovered word is cleared by the time the pointer
+// has moved onto the popover.
 type GlossSaveTarget = { kind: 'single'; tl: TokenizedLine; token: LineToken } | { kind: 'chunk'; tl: TokenizedLine }
 
+// Which gloss popover is open (anchor + lookup identity). The gloss CONTENT
+// is not stored here — it's the `useGloss` query for (word, sentence), so a
+// stale response can never hit the wrong popover.
 interface GlossState {
   lineIndex: number
   anchor: HTMLElement
   word: string
   sentence: string
-  content: GlossContent
   save: GlossSaveTarget
 }
 
@@ -121,7 +127,9 @@ export interface SubtitleOverlayAppProps {
 export function SubtitleOverlayApp(props: SubtitleOverlayAppProps) {
   return (
     <I18nProvider i18n={i18n}>
-      <OverlayBody {...props} />
+      <QueryClientProvider client={glossQueryClient}>
+        <OverlayBody {...props} />
+      </QueryClientProvider>
     </I18nProvider>
   )
 }
@@ -130,31 +138,29 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot)
   const tokenized = useMemo(() => snapshot.lines.map(tokenizeLine), [snapshot.lines])
 
-  const [selection, setSelection] = useState<SelectionState | null>(null)
+  // Pointer-interaction state, one store per overlay mount. Rendering
+  // subscribes to `selection`/`signedIn` only; the imperative handlers read
+  // getState() (always live), and `hovered`/`selecting` never cause renders.
+  const [interaction] = useState(() => createOverlayInteractionStore<HoveredWord>())
+  const selection = useStore(interaction, (s) => s.selection)
+  // Flicktionary pairing ("sign in") state. Tracked from chrome.storage so the
+  // gloss popover / toasts can offer a Sign in button when saving & glossing
+  // are gated, and so they update live once pairing completes in the opened tab.
+  const signedIn = useStore(interaction, (s) => s.signedIn)
+
   const [gloss, setGloss] = useState<GlossState | null>(null)
   const [cefr, setCefrState] = useState<CefrState | null>(null)
-  // Flicktionary pairing ("sign in") state. Tracked from chrome.storage so the
-  // gloss popover / toasts can offer a Sign in button when saving & glossing are
-  // gated, and so they update live once pairing completes in the opened tab.
-  // Default true to avoid flashing a Sign in button before the (fast, local)
-  // read resolves. `signedInRef` mirrors it for the imperative save handlers.
-  const [signedIn, setSignedIn] = useState(true)
-  const signedInRef = useRef(true)
+
+  const queryClient = useQueryClient()
+  // The open popover's content. Keyed by (word, sentence): successes cache
+  // (re-hover is instant), errors throw and are NOT cached (re-hover
+  // refetches — a "Sign in to translate" error must not survive sign-in).
+  const glossQuery = useGloss(gloss?.word, gloss?.sentence, gloss !== null)
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Pending deferred hide of the gloss popover (the hover-bridge grace timer).
   const glossHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoveredKey = useRef<string | null>(null)
-  // The word currently under the pointer (null when over nothing). Used so the
-  // window `mouseup` handler can open the chunk gloss on the word the pointer
-  // already sits on — `mouseenter` won't re-fire there after a drag-release.
-  const hoveredRef = useRef<{ tl: TokenizedLine; token: LineToken; element: HTMLElement } | null>(null)
-  // Mirror of `selection` for the imperative handlers (debounce / mouseup),
-  // which are registered once and would otherwise read a stale closure.
-  const selectionRef = useRef<SelectionState | null>(null)
-  const selectingRef = useRef(false)
-  const glossSeq = useRef(0)
-  const glossCache = useRef<Map<string, GlossData>>(new Map())
 
   // ---- helpers ---------------------------------------------------------------
 
@@ -165,11 +171,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     }
   }
 
-  const setSelectionBoth = useCallback((next: SelectionState | null) => {
-    selectionRef.current = next
-    setSelection(next)
-  }, [])
-
   const cancelGlossHide = useCallback(() => {
     if (glossHideTimer.current) {
       clearTimeout(glossHideTimer.current)
@@ -179,7 +180,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const hideGloss = useCallback(() => {
     cancelGlossHide()
-    glossSeq.current += 1
     setGloss(null)
   }, [cancelGlossHide])
 
@@ -194,27 +194,17 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   }, [cancelGlossHide, hideGloss])
 
   const clearSelection = useCallback(() => {
-    selectingRef.current = false
-    setSelectionBoth(null)
-  }, [setSelectionBoth])
+    interaction.getState().clearSelection()
+  }, [interaction])
 
-  // Mirror the Flicktionary auth state into local state + ref. The read and the
-  // change listener both hit chrome.storage.local (available in the content
+  // Mirror the Flicktionary auth state into the interaction store. The read and
+  // the change listener both hit chrome.storage.local (available in the content
   // script), so pairing done in the opened tab flips this live.
   useEffect(() => {
-    let active = true
-    const apply = (auth: unknown) => {
-      const value = auth !== null
-      signedInRef.current = value
-      if (active) setSignedIn(value)
-    }
+    const apply = (auth: unknown) => interaction.getState().setSignedIn(auth !== null)
     void getFlicktionaryAuth().then(apply)
-    const unsubscribe = onFlicktionaryAuthChange(apply)
-    return () => {
-      active = false
-      unsubscribe()
-    }
-  }, [])
+    return onFlicktionaryAuthChange(apply)
+  }, [interaction])
 
   // Kick off pairing (mirrors the popup's "Sign in with Flicktionary" button).
   const onSignIn = useCallback(() => {
@@ -234,7 +224,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     })
   }, [])
 
-  // Render-path range (reads the `selection` state so highlights re-render).
+  // Render-path range (reads the subscribed `selection` so highlights re-render).
   const selectionForLine = (lineIndex: number, wordTokens: LineToken[]) => rangeFor(selection, lineIndex, wordTokens)
 
   // ---- save flow -------------------------------------------------------------
@@ -259,7 +249,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           showToast(
             outcome.message,
             true,
-            signedInRef.current ? undefined : { label: i18n._(msg`Sign in`), onClick: onSignIn }
+            interaction.getState().signedIn ? undefined : { label: i18n._(msg`Sign in`), onClick: onSignIn }
           )
           clearSelection()
           break
@@ -269,12 +259,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           break
       }
     },
-    [showToast, clearSelection, onSignIn]
+    [showToast, clearSelection, onSignIn, interaction]
   )
 
   const saveSingle = useCallback(
     (line: SubtitleLineModel, token: LineToken) => {
-      const translation = glossCache.current.get(`${token.text}::${line.text}`)?.gloss ?? ''
+      const translation = queryClient.getQueryData<GlossData>(glossQueryKey(token.text, line.text))?.gloss ?? ''
       const segmentInfo: SaveWordSegmentInfo = {
         startSegmentIndex: line.index,
         endSegmentIndex: undefined,
@@ -283,18 +273,18 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       }
       void handleOutcome({ word: token.text, sentence: line.text, translation, segmentInfo, closures })
     },
-    [closures, handleOutcome]
+    [closures, handleOutcome, queryClient]
   )
 
   const saveSelection = useCallback(
     (tl: TokenizedLine) => {
-      const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
+      const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
       if (!range) return
       const selectedWords = tl.wordTokens.slice(range.minOrd, range.maxOrd + 1)
       const words = selectedWords.map((w) => w.text).join(' ')
       const first = selectedWords[0]
       const last = selectedWords[selectedWords.length - 1]
-      const translation = glossCache.current.get(`${words}::${tl.line.text}`)?.gloss ?? ''
+      const translation = queryClient.getQueryData<GlossData>(glossQueryKey(words, tl.line.text))?.gloss ?? ''
       // Single line → start and end segment are the same cue, so endSegmentIndex
       // is undefined (matches the legacy readSegmentRange payload).
       const segmentInfo: SaveWordSegmentInfo = {
@@ -305,63 +295,29 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       }
       void handleOutcome({ word: words, sentence: tl.line.text, translation, segmentInfo, closures })
     },
-    [closures, handleOutcome]
+    [closures, handleOutcome, queryClient, interaction]
   )
 
   // ---- gloss (hover) flow ----------------------------------------------------
 
+  // Opening a gloss is now a pure state set: the content arrives via the
+  // `useGloss` query for (word, sentence). The old in-flight guards map as
+  // follows — the seq counter is structural (data is keyed, a stale response
+  // can't hit the wrong popover); the !video.paused gate is covered by the
+  // entry check in scheduleHoverGloss plus the `playing` listener clearing the
+  // gloss; anchor.isConnected is a render-time guard below.
   const showGloss = useCallback(
     (lineIndex: number, anchor: HTMLElement, word: string, sentence: string, save: GlossSaveTarget) => {
-      const cacheKey = `${word}::${sentence}`
-      const cached = glossCache.current.get(cacheKey)
-      const seq = ++glossSeq.current
-
-      if (cached) {
-        setGloss({ lineIndex, anchor, word, sentence, save, content: { status: 'ready', data: cached } })
-        return
-      }
-
-      setGloss({ lineIndex, anchor, word, sentence, save, content: { status: 'loading' } })
-      ;(async () => {
-        let response
-        try {
-          response = await requestGloss(word, sentence)
-        } catch {
-          response = { error: 'Could not fetch a translation.' } as Awaited<ReturnType<typeof requestGloss>>
-        }
-
-        // Bail if the user moved on while fetching: a newer gloss superseded
-        // this one, or the video resumed (paused gate).
-        if (seq !== glossSeq.current || !video.paused || !anchor.isConnected) return
-
-        if (response.gloss !== undefined) {
-          const data: GlossData = {
-            gloss: response.gloss,
-            pos: response.pos ?? null,
-            register: response.register ?? null,
-            ipa: response.ipa ?? null,
-          }
-          glossCache.current.set(cacheKey, data)
-          setGloss({ lineIndex, anchor, word, sentence, save, content: { status: 'ready', data } })
-        } else {
-          setGloss({
-            lineIndex,
-            anchor,
-            word,
-            sentence,
-            save,
-            content: { status: 'error', message: response.error || 'No translation available' },
-          })
-        }
-      })()
+      setGloss({ lineIndex, anchor, word, sentence, save })
     },
-    [video]
+    []
   )
 
   // Arm the 300ms hover debounce for the word under the pointer. On fire it
   // opens the chunk gloss if that word is inside an active multi-word selection,
-  // else the single-word gloss. Reads selectionRef (live) so it's correct when
-  // called from `mouseup` after a drag. Stable identity (no selection dep).
+  // else the single-word gloss. Reads the live selection from the store so it's
+  // correct when called from `mouseup` after a drag. Stable identity (no
+  // selection dep).
   const scheduleHoverGloss = useCallback(
     (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
       const key = `${tl.line.index}:${token.ordinal}`
@@ -372,7 +328,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         // pointer is (still) on this word.
         if (!video.paused || hoveredKey.current !== key) return
 
-        const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
+        const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
         const overSelected = range && token.ordinal >= range.minOrd && token.ordinal <= range.maxOrd
         if (range && range.count > 1 && overSelected) {
           // Chunk gloss: the whole selected phrase, anchored at the pointer.
@@ -386,18 +342,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         }
       }, HOVER_DEBOUNCE_MS)
     },
-    [video, showGloss]
+    [video, showGloss, interaction]
   )
 
   const onWordEnter = useCallback(
     (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
       // A fresh hover supersedes any pending deferred hide from a prior word.
       cancelGlossHide()
-      hoveredRef.current = { tl, token, element }
+      const state = interaction.getState()
+      state.setHovered({ tl, token, element })
 
       // Drag-select: extend the active selection.
-      if (selectingRef.current && selectionRef.current && selectionRef.current.lineIndex === tl.line.index) {
-        setSelectionBoth({ ...selectionRef.current, headOrdinal: token.ordinal })
+      if (state.selecting && state.selection && state.selection.lineIndex === tl.line.index) {
+        state.setSelection({ ...state.selection, headOrdinal: token.ordinal })
       }
 
       // Always (re)arm the debounce for the word under the pointer. During a
@@ -405,7 +362,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       // pending timer is what opens the chunk gloss without a re-hover.
       scheduleHoverGloss(tl, token, element)
     },
-    [setSelectionBoth, scheduleHoverGloss, cancelGlossHide]
+    [interaction, scheduleHoverGloss, cancelGlossHide]
   )
 
   const onWordLeave = useCallback(
@@ -413,30 +370,31 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const key = `${tl.line.index}:${token.ordinal}`
       clearHoverTimer()
       if (hoveredKey.current === key) hoveredKey.current = null
-      if (hoveredRef.current?.token === token) hoveredRef.current = null
+      const state = interaction.getState()
+      if (state.hovered?.token === token) state.setHovered(null)
 
       // For an active multi-word selection, let the chunk gloss persist (it
       // clears on selection change / play / subtitle change) — mirrors legacy.
-      const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
+      const range = rangeFor(state.selection, tl.line.index, tl.wordTokens)
       if (range && range.count > 1) return
 
       // Deferred so the pointer can reach the popover (to click Save) before it
       // hides — the popover's onMouseEnter cancels this.
       scheduleGlossHide()
     },
-    [scheduleGlossHide]
+    [interaction, scheduleGlossHide]
   )
 
   const onWordContextMenu = useCallback(
     (tl: TokenizedLine, token: LineToken) => {
-      const range = rangeFor(selectionRef.current, tl.line.index, tl.wordTokens)
+      const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
       if (range) {
         saveSelection(tl)
       } else {
         saveSingle(tl.line, token)
       }
     },
-    [saveSelection, saveSingle]
+    [interaction, saveSelection, saveSingle]
   )
 
   const onWordMouseDown = useCallback(
@@ -444,10 +402,11 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       // Suppress the single-word gloss while starting a (possible) drag; the
       // mouseup handler re-arms the gloss for whatever ends up under the pointer.
       clearHoverTimer()
-      selectingRef.current = true
-      setSelectionBoth({ lineIndex: tl.line.index, anchorOrdinal: token.ordinal, headOrdinal: token.ordinal })
+      const state = interaction.getState()
+      state.setSelecting(true)
+      state.setSelection({ lineIndex: tl.line.index, anchorOrdinal: token.ordinal, headOrdinal: token.ordinal })
     },
-    [setSelectionBoth]
+    [interaction]
   )
 
   // ---- CEFR retry ------------------------------------------------------------
@@ -483,16 +442,16 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // after a multi-word drag (you'd have to leave and re-enter a selected word).
   useEffect(() => {
     const onMouseUp = () => {
-      if (!selectingRef.current) return
-      selectingRef.current = false
-      const hov = hoveredRef.current
-      if (hov) {
-        scheduleHoverGloss(hov.tl, hov.token, hov.element)
+      const state = interaction.getState()
+      if (!state.selecting) return
+      state.setSelecting(false)
+      if (state.hovered) {
+        scheduleHoverGloss(state.hovered.tl, state.hovered.token, state.hovered.element)
       }
     }
     window.addEventListener('mouseup', onMouseUp, true)
     return () => window.removeEventListener('mouseup', onMouseUp, true)
-  }, [scheduleHoverGloss])
+  }, [interaction, scheduleHoverGloss])
 
   // Resuming playback clears the hover gloss and any selection (legacy parity).
   useEffect(() => {
@@ -526,6 +485,15 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // ---- render ----------------------------------------------------------------
 
   const lineStyleForOffset = snapshot.lines[0]?.style
+
+  // The open popover's content, derived from the query (cached successes render
+  // ready immediately; a disabled/idle query renders as loading, but the
+  // tooltip only mounts while `gloss` is set).
+  const glossContent: GlossContent = glossQuery.data
+    ? { status: 'ready', data: glossQuery.data }
+    : glossQuery.isError
+      ? { status: 'error', message: glossQuery.error.message }
+      : { status: 'loading' }
 
   return (
     <>
@@ -590,11 +558,14 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
       {createPortal(
         <>
-          {snapshot.visible && gloss && (
+          {/* anchor.isConnected: cached data could otherwise appear against a
+              disconnected anchor after an element remount, before the
+              cue-change effect has cleared the gloss. */}
+          {snapshot.visible && gloss && gloss.anchor.isConnected && (
             <GlossTooltip
               anchor={gloss.anchor}
               word={gloss.word}
-              content={gloss.content}
+              content={glossContent}
               saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
               signedIn={signedIn}
               onSignIn={onSignIn}
