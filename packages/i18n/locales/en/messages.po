@@ -211,8 +211,8 @@ msgstr "€{yearlyPricePerMonth}/month"
 msgid "3 examples"
 msgstr "3 examples"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:205
-#: apps/web/src/features/review/components/editable-card-fields.tsx:246
+#: apps/web/src/features/review/components/editable-card-fields.tsx:293
+#: apps/web/src/features/review/components/editable-card-fields.tsx:334
 msgid "A natural translation of the target example."
 msgstr "A natural translation of the target example."
 
@@ -222,7 +222,7 @@ msgid "A newer version of the app is required to continue. Please update to the 
 msgstr "A newer version of the app is required to continue. Please update to "
 "the latest version to access all features and improvements."
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:185
+#: apps/web/src/features/review/components/editable-card-fields.tsx:273
 msgid "A sentence using this term in its natural setting."
 msgstr "A sentence using this term in its natural setting."
 
@@ -317,7 +317,7 @@ msgstr "Add to active vocabulary"
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:260
+#: apps/web/src/features/review/components/editable-card-fields.tsx:348
 msgid "Add translation"
 msgstr "Add translation"
 
@@ -440,7 +440,7 @@ msgstr "Animacy"
 msgid "Animate"
 msgstr "Animate"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:148
+#: apps/web/src/features/review/components/editable-card-fields.tsx:214
 msgid "Another term already exists with that headword and sense."
 msgstr "Another term already exists with that headword and sense."
 
@@ -565,7 +565,7 @@ msgstr "Back"
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:320
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:340
 msgid "Back to current card"
 msgstr "Back to current card"
 
@@ -895,7 +895,7 @@ msgstr "Could not open upgrade screen."
 msgid "Could not read this page."
 msgstr "Could not read this page."
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:150
+#: apps/web/src/features/review/components/editable-card-fields.tsx:216
 msgid "Could not rename — please try again."
 msgstr "Could not rename — please try again."
 
@@ -988,12 +988,12 @@ msgstr "Decrease playback rate"
 msgid "Default"
 msgstr "Default"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:221
+#: apps/web/src/features/review/components/editable-card-fields.tsx:309
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:64
 msgid "Definition"
 msgstr "Definition"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:209
+#: apps/web/src/features/review/components/editable-card-fields.tsx:297
 msgid "Definition (optional)"
 msgstr "Definition (optional)"
 
@@ -1586,7 +1586,11 @@ msgstr "Follow-ups"
 msgid "Form (e.g. был)"
 msgstr "Form (e.g. был)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:311
+#: apps/web/src/features/review/components/editable-card-fields.tsx:256
+msgid "Form translation"
+msgstr "Form translation"
+
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:331
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Forward"
@@ -1723,7 +1727,7 @@ msgstr "Grammar notes"
 msgid "Hard"
 msgstr "Hard"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:174
+#: apps/web/src/features/review/components/editable-card-fields.tsx:240
 msgid "Headword"
 msgstr "Headword"
 
@@ -2195,8 +2199,8 @@ msgstr "Name (optional)"
 msgid "Name of the tab"
 msgstr "Name of the tab"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:200
-#: apps/web/src/features/review/components/editable-card-fields.tsx:241
+#: apps/web/src/features/review/components/editable-card-fields.tsx:288
+#: apps/web/src/features/review/components/editable-card-fields.tsx:329
 msgid "Native example"
 msgstr "Native example"
 
@@ -2473,7 +2477,7 @@ msgstr "OpenSubtitles search failed"
 msgid "Optional"
 msgstr "Optional"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:214
+#: apps/web/src/features/review/components/editable-card-fields.tsx:302
 msgid "Optional contextual paraphrase in the target language."
 msgstr "Optional contextual paraphrase in the target language."
 
@@ -2712,7 +2716,7 @@ msgstr "Preposition"
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:300
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:320
 #: apps/web/src/features/review/components/focus-view.tsx:261
 msgid "Previous card"
 msgstr "Previous card"
@@ -2992,7 +2996,7 @@ msgstr "Save note"
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:267
+#: apps/web/src/features/review/components/editable-card-fields.tsx:355
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:450
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
@@ -3166,7 +3170,7 @@ msgid "Share your feedback or suggest improvements to the founders. We read and 
 msgstr "Share your feedback or suggest improvements to the founders. We read "
 "and reply to every submission!"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:226
+#: apps/web/src/features/review/components/editable-card-fields.tsx:314
 msgid "Short paraphrase in the target language."
 msgstr "Short paraphrase in the target language."
 
@@ -3174,7 +3178,7 @@ msgstr "Short paraphrase in the target language."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:326
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:346
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -3333,6 +3337,10 @@ msgstr "Strengthen · {languageName}"
 #: apps/web/src/features/practice/components/strengthen-view.tsx:81
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:249
+msgid "Study this exact form"
+msgstr "Study this exact form"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx:90
 msgid "Style Value"
@@ -3503,7 +3511,7 @@ msgstr "Synonyms"
 msgid "System"
 msgstr "System"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:180
+#: apps/web/src/features/review/components/editable-card-fields.tsx:268
 msgid "Target example"
 msgstr "Target example"
 
@@ -3736,14 +3744,14 @@ msgstr "Transcript Server API Key (optional)"
 msgid "Transcript Server URL"
 msgstr "Transcript Server URL"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:192
-#: apps/web/src/features/review/components/editable-card-fields.tsx:233
+#: apps/web/src/features/review/components/editable-card-fields.tsx:280
+#: apps/web/src/features/review/components/editable-card-fields.tsx:321
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:65
 msgid "Translation"
 msgstr "Translation"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:196
-#: apps/web/src/features/review/components/editable-card-fields.tsx:237
+#: apps/web/src/features/review/components/editable-card-fields.tsx:284
+#: apps/web/src/features/review/components/editable-card-fields.tsx:325
 msgid "Translation in your native language."
 msgstr "Translation in your native language."
 
@@ -3755,6 +3763,10 @@ msgstr "Translation language"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:199
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
+
+#: apps/web/src/features/review/components/editable-card-fields.tsx:260
+msgid "Translation of this exact form in context."
+msgstr "Translation of this exact form in context."
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:163
 msgid "Triage"

@@ -38,6 +38,10 @@ export type BasicDataChunk = {
   surfaceForm: string
   segmentId: string
   translation: string | null
+  // Translation of the inflected surface form as it reads in the sentence
+  // (e.g. 'voyons' for surface 'посмотрим' under headword 'посмотреть').
+  // Null when the surface form is already the citation form.
+  surfaceTranslation: string | null
   definition: string | null
   targetExample: string | null
   nativeExample: string | null
@@ -94,7 +98,13 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
               type: ['string', 'null'],
               description: hideTranslationFields
                 ? 'Set to null. Translation fields are disabled for this target language.'
-                : "Short translation of the chunk into the learner's native language. Null when below_cefr is true (we will skip this chunk).",
+                : "Short translation of the HEADWORD (citation form) into the learner's native language — NOT a translation of the inflected surface form or of the selection as it reads in the sentence. Mirror the headword's dictionary form: singular for a noun headword ('investment', not 'investments'), infinitive for a verb headword ('to pick at', not 'they pick at' or 'it made me sick'). Carry over no person, tense, number, or case from the example. Null when below_cefr is true (we will skip this chunk).",
+            },
+            surface_translation: {
+              type: ['string', 'null'],
+              description: hideTranslationFields
+                ? 'Set to null. Translation fields are disabled for this target language.'
+                : "Counterpart to `translation` for the inflected form: translate surface_form exactly as it reads in the sentence, into the learner's native language (e.g. headword 'посмотреть' with surface_form 'посмотрим' → 'let's see'). Unlike `translation`, this one DOES carry the person, tense, number, and case of the surface form. Null when surface_form is already the citation form (identical to the headword). Null when below_cefr is true.",
             },
             definition: {
               type: ['string', 'null'],
@@ -175,6 +185,7 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
             'surface_form',
             'segment_id',
             'translation',
+            'surface_translation',
             'definition',
             'target_example',
             'native_example',
@@ -215,7 +226,7 @@ ${highlightLines}\n`
     : ''
 
   const translationModeNote = shouldHideTranslationFields
-    ? `\n- Translation fields are disabled for this target language. Set translation=null and native_example=null on every row. Keep definition and target_example in ${targetLanguage}.`
+    ? `\n- Translation fields are disabled for this target language. Set translation=null, surface_translation=null and native_example=null on every row. Keep definition and target_example in ${targetLanguage}.`
     : ''
 
   const userMessage = `Emit one row per user highlight only. DO NOT discover any new chunks
@@ -224,11 +235,14 @@ have source='highlight' and a matching highlight_id from the list below. Do not
 emit any source='llm' rows.
 
 For every emitted row, populate the basic data: headword, sense, surface_form,
-segment_id, translation, definition, target_example, native_example. Populate
+segment_id, translation, surface_translation, definition, target_example,
+native_example. Populate
 the optional \`grammar\` object per chunk when relevant for the target
 language (see the system prompt for per-language guidance).
 The learner is at ${cefrLevel}, native language ${nativeLanguage}, target
-${targetLanguage}. Headwords must be in dictionary citation form (lemmatized).${translationModeNote}${highlightsBlock}
+${targetLanguage}. Headwords must be in dictionary citation form (lemmatized),
+and translation must render that citation form (infinitive for verbs, singular
+for nouns) — never the inflected selection as it appears in the segment.${translationModeNote}${highlightsBlock}
 
 Segments (id followed by text — only for context, do NOT mine them for new chunks):
 ${segmentLines}`
@@ -279,6 +293,7 @@ export const parseBasicDataChunks = (raw: Array<Record<string, unknown>>): Basic
     surfaceForm: String(c.surface_form ?? ''),
     segmentId: String(c.segment_id ?? ''),
     translation: typeof c.translation === 'string' ? c.translation : null,
+    surfaceTranslation: typeof c.surface_translation === 'string' ? c.surface_translation : null,
     definition: typeof c.definition === 'string' ? c.definition : null,
     targetExample: typeof c.target_example === 'string' ? c.target_example : null,
     nativeExample: typeof c.native_example === 'string' ? c.native_example : null,

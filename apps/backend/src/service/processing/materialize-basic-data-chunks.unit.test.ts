@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
+import { buildStudiedFormPatch, materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import type { BasicDataChunk } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
@@ -16,6 +16,7 @@ const llmChunk = (overrides: Partial<BasicDataChunk> = {}): BasicDataChunk => ({
   surfaceForm: 'palabra',
   segmentId,
   translation: 'word',
+  surfaceTranslation: null,
   definition: 'una unidad léxica',
   targetExample: 'Una palabra basta.',
   nativeExample: 'One word is enough.',
@@ -118,5 +119,62 @@ describe('materializeBasicDataChunks — translations-off is a generation pref, 
     await run({ chunk: llmChunk(), hideTranslationFields: true, repos })
 
     expect(repos.updateContent).not.toHaveBeenCalled()
+  })
+})
+
+describe('buildStudiedFormPatch', () => {
+  const inflected = { headword: 'посмотреть', surfaceForm: 'посмотрим', surfaceTranslation: "let's see" }
+
+  it('emits studied_form when the surface form is an inflection with a translation', () => {
+    expect(buildStudiedFormPatch(inflected, null)).toEqual({
+      studied_form: { form: 'посмотрим', translation: "let's see" },
+    })
+  })
+
+  it('is null when the surface form is already the citation form', () => {
+    expect(
+      buildStudiedFormPatch({ headword: 'palabra', surfaceForm: 'palabra', surfaceTranslation: 'word' }, null)
+    ).toBeNull()
+  })
+
+  it('is null without a surface translation', () => {
+    expect(buildStudiedFormPatch({ ...inflected, surfaceTranslation: null }, null)).toBeNull()
+  })
+
+  it('never retargets a form the user has enabled studying', () => {
+    expect(
+      buildStudiedFormPatch(inflected, { study_form_enabled: true, studied_form: { form: 'посмотрел' } })
+    ).toBeNull()
+  })
+})
+
+describe('materializeBasicDataChunks — studied_form persistence', () => {
+  it('folds studied_form into the grammar patch on first-time fill', async () => {
+    const repos = createRepos({})
+
+    await run({
+      chunk: llmChunk({ surfaceForm: 'palabras', surfaceTranslation: 'words', grammar: { pos: 'noun' } }),
+      hideTranslationFields: false,
+      repos,
+    })
+
+    const args = repos.updateContent.mock.calls[0]![0]
+    expect(args.grammarPatch).toEqual({
+      pos: 'noun',
+      studied_form: { form: 'palabras', translation: 'words' },
+    })
+  })
+
+  it('skips studied_form entirely when translations are off', async () => {
+    const repos = createRepos({})
+
+    await run({
+      chunk: llmChunk({ surfaceForm: 'palabras', surfaceTranslation: 'words', grammar: { pos: 'noun' } }),
+      hideTranslationFields: true,
+      repos,
+    })
+
+    const args = repos.updateContent.mock.calls[0]![0]
+    expect(args.grammarPatch).toEqual({ pos: 'noun' })
   })
 })

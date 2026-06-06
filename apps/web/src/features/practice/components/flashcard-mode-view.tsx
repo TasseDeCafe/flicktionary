@@ -208,12 +208,20 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const ipa = pickIpa(card.grammar?.ipa, targetLanguage, englishIpaDialect)
 
+  // "Study this exact form": when enabled on the chunk, the front drills the
+  // inflected form (grammar.studied_form.form) instead of the lemma; the back
+  // leads with the form's in-context translation and demotes the lemma + its
+  // translation to a secondary line. The lemma's IPA is suppressed — it would
+  // be wrong for the inflected form.
+  const studiedForm =
+    card.grammar?.study_form_enabled && card.grammar?.studied_form?.form ? card.grammar.studied_form : null
+
   const cond: CardSlotConditions = {
     hideTranslationFields,
-    hasIpa: !!ipa,
+    hasIpa: !!ipa && !studiedForm,
     hasTargetExample: !!card.targetExample,
     hasNativeExample: !!card.nativeExample,
-    hasTranslation: !!card.translation,
+    hasTranslation: studiedForm ? !!studiedForm.translation : !!card.translation,
     hasDefinition: !!card.definition,
     hasGrammarChips: !!card.grammar,
   }
@@ -230,7 +238,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
         return (
           <StressMarkedText
             key='headword'
-            text={card.grammar?.display_form || card.headword}
+            text={studiedForm ? studiedForm.form : card.grammar?.display_form || card.headword}
             lang={targetLanguage}
             className='text-2xl font-bold'
           />
@@ -254,12 +262,14 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
             {card.nativeExample}
           </p>
         ) : null
-      case 'translation':
-        return card.translation ? (
+      case 'translation': {
+        const primaryTranslation = studiedForm ? studiedForm.translation : card.translation
+        return primaryTranslation ? (
           <p key='translation' className='text-lg'>
-            {card.translation}
+            {primaryTranslation}
           </p>
         ) : null
+      }
       case 'definition':
         return card.definition ? (
           <p key='definition' className='text-muted-foreground text-sm'>
@@ -285,6 +295,16 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
           {showBack && (
             <>
               <div className='my-2 w-full border-t' />
+              {studiedForm && (
+                <p className='text-muted-foreground text-sm'>
+                  <StressMarkedText
+                    text={card.grammar?.display_form || card.headword}
+                    lang={targetLanguage}
+                    className='font-medium'
+                  />
+                  {card.translation ? ` — ${card.translation}` : null}
+                </p>
+              )}
               {backSlots.map(renderSlot)}
             </>
           )}

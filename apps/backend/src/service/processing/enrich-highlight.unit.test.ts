@@ -52,6 +52,7 @@ const highlightChunk = {
   surfaceForm: 'palabra',
   segmentId,
   translation: 'word',
+  surfaceTranslation: null,
   definition: null,
   targetExample: null,
   nativeExample: null,

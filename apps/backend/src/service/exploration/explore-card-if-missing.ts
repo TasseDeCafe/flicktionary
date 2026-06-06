@@ -94,6 +94,25 @@ export const exploreCardIfMissing = async (
       await deps.cardsRepository.updateFields(cardId, { surfaceForm: enrichment.surface_form })
     }
 
+    // grammar.studied_form mirrors the basic-data pass: refresh the inflected
+    // form + its in-context translation, but never retarget a form the user
+    // has already enabled studying.
+    const enrichedHeadwordForForm = (enrichment.headword || card.chunk.headword).trim()
+    const surfaceFormForForm = (enrichment.surface_form || card.surface_form || '').trim()
+    const existingGrammar =
+      card.chunk.grammar && typeof card.chunk.grammar === 'object'
+        ? (card.chunk.grammar as Record<string, unknown>)
+        : {}
+    const studiedFormPatch =
+      !languagePrefs.hideTranslationFields &&
+      enrichment.surface_translation &&
+      surfaceFormForForm &&
+      surfaceFormForForm !== enrichedHeadwordForForm &&
+      !existingGrammar.study_form_enabled
+        ? { studied_form: { form: surfaceFormForForm, translation: enrichment.surface_translation } }
+        : null
+    const grammarPatch = { ...enrichment.grammar, ...studiedFormPatch }
+
     // Content + extras + grammar live on the canonical chunk. When translations
     // are disabled the sanitized fields are null, and updateContent's COALESCE
     // semantics preserve whatever is stored — so a manually-entered translation
@@ -105,7 +124,7 @@ export const exploreCardIfMissing = async (
       targetExample: enrichment.target_example,
       nativeExample: sanitizedText.nativeExample,
       explorationExtrasPatch: sanitizedExtras,
-      grammarPatch: Object.keys(enrichment.grammar).length > 0 ? enrichment.grammar : null,
+      grammarPatch: Object.keys(grammarPatch).length > 0 ? grammarPatch : null,
     })
 
     // Rename only if the LLM produced a different (headword, sense) and the

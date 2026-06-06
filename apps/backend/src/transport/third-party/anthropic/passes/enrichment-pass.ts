@@ -15,6 +15,9 @@ export type EnrichmentOutput = {
   sense: string
   surface_form: string
   translation: string
+  // Translation of the inflected surface form as it reads in the source line
+  // (empty when the surface form is already the citation form).
+  surface_translation: string
   definition: string
   target_example: string
   native_example: string
@@ -55,7 +58,13 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
         type: 'string',
         description: args.hideTranslationFields
           ? 'Set to an empty string. Translation fields are disabled for this target language.'
-          : "Translation of the chunk into the learner's native language.",
+          : "Translation of the HEADWORD (citation form) into the learner's native language — NOT a translation of the inflected surface form or of how the selection reads in the sentence. Mirror the headword's dictionary form: singular for a noun headword ('investment', not 'investments'), infinitive for a verb headword ('to pick at', not 'they pick at' or 'it made me sick'). Carry over no person, tense, number, or case from the source line.",
+      },
+      surface_translation: {
+        type: 'string',
+        description: args.hideTranslationFields
+          ? 'Set to an empty string. Translation fields are disabled for this target language.'
+          : "Counterpart to `translation` for the inflected form: translate surface_form exactly as it reads in the source line, into the learner's native language (e.g. headword 'посмотреть' with surface_form 'посмотрим' → 'let's see'). Unlike `translation`, this one DOES carry the person, tense, number, and case of the surface form. Empty string when surface_form is already the citation form (identical to the headword).",
       },
       definition: {
         type: 'string',
@@ -152,6 +161,7 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
       'sense',
       'surface_form',
       'translation',
+      'surface_translation',
       'definition',
       'target_example',
       'native_example',
@@ -171,7 +181,7 @@ export const enrichmentPass = async ({
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
 }: EnrichmentPassArgs): Promise<EnrichmentOutput> => {
   const translationModeBlock = hideTranslationFields
-    ? `\nTranslation fields are disabled for this target language. Set translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
+    ? `\nTranslation fields are disabled for this target language. Set translation="", surface_translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
     : ''
   const l1NotesBlock = allowL1Notes
     ? `\nYou may include extras.l1_notes for contrastive traps involving the learner's native language.`
@@ -183,8 +193,8 @@ Surrounding segments:
 ${surroundingSegments}${translationModeBlock}${l1NotesBlock}
 
 Submit the enrichment via the tool. Required fields are the basic columns
-(headword, sense, surface_form, translation, definition, target_example,
-native_example) — refine them if your deeper analysis improves on the
+(headword, sense, surface_form, translation, surface_translation, definition,
+target_example, native_example) — refine them if your deeper analysis improves on the
 shallow basic-data pass. Optional fields go inside \`extras\`; include
 whichever are genuinely useful for this chunk. Use \`grammar\` for typed
 morphology / grammar facts (pos, gender, aspect, government, etc.) — see
@@ -222,6 +232,7 @@ fill. Skip the \`grammar\` object entirely when nothing applies.`
     sense: typeof raw.sense === 'string' ? raw.sense : '',
     surface_form: String(raw.surface_form ?? ''),
     translation: typeof raw.translation === 'string' ? raw.translation : '',
+    surface_translation: typeof raw.surface_translation === 'string' ? raw.surface_translation : '',
     definition: typeof raw.definition === 'string' ? raw.definition : '',
     target_example: typeof raw.target_example === 'string' ? raw.target_example : '',
     native_example: typeof raw.native_example === 'string' ? raw.native_example : '',
