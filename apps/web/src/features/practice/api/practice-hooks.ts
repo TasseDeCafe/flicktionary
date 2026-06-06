@@ -17,11 +17,14 @@ export const useDueSummary = () => {
 // Live review pool for the (language, pool, scope). select unwraps the
 // { data: { terms } } envelope. The flashcard mode iterates the batch locally;
 // remounting refetches a fresh slice (already-rated terms drop out naturally).
-export const useListReviewTerms = (targetLanguage: string, pool: PracticePool, scope: ReviewScope) => {
+// `count` is the explicit learn-new batch size (learn_new scope only) — it's
+// part of the orpc input and therefore of the query key, so different batch
+// picks never share a cached slice.
+export const useListReviewTerms = (targetLanguage: string, pool: PracticePool, scope: ReviewScope, count?: number) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.practice.listReviewTerms.queryOptions({
-      input: { targetLanguage, pool, scope },
+      input: { targetLanguage, pool, scope, ...(count != null ? { newBatchSize: count } : {}) },
       select: (r) => r.data.terms,
       meta: { errorMessage: t`Failed to load review terms` },
     })

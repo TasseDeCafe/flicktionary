@@ -14,7 +14,9 @@ Key code map (shared by most tasks):
 - Repository / queue queries: `user-lookups-repository.ts` (`listReviewTerms`, scopes `mixed` / `review_due` / `learn_new`)
 - Contracts: `packages/api-client/src/orpc-contracts/practice-contract.ts`, `user-prefs-contract.ts`
   (after editing a contract: `pnpm --filter @flicktionary/api-client build`)
-- Ratings audit log: `practice_ratings` table (immutable, snapshot columns, `was_explicit` flag)
+- Ratings audit log: `practice_rating_events` table (append-only; pre-rating SRS snapshots,
+  `was_explicit`/`was_introduction`/`caused_parking` flags, `reverted_at` undo tombstone) —
+  replaces the dropped `practice_ratings`
 
 ---
 
@@ -69,7 +71,26 @@ consistency (size untouched — compact sheet).
 
 ## 4. Bug: daily review limit refills on refresh
 
-**Status:** todo — root cause confirmed
+**Status:** done (feat/practice-caps-rework, with task 9)
+
+Implemented via a new append-only `practice_rating_events` table (the old
+`practice_ratings` audit table was dropped with the session machinery — nothing
+recorded rating events anymore). Every applied rating (flashcards AND reading
+advances, both pools) logs an event in the same transaction as the FSRS write,
+with pre-rating SRS snapshots so task 6 (undo) can build on it.
+
+- `resolveReviewCaps`: review cap = clamped limit − `COUNT(DISTINCT
+  user_lookup_id)` of today's non-introduction, review-state, non-reverted
+  passive events (DB `CURRENT_DATE`, same timezone semantics as the new-card
+  cap). In-session `again` redrills count once (DISTINCT); introductions
+  consume the new budget instead.
+- Learning/relearning follow-ups are exempt: `listReviewTerms` split the due
+  query into review-state (budget-capped) and learning-state (hard-max-capped)
+  sub-selects, so a spent budget can't strand a failed card's 10-min step.
+- Landing shows "Daily review limit reached." (new `reviewedTodayCount` on the
+  due summary) when due work exists only beyond the spent budget.
+- Reading mode shares `listReviewTerms`, so it now honors the review budget
+  too (intended; user-visible).
 
 **Reading of the problem confirmed.** The daily limits (`practice_max_new_terms`,
 `practice_max_review_terms` on `users`) are applied as **query LIMITs at fetch time**, not as
@@ -169,7 +190,20 @@ Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users`
 
 ## 9. "Learn new" says "No terms are due" despite thousands of unlearned terms
 
-**Status:** todo
+**Status:** done (feat/practice-caps-rework, with task 4)
+
+"Learn new" (passive pool) now opens a FloatingSheet to pick a batch size
+(5/10/15/20, plus "All N" when ≤ 20 unseen; disabled at 0 unseen). The chosen
+N flows as `count` route search → `listReviewTerms.newBatchSize` (serves
+exactly N unseen terms, ignoring the remaining daily-new budget) and the
+session's ratings send `rateTerm.learnNewSession: true` (introduction guard
+keeps the lock + stamp, drops only the cap predicate). Introductions still
+stamp `added_to_practice_at`, so they count toward today and `mixed` won't
+re-add more. The reading path deliberately does NOT bypass (no
+`requestedNewCount` from the generator, no bypass on advance) — a URL-crafted
+read+learn_new session stays within the daily budget. Empty-state copy is now
+scope-aware ("No new terms to learn." / "No reviews are due right now."). The
+active pool keeps direct entry (it has no daily cap).
 
 `Learn new` (`practice-language-view.tsx` ~lines 146–154) enters scope `learn_new`, which is
 capped by the **remaining daily new-card budget** (`resolveReviewCaps`, `review-caps.ts`

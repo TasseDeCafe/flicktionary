@@ -13,7 +13,7 @@ import { getDailyNewAvailable, getReviewCounts } from './review-counts'
 export const UnifiedReviewView = () => {
   const navigate = useNavigate()
   const { targetLanguage } = useParams({ from: '/_authenticated/_app/practice/review/$targetLanguage' })
-  const { pool, scope, mode } = useSearch({ from: '/_authenticated/_app/practice/review/$targetLanguage' })
+  const { pool, scope, mode, count } = useSearch({ from: '/_authenticated/_app/practice/review/$targetLanguage' })
   const { data: summary } = useDueSummary()
   const { data: prefs } = useGetUserPrefs()
 
@@ -28,7 +28,13 @@ export const UnifiedReviewView = () => {
   return (
     <ModalScreen onClose={close} closeIcon='x' title={languageName}>
       {mode === 'flashcards' ? (
-        <FlashcardModeView key={`fc-${pool}-${scope}`} targetLanguage={targetLanguage} pool={pool} scope={scope} />
+        <FlashcardModeView
+          key={`fc-${pool}-${scope}`}
+          targetLanguage={targetLanguage}
+          pool={pool}
+          scope={scope}
+          count={count}
+        />
       ) : (
         <ReadingModeView
           key={`rd-${pool}-${scope}`}
