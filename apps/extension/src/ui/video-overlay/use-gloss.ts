@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery } from '@tanstack/react-query'
 import type { FlicktionaryGlossResponse } from '@asbplayer-fork/common'
 import { GlossData, requestGloss } from '../../services/flicktionary/flicktionary-client'
 
@@ -10,8 +10,11 @@ export const glossQueryKey = (word: string, sentence: string) => ['gloss', word,
 // and on sendMessage rejections (background SW mid-reload) — TanStack Query
 // caches data, not errors, so a re-hover refetches after a failure while
 // successes stay instant.
-export function useGloss(word: string | undefined, sentence: string | undefined, enabled: boolean) {
-  return useQuery({
+//
+// Exported separately from the hook so the caching invariants are testable
+// against a bare QueryClient (no React).
+export const glossQueryOptions = (word: string | undefined, sentence: string | undefined, enabled: boolean) =>
+  queryOptions({
     queryKey: glossQueryKey(word ?? '', sentence ?? ''),
     queryFn: async (): Promise<GlossData> => {
       let response: FlicktionaryGlossResponse
@@ -38,4 +41,7 @@ export function useGloss(word: string | undefined, sentence: string | undefined,
     // "No translation available" must not auto-retry.
     retry: false,
   })
+
+export function useGloss(word: string | undefined, sentence: string | undefined, enabled: boolean) {
+  return useQuery(glossQueryOptions(word, sentence, enabled))
 }
