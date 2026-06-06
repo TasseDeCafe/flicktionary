@@ -197,7 +197,9 @@ Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users`
 N flows as `count` route search → `listReviewTerms.newBatchSize` (serves
 exactly N unseen terms, ignoring the remaining daily-new budget) and the
 session's ratings send `rateTerm.learnNewSession: true` (introduction guard
-keeps the lock + stamp, drops only the cap predicate). Introductions still
+keeps the lock + stamp, drops only the cap predicate). Both bypasses are gated
+on the chosen batch: a direct/bookmarked learn_new URL without `count` gets
+neither (`newBatchSize` absent, `learnNewSession` false). Introductions still
 stamp `added_to_practice_at`, so they count toward today and `mixed` won't
 re-add more. The reading path deliberately does NOT bypass (no
 `requestedNewCount` from the generator, no bypass on advance) — a URL-crafted

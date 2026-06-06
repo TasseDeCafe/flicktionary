@@ -156,7 +156,11 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     rateTerm(
       // learnNewSession lets introductions in an explicit learn-new session
       // bypass the daily-new cap (they still count toward today's intros).
-      { userLookupId: card.userLookupId, rating, pool, learnNewSession: scope === 'learn_new' },
+      // Gated on `count` to mirror the fetch-time bypass (requestedNewCount):
+      // only the batch-sheet flow supplies it, so a direct/bookmarked
+      // learn_new URL without a chosen batch stays within the daily budget at
+      // rating time too.
+      { userLookupId: card.userLookupId, rating, pool, learnNewSession: scope === 'learn_new' && count != null },
       {
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
