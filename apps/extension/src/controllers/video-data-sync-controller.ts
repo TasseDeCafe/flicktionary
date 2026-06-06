@@ -18,7 +18,7 @@ import {
   VideoDataUiOpenReason,
   VideoToExtensionCommand,
 } from '@asbplayer-fork/common'
-import { AsbplayerSettings, SettingsProvider } from '@asbplayer-fork/common/settings'
+import { AsbplayerSettings, SettingsProvider, YOUTUBE_TARGET_LANGUAGE_LIMIT } from '@asbplayer-fork/common/settings'
 import { base64ToBlob, bufferToBase64 } from '@asbplayer-fork/common/base64'
 import { createElement } from 'react'
 import Binding from '../services/binding'
@@ -27,6 +27,7 @@ import { i18n, setupLingui } from '../ui/lingui'
 import { msg } from '@lingui/core/macro'
 import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-provider'
 import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
+import { getCachedFlicktionaryNativeLanguage } from '@/services/flicktionary/flicktionary-target-language'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
 import {
   ShadowVideoDataSyncApp,
@@ -181,14 +182,38 @@ export default class VideoDataSyncController {
     if (pageDelegate.config.key === 'youtube') {
       const targetTranslationLanguageCodes =
         (await this._settings.getSingle('streamingPages')).youtube.targetLanguages ?? []
-      let payload = { targetTranslationLanguageCodes }
-      if (typeof cloneInto === 'function') {
-        payload = cloneInto(payload, document.defaultView)
-      }
-      document.dispatchEvent(new CustomEvent('asbplayer-get-synced-data', { detail: payload }))
+      this._dispatchGetSyncedData(targetTranslationLanguageCodes)
     } else {
       document.dispatchEvent(new CustomEvent('asbplayer-get-synced-data'))
     }
+  }
+
+  private async _rememberTranslationLanguages(codes: string[]) {
+    const streamingPages = await this._settings.getSingle('streamingPages')
+    const existing = streamingPages.youtube.targetLanguages ?? []
+    const merged = [...codes, ...existing.filter((code) => !codes.includes(code))].slice(
+      0,
+      YOUTUBE_TARGET_LANGUAGE_LIMIT
+    )
+    if (merged.length === existing.length && merged.every((code, i) => code === existing[i])) {
+      return
+    }
+    await this._settings
+      .set({
+        streamingPages: {
+          ...streamingPages,
+          youtube: { ...streamingPages.youtube, targetLanguages: merged },
+        },
+      })
+      .catch(() => {})
+  }
+
+  private _dispatchGetSyncedData(targetTranslationLanguageCodes: string[]) {
+    let payload = { targetTranslationLanguageCodes }
+    if (typeof cloneInto === 'function') {
+      payload = cloneInto(payload, document.defaultView)
+    }
+    document.dispatchEvent(new CustomEvent('asbplayer-get-synced-data', { detail: payload }))
   }
 
   async show({ reason, fromAsbplayerId }: ShowOptions) {
@@ -281,6 +306,18 @@ export default class VideoDataSyncController {
     // gate; this one just keeps the button honest. (The button is YouTube-only,
     // so the check's secure-context requirement is always met where it shows.)
     const canGenerateTranscripts = !!transcriptServerUrl && (await checkCurrentUserIsTestUser())
+    const availableTranslationLanguages = isYouTube ? (this._syncedData?.translationLanguages ?? []) : []
+    // Dropdown default: last machine-translated language (targetLanguages is
+    // most-recent-first), else the paired user's native language. The native
+    // language is a cached storage read only — absent until the first
+    // save/register has run bootstrapPrefs in the background.
+    const lastTranslationLanguage = isYouTube
+      ? (await this._context.settings.getSingle('streamingPages')).youtube.targetLanguages?.[0]
+      : undefined
+    const defaultTranslationLanguage = isYouTube
+      ? (lastTranslationLanguage ?? (await getCachedFlicktionaryNativeLanguage()) ?? undefined)
+      : undefined
+    const translationMode = isYouTube ? await this._context.settings.getSingle('streamingTranslationMode') : undefined
     return this._syncedData
       ? {
           isLoading: this._syncedData.subtitles === undefined,
@@ -299,6 +336,9 @@ export default class VideoDataSyncController {
           hideRememberTrackPreferenceToggle,
           isYouTube,
           canGenerateTranscripts,
+          availableTranslationLanguages,
+          defaultTranslationLanguage,
+          translationMode,
           ...additionalFields,
         }
       : {
@@ -319,6 +359,9 @@ export default class VideoDataSyncController {
           hideRememberTrackPreferenceToggle,
           isYouTube,
           canGenerateTranscripts,
+          availableTranslationLanguages,
+          defaultTranslationLanguage,
+          translationMode,
           ...additionalFields,
         }
   }
@@ -330,10 +373,17 @@ export default class VideoDataSyncController {
       completeMatch: false,
     }
 
-    const emptyChoice = this.lastLanguagesSynced.some((lang) => lang !== '-') === undefined
+    // Entries are slot-wise: '-' means "leave this slot empty". A remembered
+    // list with no real language in it (never remembered, or remembered with
+    // every slot Empty) can't auto-load anything: when the video has tracks on
+    // offer it must NOT count as a complete match — '-' matches anything, so
+    // it would silently sync nothing and suppress the prompt-on-failure dialog
+    // on every video. With no tracks available it does count as complete, so
+    // subtitle-less videos don't nag.
+    const hasRealChoice = this.lastLanguagesSynced.some((lang) => lang !== '-')
 
-    if (!tracks_list.length && emptyChoice) {
-      tracks.completeMatch = true
+    if (!hasRealChoice) {
+      tracks.completeMatch = tracks_list.length === 0
     } else {
       let matches: number = 0
       for (let i = 0; i < this.lastLanguagesSynced.length; i++) {
@@ -484,10 +534,36 @@ export default class VideoDataSyncController {
       const confirmMessage = message as VideoDataUiBridgeConfirmMessage
 
       if (confirmMessage.shouldRememberTrackChoices) {
-        this.lastLanguagesSynced = confirmMessage.data
+        const languages = confirmMessage.data
           .map((track) => track.language)
-          .filter((language) => language !== undefined) as string[]
+          .filter((language): language is string => language !== undefined)
+        // All-Empty choices would otherwise be stored as ['-','-'], which
+        // matches every video and silently suppresses the track dialog forever
+        // (see _matchLastSyncedWithAvailableTracks). Treat "remember nothing"
+        // as clearing the per-site preference instead.
+        this.lastLanguagesSynced = languages.some((language) => language !== '-') ? languages : []
         await this._context.settings.set({ streamingLastLanguagesSynced: this._lastLanguagesSynced }).catch(() => {})
+      }
+
+      // A confirmed machine-translation track (language `L_from_base`) records
+      // L in streamingPages.youtube.targetLanguages (most-recent-first): the
+      // page script then publishes the `>> L` variants on future videos, which
+      // is what lets remembered track choices auto-sync, and the dialog uses
+      // the head of the list as its dropdown default.
+      const machineTranslationCodes = confirmMessage.data
+        .map((track) => track.language)
+        .filter((language): language is string => language !== undefined && language.includes('_from_'))
+        .map((language) => language.split('_from_')[0])
+      if (machineTranslationCodes.length > 0) {
+        await this._rememberTranslationLanguages(machineTranslationCodes)
+      }
+
+      // Persist the toggle choice so the dialog reopens with it.
+      if (confirmMessage.translationMode !== undefined) {
+        const currentMode = await this._settings.getSingle('streamingTranslationMode')
+        if (currentMode !== confirmMessage.translationMode) {
+          await this._settings.set({ streamingTranslationMode: confirmMessage.translationMode }).catch(() => {})
+        }
       }
 
       const data = confirmMessage.data as ConfirmedVideoDataSubtitleTrack[]
@@ -518,11 +594,12 @@ export default class VideoDataSyncController {
     return {
       onOpenSettings: () => void this._handleUiCommand({ command: 'openSettings' }),
       onCancel: () => void this._handleUiCommand({ command: 'cancel' }),
-      onConfirm: (data, shouldRememberTrackChoices, syncWithAsbplayerId) =>
+      onConfirm: (data, shouldRememberTrackChoices, translationMode, syncWithAsbplayerId) =>
         void this._handleUiCommand({
           command: 'confirm',
           data,
           shouldRememberTrackChoices,
+          translationMode,
           syncWithAsbplayerId,
         } as VideoDataUiBridgeConfirmMessage),
       onOpenFile: (subtitles) =>

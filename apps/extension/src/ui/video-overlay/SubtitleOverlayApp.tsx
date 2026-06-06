@@ -20,7 +20,7 @@ import { Word } from './Word'
 import { GlossContent, GlossTooltip } from './GlossTooltip'
 import { CefrPicker } from './CefrPicker'
 import { toast } from 'sonner'
-import { ensureToasterHost } from './toaster-host'
+import { dispatchToast } from './toaster-host'
 
 const HOVER_DEBOUNCE_MS = 300
 // Grace period after the pointer leaves a word before the gloss popover hides,
@@ -221,14 +221,17 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     void startFlicktionaryPairing()
   }, [])
 
-  // Route through the page-global sonner toaster (viewport bottom-right). Lazily
-  // ensure the singleton host exists before the first dispatch. When `action` is
-  // given, sonner renders it as a button (used to offer Sign in on gated saves).
+  // Route through the page-global sonner toaster (viewport bottom-right);
+  // dispatchToast stands the singleton host up lazily and queues the call until
+  // the Toaster is subscribed (a bare toast() right after host creation is
+  // dropped). When `action` is given, sonner renders it as a button (used to
+  // offer Sign in on gated saves).
   const showToast = useCallback((text: string, isError: boolean, action?: { label: string; onClick: () => void }) => {
-    ensureToasterHost()
     const options = action ? { action } : undefined
-    if (isError) toast.error(text, options)
-    else toast.success(text, options)
+    dispatchToast(() => {
+      if (isError) toast.error(text, options)
+      else toast.success(text, options)
+    })
   }, [])
 
   // Render-path range (reads the `selection` state so highlights re-render).

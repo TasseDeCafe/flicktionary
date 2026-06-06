@@ -213,6 +213,20 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight start segment missing' }] },
         })
       }
+      // Cross-segment highlight: the context line must cover the whole span,
+      // not just the segment the selection started in.
+      let contextLine = startSegment.text
+      if (highlight.end_segment_id !== highlight.start_segment_id) {
+        const endSegment = await textSegmentsRepository.findById(highlight.end_segment_id)
+        if (endSegment) {
+          const spanSegments = await textSegmentsRepository.listByIndexRange(
+            session.text_track_id,
+            Math.min(startSegment.index, endSegment.index),
+            Math.max(startSegment.index, endSegment.index)
+          )
+          contextLine = spanSegments.map((s) => s.text).join(' ')
+        }
+      }
       const languagePrefs = await getLanguageMode({
         userId,
         targetLanguage: session.target_language,
@@ -225,7 +239,7 @@ export const HighlightsRouter = (
         targetLanguage: session.target_language,
         nativeLanguage: languageModeNativeLanguage,
         hideTranslationFields: languagePrefs.hideTranslationFields,
-        contextLine: startSegment.text,
+        contextLine,
         selectionText: highlight.selection_text,
       })
       await highlightsRepository.updateFastGloss(highlight.id, serializeFastGloss(gloss))

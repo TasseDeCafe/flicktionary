@@ -1,4 +1,4 @@
-import { InfoIcon, Loader2Icon, SettingsIcon, XIcon } from 'lucide-react'
+import { InfoIcon, LanguagesIcon, Loader2Icon, SettingsIcon, XIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from '@flicktionary/ui/components/dialog'
 import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
@@ -14,10 +14,29 @@ import {
 } from '@flicktionary/ui/components/select'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { ConfirmedVideoDataSubtitleTrack, VideoDataSubtitleTrack, VideoDataUiOpenReason } from '@asbplayer-fork/common'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import MiniProfileSelector from '@asbplayer-fork/common/components/MiniProfileSelector'
 import type { Profile } from '@asbplayer-fork/common/settings'
+
+// "fr" -> "French" in the extension UI locale; falls back to the raw code for
+// anything Intl.DisplayNames refuses.
+const languageDisplayName = (displayNames: Intl.DisplayNames | undefined, code: string): string => {
+  try {
+    return displayNames?.of(code) ?? code
+  } catch {
+    return code
+  }
+}
+
+// The source language a YouTube track transcribes — for already-translated
+// variants (`L_from_base`), the base.
+const baseLanguageOf = (language: string | undefined): string | undefined => {
+  if (language === undefined) {
+    return undefined
+  }
+  return language.includes('_from_') ? language.split('_from_')[1] : language
+}
 
 // Sentinel value for the action item at the bottom of each track select.
 // Radix select items must carry a non-empty unique value; this one is
@@ -57,10 +76,17 @@ interface Props {
   isYouTube?: boolean
   canGenerateTranscripts?: boolean
   isGeneratingSupadata?: boolean
+  availableTranslationLanguages?: string[]
+  defaultTranslationLanguage?: string
+  translationMode?: 'off' | 'machine' | 'human'
   onCancel: () => void
   onOpenFile: (track?: number) => void
   onOpenSettings: () => void
-  onConfirm: (track: ConfirmedVideoDataSubtitleTrack[], shouldRememberTrackChoices: boolean) => void
+  onConfirm: (
+    track: ConfirmedVideoDataSubtitleTrack[],
+    shouldRememberTrackChoices: boolean,
+    translationMode: 'off' | 'machine' | 'human'
+  ) => void
   onSetActiveProfile: (profile: string | undefined) => void
   onDismissFtue: () => void
   onGenerateSupadata?: () => void
@@ -84,6 +110,9 @@ export default function VideoDataSyncDialog({
   isYouTube,
   canGenerateTranscripts,
   isGeneratingSupadata,
+  availableTranslationLanguages,
+  defaultTranslationLanguage,
+  translationMode,
   onCancel,
   onOpenFile,
   onOpenSettings,
@@ -92,23 +121,58 @@ export default function VideoDataSyncDialog({
   onDismissFtue,
   onGenerateSupadata,
 }: Props) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   const [userSelectedSubtitleTrackIds, setUserSelectedSubtitleTrackIds] = useState(['-', '-', '-'])
   const [name, setName] = useState('')
   const [shouldRememberTrackChoices, setShouldRememberTrackChoices] = useState(false)
+  // Translation controls (YouTube): the language the toggles act on, plus the
+  // two mutually-exclusive source switches.
+  const [translationLanguage, setTranslationLanguage] = useState('')
+  const [machineTranslationOn, setMachineTranslationOn] = useState(false)
+  const [humanTranslationOn, setHumanTranslationOn] = useState(false)
   const trimmedName = name.trim()
+  const wasOpen = useRef(false)
 
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpen.current) {
+      // Adopt the controller's auto-selection only when the dialog (re)opens.
+      // While it stays open, later pushes must not clobber in-progress
+      // selections.
       setUserSelectedSubtitleTrackIds(
-        selectedSubtitleTrackIds.map((id) => {
+        selectedSubtitleTrackIds.map((id, i) => {
+          // YouTube renders two selectors; never adopt a track into the hidden
+          // third slot (the translation controls own it).
+          if (isYouTube && i >= 2) {
+            return '-'
+          }
           return id !== undefined ? id : '-'
         })
       )
+      // Adopt the persisted toggle choice; availability gating still applies
+      // (an unavailable source simply contributes nothing on OK).
+      setMachineTranslationOn(translationMode === 'machine')
+      setHumanTranslationOn(translationMode === 'human')
     } else if (!open) {
       setName('')
     }
-  }, [open, selectedSubtitleTrackIds])
+    wasOpen.current = open
+  }, [open, selectedSubtitleTrackIds, isYouTube, translationMode])
+
+  // Drop selections whose track disappeared from a late track-list push.
+  useEffect(() => {
+    setUserSelectedSubtitleTrackIds((prev) =>
+      prev.map((id) => (id === '-' || subtitleTracks.some((track) => track.id === id) ? id : '-'))
+    )
+  }, [subtitleTracks])
+
+  // The dropdown default (last used, else native language) can arrive after the
+  // dialog opened (the model push with the page's track data carries it) — only
+  // ever fill an untouched dropdown.
+  useEffect(() => {
+    if (defaultTranslationLanguage !== undefined && defaultTranslationLanguage !== '') {
+      setTranslationLanguage((current) => (current === '' ? defaultTranslationLanguage : current))
+    }
+  }, [defaultTranslationLanguage])
 
   useEffect(() => {
     if (open) {
@@ -149,11 +213,100 @@ export default function VideoDataSyncDialog({
 
   function handleOkButtonClick() {
     const selectedSubtitleTracks: ConfirmedVideoDataSubtitleTrack[] = allSelectedSubtitleTracks()
-    onConfirm(selectedSubtitleTracks, shouldRememberTrackChoices)
+    const confirmedTranslationMode = machineTranslationOn ? 'machine' : humanTranslationOn ? 'human' : 'off'
+    onConfirm(selectedSubtitleTracks, shouldRememberTrackChoices, confirmedTranslationMode)
   }
 
   function handleRememberTrackChoices() {
     setShouldRememberTrackChoices(!shouldRememberTrackChoices)
+  }
+
+  const displayNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([i18n.locale || 'en'], { type: 'language' })
+    } catch {
+      return undefined
+    }
+  }, [i18n.locale])
+
+  const translationLanguageOptions = useMemo(() => {
+    const codes = [...(availableTranslationLanguages ?? [])]
+    if (translationLanguage !== '' && !codes.includes(translationLanguage)) {
+      // Keep a stale default (e.g. native language the video doesn't offer)
+      // visible rather than showing an empty trigger.
+      codes.push(translationLanguage)
+    }
+    return codes
+      .map((code) => ({ code, name: languageDisplayName(displayNames, code) }))
+      .sort((a, b) => a.name.localeCompare(b.name, i18n.locale || 'en'))
+  }, [availableTranslationLanguages, translationLanguage, displayNames, i18n.locale])
+
+  const primaryTrack = subtitleTracks.find((track) => track.id === userSelectedSubtitleTrackIds[0])
+  // Machine translation reuses the primary track's timedtext URL with `tlang`
+  // — needs a real YouTube track and a target that differs from the language
+  // the track transcribes.
+  const machineTranslationAvailable =
+    primaryTrack !== undefined &&
+    typeof primaryTrack.url === 'string' &&
+    primaryTrack.extension === 'ytsrv3' &&
+    !primaryTrack.localFile &&
+    translationLanguage !== '' &&
+    baseLanguageOf(primaryTrack.language)?.split('-')[0] !== translationLanguage.split('-')[0]
+
+  // A human-authored YouTube track in the translation language (manual upload,
+  // not ASR, not a `>>` variant) that isn't already the primary selection.
+  const humanTranslationTrack =
+    translationLanguage === ''
+      ? undefined
+      : subtitleTracks.find(
+          (track) =>
+            track.id !== userSelectedSubtitleTrackIds[0] &&
+            track.isAutoGenerated !== true &&
+            !track.localFile &&
+            typeof track.url === 'string' &&
+            track.extension === 'ytsrv3' &&
+            track.language !== undefined &&
+            !track.language.includes('_from_') &&
+            track.language.split('-')[0] === translationLanguage.split('-')[0]
+        )
+
+  function handleMachineTranslationToggle(on: boolean) {
+    setMachineTranslationOn(on)
+    if (on) {
+      setHumanTranslationOn(false)
+    }
+  }
+
+  function handleHumanTranslationToggle(on: boolean) {
+    setHumanTranslationOn(on)
+    if (on) {
+      setMachineTranslationOn(false)
+    }
+  }
+
+  // The extra track the translation toggles contribute on OK.
+  function translationTrackForConfirm(): ConfirmedVideoDataSubtitleTrack | undefined {
+    if (machineTranslationOn && machineTranslationAvailable && primaryTrack && typeof primaryTrack.url === 'string') {
+      const url = new URL(primaryTrack.url)
+      url.searchParams.set('tlang', translationLanguage)
+      const baseLabel = primaryTrack.label.replace(/ >> .*$/, '')
+      const label = `${baseLabel} >> ${languageDisplayName(displayNames, translationLanguage)}`
+      return {
+        name: calculateVideoName(trimmedName, label, false),
+        id: `${primaryTrack.id}:tlang:${translationLanguage}`,
+        label,
+        language: `${translationLanguage}_from_${baseLanguageOf(primaryTrack.language)}`,
+        url: url.toString(),
+        extension: primaryTrack.extension,
+      }
+    }
+    if (humanTranslationOn && humanTranslationTrack) {
+      return {
+        name: calculateVideoName(trimmedName, humanTranslationTrack.label, humanTranslationTrack.localFile),
+        ...humanTranslationTrack,
+      }
+    }
+    return undefined
   }
 
   function allSelectedSubtitleTracks() {
@@ -174,6 +327,18 @@ export default function VideoDataSyncDialog({
         }
       })
       .filter((track): track is ConfirmedVideoDataSubtitleTrack => track !== undefined)
+
+    const translationTrack = translationTrackForConfirm()
+    if (
+      translationTrack !== undefined &&
+      !selectedSubtitleTracks.some(
+        (track) =>
+          track.id === translationTrack.id ||
+          (track.language !== undefined && track.language === translationTrack.language)
+      )
+    ) {
+      selectedSubtitleTracks.push(translationTrack)
+    }
 
     return selectedSubtitleTracks
   }
@@ -222,7 +387,8 @@ export default function VideoDataSyncDialog({
     return subtitleTrackSelectors
   }
 
-  const threeSubtitleTrackSelectors = generateSubtitleTrackSelectors(3)
+  // On YouTube the third selector's slot is taken by the translation controls.
+  const subtitleTrackSelectors = generateSubtitleTrackSelectors(isYouTube ? 2 : 3)
   const okButtonRef = useRef<HTMLButtonElement>(null)
   const videoNameRef = useRef<HTMLTextAreaElement>(null)
 
@@ -323,7 +489,57 @@ export default function VideoDataSyncDialog({
               onChange={(e) => setName(e.target.value)}
             />
           </div>
-          {threeSubtitleTrackSelectors}
+          {subtitleTrackSelectors}
+          {isYouTube && showSubSelect && (
+            <div className='flex flex-col gap-2'>
+              <Label className='flex items-center gap-1.5'>
+                <LanguagesIcon className='size-4' />
+                <Trans>Translation language</Trans>
+              </Label>
+              <Select
+                value={translationLanguage === '' ? undefined : translationLanguage}
+                disabled={isLoading || disabled || translationLanguageOptions.length === 0}
+                onValueChange={setTranslationLanguage}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder={t`Select a language`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {translationLanguageOptions.map(({ code, name: languageName }) => (
+                    <SelectItem value={code} key={code}>
+                      <span className='truncate'>{languageName}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-2 pt-1'>
+                <Label className='flex items-center gap-2.5'>
+                  <Switch
+                    checked={machineTranslationOn}
+                    disabled={!machineTranslationAvailable || isLoading || disabled}
+                    onCheckedChange={handleMachineTranslationToggle}
+                  />
+                  <Trans>Machine translation</Trans>
+                </Label>
+                <Label className='flex items-center gap-2.5'>
+                  <Switch
+                    checked={humanTranslationOn}
+                    disabled={humanTranslationTrack === undefined || isLoading || disabled}
+                    onCheckedChange={handleHumanTranslationToggle}
+                  />
+                  <span>
+                    <Trans>Human translation</Trans>
+                    {humanTranslationTrack === undefined && (
+                      <span className='text-muted-foreground'>
+                        {' '}
+                        (<Trans>not available</Trans>)
+                      </span>
+                    )}
+                  </span>
+                </Label>
+              </div>
+            </div>
+          )}
           {!hideRememberTrackPreferenceToggle && (
             <Label className='ml-auto flex w-fit items-center gap-3'>
               <Trans>Remember these track choices for this site</Trans>

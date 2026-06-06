@@ -50,6 +50,7 @@ export interface VideoDataCommands {
   onConfirm: (
     data: ConfirmedVideoDataSubtitleTrack[],
     shouldRememberTrackChoices: boolean,
+    translationMode: 'off' | 'machine' | 'human',
     syncWithAsbplayerId?: string
   ) => void
   onOpenFile: (subtitles: SerializedSubtitleFile[]) => void
@@ -114,6 +115,9 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
   const [isYouTube, setIsYouTube] = useState<boolean>(false)
   const [canGenerateTranscripts, setCanGenerateTranscripts] = useState<boolean>(false)
   const [isGeneratingSupadata, setIsGeneratingSupadata] = useState<boolean>(false)
+  const [availableTranslationLanguages, setAvailableTranslationLanguages] = useState<string[]>([])
+  const [defaultTranslationLanguage, setDefaultTranslationLanguage] = useState<string>()
+  const [translationMode, setTranslationMode] = useState<'off' | 'machine' | 'human'>('off')
 
   // Apply each partial model exactly as the bridge listener did in VideoDataSyncUi.
   useEffect(() => {
@@ -178,6 +182,15 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
       if (model.isGeneratingSupadata !== undefined) {
         setIsGeneratingSupadata(model.isGeneratingSupadata)
       }
+      if (model.availableTranslationLanguages !== undefined) {
+        setAvailableTranslationLanguages(model.availableTranslationLanguages)
+      }
+      if (model.defaultTranslationLanguage !== undefined) {
+        setDefaultTranslationLanguage(model.defaultTranslationLanguage)
+      }
+      if (model.translationMode !== undefined) {
+        setTranslationMode(model.translationMode)
+      }
     })
   }, [channel, t])
 
@@ -189,11 +202,16 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
   }, [commands])
 
   const handleConfirm = useCallback(
-    (data: ConfirmedVideoDataSubtitleTrack[], shouldRememberTrackChoices: boolean) => {
+    (
+      data: ConfirmedVideoDataSubtitleTrack[],
+      shouldRememberTrackChoices: boolean,
+      confirmedTranslationMode: 'off' | 'machine' | 'human'
+    ) => {
       setOpen(false)
       commands.onConfirm(
         data,
         shouldRememberTrackChoices,
+        confirmedTranslationMode,
         openedFromAsbplayerId.length > 0 ? openedFromAsbplayerId : undefined
       )
     },
@@ -282,6 +300,9 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
         isYouTube={isYouTube}
         canGenerateTranscripts={canGenerateTranscripts}
         isGeneratingSupadata={isGeneratingSupadata}
+        availableTranslationLanguages={availableTranslationLanguages}
+        defaultTranslationLanguage={defaultTranslationLanguage}
+        translationMode={translationMode}
         onCancel={handleCancel}
         onOpenFile={handleOpenFile}
         onOpenSettings={handleOpenSettings}

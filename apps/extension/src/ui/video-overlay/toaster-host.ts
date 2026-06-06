@@ -1,6 +1,7 @@
-import { createElement } from 'react'
+import { createElement, useEffect } from 'react'
 import { createRoot, Root } from 'react-dom/client'
 import { Toaster } from 'sonner'
+import type { ToasterProps } from 'sonner'
 import { resolveTheme } from '@asbplayer-fork/common/settings'
 import { applyOverlayStyles } from '../shadow/overlay-stylesheet'
 
@@ -32,11 +33,47 @@ let singleton: ToasterHost | undefined
 // resolved system theme until _refreshSettings pushes the real value.
 let currentTheme: 'dark' | 'light' = resolveTheme('system')
 
+// sonner's `toast()` publishes to subscribers only — its <Toaster> subscribes in
+// a useEffect and does NOT replay earlier toasts, so anything dispatched in the
+// same tick that creates the host (createRoot().render() is async) is silently
+// dropped. Queue dispatches until the Toaster has committed: child effects run
+// before parent effects, so when this wrapper's effect fires, sonner's
+// subscription inside <Toaster> is guaranteed live.
+let toasterReady = false
+let pendingDispatches: Array<() => void> = []
+
+const ToasterReadyGate = (props: ToasterProps) => {
+  useEffect(() => {
+    toasterReady = true
+    const queued = pendingDispatches
+    pendingDispatches = []
+    queued.forEach((dispatch) => dispatch())
+  }, [])
+  return createElement(Toaster, props)
+}
+
+// Dispatch a sonner `toast()` call, standing up the host first and deferring
+// the call until the Toaster is actually subscribed. All toast call sites must
+// go through this — a bare `ensureToasterHost(); toast(...)` loses the first
+// toast of the page.
+export function dispatchToast(dispatch: () => void): void {
+  ensureToasterHost()
+  if (toasterReady) {
+    dispatch()
+  } else {
+    pendingDispatches.push(dispatch)
+  }
+}
+
 // sonner sets `data-sonner-theme` from this prop; the palette for both themes is
 // in the adopted stylesheet, so the toaster is colored correctly in the shadow root.
 function renderToaster(root: Root): void {
   root.render(
-    createElement(Toaster, { position: 'bottom-right', theme: currentTheme, style: { zIndex: TOASTER_Z_INDEX } })
+    createElement(ToasterReadyGate, {
+      position: 'bottom-right',
+      theme: currentTheme,
+      style: { zIndex: TOASTER_Z_INDEX },
+    })
   )
 }
 
@@ -54,8 +91,9 @@ export function setToasterTheme(theme: ToasterTheme): void {
   }
 }
 
-// Stand up the singleton Toaster (idempotent). Call before the first `toast()`.
-export function ensureToasterHost(): void {
+// Stand up the singleton Toaster (idempotent). Don't pair this manually with a
+// bare `toast()` — use dispatchToast, which waits for the Toaster to subscribe.
+function ensureToasterHost(): void {
   if (singleton) {
     return
   }
@@ -101,4 +139,6 @@ export function disposeToasterHost(): void {
   singleton.root.unmount()
   singleton.host.remove()
   singleton = undefined
+  toasterReady = false
+  pendingDispatches = []
 }

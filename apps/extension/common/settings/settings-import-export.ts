@@ -267,6 +267,9 @@ const settingsSchema = {
     streamingSubtitleListPreference: {
       type: 'string',
     },
+    streamingTranslationMode: {
+      type: 'string',
+    },
     streamingEnableOverlay: {
       type: 'boolean',
     },

@@ -88,7 +88,13 @@ export const enrichHighlight = async (
       usersRepository,
       targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
     }),
-    selectSurroundingSegments(session.text_track_id, highlight.start_segment_id, textSegmentsRepository),
+    selectSurroundingSegments(
+      session.text_track_id,
+      highlight.start_segment_id,
+      textSegmentsRepository,
+      undefined,
+      highlight.end_segment_id
+    ),
   ])
   const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 

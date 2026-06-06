@@ -191,6 +191,10 @@ export interface YoutubePage extends Page {
   targetLanguages?: string[]
 }
 
+// Maximum machine-translation language codes for YouTube — each code adds a
+// translated variant per detected track, so the list multiplies the track count.
+export const YOUTUBE_TARGET_LANGUAGE_LIMIT = 3
+
 export interface PageSettings {
   netflix: Page
   youtube: YoutubePage
@@ -215,6 +219,11 @@ export interface PageSettings {
   iwanttfc: Page
 }
 
+// Which source the track-select dialog's translation toggles use. Persisted so
+// the chosen toggle survives dialog reopens (the language itself rides in
+// streamingPages.youtube.targetLanguages, most-recent-first).
+export type StreamingTranslationMode = 'off' | 'machine' | 'human'
+
 export interface StreamingVideoSettings {
   readonly streamingAppUrl: string
   readonly streamingDisplaySubtitles: boolean
@@ -227,6 +236,7 @@ export interface StreamingVideoSettings {
   readonly streamingCondensedPlaybackMinimumSkipIntervalMs: number
   readonly streamingSubtitleListPreference: SubtitleListPreference
   readonly streamingEnableOverlay: boolean
+  readonly streamingTranslationMode: StreamingTranslationMode
   readonly streamingPages: PageSettings
 }
 

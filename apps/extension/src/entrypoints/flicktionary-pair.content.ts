@@ -48,7 +48,13 @@ export default defineContentScript({
         ]
       : []),
   ],
-  runAt: 'document_idle',
+  // document_start, NOT document_idle: the pair page mints the session and
+  // posts its one-shot message within a few hundred ms of booting, often
+  // before document_idle fires — a listener registered at idle loses that
+  // race and the page sits on "Pairing..." until its 10s timeout. At
+  // document_start the listener is registered before any page script runs,
+  // so the message can never be missed.
+  runAt: 'document_start',
 
   main() {
     window.addEventListener('message', async (event) => {
@@ -58,7 +64,20 @@ export default defineContentScript({
 
       try {
         const pending = await getPendingFlicktionaryPairNonce()
-        if (!pending || pending.nonce !== event.data.nonce) return
+        if (!pending || pending.nonce !== event.data.nonce) {
+          // Stale tab or expired nonce (2min TTL): surface it instead of
+          // leaving the page hanging until its timeout.
+          window.postMessage(
+            {
+              source: ACK_SOURCE,
+              nonce: event.data.nonce,
+              ok: false,
+              error: 'Pairing expired or was started elsewhere. Try again from the extension.',
+            },
+            window.location.origin
+          )
+          return
+        }
 
         const response = await browser.runtime.sendMessage({
           sender: 'flicktionary-extension-pair-content',

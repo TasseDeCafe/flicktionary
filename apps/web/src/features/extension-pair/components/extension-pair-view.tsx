@@ -19,12 +19,14 @@ export const ExtensionPairView = () => {
 
   const [status, setStatus] = useState<Status>('pairing')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const triggered = useRef(false)
 
+  // Depends on `nonce` ONLY — no `t`, no one-shot ref. `t` changes identity
+  // when UserUiPrefsSync activates the user's locale right after boot; a
+  // dependency on it cancelled the in-flight mint mid-pairing while a
+  // module-lifetime "already triggered" guard kept the re-run from doing
+  // anything, so the page hung on "Pairing..." forever whenever the prefs
+  // response beat the mint. Translated fallbacks live at render time instead.
   useEffect(() => {
-    if (triggered.current) return
-    triggered.current = true
-
     let cancelled = false
     let extensionResponded = false
     let timeoutHandle: number | undefined
@@ -37,7 +39,7 @@ export const ExtensionPairView = () => {
       if (data.nonce !== nonce) return
       extensionResponded = true
       if (data.ok === false) {
-        setErrorMessage(data.error ?? t`The extension could not complete pairing.`)
+        setErrorMessage(data.error ?? null)
         setStatus('error')
         return
       }
@@ -68,7 +70,7 @@ export const ExtensionPairView = () => {
         }, EXTENSION_RESPONSE_TIMEOUT_MS)
       } catch (err) {
         if (cancelled) return
-        setErrorMessage(err instanceof Error ? err.message : t`Failed to start pairing`)
+        setErrorMessage(err instanceof Error ? err.message : null)
         setStatus('error')
       }
     }
@@ -80,7 +82,7 @@ export const ExtensionPairView = () => {
       window.removeEventListener('message', onAck)
       if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle)
     }
-  }, [nonce, t])
+  }, [nonce])
 
   return (
     <main className='flex flex-1 justify-center overflow-y-auto p-4'>
