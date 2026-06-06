@@ -73,12 +73,15 @@ export default class VideoDataSyncController {
   private _lastLanguagesSynced: { [key: string]: string[] }
   private _emptySubtitle: VideoDataSubtitleTrack
   private _syncedData?: VideoData
-  // Slot-ordered ids of the tracks last synced for THIS video ('-' = empty
-  // slot). Reopening the dialog must reflect what is actually loaded — the
+  // Slot-ordered tracks last synced for THIS video (_emptySubtitle for empty
+  // slots). Reopening the dialog must reflect what is actually loaded — the
   // remembered-language match alone shows Empty while subtitles play, and
   // confirming that Empty selection unloads them (and, with the remember
-  // toggle on, silently clears the per-site language preference).
-  private _lastSyncedTrackIds?: string[]
+  // toggle on, silently clears the per-site language preference). Full tracks,
+  // not just ids: a track id embeds the signed timedtext URL, and the page
+  // republishes the same logical tracks with fresh URLs (new ids), so resolving
+  // a recorded track against the current list needs the stable fields too.
+  private _lastSyncedTracks?: VideoDataSubtitleTrack[]
   private _wasPaused?: boolean
   private _fullscreenElement?: Element
   private _activeElement?: Element
@@ -131,7 +134,7 @@ export default class VideoDataSyncController {
 
     this._dataReceivedListener = undefined
     this._syncedData = undefined
-    this._lastSyncedTrackIds = undefined
+    this._lastSyncedTracks = undefined
 
     this._shadowHandle?.unmount()
     this._shadowHandle = undefined
@@ -175,7 +178,7 @@ export default class VideoDataSyncController {
     this._syncedData = undefined
     this._autoSyncAttempted = false
     // New video context — what was loaded for the previous one is irrelevant.
-    this._lastSyncedTrackIds = undefined
+    this._lastSyncedTracks = undefined
 
     if (!this._dataReceivedListener) {
       this._dataReceivedListener = (event: Event) => {
@@ -289,12 +292,12 @@ export default class VideoDataSyncController {
     const autoSelectedTracks: VideoDataSubtitleTrack[] = subs.autoSelectedTracks
 
     let autoSelectedTrackIds: string[]
-    if (this._lastSyncedTrackIds !== undefined) {
-      // Subtitles are already loaded for this video: reflect them (pruned
+    if (this._lastSyncedTracks !== undefined) {
+      // Subtitles are already loaded for this video: reflect them (resolved
       // against the available tracks) rather than the remembered-language
       // match, so reopening the dialog and pressing OK is a no-op.
-      autoSelectedTrackIds = this._lastSyncedTrackIds.map((id) =>
-        id === '-' || subtitleTrackChoices.some((track) => track.id === id) ? id : '-'
+      autoSelectedTrackIds = this._lastSyncedTracks.map((track) =>
+        this._resolveSyncedTrackId(track, subtitleTrackChoices)
       )
     } else if (cachedTranscript) {
       // Pre-select the cached Whisper track
@@ -589,7 +592,7 @@ export default class VideoDataSyncController {
         await this._syncSubtitles(subtitles, false)
         // Loaded files aren't in the page's track list — the reopened dialog
         // can't represent them, so fall back to the auto-match.
-        this._lastSyncedTrackIds = undefined
+        this._lastSyncedTracks = undefined
         dataWasSynced = true
       } catch (e) {
         if (e instanceof Error) {
@@ -738,7 +741,7 @@ export default class VideoDataSyncController {
         subtitles,
         data.some((track) => typeof track.url === 'object')
       )
-      this._recordSyncedTrackIds(data)
+      this._recordSyncedTracks(data)
       return true
     } catch (error) {
       if (typeof (error as Error).message !== 'undefined') {
@@ -749,16 +752,41 @@ export default class VideoDataSyncController {
     }
   }
 
-  // Remember the slot-ordered ids just synced so the reopened dialog shows
+  // Remember the slot-ordered tracks just synced so the reopened dialog shows
   // them. Slice to the 3 selector slots — a confirm can append a synthetic
   // machine-translation track whose id isn't in the track list (the persisted
   // translationMode toggle reconstructs that part of the choice instead).
-  private _recordSyncedTrackIds(data: VideoDataSubtitleTrack[]) {
-    const ids = data.map((track) => track.id || '-').slice(0, 3)
-    while (ids.length < 3) {
-      ids.push('-')
+  private _recordSyncedTracks(data: VideoDataSubtitleTrack[]) {
+    const tracks = data.slice(0, 3)
+    while (tracks.length < 3) {
+      tracks.push(this._emptySubtitle)
     }
-    this._lastSyncedTrackIds = ids
+    this._lastSyncedTracks = tracks
+  }
+
+  // The current-list id for a recorded synced track. Track ids embed the
+  // signed timedtext URL, and the page script re-publishes the same logical
+  // tracks with freshly-signed URLs (e.g. the 500ms videoId-change republish
+  // racing a loadedmetadata-triggered request) — so when the exact id is gone,
+  // fall back to the stable identity the page script itself dedupes on
+  // (language + asr-ness), preferring a label match when several qualify.
+  private _resolveSyncedTrackId(synced: VideoDataSubtitleTrack, available: VideoDataSubtitleTrack[]): string {
+    if (synced.id === '-') {
+      return '-'
+    }
+    if (available.some((track) => track.id === synced.id)) {
+      return synced.id
+    }
+    const candidates = available.filter(
+      (track) =>
+        track.language === synced.language &&
+        (track.isAutoGenerated === true) === (synced.isAutoGenerated === true) &&
+        track.localFile !== true
+    )
+    if (candidates.length === 0) {
+      return '-'
+    }
+    return (candidates.find((track) => track.label === synced.label) ?? candidates[0]).id
   }
 
   private async _syncDataArray(data: ConfirmedVideoDataSubtitleTrack[], syncWithAsbplayerId?: string) {
@@ -779,7 +807,7 @@ export default class VideoDataSyncController {
         data.some((track) => typeof track.url === 'object'),
         syncWithAsbplayerId
       )
-      this._recordSyncedTrackIds(data)
+      this._recordSyncedTracks(data)
       return true
     } catch (error) {
       if (typeof (error as Error).message !== 'undefined') {
@@ -978,7 +1006,7 @@ export default class VideoDataSyncController {
 
         await this._syncSubtitles(subtitleFiles, false)
         // The generated track isn't in the page's track list — see openFile.
-        this._lastSyncedTrackIds = undefined
+        this._lastSyncedTracks = undefined
         client.updateState({ isGeneratingSupadata: false })
         this._hideAndResume()
       }
