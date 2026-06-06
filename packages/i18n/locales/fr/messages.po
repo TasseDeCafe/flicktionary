@@ -1145,7 +1145,7 @@ msgstr "Le lien n'est pas valide ou a expiré"
 msgid "Email Verification Sent"
 msgstr "Email de Vérification Envoyé"
 
-#: apps/extension/src/controllers/video-data-sync-controller.ts:108
+#: apps/extension/src/controllers/video-data-sync-controller.ts:109
 #: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx:82
 msgid "Empty"
 msgstr "Vide"
