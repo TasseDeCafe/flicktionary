@@ -29,14 +29,11 @@ import { ExtensionGlobalStateProvider } from '@/services/extension-global-state-
 import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
 import { getCachedFlicktionaryNativeLanguage } from '@/services/flicktionary/flicktionary-target-language'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
-import {
-  ShadowVideoDataSyncApp,
-  VideoDataModelChannel,
-  type VideoDataCommands,
-} from '@/ui/video-data-sync/ShadowVideoDataSyncApp'
+import { ShadowVideoDataSyncApp, type VideoDataCommands } from '@/ui/video-data-sync/ShadowVideoDataSyncApp'
+import { createVideoDataSyncStore, type VideoDataSyncStore } from '@/ui/video-data-sync/video-data-sync-store'
 
-// The in-realm model sink (the channel) exposes updateState; this minimal shape
-// is what the rest of the controller drives.
+// The in-realm model sink (the store's updateState action) exposes updateState;
+// this minimal shape is what the rest of the controller drives.
 interface VideoDataClient {
   updateState(state: Partial<VideoDataUiModel>): void
 }
@@ -83,10 +80,10 @@ export default class VideoDataSyncController {
   private _dataReceivedListener?: (event: Event) => void
 
   // The subtitle-track dialog renders in the content-script realm via a
-  // fullscreen-aware modal shadow host. The model flows through `_channel`
-  // (partial updateState pushes) and the UI commands route through
-  // `_handleUiCommand`.
-  private _channel?: VideoDataModelChannel
+  // fullscreen-aware modal shadow host. The model flows through `_store`
+  // (partial pushes via the store's updateState action) and the UI commands
+  // route through `_handleUiCommand`.
+  private _store?: VideoDataSyncStore
   private _shadowHandle?: ShadowHostHandle
   private _shadowOpen = false
 
@@ -131,7 +128,7 @@ export default class VideoDataSyncController {
 
     this._shadowHandle?.unmount()
     this._shadowHandle = undefined
-    this._channel = undefined
+    this._store = undefined
     this._shadowOpen = false
   }
 
@@ -612,8 +609,8 @@ export default class VideoDataSyncController {
   }
 
   private async _ensureShadowMounted() {
-    if (!this._channel) {
-      this._channel = new VideoDataModelChannel()
+    if (!this._store) {
+      this._store = createVideoDataSyncStore()
     }
     if (this._shadowHandle) {
       return
@@ -622,7 +619,7 @@ export default class VideoDataSyncController {
     // iframe's loc script).
     const language = await this._settings.getSingle('language')
     setupLingui(language)
-    const channel = this._channel
+    const store = this._store
     const commands = this._shadowCommands()
     this._shadowHandle = mountModalHost({
       hostAttribute: VIDEO_DATA_SYNC_HOST_ATTR,
@@ -630,13 +627,15 @@ export default class VideoDataSyncController {
       // utilities) instead of emotion.
       adoptTailwind: true,
       render: ({ shadowRoot, portalContainer }) =>
-        createElement(ShadowVideoDataSyncApp, { channel, shadowRoot, portalContainer, language, commands }),
+        createElement(ShadowVideoDataSyncApp, { store, shadowRoot, portalContainer, language, commands }),
     })
   }
 
-  // The active model sink (the in-realm channel), or undefined before mount.
+  // The active model sink (the store's stable actions), or undefined before
+  // mount. zustand actions are stable across setState, so the snapshot's
+  // updateState is safe to hold.
   private _clientIfLoaded(): VideoDataClient | undefined {
-    return this._channel
+    return this._store?.getState()
   }
 
   // Whether the dialog is currently hidden.
@@ -647,7 +646,7 @@ export default class VideoDataSyncController {
   private async _client(): Promise<VideoDataClient> {
     await this._ensureShadowMounted()
     this._shadowOpen = true
-    return this._channel!
+    return this._store!.getState()
   }
 
   private _prepareShow() {
@@ -673,7 +672,7 @@ export default class VideoDataSyncController {
     this._context.subtitleController.forceHideSubtitles = false
     this._context.videoOverlayController.forceHide = false
 
-    this._channel?.updateState({ open: false })
+    this._store?.getState().updateState({ open: false })
     this._shadowOpen = false
 
     if (this._fullscreenElement) {
