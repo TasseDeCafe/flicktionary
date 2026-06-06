@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { useMutation } from '@tanstack/react-query'
 import { Button } from '@flicktionary/ui/components/button'
 
 // Popup affordance for importing the current page's article into Flicktionary.
@@ -8,31 +8,34 @@ import { Button } from '@flicktionary/ui/components/button'
 // so we only render inline feedback for the failure path.
 export const FlicktionaryImportSection = () => {
   const { t } = useLingui()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const handleImport = async () => {
-    setBusy(true)
-    setError(null)
-    try {
+  const importMutation = useMutation({
+    mutationFn: async () => {
       const response = (await browser.runtime.sendMessage({
         sender: 'asbplayer-popup',
         message: { command: 'flicktionary-import-article' },
       })) as { success: boolean; error?: string } | undefined
       if (!response?.success) {
-        setError(response?.error ?? t`Could not import this page.`)
+        throw new Error(response?.error ?? t`Could not import this page.`)
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t`Could not import this page.`)
-    } finally {
-      setBusy(false)
-    }
-  }
+    },
+    // The inline message below handles the failure path.
+    meta: { showErrorToast: false },
+  })
+
+  const error = importMutation.error?.message ?? null
 
   return (
     <div className='rounded-lg border p-3'>
-      <Button type='button' variant='outline' size='sm' className='w-full' onClick={handleImport} disabled={busy}>
-        {busy ? <Trans>Importing…</Trans> : <Trans>Import this article</Trans>}
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        className='w-full'
+        onClick={() => importMutation.mutate()}
+        disabled={importMutation.isPending}
+      >
+        {importMutation.isPending ? <Trans>Importing…</Trans> : <Trans>Import this article</Trans>}
       </Button>
       {error && <p className='text-destructive mt-2 text-xs'>{error}</p>}
     </div>

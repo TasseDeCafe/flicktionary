@@ -705,7 +705,7 @@ msgstr "Choose a plan to unlock all features"
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:63
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:66
 msgid "Choose your native language to enable lookups."
 msgstr "Choose your native language to enable lookups."
 
@@ -856,8 +856,7 @@ msgstr "Could not find a readable article on this page."
 msgid "Could not import the pasted text."
 msgstr "Could not import the pasted text."
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:23
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:26
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:19
 msgid "Could not import this page."
 msgstr "Could not import this page."
 
@@ -895,7 +894,7 @@ msgstr "Could not read this page."
 msgid "Could not rename — please try again."
 msgstr "Could not rename — please try again."
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:79
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:82
 msgid "Could not save. Please try again."
 msgstr "Could not save. Please try again."
 
@@ -1549,11 +1548,11 @@ msgstr "Feminine"
 msgid "Finding suggestions…"
 msgstr "Finding suggestions…"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:60
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:63
 msgid "Finish setup"
 msgstr "Finish setup"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:54
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:58
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:52
 msgid "Flicktionary"
 msgstr "Flicktionary"
@@ -1811,7 +1810,7 @@ msgstr "Import article to Flicktionary"
 msgid "Import Settings"
 msgstr "Import Settings"
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:38
 msgid "Import this article"
 msgstr "Import this article"
 
@@ -1823,7 +1822,7 @@ msgstr "Imported text"
 msgid "Importing articles"
 msgstr "Importing articles"
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:35
+#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx:38
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx:169
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx:85
 msgid "Importing…"
@@ -2184,8 +2183,8 @@ msgstr "Name of the tab"
 msgid "Native example"
 msgstr "Native example"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:66
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:69
+#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:70
 #: apps/web/src/features/settings/components/native-language-selector.tsx:17
 #: apps/web/src/features/settings/components/native-language-selector.tsx:21
 msgid "Native language"
@@ -3203,11 +3202,11 @@ msgstr "Sign in to Flicktionary to set your level."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Sign in to Flicktionary to translate."
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:71
 msgid "Sign in with Flicktionary"
 msgstr "Sign in with Flicktionary"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:62
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:66
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
 #: apps/web/src/features/more/components/more-tab-view.tsx:168
@@ -3224,11 +3223,11 @@ msgid "Sign up"
 msgstr "Sign up"
 
 #. placeholder {0}: auth.email
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:59
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:63
 msgid "Signed in as {0}"
 msgstr "Signed in as {0}"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:67
+#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:71
 msgid "Signing in…"
 msgstr "Signing in…"
 
@@ -3256,6 +3255,7 @@ msgstr "Something went wrong"
 msgid "Something went wrong while pairing."
 msgstr "Something went wrong while pairing."
 
+#: apps/extension/src/ui/query/query-client.ts:38
 #: apps/web/src/config/react-query-config.ts:30
 msgid "Something went wrong."
 msgstr "Something went wrong."
