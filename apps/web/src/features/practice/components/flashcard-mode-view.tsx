@@ -252,7 +252,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope }: FlashcardMode
       }
       case 'ipa':
         return ipa ? (
-          <div key='ipa' className='text-muted-foreground flex items-center justify-center gap-1.5 text-sm'>
+          <div key='ipa' className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
             <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
             <span>{ipa}</span>
           </div>
