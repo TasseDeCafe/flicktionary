@@ -40,6 +40,11 @@ export const practiceContract = {
         targetLanguage: z.string().min(1),
         pool: PracticePoolSchema.default('passive'),
         scope: ReviewScopeSchema.default('mixed'),
+        // Explicit learn-new batch size (learn_new scope only). When set, the
+        // server serves exactly this many unseen terms regardless of the
+        // remaining daily-new budget (Anki-style custom study). Ignored for
+        // other scopes.
+        newBatchSize: z.number().int().min(1).max(100).optional(),
       })
     )
     .output(z.object({ data: z.object({ terms: z.array(ReviewTermSchema) }) })),
@@ -62,6 +67,10 @@ export const practiceContract = {
         userLookupId: z.string().uuid(),
         rating: PracticeRatingSchema,
         pool: PracticePoolSchema.default('passive'),
+        // True when rating inside an explicit learn-new session: new-term
+        // introductions bypass the daily-new cap (they still stamp
+        // added_to_practice_at, so they count toward today's introductions).
+        learnNewSession: z.boolean().optional(),
       })
     )
     .output(

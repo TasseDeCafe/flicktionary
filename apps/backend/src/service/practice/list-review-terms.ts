@@ -36,18 +36,28 @@ const listCurrentReadingLookupIds = async (
   return rows.filter((row) => keySet.has(`${row.headword}::${row.sense}`)).map((row) => row.id)
 }
 
-// Resolve the effective caps for the (user, language, pool) and return the live
-// review slice for the scope. Feeds both the flashcard queue (router) and the
-// reading generator's candidate set, so the daily-new budget is shared between
-// the two render modes.
+// Resolve the effective caps for the (user, language, pool, scope) and return
+// the live review slice. Feeds both the flashcard queue (router) and the
+// reading generator's candidate set, so the daily budgets are shared between
+// the two render modes. `requestedNewCount` is the explicit learn-new batch
+// size (flashcards only — the reading generator never passes it, so a
+// URL-crafted read+learn_new session stays within the daily budget).
 export const listReviewTerms = async (
   userId: string,
   targetLanguage: string,
   pool: PracticePool,
   scope: ReviewScope,
-  deps: ListReviewTermsDependencies
+  deps: ListReviewTermsDependencies,
+  options?: { requestedNewCount?: number }
 ): Promise<DbUserLookup[]> => {
-  const caps = await resolveReviewCaps({ userId, targetLanguage, pool, deps })
+  const caps = await resolveReviewCaps({
+    userId,
+    targetLanguage,
+    pool,
+    scope,
+    requestedNewCount: options?.requestedNewCount,
+    deps,
+  })
   const excludeUserLookupIds = await listCurrentReadingLookupIds(userId, targetLanguage, pool, deps)
   return deps.userLookupsRepository.listReviewTerms({
     userId,
@@ -55,6 +65,7 @@ export const listReviewTerms = async (
     pool,
     scope,
     maxReviewTerms: caps.maxReviewTerms,
+    maxLearningTerms: caps.maxLearningTerms,
     maxNewTerms: caps.maxNewTerms,
     excludeUserLookupIds,
   })

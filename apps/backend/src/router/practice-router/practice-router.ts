@@ -15,8 +15,10 @@ import type {
   DbPracticeText,
 } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { PracticeExercisesRepositoryInterface } from '../../transport/database/practice-exercises/practice-exercises-repository'
+import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
+import { beginTx } from '../../transport/database/postgres-client'
 import { listReviewTerms } from '../../service/practice/list-review-terms'
-import { rateTerm } from '../../service/practice/rate-term'
+import { rateTerm, type WithTransaction } from '../../service/practice/rate-term'
 import { clampPracticeSessionLimits } from '../../service/practice/review-caps'
 import {
   ensureExerciseBank,
@@ -27,12 +29,8 @@ import {
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer } from '../../service/practice/rehab'
 import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
-import {
-  generateReadingText,
-  prepareNextReadingText,
-  type GenerateReadingTextDependencies,
-} from '../../service/practice/generate-reading-text'
-import { advanceReadingText } from '../../service/practice/advance-reading-text'
+import { generateReadingText, prepareNextReadingText } from '../../service/practice/generate-reading-text'
+import { advanceReadingText, type AdvanceReadingTextDependencies } from '../../service/practice/advance-reading-text'
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
@@ -41,6 +39,7 @@ import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-glos
 export type PracticeRouterDependencies = {
   practiceTextsRepository: PracticeTextsRepositoryInterface
   practiceExercisesRepository: PracticeExercisesRepositoryInterface
+  practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
@@ -169,17 +168,25 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const warmBank = (params: { lookup: DbUserLookup; pool: 'passive' | 'active' }) =>
     warmExerciseBank({ ...params, deps: exerciseBankDeps })
 
-  const readingDeps: GenerateReadingTextDependencies = {
+  // FSRS write + rating-event insert commit atomically (see applyTermRating).
+  // The cast strips postgres.js's UnwrapPromiseArray from beginTx's return —
+  // our callbacks always resolve a single value, never a query array.
+  const withTransaction: WithTransaction = (fn) => beginTx(fn) as ReturnType<typeof fn>
+
+  const readingDeps: AdvanceReadingTextDependencies = {
     practiceTextsRepository: deps.practiceTextsRepository,
     userLookupsRepository: deps.userLookupsRepository,
     usersRepository: deps.usersRepository,
     userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+    practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+    withTransaction,
     warmExerciseBank: warmBank,
   }
   const capsDeps = {
     usersRepository: deps.usersRepository,
     userLookupsRepository: deps.userLookupsRepository,
     practiceTextsRepository: deps.practiceTextsRepository,
+    practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
   }
 
   // Shape a practice_text into its DTO, joining live annotation content.
@@ -191,13 +198,25 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const router = implementer.router({
     dueSummary: implementer.dueSummary.handler(async ({ context }) => {
       const userId = context.res.locals.userId
-      const summary = await deps.userLookupsRepository.listDueSummary(userId)
-      return { data: { perLanguage: summary } }
+      // reviewedTodayCount comes off the rating-event log (passive review
+      // budget only — the active pool has no review budget) in one grouped
+      // query, merged per language.
+      const [summary, reviewedTodayByLanguage] = await Promise.all([
+        deps.userLookupsRepository.listDueSummary(userId),
+        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'passive' }),
+      ])
+      const perLanguage = summary.map((entry) => ({
+        ...entry,
+        reviewedTodayCount: reviewedTodayByLanguage.get(entry.targetLanguage) ?? 0,
+      }))
+      return { data: { perLanguage } }
     }),
 
     listReviewTerms: implementer.listReviewTerms.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps)
+      const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps, {
+        requestedNewCount: input.newBatchSize,
+      })
       return { data: { terms: rows.map((row) => toReviewTermDto(row, input.pool)) } }
     }),
 
@@ -206,10 +225,20 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       // Pass the FULL clamped daily cap: the atomic guard does its own
       // today-count comparison against it (subtracting here would double-count).
       const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
-      const result = await rateTerm(input.userLookupId, userId, input.rating, input.pool, limits.maxNewTerms, {
-        userLookupsRepository: deps.userLookupsRepository,
-        warmExerciseBank: warmBank,
-      })
+      const result = await rateTerm(
+        input.userLookupId,
+        userId,
+        input.rating,
+        input.pool,
+        limits.maxNewTerms,
+        {
+          userLookupsRepository: deps.userLookupsRepository,
+          practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+          withTransaction,
+          warmExerciseBank: warmBank,
+        },
+        { bypassDailyCap: input.learnNewSession === true }
+      )
       if (!result.ok) {
         if (result.reason === 'not_in_active_pool') {
           throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the active pool.' }] } })

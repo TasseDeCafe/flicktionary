@@ -49,6 +49,7 @@ const createDeps = (lookup: DbUserLookup | null) => {
   const initializeSrsStateForPool = vi.fn().mockResolvedValue(undefined)
   const applyFsrsResultForPool = vi.fn().mockResolvedValue(undefined)
   const parkLeech = vi.fn().mockResolvedValue(undefined)
+  const insertRatingEvent = vi.fn().mockResolvedValue(undefined)
   const warmExerciseBank = vi.fn()
   const deps = {
     userLookupsRepository: {
@@ -58,6 +59,11 @@ const createDeps = (lookup: DbUserLookup | null) => {
       applyFsrsResultForPool,
       parkLeech,
     },
+    practiceRatingEventsRepository: {
+      insert: insertRatingEvent,
+    },
+    // Unit fake: run the callback with no real executor — repo mocks ignore it.
+    withTransaction: (fn: (tx: undefined) => Promise<unknown>) => fn(undefined),
     warmExerciseBank,
   } as unknown as RateTermDependencies
   return {
@@ -66,6 +72,7 @@ const createDeps = (lookup: DbUserLookup | null) => {
     initializeSrsStateForPool,
     applyFsrsResultForPool,
     parkLeech,
+    insertRatingEvent,
     warmExerciseBank,
   }
 }
@@ -80,7 +87,7 @@ describe('rateTerm', () => {
     expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(
       expect.objectContaining({ userLookupId: lookupId, maxNewTerms: 20, targetLanguage: 'es' })
     )
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'passive' }))
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'passive' }), undefined)
   })
 
   it('refuses a new passive term when the daily cap is reached and applies no FSRS', async () => {
@@ -98,7 +105,7 @@ describe('rateTerm', () => {
     const result = await rateTerm(lookupId, userId, 'good', 'passive', 20, deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false })
     expect(initializeSrsStateIfUnderDailyCap).not.toHaveBeenCalled()
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'passive' }))
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'passive' }), undefined)
   })
 
   it('routes active-pool ratings to the active SRS family with no daily cap', async () => {
@@ -109,7 +116,7 @@ describe('rateTerm', () => {
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false })
     expect(initializeSrsStateIfUnderDailyCap).not.toHaveBeenCalled()
     expect(initializeSrsStateForPool).toHaveBeenCalledWith({ userLookupId: lookupId, pool: 'active' })
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'active' }))
+    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'active' }), undefined)
   })
 
   it('refuses active-pool ratings for terms not promoted to active learning', async () => {
@@ -124,6 +131,138 @@ describe('rateTerm', () => {
     const { deps } = createDeps(null)
     const result = await rateTerm(lookupId, userId, 'good', 'passive', 20, deps)
     expect(result).toEqual({ ok: false, reason: 'lookup_not_found' })
+  })
+
+  it('bypassDailyCap threads bypassCap into the introduction guard', async () => {
+    const { deps, initializeSrsStateIfUnderDailyCap, applyFsrsResultForPool } = createDeps(makeLookup())
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 20, deps, { bypassDailyCap: true })
+    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false })
+    expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: true }))
+    expect(applyFsrsResultForPool).toHaveBeenCalled()
+  })
+
+  it('does not bypass the cap by default', async () => {
+    const { deps, initializeSrsStateIfUnderDailyCap } = createDeps(makeLookup())
+    await rateTerm(lookupId, userId, 'good', 'passive', 20, deps)
+    expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
+  })
+})
+
+describe('rateTerm rating-event log', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('logs an introduction event with null prev state alongside the FSRS write', async () => {
+    const { deps, insertRatingEvent } = createDeps(makeLookup())
+    await rateTerm(lookupId, userId, 'good', 'passive', 20, deps)
+    expect(insertRatingEvent).toHaveBeenCalledTimes(1)
+    expect(insertRatingEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId,
+        userLookupId: lookupId,
+        targetLanguage: 'es',
+        pool: 'passive',
+        rating: 'good',
+        wasExplicit: true,
+        wasIntroduction: true,
+        causedParking: false,
+        practiceTextId: null,
+        headword: 'gato',
+        sense: 'cat',
+        prevSrsState: null,
+        prevSrsDue: null,
+      }),
+      undefined
+    )
+  })
+
+  it('logs a review event with the pre-rating SRS snapshot', async () => {
+    const { deps, insertRatingEvent } = createDeps(
+      makeLookup({
+        srs_state: 'review',
+        srs_due: '2026-05-12T00:00:00Z',
+        srs_stability: 5,
+        srs_difficulty: 6,
+        srs_last_review: '2026-05-01T00:00:00Z',
+        srs_reps: 8,
+        srs_lapses: 1,
+      })
+    )
+    await rateTerm(lookupId, userId, 'hard', 'passive', 20, deps)
+    expect(insertRatingEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rating: 'hard',
+        wasIntroduction: false,
+        prevSrsState: 'review',
+        prevSrsDue: '2026-05-12T00:00:00Z',
+        prevSrsStability: 5,
+        prevSrsDifficulty: 6,
+        prevSrsLastReview: '2026-05-01T00:00:00Z',
+        prevSrsReps: 8,
+        prevSrsLapses: 1,
+      }),
+      undefined
+    )
+  })
+
+  it('snapshots the active SRS family for active-pool events', async () => {
+    const { deps, insertRatingEvent } = createDeps(
+      makeLookup({
+        learning_mode: 'active',
+        active_srs_state: 'review',
+        active_srs_due: '2026-05-12T00:00:00Z',
+        active_srs_reps: 4,
+        active_srs_lapses: 2,
+      })
+    )
+    await rateTerm(lookupId, userId, 'good', 'active', 20, deps)
+    expect(insertRatingEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pool: 'active',
+        wasIntroduction: false,
+        prevSrsState: 'review',
+        prevSrsDue: '2026-05-12T00:00:00Z',
+        prevSrsReps: 4,
+        prevSrsLapses: 2,
+      }),
+      undefined
+    )
+  })
+
+  it("records caused_parking on the rating that crosses the leech threshold", async () => {
+    const { deps, insertRatingEvent } = createDeps(
+      makeLookup({
+        srs_state: 'review',
+        srs_due: '2026-05-01T00:00:00Z',
+        srs_stability: 5,
+        srs_difficulty: 6,
+        srs_last_review: '2026-04-20T00:00:00Z',
+        srs_reps: 8,
+        srs_lapses: 3,
+      })
+    )
+    await rateTerm(lookupId, userId, 'again', 'passive', 20, deps)
+    expect(insertRatingEvent).toHaveBeenCalledWith(expect.objectContaining({ causedParking: true }), undefined)
+  })
+
+  it('logs NO event when the daily cap refuses the introduction', async () => {
+    const { deps, initializeSrsStateIfUnderDailyCap, insertRatingEvent } = createDeps(makeLookup())
+    initializeSrsStateIfUnderDailyCap.mockResolvedValue(false)
+    await rateTerm(lookupId, userId, 'good', 'passive', 20, deps)
+    expect(insertRatingEvent).not.toHaveBeenCalled()
+  })
+
+  it('logs NO event for a parked no-op rating', async () => {
+    const { deps, insertRatingEvent } = createDeps(
+      makeLookup({ srs_state: 'review', srs_due: '2026-05-01T00:00:00Z', leech_parked_at: '2026-05-01T00:00:00Z' })
+    )
+    await rateTerm(lookupId, userId, 'again', 'passive', 20, deps)
+    expect(insertRatingEvent).not.toHaveBeenCalled()
+  })
+
+  it('logs NO event for a not-in-active-pool refusal', async () => {
+    const { deps, insertRatingEvent } = createDeps(makeLookup())
+    await rateTerm(lookupId, userId, 'good', 'active', 20, deps)
+    expect(insertRatingEvent).not.toHaveBeenCalled()
   })
 })
 
