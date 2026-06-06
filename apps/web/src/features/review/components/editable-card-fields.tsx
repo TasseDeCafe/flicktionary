@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { Plus } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
 import { Input } from '@flicktionary/ui/components/input'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 
+// How the translation/native-example inputs are presented:
+// - 'editable': pref on — always shown, translation is the primary gloss.
+// - 'on-demand': translations-off pref — not auto-generated, but the learner
+//   can add one manually behind an "Add translation" disclosure.
+// - 'hidden': native language == target language — translation is meaningless.
+export type TranslationFieldsMode = 'editable' | 'on-demand' | 'hidden'
+
 type Props = {
   card: Card
-  hideTranslationFields: boolean
+  translationFieldsMode: TranslationFieldsMode
   sourceSessionId?: string
 }
 
@@ -18,12 +27,19 @@ const SAVE_DEBOUNCE_MS = 600
 // the canonical chunk (user_lookups). Editing here mutates ONE row that may be
 // referenced by many cards across sessions — sibling cards re-fetch and pick
 // up the change via cache invalidation.
-export const EditableCardFields = ({ card, hideTranslationFields, sourceSessionId }: Props) => {
+export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionId }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
   const renameChunk = useRenameChunk(sourceSessionId)
   const isPending = updateChunkContent.isPending || renameChunk.isPending
   const [renameError, setRenameError] = useState<string | null>(null)
+
+  // 'on-demand' disclosure: starts open when a manual translation already
+  // exists (mirrors the grammar panel's startsOpen). The component remounts on
+  // card.updatedAt (keyed in focus-view), so server-side additions re-open it.
+  const [translationOpen, setTranslationOpen] = useState(
+    !!(card.chunk.translation ?? '').trim() || !!(card.chunk.nativeExample ?? '').trim()
+  )
 
   const [headword, setHeadword] = useState(card.chunk.headword)
   const [translation, setTranslation] = useState(card.chunk.translation ?? '')
@@ -170,17 +186,7 @@ export const EditableCardFields = ({ card, hideTranslationFields, sourceSessionI
         />
       </div>
 
-      {hideTranslationFields ? (
-        <div>
-          <Label className='text-xs'>{t`Definition`}</Label>
-          <Textarea
-            value={definition}
-            onChange={(e) => setDefinition(e.target.value)}
-            rows={2}
-            placeholder={t`Short paraphrase in the target language.`}
-          />
-        </div>
-      ) : (
+      {translationFieldsMode === 'editable' ? (
         <>
           <div>
             <Label className='text-xs'>{t`Translation`}</Label>
@@ -208,6 +214,53 @@ export const EditableCardFields = ({ card, hideTranslationFields, sourceSessionI
               placeholder={t`Optional contextual paraphrase in the target language.`}
             />
           </div>
+        </>
+      ) : (
+        <>
+          <div>
+            <Label className='text-xs'>{t`Definition`}</Label>
+            <Textarea
+              value={definition}
+              onChange={(e) => setDefinition(e.target.value)}
+              rows={2}
+              placeholder={t`Short paraphrase in the target language.`}
+            />
+          </div>
+          {translationFieldsMode === 'on-demand' &&
+            (translationOpen ? (
+              <>
+                <div>
+                  <Label className='text-xs'>{t`Translation`}</Label>
+                  <Input
+                    value={translation}
+                    onChange={(e) => setTranslation(e.target.value)}
+                    placeholder={t`Translation in your native language.`}
+                  />
+                </div>
+                <div>
+                  <Label className='text-xs'>{t`Native example`}</Label>
+                  <Textarea
+                    value={nativeExample}
+                    onChange={(e) => setNativeExample(e.target.value)}
+                    rows={2}
+                    placeholder={t`A natural translation of the target example.`}
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  className='text-muted-foreground -ml-2'
+                  onClick={() => setTranslationOpen(true)}
+                >
+                  <Plus className='mr-1 h-4 w-4' />
+                  {t`Add translation`}
+                </Button>
+              </div>
+            ))}
         </>
       )}
 

@@ -10,11 +10,9 @@ import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value
 import {
   useGetProcessingStatus,
   useGetStudySession,
-  useGetUserPrefs,
   useListHighlightsBySession,
   useRetryEnrichment,
 } from '@/features/sessions/api/sessions-hooks'
-import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
 import { getSessionCardsKey } from '../api/card-cache'
 import type {
@@ -91,13 +89,6 @@ export const TriageListView = () => {
     }
     wasProcessingActiveRef.current = isProcessingActive
   }, [isProcessingActive, sessionId, queryClient])
-  const { data: userPrefs } = useGetUserPrefs()
-  // Live user pref wins over the session snapshot.
-  const nativeLanguage = userPrefs?.nativeLanguage ?? session?.nativeLanguage ?? null
-  const sameLanguage =
-    !!session && !!nativeLanguage && nativeLanguage.trim().toLowerCase() === session.targetLanguage.trim().toLowerCase()
-  const hideTranslationFields =
-    sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, session?.targetLanguage ?? null)
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
   const { mutate: updateStatusBatch, isPending: isBatchPending } = useUpdateCardStatusBatch(sessionId)
   const warnings = session?.processingWarnings ?? []
@@ -227,13 +218,7 @@ export const TriageListView = () => {
               </div>
               <div className='mt-2'>
                 {grouped.yourHighlights.map((card) => (
-                  <TriageRow
-                    key={card.id}
-                    sessionId={sessionId}
-                    card={card}
-                    hideTranslationFields={hideTranslationFields}
-                    onStatusChange={handleStatusChange}
-                  />
+                  <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
                 ))}
                 {pendingHighlightRows.map((row) => (
                   <TriageEnrichingRow
@@ -262,13 +247,7 @@ export const TriageListView = () => {
               </div>
               <div className='mt-2'>
                 {grouped.llmSuggested.map((card) => (
-                  <TriageRow
-                    key={card.id}
-                    sessionId={sessionId}
-                    card={card}
-                    hideTranslationFields={hideTranslationFields}
-                    onStatusChange={handleStatusChange}
-                  />
+                  <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
                 ))}
               </div>
             </section>
@@ -277,7 +256,6 @@ export const TriageListView = () => {
           <AutoRejectedCollapsible
             sessionId={sessionId}
             cards={grouped.autoRejected}
-            hideTranslationFields={hideTranslationFields}
             onStatusChange={handleStatusChange}
           />
         </div>

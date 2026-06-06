@@ -103,14 +103,15 @@ export const materializeBasicDataChunks = async (params: {
       })
     }
     if (lookup.translation === null && lookup.definition === null) {
+      // Translations-off is a generation pref only: skip the LLM-emitted
+      // translation/native_example, but never clear the columns — a
+      // manually-entered translation must survive reprocessing.
       await userLookupsRepository.updateContent({
         id: lookup.id,
         translation: hideTranslationFields ? null : chunk.translation,
         definition: chunk.definition,
         targetExample: chunk.targetExample,
         nativeExample: hideTranslationFields ? null : chunk.nativeExample,
-        clearTranslation: hideTranslationFields,
-        clearNativeExample: hideTranslationFields,
         grammarPatch,
       })
     } else if (grammarPatch) {
@@ -120,15 +121,7 @@ export const materializeBasicDataChunks = async (params: {
       // once the row has been grounded.
       await userLookupsRepository.updateContent({
         id: lookup.id,
-        clearTranslation: hideTranslationFields,
-        clearNativeExample: hideTranslationFields,
         grammarPatch,
-      })
-    } else if (hideTranslationFields) {
-      await userLookupsRepository.updateContent({
-        id: lookup.id,
-        clearTranslation: true,
-        clearNativeExample: true,
       })
     }
 

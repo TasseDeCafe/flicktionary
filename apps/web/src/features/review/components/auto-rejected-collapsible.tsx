@@ -12,11 +12,10 @@ import { TriageRow } from './triage-row'
 type Props = {
   sessionId: string
   cards: Card[]
-  hideTranslationFields?: boolean
   onStatusChange: (cardId: string, status: CardStatus, learningMode?: LearningMode) => void
 }
 
-export const AutoRejectedCollapsible = ({ sessionId, cards, hideTranslationFields = false, onStatusChange }: Props) => {
+export const AutoRejectedCollapsible = ({ sessionId, cards, onStatusChange }: Props) => {
   const { t } = useLingui()
   const [open, setOpen] = useState(false)
   const filteredCount = cards.length
@@ -30,13 +29,7 @@ export const AutoRejectedCollapsible = ({ sessionId, cards, hideTranslationField
       {open && (
         <div className='px-3 pb-2'>
           {cards.map((card) => (
-            <TriageRow
-              key={card.id}
-              sessionId={sessionId}
-              card={card}
-              hideTranslationFields={hideTranslationFields}
-              onStatusChange={onStatusChange}
-            />
+            <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={onStatusChange} />
           ))}
         </div>
       )}
