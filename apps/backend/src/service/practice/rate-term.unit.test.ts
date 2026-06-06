@@ -228,7 +228,7 @@ describe('rateTerm rating-event log', () => {
     )
   })
 
-  it("records caused_parking on the rating that crosses the leech threshold", async () => {
+  it('records caused_parking on the rating that crosses the leech threshold', async () => {
     const { deps, insertRatingEvent } = createDeps(
       makeLookup({
         srs_state: 'review',

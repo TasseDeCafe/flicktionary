@@ -66,9 +66,7 @@ describe('listReviewTerms (service caps)', () => {
   it('learn_new with requestedNewCount serves exactly the batch, ignoring the spent daily-new budget', async () => {
     const { deps, repoListReviewTerms } = createDeps({ introducedToday: 50 })
     await listReviewTerms(userId, 'es', 'passive', 'learn_new', deps, { requestedNewCount: 10 })
-    expect(repoListReviewTerms).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: 'learn_new', maxNewTerms: 10 })
-    )
+    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ scope: 'learn_new', maxNewTerms: 10 }))
   })
 
   it('learn_new requestedNewCount is clamped to the hard ceiling', async () => {
