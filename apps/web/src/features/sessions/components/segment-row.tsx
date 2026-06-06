@@ -82,7 +82,12 @@ export const SegmentRow = ({ id, text, startMs, ranges, ghostRanges, targetLangu
     )
 
   return (
-    <div className={'flex items-start gap-3 py-1 transition-colors duration-700' + (flash ? ' bg-yellow-100' : '')}>
+    <div
+      className={
+        'flex items-start gap-3 py-1 transition-colors duration-700' +
+        (flash ? ' bg-yellow-100 dark:bg-yellow-400/15' : '')
+      }
+    >
       {ts && (
         <span className='text-muted-foreground w-16 shrink-0 text-right text-xs tabular-nums select-none'>{ts}</span>
       )}
@@ -96,7 +101,7 @@ export const SegmentRow = ({ id, text, startMs, ranges, ghostRanges, targetLangu
               <span
                 key={gi}
                 data-highlight-id={g.highlightId}
-                className='cursor-pointer rounded bg-yellow-200 shadow-[0_0_0_0.125rem_var(--color-yellow-200)] hover:bg-yellow-300 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-300)]'
+                className='cursor-pointer rounded bg-yellow-200 shadow-[0_0_0_0.125rem_var(--color-yellow-200)] hover:bg-yellow-300 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-300)] dark:bg-yellow-400/20 dark:text-yellow-200 dark:shadow-[0_0_0_0.125rem_color-mix(in_oklab,var(--color-yellow-400)_20%,transparent)] dark:hover:bg-yellow-400/30 dark:hover:shadow-[0_0_0_0.125rem_color-mix(in_oklab,var(--color-yellow-400)_30%,transparent)]'
               >
                 {g.parts.map((part, idx) => renderPiece(part, idx))}
               </span>

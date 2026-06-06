@@ -191,7 +191,7 @@ export const AnnotatedText = ({
                 ? 'text-muted-foreground decoration-muted-foreground hover:bg-muted line-through hover:shadow-[0_0_0_0.125rem_var(--color-muted)]'
                 : ann.rated
                   ? 'bg-muted text-muted-foreground underline decoration-dotted shadow-[0_0_0_0.125rem_var(--color-muted)]'
-                  : 'bg-yellow-100 text-yellow-950 underline decoration-yellow-500 decoration-2 shadow-[0_0_0_0.125rem_var(--color-yellow-100)] hover:bg-yellow-200 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-200)]'
+                  : 'bg-yellow-100 text-yellow-950 underline decoration-yellow-500 decoration-2 shadow-[0_0_0_0.125rem_var(--color-yellow-100)] hover:bg-yellow-200 hover:shadow-[0_0_0_0.125rem_var(--color-yellow-200)] dark:bg-yellow-400/15 dark:text-yellow-200 dark:decoration-yellow-400 dark:shadow-[0_0_0_0.125rem_color-mix(in_oklab,var(--color-yellow-400)_15%,transparent)] dark:hover:bg-yellow-400/25 dark:hover:shadow-[0_0_0_0.125rem_color-mix(in_oklab,var(--color-yellow-400)_25%,transparent)]'
             )}
           >
             {/* Tokenize the surface form so a drag can paint across and resolve
