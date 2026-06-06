@@ -49,7 +49,10 @@ describe('joining', () => {
 
 describe('gap splitting', () => {
   it('splits at a clear pause (fallback threshold)', () => {
-    const words = [...row(0, 200, ['this', 'phrase', 'is', 'long', 'enough']), ...row(5000, 200, ['next', 'phrase', 'starts', 'here'])]
+    const words = [
+      ...row(0, 200, ['this', 'phrase', 'is', 'long', 'enough']),
+      ...row(5000, 200, ['next', 'phrase', 'starts', 'here']),
+    ]
     expect(texts(words)).toEqual(['this phrase is long enough', 'next phrase starts here'])
   })
 
@@ -80,7 +83,10 @@ describe('gap splitting', () => {
 
 describe('punctuation', () => {
   it('splits after sentence-final punctuation without needing a pause', () => {
-    const words = [...row(0, 200, ['the', 'first', 'sentence', 'ends.']), ...row(800, 200, ['the', 'second', 'one', 'continues'])]
+    const words = [
+      ...row(0, 200, ['the', 'first', 'sentence', 'ends.']),
+      ...row(800, 200, ['the', 'second', 'one', 'continues']),
+    ]
     expect(texts(words)).toEqual(['the first sentence ends.', 'the second one continues'])
   })
 

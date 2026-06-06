@@ -21,7 +21,10 @@ export const selectSurroundingSegments = async (
 ): Promise<SurroundingSegmentSlice[]> => {
   const center = await textSegmentsRepository.findById(centerSegmentId)
   if (!center) return []
-  const end = endSegmentId !== undefined && endSegmentId !== centerSegmentId ? await textSegmentsRepository.findById(endSegmentId) : null
+  const end =
+    endSegmentId !== undefined && endSegmentId !== centerSegmentId
+      ? await textSegmentsRepository.findById(endSegmentId)
+      : null
   const slice = end
     ? await textSegmentsRepository.listByIndexRange(
         textTrackId,
