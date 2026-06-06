@@ -83,3 +83,6 @@ gitmessage
 
 # bulletproof-react
 /bulletproof-react
+
+# Claude session lock (transient, accidentally committed once)
+/.claude/scheduled_tasks.lock

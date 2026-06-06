@@ -918,6 +918,9 @@ importers:
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.101.1
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.96.0(react@19.2.6)
       '@types/chrome':
         specifier: 'catalog:'
         version: 0.1.42
@@ -993,6 +996,9 @@ importers:
       videojs-vtt.js:
         specifier: 'catalog:'
         version: 0.15.5
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.12(@types/react@19.2.14)(react@19.2.6)(use-sync-external-store@1.6.0(react@19.2.6))
     devDependencies:
       '@lingui/babel-plugin-lingui-macro':
         specifier: 'catalog:'

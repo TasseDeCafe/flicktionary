@@ -1,46 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  ConfirmedVideoDataSubtitleTrack,
-  SerializedSubtitleFile,
-  VideoDataSubtitleTrack,
-  VideoDataUiModel,
-  VideoDataUiOpenReason,
-} from '@asbplayer-fork/common'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { useStore } from 'zustand'
+import { ConfirmedVideoDataSubtitleTrack, SerializedSubtitleFile, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
-import type { Profile, ThemeType } from '@asbplayer-fork/common/settings'
 import { useLingui } from '@lingui/react/macro'
 import VideoDataSyncDialog from '../components/VideoDataSyncDialog'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
-
-// The in-realm replacement for the FrameBridge model transport. The controller
-// pushes partial VideoDataUiModel updates (formerly UpdateStateMessage over the
-// bridge); the component applies each delta exactly as VideoDataSyncUi did off
-// `bridge.addClientMessageListener`. Late subscribers (the React subscription
-// runs after the controller's first updateState) get the accumulated state
-// replayed, so no early update is lost.
-export class VideoDataModelChannel {
-  private listeners = new Set<(partial: Partial<VideoDataUiModel>) => void>()
-  private merged: Partial<VideoDataUiModel> = {}
-
-  subscribe = (listener: (partial: Partial<VideoDataUiModel>) => void): (() => void) => {
-    this.listeners.add(listener)
-    if (Object.keys(this.merged).length > 0) {
-      listener(this.merged)
-    }
-    return () => {
-      this.listeners.delete(listener)
-    }
-  }
-
-  // Matches FrameBridgeClient.updateState so the controller can treat the iframe
-  // client and this channel interchangeably.
-  updateState = (partial: Partial<VideoDataUiModel>): void => {
-    this.merged = { ...this.merged, ...partial }
-    for (const listener of this.listeners) {
-      listener(partial)
-    }
-  }
-}
+import type { VideoDataSyncStore } from './video-data-sync-store'
 
 // The command half of the bridge, now plain callbacks the controller maps to the
 // same handlers the iframe onMessage path uses.
@@ -60,146 +25,70 @@ export interface VideoDataCommands {
 }
 
 export interface ShadowVideoDataSyncAppProps {
-  channel: VideoDataModelChannel
+  store: VideoDataSyncStore
   shadowRoot: ShadowRoot
   portalContainer: HTMLElement
   language: string
   commands: VideoDataCommands
 }
 
-const initialTrackIds = ['-', '-', '-']
-
 // Outer wrapper: provides the ui/I18n/portal context. It reads ONLY themeType
-// from the channel (for the theme) — the body's hooks (useLingui) must run
+// from the store (for the theme) — the body's hooks (useLingui) must run
 // INSIDE this provider, so they live in VideoDataSyncBody below.
-export function ShadowVideoDataSyncApp({ channel, portalContainer, language, commands }: ShadowVideoDataSyncAppProps) {
+export function ShadowVideoDataSyncApp({ store, portalContainer, language, commands }: ShadowVideoDataSyncAppProps) {
   // Raw setting value — ShadowUiProvider resolves 'system' in this realm.
-  const [themeType, setThemeType] = useState<ThemeType>('system')
-  useEffect(
-    () =>
-      channel.subscribe((model) => {
-        if (model.settings?.themeType !== undefined) {
-          setThemeType((model.settings.themeType as ThemeType) ?? 'system')
-        }
-      }),
-    [channel]
-  )
+  const themeType = useStore(store, (s) => s.themeType)
 
   return (
     <ShadowUiProvider portalContainer={portalContainer} themeType={themeType} language={language}>
-      <VideoDataSyncBody channel={channel} commands={commands} />
+      <VideoDataSyncBody store={store} commands={commands} />
     </ShadowUiProvider>
   )
 }
 
-function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChannel; commands: VideoDataCommands }) {
+function VideoDataSyncBody({ store, commands }: { store: VideoDataSyncStore; commands: VideoDataCommands }) {
   const { t } = useLingui()
-  const [open, setOpen] = useState<boolean>(false)
-  const [disabled, setDisabled] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [suggestedName, setSuggestedName] = useState<string>('')
-  const [showSubSelect, setShowSubSelect] = useState<boolean>(true)
-  const [subtitles, setSubtitles] = useState<VideoDataSubtitleTrack[]>([
-    { id: '-', language: '-', url: '-', label: t`Empty`, extension: 'srt' },
-  ])
-  const [selectedSubtitleTrackIds, setSelectedSubtitleTrackIds] = useState<string[]>(initialTrackIds)
-  const [defaultCheckboxState, setDefaultCheckboxState] = useState<boolean>(false)
-  const [openReason, setOpenReason] = useState<VideoDataUiOpenReason>(VideoDataUiOpenReason.userRequested)
-  const [openedFromAsbplayerId, setOpenedFromAsbplayerId] = useState<string>('')
-  const [error, setError] = useState<string>('')
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [activeProfile, setActiveProfile] = useState<string>()
-  const [fileInputTrackNumber, setFileInputTrackNumber] = useState<number>()
-  const [hasSeenFtue, setHasSeenFtue] = useState<boolean>()
-  const [hideRememberTrackPreferenceToggle, setHideRememberTrackPreferenceToggle] = useState<boolean>()
-  const [isYouTube, setIsYouTube] = useState<boolean>(false)
-  const [canGenerateTranscripts, setCanGenerateTranscripts] = useState<boolean>(false)
-  const [isGeneratingSupadata, setIsGeneratingSupadata] = useState<boolean>(false)
-  const [availableTranslationLanguages, setAvailableTranslationLanguages] = useState<string[]>([])
-  const [defaultTranslationLanguage, setDefaultTranslationLanguage] = useState<string>()
-  const [translationMode, setTranslationMode] = useState<'off' | 'machine' | 'human'>('off')
 
-  // Apply each partial model exactly as the bridge listener did in VideoDataSyncUi.
-  useEffect(() => {
-    return channel.subscribe((model: Partial<VideoDataUiModel>) => {
-      if (model.open !== undefined) {
-        setOpen(model.open)
-      }
-      if (model.isLoading !== undefined) {
-        setIsLoading(model.isLoading)
-      }
-      if (model.suggestedName !== undefined) {
-        setSuggestedName(model.suggestedName)
-      }
-      if (model.showSubSelect !== undefined) {
-        setShowSubSelect(model.showSubSelect)
-      }
-      if (model.subtitles !== undefined) {
-        const newSubtitles = [
-          { id: '-', language: '-', url: '-', label: t`Empty`, extension: 'srt' },
-          ...model.subtitles,
-        ]
-        setSelectedSubtitleTrackIds((currentSelectedTrackIds) =>
-          currentSelectedTrackIds.map((currentSelectedTrackId) => {
-            const stillSelected = newSubtitles.find((track) => track.id === currentSelectedTrackId)
-            return stillSelected ? currentSelectedTrackId : '-'
-          })
-        )
-        setSubtitles(newSubtitles)
-      }
-      if (model.selectedSubtitle !== undefined) {
-        setSelectedSubtitleTrackIds(model.selectedSubtitle)
-      }
-      if (model.defaultCheckboxState !== undefined) {
-        setDefaultCheckboxState(model.defaultCheckboxState)
-      }
-      if (model.error !== undefined) {
-        setError(model.error)
-      }
-      if (model.openReason !== undefined) {
-        setOpenReason(model.openReason)
-      }
-      if (model.openedFromAsbplayerId !== undefined) {
-        setOpenedFromAsbplayerId(model.openedFromAsbplayerId)
-      }
-      if (model.settings !== undefined) {
-        // themeType is handled by the outer wrapper (it drives ShadowMuiProvider).
-        setProfiles(model.settings.profiles)
-        setActiveProfile(model.settings.activeProfile)
-      }
-      if (model.hasSeenFtue !== undefined) {
-        setHasSeenFtue(model.hasSeenFtue)
-      }
-      if (model.hideRememberTrackPreferenceToggle !== undefined) {
-        setHideRememberTrackPreferenceToggle(model.hideRememberTrackPreferenceToggle)
-      }
-      if (model.isYouTube !== undefined) {
-        setIsYouTube(model.isYouTube)
-      }
-      if (model.canGenerateTranscripts !== undefined) {
-        setCanGenerateTranscripts(model.canGenerateTranscripts)
-      }
-      if (model.isGeneratingSupadata !== undefined) {
-        setIsGeneratingSupadata(model.isGeneratingSupadata)
-      }
-      if (model.availableTranslationLanguages !== undefined) {
-        setAvailableTranslationLanguages(model.availableTranslationLanguages)
-      }
-      if (model.defaultTranslationLanguage !== undefined) {
-        setDefaultTranslationLanguage(model.defaultTranslationLanguage)
-      }
-      if (model.translationMode !== undefined) {
-        setTranslationMode(model.translationMode)
-      }
-    })
-  }, [channel, t])
+  const open = useStore(store, (s) => s.open)
+  const isLoading = useStore(store, (s) => s.isLoading)
+  const suggestedName = useStore(store, (s) => s.suggestedName)
+  const showSubSelect = useStore(store, (s) => s.showSubSelect)
+  const rawSubtitles = useStore(store, (s) => s.rawSubtitles)
+  const selectedSubtitleTrackIds = useStore(store, (s) => s.selectedSubtitleTrackIds)
+  const defaultCheckboxState = useStore(store, (s) => s.defaultCheckboxState)
+  const openReason = useStore(store, (s) => s.openReason)
+  const openedFromAsbplayerId = useStore(store, (s) => s.openedFromAsbplayerId)
+  const error = useStore(store, (s) => s.error)
+  const profiles = useStore(store, (s) => s.profiles)
+  const activeProfile = useStore(store, (s) => s.activeProfile)
+  const hasSeenFtue = useStore(store, (s) => s.hasSeenFtue)
+  const hideRememberTrackPreferenceToggle = useStore(store, (s) => s.hideRememberTrackPreferenceToggle)
+  const isYouTube = useStore(store, (s) => s.isYouTube)
+  const canGenerateTranscripts = useStore(store, (s) => s.canGenerateTranscripts)
+  const isGeneratingSupadata = useStore(store, (s) => s.isGeneratingSupadata)
+  const availableTranslationLanguages = useStore(store, (s) => s.availableTranslationLanguages)
+  const defaultTranslationLanguage = useStore(store, (s) => s.defaultTranslationLanguage)
+  const translationMode = useStore(store, (s) => s.translationMode)
+
+  // Pure form state — never pushed by the controller.
+  const [disabled, setDisabled] = useState<boolean>(false)
+  const [fileInputTrackNumber, setFileInputTrackNumber] = useState<number>()
+
+  // The Empty placeholder lives here, not in the store: its label is a lingui
+  // translation and `t` changes identity when the locale (re)activates shortly
+  // after boot — a late change only re-derives this memo and can never drop
+  // store state.
+  const subtitles = useMemo(
+    () => [{ id: '-', language: '-', url: '-', label: t`Empty`, extension: 'srt' }, ...rawSubtitles],
+    [rawSubtitles, t]
+  )
 
   const handleOpenSettings = useCallback(() => commands.onOpenSettings(), [commands])
 
   const handleCancel = useCallback(() => {
-    setOpen(false)
+    store.getState().updateState({ open: false })
     commands.onCancel()
-  }, [commands])
+  }, [store, commands])
 
   const handleConfirm = useCallback(
     (
@@ -207,7 +96,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
       shouldRememberTrackChoices: boolean,
       confirmedTranslationMode: 'off' | 'machine' | 'human'
     ) => {
-      setOpen(false)
+      store.getState().updateState({ open: false })
       commands.onConfirm(
         data,
         shouldRememberTrackChoices,
@@ -215,7 +104,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
         openedFromAsbplayerId.length > 0 ? openedFromAsbplayerId : undefined
       )
     },
-    [commands, openedFromAsbplayerId]
+    [store, commands, openedFromAsbplayerId]
   )
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -236,7 +125,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
             serialized.push({ name: f.name, base64 })
           }
 
-          setOpen(false)
+          store.getState().updateState({ open: false })
           commands.onOpenFile(serialized)
         } else {
           const fileTracks: VideoDataSubtitleTrack[] = [...files].map((f) => {
@@ -245,14 +134,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
             return { label: f.name, id: url, url, extension, localFile: true }
           })
 
-          if (fileTracks.length > 0) {
-            setSubtitles((s) => [...s, ...fileTracks])
-            setSelectedSubtitleTrackIds((s) => {
-              const selectedIdsByTrackNumber = [...s]
-              selectedIdsByTrackNumber[fileInputTrackNumber] = fileTracks[0].id
-              return selectedIdsByTrackNumber
-            })
-          }
+          store.getState().addLocalFileTracks(fileTracks, fileInputTrackNumber)
         }
       } finally {
         setDisabled(false)
@@ -261,7 +143,7 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
         }
       }
     }
-  }, [commands, fileInputTrackNumber])
+  }, [store, commands, fileInputTrackNumber])
 
   const handleOpenFile = useCallback((track?: number) => {
     setFileInputTrackNumber(track)
@@ -274,9 +156,9 @@ function VideoDataSyncBody({ channel, commands }: { channel: VideoDataModelChann
   )
 
   const handleDismissFtue = useCallback(() => {
-    setHasSeenFtue(true)
+    store.getState().updateState({ hasSeenFtue: true })
     commands.onDismissFtue()
-  }, [commands])
+  }, [store, commands])
 
   const handleGenerateSupadata = useCallback(() => commands.onGenerateSupadata(), [commands])
 
