@@ -2012,7 +2012,7 @@ msgstr "Link expired or invalid"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:133
 #: apps/web/src/features/more/components/more-tab-view.tsx:140
-#: apps/web/src/features/review/components/triage-list-view.tsx:245
+#: apps/web/src/features/review/components/triage-list-view.tsx:240
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
@@ -2683,7 +2683,7 @@ msgstr "Practice limits"
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:286
+#: apps/web/src/features/review/components/triage-list-view.tsx:280
 msgid "Practice your terms"
 msgstr "Practice your terms"
 
