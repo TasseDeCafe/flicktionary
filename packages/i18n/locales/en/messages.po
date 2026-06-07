@@ -13,7 +13,9 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:176
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:207
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:286
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:311
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 
@@ -101,7 +103,7 @@ msgstr "{dueTermCount} due"
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:219
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:391
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 msgstr "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
@@ -282,7 +284,7 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
-#: apps/web/src/features/review/components/focus-view.tsx:527
+#: apps/web/src/features/review/components/focus-view.tsx:528
 #: apps/web/src/features/review/components/triage-row.tsx:84
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
@@ -319,11 +321,11 @@ msgstr "Add note"
 msgid "Add selection to Flicktionary"
 msgstr "Add selection to Flicktionary"
 
-#: apps/web/src/features/review/components/focus-view.tsx:405
+#: apps/web/src/features/review/components/focus-view.tsx:406
 msgid "Add to active vocabulary"
 msgstr "Add to active vocabulary"
 
-#: apps/web/src/features/review/components/focus-view.tsx:423
+#: apps/web/src/features/review/components/focus-view.tsx:424
 msgid "Add to passive vocabulary"
 msgstr "Add to passive vocabulary"
 
@@ -401,7 +403,7 @@ msgstr "All {newCount}"
 msgid "All caught up"
 msgstr "All caught up"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:215
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:387
 msgid "All done!"
 msgstr "All done!"
 
@@ -570,8 +572,8 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:232
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:237
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:404
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:409
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 #: apps/web/src/features/practice/components/strengthen-view.tsx:62
 #: apps/web/src/features/practice/components/strengthen-view.tsx:72
@@ -579,7 +581,7 @@ msgstr "Back"
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:393
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:598
 msgid "Back to current card"
 msgstr "Back to current card"
 
@@ -672,6 +674,10 @@ msgstr "Cards left"
 msgid "CEFR level"
 msgstr "CEFR level"
 
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:589
+msgid "Change your rating"
+msgstr "Change your rating"
+
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx:22
 msgid "Changes settings for ALL tracks. Settings that already have "
 "track-specific values are hidden."
@@ -736,7 +742,7 @@ msgstr "Choose your plan"
 msgid "Clear search"
 msgstr "Clear search"
 
-#: apps/web/src/features/review/components/focus-view.tsx:367
+#: apps/web/src/features/review/components/focus-view.tsx:368
 msgid "Click Generate full exploration to enrich this card with collocations, "
 "etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, "
@@ -957,7 +963,7 @@ msgstr "Daily new limit reached"
 msgid "Daily new limit reached."
 msgstr "Daily new limit reached."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:216
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:388
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
@@ -1108,6 +1114,11 @@ msgstr "e.g. увидеть"
 #: packages/ui/src/components/rate-buttons.tsx:23
 msgid "Easy"
 msgstr "Easy"
+
+#: apps/web/src/features/practice/components/edit-card-sheet.tsx:80
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:568
+msgid "Edit card"
+msgstr "Edit card"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
 msgid "Edit note"
@@ -1283,7 +1294,7 @@ msgstr "Extension shortcut"
 msgid "Extension version"
 msgstr "Extension version"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:108
+#: apps/web/src/features/practice/api/practice-hooks.ts:125
 msgid "Failed to advance"
 msgstr "Failed to advance"
 
@@ -1303,7 +1314,7 @@ msgstr "Failed to create checkout session"
 msgid "Failed to create session"
 msgstr "Failed to create session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:137
+#: apps/web/src/features/practice/api/practice-hooks.ts:154
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:141
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
@@ -1317,7 +1328,7 @@ msgstr "Failed to export vocabulary"
 msgid "Failed to fetch subscription details"
 msgstr "Failed to fetch subscription details"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:164
+#: apps/web/src/features/practice/api/practice-hooks.ts:181
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
 
@@ -1325,7 +1336,7 @@ msgstr "Failed to fetch translation"
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:82
+#: apps/web/src/features/practice/api/practice-hooks.ts:99
 msgid "Failed to generate next text"
 msgstr "Failed to generate next text"
 
@@ -1357,7 +1368,7 @@ msgstr "Failed to load cards"
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:57
+#: apps/web/src/features/practice/api/practice-hooks.ts:74
 msgid "Failed to load exercises"
 msgstr "Failed to load exercises"
 
@@ -1365,7 +1376,7 @@ msgstr "Failed to load exercises"
 msgid "Failed to load highlights"
 msgstr "Failed to load highlights"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:119
+#: apps/web/src/features/practice/api/practice-hooks.ts:136
 msgid "Failed to load history"
 msgstr "Failed to load history"
 
@@ -1417,6 +1428,10 @@ msgstr "Failed to load suggestions"
 msgid "Failed to load surrounding context"
 msgstr "Failed to load surrounding context"
 
+#: apps/web/src/features/review/api/review-hooks.ts:214
+msgid "Failed to load term"
+msgstr "Failed to load term"
+
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:42
 msgid "Failed to load vocabulary"
 msgstr "Failed to load vocabulary"
@@ -1449,7 +1464,7 @@ msgstr "Failed to remove highlight"
 msgid "Failed to remove session"
 msgstr "Failed to remove session"
 
-#: apps/web/src/features/review/api/review-hooks.ts:240
+#: apps/web/src/features/review/api/review-hooks.ts:258
 msgid "Failed to rename term"
 msgstr "Failed to rename term"
 
@@ -1457,7 +1472,7 @@ msgstr "Failed to rename term"
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:153
+#: apps/web/src/features/practice/api/practice-hooks.ts:170
 msgid "Failed to restore term"
 msgstr "Failed to restore term"
 
@@ -1490,7 +1505,7 @@ msgstr "Failed to set CEFR level"
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:72
+#: apps/web/src/features/practice/api/practice-hooks.ts:89
 msgid "Failed to submit answer"
 msgstr "Failed to submit answer"
 
@@ -1498,6 +1513,10 @@ msgstr "Failed to submit answer"
 #: apps/web/src/features/admin/api/sentry-debug-hooks.ts:11
 msgid "Failed to trigger Sentry message"
 msgstr "Failed to trigger Sentry message"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts:62
+msgid "Failed to undo rating"
+msgstr "Failed to undo rating"
 
 #: apps/web/src/features/review/api/review-hooks.ts:87
 msgid "Failed to update card status"
@@ -1535,7 +1554,7 @@ msgstr "Failed to update practice limits"
 msgid "Failed to update show-translations setting"
 msgstr "Failed to update show-translations setting"
 
-#: apps/web/src/features/review/api/review-hooks.ts:220
+#: apps/web/src/features/review/api/review-hooks.ts:237
 msgid "Failed to update term"
 msgstr "Failed to update term"
 
@@ -1612,7 +1631,7 @@ msgstr "Form (e.g. был)"
 msgid "Form translation"
 msgstr "Form translation"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:384
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:577
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Forward"
@@ -1633,7 +1652,7 @@ msgstr "Free-form notes that don't fit the structured fields above."
 msgid "Frequency"
 msgstr "Frequency"
 
-#: apps/web/src/features/review/components/focus-view.tsx:358
+#: apps/web/src/features/review/components/focus-view.tsx:359
 msgid "Full exploration"
 msgstr "Full exploration"
 
@@ -1654,7 +1673,7 @@ msgstr "General"
 msgid "Generate card"
 msgstr "Generate card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:377
+#: apps/web/src/features/review/components/focus-view.tsx:378
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
@@ -1673,7 +1692,7 @@ msgid "Generate translations for new cards in this language. You can always add 
 msgstr "Generate translations for new cards in this language. You can always "
 "add a translation to a card manually."
 
-#: apps/web/src/features/review/components/focus-view.tsx:365
+#: apps/web/src/features/review/components/focus-view.tsx:366
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
@@ -1683,7 +1702,7 @@ msgstr "Generating..."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:397
-#: apps/web/src/features/review/components/focus-view.tsx:377
+#: apps/web/src/features/review/components/focus-view.tsx:378
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Generating…"
@@ -2071,7 +2090,7 @@ msgstr "Loading history…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:190
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:362
 msgid "Loading review terms…"
 msgstr "Loading review terms…"
 
@@ -2092,7 +2111,8 @@ msgstr "Loading..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:246
+#: apps/web/src/features/practice/components/edit-card-sheet.tsx:84
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:418
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
 #: apps/web/src/features/practice/components/practice-language-view.tsx:200
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
@@ -2321,7 +2341,7 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:201
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:373
 msgid "No new terms to learn."
 msgstr "No new terms to learn."
 
@@ -2329,7 +2349,7 @@ msgstr "No new terms to learn."
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:203
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:375
 msgid "No reviews are due right now."
 msgstr "No reviews are due right now."
 
@@ -2347,7 +2367,7 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:204
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
 msgid "No terms are due right now."
 msgstr "No terms are due right now."
 
@@ -2556,7 +2576,7 @@ msgstr "Part of speech"
 msgid "Particle"
 msgstr "Particle"
 
-#: apps/web/src/features/review/components/focus-view.tsx:523
+#: apps/web/src/features/review/components/focus-view.tsx:524
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:66
 msgid "Passive"
 msgstr "Passive"
@@ -2754,7 +2774,7 @@ msgstr "Preposition"
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:373
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:555
 #: apps/web/src/features/review/components/focus-view.tsx:261
 msgid "Previous card"
 msgstr "Previous card"
@@ -2897,7 +2917,7 @@ msgid "Rehab progress: day {days} of 3. A correct answer today still counts — 
 msgstr "Rehab progress: day {days} of 3. A correct answer today still counts — "
 "try again with a fresh exercise."
 
-#: apps/web/src/features/review/components/focus-view.tsx:520
+#: apps/web/src/features/review/components/focus-view.tsx:521
 #: apps/web/src/features/review/components/triage-row.tsx:143
 msgid "Reject"
 msgstr "Reject"
@@ -3218,7 +3238,7 @@ msgstr "Short paraphrase in the target language."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:399
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:605
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -3366,7 +3386,7 @@ msgstr "Streaming"
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:229
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:401
 msgid "Strengthen"
 msgstr "Strengthen"
 
@@ -3525,13 +3545,13 @@ msgid "Switch"
 msgstr "Switch"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:182
-#: apps/web/src/features/review/components/focus-view.tsx:445
+#: apps/web/src/features/review/components/focus-view.tsx:446
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to active vocabulary"
 msgstr "Switch to active vocabulary"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:191
-#: apps/web/src/features/review/components/focus-view.tsx:445
+#: apps/web/src/features/review/components/focus-view.tsx:446
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:47
 msgid "Switch to passive vocabulary"
 msgstr "Switch to passive vocabulary"
@@ -3657,7 +3677,7 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx:368
+#: apps/web/src/features/review/components/focus-view.tsx:369
 msgid "This card looks incomplete. Re-process the session to populate its basic "
 "data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its "
