@@ -14,6 +14,12 @@ import {
 
 const smallScreenVideoHeightThreshold = 300
 
+// Platform players (Prime, Netflix) call pause()/play() internally around
+// seeks and rebuffering, so the raw pause event fires transiently when e.g.
+// navigating between subtitles. Showing the controls only after the video has
+// stayed paused for this long absorbs those synthetic pause→play pairs.
+const showOnPauseGraceMs = 250
+
 // Marker for the in-realm controls overlay shadow host, so a host stranded by a
 // previous content-script load / HMR is removed before remounting.
 const CONTROLS_HOST_ATTR = 'data-asbplayer-video-overlay-host'
@@ -30,6 +36,7 @@ export class VideoOverlayController {
   private _forceHiding: boolean = false
   private _showing: boolean = false
   private _bound = false
+  private _showOnPauseTimeout?: ReturnType<typeof setTimeout>
 
   private _store?: VideoOverlayStore
   private _shadowHandle?: ShadowHostHandle
@@ -70,7 +77,12 @@ export class VideoOverlayController {
     } else {
       if (this._forceHiding) {
         this._forceHiding = false
-        this._show()
+
+        // Only re-show for a paused video: if playback resumed while
+        // force-hidden, no play event is coming to hide the overlay again.
+        if (this._context.video.paused) {
+          this._show()
+        }
       }
     }
   }
@@ -81,9 +93,10 @@ export class VideoOverlayController {
     }
 
     this._pauseListener = () => {
-      this._show()
+      this._scheduleShow()
     }
     this._playListener = () => {
+      this._cancelScheduledShow()
       this._hide()
     }
     this._seekedListener = () => {
@@ -159,17 +172,23 @@ export class VideoOverlayController {
     this._shadowHandle = undefined
   }
 
-  // Push the latest model (and small-screen tooltips flag) into the store,
-  // preserving the current visibility unless overridden.
-  private async _pushModel(visible?: boolean) {
+  // Push the latest model (and small-screen tooltips flag) into the store.
+  // Visibility is re-read from `_showing` *after* the async model fetch: a
+  // pause→play pair faster than the settings round-trip would otherwise
+  // resurrect the overlay (a stale `visible: true` write landing after the
+  // play-event hide), leaving the controls stuck on screen while playing.
+  private async _pushModel() {
     if (!this._store) {
       return
     }
     const model = await this._model()
+    if (!this._store) {
+      return
+    }
     this._store.setState({
       model,
       tooltipsEnabled: this._tooltipsEnabled(),
-      visible: visible ?? this._store.getState().visible,
+      visible: this._showing,
     })
   }
 
@@ -225,7 +244,38 @@ export class VideoOverlayController {
   // to the video lifecycle, not the subtitle load) and is repopulated by the next
   // updateModel().
   disposeOverlay() {
+    this._cancelScheduledShow()
+    this._showing = false
     this._store?.setState({ model: undefined, visible: false, tooltipsEnabled: this._tooltipsEnabled() })
+  }
+
+  // Defer the show until the video has stayed paused for the grace period —
+  // cancelled by the play listener — so transient platform pauses around seeks
+  // don't flash the controls. If the pause belongs to an in-flight seek, keep
+  // rescheduling until the seek settles or playback resumes.
+  private _scheduleShow() {
+    this._cancelScheduledShow()
+    this._showOnPauseTimeout = setTimeout(() => {
+      this._showOnPauseTimeout = undefined
+
+      if (!this._context.video.paused) {
+        return
+      }
+
+      if (this._context.video.seeking) {
+        this._scheduleShow()
+        return
+      }
+
+      this._show()
+    }, showOnPauseGraceMs)
+  }
+
+  private _cancelScheduledShow() {
+    if (this._showOnPauseTimeout !== undefined) {
+      clearTimeout(this._showOnPauseTimeout)
+      this._showOnPauseTimeout = undefined
+    }
   }
 
   // No `synced` gate: the overlay must show on pause even before any subtitles
@@ -246,7 +296,7 @@ export class VideoOverlayController {
       this._mountShadow()
     }
     this._showing = true
-    void this._pushModel(true)
+    void this._pushModel()
   }
 
   hide() {
@@ -282,6 +332,7 @@ export class VideoOverlayController {
       this._seekedListener = undefined
     }
 
+    this._cancelScheduledShow()
     this._unmountShadow()
     this._store = undefined
     this._showing = false

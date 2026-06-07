@@ -392,7 +392,11 @@ switches, offset/playback-rate/subtitle-navigation scroller. Desktop feature —
 despite its upstream "mobile overlay" ancestry. It shows whether or not
 subtitles are synced (`emptySubtitleTrack` model state) — it hosts the Load
 Subtitles button, the only path back into the track dialog, so gating it on
-synced would strand users who cancel the dialog.
+synced would strand users who cancel the dialog. The show is deferred by a
+250 ms grace period (cancelled by `play`): Prime/Netflix players pause/resume
+internally around seeks, and reacting to the raw `pause` event made the
+controls flash on every subtitle navigation — or stick on screen mid-playback
+when the async model push landed after the play-event hide.
 
 ### Other shadow surfaces
 
