@@ -153,10 +153,11 @@ export const chunksContract = {
     .input(z.object({}))
     .output(z.object({ languages: z.array(z.string()) })),
 
-  // Cross-session CSV export. Returns one row per kept chunk in the given
-  // target language with the same column shape per-session export uses, so
-  // both flow into Anki identically. Surface form / context fall back to
-  // empty when the originating card or segment has been removed.
+  // Cross-session CSV export (Anki feed). Returns one row per kept chunk in
+  // the given target language, opening with Anki # directives and one column
+  // per basic/grammar/extras datum (see SPEC "Export"). Surface form /
+  // context fall back to empty when the originating card or segment has been
+  // removed.
   exportCsv: oc
     .route({ method: 'POST', path: '/chunks/export', successStatus: 200 })
     .errors({

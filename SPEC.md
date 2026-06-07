@@ -363,11 +363,34 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
 - **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
 - **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: `Switch to active vocabulary` / `Switch to passive vocabulary` (toggles `learning_mode`), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
 - **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Two restore paths: (a) re-keeping the same `(headword, sense)` in any session — the keep-transition clears `deleted_at`; (b) the explicit `Restore` action the Practice reading view surfaces (toast immediately after a delete; slim Restore-only RateSheet when tapping a soft-deleted annotation), backed by the dedicated `chunks.restoreChunk` endpoint. The Vocabulary tab itself has no Trash bin in v1.
-- **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki-compatible columns; same shape per-session export used to produce). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
+- **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki `#` directives + one column per datum; see Export below). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
 
 ### Export
 
-- CSV with columns: `front`, `back`, `context`, `tags`, `headword`, `surface_form`, `note`. Imports cleanly into Anki.
+- CSV designed as an **Anki feed** (full data export is a separate,
+  out-of-scope feature; SRS state is deliberately not included — Anki cannot
+  import scheduling from CSV anyway).
+- The file opens with Anki `#` directives instead of a bare header row (which
+  Anki would import as a junk note): `#separator:Comma`, `#html:true`,
+  `#tags column:4`, `#columns:<names>`. `front`/`back` join their parts with
+  `<br><br>` (matching `#html:true`; literal newlines would collapse on the
+  rendered card).
+- Columns: `front`, `back`, `context`, `tags` first (ready-made defaults),
+  then the basic columns individually (`headword`, `sense`, `surface_form`,
+  `translation`, `definition`, `target_example`, `native_example`), then the
+  grammar bag (`pos`, `display_form`, `gender`, `aspect`,
+  `aspect_pair_headword`, `government`, `morphology` — packed
+  plurale/singulare-tantum + indeclinable + animacy + reflexive flags —
+  `ipa`, `notable_forms`, `grammar_notes`), then exploration extras
+  (`frequency`, `register`, `register_alternatives`, `more_frequent_synonym`,
+  `regionalism`, `collocations`, `etymology`, `l1_notes`, `extra_notes`).
+  Arrays/objects are rendered human-readable (`; `-joined, `label: form`);
+  sparse keys leave empty cells. `ipa` prefers the extras string over the
+  grammar bag's dialect-tagged object (rendered `GA …; RP …` when untagged is
+  absent).
+- Tags: `flicktionary <target_language>`, plus `active` when
+  `learning_mode = 'active'` and `leech` when either pool is leech-parked
+  (Anki treats a `leech` tag natively).
 - No `.apkg` for MVP.
 - **Entry point** is the Vocabulary tab's 3-dots menu → `Export vocabulary`.
   Output is one CSV per target language covering every kept (non-deleted)
@@ -379,7 +402,7 @@ chunks` CTA. The `cards.exportCsv` backend endpoint still exists (and still
 - The vocabulary export pulls a representative `surface_form` and `context`
   per chunk via the `first_card_id` back-pointer (LEFT JOIN cards +
   text_segments); rows whose origin card or segment have been deleted fall
-  back to empty cells. Tags are `flicktionary <target_language>`.
+  back to empty cells.
 
 ### Navigation chrome
 
@@ -916,6 +939,9 @@ the CSV.
 
 - `front` = `[headword, target_example]` joined by a blank line (skipping empty values)
 - `back` = `[translation || definition, native_example]` joined by a blank line (skipping empty values)
+
+In the CSV the blank line is rendered as `<br><br>` (the export imports with
+`#html:true`).
 
 ## Tap-to-translate (fast path)
 

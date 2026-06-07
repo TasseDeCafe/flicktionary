@@ -1035,6 +1035,8 @@ export type ExportChunkRow = {
   grammar: Record<string, unknown>
   surfaceForm: string
   segmentText: string
+  learningMode: LearningMode
+  isLeechParked: boolean
 }
 
 const listKeptChunksForExport = async (params: {
@@ -1051,6 +1053,8 @@ const listKeptChunksForExport = async (params: {
       ul.native_example,
       ul.exploration_extras,
       ul.grammar,
+      ul.learning_mode,
+      (ul.leech_parked_at IS NOT NULL OR ul.active_leech_parked_at IS NOT NULL) AS is_leech_parked,
       c.surface_form,
       ts.text AS segment_text
     FROM public.user_lookups ul
@@ -1071,6 +1075,8 @@ const listKeptChunksForExport = async (params: {
     nativeExample: (row.native_example as string | null) ?? null,
     explorationExtras: (row.exploration_extras as Record<string, unknown> | null) ?? {},
     grammar: (row.grammar as Record<string, unknown> | null) ?? {},
+    learningMode: row.learning_mode as LearningMode,
+    isLeechParked: row.is_leech_parked as boolean,
     surfaceForm: (row.surface_form as string | null) ?? '',
     segmentText: (row.segment_text as string | null) ?? '',
   }))
