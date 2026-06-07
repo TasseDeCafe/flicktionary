@@ -88,9 +88,12 @@ export const advanceReadingText = async (
 
   if (claimed) {
     const ratingByLookupId = new Map(ratings.map((r) => [r.userLookupId, r.rating]))
-    // Pass the FULL clamped daily cap: the atomic guard does its own today-count
-    // comparison against it (passing the remaining-new would double-count).
-    const { maxNewTerms } = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
+    // Pass the FULL clamped per-language daily cap: the atomic guard does its
+    // own today-count comparison against it (passing the remaining-new would
+    // double-count).
+    const { maxNewTerms } = clampPracticeSessionLimits(
+      await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, targetLanguage)
+    )
     const seen = new Set<string>()
     const now = new Date()
     for (const ann of readAnnotations(claimed)) {

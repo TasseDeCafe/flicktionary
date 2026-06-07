@@ -16,7 +16,6 @@ import {
   useSetUiLanguage,
   useSetUiTheme,
 } from '@/features/sessions/api/sessions-hooks'
-import { PracticeSessionLimitsSetting } from '@/features/settings/components/practice-session-limits-setting'
 import { Route as AdminSettingsRoute } from '@/app/routes/_authenticated/admin-settings'
 import { Route as DangerZoneRoute } from '@/app/routes/_authenticated/profile/danger-zone'
 import { MoreListSection } from './more-list-section'
@@ -141,12 +140,6 @@ export const MoreTabView = () => {
             />
           }
         />
-        {prefs && (
-          <PracticeSessionLimitsSetting
-            maxNewTerms={prefs.practiceMaxNewTerms}
-            maxReviewTerms={prefs.practiceMaxReviewTerms}
-          />
-        )}
       </MoreListSection>
 
       <MoreListSection title={t`About`}>

@@ -3,6 +3,16 @@ import { Tables } from '../database.public.types'
 
 export type DbUserTargetLanguagePref = Tables<'user_target_language_prefs'>
 
+export const DEFAULT_PRACTICE_MAX_NEW_TERMS = 20
+export const DEFAULT_PRACTICE_MAX_REVIEW_TERMS = 100
+export const HARD_MAX_PRACTICE_NEW_TERMS = 100
+export const HARD_MAX_PRACTICE_REVIEW_TERMS = 300
+
+export type PracticeSessionLimits = {
+  maxNewTerms: number
+  maxReviewTerms: number
+}
+
 const findForLanguage = async (userId: string, targetLanguage: string): Promise<DbUserTargetLanguagePref | null> => {
   const result = (await sql`
     SELECT * FROM public.user_target_language_prefs
@@ -52,12 +62,45 @@ const setShowTranslationsEnabled = async (
   return result.count === 1
 }
 
+const getPracticeLimitsForLanguage = async (userId: string, targetLanguage: string): Promise<PracticeSessionLimits> => {
+  const result = (await sql`
+    SELECT practice_max_new_terms, practice_max_review_terms
+    FROM public.user_target_language_prefs
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
+  `) as { practice_max_new_terms: number; practice_max_review_terms: number }[]
+  return {
+    maxNewTerms: result[0]?.practice_max_new_terms ?? DEFAULT_PRACTICE_MAX_NEW_TERMS,
+    maxReviewTerms: result[0]?.practice_max_review_terms ?? DEFAULT_PRACTICE_MAX_REVIEW_TERMS,
+  }
+}
+
+const setPracticeLimitsForLanguage = async (
+  userId: string,
+  targetLanguage: string,
+  limits: PracticeSessionLimits
+): Promise<boolean> => {
+  const result = await sql`
+    UPDATE public.user_target_language_prefs
+    SET practice_max_new_terms = ${limits.maxNewTerms},
+        practice_max_review_terms = ${limits.maxReviewTerms},
+        updated_at = NOW()
+    WHERE user_id = ${userId} AND target_language = ${targetLanguage}
+  `
+  return result.count === 1
+}
+
 export interface UserTargetLanguagePrefsRepositoryInterface {
   findForLanguage: (userId: string, targetLanguage: string) => Promise<DbUserTargetLanguagePref | null>
   listForUser: (userId: string) => Promise<DbUserTargetLanguagePref[]>
   upsertCefr: (userId: string, targetLanguage: string, cefrLevel: string) => Promise<void>
   getShowTranslationsEnabled: (userId: string, targetLanguage: string) => Promise<boolean>
   setShowTranslationsEnabled: (userId: string, targetLanguage: string, enabled: boolean) => Promise<boolean>
+  getPracticeLimitsForLanguage: (userId: string, targetLanguage: string) => Promise<PracticeSessionLimits>
+  setPracticeLimitsForLanguage: (
+    userId: string,
+    targetLanguage: string,
+    limits: PracticeSessionLimits
+  ) => Promise<boolean>
 }
 
 export const UserTargetLanguagePrefsRepository = (): UserTargetLanguagePrefsRepositoryInterface => {
@@ -67,5 +110,7 @@ export const UserTargetLanguagePrefsRepository = (): UserTargetLanguagePrefsRepo
     upsertCefr,
     getShowTranslationsEnabled,
     setShowTranslationsEnabled,
+    getPracticeLimitsForLanguage,
+    setPracticeLimitsForLanguage,
   }
 }

@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight } from 'lucide-react'
 import { useDueSummary } from '../api/practice-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 
@@ -12,9 +13,6 @@ export const PracticeLandingView = () => {
   const { data: summary, isLoading } = useDueSummary()
   const { data: prefs } = useGetUserPrefs()
 
-  const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
-  const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
-
   const handlePickLanguage = (targetLanguage: string) => {
     void navigate({
       to: '/practice/language/$targetLanguage',
@@ -22,17 +20,19 @@ export const PracticeLandingView = () => {
     })
   }
 
-  const getDailyNewAvailable = (entry: PracticeDueSummaryEntry) => {
+  const getDailyNewAvailable = (entry: PracticeDueSummaryEntry, maxNewTerms: number) => {
     if (maxNewTerms <= 0) return 0
     const remainingDailyNewTerms = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
     return Math.min(entry.newCount, remainingDailyNewTerms)
   }
 
   const getPassiveSummaryLine = (entry: PracticeDueSummaryEntry) => {
+    // Daily limits are per language.
+    const { maxNewTerms, maxReviewTerms } = getPracticeLimitsForLanguage(prefs, entry.targetLanguage)
     const dueTermCount = entry.reviewDueCount + entry.learningDueCount
     if (dueTermCount > 0 && maxReviewTerms > 0) return t`${dueTermCount} follow-up(s) due`
 
-    const dailyNewAvailable = getDailyNewAvailable(entry)
+    const dailyNewAvailable = getDailyNewAvailable(entry, maxNewTerms)
     if (dailyNewAvailable > 0) return t`${dailyNewAvailable} new available`
 
     if (entry.newCount > 0 && maxNewTerms > 0) return t`Daily new limit reached`

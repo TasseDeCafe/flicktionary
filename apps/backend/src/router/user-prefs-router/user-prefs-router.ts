@@ -14,11 +14,15 @@ type UserPrefsResponse = {
   tapToTranslateEnabled: boolean
   llmHighlightsEnabled: boolean
   englishIpaDialect: 'ga' | 'rp'
-  practiceMaxNewTerms: number
-  practiceMaxReviewTerms: number
   uiTheme: 'light' | 'dark' | 'system' | null
   uiLanguage: string | null
-  targetLanguagePrefs: { targetLanguage: string; cefrLevel: string; showTranslationsEnabled: boolean }[]
+  targetLanguagePrefs: {
+    targetLanguage: string
+    cefrLevel: string
+    showTranslationsEnabled: boolean
+    practiceMaxNewTerms: number
+    practiceMaxReviewTerms: number
+  }[]
 }
 
 const buildPrefs = async (
@@ -33,7 +37,6 @@ const buildPrefs = async (
     tapToTranslateEnabled,
     llmHighlightsEnabled,
     englishIpaDialect,
-    practiceLimits,
     uiTheme,
     uiLanguage,
     targetPrefs,
@@ -44,7 +47,6 @@ const buildPrefs = async (
     usersRepository.getTapToTranslateEnabled(userId),
     usersRepository.getLlmHighlightsEnabled(userId),
     usersRepository.getEnglishIpaDialect(userId),
-    usersRepository.getPracticeSessionLimits(userId),
     usersRepository.getUiTheme(userId),
     usersRepository.getUiLanguage(userId),
     prefsRepository.listForUser(userId),
@@ -56,14 +58,14 @@ const buildPrefs = async (
     tapToTranslateEnabled,
     llmHighlightsEnabled,
     englishIpaDialect,
-    practiceMaxNewTerms: practiceLimits.maxNewTerms,
-    practiceMaxReviewTerms: practiceLimits.maxReviewTerms,
     uiTheme,
     uiLanguage,
     targetLanguagePrefs: targetPrefs.map((p) => ({
       targetLanguage: p.target_language,
       cefrLevel: p.cefr_level,
       showTranslationsEnabled: p.show_translations_enabled,
+      practiceMaxNewTerms: p.practice_max_new_terms,
+      practiceMaxReviewTerms: p.practice_max_review_terms,
     })),
   }
 }
@@ -150,20 +152,22 @@ export const UserPrefsRouter = (
       }
     ),
 
-    setPracticeSessionLimits: implementer.setPracticeSessionLimits.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const ok = await usersRepository.setPracticeSessionLimits(userId, {
-        maxNewTerms: input.maxNewTerms,
-        maxReviewTerms: input.maxReviewTerms,
-      })
-      if (!ok) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          data: { errors: [{ message: 'Failed to update practice limits' }] },
+    setPracticeLimitsForLanguage: implementer.setPracticeLimitsForLanguage.handler(
+      async ({ input, context, errors }) => {
+        const userId = context.res.locals.userId
+        const ok = await prefsRepository.setPracticeLimitsForLanguage(userId, input.targetLanguage, {
+          maxNewTerms: input.maxNewTerms,
+          maxReviewTerms: input.maxReviewTerms,
         })
+        if (!ok) {
+          throw errors.INTERNAL_SERVER_ERROR({
+            data: { errors: [{ message: 'Failed to update practice limits' }] },
+          })
+        }
+        const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
+        return { data: prefs }
       }
-      const prefs = await buildPrefs(userId, usersRepository, prefsRepository)
-      return { data: prefs }
-    }),
+    ),
 
     setEnglishIpaDialect: implementer.setEnglishIpaDialect.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId

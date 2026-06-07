@@ -255,7 +255,7 @@ msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
 "pouvoir être miné. Sélectionnez un élément vidéo pour le synchroniser "
 "avec Flicktionary."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:152
+#: apps/web/src/features/more/components/more-tab-view.tsx:145
 msgid "About"
 msgstr "À propos"
 
@@ -270,7 +270,7 @@ msgstr "Accédez aux fonctionnalités premium exclusives disponibles pour les "
 "abonnés."
 
 #: apps/web/src/features/more/components/account-page.tsx:73
-#: apps/web/src/features/more/components/more-tab-view.tsx:80
+#: apps/web/src/features/more/components/more-tab-view.tsx:79
 msgid "Account"
 msgstr "Compte"
 
@@ -375,7 +375,7 @@ msgstr "Ajuster le décalage des sous-titres pour que le sous-titre précédent 
 "soit à l’horodatage actuel"
 
 #: apps/web/src/features/admin/components/admin-settings-view.tsx:46
-#: apps/web/src/features/more/components/more-tab-view.tsx:157
+#: apps/web/src/features/more/components/more-tab-view.tsx:150
 msgid "Admin settings"
 msgstr "Paramètres administrateur"
 
@@ -434,7 +434,7 @@ msgid "Always play (unpause) after invoking above shortcut"
 msgstr "Toujours lancer la lecture après avoir invoqué \"Aller au début du "
 "sous-titre actuel/précédent\""
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:40
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:144
 msgid "American"
 msgstr "Américain"
 
@@ -471,7 +471,7 @@ msgstr "Animé"
 msgid "Another term already exists with that headword and sense."
 msgstr "Un autre terme existe déjà avec ce mot-vedette et ce sens."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:86
+#: apps/web/src/features/more/components/more-tab-view.tsx:85
 msgid "Appearance"
 msgstr "Apparence"
 
@@ -645,7 +645,7 @@ msgstr "Bonus"
 msgid "Bottom"
 msgstr "Bas"
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:41
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:145
 msgid "British"
 msgstr "Britannique"
 
@@ -815,7 +815,7 @@ msgstr "Confirmer la suppression"
 msgid "Conjunction"
 msgstr "Conjonction"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:153
+#: apps/web/src/features/more/components/more-tab-view.tsx:146
 msgid "Contact us"
 msgstr "Nous contacter"
 
@@ -984,7 +984,7 @@ msgstr "Limite quotidienne de nouvelles cartes atteinte."
 msgid "Daily review limit reached."
 msgstr "Limite quotidienne de révisions atteinte."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:163
+#: apps/web/src/features/more/components/more-tab-view.tsx:156
 msgid "Danger zone"
 msgstr "Zone dangereuse"
 
@@ -994,7 +994,7 @@ msgid "Danger Zone"
 msgstr "Zone Dangereuse"
 
 #: apps/extension/common/components/UiSettings.tsx:32
-#: apps/web/src/features/more/components/more-tab-view.tsx:98
+#: apps/web/src/features/more/components/more-tab-view.tsx:97
 msgid "Dark"
 msgstr "Sombre"
 
@@ -1668,7 +1668,7 @@ msgstr "GA"
 msgid "Gender"
 msgstr "Genre"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:77
+#: apps/web/src/features/more/components/more-tab-view.tsx:76
 msgid "General"
 msgstr "Général"
 
@@ -1684,12 +1684,12 @@ msgstr "Générer l'exploration complète"
 msgid "Generate Subtitles"
 msgstr "Générer les sous-titres"
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:101
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:112
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:205
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:216
 msgid "Generate translations"
 msgstr "Générer les traductions"
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:103
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:207
 msgid "Generate translations for new cards in this language. You can always add "
 "a translation to a card manually."
 msgstr "Générer des traductions pour les nouvelles cartes dans cette langue. "
@@ -1930,8 +1930,8 @@ msgid "Install the Flicktionary extension and pin it to your browser toolbar "
 msgstr "Installez l'extension Flicktionary et épinglez-la à la barre d'outils "
 "de votre navigateur pour un accès facile."
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:105
-#: apps/web/src/features/more/components/more-tab-view.tsx:108
+#: apps/web/src/features/more/components/more-tab-view.tsx:104
+#: apps/web/src/features/more/components/more-tab-view.tsx:107
 msgid "Interface language"
 msgstr "Langue de l'interface"
 
@@ -1952,7 +1952,7 @@ msgstr "Jeton invalide. Veuillez vous reconnecter."
 msgid "IPA"
 msgstr "API"
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:118
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:227
 msgid "IPA dialect"
 msgstr "Dialecte API"
 
@@ -2009,13 +2009,13 @@ msgstr "Langue"
 msgid "Language of the text"
 msgstr "Langue du texte"
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:51
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:62
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:155
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:166
 msgid "Language preferences"
 msgstr "Préférences linguistiques"
 
 #: apps/web/src/features/more/components/languages-page.tsx:14
-#: apps/web/src/features/more/components/more-tab-view.tsx:127
+#: apps/web/src/features/more/components/more-tab-view.tsx:126
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:82
 msgid "Languages"
 msgstr "Langues"
@@ -2059,7 +2059,7 @@ msgid "Less formal:"
 msgstr "Moins formel :"
 
 #: apps/extension/common/components/UiSettings.tsx:31
-#: apps/web/src/features/more/components/more-tab-view.tsx:97
+#: apps/web/src/features/more/components/more-tab-view.tsx:96
 msgid "Light"
 msgstr "Clair"
 
@@ -2067,8 +2067,8 @@ msgstr "Clair"
 msgid "Link expired or invalid"
 msgstr "Lien expiré ou invalide"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:133
-#: apps/web/src/features/more/components/more-tab-view.tsx:140
+#: apps/web/src/features/more/components/more-tab-view.tsx:132
+#: apps/web/src/features/more/components/more-tab-view.tsx:139
 #: apps/web/src/features/review/components/triage-list-view.tsx:240
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
@@ -2182,7 +2182,7 @@ msgstr "Divers"
 msgid "Monthly"
 msgstr "Mensuel"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:75
+#: apps/web/src/features/more/components/more-tab-view.tsx:74
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:40
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:43
 #: apps/web/src/features/practice/components/practice-language-view.tsx:146
@@ -2266,7 +2266,7 @@ msgstr "Exemple en langue maternelle"
 msgid "Native language"
 msgstr "Langue maternelle"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:128
+#: apps/web/src/features/more/components/more-tab-view.tsx:127
 msgid "Native language and CEFR levels"
 msgstr "Langue maternelle et niveaux CECRL"
 
@@ -2290,11 +2290,11 @@ msgstr "Nouveau"
 msgid "New session"
 msgstr "Nouvelle session"
 
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:59
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:85
 msgid "New terms"
 msgstr "Nouveaux termes"
 
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:53
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:79
 msgid "New terms are capped per day. Follow-up sessions use up to this many "
 "review terms."
 msgstr "Les nouveaux termes sont limités par jour. Les sessions de suivi "
@@ -2367,7 +2367,7 @@ msgstr "Aucune session dans ce filtre."
 msgid "No sessions yet. Start one to begin."
 msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:53
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:157
 msgid "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
 msgstr "Aucune langue cible pour l'instant. Les préférences sont définies la "
@@ -2748,7 +2748,7 @@ msgstr "Pluriel uniquement"
 msgid "Practice"
 msgstr "Pratique"
 
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:51
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:77
 msgid "Practice limits"
 msgstr "Limites de pratique"
 
@@ -2839,7 +2839,7 @@ msgstr "Limite de profil atteinte"
 msgid "Profile Name"
 msgstr "Nom du profil"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:81
+#: apps/web/src/features/more/components/more-tab-view.tsx:80
 msgid "Profile, subscription, sign-in"
 msgstr "Profil, abonnement, connexion"
 
@@ -3033,7 +3033,7 @@ msgstr "Réviser"
 msgid "Review only"
 msgstr "Révision seulement"
 
-#: apps/web/src/features/settings/components/practice-session-limits-setting.tsx:78
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:104
 msgid "Review terms"
 msgstr "Termes à réviser"
 
@@ -3211,10 +3211,11 @@ msgstr "Session supprimée"
 msgid "Sessions"
 msgstr "Sessions"
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:64
-msgid "Set your CEFR level and translation behavior for each target language."
-msgstr "Définissez votre niveau CECR et le comportement de traduction pour "
-"chaque langue cible."
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:168
+msgid "Set your CEFR level, translation behavior and daily practice limits for "
+"each target language."
+msgstr "Définissez votre niveau CECR, le comportement des traductions et les "
+"limites de pratique quotidienne pour chaque langue cible."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:127
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:117
@@ -3229,7 +3230,7 @@ msgstr "Configuration du compte..."
 #: apps/extension/src/ui/components/SettingsPage.tsx:58
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx:444
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:128
-#: apps/web/src/features/more/components/more-tab-view.tsx:124
+#: apps/web/src/features/more/components/more-tab-view.tsx:123
 msgid "Settings"
 msgstr "Paramètres"
 
@@ -3260,7 +3261,7 @@ msgstr "Afficher la réponse"
 msgid "Show notes"
 msgstr "Afficher les notes"
 
-#: apps/web/src/features/more/components/more-tab-view.tsx:134
+#: apps/web/src/features/more/components/more-tab-view.tsx:133
 msgid "Show suggested terms while reading"
 msgstr "Afficher les termes suggérés pendant la lecture"
 
@@ -3293,12 +3294,12 @@ msgstr "Se connecter à Flicktionary"
 #: apps/extension/src/ui/components/FlicktionaryPairSection.tsx:66
 #: apps/native/src/features/profile/components/profile-view.tsx:155
 #: apps/web/src/features/billing/components/pricing-view.tsx:181
-#: apps/web/src/features/more/components/more-tab-view.tsx:168
+#: apps/web/src/features/more/components/more-tab-view.tsx:161
 msgid "Sign out"
 msgstr "Déconnexion"
 
 #: apps/web/src/features/billing/components/pricing-view.tsx:114
-#: apps/web/src/features/more/components/more-tab-view.tsx:60
+#: apps/web/src/features/more/components/more-tab-view.tsx:59
 msgid "Sign out success"
 msgstr "Déconnexion réussie"
 
@@ -3582,8 +3583,8 @@ msgstr "Synonymes"
 
 #: apps/extension/common/components/UiSettings.tsx:30
 #: apps/extension/common/components/UiSettings.tsx:40
-#: apps/web/src/features/more/components/more-tab-view.tsx:96
-#: apps/web/src/features/more/components/more-tab-view.tsx:112
+#: apps/web/src/features/more/components/more-tab-view.tsx:95
+#: apps/web/src/features/more/components/more-tab-view.tsx:111
 msgid "System"
 msgstr "Système"
 
@@ -3661,8 +3662,8 @@ msgid "The file appears to be empty."
 msgstr "Le fichier semble être vide."
 
 #: apps/extension/common/components/UiSettings.tsx:27
-#: apps/web/src/features/more/components/more-tab-view.tsx:89
-#: apps/web/src/features/more/components/more-tab-view.tsx:92
+#: apps/web/src/features/more/components/more-tab-view.tsx:88
+#: apps/web/src/features/more/components/more-tab-view.tsx:91
 msgid "Theme"
 msgstr "Thème"
 
@@ -4129,7 +4130,7 @@ msgstr "Lorsque vous mettez la vidéo en pause, une <0>superposition de "
 msgid "Where did you hear this? Paste a sentence or leave blank."
 msgstr "Où avez-vous entendu ceci ? Collez une phrase ou laissez vide."
 
-#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:120
+#: apps/web/src/features/settings/components/cefr-per-language-list.tsx:229
 msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Quelle prononciation afficher pour les cartes de vocabulaire anglais."
 

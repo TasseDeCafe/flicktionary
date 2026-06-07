@@ -111,10 +111,10 @@ const createDeps = (opts: { claimWins: boolean }) => {
     },
     usersRepository: {
       getNativeLanguage: vi.fn().mockResolvedValue('en'),
-      getPracticeSessionLimits: vi.fn().mockResolvedValue({ maxNewTerms: 20, maxReviewTerms: 100 }),
     },
     userTargetLanguagePrefsRepository: {
       getShowTranslationsEnabled: vi.fn().mockResolvedValue(true),
+      getPracticeLimitsForLanguage: vi.fn().mockResolvedValue({ maxNewTerms: 20, maxReviewTerms: 100 }),
     },
     practiceRatingEventsRepository: {
       insert: insertRatingEvent,

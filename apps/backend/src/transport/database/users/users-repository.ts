@@ -3,16 +3,6 @@ import { Tables } from '../database.public.types'
 
 export type DbUser = Tables<'users'>
 
-export const DEFAULT_PRACTICE_MAX_NEW_TERMS = 20
-export const DEFAULT_PRACTICE_MAX_REVIEW_TERMS = 100
-export const HARD_MAX_PRACTICE_NEW_TERMS = 100
-export const HARD_MAX_PRACTICE_REVIEW_TERMS = 300
-
-export type PracticeSessionLimits = {
-  maxNewTerms: number
-  maxReviewTerms: number
-}
-
 const insertUser = async (
   id: string,
   referral: string | null,
@@ -210,28 +200,6 @@ const setUiLanguage = async (userId: string, uiLanguage: string | null): Promise
   return result.count === 1
 }
 
-const getPracticeSessionLimits = async (userId: string): Promise<PracticeSessionLimits> => {
-  const result = (await sql`
-    SELECT practice_max_new_terms, practice_max_review_terms
-    FROM public.users
-    WHERE id = ${userId}
-  `) as Array<{ practice_max_new_terms: number | null; practice_max_review_terms: number | null }>
-  return {
-    maxNewTerms: result[0]?.practice_max_new_terms ?? DEFAULT_PRACTICE_MAX_NEW_TERMS,
-    maxReviewTerms: result[0]?.practice_max_review_terms ?? DEFAULT_PRACTICE_MAX_REVIEW_TERMS,
-  }
-}
-
-const setPracticeSessionLimits = async (userId: string, limits: PracticeSessionLimits): Promise<boolean> => {
-  const result = await sql`
-    UPDATE public.users
-    SET practice_max_new_terms = ${limits.maxNewTerms},
-        practice_max_review_terms = ${limits.maxReviewTerms}
-    WHERE id = ${userId}
-  `
-  return result.count === 1
-}
-
 export interface UsersRepositoryInterface {
   insertUser: (
     id: string,
@@ -266,8 +234,6 @@ export interface UsersRepositoryInterface {
   setUiTheme: (userId: string, uiTheme: 'light' | 'dark' | 'system' | null) => Promise<boolean>
   getUiLanguage: (userId: string) => Promise<string | null>
   setUiLanguage: (userId: string, uiLanguage: string | null) => Promise<boolean>
-  getPracticeSessionLimits: (userId: string) => Promise<PracticeSessionLimits>
-  setPracticeSessionLimits: (userId: string, limits: PracticeSessionLimits) => Promise<boolean>
 }
 
 export const UsersRepository = (): UsersRepositoryInterface => {
@@ -294,7 +260,5 @@ export const UsersRepository = (): UsersRepositoryInterface => {
     setUiTheme,
     getUiLanguage,
     setUiLanguage,
-    getPracticeSessionLimits,
-    setPracticeSessionLimits,
   }
 }

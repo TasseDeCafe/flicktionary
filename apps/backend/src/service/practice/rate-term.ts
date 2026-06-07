@@ -5,8 +5,13 @@ import type {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
+import {
+  HARD_MAX_PRACTICE_NEW_TERMS,
+  type UserTargetLanguagePrefsRepositoryInterface,
+} from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { applyRating, type AppRating } from './fsrs'
 import { isParked, shouldParkLeech } from './leech-config'
+import { clampPracticeSessionLimits } from './review-caps'
 
 // Runs `fn` inside one DB transaction and hands it the executor to thread into
 // repo methods that accept one. Wired from postgres-client's beginTx; unit
@@ -16,6 +21,10 @@ export type WithTransaction = <T>(fn: (tx: postgres.Sql) => Promise<T>) => Promi
 export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
+  // Per-language daily-new limit source for rateTerm (the language is only
+  // known once the lookup row loads). applyTermRating itself takes the
+  // resolved maxNewTerms — advanceReadingText computes its own.
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   withTransaction: WithTransaction
   // Optional fire-and-forget exercise-bank warmer. Both rating surfaces
   // (flashcards via rateTerm, reading via advanceReadingText) share
@@ -197,12 +206,21 @@ export const rateTerm = async (
   userId: string,
   rating: AppRating,
   pool: PracticePool,
-  maxNewTerms: number,
   deps: RateTermDependencies,
   options?: { bypassDailyCap?: boolean }
 ): Promise<RateTermResult> => {
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
+
+  // Pass the FULL clamped per-language daily cap: the atomic guard does its
+  // own today-count comparison against it (subtracting here would
+  // double-count). The active pool isn't daily-capped, so skip the fetch.
+  const maxNewTerms =
+    pool === 'active'
+      ? HARD_MAX_PRACTICE_NEW_TERMS
+      : clampPracticeSessionLimits(
+          await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, lookup.target_language)
+        ).maxNewTerms
 
   const result = await applyTermRating({
     lookup,

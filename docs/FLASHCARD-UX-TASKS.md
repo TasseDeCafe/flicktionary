@@ -185,16 +185,17 @@ edit, the current card's data must refresh in the queue.
 
 ## 8. Daily limits per language (migration)
 
-**Status:** todo — needs a plan
+**Status:** PR #111
 
 Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users` table,
 `practice-session-limits-setting.tsx`, `setPracticeSessionLimits` in
 `user-prefs-contract.ts`) to per-language settings (the Languages settings screen backed by
 `user_target_language_prefs`: currently `cefr_level`, `show_translations_enabled`).
 
-- Migration: add the two columns to `user_target_language_prefs` (nullable with fallback, or
-  backfill from `users` values for existing rows). **Append-only migrations** — create via
-  `supabase migration new` from dev-tunnel.
+- Migration (`20260607123340`): added the two columns NOT NULL with the existing defaults
+  (20/100), backfilled from the `users` values, and **dropped the `users` columns in the same
+  migration** — the same clean cutover as the show-translations move (`20260520094644`).
+  Missing pref row ⇒ getter falls back to 20/100.
 - Backend: `resolveReviewCaps()` + the rate-term daily-cap check must read per-language
   limits; clamping logic (`clampPracticeSessionLimits`, 0–100 / 0–300) moves with it.
 - Post-#108 note: both daily budgets are already **counted** per (user, language, pool) —
@@ -210,8 +211,11 @@ Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users`
   or deprecate the global one) → rebuild api-client.
 - UI: move the two inputs from global settings into each language card in the Languages
   screen; remove the global section.
-- Decide what happens to the old `users` columns (keep for fallback vs drop in a later
-  migration).
+- Old `users` columns: dropped in the same migration (decided against keep-for-fallback /
+  two-tier inherit — no dual-read logic anywhere).
+- `rateTerm` wrinkle that surfaced: the router has no `targetLanguage` until the lookup row
+  loads, so the per-language limit fetch moved INTO `rateTerm` (after `findByIdForUser`);
+  the active pool skips the fetch entirely (no daily cap).
 
 ## 9. "Learn new" says "No terms are due" despite thousands of unlearned terms
 
@@ -239,5 +243,5 @@ active pool keeps direct entry (it has no daily cap).
 1. ~~**PR A (small, UI-only):** tasks 2 + 3 (Russian front, example styling)~~ — done, PR #107
 2. ~~**PR B (UI):** task 1 (active card flip) — possibly with 5 (counter flicker)~~ — done, PR #107
 3. ~~**PR C (caps rework):** tasks 4 + 9 (review budget tracking + learn-new bypass)~~ — done, PR #108
-4. **PR D (migration):** task 8 (per-language limits) — plan first; the caps code from #108 is the integration point (see post-#108 note in task 8)
+4. **PR D (migration):** task 8 (per-language limits) — PR #111
 5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — plan first; the rating-event log from #108 is the undo foundation (see task 6)
