@@ -33,12 +33,12 @@ export type ChunksCursor = z.infer<typeof ChunksCursorSchema>
 // here propagate to every card that references the chunk, so the focus view
 // can show consistent content across sessions.
 export const chunksContract = {
-  // Fetch one chunk in full (the practice edit sheet opens on a lean
-  // ReviewTerm and needs explorationExtras/learningMode/etc. on demand).
-  // `surfaceForm` is the first encounter's card form, resolved server-side via
-  // the first_card_id back-pointer (same representative the CSV export uses),
-  // so the sheet's "study this exact form" toggle behaves like the focus view
-  // even when grammar.studied_form is absent. Kept out of ChunkSchema — that
+  // Fetch one chunk in full (the flashcard actions menu opens on a lean
+  // ReviewTerm and needs learningMode/etc. on demand). `firstCardId` /
+  // `firstCardSessionId` are the representative-card deep-link pointer
+  // (resolved via the first_card_id back-pointer, same join as the vocabulary
+  // list) so "Edit term" can open the focus view at
+  // `/sessions/$sessionId/review/$cardId`. Kept out of ChunkSchema — that
   // shape is reused by listChunks/updateContent, which don't pay for the join.
   get: oc
     .route({ method: 'GET', path: '/chunks/{chunkId}', successStatus: 200 })
@@ -47,7 +47,15 @@ export const chunksContract = {
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(z.object({ chunkId: z.string().uuid() }))
-    .output(z.object({ data: z.object({ chunk: ChunkSchema, surfaceForm: z.string().nullable() }) })),
+    .output(
+      z.object({
+        data: z.object({
+          chunk: ChunkSchema,
+          firstCardId: z.string().uuid().nullable(),
+          firstCardSessionId: z.string().uuid().nullable(),
+        }),
+      })
+    ),
 
   // Patch any subset of the gloss/example fields. `undefined` (omitted)
   // preserves the existing value; `null` clears it. `explorationExtrasPatch`

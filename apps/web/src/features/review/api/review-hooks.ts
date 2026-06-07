@@ -200,10 +200,10 @@ export const useTextSegmentsWindow = (input: { textTrackId: string; segmentId: s
   )
 }
 
-// Full single-chunk fetch (the practice edit sheet's data source — the lean
-// ReviewTerm queue payload lacks explorationExtras/learningMode/etc.).
-// `surfaceForm` is the first encounter's card form resolved server-side, so
-// the sheet's "study this exact form" toggle matches the focus view.
+// Full single-chunk fetch (the flashcard actions menu's data source — the
+// lean ReviewTerm queue payload lacks learningMode/etc.). `firstCardId` /
+// `firstCardSessionId` are the representative-card pointer for the "Edit
+// term" focus-view deep link.
 export const useGetChunk = (chunkId: string, enabled: boolean) => {
   const { t } = useLingui()
   return useQuery(

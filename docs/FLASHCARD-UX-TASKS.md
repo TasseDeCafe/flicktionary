@@ -182,15 +182,24 @@ This is one of the demanding ones — write a plan first. Pairs naturally with t
 
 **Status:** in progress (feat/flashcard-rerate-edit)
 
-Implemented inline (no navigation — the client-side queue survives): a pencil
-button in the flashcard controls opens `EditCardSheet` (FloatingSheet) with
-`EditableCardFields` + `EditableGrammarPanel`, both refactored to take
-`chunk: Chunk` (+ `surfaceForm` for the fields) instead of `card: Card`. The
-sheet fetches the full chunk on open via the new `chunks.get` endpoint
-(`surfaceForm` resolved server-side through `first_card_id` for study-form
-parity with the focus view). Edits flow back through a `chunkOverrides` map
-merged into the displayed card at render time — `QueueItem` object identities
-(redrill rollback, rating records) are never rewritten.
+Implemented via the focus view (matches the vocabulary rows and the reading
+mode's "Edit term"): a kebab in the flashcard header opens a ResponsiveOverlay
+actions menu whose "Edit term" row deep-links to
+`/sessions/$sessionId/review/$cardId` with `from='practice'` +
+`practiceMode='flashcards'` (new search param — the focus view's close
+returns to the flashcard queue, scope reset to `mixed`). The card pointer
+comes from the new `chunks.get` endpoint (`firstCardId`/`firstCardSessionId`
+via the `first_card_id` back-pointer), fetched lazily on menu open so the
+queue payload stays lean. `EditableCardFields`/`EditableGrammarPanel` were
+refactored to take `chunk: Chunk` (+ `surfaceForm`) along the way. The
+language-wide focus-view footer is now a single "Switch to active/passive
+vocabulary" button for both vocabulary AND practice origins (the old
+practice-origin "Add to" pair misrepresented already-kept terms). Known
+tradeoff: navigating to the editor unmounts the client-side queue — on return
+it re-seeds fresh (rated cards drop out, 'again' cards resurface as due
+learning-state), but peek re-rate records don't survive the round-trip. An
+earlier inline FloatingSheet editor was built and replaced by this flow
+(clunky popover UX).
 
 Anki-style: spot a mistake mid-review → edit the card → come back and rate it.
 

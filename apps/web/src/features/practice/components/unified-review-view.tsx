@@ -26,25 +26,29 @@ export const UnifiedReviewView = () => {
 
   const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
 
+  // The flashcard view renders its own ModalScreen: its header hosts the
+  // card-aware actions kebab, which needs the view's queue state.
+  if (mode === 'flashcards') {
+    return (
+      <FlashcardModeView
+        key={`fc-${pool}-${scope}`}
+        targetLanguage={targetLanguage}
+        pool={pool}
+        scope={scope}
+        count={count}
+      />
+    )
+  }
+
   return (
     <ModalScreen onClose={close} closeIcon='x' title={languageName}>
-      {mode === 'flashcards' ? (
-        <FlashcardModeView
-          key={`fc-${pool}-${scope}`}
-          targetLanguage={targetLanguage}
-          pool={pool}
-          scope={scope}
-          count={count}
-        />
-      ) : (
-        <ReadingModeView
-          key={`rd-${pool}-${scope}`}
-          targetLanguage={targetLanguage}
-          pool={pool}
-          scope={scope}
-          counts={counts}
-        />
-      )}
+      <ReadingModeView
+        key={`rd-${pool}-${scope}`}
+        targetLanguage={targetLanguage}
+        pool={pool}
+        scope={scope}
+        counts={counts}
+      />
     </ModalScreen>
   )
 }

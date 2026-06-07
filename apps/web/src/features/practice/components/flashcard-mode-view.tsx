@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
-import { type FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
@@ -19,7 +19,6 @@ import {
   type CardSlotKey,
 } from '@flicktionary/core/constants/card-face-config'
 import type {
-  Chunk,
   PracticePool,
   ReviewScope,
   ReviewTerm,
@@ -27,7 +26,7 @@ import type {
 import { StressMarkedText } from './stress-marked-text'
 import { PracticeLoader } from './practice-loader'
 import { ReviewQueueStats } from './review-queue-stats'
-import { EditCardSheet } from './edit-card-sheet'
+import { FlashcardActionsOverlay } from './flashcard-actions-overlay'
 import type { QueueCounts } from './review-counts'
 import { useListReviewTerms, useRateTerm, useUndoRating } from '../api/practice-hooks'
 
@@ -124,14 +123,8 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   // The peeked item whose undo→re-rate chain is in flight (disables the peek
   // rate buttons until the chain settles).
   const [pendingRerate, setPendingRerate] = useState<QueueItem | null>(null)
-  // Mid-session edit sheet (anchor = the pencil button that opened it).
-  const [editSheet, setEditSheet] = useState<{ anchor: FloatingSheetAnchor } | null>(null)
-  // Live content edits overlaid on the displayed card at render time, keyed by
-  // userLookupId. Rewriting QueueItems would break every object-identity
-  // pointer (redrill rollback, rating records); the overlay preserves them and
-  // covers redrill copies of the same lookup for free. Counters are unaffected
-  // — they classify by srsState, which editing never touches.
-  const [chunkOverrides, setChunkOverrides] = useState<Map<string, Partial<ReviewTerm>>>(new Map())
+  // Header-kebab actions menu for the displayed card (edit term, …).
+  const [actionsOpen, setActionsOpen] = useState(false)
 
   useEffect(() => {
     if (seededRef.current || !cards) return
@@ -340,26 +333,16 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     )
   }
 
-  // Live queue sync from the edit sheet: overlay the freshest chunk content
-  // onto every queue item showing this lookup (originals + redrill copies).
-  const syncChunk = (chunk: Chunk) => {
-    setChunkOverrides((prev) => {
-      const next = new Map(prev)
-      next.set(chunk.id, {
-        headword: chunk.headword,
-        sense: chunk.sense,
-        translation: chunk.translation,
-        definition: chunk.definition,
-        targetExample: chunk.targetExample,
-        nativeExample: chunk.nativeExample,
-        grammar: chunk.grammar,
-      })
-      return next
-    })
-  }
+  // The view owns its ModalScreen (instead of unified-review-view) so the
+  // header's kebab can be card-aware: present only while a card is displayed.
+  const wrap = (children: React.ReactNode, rightSlot?: React.ReactNode) => (
+    <ModalScreen onClose={close} closeIcon='x' title={languageName} rightSlot={rightSlot}>
+      {children}
+    </ModalScreen>
+  )
 
   if (isLoading) {
-    return <PracticeLoader label={t`Loading review terms…`} />
+    return wrap(<PracticeLoader label={t`Loading review terms…`} />)
   }
 
   // Done: live queue exhausted (also the empty-batch / nothing-due case).
@@ -380,7 +363,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
         params: { targetLanguage },
         search: { pool, sessionHard },
       })
-    return (
+    return wrap(
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
           <CircleCheck className='h-10 w-10 text-emerald-600' />
@@ -415,12 +398,9 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     )
   }
 
-  if (!current) return <PracticeLoader label={t`Loading…`} />
+  if (!current) return wrap(<PracticeLoader label={t`Loading…`} />)
 
-  // Edit-sheet overlay: merge live content edits into the displayed card.
-  // Queue/record/redrill identities never change — only this render-time view.
-  const override = chunkOverrides.get(current.card.userLookupId)
-  const card = override ? { ...current.card, ...override } : current.card
+  const card = current.card
   const nativeLanguage = userPrefs?.nativeLanguage ?? null
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
@@ -522,7 +502,15 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     }
   }
 
-  return (
+  // Actions for the DISPLAYED card (current or peeked) — opened from the
+  // header kebab, like the vocabulary rows.
+  const actionsButton = (
+    <Button type='button' variant='ghost' size='icon' aria-label={t`Card actions`} onClick={() => setActionsOpen(true)}>
+      <MoreVertical className='h-5 w-5' />
+    </Button>
+  )
+
+  return wrap(
     <div className='flex flex-1 flex-col overflow-hidden'>
       <div className='flex-1 overflow-y-auto'>
         <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8 text-center'>
@@ -559,28 +547,16 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
               <ChevronLeft className='h-5 w-5' />
             </Button>
             <ReviewQueueStats counts={remainingCounts} />
-            <div className='flex items-center gap-1'>
-              {/* Edits the DISPLAYED card (front, back, or peeked). */}
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={t`Edit card`}
-                onClick={(event) => setEditSheet({ anchor: event.currentTarget.getBoundingClientRect() })}
-              >
-                <Pencil className='h-4 w-4' />
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={t`Forward`}
-                disabled={!isPeeking}
-                onClick={() => setPeekBack((p) => Math.max(0, p - 1))}
-              >
-                <ChevronRight className='h-5 w-5' />
-              </Button>
-            </div>
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon'
+              aria-label={t`Forward`}
+              disabled={!isPeeking}
+              onClick={() => setPeekBack((p) => Math.max(0, p - 1))}
+            >
+              <ChevronRight className='h-5 w-5' />
+            </Button>
           </div>
           {isPeeking ? (
             <>
@@ -607,14 +583,14 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
           )}
         </div>
       </div>
-      <EditCardSheet
-        open={editSheet != null}
-        onOpenChange={(open) => !open && setEditSheet(null)}
-        anchor={editSheet?.anchor ?? null}
-        userLookupId={card.userLookupId}
+      <FlashcardActionsOverlay
+        open={actionsOpen}
+        onOpenChange={setActionsOpen}
+        term={card}
         targetLanguage={targetLanguage}
-        onChunkChange={syncChunk}
+        pool={pool}
       />
-    </div>
+    </div>,
+    actionsButton
   )
 }

@@ -562,20 +562,23 @@ const findByIdForUserIncludingDeleted = async (id: string, userId: string): Prom
   return result[0] ?? null
 }
 
-// Representative surface form for one chunk, resolved through the
-// first_card_id back-pointer (the FIRST encounter's card form — same
-// representative the CSV export uses). Null when the back-pointer is null or
-// stale. Powers the practice edit sheet's "study this exact form" fallback,
-// matching the focus view's card.surfaceForm behavior.
-const getSurfaceFormForChunk = async (params: { userLookupId: string; userId: string }): Promise<string | null> => {
+// Representative-card deep-link pointer for one chunk, resolved through the
+// first_card_id back-pointer (same representative the vocabulary list and the
+// practice-text annotations use). Both fields null when the back-pointer is
+// null or stale. Powers the practice "Edit term" action's focus-view link
+// (`/sessions/$sessionId/review/$cardId`).
+const getFirstCardPointerForChunk = async (params: {
+  userLookupId: string
+  userId: string
+}): Promise<{ cardId: string | null; sessionId: string | null }> => {
   const rows = (await sql`
-    SELECT c.surface_form
+    SELECT c.id AS card_id, c.study_session_id
     FROM public.user_lookups ul
     LEFT JOIN public.cards c ON c.id = ul.first_card_id
     WHERE ul.id = ${params.userLookupId}
       AND ul.user_id = ${params.userId}
-  `) as Array<{ surface_form: string | null }>
-  return rows[0]?.surface_form ?? null
+  `) as Array<{ card_id: string | null; study_session_id: string | null }>
+  return { cardId: rows[0]?.card_id ?? null, sessionId: rows[0]?.study_session_id ?? null }
 }
 
 // Initialize SRS state on a row that's never been reviewed before, so it
@@ -1480,7 +1483,10 @@ export interface UserLookupsRepositoryInterface {
   }) => Promise<DbUserLookup | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbUserLookup | null>
   findByIdForUserIncludingDeleted: (id: string, userId: string) => Promise<DbUserLookup | null>
-  getSurfaceFormForChunk: (params: { userLookupId: string; userId: string }) => Promise<string | null>
+  getFirstCardPointerForChunk: (params: {
+    userLookupId: string
+    userId: string
+  }) => Promise<{ cardId: string | null; sessionId: string | null }>
   initializeSrsState: (userLookupId: string) => Promise<void>
   initializeSrsStateForPool: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
   initializeSrsStateIfUnderDailyCap: (params: {
@@ -1597,7 +1603,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findByKey,
     findByIdForUser,
     findByIdForUserIncludingDeleted,
-    getSurfaceFormForChunk,
+    getFirstCardPointerForChunk,
     initializeSrsState,
     initializeSrsStateForPool,
     initializeSrsStateIfUnderDailyCap,
