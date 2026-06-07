@@ -14,6 +14,7 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { getLanguageMode, type LanguageMode } from '../user-prefs/language-mode'
 import { sanitizeExplorationExtrasForLanguageMode } from '../user-prefs/language-output-guards'
+import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 
 export type RunCardChatDependencies = {
   cardsRepository: CardsRepositoryInterface
@@ -68,7 +69,7 @@ const updateCardFieldsTool: Anthropic.Tool = {
       extras_patch: {
         type: 'object',
         description:
-          'Object of optional enrichment keys to merge into exploration_extras. Recognized keys: ipa, frequency, more_frequent_synonym, regionalism, register, register_alternatives, collocations, etymology, l1_notes, notes, context_segment.',
+          'Object of optional enrichment keys to merge into exploration_extras. Recognized keys: ipa, frequency, frequency_detail, more_frequent_synonym, more_examples, regionalism, register, register_alternatives, collocations, etymology, l1_notes, notes, context_segment.',
       },
       grammar_patch: {
         type: 'object',
@@ -290,6 +291,12 @@ export const runCardChat = async (
     targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
   })
 
+  // Chat shares the enrichment pass's dialect handling so its answers (and any
+  // extras_patch edits) stay consistent with the generated exploration.
+  const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
+    ? await deps.usersRepository.getEnglishIpaDialect(input.userId)
+    : undefined
+
   const promptContext = await buildPromptContext(
     {
       sessionId: card.study_session_id,
@@ -297,6 +304,7 @@ export const runCardChat = async (
       nativeLanguage: languagePrefs.nativeLanguage ?? undefined,
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
+      englishIpaDialect,
     },
     deps.studySessionsRepository
   )

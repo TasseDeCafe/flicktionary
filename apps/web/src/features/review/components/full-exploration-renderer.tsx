@@ -48,6 +48,10 @@ export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, showL1Not
 
   const ipa = hideExtrasIpa ? null : asString(extras.ipa)
   const frequency = asString(extras.frequency)
+  const frequencyDetail = asString(extras.frequency_detail)
+  const moreExamples = Array.isArray(extras.more_examples)
+    ? extras.more_examples.map(asString).filter((e): e is string => e !== null)
+    : []
   const moreFrequentSynonym = asString(extras.more_frequent_synonym)
   const regionalism = asString(extras.regionalism)
   const register = asString(extras.register)
@@ -63,14 +67,28 @@ export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, showL1Not
     <div className='flex flex-col'>
       {definition && <Section label={t`Definition`}>{definition}</Section>}
       {translation && <Section label={t`Translation`}>{translation}</Section>}
-      {(targetExample || nativeExample) && (
-        <Section label={t`Example`}>
+      {(targetExample || nativeExample || moreExamples.length > 0) && (
+        <Section label={(targetExample ? 1 : 0) + moreExamples.length > 1 ? t`Examples` : t`Example`}>
           {targetExample && <p>{targetExample}</p>}
           {nativeExample && <p className='text-muted-foreground'>{nativeExample}</p>}
+          {moreExamples.map((example, i) => (
+            <p key={i} className='mt-1'>
+              {example}
+            </p>
+          ))}
         </Section>
       )}
       {ipa && <Section label={t`IPA`}>{ipa}</Section>}
-      {frequency && <Section label={t`Frequency`}>{frequency}</Section>}
+      {/* frequency_detail restates the coarse band with substance (speech vs
+          writing skew, core-vocabulary status), so it replaces the bare enum
+          rather than appearing next to it. */}
+      {(frequencyDetail || frequency) && <Section label={t`Frequency`}>{frequencyDetail ?? frequency}</Section>}
+      {/* Explicit N/A so a missing synonym reads as "checked, none needed"
+          rather than missing data. The renderer only mounts once an
+          exploration exists, so the fallback never shows on bare cards. */}
+      {(frequencyDetail || frequency) && (
+        <Section label={t`More frequent synonym`}>{moreFrequentSynonym ?? t`N/A`}</Section>
+      )}
       {register && <Section label={t`Register`}>{register}</Section>}
       {registerAlternatives && (registerAlternatives.more_formal || registerAlternatives.less_formal) && (
         <Section label={t`Register alternatives`}>
@@ -86,7 +104,6 @@ export const FullExplorationRenderer = ({ card, hideExtrasIpa = false, showL1Not
           )}
         </Section>
       )}
-      {moreFrequentSynonym && <Section label={t`More frequent synonym`}>{moreFrequentSynonym}</Section>}
       {regionalism && <Section label={t`Regionalism`}>{regionalism}</Section>}
       {collocationsNode && <Section label={t`Collocations`}>{collocationsNode}</Section>}
       {etymology && <Section label={t`Etymology`}>{etymology}</Section>}

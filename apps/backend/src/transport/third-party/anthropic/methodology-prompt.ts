@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getLanguageInstructions } from './language-instructions'
+import { getLanguageInstructions, type EnglishIpaDialect } from './language-instructions'
 
 // Static methodology preamble — applies to every pipeline pass and per-card chat turn.
 // Stable across all sessions and users; first cacheable layer.
@@ -40,6 +40,11 @@ type BuildMethodologySystemArgs = {
   movieContextBlob: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
+  // Only meaningful when the target language is English. Selects the dialect
+  // variant of the English instructions (usage defaults + IPA dialect). The
+  // instructions sit inside the cacheable prefix, so each dialect is its own
+  // stable cache variant.
+  englishIpaDialect?: EnglishIpaDialect
 }
 
 const buildTranslationModeBlock = (args: { hideTranslationFields?: boolean; allowL1Notes?: boolean }): string => {
@@ -72,6 +77,7 @@ export const buildMethodologySystem = ({
   movieContextBlob,
   hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
+  englishIpaDialect,
 }: BuildMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
@@ -81,7 +87,7 @@ export const buildMethodologySystem = ({
   const contextBlock = `Source context for this session:
 ${movieContextBlob}`
 
-  const languageInstructions = getLanguageInstructions(targetLanguage)
+  const languageInstructions = getLanguageInstructions(targetLanguage, { englishIpaDialect })
   const translationMode = buildTranslationModeBlock({ hideTranslationFields, allowL1Notes })
 
   const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
@@ -100,6 +106,7 @@ type BuildPracticeMethodologySystemArgs = {
   cefrLevel: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
+  englishIpaDialect?: EnglishIpaDialect
 }
 
 // Variant for the Practice tab. Same cacheable prefix structure but without the
@@ -112,13 +119,14 @@ export const buildPracticeMethodologySystem = ({
   cefrLevel,
   hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
+  englishIpaDialect,
 }: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
 - Target language: ${targetLanguage}
 - CEFR level: ${cefrLevel}`
 
-  const languageInstructions = getLanguageInstructions(targetLanguage)
+  const languageInstructions = getLanguageInstructions(targetLanguage, { englishIpaDialect })
   const translationMode = buildTranslationModeBlock({ hideTranslationFields, allowL1Notes })
 
   const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text: METHODOLOGY_PREAMBLE }]
