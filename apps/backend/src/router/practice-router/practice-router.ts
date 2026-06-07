@@ -19,7 +19,6 @@ import type { PracticeRatingEventsRepositoryInterface } from '../../transport/da
 import { beginTx } from '../../transport/database/postgres-client'
 import { listReviewTerms } from '../../service/practice/list-review-terms'
 import { rateTerm, type WithTransaction } from '../../service/practice/rate-term'
-import { clampPracticeSessionLimits } from '../../service/practice/review-caps'
 import {
   ensureExerciseBank,
   getStrengthenExercises,
@@ -183,7 +182,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     warmExerciseBank: warmBank,
   }
   const capsDeps = {
-    usersRepository: deps.usersRepository,
+    userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     userLookupsRepository: deps.userLookupsRepository,
     practiceTextsRepository: deps.practiceTextsRepository,
     practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
@@ -222,18 +221,15 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     rateTerm: implementer.rateTerm.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      // Pass the FULL clamped daily cap: the atomic guard does its own
-      // today-count comparison against it (subtracting here would double-count).
-      const limits = clampPracticeSessionLimits(await deps.usersRepository.getPracticeSessionLimits(userId))
       const result = await rateTerm(
         input.userLookupId,
         userId,
         input.rating,
         input.pool,
-        limits.maxNewTerms,
         {
           userLookupsRepository: deps.userLookupsRepository,
           practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+          userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
           withTransaction,
           warmExerciseBank: warmBank,
         },

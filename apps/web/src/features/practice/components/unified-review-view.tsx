@@ -1,6 +1,7 @@
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { useDueSummary } from '../api/practice-hooks'
 import { FlashcardModeView } from './flashcard-mode-view'
@@ -19,7 +20,7 @@ export const UnifiedReviewView = () => {
 
   const languageName = getLanguageName(targetLanguage)
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
-  const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
+  const { maxNewTerms } = getPracticeLimitsForLanguage(prefs, targetLanguage)
   const dailyNewAvailable = entry ? getDailyNewAvailable(entry, maxNewTerms) : 0
   const counts = getReviewCounts(entry, pool, dailyNewAvailable)
 

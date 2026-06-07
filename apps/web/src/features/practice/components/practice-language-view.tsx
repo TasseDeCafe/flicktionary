@@ -17,6 +17,7 @@ import {
 import { Button } from '@flicktionary/ui/components/button'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import type {
   PracticeDueSummaryEntry,
   PracticePool,
@@ -54,8 +55,7 @@ export const PracticeLanguageView = () => {
 
   const entry = summary?.find((row) => row.targetLanguage === targetLanguage) ?? null
   const languageName = getLanguageName(targetLanguage)
-  const maxNewTerms = prefs?.practiceMaxNewTerms ?? 20
-  const maxReviewTerms = prefs?.practiceMaxReviewTerms ?? 100
+  const { maxNewTerms, maxReviewTerms } = getPracticeLimitsForLanguage(prefs, targetLanguage)
 
   const dailyNewAvailable = entry ? getDailyNewAvailable(entry, maxNewTerms) : 0
   // The review-due count is capped by what's left of today's review budget —

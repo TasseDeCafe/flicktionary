@@ -1138,6 +1138,8 @@ export type Database = {
         Row: {
           cefr_level: string
           created_at: string
+          practice_max_new_terms: number
+          practice_max_review_terms: number
           show_translations_enabled: boolean
           target_language: string
           updated_at: string
@@ -1146,6 +1148,8 @@ export type Database = {
         Insert: {
           cefr_level: string
           created_at?: string
+          practice_max_new_terms?: number
+          practice_max_review_terms?: number
           show_translations_enabled?: boolean
           target_language: string
           updated_at?: string
@@ -1154,6 +1158,8 @@ export type Database = {
         Update: {
           cefr_level?: string
           created_at?: string
+          practice_max_new_terms?: number
+          practice_max_review_terms?: number
           show_translations_enabled?: boolean
           target_language?: string
           updated_at?: string
@@ -1170,8 +1176,6 @@ export type Database = {
           last_target_language: string | null
           llm_highlights_enabled: boolean
           native_language: string | null
-          practice_max_new_terms: number
-          practice_max_review_terms: number
           referral: string | null
           stripe_customer_id: string | null
           tap_to_translate_enabled: boolean
@@ -1191,8 +1195,6 @@ export type Database = {
           last_target_language?: string | null
           llm_highlights_enabled?: boolean
           native_language?: string | null
-          practice_max_new_terms?: number
-          practice_max_review_terms?: number
           referral?: string | null
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean
@@ -1212,8 +1214,6 @@ export type Database = {
           last_target_language?: string | null
           llm_highlights_enabled?: boolean
           native_language?: string | null
-          practice_max_new_terms?: number
-          practice_max_review_terms?: number
           referral?: string | null
           stripe_customer_id?: string | null
           tap_to_translate_enabled?: boolean

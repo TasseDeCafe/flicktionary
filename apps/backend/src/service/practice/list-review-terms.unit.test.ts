@@ -7,8 +7,8 @@ const createDeps = (opts: { introducedToday?: number; reviewedToday?: number } =
   const repoListReviewTerms = vi.fn().mockResolvedValue([])
   const countReviewBudgetConsumedToday = vi.fn().mockResolvedValue(opts.reviewedToday ?? 0)
   const deps = {
-    usersRepository: {
-      getPracticeSessionLimits: vi.fn().mockResolvedValue({ maxNewTerms: 20, maxReviewTerms: 100 }),
+    userTargetLanguagePrefsRepository: {
+      getPracticeLimitsForLanguage: vi.fn().mockResolvedValue({ maxNewTerms: 20, maxReviewTerms: 100 }),
     },
     userLookupsRepository: {
       listReviewTerms: repoListReviewTerms,

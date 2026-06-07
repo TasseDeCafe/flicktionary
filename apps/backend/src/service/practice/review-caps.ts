@@ -4,8 +4,8 @@ import {
   HARD_MAX_PRACTICE_NEW_TERMS,
   HARD_MAX_PRACTICE_REVIEW_TERMS,
   type PracticeSessionLimits,
-  type UsersRepositoryInterface,
-} from '../../transport/database/users/users-repository'
+  type UserTargetLanguagePrefsRepositoryInterface,
+} from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type {
   PracticePool,
   UserLookupsRepositoryInterface,
@@ -24,7 +24,7 @@ export const clampPracticeSessionLimits = (limits: PracticeSessionLimits): Pract
 }
 
 export type ReviewCapsDependencies = {
-  usersRepository: UsersRepositoryInterface
+  userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
 }
@@ -64,7 +64,12 @@ export const resolveReviewCaps = async (params: {
       maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
     }
   }
-  const limits = clampPracticeSessionLimits(await params.deps.usersRepository.getPracticeSessionLimits(params.userId))
+  const limits = clampPracticeSessionLimits(
+    await params.deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(
+      params.userId,
+      params.targetLanguage
+    )
+  )
 
   const consumedReviewsToday = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
     userId: params.userId,

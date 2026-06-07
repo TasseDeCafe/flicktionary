@@ -496,11 +496,11 @@ export const useSetUiLanguage = () => {
   )
 }
 
-export const useSetPracticeSessionLimits = () => {
+export const useSetPracticeLimitsForLanguage = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
-    orpcQuery.userPrefs.setPracticeSessionLimits.mutationOptions({
+    orpcQuery.userPrefs.setPracticeLimitsForLanguage.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
       },

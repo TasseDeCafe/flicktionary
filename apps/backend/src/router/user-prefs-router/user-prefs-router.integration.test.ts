@@ -112,4 +112,79 @@ describe('user-prefs-router', async () => {
     const getResponse = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
     expect(getResponse.body.data.uiTheme).toBeNull()
   })
+
+  // Creates the user_target_language_prefs row (upsertCefr) the limits
+  // setter requires — same precondition as setShowTranslationsForLanguage.
+  const setCefr = async (token: string, targetLanguage: string) => {
+    const response = await request(testApp)
+      .put('/api/v1/user-prefs/cefr-for-language')
+      .send({ targetLanguage, cefrLevel: 'B1' })
+      .set(buildAuthorizationHeaders(token))
+    expect(response.status).toBe(200)
+  }
+
+  test('practice limits are per language with column defaults and no global fields', async () => {
+    const token = await createUserAndGetToken()
+    await setCefr(token, 'es')
+
+    const response = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.practiceMaxNewTerms).toBeUndefined()
+    expect(response.body.data.practiceMaxReviewTerms).toBeUndefined()
+    expect(response.body.data.targetLanguagePrefs).toEqual([
+      expect.objectContaining({ targetLanguage: 'es', practiceMaxNewTerms: 20, practiceMaxReviewTerms: 100 }),
+    ])
+  })
+
+  test('setPracticeLimitsForLanguage persists one language and leaves the others untouched', async () => {
+    const token = await createUserAndGetToken()
+    await setCefr(token, 'es')
+    await setCefr(token, 'ru')
+
+    const setLimits = await request(testApp)
+      .put('/api/v1/user-prefs/practice-limits-for-language')
+      .send({ targetLanguage: 'es', maxNewTerms: 5, maxReviewTerms: 50 })
+      .set(buildAuthorizationHeaders(token))
+    expect(setLimits.status).toBe(200)
+
+    const getResponse = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+    const byLanguage = new Map(
+      (getResponse.body.data.targetLanguagePrefs as { targetLanguage: string }[]).map((p) => [p.targetLanguage, p])
+    )
+    expect(byLanguage.get('es')).toEqual(
+      expect.objectContaining({ practiceMaxNewTerms: 5, practiceMaxReviewTerms: 50 })
+    )
+    expect(byLanguage.get('ru')).toEqual(
+      expect.objectContaining({ practiceMaxNewTerms: 20, practiceMaxReviewTerms: 100 })
+    )
+  })
+
+  test('rejects practice limits that disable both budgets', async () => {
+    const token = await createUserAndGetToken()
+    await setCefr(token, 'es')
+
+    const response = await request(testApp)
+      .put('/api/v1/user-prefs/practice-limits-for-language')
+      .send({ targetLanguage: 'es', maxNewTerms: 0, maxReviewTerms: 0 })
+      .set(buildAuthorizationHeaders(token))
+
+    expect(response.status).toBe(400)
+
+    const getResponse = await request(testApp).get('/api/v1/user-prefs').set(buildAuthorizationHeaders(token))
+    expect(getResponse.body.data.targetLanguagePrefs[0]).toEqual(
+      expect.objectContaining({ practiceMaxNewTerms: 20, practiceMaxReviewTerms: 100 })
+    )
+  })
+
+  test('setting practice limits for a never-configured language fails (UPDATE-only, like show-translations)', async () => {
+    const token = await createUserAndGetToken()
+
+    const response = await request(testApp)
+      .put('/api/v1/user-prefs/practice-limits-for-language')
+      .send({ targetLanguage: 'es', maxNewTerms: 5, maxReviewTerms: 50 })
+      .set(buildAuthorizationHeaders(token))
+
+    expect(response.status).toBe(500)
+  })
 })

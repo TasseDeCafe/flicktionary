@@ -1,12 +1,19 @@
+import { useEffect, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { Input } from '@flicktionary/ui/components/input'
 import { Label } from '@flicktionary/ui/components/label'
 import { Switch } from '@flicktionary/ui/components/switch'
 import {
   useSetCefrForLanguage,
   useSetEnglishIpaDialect,
+  useSetPracticeLimitsForLanguage,
   useSetShowTranslationsForLanguage,
 } from '@/features/sessions/api/sessions-hooks'
+import {
+  PRACTICE_MAX_NEW_TERMS_LIMIT,
+  PRACTICE_MAX_REVIEW_TERMS_LIMIT,
+} from '@flicktionary/api-client/orpc-contracts/user-prefs-contract'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 type CefrLevel = (typeof LEVELS)[number]
@@ -17,6 +24,103 @@ type Pref = {
   targetLanguage: string
   cefrLevel: string
   showTranslationsEnabled: boolean
+  practiceMaxNewTerms: number
+  practiceMaxReviewTerms: number
+}
+
+const clampLimit = (value: number, max: number) => Math.min(Math.max(Math.trunc(value), 0), max)
+
+// Module-scope on purpose: each language card owns its own draft state, and an
+// inline component would remount (and drop drafts) on every list render.
+const PracticeLimitsRow = ({
+  targetLanguage,
+  maxNewTerms,
+  maxReviewTerms,
+}: {
+  targetLanguage: string
+  maxNewTerms: number
+  maxReviewTerms: number
+}) => {
+  const { t } = useLingui()
+  const { mutate, isPending, variables } = useSetPracticeLimitsForLanguage()
+  const isRowPending = isPending && variables?.targetLanguage === targetLanguage
+  const [draftNew, setDraftNew] = useState(String(maxNewTerms))
+  const [draftReview, setDraftReview] = useState(String(maxReviewTerms))
+
+  useEffect(() => {
+    setDraftNew(String(maxNewTerms))
+    setDraftReview(String(maxReviewTerms))
+  }, [maxNewTerms, maxReviewTerms])
+
+  const save = () => {
+    const parsedNew = Number.parseInt(draftNew, 10)
+    const parsedReview = Number.parseInt(draftReview, 10)
+    const nextNew = clampLimit(Number.isFinite(parsedNew) ? parsedNew : maxNewTerms, PRACTICE_MAX_NEW_TERMS_LIMIT)
+    const nextReview = clampLimit(
+      Number.isFinite(parsedReview) ? parsedReview : maxReviewTerms,
+      PRACTICE_MAX_REVIEW_TERMS_LIMIT
+    )
+    const payload =
+      nextNew + nextReview > 0
+        ? { maxNewTerms: nextNew, maxReviewTerms: nextReview }
+        : { maxNewTerms: maxNewTerms, maxReviewTerms: maxReviewTerms }
+
+    setDraftNew(String(payload.maxNewTerms))
+    setDraftReview(String(payload.maxReviewTerms))
+    if (payload.maxNewTerms === maxNewTerms && payload.maxReviewTerms === maxReviewTerms) return
+    mutate({ targetLanguage, ...payload })
+  }
+
+  return (
+    <div className='flex flex-col gap-3 border-t pt-3'>
+      <div className='flex flex-col gap-1'>
+        <span className='text-sm font-medium'>{t`Practice limits`}</span>
+        <p className='text-muted-foreground text-xs'>
+          {t`New terms are capped per day. Follow-up sessions use up to this many review terms.`}
+        </p>
+      </div>
+      <div className='grid grid-cols-2 gap-3'>
+        <div className='flex flex-col gap-1.5'>
+          <Label htmlFor={`practice-max-new-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
+            {t`New terms`}
+          </Label>
+          <Input
+            id={`practice-max-new-terms-${targetLanguage}`}
+            type='number'
+            inputMode='numeric'
+            min={0}
+            max={PRACTICE_MAX_NEW_TERMS_LIMIT}
+            value={draftNew}
+            disabled={isRowPending}
+            onChange={(event) => setDraftNew(event.target.value)}
+            onBlur={save}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur()
+            }}
+          />
+        </div>
+        <div className='flex flex-col gap-1.5'>
+          <Label htmlFor={`practice-max-review-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
+            {t`Review terms`}
+          </Label>
+          <Input
+            id={`practice-max-review-terms-${targetLanguage}`}
+            type='number'
+            inputMode='numeric'
+            min={0}
+            max={PRACTICE_MAX_REVIEW_TERMS_LIMIT}
+            value={draftReview}
+            disabled={isRowPending}
+            onChange={(event) => setDraftReview(event.target.value)}
+            onBlur={save}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur()
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 type Props = {
@@ -61,7 +165,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
       <div>
         <Label className='text-sm font-medium'>{t`Language preferences`}</Label>
         <p className='text-muted-foreground mt-1 text-xs'>
-          {t`Set your CEFR level and translation behavior for each target language.`}
+          {t`Set your CEFR level, translation behavior and daily practice limits for each target language.`}
         </p>
       </div>
       <ul className='flex flex-col gap-2'>
@@ -112,6 +216,11 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                   aria-label={t`Generate translations`}
                 />
               </div>
+              <PracticeLimitsRow
+                targetLanguage={p.targetLanguage}
+                maxNewTerms={p.practiceMaxNewTerms}
+                maxReviewTerms={p.practiceMaxReviewTerms}
+              />
               {p.targetLanguage === 'en' && (
                 <div className='flex items-center justify-between gap-3 border-t pt-3'>
                   <div className='flex flex-col gap-1'>
