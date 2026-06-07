@@ -20,12 +20,21 @@ export const useDueSummary = () => {
 // `count` is the explicit learn-new batch size (learn_new scope only) — it's
 // part of the orpc input and therefore of the query key, so different batch
 // picks never share a cached slice.
+//
+// gcTime: 0 — the queue is a one-shot client-side slice: the view seeds its
+// local queue from the FIRST data it sees and deliberately ignores later
+// refetches (mid-session updates must not clobber local state). Serving a
+// cached slice on remount therefore replays already-rated cards and pre-edit
+// content (e.g. returning from the focus-view editor), and the background
+// refetch can't fix it. Dropping the cache on unmount makes every (re)entry
+// load fresh.
 export const useListReviewTerms = (targetLanguage: string, pool: PracticePool, scope: ReviewScope, count?: number) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.practice.listReviewTerms.queryOptions({
       input: { targetLanguage, pool, scope, ...(count != null ? { newBatchSize: count } : {}) },
       select: (r) => r.data.terms,
+      gcTime: 0,
       meta: { errorMessage: t`Failed to load review terms` },
     })
   )
