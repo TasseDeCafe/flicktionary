@@ -14,7 +14,7 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import type {
-  Card,
+  Chunk,
   Grammar,
   GrammarIpaBag,
   GrammarNotableForm,
@@ -23,7 +23,7 @@ import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { useUpdateChunkContent } from '../api/review-hooks'
 
 type Props = {
-  card: Card
+  chunk: Chunk
   targetLanguage?: string
   sourceSessionId?: string
 }
@@ -67,7 +67,7 @@ const SelectField = ({
   </select>
 )
 
-const grammarFromCard = (card: Card): Grammar => (card.chunk.grammar ?? {}) as Grammar
+const grammarFromChunk = (chunk: Chunk): Grammar => (chunk.grammar ?? {}) as Grammar
 
 const isMeaningful = (g: Grammar): boolean => {
   const keys = Object.keys(g)
@@ -108,7 +108,7 @@ const buildGrammarPatch = (current: Grammar, lastSaved: Grammar): Record<string,
 // Editable per-key editor. Sends a debounced PATCH on every change. Mirrors
 // the lastSavedRef pattern from EditableCardFields so concurrent updates
 // (chat tool, sibling tab) don't clobber in-flight edits.
-export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: Props) => {
+export const EditableGrammarPanel = ({ chunk, targetLanguage, sourceSessionId }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
   const { data: userPrefs } = useGetUserPrefs()
@@ -116,7 +116,7 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
 
   const config = useMemo(() => getLanguageGrammarConfig(targetLanguage), [targetLanguage])
 
-  const initial = useMemo(() => grammarFromCard(card), [card])
+  const initial = useMemo(() => grammarFromChunk(chunk), [chunk])
   const startsOpen = isMeaningful(initial)
   const [open, setOpen] = useState(startsOpen)
   const [grammar, setGrammar] = useState<Grammar>(initial)
@@ -165,22 +165,22 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
   // patched the row, another tab edited it, etc.). Don't clobber in-flight
   // typing by comparing to lastSaved, not to local state.
   useEffect(() => {
-    const incoming = grammarFromCard(card)
+    const incoming = grammarFromChunk(chunk)
     if (!sameJson(incoming, lastSavedRef.current)) {
       setGrammar(incoming)
       lastSavedRef.current = incoming
     }
-  }, [card])
+  }, [chunk])
 
   useEffect(() => {
     const id = setTimeout(() => {
       const patch = buildGrammarPatch(grammar, lastSavedRef.current)
       if (!patch) return
-      updateChunkContent.mutate({ chunkId: card.chunk.id, patch: { grammarPatch: patch } })
+      updateChunkContent.mutate({ chunkId: chunk.id, patch: { grammarPatch: patch } })
       lastSavedRef.current = grammar
     }, SAVE_DEBOUNCE_MS)
     return () => clearTimeout(id)
-  }, [grammar, card.chunk.id, updateChunkContent])
+  }, [grammar, chunk.id, updateChunkContent])
 
   const setKey = <K extends keyof Grammar>(key: K, value: Grammar[K] | undefined) => {
     setGrammar((prev) => {
@@ -371,13 +371,13 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
           {has('is_indeclinable') && (
             <div className='flex items-center gap-2'>
               <input
-                id={`indecl-${card.chunk.id}`}
+                id={`indecl-${chunk.id}`}
                 type='checkbox'
                 checked={Boolean(grammar.is_indeclinable)}
                 onChange={(e) => setKey('is_indeclinable', e.target.checked || undefined)}
                 className='h-4 w-4'
               />
-              <Label htmlFor={`indecl-${card.chunk.id}`} className='text-xs'>
+              <Label htmlFor={`indecl-${chunk.id}`} className='text-xs'>
                 {t`Indeclinable`}
               </Label>
             </div>
@@ -386,13 +386,13 @@ export const EditableGrammarPanel = ({ card, targetLanguage, sourceSessionId }: 
           {has('is_reflexive') && (
             <div className='flex items-center gap-2'>
               <input
-                id={`refl-${card.chunk.id}`}
+                id={`refl-${chunk.id}`}
                 type='checkbox'
                 checked={Boolean(grammar.is_reflexive)}
                 onChange={(e) => setKey('is_reflexive', e.target.checked || undefined)}
                 className='h-4 w-4'
               />
-              <Label htmlFor={`refl-${card.chunk.id}`} className='text-xs'>
+              <Label htmlFor={`refl-${chunk.id}`} className='text-xs'>
                 {t`Reflexive`}
               </Label>
             </div>

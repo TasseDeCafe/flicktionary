@@ -4,14 +4,16 @@ import { FocusView } from '@/features/review/components/focus-view'
 
 // `from` lets the close button know where to land. Defaults to the triage list
 // (the natural parent). The Vocabulary tab passes 'vocabulary' so close
-// returns there. A practice text passes 'practice' alongside the language +
-// pool so close (and the cross-jump from prev/next) returns to the sessionless
-// review screen for the right (language, pool).
+// returns there. A practice surface passes 'practice' alongside the language +
+// pool (+ render mode: a reading text omits practiceMode and returns to 'read';
+// the flashcard actions menu passes 'flashcards') so close returns to the
+// sessionless review screen for the right (language, pool, mode).
 const focusViewSearchSchema = z.object({
   from: z.enum(['triage', 'vocabulary', 'practice']).optional(),
   source: z.enum(['available']).optional(),
   practiceLang: z.string().optional(),
   practicePool: z.enum(['passive', 'active']).optional(),
+  practiceMode: z.enum(['read', 'flashcards']).optional(),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/sessions/$sessionId/review/$cardId')({

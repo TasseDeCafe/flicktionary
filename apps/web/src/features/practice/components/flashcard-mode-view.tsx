@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
+import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
@@ -25,8 +26,9 @@ import type {
 import { StressMarkedText } from './stress-marked-text'
 import { PracticeLoader } from './practice-loader'
 import { ReviewQueueStats } from './review-queue-stats'
+import { FlashcardActionsOverlay } from './flashcard-actions-overlay'
 import type { QueueCounts } from './review-counts'
-import { useListReviewTerms, useRateTerm } from '../api/practice-hooks'
+import { useListReviewTerms, useRateTerm, useUndoRating } from '../api/practice-hooks'
 
 // A persistently-failing rateTerm mutation re-appends its card to the queue end
 // (so it isn't silently lost) — capped so a hard failure can't loop forever.
@@ -43,6 +45,16 @@ type QueueItem = {
   // True for in-session redrill copies of 'again'-rated cards (classifies the
   // item into the learning bucket of the remaining counts).
   requeuedForAgain: boolean
+}
+
+// One durably-applied rating, keyed by the QueueItem it rated (object
+// identity — same identity scheme as the redrill machinery). `eventId` is the
+// undo handle the rating response returned; `redrill` is the in-session copy
+// an 'again' rating appended (null otherwise), so a re-rate can reconcile it.
+type RatingRecord = {
+  rating: RateValue
+  eventId: string
+  redrill: QueueItem | null
 }
 
 const getRemainingCounts = (queue: QueueItem[], index: number): QueueCounts =>
@@ -85,6 +97,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const { data: userPrefs } = useGetUserPrefs()
   const { data: cards, isLoading } = useListReviewTerms(targetLanguage, pool, scope, count)
   const { mutate: rateTerm } = useRateTerm()
+  const { mutate: undoRating } = useUndoRating()
   const languageName = getLanguageName(targetLanguage)
   const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
 
@@ -102,6 +115,16 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   // exercises. Parked (leech) terms never enter this queue, so the set is
   // non-leech by construction.
   const sessionHardRef = useRef<Set<string>>(new Set())
+  // Durably-applied ratings keyed by QueueItem identity: an entry exists ⇔
+  // the rating landed server-side with an undoable event. Drives the peek
+  // re-rate buttons. A ref (not state): writes happen in mutation callbacks
+  // and reads happen in renders triggered by the same queue/index updates.
+  const ratingRecordsRef = useRef<Map<QueueItem, RatingRecord>>(new Map())
+  // The peeked item whose undo→re-rate chain is in flight (disables the peek
+  // rate buttons until the chain settles).
+  const [pendingRerate, setPendingRerate] = useState<QueueItem | null>(null)
+  // Header-kebab actions menu for the displayed card (edit term, …).
+  const [actionsOpen, setActionsOpen] = useState(false)
 
   useEffect(() => {
     if (seededRef.current || !cards) return
@@ -164,6 +187,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
       {
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
+            // Nothing applied (no event) — no record, nothing to re-rate.
             dropRedrill()
             if (!capNoticeShown) setCapNoticeShown(true)
             return
@@ -174,6 +198,17 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
             dropRedrill()
             const headword = card.headword
             toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
+            // parked comes in two shapes: eventId set = the rating applied AND
+            // newly parked the leech (fully undoable — undo un-parks); eventId
+            // null = stale-queue no-op on an already-parked term (nothing to
+            // undo). Only the former gets a record.
+            if (resp.data.eventId) {
+              ratingRecordsRef.current.set(item, { rating, eventId: resp.data.eventId, redrill })
+            }
+            return
+          }
+          if (resp.data.eventId) {
+            ratingRecordsRef.current.set(item, { rating, eventId: resp.data.eventId, redrill })
           }
         },
         onError: () => {
@@ -186,8 +221,128 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     )
   }
 
+  // Peek re-rate (Anki semantics): undo the recorded rating, then apply the
+  // new one through the full rateTerm machinery (cap/introduction/leech). Any
+  // outcome that leaves the card unrated server-side (stale undo, cap refusal,
+  // parked no-op, error after a committed undo) drops the record and
+  // re-appends a fresh QueueItem so the card resurfaces rateable.
+  const handleRerate = (item: QueueItem, newRating: RateValue) => {
+    const record = ratingRecordsRef.current.get(item)
+    if (!record || pendingRerate) return
+    const { card } = item
+    setPendingRerate(item)
+
+    const requeueFresh = () => {
+      ratingRecordsRef.current.delete(item)
+      setQueue((q) => [...q, { card, retryCount: 0, requeuedForAgain: false }])
+    }
+
+    undoRating(
+      { userLookupId: card.userLookupId, pool, eventId: record.eventId },
+      {
+        // Mutation error: nothing changed server-side — keep the record (the
+        // hook's meta toast surfaces the failure).
+        onError: () => setPendingRerate(null),
+        onSuccess: (undoResp) => {
+          if (!undoResp.data.undone) {
+            // Stale handle — a later rating (other tab, reading mode) is now
+            // the latest live event, or it was already reverted. The server
+            // refused to restore; treat the card as unknown-but-consistent:
+            // drop the record and let it resurface for a clean rating.
+            requeueFresh()
+            setPendingRerate(null)
+            return
+          }
+          // Undo committed — the card is unrated server-side. Apply the fresh
+          // rating with the same learn-new flag as original ratings.
+          rateTerm(
+            {
+              userLookupId: card.userLookupId,
+              rating: newRating,
+              pool,
+              learnNewSession: scope === 'learn_new' && count != null,
+            },
+            {
+              onError: () => {
+                requeueFresh()
+                setPendingRerate(null)
+              },
+              onSuccess: (resp) => {
+                const parked = resp.data.parked
+                if (resp.data.dailyCapReached || (parked && resp.data.eventId === null)) {
+                  // The fresh rating didn't apply (cap consumed meanwhile, or
+                  // the term got parked by another surface) — card is unrated.
+                  requeueFresh()
+                  if (resp.data.dailyCapReached && !capNoticeShown) setCapNoticeShown(true)
+                  if (parked) {
+                    const headword = card.headword
+                    toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
+                  }
+                  setPendingRerate(null)
+                  return
+                }
+
+                // Applied (incl. newly-parked-with-eventId). Reconcile the
+                // redrill copy with the rating change.
+                const oldRedrill = record.redrill
+                let newRedrill: QueueItem | null = oldRedrill
+                const dropOldRedrill = () => {
+                  if (!oldRedrill) return
+                  setQueue((q) => {
+                    const position = q.indexOf(oldRedrill)
+                    // Already consumed: the live index walked past it — can't
+                    // pull a card the session already showed.
+                    if (position === -1 || position < indexRef.current) return q
+                    return q.filter((queued) => queued !== oldRedrill)
+                  })
+                  newRedrill = null
+                }
+                if (parked) {
+                  // Newly parked: out of rotation — no redrill either way.
+                  dropOldRedrill()
+                  const headword = card.headword
+                  toast.info(t`“${headword}” keeps tripping you up — it's parked for rehab exercises.`)
+                } else if (record.rating === 'again' && newRating !== 'again') {
+                  dropOldRedrill()
+                } else if (record.rating !== 'again' && newRating === 'again') {
+                  const fresh: QueueItem = { card, retryCount: item.retryCount, requeuedForAgain: true }
+                  setQueue((q) => [...q, fresh])
+                  newRedrill = fresh
+                }
+
+                // Keyed by lookupId — may over-clear when a redrill copy is
+                // still hard; acceptable, Strengthen is best-effort.
+                if (newRating === 'again' || newRating === 'hard') {
+                  sessionHardRef.current.add(card.userLookupId)
+                } else {
+                  sessionHardRef.current.delete(card.userLookupId)
+                }
+
+                ratingRecordsRef.current.set(item, {
+                  rating: newRating,
+                  eventId: resp.data.eventId as string,
+                  redrill: newRedrill,
+                })
+                setPeekBack(0)
+                setPendingRerate(null)
+              },
+            }
+          )
+        },
+      }
+    )
+  }
+
+  // The view owns its ModalScreen (instead of unified-review-view) so the
+  // header's kebab can be card-aware: present only while a card is displayed.
+  const wrap = (children: React.ReactNode, rightSlot?: React.ReactNode) => (
+    <ModalScreen onClose={close} closeIcon='x' title={languageName} rightSlot={rightSlot}>
+      {children}
+    </ModalScreen>
+  )
+
   if (isLoading) {
-    return <PracticeLoader label={t`Loading review terms…`} />
+    return wrap(<PracticeLoader label={t`Loading review terms…`} />)
   }
 
   // Done: live queue exhausted (also the empty-batch / nothing-due case).
@@ -208,7 +363,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
         params: { targetLanguage },
         search: { pool, sessionHard },
       })
-    return (
+    return wrap(
       <div className='flex flex-1 flex-col overflow-hidden'>
         <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
           <CircleCheck className='h-10 w-10 text-emerald-600' />
@@ -243,7 +398,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     )
   }
 
-  if (!current) return <PracticeLoader label={t`Loading…`} />
+  if (!current) return wrap(<PracticeLoader label={t`Loading…`} />)
 
   const card = current.card
   const nativeLanguage = userPrefs?.nativeLanguage ?? null
@@ -280,6 +435,13 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const backSlots = resolveCardSlots(faceConfig.back, cond)
   // Peeked cards are always shown fully (front + back), read-only.
   const showBack = revealed || isPeeking
+
+  // Peek re-rate: offered when the displayed (peeked) item has a durably
+  // applied rating AND its redrill copy wasn't itself rated yet — once the
+  // copy is rated, the original's event is no longer the latest live one (the
+  // server would refuse the undo too; don't offer dead buttons).
+  const peekRecord = isPeeking ? ratingRecordsRef.current.get(current) : undefined
+  const canRerate = !!peekRecord && (!peekRecord.redrill || !ratingRecordsRef.current.has(peekRecord.redrill))
 
   const renderSlot = (slot: CardSlotKey, face: 'front' | 'back') => {
     switch (slot) {
@@ -340,7 +502,15 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     }
   }
 
-  return (
+  // Actions for the DISPLAYED card (current or peeked) — opened from the
+  // header kebab, like the vocabulary rows.
+  const actionsButton = (
+    <Button type='button' variant='ghost' size='icon' aria-label={t`Card actions`} onClick={() => setActionsOpen(true)}>
+      <MoreVertical className='h-5 w-5' />
+    </Button>
+  )
+
+  return wrap(
     <div className='flex flex-1 flex-col overflow-hidden'>
       <div className='flex-1 overflow-y-auto'>
         <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8 text-center'>
@@ -389,9 +559,21 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
             </Button>
           </div>
           {isPeeking ? (
-            <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
-              {t`Back to current card`}
-            </Button>
+            <>
+              {canRerate && peekRecord && (
+                <div className='flex flex-col gap-1.5'>
+                  <p className='text-muted-foreground text-center text-xs'>{t`Change your rating`}</p>
+                  <RateButtons
+                    value={peekRecord.rating}
+                    disabled={pendingRerate != null}
+                    onSelect={(value) => handleRerate(current, value)}
+                  />
+                </div>
+              )}
+              <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
+                {t`Back to current card`}
+              </Button>
+            </>
           ) : showBack ? (
             <RateButtons onSelect={handleRate} />
           ) : (
@@ -401,6 +583,14 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
           )}
         </div>
       </div>
-    </div>
+      <FlashcardActionsOverlay
+        open={actionsOpen}
+        onOpenChange={setActionsOpen}
+        term={card}
+        targetLanguage={targetLanguage}
+        pool={pool}
+      />
+    </div>,
+    actionsButton
   )
 }

@@ -83,7 +83,7 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const { from, source, practiceLang, practicePool } = useSearch({
+  const { from, source, practiceLang, practicePool, practiceMode } = useSearch({
     from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
   })
   const fromVocabulary = from === 'vocabulary'
@@ -114,13 +114,20 @@ export const FocusView = () => {
   // Preserve the `from` origin across prev/next so the close button still
   // knows where to land after the user navigates around. Practice carries the
   // language + pool so the back-route resolves to the sessionless review screen.
-  const search = from ? (fromPractice && practiceLang ? { from, practiceLang, practicePool } : { from }) : undefined
+  const search = from
+    ? fromPractice && practiceLang
+      ? { from, practiceLang, practicePool, practiceMode }
+      : { from }
+    : undefined
   const backToPractice = () => {
     if (!practiceLang) return
     void navigate({
       to: '/practice/review/$targetLanguage',
       params: { targetLanguage: practiceLang },
-      search: { pool: practicePool ?? 'passive', scope: 'mixed', mode: 'read' },
+      // Scope is always 'mixed' on return: a flashcard queue re-seeds from a
+      // fresh fetch anyway, and re-entering learn_new with its batch count
+      // would serve a whole new batch of unseen terms.
+      search: { pool: practicePool ?? 'passive', scope: 'mixed', mode: practiceMode ?? 'read' },
     })
   }
   const goPrev = () => {
@@ -332,14 +339,15 @@ export const FocusView = () => {
                 update_card_fields) so the field useState picks up new values. */}
                 <EditableCardFields
                   key={`${card.id}:${card.updatedAt}`}
-                  card={card}
+                  chunk={card.chunk}
+                  surfaceForm={card.surfaceForm}
                   translationFieldsMode={translationFieldsMode}
                   sourceSessionId={sourceSessionId}
                 />
                 <div className='mt-4'>
                   <EditableGrammarPanel
                     key={`grammar:${card.chunk.id}:${card.updatedAt}`}
-                    card={card}
+                    chunk={card.chunk}
                     targetLanguage={targetLanguage}
                     sourceSessionId={sourceSessionId}
                   />
@@ -382,51 +390,11 @@ export const FocusView = () => {
             </div>
           </div>
 
-          {fromPractice && (
-            <div className='bg-background shrink-0 border-t px-4 py-3'>
-              <div className='mx-auto flex w-full max-w-md flex-col gap-2 md:max-w-lg'>
-                <Button
-                  variant={card.chunk.learningMode === 'active' ? 'default' : 'outline'}
-                  size='xl'
-                  className='w-full'
-                  disabled={isSettingLearningMode}
-                  onClick={() => {
-                    setLearningMode(
-                      { chunkId: card.chunk.id, learningMode: 'active' },
-                      {
-                        onSuccess: () => {
-                          backToPractice()
-                        },
-                      }
-                    )
-                  }}
-                >
-                  <Star className='mr-2 h-4 w-4' />
-                  {t`Add to active vocabulary`}
-                </Button>
-                <Button
-                  variant={card.chunk.learningMode === 'passive' ? 'default' : 'outline'}
-                  size='xl'
-                  className='w-full'
-                  disabled={isSettingLearningMode}
-                  onClick={() => {
-                    setLearningMode(
-                      { chunkId: card.chunk.id, learningMode: 'passive' },
-                      {
-                        onSuccess: () => {
-                          backToPractice()
-                        },
-                      }
-                    )
-                  }}
-                >
-                  {t`Add to passive vocabulary`}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {fromVocabulary &&
+          {/* Language-wide entries (vocabulary AND practice origins) are
+              already kept — offer the single mode SWITCH, not the triage
+              "Add to" pair. Switching stays in place (no auto-navigate); the
+              chevron closes back to the originating surface. */}
+          {isLanguageWideEntry &&
             (() => {
               const targetMode = card.chunk.learningMode === 'active' ? 'passive' : 'active'
               return (

@@ -4,6 +4,7 @@ import { rateTerm, type RateTermDependencies } from './rate-term'
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const lookupId = '00000000-0000-0000-0000-000000000004'
+const eventId = '00000000-0000-0000-0000-00000000000e'
 
 const makeLookup = (overrides: Partial<DbUserLookup> = {}): DbUserLookup =>
   ({
@@ -49,7 +50,8 @@ const createDeps = (lookup: DbUserLookup | null) => {
   const initializeSrsStateForPool = vi.fn().mockResolvedValue(undefined)
   const applyFsrsResultForPool = vi.fn().mockResolvedValue(undefined)
   const parkLeech = vi.fn().mockResolvedValue(undefined)
-  const insertRatingEvent = vi.fn().mockResolvedValue(undefined)
+  // Insert returns the new event's id (the undo handle rateTerm surfaces).
+  const insertRatingEvent = vi.fn().mockResolvedValue(eventId)
   const warmExerciseBank = vi.fn()
   const deps = {
     userLookupsRepository: {
@@ -86,7 +88,7 @@ describe('rateTerm', () => {
   it('introduces a never-reviewed passive term via the daily-cap guard, then applies FSRS', async () => {
     const { deps, initializeSrsStateIfUnderDailyCap, applyFsrsResultForPool } = createDeps(makeLookup())
     const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(
       expect.objectContaining({ userLookupId: lookupId, maxNewTerms: 20, targetLanguage: 'es' })
     )
@@ -97,7 +99,7 @@ describe('rateTerm', () => {
     const { deps, initializeSrsStateIfUnderDailyCap, applyFsrsResultForPool } = createDeps(makeLookup())
     initializeSrsStateIfUnderDailyCap.mockResolvedValue(false)
     const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: true, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: true, parked: false, eventId: null })
     expect(applyFsrsResultForPool).not.toHaveBeenCalled()
   })
 
@@ -106,7 +108,7 @@ describe('rateTerm', () => {
       makeLookup({ srs_state: 'review', srs_due: '2026-05-12T00:00:00Z' })
     )
     const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(initializeSrsStateIfUnderDailyCap).not.toHaveBeenCalled()
     expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'passive' }), undefined)
   })
@@ -116,7 +118,7 @@ describe('rateTerm', () => {
       makeLookup({ learning_mode: 'active' })
     )
     const result = await rateTerm(lookupId, userId, 'good', 'active', deps)
-    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeSrsStateIfUnderDailyCap).not.toHaveBeenCalled()
     expect(initializeSrsStateForPool).toHaveBeenCalledWith({ userLookupId: lookupId, pool: 'active' })
     expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'active' }), undefined)
@@ -139,7 +141,7 @@ describe('rateTerm', () => {
   it('bypassDailyCap threads bypassCap into the introduction guard', async () => {
     const { deps, initializeSrsStateIfUnderDailyCap, applyFsrsResultForPool } = createDeps(makeLookup())
     const result = await rateTerm(lookupId, userId, 'good', 'passive', deps, { bypassDailyCap: true })
-    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: true }))
     expect(applyFsrsResultForPool).toHaveBeenCalled()
   })
@@ -290,7 +292,8 @@ describe('rateTerm leech parking', () => {
   it("parks on the 'again' that crosses the lapse threshold and reports parked", async () => {
     const { deps, parkLeech, warmExerciseBank } = createDeps(reviewOverdue(3))
     const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true })
+    // The rating applied (then parked), so it carries an undo handle.
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeech).toHaveBeenCalledWith({ userLookupId: lookupId, pool: 'passive' })
     // A freshly parked leech warms its gate-exercise bank.
     expect(warmExerciseBank).toHaveBeenCalled()
@@ -299,21 +302,21 @@ describe('rateTerm leech parking', () => {
   it("does NOT re-park a graduated term (historical lapses >= threshold) on 'good'", async () => {
     const { deps, parkLeech } = createDeps(reviewOverdue(5))
     const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(parkLeech).not.toHaveBeenCalled()
   })
 
   it('re-parks a graduated term on its next FRESH lapse', async () => {
     const { deps, parkLeech } = createDeps(reviewOverdue(5))
     const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeech).toHaveBeenCalledWith({ userLookupId: lookupId, pool: 'passive' })
   })
 
   it('does not park below the threshold', async () => {
     const { deps, parkLeech } = createDeps(reviewOverdue(1))
     const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(parkLeech).not.toHaveBeenCalled()
   })
 
@@ -322,7 +325,8 @@ describe('rateTerm leech parking', () => {
       reviewOverdue(5, { leech_parked_at: '2026-05-01T00:00:00Z' })
     )
     const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true })
+    // Nothing was applied (parked no-op) — no event, so no undo handle.
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId: null })
     expect(applyFsrsResultForPool).not.toHaveBeenCalled()
     expect(parkLeech).not.toHaveBeenCalled()
     expect(warmExerciseBank).not.toHaveBeenCalled()
@@ -342,7 +346,7 @@ describe('rateTerm leech parking', () => {
       })
     )
     const result = await rateTerm(lookupId, userId, 'again', 'active', deps)
-    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true })
+    expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeech).toHaveBeenCalledWith({ userLookupId: lookupId, pool: 'active' })
   })
 })

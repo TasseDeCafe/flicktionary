@@ -38,8 +38,10 @@ export type InsertRatingEventInput = {
 // a transaction (beginTx's tx) so the event commits atomically with the FSRS
 // column update it describes — the log is the review budget's source of truth,
 // so a half-applied rating must not leave the two out of sync.
-const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = sql): Promise<void> => {
-  await executor`
+// Returns the new event's id so the rating response can hand the client an
+// undo handle (undoRating verifies it's still the latest live event).
+const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = sql): Promise<string> => {
+  const rows = (await executor`
     INSERT INTO public.practice_rating_events (
       user_id,
       user_lookup_id,
@@ -80,6 +82,48 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
       ${params.prevSrsReps},
       ${params.prevSrsLapses}
     )
+    RETURNING id
+  `) as Array<{ id: string }>
+  return rows[0]!.id
+}
+
+// The latest non-reverted event for one (user, lookup, pool) — the only event
+// undoRating may revert (its prev_srs_* snapshot describes the CURRENT row
+// state; older snapshots are stale). FOR UPDATE serializes concurrent undos of
+// the same card: the loser re-reads after the winner's reverted_at stamp and
+// sees no live event. The user_id predicate is defense-in-depth — callers
+// already resolve the lookup through findByIdForUser.
+const findLatestLiveEventForUndo = async (
+  params: { userId: string; userLookupId: string; pool: PracticePool },
+  executor: postgres.Sql = sql
+): Promise<DbPracticeRatingEvent | null> => {
+  const rows = (await executor`
+    SELECT *
+    FROM public.practice_rating_events
+    WHERE user_id = ${params.userId}
+      AND user_lookup_id = ${params.userLookupId}
+      AND pool = ${params.pool}
+      AND reverted_at IS NULL
+    ORDER BY rated_at DESC
+    LIMIT 1
+    FOR UPDATE
+  `) as DbPracticeRatingEvent[]
+  return rows[0] ?? null
+}
+
+// Tombstone an event after its snapshot has been restored. The
+// reverted_at IS NULL guard makes a double-undo a no-op; the budget queries'
+// reverted_at IS NULL filters refund the slot automatically.
+const markReverted = async (
+  params: { eventId: string; userId: string },
+  executor: postgres.Sql = sql
+): Promise<void> => {
+  await executor`
+    UPDATE public.practice_rating_events
+    SET reverted_at = NOW()
+    WHERE id = ${params.eventId}
+      AND user_id = ${params.userId}
+      AND reverted_at IS NULL
   `
 }
 
@@ -139,7 +183,12 @@ const countReviewBudgetConsumedTodayByLanguage = async (params: {
 }
 
 export interface PracticeRatingEventsRepositoryInterface {
-  insert: (params: InsertRatingEventInput, executor?: postgres.Sql) => Promise<void>
+  insert: (params: InsertRatingEventInput, executor?: postgres.Sql) => Promise<string>
+  findLatestLiveEventForUndo: (
+    params: { userId: string; userLookupId: string; pool: PracticePool },
+    executor?: postgres.Sql
+  ) => Promise<DbPracticeRatingEvent | null>
+  markReverted: (params: { eventId: string; userId: string }, executor?: postgres.Sql) => Promise<void>
   countReviewBudgetConsumedToday: (params: {
     userId: string
     targetLanguage: string
@@ -154,6 +203,8 @@ export interface PracticeRatingEventsRepositoryInterface {
 export const PracticeRatingEventsRepository = (): PracticeRatingEventsRepositoryInterface => {
   return {
     insert,
+    findLatestLiveEventForUndo,
+    markReverted,
     countReviewBudgetConsumedToday,
     countReviewBudgetConsumedTodayByLanguage,
   }

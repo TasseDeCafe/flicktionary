@@ -6,7 +6,7 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Input } from '@flicktionary/ui/components/input'
 import { Switch } from '@flicktionary/ui/components/switch'
 import { Textarea } from '@flicktionary/ui/components/textarea'
-import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Chunk } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 
 // How the translation/native-example inputs are presented:
@@ -17,7 +17,11 @@ import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 export type TranslationFieldsMode = 'editable' | 'on-demand' | 'hidden'
 
 type Props = {
-  card: Card
+  chunk: Chunk
+  // Representative card form used to seed "study this exact form" when the
+  // chunk's grammar bag lacks studied_form (the focus view passes the session
+  // card's form; the practice edit sheet passes the first encounter's).
+  surfaceForm?: string | null
   translationFieldsMode: TranslationFieldsMode
   sourceSessionId?: string
 }
@@ -28,7 +32,7 @@ const SAVE_DEBOUNCE_MS = 600
 // the canonical chunk (user_lookups). Editing here mutates ONE row that may be
 // referenced by many cards across sessions — sibling cards re-fetch and pick
 // up the change via cache invalidation.
-export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionId }: Props) => {
+export const EditableCardFields = ({ chunk, surfaceForm, translationFieldsMode, sourceSessionId }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
   const renameChunk = useRenameChunk(sourceSessionId)
@@ -36,17 +40,19 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
   const [renameError, setRenameError] = useState<string | null>(null)
 
   // 'on-demand' disclosure: starts open when a manual translation already
-  // exists (mirrors the grammar panel's startsOpen). The component remounts on
-  // card.updatedAt (keyed in focus-view), so server-side additions re-open it.
+  // exists (mirrors the grammar panel's startsOpen). The focus view remounts
+  // the component per save (keyed on card.updatedAt), so server-side
+  // additions re-open it there; the practice edit sheet stays mounted and
+  // keeps the user's disclosure state instead.
   const [translationOpen, setTranslationOpen] = useState(
-    !!(card.chunk.translation ?? '').trim() || !!(card.chunk.nativeExample ?? '').trim()
+    !!(chunk.translation ?? '').trim() || !!(chunk.nativeExample ?? '').trim()
   )
 
-  const [headword, setHeadword] = useState(card.chunk.headword)
-  const [translation, setTranslation] = useState(card.chunk.translation ?? '')
-  const [definition, setDefinition] = useState(card.chunk.definition ?? '')
-  const [targetExample, setTargetExample] = useState(card.chunk.targetExample ?? '')
-  const [nativeExample, setNativeExample] = useState(card.chunk.nativeExample ?? '')
+  const [headword, setHeadword] = useState(chunk.headword)
+  const [translation, setTranslation] = useState(chunk.translation ?? '')
+  const [definition, setDefinition] = useState(chunk.definition ?? '')
+  const [targetExample, setTargetExample] = useState(chunk.targetExample ?? '')
+  const [nativeExample, setNativeExample] = useState(chunk.nativeExample ?? '')
 
   // "Study this exact form": when the card's surface form is an inflection of
   // the headword, the learner can flip the review front to drill the form
@@ -55,13 +61,13 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
   // study_form_enabled) so they follow the canonical row into the review
   // queue. Old chunks may predate the LLM-generated studied_form — toggling
   // on then seeds it from the card's surface form with an empty translation.
-  const storedStudiedForm = card.chunk.grammar?.studied_form ?? null
-  const studyFormValue = (storedStudiedForm?.form ?? card.surfaceForm ?? '').trim()
-  const studyFormAvailable = !!studyFormValue && studyFormValue !== card.chunk.headword.trim()
-  const [studyFormEnabled, setStudyFormEnabled] = useState(!!card.chunk.grammar?.study_form_enabled)
+  const storedStudiedForm = chunk.grammar?.studied_form ?? null
+  const studyFormValue = (storedStudiedForm?.form ?? surfaceForm ?? '').trim()
+  const studyFormAvailable = !!studyFormValue && studyFormValue !== chunk.headword.trim()
+  const [studyFormEnabled, setStudyFormEnabled] = useState(!!chunk.grammar?.study_form_enabled)
   const [formTranslation, setFormTranslation] = useState(storedStudiedForm?.translation ?? '')
   const lastSavedStudyFormRef = useRef({
-    enabled: !!card.chunk.grammar?.study_form_enabled,
+    enabled: !!chunk.grammar?.study_form_enabled,
     translation: storedStudiedForm?.translation ?? '',
   })
 
@@ -69,11 +75,11 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
   // every keystroke pause and avoid clobbering server-side updates (e.g. from
   // the chat tool) with our local stale state.
   const lastSavedRef = useRef({
-    headword: card.chunk.headword,
-    translation: card.chunk.translation ?? '',
-    definition: card.chunk.definition ?? '',
-    targetExample: card.chunk.targetExample ?? '',
-    nativeExample: card.chunk.nativeExample ?? '',
+    headword: chunk.headword,
+    translation: chunk.translation ?? '',
+    definition: chunk.definition ?? '',
+    targetExample: chunk.targetExample ?? '',
+    nativeExample: chunk.nativeExample ?? '',
   })
 
   // Sync local state when the server value diverges from what we last saved
@@ -82,11 +88,11 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
   // server-vs-local-state) so the user's in-flight typing isn't clobbered by
   // routine refetches that return the value we just sent.
   useEffect(() => {
-    const serverHeadword = card.chunk.headword
-    const serverTranslation = card.chunk.translation ?? ''
-    const serverDefinition = card.chunk.definition ?? ''
-    const serverTargetExample = card.chunk.targetExample ?? ''
-    const serverNativeExample = card.chunk.nativeExample ?? ''
+    const serverHeadword = chunk.headword
+    const serverTranslation = chunk.translation ?? ''
+    const serverDefinition = chunk.definition ?? ''
+    const serverTargetExample = chunk.targetExample ?? ''
+    const serverNativeExample = chunk.nativeExample ?? ''
     if (serverHeadword !== lastSavedRef.current.headword) {
       setHeadword(serverHeadword)
       lastSavedRef.current.headword = serverHeadword
@@ -107,18 +113,12 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
       setNativeExample(serverNativeExample)
       lastSavedRef.current.nativeExample = serverNativeExample
     }
-  }, [
-    card.chunk.headword,
-    card.chunk.translation,
-    card.chunk.definition,
-    card.chunk.targetExample,
-    card.chunk.nativeExample,
-  ])
+  }, [chunk.headword, chunk.translation, chunk.definition, chunk.targetExample, chunk.nativeExample])
 
   // Same server-sync rule for the study-form fields.
   useEffect(() => {
-    const serverEnabled = !!card.chunk.grammar?.study_form_enabled
-    const serverFormTranslation = card.chunk.grammar?.studied_form?.translation ?? ''
+    const serverEnabled = !!chunk.grammar?.study_form_enabled
+    const serverFormTranslation = chunk.grammar?.studied_form?.translation ?? ''
     if (serverEnabled !== lastSavedStudyFormRef.current.enabled) {
       setStudyFormEnabled(serverEnabled)
       lastSavedStudyFormRef.current.enabled = serverEnabled
@@ -127,7 +127,7 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
       setFormTranslation(serverFormTranslation)
       lastSavedStudyFormRef.current.translation = serverFormTranslation
     }
-  }, [card.chunk.grammar])
+  }, [chunk.grammar])
 
   const handleStudyFormToggle = (next: boolean) => {
     setStudyFormEnabled(next)
@@ -135,7 +135,7 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
     // Write the full {form, translation} pair so a toggle on an old chunk
     // (no LLM-generated studied_form) seeds it from the card's surface form.
     updateChunkContent.mutate({
-      chunkId: card.chunk.id,
+      chunkId: chunk.id,
       patch: {
         grammarPatch: {
           study_form_enabled: next,
@@ -151,7 +151,7 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
       if (!studyFormEnabled) return
       if (formTranslation === lastSavedStudyFormRef.current.translation) return
       updateChunkContent.mutate({
-        chunkId: card.chunk.id,
+        chunkId: chunk.id,
         patch: {
           grammarPatch: {
             studied_form: { form: studyFormValue, translation: formTranslation.trim() || null },
@@ -161,7 +161,7 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
       lastSavedStudyFormRef.current.translation = formTranslation
     }, SAVE_DEBOUNCE_MS)
     return () => clearTimeout(id)
-  }, [formTranslation, studyFormEnabled, studyFormValue, card.chunk.id, updateChunkContent])
+  }, [formTranslation, studyFormEnabled, studyFormValue, chunk.id, updateChunkContent])
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -189,7 +189,7 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
         contentDirty = true
       }
       if (contentDirty) {
-        updateChunkContent.mutate({ chunkId: card.chunk.id, patch: contentPatch })
+        updateChunkContent.mutate({ chunkId: chunk.id, patch: contentPatch })
         lastSavedRef.current = {
           ...lastSavedRef.current,
           translation,
@@ -202,7 +202,7 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
       const trimmedHeadword = headword.trim()
       if (trimmedHeadword.length > 0 && trimmedHeadword !== lastSavedRef.current.headword) {
         renameChunk.mutate(
-          { chunkId: card.chunk.id, headword: trimmedHeadword, sense: card.chunk.sense ?? '' },
+          { chunkId: chunk.id, headword: trimmedHeadword, sense: chunk.sense ?? '' },
           {
             onSuccess: () => {
               lastSavedRef.current = { ...lastSavedRef.current, headword: trimmedHeadword }
@@ -227,8 +227,8 @@ export const EditableCardFields = ({ card, translationFieldsMode, sourceSessionI
     definition,
     targetExample,
     nativeExample,
-    card.chunk.id,
-    card.chunk.sense,
+    chunk.id,
+    chunk.sense,
     updateChunkContent,
     renameChunk,
     t,

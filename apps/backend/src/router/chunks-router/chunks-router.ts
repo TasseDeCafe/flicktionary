@@ -96,6 +96,21 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
+    get: implementer.get.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      // Representative-card pointer so "Edit term" surfaces can deep-link to
+      // the focus view (`/sessions/$sessionId/review/$cardId`).
+      const pointer = await userLookupsRepository.getFirstCardPointerForChunk({
+        userLookupId: input.chunkId,
+        userId,
+      })
+      return { data: { chunk: toChunkDto(owned), firstCardId: pointer.cardId, firstCardSessionId: pointer.sessionId } }
+    }),
+
     updateContent: implementer.updateContent.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
