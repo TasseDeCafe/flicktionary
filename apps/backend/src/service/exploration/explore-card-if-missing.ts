@@ -7,6 +7,7 @@ import { UserLookupsRepositoryInterface } from '../../transport/database/user-lo
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
+import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import {
@@ -67,6 +68,12 @@ export const exploreCardIfMissing = async (
     })
     const languageModeNativeLanguage = languagePrefs.nativeLanguage ?? session.target_language
 
+    // English explorations follow the user's IPA dialect preference (GA vs RP):
+    // it steers extras.ipa and which variety counts as the default vs a regionalism.
+    const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
+      ? await deps.usersRepository.getEnglishIpaDialect(userId)
+      : undefined
+
     const enrichment = await enrichmentPass({
       nativeLanguage: languageModeNativeLanguage,
       targetLanguage: session.target_language,
@@ -76,6 +83,7 @@ export const exploreCardIfMissing = async (
       surroundingSegments: surroundingFormatted,
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
+      englishIpaDialect,
     })
     const sanitizedText = sanitizeTextFieldsForLanguageMode(
       {

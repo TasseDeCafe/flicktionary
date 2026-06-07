@@ -90,7 +90,27 @@ Do not duplicate information across grammar and exploration_extras: register
 goes only in extras; case government goes only in grammar.government;
 etymology only in extras.etymology.`
 
-const ENGLISH_INSTRUCTIONS = `English-specific guidance:
+export type EnglishIpaDialect = 'ga' | 'rp'
+
+// The dialect block mirrors the user's English IPA dialect preference
+// (users.english_ipa_dialect). It steers default usage, Briticism/Americanism
+// flagging, and the dialect of extras.ipa transcriptions.
+const buildEnglishDialectBlock = (dialect: EnglishIpaDialect): string =>
+  dialect === 'rp'
+    ? `Dialect: the learner prefers British English.
+- Default to standard British English usage, spelling, and vocabulary.
+- IPA transcriptions use Received Pronunciation (RP).
+- When a word or expression is chiefly American, flag it explicitly and give
+  the British equivalent.`
+    : `Dialect: the learner prefers American English.
+- Default to standard American English usage, spelling, and vocabulary.
+- IPA transcriptions use General American (GA).
+- When a word or expression is chiefly British, flag it explicitly and give
+  the American equivalent.`
+
+const buildEnglishInstructions = (dialect: EnglishIpaDialect): string => `English-specific guidance:
+
+${buildEnglishDialectBlock(dialect)}
 
 Headword form for verbs is the marked infinitive: "to practice", "to run
 out of", "to look forward to". Always include the "to" — even for phrasal
@@ -137,12 +157,18 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   ru: RUSSIAN_INSTRUCTIONS,
   rus: RUSSIAN_INSTRUCTIONS,
   russian: RUSSIAN_INSTRUCTIONS,
-  en: ENGLISH_INSTRUCTIONS,
-  eng: ENGLISH_INSTRUCTIONS,
-  english: ENGLISH_INSTRUCTIONS,
 }
 
-export const getLanguageInstructions = (targetLanguage: string): string | null => {
+export const isEnglishTargetLanguage = (targetLanguage: string): boolean =>
+  ['en', 'eng', 'english'].includes(targetLanguage.trim().toLowerCase())
+
+export const getLanguageInstructions = (
+  targetLanguage: string,
+  opts: { englishIpaDialect?: EnglishIpaDialect } = {}
+): string | null => {
+  if (isEnglishTargetLanguage(targetLanguage)) {
+    return buildEnglishInstructions(opts.englishIpaDialect ?? 'ga')
+  }
   const key = targetLanguage.trim().toLowerCase()
   return LANGUAGE_INSTRUCTIONS[key] ?? null
 }

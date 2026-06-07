@@ -174,10 +174,18 @@ The enrichment path uses these shared steps:
    - Input: chunk + 10 surrounding segments + source context blob + user's
      note + preset tags + methodology prompt.
    - Output: refined basic columns (the model may revise them based on
-     deeper analysis) plus an `extras` bag containing optional fields (IPA,
-     frequency, register, register alternatives, collocations, etymology,
-     per-chunk L1 notes, more frequent synonyms, regionalism, free-form
-     notes, bolded context segment), AND a refined `grammar` bag (same
+     deeper analysis) plus an `extras` bag in two tiers — always-include
+     fields the model must fill with an explicit verdict/negative rather
+     than omit (IPA in the user's English dialect when applicable,
+     frequency band + `frequency_detail` prose, `more_frequent_synonym`
+     with explicit null when none is needed, `more_examples` (2 extra
+     sentences, 3 total with `target_example`), regionalism verdict even
+     when "No — universal", register, register alternatives with explicit
+     negatives like "none — already the everyday word", collocations) and
+     when-relevant fields (etymology — omitted rather than invented for
+     function words / fragments with no documented origin, per-chunk L1
+     notes, free-form notes, bolded context segment), AND a refined
+     `grammar` bag (same
      shape as the basic-data pass; the deeper analysis can correct or
      fill keys the basic pass left empty). Per-chunk L1 notes (e.g. an
      English speaker's confusion between `près de moi` and `chez moi`)
@@ -522,9 +530,10 @@ card
                                     -- show_translations_enabled is off for this
                                     -- target language
   -- enrichment (populated only on demand by Generate full exploration)
-  exploration_extras  jsonb         -- partial bag: ipa, frequency, register, register_alternatives,
-                                    -- collocations, etymology, l1_notes, notes, more_frequent_synonym,
-                                    -- regionalism, context_segment. Default '{}'.
+  exploration_extras  jsonb         -- partial bag: ipa, frequency, frequency_detail, register,
+                                    -- register_alternatives, collocations, etymology, l1_notes, notes,
+                                    -- more_frequent_synonym, more_examples, regionalism,
+                                    -- context_segment. Default '{}'.
   grammar             jsonb         -- typed sparse bag of language-agnostic morphology / grammar
                                     -- facts: pos, gender (m/f/n/c), aspect (impf/perf/biaspectual),
                                     -- aspect_pair_headword, government (e.g. "от + gen"), number_only
@@ -781,7 +790,7 @@ Notes:
 
 ## LLM methodology prompt
 
-Used as the system prompt for every heavy pass (context blob, basic-data, full-exploration, practice-text-generation) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{source_context_blob}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`). Three blocks ship today: Spanish (rioplatense / peninsular / Mexican variant rules, pronominal-verb headword rules, plus grammar-field guidance for unpredictable gender + reflexive verbs + fixed-preposition verbs); Russian (clean-headword convention, soft-sign-masculine flagging, aspect + aspect_pair_headword + government rules, plurale tantum, stress-marked `display_form`); English (marked-infinitive headword convention `to <verb>`, prepositional-verb government, irregular-form `notable_forms` for irregular pasts / plurals / comparatives, plurale tantum). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
+Used as the system prompt for every heavy pass (context blob, basic-data, full-exploration, practice-text-generation) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{source_context_blob}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`). Three blocks ship today: Spanish (rioplatense / peninsular / Mexican variant rules, pronominal-verb headword rules, plus grammar-field guidance for unpredictable gender + reflexive verbs + fixed-preposition verbs); Russian (clean-headword convention, soft-sign-masculine flagging, aspect + aspect_pair_headword + government rules, plurale tantum, stress-marked `display_form`); English (marked-infinitive headword convention `to <verb>`, prepositional-verb government, irregular-form `notable_forms` for irregular pasts / plurals / comparatives, plurale tantum). The English block is parameterized on the user's `english_ipa_dialect` pref (GA vs RP): it sets the default variety for usage, spelling, and IPA, and flips which variety gets flagged as regional — each dialect is its own stable cache-prefix variant; the dialect is threaded into the full-exploration pass and per-card chat (other passes default to GA). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
 
 ```
 You are a linguistic co-pilot for a language learner. Methodology: lexical approach.

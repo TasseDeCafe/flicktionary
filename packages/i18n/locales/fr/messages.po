@@ -779,7 +779,7 @@ msgstr "Cliquez pour déverrouiller le menu de police"
 msgid "Close"
 msgstr "Fermer"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:91
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:108
 msgid "Collocations"
 msgstr "Cooccurrences"
 
@@ -1026,7 +1026,7 @@ msgid "Default"
 msgstr "Défaut"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:309
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:64
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:68
 msgid "Definition"
 msgstr "Définition"
 
@@ -1238,7 +1238,7 @@ msgstr "Erreur lors de la configuration des données utilisateur"
 msgid "Error: {message}"
 msgstr "Erreur : {message}"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:92
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:109
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:179
 msgid "Etymology"
 msgstr "Étymologie"
@@ -1264,9 +1264,13 @@ msgstr "Tout ce que vous enregistrez apparaît dans l'application web, où vous 
 "pouvez consulter vos sessions, parcourir votre vocabulaire et pratiquer "
 "ce que vous avez collecté."
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:67
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
 msgid "Example"
 msgstr "Exemple"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
+msgid "Examples"
+msgstr "Exemples"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:111
 msgid "Expected:"
@@ -1651,7 +1655,7 @@ msgstr "Essai gratuit"
 msgid "Free-form notes that don't fit the structured fields above."
 msgstr "Notes libres qui ne correspondent pas aux champs structurés ci-dessus."
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:73
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:85
 msgid "Frequency"
 msgstr "Fréquence"
 
@@ -1948,7 +1952,7 @@ msgid "Invalid token. Please sign in again."
 msgstr "Jeton invalide. Veuillez vous reconnecter."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:233
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:81
 msgid "IPA"
 msgstr "API"
 
@@ -1992,7 +1996,7 @@ msgstr "Continuez à pratiquer celui-ci."
 msgid "Keyboard Shortcuts"
 msgstr "Raccourcis clavier"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:93
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:110
 msgid "L1 notes"
 msgstr "Notes L1"
 
@@ -2054,7 +2058,7 @@ msgstr "Apprendre de nouveaux termes"
 msgid "Learning"
 msgstr "Apprentissage"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:84
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:102
 msgid "Less formal:"
 msgstr "Moins formel :"
 
@@ -2189,11 +2193,11 @@ msgstr "Mensuel"
 msgid "More"
 msgstr "Plus"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:79
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:97
 msgid "More formal:"
 msgstr "Plus formel :"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:89
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
 msgid "More frequent synonym"
 msgstr "Synonyme plus fréquent"
 
@@ -2244,6 +2248,10 @@ msgstr "Films"
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:122
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
+msgid "N/A"
+msgstr "N/D"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
@@ -2437,7 +2445,7 @@ msgstr "Formes remarquables"
 msgid "Note saved"
 msgstr "Note enregistrée"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:94
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:111
 msgid "Notes"
 msgstr "Notes"
 
@@ -2905,15 +2913,15 @@ msgstr "Réfléchi"
 msgid "Refresh"
 msgstr "Actualiser"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:107
 msgid "Regionalism"
 msgstr "Régionalisme"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:74
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:92
 msgid "Register"
 msgstr "Registre"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:76
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:94
 msgid "Register alternatives"
 msgstr "Alternatives de registre"
 
@@ -3214,8 +3222,8 @@ msgstr "Sessions"
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:168
 msgid "Set your CEFR level, translation behavior and daily practice limits for "
 "each target language."
-msgstr "Définissez votre niveau CECR, le comportement des traductions et les "
-"limites de pratique quotidienne pour chaque langue cible."
+msgstr "Définissez votre niveau CECR, le comportement de traduction et les "
+"limites de pratique quotidiennes pour chaque langue cible."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:127
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:117
@@ -3827,7 +3835,7 @@ msgstr "URL du serveur de transcription"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:280
 #: apps/web/src/features/review/components/editable-card-fields.tsx:321
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:65
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:69
 msgid "Translation"
 msgstr "Traduction"
 

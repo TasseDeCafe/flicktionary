@@ -765,7 +765,7 @@ msgstr "Click to unlock font menu"
 msgid "Close"
 msgstr "Close"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:91
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:108
 msgid "Collocations"
 msgstr "Collocations"
 
@@ -1007,7 +1007,7 @@ msgid "Default"
 msgstr "Default"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:309
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:64
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:68
 msgid "Definition"
 msgstr "Definition"
 
@@ -1216,7 +1216,7 @@ msgstr "Error setting up user data"
 msgid "Error: {message}"
 msgstr "Error: {message}"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:92
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:109
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:179
 msgid "Etymology"
 msgstr "Etymology"
@@ -1239,9 +1239,13 @@ msgid "Everything you save lands in the web app, where you can review your "
 msgstr "Everything you save lands in the web app, where you can review your "
 "sessions, browse your vocabulary, and practice what you collected."
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:67
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
 msgid "Example"
 msgstr "Example"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:71
+msgid "Examples"
+msgstr "Examples"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:111
 msgid "Expected:"
@@ -1625,7 +1629,7 @@ msgstr "Free Trial"
 msgid "Free-form notes that don't fit the structured fields above."
 msgstr "Free-form notes that don't fit the structured fields above."
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:73
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:85
 msgid "Frequency"
 msgstr "Frequency"
 
@@ -1917,7 +1921,7 @@ msgid "Invalid token. Please sign in again."
 msgstr "Invalid token. Please sign in again."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:233
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:72
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:81
 msgid "IPA"
 msgstr "IPA"
 
@@ -1961,7 +1965,7 @@ msgstr "Keep practicing this one."
 msgid "Keyboard Shortcuts"
 msgstr "Keyboard Shortcuts"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:93
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:110
 msgid "L1 notes"
 msgstr "L1 notes"
 
@@ -2023,7 +2027,7 @@ msgstr "Learn new terms"
 msgid "Learning"
 msgstr "Learning"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:84
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:102
 msgid "Less formal:"
 msgstr "Less formal:"
 
@@ -2157,11 +2161,11 @@ msgstr "Monthly"
 msgid "More"
 msgstr "More"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:79
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:97
 msgid "More formal:"
 msgstr "More formal:"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:89
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
 msgid "More frequent synonym"
 msgstr "More frequent synonym"
 
@@ -2211,6 +2215,10 @@ msgstr "Movies"
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx:122
 msgid "Multiple Video Elements Detected"
 msgstr "Multiple Video Elements Detected"
+
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
+msgid "N/A"
+msgstr "N/A"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx:117
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:99
@@ -2402,7 +2410,7 @@ msgstr "Notable forms"
 msgid "Note saved"
 msgstr "Note saved"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:94
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:111
 msgid "Notes"
 msgstr "Notes"
 
@@ -2863,15 +2871,15 @@ msgstr "Reflexive"
 msgid "Refresh"
 msgstr "Refresh"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:90
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:107
 msgid "Regionalism"
 msgstr "Regionalism"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:74
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:92
 msgid "Register"
 msgstr "Register"
 
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:76
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:94
 msgid "Register alternatives"
 msgstr "Register alternatives"
 
@@ -3778,7 +3786,7 @@ msgstr "Transcript Server URL"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:280
 #: apps/web/src/features/review/components/editable-card-fields.tsx:321
-#: apps/web/src/features/review/components/full-exploration-renderer.tsx:65
+#: apps/web/src/features/review/components/full-exploration-renderer.tsx:69
 msgid "Translation"
 msgstr "Translation"
 

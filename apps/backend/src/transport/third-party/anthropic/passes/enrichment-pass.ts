@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 import { buildMethodologySystem } from '../methodology-prompt'
+import type { EnglishIpaDialect } from '../language-instructions'
 
 const TOOL_NAME = 'submit_enrichment'
 
@@ -34,6 +35,7 @@ type EnrichmentPassArgs = {
   surroundingSegments: string
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
+  englishIpaDialect?: EnglishIpaDialect
 }
 
 const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean }): Anthropic.Tool => ({
@@ -84,22 +86,65 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
       extras: {
         type: 'object',
         description:
-          'Optional enrichment fields. Include any keys that are relevant; omit a key entirely when it is not. Recognized keys: `ipa` (string), `frequency` (one of high/medium/low), `more_frequent_synonym` (string|null), `regionalism` (string|null), `register` (string), `register_alternatives` ({more_formal, less_formal}), `collocations` (string[]), `etymology` (string), `l1_notes` (string|null), `notes` (string|null), `context_segment` (string with the chunk wrapped in **double asterisks**).',
+          'Enrichment fields, in two tiers. ALWAYS include for every chunk: `ipa`, `frequency`, `frequency_detail`, `more_frequent_synonym` (explicit null when none is needed), `more_examples`, `regionalism` (explicit verdict even when not regional), `register`, `register_alternatives` (explicit negatives when no alternative exists), `collocations`. Include when genuinely useful, omit otherwise: `etymology` (see its description), `l1_notes`, `notes`, `context_segment` (string with the chunk wrapped in **double asterisks**). Never skip an always-include key just because the answer is "nothing notable" — say so explicitly instead.',
         properties: {
-          ipa: { type: 'string' },
-          frequency: { type: 'string', enum: ['high', 'medium', 'low'] },
-          more_frequent_synonym: { type: ['string', 'null'] },
-          regionalism: { type: ['string', 'null'] },
-          register: { type: 'string' },
+          ipa: {
+            type: 'string',
+            description:
+              'IPA transcription of the headword, in the dialect specified by the system prompt when one is given.',
+          },
+          frequency: {
+            type: 'string',
+            enum: ['high', 'medium', 'low'],
+            description: 'Coarse frequency band. Always include.',
+          },
+          frequency_detail: {
+            type: 'string',
+            description:
+              "One short line of real frequency information, starting from the band: core-vocabulary status, speech vs writing skew, domain restrictions. E.g. 'Very high — core vocabulary, equally common in speech and writing.' or 'Low — mostly academic prose; sounds stiff in conversation.' Always include.",
+          },
+          more_frequent_synonym: {
+            type: ['string', 'null'],
+            description:
+              'REQUIRED when frequency is medium or low: a more frequent near-synonym the learner could reach for instead. Explicit null when the chunk is already the high-frequency default.',
+          },
+          more_examples: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'Exactly 2 additional self-contained example sentences in the same context and register as target_example (3 examples total). Complete and grammatical, not fragments. Always include.',
+          },
+          regionalism: {
+            type: 'string',
+            description:
+              "Always include an explicit verdict. 'No — universal' when the chunk is used across all major varieties; otherwise name the region and give the neutral/other-variety equivalent (e.g. 'Chiefly British — Americans say X').",
+          },
+          register: {
+            type: 'string',
+            description:
+              "Always include. How formal the chunk is and where it lives, e.g. 'neutral', 'informal — common in speech, rare in writing', 'formal — mostly written'.",
+          },
           register_alternatives: {
             type: 'object',
+            description:
+              'Always include BOTH keys. Each value is either a synonym at that register (e.g. more_formal: "cord, twine") or an explicit negative (e.g. less_formal: "none — already the everyday word"). Never omit a key or use null.',
             properties: {
-              more_formal: { type: ['string', 'null'] },
-              less_formal: { type: ['string', 'null'] },
+              more_formal: { type: 'string' },
+              less_formal: { type: 'string' },
             },
+            required: ['more_formal', 'less_formal'],
           },
-          collocations: { type: 'array', items: { type: 'string' } },
-          etymology: { type: 'string' },
+          collocations: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'For single words AND for phrasal verbs / short multi-word units: 3-5 high-frequency collocations showing the chunk in its natural environments, most frequent first. Always include.',
+          },
+          etymology: {
+            type: 'string',
+            description:
+              'Concise etymology for content words; for idioms and fixed expressions, the origin of the image. Include for every chunk where a real, documented origin exists. For grammar/function words, discourse markers, proper names, or unusual selections with no meaningful origin story, omit the key entirely — never invent or pad.',
+          },
           l1_notes: {
             type: ['string', 'null'],
             description: args.allowL1Notes
@@ -109,6 +154,17 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
           notes: { type: ['string', 'null'] },
           context_segment: { type: 'string' },
         },
+        required: [
+          'ipa',
+          'frequency',
+          'frequency_detail',
+          'more_frequent_synonym',
+          'more_examples',
+          'regionalism',
+          'register',
+          'register_alternatives',
+          'collocations',
+        ],
       },
       grammar: {
         type: 'object',
@@ -179,6 +235,7 @@ export const enrichmentPass = async ({
   surroundingSegments,
   hideTranslationFields = false,
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
+  englishIpaDialect,
 }: EnrichmentPassArgs): Promise<EnrichmentOutput> => {
   const translationModeBlock = hideTranslationFields
     ? `\nTranslation fields are disabled for this target language. Set translation="", surface_translation="" and native_example="". Keep definition, target_example, and general explanations in ${targetLanguage}.`
@@ -195,11 +252,13 @@ ${surroundingSegments}${translationModeBlock}${l1NotesBlock}
 Submit the enrichment via the tool. Required fields are the basic columns
 (headword, sense, surface_form, translation, surface_translation, definition,
 target_example, native_example) — refine them if your deeper analysis improves on the
-shallow basic-data pass. Optional fields go inside \`extras\`; include
-whichever are genuinely useful for this chunk. Use \`grammar\` for typed
-morphology / grammar facts (pos, gender, aspect, government, etc.) — see
-the per-target-language guidance in the system prompt for which keys to
-fill. Skip the \`grammar\` object entirely when nothing applies.`
+shallow basic-data pass. \`extras\` holds the exploration: fill every
+always-include key (with an explicit verdict or negative when the answer is
+"nothing notable" — absence must never be ambiguous), and add the
+when-relevant keys only when they genuinely earn their place. Use \`grammar\`
+for typed morphology / grammar facts (pos, gender, aspect, government,
+etc.) — see the per-target-language guidance in the system prompt for which
+keys to fill. Skip the \`grammar\` object entirely when nothing applies.`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_OPUS,
@@ -211,6 +270,7 @@ fill. Skip the \`grammar\` object entirely when nothing applies.`
       movieContextBlob,
       hideTranslationFields,
       allowL1Notes,
+      englishIpaDialect,
     }),
     tools: [buildTool({ hideTranslationFields, allowL1Notes })],
     tool_choice: { type: 'tool', name: TOOL_NAME },
