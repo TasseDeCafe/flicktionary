@@ -1,8 +1,8 @@
 # How the SRS works
 
-Reference for the practice/SRS system (web app). Describes the code as of the flashcard
-re-rate + mid-session edit work (`feat/flashcard-rerate-edit`, after PR #111). Update this
-doc alongside behavior changes — same convention as `apps/extension/EXTENSION-SPEC.md`.
+Reference for the practice/SRS system (web app). Describes the code as of PR #113
+(flashcard re-rate + mid-session edit). Update this doc alongside behavior changes — same
+convention as `apps/extension/EXTENSION-SPEC.md`.
 
 Code map:
 

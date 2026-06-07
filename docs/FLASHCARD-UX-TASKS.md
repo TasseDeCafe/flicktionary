@@ -108,7 +108,7 @@ is never removed (that would shift the queue under the live index).
 
 ## 6. Allow re-rating from history (undo / change rating)
 
-**Status:** in progress (feat/flashcard-rerate-edit)
+**Status:** PR #113
 
 Implemented: `rateTerm` returns the logged event's `eventId` (null when nothing
 applied — disambiguates the two `parked: true` shapes); new `undoRating`
@@ -180,7 +180,7 @@ This is one of the demanding ones — write a plan first. Pairs naturally with t
 
 ## 7. Edit a card during practice
 
-**Status:** in progress (feat/flashcard-rerate-edit)
+**Status:** PR #113
 
 Implemented via the focus view (matches the vocabulary rows and the reading
 mode's "Edit term"): a kebab in the flashcard header opens a ResponsiveOverlay
@@ -276,4 +276,4 @@ active pool keeps direct entry (it has no daily cap).
 2. ~~**PR B (UI):** task 1 (active card flip) — possibly with 5 (counter flicker)~~ — done, PR #107
 3. ~~**PR C (caps rework):** tasks 4 + 9 (review budget tracking + learn-new bypass)~~ — done, PR #108
 4. ~~**PR D (migration):** task 8 (per-language limits)~~ — done, PR #111
-5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — in progress (feat/flashcard-rerate-edit)
+5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — PR #113
