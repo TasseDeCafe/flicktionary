@@ -1,13 +1,13 @@
 # How the SRS works
 
-Reference for the practice/SRS system (web app). Describes the code as of PR #111
-(per-language daily limits). Update this doc alongside behavior changes — same convention as
-`apps/extension/EXTENSION-SPEC.md`.
+Reference for the practice/SRS system (web app). Describes the code as of the flashcard
+re-rate + mid-session edit work (`feat/flashcard-rerate-edit`, after PR #111). Update this
+doc alongside behavior changes — same convention as `apps/extension/EXTENSION-SPEC.md`.
 
 Code map:
 
 - Scheduler: `apps/backend/src/service/practice/fsrs.ts` (`ts-fsrs` wrapper)
-- Rating flow: `rate-term.ts` (`applyTermRating`, `rateTerm`)
+- Rating flow: `rate-term.ts` (`applyTermRating`, `rateTerm`); undo: `undo-rating.ts`
 - Queue: `list-review-terms.ts` + `listReviewTerms` in `user-lookups-repository.ts`
 - Daily budgets: `review-caps.ts` (`resolveReviewCaps`, `clampPracticeSessionLimits`)
 - Leeches: `leech-config.ts`, `rehab.ts`, `exercise-bank.ts`
@@ -135,15 +135,39 @@ Shared by flashcards (`rateTerm`) and reading advances (`advanceReadingText`). P
    `practice_rating_events` insert commit together. The event carries the **pre-rating SRS
    snapshot** (`prev_srs_*`), `was_explicit` (false = implicit reading 'good'),
    `was_introduction`, `caused_parking`, `practice_text_id`, and a `reverted_at` tombstone
-   column — the foundation for undo (task 6) and the review-budget count. Append-only;
-   every event row represents an applied write.
+   column — the foundation for undo and the review-budget count. Append-only; every event
+   row represents an applied write.
 4. **Post-commit, fire-and-forget**: `parkLeech` (if the rating crossed the leech threshold)
    and `warmExerciseBank` (on parked / `again` / `hard` — pre-generates Strengthen
    exercises). A crash window can leave `caused_parking=true` without the park applied
-   (accepted; un-parking an unparked term is a no-op).
+   (accepted; un-parking an unparked term is a no-op — and undo's restore also clears it).
 
 `rateTerm` resolves the per-language new-cap itself after loading the lookup row (the row
 carries `target_language`); the active pool skips the fetch (no daily cap).
+
+### Undo (undoRating)
+
+`rateTerm` returns the logged event's id as `eventId` — **null exactly when nothing was
+applied** (daily-cap refusal, or the parked stale-queue no-op; this disambiguates the two
+`parked: true` response shapes — a rating that newly parked a leech carries an eventId and
+is fully undoable). `practice.undoRating` takes that handle and, in one transaction:
+
+1. Locks the **latest live** (`reverted_at IS NULL`) event for (user, lookup, pool) —
+   `FOR UPDATE` serializes concurrent undos. If the passed eventId isn't that event (a later
+   rating landed from another tab / reading mode, or it's already reverted), the undo is a
+   stale-safe no-op: `{ undone: false }` (200), **never an error** — only the latest event's
+   snapshot describes the row's current state, so an older one must never restore.
+2. Restores the pool's SRS family from the event's `prev_srs_*` snapshot
+   (`restoreSrsSnapshotForPool` — nullable on purpose: an undone *introduction* restores
+   state back to NULL and clears `added_to_practice_at`, refunding the daily-new slot;
+   `caused_parking` additionally un-parks and zeroes the pool's rehab columns).
+3. Stamps `reverted_at`. The review budget refunds itself — every budget query filters
+   `reverted_at IS NULL`.
+
+No FSRS recompute and no exercise-bank warming: the only caller (flashcard re-rate)
+immediately follows a successful undo with a fresh `rateTerm`, which re-runs all of that.
+**Re-rate = undo + fresh rate** (Anki semantics), so the new rating goes through the full
+cap/introduction/leech machinery.
 
 ## 6. Reading mode
 
@@ -182,16 +206,32 @@ scopes/budgets — no learn-new bypass). On **advance**:
 
 ## 8. Frontend session model (flashcard-mode-view.tsx)
 
-- The queue is fetched **once** and held in client state — navigation drops the session
-  (constraint for tasks 6/7: undo/edit must not leave the view).
+- The queue is a **one-shot client-side slice**: seeded from the first fetch, later
+  refetches are ignored (they must not clobber local queue state), and the query cache is
+  dropped on unmount (`gcTime: 0` on `useListReviewTerms`) so every (re)entry — including
+  the round-trip through the focus-view editor — loads fresh behind the loader. Navigation
+  still drops the in-session state (rating records, Strengthen set, position).
 - **Again-redrill**: rating `again` optimistically appends a copy of the card to the local
   queue in the same render as the index advance (so the Learning pill never dips); the copy
   is rolled back by object identity if the server says cap-rejected / parked / error, guarded
   by `indexRef` so an already-consumed copy is never removed.
 - `sessionHardRef` collects this session's again/hard terms → offered to Strengthen
   afterwards.
-- The back-chevron (`peekBack`) is a **read-only** peek at the previous card (front+back); no
-  re-rating yet (task 6).
+- **Peek + re-rate**: the back-chevron (`peekBack`) shows previous cards front+back. A
+  peeked card whose rating durably applied (rating record keyed by queue-item identity,
+  holding the response's `eventId` + its redrill copy) re-shows the rating buttons with the
+  previous rating highlighted — unless its redrill copy was itself already rated (the
+  original's event is no longer latest; the server would refuse, so no dead buttons).
+  Re-rate runs undo → fresh rate (§5), then reconciles: old `again` → new `good`+ removes
+  the unconsumed redrill copy; old `good`+ → new `again` appends one; `sessionHardRef`
+  updates by lookupId. Any outcome that leaves the card unrated server-side (stale undo,
+  cap refusal on the fresh rate, error after a committed undo) drops the record and
+  re-appends a fresh queue item so the card resurfaces rateable.
+- **Edit during practice**: a header kebab opens an actions menu for the displayed card;
+  `Edit term` deep-links to the focus view via `chunks.get`'s representative-card pointer
+  (`firstCardId`/`firstCardSessionId`, fetched lazily on menu open) with
+  `from=practice&practiceMode=flashcards`, so the focus view's close returns to a fresh
+  `mixed` flashcard queue for the same pool.
 - Counter pills derive from the remaining local queue (`getRemainingCounts`), with redrill
   copies counted as Learning.
 - Landing/status lines compute servable work client-side from the due summary + per-language
@@ -214,6 +254,11 @@ The **due summary** endpoint returns per language: `newCount` (unseen), `reviewD
   (no 24h floor) or in the active pool (never floored).
 - **"Why did my failed card disappear from rotation?"** Probably parked as a leech (4th
   lapse). Check `parkedCount` / the Strengthen screen — it graduates after 3 rehab days.
+- **"I mis-tapped a rating."** Peek back with the chevron and re-rate — the undo refunds
+  the budget slot and the fresh rating recomputes FSRS from the restored snapshot. Not
+  offered when the card's `again`-redrill copy was already rated (the original event is no
+  longer the latest), or after leaving the view (rating records are in-session state).
 - **Daily windows roll over at UTC midnight** (server `CURRENT_DATE`), not local midnight.
 - **Refreshing mid-session** refetches a fresh queue but cannot refill spent budgets — the
-  review budget is counted off the append-only event log.
+  review budget is counted off the append-only event log. Undone ratings DO refund their
+  slot (the budget queries filter `reverted_at IS NULL`).
