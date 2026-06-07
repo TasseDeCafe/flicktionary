@@ -47,6 +47,23 @@ export const useRateTerm = () => {
   )
 }
 
+// Revert a previously applied rating (first half of the peek re-rate flow —
+// the caller follows up with a fresh useRateTerm). Takes the eventId the
+// rating response returned; a stale handle resolves undone=false (no error).
+// Invalidates the landing counts — the undo refunds review/new budget.
+export const useUndoRating = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.practice.undoRating.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Failed to undo rating` },
+    })
+  )
+}
+
 // Build a Strengthen session (gate exercises for parked leeches + bonus
 // exercises for this-session again/hard terms). POST because the server may
 // kick off background generation for cold banks.

@@ -19,6 +19,7 @@ import type { PracticeRatingEventsRepositoryInterface } from '../../transport/da
 import { beginTx } from '../../transport/database/postgres-client'
 import { listReviewTerms } from '../../service/practice/list-review-terms'
 import { rateTerm, type WithTransaction } from '../../service/practice/rate-term'
+import { undoRating } from '../../service/practice/undo-rating'
 import {
   ensureExerciseBank,
   getStrengthenExercises,
@@ -247,8 +248,22 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
           introducedNew: result.introducedNew,
           dailyCapReached: result.dailyCapReached,
           parked: result.parked,
+          eventId: result.eventId,
         },
       }
+    }),
+
+    undoRating: implementer.undoRating.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await undoRating(input.userLookupId, userId, input.pool, input.eventId, {
+        userLookupsRepository: deps.userLookupsRepository,
+        practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+        withTransaction,
+      })
+      if (!result.ok) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
+      }
+      return { data: { undone: result.undone } }
     }),
 
     generateNextReadingText: implementer.generateNextReadingText.handler(async ({ input, context, errors }) => {

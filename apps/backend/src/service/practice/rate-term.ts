@@ -33,8 +33,11 @@ export type RateTermDependencies = {
   warmExerciseBank?: (params: { lookup: DbUserLookup; pool: PracticePool }) => void
 }
 
+// `eventId` is the logged practice_rating_events row — the undo handle the
+// client passes back to undoRating. Null exactly when nothing was applied
+// (the parked stale-queue no-op), so the client knows there's nothing to undo.
 export type ApplyTermRatingResult =
-  | { ok: true; introducedNew: boolean; parked: boolean }
+  | { ok: true; introducedNew: boolean; parked: boolean; eventId: string | null }
   | { ok: false; reason: 'daily_cap_reached' | 'not_in_active_pool' }
 
 // Apply one rating event to a user_lookup in the given pool. Shared by the
@@ -83,7 +86,8 @@ export const applyTermRating = async (params: {
     // Stale queues can outlive parking: an old flashcard tab or an already
     // generated reading text may still submit a rating after the term left
     // rotation. Parked terms must not mutate FSRS until rehab graduates them.
-    return { ok: true, introducedNew: false, parked: true }
+    // No event is logged, so eventId is null — there is nothing to undo.
+    return { ok: true, introducedNew: false, parked: true, eventId: null }
   }
 
   const introducedNew = pool === 'passive' ? lookup.srs_state == null : lookup.active_srs_state == null
@@ -139,7 +143,7 @@ export const applyTermRating = async (params: {
   // event-says-parked-but-park-write-failed window, reconcilable).
   const parked = shouldParkLeech(lookup, result, pool)
 
-  await deps.withTransaction(async (tx) => {
+  const eventId = await deps.withTransaction(async (tx) => {
     await deps.userLookupsRepository.applyFsrsResultForPool(
       {
         userLookupId: lookup.id,
@@ -154,7 +158,7 @@ export const applyTermRating = async (params: {
       },
       tx
     )
-    await deps.practiceRatingEventsRepository.insert(
+    return await deps.practiceRatingEventsRepository.insert(
       {
         userId,
         userLookupId: lookup.id,
@@ -190,11 +194,11 @@ export const applyTermRating = async (params: {
     deps.warmExerciseBank?.({ lookup, pool })
   }
 
-  return { ok: true, introducedNew, parked }
+  return { ok: true, introducedNew, parked, eventId }
 }
 
 export type RateTermResult =
-  | { ok: true; introducedNew: boolean; dailyCapReached: boolean; parked: boolean }
+  | { ok: true; introducedNew: boolean; dailyCapReached: boolean; parked: boolean; eventId: string | null }
   | { ok: false; reason: 'lookup_not_found' | 'not_in_active_pool' }
 
 // Flashcard-mode single-card rating. Pool-parametrized; no practice_text / no
@@ -232,6 +236,12 @@ export const rateTerm = async (
     deps,
   })
   if (!result.ok && result.reason === 'not_in_active_pool') return { ok: false, reason: 'not_in_active_pool' }
-  if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true, parked: false }
-  return { ok: true, introducedNew: result.introducedNew, dailyCapReached: false, parked: result.parked }
+  if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true, parked: false, eventId: null }
+  return {
+    ok: true,
+    introducedNew: result.introducedNew,
+    dailyCapReached: false,
+    parked: result.parked,
+    eventId: result.eventId,
+  }
 }

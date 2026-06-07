@@ -332,14 +332,15 @@ export const FocusView = () => {
                 update_card_fields) so the field useState picks up new values. */}
                 <EditableCardFields
                   key={`${card.id}:${card.updatedAt}`}
-                  card={card}
+                  chunk={card.chunk}
+                  surfaceForm={card.surfaceForm}
                   translationFieldsMode={translationFieldsMode}
                   sourceSessionId={sourceSessionId}
                 />
                 <div className='mt-4'>
                   <EditableGrammarPanel
                     key={`grammar:${card.chunk.id}:${card.updatedAt}`}
-                    card={card}
+                    chunk={card.chunk}
                     targetLanguage={targetLanguage}
                     sourceSessionId={sourceSessionId}
                   />

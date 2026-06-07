@@ -82,9 +82,39 @@ export const practiceContract = {
           // True when this rating crossed the leech threshold and parked the
           // term out of practice rotation (rehab gates are its way back).
           parked: z.boolean(),
+          // Undo handle: the logged practice_rating_events row, passed back to
+          // undoRating to revert this exact rating. Null when nothing was
+          // applied (daily-cap refusal, or the parked stale-queue no-op) —
+          // notably this disambiguates the two parked:true shapes: a rating
+          // that newly parked a leech carries an eventId (fully undoable),
+          // the stale no-op on an already-parked term does not.
+          eventId: z.string().uuid().nullable(),
         }),
       })
     ),
+
+  // Revert a previously applied rating (the "re-rate from history" flow's
+  // first half — the client follows up with a fresh rateTerm). Restores the
+  // pool's SRS columns from the event's pre-rating snapshot, clears the
+  // daily-new stamp for an undone introduction, un-parks a leech the rating
+  // parked, and tombstones the event (refunding the review budget). Only the
+  // latest live event for (lookup, pool) can be reverted; a stale eventId
+  // (a later rating landed meanwhile / already reverted) is a safe no-op:
+  // undone=false, never an error.
+  undoRating: oc
+    .route({ method: 'POST', path: '/practice/review-terms/{userLookupId}/undo', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        userLookupId: z.string().uuid(),
+        pool: PracticePoolSchema.default('passive'),
+        eventId: z.string().uuid(),
+      })
+    )
+    .output(z.object({ data: z.object({ undone: z.boolean() }) })),
 
   // Bootstrap or resume reading mode for a (language, pool): returns the
   // in-progress 'reading' text if one exists, otherwise promotes a pre-generated

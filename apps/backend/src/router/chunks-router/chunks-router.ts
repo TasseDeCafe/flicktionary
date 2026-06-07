@@ -96,6 +96,21 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
   const router = implementer.router({
+    get: implementer.get.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      // The first encounter's card form (same representative the CSV export
+      // uses) — the edit sheet's "study this exact form" fallback.
+      const surfaceForm = await userLookupsRepository.getSurfaceFormForChunk({
+        userLookupId: input.chunkId,
+        userId,
+      })
+      return { data: { chunk: toChunkDto(owned), surfaceForm } }
+    }),
+
     updateContent: implementer.updateContent.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)

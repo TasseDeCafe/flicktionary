@@ -562,6 +562,22 @@ const findByIdForUserIncludingDeleted = async (id: string, userId: string): Prom
   return result[0] ?? null
 }
 
+// Representative surface form for one chunk, resolved through the
+// first_card_id back-pointer (the FIRST encounter's card form — same
+// representative the CSV export uses). Null when the back-pointer is null or
+// stale. Powers the practice edit sheet's "study this exact form" fallback,
+// matching the focus view's card.surfaceForm behavior.
+const getSurfaceFormForChunk = async (params: { userLookupId: string; userId: string }): Promise<string | null> => {
+  const rows = (await sql`
+    SELECT c.surface_form
+    FROM public.user_lookups ul
+    LEFT JOIN public.cards c ON c.id = ul.first_card_id
+    WHERE ul.id = ${params.userLookupId}
+      AND ul.user_id = ${params.userId}
+  `) as Array<{ surface_form: string | null }>
+  return rows[0]?.surface_form ?? null
+}
+
 // Initialize SRS state on a row that's never been reviewed before, so it
 // appears in the queue as 'new' and due now. No-op if srs_state is already
 // non-null.
@@ -723,6 +739,71 @@ const applyFsrsResultForPool = async (
         active_srs_last_review = ${params.lastReview.toISOString()},
         active_srs_reps = ${params.reps},
         active_srs_lapses = ${params.lapses}
+    WHERE id = ${params.userLookupId}
+  `
+}
+
+// Undo support: restore one pool's SRS family from a practice_rating_events
+// prev_srs_* snapshot. Deliberately NOT routed through applyFsrsResultForPool —
+// that signature is non-null (a rating always produces a full FSRS card),
+// while an undone INTRODUCTION restores state/due/etc. back to NULL.
+//
+// - wasIntroduction additionally clears added_to_practice_at (passive only —
+//   active introductions never stamp it), refunding the daily-new slot the
+//   introduction consumed.
+// - causedParking additionally un-parks and zeroes rehab progress: the parking
+//   was a consequence of the rating being reverted. Un-parking an already
+//   unparked row is a harmless no-op (also covers the known parkLeech
+//   post-commit-crash gap, where the event says parked but the park write
+//   never landed).
+// - reps/lapses columns are NOT NULL; the snapshot's nulls only occur on the
+//   introduction path where 0 is the correct pre-introduction value.
+const restoreSrsSnapshotForPool = async (
+  params: {
+    userLookupId: string
+    pool: PracticePool
+    prevState: SrsState | null
+    prevDue: string | null
+    prevStability: number | null
+    prevDifficulty: number | null
+    prevLastReview: string | null
+    prevReps: number | null
+    prevLapses: number | null
+    wasIntroduction: boolean
+    causedParking: boolean
+  },
+  executor: postgres.Sql = sql
+): Promise<void> => {
+  if (params.pool === 'passive') {
+    await executor`
+      UPDATE public.user_lookups
+      SET srs_state = ${params.prevState},
+          srs_due = ${params.prevDue},
+          srs_stability = ${params.prevStability},
+          srs_difficulty = ${params.prevDifficulty},
+          srs_last_review = ${params.prevLastReview},
+          srs_reps = ${params.prevReps ?? 0},
+          srs_lapses = ${params.prevLapses ?? 0},
+          added_to_practice_at = CASE WHEN ${params.wasIntroduction} THEN NULL ELSE added_to_practice_at END,
+          leech_parked_at = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_parked_at END,
+          leech_rehab_correct_days = CASE WHEN ${params.causedParking} THEN 0 ELSE leech_rehab_correct_days END,
+          leech_rehab_last_correct_on = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_rehab_last_correct_on END
+      WHERE id = ${params.userLookupId}
+    `
+    return
+  }
+  await executor`
+    UPDATE public.user_lookups
+    SET active_srs_state = ${params.prevState},
+        active_srs_due = ${params.prevDue},
+        active_srs_stability = ${params.prevStability},
+        active_srs_difficulty = ${params.prevDifficulty},
+        active_srs_last_review = ${params.prevLastReview},
+        active_srs_reps = ${params.prevReps ?? 0},
+        active_srs_lapses = ${params.prevLapses ?? 0},
+        active_leech_parked_at = CASE WHEN ${params.causedParking} THEN NULL ELSE active_leech_parked_at END,
+        active_leech_rehab_correct_days = CASE WHEN ${params.causedParking} THEN 0 ELSE active_leech_rehab_correct_days END,
+        active_leech_rehab_last_correct_on = CASE WHEN ${params.causedParking} THEN NULL ELSE active_leech_rehab_last_correct_on END
     WHERE id = ${params.userLookupId}
   `
 }
@@ -1399,6 +1480,7 @@ export interface UserLookupsRepositoryInterface {
   }) => Promise<DbUserLookup | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbUserLookup | null>
   findByIdForUserIncludingDeleted: (id: string, userId: string) => Promise<DbUserLookup | null>
+  getSurfaceFormForChunk: (params: { userLookupId: string; userId: string }) => Promise<string | null>
   initializeSrsState: (userLookupId: string) => Promise<void>
   initializeSrsStateForPool: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
   initializeSrsStateIfUnderDailyCap: (params: {
@@ -1429,6 +1511,22 @@ export interface UserLookupsRepositoryInterface {
       lastReview: Date
       reps: number
       lapses: number
+    },
+    executor?: postgres.Sql
+  ) => Promise<void>
+  restoreSrsSnapshotForPool: (
+    params: {
+      userLookupId: string
+      pool: PracticePool
+      prevState: SrsState | null
+      prevDue: string | null
+      prevStability: number | null
+      prevDifficulty: number | null
+      prevLastReview: string | null
+      prevReps: number | null
+      prevLapses: number | null
+      wasIntroduction: boolean
+      causedParking: boolean
     },
     executor?: postgres.Sql
   ) => Promise<void>
@@ -1499,11 +1597,13 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findByKey,
     findByIdForUser,
     findByIdForUserIncludingDeleted,
+    getSurfaceFormForChunk,
     initializeSrsState,
     initializeSrsStateForPool,
     initializeSrsStateIfUnderDailyCap,
     applyFsrsResult,
     applyFsrsResultForPool,
+    restoreSrsSnapshotForPool,
     setLearningMode,
     parkLeech,
     advanceRehabDay,

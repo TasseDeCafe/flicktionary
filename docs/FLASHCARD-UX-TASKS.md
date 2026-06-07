@@ -108,7 +108,20 @@ is never removed (that would shift the queue under the live index).
 
 ## 6. Allow re-rating from history (undo / change rating)
 
-**Status:** todo — needs a plan, but the data foundation shipped in PR #108 (task 4/9)
+**Status:** in progress (feat/flashcard-rerate-edit)
+
+Implemented: `rateTerm` returns the logged event's `eventId` (null when nothing
+applied — disambiguates the two `parked: true` shapes); new `undoRating`
+endpoint (`undo-rating.ts`) restores the pool's `prev_srs_*` snapshot via
+`restoreSrsSnapshotForPool` (clears `added_to_practice_at` on
+`was_introduction`, un-parks + zeroes rehab on `caused_parking`), stamps
+`reverted_at`, all in one tx. Only the latest live event for (lookup, pool) is
+undoable — a stale `eventId` returns `undone: false` (200, no restore). Client:
+rating records keyed by `QueueItem` identity hold `{rating, eventId, redrill}`;
+the peeked card shows `RateButtons` (previous rating highlighted) when its
+redrill copy wasn't itself rated; re-rate = undo → fresh `rateTerm` with
+redrill/sessionHard reconciliation; any unrated-server-side outcome re-appends
+a fresh queue item.
 
 Today the back-chevron is a read-only peek (`peekBack` state in
 `flashcard-mode-view.tsx`). There is no undo endpoint yet — but everything an undo needs to
@@ -167,7 +180,17 @@ This is one of the demanding ones — write a plan first. Pairs naturally with t
 
 ## 7. Edit a card during practice
 
-**Status:** todo — needs a plan (pairs with 6)
+**Status:** in progress (feat/flashcard-rerate-edit)
+
+Implemented inline (no navigation — the client-side queue survives): a pencil
+button in the flashcard controls opens `EditCardSheet` (FloatingSheet) with
+`EditableCardFields` + `EditableGrammarPanel`, both refactored to take
+`chunk: Chunk` (+ `surfaceForm` for the fields) instead of `card: Card`. The
+sheet fetches the full chunk on open via the new `chunks.get` endpoint
+(`surfaceForm` resolved server-side through `first_card_id` for study-form
+parity with the focus view). Edits flow back through a `chunkOverrides` map
+merged into the displayed card at render time — `QueueItem` object identities
+(redrill rollback, rating records) are never rewritten.
 
 Anki-style: spot a mistake mid-review → edit the card → come back and rate it.
 
@@ -185,7 +208,7 @@ edit, the current card's data must refresh in the queue.
 
 ## 8. Daily limits per language (migration)
 
-**Status:** PR #111
+**Status:** done (PR #111)
 
 Move `practice_max_new_terms` / `practice_max_review_terms` from global (`users` table,
 `practice-session-limits-setting.tsx`, `setPracticeSessionLimits` in
@@ -243,5 +266,5 @@ active pool keeps direct entry (it has no daily cap).
 1. ~~**PR A (small, UI-only):** tasks 2 + 3 (Russian front, example styling)~~ — done, PR #107
 2. ~~**PR B (UI):** task 1 (active card flip) — possibly with 5 (counter flicker)~~ — done, PR #107
 3. ~~**PR C (caps rework):** tasks 4 + 9 (review budget tracking + learn-new bypass)~~ — done, PR #108
-4. **PR D (migration):** task 8 (per-language limits) — PR #111
-5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — plan first; the rating-event log from #108 is the undo foundation (see task 6)
+4. ~~**PR D (migration):** task 8 (per-language limits)~~ — done, PR #111
+5. **PR E (session interactivity):** tasks 6 + 7 (re-rate + in-practice edit) — in progress (feat/flashcard-rerate-edit)

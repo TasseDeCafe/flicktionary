@@ -200,6 +200,22 @@ export const useTextSegmentsWindow = (input: { textTrackId: string; segmentId: s
   )
 }
 
+// Full single-chunk fetch (the practice edit sheet's data source — the lean
+// ReviewTerm queue payload lacks explorationExtras/learningMode/etc.).
+// `surfaceForm` is the first encounter's card form resolved server-side, so
+// the sheet's "study this exact form" toggle matches the focus view.
+export const useGetChunk = (chunkId: string, enabled: boolean) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.chunks.get.queryOptions({
+      input: { chunkId },
+      enabled,
+      select: (response) => response.data,
+      meta: { errorMessage: t`Failed to load term` },
+    })
+  )
+}
+
 // Patch translation/definition/examples/extras on the canonical chunk
 // (user_lookups). After success, invalidate the cards caches so any sibling
 // card showing the same chunk picks up the new content via re-fetch. We don't
@@ -215,6 +231,7 @@ export const useUpdateChunkContent = (sessionId?: string) => {
           queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
         }
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.get.key() })
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
       },
       meta: { errorMessage: t`Failed to update term` },
@@ -235,6 +252,7 @@ export const useRenameChunk = (sessionId?: string) => {
           queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
         }
         queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.get.key() })
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
       },
       meta: { errorMessage: t`Failed to rename term` },
