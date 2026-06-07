@@ -1290,7 +1290,7 @@ msgstr "Extension shortcut"
 msgid "Extension version"
 msgstr "Extension version"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:125
+#: apps/web/src/features/practice/api/practice-hooks.ts:134
 msgid "Failed to advance"
 msgstr "Failed to advance"
 
@@ -1310,7 +1310,7 @@ msgstr "Failed to create checkout session"
 msgid "Failed to create session"
 msgstr "Failed to create session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:154
+#: apps/web/src/features/practice/api/practice-hooks.ts:163
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:141
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
@@ -1324,7 +1324,7 @@ msgstr "Failed to export vocabulary"
 msgid "Failed to fetch subscription details"
 msgstr "Failed to fetch subscription details"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:181
+#: apps/web/src/features/practice/api/practice-hooks.ts:190
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
 
@@ -1332,7 +1332,7 @@ msgstr "Failed to fetch translation"
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:99
+#: apps/web/src/features/practice/api/practice-hooks.ts:108
 msgid "Failed to generate next text"
 msgstr "Failed to generate next text"
 
@@ -1364,7 +1364,7 @@ msgstr "Failed to load cards"
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:74
+#: apps/web/src/features/practice/api/practice-hooks.ts:83
 msgid "Failed to load exercises"
 msgstr "Failed to load exercises"
 
@@ -1372,7 +1372,7 @@ msgstr "Failed to load exercises"
 msgid "Failed to load highlights"
 msgstr "Failed to load highlights"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:136
+#: apps/web/src/features/practice/api/practice-hooks.ts:145
 msgid "Failed to load history"
 msgstr "Failed to load history"
 
@@ -1392,7 +1392,7 @@ msgstr "Failed to load preferences"
 msgid "Failed to load processing status"
 msgstr "Failed to load processing status"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:29
+#: apps/web/src/features/practice/api/practice-hooks.ts:38
 msgid "Failed to load review terms"
 msgstr "Failed to load review terms"
 
@@ -1440,7 +1440,7 @@ msgstr "Failed to mark chat read"
 msgid "Failed to open triage"
 msgstr "Failed to open triage"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:45
+#: apps/web/src/features/practice/api/practice-hooks.ts:54
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
 
@@ -1468,7 +1468,7 @@ msgstr "Failed to rename term"
 msgid "Failed to request suggestions"
 msgstr "Failed to request suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:170
+#: apps/web/src/features/practice/api/practice-hooks.ts:179
 msgid "Failed to restore term"
 msgstr "Failed to restore term"
 
@@ -1501,7 +1501,7 @@ msgstr "Failed to set CEFR level"
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:89
+#: apps/web/src/features/practice/api/practice-hooks.ts:98
 msgid "Failed to submit answer"
 msgstr "Failed to submit answer"
 
@@ -1510,7 +1510,7 @@ msgstr "Failed to submit answer"
 msgid "Failed to trigger Sentry message"
 msgstr "Failed to trigger Sentry message"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:62
+#: apps/web/src/features/practice/api/practice-hooks.ts:71
 msgid "Failed to undo rating"
 msgstr "Failed to undo rating"
 
