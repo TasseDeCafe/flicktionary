@@ -792,10 +792,6 @@ msgstr "Fermer"
 msgid "Collocations"
 msgstr "Cooccurrences"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:81
-#~ msgid "Coming soon"
-#~ msgstr "Bientôt disponible"
-
 #: apps/extension/common/components/ListField.tsx:58
 msgid "Comma-separated list of strings"
 msgstr "Liste de chaînes séparées par des virgules"

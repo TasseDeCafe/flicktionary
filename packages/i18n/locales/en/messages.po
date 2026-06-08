@@ -778,10 +778,6 @@ msgstr "Close"
 msgid "Collocations"
 msgstr "Collocations"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:81
-#~ msgid "Coming soon"
-#~ msgstr "Coming soon"
-
 #: apps/extension/common/components/ListField.tsx:58
 msgid "Comma-separated list of strings"
 msgstr "Comma-separated list of strings"
