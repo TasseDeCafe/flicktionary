@@ -4,10 +4,17 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
-import type {
-  DbUserLookup,
-  UserLookupsRepositoryInterface,
+import {
+  mergeFacet,
+  type DbUserLookup,
+  type DbUserLookupWithFacet,
+  type UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  CITATION_FORM,
+  skillForPool,
+  type StudyFacetsRepositoryInterface,
+} from '../../transport/database/study-facets/study-facets-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type {
@@ -41,6 +48,7 @@ export type PracticeRouterDependencies = {
   practiceExercisesRepository: PracticeExercisesRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
@@ -107,7 +115,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
 
 // Maps a user_lookups row to the review-term DTO. grammar JSONB is passed
 // through like toPracticeTextDto does; the contract's GrammarSchema validates it.
-const toReviewTermDto = (row: DbUserLookup, pool: 'passive' | 'active') => ({
+const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
   userLookupId: row.id,
   headword: row.headword,
   sense: row.sense ?? '',
@@ -116,7 +124,7 @@ const toReviewTermDto = (row: DbUserLookup, pool: 'passive' | 'active') => ({
   targetExample: row.target_example,
   nativeExample: row.native_example,
   grammar: (row.grammar as Record<string, unknown> | null) ?? null,
-  srsState: pool === 'active' ? row.active_srs_state : row.srs_state,
+  srsState: row.srs_state,
   targetLanguage: row.target_language,
 })
 
@@ -176,6 +184,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const readingDeps: AdvanceReadingTextDependencies = {
     practiceTextsRepository: deps.practiceTextsRepository,
     userLookupsRepository: deps.userLookupsRepository,
+    studyFacetsRepository: deps.studyFacetsRepository,
     usersRepository: deps.usersRepository,
     userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
@@ -217,7 +226,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps, {
         requestedNewCount: input.newBatchSize,
       })
-      return { data: { terms: rows.map((row) => toReviewTermDto(row, input.pool)) } }
+      return { data: { terms: rows.map((row) => toReviewTermDto(row)) } }
     }),
 
     rateTerm: implementer.rateTerm.handler(async ({ input, context, errors }) => {
@@ -229,6 +238,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         input.pool,
         {
           userLookupsRepository: deps.userLookupsRepository,
+          studyFacetsRepository: deps.studyFacetsRepository,
           practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
           userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
           withTransaction,
@@ -257,6 +267,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const userId = context.res.locals.userId
       const result = await undoRating(input.userLookupId, userId, input.pool, input.eventId, {
         userLookupsRepository: deps.userLookupsRepository,
+        studyFacetsRepository: deps.studyFacetsRepository,
         practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
         withTransaction,
       })
@@ -451,14 +462,24 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       let rehabCorrectDays: number | null = null
       let graduated = false
       if (consumed.gate_eligible && termLookup) {
-        const outcome = await applyGateAnswer({
-          lookup: termLookup,
-          pool: exercisePool,
-          correct,
-          deps: { userLookupsRepository: deps.userLookupsRepository },
+        // Load the facet for this pool's citation skill; rehab only runs when
+        // it exists and is parked (applyGateAnswer guards on parked).
+        const facet = await deps.studyFacetsRepository.getFacet({
+          userLookupId: termLookup.id,
+          skill: skillForPool(exercisePool),
+          targetForm: CITATION_FORM,
         })
-        rehabCorrectDays = outcome.rehabCorrectDays
-        graduated = outcome.graduated
+        if (facet) {
+          const facetRow: DbUserLookupWithFacet = mergeFacet(termLookup, facet)
+          const outcome = await applyGateAnswer({
+            lookup: facetRow,
+            pool: exercisePool,
+            correct,
+            deps: { studyFacetsRepository: deps.studyFacetsRepository },
+          })
+          rehabCorrectDays = outcome.rehabCorrectDays
+          graduated = outcome.graduated
+        }
       }
 
       // Replenish the consumed slot in the background so the next attempt for

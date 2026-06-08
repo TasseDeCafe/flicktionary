@@ -1,4 +1,4 @@
-import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { PracticeTextsRepositoryInterface } from '../../transport/database/practice-texts/practice-texts-repository'
 import type { ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -49,7 +49,7 @@ export const listReviewTerms = async (
   scope: ReviewScope,
   deps: ListReviewTermsDependencies,
   options?: { requestedNewCount?: number }
-): Promise<DbUserLookup[]> => {
+): Promise<DbUserLookupWithFacet[]> => {
   const caps = await resolveReviewCaps({
     userId,
     targetLanguage,

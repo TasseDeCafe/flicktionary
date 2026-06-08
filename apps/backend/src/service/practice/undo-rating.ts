@@ -2,11 +2,17 @@ import type {
   PracticePool,
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  CITATION_FORM,
+  skillForPool,
+  type StudyFacetsRepositoryInterface,
+} from '../../transport/database/study-facets/study-facets-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import type { WithTransaction } from './rate-term'
 
 export type UndoRatingDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   withTransaction: WithTransaction
 }
@@ -45,10 +51,13 @@ export const undoRating = async (
       tx
     )
     if (!event || event.id !== eventId) return false
-    await deps.userLookupsRepository.restoreSrsSnapshotForPool(
+    // The event still carries `pool` in Phase 1 (skill/target_form land on the
+    // event row in Phase 2); map it to the citation facet identity to restore.
+    await deps.studyFacetsRepository.restoreSrsSnapshotForFacet(
       {
         userLookupId,
-        pool,
+        skill: skillForPool(pool),
+        targetForm: CITATION_FORM,
         prevState: event.prev_srs_state,
         prevDue: event.prev_srs_due,
         prevStability: event.prev_srs_stability,

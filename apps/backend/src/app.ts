@@ -62,6 +62,7 @@ import { CardsRepository } from './transport/database/cards/cards-repository'
 import { CardChatMessagesRepository } from './transport/database/card-chat-messages/card-chat-messages-repository'
 import { UserTargetLanguagePrefsRepository } from './transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UserLookupsRepository } from './transport/database/user-lookups/user-lookups-repository'
+import { StudyFacetsRepository } from './transport/database/study-facets/study-facets-repository'
 import { PracticeTextsRepository } from './transport/database/practice-texts/practice-texts-repository'
 import { PracticeExercisesRepository } from './transport/database/practice-exercises/practice-exercises-repository'
 import { PracticeRatingEventsRepository } from './transport/database/practice-rating-events/practice-rating-events-repository'
@@ -256,6 +257,7 @@ export const buildApp = ({
   const cardChatMessagesRepository = CardChatMessagesRepository()
   const userTargetLanguagePrefsRepository = UserTargetLanguagePrefsRepository()
   const userLookupsRepository = UserLookupsRepository()
+  const studyFacetsRepository = StudyFacetsRepository()
   const practiceTextsRepository = PracticeTextsRepository()
   const practiceExercisesRepository = PracticeExercisesRepository()
   const practiceRatingEventsRepository = PracticeRatingEventsRepository()
@@ -368,6 +370,7 @@ export const buildApp = ({
       practiceExercisesRepository,
       practiceRatingEventsRepository,
       userLookupsRepository,
+      studyFacetsRepository,
       usersRepository,
       userTargetLanguagePrefsRepository,
       wiktionaryEntriesRepository,

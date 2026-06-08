@@ -1,5 +1,14 @@
 import type { DbPracticeText, ReadingGroup } from '../../transport/database/practice-texts/practice-texts-repository'
-import type { DbUserLookup, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  mergeFacet,
+  type DbUserLookupWithFacet,
+  type PracticePool,
+} from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  CITATION_FORM,
+  skillForPool,
+  type StudyFacetsRepositoryInterface,
+} from '../../transport/database/study-facets/study-facets-repository'
 import type { ReadingRating, ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   produceNextReadable,
@@ -10,9 +19,11 @@ import { applyTermRating, type WithTransaction } from './rate-term'
 import { clampPracticeSessionLimits } from './review-caps'
 
 // The finalizer additionally needs the transaction runner so each applied
-// rating's FSRS write + event-log row commit atomically (see applyTermRating).
+// rating's FSRS write + event-log row commit atomically (see applyTermRating),
+// and the facet repository to load the citation facet being rated.
 export type AdvanceReadingTextDependencies = GenerateReadingTextDependencies & {
   withTransaction: WithTransaction
+  studyFacetsRepository: StudyFacetsRepositoryInterface
 }
 
 export type AdvanceReadingTextResult =
@@ -38,17 +49,22 @@ const dateValue = (value: string | Date | null | undefined): number | null => {
   return Number.isFinite(time) ? time : null
 }
 
-const wasReviewedAfterTextWasPrepared = (lookup: DbUserLookup, text: DbPracticeText, pool: PracticePool): boolean => {
+const wasReviewedAfterTextWasPrepared = (lookup: DbUserLookupWithFacet, text: DbPracticeText): boolean => {
   const preparedAt = dateValue(text.ready_at) ?? dateValue(text.created_at)
   if (preparedAt == null) return false
-  const lastReview = pool === 'active' ? dateValue(lookup.active_srs_last_review) : dateValue(lookup.srs_last_review)
+  const lastReview = dateValue(lookup.srs_last_review)
   return lastReview != null && lastReview > preparedAt
 }
 
-const isEligibleForScope = (lookup: DbUserLookup, pool: PracticePool, scope: ReviewScope, now: Date): boolean => {
+const isEligibleForScope = (
+  lookup: DbUserLookupWithFacet,
+  pool: PracticePool,
+  scope: ReviewScope,
+  now: Date
+): boolean => {
   if (pool === 'active' && lookup.learning_mode !== 'active') return false
-  const state = pool === 'active' ? lookup.active_srs_state : lookup.srs_state
-  const due = pool === 'active' ? lookup.active_srs_due : lookup.srs_due
+  const state = lookup.srs_state
+  const due = lookup.srs_due
   const wantsNew = scope === 'learn_new' || scope === 'mixed'
   const wantsDue = scope === 'review_due' || scope === 'mixed'
   if (state == null) return wantsNew
@@ -106,13 +122,27 @@ export const advanceReadingText = async (
       if (!lookup || seen.has(lookup.id)) continue
       seen.add(lookup.id)
       ratedLookupIds.push(lookup.id)
-      if (wasReviewedAfterTextWasPrepared(lookup, claimed, effectivePool)) continue
-      if (!isEligibleForScope(lookup, effectivePool, scope, now)) continue
+      // Reading stays citation-meaning-only; load the facet for the pool's
+      // citation skill and merge it. A non-active term has no production facet —
+      // getFacet returns null and the term is simply skipped (not eligible).
+      const skill = skillForPool(effectivePool)
+      if (skill === 'meaning_recognition') {
+        await deps.studyFacetsRepository.ensureCitationFacet(lookup.id)
+      }
+      const facet = await deps.studyFacetsRepository.getFacet({
+        userLookupId: lookup.id,
+        skill,
+        targetForm: CITATION_FORM,
+      })
+      if (!facet) continue
+      const facetRow = mergeFacet(lookup, facet)
+      if (wasReviewedAfterTextWasPrepared(facetRow, claimed)) continue
+      if (!isEligibleForScope(facetRow, effectivePool, scope, now)) continue
       const rating = ratingByLookupId.get(lookup.id) ?? 'good'
       // Reading mode NEVER bypasses the daily-new cap — the learn-new bypass is
       // a flashcards-only affordance (driven by rateTerm's learnNewSession).
       const result = await applyTermRating({
-        lookup,
+        lookup: facetRow,
         userId,
         rating,
         pool: effectivePool,

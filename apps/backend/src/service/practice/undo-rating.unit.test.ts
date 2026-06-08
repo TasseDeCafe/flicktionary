@@ -14,7 +14,6 @@ const makeLookup = (overrides: Partial<DbUserLookup> = {}): DbUserLookup =>
     target_language: 'es',
     headword: 'gato',
     sense: 'cat',
-    srs_state: 'review',
     learning_mode: 'passive',
     deleted_at: null,
     ...overrides,
@@ -49,12 +48,14 @@ const makeEvent = (overrides: Partial<DbPracticeRatingEvent> = {}): DbPracticeRa
 const createDeps = (params: { lookup: DbUserLookup | null; latestEvent: DbPracticeRatingEvent | null }) => {
   const findLatestLiveEventForUndo = vi.fn().mockResolvedValue(params.latestEvent)
   const markReverted = vi.fn().mockResolvedValue(undefined)
-  const restoreSrsSnapshotForPool = vi.fn().mockResolvedValue(undefined)
+  const restoreSrsSnapshotForFacet = vi.fn().mockResolvedValue(undefined)
   const txCallbacks: unknown[] = []
   const deps = {
     userLookupsRepository: {
       findByIdForUser: vi.fn().mockResolvedValue(params.lookup),
-      restoreSrsSnapshotForPool,
+    },
+    studyFacetsRepository: {
+      restoreSrsSnapshotForFacet,
     },
     practiceRatingEventsRepository: {
       findLatestLiveEventForUndo,
@@ -66,23 +67,24 @@ const createDeps = (params: { lookup: DbUserLookup | null; latestEvent: DbPracti
       return fn(undefined)
     },
   } as unknown as UndoRatingDependencies
-  return { deps, findLatestLiveEventForUndo, markReverted, restoreSrsSnapshotForPool, txCallbacks }
+  return { deps, findLatestLiveEventForUndo, markReverted, restoreSrsSnapshotForFacet, txCallbacks }
 }
 
 describe('undoRating', () => {
   beforeEach(() => vi.restoreAllMocks())
 
-  it('restores a passive review snapshot and tombstones the event', async () => {
-    const { deps, restoreSrsSnapshotForPool, markReverted } = createDeps({
+  it('restores a recognition review snapshot and tombstones the event', async () => {
+    const { deps, restoreSrsSnapshotForFacet, markReverted } = createDeps({
       lookup: makeLookup(),
       latestEvent: makeEvent(),
     })
     const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
-    expect(restoreSrsSnapshotForPool).toHaveBeenCalledWith(
+    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
       {
         userLookupId: lookupId,
-        pool: 'passive',
+        skill: 'meaning_recognition',
+        targetForm: '',
         prevState: 'review',
         prevDue: '2026-05-12T00:00:00Z',
         prevStability: 5,
@@ -99,7 +101,7 @@ describe('undoRating', () => {
   })
 
   it('restores an introduction back to a null snapshot with wasIntroduction', async () => {
-    const { deps, restoreSrsSnapshotForPool } = createDeps({
+    const { deps, restoreSrsSnapshotForFacet } = createDeps({
       lookup: makeLookup(),
       latestEvent: makeEvent({
         was_introduction: true,
@@ -114,7 +116,7 @@ describe('undoRating', () => {
     })
     const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
-    expect(restoreSrsSnapshotForPool).toHaveBeenCalledWith(
+    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
       expect.objectContaining({
         prevState: null,
         prevDue: null,
@@ -126,8 +128,8 @@ describe('undoRating', () => {
     )
   })
 
-  it('routes active-pool undos to the active SRS family', async () => {
-    const { deps, findLatestLiveEventForUndo, restoreSrsSnapshotForPool } = createDeps({
+  it('routes active-pool undos to the production facet', async () => {
+    const { deps, findLatestLiveEventForUndo, restoreSrsSnapshotForFacet } = createDeps({
       lookup: makeLookup({ learning_mode: 'active' }),
       latestEvent: makeEvent({ pool: 'active' }),
     })
@@ -137,39 +139,45 @@ describe('undoRating', () => {
       { userId, userLookupId: lookupId, pool: 'active' },
       undefined
     )
-    expect(restoreSrsSnapshotForPool).toHaveBeenCalledWith(expect.objectContaining({ pool: 'active' }), undefined)
+    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
+      expect.objectContaining({ skill: 'meaning_production', targetForm: '' }),
+      undefined
+    )
   })
 
   it('passes causedParking through so the restore un-parks the leech', async () => {
-    const { deps, restoreSrsSnapshotForPool } = createDeps({
+    const { deps, restoreSrsSnapshotForFacet } = createDeps({
       lookup: makeLookup(),
       latestEvent: makeEvent({ caused_parking: true }),
     })
     const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
-    expect(restoreSrsSnapshotForPool).toHaveBeenCalledWith(expect.objectContaining({ causedParking: true }), undefined)
+    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
+      expect.objectContaining({ causedParking: true }),
+      undefined
+    )
   })
 
   it('refuses a stale eventId (a later rating is now the latest live event)', async () => {
     const laterEventId = '00000000-0000-0000-0000-00000000000f'
-    const { deps, restoreSrsSnapshotForPool, markReverted } = createDeps({
+    const { deps, restoreSrsSnapshotForFacet, markReverted } = createDeps({
       lookup: makeLookup(),
       latestEvent: makeEvent({ id: laterEventId, rated_at: '2026-06-07T01:00:00Z' }),
     })
     const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
     expect(result).toEqual({ ok: true, undone: false })
-    expect(restoreSrsSnapshotForPool).not.toHaveBeenCalled()
+    expect(restoreSrsSnapshotForFacet).not.toHaveBeenCalled()
     expect(markReverted).not.toHaveBeenCalled()
   })
 
   it('no-ops when no live event exists (already reverted or never rated)', async () => {
-    const { deps, restoreSrsSnapshotForPool, markReverted } = createDeps({
+    const { deps, restoreSrsSnapshotForFacet, markReverted } = createDeps({
       lookup: makeLookup(),
       latestEvent: null,
     })
     const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
     expect(result).toEqual({ ok: true, undone: false })
-    expect(restoreSrsSnapshotForPool).not.toHaveBeenCalled()
+    expect(restoreSrsSnapshotForFacet).not.toHaveBeenCalled()
     expect(markReverted).not.toHaveBeenCalled()
   })
 
@@ -187,7 +195,9 @@ describe('undoRating', () => {
     const deps = {
       userLookupsRepository: {
         findByIdForUser: vi.fn().mockResolvedValue(makeLookup()),
-        restoreSrsSnapshotForPool: vi.fn(async (_params: unknown, tx: unknown) => {
+      },
+      studyFacetsRepository: {
+        restoreSrsSnapshotForFacet: vi.fn(async (_params: unknown, tx: unknown) => {
           calls.push(tx === txSentinel ? 'restore@tx' : 'restore')
         }),
       },

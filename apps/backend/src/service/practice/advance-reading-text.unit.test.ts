@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { DbStudyFacet } from '../../transport/database/study-facets/study-facets-repository'
 import type { DbPracticeText } from '../../transport/database/practice-texts/practice-texts-repository'
 import { advanceReadingText, type AdvanceReadingTextDependencies } from './advance-reading-text'
 
@@ -27,6 +28,22 @@ const makeLookup = (id: string, overrides: Partial<DbUserLookup> = {}): DbUserLo
     first_card_id: null,
     exported_at: null,
     count: 1,
+    learning_mode: 'passive',
+    created_at: '2026-05-12T00:00:00Z',
+    deleted_at: null,
+    ...overrides,
+  }) as DbUserLookup
+
+// The citation recognition facet carries the SRS/leech state read for
+// eligibility + rating.
+const makeFacet = (lookupId: string, overrides: Partial<DbStudyFacet> = {}): DbStudyFacet =>
+  ({
+    id: `facet-${lookupId}`,
+    user_lookup_id: lookupId,
+    user_id: userId,
+    target_language: 'es',
+    skill: 'meaning_recognition',
+    target_form: '',
     srs_state: null,
     srs_due: null,
     srs_stability: null,
@@ -34,19 +51,18 @@ const makeLookup = (id: string, overrides: Partial<DbUserLookup> = {}): DbUserLo
     srs_last_review: null,
     srs_reps: 0,
     srs_lapses: 0,
-    added_to_practice_at: null,
-    learning_mode: 'passive',
-    active_srs_state: null,
-    active_srs_due: null,
-    active_srs_stability: null,
-    active_srs_difficulty: null,
-    active_srs_last_review: null,
-    active_srs_reps: 0,
-    active_srs_lapses: 0,
+    leech_parked_at: null,
+    leech_rehab_correct_days: 0,
+    leech_rehab_last_correct_on: null,
+    introduced_at: null,
+    payload: {},
+    data_status: 'ready',
+    source: 'system',
+    disabled_at: null,
     created_at: '2026-05-12T00:00:00Z',
-    deleted_at: null,
+    updated_at: '2026-05-12T00:00:00Z',
     ...overrides,
-  }) as DbUserLookup
+  }) as DbStudyFacet
 
 const claimedText = {
   id: textId,
@@ -70,19 +86,28 @@ const claimedText = {
 
 const nextText = { ...claimedText, id: nextTextId, ord: 1, status: 'reading' } as DbPracticeText
 
-const createDeps = (opts: { claimWins: boolean }) => {
+const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<DbStudyFacet>> }) => {
   // la is already scheduled (review); lb is new — so rating both should
   // introduce exactly one term.
   const lookupsByKey: Record<string, DbUserLookup> = {
-    [`${laId}::s`]: makeLookup(laId, { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z' }),
+    [`${laId}::s`]: makeLookup(laId),
     [`${lbId}::s`]: makeLookup(lbId),
+  }
+  const facetOverrides = opts.facets ?? {
+    [laId]: { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z' },
+    [lbId]: {},
   }
   const findByKey = vi.fn(
     async ({ headword, sense }: { headword: string; sense: string }) => lookupsByKey[`${headword}::${sense}`] ?? null
   )
-  const applyFsrsResultForPool = vi.fn().mockResolvedValue(undefined)
-  const initializeSrsStateIfUnderDailyCap = vi.fn().mockResolvedValue(true)
-  const parkLeech = vi.fn().mockResolvedValue(undefined)
+  const getFacet = vi.fn(async ({ userLookupId }: { userLookupId: string }) =>
+    makeFacet(userLookupId, facetOverrides[userLookupId] ?? {})
+  )
+  const ensureCitationFacet = vi.fn().mockResolvedValue(undefined)
+  const applyFsrsResultForFacet = vi.fn().mockResolvedValue(undefined)
+  const initializeCitationFacetIfUnderDailyCap = vi.fn().mockResolvedValue(true)
+  const initializeFacet = vi.fn().mockResolvedValue(undefined)
+  const parkLeechFacet = vi.fn().mockResolvedValue(undefined)
   const insertRatingEvent = vi.fn().mockResolvedValue(undefined)
   const claimFinalize = vi.fn().mockResolvedValue(opts.claimWins ? claimedText : null)
   const selectAndMarkReading = vi.fn().mockResolvedValue(nextText)
@@ -102,12 +127,16 @@ const createDeps = (opts: { claimWins: boolean }) => {
     },
     userLookupsRepository: {
       findByKey,
-      initializeSrsStateIfUnderDailyCap,
-      initializeSrsStateForPool: vi.fn(),
-      applyFsrsResultForPool,
-      parkLeech,
       listReviewTerms: vi.fn().mockResolvedValue([]),
       listDueSummary: vi.fn().mockResolvedValue([]),
+    },
+    studyFacetsRepository: {
+      ensureCitationFacet,
+      getFacet,
+      initializeCitationFacetIfUnderDailyCap,
+      initializeFacet,
+      applyFsrsResultForFacet,
+      parkLeechFacet,
     },
     usersRepository: {
       getNativeLanguage: vi.fn().mockResolvedValue('en'),
@@ -128,12 +157,13 @@ const createDeps = (opts: { claimWins: boolean }) => {
   return {
     deps,
     findByKey,
-    applyFsrsResultForPool,
+    getFacet,
+    applyFsrsResultForFacet,
     claimFinalize,
     selectAndMarkReading,
-    parkLeech,
+    parkLeechFacet,
     insertRatingEvent,
-    initializeSrsStateIfUnderDailyCap,
+    initializeCitationFacetIfUnderDailyCap,
   }
 }
 
@@ -141,7 +171,7 @@ describe('advanceReadingText', () => {
   beforeEach(() => vi.restoreAllMocks())
 
   it('applies the explicit rating to tapped terms and implicit good to the rest, counting introductions', async () => {
-    const { deps, applyFsrsResultForPool } = createDeps({ claimWins: true })
+    const { deps, applyFsrsResultForFacet } = createDeps({ claimWins: true })
     const result = await advanceReadingText(
       userId,
       textId,
@@ -152,86 +182,72 @@ describe('advanceReadingText', () => {
     )
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
     // Both annotations graded: la (scheduled, no intro) + lb (new, introduced).
-    expect(applyFsrsResultForPool).toHaveBeenCalledTimes(2)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(2)
   })
 
   it('is idempotent: a lost finalize claim applies no FSRS and still returns the next text', async () => {
-    const { deps, applyFsrsResultForPool, findByKey } = createDeps({ claimWins: false })
+    const { deps, applyFsrsResultForFacet, findByKey } = createDeps({ claimWins: false })
     const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 0 })
-    expect(applyFsrsResultForPool).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
     expect(findByKey).not.toHaveBeenCalled()
   })
 
   it('skips annotations already reviewed after the text was prepared', async () => {
-    const { deps, applyFsrsResultForPool } = createDeps({ claimWins: true })
+    const { deps, applyFsrsResultForFacet } = createDeps({
+      claimWins: true,
+      facets: {
+        [laId]: { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z', srs_last_review: '2026-05-12T00:05:00Z' },
+        [lbId]: {},
+      },
+    })
     ;(deps.practiceTextsRepository.claimFinalize as ReturnType<typeof vi.fn>).mockResolvedValue({
       ...claimedText,
       ready_at: '2026-05-12T00:00:00Z',
     })
-    ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(
-      async ({ headword, sense }: { headword: string; sense: string }) => {
-        if (headword === laId) {
-          return makeLookup(laId, {
-            srs_state: 'review',
-            srs_due: '2026-05-12T00:00:00Z',
-            srs_last_review: '2026-05-12T00:05:00Z',
-          })
-        }
-        return makeLookup(lbId)
-      }
-    )
 
     const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
 
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
-    expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
   })
 
   it('does not mutate FSRS for parked annotations from stale generated texts', async () => {
-    const { deps, applyFsrsResultForPool, parkLeech } = createDeps({ claimWins: true })
-    ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(
-      async ({ headword }: { headword: string }) => {
-        if (headword === laId) {
-          return makeLookup(laId, {
-            srs_state: 'review',
-            srs_due: '2026-05-12T00:00:00Z',
-            leech_parked_at: '2026-05-12T00:01:00Z',
-          })
-        }
-        return makeLookup(lbId)
-      }
-    )
+    const { deps, applyFsrsResultForFacet, parkLeechFacet } = createDeps({
+      claimWins: true,
+      facets: {
+        [laId]: { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z', leech_parked_at: '2026-05-12T00:01:00Z' },
+        [lbId]: {},
+      },
+    })
 
     const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
 
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
-    expect(applyFsrsResultForPool).toHaveBeenCalledTimes(1)
-    expect(applyFsrsResultForPool).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
-    expect(parkLeech).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
+    expect(parkLeechFacet).not.toHaveBeenCalled()
   })
 
   it("parks a leech when a reading-mode 'again' rating crosses the lapse threshold", async () => {
-    const { deps, parkLeech } = createDeps({ claimWins: true })
-    ;(deps.userLookupsRepository.findByKey as ReturnType<typeof vi.fn>).mockImplementation(
-      async ({ headword }: { headword: string }) => {
-        if (headword === laId) {
-          // One lapse away from the threshold (4); the explicit 'again' below
-          // is the fresh lapse that parks it.
-          return makeLookup(laId, {
-            srs_state: 'review',
-            srs_due: '2026-05-12T00:00:00Z',
-            srs_stability: 5,
-            srs_difficulty: 6,
-            srs_last_review: '2026-05-01T00:00:00Z',
-            srs_reps: 8,
-            srs_lapses: 3,
-          })
-        }
-        return makeLookup(lbId)
-      }
-    )
+    const { deps, parkLeechFacet } = createDeps({
+      claimWins: true,
+      facets: {
+        // One lapse away from the threshold (4); the explicit 'again' below is
+        // the fresh lapse that parks it.
+        [laId]: {
+          srs_state: 'review',
+          srs_due: '2026-05-12T00:00:00Z',
+          srs_stability: 5,
+          srs_difficulty: 6,
+          srs_last_review: '2026-05-01T00:00:00Z',
+          srs_reps: 8,
+          srs_lapses: 3,
+        },
+        [lbId]: {},
+      },
+    })
 
     const result = await advanceReadingText(
       userId,
@@ -243,9 +259,9 @@ describe('advanceReadingText', () => {
     )
 
     expect(result.ok).toBe(true)
-    expect(parkLeech).toHaveBeenCalledWith({ userLookupId: laId, pool: 'passive' })
+    expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: laId, skill: 'meaning_recognition', targetForm: '' })
     // The implicit-good term (lb) must not park.
-    expect(parkLeech).toHaveBeenCalledTimes(1)
+    expect(parkLeechFacet).toHaveBeenCalledTimes(1)
   })
 
   it('returns text_not_found when the text is missing or not owned', async () => {
@@ -289,16 +305,16 @@ describe('advanceReadingText', () => {
   })
 
   it('learn_new scope does NOT bypass the daily-new cap (the bypass is flashcards-only)', async () => {
-    const { deps, initializeSrsStateIfUnderDailyCap, applyFsrsResultForPool, insertRatingEvent } = createDeps({
+    const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet, insertRatingEvent } = createDeps({
       claimWins: true,
     })
-    initializeSrsStateIfUnderDailyCap.mockResolvedValue(false)
+    initializeCitationFacetIfUnderDailyCap.mockResolvedValue(false)
     const result = await advanceReadingText(userId, textId, 'passive', 'learn_new', [], deps)
     expect(result.ok).toBe(true)
     // lb is the only learn_new-eligible annotation (la is scheduled); its
     // introduction is refused at the guard — no bypass, no FSRS, no event.
-    expect(initializeSrsStateIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
-    expect(applyFsrsResultForPool).not.toHaveBeenCalled()
+    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
+    expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
     expect(insertRatingEvent).not.toHaveBeenCalled()
     if (result.ok && !result.done) expect(result.introduced).toBe(0)
   })

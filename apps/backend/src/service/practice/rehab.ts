@@ -1,14 +1,18 @@
 import type { ExerciseType } from '../../transport/database/practice-exercises/practice-exercises-repository'
 import type {
-  DbUserLookup,
+  DbUserLookupWithFacet,
   PracticePool,
-  UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  CITATION_FORM,
+  skillForPool,
+  type StudyFacetsRepositoryInterface,
+} from '../../transport/database/study-facets/study-facets-repository'
 import { softReentryResult } from './fsrs'
 import { LEECH_GRADUATION_DAYS, isParked } from './leech-config'
 
 export type RehabDependencies = {
-  userLookupsRepository: UserLookupsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
 }
 
 // Escalating gate-exercise ladder, derived from the term's rehab day count
@@ -25,8 +29,7 @@ export const gateTypeForTier = (pool: PracticePool, rehabCorrectDays: number): E
   return ladder[tier]!
 }
 
-export const rehabCorrectDaysFor = (lookup: DbUserLookup, pool: PracticePool): number =>
-  pool === 'passive' ? lookup.leech_rehab_correct_days : lookup.active_leech_rehab_correct_days
+export const rehabCorrectDaysFor = (lookup: DbUserLookupWithFacet): number => lookup.leech_rehab_correct_days
 
 export type GateAnswerOutcome = {
   // Day count after this answer (unchanged when the answer was wrong or the
@@ -44,25 +47,31 @@ export type GateAnswerOutcome = {
 //               same-day correct attempt (on a fresh exercise) can still earn
 //               that day's credit.
 export const applyGateAnswer = async (params: {
-  lookup: DbUserLookup
+  lookup: DbUserLookupWithFacet
   pool: PracticePool
   correct: boolean
   deps: RehabDependencies
 }): Promise<GateAnswerOutcome> => {
   const { lookup, pool, correct, deps } = params
-  if (!isParked(lookup, pool)) return { rehabCorrectDays: null, graduated: false }
+  if (!isParked(lookup)) return { rehabCorrectDays: null, graduated: false }
 
-  const daysBefore = rehabCorrectDaysFor(lookup, pool)
+  const skill = skillForPool(pool)
+  const daysBefore = rehabCorrectDaysFor(lookup)
   if (!correct) return { rehabCorrectDays: daysBefore, graduated: false }
 
-  const advanced = await deps.userLookupsRepository.advanceRehabDay({ userLookupId: lookup.id, pool })
+  const advanced = await deps.studyFacetsRepository.advanceRehabDayFacet({
+    userLookupId: lookup.id,
+    skill,
+    targetForm: CITATION_FORM,
+  })
   const days = advanced ?? daysBefore
   if (days < LEECH_GRADUATION_DAYS) return { rehabCorrectDays: days, graduated: false }
 
   const reentry = softReentryResult(new Date())
-  await deps.userLookupsRepository.unparkAndSoftReentry({
+  await deps.studyFacetsRepository.unparkAndSoftReentryFacet({
     userLookupId: lookup.id,
-    pool,
+    skill,
+    targetForm: CITATION_FORM,
     state: reentry.state,
     due: reentry.due,
     stability: reentry.stability,

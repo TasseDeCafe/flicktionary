@@ -1,9 +1,5 @@
 import { FSRS, generatorParameters, createEmptyCard, Rating, State, type Card as FsrsCard, type Grade } from 'ts-fsrs'
-import type {
-  DbUserLookup,
-  PracticePool,
-  SrsState,
-} from '../../transport/database/user-lookups/user-lookups-repository'
+import type { DbUserLookupWithFacet, SrsState } from '../../transport/database/user-lookups/user-lookups-repository'
 import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
 
 const fsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
@@ -31,40 +27,23 @@ const DB_TO_STATE: Record<SrsState, State> = {
   relearning: State.Relearning,
 }
 
-// Convert a user_lookups row's SRS columns into a ts-fsrs Card. The pool
-// argument selects which SRS column family to read — passive reads srs_*,
-// active reads active_srs_*. If the relevant state column is null (the row
-// has never been reviewed in this pool) we return null and the caller seeds
-// with createEmptyCard.
-const userLookupToFsrs = (row: DbUserLookup, pool: PracticePool): FsrsCard | null => {
-  if (pool === 'passive') {
-    if (row.srs_state == null || row.srs_due == null) return null
-    const lastReview = row.srs_last_review ? new Date(row.srs_last_review) : undefined
-    return {
-      due: new Date(row.srs_due),
-      stability: row.srs_stability ?? 0,
-      difficulty: row.srs_difficulty ?? 0,
-      elapsed_days: 0,
-      scheduled_days: 0,
-      learning_steps: 0,
-      reps: row.srs_reps,
-      lapses: row.srs_lapses,
-      state: DB_TO_STATE[row.srs_state],
-      last_review: lastReview,
-    }
-  }
-  if (row.active_srs_state == null || row.active_srs_due == null) return null
-  const lastReview = row.active_srs_last_review ? new Date(row.active_srs_last_review) : undefined
+// Convert a facet's FSRS columns into a ts-fsrs Card. The facet already encodes
+// the pool (via its skill), so there is a single column family to read. If the
+// state column is null (the facet has never been reviewed) we return null and
+// the caller seeds with createEmptyCard.
+const facetToFsrs = (row: DbUserLookupWithFacet): FsrsCard | null => {
+  if (row.srs_state == null || row.srs_due == null) return null
+  const lastReview = row.srs_last_review ? new Date(row.srs_last_review) : undefined
   return {
-    due: new Date(row.active_srs_due),
-    stability: row.active_srs_stability ?? 0,
-    difficulty: row.active_srs_difficulty ?? 0,
+    due: new Date(row.srs_due),
+    stability: row.srs_stability ?? 0,
+    difficulty: row.srs_difficulty ?? 0,
     elapsed_days: 0,
     scheduled_days: 0,
     learning_steps: 0,
-    reps: row.active_srs_reps,
-    lapses: row.active_srs_lapses,
-    state: DB_TO_STATE[row.active_srs_state],
+    reps: row.srs_reps,
+    lapses: row.srs_lapses,
+    state: DB_TO_STATE[row.srs_state],
     last_review: lastReview,
   }
 }
@@ -117,13 +96,16 @@ export const softReentryResult = (now: Date): SoftReentryResult => ({
   lastReview: now,
 })
 
-export const applyRating = (row: DbUserLookup, rating: AppRating, now: Date, pool: PracticePool): FsrsResult => {
-  const existing = userLookupToFsrs(row, pool)
+export const applyRating = (row: DbUserLookupWithFacet, rating: AppRating, now: Date): FsrsResult => {
+  const existing = facetToFsrs(row)
   const card: FsrsCard = existing ?? createEmptyCard(now)
   const result = fsrs.next(card, now, RATING_MAP[rating])
   const next = result.card
+  // The next-day floor applies to recognition-mode facets (the passive queue),
+  // not production. In Phase 1 that's exactly meaning_recognition.
+  const isRecognition = row.skill === 'meaning_recognition'
   const floor = now.getTime() + MIN_PASSIVE_INTERVAL_MS
-  const due = pool === 'passive' && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
+  const due = isRecognition && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
   return {
     state: STATE_TO_DB[next.state],
     due,
