@@ -78,7 +78,7 @@ describe('undoRating', () => {
       lookup: makeLookup(),
       latestEvent: makeEvent(),
     })
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
     expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
       {
@@ -114,7 +114,7 @@ describe('undoRating', () => {
         prev_srs_lapses: null,
       }),
     })
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
     expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -133,10 +133,10 @@ describe('undoRating', () => {
       lookup: makeLookup({ learning_mode: 'active' }),
       latestEvent: makeEvent({ pool: 'active' }),
     })
-    const result = await undoRating(lookupId, userId, 'active', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'active', 'meaning_production', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
     expect(findLatestLiveEventForUndo).toHaveBeenCalledWith(
-      { userId, userLookupId: lookupId, pool: 'active' },
+      { userId, userLookupId: lookupId, skill: 'meaning_production', targetForm: '' },
       undefined
     )
     expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
@@ -150,7 +150,7 @@ describe('undoRating', () => {
       lookup: makeLookup(),
       latestEvent: makeEvent({ caused_parking: true }),
     })
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
     expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(expect.objectContaining({ causedParking: true }), undefined)
   })
@@ -161,7 +161,7 @@ describe('undoRating', () => {
       lookup: makeLookup(),
       latestEvent: makeEvent({ id: laterEventId, rated_at: '2026-06-07T01:00:00Z' }),
     })
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: false })
     expect(restoreSrsSnapshotForFacet).not.toHaveBeenCalled()
     expect(markReverted).not.toHaveBeenCalled()
@@ -172,7 +172,7 @@ describe('undoRating', () => {
       lookup: makeLookup(),
       latestEvent: null,
     })
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: false })
     expect(restoreSrsSnapshotForFacet).not.toHaveBeenCalled()
     expect(markReverted).not.toHaveBeenCalled()
@@ -180,8 +180,16 @@ describe('undoRating', () => {
 
   it('returns lookup_not_found when the term is missing', async () => {
     const { deps, findLatestLiveEventForUndo } = createDeps({ lookup: null, latestEvent: makeEvent() })
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: false, reason: 'lookup_not_found' })
+    expect(findLatestLiveEventForUndo).not.toHaveBeenCalled()
+  })
+
+  it('rejects an illegal (pool, skill) pairing before touching state', async () => {
+    const { deps, findLatestLiveEventForUndo } = createDeps({ lookup: makeLookup(), latestEvent: makeEvent() })
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_production', '', eventId, deps)
+    expect(result).toEqual({ ok: false, reason: 'illegal_pool_skill' })
+    expect(deps.userLookupsRepository.findByIdForUser).not.toHaveBeenCalled()
     expect(findLatestLiveEventForUndo).not.toHaveBeenCalled()
   })
 
@@ -209,7 +217,7 @@ describe('undoRating', () => {
       },
       withTransaction: (fn: (tx: undefined) => Promise<unknown>) => fn(txSentinel),
     } as unknown as UndoRatingDependencies
-    const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
+    const result = await undoRating(lookupId, userId, 'passive', 'meaning_recognition', '', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
     expect(calls).toEqual(['find@tx', 'restore@tx', 'markReverted@tx'])
   })

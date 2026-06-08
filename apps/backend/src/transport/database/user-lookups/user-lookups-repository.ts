@@ -34,6 +34,9 @@ export type DbUserLookupWithFacet = DbUserLookup & {
   leech_rehab_correct_days: number
   leech_rehab_last_correct_on: string | null
   introduced_at: string | null
+  // Form facets carry {form, translation}; citation cards carry {}. Surfaced to
+  // the queue DTO (facetPayload). Populated in Phase 4.
+  payload: DbStudyFacet['payload']
 }
 
 // Flatten a (lookup, facet) pair into the combined row the rating/leech
@@ -54,6 +57,7 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
   leech_rehab_correct_days: facet.leech_rehab_correct_days,
   leech_rehab_last_correct_on: facet.leech_rehab_last_correct_on,
   introduced_at: facet.introduced_at,
+  payload: facet.payload,
 })
 
 // Per-term knob: every kept term is at minimum 'passive' (recognition pool).
@@ -465,29 +469,42 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   }))
 }
 
-// The live review pool for a (language, pool), sliced by scope. This is the
-// single source for both render modes and the reading generator's candidate
-// set. It replaces both the frozen practice_session_chunks snapshot
-// (listEligibleForLanguage) and the passive-only flashcard query
-// (listDueFlashcardsForLanguage):
+// The live review pool for a (language, pool), sliced by scope. Single source
+// for both render modes and the reading generator's candidate set.
 //
-//   - `pool` selects the SRS column family. The active pool additionally
-//     restricts to learning_mode='active' rows (the passive pool spans every
-//     kept term).
-//   - `scope` gates the capped sub-selects: 'review_due' returns due rows
-//     only, 'learn_new' returns never-reviewed rows only, 'mixed' returns both
-//     merged due-first then new (Anki-standard ordering).
+//   - `pool` selects the facet skill SET, not a single skill: the passive queue
+//     serves the recognition skills {meaning_recognition, pronunciation}, the
+//     active queue serves {meaning_production}. The active pool additionally
+//     restricts to learning_mode='active' rows (passive spans every kept term).
+//     Facets are filtered to enabled (disabled_at IS NULL — keeps demoted
+//     production facets out) and ready (data_status='ready' — keeps pending_data
+//     facets out); leech-parked facets leave BOTH render modes (the reading
+//     generator feeds from this query and must never re-rate a parked facet).
+//   - `scope` gates the buckets: 'review_due' = due only, 'learn_new' =
+//     never-reviewed only, 'mixed' = due + capped citation-new.
 //
-// Due cards are split into two independently-capped buckets, mirroring
-// listDueSummary's state grouping: review-state ('new','review') rows consume
-// the daily review budget (maxReviewTerms = the remaining budget), while
-// learning-state ('learning','relearning') intraday follow-ups are exempt
-// (maxLearningTerms = a hard ceiling) so a spent budget can never strand a
-// failed card's 10-minute relearning step until tomorrow. The two sub-selects
-// are merged due-first via UNION ALL + outer ORDER BY.
+// Due cards split into two independently-capped buckets (review-state
+// {'new','review'} consume the daily review budget = maxReviewTerms; learning
+// follow-ups {'learning','relearning'} are exempt under maxLearningTerms, a hard
+// ceiling, so a spent budget can't strand a failed card's relearning step).
 //
-// New rows are never-reviewed (state IS NULL). The buckets are mutually
-// exclusive (null vs disjoint state sets), so no row appears twice.
+// New cards split too: the citation card for the pool's review mode is the only
+// daily-new-capped facet — capped by maxNewTerms, served in 'mixed' + 'learn_new'.
+// Opt-in new facets (pronunciation/forms, Phase 4) bypass the daily-new cap
+// (maxOptInNewTerms = a hard ceiling) and are served ONLY in 'learn_new', never
+// 'mixed' — otherwise the primary Practice button would flood a session with
+// every enabled-but-unseen facet (Trap 22). Enabling a facet is a deliberate
+// "go learn it via learn-new" act.
+//
+// SIBLING SPACING (Trap 5/16): a term's facets ("siblings") must not be
+// adjacent. Each selected facet is ranked within its term by priority
+// (due-review > intraday-learning > unseen); the outer queue orders by that rank
+// first, so every term's rank-1 facet precedes any rank-2 — best-effort (a term
+// dominating the due set has no separators left for its high-rank siblings, which
+// go adjacent at the tail; accepted, not a guarantee). In Phase 2 each term has
+// exactly one citation facet, so sibling_rank is always 1 and the order collapses
+// to today's due-time-then-new ordering (behavior-preserving); Phase-4 facets
+// exercise the spacing.
 const listReviewTerms = async (params: {
   userId: string
   targetLanguage: string
@@ -496,6 +513,7 @@ const listReviewTerms = async (params: {
   maxReviewTerms: number
   maxLearningTerms: number
   maxNewTerms: number
+  maxOptInNewTerms: number
   excludeUserLookupIds?: string[]
 }): Promise<DbUserLookupWithFacet[]> => {
   const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
@@ -503,99 +521,99 @@ const listReviewTerms = async (params: {
   const reviewLimit = wantDue ? params.maxReviewTerms : 0
   const learningLimit = wantDue ? params.maxLearningTerms : 0
   const newLimit = wantNew ? params.maxNewTerms : 0
-  if (reviewLimit <= 0 && learningLimit <= 0 && newLimit <= 0) return []
+  // maxOptInNewTerms is already pool+scope-gated by resolveReviewCaps (0 unless
+  // passive learn_new), so apply it directly.
+  const optInNewLimit = params.maxOptInNewTerms
+  if (reviewLimit <= 0 && learningLimit <= 0 && newLimit <= 0 && optInNewLimit <= 0) return []
 
-  // pool maps to the facet skill; the queue addresses the citation facet. The
-  // active pool additionally restricts to learning_mode='active' rows (passive
-  // spans every kept term). disabled_at IS NULL keeps demoted production facets
-  // out of the queue. SRS state / due / parked all read off the joined facet.
-  const skill = skillForPool(params.pool)
-  const facetJoin = sql`
-    JOIN public.study_facets f
-      ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
-  `
+  // The skill set this queue serves, and its daily-new-capped primary citation
+  // facet. 'pronunciation' has no rows until Phase 4, so listing it is inert now.
+  const skills = params.pool === 'active' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
+  const primarySkill = skillForPool(params.pool)
   const facetCols = sql`
     f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
     f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
-    f.leech_rehab_last_correct_on, f.introduced_at
+    f.leech_rehab_last_correct_on, f.introduced_at, f.payload
   `
   const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
-  // Leech-parked facets leave BOTH render modes at once — flashcards and the
-  // reading-text generator's candidate set feed from this query. That's
-  // intentional: reading mode implicitly rates untapped annotations 'good' on
-  // advance, which must never mutate a parked facet's FSRS. The only way back
-  // into rotation is rehab graduation.
   const excludedIds = params.excludeUserLookupIds ?? []
   const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
+  // Shared eligibility: kept, live term; enabled, ready, non-parked facet in the
+  // pool's skill set. Always-true conditions first so the optional AND clauses
+  // append cleanly.
+  const eligible = sql`
+    ul.user_id = ${params.userId}
+    AND ul.target_language = ${params.targetLanguage}
+    AND ul.count > 0
+    AND ul.deleted_at IS NULL
+    AND f.disabled_at IS NULL
+    AND f.data_status = 'ready'
+    AND f.leech_parked_at IS NULL
+    ${activeModeClause}
+    ${excludeClause}
+  `
+  const facetJoin = sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skills})`
+  const primaryCitation = sql`(f.skill = ${primarySkill} AND f.target_form = ${CITATION_FORM})`
 
-  const dueRows =
-    reviewLimit > 0 || learningLimit > 0
-      ? ((await sql`
-          SELECT *
-          FROM (
-            (
-              SELECT ul.*, ${facetCols}
-              FROM public.user_lookups ul
-              ${facetJoin}
-              WHERE ul.user_id = ${params.userId}
-                AND ul.target_language = ${params.targetLanguage}
-                AND ul.count > 0
-                AND ul.deleted_at IS NULL
-                AND f.disabled_at IS NULL
-                ${activeModeClause}
-                ${excludeClause}
-                AND f.leech_parked_at IS NULL
-                AND f.srs_due IS NOT NULL
-                AND f.srs_due <= NOW()
-                AND f.srs_state IN ('new', 'review')
-              ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC
-              LIMIT ${reviewLimit}
-            )
-            UNION ALL
-            (
-              SELECT ul.*, ${facetCols}
-              FROM public.user_lookups ul
-              ${facetJoin}
-              WHERE ul.user_id = ${params.userId}
-                AND ul.target_language = ${params.targetLanguage}
-                AND ul.count > 0
-                AND ul.deleted_at IS NULL
-                AND f.disabled_at IS NULL
-                ${activeModeClause}
-                ${excludeClause}
-                AND f.leech_parked_at IS NULL
-                AND f.srs_due IS NOT NULL
-                AND f.srs_due <= NOW()
-                AND f.srs_state IN ('learning', 'relearning')
-              ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC
-              LIMIT ${learningLimit}
-            )
-          ) merged
-          ORDER BY srs_due ASC, headword ASC, sense ASC
-        `) as DbUserLookupWithFacet[])
-      : []
-
-  const newRows =
-    newLimit > 0
-      ? ((await sql`
-          SELECT ul.*, ${facetCols}
-          FROM public.user_lookups ul
-          ${facetJoin}
-          WHERE ul.user_id = ${params.userId}
-            AND ul.target_language = ${params.targetLanguage}
-            AND ul.count > 0
-            AND ul.deleted_at IS NULL
-            AND f.disabled_at IS NULL
-            ${activeModeClause}
-            ${excludeClause}
-            AND f.leech_parked_at IS NULL
-            AND f.srs_state IS NULL
-          ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
-          LIMIT ${newLimit}
-        `) as DbUserLookupWithFacet[])
-      : []
-
-  return [...dueRows, ...newRows]
+  // Four capped buckets unioned, then spaced. Priority: 1 due-review,
+  // 2 due-learning, 3 new. A bucket with a 0 LIMIT contributes nothing.
+  const rows = (await sql`
+    WITH selected AS (
+      (
+        SELECT ul.*, ${facetCols}, 1 AS facet_priority
+        FROM public.user_lookups ul
+        ${facetJoin}
+        WHERE ${eligible}
+          AND f.srs_due IS NOT NULL AND f.srs_due <= NOW()
+          AND f.srs_state IN ('new', 'review')
+        ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+        LIMIT ${reviewLimit}
+      )
+      UNION ALL
+      (
+        SELECT ul.*, ${facetCols}, 2 AS facet_priority
+        FROM public.user_lookups ul
+        ${facetJoin}
+        WHERE ${eligible}
+          AND f.srs_due IS NOT NULL AND f.srs_due <= NOW()
+          AND f.srs_state IN ('learning', 'relearning')
+        ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+        LIMIT ${learningLimit}
+      )
+      UNION ALL
+      (
+        SELECT ul.*, ${facetCols}, 3 AS facet_priority
+        FROM public.user_lookups ul
+        ${facetJoin}
+        WHERE ${eligible}
+          AND f.srs_state IS NULL
+          AND ${primaryCitation}
+        ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+        LIMIT ${newLimit}
+      )
+      UNION ALL
+      (
+        SELECT ul.*, ${facetCols}, 3 AS facet_priority
+        FROM public.user_lookups ul
+        ${facetJoin}
+        WHERE ${eligible}
+          AND f.srs_state IS NULL
+          AND NOT ${primaryCitation}
+        ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC, f.target_form ASC
+        LIMIT ${optInNewLimit}
+      )
+    ),
+    spaced AS (
+      SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY id
+        ORDER BY facet_priority ASC, srs_due ASC NULLS LAST, created_at ASC, headword ASC, sense ASC, target_form ASC
+      ) AS sibling_rank
+      FROM selected
+    )
+    SELECT * FROM spaced
+    ORDER BY sibling_rank ASC, srs_due ASC NULLS LAST, created_at ASC, headword ASC, sense ASC, target_form ASC
+  `) as DbUserLookupWithFacet[]
+  return rows
 }
 
 const findByKey = async (params: {
@@ -741,7 +759,7 @@ const listParkedTerms = async (params: {
       ul.*,
       f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
       f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
-      f.leech_rehab_last_correct_on, f.introduced_at
+      f.leech_rehab_last_correct_on, f.introduced_at, f.payload
     FROM public.user_lookups ul
     JOIN public.study_facets f
       ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
@@ -1274,6 +1292,7 @@ export interface UserLookupsRepositoryInterface {
     maxReviewTerms: number
     maxLearningTerms: number
     maxNewTerms: number
+    maxOptInNewTerms: number
     excludeUserLookupIds?: string[]
   }) => Promise<DbUserLookupWithFacet[]>
   findByKey: (params: {

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
   ExerciseAnswerSchema,
+  FacetSkillSchema,
   GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
   PracticePoolSchema,
@@ -67,6 +68,12 @@ export const practiceContract = {
         userLookupId: z.string().uuid(),
         rating: PracticeRatingSchema,
         pool: PracticePoolSchema.default('passive'),
+        // Facet identity of the rated card. `pool` names the session queue; the
+        // queue can serve more than one facet per term, so identity rides
+        // separately. Defaults preserve the citation-recognition card for any
+        // client that doesn't yet send them.
+        skill: FacetSkillSchema.default('meaning_recognition'),
+        targetForm: z.string().default(''),
         // True when rating inside an explicit learn-new session: new-term
         // introductions bypass the daily-new cap (they still stamp
         // added_to_practice_at, so they count toward today's introductions).
@@ -105,12 +112,17 @@ export const practiceContract = {
     .route({ method: 'POST', path: '/practice/review-terms/{userLookupId}/undo', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(
       z.object({
         userLookupId: z.string().uuid(),
         pool: PracticePoolSchema.default('passive'),
+        // Facet identity of the rating being reverted (matches the rateTerm
+        // input). Defaults to the citation recognition card.
+        skill: FacetSkillSchema.default('meaning_recognition'),
+        targetForm: z.string().default(''),
         eventId: z.string().uuid(),
       })
     )

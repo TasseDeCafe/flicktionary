@@ -126,6 +126,10 @@ const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
   grammar: (row.grammar as Record<string, unknown> | null) ?? null,
   srsState: row.srs_state,
   targetLanguage: row.target_language,
+  // Facet identity carried back to rate/undo (the queue item knows its card).
+  skill: row.skill,
+  targetForm: row.target_form,
+  facetPayload: (row.payload as Record<string, unknown> | null) ?? null,
 })
 
 // Builds the (headword, sense) -> content map for the row's annotations by
@@ -212,7 +216,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       // query, merged per language.
       const [summary, reviewedTodayByLanguage] = await Promise.all([
         deps.userLookupsRepository.listDueSummary(userId),
-        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'passive' }),
+        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, mode: 'recognition' }),
       ])
       const perLanguage = summary.map((entry) => ({
         ...entry,
@@ -236,6 +240,8 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         userId,
         input.rating,
         input.pool,
+        input.skill,
+        input.targetForm,
         {
           userLookupsRepository: deps.userLookupsRepository,
           studyFacetsRepository: deps.studyFacetsRepository,
@@ -249,6 +255,9 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       if (!result.ok) {
         if (result.reason === 'not_in_active_pool') {
           throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the active pool.' }] } })
+        }
+        if (result.reason === 'illegal_pool_skill') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Illegal (pool, skill) pairing.' }] } })
         }
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
@@ -265,13 +274,24 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     undoRating: implementer.undoRating.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await undoRating(input.userLookupId, userId, input.pool, input.eventId, {
-        userLookupsRepository: deps.userLookupsRepository,
-        studyFacetsRepository: deps.studyFacetsRepository,
-        practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
-        withTransaction,
-      })
+      const result = await undoRating(
+        input.userLookupId,
+        userId,
+        input.pool,
+        input.skill,
+        input.targetForm,
+        input.eventId,
+        {
+          userLookupsRepository: deps.userLookupsRepository,
+          studyFacetsRepository: deps.studyFacetsRepository,
+          practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
+          withTransaction,
+        }
+      )
       if (!result.ok) {
+        if (result.reason === 'illegal_pool_skill') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Illegal (pool, skill) pairing.' }] } })
+        }
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'lookup_not_found' }] } })
       }
       return { data: { undone: result.undone } }

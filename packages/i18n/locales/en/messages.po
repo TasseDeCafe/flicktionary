@@ -13,9 +13,9 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:200
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:279
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:304
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:209
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:296
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:321
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 
@@ -103,7 +103,7 @@ msgstr "{dueTermCount} due"
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:374
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:391
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 msgstr "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
@@ -399,7 +399,7 @@ msgstr "All {newCount}"
 msgid "All caught up"
 msgstr "All caught up"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:370
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:387
 msgid "All done!"
 msgstr "All done!"
 
@@ -568,8 +568,8 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:387
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:392
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:404
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:409
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 #: apps/web/src/features/practice/components/strengthen-view.tsx:62
 #: apps/web/src/features/practice/components/strengthen-view.tsx:72
@@ -577,7 +577,7 @@ msgstr "Back"
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:574
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:591
 msgid "Back to current card"
 msgstr "Back to current card"
 
@@ -658,7 +658,7 @@ msgstr "Card"
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Card {cardPosition} of {cardTotal}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:508
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:525
 msgid "Card actions"
 msgstr "Card actions"
 
@@ -674,7 +674,7 @@ msgstr "Cards left"
 msgid "CEFR level"
 msgstr "CEFR level"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:565
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:582
 msgid "Change your rating"
 msgstr "Change your rating"
 
@@ -963,7 +963,7 @@ msgstr "Daily new limit reached"
 msgid "Daily new limit reached."
 msgstr "Daily new limit reached."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:371
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:388
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
@@ -1627,7 +1627,7 @@ msgstr "Form (e.g. был)"
 msgid "Form translation"
 msgstr "Form translation"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:554
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:571
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Forward"
@@ -2086,7 +2086,7 @@ msgstr "Loading history…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:345
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:362
 msgid "Loading review terms…"
 msgstr "Loading review terms…"
 
@@ -2107,7 +2107,7 @@ msgstr "Loading..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:401
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:418
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
 #: apps/web/src/features/practice/components/practice-language-view.tsx:200
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
@@ -2336,7 +2336,7 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:356
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:373
 msgid "No new terms to learn."
 msgstr "No new terms to learn."
 
@@ -2344,7 +2344,7 @@ msgstr "No new terms to learn."
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:358
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:375
 msgid "No reviews are due right now."
 msgstr "No reviews are due right now."
 
@@ -2362,7 +2362,7 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:359
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
 msgid "No terms are due right now."
 msgstr "No terms are due right now."
 
@@ -2770,7 +2770,7 @@ msgstr "Preposition"
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:543
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:560
 #: apps/web/src/features/review/components/focus-view.tsx:268
 msgid "Previous card"
 msgstr "Previous card"
@@ -3234,7 +3234,7 @@ msgstr "Short paraphrase in the target language."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:581
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:598
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -3382,7 +3382,7 @@ msgstr "Streaming"
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:384
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:401
 msgid "Strengthen"
 msgstr "Strengthen"
 

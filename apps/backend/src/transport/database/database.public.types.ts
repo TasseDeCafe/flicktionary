@@ -477,6 +477,8 @@ export type Database = {
           rating: string
           reverted_at: string | null
           sense: string
+          skill: string
+          target_form: string
           target_language: string
           user_id: string
           user_lookup_id: string
@@ -500,6 +502,8 @@ export type Database = {
           rating: string
           reverted_at?: string | null
           sense?: string
+          skill?: string
+          target_form?: string
           target_language: string
           user_id: string
           user_lookup_id: string
@@ -523,6 +527,8 @@ export type Database = {
           rating?: string
           reverted_at?: string | null
           sense?: string
+          skill?: string
+          target_form?: string
           target_language?: string
           user_id?: string
           user_lookup_id?: string
@@ -1163,6 +1169,7 @@ export type Database = {
           created_at: string
           practice_max_new_terms: number
           practice_max_review_terms: number
+          practice_max_review_terms_active: number | null
           show_translations_enabled: boolean
           target_language: string
           updated_at: string
@@ -1173,6 +1180,7 @@ export type Database = {
           created_at?: string
           practice_max_new_terms?: number
           practice_max_review_terms?: number
+          practice_max_review_terms_active?: number | null
           show_translations_enabled?: boolean
           target_language: string
           updated_at?: string
@@ -1183,6 +1191,7 @@ export type Database = {
           created_at?: string
           practice_max_new_terms?: number
           practice_max_review_terms?: number
+          practice_max_review_terms_active?: number | null
           show_translations_enabled?: boolean
           target_language?: string
           updated_at?: string

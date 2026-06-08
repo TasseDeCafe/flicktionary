@@ -3,8 +3,8 @@ import type {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
-  CITATION_FORM,
-  skillForPool,
+  isLegalPoolSkill,
+  type FacetSkill,
   type StudyFacetsRepositoryInterface,
 } from '../../transport/database/study-facets/study-facets-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
@@ -17,7 +17,9 @@ export type UndoRatingDependencies = {
   withTransaction: WithTransaction
 }
 
-export type UndoRatingResult = { ok: true; undone: boolean } | { ok: false; reason: 'lookup_not_found' }
+export type UndoRatingResult =
+  | { ok: true; undone: boolean }
+  | { ok: false; reason: 'lookup_not_found' | 'illegal_pool_skill' }
 
 // Revert one rating: restore the pool's SRS family from the event's prev_srs_*
 // snapshot and tombstone the event (reverted_at). The review budget refunds
@@ -39,25 +41,29 @@ export const undoRating = async (
   userLookupId: string,
   userId: string,
   pool: PracticePool,
+  skill: FacetSkill,
+  targetForm: string,
   eventId: string,
   deps: UndoRatingDependencies
 ): Promise<UndoRatingResult> => {
+  if (!isLegalPoolSkill(pool, skill)) return { ok: false, reason: 'illegal_pool_skill' }
+
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
 
   const undone = await deps.withTransaction(async (tx) => {
+    // Address the latest live event by the FACET identity (skill, target_form),
+    // not pool — the passive queue can serve multiple facets per term.
     const event = await deps.practiceRatingEventsRepository.findLatestLiveEventForUndo(
-      { userId, userLookupId, pool },
+      { userId, userLookupId, skill, targetForm },
       tx
     )
     if (!event || event.id !== eventId) return false
-    // The event still carries `pool` in Phase 1 (skill/target_form land on the
-    // event row in Phase 2); map it to the citation facet identity to restore.
     await deps.studyFacetsRepository.restoreSrsSnapshotForFacet(
       {
         userLookupId,
-        skill: skillForPool(pool),
-        targetForm: CITATION_FORM,
+        skill,
+        targetForm,
         prevState: event.prev_srs_state,
         prevDue: event.prev_srs_due,
         prevStability: event.prev_srs_stability,

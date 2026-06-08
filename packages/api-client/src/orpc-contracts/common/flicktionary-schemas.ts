@@ -180,6 +180,13 @@ export type LearningMode = z.infer<typeof LearningModeSchema>
 export const PracticePoolSchema = z.enum(['passive', 'active'])
 export type PracticePool = z.infer<typeof PracticePoolSchema>
 
+// What you practise on a target — one axis of a study_facets facet. `pool` (the
+// session queue, above) is the DERIVED review mode of a skill and stays on the
+// wire; this is card identity. 'pronunciation' arrives in Phase 4 (widened
+// CHECK); the two meaning skills are the Phase-2 surface.
+export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production'])
+export type FacetSkill = z.infer<typeof FacetSkillSchema>
+
 // The canonical vocabulary entry: one row per (user, targetLanguage, headword,
 // sense). Owns the gloss/example fields so edits propagate to every card that
 // references it. Cards carry a `chunk` of this shape on read paths.
@@ -476,6 +483,15 @@ export const ReviewTermSchema = z.object({
   grammar: GrammarSchema.nullable(),
   srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
   targetLanguage: z.string(),
+  // Facet identity: the client holds the queue item, so it carries each card's
+  // identity back to rate/undo. `targetForm` is '' for citation cards. In
+  // Phase 2 every queued card is the citation facet; the fields are carried so
+  // the rate/undo wiring is ready for pronunciation/form facets (Phase 4).
+  skill: FacetSkillSchema,
+  targetForm: z.string(),
+  // Form facets ({form, translation}); '{}' / null for citation cards. Designed
+  // now, populated in Phase 4.
+  facetPayload: z.record(z.string(), z.unknown()).nullable(),
 })
 export type ReviewTerm = z.infer<typeof ReviewTermSchema>
 

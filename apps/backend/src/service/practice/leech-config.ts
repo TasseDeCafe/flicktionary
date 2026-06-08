@@ -26,6 +26,16 @@ export const SOFT_REENTRY_DIFFICULTY = 5 // ts-fsrs difficulty range is 1..10
 
 export const isParked = (lookup: DbUserLookupWithFacet): boolean => lookup.leech_parked_at != null
 
+// Leeching is restricted to CITATION MEANING facets: rehab gate exercises test
+// *meaning*, and `practice_exercises` is keyed `(user_lookup_id, pool, status)`
+// with no facet identity — so a form or pronunciation facet that parked would
+// collide with the citation facet on the pool-keyed bank. Form/pronunciation
+// facets therefore never leech (Trap 19). target_form='' isolates the citation
+// card; the skill check excludes 'pronunciation' (Phase 4). In Phase 2 every
+// facet is already citation meaning, so this only ever guards future facets.
+const isLeechableFacet = (lookup: DbUserLookupWithFacet): boolean =>
+  lookup.target_form === '' && (lookup.skill === 'meaning_recognition' || lookup.skill === 'meaning_production')
+
 // Park condition for one rating event. This is a NEW-LAPSE delta, not an
 // absolute threshold check: after graduation `lapses` stays >= the threshold
 // forever, so an absolute check would re-park the facet on the very next
@@ -33,5 +43,10 @@ export const isParked = (lookup: DbUserLookupWithFacet): boolean => lookup.leech
 // a rating that itself caused a lapse (an 'again' on a review-state card) can
 // park — good/easy ratings on a high-lapse graduated facet never do.
 export const shouldParkLeech = (lookup: DbUserLookupWithFacet, result: FsrsResult): boolean => {
-  return result.lapses > (lookup.srs_lapses ?? 0) && result.lapses >= LEECH_LAPSE_THRESHOLD && !isParked(lookup)
+  return (
+    isLeechableFacet(lookup) &&
+    result.lapses > (lookup.srs_lapses ?? 0) &&
+    result.lapses >= LEECH_LAPSE_THRESHOLD &&
+    !isParked(lookup)
+  )
 }

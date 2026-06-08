@@ -21,6 +21,34 @@ export type PracticePool = 'passive' | 'active'
 export const skillForPool = (pool: PracticePool): FacetSkill =>
   pool === 'active' ? 'meaning_production' : 'meaning_recognition'
 
+// A skill's review MODE — the static property that decides which session queue
+// (and which per-mode budget/cap) a facet belongs to. recognition skills are
+// reviewed in the passive queue; production in the active queue. Budgets and
+// daily caps are per-mode, NOT per-skill (see the plan: no per-skill caps).
+export type ReviewMode = 'recognition' | 'production'
+
+// The skills that belong to each review mode. Returned as raw strings (not
+// FacetSkill) so 'pronunciation' is already covered for forward-compat: it has
+// no rows until Phase 4 widens the CHECK, but a recognition-mode budget/queue
+// filter that lists it is correct now and needs no change then.
+export const skillsForReviewMode = (mode: ReviewMode): string[] =>
+  mode === 'production' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
+
+// The ONLY daily-new-capped facet is the citation recognition card ("I'm
+// starting to learn this word"). Pronunciation, production, and every
+// form/skill toggled in the matrix bypass the daily-new cap — they're explicit
+// opt-ins, born `new`, entered via "learn new" at the user's pace. `skill` is a
+// raw string so a future 'pronunciation'/form facet routes correctly here too.
+export const isDailyNewCappedFacet = (skill: string, targetForm: string): boolean =>
+  skill === 'meaning_recognition' && targetForm === CITATION_FORM
+
+// `pool` (the session queue / wire param) names which queue you entered, not
+// card identity. These are the legal (pool, skill) pairs — the passive queue
+// serves recognition skills, the active queue serves production. Validate
+// server-side in rateTerm/undoRating so a crafted (active, pronunciation) 400s.
+export const isLegalPoolSkill = (pool: PracticePool, skill: string): boolean =>
+  pool === 'active' ? skill === 'meaning_production' : skillsForReviewMode('recognition').includes(skill)
+
 export type FacetAddress = {
   userLookupId: string
   skill: FacetSkill

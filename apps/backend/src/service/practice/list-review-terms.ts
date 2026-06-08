@@ -67,6 +67,7 @@ export const listReviewTerms = async (
     maxReviewTerms: caps.maxReviewTerms,
     maxLearningTerms: caps.maxLearningTerms,
     maxNewTerms: caps.maxNewTerms,
+    maxOptInNewTerms: caps.maxOptInNewTerms,
     excludeUserLookupIds,
   })
 }

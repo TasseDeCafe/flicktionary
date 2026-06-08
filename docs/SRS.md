@@ -93,21 +93,30 @@ predicate).
 ## 3. Daily limits (per language since PR #111)
 
 `practice_max_new_terms` / `practice_max_review_terms` live on
-`user_target_language_prefs` (Languages settings screen). Defaults 20/100; hard maxes
-100/300; missing row ⇒ defaults. `clampPracticeSessionLimits` clamps to [0, hard-max] and
-treats **both-zero as "fall back to defaults"** — a fully-paused language is deliberately not
-expressible (the contract also rejects both-zero with a sum>0 refine; the settings UI snaps
-invalid drafts back on blur).
+`user_target_language_prefs` (Languages settings screen) and are the **recognition-mode**
+caps. Defaults 20/100; hard maxes 100/300; missing row ⇒ defaults. `clampPracticeSessionLimits`
+clamps to [0, hard-max] and treats **both-zero as "fall back to defaults"** — a fully-paused
+language is deliberately not expressible (the contract also rejects both-zero with a sum>0
+refine; the settings UI snaps invalid drafts back on blur).
 
-Two independent daily budgets, both passive-only:
+Caps are **per review mode** (recognition / production), not per skill. Production gets an
+optional **review** cap only — `practice_max_review_terms_active` (nullable; **NULL = uncapped
+= hard ceiling**, the default, preserving today's active behaviour until the Phase-3 UI sets
+it). Production has **no** new cap: the citation recognition card is the only daily-new-capped
+facet, so production-new is uncapped by design (`isDailyNewCappedFacet`).
 
-- **New budget** = limit − count of rows with `added_to_practice_at` = today. Consumed by
-  introductions (first-ever passive rating), from flashcards AND reading mode.
-- **Review budget** = limit − `COUNT(DISTINCT user_lookup_id)` of today's
-  `practice_rating_events` where `pool='passive'`, `was_introduction=false`,
-  `prev_srs_state IN ('new','review')`, `reverted_at IS NULL`. DISTINCT means in-session
-  `again` redrills of one card charge one slot. Counting events (not queue state) is what
-  fixed the "refresh refills the queue" bug.
+Daily budgets:
+
+- **New budget** (recognition only) = limit − count of citation-recognition facets with
+  `introduced_at` = today. Consumed by introductions (first citation-recognition rating), from
+  flashcards AND reading mode.
+- **Review budget** = limit − `COUNT(DISTINCT (user_lookup_id, skill, target_form))` of today's
+  `practice_rating_events` where `skill = ANY(<mode's skills>)`, `was_introduction=false`,
+  `prev_srs_state IN ('new','review')`, `reverted_at IS NULL`. Counting **distinct facets**
+  (not terms) means caveat-meaning + caveat-pronunciation are two slots, while in-session
+  `again` redrills of one facet charge one. The mode's skills: recognition =
+  `{meaning_recognition, pronunciation}`, production = `{meaning_production}`. Counting events
+  (not queue state) is what fixed the "refresh refills the queue" bug.
 
 **Learning/relearning follow-ups are exempt from both budgets.** A card in
 `learning`/`relearning` state is an unfinished intraday step (usually a failed card); it is
@@ -118,15 +127,33 @@ learning-state cards — they keep appearing under "Follow-ups" until cleared.*
 ## 4. The queue (listReviewTerms)
 
 Scopes: `mixed` (due first, then new), `review_due` (due only), `learn_new` (new only).
-The repository query is three sub-selects, each separately capped:
+The query serves the pool's **skill set** (passive = `{meaning_recognition, pronunciation}`,
+active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) and ready
+(`data_status='ready'`) facets. It is four sub-selects, each separately capped, then spaced:
 
 | bucket | predicate | cap | order |
 |---|---|---|---|
-| review-state | `srs_state IN ('new','review')`, due | remaining **review budget** | due ASC, headword, sense |
-| learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC, headword, sense |
-| new | `srs_state IS NULL` | remaining **new budget** (or batch) | created_at ASC, headword, sense |
+| review-state | `srs_state IN ('new','review')`, due | remaining **review budget** | due ASC |
+| learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
+| new (capped) | `srs_state IS NULL`, **primary citation** facet | remaining **new budget** (or batch) | created_at ASC |
+| new (opt-in) | `srs_state IS NULL`, **NOT** primary citation | hard ceiling, **`learn_new` only** | created_at ASC |
 
-Excluded everywhere: parked terms (`*_parked_at IS NOT NULL`) and terms woven into the
+The **primary citation** facet is the pool's daily-new-capped card (passive →
+`(meaning_recognition,'')`, active → `(meaning_production,'')`). **Opt-in new** facets
+(pronunciation/forms, Phase 4) bypass the daily-new cap but are served **only in `learn_new`**,
+never `mixed` — otherwise the primary Practice button would flood a session with every
+enabled-but-unseen facet. `resolveReviewCaps` enforces this (it returns `maxOptInNewTerms=0`
+outside passive `learn_new`).
+
+**Sibling spacing**: a term's facets ("siblings") must not be adjacent. Each selected facet is
+ranked within its term by priority (due-review > intraday-learning > unseen) via `ROW_NUMBER()
+OVER (PARTITION BY user_lookup_id …)`; the outer queue orders by that rank first, so every
+term's rank-1 facet precedes any rank-2. Best-effort: a term dominating the due set has no
+separators left for its high-rank siblings, which go adjacent at the tail (accepted, not a
+guarantee). In Phase 2 each term has one citation facet, so the rank is always 1 and the order
+collapses to today's due-time-then-new ordering (behaviour-preserving).
+
+Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`) and terms woven into the
 currently-open reading text (`excludeUserLookupIds`).
 
 **Learn-new batch bypass**: the "Learn new" flashcard flow opens a sheet (5/10/15/20, plus
@@ -148,12 +175,16 @@ Shared by flashcards (`rateTerm`) and reading advances (`advanceReadingText`). P
    against the *full clamped per-language cap* and stamps `srs_state='new'` +
    `added_to_practice_at` only if under it. `bypassDailyCap` (learn-new session) drops only
    the count predicate. Active introductions initialize unconditionally.
-3. **FSRS write + event log in one transaction**: `applyFsrsResultForPool` and the
-   `practice_rating_events` insert commit together. The event carries the **pre-rating SRS
-   snapshot** (`prev_srs_*`), `was_explicit` (false = implicit reading 'good'),
-   `was_introduction`, `caused_parking`, `practice_text_id`, and a `reverted_at` tombstone
-   column — the foundation for undo and the review-budget count. Append-only; every event
-   row represents an applied write.
+3. **FSRS write + event log in one transaction**: `applyFsrsResultForFacet` and the
+   `practice_rating_events` insert commit together. The event carries the rated **facet
+   identity** (`skill`, `target_form`) alongside `pool` (the session queue — distinct
+   namespaces), the **pre-rating SRS snapshot** (`prev_srs_*`), `was_explicit` (false =
+   implicit reading 'good'), `was_introduction`, `caused_parking`, `practice_text_id`, and a
+   `reverted_at` tombstone column — the foundation for undo and the review-budget count.
+   Append-only; every event row represents an applied write.
+
+Both `rateTerm` and `undoRating` validate the **legal `(pool, skill)` pairing** first (passive
+↔ {recognition, pronunciation}; active ↔ production) — a crafted mismatch is a 400.
 4. **Post-commit, fire-and-forget**: `parkLeech` (if the rating crossed the leech threshold)
    and `warmExerciseBank` (on parked / `again` / `hard` — pre-generates Strengthen
    exercises). A crash window can leave `caused_parking=true` without the park applied
@@ -169,15 +200,17 @@ applied** (daily-cap refusal, or the parked stale-queue no-op; this disambiguate
 `parked: true` response shapes — a rating that newly parked a leech carries an eventId and
 is fully undoable). `practice.undoRating` takes that handle and, in one transaction:
 
-1. Locks the **latest live** (`reverted_at IS NULL`) event for (user, lookup, pool) —
-   `FOR UPDATE` serializes concurrent undos. If the passed eventId isn't that event (a later
-   rating landed from another tab / reading mode, or it's already reverted), the undo is a
-   stale-safe no-op: `{ undone: false }` (200), **never an error** — only the latest event's
-   snapshot describes the row's current state, so an older one must never restore.
-2. Restores the pool's SRS family from the event's `prev_srs_*` snapshot
-   (`restoreSrsSnapshotForPool` — nullable on purpose: an undone *introduction* restores
-   state back to NULL and clears `added_to_practice_at`, refunding the daily-new slot;
-   `caused_parking` additionally un-parks and zeroes the pool's rehab columns).
+1. Locks the **latest live** (`reverted_at IS NULL`) event for the **facet**
+   (user, lookup, skill, target_form) — `FOR UPDATE` serializes concurrent undos. Keyed on
+   facet identity, **not pool**: the passive queue can serve multiple facets per term, so pool
+   would address the wrong card. If the passed eventId isn't that event (a later rating landed
+   from another tab / reading mode, or it's already reverted), the undo is a stale-safe no-op:
+   `{ undone: false }` (200), **never an error** — only the latest event's snapshot describes
+   the row's current state, so an older one must never restore.
+2. Restores the facet's SRS family from the event's `prev_srs_*` snapshot
+   (`restoreSrsSnapshotForFacet` — nullable on purpose: an undone *introduction* restores
+   state back to NULL and clears `introduced_at`, refunding the daily-new slot;
+   `caused_parking` additionally un-parks and zeroes the facet's rehab columns).
 3. Stamps `reverted_at`. The review budget refunds itself — every budget query filters
    `reverted_at IS NULL`.
 

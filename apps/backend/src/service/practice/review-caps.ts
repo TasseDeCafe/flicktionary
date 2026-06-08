@@ -46,9 +46,12 @@ export type ReviewCapsDependencies = {
 //     today and `mixed` won't re-add more). Without `requestedNewCount` (the
 //     reading-generator path) learn_new keeps the daily-remaining math.
 //
-// The active pool is not daily-capped (active introductions don't consume the
-// passive new allowance and active ratings are excluded from the review-budget
-// count), so it uses the hard ceilings as generous bounds.
+// The active pool's NEW intake is never daily-capped (active introductions
+// don't consume the passive new allowance), so maxNewTerms stays the hard
+// ceiling. Its REVIEW cap is per-mode and optional: NULL (the default until the
+// Phase-3 UI sets it) means uncapped — the hard ceiling — preserving today's
+// behavior; a set value runs the same remaining-budget math against the
+// production-mode rating log.
 export const resolveReviewCaps = async (params: {
   userId: string
   targetLanguage: string
@@ -56,25 +59,50 @@ export const resolveReviewCaps = async (params: {
   scope: ReviewScope
   requestedNewCount?: number
   deps: ReviewCapsDependencies
-}): Promise<{ maxReviewTerms: number; maxLearningTerms: number; maxNewTerms: number }> => {
+}): Promise<{
+  maxReviewTerms: number
+  maxLearningTerms: number
+  maxNewTerms: number
+  // Hard-ceiling cap for opt-in (non-citation) new facets — pronunciation/forms
+  // (Phase 4). Non-zero ONLY for the passive pool in learn_new scope; the
+  // primary Practice button (mixed) never serves them (Trap 22). The active
+  // pool has no opt-in facets.
+  maxOptInNewTerms: number
+}> => {
+  const rawLimits = await params.deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(
+    params.userId,
+    params.targetLanguage
+  )
+
   if (params.pool === 'active') {
+    if (rawLimits.maxReviewTermsActive == null) {
+      return {
+        maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
+        maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
+        maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
+        maxOptInNewTerms: 0,
+      }
+    }
+    const cap = Math.min(Math.max(Math.trunc(rawLimits.maxReviewTermsActive), 0), HARD_MAX_PRACTICE_REVIEW_TERMS)
+    const consumedActiveReviews = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
+      userId: params.userId,
+      targetLanguage: params.targetLanguage,
+      mode: 'production',
+    })
     return {
-      maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
+      maxReviewTerms: Math.max(0, cap - consumedActiveReviews),
       maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
       maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
+      maxOptInNewTerms: 0,
     }
   }
-  const limits = clampPracticeSessionLimits(
-    await params.deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(
-      params.userId,
-      params.targetLanguage
-    )
-  )
+
+  const limits = clampPracticeSessionLimits(rawLimits)
 
   const consumedReviewsToday = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
     userId: params.userId,
     targetLanguage: params.targetLanguage,
-    pool: 'passive',
+    mode: 'recognition',
   })
   const remainingReviews = Math.max(0, limits.maxReviewTerms - consumedReviewsToday)
 
@@ -88,5 +116,12 @@ export const resolveReviewCaps = async (params: {
     maxNewTerms = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
   }
 
-  return { maxReviewTerms: remainingReviews, maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS, maxNewTerms }
+  return {
+    maxReviewTerms: remainingReviews,
+    maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
+    maxNewTerms,
+    // Opt-in (non-citation) new facets bypass the daily-new cap entirely, but
+    // only in an explicit learn-new session — never the mixed Practice button.
+    maxOptInNewTerms: params.scope === 'learn_new' ? HARD_MAX_PRACTICE_NEW_TERMS : 0,
+  }
 }
