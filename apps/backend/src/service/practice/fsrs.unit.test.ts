@@ -20,7 +20,6 @@ const newRow: DbUserLookupWithFacet = {
   first_card_id: null,
   exported_at: null,
   count: 1,
-  learning_mode: 'passive',
   created_at: '2026-01-01T00:00:00Z',
   deleted_at: null,
   // Facet (citation recognition) state.
@@ -38,6 +37,7 @@ const newRow: DbUserLookupWithFacet = {
   leech_rehab_last_correct_on: null,
   introduced_at: null,
   payload: {},
+  is_production_enabled: false,
 }
 
 const reviewRow: DbUserLookupWithFacet = {

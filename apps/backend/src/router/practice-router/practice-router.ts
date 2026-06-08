@@ -174,6 +174,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     userLookupsRepository: deps.userLookupsRepository,
     usersRepository: deps.usersRepository,
     userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+    studyFacetsRepository: deps.studyFacetsRepository,
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.

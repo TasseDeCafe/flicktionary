@@ -26,6 +26,7 @@ type Pref = {
   showTranslationsEnabled: boolean
   practiceMaxNewTerms: number
   practiceMaxReviewTerms: number
+  practiceMaxReviewTermsActive: number | null
 }
 
 const clampLimit = (value: number, max: number) => Math.min(Math.max(Math.trunc(value), 0), max)
@@ -36,21 +37,28 @@ const PracticeLimitsRow = ({
   targetLanguage,
   maxNewTerms,
   maxReviewTerms,
+  maxReviewTermsActive,
 }: {
   targetLanguage: string
   maxNewTerms: number
   maxReviewTerms: number
+  maxReviewTermsActive: number | null
 }) => {
   const { t } = useLingui()
   const { mutate, isPending, variables } = useSetPracticeLimitsForLanguage()
   const isRowPending = isPending && variables?.targetLanguage === targetLanguage
   const [draftNew, setDraftNew] = useState(String(maxNewTerms))
   const [draftReview, setDraftReview] = useState(String(maxReviewTerms))
+  // Nullable production cap: empty string means uncapped (null).
+  const [draftActiveReview, setDraftActiveReview] = useState(
+    maxReviewTermsActive == null ? '' : String(maxReviewTermsActive)
+  )
 
   useEffect(() => {
     setDraftNew(String(maxNewTerms))
     setDraftReview(String(maxReviewTerms))
-  }, [maxNewTerms, maxReviewTerms])
+    setDraftActiveReview(maxReviewTermsActive == null ? '' : String(maxReviewTermsActive))
+  }, [maxNewTerms, maxReviewTerms, maxReviewTermsActive])
 
   const save = () => {
     const parsedNew = Number.parseInt(draftNew, 10)
@@ -60,15 +68,32 @@ const PracticeLimitsRow = ({
       Number.isFinite(parsedReview) ? parsedReview : maxReviewTerms,
       PRACTICE_MAX_REVIEW_TERMS_LIMIT
     )
-    const payload =
+    // Recognition pair keeps the "at least one > 0" guard; an all-zero edit is
+    // ignored and reverted to the saved values.
+    const recognition =
       nextNew + nextReview > 0
         ? { maxNewTerms: nextNew, maxReviewTerms: nextReview }
         : { maxNewTerms: maxNewTerms, maxReviewTerms: maxReviewTerms }
 
-    setDraftNew(String(payload.maxNewTerms))
-    setDraftReview(String(payload.maxReviewTerms))
-    if (payload.maxNewTerms === maxNewTerms && payload.maxReviewTerms === maxReviewTerms) return
-    mutate({ targetLanguage, ...payload })
+    // Production review cap is independent and nullable: empty (or non-numeric)
+    // means uncapped (null); a number is clamped like the others.
+    const trimmedActive = draftActiveReview.trim()
+    const parsedActive = Number.parseInt(trimmedActive, 10)
+    const nextActiveReview: number | null =
+      trimmedActive === '' || !Number.isFinite(parsedActive)
+        ? null
+        : clampLimit(parsedActive, PRACTICE_MAX_REVIEW_TERMS_LIMIT)
+
+    setDraftNew(String(recognition.maxNewTerms))
+    setDraftReview(String(recognition.maxReviewTerms))
+    setDraftActiveReview(nextActiveReview == null ? '' : String(nextActiveReview))
+
+    const unchanged =
+      recognition.maxNewTerms === maxNewTerms &&
+      recognition.maxReviewTerms === maxReviewTerms &&
+      nextActiveReview === maxReviewTermsActive
+    if (unchanged) return
+    mutate({ targetLanguage, ...recognition, maxReviewTermsActive: nextActiveReview })
   }
 
   return (
@@ -79,44 +104,77 @@ const PracticeLimitsRow = ({
           {t`New terms are capped per day. Follow-up sessions use up to this many review terms.`}
         </p>
       </div>
-      <div className='grid grid-cols-2 gap-3'>
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor={`practice-max-new-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
-            {t`New terms`}
-          </Label>
-          <Input
-            id={`practice-max-new-terms-${targetLanguage}`}
-            type='number'
-            inputMode='numeric'
-            min={0}
-            max={PRACTICE_MAX_NEW_TERMS_LIMIT}
-            value={draftNew}
-            disabled={isRowPending}
-            onChange={(event) => setDraftNew(event.target.value)}
-            onBlur={save}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') event.currentTarget.blur()
-            }}
-          />
+
+      <div className='flex flex-col gap-1.5'>
+        <span className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{t`Recognition`}</span>
+        <div className='grid grid-cols-2 gap-3'>
+          <div className='flex flex-col gap-1.5'>
+            <Label htmlFor={`practice-max-new-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
+              {t`New terms`}
+            </Label>
+            <Input
+              id={`practice-max-new-terms-${targetLanguage}`}
+              type='number'
+              inputMode='numeric'
+              min={0}
+              max={PRACTICE_MAX_NEW_TERMS_LIMIT}
+              value={draftNew}
+              disabled={isRowPending}
+              onChange={(event) => setDraftNew(event.target.value)}
+              onBlur={save}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur()
+              }}
+            />
+          </div>
+          <div className='flex flex-col gap-1.5'>
+            <Label htmlFor={`practice-max-review-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
+              {t`Review terms`}
+            </Label>
+            <Input
+              id={`practice-max-review-terms-${targetLanguage}`}
+              type='number'
+              inputMode='numeric'
+              min={0}
+              max={PRACTICE_MAX_REVIEW_TERMS_LIMIT}
+              value={draftReview}
+              disabled={isRowPending}
+              onChange={(event) => setDraftReview(event.target.value)}
+              onBlur={save}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur()
+              }}
+            />
+          </div>
         </div>
-        <div className='flex flex-col gap-1.5'>
-          <Label htmlFor={`practice-max-review-terms-${targetLanguage}`} className='text-muted-foreground text-xs'>
-            {t`Review terms`}
-          </Label>
-          <Input
-            id={`practice-max-review-terms-${targetLanguage}`}
-            type='number'
-            inputMode='numeric'
-            min={0}
-            max={PRACTICE_MAX_REVIEW_TERMS_LIMIT}
-            value={draftReview}
-            disabled={isRowPending}
-            onChange={(event) => setDraftReview(event.target.value)}
-            onBlur={save}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') event.currentTarget.blur()
-            }}
-          />
+      </div>
+
+      <div className='flex flex-col gap-1.5'>
+        <span className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>{t`Production`}</span>
+        <div className='grid grid-cols-2 gap-3'>
+          <div className='flex flex-col gap-1.5'>
+            <Label
+              htmlFor={`practice-max-review-terms-active-${targetLanguage}`}
+              className='text-muted-foreground text-xs'
+            >
+              {t`Review terms`}
+            </Label>
+            <Input
+              id={`practice-max-review-terms-active-${targetLanguage}`}
+              type='number'
+              inputMode='numeric'
+              min={0}
+              max={PRACTICE_MAX_REVIEW_TERMS_LIMIT}
+              value={draftActiveReview}
+              disabled={isRowPending}
+              onChange={(event) => setDraftActiveReview(event.target.value)}
+              onBlur={save}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur()
+              }}
+            />
+            <p className='text-muted-foreground text-xs'>{t`Leave empty for no limit.`}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -220,6 +278,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                 targetLanguage={p.targetLanguage}
                 maxNewTerms={p.practiceMaxNewTerms}
                 maxReviewTerms={p.practiceMaxReviewTerms}
+                maxReviewTermsActive={p.practiceMaxReviewTermsActive}
               />
               {p.targetLanguage === 'en' && (
                 <div className='flex items-center justify-between gap-3 border-t pt-3'>

@@ -44,17 +44,24 @@ export const useListChunksInfinite = (params: {
   )
 }
 
-// Switch a chunk's learning_mode between passive/active. Optimistically patches
-// every in-flight infinite-query page so chips flip instantly, then invalidates
-// the chunks list + practice due summary on settle (counts depend on mode).
-export const useSetLearningMode = () => {
+// Enable or disable one study facet (skill x target_form) on a term. This is the
+// unified study-target write path that replaced the old passive/active toggle:
+// enabling the citation meaning_production facet is what "promote to active"
+// used to be (disable = demote), and the wire still derives `learningMode` from
+// that facet's enabled state. For the production-citation case we optimistically
+// flip every in-flight chunks page so vocab chips update instantly; other facets
+// (recognition, forms) have no list-visible flag yet, so we just invalidate.
+export const useSetFacetEnabled = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
-    orpcQuery.chunks.setLearningMode.mutationOptions({
-      onMutate: async ({ chunkId, learningMode }) => {
+    orpcQuery.chunks.setFacetEnabled.mutationOptions({
+      onMutate: async ({ chunkId, skill, targetForm, enabled }) => {
+        const isProductionCitation = skill === 'meaning_production' && (targetForm ?? '') === ''
+        if (!isProductionCitation) return { snapshot: undefined }
         await queryClient.cancelQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
         const snapshot = queryClient.getQueriesData({ queryKey: orpcQuery.chunks.listChunks.key() })
+        const learningMode: LearningMode = enabled ? 'active' : 'passive'
         queryClient.setQueriesData<{
           pages: Array<{ rows: Array<{ id: string; learningMode: LearningMode }>; nextCursor: string | null }>
         }>({ queryKey: orpcQuery.chunks.listChunks.key() }, (old) => {
@@ -70,7 +77,7 @@ export const useSetLearningMode = () => {
         return { snapshot }
       },
       onError: (_err, _vars, context) => {
-        if (!context) return
+        if (!context?.snapshot) return
         for (const [key, value] of context.snapshot) {
           queryClient.setQueryData(key, value)
         }
@@ -82,7 +89,7 @@ export const useSetLearningMode = () => {
         void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key() })
       },
       meta: {
-        errorMessage: t`Failed to update learning mode`,
+        errorMessage: t`Failed to update study targets`,
         showErrorModal: true,
       },
     })

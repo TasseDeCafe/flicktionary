@@ -360,8 +360,8 @@ export interface StudyFacetsRepositoryInterface {
 }
 
 // Module-level functions importable directly (e.g. user-lookups-repository's
-// keep transaction calls ensureCitationFacet inside its tx, and setLearningMode
-// calls ensureFacet to create the production facet on promote).
+// keep transaction calls ensureCitationFacet inside its tx, and setFacetEnabled
+// calls ensureFacet to create the facet on enable).
 export { ensureCitationFacet, ensureFacet }
 
 export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({

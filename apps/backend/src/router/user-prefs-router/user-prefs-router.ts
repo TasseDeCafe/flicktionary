@@ -22,6 +22,7 @@ type UserPrefsResponse = {
     showTranslationsEnabled: boolean
     practiceMaxNewTerms: number
     practiceMaxReviewTerms: number
+    practiceMaxReviewTermsActive: number | null
   }[]
 }
 
@@ -66,6 +67,7 @@ const buildPrefs = async (
       showTranslationsEnabled: p.show_translations_enabled,
       practiceMaxNewTerms: p.practice_max_new_terms,
       practiceMaxReviewTerms: p.practice_max_review_terms,
+      practiceMaxReviewTermsActive: p.practice_max_review_terms_active,
     })),
   }
 }
@@ -158,6 +160,7 @@ export const UserPrefsRouter = (
         const ok = await prefsRepository.setPracticeLimitsForLanguage(userId, input.targetLanguage, {
           maxNewTerms: input.maxNewTerms,
           maxReviewTerms: input.maxReviewTerms,
+          maxReviewTermsActive: input.maxReviewTermsActive ?? null,
         })
         if (!ok) {
           throw errors.INTERNAL_SERVER_ERROR({

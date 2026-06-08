@@ -96,12 +96,13 @@ const getPracticeLimitsForLanguage = async (userId: string, targetLanguage: stri
 const setPracticeLimitsForLanguage = async (
   userId: string,
   targetLanguage: string,
-  limits: PracticeSessionLimits
+  limits: PracticeSessionLimits & { maxReviewTermsActive: number | null }
 ): Promise<boolean> => {
   const result = await sql`
     UPDATE public.user_target_language_prefs
     SET practice_max_new_terms = ${limits.maxNewTerms},
         practice_max_review_terms = ${limits.maxReviewTerms},
+        practice_max_review_terms_active = ${limits.maxReviewTermsActive},
         updated_at = NOW()
     WHERE user_id = ${userId} AND target_language = ${targetLanguage}
   `
@@ -118,7 +119,7 @@ export interface UserTargetLanguagePrefsRepositoryInterface {
   setPracticeLimitsForLanguage: (
     userId: string,
     targetLanguage: string,
-    limits: PracticeSessionLimits
+    limits: PracticeSessionLimits & { maxReviewTermsActive: number | null }
   ) => Promise<boolean>
 }
 

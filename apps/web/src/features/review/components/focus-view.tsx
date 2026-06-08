@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Sparkles, Star, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import {
@@ -15,7 +15,16 @@ import {
   useUpdateCardStatus,
 } from '../api/review-hooks'
 import { invalidateCardEverywhere } from '../api/card-cache'
-import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
+import { useDeleteChunk } from '@/features/vocabulary/api/vocabulary-hooks'
+import { StudyTargetsSection } from './study-targets-section'
+import {
+  ResponsiveOverlay,
+  OverlayContent,
+  OverlayDescription,
+  OverlayFooter,
+  OverlayHeader,
+  OverlayTitle,
+} from '@/components/ui/responsive-overlay'
 import { useGetProcessingStatus, useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
 import { EditableCardFields } from './editable-card-fields'
@@ -105,7 +114,8 @@ export const FocusView = () => {
   // language at session creation time, which matches what the LLM saw).
   const { data: userPrefs } = useGetUserPrefs()
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
-  const { mutate: setLearningMode, isPending: isSettingLearningMode } = useSetLearningMode()
+  const { mutate: deleteChunk, isPending: isDeletingChunk } = useDeleteChunk()
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const { mutate: exploreCard, isPending: isExploringAny, variables: exploringVariables } = useExploreCard()
   const isExploring = isExploringAny && exploringVariables?.cardId === cardId
 
@@ -192,7 +202,7 @@ export const FocusView = () => {
   // for the visual confirmation. Reset on cardId change so the next card mounts
   // with a clean slate. Declared above the early returns to keep hook order
   // stable across loading/empty states.
-  const [pendingAction, setPendingAction] = useState<'reject' | 'passive' | 'active' | null>(null)
+  const [pendingAction, setPendingAction] = useState<'reject' | 'keep' | null>(null)
   useEffect(() => {
     setPendingAction(null)
   }, [cardId])
@@ -255,6 +265,7 @@ export const FocusView = () => {
   // keep/reject toggles and the per-session position counter don't apply.
   // Show the chunk's headword as the title instead.
   const isLanguageWideEntry = fromVocabulary || fromPractice
+  const deleteHeadword = card.chunk.headword
   const title = isLanguageWideEntry ? card.chunk.headword : positionLabel
 
   // Prev/next pager lives in the header (right side, away from the back
@@ -289,19 +300,15 @@ export const FocusView = () => {
     else closeToTriage()
   }
 
-  const triggerAction = (action: 'reject' | 'passive' | 'active') => {
+  const triggerAction = (action: 'reject' | 'keep') => {
     if (pendingAction) return
     setPendingAction(action)
     if (action === 'reject') {
       if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
-    } else if (action === 'passive') {
-      if (card.status !== 'kept' || card.chunk.learningMode !== 'passive') {
-        updateStatus({ cardId: card.id, status: 'kept', learningMode: 'passive' })
-      }
     } else {
-      if (card.status !== 'kept' || card.chunk.learningMode !== 'active') {
-        updateStatus({ cardId: card.id, status: 'kept', learningMode: 'active' })
-      }
+      // Keep just enables recognition server-side; the passive/active fork is
+      // gone (production is now a per-target study facet edited elsewhere).
+      if (card.status !== 'kept') updateStatus({ cardId: card.id, status: 'kept' })
     }
     setTimeout(() => advanceOrClose(), 220)
   }
@@ -363,6 +370,31 @@ export const FocusView = () => {
                     fromVocabulary={fromVocabulary}
                   />
                 )}
+                {/* Language-wide entries are already-kept terms: surface the
+                    study-targets control inline (the bottom mode-switch bar is
+                    gone) plus a secondary delete affordance. */}
+                {isLanguageWideEntry && (
+                  <div className='mb-6 flex flex-col gap-3'>
+                    <StudyTargetsSection
+                      chunk={{
+                        id: card.chunk.id,
+                        headword: card.chunk.headword,
+                        learningMode: card.chunk.learningMode,
+                      }}
+                    />
+                    <div>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                        onClick={() => setDeleteConfirmOpen(true)}
+                      >
+                        <Trash2 className='mr-1 h-4 w-4' />
+                        {t`Delete term`}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase'>{t`Full exploration`}</h2>
                 {hasExtras ? (
                   <FullExplorationRenderer card={card} hideExtrasIpa={!!displayedIpa} showL1Notes={showL1Notes} />
@@ -391,40 +423,58 @@ export const FocusView = () => {
           </div>
 
           {/* Language-wide entries (vocabulary AND practice origins) are
-              already kept — offer the single mode SWITCH, not the triage
-              "Add to" pair. Switching stays in place (no auto-navigate); the
-              chevron closes back to the originating surface. */}
-          {isLanguageWideEntry &&
-            (() => {
-              const targetMode = card.chunk.learningMode === 'active' ? 'passive' : 'active'
-              return (
-                <div className='bg-background shrink-0 border-t px-4 py-3'>
-                  <div className='mx-auto flex w-full max-w-md md:max-w-lg'>
-                    <Button
-                      variant='outline'
-                      size='xl'
-                      className='w-full'
-                      disabled={isSettingLearningMode}
-                      onClick={() => {
-                        setLearningMode({ chunkId: card.chunk.id, learningMode: targetMode })
-                      }}
-                    >
-                      {targetMode === 'active' && <Star className='mr-2 h-4 w-4' />}
-                      {targetMode === 'active' ? t`Switch to active vocabulary` : t`Switch to passive vocabulary`}
-                    </Button>
-                  </div>
-                </div>
-              )
-            })()}
-
+              already kept — their study targets + delete affordance live inline
+              in the scrollable content above, so there's no bottom action bar. */}
           {!isLanguageWideEntry && (
             <FocusActionBar
               card={card}
               pendingAction={pendingAction}
               onReject={() => triggerAction('reject')}
-              onKeepPassive={() => triggerAction('passive')}
-              onKeepActive={() => triggerAction('active')}
+              onKeep={() => triggerAction('keep')}
             />
+          )}
+
+          {isLanguageWideEntry && (
+            <ResponsiveOverlay open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+              <OverlayContent>
+                <OverlayHeader>
+                  <OverlayTitle>{t`Delete "${deleteHeadword}"?`}</OverlayTitle>
+                  <OverlayDescription>
+                    {t`Hides this term from your vocabulary and Practice. You can revive it by re-keeping it in a session.`}
+                  </OverlayDescription>
+                </OverlayHeader>
+                <OverlayFooter>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='xl'
+                    disabled={isDeletingChunk}
+                    onClick={() => setDeleteConfirmOpen(false)}
+                  >
+                    {t`Cancel`}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    size='xl'
+                    disabled={isDeletingChunk}
+                    onClick={() => {
+                      deleteChunk(
+                        { id: card.chunk.id },
+                        {
+                          onSuccess: () => {
+                            setDeleteConfirmOpen(false)
+                            closeToTriage()
+                          },
+                        }
+                      )
+                    }}
+                  >
+                    {isDeletingChunk ? t`Deleting…` : t`Delete`}
+                  </Button>
+                </OverlayFooter>
+              </OverlayContent>
+            </ResponsiveOverlay>
           )}
 
           {/* Mobile: full-screen sheet overlay (fixed-positioned, so it can
@@ -458,27 +508,20 @@ export const FocusView = () => {
 type FocusActionBarProps = {
   card: {
     status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
-    chunk: { learningMode: 'passive' | 'active' }
   }
   // When set, overrides the state-derived highlight so the just-tapped button
   // stays filled during the brief delay before navigation.
-  pendingAction: 'reject' | 'passive' | 'active' | null
+  pendingAction: 'reject' | 'keep' | null
   onReject: () => void
-  onKeepPassive: () => void
-  onKeepActive: () => void
+  onKeep: () => void
 }
 
-const FocusActionBar = ({ card, pendingAction, onReject, onKeepPassive, onKeepActive }: FocusActionBarProps) => {
+const FocusActionBar = ({ card, pendingAction, onReject, onKeep }: FocusActionBarProps) => {
   const { t } = useLingui()
   const isRejected = pendingAction
     ? pendingAction === 'reject'
     : card.status === 'rejected' || card.status === 'auto_rejected'
-  const isKeptPassive = pendingAction
-    ? pendingAction === 'passive'
-    : card.status === 'kept' && card.chunk.learningMode === 'passive'
-  const isKeptActive = pendingAction
-    ? pendingAction === 'active'
-    : card.status === 'kept' && card.chunk.learningMode === 'active'
+  const isKept = pendingAction ? pendingAction === 'keep' : card.status === 'kept'
 
   return (
     <div className='bg-background shrink-0 border-t px-4 py-3'>
@@ -487,12 +530,8 @@ const FocusActionBar = ({ card, pendingAction, onReject, onKeepPassive, onKeepAc
           <X className='mr-1 h-4 w-4' />
           {t`Reject`}
         </Button>
-        <Button size='xl' variant={isKeptPassive ? 'default' : 'outline'} className='flex-1' onClick={onKeepPassive}>
-          {t`Passive`}
-        </Button>
-        <Button size='xl' variant={isKeptActive ? 'default' : 'outline'} className='flex-1' onClick={onKeepActive}>
-          <Star className='mr-1 h-4 w-4' />
-          {t`Active`}
+        <Button size='xl' variant={isKept ? 'default' : 'outline'} className='flex-1' onClick={onKeep}>
+          {t`Keep`}
         </Button>
       </div>
     </div>

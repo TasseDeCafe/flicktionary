@@ -204,10 +204,10 @@ Two-layer UI.
   highlight before enrichment. Legacy LLM-suggested / auto-rejected rows may still
   render defensively, but the current pipeline no longer creates new triage cards
   with `highlight_id = null`.
-- Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, a split-keep control (primary button keeps as passive; chevron opens a menu with `Keep as passive` / `Keep as active`), reject toggle, tap target. Rows whose underlying term is already in the active pool show a compact ★ `Active` indicator. `Keep all` defaults to passive — there is no bulk "Keep all as active" in v1.
+- Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, a plain **Keep** button (toggles kept⇄pending, no learning mode) and a **Reject** toggle, tap target. Production is no longer a triage decision — it is set later in the term view. `Keep all` keeps the visible cards as plain kept (no passive/active distinction).
 - Filter, search, sort across both sections.
 - Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
-- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). Because highlights are kept by default, the `cards.updateStatus` endpoint honors a `learningMode` field even when the status is already `kept` — i.e. tapping `Keep as active` on a default-kept highlight promotes its `user_lookup` to the active pool rather than no-op-ing.
+- Highlights are inserted with status `kept` by default (the user already signaled intent by highlighting). The `cards.updateStatus` endpoint still **accepts** an optional `learningMode` field even when the status is already `kept` (backend maps it to `setFacetEnabled` on the production facet), but the collapsed Keep/Reject triage UI no longer sends it — keep-as-active is no longer a triage action, so the param remains only for compatibility and isn't exercised here.
 - Sticky footer: `Practice these terms` button (full-width on mobile,
   right-aligned on desktop) that starts a Practice session in the session's
   target language. Disabled when no cards are kept. Per-session CSV export is
@@ -273,28 +273,30 @@ Two-layer UI.
   tool can call `update_card_fields` to patch any basic column or merge into
   `exploration_extras` / `grammar` server-side; the assistant body gets a
   `_Updated: …_` italic line and the focus view re-fetches the card.
-- A fixed bottom action bar carries the per-card decision. In the default
-  session-scope triage entry it shows three equal-width buttons —
-  `Reject` (destructive), `Passive` (default), `★ Active` (outline) — with
-  the button matching the card's current state filled, others outlined. A
-  tap fires the appropriate mutation (`cards.updateStatus` with
-  `learningMode` on the keep buttons; status-only on Reject), holds a brief
-  ~220ms confirmation highlight on the just-tapped button, then auto-advances
-  to the next card via the cursor. If the tapped card is the last one in the
-  cursor, the focus view closes back to the triage list instead. There is no
-  inline `Learning mode` row inside the card section — the bottom bar is the
-  single source of truth for both keep/reject and active/passive promotion.
-  Entered via `?from=practice` or `?from=vocabulary` (language-wide entries
-  over already-kept chunks — the triage "Add to" framing would misrepresent
-  them) the bar shows a single toggle button (`Switch to active vocabulary`
-  or `Switch to passive vocabulary`, label flipped from the chunk's current
-  `learning_mode`) that flips the mode in place via `chunks.setLearningMode`
-  and keeps the user on the focus view; the chevron closes back to the
-  originating surface (`?from=practice` carries `practiceLang` +
-  `practicePool` + `practiceMode` — `read` (default) for a reading text,
-  `flashcards` for the flashcard reviewer's actions menu — so close lands on
-  the right review screen, scope reset to `mixed`). The bottom bar lives as a
-  flex sibling of the scroll body so it stays anchored on long cards.
+- For **triage entries** a fixed bottom action bar carries the per-card
+  decision: two equal-width buttons — `Reject` (destructive) and `Keep`
+  (default; `cards.updateStatus` with status `kept`, no learning mode) — with
+  the button matching the card's current state filled, the other outlined. A
+  tap fires the mutation, holds a brief ~220ms confirmation highlight on the
+  just-tapped button, then auto-advances to the next card via the cursor. If
+  the tapped card is the last one in the cursor, the focus view closes back to
+  the triage list instead. Production is no longer a triage decision — there is
+  no `★ Active` button and no inline `Learning mode` row; the bar is just
+  keep/reject.
+- For **language-wide entries** (entered via `?from=practice` or
+  `?from=vocabulary` over already-kept chunks — the triage "Add to" framing
+  would misrepresent them) there is **no bottom bar**. Instead the card section
+  shows an inline **Study targets** control plus a secondary **Delete term**
+  affordance. Study targets is a chip-per-target row (Phase 3: one **Citation**
+  chip labelled with the headword) whose edit pencil opens a small popover of
+  **skill checkboxes** — Recognition (locked on; created on keep), Production
+  (toggles the `(meaning_production, '')` facet via `chunks.setFacetEnabled`),
+  and Pronunciation (disabled, "coming soon"; Phase 4). The chip is accented
+  (★) when Production is on. Toggling keeps the user on the focus view; the
+  chevron closes back to the originating surface (`?from=practice` carries
+  `practiceLang` + `practicePool` + `practiceMode` — `read` (default) for a
+  reading text, `flashcards` for the flashcard reviewer's actions menu — so
+  close lands on the right review screen, scope reset to `mixed`).
 - Keyboard `j`/`k` and `←`/`→` still drive prev/next.
 
 Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + grammar (if populated) + extras (if populated, including any per-chunk L1 notes). The user's question is the only dynamic turn.
@@ -304,14 +306,14 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context 
 A separate top-level destination from the per-session review flow. Practice is **cross-session** — its review pool is every kept card the user has accumulated, regardless of which study session it came from.
 
 - **Pool source.** Every card with `status='kept'` flows into `user_lookup` automatically (the keep transition writes the row). `user_lookup` is the canonical "user vocabulary" record; it carries FSRS state per `(user_id, target_language, headword, sense)`.
-- **Passive vs active pools (now facets).** SRS state lives in `public.study_facets` rows ("facets"), each keyed by `(user_lookup_id, skill, target_form)` and owning its own FSRS + leech state — no longer on `user_lookups`. A kept term's passive (recognition) card is its `(meaning_recognition, '')` facet; promoting to the **active** pool (production, `user_lookup.learning_mode = 'active'`) enables its `(meaning_production, '')` facet. `pool` (`passive`/`active`) stays on the wire and route params but is **derived** — the review mode of the skill, mapped at the service boundary (`skillForPool`), not a stored column. Active membership is additive — an active term still appears in the passive queue when its recognition facet is due. The two are independent: a passive rating advances the recognition facet, an active rating the production facet. `practice_session.pool` carries the routing decision per generated-text session and selects which facet `rate-chunk` writes; flashcard ratings apply FSRS directly to the recognition facet. (See `docs/SRS.md` §1 for the full data model.)
+- **Passive vs active pools (now facets).** SRS state lives in `public.study_facets` rows ("facets"), each keyed by `(user_lookup_id, skill, target_form)` and owning its own FSRS + leech state — no longer on `user_lookups`. A kept term's passive (recognition) card is its `(meaning_recognition, '')` facet; promoting to the **active** pool (production) enables its `(meaning_production, '')` facet. A term is "active / in production" IFF it has an enabled (`disabled_at IS NULL`) citation `(meaning_production, '')` facet — there is no stored `learning_mode` column (dropped in Phase 3); the wire still exposes a **derived** `learningMode` ('active'/'passive') for read-only display. `pool` (`passive`/`active`) stays on the wire and route params but is **derived** — the review mode of the skill, mapped at the service boundary (`skillForPool`), not a stored column. Active membership is additive — an active term still appears in the passive queue when its recognition facet is due. The two are independent: a passive rating advances the recognition facet, an active rating the production facet. `practice_session.pool` carries the routing decision per generated-text session and selects which facet `rate-chunk` writes; flashcard ratings apply FSRS directly to the recognition facet. (See `docs/SRS.md` §1 for the full data model.)
 - **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`. When the language has any active-pool terms the summary line appends `· N active`; when any terms are leech-parked it appends `· N parked` (passive + active parked combined).
 - **Language action screen.** `/practice/language/$targetLanguage` shows one card per pool — **Active vocabulary** first (rendered only when `activeTotal > 0`), then **Passive vocabulary**. The system makes the strategic decision, not the user: each pool has a single primary **Practice** button that enters the unified review screen in **flashcards mode over the `mixed` scope** (due first, then new under the daily allowance; `{ pool, scope: 'mixed', mode: 'flashcards' }` is passed explicitly because the review route's Zod default is `mode: 'read'`). The Active primary button is always tappable — an empty queue lands on the flashcard view's existing "No terms are due right now" screen. Per-pool secondary actions: **History**, and a **More** disclosure (local per-pool boolean) exposing `Read` (`mixed` + reading mode), `Review only` (`review_due` + flashcards), `Learn new` (`learn_new` + flashcards). When a pool has leech-parked terms the card also shows an `N word(s) parked — strengthen them` affordance that opens the Strengthen route for that pool (see "Strengthen exercises + leech rehab"). The passive stat cards (Follow-ups / New today / Unseen / Total) render below the pool sections.
 - **Stale session URLs.** Reloading or deep-linking to `/practice/$sessionId` for a completed/abandoned session silently redirects back to that language's action screen. Background pre-generation is opportunistic and must not show user-facing errors for inactive sessions.
-- **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` snapshots due terms plus unseen passive terms up to the remaining daily new-term allowance — used by source/triage entry points and by the default **Practice** action on the language screen so a single session clears follow-ups and then introduces the day's new terms; `active_drill` snapshots only `learning_mode = 'active'` terms — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
+- **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` snapshots due terms plus unseen passive terms up to the remaining daily new-term allowance — used by source/triage entry points and by the default **Practice** action on the language screen so a single session clears follow-ups and then introduces the day's new terms; `active_drill` snapshots only terms with an enabled `(meaning_production, '')` facet — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
 - **Session.** Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
 - **Generation prompt.** Methodology preamble + language instructions + user profile + the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`, `native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense, surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are unreliable at character arithmetic; the server locates each `surface_form` in `body` and computes offsets itself, claiming non-overlapping positions when a surface form repeats.
-- **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray; soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. A 3-dots overflow on the sheet opens `Edit term` (navigates to the focus view of the chunk's representative card with `?from=practice` so chevron-back returns to the same practice text), `Switch to active vocabulary` / `Switch to passive vocabulary` (label flips based on the term's current `learning_mode`; calls `chunks.setLearningMode` and dismisses the sheet on success; hidden when the annotation has no canonical `user_lookup` row), and `Delete from vocabulary` (soft-deletes the chunk via `chunks.deleteChunk` and shows a Sonner toast with a `Restore` action backed by `chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only variant of the RateSheet. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
+- **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray; soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. A 3-dots overflow on the sheet opens `Edit term` (navigates to the focus view of the chunk's representative card with `?from=practice` so chevron-back returns to the same practice text), `Switch to active vocabulary` / `Switch to passive vocabulary` (label flips based on the term's derived `learningMode`; calls `chunks.setFacetEnabled` with `skill=meaning_production`, `targetForm=''`, `enabled` = switching-to-active, and dismisses the sheet on success; hidden when the annotation has no canonical `user_lookup` row), and `Delete from vocabulary` (soft-deletes the chunk via `chunks.deleteChunk` and shows a Sonner toast with a `Restore` action backed by `chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only variant of the RateSheet. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
 - **Peek + save unannotated spans.** Tap-to-select on plain text in the body (text not covered by an annotation) opens a `LookupSheet` with a fast one-line gloss + optional POS / register chips. A single click/tap selects one `Intl.Segmenter` word in the practice session's target language; press-and-drag extends to a word range. Annotation buttons remain reserved for `RateSheet`, and ranges that cross an annotation are rejected rather than snapped. The gloss reuses the same Haiku-powered `fastGlossPass` as tap-to-select in the session view, exposed as `practice.fastGloss` keyed to the practice text body (no highlight row needed, no server-side cache). `Save to vocabulary` routes the selection into the existing `cards.createAdhoc` adhoc flow (passing the practice text body as the LLM context, truncated to 2000 chars), then navigates to the new card's focus view with `?from=practice`.
 - **Flashcard reviewer.** The no-LLM flashcard route fetches a fresh capped batch from `user_lookups` through `practice.listReviewTerms` (shared with the reading-text generator's candidate set): due rows first, then never-reviewed rows up to the remaining daily new-term allowance. There is no `practice_session` row and no `practice_text` for flashcards; ratings call `practice.rateTerm` with the card's **facet identity** (`skill`, `targetForm` — the queue item carries them), which applies FSRS to that facet and logs a `practice_rating_events` row (carrying `skill`/`target_form` alongside the session `pool`) in the same transaction (the event's id comes back as `eventId`, the undo handle — null when nothing applied; undo is keyed on the facet, not pool). The review budget counts **distinct facets** (`COUNT(DISTINCT (user_lookup_id, skill, target_form))`) per review mode (recognition / production), and production has an optional review cap (`practice_max_review_terms_active`, NULL = uncapped). The queue serves the pool's skill set and **spaces a term's sibling facets** apart (rank-1 of every term before rank-2); opt-in (non-citation) new facets bypass the daily-new cap but are served only in an explicit learn-new session, never the mixed Practice button. The queue is a one-shot client-side slice: the view seeds its local queue from the first fetch and ignores later refetches, and the query cache is dropped on unmount (`gcTime: 0`) so every (re)entry — including returning from the focus-view editor — loads a fresh slice (already-rated cards drop out naturally, edits are live). `Again` optimistically appends a redrill copy at the end of the local queue in the same render as the index advance, rolled back by object identity on cap-rejection / leech-parking / error; mutation failures reappend the card for a capped retry instead of silently losing it, and daily-cap refusals drop the card with a one-time note. The sticky bottom control area shows compact colored counts for cards left in the local queue: new (`srs_state IS NULL`), learning/redrill (`new` / `learning` / `relearning` plus accepted `Again` requeues), and review.
 - **Flashcard re-rate from history.** The back-chevron peeks at previous cards (front + back). A peeked card whose rating durably applied (a rating record keyed by queue-item identity holds the response's `eventId`) re-shows the rating buttons with the previous rating highlighted — unless its `Again`-redrill copy was itself already rated (the original's event is no longer the latest; no dead buttons). Re-rating calls `practice.undoRating` (restores the event's `prev_srs_*` snapshot, clears `added_to_practice_at` for an undone introduction, un-parks a leech the rating parked, tombstones the event via `reverted_at` — which auto-refunds the daily budgets since every budget query filters live events) then a fresh `practice.rateTerm` through the full cap/introduction/leech machinery, reconciling the redrill copy and the session's again/hard set. Only the latest live event per (lookup, pool) is undoable; a stale `eventId` (a later rating landed from another tab / reading mode) returns `undone: false` — never an error — and the client re-appends the card for a clean rating.
@@ -332,7 +334,7 @@ Post-session reinforcement layered on top of Practice. Two populations, one surf
 - The park condition is a **new-lapse delta**, not an absolute check (`result.lapses > prevLapses && result.lapses >= threshold && !alreadyParked`, the pure `shouldParkLeech` helper). After graduation `lapses` stays ≥ the threshold forever, so only a rating that itself caused a fresh lapse can (re-)park; `good`/`easy` on a high-lapse graduated term never does. Parked state is an explicit `study_facets.leech_parked_at` timestamp on the facet, and recognition/production facets park independently.
 - Parked terms leave **both render modes at once**: flashcards and the reading-text generator's candidate set both feed from `listReviewTerms`, which filters on the pool's parked column. This is intentional — reading mode implicitly rates untapped annotations `good` on advance, which must never mutate a parked term's FSRS. The due-summary aggregates also exclude parked rows (the landing never claims terms the queue refuses to serve) and expose `parkedCount` / `activeParkedCount` per language.
 - The flashcard client reacts to `rateTerm`'s `parked: true` output with a toast ("… keeps tripping you up — it's parked for rehab exercises") and skips the usual in-session `again` requeue for that card.
-- **Pool move resets production rehab.** A real `learning_mode` change keeps the production facet in sync inside the repo's `setLearningMode` transaction (guarded by `learning_mode IS DISTINCT FROM`): promote ensures the facet and clears its `disabled_at` (history-bearing re-enable); demote sets `disabled_at` (history preserved — disable ≠ delete). Either way it resets that facet's parked/rehab columns, so both pool-move surfaces — triage keep-as-active and the Vocabulary tab — get it, while idempotent "keep as active" re-stamps don't wipe progress. Only the production facet resets: the recognition facet never changes. Soft-deleting a parked term hides it everywhere via the existing `deleted_at` filters; restoring resumes with parked state intact (correct — it still needs rehab).
+- **Pool move resets production rehab.** A real enable/disable flip keeps the production facet in sync inside the repo's `setFacetEnabled` transaction (guarded by `disabled_at IS DISTINCT FROM` the target): promote ensures the facet and clears its `disabled_at` (history-bearing re-enable); demote sets `disabled_at` (history preserved — disable ≠ delete). Either way it resets that facet's parked/rehab columns, so both pool-move surfaces — the term view's Study targets control and the Vocabulary tab — get it, while idempotent re-enable re-stamps don't wipe progress. Only the production facet resets: the recognition facet never changes. Soft-deleting a parked term hides it everywhere via the existing `deleted_at` filters; restoring resumes with parked state intact (correct — it still needs rehab).
 
 **Exercise bank (`practice_exercise` table).**
 
@@ -352,16 +354,16 @@ Post-session reinforcement layered on top of Practice. Two populations, one surf
 **Strengthen session (UI).**
 
 - Route: `/practice/strengthen/$targetLanguage` (Zod search: `pool`, optional `sessionHard` userLookupId array — carried in the URL so the list survives refresh). Entry points: the post-flashcard-session CTA (primary `Strengthen` button on the completion screen when the session produced again/hard terms; the back button is the skip path — v1 is flashcards-only, reading completion is unchanged though its ratings still warm bonus banks) and the per-pool parked affordance on the language screen.
-- `startStrengthenSession` re-validates the client-supplied hard ids server-side (ownership, language, `count > 0`, not deleted, `learning_mode='active'` when `pool='active'`; silently drops the rest) and returns one tier-typed gate exercise per parked term plus one bonus exercise per validated hard term. A term with nothing ready gets a **`generating` placeholder** (skippable) and a background bank top-up — the session never blocks on LLM work.
+- `startStrengthenSession` re-validates the client-supplied hard ids server-side (ownership, language, `count > 0`, not deleted, an enabled `(meaning_production, '')` facet — `disabled_at IS NULL`, enforced by the queue join — when `pool='active'`; silently drops the rest) and returns one tier-typed gate exercise per parked term plus one bonus exercise per validated hard term. A term with nothing ready gets a **`generating` placeholder** (skippable) and a background bank top-up — the session never blocks on LLM work.
 - Exercise screens share an `ExerciseLayout`: scrollable content + a pinned bottom action bar (the flashcard-view pattern). Every unanswered exercise has a secondary **Skip** (non-consuming — it re-serves next session, so "I don't know" on a gate doesn't burn the fresh exercise or the day; to *see* the answer, submit a guess — that consumes and reveals). Cloze blanks render as literal underscores. MC answers highlight the correct option from the response's `correctIndex`; production cloze reveals `correctAnswer` on a miss; use-in-sentence is labelled **Bonus** and shows the LLM feedback. Gate answers render a "Day N of 3" rehab progress note from the response's `rehabCorrectDays`, and `graduated: true` renders a graduation celebration ("back in your practice rotation"); the dueSummary invalidation drops the parked counts.
 
 ### Vocabulary (browse + manage kept chunks)
 
 A separate top-level destination at `/vocabulary` for cross-session browsing of the user's kept chunks. The same `user_lookups` rows feed Practice and this view.
 
-- **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Learning-mode pills: `All` (default) / `Passive` / `Active` — selection syncs with the `?mode=passive|active` search param so reload survives. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + a compact ★ `Active` chip when `learning_mode = 'active'` + count badge when the chunk has been kept multiple times.
+- **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Filter pills: `All` (default) / `Passive` / `Active` — filter on the derived `learningMode`; selection syncs with the `?mode=passive|active` search param so reload survives. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + a compact ★ `Active` chip when the derived `learningMode` is `'active'` + count badge when the chunk has been kept multiple times.
 - **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
-- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: `Switch to active vocabulary` / `Switch to passive vocabulary` (toggles `learning_mode`), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
+- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: an inline **Study targets** control (the citation chip + skill popover — Recognition locked on, Production toggles the `(meaning_production, '')` facet via `chunks.setFacetEnabled`, Pronunciation disabled "coming soon"; chip accented ★ when Production is on), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
 - **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Two restore paths: (a) re-keeping the same `(headword, sense)` in any session — the keep-transition clears `deleted_at`; (b) the explicit `Restore` action the Practice reading view surfaces (toast immediately after a delete; slim Restore-only RateSheet when tapping a soft-deleted annotation), backed by the dedicated `chunks.restoreChunk` endpoint. The Vocabulary tab itself has no Trash bin in v1.
 - **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki `#` directives + one column per datum; see Export below). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
 
@@ -388,8 +390,8 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
   sparse keys leave empty cells. `ipa` prefers the extras string over the
   grammar bag's dialect-tagged object (rendered `GA …; RP …` when untagged is
   absent).
-- Tags: `flicktionary <target_language>`, plus `active` when
-  `learning_mode = 'active'` and `leech` when either pool is leech-parked
+- Tags: `flicktionary <target_language>`, plus `active` when the term has an
+  enabled `(meaning_production, '')` facet and `leech` when either pool is leech-parked
   (Anki treats a `leech` tag natively).
 - No `.apkg` for MVP.
 - **Entry point** is the Vocabulary tab's 3-dots menu → `Export vocabulary`.
@@ -442,6 +444,7 @@ The extension has its own spec — behavior, architecture, fork lineage, and the
 
 - Native language (single).
 - CEFR level per `target_language`. Asked once when starting a session in a new target language.
+- Per-language practice caps. The practice-limits row (alongside the CEFR-per-language settings) renders TWO groups — **Recognition** {New, Review} and **Production** {Review only}. The Production review cap maps to `practice_max_review_terms_active` (nullable; an EMPTY input = uncapped = NULL = hard ceiling, the historical active default). Production has NO new cap by design.
 - LLM-suggested chunks toggle (default on). When off, ghost nomination is inert:
   no windows are requested, no ghost outlines render, and no `Use suggested`
   adoption action appears. Manual highlights are still enriched into cards. The
@@ -662,51 +665,16 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- (floored at 0). SRS state is preserved
                                     -- across un-keep so re-keeping resumes the
                                     -- schedule.
-  learning_mode       'passive' | 'active' default 'passive'
-                                    -- per-term knob. Every kept term lives in
-                                    -- the passive (recognition) pool. Promoting
-                                    -- to 'active' also enters the parallel
-                                    -- active-drill pool. Demote preserves
-                                    -- active_srs_* so future re-promotion
-                                    -- resumes the active schedule.
-  -- Passive-pool SRS / FSRS state. Null until the row enters its first
-  -- passive practice surface (generated-text session or flashcard review).
-  srs_state           'new' | 'learning' | 'review' | 'relearning'?
-  srs_due             timestamptz?
-  srs_stability       real?
-  srs_difficulty      real?
-  srs_last_review     timestamptz?
-  srs_reps            int default 0
-  srs_lapses          int default 0
-  added_to_practice_at timestamptz? -- passive-pool first-introduction stamp.
-                                    -- Drives the daily new-term cap; the active
-                                    -- pool deliberately does NOT touch it so
-                                    -- starting a drill never eats passive
-                                    -- daily-new allowance.
-  -- Active-pool SRS / FSRS state. Independent of the passive columns.
-  -- Null until the row enters its first active drill.
-  active_srs_state    'new' | 'learning' | 'review' | 'relearning'?
-  active_srs_due      timestamptz?
-  active_srs_stability real?
-  active_srs_difficulty real?
-  active_srs_last_review timestamptz?
-  active_srs_reps     int default 0
-  active_srs_lapses   int default 0
-  -- Leech-rehab state, per pool (passive unprefixed / active_*). See
-  -- "Strengthen exercises + leech rehab".
-  leech_parked_at     timestamptz?  -- set => excluded from every practice queue
-                                    -- (flashcards AND reading-text candidates)
-                                    -- until rehab graduates it. Explicit flag:
-                                    -- lapses stay >= threshold after graduation,
-                                    -- so a derived check would instantly re-park.
-  leech_rehab_correct_days int default 0
-                                    -- distinct calendar days with a correct gate
-                                    -- answer; doubles as the exercise-ladder tier
-  leech_rehab_last_correct_on date? -- server CURRENT_DATE of the last counted
-                                    -- credit; enforces one advance per day
-  active_leech_parked_at timestamptz?
-  active_leech_rehab_correct_days int default 0
-  active_leech_rehab_last_correct_on date?
+  -- SRS/FSRS scheduling, leech-rehab, and first-introduction state NO LONGER
+  -- live on user_lookups. The study-facets cutover (Phase 1) moved them to
+  -- public.study_facets — one row per (user_lookup_id, skill, target_form),
+  -- each owning its own srs_* columns, leech_* columns, and introduced_at
+  -- (the daily-new stamp that replaced added_to_practice_at). The old
+  -- per-term learning_mode column was dropped in Phase 3: "in production" is
+  -- now an enabled (disabled_at IS NULL) (meaning_production,'') facet,
+  -- surfaced on the wire as a DERIVED `learningMode` for read-only display.
+  -- See the "Passive vs active pools (now facets)" bullet above and
+  -- docs/SRS.md §1 for the study_facets schema + the full data model.
   created_at          timestamptz   -- powers Vocabulary "Recently added" sort
   deleted_at          timestamptz?  -- soft-delete from Vocabulary tab; also hides from Practice queue
   primary key (id)

@@ -8,30 +8,27 @@ import {
   ChunksCursorSchema,
   type ChunksCursor,
 } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
-import {
-  ChunkRow,
-  DbUserLookup,
-  LearningMode,
-  UserLookupsRepositoryInterface,
-} from '../../transport/database/user-lookups/user-lookups-repository'
+import { ChunkRow, UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
 import { toIsoString } from '../router-utils'
 
-const toChunkDto = (row: DbUserLookup) => ({
+// Project a facet-joined ChunkRow down to the bare ChunkSchema shape (the
+// setFacetEnabled response). ChunkRow already carries the DERIVED learningMode.
+const toChunkRowAsChunkDto = (row: ChunkRow) => ({
   id: row.id,
-  userId: row.user_id,
-  targetLanguage: row.target_language,
+  userId: row.userId,
+  targetLanguage: row.targetLanguage,
   headword: row.headword,
-  sense: row.sense ?? '',
+  sense: row.sense,
   translation: row.translation,
   definition: row.definition,
-  targetExample: row.target_example,
-  nativeExample: row.native_example,
-  explorationExtras: (row.exploration_extras ?? {}) as Record<string, unknown>,
-  grammar: (row.grammar ?? {}) as Record<string, unknown>,
-  groundedAt: toIsoString(row.grounded_at),
-  grammarUserEditedAt: toIsoString(row.grammar_user_edited_at),
-  learningMode: (row.learning_mode as LearningMode) ?? 'passive',
+  targetExample: row.targetExample,
+  nativeExample: row.nativeExample,
+  explorationExtras: row.explorationExtras,
+  grammar: row.grammar,
+  groundedAt: toIsoString(row.groundedAt),
+  grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
+  learningMode: row.learningMode,
 })
 
 const toChunkRowDto = (row: ChunkRow) => ({
@@ -108,7 +105,19 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         userLookupId: input.chunkId,
         userId,
       })
-      return { data: { chunk: toChunkDto(owned), firstCardId: pointer.cardId, firstCardSessionId: pointer.sessionId } }
+      // Re-read via the facet-joined getter so learningMode is the DERIVED
+      // production-facet state (the plain term row no longer carries it).
+      const row = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
+      if (!row) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      return {
+        data: {
+          chunk: toChunkRowAsChunkDto(row),
+          firstCardId: pointer.cardId,
+          firstCardSessionId: pointer.sessionId,
+        },
+      }
     }),
 
     updateContent: implementer.updateContent.handler(async ({ input, context, errors }) => {
@@ -127,11 +136,11 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
         grammarPatch: input.patch.grammarPatch ?? null,
         markGrammarUserEdited: hasGrammarPatch(input.patch.grammarPatch),
       })
-      const refreshed = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      const refreshed = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
       if (!refreshed) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }
-      return { data: toChunkDto(refreshed) }
+      return { data: toChunkRowAsChunkDto(refreshed) }
     }),
 
     listChunks: implementer.listChunks.handler(async ({ input, context }) => {
@@ -149,21 +158,31 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
     }),
 
-    setLearningMode: implementer.setLearningMode.handler(async ({ input, context, errors }) => {
+    setFacetEnabled: implementer.setFacetEnabled.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
       if (!owned) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
       }
-      const updated = await userLookupsRepository.setLearningMode({
+      const updated = await userLookupsRepository.setFacetEnabled({
         userLookupId: input.chunkId,
         userId,
-        learningMode: input.learningMode,
+        skill: input.skill,
+        targetForm: input.targetForm,
+        enabled: input.enabled,
+        payload: input.payload,
       })
       if (!updated) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }
-      return { data: toChunkDto(updated) }
+      // Re-read via the facet-joined single-row getter so learningMode reflects
+      // the post-update production-facet state (the plain term row no longer
+      // carries it).
+      const row = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
+      if (!row) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
+      }
+      return { data: toChunkRowAsChunkDto(row) }
     }),
 
     listLanguages: implementer.listLanguages.handler(async ({ context }) => {
@@ -218,11 +237,11 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
           data: { errors: [{ message: 'Another chunk already exists with that headword and sense' }] },
         })
       }
-      const refreshed = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      const refreshed = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
       if (!refreshed) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after rename' }] } })
       }
-      return { data: toChunkDto(refreshed) }
+      return { data: toChunkRowAsChunkDto(refreshed) }
     }),
   })
 

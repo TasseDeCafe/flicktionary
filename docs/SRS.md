@@ -54,10 +54,14 @@ column. The passive queue serves `meaning_recognition`; the active queue serves
 - `srs_state IS NULL` on a facet = never reviewed — the UI's **"Unseen"**.
 - `introduced_at` (on the citation recognition facet) is the source of truth for the daily-new
   count; it replaces the old `user_lookups.added_to_practice_at`.
-- **Membership vs existence**: `learning_mode` is kept for Phase 1 as the active-membership
-  flag, but a demoted term keeps its production facet (history intact) with `disabled_at` set —
-  so "in production" means an *enabled* (`disabled_at IS NULL`) production facet, never mere row
-  existence. Promote clears `disabled_at` (+ resets its leech state); demote sets it.
+- **Membership vs existence**: as of Phase 3 there is **no `learning_mode` column** — it was
+  dropped (migration `drop_learning_mode`). "In production" means an *enabled*
+  (`disabled_at IS NULL`) citation production facet, never mere row existence: a demoted term
+  keeps its production facet (history intact) with `disabled_at` set. The wire still exposes a
+  **derived** `learningMode` (`'active'` iff that facet is enabled) for read-only surfaces (vocab
+  filter pills/chips). Enable/disable is one unified write — `chunks.setFacetEnabled` →
+  `setFacetEnabled({skill, targetForm, enabled})` (it replaced `setLearningMode`): enable upserts
+  the facet and clears `disabled_at`; disable sets it; a real flip resets that facet's leech state.
 
 ## 2. The scheduler (fsrs.ts)
 
@@ -101,9 +105,11 @@ refine; the settings UI snaps invalid drafts back on blur).
 
 Caps are **per review mode** (recognition / production), not per skill. Production gets an
 optional **review** cap only — `practice_max_review_terms_active` (nullable; **NULL = uncapped
-= hard ceiling**, the default, preserving today's active behaviour until the Phase-3 UI sets
-it). Production has **no** new cap: the citation recognition card is the only daily-new-capped
-facet, so production-new is uncapped by design (`isDailyNewCappedFacet`).
+= hard ceiling**, the default, preserving the historical active behaviour). As of Phase 3 the
+settings UI (`cefr-per-language-list.tsx`) surfaces it: a Recognition group {New, Review} and a
+Production group {Review only}, where an empty Production-review input means uncapped (NULL).
+Production has **no** new cap: the citation recognition card is the only daily-new-capped facet,
+so production-new is uncapped by design (`isDailyNewCappedFacet`).
 
 Daily budgets:
 
