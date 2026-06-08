@@ -1,8 +1,5 @@
 import type { ExerciseType } from '../../transport/database/practice-exercises/practice-exercises-repository'
-import type {
-  DbUserLookupWithFacet,
-  PracticePool,
-} from '../../transport/database/user-lookups/user-lookups-repository'
+import type { DbUserLookupWithFacet, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
   CITATION_FORM,
   skillForPool,

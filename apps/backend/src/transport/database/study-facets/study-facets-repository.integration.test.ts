@@ -97,7 +97,12 @@ describe('study-facets-repository integration tests', () => {
     const lookup = await createKeptTerm(userId, 'gato')
     const address = { userLookupId: lookup.id, skill: 'meaning_recognition' as const, targetForm: '' }
     await repo.ensureCitationFacet(lookup.id)
-    await repo.initializeCitationFacetIfUnderDailyCap({ userLookupId: lookup.id, userId, targetLanguage: 'es', maxNewTerms: 10 })
+    await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: lookup.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 10,
+    })
 
     await repo.applyFsrsResultForFacet({
       ...address,

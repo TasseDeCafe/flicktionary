@@ -150,7 +150,11 @@ describe('rateTerm', () => {
     const result = await rateTerm(lookupId, userId, 'good', 'active', deps)
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
-    expect(initializeFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' })
+    expect(initializeFacet).toHaveBeenCalledWith({
+      userLookupId: lookupId,
+      skill: 'meaning_production',
+      targetForm: '',
+    })
     expect(applyFsrsResultForFacet).toHaveBeenCalledWith(
       expect.objectContaining({ skill: 'meaning_production', targetForm: '' }),
       undefined
@@ -331,7 +335,11 @@ describe('rateTerm leech parking', () => {
     const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
     // The rating applied (then parked), so it carries an undo handle.
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
-    expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_recognition', targetForm: '' })
+    expect(parkLeechFacet).toHaveBeenCalledWith({
+      userLookupId: lookupId,
+      skill: 'meaning_recognition',
+      targetForm: '',
+    })
     // A freshly parked leech warms its gate-exercise bank.
     expect(warmExerciseBank).toHaveBeenCalled()
   })
@@ -347,7 +355,11 @@ describe('rateTerm leech parking', () => {
     const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(5))
     const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
-    expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_recognition', targetForm: '' })
+    expect(parkLeechFacet).toHaveBeenCalledWith({
+      userLookupId: lookupId,
+      skill: 'meaning_recognition',
+      targetForm: '',
+    })
   })
 
   it('does not park below the threshold', async () => {

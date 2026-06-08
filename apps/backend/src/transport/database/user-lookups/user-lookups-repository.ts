@@ -693,7 +693,10 @@ const setLearningMode = async (params: {
       return findByIdForUser(params.userLookupId, params.userId)
     }
     if (params.learningMode === 'active') {
-      await ensureFacet({ userLookupId: params.userLookupId, skill: 'meaning_production', targetForm: CITATION_FORM }, tx)
+      await ensureFacet(
+        { userLookupId: params.userLookupId, skill: 'meaning_production', targetForm: CITATION_FORM },
+        tx
+      )
       await tx`
         UPDATE public.study_facets
         SET disabled_at = NULL,

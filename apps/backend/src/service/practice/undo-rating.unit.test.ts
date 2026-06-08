@@ -152,10 +152,7 @@ describe('undoRating', () => {
     })
     const result = await undoRating(lookupId, userId, 'passive', eventId, deps)
     expect(result).toEqual({ ok: true, undone: true })
-    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(
-      expect.objectContaining({ causedParking: true }),
-      undefined
-    )
+    expect(restoreSrsSnapshotForFacet).toHaveBeenCalledWith(expect.objectContaining({ causedParking: true }), undefined)
   })
 
   it('refuses a stale eventId (a later rating is now the latest live event)', async () => {
