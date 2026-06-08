@@ -69,6 +69,13 @@ describe('shouldParkLeech', () => {
     const facet = makeFacetRow({ skill: 'meaning_production', srs_lapses: LEECH_LAPSE_THRESHOLD - 1 })
     expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD))).toBe(true)
   })
+
+  it('does NOT park a non-citation (form) facet even on a fresh threshold lapse (Trap 19)', () => {
+    // Leeching is citation-meaning-only: the pool-keyed exercise bank has no
+    // facet identity, so form/pronunciation facets must never park.
+    const facet = makeFacetRow({ target_form: 'gatos', srs_lapses: LEECH_LAPSE_THRESHOLD - 1 })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD))).toBe(false)
+  })
 })
 
 describe('isParked', () => {

@@ -8,9 +8,21 @@ export const DEFAULT_PRACTICE_MAX_REVIEW_TERMS = 100
 export const HARD_MAX_PRACTICE_NEW_TERMS = 100
 export const HARD_MAX_PRACTICE_REVIEW_TERMS = 300
 
+// The recognition-mode daily caps — set together by the existing UI, clamped
+// as a pair. (Confusingly named for history; these are the passive/recognition
+// limits.)
 export type PracticeSessionLimits = {
   maxNewTerms: number
   maxReviewTerms: number
+}
+
+// Full per-mode practice limits for a language. `maxReviewTermsActive` is the
+// production-mode review cap: NULL = uncapped (hard ceiling), preserving
+// today's active behavior until the Phase-3 UI sets it. Production has no NEW
+// cap by design (the citation recognition card is the only daily-new-capped
+// facet — see the active-cap migration).
+export type PracticeLimits = PracticeSessionLimits & {
+  maxReviewTermsActive: number | null
 }
 
 const findForLanguage = async (userId: string, targetLanguage: string): Promise<DbUserTargetLanguagePref | null> => {
@@ -62,15 +74,22 @@ const setShowTranslationsEnabled = async (
   return result.count === 1
 }
 
-const getPracticeLimitsForLanguage = async (userId: string, targetLanguage: string): Promise<PracticeSessionLimits> => {
+const getPracticeLimitsForLanguage = async (userId: string, targetLanguage: string): Promise<PracticeLimits> => {
   const result = (await sql`
-    SELECT practice_max_new_terms, practice_max_review_terms
+    SELECT practice_max_new_terms, practice_max_review_terms, practice_max_review_terms_active
     FROM public.user_target_language_prefs
     WHERE user_id = ${userId} AND target_language = ${targetLanguage}
-  `) as { practice_max_new_terms: number; practice_max_review_terms: number }[]
+  `) as {
+    practice_max_new_terms: number
+    practice_max_review_terms: number
+    practice_max_review_terms_active: number | null
+  }[]
   return {
     maxNewTerms: result[0]?.practice_max_new_terms ?? DEFAULT_PRACTICE_MAX_NEW_TERMS,
     maxReviewTerms: result[0]?.practice_max_review_terms ?? DEFAULT_PRACTICE_MAX_REVIEW_TERMS,
+    // NULL stays NULL = uncapped (hard ceiling). No default numeric cap for
+    // production — that would silently start capping active review.
+    maxReviewTermsActive: result[0]?.practice_max_review_terms_active ?? null,
   }
 }
 
@@ -95,7 +114,7 @@ export interface UserTargetLanguagePrefsRepositoryInterface {
   upsertCefr: (userId: string, targetLanguage: string, cefrLevel: string) => Promise<void>
   getShowTranslationsEnabled: (userId: string, targetLanguage: string) => Promise<boolean>
   setShowTranslationsEnabled: (userId: string, targetLanguage: string, enabled: boolean) => Promise<boolean>
-  getPracticeLimitsForLanguage: (userId: string, targetLanguage: string) => Promise<PracticeSessionLimits>
+  getPracticeLimitsForLanguage: (userId: string, targetLanguage: string) => Promise<PracticeLimits>
   setPracticeLimitsForLanguage: (
     userId: string,
     targetLanguage: string,

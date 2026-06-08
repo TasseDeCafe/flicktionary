@@ -18,6 +18,18 @@ import {
 } from '../../transport/third-party/anthropic/passes/generate-practice-text'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { listReviewTerms } from './list-review-terms'
+import { CITATION_FORM } from '../../transport/database/study-facets/study-facets-repository'
+import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
+
+// Reading mode stays CITATION-MEANING-ONLY: the generator embeds a word's
+// citation card, and advance-reading-text implicitly rates untapped annotations
+// 'good'. It must never weave a pronunciation or specific-form facet, whose
+// front isn't the lemma. listReviewTerms can surface those facets (Phase 4), so
+// filter candidates down to the citation meaning facet here. In Phase 2 every
+// candidate already is one, so this is inert; it also dedupes a term to a single
+// citation row.
+const isCitationMeaningCandidate = (row: DbUserLookupWithFacet): boolean =>
+  row.target_form === CITATION_FORM && (row.skill === 'meaning_recognition' || row.skill === 'meaning_production')
 
 export type GenerateReadingTextDependencies = {
   practiceTextsRepository: PracticeTextsRepositoryInterface
@@ -166,7 +178,7 @@ export const produceNextReadable = async (params: {
 
   for (;;) {
     const candidates = (await listReviewTerms(group.userId, group.targetLanguage, group.pool, scope, deps)).filter(
-      (row) => !exclude.has(row.id)
+      (row) => isCitationMeaningCandidate(row) && !exclude.has(row.id)
     )
     if (candidates.length === 0) return { ok: true, done: true }
 
@@ -272,7 +284,7 @@ export const prepareNextReadingText = async (
   const group: ReadingGroup = { userId, targetLanguage, pool }
   const exclude = new Set(excludeUserLookupIds)
   const candidates = (await listReviewTerms(userId, targetLanguage, pool, scope, deps)).filter(
-    (row) => !exclude.has(row.id)
+    (row) => isCitationMeaningCandidate(row) && !exclude.has(row.id)
   )
   if (candidates.length === 0) return { ok: true, status: 'no_work' }
 

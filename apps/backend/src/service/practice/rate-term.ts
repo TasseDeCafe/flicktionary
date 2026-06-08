@@ -8,7 +8,9 @@ import {
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
   CITATION_FORM,
-  skillForPool,
+  isDailyNewCappedFacet,
+  isLegalPoolSkill,
+  type FacetSkill,
   type StudyFacetsRepositoryInterface,
 } from '../../transport/database/study-facets/study-facets-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
@@ -103,8 +105,8 @@ export const applyTermRating = async (params: {
   const introducedNew = lookup.srs_state == null
 
   if (introducedNew) {
-    if (pool === 'passive') {
-      // The citation recognition facet is the only daily-new-capped facet.
+    if (isDailyNewCappedFacet(skill, targetForm)) {
+      // The citation recognition facet is the ONLY daily-new-capped facet.
       const introduced = await deps.studyFacetsRepository.initializeCitationFacetIfUnderDailyCap({
         userLookupId: lookup.id,
         userId,
@@ -114,6 +116,9 @@ export const applyTermRating = async (params: {
       })
       if (!introduced) return { ok: false, reason: 'daily_cap_reached' }
     } else {
+      // Production citation, and (Phase 4) opt-in pronunciation/form facets:
+      // never daily-new-capped, so the first rating must NOT be refused by the
+      // cap guard (Trap 18). Initialize unconditionally.
       await deps.studyFacetsRepository.initializeFacet({ userLookupId: lookup.id, skill, targetForm })
     }
   }
@@ -165,6 +170,8 @@ export const applyTermRating = async (params: {
         userLookupId: lookup.id,
         targetLanguage: lookup.target_language,
         pool,
+        skill,
+        targetForm,
         rating,
         wasExplicit: params.wasExplicit ?? true,
         wasIntroduction: introducedNew,
@@ -200,34 +207,41 @@ export const applyTermRating = async (params: {
 
 export type RateTermResult =
   | { ok: true; introducedNew: boolean; dailyCapReached: boolean; parked: boolean; eventId: string | null }
-  | { ok: false; reason: 'lookup_not_found' | 'not_in_active_pool' }
+  | { ok: false; reason: 'lookup_not_found' | 'not_in_active_pool' | 'illegal_pool_skill' }
 
-// Flashcard-mode single-card rating. Pool-parametrized; no practice_text / no
-// session. Daily-cap refusal is surfaced (not an error) so the client drops the
-// card without applying FSRS. `bypassDailyCap` carries the explicit learn-new
-// session intent through to the introduction guard.
+// Flashcard-mode single-card rating. The wire carries `pool` (the session queue
+// the rating came from) plus `skill`/`targetForm` (which facet was rated); the
+// queue can serve more than one facet per term, so identity is no longer
+// derivable from pool. Daily-cap refusal is surfaced (not an error) so the
+// client drops the card without applying FSRS. `bypassDailyCap` carries the
+// explicit learn-new session intent through to the introduction guard.
 export const rateTerm = async (
   userLookupId: string,
   userId: string,
   rating: AppRating,
   pool: PracticePool,
+  skill: FacetSkill,
+  targetForm: string,
   deps: RateTermDependencies,
   options?: { bypassDailyCap?: boolean }
 ): Promise<RateTermResult> => {
+  // Reject illegal (pool, skill) pairings (e.g. active + pronunciation) before
+  // touching any state — pool and skill are distinct namespaces.
+  if (!isLegalPoolSkill(pool, skill)) return { ok: false, reason: 'illegal_pool_skill' }
+
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
   if (pool === 'active' && lookup.learning_mode !== 'active') return { ok: false, reason: 'not_in_active_pool' }
 
-  // Map pool -> facet identity and load the facet being rated. The citation
-  // recognition facet is created eagerly on keep; repair it defensively here so
-  // any count>0 term lacking it can still be rated. A missing production facet
-  // means the term isn't actually enrolled in production (treat as not in the
-  // active pool rather than 500).
-  const skill = skillForPool(pool)
-  if (skill === 'meaning_recognition') {
+  // Load the facet being rated. The citation recognition facet is created
+  // eagerly on keep; repair it defensively here so any count>0 term lacking it
+  // can still be rated. Every other facet must already have been enabled (it is
+  // NOT auto-created); a missing one means the card isn't enrolled (treat as not
+  // in pool rather than 500).
+  if (skill === 'meaning_recognition' && targetForm === CITATION_FORM) {
     await deps.studyFacetsRepository.ensureCitationFacet(lookup.id)
   }
-  const facet = await deps.studyFacetsRepository.getFacet({ userLookupId: lookup.id, skill, targetForm: CITATION_FORM })
+  const facet = await deps.studyFacetsRepository.getFacet({ userLookupId: lookup.id, skill, targetForm })
   if (!facet) return { ok: false, reason: 'not_in_active_pool' }
   const facetRow = mergeFacet(lookup, facet)
 

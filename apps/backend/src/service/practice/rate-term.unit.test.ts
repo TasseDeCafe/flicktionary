@@ -109,7 +109,7 @@ describe('rateTerm', () => {
 
   it('introduces a never-reviewed passive facet via the daily-cap guard, then applies FSRS', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet } = createDeps(makeLookup())
-    const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(
       expect.objectContaining({ userLookupId: lookupId, maxNewTerms: 20, targetLanguage: 'es' })
@@ -123,7 +123,7 @@ describe('rateTerm', () => {
   it('refuses a new passive facet when the daily cap is reached and applies no FSRS', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet } = createDeps(makeLookup())
     initializeCitationFacetIfUnderDailyCap.mockResolvedValue(false)
-    const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: true, parked: false, eventId: null })
     expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
   })
@@ -133,7 +133,7 @@ describe('rateTerm', () => {
       makeLookup(),
       makeFacet({ srs_state: 'review', srs_due: '2026-05-12T00:00:00Z' })
     )
-    const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(initializeCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
     expect(applyFsrsResultForFacet).toHaveBeenCalledWith(
@@ -147,7 +147,7 @@ describe('rateTerm', () => {
       makeLookup({ learning_mode: 'active' }),
       makeFacet({ skill: 'meaning_production' })
     )
-    const result = await rateTerm(lookupId, userId, 'good', 'active', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
     expect(initializeFacet).toHaveBeenCalledWith({
@@ -163,7 +163,7 @@ describe('rateTerm', () => {
 
   it('refuses active-pool ratings for terms not promoted to active learning', async () => {
     const { deps, initializeFacet, applyFsrsResultForFacet } = createDeps(makeLookup())
-    const result = await rateTerm(lookupId, userId, 'good', 'active', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: false, reason: 'not_in_active_pool' })
     expect(initializeFacet).not.toHaveBeenCalled()
     expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
@@ -171,13 +171,24 @@ describe('rateTerm', () => {
 
   it('returns lookup_not_found when the term is missing', async () => {
     const { deps } = createDeps(null)
-    const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: false, reason: 'lookup_not_found' })
+  })
+
+  it('rejects an illegal (pool, skill) pairing before touching state', async () => {
+    const { deps, applyFsrsResultForFacet } = createDeps(makeLookup({ learning_mode: 'active' }))
+    // active pool may only serve meaning_production.
+    const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_recognition', '', deps)
+    expect(result).toEqual({ ok: false, reason: 'illegal_pool_skill' })
+    expect(deps.userLookupsRepository.findByIdForUser).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
   })
 
   it('bypassDailyCap threads bypassCap into the introduction guard', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet } = createDeps(makeLookup())
-    const result = await rateTerm(lookupId, userId, 'good', 'passive', deps, { bypassDailyCap: true })
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps, {
+      bypassDailyCap: true,
+    })
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
     expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: true }))
     expect(applyFsrsResultForFacet).toHaveBeenCalled()
@@ -185,7 +196,7 @@ describe('rateTerm', () => {
 
   it('does not bypass the cap by default', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap } = createDeps(makeLookup())
-    await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
   })
 })
@@ -195,7 +206,7 @@ describe('rateTerm rating-event log', () => {
 
   it('logs an introduction event with null prev state alongside the FSRS write', async () => {
     const { deps, insertRatingEvent } = createDeps(makeLookup())
-    await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(insertRatingEvent).toHaveBeenCalledTimes(1)
     expect(insertRatingEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -203,6 +214,8 @@ describe('rateTerm rating-event log', () => {
         userLookupId: lookupId,
         targetLanguage: 'es',
         pool: 'passive',
+        skill: 'meaning_recognition',
+        targetForm: '',
         rating: 'good',
         wasExplicit: true,
         wasIntroduction: true,
@@ -230,7 +243,7 @@ describe('rateTerm rating-event log', () => {
         srs_lapses: 1,
       })
     )
-    await rateTerm(lookupId, userId, 'hard', 'passive', deps)
+    await rateTerm(lookupId, userId, 'hard', 'passive', 'meaning_recognition', '', deps)
     expect(insertRatingEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         rating: 'hard',
@@ -258,10 +271,12 @@ describe('rateTerm rating-event log', () => {
         srs_lapses: 2,
       })
     )
-    await rateTerm(lookupId, userId, 'good', 'active', deps)
+    await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
     expect(insertRatingEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         pool: 'active',
+        skill: 'meaning_production',
+        targetForm: '',
         wasIntroduction: false,
         prevSrsState: 'review',
         prevSrsDue: '2026-05-12T00:00:00Z',
@@ -285,14 +300,14 @@ describe('rateTerm rating-event log', () => {
         srs_lapses: 3,
       })
     )
-    await rateTerm(lookupId, userId, 'again', 'passive', deps)
+    await rateTerm(lookupId, userId, 'again', 'passive', 'meaning_recognition', '', deps)
     expect(insertRatingEvent).toHaveBeenCalledWith(expect.objectContaining({ causedParking: true }), undefined)
   })
 
   it('logs NO event when the daily cap refuses the introduction', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, insertRatingEvent } = createDeps(makeLookup())
     initializeCitationFacetIfUnderDailyCap.mockResolvedValue(false)
-    await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(insertRatingEvent).not.toHaveBeenCalled()
   })
 
@@ -301,13 +316,13 @@ describe('rateTerm rating-event log', () => {
       makeLookup(),
       makeFacet({ srs_state: 'review', srs_due: '2026-05-01T00:00:00Z', leech_parked_at: '2026-05-01T00:00:00Z' })
     )
-    await rateTerm(lookupId, userId, 'again', 'passive', deps)
+    await rateTerm(lookupId, userId, 'again', 'passive', 'meaning_recognition', '', deps)
     expect(insertRatingEvent).not.toHaveBeenCalled()
   })
 
   it('logs NO event for a not-in-active-pool refusal', async () => {
     const { deps, insertRatingEvent } = createDeps(makeLookup())
-    await rateTerm(lookupId, userId, 'good', 'active', deps)
+    await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
     expect(insertRatingEvent).not.toHaveBeenCalled()
   })
 })
@@ -332,7 +347,7 @@ describe('rateTerm leech parking', () => {
 
   it("parks on the 'again' that crosses the lapse threshold and reports parked", async () => {
     const { deps, parkLeechFacet, warmExerciseBank } = createDeps(makeLookup(), reviewFacet(3))
-    const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'again', 'passive', 'meaning_recognition', '', deps)
     // The rating applied (then parked), so it carries an undo handle.
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({
@@ -346,14 +361,14 @@ describe('rateTerm leech parking', () => {
 
   it("does NOT re-park a graduated facet (historical lapses >= threshold) on 'good'", async () => {
     const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(5))
-    const result = await rateTerm(lookupId, userId, 'good', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'good', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(parkLeechFacet).not.toHaveBeenCalled()
   })
 
   it('re-parks a graduated facet on its next FRESH lapse', async () => {
     const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(5))
-    const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'again', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({
       userLookupId: lookupId,
@@ -364,7 +379,7 @@ describe('rateTerm leech parking', () => {
 
   it('does not park below the threshold', async () => {
     const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(1))
-    const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'again', 'passive', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(parkLeechFacet).not.toHaveBeenCalled()
   })
@@ -374,7 +389,7 @@ describe('rateTerm leech parking', () => {
       makeLookup(),
       reviewFacet(5, { leech_parked_at: '2026-05-01T00:00:00Z' })
     )
-    const result = await rateTerm(lookupId, userId, 'again', 'passive', deps)
+    const result = await rateTerm(lookupId, userId, 'again', 'passive', 'meaning_recognition', '', deps)
     // Nothing was applied (parked no-op) — no event, so no undo handle.
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId: null })
     expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
@@ -387,7 +402,7 @@ describe('rateTerm leech parking', () => {
       makeLookup({ learning_mode: 'active' }),
       reviewFacet(3, { skill: 'meaning_production' })
     )
-    const result = await rateTerm(lookupId, userId, 'again', 'active', deps)
+    const result = await rateTerm(lookupId, userId, 'again', 'active', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' })
   })

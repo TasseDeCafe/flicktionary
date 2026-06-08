@@ -37,6 +37,7 @@ const newRow: DbUserLookupWithFacet = {
   leech_rehab_correct_days: 0,
   leech_rehab_last_correct_on: null,
   introduced_at: null,
+  payload: {},
 }
 
 const reviewRow: DbUserLookupWithFacet = {

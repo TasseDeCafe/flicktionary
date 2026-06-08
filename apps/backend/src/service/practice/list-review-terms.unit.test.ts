@@ -3,12 +3,18 @@ import { listReviewTerms, type ListReviewTermsDependencies } from './list-review
 
 const userId = '00000000-0000-0000-0000-000000000001'
 
-const createDeps = (opts: { introducedToday?: number; reviewedToday?: number } = {}) => {
+const createDeps = (
+  opts: { introducedToday?: number; reviewedToday?: number; maxReviewTermsActive?: number | null } = {}
+) => {
   const repoListReviewTerms = vi.fn().mockResolvedValue([])
   const countReviewBudgetConsumedToday = vi.fn().mockResolvedValue(opts.reviewedToday ?? 0)
   const deps = {
     userTargetLanguagePrefsRepository: {
-      getPracticeLimitsForLanguage: vi.fn().mockResolvedValue({ maxNewTerms: 20, maxReviewTerms: 100 }),
+      getPracticeLimitsForLanguage: vi.fn().mockResolvedValue({
+        maxNewTerms: 20,
+        maxReviewTerms: 100,
+        maxReviewTermsActive: opts.maxReviewTermsActive ?? null,
+      }),
     },
     userLookupsRepository: {
       listReviewTerms: repoListReviewTerms,
@@ -46,7 +52,7 @@ describe('listReviewTerms (service caps)', () => {
     expect(countReviewBudgetConsumedToday).toHaveBeenCalledWith({
       userId,
       targetLanguage: 'es',
-      pool: 'passive',
+      mode: 'recognition',
     })
     expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxReviewTerms: 70 }))
   })
@@ -87,7 +93,7 @@ describe('listReviewTerms (service caps)', () => {
     expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxNewTerms: 0 }))
   })
 
-  it('active pool: not daily-capped — uses the hard ceilings', async () => {
+  it('active pool: uncapped review (NULL cap) — uses the hard ceilings, no budget count', async () => {
     const { deps, repoListReviewTerms, countReviewBudgetConsumedToday } = createDeps()
     await listReviewTerms(userId, 'es', 'active', 'review_due', deps)
     expect(countReviewBudgetConsumedToday).not.toHaveBeenCalled()
@@ -98,8 +104,29 @@ describe('listReviewTerms (service caps)', () => {
         maxReviewTerms: 300,
         maxLearningTerms: 300,
         maxNewTerms: 100,
+        maxOptInNewTerms: 0,
       })
     )
+  })
+
+  it('active pool: a SET review cap counts the production budget and shrinks the cap', async () => {
+    const { deps, repoListReviewTerms, countReviewBudgetConsumedToday } = createDeps({
+      maxReviewTermsActive: 40,
+      reviewedToday: 15,
+    })
+    await listReviewTerms(userId, 'es', 'active', 'review_due', deps)
+    expect(countReviewBudgetConsumedToday).toHaveBeenCalledWith({ userId, targetLanguage: 'es', mode: 'production' })
+    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxReviewTerms: 25 }))
+  })
+
+  it('opt-in new is served only in learn_new (passive): a hard ceiling there, zero in mixed', async () => {
+    const learn = createDeps()
+    await listReviewTerms(userId, 'es', 'passive', 'learn_new', learn.deps)
+    expect(learn.repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxOptInNewTerms: 100 }))
+
+    const mixed = createDeps()
+    await listReviewTerms(userId, 'es', 'passive', 'mixed', mixed.deps)
+    expect(mixed.repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxOptInNewTerms: 0 }))
   })
 
   it('excludes terms already embedded in the current reading text', async () => {

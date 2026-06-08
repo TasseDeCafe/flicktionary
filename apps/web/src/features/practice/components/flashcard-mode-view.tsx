@@ -183,7 +183,16 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
       // only the batch-sheet flow supplies it, so a direct/bookmarked
       // learn_new URL without a chosen batch stays within the daily budget at
       // rating time too.
-      { userLookupId: card.userLookupId, rating, pool, learnNewSession: scope === 'learn_new' && count != null },
+      {
+        userLookupId: card.userLookupId,
+        rating,
+        pool,
+        // Facet identity of the queued card (citation in Phase 2; carried so
+        // pronunciation/form cards address the right facet in Phase 4).
+        skill: card.skill,
+        targetForm: card.targetForm,
+        learnNewSession: scope === 'learn_new' && count != null,
+      },
       {
         onSuccess: (resp) => {
           if (resp.data.dailyCapReached) {
@@ -238,7 +247,13 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     }
 
     undoRating(
-      { userLookupId: card.userLookupId, pool, eventId: record.eventId },
+      {
+        userLookupId: card.userLookupId,
+        pool,
+        skill: card.skill,
+        targetForm: card.targetForm,
+        eventId: record.eventId,
+      },
       {
         // Mutation error: nothing changed server-side — keep the record (the
         // hook's meta toast surfaces the failure).
@@ -260,6 +275,8 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
               userLookupId: card.userLookupId,
               rating: newRating,
               pool,
+              skill: card.skill,
+              targetForm: card.targetForm,
               learnNewSession: scope === 'learn_new' && count != null,
             },
             {
