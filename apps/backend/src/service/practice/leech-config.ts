@@ -1,4 +1,4 @@
-import type { DbUserLookup, PracticePool } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { FsrsResult } from './fsrs'
 
 // Shared leech/rehab tuning. One source of truth for both pools — the
@@ -24,16 +24,14 @@ export const PRODUCTION_CLOZE_MAX_EDIT_DISTANCE = 1
 export const SOFT_REENTRY_STABILITY = 1
 export const SOFT_REENTRY_DIFFICULTY = 5 // ts-fsrs difficulty range is 1..10
 
-export const isParked = (lookup: DbUserLookup, pool: PracticePool): boolean =>
-  pool === 'passive' ? lookup.leech_parked_at != null : lookup.active_leech_parked_at != null
+export const isParked = (lookup: DbUserLookupWithFacet): boolean => lookup.leech_parked_at != null
 
 // Park condition for one rating event. This is a NEW-LAPSE delta, not an
 // absolute threshold check: after graduation `lapses` stays >= the threshold
-// forever, so an absolute check would re-park the term on the very next
+// forever, so an absolute check would re-park the facet on the very next
 // rating of any kind. Comparing against the pre-rating lapse count means only
 // a rating that itself caused a lapse (an 'again' on a review-state card) can
-// park — good/easy ratings on a high-lapse graduated term never do.
-export const shouldParkLeech = (lookup: DbUserLookup, result: FsrsResult, pool: PracticePool): boolean => {
-  const prevLapses = pool === 'passive' ? lookup.srs_lapses : lookup.active_srs_lapses
-  return result.lapses > (prevLapses ?? 0) && result.lapses >= LEECH_LAPSE_THRESHOLD && !isParked(lookup, pool)
+// park — good/easy ratings on a high-lapse graduated facet never do.
+export const shouldParkLeech = (lookup: DbUserLookupWithFacet, result: FsrsResult): boolean => {
+  return result.lapses > (lookup.srs_lapses ?? 0) && result.lapses >= LEECH_LAPSE_THRESHOLD && !isParked(lookup)
 }

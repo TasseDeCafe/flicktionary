@@ -854,6 +854,92 @@ export type Database = {
         }
         Relationships: []
       }
+      study_facets: {
+        Row: {
+          created_at: string
+          data_status: string
+          disabled_at: string | null
+          id: string
+          introduced_at: string | null
+          leech_parked_at: string | null
+          leech_rehab_correct_days: number
+          leech_rehab_last_correct_on: string | null
+          payload: Json
+          skill: string
+          source: string
+          srs_difficulty: number | null
+          srs_due: string | null
+          srs_lapses: number
+          srs_last_review: string | null
+          srs_reps: number
+          srs_stability: number | null
+          srs_state: Database['public']['Enums']['srs_state'] | null
+          target_form: string
+          target_language: string
+          updated_at: string
+          user_id: string
+          user_lookup_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_status?: string
+          disabled_at?: string | null
+          id?: string
+          introduced_at?: string | null
+          leech_parked_at?: string | null
+          leech_rehab_correct_days?: number
+          leech_rehab_last_correct_on?: string | null
+          payload?: Json
+          skill: string
+          source?: string
+          srs_difficulty?: number | null
+          srs_due?: string | null
+          srs_lapses?: number
+          srs_last_review?: string | null
+          srs_reps?: number
+          srs_stability?: number | null
+          srs_state?: Database['public']['Enums']['srs_state'] | null
+          target_form?: string
+          target_language: string
+          updated_at?: string
+          user_id: string
+          user_lookup_id: string
+        }
+        Update: {
+          created_at?: string
+          data_status?: string
+          disabled_at?: string | null
+          id?: string
+          introduced_at?: string | null
+          leech_parked_at?: string | null
+          leech_rehab_correct_days?: number
+          leech_rehab_last_correct_on?: string | null
+          payload?: Json
+          skill?: string
+          source?: string
+          srs_difficulty?: number | null
+          srs_due?: string | null
+          srs_lapses?: number
+          srs_last_review?: string | null
+          srs_reps?: number
+          srs_stability?: number | null
+          srs_state?: Database['public']['Enums']['srs_state'] | null
+          target_form?: string
+          target_language?: string
+          updated_at?: string
+          user_id?: string
+          user_lookup_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'study_facets_lookup_fkey'
+            columns: ['user_lookup_id']
+            isOneToOne: false
+            referencedRelation: 'user_lookups'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       study_sessions: {
         Row: {
           cefr_level: string
@@ -999,17 +1085,6 @@ export type Database = {
       }
       user_lookups: {
         Row: {
-          active_leech_parked_at: string | null
-          active_leech_rehab_correct_days: number
-          active_leech_rehab_last_correct_on: string | null
-          active_srs_difficulty: number | null
-          active_srs_due: string | null
-          active_srs_lapses: number
-          active_srs_last_review: string | null
-          active_srs_reps: number
-          active_srs_stability: number | null
-          active_srs_state: Database['public']['Enums']['srs_state'] | null
-          added_to_practice_at: string | null
           count: number
           created_at: string
           definition: string | null
@@ -1023,35 +1098,14 @@ export type Database = {
           headword: string
           id: string
           learning_mode: string
-          leech_parked_at: string | null
-          leech_rehab_correct_days: number
-          leech_rehab_last_correct_on: string | null
           native_example: string | null
           sense: string
-          srs_difficulty: number | null
-          srs_due: string | null
-          srs_lapses: number
-          srs_last_review: string | null
-          srs_reps: number
-          srs_stability: number | null
-          srs_state: Database['public']['Enums']['srs_state'] | null
           target_example: string | null
           target_language: string
           translation: string | null
           user_id: string
         }
         Insert: {
-          active_leech_parked_at?: string | null
-          active_leech_rehab_correct_days?: number
-          active_leech_rehab_last_correct_on?: string | null
-          active_srs_difficulty?: number | null
-          active_srs_due?: string | null
-          active_srs_lapses?: number
-          active_srs_last_review?: string | null
-          active_srs_reps?: number
-          active_srs_stability?: number | null
-          active_srs_state?: Database['public']['Enums']['srs_state'] | null
-          added_to_practice_at?: string | null
           count?: number
           created_at?: string
           definition?: string | null
@@ -1065,35 +1119,14 @@ export type Database = {
           headword: string
           id?: string
           learning_mode?: string
-          leech_parked_at?: string | null
-          leech_rehab_correct_days?: number
-          leech_rehab_last_correct_on?: string | null
           native_example?: string | null
           sense?: string
-          srs_difficulty?: number | null
-          srs_due?: string | null
-          srs_lapses?: number
-          srs_last_review?: string | null
-          srs_reps?: number
-          srs_stability?: number | null
-          srs_state?: Database['public']['Enums']['srs_state'] | null
           target_example?: string | null
           target_language: string
           translation?: string | null
           user_id: string
         }
         Update: {
-          active_leech_parked_at?: string | null
-          active_leech_rehab_correct_days?: number
-          active_leech_rehab_last_correct_on?: string | null
-          active_srs_difficulty?: number | null
-          active_srs_due?: string | null
-          active_srs_lapses?: number
-          active_srs_last_review?: string | null
-          active_srs_reps?: number
-          active_srs_stability?: number | null
-          active_srs_state?: Database['public']['Enums']['srs_state'] | null
-          added_to_practice_at?: string | null
           count?: number
           created_at?: string
           definition?: string | null
@@ -1107,18 +1140,8 @@ export type Database = {
           headword?: string
           id?: string
           learning_mode?: string
-          leech_parked_at?: string | null
-          leech_rehab_correct_days?: number
-          leech_rehab_last_correct_on?: string | null
           native_example?: string | null
           sense?: string
-          srs_difficulty?: number | null
-          srs_due?: string | null
-          srs_lapses?: number
-          srs_last_review?: string | null
-          srs_reps?: number
-          srs_stability?: number | null
-          srs_state?: Database['public']['Enums']['srs_state'] | null
           target_example?: string | null
           target_language?: string
           translation?: string | null

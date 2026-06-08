@@ -1,9 +1,16 @@
 import type postgres from 'postgres'
-import type {
-  DbUserLookup,
-  PracticePool,
-  UserLookupsRepositoryInterface,
+import {
+  mergeFacet,
+  type DbUserLookup,
+  type DbUserLookupWithFacet,
+  type PracticePool,
+  type UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  CITATION_FORM,
+  skillForPool,
+  type StudyFacetsRepositoryInterface,
+} from '../../transport/database/study-facets/study-facets-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import {
   HARD_MAX_PRACTICE_NEW_TERMS,
@@ -20,6 +27,7 @@ export type WithTransaction = <T>(fn: (tx: postgres.Sql) => Promise<T>) => Promi
 
 export type RateTermDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
   // Per-language daily-new limit source for rateTerm (the language is only
   // known once the lookup row loads). applyTermRating itself takes the
@@ -38,7 +46,7 @@ export type RateTermDependencies = {
 // (the parked stale-queue no-op), so the client knows there's nothing to undo.
 export type ApplyTermRatingResult =
   | { ok: true; introducedNew: boolean; parked: boolean; eventId: string | null }
-  | { ok: false; reason: 'daily_cap_reached' | 'not_in_active_pool' }
+  | { ok: false; reason: 'daily_cap_reached' }
 
 // Apply one rating event to a user_lookup in the given pool. Shared by the
 // flashcard reviewer (rateTerm) and the reading-text finalizer
@@ -66,7 +74,10 @@ export type ApplyTermRatingResult =
 // event to undo because no FSRS result was applied. Same risk window as the
 // pre-event-log code.
 export const applyTermRating = async (params: {
-  lookup: DbUserLookup
+  // The term joined with the facet being rated (recognition for passive,
+  // production for active). The callers build it via mergeFacet so the facet is
+  // guaranteed to exist and carries the SRS/leech state to read.
+  lookup: DbUserLookupWithFacet
   userId: string
   rating: AppRating
   pool: PracticePool
@@ -79,22 +90,22 @@ export const applyTermRating = async (params: {
   deps: RateTermDependencies
 }): Promise<ApplyTermRatingResult> => {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
-  if (pool === 'active' && lookup.learning_mode !== 'active') {
-    return { ok: false, reason: 'not_in_active_pool' }
-  }
-  if (isParked(lookup, pool)) {
+  const skill = lookup.skill
+  const targetForm = lookup.target_form
+  if (isParked(lookup)) {
     // Stale queues can outlive parking: an old flashcard tab or an already
-    // generated reading text may still submit a rating after the term left
-    // rotation. Parked terms must not mutate FSRS until rehab graduates them.
+    // generated reading text may still submit a rating after the facet left
+    // rotation. Parked facets must not mutate FSRS until rehab graduates them.
     // No event is logged, so eventId is null — there is nothing to undo.
     return { ok: true, introducedNew: false, parked: true, eventId: null }
   }
 
-  const introducedNew = pool === 'passive' ? lookup.srs_state == null : lookup.active_srs_state == null
+  const introducedNew = lookup.srs_state == null
 
   if (introducedNew) {
     if (pool === 'passive') {
-      const introduced = await deps.userLookupsRepository.initializeSrsStateIfUnderDailyCap({
+      // The citation recognition facet is the only daily-new-capped facet.
+      const introduced = await deps.studyFacetsRepository.initializeCitationFacetIfUnderDailyCap({
         userLookupId: lookup.id,
         userId,
         targetLanguage: lookup.target_language,
@@ -103,51 +114,41 @@ export const applyTermRating = async (params: {
       })
       if (!introduced) return { ok: false, reason: 'daily_cap_reached' }
     } else {
-      await deps.userLookupsRepository.initializeSrsStateForPool({ userLookupId: lookup.id, pool: 'active' })
+      await deps.studyFacetsRepository.initializeFacet({ userLookupId: lookup.id, skill, targetForm })
     }
   }
 
-  // Pre-rating snapshot of the rated pool's SRS family, taken from the lookup
-  // row BEFORE applyRating (which reads but never mutates it). For an
-  // introduction the in-memory row still has its pre-guard NULL state — which
-  // is exactly the restore target a future undo needs.
-  const prev =
-    pool === 'passive'
-      ? {
-          state: lookup.srs_state,
-          due: lookup.srs_due,
-          stability: lookup.srs_stability,
-          difficulty: lookup.srs_difficulty,
-          lastReview: lookup.srs_last_review,
-          reps: lookup.srs_reps,
-          lapses: lookup.srs_lapses,
-        }
-      : {
-          state: lookup.active_srs_state,
-          due: lookup.active_srs_due,
-          stability: lookup.active_srs_stability,
-          difficulty: lookup.active_srs_difficulty,
-          lastReview: lookup.active_srs_last_review,
-          reps: lookup.active_srs_reps,
-          lapses: lookup.active_srs_lapses,
-        }
+  // Pre-rating snapshot of the facet's SRS family, taken from the merged row
+  // BEFORE applyRating (which reads but never mutates it). For an introduction
+  // the in-memory row still has its pre-guard NULL state — exactly the restore
+  // target a future undo needs.
+  const prev = {
+    state: lookup.srs_state,
+    due: lookup.srs_due,
+    stability: lookup.srs_stability,
+    difficulty: lookup.srs_difficulty,
+    lastReview: lookup.srs_last_review,
+    reps: lookup.srs_reps,
+    lapses: lookup.srs_lapses,
+  }
 
-  // applyRating seeds null-state rows via createEmptyCard, then FSRS transitions
-  // them. applyFsrsResultForPool overwrites the pool's srs columns;
-  // added_to_practice_at (stamped by the guard) is left untouched.
-  const result = applyRating(lookup, rating, new Date(), pool)
+  // applyRating seeds null-state facets via createEmptyCard, then FSRS
+  // transitions them. applyFsrsResultForFacet overwrites the facet's srs
+  // columns; introduced_at (stamped by the guard) is left untouched.
+  const result = applyRating(lookup, rating, new Date())
 
   // Leech detection, computed (pure) BEFORE the write so the event records
   // caused_parking. The park write itself stays a separate post-commit write —
   // same exposure as the historical FSRS-then-park ordering (a tiny
   // event-says-parked-but-park-write-failed window, reconcilable).
-  const parked = shouldParkLeech(lookup, result, pool)
+  const parked = shouldParkLeech(lookup, result)
 
   const eventId = await deps.withTransaction(async (tx) => {
-    await deps.userLookupsRepository.applyFsrsResultForPool(
+    await deps.studyFacetsRepository.applyFsrsResultForFacet(
       {
         userLookupId: lookup.id,
-        pool,
+        skill,
+        targetForm,
         state: result.state,
         due: result.due,
         stability: result.stability,
@@ -184,7 +185,7 @@ export const applyTermRating = async (params: {
   })
 
   if (parked) {
-    await deps.userLookupsRepository.parkLeech({ userLookupId: lookup.id, pool })
+    await deps.studyFacetsRepository.parkLeechFacet({ userLookupId: lookup.id, skill, targetForm })
   }
 
   // Pre-warm the exercise bank in the background: a freshly parked leech needs
@@ -215,6 +216,20 @@ export const rateTerm = async (
 ): Promise<RateTermResult> => {
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
+  if (pool === 'active' && lookup.learning_mode !== 'active') return { ok: false, reason: 'not_in_active_pool' }
+
+  // Map pool -> facet identity and load the facet being rated. The citation
+  // recognition facet is created eagerly on keep; repair it defensively here so
+  // any count>0 term lacking it can still be rated. A missing production facet
+  // means the term isn't actually enrolled in production (treat as not in the
+  // active pool rather than 500).
+  const skill = skillForPool(pool)
+  if (skill === 'meaning_recognition') {
+    await deps.studyFacetsRepository.ensureCitationFacet(lookup.id)
+  }
+  const facet = await deps.studyFacetsRepository.getFacet({ userLookupId: lookup.id, skill, targetForm: CITATION_FORM })
+  if (!facet) return { ok: false, reason: 'not_in_active_pool' }
+  const facetRow = mergeFacet(lookup, facet)
 
   // Pass the FULL clamped per-language daily cap: the atomic guard does its
   // own today-count comparison against it (subtracting here would
@@ -227,7 +242,7 @@ export const rateTerm = async (
         ).maxNewTerms
 
   const result = await applyTermRating({
-    lookup,
+    lookup: facetRow,
     userId,
     rating,
     pool,
@@ -235,7 +250,6 @@ export const rateTerm = async (
     bypassDailyCap: options?.bypassDailyCap ?? false,
     deps,
   })
-  if (!result.ok && result.reason === 'not_in_active_pool') return { ok: false, reason: 'not_in_active_pool' }
   if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true, parked: false, eventId: null }
   return {
     ok: true,

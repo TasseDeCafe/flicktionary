@@ -2,9 +2,59 @@ import postgres from 'postgres'
 import { beginTx, sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
+import {
+  CITATION_FORM,
+  ensureCitationFacet,
+  ensureFacet,
+  skillForPool,
+  type DbStudyFacet,
+  type FacetSkill,
+} from '../study-facets/study-facets-repository'
 
 export type DbUserLookup = Tables<'user_lookups'>
 export type SrsState = Database['public']['Enums']['srs_state']
+
+// A user_lookups row joined with one facet's FSRS + leech state, flattened with
+// the legacy srs_*/leech_* column names so the rating/leech services read a
+// single column family (the facet's skill already encodes the pool — there is
+// no more active_* mirror). `skill`/`target_form` carry the facet identity for
+// the writers. Produced by the facet-joined readers (listReviewTerms,
+// listParkedTerms) and by mergeFacet at the rating boundary.
+export type DbUserLookupWithFacet = DbUserLookup & {
+  skill: FacetSkill
+  target_form: string
+  srs_state: SrsState | null
+  srs_due: string | null
+  srs_stability: number | null
+  srs_difficulty: number | null
+  srs_last_review: string | null
+  srs_reps: number
+  srs_lapses: number
+  leech_parked_at: string | null
+  leech_rehab_correct_days: number
+  leech_rehab_last_correct_on: string | null
+  introduced_at: string | null
+}
+
+// Flatten a (lookup, facet) pair into the combined row the rating/leech
+// services consume. Used at the flashcard and reading rating boundaries where
+// the term and its facet are fetched separately.
+export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLookupWithFacet => ({
+  ...lookup,
+  skill: facet.skill as FacetSkill,
+  target_form: facet.target_form,
+  srs_state: facet.srs_state,
+  srs_due: facet.srs_due,
+  srs_stability: facet.srs_stability,
+  srs_difficulty: facet.srs_difficulty,
+  srs_last_review: facet.srs_last_review,
+  srs_reps: facet.srs_reps,
+  srs_lapses: facet.srs_lapses,
+  leech_parked_at: facet.leech_parked_at,
+  leech_rehab_correct_days: facet.leech_rehab_correct_days,
+  leech_rehab_last_correct_on: facet.leech_rehab_last_correct_on,
+  introduced_at: facet.introduced_at,
+})
 
 // Per-term knob: every kept term is at minimum 'passive' (recognition pool).
 // Promoting to 'active' adds the term to the parallel active-drill pool with
@@ -291,13 +341,20 @@ const renameKey = async (params: {
 // clears (re-keeping a soft-deleted chunk revives it), first_card_id is
 // backfilled if it wasn't set.
 const applyKeepTransition = async (params: { userLookupId: string; cardId: string }): Promise<void> => {
-  await sql`
-    UPDATE public.user_lookups
-    SET count = count + 1,
-        first_card_id = COALESCE(first_card_id, ${params.cardId}),
-        deleted_at = NULL
-    WHERE id = ${params.userLookupId}
-  `
+  // The count bump and the citation recognition facet creation must commit
+  // together: once a queueable facet is required on keep, a failure between the
+  // two would leave a kept term that can never appear in practice. ensureCitationFacet
+  // is idempotent (ON CONFLICT DO NOTHING) so a re-keep / repair pass is safe.
+  await beginTx(async (tx) => {
+    await tx`
+      UPDATE public.user_lookups
+      SET count = count + 1,
+          first_card_id = COALESCE(first_card_id, ${params.cardId}),
+          deleted_at = NULL
+      WHERE id = ${params.userLookupId}
+    `
+    await ensureCitationFacet(params.userLookupId, tx)
+  })
 }
 
 // Card transitioned 'kept' → Y (Y !== 'kept'). count drops by 1, floored at 0.
@@ -323,58 +380,65 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 // part of the user's vocabulary until they keep at least one card for the
 // chunk — hence the count > 0 gate everywhere on the Practice path.
 const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
+  // Recognition (passive) numbers read the citation meaning_recognition facet;
+  // the active mirror reads the citation meaning_production facet. Both are 1:1
+  // with the term (target_form=''), so the LEFT JOINs never fan out.
   const result = await sql`
     SELECT
       ul.target_language,
       COUNT(*)::int AS total_kept,
       COUNT(*) FILTER (
-        WHERE ul.srs_state IN ('new', 'review')
-          AND ul.srs_due IS NOT NULL
-          AND ul.srs_due <= NOW()
-          AND ul.leech_parked_at IS NULL
+        WHERE rf.srs_state IN ('new', 'review')
+          AND rf.srs_due IS NOT NULL
+          AND rf.srs_due <= NOW()
+          AND rf.leech_parked_at IS NULL
       )::int AS review_due_count,
       COUNT(*) FILTER (
-        WHERE ul.srs_state IN ('learning', 'relearning')
-          AND ul.srs_due IS NOT NULL
-          AND ul.srs_due <= NOW()
-          AND ul.leech_parked_at IS NULL
+        WHERE rf.srs_state IN ('learning', 'relearning')
+          AND rf.srs_due IS NOT NULL
+          AND rf.srs_due <= NOW()
+          AND rf.leech_parked_at IS NULL
       )::int AS learning_due_count,
-      MIN(ul.srs_due) FILTER (
-        WHERE ul.srs_state IN ('learning', 'relearning')
-          AND ul.srs_due IS NOT NULL
-          AND ul.srs_due > NOW()
-          AND ul.leech_parked_at IS NULL
+      MIN(rf.srs_due) FILTER (
+        WHERE rf.srs_state IN ('learning', 'relearning')
+          AND rf.srs_due IS NOT NULL
+          AND rf.srs_due > NOW()
+          AND rf.leech_parked_at IS NULL
       ) AS next_learning_due_at,
-      COUNT(*) FILTER (WHERE ul.srs_state IS NULL)::int AS new_count,
+      COUNT(*) FILTER (WHERE rf.srs_state IS NULL)::int AS new_count,
       COUNT(*) FILTER (
-        WHERE ul.added_to_practice_at >= CURRENT_DATE
-          AND ul.added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
+        WHERE rf.introduced_at >= CURRENT_DATE
+          AND rf.introduced_at < CURRENT_DATE + INTERVAL '1 day'
       )::int AS new_introduced_today_count,
-      COUNT(*) FILTER (WHERE ul.leech_parked_at IS NOT NULL)::int AS parked_count,
+      COUNT(*) FILTER (WHERE rf.leech_parked_at IS NOT NULL)::int AS parked_count,
       COUNT(*) FILTER (WHERE ul.learning_mode = 'active')::int AS active_total,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
-          AND ul.active_srs_state IN ('new', 'review')
-          AND ul.active_srs_due IS NOT NULL
-          AND ul.active_srs_due <= NOW()
-          AND ul.active_leech_parked_at IS NULL
+          AND pf.srs_state IN ('new', 'review')
+          AND pf.srs_due IS NOT NULL
+          AND pf.srs_due <= NOW()
+          AND pf.leech_parked_at IS NULL
       )::int AS active_review_due_count,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
-          AND ul.active_srs_state IN ('learning', 'relearning')
-          AND ul.active_srs_due IS NOT NULL
-          AND ul.active_srs_due <= NOW()
-          AND ul.active_leech_parked_at IS NULL
+          AND pf.srs_state IN ('learning', 'relearning')
+          AND pf.srs_due IS NOT NULL
+          AND pf.srs_due <= NOW()
+          AND pf.leech_parked_at IS NULL
       )::int AS active_learning_due_count,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
-          AND ul.active_srs_state IS NULL
+          AND pf.srs_state IS NULL
       )::int AS active_new_count,
       COUNT(*) FILTER (
         WHERE ul.learning_mode = 'active'
-          AND ul.active_leech_parked_at IS NOT NULL
+          AND pf.leech_parked_at IS NOT NULL
       )::int AS active_parked_count
     FROM public.user_lookups ul
+    LEFT JOIN public.study_facets rf
+      ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
+    LEFT JOIN public.study_facets pf
+      ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
     WHERE ul.user_id = ${userId}
       AND ul.count > 0
       AND ul.deleted_at IS NULL
@@ -433,7 +497,7 @@ const listReviewTerms = async (params: {
   maxLearningTerms: number
   maxNewTerms: number
   excludeUserLookupIds?: string[]
-}): Promise<DbUserLookup[]> => {
+}): Promise<DbUserLookupWithFacet[]> => {
   const wantDue = params.scope === 'review_due' || params.scope === 'mixed'
   const wantNew = params.scope === 'learn_new' || params.scope === 'mixed'
   const reviewLimit = wantDue ? params.maxReviewTerms : 0
@@ -441,17 +505,26 @@ const listReviewTerms = async (params: {
   const newLimit = wantNew ? params.maxNewTerms : 0
   if (reviewLimit <= 0 && learningLimit <= 0 && newLimit <= 0) return []
 
+  // pool maps to the facet skill; the queue addresses the citation facet. The
+  // active pool additionally restricts to learning_mode='active' rows (passive
+  // spans every kept term). disabled_at IS NULL keeps demoted production facets
+  // out of the queue. SRS state / due / parked all read off the joined facet.
+  const skill = skillForPool(params.pool)
+  const facetJoin = sql`
+    JOIN public.study_facets f
+      ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
+  `
+  const facetCols = sql`
+    f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
+    f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
+    f.leech_rehab_last_correct_on, f.introduced_at
+  `
   const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
-  const stateCol = params.pool === 'active' ? sql`ul.active_srs_state` : sql`ul.srs_state`
-  const dueCol = params.pool === 'active' ? sql`ul.active_srs_due` : sql`ul.srs_due`
-  // Bare (un-prefixed) due column for the outer ORDER BY over the UNION.
-  const outerDueCol = params.pool === 'active' ? sql`active_srs_due` : sql`srs_due`
-  // Leech-parked terms leave BOTH render modes at once — flashcards and the
+  // Leech-parked facets leave BOTH render modes at once — flashcards and the
   // reading-text generator's candidate set feed from this query. That's
   // intentional: reading mode implicitly rates untapped annotations 'good' on
-  // advance, which must never mutate a parked term's FSRS. The only way back
+  // advance, which must never mutate a parked facet's FSRS. The only way back
   // into rotation is rehab graduation.
-  const parkedCol = params.pool === 'active' ? sql`ul.active_leech_parked_at` : sql`ul.leech_parked_at`
   const excludedIds = params.excludeUserLookupIds ?? []
   const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
 
@@ -461,59 +534,65 @@ const listReviewTerms = async (params: {
           SELECT *
           FROM (
             (
-              SELECT ul.*
+              SELECT ul.*, ${facetCols}
               FROM public.user_lookups ul
+              ${facetJoin}
               WHERE ul.user_id = ${params.userId}
                 AND ul.target_language = ${params.targetLanguage}
                 AND ul.count > 0
                 AND ul.deleted_at IS NULL
+                AND f.disabled_at IS NULL
                 ${activeModeClause}
                 ${excludeClause}
-                AND ${parkedCol} IS NULL
-                AND ${dueCol} IS NOT NULL
-                AND ${dueCol} <= NOW()
-                AND ${stateCol} IN ('new', 'review')
-              ORDER BY ${dueCol} ASC, ul.headword ASC, ul.sense ASC
+                AND f.leech_parked_at IS NULL
+                AND f.srs_due IS NOT NULL
+                AND f.srs_due <= NOW()
+                AND f.srs_state IN ('new', 'review')
+              ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC
               LIMIT ${reviewLimit}
             )
             UNION ALL
             (
-              SELECT ul.*
+              SELECT ul.*, ${facetCols}
               FROM public.user_lookups ul
+              ${facetJoin}
               WHERE ul.user_id = ${params.userId}
                 AND ul.target_language = ${params.targetLanguage}
                 AND ul.count > 0
                 AND ul.deleted_at IS NULL
+                AND f.disabled_at IS NULL
                 ${activeModeClause}
                 ${excludeClause}
-                AND ${parkedCol} IS NULL
-                AND ${dueCol} IS NOT NULL
-                AND ${dueCol} <= NOW()
-                AND ${stateCol} IN ('learning', 'relearning')
-              ORDER BY ${dueCol} ASC, ul.headword ASC, ul.sense ASC
+                AND f.leech_parked_at IS NULL
+                AND f.srs_due IS NOT NULL
+                AND f.srs_due <= NOW()
+                AND f.srs_state IN ('learning', 'relearning')
+              ORDER BY f.srs_due ASC, ul.headword ASC, ul.sense ASC
               LIMIT ${learningLimit}
             )
           ) merged
-          ORDER BY ${outerDueCol} ASC, headword ASC, sense ASC
-        `) as DbUserLookup[])
+          ORDER BY srs_due ASC, headword ASC, sense ASC
+        `) as DbUserLookupWithFacet[])
       : []
 
   const newRows =
     newLimit > 0
       ? ((await sql`
-          SELECT ul.*
+          SELECT ul.*, ${facetCols}
           FROM public.user_lookups ul
+          ${facetJoin}
           WHERE ul.user_id = ${params.userId}
             AND ul.target_language = ${params.targetLanguage}
             AND ul.count > 0
             AND ul.deleted_at IS NULL
+            AND f.disabled_at IS NULL
             ${activeModeClause}
             ${excludeClause}
-            AND ${parkedCol} IS NULL
-            AND ${stateCol} IS NULL
+            AND f.leech_parked_at IS NULL
+            AND f.srs_state IS NULL
           ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
           LIMIT ${newLimit}
-        `) as DbUserLookup[])
+        `) as DbUserLookupWithFacet[])
       : []
 
   return [...dueRows, ...newRows]
@@ -581,394 +660,100 @@ const getFirstCardPointerForChunk = async (params: {
   return { cardId: rows[0]?.card_id ?? null, sessionId: rows[0]?.study_session_id ?? null }
 }
 
-// Initialize SRS state on a row that's never been reviewed before, so it
-// appears in the queue as 'new' and due now. No-op if srs_state is already
-// non-null.
-const initializeSrsState = async (userLookupId: string): Promise<void> => {
-  await sql`
-    UPDATE public.user_lookups
-    SET srs_state = 'new',
-        srs_due = NOW(),
-        added_to_practice_at = NOW()
-    WHERE id = ${userLookupId}
-      AND srs_state IS NULL
-  `
-}
-
-// Pool-aware initializer. The passive pool path is identical to
-// initializeSrsState (and also stamps added_to_practice_at for the daily-new
-// cap). The active pool path only touches active_srs_*; it must NOT bump
-// added_to_practice_at because the daily-new cap is passive-only — an active
-// drill should not eat the user's passive new-term allowance for the day.
-const initializeSrsStateForPool = async (params: { userLookupId: string; pool: PracticePool }): Promise<void> => {
-  if (params.pool === 'passive') {
-    await sql`
-      UPDATE public.user_lookups
-      SET srs_state = 'new',
-          srs_due = NOW(),
-          added_to_practice_at = NOW()
-      WHERE id = ${params.userLookupId}
-        AND srs_state IS NULL
-    `
-    return
-  }
-  await sql`
-    UPDATE public.user_lookups
-    SET active_srs_state = 'new',
-        active_srs_due = NOW()
-    WHERE id = ${params.userLookupId}
-      AND active_srs_state IS NULL
-  `
-}
-
-// Race-safe daily-new-cap guard for the flashcard reviewer. Introduces a
-// never-reviewed row into the passive pool (srs_state='new', due now, stamped
-// added_to_practice_at) only when the day's introduced count for this
-// (user, language) is still under maxNewTerms.
-//
-// The advisory transaction lock serializes all flashcard introductions for the
-// same user/language. A single UPDATE with COUNT(*) still races across two
-// different target rows because each transaction can see the same pre-update
-// aggregate. The lock keeps the count + update decision one-at-a-time.
-//
-// `bypassCap` (an explicit learn-new session) drops ONLY the < maxNewTerms
-// predicate: the lock, the srs_state IS NULL guard and the
-// added_to_practice_at stamp all stay, so bypassed introductions still count
-// toward today (mixed scope won't re-add more on top).
-const initializeSrsStateIfUnderDailyCap = async (params: {
-  userLookupId: string
-  userId: string
-  targetLanguage: string
-  maxNewTerms: number
-  bypassCap?: boolean
-}): Promise<boolean> => {
-  return await beginTx(async (tx) => {
-    await tx`
-      SELECT pg_advisory_xact_lock(hashtext(${`flashcards:${params.userId}:${params.targetLanguage}`}))
-    `
-    const rows = (await tx`
-      UPDATE public.user_lookups
-      SET srs_state = 'new',
-          srs_due = NOW(),
-          added_to_practice_at = NOW()
-      WHERE id = ${params.userLookupId}
-        AND user_id = ${params.userId}
-        AND target_language = ${params.targetLanguage}
-        AND count > 0
-        AND srs_state IS NULL
-        AND deleted_at IS NULL
-        AND (
-          ${params.bypassCap ?? false}
-          OR (
-            SELECT COUNT(*)
-            FROM public.user_lookups
-            WHERE user_id = ${params.userId}
-              AND target_language = ${params.targetLanguage}
-              AND count > 0
-              AND deleted_at IS NULL
-              AND added_to_practice_at >= CURRENT_DATE
-              AND added_to_practice_at < CURRENT_DATE + INTERVAL '1 day'
-          ) < ${params.maxNewTerms}
-        )
-      RETURNING id
-    `) as Array<{ id: string }>
-    return rows.length > 0
-  })
-}
-
-// Patch the SRS columns from a ts-fsrs Card object. Atomic update — call this
-// for every rating event.
-const applyFsrsResult = async (params: {
-  userLookupId: string
-  state: SrsState
-  due: Date
-  stability: number
-  difficulty: number
-  lastReview: Date
-  reps: number
-  lapses: number
-}): Promise<void> => {
-  await sql`
-    UPDATE public.user_lookups
-    SET srs_state = ${params.state},
-        srs_due = ${params.due.toISOString()},
-        srs_stability = ${params.stability},
-        srs_difficulty = ${params.difficulty},
-        srs_last_review = ${params.lastReview.toISOString()},
-        srs_reps = ${params.reps},
-        srs_lapses = ${params.lapses}
-    WHERE id = ${params.userLookupId}
-  `
-}
-
-// Pool-aware FSRS patch. The passive pool path matches applyFsrsResult; the
-// active pool path writes the same fields under their active_srs_* names.
-// `executor` defaults to the pooled connection; pass a transaction (beginTx's
-// tx) so the patch commits atomically with its practice_rating_events row.
-const applyFsrsResultForPool = async (
-  params: {
-    userLookupId: string
-    pool: PracticePool
-    state: SrsState
-    due: Date
-    stability: number
-    difficulty: number
-    lastReview: Date
-    reps: number
-    lapses: number
-  },
-  executor: postgres.Sql = sql
-): Promise<void> => {
-  if (params.pool === 'passive') {
-    await executor`
-      UPDATE public.user_lookups
-      SET srs_state = ${params.state},
-          srs_due = ${params.due.toISOString()},
-          srs_stability = ${params.stability},
-          srs_difficulty = ${params.difficulty},
-          srs_last_review = ${params.lastReview.toISOString()},
-          srs_reps = ${params.reps},
-          srs_lapses = ${params.lapses}
-      WHERE id = ${params.userLookupId}
-    `
-    return
-  }
-  await executor`
-    UPDATE public.user_lookups
-    SET active_srs_state = ${params.state},
-        active_srs_due = ${params.due.toISOString()},
-        active_srs_stability = ${params.stability},
-        active_srs_difficulty = ${params.difficulty},
-        active_srs_last_review = ${params.lastReview.toISOString()},
-        active_srs_reps = ${params.reps},
-        active_srs_lapses = ${params.lapses}
-    WHERE id = ${params.userLookupId}
-  `
-}
-
-// Undo support: restore one pool's SRS family from a practice_rating_events
-// prev_srs_* snapshot. Deliberately NOT routed through applyFsrsResultForPool —
-// that signature is non-null (a rating always produces a full FSRS card),
-// while an undone INTRODUCTION restores state/due/etc. back to NULL.
-//
-// - wasIntroduction additionally clears added_to_practice_at (passive only —
-//   active introductions never stamp it), refunding the daily-new slot the
-//   introduction consumed.
-// - causedParking additionally un-parks and zeroes rehab progress: the parking
-//   was a consequence of the rating being reverted. Un-parking an already
-//   unparked row is a harmless no-op (also covers the known parkLeech
-//   post-commit-crash gap, where the event says parked but the park write
-//   never landed).
-// - reps/lapses columns are NOT NULL; the snapshot's nulls only occur on the
-//   introduction path where 0 is the correct pre-introduction value.
-const restoreSrsSnapshotForPool = async (
-  params: {
-    userLookupId: string
-    pool: PracticePool
-    prevState: SrsState | null
-    prevDue: string | null
-    prevStability: number | null
-    prevDifficulty: number | null
-    prevLastReview: string | null
-    prevReps: number | null
-    prevLapses: number | null
-    wasIntroduction: boolean
-    causedParking: boolean
-  },
-  executor: postgres.Sql = sql
-): Promise<void> => {
-  if (params.pool === 'passive') {
-    await executor`
-      UPDATE public.user_lookups
-      SET srs_state = ${params.prevState},
-          srs_due = ${params.prevDue},
-          srs_stability = ${params.prevStability},
-          srs_difficulty = ${params.prevDifficulty},
-          srs_last_review = ${params.prevLastReview},
-          srs_reps = ${params.prevReps ?? 0},
-          srs_lapses = ${params.prevLapses ?? 0},
-          added_to_practice_at = CASE WHEN ${params.wasIntroduction} THEN NULL ELSE added_to_practice_at END,
-          leech_parked_at = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_parked_at END,
-          leech_rehab_correct_days = CASE WHEN ${params.causedParking} THEN 0 ELSE leech_rehab_correct_days END,
-          leech_rehab_last_correct_on = CASE WHEN ${params.causedParking} THEN NULL ELSE leech_rehab_last_correct_on END
-      WHERE id = ${params.userLookupId}
-    `
-    return
-  }
-  await executor`
-    UPDATE public.user_lookups
-    SET active_srs_state = ${params.prevState},
-        active_srs_due = ${params.prevDue},
-        active_srs_stability = ${params.prevStability},
-        active_srs_difficulty = ${params.prevDifficulty},
-        active_srs_last_review = ${params.prevLastReview},
-        active_srs_reps = ${params.prevReps ?? 0},
-        active_srs_lapses = ${params.prevLapses ?? 0},
-        active_leech_parked_at = CASE WHEN ${params.causedParking} THEN NULL ELSE active_leech_parked_at END,
-        active_leech_rehab_correct_days = CASE WHEN ${params.causedParking} THEN 0 ELSE active_leech_rehab_correct_days END,
-        active_leech_rehab_last_correct_on = CASE WHEN ${params.causedParking} THEN NULL ELSE active_leech_rehab_last_correct_on END
-    WHERE id = ${params.userLookupId}
-  `
-}
-
-// Switch a user_lookup between passive and active learning modes. Demoting
-// active -> passive preserves active_srs_* so a future re-promotion resumes
-// the schedule — but a REAL pool move resets the active leech-rehab state:
-// the active pool's membership was created/destroyed, so any in-flight rehab
-// progress (or parked flag) for that family is stale. The reset lives inside
-// this UPDATE (guarded by IS DISTINCT FROM) so every pool-move surface
-// (card triage, vocabulary tab) gets it, and idempotent "keep as active"
-// re-stamps — which call this with an unchanged mode — never wipe progress.
-// Passive rehab is untouched: passive membership never changes.
-// Returns the post-update row.
+// Switch a user_lookup between passive and active learning modes. learning_mode
+// stays the membership flag for Phase 1, but the citation meaning_production
+// facet is now kept in sync alongside it (so a Phase-1 promote/demote that
+// happens before learning_mode is dropped in Phase 3 leaves consistent state):
+//   - promote (active): ensure the production facet exists and CLEAR its
+//     disabled_at (re-enabling a previously-demoted, history-bearing facet so a
+//     re-promotion resumes its schedule).
+//   - demote (passive): SET disabled_at on the production facet (its
+//     active_srs_* history is preserved — disable != delete).
+// A REAL flip (guarded by IS DISTINCT FROM) additionally resets that facet's
+// leech-rehab state: membership changed, so any in-flight rehab progress is
+// stale. Idempotent "keep as active" re-stamps (unchanged mode) never wipe
+// progress. Returns the post-update term row.
 const setLearningMode = async (params: {
   userLookupId: string
   userId: string
   learningMode: LearningMode
 }): Promise<DbUserLookup | null> => {
-  const result = (await sql`
-    UPDATE public.user_lookups
-    SET learning_mode = ${params.learningMode},
-        active_leech_parked_at = NULL,
-        active_leech_rehab_correct_days = 0,
-        active_leech_rehab_last_correct_on = NULL
-    WHERE id = ${params.userLookupId}
-      AND user_id = ${params.userId}
-      AND deleted_at IS NULL
-      AND learning_mode IS DISTINCT FROM ${params.learningMode}
-    RETURNING *
-  `) as DbUserLookup[]
-  if (result[0]) return result[0]
-  // No mode change (idempotent re-stamp) — return the current row untouched.
-  return findByIdForUser(params.userLookupId, params.userId)
-}
-
-// =========================================================================
-// Leech parking / rehab
-// =========================================================================
-
-// Park a term out of the given pool's practice rotation. Zeroes any stale
-// rehab progress so the graduation ladder always starts at day 0. The
-// parked_at IS NULL guard makes a double-park (e.g. two racing rating events)
-// a no-op rather than a rehab-progress reset.
-const parkLeech = async (params: { userLookupId: string; pool: PracticePool }): Promise<void> => {
-  if (params.pool === 'passive') {
-    await sql`
+  return await beginTx(async (tx) => {
+    const result = (await tx`
       UPDATE public.user_lookups
-      SET leech_parked_at = NOW(),
-          leech_rehab_correct_days = 0,
-          leech_rehab_last_correct_on = NULL
+      SET learning_mode = ${params.learningMode}
       WHERE id = ${params.userLookupId}
-        AND leech_parked_at IS NULL
-    `
-    return
-  }
-  await sql`
-    UPDATE public.user_lookups
-    SET active_leech_parked_at = NOW(),
-        active_leech_rehab_correct_days = 0,
-        active_leech_rehab_last_correct_on = NULL
-    WHERE id = ${params.userLookupId}
-      AND active_leech_parked_at IS NULL
-  `
+        AND user_id = ${params.userId}
+        AND deleted_at IS NULL
+        AND learning_mode IS DISTINCT FROM ${params.learningMode}
+      RETURNING *
+    `) as DbUserLookup[]
+    if (!result[0]) {
+      // No mode change (idempotent re-stamp) — leave the facet untouched.
+      return findByIdForUser(params.userLookupId, params.userId)
+    }
+    if (params.learningMode === 'active') {
+      await ensureFacet(
+        { userLookupId: params.userLookupId, skill: 'meaning_production', targetForm: CITATION_FORM },
+        tx
+      )
+      await tx`
+        UPDATE public.study_facets
+        SET disabled_at = NULL,
+            leech_parked_at = NULL,
+            leech_rehab_correct_days = 0,
+            leech_rehab_last_correct_on = NULL,
+            updated_at = NOW()
+        WHERE user_lookup_id = ${params.userLookupId}
+          AND skill = 'meaning_production'
+          AND target_form = ${CITATION_FORM}
+      `
+    } else {
+      await tx`
+        UPDATE public.study_facets
+        SET disabled_at = NOW(),
+            leech_parked_at = NULL,
+            leech_rehab_correct_days = 0,
+            leech_rehab_last_correct_on = NULL,
+            updated_at = NOW()
+        WHERE user_lookup_id = ${params.userLookupId}
+          AND skill = 'meaning_production'
+          AND target_form = ${CITATION_FORM}
+      `
+    }
+    return result[0]
+  })
 }
 
-// One graduation-day credit for a correct gate-exercise answer. The
-// IS DISTINCT FROM CURRENT_DATE guard enforces at most one advance per server
-// calendar day — massed same-day correct answers count once. Returns the new
-// correct-day count, or null when no advance happened (already credited
-// today, or the term isn't parked in this pool).
-const advanceRehabDay = async (params: { userLookupId: string; pool: PracticePool }): Promise<number | null> => {
-  if (params.pool === 'passive') {
-    const rows = (await sql`
-      UPDATE public.user_lookups
-      SET leech_rehab_correct_days = leech_rehab_correct_days + 1,
-          leech_rehab_last_correct_on = CURRENT_DATE
-      WHERE id = ${params.userLookupId}
-        AND leech_parked_at IS NOT NULL
-        AND leech_rehab_last_correct_on IS DISTINCT FROM CURRENT_DATE
-      RETURNING leech_rehab_correct_days
-    `) as Array<{ leech_rehab_correct_days: number }>
-    return rows[0]?.leech_rehab_correct_days ?? null
-  }
-  const rows = (await sql`
-    UPDATE public.user_lookups
-    SET active_leech_rehab_correct_days = active_leech_rehab_correct_days + 1,
-        active_leech_rehab_last_correct_on = CURRENT_DATE
-    WHERE id = ${params.userLookupId}
-      AND active_leech_parked_at IS NOT NULL
-      AND active_leech_rehab_last_correct_on IS DISTINCT FROM CURRENT_DATE
-    RETURNING active_leech_rehab_correct_days
-  `) as Array<{ active_leech_rehab_correct_days: number }>
-  return rows[0]?.active_leech_rehab_correct_days ?? null
-}
-
-// Graduation: clear the pool's parked/rehab state and re-enter FSRS on a
-// softened schedule in ONE update. Direct column write — deliberately not
-// routed through applyFsrsResultForPool because reps/lapses must stay
-// UNCHANGED (history preserved; the explicit parked_at flag is the re-park
-// gate, not the lapse count). Also never touches added_to_practice_at, so the
-// daily-new cap is unaffected.
-const unparkAndSoftReentry = async (params: {
-  userLookupId: string
-  pool: PracticePool
-  state: SrsState
-  due: Date
-  stability: number
-  difficulty: number
-  lastReview: Date
-}): Promise<void> => {
-  if (params.pool === 'passive') {
-    await sql`
-      UPDATE public.user_lookups
-      SET srs_state = ${params.state},
-          srs_due = ${params.due.toISOString()},
-          srs_stability = ${params.stability},
-          srs_difficulty = ${params.difficulty},
-          srs_last_review = ${params.lastReview.toISOString()},
-          leech_parked_at = NULL,
-          leech_rehab_correct_days = 0,
-          leech_rehab_last_correct_on = NULL
-      WHERE id = ${params.userLookupId}
-        AND leech_parked_at IS NOT NULL
-    `
-    return
-  }
-  await sql`
-    UPDATE public.user_lookups
-    SET active_srs_state = ${params.state},
-        active_srs_due = ${params.due.toISOString()},
-        active_srs_stability = ${params.stability},
-        active_srs_difficulty = ${params.difficulty},
-        active_srs_last_review = ${params.lastReview.toISOString()},
-        active_leech_parked_at = NULL,
-        active_leech_rehab_correct_days = 0,
-        active_leech_rehab_last_correct_on = NULL
-    WHERE id = ${params.userLookupId}
-      AND active_leech_parked_at IS NOT NULL
-  `
-}
-
-// Parked terms for the Strengthen session's gated track, oldest-parked first
-// so the longest-stranded terms get rehab attention first.
+// Parked facets for the Strengthen session's gated track, oldest-parked first
+// so the longest-stranded facets get rehab attention first. Joined with the
+// term so callers still get the content fields; the leech/SRS state is the
+// facet's.
 const listParkedTerms = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
-}): Promise<DbUserLookup[]> => {
-  const parkedCol = params.pool === 'active' ? sql`ul.active_leech_parked_at` : sql`ul.leech_parked_at`
+}): Promise<DbUserLookupWithFacet[]> => {
+  const skill = skillForPool(params.pool)
   const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
   return (await sql`
-    SELECT ul.*
+    SELECT
+      ul.*,
+      f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
+      f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
+      f.leech_rehab_last_correct_on, f.introduced_at
     FROM public.user_lookups ul
+    JOIN public.study_facets f
+      ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
     WHERE ul.user_id = ${params.userId}
       AND ul.target_language = ${params.targetLanguage}
       AND ul.count > 0
       AND ul.deleted_at IS NULL
+      AND f.disabled_at IS NULL
       ${activeModeClause}
-      AND ${parkedCol} IS NOT NULL
-    ORDER BY ${parkedCol} ASC, ul.headword ASC, ul.sense ASC
-  `) as DbUserLookup[]
+      AND f.leech_parked_at IS NOT NULL
+    ORDER BY f.leech_parked_at ASC, ul.headword ASC, ul.sense ASC
+  `) as DbUserLookupWithFacet[]
 }
 
 // Lightweight "vocabulary" view used by the practice-text generator's prompt
@@ -992,20 +777,22 @@ const listVocabularyForLanguage = async (params: {
 }): Promise<VocabularyRow[]> => {
   const result = await sql`
     SELECT
-      headword,
-      sense,
-      translation,
-      definition,
-      target_example,
-      native_example,
-      srs_state,
-      srs_due,
-      srs_reps
-    FROM public.user_lookups
-    WHERE user_id = ${params.userId}
-      AND target_language = ${params.targetLanguage}
-      AND count > 0
-      AND deleted_at IS NULL
+      ul.headword,
+      ul.sense,
+      ul.translation,
+      ul.definition,
+      ul.target_example,
+      ul.native_example,
+      rf.srs_state,
+      rf.srs_due,
+      rf.srs_reps
+    FROM public.user_lookups ul
+    LEFT JOIN public.study_facets rf
+      ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
   `
   return result.map((row) => ({
     headword: row.headword as string,
@@ -1054,10 +841,14 @@ const listKeptChunksForExport = async (params: {
       ul.exploration_extras,
       ul.grammar,
       ul.learning_mode,
-      (ul.leech_parked_at IS NOT NULL OR ul.active_leech_parked_at IS NOT NULL) AS is_leech_parked,
+      (rf.leech_parked_at IS NOT NULL OR pf.leech_parked_at IS NOT NULL) AS is_leech_parked,
       c.surface_form,
       ts.text AS segment_text
     FROM public.user_lookups ul
+    LEFT JOIN public.study_facets rf
+      ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
+    LEFT JOIN public.study_facets pf
+      ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
     LEFT JOIN public.cards c ON c.id = ul.first_card_id
     LEFT JOIN public.text_segments ts ON ts.id = c.segment_id
     WHERE ul.user_id = ${params.userId}
@@ -1146,19 +937,23 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.grounded_at,
     ul.grammar_user_edited_at,
     ul.count,
-    ul.srs_state,
-    ul.srs_due,
-    ul.srs_reps,
+    rf.srs_state AS srs_state,
+    rf.srs_due AS srs_due,
+    rf.srs_reps AS srs_reps,
     ul.learning_mode,
-    ul.active_srs_state,
-    ul.active_srs_due,
-    ul.active_srs_reps,
+    pf.srs_state AS active_srs_state,
+    pf.srs_due AS active_srs_due,
+    pf.srs_reps AS active_srs_reps,
     ul.created_at,
     ul.first_card_id,
     c.segment_id AS first_card_segment_id,
     c.study_session_id,
     (s.id IS NOT NULL AND cs.type != 'adhoc') AS source_available
   FROM public.user_lookups ul
+  LEFT JOIN public.study_facets rf
+    ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
+  LEFT JOIN public.study_facets pf
+    ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
   LEFT JOIN public.cards c ON c.id = ul.first_card_id
   LEFT JOIN public.study_sessions s ON s.id = c.study_session_id AND s.deleted_at IS NULL
   LEFT JOIN public.content_sources cs ON cs.id = s.content_source_id
@@ -1252,15 +1047,15 @@ const listChunksForLanguage = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
         AND ul.count > 0
-        AND ul.srs_due IS NOT NULL
+        AND rf.srs_due IS NOT NULL
         ${searchClause}
         ${learningModeClause}
         AND ${
           cursor && cursor.phase === 'scheduled'
-            ? sql`(ul.srs_due, ul.id) > (${cursor.srsDue}::timestamptz, ${cursor.id}::uuid)`
+            ? sql`(rf.srs_due, ul.id) > (${cursor.srsDue}::timestamptz, ${cursor.id}::uuid)`
             : sql`TRUE`
         }
-      ORDER BY ul.srs_due ASC, ul.id ASC
+      ORDER BY rf.srs_due ASC, ul.id ASC
       LIMIT ${fetchLimit}
     `) as Array<Record<string, unknown>>
 
@@ -1291,7 +1086,7 @@ const listChunksForLanguage = async (params: {
         AND ul.target_language = ${params.targetLanguage}
         AND ul.deleted_at IS NULL
         AND ul.count > 0
-        AND ul.srs_due IS NULL
+        AND rf.srs_due IS NULL
         ${searchClause}
         ${learningModeClause}
       ORDER BY ul.id ASC
@@ -1315,7 +1110,7 @@ const listChunksForLanguage = async (params: {
       AND ul.target_language = ${params.targetLanguage}
       AND ul.deleted_at IS NULL
       AND ul.count > 0
-      AND ul.srs_due IS NULL
+      AND rf.srs_due IS NULL
       ${searchClause}
       ${learningModeClause}
       AND ul.id > ${cursor!.id}::uuid
@@ -1480,7 +1275,7 @@ export interface UserLookupsRepositoryInterface {
     maxLearningTerms: number
     maxNewTerms: number
     excludeUserLookupIds?: string[]
-  }) => Promise<DbUserLookup[]>
+  }) => Promise<DbUserLookupWithFacet[]>
   findByKey: (params: {
     userId: string
     targetLanguage: string
@@ -1493,72 +1288,16 @@ export interface UserLookupsRepositoryInterface {
     userLookupId: string
     userId: string
   }) => Promise<{ cardId: string | null; sessionId: string | null }>
-  initializeSrsState: (userLookupId: string) => Promise<void>
-  initializeSrsStateForPool: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
-  initializeSrsStateIfUnderDailyCap: (params: {
-    userLookupId: string
-    userId: string
-    targetLanguage: string
-    maxNewTerms: number
-    bypassCap?: boolean
-  }) => Promise<boolean>
-  applyFsrsResult: (params: {
-    userLookupId: string
-    state: SrsState
-    due: Date
-    stability: number
-    difficulty: number
-    lastReview: Date
-    reps: number
-    lapses: number
-  }) => Promise<void>
-  applyFsrsResultForPool: (
-    params: {
-      userLookupId: string
-      pool: PracticePool
-      state: SrsState
-      due: Date
-      stability: number
-      difficulty: number
-      lastReview: Date
-      reps: number
-      lapses: number
-    },
-    executor?: postgres.Sql
-  ) => Promise<void>
-  restoreSrsSnapshotForPool: (
-    params: {
-      userLookupId: string
-      pool: PracticePool
-      prevState: SrsState | null
-      prevDue: string | null
-      prevStability: number | null
-      prevDifficulty: number | null
-      prevLastReview: string | null
-      prevReps: number | null
-      prevLapses: number | null
-      wasIntroduction: boolean
-      causedParking: boolean
-    },
-    executor?: postgres.Sql
-  ) => Promise<void>
   setLearningMode: (params: {
     userLookupId: string
     userId: string
     learningMode: LearningMode
   }) => Promise<DbUserLookup | null>
-  parkLeech: (params: { userLookupId: string; pool: PracticePool }) => Promise<void>
-  advanceRehabDay: (params: { userLookupId: string; pool: PracticePool }) => Promise<number | null>
-  unparkAndSoftReentry: (params: {
-    userLookupId: string
+  listParkedTerms: (params: {
+    userId: string
+    targetLanguage: string
     pool: PracticePool
-    state: SrsState
-    due: Date
-    stability: number
-    difficulty: number
-    lastReview: Date
-  }) => Promise<void>
-  listParkedTerms: (params: { userId: string; targetLanguage: string; pool: PracticePool }) => Promise<DbUserLookup[]>
+  }) => Promise<DbUserLookupWithFacet[]>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
   listChunksForLanguage: (params: {
@@ -1610,16 +1349,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findByIdForUser,
     findByIdForUserIncludingDeleted,
     getFirstCardPointerForChunk,
-    initializeSrsState,
-    initializeSrsStateForPool,
-    initializeSrsStateIfUnderDailyCap,
-    applyFsrsResult,
-    applyFsrsResultForPool,
-    restoreSrsSnapshotForPool,
     setLearningMode,
-    parkLeech,
-    advanceRehabDay,
-    unparkAndSoftReentry,
     listParkedTerms,
     listVocabularyForLanguage,
     listKeptChunksForExport,

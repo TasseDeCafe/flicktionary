@@ -289,7 +289,7 @@ export const getStrengthenExercises = async (params: {
       userLookupId: lookup.id,
       pool,
       gateEligible: true,
-      type: gateTypeForTier(pool, rehabCorrectDaysFor(lookup, pool)),
+      type: gateTypeForTier(pool, rehabCorrectDaysFor(lookup)),
     })
     if (!exercise) void ensureExerciseBank({ lookup, pool, deps })
     entries.push(toEntry(lookup, 'gate', exercise))

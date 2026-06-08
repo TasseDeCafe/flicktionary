@@ -18,31 +18,46 @@ Code map:
 All "today" windows below use the **server's `CURRENT_DATE`** (Postgres, UTC) — not the
 client's timezone.
 
-## 1. Data model: one row, two pools
+## 1. Data model: terms and facets
 
-A `user_lookups` row is created per (user, target_language, headword, sense) when the user
-keeps a card (`set-card-status.ts`; `findOrCreate` + `applyKeepTransition` bumps `count`).
-Rows with `count = 0` or `deleted_at` set are invisible to practice.
+A `user_lookups` row — the **term** — is created per (user, target_language, headword, sense)
+when the user keeps a card (`set-card-status.ts`; `findOrCreate` + `applyKeepTransition` bumps
+`count`). Rows with `count = 0` or `deleted_at` set are invisible to practice. The term holds
+the *content* (headword/sense/translation/grammar); it no longer holds any SRS state.
 
-Every kept term participates in the **passive** pool (recognition). The user can additionally
-promote a term to the **active** pool (production) via `learning_mode = 'active'`. The pools
-are two *independent* SRS column families on the same row:
+Each independently-scheduled card is a **facet** — one `public.study_facets` row
+(`study-facets-repository.ts`) keyed by `(user_lookup_id, skill, target_form)`, owning its own
+FSRS + leech-rehab state and `introduced_at`. A facet is a `(skill, target_form)` pair on a
+term:
 
-| | passive | active |
+- **skill** — `meaning_recognition` | `meaning_production` (Phase 1; `pronunciation` is planned).
+- **target_form** — `''` is the citation/lemma (every Phase-1 facet); a non-empty string is a
+  specific inflected form (planned).
+
+`pool` (`passive`/`active`) stays on the wire and route params unchanged, but it is **derived**:
+it is the review mode of a skill, mapped at the service boundary (`skillForPool`), not a stored
+column. The passive queue serves `meaning_recognition`; the active queue serves
+`meaning_production`.
+
+| | passive (recognition) | active (production) |
 |---|---|---|
-| SRS columns | `srs_*` | `active_srs_*` |
-| Leech columns | `leech_parked_at`, `leech_rehab_*` | `active_leech_parked_at`, `active_leech_rehab_*` |
+| Facet skill | `meaning_recognition` | `meaning_production` |
 | Daily caps | new + review budgets | **none** (hard ceilings only) |
-| Counts toward `added_to_practice_at` | yes (stamped on introduction) | no |
+| Stamps `introduced_at` on introduction | yes | no |
 | Counts toward review budget | yes | no |
 | 24h interval floor | yes | no |
 | Card layout | headword front | prompt front (`ACTIVE_CARD_FACE_CONFIG`) |
 
-- `srs_state IS NULL` = never reviewed in that pool — the UI's **"Unseen"**.
-- `added_to_practice_at` is stamped once, when the passive introduction succeeds; it is the
-  source of truth for the daily-new count.
-- Promoting to active clears stale `active_leech_*` state; passive state is never touched by
-  mode changes.
+- Every kept term gets a `(meaning_recognition, '')` facet eagerly on keep (atomic with the
+  `count` bump; `ensureCitationFacet`, idempotent). A `(meaning_production, '')` facet exists
+  only once production is enabled.
+- `srs_state IS NULL` on a facet = never reviewed — the UI's **"Unseen"**.
+- `introduced_at` (on the citation recognition facet) is the source of truth for the daily-new
+  count; it replaces the old `user_lookups.added_to_practice_at`.
+- **Membership vs existence**: `learning_mode` is kept for Phase 1 as the active-membership
+  flag, but a demoted term keeps its production facet (history intact) with `disabled_at` set —
+  so "in production" means an *enabled* (`disabled_at IS NULL`) production facet, never mere row
+  existence. Promote clears `disabled_at` (+ resets its leech state); demote sets it.
 
 ## 2. The scheduler (fsrs.ts)
 
@@ -51,15 +66,17 @@ other parameters are library defaults. App ratings `again | hard | good | easy` 
 FSRS grades. States mirror FSRS: `new`, `learning`, `review`, `relearning` (plus DB `NULL` =
 not introduced).
 
-`applyRating(row, rating, now, pool)`:
+`applyRating(facetRow, rating, now)`:
 
-1. Reads the pool's column family into an FSRS card; a never-reviewed row is seeded with
+1. Reads the facet's FSRS columns into an FSRS card; a never-reviewed facet is seeded with
    `createEmptyCard(now)`.
-2. Runs `fsrs.next()` and persists `state/due/stability/difficulty/last_review/reps/lapses`.
-3. **Passive 24h floor**: for passive, non-`again` ratings, `due` is clamped to at least
-   `now + 24h`. This kills FSRS's minutes-away intraday steps for correct answers — finishing
-   a session leaves nothing immediately due. `again` is deliberately NOT clamped, so an
-   abandoned miss stays due soon. The active pool is never clamped.
+2. Runs `fsrs.next()` and persists `state/due/stability/difficulty/last_review/reps/lapses` on
+   the facet (`applyFsrsResultForFacet`).
+3. **Recognition 24h floor**: for recognition facets (`skill === 'meaning_recognition'`),
+   non-`again` ratings clamp `due` to at least `now + 24h`. This kills FSRS's minutes-away
+   intraday steps for correct answers — finishing a session leaves nothing immediately due.
+   `again` is deliberately NOT clamped, so an abandoned miss stays due soon. Production facets
+   are never clamped.
 
 Practical effect of the floor: a passive card you get right never comes back the same day; a
 card you fail goes to `learning`/`relearning` with a short FSRS step and is served as a
