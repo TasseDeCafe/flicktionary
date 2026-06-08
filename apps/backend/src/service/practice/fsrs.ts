@@ -1,5 +1,6 @@
 import { FSRS, generatorParameters, createEmptyCard, Rating, State, type Card as FsrsCard, type Grade } from 'ts-fsrs'
 import type { DbUserLookupWithFacet, SrsState } from '../../transport/database/user-lookups/user-lookups-repository'
+import { reviewModeForSkill } from '../../transport/database/study-facets/study-facets-repository'
 import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
 
 const fsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
@@ -102,8 +103,8 @@ export const applyRating = (row: DbUserLookupWithFacet, rating: AppRating, now: 
   const result = fsrs.next(card, now, RATING_MAP[rating])
   const next = result.card
   // The next-day floor applies to recognition-mode facets (the passive queue),
-  // not production. In Phase 1 that's exactly meaning_recognition.
-  const isRecognition = row.skill === 'meaning_recognition'
+  // not production — that's meaning_recognition AND pronunciation (Phase 4).
+  const isRecognition = reviewModeForSkill(row.skill) === 'recognition'
   const floor = now.getTime() + MIN_PASSIVE_INTERVAL_MS
   const due = isRecognition && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
   return {

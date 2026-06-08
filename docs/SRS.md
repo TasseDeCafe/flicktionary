@@ -30,18 +30,20 @@ Each independently-scheduled card is a **facet** — one `public.study_facets` r
 FSRS + leech-rehab state and `introduced_at`. A facet is a `(skill, target_form)` pair on a
 term:
 
-- **skill** — `meaning_recognition` | `meaning_production` (Phase 1; `pronunciation` is planned).
+- **skill** — `meaning_recognition` | `meaning_production` | `pronunciation` (the last added in
+  Phase 4a; recognition-mode, citation-only — see §pronunciation below). `target_form`-bearing
+  form facets are Phase 4b.
 - **target_form** — `''` is the citation/lemma (every Phase-1 facet); a non-empty string is a
-  specific inflected form (planned).
+  specific inflected form (Phase 4b).
 
 `pool` (`passive`/`active`) stays on the wire and route params unchanged, but it is **derived**:
-it is the review mode of a skill, mapped at the service boundary (`skillForPool`), not a stored
-column. The passive queue serves `meaning_recognition`; the active queue serves
-`meaning_production`.
+it is the review mode of a skill, mapped at the service boundary (`skillForPool` /
+`reviewModeForSkill`), not a stored column. The passive queue serves the recognition skills
+`{meaning_recognition, pronunciation}`; the active queue serves `meaning_production`.
 
 | | passive (recognition) | active (production) |
 |---|---|---|
-| Facet skill | `meaning_recognition` | `meaning_production` |
+| Facet skill | `meaning_recognition`, `pronunciation` | `meaning_production` |
 | Daily caps | new + review budgets | **none** (hard ceilings only) |
 | Stamps `introduced_at` on introduction | yes | no |
 | Counts toward review budget | yes | no |
@@ -63,6 +65,26 @@ column. The passive queue serves `meaning_recognition`; the active queue serves
   `setFacetEnabled({skill, targetForm, enabled})` (it replaced `setLearningMode`): enable upserts
   the facet and clears `disabled_at`; disable sets it; a real flip resets that facet's leech state.
 
+### Pronunciation facet (Phase 4a, citation only)
+
+`(pronunciation, '')` is a recognition-mode facet (passive queue, own schedule, counts toward the
+recognition budget) drilling how the headword *sounds*. Enabled from the Study-targets control
+alongside Recognition/Production.
+
+- **Readiness gate** — offerable only when the term has a displayable IPA
+  (`hasDisplayableIpa(grammar.ipa, lang)` in `packages/core/utils/pick-ipa`, dialect-independent).
+  The chip is greyed ("No pronunciation data yet") when none exists; the backend defends an
+  IPA-less enable by deleting the just-created facet (`reconcilePronunciationFacet`).
+- **IPA-vanished → delete** (decided over rehab): a pronunciation card derives its back from
+  `grammar.ipa` at render; if a later grammar edit removes the IPA, the facet is hard-deleted
+  (`chunks.updateContent` → `reconcilePronunciationFacet` → `deleteFacet`). There is nothing to
+  rehab a soundless pronunciation with, so disable-keeps-history doesn't apply here.
+- **Card** (`flashcard-mode-view`, dedicated body, not the slot resolver): front = headword (ru
+  stress hidden) + an audio cue (`Volume2` + "Say it out loud"; playback is roadmap, the chip is a
+  prompt); back = stressed `display_form` + IPA (`pickIpaForDisplay`, falls back across dialects so
+  a card that passed the gate never reveals an empty back). Self-graded, passive pool.
+- Payload is `{}` — IPA is derived at render from `grammar.ipa`, so grammar edits stay live.
+
 ## 2. The scheduler (fsrs.ts)
 
 Thin wrapper around `ts-fsrs`: `new FSRS(generatorParameters({ enable_fuzz: true }))` — all
@@ -76,7 +98,8 @@ not introduced).
    `createEmptyCard(now)`.
 2. Runs `fsrs.next()` and persists `state/due/stability/difficulty/last_review/reps/lapses` on
    the facet (`applyFsrsResultForFacet`).
-3. **Recognition 24h floor**: for recognition facets (`skill === 'meaning_recognition'`),
+3. **Recognition 24h floor**: for recognition-mode facets (`reviewModeForSkill(skill) ===
+   'recognition'` — i.e. `meaning_recognition` and `pronunciation`),
    non-`again` ratings clamp `due` to at least `now + 24h`. This kills FSRS's minutes-away
    intraday steps for correct answers — finishing a session leaves nothing immediately due.
    `again` is deliberately NOT clamped, so an abandoned miss stays due soon. Production facets

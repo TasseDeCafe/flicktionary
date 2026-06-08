@@ -287,11 +287,14 @@ Two-layer UI.
   `?from=vocabulary` over already-kept chunks — the triage "Add to" framing
   would misrepresent them) there is **no bottom bar**. Instead the card section
   shows an inline **Study targets** control plus a secondary **Delete term**
-  affordance. Study targets is a chip-per-target row (Phase 3: one **Citation**
-  chip labelled with the headword) whose edit pencil opens a small popover of
-  **skill checkboxes** — Recognition (locked on; created on keep), Production
-  (toggles the `(meaning_production, '')` facet via `chunks.setFacetEnabled`),
-  and Pronunciation (disabled, "coming soon"; Phase 4). The chip is accented
+  affordance. Study targets is a chip-per-target row (one **Citation**
+  chip labelled with the headword; form chips are Phase 4b) whose edit pencil
+  opens a small popover of **skill checkboxes** — Recognition (locked on; created
+  on keep), Production (toggles the `(meaning_production, '')` facet via
+  `chunks.setFacetEnabled`), and Pronunciation (toggles the `(pronunciation, '')`
+  facet; greyed "No pronunciation data yet" when the term has no displayable IPA
+  — `hasDisplayableIpa`). The popover reads each facet's enabled state lazily via
+  `chunks.getStudyTargets`. The chip is accented
   (★) when Production is on. Toggling keeps the user on the focus view; the
   chevron closes back to the originating surface (`?from=practice` carries
   `practiceLang` + `practicePool` + `practiceMode` — `read` (default) for a
@@ -363,7 +366,7 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
 
 - **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Filter pills: `All` (default) / `Passive` / `Active` — filter on the derived `learningMode`; selection syncs with the `?mode=passive|active` search param so reload survives. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + a compact ★ `Active` chip when the derived `learningMode` is `'active'` + count badge when the chunk has been kept multiple times.
 - **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
-- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: an inline **Study targets** control (the citation chip + skill popover — Recognition locked on, Production toggles the `(meaning_production, '')` facet via `chunks.setFacetEnabled`, Pronunciation disabled "coming soon"; chip accented ★ when Production is on), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
+- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: an inline **Study targets** control (the citation chip + skill popover — Recognition locked on, Production toggles the `(meaning_production, '')` facet via `chunks.setFacetEnabled`, Pronunciation toggles the `(pronunciation, '')` facet — greyed when the term has no displayable IPA; chip accented ★ when Production is on), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
 - **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Two restore paths: (a) re-keeping the same `(headword, sense)` in any session — the keep-transition clears `deleted_at`; (b) the explicit `Restore` action the Practice reading view surfaces (toast immediately after a delete; slim Restore-only RateSheet when tapping a soft-deleted annotation), backed by the dedicated `chunks.restoreChunk` endpoint. The Vocabulary tab itself has no Trash bin in v1.
 - **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki `#` directives + one column per datum; see Export below). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
 

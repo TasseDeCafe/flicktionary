@@ -81,6 +81,19 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
 // its own independent SRS state under the active_srs_* columns.
 export type LearningMode = 'passive' | 'active'
 
+// One study facet projected for the Study-targets control (listFacetsForChunk).
+// Structurally matches StudyFacetSummarySchema in api-client; declared locally
+// to keep this repository decoupled from the contract package (same convention
+// as ChunkRow/LearningMode).
+export type ChunkFacetSummary = {
+  skill: FacetSkill
+  targetForm: string
+  enabled: boolean
+  dataStatus: 'ready' | 'pending_data'
+  srsState: SrsState | null
+  payload: Record<string, unknown>
+}
+
 // Which SRS column set to read or advance. 1:1 with practice_sessions.pool —
 // passive sessions read the legacy srs_* columns, active drills read
 // active_srs_*.
@@ -1055,6 +1068,51 @@ const getChunkRowForUser = async (userLookupId: string, userId: string): Promise
   return rows[0] ? mapChunkRow(rows[0]) : null
 }
 
+// Hard-delete one facet (skill x target_form) of a term. Unlike setFacetEnabled
+// (disable != delete: keeps SRS history for re-enable), this drops the row and
+// its schedule entirely. Used for the IPA-vanished case (Trap 12): a
+// pronunciation facet has nothing to rehab once its IPA precondition disappears,
+// so it is deleted rather than disabled. Keyed on user_lookup_id (FK-cascade
+// scope); ownership is enforced by the caller.
+const deleteFacet = async (params: { userLookupId: string; skill: FacetSkill; targetForm: string }): Promise<void> => {
+  await sql`
+    DELETE FROM public.study_facets
+    WHERE user_lookup_id = ${params.userLookupId}
+      AND skill = ${params.skill}
+      AND target_form = ${params.targetForm}
+  `
+}
+
+// All study facets of one term, for the Study-targets control (term view). The
+// chunk DTO only derives learningMode from the citation production facet; this
+// surfaces every facet's identity + membership (enabled = disabled_at IS NULL) +
+// data readiness so the term view can render the pronunciation row and form
+// chips. Ownership is enforced by the caller (findByIdForUser) — this is keyed
+// on user_lookup_id alone, matching the FK-cascade scope of study_facets.
+const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSummary[]> => {
+  const rows = (await sql`
+    SELECT skill, target_form, srs_state, data_status, payload, disabled_at
+    FROM public.study_facets
+    WHERE user_lookup_id = ${userLookupId}
+    ORDER BY skill ASC, target_form ASC
+  `) as Array<{
+    skill: FacetSkill
+    target_form: string
+    srs_state: SrsState | null
+    data_status: 'ready' | 'pending_data'
+    payload: Record<string, unknown>
+    disabled_at: string | null
+  }>
+  return rows.map((r) => ({
+    skill: r.skill,
+    targetForm: r.target_form,
+    enabled: r.disabled_at === null,
+    dataStatus: r.data_status,
+    srsState: r.srs_state,
+    payload: r.payload ?? {},
+  }))
+}
+
 // Case-insensitive substring filter across headword/translation/definition.
 // `%` and `_` in user input retain LIKE-pattern semantics — acceptable for
 // the v1 search bar; if it becomes a footgun we can escape later.
@@ -1374,6 +1432,8 @@ export interface UserLookupsRepositoryInterface {
     payload?: Record<string, unknown>
   }) => Promise<DbUserLookup | null>
   getChunkRowForUser: (userLookupId: string, userId: string) => Promise<ChunkRow | null>
+  listFacetsForChunk: (userLookupId: string) => Promise<ChunkFacetSummary[]>
+  deleteFacet: (params: { userLookupId: string; skill: FacetSkill; targetForm: string }) => Promise<void>
   listParkedTerms: (params: {
     userId: string
     targetLanguage: string
@@ -1432,6 +1492,8 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     getFirstCardPointerForChunk,
     setFacetEnabled,
     getChunkRowForUser,
+    listFacetsForChunk,
+    deleteFacet,
     listParkedTerms,
     listVocabularyForLanguage,
     listKeptChunksForExport,
