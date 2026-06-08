@@ -3,14 +3,19 @@ import { Pencil, Star } from 'lucide-react'
 import { Checkbox } from '@flicktionary/ui/components/checkbox'
 import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { useSetFacetEnabled } from '@/features/vocabulary/api/vocabulary-hooks'
+import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
+import { useSetFacetEnabled, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
 
 // Minimal slice of a chunk this control needs. `learningMode` is the wire's
 // DERIVED flag: 'active' iff the citation meaning_production facet is enabled.
+// `grammar`/`targetLanguage` gate the pronunciation row: that facet renders its
+// back from grammar.ipa, so it's only offerable when an IPA is displayable.
 type StudyTargetsChunk = {
   id: string
   headword: string
   learningMode: 'passive' | 'active'
+  grammar: Record<string, unknown>
+  targetLanguage: string
 }
 
 type StudyTargetsSectionProps = {
@@ -36,11 +41,22 @@ export const StudyTargetsSection = ({ chunk }: StudyTargetsSectionProps) => {
 const CitationChip = ({ chunk }: { chunk: StudyTargetsChunk }) => {
   const { t } = useLingui()
   const { mutate: setFacetEnabled, isPending } = useSetFacetEnabled()
+  const { data: facets } = useStudyTargets(chunk.id)
   const productionOn = chunk.learningMode === 'active'
   const headword = chunk.headword
 
+  // Pronunciation is a citation-only recognition facet (passive queue). It's
+  // offerable only when the term has a displayable IPA — its card back is the
+  // IPA, derived at render (Trap 12). Enabled state comes from the facet read.
+  const ipaAvailable = hasDisplayableIpa((chunk.grammar?.ipa ?? null) as IpaBagShape | null, chunk.targetLanguage)
+  const pronunciationOn = !!facets?.some((f) => f.skill === 'pronunciation' && f.targetForm === '' && f.enabled)
+
   const toggleProduction = (next: boolean) => {
     setFacetEnabled({ chunkId: chunk.id, skill: 'meaning_production', targetForm: '', enabled: next })
+  }
+
+  const togglePronunciation = (next: boolean) => {
+    setFacetEnabled({ chunkId: chunk.id, skill: 'pronunciation', targetForm: '', enabled: next })
   }
 
   return (
@@ -74,13 +90,16 @@ const CitationChip = ({ chunk }: { chunk: StudyTargetsChunk }) => {
             disabled={isPending}
             onCheckedChange={toggleProduction}
           />
-          {/* Pronunciation lands in Phase 4. */}
+          {/* Pronunciation (citation only): a passive-queue card drilling the
+              headword's sound. Offerable only when an IPA is displayable; on a
+              term with none it's greyed with a "needs data" hint. */}
           <SkillRow
             id={`pronunciation-${chunk.id}`}
             label={t`Pronunciation`}
-            hint={t`Coming soon`}
-            checked={false}
-            disabled
+            hint={ipaAvailable ? undefined : t`No pronunciation data yet`}
+            checked={pronunciationOn}
+            disabled={isPending || !ipaAvailable}
+            onCheckedChange={ipaAvailable ? togglePronunciation : undefined}
           />
         </div>
       </PopoverContent>

@@ -6,6 +6,7 @@ import {
   ChunkSchema,
   FacetSkillSchema,
   LearningModeSchema,
+  StudyFacetSummarySchema,
 } from './common/flicktionary-schemas'
 
 // Cursor wire format for `listChunks`. Encoded base64 over a JSON payload by
@@ -161,6 +162,22 @@ export const chunksContract = {
       })
     )
     .output(z.object({ data: ChunkSchema })),
+
+  // Read the study facets of one term for the Study-targets control. The chunk
+  // DTO only derives `learningMode` from the citation production facet; the
+  // term view needs every facet's identity + enabled + data readiness to render
+  // the pronunciation row (Phase 4a) and form chips (Phase 4b). Fetched lazily
+  // when the term view opens (kept off the chunk DTO so the vocab list payload
+  // stays lean — most chunks never open the term view). Phase 4b extends the
+  // output with `candidateForms` (encountered surface forms for "+ Add a form").
+  getStudyTargets: oc
+    .route({ method: 'GET', path: '/chunks/{chunkId}/study-targets', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ chunkId: z.string().uuid() }))
+    .output(z.object({ data: z.object({ facets: z.array(StudyFacetSummarySchema) }) })),
 
   // Distinct target_languages the user has at least one (non-deleted) chunk in.
   // Powers the language switcher pills on the Vocabulary tab.

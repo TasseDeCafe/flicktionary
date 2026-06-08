@@ -380,6 +380,8 @@ export const FocusView = () => {
                         id: card.chunk.id,
                         headword: card.chunk.headword,
                         learningMode: card.chunk.learningMode,
+                        grammar: card.chunk.grammar,
+                        targetLanguage: card.chunk.targetLanguage,
                       }}
                     />
                     <div>

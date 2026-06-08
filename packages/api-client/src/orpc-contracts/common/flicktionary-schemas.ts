@@ -182,10 +182,27 @@ export type PracticePool = z.infer<typeof PracticePoolSchema>
 
 // What you practise on a target — one axis of a study_facets facet. `pool` (the
 // session queue, above) is the DERIVED review mode of a skill and stays on the
-// wire; this is card identity. 'pronunciation' arrives in Phase 4 (widened
-// CHECK); the two meaning skills are the Phase-2 surface.
-export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production'])
+// wire; this is card identity. 'pronunciation' (recognition-mode, citation-only)
+// arrives in Phase 4 (widened CHECK).
+export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
 export type FacetSkill = z.infer<typeof FacetSkillSchema>
+
+// One study facet as seen by the Study-targets control (chunks.getStudyTargets).
+// The chunk DTO only derives `learningMode` from the citation production facet;
+// to render per-form / pronunciation chips the term view needs each facet's
+// identity + membership + data readiness, which this summary carries. `enabled`
+// = disabled_at IS NULL (disable != delete); `dataStatus='pending_data'` =
+// enabled but not yet queued (Phase 4 form generation). `payload` carries
+// {form, translation} for form facets, {} for citation/pronunciation.
+export const StudyFacetSummarySchema = z.object({
+  skill: FacetSkillSchema,
+  targetForm: z.string(),
+  enabled: z.boolean(),
+  dataStatus: z.enum(['ready', 'pending_data']),
+  srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
+  payload: z.record(z.string(), z.unknown()),
+})
+export type StudyFacetSummary = z.infer<typeof StudyFacetSummarySchema>
 
 // The canonical vocabulary entry: one row per (user, targetLanguage, headword,
 // sense). Owns the gloss/example fields so edits propagate to every card that

@@ -40,7 +40,15 @@ export const VocabularyActionDrawer = ({
           <OverlayDescription className='sr-only'>{t`Actions for this vocabulary term.`}</OverlayDescription>
         </OverlayHeader>
         <div className='flex flex-col gap-3 px-4 pb-2'>
-          <StudyTargetsSection chunk={{ id: chunk.id, headword: chunk.headword, learningMode: chunk.learningMode }} />
+          <StudyTargetsSection
+            chunk={{
+              id: chunk.id,
+              headword: chunk.headword,
+              learningMode: chunk.learningMode,
+              grammar: chunk.grammar,
+              targetLanguage: chunk.targetLanguage,
+            }}
+          />
         </div>
         <div className='flex flex-col gap-1 px-2 pb-2'>
           {canOpenSource && (

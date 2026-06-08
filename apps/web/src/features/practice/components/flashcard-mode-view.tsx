@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical, Volume2 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
@@ -11,7 +11,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { pickIpa, pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import {
   getCardFaceConfig,
   resolveCardSlots,
@@ -424,6 +424,18 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const ipa = pickIpa(card.grammar?.ipa, targetLanguage, englishIpaDialect)
 
+  // Pronunciation facet (citation only, passive queue): front prompts the
+  // headword + an audio cue ("say it out loud"), the flip reveals the stressed
+  // display form + IPA. Distinct enough from the meaning layouts (no slot
+  // resolver, its own audio chip) that it gets a dedicated body. The IPA falls
+  // back across dialects so a card that passed the enable gate never reveals an
+  // empty back (the IPA-vanished case is handled server-side by deleting the
+  // facet — see reconcilePronunciationFacet).
+  const isPronunciation = card.skill === 'pronunciation'
+  const pronunciationIpa = isPronunciation
+    ? pickIpaForDisplay(card.grammar?.ipa, targetLanguage, englishIpaDialect)
+    : undefined
+
   // "Study this exact form": when enabled on the chunk, the front drills the
   // inflected form (grammar.studied_form.form) instead of the lemma; the back
   // leads with the form's in-context translation and demotes the lemma + its
@@ -531,21 +543,57 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     <div className='flex flex-1 flex-col overflow-hidden'>
       <div className='flex-1 overflow-y-auto'>
         <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8 text-center'>
-          {frontSlots.map((slot) => renderSlot(slot, 'front'))}
-          {showBack && (
+          {isPronunciation ? (
             <>
-              <div className='my-2 w-full border-t' />
-              {studiedForm && (
-                <p className='text-muted-foreground text-sm'>
+              {/* Front: bare headword (ru stress hidden so the answer isn't
+                  given away) + an audio cue. Audio playback is roadmap; the chip
+                  is the "pronounce this" prompt, not a player. */}
+              <StressMarkedText
+                text={stripStressMarks(card.grammar?.display_form || card.headword)}
+                lang={targetLanguage}
+                className='text-2xl font-bold'
+              />
+              <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+                <Volume2 className='h-4 w-4' />
+                <span>{t`Say it out loud`}</span>
+              </div>
+              {showBack && (
+                <>
+                  <div className='my-2 w-full border-t' />
+                  {/* Back: stressed display form + IPA. */}
                   <StressMarkedText
                     text={card.grammar?.display_form || card.headword}
                     lang={targetLanguage}
-                    className='font-medium'
+                    className='text-2xl font-bold'
                   />
-                  {card.translation ? ` — ${card.translation}` : null}
-                </p>
+                  {pronunciationIpa && (
+                    <div className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
+                      <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                      <span>{pronunciationIpa}</span>
+                    </div>
+                  )}
+                </>
               )}
-              {backSlots.map((slot) => renderSlot(slot, 'back'))}
+            </>
+          ) : (
+            <>
+              {frontSlots.map((slot) => renderSlot(slot, 'front'))}
+              {showBack && (
+                <>
+                  <div className='my-2 w-full border-t' />
+                  {studiedForm && (
+                    <p className='text-muted-foreground text-sm'>
+                      <StressMarkedText
+                        text={card.grammar?.display_form || card.headword}
+                        lang={targetLanguage}
+                        className='font-medium'
+                      />
+                      {card.translation ? ` — ${card.translation}` : null}
+                    </p>
+                  )}
+                  {backSlots.map((slot) => renderSlot(slot, 'back'))}
+                </>
+              )}
             </>
           )}
         </div>

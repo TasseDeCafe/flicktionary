@@ -7,8 +7,9 @@ import { Tables, Database } from '../database.public.types'
 export type DbStudyFacet = Tables<'study_facets'>
 export type SrsState = Database['public']['Enums']['srs_state']
 
-// Phase 1 ships the two meaning skills; 'pronunciation' is added in Phase 4.
-export type FacetSkill = 'meaning_recognition' | 'meaning_production'
+// Phase 1 ships the two meaning skills; 'pronunciation' (recognition-mode,
+// citation-only) is added in Phase 4.
+export type FacetSkill = 'meaning_recognition' | 'meaning_production' | 'pronunciation'
 
 // The citation/lemma target. Every Phase-1 facet keys on this; specific
 // inflected forms (non-empty strings) arrive in Phase 4.
@@ -33,6 +34,13 @@ export type ReviewMode = 'recognition' | 'production'
 // filter that lists it is correct now and needs no change then.
 export const skillsForReviewMode = (mode: ReviewMode): string[] =>
   mode === 'production' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
+
+// The inverse of skillsForReviewMode: a skill's review mode. Only
+// meaning_production is production-mode; meaning_recognition and pronunciation
+// are recognition-mode (passive queue). Used for mode-specific FSRS rules (e.g.
+// the next-day passive floor) that apply to recognition skills as a class.
+export const reviewModeForSkill = (skill: string): ReviewMode =>
+  skill === 'meaning_production' ? 'production' : 'recognition'
 
 // The ONLY daily-new-capped facet is the citation recognition card ("I'm
 // starting to learn this word"). Pronunciation, production, and every

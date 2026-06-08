@@ -11,6 +11,26 @@ import {
 import { ChunkRow, UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
 import { toIsoString } from '../router-utils'
+import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
+
+// Keep the citation pronunciation facet in sync with the term's IPA precondition
+// (Trap 12). A pronunciation card derives its back from grammar.ipa at render;
+// if no transcription is displayable the card is empty and there is nothing to
+// rehab, so the facet is DELETED (not disabled — decided). Self-healing: run
+// after grammar edits (IPA can vanish) and after a pronunciation enable (defends
+// an enable on a term that never had IPA). DELETE is a no-op when no such facet
+// exists, so this is safe to call unconditionally.
+const reconcilePronunciationFacet = async (
+  userLookupsRepository: UserLookupsRepositoryInterface,
+  chunkId: string,
+  grammar: Record<string, unknown>,
+  targetLanguage: string
+): Promise<void> => {
+  const ipa = (grammar?.ipa ?? null) as IpaBagShape | null
+  if (!hasDisplayableIpa(ipa, targetLanguage)) {
+    await userLookupsRepository.deleteFacet({ userLookupId: chunkId, skill: 'pronunciation', targetForm: '' })
+  }
+}
 
 // Project a facet-joined ChunkRow down to the bare ChunkSchema shape (the
 // setFacetEnabled response). ChunkRow already carries the DERIVED learningMode.
@@ -140,6 +160,13 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       if (!refreshed) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }
+      // A grammar edit can remove the IPA a pronunciation facet depends on.
+      await reconcilePronunciationFacet(
+        userLookupsRepository,
+        input.chunkId,
+        refreshed.grammar,
+        refreshed.targetLanguage
+      )
       return { data: toChunkRowAsChunkDto(refreshed) }
     }),
 
@@ -182,7 +209,25 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       if (!row) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }
+      // Defend a pronunciation enable on a term with no displayable IPA: the
+      // facet would render an empty back, so it is deleted right back out (the
+      // frontend gates the chip on IPA presence, so this is the belt-and-braces).
+      if (input.skill === 'pronunciation' && input.enabled) {
+        await reconcilePronunciationFacet(userLookupsRepository, input.chunkId, row.grammar, row.targetLanguage)
+      }
       return { data: toChunkRowAsChunkDto(row) }
+    }),
+
+    getStudyTargets: implementer.getStudyTargets.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      // Ownership guard before the facet read (listFacetsForChunk keys on
+      // user_lookup_id alone, mirroring the FK-cascade scope of study_facets).
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      const facets = await userLookupsRepository.listFacetsForChunk(input.chunkId)
+      return { data: { facets } }
     }),
 
     listLanguages: implementer.listLanguages.handler(async ({ context }) => {

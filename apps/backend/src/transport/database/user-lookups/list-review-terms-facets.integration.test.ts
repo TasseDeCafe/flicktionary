@@ -33,16 +33,18 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
   const insertFacet = async (params: {
     userLookupId: string
     userId: string
-    skill: 'meaning_recognition' | 'meaning_production'
+    skill: 'meaning_recognition' | 'meaning_production' | 'pronunciation'
     targetForm: string
     srsState: 'new' | 'review' | null
     srsDue: string | null
+    dataStatus?: 'ready' | 'pending_data'
+    disabledAt?: string | null
   }) => {
     await sql`
       INSERT INTO public.study_facets
-        (user_lookup_id, user_id, target_language, skill, target_form, srs_state, srs_due)
+        (user_lookup_id, user_id, target_language, skill, target_form, srs_state, srs_due, data_status, disabled_at)
       VALUES (${params.userLookupId}, ${params.userId}, 'es', ${params.skill}, ${params.targetForm},
-              ${params.srsState}, ${params.srsDue})
+              ${params.srsState}, ${params.srsDue}, ${params.dataStatus ?? 'ready'}, ${params.disabledAt ?? null})
     `
   }
 
@@ -236,5 +238,89 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       maxOptInNewTerms: 50,
     })
     expect(learn.map((r) => r.target_form).sort()).toEqual(['', 'nuevos'])
+  })
+
+  // Phase 4a: pronunciation is a recognition-mode (passive) facet. A ready,
+  // enabled, due pronunciation facet is served in the passive queue alongside
+  // the citation meaning facet; a disabled or pending_data one is filtered out.
+  test('pronunciation facet is served in the passive queue (ready+enabled only)', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const due = '2026-06-01T00:00:00Z'
+
+    // Term A: citation meaning + a ready, enabled, due pronunciation facet.
+    const served = await createKeptTerm(userId, 'casa')
+    await studyFacetsRepository.ensureCitationFacet(served.id)
+    await sql`UPDATE public.study_facets SET srs_state = 'review', srs_due = ${due} WHERE user_lookup_id = ${served.id} AND target_form = ''`
+    await insertFacet({
+      userLookupId: served.id,
+      userId,
+      skill: 'pronunciation',
+      targetForm: '',
+      srsState: 'review',
+      srsDue: due,
+    })
+
+    // Term B: a disabled pronunciation facet — must NOT appear.
+    const disabled = await createKeptTerm(userId, 'perro')
+    await studyFacetsRepository.ensureCitationFacet(disabled.id)
+    await insertFacet({
+      userLookupId: disabled.id,
+      userId,
+      skill: 'pronunciation',
+      targetForm: '',
+      srsState: 'review',
+      srsDue: due,
+      disabledAt: due,
+    })
+
+    const rows = await userLookupsRepository.listReviewTerms({
+      userId,
+      targetLanguage: 'es',
+      pool: 'passive',
+      scope: 'review_due',
+      maxReviewTerms: 100,
+      maxLearningTerms: 100,
+      maxNewTerms: 0,
+      maxOptInNewTerms: 0,
+    })
+
+    // The served term's pronunciation facet is present; the disabled one's is not.
+    const pronRows = rows.filter((r) => r.skill === 'pronunciation')
+    expect(pronRows).toHaveLength(1)
+    expect(pronRows[0]!.id).toBe(served.id)
+    // It sits next to (spaced from) the citation meaning facet of the same term.
+    expect(
+      rows
+        .filter((r) => r.id === served.id)
+        .map((r) => r.skill)
+        .sort()
+    ).toEqual(['meaning_recognition', 'pronunciation'])
+    expect(rows.some((r) => r.id === disabled.id && r.skill === 'pronunciation')).toBe(false)
+  })
+
+  test('production queue never serves a pronunciation facet', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const due = '2026-06-01T00:00:00Z'
+    const term = await createKeptTerm(userId, 'libro')
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'pronunciation',
+      targetForm: '',
+      srsState: 'review',
+      srsDue: due,
+    })
+
+    const active = await userLookupsRepository.listReviewTerms({
+      userId,
+      targetLanguage: 'es',
+      pool: 'active',
+      scope: 'review_due',
+      maxReviewTerms: 100,
+      maxLearningTerms: 100,
+      maxNewTerms: 0,
+      maxOptInNewTerms: 0,
+    })
+    expect(active.some((r) => r.skill === 'pronunciation')).toBe(false)
   })
 })

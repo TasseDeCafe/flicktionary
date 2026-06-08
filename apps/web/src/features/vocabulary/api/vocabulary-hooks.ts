@@ -87,11 +87,32 @@ export const useSetFacetEnabled = () => {
         void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
         void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
         void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key() })
+        // The Study-targets control reads facet membership from getStudyTargets;
+        // refetch it so the just-toggled chip reflects the server state (the
+        // pronunciation enable can also self-heal to "off" server-side when the
+        // term has no IPA).
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
       },
       meta: {
         errorMessage: t`Failed to update study targets`,
         showErrorModal: true,
       },
+    })
+  )
+}
+
+// Read one term's study facets for the Study-targets control. Lazily fetched
+// when the term view renders (kept off the chunk DTO so the vocab list stays
+// lean). Returns the facet summary array; the control derives chip membership
+// (e.g. is the citation pronunciation facet enabled) from it.
+export const useStudyTargets = (chunkId: string | null) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.chunks.getStudyTargets.queryOptions({
+      enabled: Boolean(chunkId),
+      input: { chunkId: chunkId ?? '' },
+      select: (response) => response.data.facets,
+      meta: { errorMessage: t`Failed to load study targets` },
     })
   )
 }
