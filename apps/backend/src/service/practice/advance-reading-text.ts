@@ -62,7 +62,9 @@ const isEligibleForScope = (
   scope: ReviewScope,
   now: Date
 ): boolean => {
-  if (pool === 'active' && lookup.learning_mode !== 'active') return false
+  // Active-pool membership is the citation production facet being enabled
+  // (is_production_enabled), derived from the merged facet's disabled_at.
+  if (pool === 'active' && !lookup.is_production_enabled) return false
   const state = lookup.srs_state
   const due = lookup.srs_due
   const wantsNew = scope === 'learn_new' || scope === 'mixed'

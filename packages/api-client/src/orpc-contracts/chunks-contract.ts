@@ -1,7 +1,12 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { ChunkRowSchema, ChunkSchema, LearningModeSchema } from './common/flicktionary-schemas'
+import {
+  ChunkRowSchema,
+  ChunkSchema,
+  FacetSkillSchema,
+  LearningModeSchema,
+} from './common/flicktionary-schemas'
 
 // Cursor wire format for `listChunks`. Encoded base64 over a JSON payload by
 // both client and server; we keep the schema strict so a malformed cursor
@@ -131,16 +136,30 @@ export const chunksContract = {
       })
     ),
 
-  // Switch a chunk between passive and active learning modes. Demoting active
-  // back to passive preserves the row's active_srs_* state so a future
-  // re-promotion resumes the schedule.
-  setLearningMode: oc
-    .route({ method: 'PATCH', path: '/chunks/{chunkId}/learning-mode', successStatus: 200 })
+  // Enable or disable a single study facet (skill x target_form) on a term.
+  // This is the unified study-target control: the citation meaning_production
+  // facet is what "active vocabulary" used to mean (enabled => in production
+  // study), and meaning_recognition is enabled on keep. enabled:true upserts
+  // the facet — creating it (NULL srs state) if absent, else CLEARING its
+  // disabled_at so a previously-disabled, history-bearing facet resumes its
+  // schedule. enabled:false sets disabled_at (disable != delete: SRS history is
+  // kept). `payload` carries {form, translation} for form facets (Phase 4).
+  // `targetForm` defaults to '' (the citation/lemma).
+  setFacetEnabled: oc
+    .route({ method: 'PATCH', path: '/chunks/{chunkId}/facets/enabled', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ chunkId: z.string().uuid(), learningMode: LearningModeSchema }))
+    .input(
+      z.object({
+        chunkId: z.string().uuid(),
+        skill: FacetSkillSchema,
+        targetForm: z.string().default(''),
+        enabled: z.boolean(),
+        payload: z.record(z.string(), z.unknown()).optional(),
+      })
+    )
     .output(z.object({ data: ChunkSchema })),
 
   // Distinct target_languages the user has at least one (non-deleted) chunk in.

@@ -11,6 +11,10 @@ import type {
 import type { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import {
+  CITATION_FORM,
+  type StudyFacetsRepositoryInterface,
+} from '../../transport/database/study-facets/study-facets-repository'
+import {
   generateExercisePass,
   type ExerciseTermInput,
   type GeneratableExerciseType,
@@ -26,6 +30,7 @@ export type ExerciseBankDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
 }
 
 // Pool-dependent exercise ladder. Passive (recognition): MC cloze + MC
@@ -269,16 +274,31 @@ export const getStrengthenExercises = async (params: {
   // Parked terms never appear in the review queue, so the hard set is
   // non-leech by construction — but drop overlaps defensively anyway.
   const hardIds = Array.from(new Set(params.sessionHardUserLookupIds))
-  const hardLookups = (
+  const candidateLookups = (
     await Promise.all(hardIds.map((id) => deps.userLookupsRepository.findByIdForUser(id, userId)))
   ).filter(
     (row): row is DbUserLookup =>
-      row != null &&
-      row.target_language === targetLanguage &&
-      row.count > 0 &&
-      !parkedIds.has(row.id) &&
-      (pool !== 'active' || row.learning_mode === 'active')
+      row != null && row.target_language === targetLanguage && row.count > 0 && !parkedIds.has(row.id)
   )
+  // Active-pool membership is now the citation meaning_production facet being
+  // ENABLED (replaces the dropped learning_mode column). Re-validate each
+  // candidate's production facet; a missing or disabled facet drops it.
+  let hardLookups: DbUserLookup[]
+  if (pool === 'active') {
+    const enabledFlags = await Promise.all(
+      candidateLookups.map(async (row) => {
+        const facet = await deps.studyFacetsRepository.getFacet({
+          userLookupId: row.id,
+          skill: 'meaning_production',
+          targetForm: CITATION_FORM,
+        })
+        return facet != null && facet.disabled_at === null
+      })
+    )
+    hardLookups = candidateLookups.filter((_, i) => enabledFlags[i])
+  } else {
+    hardLookups = candidateLookups
+  }
 
   const entries: StrengthenExerciseEntry[] = []
 

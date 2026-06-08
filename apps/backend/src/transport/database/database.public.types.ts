@@ -1103,7 +1103,6 @@ export type Database = {
           grounded_at: string | null
           headword: string
           id: string
-          learning_mode: string
           native_example: string | null
           sense: string
           target_example: string | null
@@ -1124,7 +1123,6 @@ export type Database = {
           grounded_at?: string | null
           headword: string
           id?: string
-          learning_mode?: string
           native_example?: string | null
           sense?: string
           target_example?: string | null
@@ -1145,7 +1143,6 @@ export type Database = {
           grounded_at?: string | null
           headword?: string
           id?: string
-          learning_mode?: string
           native_example?: string | null
           sense?: string
           target_example?: string | null

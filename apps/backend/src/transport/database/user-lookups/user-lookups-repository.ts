@@ -37,6 +37,14 @@ export type DbUserLookupWithFacet = DbUserLookup & {
   // Form facets carry {form, translation}; citation cards carry {}. Surfaced to
   // the queue DTO (facetPayload). Populated in Phase 4.
   payload: DbStudyFacet['payload']
+  // True iff an ENABLED citation meaning_production facet exists for this term
+  // — the derived "in production study" / active-pool membership flag (replaces
+  // the dropped user_lookups.learning_mode column). For the active-pool readers
+  // (listReviewTerms/listParkedTerms with pool='active') the merged facet IS
+  // that production facet, so this mirrors `disabled_at IS NULL` on it; the
+  // active queries already filter to enabled production facets, so it is always
+  // true there. Service-layer guards read this instead of learning_mode.
+  is_production_enabled: boolean
 }
 
 // Flatten a (lookup, facet) pair into the combined row the rating/leech
@@ -58,6 +66,14 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
   leech_rehab_last_correct_on: facet.leech_rehab_last_correct_on,
   introduced_at: facet.introduced_at,
   payload: facet.payload,
+  // The active-pool membership flag is the production citation facet's enabled
+  // state. mergeFacet is the rating boundary: an active rating merges THE
+  // production citation facet, so its own disabled_at is the source of truth.
+  // For any other facet (passive/recognition, forms) production-membership
+  // isn't carried here and is irrelevant to the active-pool guards, so it
+  // resolves false.
+  is_production_enabled:
+    facet.skill === 'meaning_production' && facet.target_form === CITATION_FORM && facet.disabled_at === null,
 })
 
 // Per-term knob: every kept term is at minimum 'passive' (recognition pool).
@@ -90,7 +106,8 @@ export type DueSummaryEntry = {
   // graduates them). The due/learning aggregates above already exclude them.
   parkedCount: number
   // Active-drill pool counters. Parallel to the passive counters above but
-  // computed off learning_mode = 'active' and active_srs_* state.
+  // computed off the enabled citation meaning_production facet (membership) and
+  // its SRS state.
   activeTotal: number
   activeReviewDueCount: number
   activeLearningDueCount: number
@@ -415,27 +432,27 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
           AND rf.introduced_at < CURRENT_DATE + INTERVAL '1 day'
       )::int AS new_introduced_today_count,
       COUNT(*) FILTER (WHERE rf.leech_parked_at IS NOT NULL)::int AS parked_count,
-      COUNT(*) FILTER (WHERE ul.learning_mode = 'active')::int AS active_total,
+      COUNT(*) FILTER (WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL)::int AS active_total,
       COUNT(*) FILTER (
-        WHERE ul.learning_mode = 'active'
+        WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.srs_state IN ('new', 'review')
           AND pf.srs_due IS NOT NULL
           AND pf.srs_due <= NOW()
           AND pf.leech_parked_at IS NULL
       )::int AS active_review_due_count,
       COUNT(*) FILTER (
-        WHERE ul.learning_mode = 'active'
+        WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.srs_state IN ('learning', 'relearning')
           AND pf.srs_due IS NOT NULL
           AND pf.srs_due <= NOW()
           AND pf.leech_parked_at IS NULL
       )::int AS active_learning_due_count,
       COUNT(*) FILTER (
-        WHERE ul.learning_mode = 'active'
+        WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.srs_state IS NULL
       )::int AS active_new_count,
       COUNT(*) FILTER (
-        WHERE ul.learning_mode = 'active'
+        WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.leech_parked_at IS NOT NULL
       )::int AS active_parked_count
     FROM public.user_lookups ul
@@ -474,8 +491,10 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
 //
 //   - `pool` selects the facet skill SET, not a single skill: the passive queue
 //     serves the recognition skills {meaning_recognition, pronunciation}, the
-//     active queue serves {meaning_production}. The active pool additionally
-//     restricts to learning_mode='active' rows (passive spans every kept term).
+//     active queue serves {meaning_production}. Active-pool membership needs no
+//     extra row filter: the enabled-facet filter below IS the membership test
+//     (an enabled meaning_production facet == "in production study"; passive
+//     spans every kept term via its recognition facet).
 //     Facets are filtered to enabled (disabled_at IS NULL — keeps demoted
 //     production facets out) and ready (data_status='ready' — keeps pending_data
 //     facets out); leech-parked facets leave BOTH render modes (the reading
@@ -533,14 +552,17 @@ const listReviewTerms = async (params: {
   const facetCols = sql`
     f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
     f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
-    f.leech_rehab_last_correct_on, f.introduced_at, f.payload
+    f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
+    (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
+      AS is_production_enabled
   `
-  const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
   const excludedIds = params.excludeUserLookupIds ?? []
   const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
   // Shared eligibility: kept, live term; enabled, ready, non-parked facet in the
   // pool's skill set. Always-true conditions first so the optional AND clauses
-  // append cleanly.
+  // append cleanly. Active-pool membership needs no extra clause: the facetJoin
+  // is to the meaning_production facet and `f.disabled_at IS NULL` already keeps
+  // demoted (disabled) production facets out — that IS the membership filter.
   const eligible = sql`
     ul.user_id = ${params.userId}
     AND ul.target_language = ${params.targetLanguage}
@@ -549,7 +571,6 @@ const listReviewTerms = async (params: {
     AND f.disabled_at IS NULL
     AND f.data_status = 'ready'
     AND f.leech_parked_at IS NULL
-    ${activeModeClause}
     ${excludeClause}
   `
   const facetJoin = sql`JOIN public.study_facets f ON f.user_lookup_id = ul.id AND f.skill = ANY(${skills})`
@@ -678,68 +699,79 @@ const getFirstCardPointerForChunk = async (params: {
   return { cardId: rows[0]?.card_id ?? null, sessionId: rows[0]?.study_session_id ?? null }
 }
 
-// Switch a user_lookup between passive and active learning modes. learning_mode
-// stays the membership flag for Phase 1, but the citation meaning_production
-// facet is now kept in sync alongside it (so a Phase-1 promote/demote that
-// happens before learning_mode is dropped in Phase 3 leaves consistent state):
-//   - promote (active): ensure the production facet exists and CLEAR its
-//     disabled_at (re-enabling a previously-demoted, history-bearing facet so a
-//     re-promotion resumes its schedule).
-//   - demote (passive): SET disabled_at on the production facet (its
-//     active_srs_* history is preserved — disable != delete).
-// A REAL flip (guarded by IS DISTINCT FROM) additionally resets that facet's
-// leech-rehab state: membership changed, so any in-flight rehab progress is
-// stale. Idempotent "keep as active" re-stamps (unchanged mode) never wipe
-// progress. Returns the post-update term row.
-const setLearningMode = async (params: {
+// Enable or disable a single study facet (skill x target_form) on a term. The
+// facet's `disabled_at` IS the membership flag — there is no more
+// user_lookups.learning_mode column. Enabling the citation meaning_production
+// facet is what "promote to active" used to be; disabling it is "demote".
+//   - enabled:true: ensure the facet exists (created with NULL srs state if
+//     absent) then CLEAR its disabled_at — re-enabling a previously-disabled,
+//     history-bearing facet so it resumes its schedule. `payload` (when
+//     provided) is merged into the facet's JSONB payload.
+//   - enabled:false: SET disabled_at (its SRS history is preserved — disable !=
+//     delete).
+// A REAL flip (membership actually changed, guarded by `disabled_at IS DISTINCT
+// FROM` the target) additionally resets the facet's leech-rehab state:
+// membership changed, so any in-flight rehab progress is stale. An idempotent
+// re-enable/re-disable (no change) never wipes progress. Ownership: the term
+// must belong to the user and not be deleted, else returns null. Returns the
+// post-update term row (the router re-derives learning_mode from facet state).
+const setFacetEnabled = async (params: {
   userLookupId: string
   userId: string
-  learningMode: LearningMode
+  skill: FacetSkill
+  targetForm: string
+  enabled: boolean
+  payload?: Record<string, unknown>
 }): Promise<DbUserLookup | null> => {
   return await beginTx(async (tx) => {
-    const result = (await tx`
-      UPDATE public.user_lookups
-      SET learning_mode = ${params.learningMode}
+    // Ownership / existence guard. The facet UPDATEs below are not user-scoped
+    // (study_facets has no user_id filter here), so verify the term first.
+    const owned = (await tx`
+      SELECT id
+      FROM public.user_lookups
       WHERE id = ${params.userLookupId}
         AND user_id = ${params.userId}
         AND deleted_at IS NULL
-        AND learning_mode IS DISTINCT FROM ${params.learningMode}
-      RETURNING *
-    `) as DbUserLookup[]
-    if (!result[0]) {
-      // No mode change (idempotent re-stamp) — leave the facet untouched.
-      return findByIdForUser(params.userLookupId, params.userId)
-    }
-    if (params.learningMode === 'active') {
-      await ensureFacet(
-        { userLookupId: params.userLookupId, skill: 'meaning_production', targetForm: CITATION_FORM },
-        tx
-      )
+    `) as Array<{ id: string }>
+    if (!owned[0]) return null
+
+    const payloadJson = params.payload ? sql.json(params.payload as unknown as postgres.JSONValue) : null
+
+    if (params.enabled) {
+      await ensureFacet({ userLookupId: params.userLookupId, skill: params.skill, targetForm: params.targetForm }, tx)
+      // disabled_at IS DISTINCT FROM NULL is true only when the facet was
+      // actually disabled — so the leech-rehab reset fires on a real re-enable,
+      // not on an idempotent re-enable. payload merges via || when provided.
       await tx`
         UPDATE public.study_facets
         SET disabled_at = NULL,
-            leech_parked_at = NULL,
-            leech_rehab_correct_days = 0,
-            leech_rehab_last_correct_on = NULL,
+            payload = ${payloadJson ? sql`payload || ${payloadJson}::jsonb` : sql`payload`},
+            leech_parked_at = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN NULL ELSE leech_parked_at END,
+            leech_rehab_correct_days = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN 0 ELSE leech_rehab_correct_days END,
+            leech_rehab_last_correct_on = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN NULL ELSE leech_rehab_last_correct_on END,
             updated_at = NOW()
         WHERE user_lookup_id = ${params.userLookupId}
-          AND skill = 'meaning_production'
-          AND target_form = ${CITATION_FORM}
+          AND skill = ${params.skill}
+          AND target_form = ${params.targetForm}
       `
     } else {
+      // A real disable flips a currently-NULL disabled_at to NOW(); only then is
+      // the leech-rehab progress stale. Re-disabling an already-disabled facet
+      // leaves rehab columns untouched.
       await tx`
         UPDATE public.study_facets
-        SET disabled_at = NOW(),
-            leech_parked_at = NULL,
-            leech_rehab_correct_days = 0,
-            leech_rehab_last_correct_on = NULL,
+        SET payload = ${payloadJson ? sql`payload || ${payloadJson}::jsonb` : sql`payload`},
+            leech_parked_at = CASE WHEN disabled_at IS NULL THEN NULL ELSE leech_parked_at END,
+            leech_rehab_correct_days = CASE WHEN disabled_at IS NULL THEN 0 ELSE leech_rehab_correct_days END,
+            leech_rehab_last_correct_on = CASE WHEN disabled_at IS NULL THEN NULL ELSE leech_rehab_last_correct_on END,
+            disabled_at = CASE WHEN disabled_at IS NULL THEN NOW() ELSE disabled_at END,
             updated_at = NOW()
         WHERE user_lookup_id = ${params.userLookupId}
-          AND skill = 'meaning_production'
-          AND target_form = ${CITATION_FORM}
+          AND skill = ${params.skill}
+          AND target_form = ${params.targetForm}
       `
     }
-    return result[0]
+    return findByIdForUser(params.userLookupId, params.userId)
   })
 }
 
@@ -753,13 +785,17 @@ const listParkedTerms = async (params: {
   pool: PracticePool
 }): Promise<DbUserLookupWithFacet[]> => {
   const skill = skillForPool(params.pool)
-  const activeModeClause = params.pool === 'active' ? sql`AND ul.learning_mode = 'active'` : sql``
+  // No active-mode clause: the join is to the pool's citation facet
+  // (meaning_production for active) and `f.disabled_at IS NULL` already enforces
+  // membership — a demoted (disabled) production facet is excluded.
   return (await sql`
     SELECT
       ul.*,
       f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
       f.srs_last_review, f.srs_reps, f.srs_lapses, f.leech_parked_at, f.leech_rehab_correct_days,
-      f.leech_rehab_last_correct_on, f.introduced_at, f.payload
+      f.leech_rehab_last_correct_on, f.introduced_at, f.payload,
+      (f.skill = 'meaning_production' AND f.target_form = ${CITATION_FORM} AND f.disabled_at IS NULL)
+        AS is_production_enabled
     FROM public.user_lookups ul
     JOIN public.study_facets f
       ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
@@ -768,7 +804,6 @@ const listParkedTerms = async (params: {
       AND ul.count > 0
       AND ul.deleted_at IS NULL
       AND f.disabled_at IS NULL
-      ${activeModeClause}
       AND f.leech_parked_at IS NOT NULL
     ORDER BY f.leech_parked_at ASC, ul.headword ASC, ul.sense ASC
   `) as DbUserLookupWithFacet[]
@@ -858,7 +893,7 @@ const listKeptChunksForExport = async (params: {
       ul.native_example,
       ul.exploration_extras,
       ul.grammar,
-      ul.learning_mode,
+      CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END AS learning_mode,
       (rf.leech_parked_at IS NOT NULL OR pf.leech_parked_at IS NOT NULL) AS is_leech_parked,
       c.surface_form,
       ts.text AS segment_text
@@ -958,7 +993,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     rf.srs_state AS srs_state,
     rf.srs_due AS srs_due,
     rf.srs_reps AS srs_reps,
-    ul.learning_mode,
+    CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END AS learning_mode,
     pf.srs_state AS active_srs_state,
     pf.srs_due AS active_srs_due,
     pf.srs_reps AS active_srs_reps,
@@ -1006,6 +1041,20 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   sourceAvailable: row.source_available === true,
 })
 
+// Single chunk row (facet-joined, so learning_mode is the DERIVED production
+// state) for one term, scoped to its owner. Used by setFacetEnabled's response
+// path where the caller needs the post-update derived learning_mode in the
+// ChunkSchema shape.
+const getChunkRowForUser = async (userLookupId: string, userId: string): Promise<ChunkRow | null> => {
+  const rows = (await sql`
+    ${SELECT_CHUNK_ROW_SQL}
+    WHERE ul.id = ${userLookupId}
+      AND ul.user_id = ${userId}
+      AND ul.deleted_at IS NULL
+  `) as Array<Record<string, unknown>>
+  return rows[0] ? mapChunkRow(rows[0]) : null
+}
+
 // Case-insensitive substring filter across headword/translation/definition.
 // `%` and `_` in user input retain LIKE-pattern semantics — acceptable for
 // the v1 search bar; if it becomes a footgun we can escape later.
@@ -1027,7 +1076,14 @@ const listChunksForLanguage = async (params: {
   const limit = Math.max(1, Math.min(params.limit, 200))
   const fetchLimit = limit + 1
   const searchClause = buildSearchClause(params.q)
-  const learningModeClause = params.learningMode ? sql`AND ul.learning_mode = ${params.learningMode}` : sql``
+  // Derived membership filter: 'active' = an enabled citation production facet
+  // exists (pf joined in SELECT_CHUNK_ROW_SQL); 'passive' = it doesn't (absent
+  // or disabled).
+  const learningModeClause = !params.learningMode
+    ? sql``
+    : params.learningMode === 'active'
+      ? sql`AND (pf.id IS NOT NULL AND pf.disabled_at IS NULL)`
+      : sql`AND (pf.id IS NULL OR pf.disabled_at IS NOT NULL)`
 
   if (params.sort === 'recent') {
     const cursor = params.cursor && params.cursor.sort === 'recent' ? params.cursor : null
@@ -1180,9 +1236,11 @@ const listChunkContentForKeys = async (params: {
       ul.grammar,
       ul.first_card_id,
       ul.deleted_at,
-      ul.learning_mode,
+      CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END AS learning_mode,
       c.study_session_id AS first_card_session_id
     FROM public.user_lookups ul
+    LEFT JOIN public.study_facets pf
+      ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
     LEFT JOIN public.cards c ON c.id = ul.first_card_id
     WHERE ul.user_id = ${params.userId}
       AND ul.target_language = ${params.targetLanguage}
@@ -1307,11 +1365,15 @@ export interface UserLookupsRepositoryInterface {
     userLookupId: string
     userId: string
   }) => Promise<{ cardId: string | null; sessionId: string | null }>
-  setLearningMode: (params: {
+  setFacetEnabled: (params: {
     userLookupId: string
     userId: string
-    learningMode: LearningMode
+    skill: FacetSkill
+    targetForm: string
+    enabled: boolean
+    payload?: Record<string, unknown>
   }) => Promise<DbUserLookup | null>
+  getChunkRowForUser: (userLookupId: string, userId: string) => Promise<ChunkRow | null>
   listParkedTerms: (params: {
     userId: string
     targetLanguage: string
@@ -1368,7 +1430,8 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     findByIdForUser,
     findByIdForUserIncludingDeleted,
     getFirstCardPointerForChunk,
-    setLearningMode,
+    setFacetEnabled,
+    getChunkRowForUser,
     listParkedTerms,
     listVocabularyForLanguage,
     listKeptChunksForExport,

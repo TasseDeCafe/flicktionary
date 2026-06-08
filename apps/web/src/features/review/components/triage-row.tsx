@@ -1,9 +1,7 @@
-import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@flicktionary/ui/components/popover'
-import { Check, ChevronDown, Loader2, RotateCw, Star, X } from 'lucide-react'
+import { Check, Loader2, RotateCw, X } from 'lucide-react'
 import type {
   Card,
   CardStatus,
@@ -61,9 +59,7 @@ type Props = {
 
 export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
   const { t } = useLingui()
-  const [menuOpen, setMenuOpen] = useState(false)
   const isKept = card.status === 'kept'
-  const isActive = isKept && card.chunk.learningMode === 'active'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
   const preview = getBackPreview(card)
 
@@ -78,65 +74,17 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
         {card.chunk.headword && card.surfaceForm && card.chunk.headword !== card.surfaceForm && (
           <span className='text-muted-foreground ml-2 text-sm'>({card.surfaceForm})</span>
         )}
-        {isActive && (
-          <span className='ml-2 inline-flex items-center gap-1 align-middle text-xs text-amber-600 dark:text-amber-400'>
-            <Star className='h-3 w-3' />
-            {t`Active`}
-          </span>
-        )}
         {preview && <p className='mt-1 text-sm'>{preview}</p>}
       </Link>
       <div className='flex shrink-0 items-center gap-1 py-3'>
-        <div className='inline-flex'>
-          <Button
-            size='icon'
-            variant={isKept ? 'default' : 'outline'}
-            aria-label={t`Keep`}
-            className='rounded-r-none'
-            onClick={() => onStatusChange(card.id, isKept ? 'pending' : 'kept')}
-          >
-            <Check className='h-4 w-4' />
-          </Button>
-          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                size='icon'
-                variant={isKept ? 'default' : 'outline'}
-                aria-label={t`Keep options`}
-                className='-ml-px w-6 rounded-l-none border-l'
-              >
-                <ChevronDown className='h-3 w-3' />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align='end' className='w-48 p-1'>
-              <button
-                type='button'
-                className='hover:bg-muted active:bg-muted flex w-full items-center justify-between rounded-sm px-3 py-2 text-left text-sm transition-colors'
-                onClick={() => {
-                  setMenuOpen(false)
-                  onStatusChange(card.id, 'kept', 'passive')
-                }}
-              >
-                <span>{t`Keep as passive`}</span>
-                {isKept && card.chunk.learningMode === 'passive' && <Check className='h-3 w-3' />}
-              </button>
-              <button
-                type='button'
-                className='hover:bg-muted active:bg-muted flex w-full items-center justify-between rounded-sm px-3 py-2 text-left text-sm transition-colors'
-                onClick={() => {
-                  setMenuOpen(false)
-                  onStatusChange(card.id, 'kept', 'active')
-                }}
-              >
-                <span className='flex items-center gap-1.5'>
-                  <Star className='h-3 w-3' />
-                  {t`Keep as active`}
-                </span>
-                {isActive && <Check className='h-3 w-3' />}
-              </button>
-            </PopoverContent>
-          </Popover>
-        </div>
+        <Button
+          size='icon'
+          variant={isKept ? 'default' : 'outline'}
+          aria-label={t`Keep`}
+          onClick={() => onStatusChange(card.id, isKept ? 'pending' : 'kept')}
+        >
+          <Check className='h-4 w-4' />
+        </Button>
         <Button
           size='icon'
           variant={isRejected ? 'default' : 'outline'}

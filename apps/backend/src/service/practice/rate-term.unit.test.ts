@@ -25,7 +25,6 @@ const makeLookup = (overrides: Partial<DbUserLookup> = {}): DbUserLookup =>
     first_card_id: null,
     exported_at: null,
     count: 1,
-    learning_mode: 'passive',
     created_at: '2026-05-12T00:00:00Z',
     deleted_at: null,
     ...overrides,
@@ -144,7 +143,7 @@ describe('rateTerm', () => {
 
   it('routes active-pool ratings to the production facet with no daily cap', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, initializeFacet, applyFsrsResultForFacet } = createDeps(
-      makeLookup({ learning_mode: 'active' }),
+      makeLookup(),
       makeFacet({ skill: 'meaning_production' })
     )
     const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
@@ -161,8 +160,24 @@ describe('rateTerm', () => {
     )
   })
 
-  it('refuses active-pool ratings for terms not promoted to active learning', async () => {
-    const { deps, initializeFacet, applyFsrsResultForFacet } = createDeps(makeLookup())
+  it('refuses active-pool ratings for terms not promoted to active learning (disabled production facet)', async () => {
+    // "Not promoted" is now a DISABLED citation production facet (the dropped
+    // learning_mode column's replacement). The facet exists (history-bearing
+    // demote) but disabled_at is set, so it is not in the active pool.
+    const { deps, initializeFacet, applyFsrsResultForFacet } = createDeps(
+      makeLookup(),
+      makeFacet({ skill: 'meaning_production', disabled_at: '2026-05-12T00:00:00Z' })
+    )
+    const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
+    expect(result).toEqual({ ok: false, reason: 'not_in_active_pool' })
+    expect(initializeFacet).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
+  })
+
+  it('refuses active-pool ratings when no production facet exists', async () => {
+    // A term that was never promoted has no production facet — getFacet returns
+    // null and the rating is refused.
+    const { deps, initializeFacet, applyFsrsResultForFacet } = createDeps(makeLookup(), null)
     const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: false, reason: 'not_in_active_pool' })
     expect(initializeFacet).not.toHaveBeenCalled()
@@ -176,7 +191,7 @@ describe('rateTerm', () => {
   })
 
   it('rejects an illegal (pool, skill) pairing before touching state', async () => {
-    const { deps, applyFsrsResultForFacet } = createDeps(makeLookup({ learning_mode: 'active' }))
+    const { deps, applyFsrsResultForFacet } = createDeps(makeLookup())
     // active pool may only serve meaning_production.
     const result = await rateTerm(lookupId, userId, 'good', 'active', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: false, reason: 'illegal_pool_skill' })
@@ -262,7 +277,7 @@ describe('rateTerm rating-event log', () => {
 
   it('snapshots the production facet for active-pool events', async () => {
     const { deps, insertRatingEvent } = createDeps(
-      makeLookup({ learning_mode: 'active' }),
+      makeLookup(),
       makeFacet({
         skill: 'meaning_production',
         srs_state: 'review',
@@ -321,7 +336,9 @@ describe('rateTerm rating-event log', () => {
   })
 
   it('logs NO event for a not-in-active-pool refusal', async () => {
-    const { deps, insertRatingEvent } = createDeps(makeLookup())
+    // No production facet (never promoted) — getFacet returns null, rating
+    // refused before any event is logged.
+    const { deps, insertRatingEvent } = createDeps(makeLookup(), null)
     await rateTerm(lookupId, userId, 'good', 'active', 'meaning_production', '', deps)
     expect(insertRatingEvent).not.toHaveBeenCalled()
   })
@@ -398,10 +415,7 @@ describe('rateTerm leech parking', () => {
   })
 
   it('parks in the active pool off the production facet', async () => {
-    const { deps, parkLeechFacet } = createDeps(
-      makeLookup({ learning_mode: 'active' }),
-      reviewFacet(3, { skill: 'meaning_production' })
-    )
+    const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(3, { skill: 'meaning_production' }))
     const result = await rateTerm(lookupId, userId, 'again', 'active', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' })

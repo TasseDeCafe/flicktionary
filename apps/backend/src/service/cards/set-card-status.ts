@@ -4,12 +4,30 @@ import {
   LearningMode,
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import { CITATION_FORM } from '../../transport/database/study-facets/study-facets-repository'
 
 export type SetCardStatusDependencies = {
   cardsRepository: CardsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
 }
+
+// Apply a learning-mode choice via the citation meaning_production facet, which
+// IS the membership flag now (active = enabled, passive = disabled). Replaces
+// the dropped user_lookups.learning_mode column.
+const applyLearningMode = (
+  deps: SetCardStatusDependencies,
+  userLookupId: string,
+  userId: string,
+  learningMode: LearningMode
+): Promise<unknown> =>
+  deps.userLookupsRepository.setFacetEnabled({
+    userLookupId,
+    userId,
+    skill: 'meaning_production',
+    targetForm: CITATION_FORM,
+    enabled: learningMode === 'active',
+  })
 
 // Wraps cardsRepository.updateStatus with transition-aware bookkeeping on the
 // canonical user_lookups row. count tracks "how many cards (across all sessions)
@@ -41,11 +59,7 @@ export const setCardStatus = async (
   // is the "promote already-kept term to active" path.
   if (prevStatus === status) {
     if (status === 'kept' && learningMode) {
-      await deps.userLookupsRepository.setLearningMode({
-        userLookupId: card.user_lookup_id,
-        userId,
-        learningMode,
-      })
+      await applyLearningMode(deps, card.user_lookup_id, userId, learningMode)
     }
     return card
   }
@@ -59,11 +73,7 @@ export const setCardStatus = async (
       cardId: card.id,
     })
     if (learningMode) {
-      await deps.userLookupsRepository.setLearningMode({
-        userLookupId: card.user_lookup_id,
-        userId,
-        learningMode,
-      })
+      await applyLearningMode(deps, card.user_lookup_id, userId, learningMode)
     }
   } else if (prevStatus === 'kept' && status !== 'kept') {
     await deps.userLookupsRepository.applyUnkeepTransition({ userLookupId: card.user_lookup_id })
@@ -135,15 +145,7 @@ export const setCardStatusBatch = async (
     // Stamp learning_mode on every kept user_lookup in the batch — both
     // newly-kept rows and rows that were already 'kept'.
     const stampTargets = [...enteringKept, ...alreadyKept]
-    await Promise.all(
-      stampTargets.map((card) =>
-        deps.userLookupsRepository.setLearningMode({
-          userLookupId: card.user_lookup_id,
-          userId,
-          learningMode,
-        })
-      )
-    )
+    await Promise.all(stampTargets.map((card) => applyLearningMode(deps, card.user_lookup_id, userId, learningMode)))
   }
 
   return updated

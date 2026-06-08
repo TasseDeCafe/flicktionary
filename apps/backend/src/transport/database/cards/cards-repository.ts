@@ -100,7 +100,8 @@ const SELECT_CARD_WITH_CHUNK_SQL = sql`
       'grammar', ul.grammar,
       'grounded_at', ul.grounded_at,
       'grammar_user_edited_at', ul.grammar_user_edited_at,
-      'learning_mode', ul.learning_mode
+      'learning_mode',
+        CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END
     ) AS chunk,
     -- Unread iff the newest assistant turn is newer than the user's last read.
     -- role = 'assistant' is required: otherwise sending a user message bumps
@@ -117,6 +118,8 @@ const SELECT_CARD_WITH_CHUNK_SQL = sql`
     ) AS has_unread_chat
   FROM public.cards c
   JOIN public.user_lookups ul ON ul.id = c.user_lookup_id
+  LEFT JOIN public.study_facets pf
+    ON pf.user_lookup_id = ul.id AND pf.skill = 'meaning_production' AND pf.target_form = ''
 `
 
 const listBySessionId = async (studySessionId: string, status?: CardStatus): Promise<DbCardWithChunk[]> => {

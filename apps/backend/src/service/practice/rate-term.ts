@@ -231,7 +231,6 @@ export const rateTerm = async (
 
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
   if (!lookup) return { ok: false, reason: 'lookup_not_found' }
-  if (pool === 'active' && lookup.learning_mode !== 'active') return { ok: false, reason: 'not_in_active_pool' }
 
   // Load the facet being rated. The citation recognition facet is created
   // eagerly on keep; repair it defensively here so any count>0 term lacking it
@@ -243,6 +242,10 @@ export const rateTerm = async (
   }
   const facet = await deps.studyFacetsRepository.getFacet({ userLookupId: lookup.id, skill, targetForm })
   if (!facet) return { ok: false, reason: 'not_in_active_pool' }
+  // Active-pool membership is now the production citation facet being ENABLED
+  // (replaces the dropped learning_mode column). A disabled (demoted) facet is
+  // not in the active pool — reject rather than re-rate a demoted term.
+  if (pool === 'active' && facet.disabled_at !== null) return { ok: false, reason: 'not_in_active_pool' }
   const facetRow = mergeFacet(lookup, facet)
 
   // Pass the FULL clamped per-language daily cap: the atomic guard does its

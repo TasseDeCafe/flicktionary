@@ -12,7 +12,7 @@ import type {
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { Button } from '@flicktionary/ui/components/button'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { useSetLearningMode } from '@/features/vocabulary/api/vocabulary-hooks'
+import { useSetFacetEnabled } from '@/features/vocabulary/api/vocabulary-hooks'
 import {
   useAdvanceReadingText,
   useDeleteChunkFromPractice,
@@ -54,7 +54,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
   const { mutate: prepareNext } = usePrepareNextReadingText()
   const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunkFromPractice()
   const { mutate: restoreChunk, isPending: isRestoring } = useRestoreChunkFromPractice()
-  const { mutate: setLearningMode, isPending: isTogglingLearningMode } = useSetLearningMode()
+  const { mutate: setFacetEnabled, isPending: isTogglingLearningMode } = useSetFacetEnabled()
 
   // Past + current texts, oldest first. viewIndex selects which is shown; the
   // last entry is the live (rateable) text. Earlier entries are peek-back,
@@ -268,8 +268,8 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
 
   const handleToggleLearningMode = (next: 'passive' | 'active') => {
     if (!openAnnotation?.userLookupId) return
-    setLearningMode(
-      { chunkId: openAnnotation.userLookupId, learningMode: next },
+    setFacetEnabled(
+      { chunkId: openAnnotation.userLookupId, skill: 'meaning_production', targetForm: '', enabled: next === 'active' },
       { onSuccess: () => setSheetOpen(false) }
     )
   }

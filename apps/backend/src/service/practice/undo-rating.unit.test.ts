@@ -14,7 +14,6 @@ const makeLookup = (overrides: Partial<DbUserLookup> = {}): DbUserLookup =>
     target_language: 'es',
     headword: 'gato',
     sense: 'cat',
-    learning_mode: 'passive',
     deleted_at: null,
     ...overrides,
   }) as DbUserLookup
@@ -130,7 +129,7 @@ describe('undoRating', () => {
 
   it('routes active-pool undos to the production facet', async () => {
     const { deps, findLatestLiveEventForUndo, restoreSrsSnapshotForFacet } = createDeps({
-      lookup: makeLookup({ learning_mode: 'active' }),
+      lookup: makeLookup(),
       latestEvent: makeEvent({ pool: 'active' }),
     })
     const result = await undoRating(lookupId, userId, 'active', 'meaning_production', '', eventId, deps)

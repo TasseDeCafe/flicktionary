@@ -150,7 +150,7 @@ export const TriageListView = () => {
   const handleBulkStatusChange = (sectionCards: Card[], status: CardStatus) => {
     const cardIds = sectionCards.filter((c) => c.status !== status).map((c) => c.id)
     if (cardIds.length === 0) return
-    updateStatusBatch({ sessionId, cardIds, status, ...(status === 'kept' ? { learningMode: 'passive' } : {}) })
+    updateStatusBatch({ sessionId, cardIds, status })
   }
 
   // Triage and the source view are sibling screens (neither is the parent of

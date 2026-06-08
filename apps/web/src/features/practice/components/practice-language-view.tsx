@@ -98,7 +98,7 @@ export const PracticeLanguageView = () => {
     if (!entry) return ''
     if (hasPassiveWork) {
       const parts = [
-        dueTermCount > 0 ? t`${dueTermCount} due` : null,
+        dueTermCount > 0 ? t`${dueTermCount} reviews` : null,
         dailyNewAvailable > 0 ? t`${dailyNewAvailable} new available today` : null,
       ].filter((p): p is string => p != null)
       return parts.join(' · ')
@@ -218,8 +218,8 @@ export const PracticeLanguageView = () => {
                   </h2>
                   <p className='text-foreground text-sm'>
                     {hasActiveWork
-                      ? t`${activeDueCount} due, ${activeNewCount} new`
-                      : t`${activeTotal} active term(s). Nothing due right now.`}
+                      ? t`${activeDueCount} reviews, ${activeNewCount} new`
+                      : t`${activeTotal} active term(s). Nothing to review right now.`}
                   </p>
                   {renderParkedAffordance('active')}
                   {renderPoolActions('active')}
