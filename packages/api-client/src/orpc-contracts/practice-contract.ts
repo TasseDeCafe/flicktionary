@@ -43,8 +43,8 @@ export const practiceContract = {
         // Explicit learn-new batch size (learn_new scope only). When set, the
         // server serves exactly this many unseen terms regardless of the
         // remaining daily-new budget (Anki-style custom study). Ignored for
-        // other scopes.
-        newBatchSize: z.number().int().min(1).max(100).optional(),
+        // other scopes. GET query params arrive as strings, hence the coercion.
+        newBatchSize: z.coerce.number().int().min(1).max(100).optional(),
       })
     )
     .output(z.object({ data: z.object({ terms: z.array(ReviewTermSchema) }) })),
