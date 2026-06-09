@@ -44,7 +44,7 @@ export const VocabularyActionDrawer = ({
             chunk={{
               id: chunk.id,
               headword: chunk.headword,
-              learningMode: chunk.learningMode,
+              isProductionEnabled: chunk.isProductionEnabled,
               grammar: chunk.grammar,
               targetLanguage: chunk.targetLanguage,
             }}

@@ -2,11 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { Check, Loader2, RotateCw, X } from 'lucide-react'
-import type {
-  Card,
-  CardStatus,
-  LearningMode,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 // Presence-based: with the translations pref off, `translation` is only ever
 // set manually — when present it's worth surfacing over the definition.
@@ -54,7 +50,7 @@ export const TriageEnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }:
 type Props = {
   sessionId: string
   card: Card
-  onStatusChange: (cardId: string, status: CardStatus, learningMode?: LearningMode) => void
+  onStatusChange: (cardId: string, status: CardStatus) => void
 }
 
 export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {

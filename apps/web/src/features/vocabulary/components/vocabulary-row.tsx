@@ -41,7 +41,7 @@ export const VocabularyRow = ({ chunk, onTap, onOptions, style }: VocabularyRowP
           {preview && <span className='text-muted-foreground truncate text-xs'>{preview}</span>}
         </div>
         <div className='flex shrink-0 items-center gap-2'>
-          {chunk.learningMode === 'active' && (
+          {chunk.isProductionEnabled && (
             <span className='inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-amber-800 uppercase dark:bg-amber-400/15 dark:text-amber-300'>
               <Star className='h-3 w-3' />
               {t`Active`}

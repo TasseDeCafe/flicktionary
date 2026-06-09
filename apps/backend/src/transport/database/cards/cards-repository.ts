@@ -22,7 +22,7 @@ export type DbChunkSummary = {
   grammar: Record<string, unknown>
   grounded_at: string | null
   grammar_user_edited_at: string | null
-  learning_mode: 'passive' | 'active'
+  is_production_enabled: boolean
 }
 
 export type DbCardWithChunk = DbCard & { chunk: DbChunkSummary; has_unread_chat: boolean }
@@ -100,8 +100,8 @@ const SELECT_CARD_WITH_CHUNK_SQL = sql`
       'grammar', ul.grammar,
       'grounded_at', ul.grounded_at,
       'grammar_user_edited_at', ul.grammar_user_edited_at,
-      'learning_mode',
-        CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END
+      'is_production_enabled',
+        (pf.disabled_at IS NULL AND pf.id IS NOT NULL)
     ) AS chunk,
     -- Unread iff the newest assistant turn is newer than the user's last read.
     -- role = 'assistant' is required: otherwise sending a user message bumps

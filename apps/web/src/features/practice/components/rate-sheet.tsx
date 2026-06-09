@@ -15,7 +15,7 @@ import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
-import type { Grammar, LearningMode } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { StressMarkedText } from './stress-marked-text'
 
@@ -43,10 +43,10 @@ export type RateSheetChunkContent = {
   // CTA — rating a deleted chunk would be confusing, and the chunk no longer
   // participates in SRS until restored anyway.
   isDeleted: boolean
-  // Current learning mode on the user_lookup row. Drives the "Switch to
+  // Whether the term is in production study. Drives the "Switch to
   // passive/active vocabulary" action in the 3-dots overflow. Null when the
   // canonical row is missing — the switch action is hidden in that case.
-  learningMode: LearningMode | null
+  isProductionEnabled: boolean | null
 }
 
 type Mode = 'rate' | 'actions'
@@ -70,11 +70,11 @@ interface RateSheetProps {
   canEdit: boolean
   onEdit: () => void
   onDelete: () => void
-  // Flips the term between passive and active vocabulary. Called with the
-  // target mode (i.e. the opposite of the current one). Hidden in the menu
-  // when `chunk.learningMode` is null (no canonical row yet).
-  onToggleLearningMode: (next: LearningMode) => void
-  isTogglingLearningMode?: boolean
+  // Flips the term's production study on/off. Called with the target state
+  // (i.e. the opposite of the current one). Hidden in the menu when
+  // `chunk.isProductionEnabled` is null (no canonical row yet).
+  onToggleProduction: (next: boolean) => void
+  isTogglingProduction?: boolean
   // Restore is only meaningful when isDeleted=true; the parent fires the
   // mutation and re-fetches.
   onRestore?: () => void
@@ -92,8 +92,8 @@ export const RateSheet = ({
   canEdit,
   onEdit,
   onDelete,
-  onToggleLearningMode,
-  isTogglingLearningMode,
+  onToggleProduction,
+  isTogglingProduction,
   onRestore,
   isRestoring,
 }: RateSheetProps) => {
@@ -176,22 +176,22 @@ export const RateSheet = ({
               disabled={!canEdit}
               onClick={onEdit}
             />
-            {chunk?.learningMode === 'passive' && (
+            {chunk?.isProductionEnabled === false && (
               <OverlayActionRow
                 icon={Star}
                 label={t`Switch to active vocabulary`}
                 description={t`Move this term into the active drilling pool.`}
-                disabled={!!isTogglingLearningMode}
-                onClick={() => onToggleLearningMode('active')}
+                disabled={!!isTogglingProduction}
+                onClick={() => onToggleProduction(true)}
               />
             )}
-            {chunk?.learningMode === 'active' && (
+            {chunk?.isProductionEnabled === true && (
               <OverlayActionRow
                 icon={Star}
                 label={t`Switch to passive vocabulary`}
                 description={t`Move this term back to passive review only.`}
-                disabled={!!isTogglingLearningMode}
-                onClick={() => onToggleLearningMode('passive')}
+                disabled={!!isTogglingProduction}
+                onClick={() => onToggleProduction(false)}
               />
             )}
             <OverlayActionRow

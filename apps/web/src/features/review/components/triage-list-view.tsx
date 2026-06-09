@@ -15,11 +15,7 @@ import {
 } from '@/features/sessions/api/sessions-hooks'
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
 import { getSessionCardsKey } from '../api/card-cache'
-import type {
-  Card,
-  CardStatus,
-  LearningMode,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow, TriageEnrichingRow } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
@@ -143,8 +139,8 @@ export const TriageListView = () => {
     ready: (cards?.length ?? 0) > 0 || pendingHighlightRows.length > 0,
   })
 
-  const handleStatusChange = (cardId: string, status: CardStatus, learningMode?: LearningMode) => {
-    updateStatus({ cardId, status, learningMode })
+  const handleStatusChange = (cardId: string, status: CardStatus) => {
+    updateStatus({ cardId, status })
   }
 
   const handleBulkStatusChange = (sectionCards: Card[], status: CardStatus) => {

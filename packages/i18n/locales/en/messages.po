@@ -288,7 +288,6 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 msgid "Active"
 msgstr "Active"
@@ -939,7 +938,7 @@ msgstr "Could not save. Please try again."
 msgid "Could not set up your account. Please try restarting the app."
 msgstr "Could not set up your account. Please try restarting the app."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:135
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:133
 msgid "Couldn't generate the form's data"
 msgstr "Couldn't generate the form's data"
 
@@ -947,7 +946,7 @@ msgstr "Couldn't generate the form's data"
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:153
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:151
 msgid "Couldn't save the form's data"
 msgstr "Couldn't save the form's data"
 
@@ -1209,7 +1208,7 @@ msgstr "Enabled"
 msgid "Enabled with auto-resume"
 msgstr "Enabled with auto-resume"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:310
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:313
 msgid "End of list"
 msgstr "End of list"
 
@@ -1217,15 +1216,15 @@ msgstr "End of list"
 msgid "Enjoy unlimited access to all our premium features and content."
 msgstr "Enjoy unlimited access to all our premium features and content."
 
-#: apps/web/src/features/review/components/triage-row.tsx:40
+#: apps/web/src/features/review/components/triage-row.tsx:36
 msgid "Enriching…"
 msgstr "Enriching…"
 
-#: apps/web/src/features/review/components/triage-row.tsx:34
+#: apps/web/src/features/review/components/triage-row.tsx:30
 msgid "Enrichment failed"
 msgstr "Enrichment failed"
 
-#: apps/web/src/features/review/components/triage-row.tsx:36
+#: apps/web/src/features/review/components/triage-row.tsx:32
 msgid "Enrichment has not started yet."
 msgstr "Enrichment has not started yet."
 
@@ -1272,7 +1271,7 @@ msgid "Even if you get charged you can request an unconditional refund. Just "
 msgstr "Even if you get charged you can request an unconditional refund. Just "
 "let us know by clicking the \"Contact Us\" button above."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:249
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:252
 msgid "Every term you've kept, across every session. Tap a row to edit, or open "
 "the menu for more options."
 msgstr "Every term you've kept, across every session. Tap a row to edit, or "
@@ -1349,11 +1348,11 @@ msgid "Failed to create session"
 msgstr "Failed to create session"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:163
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:207
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:205
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:162
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:160
 msgid "Failed to export vocabulary"
 msgstr "Failed to export vocabulary"
 
@@ -1366,7 +1365,7 @@ msgstr "Failed to fetch subscription details"
 msgid "Failed to fetch translation"
 msgstr "Failed to fetch translation"
 
-#: apps/web/src/features/review/api/review-hooks.ts:186
+#: apps/web/src/features/review/api/review-hooks.ts:181
 msgid "Failed to generate exploration"
 msgstr "Failed to generate exploration"
 
@@ -1390,15 +1389,15 @@ msgstr "Failed to import subtitles"
 msgid "Failed to initialize payment system. Please restart the app."
 msgstr "Failed to initialize payment system. Please restart the app."
 
-#: apps/web/src/features/review/api/review-hooks.ts:60
+#: apps/web/src/features/review/api/review-hooks.ts:56
 msgid "Failed to load card"
 msgstr "Failed to load card"
 
-#: apps/web/src/features/review/api/review-hooks.ts:42
+#: apps/web/src/features/review/api/review-hooks.ts:38
 msgid "Failed to load cards"
 msgstr "Failed to load cards"
 
-#: apps/web/src/features/review/api/review-hooks.ts:126
+#: apps/web/src/features/review/api/review-hooks.ts:121
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
@@ -1414,7 +1413,7 @@ msgstr "Failed to load highlights"
 msgid "Failed to load history"
 msgstr "Failed to load history"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:13
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:12
 msgid "Failed to load languages"
 msgstr "Failed to load languages"
 
@@ -1450,7 +1449,7 @@ msgstr "Failed to load session status"
 msgid "Failed to load sessions"
 msgstr "Failed to load sessions"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:116
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:114
 msgid "Failed to load study targets"
 msgstr "Failed to load study targets"
 
@@ -1462,19 +1461,19 @@ msgstr "Failed to load subtitle segments"
 msgid "Failed to load suggestions"
 msgstr "Failed to load suggestions"
 
-#: apps/web/src/features/review/api/review-hooks.ts:198
+#: apps/web/src/features/review/api/review-hooks.ts:193
 msgid "Failed to load surrounding context"
 msgstr "Failed to load surrounding context"
 
-#: apps/web/src/features/review/api/review-hooks.ts:214
+#: apps/web/src/features/review/api/review-hooks.ts:209
 msgid "Failed to load term"
 msgstr "Failed to load term"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:42
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:41
 msgid "Failed to load vocabulary"
 msgstr "Failed to load vocabulary"
 
-#: apps/web/src/features/review/api/review-hooks.ts:173
+#: apps/web/src/features/review/api/review-hooks.ts:168
 msgid "Failed to mark chat read"
 msgstr "Failed to mark chat read"
 
@@ -1502,7 +1501,7 @@ msgstr "Failed to remove highlight"
 msgid "Failed to remove session"
 msgstr "Failed to remove session"
 
-#: apps/web/src/features/review/api/review-hooks.ts:258
+#: apps/web/src/features/review/api/review-hooks.ts:253
 msgid "Failed to rename term"
 msgstr "Failed to rename term"
 
@@ -1526,7 +1525,7 @@ msgstr "Failed to save highlight"
 msgid "Failed to save term"
 msgstr "Failed to save term"
 
-#: apps/web/src/features/review/api/review-hooks.ts:149
+#: apps/web/src/features/review/api/review-hooks.ts:144
 msgid "Failed to send chat message"
 msgstr "Failed to send chat message"
 
@@ -1556,11 +1555,11 @@ msgstr "Failed to trigger Sentry message"
 msgid "Failed to undo rating"
 msgstr "Failed to undo rating"
 
-#: apps/web/src/features/review/api/review-hooks.ts:87
+#: apps/web/src/features/review/api/review-hooks.ts:82
 msgid "Failed to update card status"
 msgstr "Failed to update card status"
 
-#: apps/web/src/features/review/api/review-hooks.ts:115
+#: apps/web/src/features/review/api/review-hooks.ts:110
 msgid "Failed to update card statuses"
 msgstr "Failed to update card statuses"
 
@@ -1588,11 +1587,11 @@ msgstr "Failed to update practice limits"
 msgid "Failed to update show-translations setting"
 msgstr "Failed to update show-translations setting"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:97
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:95
 msgid "Failed to update study targets"
 msgstr "Failed to update study targets"
 
-#: apps/web/src/features/review/api/review-hooks.ts:237
+#: apps/web/src/features/review/api/review-hooks.ts:232
 msgid "Failed to update term"
 msgstr "Failed to update term"
 
@@ -1765,7 +1764,7 @@ msgstr "Give me three more example sentences using it."
 msgid "Go Back"
 msgstr "Go Back"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:196
+#: apps/web/src/features/review/components/triage-list-view.tsx:192
 msgid "Go back to the source view to add or retry highlights."
 msgstr "Go back to the source view to add or retry highlights."
 
@@ -1936,6 +1935,10 @@ msgstr "Importing articles"
 msgid "Importing…"
 msgstr "Importing…"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:66
+msgid "In production"
+msgstr "In production"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:365
 msgid "Inanimate"
 msgstr "Inanimate"
@@ -2004,11 +2007,11 @@ msgid "Jump to the session this term came from"
 msgstr "Jump to the session this term came from"
 
 #: apps/web/src/features/review/components/focus-view.tsx:535
-#: apps/web/src/features/review/components/triage-row.tsx:83
+#: apps/web/src/features/review/components/triage-row.tsx:79
 msgid "Keep"
 msgstr "Keep"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:52
+#: apps/web/src/features/review/components/triage-list-view.tsx:48
 msgid "Keep all"
 msgstr "Keep all"
 
@@ -2101,7 +2104,7 @@ msgstr "Link expired or invalid"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:132
 #: apps/web/src/features/more/components/more-tab-view.tsx:139
-#: apps/web/src/features/review/components/triage-list-view.tsx:240
+#: apps/web/src/features/review/components/triage-list-view.tsx:236
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
@@ -2114,7 +2117,7 @@ msgstr "Load Subtitles"
 msgid "Loading card…"
 msgstr "Loading card…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:201
+#: apps/web/src/features/review/components/triage-list-view.tsx:197
 msgid "Loading cards…"
 msgstr "Loading cards…"
 
@@ -2126,7 +2129,7 @@ msgstr "Loading chat…"
 msgid "Loading history…"
 msgstr "Loading history…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:310
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:313
 msgid "Loading more…"
 msgstr "Loading more…"
 
@@ -2156,7 +2159,7 @@ msgstr "Loading..."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:200
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:283
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:286
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -2361,7 +2364,7 @@ msgstr "No active tab to import from."
 msgid "No active tab."
 msgstr "No active tab."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:204
+#: apps/web/src/features/review/components/triage-list-view.tsx:200
 msgid "No cards yet. Select some highlights in the source text to generate new "
 "cards."
 msgstr "No cards yet. Select some highlights in the source text to generate new "
@@ -2376,7 +2379,7 @@ msgid "No languages found."
 msgstr "No languages found."
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:64
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:271
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:274
 msgid "No matches."
 msgstr "No matches."
 
@@ -2430,7 +2433,7 @@ msgstr "No translation available"
 msgid "No videos detected."
 msgstr "No videos detected."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:271
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:274
 msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
@@ -2459,6 +2462,10 @@ msgstr "not available"
 #: apps/web/src/features/review/components/grounding-badge.tsx:47
 msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
 msgstr "Not found in Wiktionary — grammar fields are LLM-generated only"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
+msgid "Not in production"
+msgstr "Not in production"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx:108
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:107
@@ -2619,10 +2626,6 @@ msgstr "Part of speech"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:264
 msgid "Particle"
 msgstr "Particle"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:66
-msgid "Passive"
-msgstr "Passive"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:230
 msgid "Passive vocabulary"
@@ -2792,7 +2795,7 @@ msgstr "Practice limits"
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:280
+#: apps/web/src/features/review/components/triage-list-view.tsx:276
 msgid "Practice your terms"
 msgstr "Practice your terms"
 
@@ -2855,7 +2858,7 @@ msgstr "Processing"
 msgid "Processing has moved to the background"
 msgstr "Processing has moved to the background"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:189
+#: apps/web/src/features/review/components/triage-list-view.tsx:185
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
@@ -2982,11 +2985,11 @@ msgstr "Rehab progress: day {days} of 3. A correct answer today still counts —
 "try again with a fresh exercise."
 
 #: apps/web/src/features/review/components/focus-view.tsx:532
-#: apps/web/src/features/review/components/triage-row.tsx:91
+#: apps/web/src/features/review/components/triage-row.tsx:87
 msgid "Reject"
 msgstr "Reject"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:61
+#: apps/web/src/features/review/components/triage-list-view.tsx:57
 msgid "Reject all"
 msgstr "Reject all"
 
@@ -3062,7 +3065,7 @@ msgstr "Restore"
 msgid "Restoring…"
 msgstr "Restoring…"
 
-#: apps/web/src/features/review/components/triage-row.tsx:47
+#: apps/web/src/features/review/components/triage-row.tsx:43
 msgid "Retry"
 msgstr "Retry"
 
@@ -3075,7 +3078,7 @@ msgid "Revert"
 msgstr "Revert"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:23
-#: apps/web/src/features/review/components/triage-list-view.tsx:173
+#: apps/web/src/features/review/components/triage-list-view.tsx:169
 msgid "Review"
 msgstr "Review"
 
@@ -3153,11 +3156,11 @@ msgstr "Search OpenSubtitles"
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:260
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:263
 msgid "Search terms…"
 msgstr "Search terms…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:181
+#: apps/web/src/features/review/components/triage-list-view.tsx:177
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:11
 msgid "Search…"
 msgstr "Search…"
@@ -3304,7 +3307,7 @@ msgstr "Share your feedback or suggest improvements to the founders. We read "
 msgid "Short paraphrase in the target language."
 msgstr "Short paraphrase in the target language."
 
-#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:27
+#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:23
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
@@ -3409,7 +3412,7 @@ msgstr "Something went wrong."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:169
+#: apps/web/src/features/review/components/triage-list-view.tsx:165
 msgid "Source"
 msgstr "Source"
 
@@ -3418,7 +3421,7 @@ msgid "Standalone"
 msgstr "Standalone"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:142
-#: apps/web/src/features/review/components/triage-row.tsx:47
+#: apps/web/src/features/review/components/triage-row.tsx:43
 msgid "Start"
 msgstr "Start"
 
@@ -3655,7 +3658,7 @@ msgstr "Target language codes for machine translation"
 msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Tell us what you think or describe any issues you encountered..."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:221
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:224
 msgid "Term deleted"
 msgstr "Term deleted"
 
@@ -3899,7 +3902,7 @@ msgstr "Translation lookup and save action for the selected text."
 msgid "Translation of this form"
 msgstr "Translation of this form"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:163
+#: apps/web/src/features/review/components/triage-list-view.tsx:159
 msgid "Triage"
 msgstr "Triage"
 
@@ -4077,11 +4080,11 @@ msgstr "View Premium Demo"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:39
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:42
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:235
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:238
 msgid "Vocabulary"
 msgstr "Vocabulary"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:242
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:245
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:52
 msgid "Vocabulary options"
 msgstr "Vocabulary options"
@@ -4260,7 +4263,7 @@ msgstr "Your current plan"
 msgid "your email address"
 msgstr "your email address"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:211
+#: apps/web/src/features/review/components/triage-list-view.tsx:207
 msgid "Your highlights"
 msgstr "Your highlights"
 

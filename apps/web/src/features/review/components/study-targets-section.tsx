@@ -17,14 +17,14 @@ import {
   useStudyTargets,
 } from '@/features/vocabulary/api/vocabulary-hooks'
 
-// Minimal slice of a chunk this control needs. `learningMode` is the wire's
-// DERIVED flag: 'active' iff the citation meaning_production facet is enabled.
+// Minimal slice of a chunk this control needs. `isProductionEnabled` is the
+// wire's DERIVED flag: true iff the citation meaning_production facet is enabled.
 // `grammar`/`targetLanguage` gate the pronunciation row: that facet renders its
 // back from grammar.ipa, so it's only offerable when an IPA is displayable.
 type StudyTargetsChunk = {
   id: string
   headword: string
-  learningMode: 'passive' | 'active'
+  isProductionEnabled: boolean
   grammar: Record<string, unknown>
   targetLanguage: string
 }
@@ -74,7 +74,7 @@ export const StudyTargetsSection = ({ chunk }: StudyTargetsSectionProps) => {
 const CitationChip = ({ chunk, facets }: { chunk: StudyTargetsChunk; facets: StudyFacetSummary[] }) => {
   const { t } = useLingui()
   const { mutate: setFacetEnabled, isPending } = useSetFacetEnabled()
-  const productionOn = chunk.learningMode === 'active'
+  const productionOn = chunk.isProductionEnabled
   const headword = chunk.headword
 
   // Pronunciation is a citation-only recognition facet (passive queue). It's

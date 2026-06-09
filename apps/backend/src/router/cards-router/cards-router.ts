@@ -34,7 +34,7 @@ const toChunkDto = (chunk: DbChunkSummary) => ({
   grammar: (chunk.grammar ?? {}) as Record<string, unknown>,
   groundedAt: toIsoString(chunk.grounded_at),
   grammarUserEditedAt: toIsoString(chunk.grammar_user_edited_at),
-  learningMode: chunk.learning_mode ?? 'passive',
+  isProductionEnabled: chunk.is_production_enabled ?? false,
 })
 
 const toCardDto = (row: DbCardWithChunk) => ({
@@ -95,13 +95,7 @@ export const CardsRouter = (
 
     updateStatus: implementer.updateStatus.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const updated = await setCardStatus(
-        input.cardId,
-        userId,
-        input.status,
-        setCardStatusDependencies,
-        input.learningMode
-      )
+      const updated = await setCardStatus(input.cardId, userId, input.status, setCardStatusDependencies)
       if (!updated) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Card not found' }] },
@@ -127,8 +121,7 @@ export const CardsRouter = (
         input.cardIds,
         userId,
         input.status,
-        setCardStatusDependencies,
-        input.learningMode
+        setCardStatusDependencies
       )
       const withChunks = await Promise.all(updated.map((card) => cardWithChunkOrError(cardsRepository, card, userId)))
       return { data: withChunks.filter((c): c is DbCardWithChunk => c !== null).map(toCardDto) }

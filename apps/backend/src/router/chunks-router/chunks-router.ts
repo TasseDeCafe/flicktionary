@@ -37,7 +37,8 @@ const reconcilePronunciationFacet = async (
 }
 
 // Project a facet-joined ChunkRow down to the bare ChunkSchema shape (the
-// setFacetEnabled response). ChunkRow already carries the DERIVED learningMode.
+// setFacetEnabled response). ChunkRow already carries the DERIVED
+// isProductionEnabled.
 const toChunkRowAsChunkDto = (row: ChunkRow) => ({
   id: row.id,
   userId: row.userId,
@@ -52,7 +53,7 @@ const toChunkRowAsChunkDto = (row: ChunkRow) => ({
   grammar: row.grammar,
   groundedAt: toIsoString(row.groundedAt),
   grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
-  learningMode: row.learningMode,
+  isProductionEnabled: row.isProductionEnabled,
 })
 
 const toChunkRowDto = (row: ChunkRow) => ({
@@ -69,7 +70,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   grammar: row.grammar,
   groundedAt: toIsoString(row.groundedAt),
   grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
-  learningMode: row.learningMode,
+  isProductionEnabled: row.isProductionEnabled,
   count: row.count,
   srsState: row.srsState,
   srsDue: toIsoString(row.srsDue),
@@ -104,15 +105,10 @@ const encodeCursor = (cursor: ChunksCursor | null): string | null => {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
 }
 
-// `studied_form` is a generation artifact, not a user linguistic edit — a
-// grammarPatch touching only it must not stamp grammar_user_edited_at (that
-// would pin the whole bag against future LLM/grounding merges). Per-form study
-// moved to study_facets in Phase 4b; the retired `study_form_enabled` toggle is
-// gone, but studied_form stays here as the never-overwrite signal.
-const STUDY_FORM_GRAMMAR_KEYS = new Set(['studied_form'])
-
+// A grammarPatch with any key is a real user linguistic edit and stamps
+// grammar_user_edited_at (pinning the bag against future LLM/grounding merges).
 const hasGrammarPatch = (patch: Record<string, unknown> | null | undefined): boolean =>
-  !!patch && Object.keys(patch).some((key) => !STUDY_FORM_GRAMMAR_KEYS.has(key))
+  !!patch && Object.keys(patch).length > 0
 
 export const ChunksRouter = (
   userLookupsRepository: UserLookupsRepositoryInterface,
@@ -149,8 +145,8 @@ export const ChunksRouter = (
         userLookupId: input.chunkId,
         userId,
       })
-      // Re-read via the facet-joined getter so learningMode is the DERIVED
-      // production-facet state (the plain term row no longer carries it).
+      // Re-read via the facet-joined getter so isProductionEnabled is the
+      // DERIVED production-facet state (the plain term row no longer carries it).
       const row = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
       if (!row) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
@@ -204,7 +200,7 @@ export const ChunksRouter = (
         cursor: decodeCursor(input.cursor),
         limit: input.limit,
         q: trimmedQ.length > 0 ? trimmedQ : null,
-        learningMode: input.learningMode ?? null,
+        isProductionEnabled: input.isProductionEnabled ?? null,
       })
       return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
     }),
@@ -229,9 +225,9 @@ export const ChunksRouter = (
       if (!updated) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }
-      // Re-read via the facet-joined single-row getter so learningMode reflects
-      // the post-update production-facet state (the plain term row no longer
-      // carries it).
+      // Re-read via the facet-joined single-row getter so isProductionEnabled
+      // reflects the post-update production-facet state (the plain term row no
+      // longer carries it).
       const row = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
       if (!row) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })

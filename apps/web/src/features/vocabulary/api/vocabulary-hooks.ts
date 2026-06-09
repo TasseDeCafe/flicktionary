@@ -2,7 +2,6 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
-import type { LearningMode } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 export const useListLanguages = () => {
   const { t } = useLingui()
@@ -20,12 +19,12 @@ export const useListChunksInfinite = (params: {
   sort: ChunksSort
   q?: string
   limit?: number
-  learningMode?: LearningMode | null
+  isProductionEnabled?: boolean | null
 }) => {
   const { t } = useLingui()
   const targetLanguage = params.targetLanguage
   const q = params.q?.trim() ?? ''
-  const learningMode = params.learningMode ?? null
+  const isProductionEnabled = params.isProductionEnabled ?? null
   return useInfiniteQuery(
     orpcQuery.chunks.listChunks.infiniteOptions({
       enabled: Boolean(targetLanguage),
@@ -35,7 +34,7 @@ export const useListChunksInfinite = (params: {
         cursor: pageParam ?? null,
         limit: params.limit ?? 50,
         ...(q.length > 0 ? { q } : {}),
-        ...(learningMode ? { learningMode } : {}),
+        ...(isProductionEnabled === null ? {} : { isProductionEnabled }),
       }),
       initialPageParam: null as string | null,
       getNextPageParam: (last) => last.nextCursor,
@@ -47,7 +46,7 @@ export const useListChunksInfinite = (params: {
 // Enable or disable one study facet (skill x target_form) on a term. This is the
 // unified study-target write path that replaced the old passive/active toggle:
 // enabling the citation meaning_production facet is what "promote to active"
-// used to be (disable = demote), and the wire still derives `learningMode` from
+// used to be (disable = demote), and the wire derives `isProductionEnabled` from
 // that facet's enabled state. For the production-citation case we optimistically
 // flip every in-flight chunks page so vocab chips update instantly; other facets
 // (recognition, forms) have no list-visible flag yet, so we just invalidate.
@@ -61,16 +60,15 @@ export const useSetFacetEnabled = () => {
         if (!isProductionCitation) return { snapshot: undefined }
         await queryClient.cancelQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
         const snapshot = queryClient.getQueriesData({ queryKey: orpcQuery.chunks.listChunks.key() })
-        const learningMode: LearningMode = enabled ? 'active' : 'passive'
         queryClient.setQueriesData<{
-          pages: Array<{ rows: Array<{ id: string; learningMode: LearningMode }>; nextCursor: string | null }>
+          pages: Array<{ rows: Array<{ id: string; isProductionEnabled: boolean }>; nextCursor: string | null }>
         }>({ queryKey: orpcQuery.chunks.listChunks.key() }, (old) => {
           if (!old) return old
           return {
             ...old,
             pages: old.pages.map((page) => ({
               ...page,
-              rows: page.rows.map((row) => (row.id === chunkId ? { ...row, learningMode } : row)),
+              rows: page.rows.map((row) => (row.id === chunkId ? { ...row, isProductionEnabled: enabled } : row)),
             })),
           }
         })

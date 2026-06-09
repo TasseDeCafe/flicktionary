@@ -54,7 +54,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
   const { mutate: prepareNext } = usePrepareNextReadingText()
   const { mutate: deleteChunk, isPending: isDeleting } = useDeleteChunkFromPractice()
   const { mutate: restoreChunk, isPending: isRestoring } = useRestoreChunkFromPractice()
-  const { mutate: setFacetEnabled, isPending: isTogglingLearningMode } = useSetFacetEnabled()
+  const { mutate: setFacetEnabled, isPending: isTogglingProduction } = useSetFacetEnabled()
 
   // Past + current texts, oldest first. viewIndex selects which is shown; the
   // last entry is the live (rateable) text. Earlier entries are peek-back,
@@ -155,7 +155,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
       grammar,
       targetLanguage,
       isDeleted: !!ann.deletedAt,
-      learningMode: ann.learningMode,
+      isProductionEnabled: ann.isProductionEnabled,
     }
   }, [openIndex, liveText, targetLanguage, userPrefs?.englishIpaDialect])
 
@@ -266,10 +266,10 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
     )
   }
 
-  const handleToggleLearningMode = (next: 'passive' | 'active') => {
+  const handleToggleProduction = (next: boolean) => {
     if (!openAnnotation?.userLookupId) return
     setFacetEnabled(
-      { chunkId: openAnnotation.userLookupId, skill: 'meaning_production', targetForm: '', enabled: next === 'active' },
+      { chunkId: openAnnotation.userLookupId, skill: 'meaning_production', targetForm: '', enabled: next },
       { onSuccess: () => setSheetOpen(false) }
     )
   }
@@ -418,8 +418,8 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
         canEdit={!!openAnnotation?.cardId && !!openAnnotation?.cardSessionId}
         onEdit={handleEdit}
         onDelete={handleDeleteRequest}
-        onToggleLearningMode={handleToggleLearningMode}
-        isTogglingLearningMode={isTogglingLearningMode}
+        onToggleProduction={handleToggleProduction}
+        isTogglingProduction={isTogglingProduction}
         onRestore={handleRestoreFromSheet}
         isRestoring={isRestoring}
       />
