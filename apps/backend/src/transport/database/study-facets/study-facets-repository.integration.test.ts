@@ -77,7 +77,11 @@ describe('study-facets-repository integration tests', () => {
     await repo.ensureCitationFacet(dormant.id)
     await sql`UPDATE public.study_facets SET disabled_at = NOW() WHERE user_lookup_id = ${dormant.id}`
     await ensureDefaultCitationFacetIfUnconfigured(dormant.id)
-    const stillDisabled = await repo.getFacet({ userLookupId: dormant.id, skill: 'meaning_recognition', targetForm: '' })
+    const stillDisabled = await repo.getFacet({
+      userLookupId: dormant.id,
+      skill: 'meaning_recognition',
+      targetForm: '',
+    })
     expect(stillDisabled?.disabled_at).not.toBeNull()
   })
 

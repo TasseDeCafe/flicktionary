@@ -414,10 +414,31 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     await studyFacetsRepository.ensureCitationFacet(term.id)
 
     // Recognition-mode opt-ins: citation pronunciation + a recognition form.
-    await insertFacet({ userLookupId: term.id, userId, skill: 'pronunciation', targetForm: '', srsState: null, srsDue: null })
-    await insertFacet({ userLookupId: term.id, userId, skill: 'meaning_recognition', targetForm: 'canto', srsState: null, srsDue: null })
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'pronunciation',
+      targetForm: '',
+      srsState: null,
+      srsDue: null,
+    })
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_recognition',
+      targetForm: 'canto',
+      srsState: null,
+      srsDue: null,
+    })
     // Production-mode opt-in: a production form.
-    await insertFacet({ userLookupId: term.id, userId, skill: 'meaning_production', targetForm: 'canto', srsState: null, srsDue: null })
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_production',
+      targetForm: 'canto',
+      srsState: null,
+      srsDue: null,
+    })
     // Neither disabled nor pending_data opt-ins count.
     await insertFacet({
       userLookupId: term.id,
