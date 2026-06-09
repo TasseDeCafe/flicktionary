@@ -2,6 +2,11 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
+import type { StudyFacetSummary } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+
+// The cached `getStudyTargets` query result (the raw response, before the
+// `useStudyTargets` select unwraps `.data`).
+type StudyTargetsCache = { data: { facets: StudyFacetSummary[]; candidateForms: string[] } }
 
 export const useListLanguages = () => {
   const { t } = useLingui()
@@ -47,36 +52,82 @@ export const useListChunksInfinite = (params: {
 // unified study-target write path that replaced the old passive/active toggle:
 // enabling the citation meaning_production facet is what "promote to active"
 // used to be (disable = demote), and the wire derives `isProductionEnabled` from
-// that facet's enabled state. For the production-citation case we optimistically
-// flip every in-flight chunks page so vocab chips update instantly; other facets
-// (recognition, forms) have no list-visible flag yet, so we just invalidate.
+// that facet's enabled state. Optimism is two-pronged: the term's own study-
+// targets view (the focus-view skills card/sheet) flips instantly for EVERY
+// facet, and the vocab list's production chips flip for the production-citation
+// case (the only facet with a list-visible flag).
 export const useSetFacetEnabled = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.setFacetEnabled.mutationOptions({
-      onMutate: async ({ chunkId, skill, targetForm, enabled }) => {
-        const isProductionCitation = skill === 'meaning_production' && (targetForm ?? '') === ''
-        if (!isProductionCitation) return { snapshot: undefined }
-        await queryClient.cancelQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        const snapshot = queryClient.getQueriesData({ queryKey: orpcQuery.chunks.listChunks.key() })
-        queryClient.setQueriesData<{
-          pages: Array<{ rows: Array<{ id: string; isProductionEnabled: boolean }>; nextCursor: string | null }>
-        }>({ queryKey: orpcQuery.chunks.listChunks.key() }, (old) => {
+      onMutate: async ({ chunkId, skill, targetForm, enabled, payload }) => {
+        const form = targetForm ?? ''
+
+        // 1) The term's own study targets (scoped to this chunk — recognition's
+        // target_form '' is shared across every term, so a broad patch would
+        // corrupt siblings). Flip the matching facet, or insert it when enabling
+        // a skill with no row yet (mirrors the server's ensure-then-enable).
+        const studyTargetsKey = orpcQuery.chunks.getStudyTargets.key({ input: { chunkId } })
+        await queryClient.cancelQueries({ queryKey: studyTargetsKey })
+        const studyTargetsSnapshot = queryClient.getQueriesData<StudyTargetsCache>({ queryKey: studyTargetsKey })
+        queryClient.setQueriesData<StudyTargetsCache>({ queryKey: studyTargetsKey }, (old) => {
           if (!old) return old
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              rows: page.rows.map((row) => (row.id === chunkId ? { ...row, isProductionEnabled: enabled } : row)),
-            })),
+          const facets = old.data.facets
+          const idx = facets.findIndex((f) => f.skill === skill && f.targetForm === form)
+          let nextFacets: StudyFacetSummary[]
+          if (idx >= 0) {
+            nextFacets = facets.map((f, i) =>
+              i === idx ? { ...f, enabled, ...(payload ? { payload: { ...f.payload, ...payload } } : {}) } : f
+            )
+          } else if (enabled) {
+            const isForm = form !== ''
+            const hasTranslation = !!payload && 'translation' in payload
+            nextFacets = [
+              ...facets,
+              {
+                skill,
+                targetForm: form,
+                enabled: true,
+                dataStatus: isForm && !hasTranslation ? 'pending_data' : 'ready',
+                srsState: null,
+                payload: payload ?? {},
+                source: null,
+              },
+            ]
+          } else {
+            nextFacets = facets
           }
+          return { ...old, data: { ...old.data, facets: nextFacets } }
         })
-        return { snapshot }
+
+        // 2) The vocab list's production chips (production-citation only).
+        const isProductionCitation = skill === 'meaning_production' && form === ''
+        let listSnapshot: ReturnType<typeof queryClient.getQueriesData> | undefined
+        if (isProductionCitation) {
+          await queryClient.cancelQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+          listSnapshot = queryClient.getQueriesData({ queryKey: orpcQuery.chunks.listChunks.key() })
+          queryClient.setQueriesData<{
+            pages: Array<{ rows: Array<{ id: string; isProductionEnabled: boolean }>; nextCursor: string | null }>
+          }>({ queryKey: orpcQuery.chunks.listChunks.key() }, (old) => {
+            if (!old) return old
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                rows: page.rows.map((row) => (row.id === chunkId ? { ...row, isProductionEnabled: enabled } : row)),
+              })),
+            }
+          })
+        }
+
+        return { studyTargetsSnapshot, listSnapshot }
       },
       onError: (_err, _vars, context) => {
-        if (!context?.snapshot) return
-        for (const [key, value] of context.snapshot) {
+        for (const [key, value] of context?.studyTargetsSnapshot ?? []) {
+          queryClient.setQueryData(key, value)
+        }
+        for (const [key, value] of context?.listSnapshot ?? []) {
           queryClient.setQueryData(key, value)
         }
       },
