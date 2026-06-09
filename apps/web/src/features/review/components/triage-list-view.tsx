@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Brain, ChevronRight, FileText } from 'lucide-react'
+import { Brain, ChevronRight } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
@@ -149,27 +149,17 @@ export const TriageListView = () => {
     updateStatusBatch({ sessionId, cardIds, status })
   }
 
-  // Triage and the source view are sibling screens (neither is the parent of
-  // the other). The modal chevron means "close stack" → /sessions; the Source
-  // cross-jump moves to the right slot as a forward link.
+  // Back follows the screen hierarchy: sessions → source → triage → focus.
   return (
     <ModalScreen
-      onClose={() => navigate({ to: '/sessions' })}
+      onClose={() => navigate({ to: '/sessions/$sessionId', params: { sessionId } })}
       closeIcon='chevron'
       title={t`Triage`}
       rightSlot={
-        <>
-          <Button variant='outline' size='sm' asChild>
-            <Link to='/sessions/$sessionId' params={{ sessionId }}>
-              <FileText className='mr-1 h-4 w-4' />
-              {t`Source`}
-            </Link>
-          </Button>
-          <Button variant='outline' size='sm' onClick={handleReviewCards} disabled={!firstNavigableCardId}>
-            {t`Review`}
-            <ChevronRight className='ml-1 h-4 w-4' />
-          </Button>
-        </>
+        <Button variant='outline' size='sm' onClick={handleReviewCards} disabled={!firstNavigableCardId}>
+          {t`Review`}
+          <ChevronRight className='ml-1 h-4 w-4' />
+        </Button>
       }
     >
       <div className='bg-background border-b px-4 py-3'>

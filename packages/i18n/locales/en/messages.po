@@ -1777,7 +1777,7 @@ msgstr "Give me three more example sentences using it."
 msgid "Go Back"
 msgstr "Go Back"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:192
+#: apps/web/src/features/review/components/triage-list-view.tsx:182
 msgid "Go back to the source view to add or retry highlights."
 msgstr "Go back to the source view to add or retry highlights."
 
@@ -2113,7 +2113,7 @@ msgstr "Link expired or invalid"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:132
 #: apps/web/src/features/more/components/more-tab-view.tsx:139
-#: apps/web/src/features/review/components/triage-list-view.tsx:236
+#: apps/web/src/features/review/components/triage-list-view.tsx:226
 msgid "LLM-suggested terms"
 msgstr "LLM-suggested terms"
 
@@ -2126,7 +2126,7 @@ msgstr "Load Subtitles"
 msgid "Loading card…"
 msgstr "Loading card…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:197
+#: apps/web/src/features/review/components/triage-list-view.tsx:187
 msgid "Loading cards…"
 msgstr "Loading cards…"
 
@@ -2369,7 +2369,7 @@ msgstr "No active tab to import from."
 msgid "No active tab."
 msgstr "No active tab."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:200
+#: apps/web/src/features/review/components/triage-list-view.tsx:190
 msgid "No cards yet. Select some highlights in the source text to generate new "
 "cards."
 msgstr "No cards yet. Select some highlights in the source text to generate new "
@@ -2804,7 +2804,7 @@ msgstr "Practice limits"
 msgid "Practice with a text"
 msgstr "Practice with a text"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:276
+#: apps/web/src/features/review/components/triage-list-view.tsx:266
 msgid "Practice your terms"
 msgstr "Practice your terms"
 
@@ -2871,7 +2871,7 @@ msgstr "Processing"
 msgid "Processing has moved to the background"
 msgstr "Processing has moved to the background"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:185
+#: apps/web/src/features/review/components/triage-list-view.tsx:175
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
@@ -3104,7 +3104,7 @@ msgid "Revert"
 msgstr "Revert"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:23
-#: apps/web/src/features/review/components/triage-list-view.tsx:169
+#: apps/web/src/features/review/components/triage-list-view.tsx:160
 msgid "Review"
 msgstr "Review"
 
@@ -3185,7 +3185,7 @@ msgstr "Search shadow roots for video elements"
 msgid "Search terms…"
 msgstr "Search terms…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:177
+#: apps/web/src/features/review/components/triage-list-view.tsx:167
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:11
 msgid "Search…"
 msgstr "Search…"
@@ -3443,10 +3443,6 @@ msgstr "Something went wrong."
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:16
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:165
-msgid "Source"
-msgstr "Source"
 
 #: apps/web/src/features/review/components/focus-view.tsx:223
 msgid "Standalone"
@@ -3932,7 +3928,7 @@ msgstr "Translation language"
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:159
+#: apps/web/src/features/review/components/triage-list-view.tsx:157
 msgid "Triage"
 msgstr "Triage"
 
@@ -4293,7 +4289,7 @@ msgstr "Your current plan"
 msgid "your email address"
 msgstr "your email address"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:207
+#: apps/web/src/features/review/components/triage-list-view.tsx:197
 msgid "Your highlights"
 msgstr "Your highlights"
 

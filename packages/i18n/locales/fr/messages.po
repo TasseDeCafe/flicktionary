@@ -133,8 +133,9 @@ msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} jours"
 #: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:60
 msgid "{optInNewCount} enabled extra card(s) (forms, pronunciation) will join "
 "the session — they don't count toward today's introductions."
-msgstr "{optInNewCount} carte(s) supplémentaire(s) activée(s) (formes, prononciation) "
-"rejoindront la session — elles ne comptent pas dans les introductions du jour."
+msgstr "{optInNewCount} carte(s) supplémentaire(s) activée(s) (formes, "
+"prononciation) rejoindront la session — elles ne comptent pas dans les "
+"introductions du jour."
 
 #: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:66
 msgid "{option} terms"
@@ -1803,7 +1804,7 @@ msgstr "Donne-moi trois autres exemples de phrases l'utilisant."
 msgid "Go Back"
 msgstr "Retour"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:192
+#: apps/web/src/features/review/components/triage-list-view.tsx:182
 msgid "Go back to the source view to add or retry highlights."
 msgstr "Retournez à la vue source pour ajouter ou réessayer des surlignages."
 
@@ -2144,7 +2145,7 @@ msgstr "Lien expiré ou invalide"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:132
 #: apps/web/src/features/more/components/more-tab-view.tsx:139
-#: apps/web/src/features/review/components/triage-list-view.tsx:236
+#: apps/web/src/features/review/components/triage-list-view.tsx:226
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
 
@@ -2157,7 +2158,7 @@ msgstr "Charger des sous-titres"
 msgid "Loading card…"
 msgstr "Chargement de la carte…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:197
+#: apps/web/src/features/review/components/triage-list-view.tsx:187
 msgid "Loading cards…"
 msgstr "Chargement des cartes…"
 
@@ -2402,7 +2403,7 @@ msgstr "Aucun onglet actif à importer."
 msgid "No active tab."
 msgstr "Aucun onglet actif."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:200
+#: apps/web/src/features/review/components/triage-list-view.tsx:190
 msgid "No cards yet. Select some highlights in the source text to generate new "
 "cards."
 msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte "
@@ -2846,7 +2847,7 @@ msgstr "Limites de pratique"
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:276
+#: apps/web/src/features/review/components/triage-list-view.tsx:266
 msgid "Practice your terms"
 msgstr "Pratiquer vos termes"
 
@@ -2914,7 +2915,7 @@ msgstr "Traitement"
 msgid "Processing has moved to the background"
 msgstr "Le traitement s'effectue en arrière-plan"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:185
+#: apps/web/src/features/review/components/triage-list-view.tsx:175
 msgid "Processing warnings"
 msgstr "Avertissements de traitement"
 
@@ -3147,7 +3148,7 @@ msgid "Revert"
 msgstr "Revert"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:23
-#: apps/web/src/features/review/components/triage-list-view.tsx:169
+#: apps/web/src/features/review/components/triage-list-view.tsx:160
 msgid "Review"
 msgstr "Réviser"
 
@@ -3229,7 +3230,7 @@ msgstr "Search shadow roots for video elements"
 msgid "Search terms…"
 msgstr "Rechercher des termes…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:177
+#: apps/web/src/features/review/components/triage-list-view.tsx:167
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:11
 msgid "Search…"
 msgstr "Rechercher…"
@@ -3487,10 +3488,6 @@ msgstr "Une erreur s'est produite."
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx:16
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Une erreur est survenue. Veuillez actualiser la page et réessayer."
-
-#: apps/web/src/features/review/components/triage-list-view.tsx:165
-msgid "Source"
-msgstr "Source"
 
 #: apps/web/src/features/review/components/focus-view.tsx:223
 msgid "Standalone"
@@ -3983,7 +3980,7 @@ msgid "Translation lookup and save action for the selected text."
 msgstr "Recherche de traduction et action de sauvegarde pour le texte "
 "sélectionné."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:159
+#: apps/web/src/features/review/components/triage-list-view.tsx:157
 msgid "Triage"
 msgstr "Tri"
 
@@ -4353,7 +4350,7 @@ msgstr "Votre forfait actuel"
 msgid "your email address"
 msgstr "votre adresse e-mail"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:207
+#: apps/web/src/features/review/components/triage-list-view.tsx:197
 msgid "Your highlights"
 msgstr "Vos surlignages"
 
