@@ -104,21 +104,26 @@ to **form-facet existence**, `hasFormFacet`).
   byte-for-byte in the migration and the candidate query (Trap 21). `payload` keeps the **full
   display form** (stress/case intact); only the key folds. This is **not** the display
   `stripStressMarks` helper (which preserves case for the front render).
-- **payload** = `{form, translation}`. The form swaps into the `headword` slot (front on a
-  recognition card, back on a production card) and its in-context translation into the `translation`
-  slot — wherever the pool layout places them; the lemma is demoted to a secondary back line and its
-  IPA suppressed (wrong for the inflection). Reuses the meaning layouts via the existing
-  `studiedForm` swap in `flashcard-mode-view`, sourced from `ReviewTerm.facetPayload` — no
-  `getCardFaceConfig` change.
+- **payload** = the form's own full card content (`FormFacetPayloadSchema`: `form`, plus optional
+  `translation`, `definition`, `targetExample`, `nativeExample`, and a `grammar` subset). The form
+  swaps into the `headword` slot (front on a recognition card, back on a production card); the rest
+  feeds the same meaning layouts. `resolveCardContent` (`practice/utils`) prefers the form payload
+  per field and falls back to the lemma where the form is silent — **except IPA, which never falls
+  back** (a lemma's transcription is wrong for the inflection). The lemma is demoted to a secondary
+  back line. No `getCardFaceConfig` change. The payload merges shallowly server-side (`payload ||
+  $new`), so writers must send `grammar` **complete** (the merge replaces the whole sub-object).
 - **generate-and-confirm** — a form added from the "+ Add a form" picker is born
   `data_status='pending_data'` (enabled but **not** queued; the queue filters `data_status='ready'`)
-  carrying only the surface string. The chip offers **Generate** (a focused **Opus** pass,
+  carrying only the surface string. The editor body offers **Generate** (a focused **Opus** pass,
   `generate-form-data.ts` → `generateFormFacetData` → `setFacetPayload`, synchronous, user behind a
-  spinner — never the Haiku gloss) or **Enter manually**; either fills `{form, translation}` and
-  flips to `ready`. Enabling Production on an already-filled form reuses its payload and is born
-  `ready` (the `translation` key signals "data provided"). Per-form **pronunciation** stays
-  greyed/roadmap — it needs per-form stress/IPA the lemma `grammar.ipa` doesn't carry (Worked
-  example 4).
+  spinner — never the Haiku gloss) or **Enter manually**; either fills the payload and flips to
+  `ready`, after which the full editable field set replaces the affordance. Generation emits
+  translation / definition / example / pos and **source-seeds** the `targetExample` from the form's
+  encountered sentence (`facet.source`) — Opus translates that rather than inventing — but **never
+  IPA/stress** (hallucination guard). Enabling Production on an already-filled form reuses its
+  payload and is born `ready` (the `translation` key signals "data provided"). Per-form
+  **pronunciation** stays greyed/roadmap — it needs per-form stress/IPA the lemma `grammar.ipa`
+  doesn't carry (Worked example 4), though the per-form IPA *field* is editable.
 - **Candidates** — "+ Add a form" sources encountered forms from
   `listCandidateFormsForChunk` (distinct kept-card `surface_form`, minus the lemma and any
   already-faceted form; Worked example 3), surfaced on demand, not auto-added.

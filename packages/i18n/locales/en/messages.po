@@ -13,9 +13,9 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:209
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:296
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:321
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:210
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:297
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:322
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 
@@ -29,11 +29,11 @@ msgstr "(Current)"
 msgid "(Expired)"
 msgstr "(Expired)"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:256
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:292
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:309
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:347
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:362
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:258
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:294
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:311
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:349
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:364
 msgid "(unset)"
 msgstr "(unset)"
 
@@ -103,7 +103,7 @@ msgstr "{dueTermCount} follow-up(s) due"
 msgid "{dueTermCount} reviews"
 msgstr "{dueTermCount} reviews"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:391
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:392
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 msgstr "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
@@ -223,8 +223,8 @@ msgstr "€{yearlyPricePerMonth}/month"
 msgid "3 examples"
 msgstr "3 examples"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:205
-#: apps/web/src/features/review/components/editable-card-fields.tsx:246
+#: apps/web/src/features/review/components/editable-card-fields.tsx:200
+#: apps/web/src/features/review/components/editable-card-fields.tsx:241
 msgid "A natural translation of the target example."
 msgstr "A natural translation of the target example."
 
@@ -234,7 +234,7 @@ msgid "A newer version of the app is required to continue. Please update to the 
 msgstr "A newer version of the app is required to continue. Please update to "
 "the latest version to access all features and improvements."
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:185
+#: apps/web/src/features/review/components/editable-card-fields.tsx:180
 msgid "A sentence using this term in its natural setting."
 msgstr "A sentence using this term in its natural setting."
 
@@ -288,11 +288,11 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:336
+#: apps/web/src/features/review/components/form-selector.tsx:166
 msgid "Add a form"
 msgstr "Add a form"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:332
+#: apps/web/src/features/review/components/form-selector.tsx:162
 msgid "Add a form to study"
 msgstr "Add a form to study"
 
@@ -306,7 +306,7 @@ msgstr "Add a word"
 msgid "Add Custom CSS"
 msgstr "Add Custom CSS"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:432
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:434
 msgid "Add form"
 msgstr "Add form"
 
@@ -326,7 +326,7 @@ msgstr "Add selection to Flicktionary"
 msgid "Add this term to production practice."
 msgstr "Add this term to production practice."
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:260
+#: apps/web/src/features/review/components/editable-card-fields.tsx:255
 msgid "Add translation"
 msgstr "Add translation"
 
@@ -340,7 +340,7 @@ msgid "Adds an outline around subtitle text. If this causes overlapping lines, "
 msgstr "Adds an outline around subtitle text. If this causes overlapping lines, "
 "try using a different font."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:260
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:262
 msgid "Adjective"
 msgstr "Adjective"
 
@@ -375,7 +375,7 @@ msgstr "Admin Settings"
 msgid "Advanced — flexible, effective use in complex contexts."
 msgstr "Advanced — flexible, effective use in complex contexts."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:261
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:263
 msgid "Adverb"
 msgstr "Adverb"
 
@@ -400,7 +400,7 @@ msgstr "All {newCount}"
 msgid "All caught up"
 msgstr "All caught up"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:387
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:388
 msgid "All done!"
 msgstr "All done!"
 
@@ -419,10 +419,6 @@ msgstr "Allow video elements with blank src"
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:347
 msgid "Always play (unpause) after invoking above shortcut"
 msgstr "Always play (unpause) after invoking above shortcut"
-
-#: apps/web/src/features/review/components/study-targets-section.tsx:117
-msgid "Always studied"
-msgstr "Always studied"
 
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:202
 msgid "American"
@@ -449,15 +445,15 @@ msgstr "An exercise for “{currentHeadword}” is still being prepared. Check b
 msgid "An unexpected error occurred"
 msgstr "An unexpected error occurred"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:358
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:360
 msgid "Animacy"
 msgstr "Animacy"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:364
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:366
 msgid "Animate"
 msgstr "Animate"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:148
+#: apps/web/src/features/review/components/editable-card-fields.tsx:152
 msgid "Another term already exists with that headword and sense."
 msgstr "Another term already exists with that headword and sense."
 
@@ -490,7 +486,7 @@ msgstr "Ask anything about this term… (Enter to send, Shift+Enter for a new "
 msgid "Ask follow-up questions about this term."
 msgstr "Ask follow-up questions about this term."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:305
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:307
 #: apps/web/src/features/review/components/grammar-chips.tsx:90
 msgid "Aspect"
 msgstr "Aspect"
@@ -499,7 +495,7 @@ msgstr "Aspect"
 msgid "Aspect pair"
 msgstr "Aspect pair"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:321
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:323
 msgid "Aspect pair (counterpart headword)"
 msgstr "Aspect pair (counterpart headword)"
 
@@ -573,8 +569,8 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Back"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:404
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:409
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:405
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:410
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 #: apps/web/src/features/practice/components/strengthen-view.tsx:62
 #: apps/web/src/features/practice/components/strengthen-view.tsx:72
@@ -582,7 +578,7 @@ msgstr "Back"
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:648
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:639
 msgid "Back to current card"
 msgstr "Back to current card"
 
@@ -618,7 +614,7 @@ msgstr "Beginner — basic phrases and immediate needs."
 msgid "best value"
 msgstr "best value"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:313
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:315
 msgid "Biaspectual"
 msgstr "Biaspectual"
 
@@ -646,8 +642,7 @@ msgstr "Browse community-uploaded tracks for this movie."
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:43
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:67
-#: apps/web/src/features/review/components/focus-view.tsx:455
-#: apps/web/src/features/review/components/study-targets-section.tsx:244
+#: apps/web/src/features/review/components/focus-view.tsx:400
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:634
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:61
@@ -655,21 +650,21 @@ msgstr "Browse community-uploaded tracks for this movie."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: apps/web/src/features/review/components/focus-view.tsx:224
-#: apps/web/src/features/review/components/focus-view.tsx:231
-#: apps/web/src/features/review/components/focus-view.tsx:325
+#: apps/web/src/features/review/components/focus-view.tsx:176
+#: apps/web/src/features/review/components/focus-view.tsx:183
+#: apps/web/src/features/review/components/focus-view.tsx:277
 msgid "Card"
 msgstr "Card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:263
+#: apps/web/src/features/review/components/focus-view.tsx:215
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Card {cardPosition} of {cardTotal}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:546
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:537
 msgid "Card actions"
 msgstr "Card actions"
 
-#: apps/web/src/features/review/components/focus-view.tsx:232
+#: apps/web/src/features/review/components/focus-view.tsx:184
 msgid "Card not found."
 msgstr "Card not found."
 
@@ -681,7 +676,7 @@ msgstr "Cards left"
 msgid "CEFR level"
 msgstr "CEFR level"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:639
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:630
 msgid "Change your rating"
 msgstr "Change your rating"
 
@@ -737,6 +732,10 @@ msgstr "Choose a plan to unlock all features"
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
+#: apps/web/src/features/review/components/form-selector.tsx:239
+msgid "Choose what to study for this target."
+msgstr "Choose what to study for this target."
+
 #: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx:66
 msgid "Choose your native language to enable lookups."
 msgstr "Choose your native language to enable lookups."
@@ -749,7 +748,7 @@ msgstr "Choose your plan"
 msgid "Clear search"
 msgstr "Clear search"
 
-#: apps/web/src/features/review/components/focus-view.tsx:408
+#: apps/web/src/features/review/components/focus-view.tsx:353
 msgid "Click Generate full exploration to enrich this card with collocations, "
 "etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, "
@@ -786,7 +785,7 @@ msgstr "Collocations"
 msgid "Comma-separated list of strings"
 msgstr "Comma-separated list of strings"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:297
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:299
 msgid "Common"
 msgstr "Common"
 
@@ -810,7 +809,7 @@ msgstr "Condensed playback: On"
 msgid "Confirm deletion"
 msgstr "Confirm deletion"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:265
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:267
 msgid "Conjunction"
 msgstr "Conjunction"
 
@@ -822,7 +821,7 @@ msgstr "Contact us"
 msgid "Contact Us"
 msgstr "Contact Us"
 
-#: apps/web/src/features/review/components/focus-view.tsx:62
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:255
 msgid "Context"
 msgstr "Context"
 
@@ -922,7 +921,7 @@ msgstr "Could not open upgrade screen."
 msgid "Could not read this page."
 msgstr "Could not read this page."
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:150
+#: apps/web/src/features/review/components/editable-card-fields.tsx:154
 msgid "Could not rename — please try again."
 msgstr "Could not rename — please try again."
 
@@ -942,7 +941,11 @@ msgstr "Couldn't generate the form's data"
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:151
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:173
+msgid "Couldn't remove the form"
+msgstr "Couldn't remove the form"
+
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:155
 msgid "Couldn't save the form's data"
 msgstr "Couldn't save the form's data"
 
@@ -978,7 +981,7 @@ msgstr "Daily new limit reached"
 msgid "Daily new limit reached."
 msgstr "Daily new limit reached."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:388
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:389
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
 
@@ -1027,23 +1030,23 @@ msgstr "Decrease playback rate"
 msgid "Default"
 msgstr "Default"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:221
+#: apps/web/src/features/review/components/editable-card-fields.tsx:216
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:68
 msgid "Definition"
 msgstr "Definition"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:209
+#: apps/web/src/features/review/components/editable-card-fields.tsx:204
 msgid "Definition (optional)"
 msgstr "Definition (optional)"
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:46
-#: apps/web/src/features/review/components/focus-view.tsx:474
+#: apps/web/src/features/review/components/focus-view.tsx:419
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:63
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:48
 msgid "Delete"
 msgstr "Delete"
 
-#: apps/web/src/features/review/components/focus-view.tsx:442
+#: apps/web/src/features/review/components/focus-view.tsx:387
 msgid "Delete \"{deleteHeadword}\"?"
 msgstr "Delete \"{deleteHeadword}\"?"
 
@@ -1062,7 +1065,7 @@ msgstr "Delete from vocabulary"
 msgid "Delete my account"
 msgstr "Delete my account"
 
-#: apps/web/src/features/review/components/focus-view.tsx:394
+#: apps/web/src/features/review/components/focus-view.tsx:340
 msgid "Delete term"
 msgstr "Delete term"
 
@@ -1071,7 +1074,7 @@ msgid "Deleted \"{headword}\""
 msgstr "Deleted \"{headword}\""
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:46
-#: apps/web/src/features/review/components/focus-view.tsx:474
+#: apps/web/src/features/review/components/focus-view.tsx:419
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:48
 msgid "Deleting…"
 msgstr "Deleting…"
@@ -1088,7 +1091,7 @@ msgstr "Detecting language…"
 msgid "Disabled"
 msgstr "Disabled"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:277
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:279
 msgid "Display form (e.g. stress-marked)"
 msgstr "Display form (e.g. stress-marked)"
 
@@ -1116,11 +1119,11 @@ msgstr "Due"
 msgid "Due soonest"
 msgstr "Due soonest"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:244
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:246
 msgid "e.g. /ˈkæt/"
 msgstr "e.g. /ˈkæt/"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:336
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:338
 msgid "e.g. + acc, от + gen"
 msgstr "e.g. + acc, от + gen"
 
@@ -1128,7 +1131,7 @@ msgstr "e.g. + acc, от + gen"
 msgid "e.g. подоконник, ran out of, à propos"
 msgstr "e.g. подоконник, ran out of, à propos"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:325
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:327
 msgid "e.g. увидеть"
 msgstr "e.g. увидеть"
 
@@ -1139,14 +1142,6 @@ msgstr "Easy"
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
 msgid "Edit note"
 msgstr "Edit note"
-
-#: apps/web/src/features/review/components/study-targets-section.tsx:206
-msgid "Edit study target for the form {form}"
-msgstr "Edit study target for the form {form}"
-
-#: apps/web/src/features/review/components/study-targets-section.tsx:99
-msgid "Edit study targets for {headword}"
-msgstr "Edit study targets for {headword}"
 
 #: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx:74
 #: apps/web/src/features/practice/components/rate-sheet.tsx:174
@@ -1225,7 +1220,7 @@ msgstr "Enrichment failed"
 msgid "Enrichment has not started yet."
 msgstr "Enrichment has not started yet."
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:260
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:170
 msgid "Enter manually"
 msgstr "Enter manually"
 
@@ -1345,11 +1340,11 @@ msgid "Failed to create session"
 msgstr "Failed to create session"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:163
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:205
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:227
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:160
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:182
 msgid "Failed to export vocabulary"
 msgstr "Failed to export vocabulary"
 
@@ -1620,7 +1615,7 @@ msgstr "Fast-forward"
 msgid "Fast-forward mode playback rate"
 msgstr "Fast-forward mode playback rate"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:295
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:297
 msgid "Feminine"
 msgstr "Feminine"
 
@@ -1657,15 +1652,19 @@ msgstr "Flicktionary User Guide"
 msgid "Follow-ups"
 msgstr "Follow-ups"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:416
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:137
+msgid "Form"
+msgstr "Form"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:418
 msgid "Form (e.g. был)"
 msgstr "Form (e.g. был)"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:341
+#: apps/web/src/features/review/components/form-selector.tsx:171
 msgid "Forms you've encountered"
 msgstr "Forms you've encountered"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:628
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:619
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Forward"
@@ -1678,7 +1677,7 @@ msgstr "Free for {NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgid "Free Trial"
 msgstr "Free Trial"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:445
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:447
 msgid "Free-form notes that don't fit the structured fields above."
 msgstr "Free-form notes that don't fit the structured fields above."
 
@@ -1686,15 +1685,15 @@ msgstr "Free-form notes that don't fit the structured fields above."
 msgid "Frequency"
 msgstr "Frequency"
 
-#: apps/web/src/features/review/components/focus-view.tsx:399
+#: apps/web/src/features/review/components/focus-view.tsx:344
 msgid "Full exploration"
 msgstr "Full exploration"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:237
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:239
 msgid "GA"
 msgstr "GA"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:288
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:290
 #: apps/web/src/features/review/components/grammar-chips.tsx:83
 msgid "Gender"
 msgstr "Gender"
@@ -1703,7 +1702,7 @@ msgstr "Gender"
 msgid "General"
 msgstr "General"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:257
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:167
 msgid "Generate"
 msgstr "Generate"
 
@@ -1711,7 +1710,7 @@ msgstr "Generate"
 msgid "Generate card"
 msgstr "Generate card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:418
+#: apps/web/src/features/review/components/focus-view.tsx:363
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
@@ -1730,7 +1729,7 @@ msgid "Generate translations for new cards in this language. You can always add 
 msgstr "Generate translations for new cards in this language. You can always "
 "add a translation to a card manually."
 
-#: apps/web/src/features/review/components/focus-view.tsx:406
+#: apps/web/src/features/review/components/focus-view.tsx:351
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
@@ -1740,7 +1739,7 @@ msgstr "Generating..."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:397
-#: apps/web/src/features/review/components/focus-view.tsx:418
+#: apps/web/src/features/review/components/focus-view.tsx:363
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Generating…"
@@ -1782,7 +1781,7 @@ msgstr "Good"
 msgid "Government"
 msgstr "Government"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:332
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:334
 msgid "Government / case requirement"
 msgstr "Government / case requirement"
 
@@ -1790,7 +1789,7 @@ msgstr "Government / case requirement"
 msgid "Graduated! This term is back in your practice rotation."
 msgstr "Graduated! This term is back in your practice rotation."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:225
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:227
 msgid "Grammar"
 msgstr "Grammar"
 
@@ -1798,7 +1797,7 @@ msgstr "Grammar"
 msgid "Grammar fields have been edited manually"
 msgstr "Grammar fields have been edited manually"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:440
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:442
 msgid "Grammar notes"
 msgstr "Grammar notes"
 
@@ -1806,7 +1805,7 @@ msgstr "Grammar notes"
 msgid "Hard"
 msgstr "Hard"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:174
+#: apps/web/src/features/review/components/editable-card-fields.tsx:168
 msgid "Headword"
 msgstr "Headword"
 
@@ -1843,7 +1842,7 @@ msgid "Hides this term from Practice and Vocabulary. You can restore it from "
 msgstr "Hides this term from Practice and Vocabulary. You can restore it from "
 "the toast right after, or by re-keeping it in a session."
 
-#: apps/web/src/features/review/components/focus-view.tsx:444
+#: apps/web/src/features/review/components/focus-view.tsx:389
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:40
 msgid "Hides this term from your vocabulary and Practice. You can revive it by "
 "re-keeping it in a session."
@@ -1878,10 +1877,6 @@ msgstr "Home"
 msgid "Host regex"
 msgstr "Host regex"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:236
-msgid "How this exact form reads in context."
-msgstr "How this exact form reads in context."
-
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:48
 msgid "How your free trial works"
 msgstr "How your free trial works"
@@ -1890,7 +1885,7 @@ msgstr "How your free trial works"
 msgid "Human translation"
 msgstr "Human translation"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:268
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:270
 msgid "Idiom"
 msgstr "Idiom"
 
@@ -1902,7 +1897,7 @@ msgstr "If you'd like to create a new account, sign up again below."
 msgid "If you'd like to create a new account, you can sign up again."
 msgstr "If you'd like to create a new account, you can sign up again."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:311
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:313
 msgid "Imperfective"
 msgstr "Imperfective"
 
@@ -1936,7 +1931,7 @@ msgstr "Importing…"
 msgid "In production"
 msgstr "In production"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:365
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:367
 msgid "Inanimate"
 msgstr "Inanimate"
 
@@ -1951,7 +1946,7 @@ msgstr "Increase offset to so that previous subtitle is at current position. "
 msgid "Increase playback rate"
 msgstr "Increase playback rate"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:381
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:383
 msgid "Indeclinable"
 msgstr "Indeclinable"
 
@@ -1986,7 +1981,7 @@ msgstr "Introduce your card details and get instant access"
 msgid "Invalid token. Please sign in again."
 msgstr "Invalid token. Please sign in again."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:233
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:235
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:81
 msgid "IPA"
 msgstr "IPA"
@@ -2003,7 +1998,7 @@ msgstr "Jump to latest"
 msgid "Jump to the session this term came from"
 msgstr "Jump to the session this term came from"
 
-#: apps/web/src/features/review/components/focus-view.tsx:535
+#: apps/web/src/features/review/components/focus-view.tsx:480
 #: apps/web/src/features/review/components/triage-row.tsx:79
 msgid "Keep"
 msgstr "Keep"
@@ -2024,7 +2019,7 @@ msgstr "Keyboard Shortcuts"
 msgid "L1 notes"
 msgstr "L1 notes"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:410
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:412
 msgid "Label (e.g. past.m)"
 msgstr "Label (e.g. past.m)"
 
@@ -2110,7 +2105,7 @@ msgstr "LLM-suggested terms"
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
-#: apps/web/src/features/review/components/focus-view.tsx:225
+#: apps/web/src/features/review/components/focus-view.tsx:177
 msgid "Loading card…"
 msgstr "Loading card…"
 
@@ -2130,7 +2125,7 @@ msgstr "Loading history…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:362
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:363
 msgid "Loading review terms…"
 msgstr "Loading review terms…"
 
@@ -2151,7 +2146,7 @@ msgstr "Loading..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:418
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:419
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
 #: apps/web/src/features/practice/components/practice-language-view.tsx:200
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
@@ -2186,7 +2181,7 @@ msgstr "Make sure the extension is installed and try again from its popup."
 msgid "Manage Subscription"
 msgstr "Manage Subscription"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:294
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:296
 msgid "Masculine"
 msgstr "Masculine"
 
@@ -2284,8 +2279,8 @@ msgstr "Name (optional)"
 msgid "Name of the tab"
 msgstr "Name of the tab"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:200
-#: apps/web/src/features/review/components/editable-card-fields.tsx:241
+#: apps/web/src/features/review/components/editable-card-fields.tsx:195
+#: apps/web/src/features/review/components/editable-card-fields.tsx:236
 msgid "Native example"
 msgstr "Native example"
 
@@ -2300,7 +2295,7 @@ msgstr "Native language"
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:296
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:298
 msgid "Neuter"
 msgstr "Neuter"
 
@@ -2341,7 +2336,7 @@ msgstr "New today"
 msgid "Next"
 msgstr "Next"
 
-#: apps/web/src/features/review/components/focus-view.tsx:282
+#: apps/web/src/features/review/components/focus-view.tsx:234
 msgid "Next card"
 msgstr "Next card"
 
@@ -2376,7 +2371,7 @@ msgstr "No languages found."
 msgid "No matches."
 msgstr "No matches."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:373
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:374
 msgid "No new terms to learn."
 msgstr "No new terms to learn."
 
@@ -2384,11 +2379,11 @@ msgstr "No new terms to learn."
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:131
+#: apps/web/src/features/review/components/form-selector.tsx:294
 msgid "No pronunciation data yet"
 msgstr "No pronunciation data yet"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:375
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
 msgid "No reviews are due right now."
 msgstr "No reviews are due right now."
 
@@ -2406,7 +2401,7 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "No target languages yet. Preferences are set the first time you start a "
 "session in a new language."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:377
 msgid "No terms are due right now."
 msgstr "No terms are due right now."
 
@@ -2465,7 +2460,7 @@ msgstr "Not in production"
 msgid "Not quite."
 msgstr "Not quite."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:403
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:405
 msgid "Notable forms"
 msgstr "Notable forms"
 
@@ -2481,15 +2476,15 @@ msgstr "Notes"
 msgid "Nothing to strengthen right now."
 msgstr "Nothing to strengthen right now."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:258
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:260
 msgid "Noun"
 msgstr "Noun"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:343
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:345
 msgid "Number-only"
 msgstr "Number-only"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:266
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:268
 msgid "Numeral"
 msgstr "Numeral"
 
@@ -2545,7 +2540,7 @@ msgstr "Open Flicktionary"
 msgid "Open Mail App"
 msgstr "Open Mail App"
 
-#: apps/web/src/features/review/components/focus-view.tsx:71
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:264
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:56
 msgid "Open source"
 msgstr "Open source"
@@ -2579,11 +2574,11 @@ msgstr "Opening…"
 msgid "OpenSubtitles search failed"
 msgstr "OpenSubtitles search failed"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:281
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:283
 msgid "Optional"
 msgstr "Optional"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:214
+#: apps/web/src/features/review/components/editable-card-fields.tsx:209
 msgid "Optional contextual paraphrase in the target language."
 msgstr "Optional contextual paraphrase in the target language."
 
@@ -2595,7 +2590,7 @@ msgstr "Optional note for the LLM (what specifically confuses you?)"
 msgid "Originally verified against Wiktionary on {groundedDate}, then edited"
 msgstr "Originally verified against Wiktionary on {groundedDate}, then edited"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:269
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:271
 msgid "Other"
 msgstr "Other"
 
@@ -2615,12 +2610,12 @@ msgstr "Pair the Flicktionary extension"
 msgid "Pairing your browser extension..."
 msgstr "Pairing your browser extension..."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:252
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:254
 #: apps/web/src/features/review/components/grammar-chips.tsx:76
 msgid "Part of speech"
 msgstr "Part of speech"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:264
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:266
 msgid "Particle"
 msgstr "Particle"
 
@@ -2648,11 +2643,11 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:289
+#: apps/web/src/features/review/components/form-selector.tsx:348
 msgid "Per-form pronunciation coming soon"
 msgstr "Per-form pronunciation coming soon"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:312
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:314
 msgid "Perfective"
 msgstr "Perfective"
 
@@ -2660,7 +2655,7 @@ msgstr "Perfective"
 msgid "Permanently delete your account and all associated data"
 msgstr "Permanently delete your account and all associated data"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:267
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:269
 msgid "Phrase"
 msgstr "Phrase"
 
@@ -2766,7 +2761,7 @@ msgstr "Please try again or refresh the page."
 msgid "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
 msgstr "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:349
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:351
 msgid "Plural-only"
 msgstr "Plural-only"
 
@@ -2801,6 +2796,10 @@ msgstr "Premium Features"
 msgid "Preparing exercises…"
 msgstr "Preparing exercises…"
 
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:187
+msgid "Preparing this form…"
+msgstr "Preparing this form…"
+
 #: apps/web/src/features/review/components/per-card-chat.tsx:220
 msgid "Preparing your answer…"
 msgstr "Preparing your answer…"
@@ -2809,7 +2808,7 @@ msgstr "Preparing your answer…"
 msgid "Preparing your text…"
 msgstr "Preparing your text…"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:262
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:264
 msgid "Preposition"
 msgstr "Preposition"
 
@@ -2817,8 +2816,8 @@ msgstr "Preposition"
 msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:617
-#: apps/web/src/features/review/components/focus-view.tsx:279
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:608
+#: apps/web/src/features/review/components/focus-view.tsx:231
 msgid "Previous card"
 msgstr "Previous card"
 
@@ -2855,8 +2854,8 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:120
-#: apps/web/src/features/review/components/study-targets-section.tsx:278
+#: apps/web/src/features/review/components/form-selector.tsx:284
+#: apps/web/src/features/review/components/form-selector.tsx:328
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 msgid "Production"
@@ -2887,12 +2886,12 @@ msgstr "Profile, subscription, sign-in"
 msgid "Prompt on failure to auto-load subtitles"
 msgstr "Prompt on failure to auto-load subtitles"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:263
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:265
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:130
-#: apps/web/src/features/review/components/study-targets-section.tsx:288
+#: apps/web/src/features/review/components/form-selector.tsx:293
+#: apps/web/src/features/review/components/form-selector.tsx:347
 msgid "Pronunciation"
 msgstr "Pronunciation"
 
@@ -2933,8 +2932,8 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:117
-#: apps/web/src/features/review/components/study-targets-section.tsx:271
+#: apps/web/src/features/review/components/form-selector.tsx:275
+#: apps/web/src/features/review/components/form-selector.tsx:319
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 msgid "Recognition"
 msgstr "Recognition"
@@ -2951,7 +2950,7 @@ msgstr "Recording"
 msgid "Redirecting..."
 msgstr "Redirecting..."
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:396
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:398
 msgid "Reflexive"
 msgstr "Reflexive"
 
@@ -2986,7 +2985,7 @@ msgid "Rehab progress: day {days} of 3. A correct answer today still counts — 
 msgstr "Rehab progress: day {days} of 3. A correct answer today still counts — "
 "try again with a fresh exercise."
 
-#: apps/web/src/features/review/components/focus-view.tsx:532
+#: apps/web/src/features/review/components/focus-view.tsx:477
 #: apps/web/src/features/review/components/triage-row.tsx:87
 msgid "Reject"
 msgstr "Reject"
@@ -3008,7 +3007,7 @@ msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
 #: apps/extension/common/components/MiscSettingsTab.tsx:179
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:424
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:426
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Remove"
 msgstr "Remove"
@@ -3016,6 +3015,10 @@ msgstr "Remove"
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:43
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
+
+#: apps/web/src/features/review/components/form-selector.tsx:395
+msgid "Remove form"
+msgstr "Remove form"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:652
 msgid "Remove highlight"
@@ -3097,13 +3100,12 @@ msgstr "Review terms"
 msgid "Reviewing and practicing"
 msgstr "Reviewing and practicing"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:237
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:239
 msgid "RP"
 msgstr "RP"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:140
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:150
-#: apps/web/src/features/review/components/study-targets-section.tsx:241
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
 msgid "Save"
@@ -3125,8 +3127,8 @@ msgstr "Save note"
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:267
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:450
+#: apps/web/src/features/review/components/editable-card-fields.tsx:262
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:452
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:656
@@ -3134,7 +3136,7 @@ msgstr "Save to vocabulary"
 msgid "Saving…"
 msgstr "Saving…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:567
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:558
 msgid "Say it out loud"
 msgstr "Say it out loud"
 
@@ -3305,7 +3307,7 @@ msgid "Share your feedback or suggest improvements to the founders. We read and 
 msgstr "Share your feedback or suggest improvements to the founders. We read "
 "and reply to every submission!"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:226
+#: apps/web/src/features/review/components/editable-card-fields.tsx:221
 msgid "Short paraphrase in the target language."
 msgstr "Short paraphrase in the target language."
 
@@ -3313,7 +3315,7 @@ msgstr "Short paraphrase in the target language."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Show {filteredCount} filtered out (below your level)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:655
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:646
 msgid "Show answer"
 msgstr "Show answer"
 
@@ -3376,14 +3378,17 @@ msgstr "Signed in as {0}"
 msgid "Signing in…"
 msgstr "Signing in…"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:350
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:352
 msgid "Singular-only"
 msgstr "Singular-only"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:113
-#: apps/web/src/features/review/components/study-targets-section.tsx:267
+#: apps/web/src/features/review/components/form-selector.tsx:233
 msgid "Skills"
 msgstr "Skills"
+
+#: apps/web/src/features/review/components/form-selector.tsx:238
+msgid "Skills for {label}"
+msgstr "Skills for {label}"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx:60
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:70
@@ -3418,7 +3423,7 @@ msgstr "Something went wrong. Please refresh the page and try again."
 msgid "Source"
 msgstr "Source"
 
-#: apps/web/src/features/review/components/focus-view.tsx:263
+#: apps/web/src/features/review/components/focus-view.tsx:215
 msgid "Standalone"
 msgstr "Standalone"
 
@@ -3462,7 +3467,7 @@ msgstr "Streaming"
 msgid "Streaming Video"
 msgstr "Streaming Video"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:401
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:402
 msgid "Strengthen"
 msgstr "Strengthen"
 
@@ -3474,7 +3479,7 @@ msgstr "Strengthen · {languageName}"
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:62
+#: apps/web/src/features/review/components/form-selector.tsx:53
 msgid "Study targets"
 msgstr "Study targets"
 
@@ -3643,7 +3648,7 @@ msgstr "Synonyms"
 msgid "System"
 msgstr "System"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:180
+#: apps/web/src/features/review/components/editable-card-fields.tsx:175
 msgid "Target example"
 msgstr "Target example"
 
@@ -3749,13 +3754,13 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx:409
+#: apps/web/src/features/review/components/focus-view.tsx:354
 msgid "This card looks incomplete. Re-process the session to populate its basic "
 "data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its "
 "basic data, then come back to enrich it."
 
-#: apps/web/src/features/review/components/study-targets-section.tsx:229
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:163
 msgid "This form needs data before you can study it."
 msgstr "This form needs data before you can study it."
 
@@ -3880,14 +3885,14 @@ msgstr "Transcript Server API Key (optional)"
 msgid "Transcript Server URL"
 msgstr "Transcript Server URL"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:192
-#: apps/web/src/features/review/components/editable-card-fields.tsx:233
+#: apps/web/src/features/review/components/editable-card-fields.tsx:187
+#: apps/web/src/features/review/components/editable-card-fields.tsx:228
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:69
 msgid "Translation"
 msgstr "Translation"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:196
-#: apps/web/src/features/review/components/editable-card-fields.tsx:237
+#: apps/web/src/features/review/components/editable-card-fields.tsx:191
+#: apps/web/src/features/review/components/editable-card-fields.tsx:232
 msgid "Translation in your native language."
 msgstr "Translation in your native language."
 
@@ -3899,10 +3904,6 @@ msgstr "Translation language"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:199
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
-
-#: apps/web/src/features/review/components/study-targets-section.tsx:232
-msgid "Translation of this form"
-msgstr "Translation of this form"
 
 #: apps/web/src/features/review/components/triage-list-view.tsx:159
 msgid "Triage"
@@ -4039,7 +4040,7 @@ msgstr "User Guide"
 msgid "User setup complete"
 msgstr "User setup complete"
 
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:259
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:261
 msgid "Verb"
 msgstr "Verb"
 
@@ -4187,7 +4188,7 @@ msgstr "Why does it appear in this particular form here?"
 msgid "Why this form?"
 msgstr "Why this form?"
 
-#: apps/web/src/features/review/components/focus-view.tsx:341
+#: apps/web/src/features/review/components/focus-view.tsx:293
 msgid "Wiktionary"
 msgstr "Wiktionary"
 

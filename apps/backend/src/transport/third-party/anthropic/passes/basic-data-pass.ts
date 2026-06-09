@@ -79,7 +79,7 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
             headword: {
               type: 'string',
               description:
-                "The normalized chunk in citation form (e.g. 'run out of', 'estar a punto de', 'fundirse con'). Always lemmatized — verbs as infinitives, nouns as singular, prepositional collocations include the canonical preposition. Never inflected.",
+                "The user's selection in dictionary citation form. Always lemmatized — verbs as infinitives, nouns as singular, never inflected. Anchor the EXTENT to what the user selected (see surface_form): cover the same word(s), just normalized. Do NOT widen a fully-selected, independently-meaningful word into a surrounding collocation just because the larger phrase reads naturally — e.g. selection 'назначения' → headword 'назначение', NOT 'специальное назначение'; selection 'так' → 'так', NOT 'не просто так'. The global 'chunks over single words' methodology does NOT apply here: the user drew the boundary, respect it. Only extend beyond the selected words when the selection is an incomplete fragment of a single fixed lexical unit that has no standalone citation form — a phrasal-verb particle, a required clitic, or a governed preposition that is part of the lemma (e.g. 'run out of', 'estar a punto de', 'fundirse con'). When in doubt, keep the headword to the selected word(s).",
             },
             sense: {
               type: 'string',
@@ -242,7 +242,12 @@ language (see the system prompt for per-language guidance).
 The learner is at ${cefrLevel}, native language ${nativeLanguage}, target
 ${targetLanguage}. Headwords must be in dictionary citation form (lemmatized),
 and translation must render that citation form (infinitive for verbs, singular
-for nouns) — never the inflected selection as it appears in the segment.${translationModeNote}${highlightsBlock}
+for nouns) — never the inflected selection as it appears in the segment. Each
+headword must cover the SAME word(s) the user selected, only normalized — do NOT
+absorb neighbouring words into a wider collocation (selection 'назначения' →
+'назначение', never 'специальное назначение'). Widen past the selection only when
+it is an incomplete fragment of a single fixed unit (a phrasal-verb particle, a
+required preposition/clitic).${translationModeNote}${highlightsBlock}
 
 Segments (id followed by text — only for context, do NOT mine them for new chunks):
 ${segmentLines}`

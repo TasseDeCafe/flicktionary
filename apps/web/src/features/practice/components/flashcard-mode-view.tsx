@@ -11,7 +11,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
-import { pickIpa, pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
+import { pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
 import {
   getCardFaceConfig,
   resolveCardSlots,
@@ -23,6 +23,7 @@ import type {
   ReviewScope,
   ReviewTerm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { resolveCardContent } from '../utils/resolve-card-content'
 import { StressMarkedText } from './stress-marked-text'
 import { PracticeLoader } from './practice-loader'
 import { ReviewQueueStats } from './review-queue-stats'
@@ -422,7 +423,6 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const sameLanguage = !!nativeLanguage && nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
   const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
-  const ipa = pickIpa(card.grammar?.ipa, targetLanguage, englishIpaDialect)
 
   // Pronunciation facet (citation only, passive queue): front prompts the
   // headword + an audio cue ("say it out loud"), the flip reveals the stressed
@@ -436,31 +436,23 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     ? pickIpaForDisplay(card.grammar?.ipa, targetLanguage, englishIpaDialect)
     : undefined
 
-  // Per-form study facet (Phase 4b): a queued card whose target_form is a
-  // specific inflection carries its {form, translation} in facetPayload. The
-  // form swaps into the 'headword' slot (the front on a recognition card, the
-  // back on a production card) and its in-context translation into the
-  // 'translation' slot — wherever the pool's layout places them — and the lemma
-  // is demoted to a secondary line on the back. The lemma's IPA is suppressed:
-  // it would be wrong for the inflected form. Citation cards (target_form='')
-  // leave studiedForm null and render the lemma as before.
-  const studiedForm =
-    card.targetForm !== '' && typeof card.facetPayload?.form === 'string'
-      ? {
-          form: card.facetPayload.form as string,
-          translation:
-            typeof card.facetPayload.translation === 'string' ? (card.facetPayload.translation as string) : null,
-        }
-      : null
+  // A queued card whose target_form is a specific inflection now carries its OWN
+  // full card content in facetPayload (translation / definition / examples /
+  // grammar). resolveCardContent prefers that per field and falls back to the
+  // lemma where the form is silent — except IPA, which never falls back (a
+  // lemma's transcription is wrong for an inflection). The form swaps into the
+  // 'headword' slot (front on recognition, back on production) and the lemma is
+  // demoted to a secondary line on the back. Citation cards resolve to the lemma.
+  const content = resolveCardContent(card, targetLanguage, englishIpaDialect)
 
   const cond: CardSlotConditions = {
     hideTranslationFields,
-    hasIpa: !!ipa && !studiedForm,
-    hasTargetExample: !!card.targetExample,
-    hasNativeExample: !!card.nativeExample,
-    hasTranslation: studiedForm ? !!studiedForm.translation : !!card.translation,
-    hasDefinition: !!card.definition,
-    hasGrammarChips: !!card.grammar,
+    hasIpa: !!content.ipa,
+    hasTargetExample: !!content.targetExample,
+    hasNativeExample: !!content.nativeExample,
+    hasTranslation: !!content.translation,
+    hasDefinition: !!content.definition,
+    hasGrammarChips: !!content.grammar,
   }
 
   // Active fronts are gloss-only; a card with no translation, no definition
@@ -484,7 +476,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const renderSlot = (slot: CardSlotKey, face: 'front' | 'back') => {
     switch (slot) {
       case 'headword': {
-        const fullForm = studiedForm ? studiedForm.form : card.grammar?.display_form || card.headword
+        const fullForm = content.displayForm
         return (
           <StressMarkedText
             key='headword'
@@ -495,44 +487,43 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
         )
       }
       case 'ipa':
-        return ipa ? (
+        return content.ipa ? (
           <div key='ipa' className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
             <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-            <span>{ipa}</span>
+            <span>{content.ipa}</span>
           </div>
         ) : null
       case 'targetExample':
-        return card.targetExample ? (
+        return content.targetExample ? (
           <p key='targetExample' className='border-l-2 border-yellow-300 pl-3 text-left text-base'>
-            {card.targetExample}
+            {content.targetExample}
           </p>
         ) : null
       case 'nativeExample':
-        return card.nativeExample ? (
+        return content.nativeExample ? (
           <p key='nativeExample' className='text-muted-foreground pl-3 text-left text-base'>
-            {card.nativeExample}
+            {content.nativeExample}
           </p>
         ) : null
       case 'translation': {
-        const primaryTranslation = studiedForm ? studiedForm.translation : card.translation
-        return primaryTranslation ? (
+        return content.translation ? (
           <p key='translation' className='text-lg'>
-            {primaryTranslation}
+            {content.translation}
           </p>
         ) : null
       }
       case 'definition':
         // On an active front the definition is the prompt itself (translation
         // fallback), so it gets prompt sizing instead of footnote sizing.
-        return card.definition ? (
+        return content.definition ? (
           <p key='definition' className={face === 'front' ? 'text-lg' : 'text-muted-foreground text-sm'}>
-            {card.definition}
+            {content.definition}
           </p>
         ) : null
       case 'grammar':
         return (
           <div key='grammar' className='flex justify-center'>
-            <GrammarChips grammar={card.grammar} targetLanguage={targetLanguage} />
+            <GrammarChips grammar={content.grammar} targetLanguage={targetLanguage} />
           </div>
         )
       default:
@@ -590,14 +581,14 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
               {showBack && (
                 <>
                   <div className='my-2 w-full border-t' />
-                  {studiedForm && (
+                  {content.lemma && (
                     <p className='text-muted-foreground text-sm'>
                       <StressMarkedText
-                        text={card.grammar?.display_form || card.headword}
+                        text={content.lemma.displayForm}
                         lang={targetLanguage}
                         className='font-medium'
                       />
-                      {card.translation ? ` — ${card.translation}` : null}
+                      {content.lemma.translation ? ` — ${content.lemma.translation}` : null}
                     </p>
                   )}
                   {backSlots.map((slot) => renderSlot(slot, 'back'))}

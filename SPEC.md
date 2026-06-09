@@ -283,30 +283,52 @@ Two-layer UI.
   the triage list instead. Production is no longer a triage decision — there is
   no `★ Active` button and no inline `Learning mode` row; the bar is just
   keep/reject.
-- For **language-wide entries** (entered via `?from=practice` or
-  `?from=vocabulary` over already-kept chunks — the triage "Add to" framing
-  would misrepresent them) there is **no bottom bar**. Instead the card section
-  shows an inline **Study targets** control plus a secondary **Delete term**
-  affordance. Study targets is a chip-per-target row: one **Citation** chip
-  labelled with the headword, one chip per **form** target the learner has added,
-  and a **"+ Add a form"** chip. The Citation chip's edit pencil opens a small
-  popover of **skill checkboxes** — Recognition (locked on; created on keep),
-  Production (toggles the `(meaning_production, '')` facet via
-  `chunks.setFacetEnabled`), and Pronunciation (toggles the `(pronunciation, '')`
-  facet; greyed "No pronunciation data yet" when the term has no displayable IPA
-  — `hasDisplayableIpa`). **Form chips** (Phase 4b) drill a specific inflection on
-  its own schedule: each opens the same Recognition/Production skill popover for
-  that `(skill, '<form>')` facet (per-form Pronunciation greyed — roadmap). A form
-  added from **"+ Add a form"** (which lists encountered surface forms from
-  `getStudyTargets.candidateForms`) is born `pending_data` and its chip offers
-  **Generate** (an Opus pass, `chunks.generateFacetData`) or **Enter manually**
-  (`chunks.setFacetPayload`) to fill `{form, translation}` before it can be
-  studied. The popover reads each facet's enabled state + readiness lazily via
-  `chunks.getStudyTargets`. The chip is accented (★) when Production is on. Toggling keeps the user on the focus view; the
-  chevron closes back to the originating surface (`?from=practice` carries
-  `practiceLang` + `practicePool` + `practiceMode` — `read` (default) for a
-  reading text, `flashcards` for the flashcard reviewer's actions menu — so
-  close lands on the right review screen, scope reset to `mixed`).
+- The card section always shows the **study-target selector + unified editor**
+  (in triage too — keeping a card on `Keep` just enables recognition; the editor
+  lets the learner set up forms/skills and edit content either side of that
+  decision). **Language-wide entries** (entered via `?from=practice` or
+  `?from=vocabulary` over already-kept chunks) additionally get a secondary
+  **Delete term** affordance and **no bottom keep/reject bar** (they're already
+  kept); triage entries keep the bar and delete via `Reject`.
+  - **Form selector** (`form-selector.tsx`): a chip-per-target row at the top —
+    one **Citation** chip (the headword), one chip per **form** target, and a
+    **"+ Add a form"** chip. Selecting a chip sets which target the editor below
+    edits (local navigation, no popover). A chip is accented (★) when Production
+    is on, dashed/Sparkles when a form is `pending_data`, and muted when the
+    target is **dormant** (zero enabled skills — in vocabulary but queued
+    nowhere).
+  - **Skills** for the selected target render inline beneath the chips on desktop
+    and behind a pencil→sheet on mobile (`useIsMobile`): **Recognition** and
+    **Production** toggle `(skill, '<targetForm>')` via `chunks.setFacetEnabled`;
+    **Pronunciation** toggles `(pronunciation, '')` for citation (greyed "No
+    pronunciation data yet" without displayable IPA — `hasDisplayableIpa`) and is
+    greyed "coming soon" for forms. **Recognition is deselectable** — unchecking
+    every skill leaves the target dormant (disable ≠ delete; SRS history kept).
+    Removal is explicit: **Remove form** (`chunks.deleteFacet` for the target's
+    facets) on a form, **Delete term** (`chunks.deleteChunk`) for the citation.
+  - **Unified editor** (`per-form-card-editor.tsx`): Citation edits the lemma's
+    canonical content (translation / examples / definition / grammar on
+    `user_lookups`, via `chunks.updateContent` + `chunks.rename`); a form edits
+    that form facet's own full content in its `study_facets.payload`
+    (`chunks.setFacetPayload`). Both reuse `editable-card-fields.tsx` +
+    `editable-grammar-panel.tsx` through injected save adapters; the form payload
+    `grammar` is always written **complete** (the JSONB merge replaces the whole
+    sub-object). A form added from **"+ Add a form"** (encountered surface forms
+    from `getStudyTargets.candidateForms`) is born `pending_data`; the editor body
+    offers **Generate** (an Opus pass, `chunks.generateFacetData`, which seeds the
+    example from the encountered sentence) or **Enter manually** — either fills
+    the payload, flips the facet to `ready`, and swaps in the full editable field
+    set (a skeleton shows while generation is in flight).
+  - **Context** block per target: the most-recent kept occurrence backing the
+    selected target (`getStudyTargets` `facet.source` — the form's own inflection,
+    the lemma's for citation), with an "Open source" deep-link; hidden when the
+    target has no kept occurrence / source. The selector + editor read facet
+    state + readiness + source lazily via `chunks.getStudyTargets`. Edits keep the
+    user on the focus view; the chevron closes back to the originating surface
+    (`?from=practice` carries `practiceLang` + `practicePool` + `practiceMode` —
+    `read` (default) for a reading text, `flashcards` for the flashcard reviewer's
+    actions menu — so close lands on the right review screen, scope reset to
+    `mixed`).
 - Keyboard `j`/`k` and `←`/`→` still drive prev/next.
 
 Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context blob (cached) + chunk + 10 surrounding segments + the card's current basic data + grammar (if populated) + extras (if populated, including any per-chunk L1 notes). The user's question is the only dynamic turn.
@@ -373,7 +395,7 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
 
 - **Landing.** Per-target-language list of every non-deleted chunk for the user. Language pills switch between languages when more than one exists. Filter pills: `All` (default) / `Passive` / `Active` — filter on the derived `learningMode`; selection syncs with the `?mode=passive|active` search param so reload survives. Sort: "Recently added" (default) or "Due soonest". Each row shows headword + sense + 1-line preview (`translation || definition`) + a `Due / New / Later` chip + a compact ★ `Active` chip when the derived `learningMode` is `'active'` + count badge when the chunk has been kept multiple times.
 - **Pagination.** Cursor-based with `@tanstack/react-virtual`. The `due` sort is two-phase to keep the cursor stable across NULLS LAST: scheduled rows first (ordered `srs_due ASC, id`), then the unscheduled tail (ordered by `id`).
-- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: an inline **Study targets** control (the citation chip + skill popover — Recognition locked on, Production toggles the `(meaning_production, '')` facet via `chunks.setFacetEnabled`, Pronunciation toggles the `(pronunciation, '')` facet — greyed when the term has no displayable IPA; chip accented ★ when Production is on), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
+- **Row actions.** Tapping a row jumps straight to the focus view of `first_card_id` with `?from=vocabulary` so close returns here. A 3-dots button on the right opens a bottom drawer with the secondary actions: **`Edit term`** (opens that focus view, where the study-target selector + unified editor live — the drawer itself hosts no skill/form editing), `Open source` (jumps to `/sessions/$id` for the originating session; the row is omitted when no source is available — e.g. adhoc chunks or sessions whose source was removed), and `Delete` (with inline confirm). Rows whose source card has been deleted fall back to opening the drawer when tapped, so the secondary actions remain reachable.
 - **Soft-delete semantics.** Delete sets `user_lookups.deleted_at` and hides the chunk from the Vocabulary list AND from the Practice queue (`listEligibleForLanguage` filters on `deleted_at IS NULL`). The card row stays untouched (so the source session still renders the card normally). Two restore paths: (a) re-keeping the same `(headword, sense)` in any session — the keep-transition clears `deleted_at`; (b) the explicit `Restore` action the Practice reading view surfaces (toast immediately after a delete; slim Restore-only RateSheet when tapping a soft-deleted annotation), backed by the dedicated `chunks.restoreChunk` endpoint. The Vocabulary tab itself has no Trash bin in v1.
 - **Header options (3-dots).** Top-right of the Vocabulary tab opens a `ResponsiveOverlay` (sheet on mobile, dialog on desktop) titled "Vocabulary options". Single action in v1: `Export vocabulary` — downloads a CSV of every kept chunk in the currently-selected language (Anki `#` directives + one column per datum; see Export below). Filename: `flicktionary-vocabulary-<lang>.csv`. The button is disabled until a language is selected.
 
