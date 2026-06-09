@@ -103,20 +103,17 @@ export const exploreCardIfMissing = async (
     }
 
     // grammar.studied_form mirrors the basic-data pass: refresh the inflected
-    // form + its in-context translation, but never retarget a form the user
-    // has already enabled studying.
+    // form + its in-context translation (a write-only generation artifact as of
+    // Phase 4b — per-form study reads study_facets). Never retarget the artifact
+    // once the user has turned a form of this term into its own facet.
     const enrichedHeadwordForForm = (enrichment.headword || card.chunk.headword).trim()
     const surfaceFormForForm = (enrichment.surface_form || card.surface_form || '').trim()
-    const existingGrammar =
-      card.chunk.grammar && typeof card.chunk.grammar === 'object'
-        ? (card.chunk.grammar as Record<string, unknown>)
-        : {}
     const studiedFormPatch =
       !languagePrefs.hideTranslationFields &&
       enrichment.surface_translation &&
       surfaceFormForForm &&
       surfaceFormForForm !== enrichedHeadwordForForm &&
-      !existingGrammar.study_form_enabled
+      !(await deps.userLookupsRepository.hasFormFacet(card.user_lookup_id))
         ? { studied_form: { form: surfaceFormForForm, translation: enrichment.surface_translation } }
         : null
     const grammarPatch = { ...enrichment.grammar, ...studiedFormPatch }

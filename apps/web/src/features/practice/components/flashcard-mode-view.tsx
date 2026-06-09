@@ -436,13 +436,22 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     ? pickIpaForDisplay(card.grammar?.ipa, targetLanguage, englishIpaDialect)
     : undefined
 
-  // "Study this exact form": when enabled on the chunk, the front drills the
-  // inflected form (grammar.studied_form.form) instead of the lemma; the back
-  // leads with the form's in-context translation and demotes the lemma + its
-  // translation to a secondary line. The lemma's IPA is suppressed — it would
-  // be wrong for the inflected form.
+  // Per-form study facet (Phase 4b): a queued card whose target_form is a
+  // specific inflection carries its {form, translation} in facetPayload. The
+  // form swaps into the 'headword' slot (the front on a recognition card, the
+  // back on a production card) and its in-context translation into the
+  // 'translation' slot — wherever the pool's layout places them — and the lemma
+  // is demoted to a secondary line on the back. The lemma's IPA is suppressed:
+  // it would be wrong for the inflected form. Citation cards (target_form='')
+  // leave studiedForm null and render the lemma as before.
   const studiedForm =
-    card.grammar?.study_form_enabled && card.grammar?.studied_form?.form ? card.grammar.studied_form : null
+    card.targetForm !== '' && typeof card.facetPayload?.form === 'string'
+      ? {
+          form: card.facetPayload.form as string,
+          translation:
+            typeof card.facetPayload.translation === 'string' ? (card.facetPayload.translation as string) : null,
+        }
+      : null
 
   const cond: CardSlotConditions = {
     hideTranslationFields,

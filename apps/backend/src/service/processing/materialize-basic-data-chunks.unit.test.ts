@@ -37,6 +37,7 @@ const createRepos = (lookup: Record<string, unknown>) => {
       ...lookup,
     }),
     updateContent,
+    hasFormFacet: vi.fn().mockResolvedValue(lookup.hasFormFacet ?? false),
   } as unknown as UserLookupsRepositoryInterface
   const cardsRepository = {
     insertCard: vi.fn().mockResolvedValue({ id: 'card-1' }),
@@ -126,25 +127,37 @@ describe('buildStudiedFormPatch', () => {
   const inflected = { headword: 'посмотреть', surfaceForm: 'посмотрим', surfaceTranslation: "let's see" }
 
   it('emits studied_form when the surface form is an inflection with a translation', () => {
-    expect(buildStudiedFormPatch(inflected, null)).toEqual({
+    expect(buildStudiedFormPatch(inflected)).toEqual({
       studied_form: { form: 'посмотрим', translation: "let's see" },
     })
   })
 
   it('is null when the surface form is already the citation form', () => {
     expect(
-      buildStudiedFormPatch({ headword: 'palabra', surfaceForm: 'palabra', surfaceTranslation: 'word' }, null)
+      buildStudiedFormPatch({ headword: 'palabra', surfaceForm: 'palabra', surfaceTranslation: 'word' })
     ).toBeNull()
   })
 
   it('is null without a surface translation', () => {
-    expect(buildStudiedFormPatch({ ...inflected, surfaceTranslation: null }, null)).toBeNull()
+    expect(buildStudiedFormPatch({ ...inflected, surfaceTranslation: null })).toBeNull()
   })
+})
 
-  it('never retargets a form the user has enabled studying', () => {
-    expect(
-      buildStudiedFormPatch(inflected, { study_form_enabled: true, studied_form: { form: 'посмотрел' } })
-    ).toBeNull()
+describe('materializeBasicDataChunks — studied_form never-overwrite gate', () => {
+  it('skips the studied_form artifact once the term already has a form facet', async () => {
+    // The gate moved from grammar.study_form_enabled to form-facet existence
+    // (Phase 4b): re-enrichment must not retarget the artifact to a later
+    // inflection after the user has made one of its forms a facet.
+    const repos = createRepos({ hasFormFacet: true })
+
+    await run({
+      chunk: llmChunk({ surfaceForm: 'palabras', surfaceTranslation: 'words', grammar: { pos: 'noun' } }),
+      hideTranslationFields: false,
+      repos,
+    })
+
+    const args = repos.updateContent.mock.calls[0]![0]
+    expect(args.grammarPatch).toEqual({ pos: 'noun' })
   })
 })
 

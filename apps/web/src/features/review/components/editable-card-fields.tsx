@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
 import { Input } from '@flicktionary/ui/components/input'
-import { Switch } from '@flicktionary/ui/components/switch'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import type { Chunk } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
@@ -18,10 +17,6 @@ export type TranslationFieldsMode = 'editable' | 'on-demand' | 'hidden'
 
 type Props = {
   chunk: Chunk
-  // Representative card form used to seed "study this exact form" when the
-  // chunk's grammar bag lacks studied_form (the focus view passes the session
-  // card's form; the practice edit sheet passes the first encounter's).
-  surfaceForm?: string | null
   translationFieldsMode: TranslationFieldsMode
   sourceSessionId?: string
 }
@@ -32,7 +27,7 @@ const SAVE_DEBOUNCE_MS = 600
 // the canonical chunk (user_lookups). Editing here mutates ONE row that may be
 // referenced by many cards across sessions — sibling cards re-fetch and pick
 // up the change via cache invalidation.
-export const EditableCardFields = ({ chunk, surfaceForm, translationFieldsMode, sourceSessionId }: Props) => {
+export const EditableCardFields = ({ chunk, translationFieldsMode, sourceSessionId }: Props) => {
   const { t } = useLingui()
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
   const renameChunk = useRenameChunk(sourceSessionId)
@@ -54,22 +49,9 @@ export const EditableCardFields = ({ chunk, surfaceForm, translationFieldsMode, 
   const [targetExample, setTargetExample] = useState(chunk.targetExample ?? '')
   const [nativeExample, setNativeExample] = useState(chunk.nativeExample ?? '')
 
-  // "Study this exact form": when the card's surface form is an inflection of
-  // the headword, the learner can flip the review front to drill the form
-  // itself (e.g. посмотрим instead of посмотреть). Both the form+translation
-  // pair and the toggle live in the chunk's grammar bag (studied_form /
-  // study_form_enabled) so they follow the canonical row into the review
-  // queue. Old chunks may predate the LLM-generated studied_form — toggling
-  // on then seeds it from the card's surface form with an empty translation.
-  const storedStudiedForm = chunk.grammar?.studied_form ?? null
-  const studyFormValue = (storedStudiedForm?.form ?? surfaceForm ?? '').trim()
-  const studyFormAvailable = !!studyFormValue && studyFormValue !== chunk.headword.trim()
-  const [studyFormEnabled, setStudyFormEnabled] = useState(!!chunk.grammar?.study_form_enabled)
-  const [formTranslation, setFormTranslation] = useState(storedStudiedForm?.translation ?? '')
-  const lastSavedStudyFormRef = useRef({
-    enabled: !!chunk.grammar?.study_form_enabled,
-    translation: storedStudiedForm?.translation ?? '',
-  })
+  // Per-form study ("study посмотрим, not посмотреть") moved out of this sheet
+  // in Phase 4b: it's now a first-class study facet edited from the
+  // Study-targets control (StudyTargetsSection), not a grammar-bag toggle here.
 
   // Track the last value sent to the server so we avoid sending no-ops on
   // every keystroke pause and avoid clobbering server-side updates (e.g. from
@@ -114,54 +96,6 @@ export const EditableCardFields = ({ chunk, surfaceForm, translationFieldsMode, 
       lastSavedRef.current.nativeExample = serverNativeExample
     }
   }, [chunk.headword, chunk.translation, chunk.definition, chunk.targetExample, chunk.nativeExample])
-
-  // Same server-sync rule for the study-form fields.
-  useEffect(() => {
-    const serverEnabled = !!chunk.grammar?.study_form_enabled
-    const serverFormTranslation = chunk.grammar?.studied_form?.translation ?? ''
-    if (serverEnabled !== lastSavedStudyFormRef.current.enabled) {
-      setStudyFormEnabled(serverEnabled)
-      lastSavedStudyFormRef.current.enabled = serverEnabled
-    }
-    if (serverFormTranslation !== lastSavedStudyFormRef.current.translation) {
-      setFormTranslation(serverFormTranslation)
-      lastSavedStudyFormRef.current.translation = serverFormTranslation
-    }
-  }, [chunk.grammar])
-
-  const handleStudyFormToggle = (next: boolean) => {
-    setStudyFormEnabled(next)
-    lastSavedStudyFormRef.current.enabled = next
-    // Write the full {form, translation} pair so a toggle on an old chunk
-    // (no LLM-generated studied_form) seeds it from the card's surface form.
-    updateChunkContent.mutate({
-      chunkId: chunk.id,
-      patch: {
-        grammarPatch: {
-          study_form_enabled: next,
-          studied_form: { form: studyFormValue, translation: formTranslation.trim() || null },
-        },
-      },
-    })
-  }
-
-  // Debounced save for the form translation, mirroring the content fields.
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (!studyFormEnabled) return
-      if (formTranslation === lastSavedStudyFormRef.current.translation) return
-      updateChunkContent.mutate({
-        chunkId: chunk.id,
-        patch: {
-          grammarPatch: {
-            studied_form: { form: studyFormValue, translation: formTranslation.trim() || null },
-          },
-        },
-      })
-      lastSavedStudyFormRef.current.translation = formTranslation
-    }, SAVE_DEBOUNCE_MS)
-    return () => clearTimeout(id)
-  }, [formTranslation, studyFormEnabled, studyFormValue, chunk.id, updateChunkContent])
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -241,28 +175,6 @@ export const EditableCardFields = ({ chunk, surfaceForm, translationFieldsMode, 
         <Input value={headword} onChange={(e) => setHeadword(e.target.value)} />
         {renameError && <p className='text-destructive mt-1 text-xs'>{renameError}</p>}
       </div>
-
-      {studyFormAvailable && (
-        <div className='flex flex-col gap-2 rounded-md border px-3 py-2'>
-          <div className='flex items-center justify-between gap-2'>
-            <div>
-              <Label className='text-xs'>{t`Study this exact form`}</Label>
-              <p className='text-sm font-medium'>{studyFormValue}</p>
-            </div>
-            <Switch checked={studyFormEnabled} onCheckedChange={handleStudyFormToggle} />
-          </div>
-          {studyFormEnabled && translationFieldsMode !== 'hidden' && (
-            <div>
-              <Label className='text-xs'>{t`Form translation`}</Label>
-              <Input
-                value={formTranslation}
-                onChange={(e) => setFormTranslation(e.target.value)}
-                placeholder={t`Translation of this exact form in context.`}
-              />
-            </div>
-          )}
-        </div>
-      )}
 
       <div>
         <Label className='text-xs'>{t`Target example`}</Label>

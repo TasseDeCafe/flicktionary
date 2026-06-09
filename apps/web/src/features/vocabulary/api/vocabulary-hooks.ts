@@ -103,16 +103,54 @@ export const useSetFacetEnabled = () => {
 
 // Read one term's study facets for the Study-targets control. Lazily fetched
 // when the term view renders (kept off the chunk DTO so the vocab list stays
-// lean). Returns the facet summary array; the control derives chip membership
-// (e.g. is the citation pronunciation facet enabled) from it.
+// lean). Returns `{ facets, candidateForms }`: the facet summaries drive chip
+// membership / readiness, and candidateForms are the encountered surface forms
+// the "+ Add a form" picker can still offer.
 export const useStudyTargets = (chunkId: string | null) => {
   const { t } = useLingui()
   return useQuery(
     orpcQuery.chunks.getStudyTargets.queryOptions({
       enabled: Boolean(chunkId),
       input: { chunkId: chunkId ?? '' },
-      select: (response) => response.data.facets,
+      select: (response) => response.data,
       meta: { errorMessage: t`Failed to load study targets` },
+    })
+  )
+}
+
+// Fill a pending_data form facet's render data via the Opus generate-and-confirm
+// pass (the form's spelling + a translation of that exact inflection) and flip
+// it to ready. The mutation response is the refreshed study-targets; we
+// invalidate so the chip drops its "needs data" state. dueSummary refetches
+// because a newly-ready form facet enters the opt-in-new queue.
+export const useGenerateFacetData = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.generateFacetData.mutationOptions({
+      onSettled: () => {
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Couldn't generate the form's data`, showErrorModal: true },
+    })
+  )
+}
+
+// Manual counterpart to useGenerateFacetData: the user types the form's data
+// themselves (the "enter it yourself" escape from a pending_data facet, and the
+// edit path for an existing form facet). Merges {form, translation} and flips to
+// ready.
+export const useSetFacetPayload = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.setFacetPayload.mutationOptions({
+      onSettled: () => {
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Couldn't save the form's data`, showErrorModal: true },
     })
   )
 }

@@ -347,7 +347,6 @@ export const FocusView = () => {
                 <EditableCardFields
                   key={`${card.id}:${card.updatedAt}`}
                   chunk={card.chunk}
-                  surfaceForm={card.surfaceForm}
                   translationFieldsMode={translationFieldsMode}
                   sourceSessionId={sourceSessionId}
                 />

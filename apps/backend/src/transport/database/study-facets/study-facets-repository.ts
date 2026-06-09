@@ -93,10 +93,30 @@ const ensureCitationFacet = async (userLookupId: string, executor: postgres.Sql 
 
 // Generic idempotent facet creation for an arbitrary (skill, target_form).
 // Used when a facet is enabled (e.g. promote creates the production facet).
-const ensureFacet = async (params: FacetAddress, executor: postgres.Sql = sql): Promise<void> => {
+//
+// `dataStatus`/`source`/`payload` apply ONLY to a freshly-inserted row (the
+// column defaults are 'ready'/'system'/{}). ON CONFLICT DO NOTHING means an
+// EXISTING facet keeps its stored data_status/source/payload — re-enabling a
+// previously-disabled, history-bearing form facet must not revert it to
+// pending_data or wipe its generated payload. Phase 4b passes
+// dataStatus='pending_data', source='manual' when a NEW form facet is created
+// from the term view (it needs Opus/manual data before it can be queued).
+const ensureFacet = async (
+  params: FacetAddress & {
+    dataStatus?: 'ready' | 'pending_data'
+    source?: 'system' | 'highlight' | 'paradigm' | 'manual'
+    payload?: Record<string, unknown>
+  },
+  executor: postgres.Sql = sql
+): Promise<void> => {
+  const payloadJson = params.payload ? sql.json(params.payload as unknown as postgres.JSONValue) : null
   await executor`
-    INSERT INTO public.study_facets (user_lookup_id, user_id, target_language, skill, target_form)
-    SELECT ul.id, ul.user_id, ul.target_language, ${params.skill}, ${params.targetForm}
+    INSERT INTO public.study_facets (
+      user_lookup_id, user_id, target_language, skill, target_form, data_status, source, payload
+    )
+    SELECT ul.id, ul.user_id, ul.target_language, ${params.skill}, ${params.targetForm},
+      ${params.dataStatus ?? 'ready'}, ${params.source ?? 'system'},
+      ${payloadJson ? sql`${payloadJson}::jsonb` : sql`'{}'::jsonb`}
     FROM public.user_lookups ul
     WHERE ul.id = ${params.userLookupId}
     ON CONFLICT (user_lookup_id, skill, target_form) DO NOTHING
@@ -319,7 +339,14 @@ const unparkAndSoftReentryFacet = async (
 export interface StudyFacetsRepositoryInterface {
   getFacet: (params: FacetAddress, executor?: postgres.Sql) => Promise<DbStudyFacet | null>
   ensureCitationFacet: (userLookupId: string, executor?: postgres.Sql) => Promise<void>
-  ensureFacet: (params: FacetAddress, executor?: postgres.Sql) => Promise<void>
+  ensureFacet: (
+    params: FacetAddress & {
+      dataStatus?: 'ready' | 'pending_data'
+      source?: 'system' | 'highlight' | 'paradigm' | 'manual'
+      payload?: Record<string, unknown>
+    },
+    executor?: postgres.Sql
+  ) => Promise<void>
   initializeCitationFacetIfUnderDailyCap: (params: {
     userLookupId: string
     userId: string
