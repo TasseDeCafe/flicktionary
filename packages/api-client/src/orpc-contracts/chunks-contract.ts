@@ -126,8 +126,11 @@ export const chunksContract = {
         q: z.string().optional(),
         // Optional production-study filter. Omitted/null means "All"; true =
         // only terms in production (citation meaning_production enabled), false
-        // = only terms not in production.
-        isProductionEnabled: z.boolean().nullable().optional(),
+        // = only terms not in production. Accepts a real boolean (client input)
+        // OR the 'true'/'false' string a GET query delivers — z.boolean() alone
+        // rejects the string, and z.coerce.boolean() would parse 'false' as
+        // true (it's just Boolean(value)). z.stringbool() handles the string.
+        isProductionEnabled: z.union([z.boolean(), z.stringbool()]).nullable().optional(),
       })
     )
     .output(
