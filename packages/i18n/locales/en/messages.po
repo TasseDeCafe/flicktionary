@@ -288,12 +288,12 @@ msgstr "Actions for this vocabulary term."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Actions in this section can lead to permanent data loss."
 
-#: apps/web/src/features/review/components/form-selector.tsx:191
-#: apps/web/src/features/review/components/form-selector.tsx:229
+#: apps/web/src/features/review/components/form-selector.tsx:193
+#: apps/web/src/features/review/components/form-selector.tsx:231
 msgid "Add a form"
 msgstr "Add a form"
 
-#: apps/web/src/features/review/components/form-selector.tsx:186
+#: apps/web/src/features/review/components/form-selector.tsx:188
 msgid "Add a form to study"
 msgstr "Add a form to study"
 
@@ -587,7 +587,7 @@ msgstr "Back to current card"
 msgid "Back to current text"
 msgstr "Back to current text"
 
-#: apps/web/src/features/review/components/form-selector.tsx:202
+#: apps/web/src/features/review/components/form-selector.tsx:204
 msgid "Back to forms"
 msgstr "Back to forms"
 
@@ -733,7 +733,7 @@ msgstr "Checking…"
 msgid "Choose a plan to unlock all features"
 msgstr "Choose a plan to unlock all features"
 
-#: apps/web/src/features/review/components/form-selector.tsx:210
+#: apps/web/src/features/review/components/form-selector.tsx:212
 msgid "Choose how to fill this form's data."
 msgstr "Choose how to fill this form's data."
 
@@ -741,7 +741,7 @@ msgstr "Choose how to fill this form's data."
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
-#: apps/web/src/features/review/components/form-selector.tsx:419
+#: apps/web/src/features/review/components/form-selector.tsx:421
 msgid "Choose what to study for this target."
 msgstr "Choose what to study for this target."
 
@@ -830,7 +830,7 @@ msgstr "Contact us"
 msgid "Contact Us"
 msgstr "Contact Us"
 
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:295
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:296
 msgid "Context"
 msgstr "Context"
 
@@ -1229,8 +1229,8 @@ msgstr "Enrichment failed"
 msgid "Enrichment has not started yet."
 msgstr "Enrichment has not started yet."
 
-#: apps/web/src/features/review/components/form-selector.tsx:221
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:210
+#: apps/web/src/features/review/components/form-selector.tsx:223
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:211
 msgid "Enter manually"
 msgstr "Enter manually"
 
@@ -1662,7 +1662,7 @@ msgstr "Flicktionary User Guide"
 msgid "Follow-ups"
 msgstr "Follow-ups"
 
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:190
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:191
 msgid "Form"
 msgstr "Form"
 
@@ -1670,7 +1670,7 @@ msgstr "Form"
 msgid "Form (e.g. был)"
 msgstr "Form (e.g. был)"
 
-#: apps/web/src/features/review/components/form-selector.tsx:230
+#: apps/web/src/features/review/components/form-selector.tsx:232
 msgid "Forms you've encountered"
 msgstr "Forms you've encountered"
 
@@ -1712,8 +1712,8 @@ msgstr "Gender"
 msgid "General"
 msgstr "General"
 
-#: apps/web/src/features/review/components/form-selector.tsx:218
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:207
+#: apps/web/src/features/review/components/form-selector.tsx:220
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:208
 msgid "Generate"
 msgstr "Generate"
 
@@ -2390,7 +2390,7 @@ msgstr "No new terms to learn."
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
-#: apps/web/src/features/review/components/form-selector.tsx:307
+#: apps/web/src/features/review/components/form-selector.tsx:309
 msgid "No pronunciation data yet"
 msgstr "No pronunciation data yet"
 
@@ -2406,7 +2406,7 @@ msgstr "No sessions in this filter."
 msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
-#: apps/web/src/features/review/components/form-selector.tsx:407
+#: apps/web/src/features/review/components/form-selector.tsx:409
 msgid "No skills selected"
 msgstr "No skills selected"
 
@@ -2555,7 +2555,7 @@ msgstr "Open Flicktionary"
 msgid "Open Mail App"
 msgstr "Open Mail App"
 
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:304
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:305
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:56
 msgid "Open source"
 msgstr "Open source"
@@ -2658,7 +2658,7 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
-#: apps/web/src/features/review/components/form-selector.tsx:370
+#: apps/web/src/features/review/components/form-selector.tsx:372
 msgid "Per-form pronunciation coming soon"
 msgstr "Per-form pronunciation coming soon"
 
@@ -2811,7 +2811,7 @@ msgstr "Premium Features"
 msgid "Preparing exercises…"
 msgstr "Preparing exercises…"
 
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:227
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:228
 msgid "Preparing this form…"
 msgstr "Preparing this form…"
 
@@ -2869,8 +2869,8 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
-#: apps/web/src/features/review/components/form-selector.tsx:299
-#: apps/web/src/features/review/components/form-selector.tsx:351
+#: apps/web/src/features/review/components/form-selector.tsx:301
+#: apps/web/src/features/review/components/form-selector.tsx:353
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 msgid "Production"
@@ -2905,8 +2905,8 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/web/src/features/review/components/form-selector.tsx:306
-#: apps/web/src/features/review/components/form-selector.tsx:369
+#: apps/web/src/features/review/components/form-selector.tsx:308
+#: apps/web/src/features/review/components/form-selector.tsx:371
 msgid "Pronunciation"
 msgstr "Pronunciation"
 
@@ -2947,8 +2947,8 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: apps/web/src/features/review/components/form-selector.tsx:292
-#: apps/web/src/features/review/components/form-selector.tsx:343
+#: apps/web/src/features/review/components/form-selector.tsx:294
+#: apps/web/src/features/review/components/form-selector.tsx:345
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 msgid "Recognition"
 msgstr "Recognition"
@@ -3031,7 +3031,7 @@ msgstr "Remove"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
-#: apps/web/src/features/review/components/form-selector.tsx:484
+#: apps/web/src/features/review/components/form-selector.tsx:486
 msgid "Remove form"
 msgstr "Remove form"
 
@@ -3288,7 +3288,7 @@ msgstr "Session removed"
 msgid "Sessions"
 msgstr "Sessions"
 
-#: apps/web/src/features/review/components/form-selector.tsx:208
+#: apps/web/src/features/review/components/form-selector.tsx:210
 msgid "Set up form"
 msgstr "Set up form"
 
@@ -3401,11 +3401,11 @@ msgstr "Signing in…"
 msgid "Singular-only"
 msgstr "Singular-only"
 
-#: apps/web/src/features/review/components/form-selector.tsx:394
+#: apps/web/src/features/review/components/form-selector.tsx:396
 msgid "Skills"
 msgstr "Skills"
 
-#: apps/web/src/features/review/components/form-selector.tsx:418
+#: apps/web/src/features/review/components/form-selector.tsx:420
 msgid "Skills for {label}"
 msgstr "Skills for {label}"
 
@@ -3779,8 +3779,8 @@ msgid "This card looks incomplete. Re-process the session to populate its basic 
 msgstr "This card looks incomplete. Re-process the session to populate its "
 "basic data, then come back to enrich it."
 
-#: apps/web/src/features/review/components/form-selector.tsx:214
-#: apps/web/src/features/review/components/per-form-card-editor.tsx:203
+#: apps/web/src/features/review/components/form-selector.tsx:216
+#: apps/web/src/features/review/components/per-form-card-editor.tsx:204
 msgid "This form needs data before you can study it."
 msgstr "This form needs data before you can study it."
 
