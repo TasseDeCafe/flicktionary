@@ -5,17 +5,11 @@ import type { Grammar, StudyFacetSummary } from '@flicktionary/api-client/orpc-c
 // facet's payload, keyed by the normalized target_form).
 export type SelectedTarget = { kind: 'citation' } | { kind: 'form'; targetForm: string }
 
-// Minimal slice of a chunk the study-target controls need. `isProductionEnabled`
-// is the wire's DERIVED flag (true iff the citation meaning_production facet is
-// enabled). `grammar`/`targetLanguage` gate the citation pronunciation row (it
-// renders its back from grammar.ipa, so it's only offerable with displayable IPA).
-export type StudyTargetsChunk = {
-  id: string
-  headword: string
-  isProductionEnabled: boolean
-  grammar: Record<string, unknown>
-  targetLanguage: string
-}
+// One-shot signal from the "Add a form" sheet to the inline per-form editor: the
+// user picked a form and chose how to fill it (Generate or Enter manually). The
+// sheet creates the recognition facet and closes; the inline editor (which owns
+// the loading state) runs the chosen action so the data loads on the main view.
+export type FormAutoSetup = { targetForm: string; action: 'generate' | 'manual' }
 
 // A form facet's display spelling — the payload `form` (stress/case intact),
 // falling back to the normalized target_form key when the payload predates it.

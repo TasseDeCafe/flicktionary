@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 type OptionCardProps = {
@@ -11,6 +11,10 @@ type OptionCardProps = {
   // selected state visible. `navigation` renders a chevron-right and is meant
   // for list-pick flows where tapping a row immediately advances the wizard.
   variant?: 'radio' | 'navigation'
+  // The right-hand selection indicator (ignored when variant is `navigation`).
+  // `radio` (default) is a round dot for single-select; `checkbox` is a square
+  // box with a check for multi-select lists.
+  indicator?: 'radio' | 'checkbox'
   selected?: boolean
   disabled?: boolean
   onSelect: () => void
@@ -23,16 +27,18 @@ export const OptionCard = ({
   description,
   badge,
   variant = 'radio',
+  indicator = 'radio',
   selected = false,
   disabled,
   onSelect,
   className,
 }: OptionCardProps) => {
   const isNav = variant === 'navigation'
+  const isCheckbox = indicator === 'checkbox'
   return (
     <button
       type='button'
-      role={isNav ? undefined : 'radio'}
+      role={isNav ? undefined : isCheckbox ? 'checkbox' : 'radio'}
       aria-checked={isNav ? undefined : selected}
       disabled={disabled}
       onClick={onSelect}
@@ -64,6 +70,16 @@ export const OptionCard = ({
       </div>
       {isNav ? (
         <ChevronRight className='text-muted-foreground h-5 w-5 shrink-0' aria-hidden='true' />
+      ) : isCheckbox ? (
+        <div
+          className={cn(
+            'flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border transition-colors',
+            selected ? 'border-foreground bg-foreground' : 'border-muted-foreground/40 group-hover:border-foreground/60'
+          )}
+          aria-hidden='true'
+        >
+          {selected && <Check className='text-background h-3.5 w-3.5' />}
+        </div>
       ) : (
         <div
           className={cn(

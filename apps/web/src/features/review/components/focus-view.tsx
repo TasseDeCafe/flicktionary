@@ -12,7 +12,7 @@ import { invalidateCardEverywhere } from '../api/card-cache'
 import { useDeleteChunk, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
 import { FormSelector } from './form-selector'
 import { PerFormCardEditor } from './per-form-card-editor'
-import type { SelectedTarget } from './study-target-helpers'
+import type { FormAutoSetup, SelectedTarget } from './study-target-helpers'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -57,6 +57,13 @@ export const FocusView = () => {
   const candidateForms = studyTargets?.candidateForms ?? []
   // Which study target the editor is focused on (reset to citation per card).
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>({ kind: 'citation' })
+  // One-shot: a form added via the "Add a form" sheet + the fill action to run in
+  // the inline editor (so loading shows on the main view). Consumed once run.
+  const [autoSetup, setAutoSetup] = useState<FormAutoSetup | null>(null)
+  const handleSetupForm = (targetForm: string, action: FormAutoSetup['action']) => {
+    setSelectedTarget({ kind: 'form', targetForm })
+    setAutoSetup({ targetForm, action })
+  }
   const { data: session } = useGetStudySession(sessionId, { enabled: shouldLoadSessionScope })
   // Vocabulary entries (including adhoc) intentionally skip the session
   // fetch, so we read the native language from user prefs to keep
@@ -157,6 +164,7 @@ export const FocusView = () => {
   useEffect(() => {
     setPendingAction(null)
     setSelectedTarget({ kind: 'citation' })
+    setAutoSetup(null)
   }, [cardId])
 
   const closeToTriage = () => {
@@ -299,17 +307,12 @@ export const FocusView = () => {
                     Keep just enables recognition; this lets the learner set up
                     forms/skills + edit content before/after that decision. */}
                 <FormSelector
-                  chunk={{
-                    id: card.chunk.id,
-                    headword: card.chunk.headword,
-                    isProductionEnabled: card.chunk.isProductionEnabled,
-                    grammar: card.chunk.grammar,
-                    targetLanguage: card.chunk.targetLanguage,
-                  }}
+                  chunk={card.chunk}
                   facets={facets}
                   candidateForms={candidateForms}
                   selectedTarget={selectedTarget}
                   onSelect={setSelectedTarget}
+                  onSetupForm={handleSetupForm}
                 />
                 <div className='mt-4'>
                   <PerFormCardEditor
@@ -320,6 +323,8 @@ export const FocusView = () => {
                     translationFieldsMode={translationFieldsMode}
                     sourceSessionId={sourceSessionId}
                     fromVocabulary={fromVocabulary}
+                    autoSetup={autoSetup}
+                    onAutoSetupConsumed={() => setAutoSetup(null)}
                   />
                 </div>
               </section>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronRight, ExternalLink, Loader2, Sparkles } from 'lucide-react'
@@ -14,7 +14,13 @@ import { useTextSegmentsWindow, useRenameChunk, useUpdateChunkContent } from '..
 import { useGenerateFacetData, useSetFacetPayload } from '@/features/vocabulary/api/vocabulary-hooks'
 import { EditableCardFields, type TranslationFieldsMode } from './editable-card-fields'
 import { EditableGrammarPanel } from './editable-grammar-panel'
-import { formDisplay, payloadGrammar, payloadString, type SelectedTarget } from './study-target-helpers'
+import {
+  formDisplay,
+  payloadGrammar,
+  payloadString,
+  type FormAutoSetup,
+  type SelectedTarget,
+} from './study-target-helpers'
 
 type Props = {
   chunk: Chunk
@@ -29,6 +35,10 @@ type Props = {
   // sibling-card refetch). Undefined for language-wide entries.
   sourceSessionId?: string
   fromVocabulary: boolean
+  // One-shot: a form just added via the "Add a form" sheet, with the chosen fill
+  // action to run here (so its loading shows on the main view). Cleared once run.
+  autoSetup?: FormAutoSetup | null
+  onAutoSetupConsumed?: () => void
 }
 
 // The unified per-target card editor: edits the lemma's canonical content when
@@ -44,6 +54,8 @@ export const PerFormCardEditor = ({
   translationFieldsMode,
   sourceSessionId,
   fromVocabulary,
+  autoSetup,
+  onAutoSetupConsumed,
 }: Props) => {
   // All mutation hooks are unconditional (render branches below pick which to use).
   const updateChunkContent = useUpdateChunkContent(sourceSessionId)
@@ -93,11 +105,13 @@ export const PerFormCardEditor = ({
       fromVocabulary={fromVocabulary}
       setFacetPayload={setFacetPayload}
       generateFacetData={generateFacetData}
+      autoSetup={autoSetup}
+      onAutoSetupConsumed={onAutoSetupConsumed}
     />
   )
 }
 
-const FormEditor = ({
+export const FormEditor = ({
   chunk,
   targetForm,
   facets,
@@ -105,6 +119,8 @@ const FormEditor = ({
   fromVocabulary,
   setFacetPayload,
   generateFacetData,
+  autoSetup,
+  onAutoSetupConsumed,
 }: {
   chunk: Chunk
   targetForm: string
@@ -113,21 +129,59 @@ const FormEditor = ({
   fromVocabulary: boolean
   setFacetPayload: ReturnType<typeof useSetFacetPayload>
   generateFacetData: ReturnType<typeof useGenerateFacetData>
+  autoSetup?: FormAutoSetup | null
+  onAutoSetupConsumed?: () => void
 }) => {
   const { t } = useLingui()
   // Sticky while a generate / first-save is in flight or its refetch hasn't yet
   // flipped the facet to ready — keeps the skeleton up instead of flashing the
   // Generate affordance back.
   const [awaiting, setAwaiting] = useState(false)
+  const autoRanRef = useRef(false)
 
   const facet = facets.find((f) => f.skill === 'meaning_recognition' && f.targetForm === targetForm)
+  const form = facet ? formDisplay(facet) : targetForm
+  const source = facet?.source ?? null
+  const pending = facet?.dataStatus === 'pending_data'
+  const busy = generateFacetData.isPending || setFacetPayload.isPending
+
+  // The two ways to fill a pending form, shared by the inline choice buttons and
+  // the auto-run below. Both set `awaiting` (owned here) so the skeleton stays up
+  // through the mutation and its refetch. Manual seeds the example from the
+  // encountered sentence when one is known.
+  const runGenerate = () => {
+    setAwaiting(true)
+    generateFacetData.mutate({ chunkId: chunk.id, skill: 'meaning_recognition', targetForm })
+  }
+  const runManual = () => {
+    setAwaiting(true)
+    setFacetPayload.mutate({
+      chunkId: chunk.id,
+      skill: 'meaning_recognition',
+      targetForm,
+      payload: { form, ...(source?.sentence ? { targetExample: source.sentence } : {}) },
+    })
+  }
+
+  // A form just added via the "Add a form" sheet hands us its chosen action. Run
+  // it once this form's (optimistically inserted) pending facet is present — the
+  // loading then shows here on the main view, not in the now-closed sheet. Layout
+  // effect so `awaiting` flips before paint and the choice prompt never flashes.
+  useLayoutEffect(() => {
+    if (!autoSetup) {
+      autoRanRef.current = false
+      return
+    }
+    if (autoSetup.targetForm !== targetForm || !pending || autoRanRef.current) return
+    autoRanRef.current = true
+    if (autoSetup.action === 'generate') runGenerate()
+    else runManual()
+    onAutoSetupConsumed?.()
+    // Gate on the signal + facet readiness; runGenerate/runManual read live values at call time.
+  }, [autoSetup, targetForm, pending])
+
   // The form vanished (removed elsewhere) — nothing to edit.
   if (!facet) return null
-
-  const form = formDisplay(facet)
-  const source = facet.source
-  const pending = facet.dataStatus === 'pending_data'
-  const busy = generateFacetData.isPending || setFacetPayload.isPending
 
   const onSavePayload = (patch: Record<string, unknown>) =>
     setFacetPayload.mutate({ chunkId: chunk.id, skill: 'meaning_recognition', targetForm, payload: { form, ...patch } })
@@ -143,30 +197,17 @@ const FormEditor = ({
   // fills the payload and flips the facet to ready, after which the editable
   // fields render. Manual entry seeds the example from the encountered sentence.
   if (pending && !(busy || awaiting)) {
-    const enterManually = () => {
-      setAwaiting(true)
-      setFacetPayload.mutate({
-        chunkId: chunk.id,
-        skill: 'meaning_recognition',
-        targetForm,
-        payload: { form, ...(source?.sentence ? { targetExample: source.sentence } : {}) },
-      })
-    }
-    const generate = () => {
-      setAwaiting(true)
-      generateFacetData.mutate({ chunkId: chunk.id, skill: 'meaning_recognition', targetForm })
-    }
     return (
       <div className='flex flex-col gap-4'>
         {header}
         <div className='flex flex-col gap-2 rounded-md border border-dashed border-amber-400 bg-amber-50 p-3'>
           <p className='text-sm text-amber-900'>{t`This form needs data before you can study it.`}</p>
           <div className='flex gap-2'>
-            <Button type='button' size='sm' onClick={generate}>
+            <Button type='button' size='xl' className='flex-1' onClick={runGenerate}>
               <Sparkles className='mr-1 h-4 w-4' />
               {t`Generate`}
             </Button>
-            <Button type='button' size='sm' variant='outline' onClick={enterManually}>
+            <Button type='button' size='xl' variant='outline' className='flex-1' onClick={runManual}>
               {t`Enter manually`}
             </Button>
           </div>
