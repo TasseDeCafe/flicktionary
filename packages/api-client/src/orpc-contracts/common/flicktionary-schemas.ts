@@ -150,35 +150,14 @@ export const GrammarSchema = z
     // populate `untagged`. Renderer picks the right bucket from the user's
     // englishIpaDialect preference.
     ipa: GrammarIpaBagSchema.nullable().optional(),
-    // Specific-form study generation artifact. `studied_form` is the inflected
-    // form the learner highlighted plus its in-context translation (e.g. form
-    // `посмотрим`, translation `voyons`), emitted by the Opus passes whenever
-    // the surface form differs from the headword. As of Phase 4b it is NO LONGER
-    // read for display — per-form study is its own (meaning_recognition, <form>)
-    // facet (see study_facets / setFacetEnabled). The field is kept purely as
-    // the generation artifact (the focus view / enrichment still write it) and
-    // as the never-overwrite signal for buildStudiedFormPatch. The old
-    // `study_form_enabled` display toggle was removed (migrated to form facets).
-    studied_form: z
-      .object({
-        form: z.string(),
-        translation: z.string().nullable().optional(),
-      })
-      .nullable()
-      .optional(),
   })
   .passthrough()
 export type Grammar = z.infer<typeof GrammarSchema>
 
-// Per-term knob: every kept term is at minimum 'passive' (recognition pool).
-// Promoting to 'active' adds the term to the parallel active-drill pool.
-export const LearningModeSchema = z.enum(['passive', 'active'])
-export type LearningMode = z.infer<typeof LearningModeSchema>
-
-// Which SRS column family a practice session reads and writes. 1:1 with
-// user_lookups.learning_mode for the purpose of selecting sources, but lives
-// on practice_sessions so the rating layer knows whether to advance srs_* or
-// active_srs_*.
+// Which SRS column family a practice session reads and writes. Selects sources
+// per session (production iff an enabled citation meaning_production facet
+// exists); lives on practice_sessions so the rating layer knows whether to
+// advance srs_* or active_srs_*.
 export const PracticePoolSchema = z.enum(['passive', 'active'])
 export type PracticePool = z.infer<typeof PracticePoolSchema>
 
@@ -228,9 +207,11 @@ export const ChunkSchema = z.object({
   // Set when the user manually edits grammar-provenance-sensitive data.
   // Automatic processing/enrichment/chat patches do not stamp this.
   grammarUserEditedAt: z.string().nullable(),
-  // Passive (default) or active. Active terms additionally participate in the
-  // active-drill pool with their own SRS state.
-  learningMode: LearningModeSchema.default('passive'),
+  // True iff the citation meaning_production facet is enabled — i.e. the term
+  // is in production study (the active-drill pool, with its own SRS state).
+  // Derived server-side from facet state (the user_lookups.learning_mode column
+  // was dropped).
+  isProductionEnabled: z.boolean().default(false),
 })
 export type Chunk = z.infer<typeof ChunkSchema>
 
@@ -368,9 +349,10 @@ export const PracticeAnnotationSchema = z.object({
   // strikethrough/Restore state for chunks the user just deleted from the
   // sheet, even after a refetch.
   deletedAt: z.string().nullable(),
-  // Current learning mode for the user_lookup row, so the rate sheet can show
-  // the right "Switch to passive/active" action. Null when no canonical row.
-  learningMode: LearningModeSchema.nullable(),
+  // Whether the term is in production study (citation meaning_production facet
+  // enabled), so the rate sheet can show the right "Switch to passive/active"
+  // action. Null when no canonical row.
+  isProductionEnabled: z.boolean().nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 

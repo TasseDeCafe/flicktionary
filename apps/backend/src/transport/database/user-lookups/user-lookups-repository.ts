@@ -76,15 +76,10 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
     facet.skill === 'meaning_production' && facet.target_form === CITATION_FORM && facet.disabled_at === null,
 })
 
-// Per-term knob: every kept term is at minimum 'passive' (recognition pool).
-// Promoting to 'active' adds the term to the parallel active-drill pool with
-// its own independent SRS state under the active_srs_* columns.
-export type LearningMode = 'passive' | 'active'
-
 // One study facet projected for the Study-targets control (listFacetsForChunk).
 // Structurally matches StudyFacetSummarySchema in api-client; declared locally
 // to keep this repository decoupled from the contract package (same convention
-// as ChunkRow/LearningMode).
+// as ChunkRow).
 export type ChunkFacetSummary = {
   skill: FacetSkill
   targetForm: string
@@ -909,7 +904,7 @@ export type ExportChunkRow = {
   grammar: Record<string, unknown>
   surfaceForm: string
   segmentText: string
-  learningMode: LearningMode
+  isProductionEnabled: boolean
   isLeechParked: boolean
 }
 
@@ -927,7 +922,7 @@ const listKeptChunksForExport = async (params: {
       ul.native_example,
       ul.exploration_extras,
       ul.grammar,
-      CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END AS learning_mode,
+      (pf.disabled_at IS NULL AND pf.id IS NOT NULL) AS is_production_enabled,
       (rf.leech_parked_at IS NOT NULL OR pf.leech_parked_at IS NOT NULL) AS is_leech_parked,
       c.surface_form,
       ts.text AS segment_text
@@ -953,7 +948,7 @@ const listKeptChunksForExport = async (params: {
     nativeExample: (row.native_example as string | null) ?? null,
     explorationExtras: (row.exploration_extras as Record<string, unknown> | null) ?? {},
     grammar: (row.grammar as Record<string, unknown> | null) ?? {},
-    learningMode: row.learning_mode as LearningMode,
+    isProductionEnabled: row.is_production_enabled as boolean,
     isLeechParked: row.is_leech_parked as boolean,
     surfaceForm: (row.surface_form as string | null) ?? '',
     segmentText: (row.segment_text as string | null) ?? '',
@@ -997,7 +992,7 @@ export type ChunkRow = {
   srsState: SrsState | null
   srsDue: string | null
   srsReps: number
-  learningMode: LearningMode
+  isProductionEnabled: boolean
   activeSrsState: SrsState | null
   activeSrsDue: string | null
   activeSrsReps: number
@@ -1027,7 +1022,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     rf.srs_state AS srs_state,
     rf.srs_due AS srs_due,
     rf.srs_reps AS srs_reps,
-    CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END AS learning_mode,
+    (pf.disabled_at IS NULL AND pf.id IS NOT NULL) AS is_production_enabled,
     pf.srs_state AS active_srs_state,
     pf.srs_due AS active_srs_due,
     pf.srs_reps AS active_srs_reps,
@@ -1064,7 +1059,7 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   srsState: (row.srs_state as SrsState | null) ?? null,
   srsDue: (row.srs_due as string | null) ?? null,
   srsReps: (row.srs_reps as number) ?? 0,
-  learningMode: (row.learning_mode as LearningMode | null) ?? 'passive',
+  isProductionEnabled: (row.is_production_enabled as boolean | null) ?? false,
   activeSrsState: (row.active_srs_state as SrsState | null) ?? null,
   activeSrsDue: (row.active_srs_due as string | null) ?? null,
   activeSrsReps: (row.active_srs_reps as number) ?? 0,
@@ -1075,9 +1070,9 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   sourceAvailable: row.source_available === true,
 })
 
-// Single chunk row (facet-joined, so learning_mode is the DERIVED production
-// state) for one term, scoped to its owner. Used by setFacetEnabled's response
-// path where the caller needs the post-update derived learning_mode in the
+// Single chunk row (facet-joined, so isProductionEnabled is the DERIVED
+// production state) for one term, scoped to its owner. Used by setFacetEnabled's
+// response path where the caller needs the post-update production state in the
 // ChunkSchema shape.
 const getChunkRowForUser = async (userLookupId: string, userId: string): Promise<ChunkRow | null> => {
   const rows = (await sql`
@@ -1105,7 +1100,7 @@ const deleteFacet = async (params: { userLookupId: string; skill: FacetSkill; ta
 }
 
 // All study facets of one term, for the Study-targets control (term view). The
-// chunk DTO only derives learningMode from the citation production facet; this
+// chunk DTO only derives isProductionEnabled from the citation production facet; this
 // surfaces every facet's identity + membership (enabled = disabled_at IS NULL) +
 // data readiness so the term view can render the pronunciation row and form
 // chips. Ownership is enforced by the caller (findByIdForUser) — this is keyed
@@ -1163,23 +1158,6 @@ const setFacetPayload = async (params: {
   `
 }
 
-// True iff the term has at least one per-form meaning_recognition facet (any
-// non-empty target_form, enabled or disabled). The studied_form generation
-// artifact's never-overwrite gate: once the user has turned a form into a facet,
-// re-enrichment must not retarget the artifact to a later-highlighted inflection
-// (Phase 4b — replaces the old grammar.study_form_enabled guard).
-const hasFormFacet = async (userLookupId: string): Promise<boolean> => {
-  const rows = (await sql`
-    SELECT 1
-    FROM public.study_facets
-    WHERE user_lookup_id = ${userLookupId}
-      AND skill = 'meaning_recognition'
-      AND target_form <> ''
-    LIMIT 1
-  `) as Array<{ '?column?': number }>
-  return rows.length > 0
-}
-
 // Encountered surface forms for the "+ Add a form" picker (Worked example 3):
 // distinct kept-card surface forms for this term, minus the lemma itself and any
 // form already turned into a meaning_recognition facet. A card row stores only
@@ -1234,19 +1212,20 @@ const listChunksForLanguage = async (params: {
   cursor: ChunksCursor | null
   limit: number
   q: string | null
-  learningMode?: LearningMode | null
+  isProductionEnabled?: boolean | null
 }): Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }> => {
   const limit = Math.max(1, Math.min(params.limit, 200))
   const fetchLimit = limit + 1
   const searchClause = buildSearchClause(params.q)
-  // Derived membership filter: 'active' = an enabled citation production facet
-  // exists (pf joined in SELECT_CHUNK_ROW_SQL); 'passive' = it doesn't (absent
-  // or disabled).
-  const learningModeClause = !params.learningMode
-    ? sql``
-    : params.learningMode === 'active'
-      ? sql`AND (pf.id IS NOT NULL AND pf.disabled_at IS NULL)`
-      : sql`AND (pf.id IS NULL OR pf.disabled_at IS NOT NULL)`
+  // Derived membership filter: true = an enabled citation production facet
+  // exists (pf joined in SELECT_CHUNK_ROW_SQL); false = it doesn't (absent or
+  // disabled); null/undefined = no filter.
+  const productionClause =
+    params.isProductionEnabled == null
+      ? sql``
+      : params.isProductionEnabled
+        ? sql`AND (pf.id IS NOT NULL AND pf.disabled_at IS NULL)`
+        : sql`AND (pf.id IS NULL OR pf.disabled_at IS NOT NULL)`
 
   if (params.sort === 'recent') {
     const cursor = params.cursor && params.cursor.sort === 'recent' ? params.cursor : null
@@ -1257,7 +1236,7 @@ const listChunksForLanguage = async (params: {
         AND ul.deleted_at IS NULL
         AND ul.count > 0
         ${searchClause}
-        ${learningModeClause}
+        ${productionClause}
         AND ${cursor ? sql`(ul.created_at, ul.id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)` : sql`TRUE`}
       ORDER BY ul.created_at DESC, ul.id ASC
       LIMIT ${fetchLimit}
@@ -1286,7 +1265,7 @@ const listChunksForLanguage = async (params: {
         AND ul.count > 0
         AND rf.srs_due IS NOT NULL
         ${searchClause}
-        ${learningModeClause}
+        ${productionClause}
         AND ${
           cursor && cursor.phase === 'scheduled'
             ? sql`(rf.srs_due, ul.id) > (${cursor.srsDue}::timestamptz, ${cursor.id}::uuid)`
@@ -1325,7 +1304,7 @@ const listChunksForLanguage = async (params: {
         AND ul.count > 0
         AND rf.srs_due IS NULL
         ${searchClause}
-        ${learningModeClause}
+        ${productionClause}
       ORDER BY ul.id ASC
       LIMIT ${tailFetchLimit}
     `) as Array<Record<string, unknown>>
@@ -1349,7 +1328,7 @@ const listChunksForLanguage = async (params: {
       AND ul.count > 0
       AND rf.srs_due IS NULL
       ${searchClause}
-      ${learningModeClause}
+      ${productionClause}
       AND ul.id > ${cursor!.id}::uuid
     ORDER BY ul.id ASC
     LIMIT ${fetchLimit}
@@ -1385,7 +1364,7 @@ const listChunkContentForKeys = async (params: {
     firstCardId: string | null
     firstCardSessionId: string | null
     deletedAt: Date | null
-    learningMode: LearningMode
+    isProductionEnabled: boolean
   }>
 > => {
   if (params.keys.length === 0) return []
@@ -1399,7 +1378,7 @@ const listChunkContentForKeys = async (params: {
       ul.grammar,
       ul.first_card_id,
       ul.deleted_at,
-      CASE WHEN pf.disabled_at IS NULL AND pf.id IS NOT NULL THEN 'active' ELSE 'passive' END AS learning_mode,
+      (pf.disabled_at IS NULL AND pf.id IS NOT NULL) AS is_production_enabled,
       c.study_session_id AS first_card_session_id
     FROM public.user_lookups ul
     LEFT JOIN public.study_facets pf
@@ -1417,7 +1396,7 @@ const listChunkContentForKeys = async (params: {
     first_card_id: string | null
     first_card_session_id: string | null
     deleted_at: Date | null
-    learning_mode: LearningMode
+    is_production_enabled: boolean
   }>
   return result.map((row) => ({
     id: row.id,
@@ -1429,7 +1408,7 @@ const listChunkContentForKeys = async (params: {
     firstCardId: row.first_card_id,
     firstCardSessionId: row.first_card_session_id,
     deletedAt: row.deleted_at,
-    learningMode: row.learning_mode,
+    isProductionEnabled: row.is_production_enabled,
   }))
 }
 
@@ -1546,7 +1525,6 @@ export interface UserLookupsRepositoryInterface {
     payload: Record<string, unknown>
   }) => Promise<void>
   listCandidateFormsForChunk: (userLookupId: string) => Promise<string[]>
-  hasFormFacet: (userLookupId: string) => Promise<boolean>
   deleteFacet: (params: { userLookupId: string; skill: FacetSkill; targetForm: string }) => Promise<void>
   listParkedTerms: (params: {
     userId: string
@@ -1562,7 +1540,7 @@ export interface UserLookupsRepositoryInterface {
     cursor: ChunksCursor | null
     limit: number
     q: string | null
-    learningMode?: LearningMode | null
+    isProductionEnabled?: boolean | null
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
   restoreChunk: (id: string, userId: string) => Promise<void>
@@ -1581,7 +1559,7 @@ export interface UserLookupsRepositoryInterface {
       firstCardId: string | null
       firstCardSessionId: string | null
       deletedAt: Date | null
-      learningMode: LearningMode
+      isProductionEnabled: boolean
     }>
   >
   listLanguagesForUser: (userId: string) => Promise<string[]>
@@ -1609,7 +1587,6 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listFacetsForChunk,
     setFacetPayload,
     listCandidateFormsForChunk,
-    hasFormFacet,
     deleteFacet,
     listParkedTerms,
     listVocabularyForLanguage,

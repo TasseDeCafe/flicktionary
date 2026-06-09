@@ -47,8 +47,8 @@ msgid "{activeDueCount} reviews, {activeNewCount} new"
 msgstr "{activeDueCount} révisions, {activeNewCount} nouveaux"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:222
-msgid "{activeTotal} active term(s). Nothing to review right now."
-msgstr "{activeTotal} terme(s) actif(s). Rien à réviser pour le moment."
+msgid "{activeTotal} production term(s). Nothing to review right now."
+msgstr "{activeTotal} terme(s) en production. Rien à réviser pour le moment."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:54
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
@@ -289,7 +289,7 @@ msgstr "Actions pour la liste de vocabulaire sélectionnée."
 msgid "Actions for this card."
 msgstr "Actions pour cette carte."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:40
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:42
 msgid "Actions for this vocabulary term."
 msgstr "Actions pour ce terme de vocabulaire."
 
@@ -298,15 +298,6 @@ msgstr "Actions pour ce terme de vocabulaire."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Les actions dans cette section peuvent entraîner une perte définitive "
 "de données."
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
-msgid "Active"
-msgstr "Actif"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:217
-msgid "Active vocabulary"
-msgstr "Vocabulaire actif"
 
 #: apps/web/src/features/review/components/study-targets-section.tsx:336
 msgid "Add a form"
@@ -341,6 +332,10 @@ msgstr "Ajouter une note"
 #: apps/extension/src/entrypoints/background.ts:180
 msgid "Add selection to Flicktionary"
 msgstr "Ajouter la sélection à Flicktionary"
+
+#: apps/web/src/features/practice/components/rate-sheet.tsx:183
+msgid "Add this term to production practice."
+msgstr "Ajouter ce terme à la pratique en production."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:260
 msgid "Add translation"
@@ -958,7 +953,7 @@ msgid "Could not set up your account. Please try restarting the app."
 msgstr "Impossible de configurer votre compte. Veuillez redémarrer "
 "l'application."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:135
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:133
 msgid "Couldn't generate the form's data"
 msgstr "Impossible de générer les données de la forme"
 
@@ -966,7 +961,7 @@ msgstr "Impossible de générer les données de la forme"
 msgid "Couldn't load exercises."
 msgstr "Impossible de charger les exercices."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:153
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:151
 msgid "Couldn't save the form's data"
 msgstr "Impossible d'enregistrer les données de la forme"
 
@@ -1062,7 +1057,7 @@ msgstr "Définition (facultatif)"
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:46
 #: apps/web/src/features/review/components/focus-view.tsx:474
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:64
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:63
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:48
 msgid "Delete"
 msgstr "Supprimer"
@@ -1175,6 +1170,7 @@ msgstr "Modifier les cibles d'étude pour {headword}"
 
 #: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx:74
 #: apps/web/src/features/practice/components/rate-sheet.tsx:174
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:48
 msgid "Edit term"
 msgstr "Modifier le terme"
 
@@ -1230,7 +1226,7 @@ msgstr "Activé"
 msgid "Enabled with auto-resume"
 msgstr "Activé avec reprise automatique"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:310
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:313
 msgid "End of list"
 msgstr "Fin de la liste"
 
@@ -1239,15 +1235,15 @@ msgid "Enjoy unlimited access to all our premium features and content."
 msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus "
 "premium."
 
-#: apps/web/src/features/review/components/triage-row.tsx:40
+#: apps/web/src/features/review/components/triage-row.tsx:36
 msgid "Enriching…"
 msgstr "Enrichissement…"
 
-#: apps/web/src/features/review/components/triage-row.tsx:34
+#: apps/web/src/features/review/components/triage-row.tsx:30
 msgid "Enrichment failed"
 msgstr "Échec de l'enrichissement"
 
-#: apps/web/src/features/review/components/triage-row.tsx:36
+#: apps/web/src/features/review/components/triage-row.tsx:32
 msgid "Enrichment has not started yet."
 msgstr "L'enrichissement n'a pas encore commencé."
 
@@ -1295,7 +1291,7 @@ msgstr "Même si vous êtes facturé, vous pouvez demander un remboursement "
 "inconditionnel. Il suffit de nous le faire savoir en cliquant sur le "
 "bouton « Nous contacter » ci-dessus."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:249
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:252
 msgid "Every term you've kept, across every session. Tap a row to edit, or open "
 "the menu for more options."
 msgstr "Tous les termes que vous avez conservés, dans toutes les sessions. "
@@ -1374,11 +1370,11 @@ msgid "Failed to create session"
 msgstr "Échec de la création de la session"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:163
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:207
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:205
 msgid "Failed to delete term"
 msgstr "Échec de la suppression du terme"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:162
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:160
 msgid "Failed to export vocabulary"
 msgstr "Échec de l'export du vocabulaire"
 
@@ -1391,7 +1387,7 @@ msgstr "Échec de la récupération des détails de l'abonnement"
 msgid "Failed to fetch translation"
 msgstr "Échec de la récupération de la traduction"
 
-#: apps/web/src/features/review/api/review-hooks.ts:186
+#: apps/web/src/features/review/api/review-hooks.ts:181
 msgid "Failed to generate exploration"
 msgstr "Échec de la génération de l'exploration"
 
@@ -1416,15 +1412,15 @@ msgid "Failed to initialize payment system. Please restart the app."
 msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer "
 "l'application."
 
-#: apps/web/src/features/review/api/review-hooks.ts:60
+#: apps/web/src/features/review/api/review-hooks.ts:56
 msgid "Failed to load card"
 msgstr "Échec du chargement de la carte"
 
-#: apps/web/src/features/review/api/review-hooks.ts:42
+#: apps/web/src/features/review/api/review-hooks.ts:38
 msgid "Failed to load cards"
 msgstr "Échec du chargement des cartes"
 
-#: apps/web/src/features/review/api/review-hooks.ts:126
+#: apps/web/src/features/review/api/review-hooks.ts:121
 msgid "Failed to load chat"
 msgstr "Échec du chargement de la discussion"
 
@@ -1440,7 +1436,7 @@ msgstr "Échec du chargement des surlignages"
 msgid "Failed to load history"
 msgstr "Échec du chargement de l'historique"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:13
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:12
 msgid "Failed to load languages"
 msgstr "Échec du chargement des langues"
 
@@ -1476,7 +1472,7 @@ msgstr "Échec du chargement du statut de la session"
 msgid "Failed to load sessions"
 msgstr "Échec du chargement des sessions"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:116
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:114
 msgid "Failed to load study targets"
 msgstr "Échec du chargement des cibles d'étude"
 
@@ -1488,19 +1484,19 @@ msgstr "Échec du chargement des segments de sous-titres"
 msgid "Failed to load suggestions"
 msgstr "Échec du chargement des suggestions"
 
-#: apps/web/src/features/review/api/review-hooks.ts:198
+#: apps/web/src/features/review/api/review-hooks.ts:193
 msgid "Failed to load surrounding context"
 msgstr "Échec du chargement du contexte environnant"
 
-#: apps/web/src/features/review/api/review-hooks.ts:214
+#: apps/web/src/features/review/api/review-hooks.ts:209
 msgid "Failed to load term"
 msgstr "Échec du chargement du terme"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:42
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:41
 msgid "Failed to load vocabulary"
 msgstr "Échec du chargement du vocabulaire"
 
-#: apps/web/src/features/review/api/review-hooks.ts:173
+#: apps/web/src/features/review/api/review-hooks.ts:168
 msgid "Failed to mark chat read"
 msgstr "Échec du marquage du chat comme lu"
 
@@ -1528,7 +1524,7 @@ msgstr "Échec de la suppression du surlignage"
 msgid "Failed to remove session"
 msgstr "Échec de la suppression de la session"
 
-#: apps/web/src/features/review/api/review-hooks.ts:258
+#: apps/web/src/features/review/api/review-hooks.ts:253
 msgid "Failed to rename term"
 msgstr "Échec du renommage du terme"
 
@@ -1552,7 +1548,7 @@ msgstr "Échec de l'enregistrement du surlignage"
 msgid "Failed to save term"
 msgstr "Échec de l'enregistrement du terme"
 
-#: apps/web/src/features/review/api/review-hooks.ts:149
+#: apps/web/src/features/review/api/review-hooks.ts:144
 msgid "Failed to send chat message"
 msgstr "Échec de l'envoi du message de discussion"
 
@@ -1582,11 +1578,11 @@ msgstr "Échec du déclenchement du message Sentry"
 msgid "Failed to undo rating"
 msgstr "Échec de l'annulation de la note"
 
-#: apps/web/src/features/review/api/review-hooks.ts:87
+#: apps/web/src/features/review/api/review-hooks.ts:82
 msgid "Failed to update card status"
 msgstr "Échec de la mise à jour du statut de la carte"
 
-#: apps/web/src/features/review/api/review-hooks.ts:115
+#: apps/web/src/features/review/api/review-hooks.ts:110
 msgid "Failed to update card statuses"
 msgstr "Échec de la mise à jour des statuts des cartes"
 
@@ -1614,11 +1610,11 @@ msgstr "Échec de la mise à jour des limites de pratique"
 msgid "Failed to update show-translations setting"
 msgstr "Échec de la mise à jour du paramètre d'affichage des traductions"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:97
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:95
 msgid "Failed to update study targets"
 msgstr "Échec de la mise à jour des cibles d'étude"
 
-#: apps/web/src/features/review/api/review-hooks.ts:237
+#: apps/web/src/features/review/api/review-hooks.ts:232
 msgid "Failed to update term"
 msgstr "Échec de la mise à jour du terme"
 
@@ -1791,7 +1787,7 @@ msgstr "Donne-moi trois autres exemples de phrases l'utilisant."
 msgid "Go Back"
 msgstr "Retour"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:196
+#: apps/web/src/features/review/components/triage-list-view.tsx:192
 msgid "Go back to the source view to add or retry highlights."
 msgstr "Retournez à la vue source pour ajouter ou réessayer des surlignages."
 
@@ -1849,7 +1845,7 @@ msgstr "Aidez-nous à améliorer Flicktionary"
 msgid "HI"
 msgstr "SM"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:65
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:64
 msgid "Hide from vocabulary and Practice"
 msgstr "Masquer du vocabulaire et de la pratique"
 
@@ -1967,6 +1963,10 @@ msgstr "Importer des articles"
 msgid "Importing…"
 msgstr "Importation…"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:66
+msgid "In production"
+msgstr "En production"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:365
 msgid "Inanimate"
 msgstr "Inanimé"
@@ -2030,16 +2030,16 @@ msgstr "Dialecte API"
 msgid "Jump to latest"
 msgstr "Aller au plus récent"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:58
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:57
 msgid "Jump to the session this term came from"
 msgstr "Accéder à la session d'origine de ce terme"
 
 #: apps/web/src/features/review/components/focus-view.tsx:535
-#: apps/web/src/features/review/components/triage-row.tsx:83
+#: apps/web/src/features/review/components/triage-row.tsx:79
 msgid "Keep"
 msgstr "Conserver"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:52
+#: apps/web/src/features/review/components/triage-list-view.tsx:48
 msgid "Keep all"
 msgstr "Tout conserver"
 
@@ -2132,7 +2132,7 @@ msgstr "Lien expiré ou invalide"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx:132
 #: apps/web/src/features/more/components/more-tab-view.tsx:139
-#: apps/web/src/features/review/components/triage-list-view.tsx:240
+#: apps/web/src/features/review/components/triage-list-view.tsx:236
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
 
@@ -2145,7 +2145,7 @@ msgstr "Charger des sous-titres"
 msgid "Loading card…"
 msgstr "Chargement de la carte…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:201
+#: apps/web/src/features/review/components/triage-list-view.tsx:197
 msgid "Loading cards…"
 msgstr "Chargement des cartes…"
 
@@ -2157,7 +2157,7 @@ msgstr "Chargement de la discussion…"
 msgid "Loading history…"
 msgstr "Chargement de l'historique…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:310
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:313
 msgid "Loading more…"
 msgstr "Chargement…"
 
@@ -2187,7 +2187,7 @@ msgstr "Chargement..."
 #: apps/web/src/features/practice/components/practice-language-view.tsx:200
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:283
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:286
 msgid "Loading…"
 msgstr "Chargement…"
 
@@ -2285,12 +2285,8 @@ msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:192
-msgid "Move this term back to passive review only."
-msgstr "Renvoyer ce terme à la révision passive uniquement."
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx:183
-msgid "Move this term into the active drilling pool."
-msgstr "Déplacer ce terme vers le pool d'entraînement actif."
+msgid "Move this term back to recognition practice only."
+msgstr "Remettre ce terme en pratique de reconnaissance uniquement."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:402
 msgid "Move top subtitles down"
@@ -2394,7 +2390,7 @@ msgstr "Aucun onglet actif à importer."
 msgid "No active tab."
 msgstr "Aucun onglet actif."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:204
+#: apps/web/src/features/review/components/triage-list-view.tsx:200
 msgid "No cards yet. Select some highlights in the source text to generate new "
 "cards."
 msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte "
@@ -2409,7 +2405,7 @@ msgid "No languages found."
 msgstr "Aucune langue trouvée."
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx:64
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:271
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:274
 msgid "No matches."
 msgstr "Aucun résultat."
 
@@ -2465,7 +2461,7 @@ msgstr "Aucune traduction disponible"
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:271
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:274
 msgid "No vocabulary in this language yet."
 msgstr "Aucun vocabulaire dans cette langue pour le moment."
 
@@ -2494,6 +2490,10 @@ msgstr "non disponible"
 #: apps/web/src/features/review/components/grounding-badge.tsx:47
 msgid "Not found in Wiktionary — grammar fields are LLM-generated only"
 msgstr "Absent du Wiktionnaire — champs grammaticaux générés uniquement par LLM"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:67
+msgid "Not in production"
+msgstr "Hors production"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx:108
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx:107
@@ -2583,7 +2583,7 @@ msgid "Open Mail App"
 msgstr "Ouvrir l'Application Mail"
 
 #: apps/web/src/features/review/components/focus-view.tsx:71
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:57
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:56
 msgid "Open source"
 msgstr "Ouvrir la source"
 
@@ -2600,6 +2600,11 @@ msgstr "Ouvrez le popup de l'extension et choisissez <0>Se connecter avec "
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une "
 "exploration complète."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:49
+msgid "Open the focus view to edit fields, forms, and skills."
+msgstr "Ouvrir la vue détaillée pour modifier les champs, les formes et les "
+"compétences."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:370
 msgid "Opening triage"
@@ -2658,14 +2663,6 @@ msgstr "Partie du discours"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:264
 msgid "Particle"
 msgstr "Particule"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:66
-msgid "Passive"
-msgstr "Passif"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:230
-msgid "Passive vocabulary"
-msgstr "Vocabulaire passif"
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:84
 msgid "Paste a Reddit comment, news excerpt, Telegram post…"
@@ -2833,7 +2830,7 @@ msgstr "Limites de pratique"
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:280
+#: apps/web/src/features/review/components/triage-list-view.tsx:276
 msgid "Practice your terms"
 msgstr "Pratiquer vos termes"
 
@@ -2897,15 +2894,20 @@ msgstr "Traitement"
 msgid "Processing has moved to the background"
 msgstr "Le traitement s'effectue en arrière-plan"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:189
+#: apps/web/src/features/review/components/triage-list-view.tsx:185
 msgid "Processing warnings"
 msgstr "Avertissements de traitement"
 
 #: apps/web/src/features/review/components/study-targets-section.tsx:120
 #: apps/web/src/features/review/components/study-targets-section.tsx:278
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 msgid "Production"
 msgstr "Production"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:217
+msgid "Production practice"
+msgstr "Pratique en production"
 
 #: apps/extension/common/components/SettingsProfileSelectMenu.tsx:117
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
@@ -2980,6 +2982,10 @@ msgstr "Récemment ajouté"
 msgid "Recognition"
 msgstr "Reconnaissance"
 
+#: apps/web/src/features/practice/components/practice-language-view.tsx:230
+msgid "Recognition practice"
+msgstr "Pratique de reconnaissance"
+
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:134
 msgid "Recording"
 msgstr "Enregistrement"
@@ -3024,11 +3030,11 @@ msgstr "Progrès de réhabilitation : jour {days} sur 3. Une bonne réponse "
 "aujourd'hui compte toujours — réessayez avec un nouvel exercice."
 
 #: apps/web/src/features/review/components/focus-view.tsx:532
-#: apps/web/src/features/review/components/triage-row.tsx:91
+#: apps/web/src/features/review/components/triage-row.tsx:87
 msgid "Reject"
 msgstr "Rejeter"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:61
+#: apps/web/src/features/review/components/triage-list-view.tsx:57
 msgid "Reject all"
 msgstr "Tout rejeter"
 
@@ -3104,7 +3110,7 @@ msgstr "Restaurer"
 msgid "Restoring…"
 msgstr "Restauration…"
 
-#: apps/web/src/features/review/components/triage-row.tsx:47
+#: apps/web/src/features/review/components/triage-row.tsx:43
 msgid "Retry"
 msgstr "Réessayer"
 
@@ -3117,7 +3123,7 @@ msgid "Revert"
 msgstr "Revert"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx:23
-#: apps/web/src/features/review/components/triage-list-view.tsx:173
+#: apps/web/src/features/review/components/triage-list-view.tsx:169
 msgid "Review"
 msgstr "Réviser"
 
@@ -3196,11 +3202,11 @@ msgstr "Rechercher sur OpenSubtitles"
 msgid "Search shadow roots for video elements"
 msgstr "Search shadow roots for video elements"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:260
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:263
 msgid "Search terms…"
 msgstr "Rechercher des termes…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:181
+#: apps/web/src/features/review/components/triage-list-view.tsx:177
 #: apps/web/src/features/sessions/components/track-search-bar.tsx:11
 msgid "Search…"
 msgstr "Rechercher…"
@@ -3347,7 +3353,7 @@ msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous
 msgid "Short paraphrase in the target language."
 msgstr "Courte paraphrase dans la langue cible."
 
-#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:27
+#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx:23
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Afficher {filteredCount} filtrés (en dessous de votre niveau)"
 
@@ -3452,7 +3458,7 @@ msgstr "Une erreur s'est produite."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Une erreur est survenue. Veuillez actualiser la page et réessayer."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:169
+#: apps/web/src/features/review/components/triage-list-view.tsx:165
 msgid "Source"
 msgstr "Source"
 
@@ -3461,7 +3467,7 @@ msgid "Standalone"
 msgstr "Autonome"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:142
-#: apps/web/src/features/review/components/triage-row.tsx:47
+#: apps/web/src/features/review/components/triage-row.tsx:43
 msgid "Start"
 msgstr "Commencer"
 
@@ -3661,12 +3667,12 @@ msgid "Switch"
 msgstr "Changer"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:182
-msgid "Switch to active vocabulary"
-msgstr "Passer au vocabulaire actif"
+msgid "Switch to production"
+msgstr "Passer en production"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:191
-msgid "Switch to passive vocabulary"
-msgstr "Passer au vocabulaire passif"
+msgid "Switch to recognition"
+msgstr "Passer en reconnaissance"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:587
 msgid "Switching…"
@@ -3700,7 +3706,7 @@ msgstr "Target language codes for machine translation"
 msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Dites-nous ce que vous pensez ou décrivez tout problème rencontré..."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:221
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:224
 msgid "Term deleted"
 msgstr "Terme supprimé"
 
@@ -3949,7 +3955,7 @@ msgstr "Recherche de traduction et action de sauvegarde pour le texte "
 msgid "Translation of this form"
 msgstr "Traduction de cette forme"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:163
+#: apps/web/src/features/review/components/triage-list-view.tsx:159
 msgid "Triage"
 msgstr "Tri"
 
@@ -4131,11 +4137,11 @@ msgstr "Voir la démo Premium"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx:39
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx:42
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:235
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:238
 msgid "Vocabulary"
 msgstr "Vocabulaire"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:242
+#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:245
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx:52
 msgid "Vocabulary options"
 msgstr "Options de vocabulaire"
@@ -4319,7 +4325,7 @@ msgstr "Votre forfait actuel"
 msgid "your email address"
 msgstr "votre adresse e-mail"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx:211
+#: apps/web/src/features/review/components/triage-list-view.tsx:207
 msgid "Your highlights"
 msgstr "Vos surlignages"
 

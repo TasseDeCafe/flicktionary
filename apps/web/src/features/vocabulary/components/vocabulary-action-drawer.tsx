@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { ExternalLink, Trash2 } from 'lucide-react'
+import { ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   ResponsiveOverlay,
@@ -9,12 +9,12 @@ import {
   OverlayTitle,
 } from '@/components/ui/responsive-overlay'
 import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
-import { StudyTargetsSection } from '@/features/review/components/study-targets-section'
 
 interface VocabularyActionDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   chunk: ChunkRow | null
+  onEdit: (chunk: ChunkRow) => void
   onOpenSource: (chunk: ChunkRow) => void
   onRequestDelete: (chunk: ChunkRow) => void
 }
@@ -23,6 +23,7 @@ export const VocabularyActionDrawer = ({
   open,
   onOpenChange,
   chunk,
+  onEdit,
   onOpenSource,
   onRequestDelete,
 }: VocabularyActionDrawerProps) => {
@@ -30,6 +31,7 @@ export const VocabularyActionDrawer = ({
 
   if (!chunk) return null
 
+  const canEdit = chunk.studySessionId !== null && chunk.firstCardId !== null
   const canOpenSource = chunk.studySessionId !== null && chunk.sourceAvailable
 
   return (
@@ -39,18 +41,15 @@ export const VocabularyActionDrawer = ({
           <OverlayTitle>{chunk.headword}</OverlayTitle>
           <OverlayDescription className='sr-only'>{t`Actions for this vocabulary term.`}</OverlayDescription>
         </OverlayHeader>
-        <div className='flex flex-col gap-3 px-4 pb-2'>
-          <StudyTargetsSection
-            chunk={{
-              id: chunk.id,
-              headword: chunk.headword,
-              learningMode: chunk.learningMode,
-              grammar: chunk.grammar,
-              targetLanguage: chunk.targetLanguage,
-            }}
-          />
-        </div>
         <div className='flex flex-col gap-1 px-2 pb-2'>
+          {canEdit && (
+            <OverlayActionRow
+              icon={Pencil}
+              label={t`Edit term`}
+              description={t`Open the focus view to edit fields, forms, and skills.`}
+              onClick={() => onEdit(chunk)}
+            />
+          )}
           {canOpenSource && (
             <OverlayActionRow
               icon={ExternalLink}

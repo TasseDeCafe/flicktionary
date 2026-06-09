@@ -5,7 +5,6 @@ import {
   ChunkRowSchema,
   ChunkSchema,
   FacetSkillSchema,
-  LearningModeSchema,
   StudyFacetSummarySchema,
 } from './common/flicktionary-schemas'
 
@@ -125,9 +124,13 @@ export const chunksContract = {
         // Optional case-insensitive substring filter applied across headword,
         // translation, and definition. Empty string is treated as no filter.
         q: z.string().optional(),
-        // Optional learning_mode filter. Omitted/null means "All"; otherwise
-        // restrict to passive or active terms.
-        learningMode: LearningModeSchema.nullable().optional(),
+        // Optional production-study filter. Omitted/null means "All"; true =
+        // only terms in production (citation meaning_production enabled), false
+        // = only terms not in production. Accepts a real boolean (client input)
+        // OR the 'true'/'false' string a GET query delivers — z.boolean() alone
+        // rejects the string, and z.coerce.boolean() would parse 'false' as
+        // true (it's just Boolean(value)). z.stringbool() handles the string.
+        isProductionEnabled: z.union([z.boolean(), z.stringbool()]).nullable().optional(),
       })
     )
     .output(
@@ -164,8 +167,8 @@ export const chunksContract = {
     .output(z.object({ data: ChunkSchema })),
 
   // Read the study facets of one term for the Study-targets control. The chunk
-  // DTO only derives `learningMode` from the citation production facet; the
-  // term view needs every facet's identity + enabled + data readiness to render
+  // DTO only derives `isProductionEnabled` from the citation production facet;
+  // the term view needs every facet's identity + enabled + data readiness to render
   // the pronunciation row (Phase 4a) and form chips (Phase 4b). Fetched lazily
   // when the term view opens (kept off the chunk DTO so the vocab list payload
   // stays lean — most chunks never open the term view). Phase 4b extends the

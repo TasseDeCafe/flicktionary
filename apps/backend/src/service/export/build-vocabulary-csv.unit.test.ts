@@ -16,7 +16,7 @@ const baseChunk = (overrides: Partial<ExportChunkRow> = {}): ExportChunkRow => (
   grammar: {},
   surfaceForm: 'corre',
   segmentText: 'Mi hermano corre todos los días.',
-  learningMode: 'passive',
+  isProductionEnabled: false,
   isLeechParked: false,
   ...overrides,
 })
@@ -59,7 +59,7 @@ describe('buildVocabularyCsv', () => {
     const { csv } = await buildVocabularyCsv(
       'u1',
       'es',
-      createDeps([baseChunk({ learningMode: 'active', isLeechParked: true })])
+      createDeps([baseChunk({ isProductionEnabled: true, isLeechParked: true })])
     )
     const cells = parseLines(csv)[4].split(',')
     expect(cells[3]).toBe('flicktionary es active leech')

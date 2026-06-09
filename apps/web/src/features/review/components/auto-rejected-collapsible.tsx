@@ -2,17 +2,13 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import type {
-  Card,
-  CardStatus,
-  LearningMode,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow } from './triage-row'
 
 type Props = {
   sessionId: string
   cards: Card[]
-  onStatusChange: (cardId: string, status: CardStatus, learningMode?: LearningMode) => void
+  onStatusChange: (cardId: string, status: CardStatus) => void
 }
 
 export const AutoRejectedCollapsible = ({ sessionId, cards, onStatusChange }: Props) => {

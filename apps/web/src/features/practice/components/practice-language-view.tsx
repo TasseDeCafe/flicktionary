@@ -214,12 +214,12 @@ export const PracticeLanguageView = () => {
                 <section className='rounded-xl border bg-amber-50/40 p-4 dark:bg-amber-400/10'>
                   <h2 className='text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
                     <Star className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />
-                    {t`Active vocabulary`}
+                    {t`Production practice`}
                   </h2>
                   <p className='text-foreground text-sm'>
                     {hasActiveWork
                       ? t`${activeDueCount} reviews, ${activeNewCount} new`
-                      : t`${activeTotal} active term(s). Nothing to review right now.`}
+                      : t`${activeTotal} production term(s). Nothing to review right now.`}
                   </p>
                   {renderParkedAffordance('active')}
                   {renderPoolActions('active')}
@@ -227,7 +227,7 @@ export const PracticeLanguageView = () => {
               )}
 
               <section className='bg-card rounded-xl border p-4'>
-                <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Passive vocabulary`}</h2>
+                <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Recognition practice`}</h2>
                 <div className='flex items-start gap-3'>
                   {hasPassiveWork ? (
                     <Brain className='mt-1 h-5 w-5 text-yellow-600 dark:text-yellow-400' />

@@ -5,7 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { BookOpen, MoreVertical } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { toast } from 'sonner'
-import type { ChunkRow, LearningMode } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/vocabulary-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
@@ -53,18 +53,18 @@ const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: Ch
   )
 }
 
-const LearningModeFilterPills = ({
+const ProductionFilterPills = ({
   value,
   onChange,
 }: {
-  value: LearningMode | null
-  onChange: (next: LearningMode | null) => void
+  value: boolean | null
+  onChange: (next: boolean | null) => void
 }) => {
   const { t } = useLingui()
-  const options: Array<{ value: LearningMode | null; label: string }> = [
+  const options: Array<{ value: boolean | null; label: string }> = [
     { value: null, label: t`All` },
-    { value: 'passive', label: t`Passive` },
-    { value: 'active', label: t`Active` },
+    { value: true, label: t`In production` },
+    { value: false, label: t`Not in production` },
   ]
   return (
     <div className='bg-muted flex gap-1 rounded-full p-1'>
@@ -101,9 +101,12 @@ export const VocabularyListView = () => {
   const [sort, setSort] = useState<ChunksSort>('recent')
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
-  const learningMode: LearningMode | null = mode ?? null
-  const setLearningModeFilter = (next: LearningMode | null) => {
-    void navigate({ to: '/vocabulary', search: next ? { mode: next } : {} })
+  // URL `mode` tokens stay 'passive'/'active' (bookmark-safe); the filter is
+  // expressed to the API as a boolean isProductionEnabled (active = in
+  // production, passive = not).
+  const isProductionEnabled: boolean | null = mode === 'active' ? true : mode === 'passive' ? false : null
+  const setProductionFilter = (next: boolean | null) => {
+    void navigate({ to: '/vocabulary', search: next === null ? {} : { mode: next ? 'active' : 'passive' } })
   }
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -126,7 +129,7 @@ export const VocabularyListView = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch, learningMode })
+  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch, isProductionEnabled })
   const rows: ChunkRow[] = useMemo(() => {
     if (!data) return []
     return data.pages.flatMap((page) => page.rows)
@@ -135,7 +138,7 @@ export const VocabularyListView = () => {
   // Restores scroll position when the container remounts (e.g. focus-view
   // round-trip). Resets when the filter combo changes so a stale offset from
   // a different result set never gets applied.
-  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}|${learningMode ?? 'all'}`
+  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}|${isProductionEnabled === null ? 'all' : isProductionEnabled ? 'prod' : 'noprod'}`
   const { ref: parentRef, onScroll: onParentScroll } = useScrollRestoration<HTMLDivElement>({
     scope: 'vocabulary',
     filterKey,
@@ -260,7 +263,7 @@ export const VocabularyListView = () => {
       <SearchInput value={searchInput} onChange={setSearchInput} placeholder={t`Search terms…`} className='w-full' />
 
       <div className='flex flex-wrap items-center justify-between gap-2'>
-        <LearningModeFilterPills value={learningMode} onChange={setLearningModeFilter} />
+        <ProductionFilterPills value={isProductionEnabled} onChange={setProductionFilter} />
         <SortPills value={sort} onChange={setSort} />
       </div>
 
@@ -331,6 +334,7 @@ export const VocabularyListView = () => {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         chunk={activeChunk}
+        onEdit={handleEdit}
         onOpenSource={handleOpenSource}
         onRequestDelete={handleRequestDelete}
       />

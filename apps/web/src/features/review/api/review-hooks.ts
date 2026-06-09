@@ -1,11 +1,7 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type {
-  Card,
-  CardStatus,
-  LearningMode,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   cancelCardCaches,
   cancelCardCachesOptionalSession,
@@ -67,7 +63,7 @@ export const useUpdateCardStatus = (sessionId: string) => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.cards.updateStatus.mutationOptions({
-      onMutate: async (variables: { cardId: string; status: CardStatus; learningMode?: LearningMode }) => {
+      onMutate: async (variables: { cardId: string; status: CardStatus }) => {
         await cancelCardCaches(queryClient, { sessionId, cardId: variables.cardId })
         const snapshot = snapshotCardCaches(queryClient, { sessionId, cardId: variables.cardId })
         setCardStatusEverywhere(queryClient, { sessionId, cardId: variables.cardId, status: variables.status })
@@ -78,9 +74,8 @@ export const useUpdateCardStatus = (sessionId: string) => {
       },
       onSuccess: (response) => {
         setCardEverywhere(queryClient, response.data)
-        // Term's learning_mode may have shifted (e.g. promoted to active on
-        // keep). Invalidate vocabulary list + practice due summary so chips
-        // and counts refresh.
+        // Keeping a card may change downstream counts; invalidate vocabulary
+        // list + practice due summary so chips and counts refresh.
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
         queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
       },

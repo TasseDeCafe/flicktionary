@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildStudiedFormPatch, materializeBasicDataChunks } from './materialize-basic-data-chunks'
+import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import type { BasicDataChunk } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
@@ -37,7 +37,6 @@ const createRepos = (lookup: Record<string, unknown>) => {
       ...lookup,
     }),
     updateContent,
-    hasFormFacet: vi.fn().mockResolvedValue(lookup.hasFormFacet ?? false),
   } as unknown as UserLookupsRepositoryInterface
   const cardsRepository = {
     insertCard: vi.fn().mockResolvedValue({ id: 'card-1' }),
@@ -123,67 +122,16 @@ describe('materializeBasicDataChunks — translations-off is a generation pref, 
   })
 })
 
-describe('buildStudiedFormPatch', () => {
-  const inflected = { headword: 'посмотреть', surfaceForm: 'посмотрим', surfaceTranslation: "let's see" }
-
-  it('emits studied_form when the surface form is an inflection with a translation', () => {
-    expect(buildStudiedFormPatch(inflected)).toEqual({
-      studied_form: { form: 'посмотрим', translation: "let's see" },
-    })
-  })
-
-  it('is null when the surface form is already the citation form', () => {
-    expect(
-      buildStudiedFormPatch({ headword: 'palabra', surfaceForm: 'palabra', surfaceTranslation: 'word' })
-    ).toBeNull()
-  })
-
-  it('is null without a surface translation', () => {
-    expect(buildStudiedFormPatch({ ...inflected, surfaceTranslation: null })).toBeNull()
-  })
-})
-
-describe('materializeBasicDataChunks — studied_form never-overwrite gate', () => {
-  it('skips the studied_form artifact once the term already has a form facet', async () => {
-    // The gate moved from grammar.study_form_enabled to form-facet existence
-    // (Phase 4b): re-enrichment must not retarget the artifact to a later
-    // inflection after the user has made one of its forms a facet.
-    const repos = createRepos({ hasFormFacet: true })
-
-    await run({
-      chunk: llmChunk({ surfaceForm: 'palabras', surfaceTranslation: 'words', grammar: { pos: 'noun' } }),
-      hideTranslationFields: false,
-      repos,
-    })
-
-    const args = repos.updateContent.mock.calls[0]![0]
-    expect(args.grammarPatch).toEqual({ pos: 'noun' })
-  })
-})
-
-describe('materializeBasicDataChunks — studied_form persistence', () => {
-  it('folds studied_form into the grammar patch on first-time fill', async () => {
+describe('materializeBasicDataChunks — grammar patch', () => {
+  // grammar.studied_form was dropped (per-form study lives in study_facets), so
+  // the grammar patch carries only the LLM's grammar bag — never a studied_form
+  // artifact, regardless of the surface form being an inflection.
+  it('does not fold a studied_form artifact into the grammar patch', async () => {
     const repos = createRepos({})
 
     await run({
       chunk: llmChunk({ surfaceForm: 'palabras', surfaceTranslation: 'words', grammar: { pos: 'noun' } }),
       hideTranslationFields: false,
-      repos,
-    })
-
-    const args = repos.updateContent.mock.calls[0]![0]
-    expect(args.grammarPatch).toEqual({
-      pos: 'noun',
-      studied_form: { form: 'palabras', translation: 'words' },
-    })
-  })
-
-  it('skips studied_form entirely when translations are off', async () => {
-    const repos = createRepos({})
-
-    await run({
-      chunk: llmChunk({ surfaceForm: 'palabras', surfaceTranslation: 'words', grammar: { pos: 'noun' } }),
-      hideTranslationFields: true,
       repos,
     })
 
