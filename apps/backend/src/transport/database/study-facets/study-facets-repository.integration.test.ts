@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, test } from 'vitest'
-import { StudyFacetsRepository } from './study-facets-repository'
+import { StudyFacetsRepository, ensureDefaultCitationFacetIfUnconfigured } from './study-facets-repository'
 import { UserLookupsRepository } from '../user-lookups/user-lookups-repository'
 import { sql } from '../postgres-client'
 import { __createUserInSupabaseAndGetHisIdAndToken, __removeAllAuthUsersFromSupabase } from '../../../test/test-utils'
@@ -49,6 +49,36 @@ describe('study-facets-repository integration tests', () => {
       SELECT COUNT(*)::int AS count FROM public.study_facets WHERE user_lookup_id = ${lookup.id}
     `) as Array<{ count: number }>
     expect(count).toBe(1)
+  })
+
+  // The keep-time default (applyKeepTransition): recognition is created only
+  // for a term with NO facet rows. A pre-keep study-target configuration
+  // (pronunciation-only) or a deliberately dormant term (disabled recognition)
+  // must survive Keep untouched.
+  test('keep default creates recognition only when the term has no facet rows', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+
+    // Unconfigured term: the default applies (and is idempotent).
+    const plain = await createKeptTerm(userId, 'gato')
+    await ensureDefaultCitationFacetIfUnconfigured(plain.id)
+    await ensureDefaultCitationFacetIfUnconfigured(plain.id)
+    const created = await repo.getFacet({ userLookupId: plain.id, skill: 'meaning_recognition', targetForm: '' })
+    expect(created?.srs_state).toBeNull()
+    expect(created?.disabled_at).toBeNull()
+
+    // Pronunciation-only configuration made pre-keep: recognition must NOT be added.
+    const pronOnly = await createKeptTerm(userId, 'perro')
+    await repo.ensureFacet({ userLookupId: pronOnly.id, skill: 'pronunciation', targetForm: '' })
+    await ensureDefaultCitationFacetIfUnconfigured(pronOnly.id)
+    expect(await repo.getFacet({ userLookupId: pronOnly.id, skill: 'meaning_recognition', targetForm: '' })).toBeNull()
+
+    // Dormant term (recognition explicitly disabled): a re-keep must not resurrect it.
+    const dormant = await createKeptTerm(userId, 'pez')
+    await repo.ensureCitationFacet(dormant.id)
+    await sql`UPDATE public.study_facets SET disabled_at = NOW() WHERE user_lookup_id = ${dormant.id}`
+    await ensureDefaultCitationFacetIfUnconfigured(dormant.id)
+    const stillDisabled = await repo.getFacet({ userLookupId: dormant.id, skill: 'meaning_recognition', targetForm: '' })
+    expect(stillDisabled?.disabled_at).not.toBeNull()
   })
 
   test('the daily-new cap guard introduces under the cap and refuses over it', async () => {

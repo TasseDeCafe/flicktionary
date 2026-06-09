@@ -91,6 +91,29 @@ const ensureCitationFacet = async (userLookupId: string, executor: postgres.Sql 
   `
 }
 
+// Keep-time DEFAULT: create the citation recognition facet only when the term
+// has NO study-facet rows at all. Any existing row — enabled, disabled, another
+// skill or form — means the user already configured study targets pre-keep
+// (e.g. pronunciation-only from the triage focus view), and Keep must respect
+// that instead of force-adding recognition. The plain Keep path (selector never
+// touched → zero rows) keeps its recognition default. Row-existence, not
+// "no ENABLED facet", so a deliberately dormant (all-skills-off) term isn't
+// resurrected by a re-keep. ON CONFLICT still guards the NOT-EXISTS race on
+// concurrent keeps.
+const ensureDefaultCitationFacetIfUnconfigured = async (
+  userLookupId: string,
+  executor: postgres.Sql = sql
+): Promise<void> => {
+  await executor`
+    INSERT INTO public.study_facets (user_lookup_id, user_id, target_language, skill, target_form)
+    SELECT ul.id, ul.user_id, ul.target_language, 'meaning_recognition', ${CITATION_FORM}
+    FROM public.user_lookups ul
+    WHERE ul.id = ${userLookupId}
+      AND NOT EXISTS (SELECT 1 FROM public.study_facets f WHERE f.user_lookup_id = ul.id)
+    ON CONFLICT (user_lookup_id, skill, target_form) DO NOTHING
+  `
+}
+
 // Generic idempotent facet creation for an arbitrary (skill, target_form).
 // Used when a facet is enabled (e.g. promote creates the production facet).
 //
@@ -395,9 +418,9 @@ export interface StudyFacetsRepositoryInterface {
 }
 
 // Module-level functions importable directly (e.g. user-lookups-repository's
-// keep transaction calls ensureCitationFacet inside its tx, and setFacetEnabled
-// calls ensureFacet to create the facet on enable).
-export { ensureCitationFacet, ensureFacet }
+// keep transaction calls ensureDefaultCitationFacetIfUnconfigured inside its
+// tx, and setFacetEnabled calls ensureFacet to create the facet on enable).
+export { ensureCitationFacet, ensureDefaultCitationFacetIfUnconfigured, ensureFacet }
 
 export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   getFacet,

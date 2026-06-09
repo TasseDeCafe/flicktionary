@@ -63,10 +63,12 @@ export const resolveReviewCaps = async (params: {
   maxReviewTerms: number
   maxLearningTerms: number
   maxNewTerms: number
-  // Hard-ceiling cap for opt-in (non-citation) new facets — pronunciation/forms
-  // (Phase 4). Non-zero ONLY for the passive pool in learn_new scope; the
-  // primary Practice button (mixed) never serves them (Trap 22). The active
-  // pool has no opt-in facets.
+  // Hard-ceiling cap for opt-in (non-citation) new facets — pronunciation and
+  // specific forms. Non-zero ONLY in learn_new scope, for BOTH pools (the
+  // active pool serves production FORM facets, opt-in since the per-form
+  // editor shipped); the primary Practice button (mixed) never serves them
+  // (Trap 22) — enabling a facet is a deliberate "go learn it via learn-new"
+  // act.
   maxOptInNewTerms: number
 }> => {
   const rawLimits = await params.deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(
@@ -74,13 +76,17 @@ export const resolveReviewCaps = async (params: {
     params.targetLanguage
   )
 
+  // Opt-in new facets bypass every daily budget (each was individually
+  // enabled), so this is a hard ceiling, gated on the explicit learn-new entry.
+  const maxOptInNewTerms = params.scope === 'learn_new' ? HARD_MAX_PRACTICE_NEW_TERMS : 0
+
   if (params.pool === 'active') {
     if (rawLimits.maxReviewTermsActive == null) {
       return {
         maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
         maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
         maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
-        maxOptInNewTerms: 0,
+        maxOptInNewTerms,
       }
     }
     const cap = Math.min(Math.max(Math.trunc(rawLimits.maxReviewTermsActive), 0), HARD_MAX_PRACTICE_REVIEW_TERMS)
@@ -93,7 +99,7 @@ export const resolveReviewCaps = async (params: {
       maxReviewTerms: Math.max(0, cap - consumedActiveReviews),
       maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
       maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
-      maxOptInNewTerms: 0,
+      maxOptInNewTerms,
     }
   }
 
@@ -120,8 +126,6 @@ export const resolveReviewCaps = async (params: {
     maxReviewTerms: remainingReviews,
     maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
     maxNewTerms,
-    // Opt-in (non-citation) new facets bypass the daily-new cap entirely, but
-    // only in an explicit learn-new session — never the mixed Practice button.
-    maxOptInNewTerms: params.scope === 'learn_new' ? HARD_MAX_PRACTICE_NEW_TERMS : 0,
+    maxOptInNewTerms,
   }
 }

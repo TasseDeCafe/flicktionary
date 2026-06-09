@@ -41,11 +41,11 @@ msgstr "(unset)"
 msgid "{activeCount} active"
 msgstr "{activeCount} active"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:221
+#: apps/web/src/features/practice/components/practice-language-view.tsx:228
 msgid "{activeDueCount} reviews, {activeNewCount} new"
 msgstr "{activeDueCount} reviews, {activeNewCount} new"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:222
+#: apps/web/src/features/practice/components/practice-language-view.tsx:229
 msgid "{activeTotal} production term(s). Nothing to review right now."
 msgstr "{activeTotal} production term(s). Nothing to review right now."
 
@@ -117,7 +117,7 @@ msgstr "{highlightCount} highlight(s)"
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} highlight(s) saved."
 
-#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:42
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:57
 msgid "{newCount} unseen term(s) available. How many do you want to learn now? "
 "They count toward today's introductions."
 msgstr "{newCount} unseen term(s) available. How many do you want to learn now? "
@@ -127,7 +127,13 @@ msgstr "{newCount} unseen term(s) available. How many do you want to learn now? 
 msgid "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 msgstr "{NUMBER_OF_DAYS_IN_FREE_TRIAL} days"
 
-#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:48
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:60
+msgid "{optInNewCount} enabled extra card(s) (forms, pronunciation) will join "
+"the session — they don't count toward today's introductions."
+msgstr "{optInNewCount} enabled extra card(s) (forms, pronunciation) will join "
+"the session — they don't count toward today's introductions."
+
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:66
 msgid "{option} terms"
 msgstr "{option} terms"
 
@@ -390,12 +396,12 @@ msgstr "Again"
 msgid "All"
 msgstr "All"
 
-#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:53
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:71
 msgid "All {newCount}"
 msgstr "All {newCount}"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:40
-#: apps/web/src/features/practice/components/practice-language-view.tsx:238
+#: apps/web/src/features/practice/components/practice-language-view.tsx:245
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:307
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:332
 msgid "All caught up"
@@ -603,7 +609,7 @@ msgstr "Back to login"
 msgid "Back to Login"
 msgstr "Back to Login"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:194
+#: apps/web/src/features/practice/components/practice-language-view.tsx:201
 msgid "Back to Practice"
 msgstr "Back to Practice"
 
@@ -1658,7 +1664,7 @@ msgstr "Flicktionary updated to version {0}. Check out the <0>release "
 msgid "Flicktionary User Guide"
 msgstr "Flicktionary User Guide"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:247
+#: apps/web/src/features/practice/components/practice-language-view.tsx:254
 msgid "Follow-ups"
 msgstr "Follow-ups"
 
@@ -2076,11 +2082,11 @@ msgid "Learn a language from the videos you already watch and the articles you "
 msgstr "Learn a language from the videos you already watch and the articles you "
 "already read."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:181
+#: apps/web/src/features/practice/components/practice-language-view.tsx:188
 msgid "Learn new"
 msgstr "Learn new"
 
-#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:40
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:54
 msgid "Learn new terms"
 msgstr "Learn new terms"
 
@@ -2159,7 +2165,7 @@ msgstr "Loading..."
 #: apps/web/src/features/more/components/languages-page.tsx:17
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:419
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
-#: apps/web/src/features/practice/components/practice-language-view.tsx:200
+#: apps/web/src/features/practice/components/practice-language-view.tsx:207
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:66
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx:286
@@ -2336,7 +2342,7 @@ msgid "New terms are capped per day. Follow-up sessions use up to this many "
 msgstr "New terms are capped per day. Follow-up sessions use up to this many "
 "review terms."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:248
+#: apps/web/src/features/practice/components/practice-language-view.tsx:255
 msgid "New today"
 msgstr "New today"
 
@@ -2441,7 +2447,7 @@ msgid "No vocabulary in this language yet."
 msgstr "No vocabulary in this language yet."
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:73
-#: apps/web/src/features/practice/components/practice-language-view.tsx:204
+#: apps/web/src/features/practice/components/practice-language-view.tsx:211
 msgid "No vocabulary to practice yet"
 msgstr "No vocabulary to practice yet"
 
@@ -2845,7 +2851,7 @@ msgid "Primary"
 msgstr "Primary"
 
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:75
-#: apps/web/src/features/practice/components/practice-language-view.tsx:206
+#: apps/web/src/features/practice/components/practice-language-view.tsx:213
 msgid "Process a session and keep some cards. They'll show up here "
 "automatically."
 msgstr "Process a session and keep some cards. They'll show up here "
@@ -2876,7 +2882,7 @@ msgstr "Processing warnings"
 msgid "Production"
 msgstr "Production"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:217
+#: apps/web/src/features/practice/components/practice-language-view.tsx:224
 msgid "Production practice"
 msgstr "Production practice"
 
@@ -2939,7 +2945,7 @@ msgstr "Read short generated texts that weave in your kept vocabulary. Tap a "
 "term to rate it; terms you don't tap are scored as recognized when you "
 "advance."
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:238
+#: apps/web/src/features/practice/components/practice-language-view.tsx:245
 msgid "Ready to practice"
 msgstr "Ready to practice"
 
@@ -2953,7 +2959,7 @@ msgstr "Recently added"
 msgid "Recognition"
 msgstr "Recognition"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:230
+#: apps/web/src/features/practice/components/practice-language-view.tsx:237
 msgid "Recognition practice"
 msgstr "Recognition practice"
 
@@ -3447,6 +3453,7 @@ msgid "Standalone"
 msgstr "Standalone"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts:142
+#: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx:76
 #: apps/web/src/features/review/components/triage-row.tsx:43
 msgid "Start"
 msgstr "Start"
@@ -3888,7 +3895,7 @@ msgstr "Too many requests. Please use the app in only one tab and device at a "
 msgid "Top"
 msgstr "Top"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:250
+#: apps/web/src/features/practice/components/practice-language-view.tsx:257
 msgid "Total"
 msgstr "Total"
 
@@ -3984,7 +3991,7 @@ msgstr "Unknown year"
 msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:249
+#: apps/web/src/features/practice/components/practice-language-view.tsx:256
 msgid "Unseen"
 msgstr "Unseen"
 

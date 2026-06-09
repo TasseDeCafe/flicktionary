@@ -50,9 +50,12 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
 | 24h interval floor | yes | no |
 | Card layout | headword front | prompt front (`ACTIVE_CARD_FACE_CONFIG`) |
 
-- Every kept term gets a `(meaning_recognition, '')` facet eagerly on keep (atomic with the
-  `count` bump; `ensureCitationFacet`, idempotent). A `(meaning_production, '')` facet exists
-  only once production is enabled.
+- Keeping a term creates a `(meaning_recognition, '')` facet **as a default** (atomic with the
+  `count` bump; `ensureDefaultCitationFacetIfUnconfigured`, idempotent) — but only when the term
+  has no facet rows yet. A study-target configuration made before Keep (e.g. pronunciation-only
+  picked in the triage focus view) is respected, not overwritten; a dormant (all-skills-disabled)
+  term is not resurrected by a re-keep. A `(meaning_production, '')` facet exists only once
+  production is enabled.
 - `srs_state IS NULL` on a facet = never reviewed — the UI's **"Unseen"**.
 - `introduced_at` (on the citation recognition facet) is the source of truth for the daily-new
   count; it replaces the old `user_lookups.added_to_practice_at`.
