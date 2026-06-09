@@ -8,6 +8,7 @@ import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow
 import { isFirefoxBuild } from '@/services/build-flags'
 import { getDevToolsState, onDevToolsStateChange } from '@/services/flicktionary/dev-tools-storage'
 import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
+import { installTopFrameActivationResponder, shouldActivateInThisFrame } from '@/services/frame-activation'
 
 import type { ContentScriptContext } from '#imports'
 import './video.css'
@@ -26,12 +27,11 @@ export default defineContentScript({
   runAt: 'document_idle',
 
   main(ctx: ContentScriptContext) {
-    // Marker class for YouTube-scoped overlay z-index (see video.css). Keeps the
-    // subtitle/notification overlays below YouTube's masthead/search chrome while
-    // leaving them at max int on every other site.
-    if (isYoutubeHost()) {
-      document.documentElement.classList.add('asbplayer-youtube')
-    }
+    // Answer activation queries from child frames. Runs in EVERY top-level
+    // document — including non-platforms — so an embedded platform clip (e.g. a
+    // YouTube video in a Guardian article) can learn its host page is not a
+    // recognized platform and stay inert. See frame-activation.ts.
+    installTopFrameActivationResponder()
 
     const hasValidVideoSource = (videoElement: HTMLVideoElement, page?: PageDelegate) => {
       if (page?.config?.allowVideoElementsWithBlankSrc) {
@@ -247,12 +247,30 @@ export default defineContentScript({
       })
     }
 
+    // Only bind on recognized streaming platforms, decided against the
+    // top-level page (not this individual frame) so third-party embeds don't
+    // activate. See shouldActivateInThisFrame.
+    const start = async () => {
+      if (!(await shouldActivateInThisFrame())) {
+        return
+      }
+
+      // Marker class for YouTube-scoped overlay z-index (see video.css). Keeps
+      // the subtitle/notification overlays below YouTube's masthead/search
+      // chrome while leaving them at max int on every other site.
+      if (isYoutubeHost()) {
+        document.documentElement.classList.add('asbplayer-youtube')
+      }
+
+      await bind()
+    }
+
     if (document.readyState === 'complete') {
-      bind().catch(console.error)
+      start().catch(console.error)
     } else {
       document.addEventListener('readystatechange', (event) => {
         if (document.readyState === 'complete') {
-          bind().catch(console.error)
+          start().catch(console.error)
         }
       })
     }
