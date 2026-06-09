@@ -323,4 +323,145 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     })
     expect(active.some((r) => r.skill === 'pronunciation')).toBe(false)
   })
+
+  // Production FORM facets are opt-in news in the ACTIVE pool: served by the
+  // opt-in bucket in learn_new, never in mixed (Trap 22 applies to both pools).
+  test('unseen production form facet is served in active learn_new, not mixed', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const term = await createKeptTerm(userId, 'hablar')
+    // Citation production facet already scheduled (not new) — only the form is unseen.
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_production',
+      targetForm: '',
+      srsState: 'review',
+      srsDue: '2030-01-01T00:00:00Z',
+    })
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_production',
+      targetForm: 'hablo',
+      srsState: null,
+      srsDue: null,
+    })
+
+    const baseParams = {
+      userId,
+      targetLanguage: 'es',
+      pool: 'active' as const,
+      maxReviewTerms: 0,
+      maxLearningTerms: 0,
+      maxNewTerms: 50,
+    }
+    const learn = await userLookupsRepository.listReviewTerms({
+      ...baseParams,
+      scope: 'learn_new',
+      maxOptInNewTerms: 50,
+    })
+    expect(learn.map((r) => r.target_form)).toEqual(['hablo'])
+
+    const mixed = await userLookupsRepository.listReviewTerms({ ...baseParams, scope: 'mixed', maxOptInNewTerms: 0 })
+    expect(mixed.some((r) => r.target_form === 'hablo')).toBe(false)
+  })
+
+  // The landing/learn-new counts must mirror the queue's enabled-facet filter:
+  // a disabled recognition facet is invisible to listReviewTerms, so counting
+  // it in the due summary promises cards ("2 new available") that the session
+  // then refuses to serve ("No new terms to learn"). Introductions performed
+  // today still count toward the daily-new budget even if disabled afterwards.
+  test('due summary excludes disabled recognition facets from new/due counts', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const due = '2026-06-01T00:00:00Z'
+
+    // Enabled, unseen citation facet -> the only "new" card.
+    const enabled = await createKeptTerm(userId, 'uno')
+    await studyFacetsRepository.ensureCitationFacet(enabled.id)
+
+    // Disabled, unseen citation facet introduced today -> excluded from
+    // newCount, still counted as introduced today.
+    const disabledNew = await createKeptTerm(userId, 'dos')
+    await studyFacetsRepository.ensureCitationFacet(disabledNew.id)
+    await sql`
+      UPDATE public.study_facets
+      SET disabled_at = NOW(), introduced_at = NOW()
+      WHERE user_lookup_id = ${disabledNew.id} AND target_form = ''
+    `
+
+    // Disabled, due citation facet -> excluded from reviewDueCount.
+    const disabledDue = await createKeptTerm(userId, 'tres')
+    await studyFacetsRepository.ensureCitationFacet(disabledDue.id)
+    await sql`
+      UPDATE public.study_facets
+      SET srs_state = 'review', srs_due = ${due}, disabled_at = NOW()
+      WHERE user_lookup_id = ${disabledDue.id} AND target_form = ''
+    `
+
+    const summary = (await userLookupsRepository.listDueSummary(userId)).find((s) => s.targetLanguage === 'es')
+    expect(summary?.totalKept).toBe(3)
+    expect(summary?.newCount).toBe(1)
+    expect(summary?.reviewDueCount).toBe(0)
+    expect(summary?.newIntroducedTodayCount).toBe(1)
+  })
+
+  // The opt-in counters mirror the queue's opt-in new bucket: enabled+ready
+  // unseen non-citation facets (plus citation pronunciation — it IS opt-in),
+  // split by review mode. Disabled and pending_data facets don't count.
+  test('due summary counts unseen opt-in facets per mode', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const term = await createKeptTerm(userId, 'cantar')
+    await studyFacetsRepository.ensureCitationFacet(term.id)
+
+    // Recognition-mode opt-ins: citation pronunciation + a recognition form.
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'pronunciation',
+      targetForm: '',
+      srsState: null,
+      srsDue: null,
+    })
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_recognition',
+      targetForm: 'canto',
+      srsState: null,
+      srsDue: null,
+    })
+    // Production-mode opt-in: a production form.
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_production',
+      targetForm: 'canto',
+      srsState: null,
+      srsDue: null,
+    })
+    // Neither disabled nor pending_data opt-ins count.
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_recognition',
+      targetForm: 'cantas',
+      srsState: null,
+      srsDue: null,
+      disabledAt: '2026-06-01T00:00:00Z',
+    })
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_recognition',
+      targetForm: 'cantamos',
+      srsState: null,
+      srsDue: null,
+      dataStatus: 'pending_data',
+    })
+
+    const summary = (await userLookupsRepository.listDueSummary(userId)).find((s) => s.targetLanguage === 'es')
+    expect(summary?.newCount).toBe(1) // the citation recognition facet stays citation-only
+    expect(summary?.optInNewCount).toBe(2)
+    expect(summary?.activeOptInNewCount).toBe(1)
+  })
 })

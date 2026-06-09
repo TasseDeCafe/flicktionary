@@ -165,7 +165,14 @@ export const PracticeLanguageView = () => {
               type='button'
               variant='outline'
               size='sm'
-              disabled={pool === 'passive' ? (entry?.newCount ?? 0) === 0 : activeNewCount === 0}
+              // Learn-new has work when EITHER unseen citation terms or unseen
+              // opt-in extras (enabled forms/pronunciation) exist — extras are
+              // served only in learn-new sessions, never by Practice (mixed).
+              disabled={
+                pool === 'passive'
+                  ? (entry?.newCount ?? 0) + (entry?.optInNewCount ?? 0) === 0
+                  : activeNewCount + (entry?.activeOptInNewCount ?? 0) === 0
+              }
               onClick={(event) => {
                 // Passive learn-new picks a batch size first (the chosen N
                 // bypasses the daily-new budget). The active pool has no daily
@@ -257,9 +264,13 @@ export const PracticeLanguageView = () => {
                 }}
                 anchor={learnNewSheet?.anchor ?? null}
                 newCount={entry.newCount}
+                optInNewCount={entry.optInNewCount}
                 onConfirm={(batchSize) => {
                   setLearnNewSheet(null)
-                  enterReview(learnNewSheet?.pool ?? 'passive', 'learn_new', 'flashcards', batchSize)
+                  // null batch = extras-only session: enter learn-new without a
+                  // count; the citation bucket is empty and only opt-in extras
+                  // (which need no daily-cap bypass) are served.
+                  enterReview(learnNewSheet?.pool ?? 'passive', 'learn_new', 'flashcards', batchSize ?? undefined)
                 }}
               />
             </>

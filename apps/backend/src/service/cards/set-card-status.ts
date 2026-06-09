@@ -17,8 +17,10 @@ export type SetCardStatusDependencies = {
 // SRS state stays put on un-keep — re-keeping later resumes the schedule.
 //
 // Production study (the active pool) is no longer set here: it's toggled
-// independently via the citation meaning_production facet (setFacetEnabled),
-// so Keep just creates/keeps the recognition facet.
+// independently via the citation meaning_production facet (setFacetEnabled).
+// Keep creates the DEFAULT recognition facet only when the term has no facet
+// rows yet — a pre-keep study-target configuration (e.g. pronunciation-only
+// picked in the triage focus view) is respected, not overwritten.
 export const setCardStatus = async (
   cardId: string,
   userId: string,

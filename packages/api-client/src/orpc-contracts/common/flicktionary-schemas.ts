@@ -425,6 +425,11 @@ export const PracticeDueSummaryEntrySchema = z.object({
   nextLearningDueAt: z.string().nullable(),
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
+  // Unseen opt-in facets (pronunciation / specific forms), enabled+ready, per
+  // review mode. Served only in learn-new sessions — newCount/activeNewCount
+  // stay citation-only because the mixed Practice queue never serves opt-ins.
+  optInNewCount: z.number().int(),
+  activeOptInNewCount: z.number().int(),
   // Review-state cards rated today (the spent daily review budget, counted
   // off the rating-event log). Lets the landing distinguish "limit reached"
   // from "all caught up" when due work exists beyond the budget.

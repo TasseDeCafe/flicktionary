@@ -129,6 +129,16 @@ describe('listReviewTerms (service caps)', () => {
     expect(mixed.repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxOptInNewTerms: 0 }))
   })
 
+  it('active pool learn_new opens the opt-in bucket too (production form facets are opt-in)', async () => {
+    const learn = createDeps()
+    await listReviewTerms(userId, 'es', 'active', 'learn_new', learn.deps)
+    expect(learn.repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxOptInNewTerms: 100 }))
+
+    const mixed = createDeps()
+    await listReviewTerms(userId, 'es', 'active', 'mixed', mixed.deps)
+    expect(mixed.repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxOptInNewTerms: 0 }))
+  })
+
   it('excludes terms already embedded in the current reading text', async () => {
     const { deps, repoListReviewTerms } = createDeps()
     ;(deps as ListReviewTermsDependencies).practiceTextsRepository = {

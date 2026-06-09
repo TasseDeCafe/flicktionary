@@ -1,5 +1,28 @@
 # Study facets v2: a two-axis (target × skill) note/cards model for the SRS
 
+> **STATUS (2026-06-09): Phases 1–4 are MERGED** (PRs #116–#122, including the 4b follow-up PRs
+> #121/#122 which added the per-form card editor and made recognition deselectable). Only the
+> **Roadmap** section remains future work. Post-merge fixes landed 2026-06-09:
+> - `listDueSummary` recognition counts now require an ENABLED facet (`disabled_at IS NULL`, plus
+>   `rf.id IS NOT NULL` for `new_count` since `srs_state IS NULL` is also true on a join miss).
+>   Phase 3+ made recognition disableable but the landing still counted disabled facets as "new
+>   available" while the queue refused to serve them ("No new terms to learn" with "2 available").
+>   `newIntroducedTodayCount` deliberately stays unfiltered (an introduction consumed today's
+>   budget even if disabled later).
+> - Opt-in new intake generalized to the ACTIVE pool: `resolveReviewCaps` opens the opt-in bucket
+>   (`maxOptInNewTerms`) for `learn_new` in BOTH pools — production FORM facets are opt-in too
+>   (the "active pool has no opt-in facets" assumption went stale with the per-form editor).
+>   `listDueSummary` gained `optInNewCount`/`activeOptInNewCount` (mirroring the queue's opt-in
+>   bucket predicate) so the landing's Learn-new button gating and batch sheet can see opt-in
+>   work; an extras-only session enters learn_new without a `count`.
+> - Triage Keep no longer clobbers a pre-keep study-target configuration: `applyKeepTransition`
+>   now calls `ensureDefaultCitationFacetIfUnconfigured` — the citation recognition facet is a
+>   keep-time DEFAULT created only when the term has NO `study_facets` rows. Touching the
+>   selector pre-keep (e.g. pronunciation-only) means "this is the full set"; recognition must
+>   then be checked explicitly. Row-existence (not "no enabled facet") so dormant terms aren't
+>   resurrected by a re-keep. The repair paths (`rate-term.ts`, `advance-reading-text.ts`) keep
+>   the unconditional `ensureCitationFacet`.
+
 > **Reading order for the implementing thread:** read **The model** and **Worked examples**
 > first — they encode decisions reached in a long design discussion and the terminology is
 > deliberately *not* Anki's. Then the schema, then phases. The **Traps** section at the bottom is

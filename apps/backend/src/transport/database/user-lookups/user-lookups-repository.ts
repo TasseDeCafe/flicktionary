@@ -4,7 +4,7 @@ import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
 import {
   CITATION_FORM,
-  ensureCitationFacet,
+  ensureDefaultCitationFacetIfUnconfigured,
   ensureFacet,
   skillForPool,
   type DbStudyFacet,
@@ -124,6 +124,13 @@ export type DueSummaryEntry = {
   nextLearningDueAt: string | null
   newCount: number
   newIntroducedTodayCount: number
+  // Unseen OPT-IN facets (pronunciation / specific forms — everything except
+  // the daily-new-capped citation facet of each mode) that are enabled+ready,
+  // split by review mode. These are served only in learn-new sessions, so the
+  // landing's Learn-new affordances need them; newCount/activeNewCount stay
+  // citation-only because the mixed Practice queue never serves opt-ins.
+  optInNewCount: number
+  activeOptInNewCount: number
   // Leech-parked terms (excluded from every practice queue until rehab
   // graduates them). The due/learning aggregates above already exclude them.
   parkedCount: number
@@ -386,8 +393,11 @@ const renameKey = async (params: {
 const applyKeepTransition = async (params: { userLookupId: string; cardId: string }): Promise<void> => {
   // The count bump and the citation recognition facet creation must commit
   // together: once a queueable facet is required on keep, a failure between the
-  // two would leave a kept term that can never appear in practice. ensureCitationFacet
-  // is idempotent (ON CONFLICT DO NOTHING) so a re-keep / repair pass is safe.
+  // two would leave a kept term that can never appear in practice. The facet is
+  // a DEFAULT, not a mandate: it's created only when the term has no facet rows
+  // yet — a study-target configuration made pre-keep in the triage focus view
+  // (e.g. pronunciation-only) must survive Keep. Idempotent, so a re-keep /
+  // repair pass is safe.
   await beginTx(async (tx) => {
     await tx`
       UPDATE public.user_lookups
@@ -396,7 +406,7 @@ const applyKeepTransition = async (params: { userLookupId: string; cardId: strin
           deleted_at = NULL
       WHERE id = ${params.userLookupId}
     `
-    await ensureCitationFacet(params.userLookupId, tx)
+    await ensureDefaultCitationFacetIfUnconfigured(params.userLookupId, tx)
   })
 }
 
@@ -426,34 +436,51 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // Recognition (passive) numbers read the citation meaning_recognition facet;
   // the active mirror reads the citation meaning_production facet. Both are 1:1
   // with the term (target_form=''), so the LEFT JOINs never fan out.
+  //
+  // Every queue-feeding count requires an ENABLED facet (id IS NOT NULL via the
+  // state predicates, disabled_at IS NULL) — the queue (listReviewTerms) and
+  // the Strengthen track (listParkedTerms) both filter disabled facets, so a
+  // recognition skill the user switched off must not inflate the landing
+  // numbers (it would promise cards the queue then refuses to serve). new_count
+  // needs the explicit rf.id check because its `srs_state IS NULL` test is also
+  // true on a join miss. newIntroducedTodayCount intentionally stays
+  // unfiltered: it feeds the remaining-daily-new budget, and an introduction
+  // performed today consumed that budget even if the facet was disabled later.
   const result = await sql`
     SELECT
       ul.target_language,
       COUNT(*)::int AS total_kept,
       COUNT(*) FILTER (
-        WHERE rf.srs_state IN ('new', 'review')
+        WHERE rf.disabled_at IS NULL
+          AND rf.srs_state IN ('new', 'review')
           AND rf.srs_due IS NOT NULL
           AND rf.srs_due <= NOW()
           AND rf.leech_parked_at IS NULL
       )::int AS review_due_count,
       COUNT(*) FILTER (
-        WHERE rf.srs_state IN ('learning', 'relearning')
+        WHERE rf.disabled_at IS NULL
+          AND rf.srs_state IN ('learning', 'relearning')
           AND rf.srs_due IS NOT NULL
           AND rf.srs_due <= NOW()
           AND rf.leech_parked_at IS NULL
       )::int AS learning_due_count,
       MIN(rf.srs_due) FILTER (
-        WHERE rf.srs_state IN ('learning', 'relearning')
+        WHERE rf.disabled_at IS NULL
+          AND rf.srs_state IN ('learning', 'relearning')
           AND rf.srs_due IS NOT NULL
           AND rf.srs_due > NOW()
           AND rf.leech_parked_at IS NULL
       ) AS next_learning_due_at,
-      COUNT(*) FILTER (WHERE rf.srs_state IS NULL)::int AS new_count,
+      COUNT(*) FILTER (
+        WHERE rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.srs_state IS NULL
+      )::int AS new_count,
       COUNT(*) FILTER (
         WHERE rf.introduced_at >= CURRENT_DATE
           AND rf.introduced_at < CURRENT_DATE + INTERVAL '1 day'
       )::int AS new_introduced_today_count,
-      COUNT(*) FILTER (WHERE rf.leech_parked_at IS NOT NULL)::int AS parked_count,
+      COUNT(*) FILTER (
+        WHERE rf.disabled_at IS NULL AND rf.leech_parked_at IS NOT NULL
+      )::int AS parked_count,
       COUNT(*) FILTER (WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL)::int AS active_total,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
@@ -488,6 +515,31 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
     GROUP BY ul.target_language
     ORDER BY ul.target_language ASC
   `
+  // Unseen opt-in facets per language — a separate aggregate because facets
+  // are 1:many with the term here (forms + pronunciation), and joining them
+  // into the grouped query above would fan out every other count. The
+  // predicate mirrors listReviewTerms' opt-in new bucket exactly: enabled,
+  // ready, non-parked, unseen, and NOT the mode's daily-new-capped citation
+  // facet. Citation pronunciation counts (it is opt-in); citation
+  // meaning_recognition/meaning_production are the primaries, excluded.
+  const optInResult = await sql`
+    SELECT
+      ul.target_language,
+      COUNT(*) FILTER (WHERE f.skill IN ('meaning_recognition', 'pronunciation'))::int AS opt_in_new_count,
+      COUNT(*) FILTER (WHERE f.skill = 'meaning_production')::int AS active_opt_in_new_count
+    FROM public.study_facets f
+    JOIN public.user_lookups ul ON ul.id = f.user_lookup_id
+    WHERE ul.user_id = ${userId}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+      AND f.disabled_at IS NULL
+      AND f.data_status = 'ready'
+      AND f.leech_parked_at IS NULL
+      AND f.srs_state IS NULL
+      AND NOT (f.target_form = '' AND f.skill IN ('meaning_recognition', 'meaning_production'))
+    GROUP BY ul.target_language
+  `
+  const optInByLanguage = new Map(optInResult.map((row) => [row.target_language as string, row]))
   return result.map((row) => ({
     targetLanguage: row.target_language as string,
     totalKept: row.total_kept as number,
@@ -499,6 +551,8 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       : null,
     newCount: row.new_count as number,
     newIntroducedTodayCount: row.new_introduced_today_count as number,
+    optInNewCount: (optInByLanguage.get(row.target_language as string)?.opt_in_new_count as number) ?? 0,
+    activeOptInNewCount: (optInByLanguage.get(row.target_language as string)?.active_opt_in_new_count as number) ?? 0,
     parkedCount: row.parked_count as number,
     activeTotal: row.active_total as number,
     activeReviewDueCount: row.active_review_due_count as number,
