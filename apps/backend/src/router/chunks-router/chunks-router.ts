@@ -283,13 +283,31 @@ export const ChunksRouter = (
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
       }
       const targetForm = normalizeTargetForm(input.targetForm)
+      // Pass the full validated FormFacetPayload through — the repo merges it via
+      // JSONB `||` (partial keys preserve untouched ones). The client is
+      // responsible for sending `grammar` COMPLETE when present (the shallow
+      // merge replaces the whole sub-object, it does not deep-merge it).
       await userLookupsRepository.setFacetPayload({
         userLookupId: input.chunkId,
         userId,
         skill: input.skill,
         targetForm,
-        payload: { form: input.payload.form, translation: input.payload.translation ?? null },
+        payload: input.payload as Record<string, unknown>,
       })
+      return { data: await loadStudyTargets(input.chunkId) }
+    }),
+
+    deleteFacet: implementer.deleteFacet.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      // deleteFacet keys on user_lookup_id alone (FK-cascade scope); ownership is
+      // enforced by the guard above. Normalize the key so it matches the stored
+      // facet regardless of which surface the request came from (Trap 21).
+      const targetForm = normalizeTargetForm(input.targetForm)
+      await userLookupsRepository.deleteFacet({ userLookupId: input.chunkId, skill: input.skill, targetForm })
       return { data: await loadStudyTargets(input.chunkId) }
     }),
 

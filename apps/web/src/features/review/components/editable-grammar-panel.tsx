@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
@@ -14,18 +14,22 @@ import { Label } from '@flicktionary/ui/components/label'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import type {
-  Chunk,
   Grammar,
   GrammarIpaBag,
   GrammarNotableForm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { useUpdateChunkContent } from '../api/review-hooks'
 
 type Props = {
-  chunk: Chunk
+  grammar: Grammar
   targetLanguage?: string
-  sourceSessionId?: string
+  // Debounced save. `patch` carries only the changed keys (cleared keys as
+  // null), `fullGrammar` is the complete current bag. The citation adapter
+  // sends `patch` (shallow-merged into the user_lookups grammar column); the
+  // form adapter sends `fullGrammar` (the form-facet payload merge replaces the
+  // whole `grammar` sub-object, so a partial patch would clobber it).
+  onSave: (patch: Record<string, unknown>, fullGrammar: Grammar) => void
+  isPending: boolean
 }
 
 // English edits the GA / RP bucket driven by the user's dialect preference,
@@ -67,8 +71,6 @@ const SelectField = ({
   </select>
 )
 
-const grammarFromChunk = (chunk: Chunk): Grammar => (chunk.grammar ?? {}) as Grammar
-
 const isMeaningful = (g: Grammar): boolean => {
   const keys = Object.keys(g)
   if (keys.length === 0) return false
@@ -108,15 +110,17 @@ const buildGrammarPatch = (current: Grammar, lastSaved: Grammar): Record<string,
 // Editable per-key editor. Sends a debounced PATCH on every change. Mirrors
 // the lastSavedRef pattern from EditableCardFields so concurrent updates
 // (chat tool, sibling tab) don't clobber in-flight edits.
-export const EditableGrammarPanel = ({ chunk, targetLanguage, sourceSessionId }: Props) => {
+export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage, onSave, isPending }: Props) => {
   const { t } = useLingui()
-  const updateChunkContent = useUpdateChunkContent(sourceSessionId)
   const { data: userPrefs } = useGetUserPrefs()
   const englishIpaDialect: 'ga' | 'rp' = userPrefs?.englishIpaDialect ?? 'ga'
 
   const config = useMemo(() => getLanguageGrammarConfig(targetLanguage), [targetLanguage])
+  // Stable unique ids for the boolean-field label/checkbox pairs (used to be
+  // keyed off chunk.id; the panel no longer takes a chunk).
+  const fieldId = useId()
 
-  const initial = useMemo(() => grammarFromChunk(chunk), [chunk])
+  const initial = useMemo(() => incomingGrammar ?? {}, [incomingGrammar])
   const startsOpen = isMeaningful(initial)
   const [open, setOpen] = useState(startsOpen)
   const [grammar, setGrammar] = useState<Grammar>(initial)
@@ -165,22 +169,22 @@ export const EditableGrammarPanel = ({ chunk, targetLanguage, sourceSessionId }:
   // patched the row, another tab edited it, etc.). Don't clobber in-flight
   // typing by comparing to lastSaved, not to local state.
   useEffect(() => {
-    const incoming = grammarFromChunk(chunk)
+    const incoming = incomingGrammar ?? {}
     if (!sameJson(incoming, lastSavedRef.current)) {
       setGrammar(incoming)
       lastSavedRef.current = incoming
     }
-  }, [chunk])
+  }, [incomingGrammar])
 
   useEffect(() => {
     const id = setTimeout(() => {
       const patch = buildGrammarPatch(grammar, lastSavedRef.current)
       if (!patch) return
-      updateChunkContent.mutate({ chunkId: chunk.id, patch: { grammarPatch: patch } })
+      onSave(patch, grammar)
       lastSavedRef.current = grammar
     }, SAVE_DEBOUNCE_MS)
     return () => clearTimeout(id)
-  }, [grammar, chunk.id, updateChunkContent])
+  }, [grammar, onSave])
 
   const setKey = <K extends keyof Grammar>(key: K, value: Grammar[K] | undefined) => {
     setGrammar((prev) => {
@@ -211,8 +215,6 @@ export const EditableGrammarPanel = ({ chunk, targetLanguage, sourceSessionId }:
       return { ...prev, notable_forms: list.length === 0 ? undefined : list }
     })
   }
-
-  const isPending = updateChunkContent.isPending
 
   return (
     <div className='border-t pt-3'>
@@ -371,13 +373,13 @@ export const EditableGrammarPanel = ({ chunk, targetLanguage, sourceSessionId }:
           {has('is_indeclinable') && (
             <div className='flex items-center gap-2'>
               <input
-                id={`indecl-${chunk.id}`}
+                id={`indecl-${fieldId}`}
                 type='checkbox'
                 checked={Boolean(grammar.is_indeclinable)}
                 onChange={(e) => setKey('is_indeclinable', e.target.checked || undefined)}
                 className='h-4 w-4'
               />
-              <Label htmlFor={`indecl-${chunk.id}`} className='text-xs'>
+              <Label htmlFor={`indecl-${fieldId}`} className='text-xs'>
                 {t`Indeclinable`}
               </Label>
             </div>
@@ -386,13 +388,13 @@ export const EditableGrammarPanel = ({ chunk, targetLanguage, sourceSessionId }:
           {has('is_reflexive') && (
             <div className='flex items-center gap-2'>
               <input
-                id={`refl-${chunk.id}`}
+                id={`refl-${fieldId}`}
                 type='checkbox'
                 checked={Boolean(grammar.is_reflexive)}
                 onChange={(e) => setKey('is_reflexive', e.target.checked || undefined)}
                 className='h-4 w-4'
               />
-              <Label htmlFor={`refl-${chunk.id}`} className='text-xs'>
+              <Label htmlFor={`refl-${fieldId}`} className='text-xs'>
                 {t`Reflexive`}
               </Label>
             </div>

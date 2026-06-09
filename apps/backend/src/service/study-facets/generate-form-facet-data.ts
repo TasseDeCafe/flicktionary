@@ -42,6 +42,10 @@ export const generateFormFacetData = async (
         ? (target.payload.form as string)
         : params.targetForm
 
+    // The real sentence the learner met this form in (source-seeding). Opus
+    // reuses it as the targetExample and translates it, rather than inventing.
+    const encounteredSentence = target.source?.sentence ?? null
+
     const languageMode = await getLanguageMode({
       userId: params.userId,
       targetLanguage: term.targetLanguage,
@@ -50,12 +54,18 @@ export const generateFormFacetData = async (
     })
 
     if (languageMode.hideTranslationFields) {
+      // Nothing to translate, so no model call — mark ready with the bare form
+      // and (when known) the encountered sentence as its target-language example.
       await deps.userLookupsRepository.setFacetPayload({
         userLookupId: params.chunkId,
         userId: params.userId,
         skill: params.skill,
         targetForm: params.targetForm,
-        payload: { form: surfaceForm, translation: '' },
+        payload: {
+          form: surfaceForm,
+          translation: '',
+          ...(encounteredSentence ? { targetExample: encounteredSentence } : {}),
+        },
       })
       return 'generated'
     }
@@ -66,14 +76,25 @@ export const generateFormFacetData = async (
       headword: term.headword,
       headwordTranslation: term.translation,
       surfaceForm,
+      encounteredSentence,
     })
 
+    // Forward the full generated content. `grammar` is written as a complete
+    // object (only `pos` here) — the shallow JSONB merge replaces the whole
+    // grammar sub-bag, which is correct since a freshly-generated form has none.
     await deps.userLookupsRepository.setFacetPayload({
       userLookupId: params.chunkId,
       userId: params.userId,
       skill: params.skill,
       targetForm: params.targetForm,
-      payload: { form: result.form, translation: result.translation },
+      payload: {
+        form: result.form,
+        translation: result.translation,
+        ...(result.definition ? { definition: result.definition } : {}),
+        ...(result.targetExample ? { targetExample: result.targetExample } : {}),
+        ...(result.nativeExample ? { nativeExample: result.nativeExample } : {}),
+        ...(result.pos ? { grammar: { pos: result.pos } } : {}),
+      },
     })
     return 'generated'
   } catch (e) {

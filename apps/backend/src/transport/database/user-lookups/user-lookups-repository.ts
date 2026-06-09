@@ -80,6 +80,16 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
 // Structurally matches StudyFacetSummarySchema in api-client; declared locally
 // to keep this repository decoupled from the contract package (same convention
 // as ChunkRow).
+// The encountered occurrence backing a study target. Matches
+// StudyFacetSourceSchema in api-client; declared locally to keep the repo
+// decoupled from the contract package (ChunkRow convention).
+export type FacetSource = {
+  sessionId: string
+  segmentId: string
+  textTrackId: string
+  sentence: string
+}
+
 export type ChunkFacetSummary = {
   skill: FacetSkill
   targetForm: string
@@ -87,6 +97,10 @@ export type ChunkFacetSummary = {
   dataStatus: 'ready' | 'pending_data'
   srsState: SrsState | null
   payload: Record<string, unknown>
+  // The most-recent kept card backing this target (its inflection's occurrence;
+  // the lemma's for citation), joined to its source segment. null when there's
+  // no kept occurrence with a readable source (adhoc session / no text track).
+  source: FacetSource | null
 }
 
 // Which SRS column set to read or advance. 1:1 with practice_sessions.pool —
@@ -1105,20 +1119,80 @@ const deleteFacet = async (params: { userLookupId: string; skill: FacetSkill; ta
 // data readiness so the term view can render the pronunciation row and form
 // chips. Ownership is enforced by the caller (findByIdForUser) — this is keyed
 // on user_lookup_id alone, matching the FK-cascade scope of study_facets.
-const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSummary[]> => {
+// Resolve the encountered occurrence backing each study target: the
+// most-recent kept card per normalized surface form, joined to its session /
+// text track and the center segment's text, and a citation occurrence (prefer
+// an exact-lemma card, else the most-recent kept card overall — the lemma was
+// met there in some form). Adhoc sessions / cards without a text track or
+// segment are dropped by the inner JOINs, so they yield no source. The SQL key
+// normalizer (strip U+0301 -> NFC -> trim -> lower) is the byte-for-byte twin of
+// normalizeTargetForm() in @flicktionary/core (Trap 21); chr(769) is the
+// combining acute, written this way to dodge the JS `\0` template escape.
+const resolveFacetSources = async (
+  userLookupId: string
+): Promise<{ citation: FacetSource | null; byForm: Map<string, FacetSource> }> => {
   const rows = (await sql`
-    SELECT skill, target_form, srs_state, data_status, payload, disabled_at
-    FROM public.study_facets
-    WHERE user_lookup_id = ${userLookupId}
-    ORDER BY skill ASC, target_form ASC
+    SELECT
+      lower(trim(normalize(regexp_replace(c.surface_form, chr(769), '', 'g'), NFC))) AS norm_form,
+      lower(trim(normalize(regexp_replace(ul.headword, chr(769), '', 'g'), NFC))) AS norm_headword,
+      c.study_session_id,
+      c.segment_id,
+      s.text_track_id,
+      ts.text AS sentence
+    FROM public.cards c
+    JOIN public.user_lookups ul ON ul.id = c.user_lookup_id
+    JOIN public.study_sessions s ON s.id = c.study_session_id AND s.deleted_at IS NULL
+    JOIN public.content_sources cs ON cs.id = s.content_source_id AND cs.type != 'adhoc'
+    JOIN public.text_segments ts ON ts.id = c.segment_id
+    WHERE c.user_lookup_id = ${userLookupId}
+      AND c.status = 'kept'
+    ORDER BY c.created_at DESC, c.id DESC
   `) as Array<{
-    skill: FacetSkill
-    target_form: string
-    srs_state: SrsState | null
-    data_status: 'ready' | 'pending_data'
-    payload: Record<string, unknown>
-    disabled_at: string | null
+    norm_form: string
+    norm_headword: string
+    study_session_id: string
+    segment_id: string
+    text_track_id: string
+    sentence: string
   }>
+
+  const byForm = new Map<string, FacetSource>()
+  let citation: FacetSource | null = null
+  let citationFallback: FacetSource | null = null
+  // Rows are most-recent-first, so the first time we see a key it's the winner.
+  for (const r of rows) {
+    const source: FacetSource = {
+      sessionId: r.study_session_id,
+      segmentId: r.segment_id,
+      textTrackId: r.text_track_id,
+      sentence: r.sentence,
+    }
+    if (r.norm_form !== '' && !byForm.has(r.norm_form)) byForm.set(r.norm_form, source)
+    if (citationFallback === null) citationFallback = source
+    if (citation === null && r.norm_form === r.norm_headword) citation = source
+  }
+  return { citation: citation ?? citationFallback, byForm }
+}
+
+const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSummary[]> => {
+  const [rows, sources] = await Promise.all([
+    sql`
+      SELECT skill, target_form, srs_state, data_status, payload, disabled_at
+      FROM public.study_facets
+      WHERE user_lookup_id = ${userLookupId}
+      ORDER BY skill ASC, target_form ASC
+    ` as Promise<
+      Array<{
+        skill: FacetSkill
+        target_form: string
+        srs_state: SrsState | null
+        data_status: 'ready' | 'pending_data'
+        payload: Record<string, unknown>
+        disabled_at: string | null
+      }>
+    >,
+    resolveFacetSources(userLookupId),
+  ])
   return rows.map((r) => ({
     skill: r.skill,
     targetForm: r.target_form,
@@ -1126,6 +1200,9 @@ const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSumma
     dataStatus: r.data_status,
     srsState: r.srs_state,
     payload: r.payload ?? {},
+    // Citation/pronunciation (target_form='') get the lemma occurrence; form
+    // facets get their own inflection's occurrence (null if never kept w/ source).
+    source: r.target_form === '' ? sources.citation : (sources.byForm.get(r.target_form) ?? null),
   }))
 }
 

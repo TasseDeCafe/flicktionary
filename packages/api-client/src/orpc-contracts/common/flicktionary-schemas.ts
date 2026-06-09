@@ -168,13 +168,52 @@ export type PracticePool = z.infer<typeof PracticePoolSchema>
 export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
 export type FacetSkill = z.infer<typeof FacetSkillSchema>
 
+// Full per-form card content stored in a form facet's `study_facets.payload`
+// JSONB. A form is its own editable card: its `form` (display spelling)
+// plus its own translation / definition / examples / grammar subset, all
+// independent of the shared lemma `user_lookups` row. The `grammar` slot reuses
+// GrammarSchema (lenient + passthrough) so it never 500s on a legacy or partial
+// bag; the per-form editor only surfaces the editable subset (pos, ipa,
+// display_form, gender, aspect, government, notable_forms). Validated at the
+// `setFacetPayload` contract boundary; `StudyFacetSummarySchema.payload` itself
+// stays a lenient record on the wire (legacy `{form,translation}` rows predate
+// this and must round-trip without erroring).
+export const FormFacetPayloadSchema = z
+  .object({
+    form: z.string(),
+    translation: z.string().nullable().optional(),
+    definition: z.string().nullable().optional(),
+    targetExample: z.string().nullable().optional(),
+    nativeExample: z.string().nullable().optional(),
+    grammar: GrammarSchema.optional(),
+  })
+  .passthrough()
+export type FormFacetPayload = z.infer<typeof FormFacetPayloadSchema>
+
+// The encountered occurrence backing a study target — the most-recent kept
+// `cards` row matching the target (normalized surface_form == target_form; ==
+// headword for citation), joined to its session / text track and the center
+// segment text. Drives the per-target Context block + source-seeded examples.
+// `null` when there is no kept occurrence, the session is adhoc, or it has no
+// text track — those targets render no Context and seed no example.
+export const StudyFacetSourceSchema = z.object({
+  sessionId: z.string().uuid(),
+  segmentId: z.string().uuid(),
+  textTrackId: z.string().uuid(),
+  sentence: z.string(),
+})
+export type StudyFacetSource = z.infer<typeof StudyFacetSourceSchema>
+
 // One study facet as seen by the Study-targets control (chunks.getStudyTargets).
 // The chunk DTO only derives `learningMode` from the citation production facet;
 // to render per-form / pronunciation chips the term view needs each facet's
 // identity + membership + data readiness, which this summary carries. `enabled`
 // = disabled_at IS NULL (disable != delete); `dataStatus='pending_data'` =
-// enabled but not yet queued (Phase 4 form generation). `payload` carries
-// {form, translation} for form facets, {} for citation/pronunciation.
+// enabled but not yet queued (Phase 4 form generation). `payload` carries full
+// per-form card content for form facets (FormFacetPayloadSchema-shaped, but kept
+// lenient on the wire for legacy rows), {} for citation/pronunciation. `source`
+// is the encountered occurrence backing this target (Context block + example
+// seeding); null when there's none.
 export const StudyFacetSummarySchema = z.object({
   skill: FacetSkillSchema,
   targetForm: z.string(),
@@ -182,6 +221,7 @@ export const StudyFacetSummarySchema = z.object({
   dataStatus: z.enum(['ready', 'pending_data']),
   srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
   payload: z.record(z.string(), z.unknown()),
+  source: StudyFacetSourceSchema.nullable(),
 })
 export type StudyFacetSummary = z.infer<typeof StudyFacetSummarySchema>
 

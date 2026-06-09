@@ -5,6 +5,7 @@ import {
   ChunkRowSchema,
   ChunkSchema,
   FacetSkillSchema,
+  FormFacetPayloadSchema,
   StudyFacetSummarySchema,
 } from './common/flicktionary-schemas'
 
@@ -220,10 +221,15 @@ export const chunksContract = {
       })
     ),
 
-  // Manual counterpart to generateFacetData: the user types the form's data
-  // themselves (the "enter it yourself" escape from a pending_data facet, and
-  // the edit path for an existing one). Merges {form, translation} into the
-  // payload and flips data_status to ready. Returns the refreshed study-targets.
+  // Manual counterpart to generateFacetData and the edit path for an existing
+  // form facet: the user types the form's full card content themselves
+  // (translation / definition / examples / grammar subset, not just a gloss). The
+  // payload is shallow-merged into the facet's JSONB and data_status flips to
+  // ready. Returns the refreshed study-targets. `payload` is the full
+  // FormFacetPayloadSchema — partial keys are fine (the merge preserves
+  // untouched ones), but `grammar` must always be sent COMPLETE because the
+  // shallow `payload || $new` merge replaces the whole `grammar` sub-object
+  // (it does not deep-merge it).
   setFacetPayload: oc
     .route({ method: 'PATCH', path: '/chunks/{chunkId}/facets/payload', successStatus: 200 })
     .errors({
@@ -235,10 +241,36 @@ export const chunksContract = {
         chunkId: z.string().uuid(),
         skill: FacetSkillSchema,
         targetForm: z.string().min(1),
-        payload: z.object({
-          form: z.string(),
-          translation: z.string().nullable().optional(),
+        payload: FormFacetPayloadSchema,
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          facets: z.array(StudyFacetSummarySchema),
+          candidateForms: z.array(z.string()),
         }),
+      })
+    ),
+
+  // Hard-delete one study facet (skill x target_form) of a term — the explicit
+  // "Remove form" action on a form chip. Unlike setFacetEnabled (disable !=
+  // delete: keeps SRS history for re-enable), this drops the facet and its
+  // schedule entirely, and is irreversible short of re-adding the form. Returns
+  // the refreshed study-targets so the removed chip disappears without a second
+  // round-trip. `targetForm` is normalized server-side. (Citation removal is
+  // expressed as Delete term — deleteChunk — not this.)
+  deleteFacet: oc
+    .route({ method: 'POST', path: '/chunks/{chunkId}/facets/delete', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        chunkId: z.string().uuid(),
+        skill: FacetSkillSchema,
+        targetForm: z.string().min(1),
       })
     )
     .output(

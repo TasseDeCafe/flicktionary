@@ -5,8 +5,6 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
 import { Input } from '@flicktionary/ui/components/input'
 import { Textarea } from '@flicktionary/ui/components/textarea'
-import type { Chunk } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 
 // How the translation/native-example inputs are presented:
 // - 'editable': pref on — always shown, translation is the primary gloss.
@@ -15,96 +13,103 @@ import { useRenameChunk, useUpdateChunkContent } from '../api/review-hooks'
 // - 'hidden': native language == target language — translation is meaningless.
 export type TranslationFieldsMode = 'editable' | 'on-demand' | 'hidden'
 
+// The four debounced content fields. Maps 1:1 to user_lookups columns (citation
+// adapter) AND to form-facet payload keys (form adapter) — the slots are the
+// same, only the storage differs.
+export type CardContentValues = {
+  translation: string
+  definition: string
+  targetExample: string
+  nativeExample: string
+}
+
+// Optional editable headword. Citation cards supply it (with a rename mutation
+// that can 409 on a duplicate headword/sense). Form cards omit it — a form's
+// `target_form` is its immutable identity, so the editor renders its display
+// form as a read-only header instead (renaming = remove + re-add).
+type HeadwordConfig = {
+  value: string
+  // mutate-shaped so the citation adapter can map status codes to messages.
+  onRename: (headword: string, callbacks: { onSuccess: () => void; onError: (err: unknown) => void }) => void
+}
+
 type Props = {
-  chunk: Chunk
+  values: CardContentValues
   translationFieldsMode: TranslationFieldsMode
-  sourceSessionId?: string
+  // Debounced partial save of whatever content fields changed.
+  onSaveContent: (patch: Partial<CardContentValues>) => void
+  isPending: boolean
+  headword?: HeadwordConfig
 }
 
 const SAVE_DEBOUNCE_MS = 600
 
-// Each field gets a small controlled input that debounces a partial PATCH to
-// the canonical chunk (user_lookups). Editing here mutates ONE row that may be
-// referenced by many cards across sessions — sibling cards re-fetch and pick
-// up the change via cache invalidation.
-export const EditableCardFields = ({ chunk, translationFieldsMode, sourceSessionId }: Props) => {
+// Source-agnostic field editor: it owns the debounce + lastSavedRef server-sync
+// machinery and renders the gloss/example inputs, but delegates persistence to
+// the injected `onSaveContent` / `headword.onRename` adapters. The citation
+// adapter writes the canonical user_lookups columns (edits propagate to every
+// card that references the chunk); the form adapter writes a single form facet's
+// payload. We compare server-vs-lastSaved (not server-vs-local) so the user's
+// in-flight typing isn't clobbered by a refetch that returns the value we just
+// sent.
+export const EditableCardFields = ({ values, translationFieldsMode, onSaveContent, isPending, headword }: Props) => {
   const { t } = useLingui()
-  const updateChunkContent = useUpdateChunkContent(sourceSessionId)
-  const renameChunk = useRenameChunk(sourceSessionId)
-  const isPending = updateChunkContent.isPending || renameChunk.isPending
   const [renameError, setRenameError] = useState<string | null>(null)
 
   // 'on-demand' disclosure: starts open when a manual translation already
-  // exists (mirrors the grammar panel's startsOpen). The focus view remounts
-  // the component per save (keyed on card.updatedAt), so server-side
-  // additions re-open it there; the practice edit sheet stays mounted and
+  // exists (mirrors the grammar panel's startsOpen). The caller remounts this
+  // component (keyed on the card's identity/version) when server-side
+  // additions arrive, so the disclosure re-opens there; a long-lived mount
   // keeps the user's disclosure state instead.
   const [translationOpen, setTranslationOpen] = useState(
-    !!(chunk.translation ?? '').trim() || !!(chunk.nativeExample ?? '').trim()
+    !!(values.translation ?? '').trim() || !!(values.nativeExample ?? '').trim()
   )
 
-  const [headword, setHeadword] = useState(chunk.headword)
-  const [translation, setTranslation] = useState(chunk.translation ?? '')
-  const [definition, setDefinition] = useState(chunk.definition ?? '')
-  const [targetExample, setTargetExample] = useState(chunk.targetExample ?? '')
-  const [nativeExample, setNativeExample] = useState(chunk.nativeExample ?? '')
+  const [headwordValue, setHeadwordValue] = useState(headword?.value ?? '')
+  const [translation, setTranslation] = useState(values.translation)
+  const [definition, setDefinition] = useState(values.definition)
+  const [targetExample, setTargetExample] = useState(values.targetExample)
+  const [nativeExample, setNativeExample] = useState(values.nativeExample)
 
-  // Per-form study ("study посмотрим, not посмотреть") moved out of this sheet
-  // in Phase 4b: it's now a first-class study facet edited from the
-  // Study-targets control (StudyTargetsSection), not a grammar-bag toggle here.
-
-  // Track the last value sent to the server so we avoid sending no-ops on
-  // every keystroke pause and avoid clobbering server-side updates (e.g. from
-  // the chat tool) with our local stale state.
+  // Track the last value sent to the server so we avoid no-op saves on every
+  // keystroke pause and avoid clobbering server-side updates (chat tool, another
+  // tab) with our local stale state.
   const lastSavedRef = useRef({
-    headword: chunk.headword,
-    translation: chunk.translation ?? '',
-    definition: chunk.definition ?? '',
-    targetExample: chunk.targetExample ?? '',
-    nativeExample: chunk.nativeExample ?? '',
+    headword: headword?.value ?? '',
+    translation: values.translation,
+    definition: values.definition,
+    targetExample: values.targetExample,
+    nativeExample: values.nativeExample,
   })
 
-  // Sync local state when the server value diverges from what we last saved
-  // — happens when something else mutates the chunk (chat tool, another tab,
-  // a sibling card's focus view). We compare server-vs-lastSaved (not
-  // server-vs-local-state) so the user's in-flight typing isn't clobbered by
-  // routine refetches that return the value we just sent.
+  // Sync local state when the server value diverges from what we last saved.
   useEffect(() => {
-    const serverHeadword = chunk.headword
-    const serverTranslation = chunk.translation ?? ''
-    const serverDefinition = chunk.definition ?? ''
-    const serverTargetExample = chunk.targetExample ?? ''
-    const serverNativeExample = chunk.nativeExample ?? ''
+    const serverHeadword = headword?.value ?? ''
     if (serverHeadword !== lastSavedRef.current.headword) {
-      setHeadword(serverHeadword)
+      setHeadwordValue(serverHeadword)
       lastSavedRef.current.headword = serverHeadword
     }
-    if (serverTranslation !== lastSavedRef.current.translation) {
-      setTranslation(serverTranslation)
-      lastSavedRef.current.translation = serverTranslation
+    if (values.translation !== lastSavedRef.current.translation) {
+      setTranslation(values.translation)
+      lastSavedRef.current.translation = values.translation
     }
-    if (serverDefinition !== lastSavedRef.current.definition) {
-      setDefinition(serverDefinition)
-      lastSavedRef.current.definition = serverDefinition
+    if (values.definition !== lastSavedRef.current.definition) {
+      setDefinition(values.definition)
+      lastSavedRef.current.definition = values.definition
     }
-    if (serverTargetExample !== lastSavedRef.current.targetExample) {
-      setTargetExample(serverTargetExample)
-      lastSavedRef.current.targetExample = serverTargetExample
+    if (values.targetExample !== lastSavedRef.current.targetExample) {
+      setTargetExample(values.targetExample)
+      lastSavedRef.current.targetExample = values.targetExample
     }
-    if (serverNativeExample !== lastSavedRef.current.nativeExample) {
-      setNativeExample(serverNativeExample)
-      lastSavedRef.current.nativeExample = serverNativeExample
+    if (values.nativeExample !== lastSavedRef.current.nativeExample) {
+      setNativeExample(values.nativeExample)
+      lastSavedRef.current.nativeExample = values.nativeExample
     }
-  }, [chunk.headword, chunk.translation, chunk.definition, chunk.targetExample, chunk.nativeExample])
+  }, [headword?.value, values.translation, values.definition, values.targetExample, values.nativeExample])
 
   useEffect(() => {
     const id = setTimeout(() => {
-      const contentPatch: {
-        translation?: string
-        definition?: string
-        targetExample?: string
-        nativeExample?: string
-      } = {}
+      const contentPatch: Partial<CardContentValues> = {}
       let contentDirty = false
       if (translation !== lastSavedRef.current.translation) {
         contentPatch.translation = translation
@@ -123,7 +128,7 @@ export const EditableCardFields = ({ chunk, translationFieldsMode, sourceSession
         contentDirty = true
       }
       if (contentDirty) {
-        updateChunkContent.mutate({ chunkId: chunk.id, patch: contentPatch })
+        onSaveContent(contentPatch)
         lastSavedRef.current = {
           ...lastSavedRef.current,
           translation,
@@ -133,11 +138,10 @@ export const EditableCardFields = ({ chunk, translationFieldsMode, sourceSession
         }
       }
 
-      const trimmedHeadword = headword.trim()
-      if (trimmedHeadword.length > 0 && trimmedHeadword !== lastSavedRef.current.headword) {
-        renameChunk.mutate(
-          { chunkId: chunk.id, headword: trimmedHeadword, sense: chunk.sense ?? '' },
-          {
+      if (headword) {
+        const trimmedHeadword = headwordValue.trim()
+        if (trimmedHeadword.length > 0 && trimmedHeadword !== lastSavedRef.current.headword) {
+          headword.onRename(trimmedHeadword, {
             onSuccess: () => {
               lastSavedRef.current = { ...lastSavedRef.current, headword: trimmedHeadword }
               setRenameError(null)
@@ -150,31 +154,22 @@ export const EditableCardFields = ({ chunk, translationFieldsMode, sourceSession
                 setRenameError(t`Could not rename — please try again.`)
               }
             },
-          }
-        )
+          })
+        }
       }
     }, SAVE_DEBOUNCE_MS)
     return () => clearTimeout(id)
-  }, [
-    headword,
-    translation,
-    definition,
-    targetExample,
-    nativeExample,
-    chunk.id,
-    chunk.sense,
-    updateChunkContent,
-    renameChunk,
-    t,
-  ])
+  }, [headwordValue, translation, definition, targetExample, nativeExample, onSaveContent, headword, t])
 
   return (
     <div className='flex flex-col gap-3'>
-      <div>
-        <Label className='text-xs'>{t`Headword`}</Label>
-        <Input value={headword} onChange={(e) => setHeadword(e.target.value)} />
-        {renameError && <p className='text-destructive mt-1 text-xs'>{renameError}</p>}
-      </div>
+      {headword && (
+        <div>
+          <Label className='text-xs'>{t`Headword`}</Label>
+          <Input value={headwordValue} onChange={(e) => setHeadwordValue(e.target.value)} />
+          {renameError && <p className='text-destructive mt-1 text-xs'>{renameError}</p>}
+        </div>
+      )}
 
       <div>
         <Label className='text-xs'>{t`Target example`}</Label>

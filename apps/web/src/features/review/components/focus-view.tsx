@@ -1,22 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router'
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
-import {
-  useExploreCard,
-  useGetCard,
-  useListCardsBySession,
-  useTextSegmentsWindow,
-  useUpdateCardStatus,
-} from '../api/review-hooks'
+import { useExploreCard, useGetCard, useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
 import { invalidateCardEverywhere } from '../api/card-cache'
-import { useDeleteChunk } from '@/features/vocabulary/api/vocabulary-hooks'
-import { StudyTargetsSection } from './study-targets-section'
+import { useDeleteChunk, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
+import { FormSelector } from './form-selector'
+import { PerFormCardEditor } from './per-form-card-editor'
+import type { SelectedTarget } from './study-target-helpers'
 import {
   ResponsiveOverlay,
   OverlayContent,
@@ -27,8 +23,6 @@ import {
 } from '@/components/ui/responsive-overlay'
 import { useGetProcessingStatus, useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
-import { EditableCardFields } from './editable-card-fields'
-import { EditableGrammarPanel } from './editable-grammar-panel'
 import { GrammarChips } from './grammar-chips'
 import { GroundingBadge } from './grounding-badge'
 import { ChatHeaderButton } from './chat-header-button'
@@ -37,56 +31,6 @@ import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
 import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
-
-type ContextWindowProps = {
-  sessionId: string
-  textTrackId: string
-  segmentId: string
-  fromVocabulary: boolean
-}
-
-const SurroundingContextBlock = ({ sessionId, textTrackId, segmentId, fromVocabulary }: ContextWindowProps) => {
-  const { t } = useLingui()
-  const [open, setOpen] = useState(false)
-  const { data } = useTextSegmentsWindow({ textTrackId, segmentId, radius: 2 })
-
-  return (
-    <div className='mb-3'>
-      <div className='flex items-center justify-between gap-2'>
-        <button
-          type='button'
-          onClick={() => setOpen((v) => !v)}
-          className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs font-semibold tracking-wide uppercase'
-        >
-          {open ? <ChevronDown className='h-3 w-3' /> : <ChevronRight className='h-3 w-3' />}
-          {t`Context`}
-        </button>
-        <Button variant='outline' size='sm' asChild>
-          <Link
-            to='/sessions/$sessionId'
-            params={{ sessionId }}
-            search={{ segment: segmentId, ...(fromVocabulary ? { from: 'vocabulary' as const } : {}) }}
-          >
-            <ExternalLink className='mr-1 h-4 w-4' />
-            {t`Open source`}
-          </Link>
-        </Button>
-      </div>
-      {open && data && (
-        <div className='border-muted bg-muted/30 mt-2 rounded-md border px-3 py-2 text-sm'>
-          {data.data.map((seg) => {
-            const isFocus = seg.id === data.centerSegmentId
-            return (
-              <div key={seg.id} className={isFocus ? 'font-medium' : 'text-muted-foreground'}>
-                {isFocus ? `> ${seg.text}` : seg.text}
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export const FocusView = () => {
   const { t } = useLingui()
@@ -106,6 +50,13 @@ export const FocusView = () => {
   })
   const initialCard = useMemo(() => cards?.find((listCard) => listCard.id === cardId), [cards, cardId])
   const { data: card, isLoading } = useGetCard(cardId, initialCard, cardsUpdatedAt)
+  // Study facets for the unified editor's selector + per-target editor. Lazily
+  // fetched once the card (hence its chunk id) is known; shared by both controls.
+  const { data: studyTargets } = useStudyTargets(card?.chunk.id ?? null)
+  const facets = studyTargets?.facets ?? []
+  const candidateForms = studyTargets?.candidateForms ?? []
+  // Which study target the editor is focused on (reset to citation per card).
+  const [selectedTarget, setSelectedTarget] = useState<SelectedTarget>({ kind: 'citation' })
   const { data: session } = useGetStudySession(sessionId, { enabled: shouldLoadSessionScope })
   // Vocabulary entries (including adhoc) intentionally skip the session
   // fetch, so we read the native language from user prefs to keep
@@ -205,6 +156,7 @@ export const FocusView = () => {
   const [pendingAction, setPendingAction] = useState<'reject' | 'keep' | null>(null)
   useEffect(() => {
     setPendingAction(null)
+    setSelectedTarget({ kind: 'citation' })
   }, [cardId])
 
   const closeToTriage = () => {
@@ -342,58 +294,51 @@ export const FocusView = () => {
                     </a>
                   )}
                 </div>
-                {/* Remount when the card mutates server-side (e.g. chat called
-                update_card_fields) so the field useState picks up new values. */}
-                <EditableCardFields
-                  key={`${card.id}:${card.updatedAt}`}
-                  chunk={card.chunk}
-                  translationFieldsMode={translationFieldsMode}
-                  sourceSessionId={sourceSessionId}
+                {/* Study-target selector (Citation + forms + Add a form) drives
+                    the editor below. Shown in triage too — keeping a card on
+                    Keep just enables recognition; this lets the learner set up
+                    forms/skills + edit content before/after that decision. */}
+                <FormSelector
+                  chunk={{
+                    id: card.chunk.id,
+                    headword: card.chunk.headword,
+                    isProductionEnabled: card.chunk.isProductionEnabled,
+                    grammar: card.chunk.grammar,
+                    targetLanguage: card.chunk.targetLanguage,
+                  }}
+                  facets={facets}
+                  candidateForms={candidateForms}
+                  selectedTarget={selectedTarget}
+                  onSelect={setSelectedTarget}
                 />
                 <div className='mt-4'>
-                  <EditableGrammarPanel
-                    key={`grammar:${card.chunk.id}:${card.updatedAt}`}
+                  <PerFormCardEditor
                     chunk={card.chunk}
-                    targetLanguage={targetLanguage}
+                    cardUpdatedAt={card.updatedAt}
+                    selectedTarget={selectedTarget}
+                    facets={facets}
+                    translationFieldsMode={translationFieldsMode}
                     sourceSessionId={sourceSessionId}
+                    fromVocabulary={fromVocabulary}
                   />
                 </div>
               </section>
 
               <section>
-                {session?.textTrackId && session.contentSourceType !== 'adhoc' && (
-                  <SurroundingContextBlock
-                    sessionId={sessionId}
-                    textTrackId={session.textTrackId}
-                    segmentId={card.segmentId}
-                    fromVocabulary={fromVocabulary}
-                  />
-                )}
-                {/* Language-wide entries are already-kept terms: surface the
-                    study-targets control inline (the bottom mode-switch bar is
-                    gone) plus a secondary delete affordance. */}
+                {/* Language-wide entries are already-kept terms: offer a
+                    secondary delete affordance (triage cards delete via the
+                    Reject bar, so this is gated to kept entries). */}
                 {isLanguageWideEntry && (
-                  <div className='mb-6 flex flex-col gap-3'>
-                    <StudyTargetsSection
-                      chunk={{
-                        id: card.chunk.id,
-                        headword: card.chunk.headword,
-                        isProductionEnabled: card.chunk.isProductionEnabled,
-                        grammar: card.chunk.grammar,
-                        targetLanguage: card.chunk.targetLanguage,
-                      }}
-                    />
-                    <div>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        className='text-destructive hover:text-destructive hover:bg-destructive/10'
-                        onClick={() => setDeleteConfirmOpen(true)}
-                      >
-                        <Trash2 className='mr-1 h-4 w-4' />
-                        {t`Delete term`}
-                      </Button>
-                    </div>
+                  <div className='mb-6'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                      onClick={() => setDeleteConfirmOpen(true)}
+                    >
+                      <Trash2 className='mr-1 h-4 w-4' />
+                      {t`Delete term`}
+                    </Button>
                   </div>
                 )}
                 <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase'>{t`Full exploration`}</h2>

@@ -135,10 +135,12 @@ export const useGenerateFacetData = () => {
   )
 }
 
-// Manual counterpart to useGenerateFacetData: the user types the form's data
-// themselves (the "enter it yourself" escape from a pending_data facet, and the
-// edit path for an existing form facet). Merges {form, translation} and flips to
-// ready.
+// Manual counterpart to useGenerateFacetData: the user types the form's card
+// content themselves (the "enter it yourself" escape from a pending_data facet,
+// and the field-level edit path for an existing form facet). Merges the partial
+// payload and flips to ready. Also invalidates cards.get/listBySession so a form
+// edit reflects on the flashcard when the user returns to the card (the form's
+// content now lives in the facet payload, which those queries carry).
 export const useSetFacetPayload = () => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
@@ -147,8 +149,28 @@ export const useSetFacetPayload = () => {
       onSettled: () => {
         void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
         void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key() })
       },
       meta: { errorMessage: t`Couldn't save the form's data`, showErrorModal: true },
+    })
+  )
+}
+
+// Explicit "Remove form" on a form chip: hard-deletes one study facet (skill x
+// target_form) and its schedule (unlike disabling, this is irreversible short of
+// re-adding the form). Refetches the study-targets so the chip disappears, and
+// dueSummary because a removed facet leaves the queue.
+export const useDeleteFacet = () => {
+  const { t } = useLingui()
+  const queryClient = useQueryClient()
+  return useMutation(
+    orpcQuery.chunks.deleteFacet.mutationOptions({
+      onSettled: () => {
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
+        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      },
+      meta: { errorMessage: t`Couldn't remove the form`, showErrorModal: true },
     })
   )
 }
