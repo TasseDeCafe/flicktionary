@@ -732,7 +732,7 @@ msgstr "Choose a plan to unlock all features"
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
-#: apps/web/src/features/review/components/form-selector.tsx:232
+#: apps/web/src/features/review/components/form-selector.tsx:239
 msgid "Choose what to study for this target."
 msgstr "Choose what to study for this target."
 
@@ -2379,7 +2379,7 @@ msgstr "No new terms to learn."
 msgid "No past texts yet. Read some practice texts and they'll show up here."
 msgstr "No past texts yet. Read some practice texts and they'll show up here."
 
-#: apps/web/src/features/review/components/form-selector.tsx:289
+#: apps/web/src/features/review/components/form-selector.tsx:294
 msgid "No pronunciation data yet"
 msgstr "No pronunciation data yet"
 
@@ -2643,7 +2643,7 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
-#: apps/web/src/features/review/components/form-selector.tsx:356
+#: apps/web/src/features/review/components/form-selector.tsx:348
 msgid "Per-form pronunciation coming soon"
 msgstr "Per-form pronunciation coming soon"
 
@@ -2854,8 +2854,8 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
-#: apps/web/src/features/review/components/form-selector.tsx:279
-#: apps/web/src/features/review/components/form-selector.tsx:336
+#: apps/web/src/features/review/components/form-selector.tsx:284
+#: apps/web/src/features/review/components/form-selector.tsx:328
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 msgid "Production"
@@ -2890,8 +2890,8 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/web/src/features/review/components/form-selector.tsx:288
-#: apps/web/src/features/review/components/form-selector.tsx:355
+#: apps/web/src/features/review/components/form-selector.tsx:293
+#: apps/web/src/features/review/components/form-selector.tsx:347
 msgid "Pronunciation"
 msgstr "Pronunciation"
 
@@ -2932,8 +2932,8 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: apps/web/src/features/review/components/form-selector.tsx:270
-#: apps/web/src/features/review/components/form-selector.tsx:327
+#: apps/web/src/features/review/components/form-selector.tsx:275
+#: apps/web/src/features/review/components/form-selector.tsx:319
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 msgid "Recognition"
 msgstr "Recognition"
@@ -3016,7 +3016,7 @@ msgstr "Remove"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
-#: apps/web/src/features/review/components/form-selector.tsx:369
+#: apps/web/src/features/review/components/form-selector.tsx:395
 msgid "Remove form"
 msgstr "Remove form"
 
@@ -3382,11 +3382,11 @@ msgstr "Signing in…"
 msgid "Singular-only"
 msgstr "Singular-only"
 
-#: apps/web/src/features/review/components/form-selector.tsx:226
+#: apps/web/src/features/review/components/form-selector.tsx:233
 msgid "Skills"
 msgstr "Skills"
 
-#: apps/web/src/features/review/components/form-selector.tsx:231
+#: apps/web/src/features/review/components/form-selector.tsx:238
 msgid "Skills for {label}"
 msgstr "Skills for {label}"
 
