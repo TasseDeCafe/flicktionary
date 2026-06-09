@@ -38,21 +38,18 @@ export const buildBasicDataGrammarPatch = (
 }
 
 // grammar.studied_form carries the inflected surface form + its in-context
-// translation so the review front can drill the exact form the user selected
-// (behind the user's grammar.study_form_enabled toggle). Emitted only when the
-// form actually differs from the lemma, and never overwriting a form the user
-// has already enabled studying — a later highlight of a different inflection
-// of the same lemma must not silently retarget the card front.
+// translation. As of Phase 4b it is a write-only GENERATION ARTIFACT — per-form
+// study reads study_facets, not this field. It is still written so the artifact
+// (and the "+ Add a form" provenance) stays available. Emitted only when the
+// form actually differs from the lemma and has an in-context translation; the
+// never-overwrite gate (don't retarget once the user has made a form facet)
+// lives in the caller, which has the DB access to check facet existence.
 export const buildStudiedFormPatch = (
-  chunk: Pick<BasicDataChunk, 'headword' | 'surfaceForm' | 'surfaceTranslation'>,
-  existingGrammar: unknown
+  chunk: Pick<BasicDataChunk, 'headword' | 'surfaceForm' | 'surfaceTranslation'>
 ): Record<string, unknown> | null => {
   const form = chunk.surfaceForm.trim()
   if (!form || form === chunk.headword.trim()) return null
   if (!chunk.surfaceTranslation) return null
-  const grammar =
-    existingGrammar && typeof existingGrammar === 'object' ? (existingGrammar as Record<string, unknown>) : {}
-  if (grammar.study_form_enabled) return null
   return { studied_form: { form, translation: chunk.surfaceTranslation } }
 }
 
@@ -111,7 +108,14 @@ export const materializeBasicDataChunks = async (params: {
     })
     const alreadyGrounded = lookup.grounded_at !== null
     const grammarUserEdited = lookup.grammar_user_edited_at !== null
-    const studiedFormPatch = hideTranslationFields ? null : buildStudiedFormPatch(chunk, lookup.grammar)
+    // studied_form artifact: emit when the form is a distinct translated
+    // inflection, but never retarget once the user has turned a form of this
+    // term into its own facet (the query runs only when a patch would emit, so
+    // it stays off the hot path for the common form==lemma chunk).
+    let studiedFormPatch = hideTranslationFields ? null : buildStudiedFormPatch(chunk)
+    if (studiedFormPatch && (await userLookupsRepository.hasFormFacet(lookup.id))) {
+      studiedFormPatch = null
+    }
     const grammarPatch = buildBasicDataGrammarPatch(
       studiedFormPatch ? { ...(chunk.grammar ?? {}), ...studiedFormPatch } : chunk.grammar,
       alreadyGrounded,

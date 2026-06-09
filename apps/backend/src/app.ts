@@ -355,7 +355,7 @@ export const buildApp = ({
     )
   )
   app.use(API_V1, CardChatRouter(cardChatMessagesRepository, cardsRepository, chatDependencies))
-  app.use(API_V1, ChunksRouter(userLookupsRepository))
+  app.use(API_V1, ChunksRouter(userLookupsRepository, { usersRepository, userTargetLanguagePrefsRepository }))
   app.use(API_V1, UserPrefsRouter(usersRepository, userTargetLanguagePrefsRepository))
   app.use(API_V1, LanguagesRouter())
   app.use(

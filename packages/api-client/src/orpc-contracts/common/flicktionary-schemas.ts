@@ -150,12 +150,15 @@ export const GrammarSchema = z
     // populate `untagged`. Renderer picks the right bucket from the user's
     // englishIpaDialect preference.
     ipa: GrammarIpaBagSchema.nullable().optional(),
-    // Specific-form study. `studied_form` is the inflected form the learner
-    // highlighted plus its in-context translation (e.g. form `посмотрим`,
-    // translation `voyons`), emitted by the Opus passes whenever the surface
-    // form differs from the headword. `study_form_enabled` is the user's
-    // display toggle: when true, review fronts show the form instead of the
-    // lemma. Data is generated unconditionally; the toggle only gates display.
+    // Specific-form study generation artifact. `studied_form` is the inflected
+    // form the learner highlighted plus its in-context translation (e.g. form
+    // `посмотрим`, translation `voyons`), emitted by the Opus passes whenever
+    // the surface form differs from the headword. As of Phase 4b it is NO LONGER
+    // read for display — per-form study is its own (meaning_recognition, <form>)
+    // facet (see study_facets / setFacetEnabled). The field is kept purely as
+    // the generation artifact (the focus view / enrichment still write it) and
+    // as the never-overwrite signal for buildStudiedFormPatch. The old
+    // `study_form_enabled` display toggle was removed (migrated to form facets).
     studied_form: z
       .object({
         form: z.string(),
@@ -163,7 +166,6 @@ export const GrammarSchema = z
       })
       .nullable()
       .optional(),
-    study_form_enabled: z.boolean().nullable().optional(),
   })
   .passthrough()
 export type Grammar = z.infer<typeof GrammarSchema>

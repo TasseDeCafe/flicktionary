@@ -85,6 +85,44 @@ alongside Recognition/Production.
   a card that passed the gate never reveals an empty back). Self-graded, passive pool.
 - Payload is `{}` — IPA is derived at render from `grammar.ipa`, so grammar edits stay live.
 
+### Form facets (Phase 4b)
+
+A `(meaning_recognition | meaning_production, '<form>')` facet drills a **specific inflection** of
+a term (e.g. `(meaning_recognition, 'стола')`) on its own schedule — replacing the old single-slot
+`grammar.study_form_enabled` / `grammar.studied_form` display toggle (which last-write-wins
+overwrote across inflections and rode the citation card's schedule; the bug). Each form is now an
+independent facet (Worked example 2). The migration `migrate_study_form_to_form_facet` created an
+enabled, ready `(meaning_recognition, <normalized form>)` facet for every term the user had
+`study_form_enabled='true'` on, then stripped the toggle from all grammar bags; `grammar.studied_form`
+stays as a write-only generation artifact (its never-overwrite gate moved from the removed boolean
+to **form-facet existence**, `hasFormFacet`).
+
+- **Key normalization** — `target_form` is normalized on every write path by
+  `normalizeTargetForm(text)` (`packages/core/utils/normalize-target-form.ts`: strip combining
+  acute U+0301 → NFC → trim → lowercase) so `стола`/`стола́`/`Houses`/`houses` collapse to one key.
+  The SQL twin (`lower(trim(normalize(regexp_replace(form, U+0301, '', 'g'), NFC)))`) is pinned
+  byte-for-byte in the migration and the candidate query (Trap 21). `payload` keeps the **full
+  display form** (stress/case intact); only the key folds. This is **not** the display
+  `stripStressMarks` helper (which preserves case for the front render).
+- **payload** = `{form, translation}`. The form swaps into the `headword` slot (front on a
+  recognition card, back on a production card) and its in-context translation into the `translation`
+  slot — wherever the pool layout places them; the lemma is demoted to a secondary back line and its
+  IPA suppressed (wrong for the inflection). Reuses the meaning layouts via the existing
+  `studiedForm` swap in `flashcard-mode-view`, sourced from `ReviewTerm.facetPayload` — no
+  `getCardFaceConfig` change.
+- **generate-and-confirm** — a form added from the "+ Add a form" picker is born
+  `data_status='pending_data'` (enabled but **not** queued; the queue filters `data_status='ready'`)
+  carrying only the surface string. The chip offers **Generate** (a focused **Opus** pass,
+  `generate-form-data.ts` → `generateFormFacetData` → `setFacetPayload`, synchronous, user behind a
+  spinner — never the Haiku gloss) or **Enter manually**; either fills `{form, translation}` and
+  flips to `ready`. Enabling Production on an already-filled form reuses its payload and is born
+  `ready` (the `translation` key signals "data provided"). Per-form **pronunciation** stays
+  greyed/roadmap — it needs per-form stress/IPA the lemma `grammar.ipa` doesn't carry (Worked
+  example 4).
+- **Candidates** — "+ Add a form" sources encountered forms from
+  `listCandidateFormsForChunk` (distinct kept-card `surface_form`, minus the lemma and any
+  already-faceted form; Worked example 3), surfaced on demand, not auto-added.
+
 ## 2. The scheduler (fsrs.ts)
 
 Thin wrapper around `ts-fsrs`: `new FSRS(generatorParameters({ enable_fuzz: true }))` — all

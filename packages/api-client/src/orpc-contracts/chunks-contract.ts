@@ -177,7 +177,75 @@ export const chunksContract = {
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(z.object({ chunkId: z.string().uuid() }))
-    .output(z.object({ data: z.object({ facets: z.array(StudyFacetSummarySchema) }) })),
+    .output(
+      z.object({
+        data: z.object({
+          facets: z.array(StudyFacetSummarySchema),
+          // Encountered surface forms (distinct kept-card forms, minus the lemma
+          // and any already-faceted form) for the "+ Add a form" picker. The
+          // string is all a card row stores; data is generated on enable.
+          candidateForms: z.array(z.string()),
+        }),
+      })
+    ),
+
+  // Generate-and-confirm: fill a pending_data form facet's payload via an Opus
+  // pass (the form's spelling + a translation of that exact inflection) and flip
+  // it to ready so the queue serves it. Synchronous (user waits behind a
+  // spinner). Returns the refreshed study-targets so the chip reflects the new
+  // ready state without a second round-trip. `targetForm` is normalized
+  // server-side (normalizeTargetForm) before it keys the facet.
+  generateFacetData: oc
+    .route({ method: 'POST', path: '/chunks/{chunkId}/facets/generate', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        chunkId: z.string().uuid(),
+        skill: FacetSkillSchema,
+        targetForm: z.string().min(1),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          facets: z.array(StudyFacetSummarySchema),
+          candidateForms: z.array(z.string()),
+        }),
+      })
+    ),
+
+  // Manual counterpart to generateFacetData: the user types the form's data
+  // themselves (the "enter it yourself" escape from a pending_data facet, and
+  // the edit path for an existing one). Merges {form, translation} into the
+  // payload and flips data_status to ready. Returns the refreshed study-targets.
+  setFacetPayload: oc
+    .route({ method: 'PATCH', path: '/chunks/{chunkId}/facets/payload', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        chunkId: z.string().uuid(),
+        skill: FacetSkillSchema,
+        targetForm: z.string().min(1),
+        payload: z.object({
+          form: z.string(),
+          translation: z.string().nullable().optional(),
+        }),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          facets: z.array(StudyFacetSummarySchema),
+          candidateForms: z.array(z.string()),
+        }),
+      })
+    ),
 
   // Distinct target_languages the user has at least one (non-deleted) chunk in.
   // Powers the language switcher pills on the Vocabulary tab.

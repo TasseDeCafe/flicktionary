@@ -9,9 +9,13 @@ import {
   type ChunksCursor,
 } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { ChunkRow, UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
+import { generateFormFacetData } from '../../service/study-facets/generate-form-facet-data'
 import { toIsoString } from '../router-utils'
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
+import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 
 // Keep the citation pronunciation facet in sync with the term's IPA precondition
 // (Trap 12). A pronunciation card derives its back from grammar.ipa at render;
@@ -100,17 +104,37 @@ const encodeCursor = (cursor: ChunksCursor | null): string | null => {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64')
 }
 
-// Keys written by the focus view's "study this form" toggle. They are study
-// preferences, not linguistic facts — writing them must not stamp
-// grammar_user_edited_at, which would pin the whole bag against future
-// LLM/grounding merges just because the user flipped a display toggle.
-const STUDY_FORM_GRAMMAR_KEYS = new Set(['studied_form', 'study_form_enabled'])
+// `studied_form` is a generation artifact, not a user linguistic edit — a
+// grammarPatch touching only it must not stamp grammar_user_edited_at (that
+// would pin the whole bag against future LLM/grounding merges). Per-form study
+// moved to study_facets in Phase 4b; the retired `study_form_enabled` toggle is
+// gone, but studied_form stays here as the never-overwrite signal.
+const STUDY_FORM_GRAMMAR_KEYS = new Set(['studied_form'])
 
 const hasGrammarPatch = (patch: Record<string, unknown> | null | undefined): boolean =>
   !!patch && Object.keys(patch).some((key) => !STUDY_FORM_GRAMMAR_KEYS.has(key))
 
-export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterface): Router => {
+export const ChunksRouter = (
+  userLookupsRepository: UserLookupsRepositoryInterface,
+  // Form-facet generate-and-confirm needs the user's language mode (native
+  // language + translations-off) to fill a pending_data form facet's payload.
+  formGenerationDeps: {
+    usersRepository: UsersRepositoryInterface
+    userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  }
+): Router => {
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
+
+  // Study-targets payload shared by getStudyTargets / generateFacetData /
+  // setFacetPayload: every facet's identity + readiness, plus the encountered
+  // forms the "+ Add a form" picker can still offer.
+  const loadStudyTargets = async (chunkId: string) => {
+    const [facets, candidateForms] = await Promise.all([
+      userLookupsRepository.listFacetsForChunk(chunkId),
+      userLookupsRepository.listCandidateFormsForChunk(chunkId),
+    ])
+    return { facets, candidateForms }
+  }
 
   const router = implementer.router({
     get: implementer.get.handler(async ({ input, context, errors }) => {
@@ -191,11 +215,14 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       if (!owned) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
       }
+      // Normalize the facet key server-side (Trap 21) so the same form keyed
+      // from any path collapses identically (''.normalized is still '').
+      const targetForm = normalizeTargetForm(input.targetForm)
       const updated = await userLookupsRepository.setFacetEnabled({
         userLookupId: input.chunkId,
         userId,
         skill: input.skill,
-        targetForm: input.targetForm,
+        targetForm,
         enabled: input.enabled,
         payload: input.payload,
       })
@@ -226,8 +253,48 @@ export const ChunksRouter = (userLookupsRepository: UserLookupsRepositoryInterfa
       if (!owned) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
       }
-      const facets = await userLookupsRepository.listFacetsForChunk(input.chunkId)
-      return { data: { facets } }
+      return { data: await loadStudyTargets(input.chunkId) }
+    }),
+
+    generateFacetData: implementer.generateFacetData.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      const targetForm = normalizeTargetForm(input.targetForm)
+      const outcome = await generateFormFacetData(
+        { chunkId: input.chunkId, userId, skill: input.skill, targetForm },
+        {
+          userLookupsRepository,
+          usersRepository: formGenerationDeps.usersRepository,
+          userTargetLanguagePrefsRepository: formGenerationDeps.userTargetLanguagePrefsRepository,
+        }
+      )
+      // The facet stays pending_data on failure (the chip keeps offering retry /
+      // manual entry); surface it as a 500 so the client toasts and doesn't
+      // optimistically treat the form as ready.
+      if (outcome === 'failed') {
+        throw errors.INTERNAL_SERVER_ERROR({ data: { errors: [{ message: 'Form data generation failed' }] } })
+      }
+      return { data: await loadStudyTargets(input.chunkId) }
+    }),
+
+    setFacetPayload: implementer.setFacetPayload.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const owned = await userLookupsRepository.findByIdForUser(input.chunkId, userId)
+      if (!owned) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk not found' }] } })
+      }
+      const targetForm = normalizeTargetForm(input.targetForm)
+      await userLookupsRepository.setFacetPayload({
+        userLookupId: input.chunkId,
+        userId,
+        skill: input.skill,
+        targetForm,
+        payload: { form: input.payload.form, translation: input.payload.translation ?? null },
+      })
+      return { data: await loadStudyTargets(input.chunkId) }
     }),
 
     listLanguages: implementer.listLanguages.handler(async ({ context }) => {

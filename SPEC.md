@@ -287,15 +287,22 @@ Two-layer UI.
   `?from=vocabulary` over already-kept chunks — the triage "Add to" framing
   would misrepresent them) there is **no bottom bar**. Instead the card section
   shows an inline **Study targets** control plus a secondary **Delete term**
-  affordance. Study targets is a chip-per-target row (one **Citation**
-  chip labelled with the headword; form chips are Phase 4b) whose edit pencil
-  opens a small popover of **skill checkboxes** — Recognition (locked on; created
-  on keep), Production (toggles the `(meaning_production, '')` facet via
+  affordance. Study targets is a chip-per-target row: one **Citation** chip
+  labelled with the headword, one chip per **form** target the learner has added,
+  and a **"+ Add a form"** chip. The Citation chip's edit pencil opens a small
+  popover of **skill checkboxes** — Recognition (locked on; created on keep),
+  Production (toggles the `(meaning_production, '')` facet via
   `chunks.setFacetEnabled`), and Pronunciation (toggles the `(pronunciation, '')`
   facet; greyed "No pronunciation data yet" when the term has no displayable IPA
-  — `hasDisplayableIpa`). The popover reads each facet's enabled state lazily via
-  `chunks.getStudyTargets`. The chip is accented
-  (★) when Production is on. Toggling keeps the user on the focus view; the
+  — `hasDisplayableIpa`). **Form chips** (Phase 4b) drill a specific inflection on
+  its own schedule: each opens the same Recognition/Production skill popover for
+  that `(skill, '<form>')` facet (per-form Pronunciation greyed — roadmap). A form
+  added from **"+ Add a form"** (which lists encountered surface forms from
+  `getStudyTargets.candidateForms`) is born `pending_data` and its chip offers
+  **Generate** (an Opus pass, `chunks.generateFacetData`) or **Enter manually**
+  (`chunks.setFacetPayload`) to fill `{form, translation}` before it can be
+  studied. The popover reads each facet's enabled state + readiness lazily via
+  `chunks.getStudyTargets`. The chip is accented (★) when Production is on. Toggling keeps the user on the focus view; the
   chevron closes back to the originating surface (`?from=practice` carries
   `practiceLang` + `practicePool` + `practiceMode` — `read` (default) for a
   reading text, `flashcards` for the flashcard reviewer's actions menu — so
