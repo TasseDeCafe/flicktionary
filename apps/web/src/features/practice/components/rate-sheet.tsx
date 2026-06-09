@@ -179,8 +179,8 @@ export const RateSheet = ({
             {chunk?.isProductionEnabled === false && (
               <OverlayActionRow
                 icon={Star}
-                label={t`Switch to active vocabulary`}
-                description={t`Move this term into the active drilling pool.`}
+                label={t`Switch to production`}
+                description={t`Add this term to production practice.`}
                 disabled={!!isTogglingProduction}
                 onClick={() => onToggleProduction(true)}
               />
@@ -188,8 +188,8 @@ export const RateSheet = ({
             {chunk?.isProductionEnabled === true && (
               <OverlayActionRow
                 icon={Star}
-                label={t`Switch to passive vocabulary`}
-                description={t`Move this term back to passive review only.`}
+                label={t`Switch to recognition`}
+                description={t`Move this term back to recognition practice only.`}
                 disabled={!!isTogglingProduction}
                 onClick={() => onToggleProduction(false)}
               />

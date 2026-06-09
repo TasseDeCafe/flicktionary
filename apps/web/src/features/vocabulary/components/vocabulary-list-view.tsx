@@ -334,6 +334,7 @@ export const VocabularyListView = () => {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         chunk={activeChunk}
+        onEdit={handleEdit}
         onOpenSource={handleOpenSource}
         onRequestDelete={handleRequestDelete}
       />

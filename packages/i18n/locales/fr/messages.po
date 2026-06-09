@@ -47,8 +47,8 @@ msgid "{activeDueCount} reviews, {activeNewCount} new"
 msgstr "{activeDueCount} révisions, {activeNewCount} nouveaux"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx:222
-msgid "{activeTotal} active term(s). Nothing to review right now."
-msgstr "{activeTotal} terme(s) actif(s). Rien à réviser pour le moment."
+msgid "{activeTotal} production term(s). Nothing to review right now."
+msgstr "{activeTotal} terme(s) en production. Rien à réviser pour le moment."
 
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:54
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
@@ -289,7 +289,7 @@ msgstr "Actions pour la liste de vocabulaire sélectionnée."
 msgid "Actions for this card."
 msgstr "Actions pour cette carte."
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:40
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:42
 msgid "Actions for this vocabulary term."
 msgstr "Actions pour ce terme de vocabulaire."
 
@@ -298,14 +298,6 @@ msgstr "Actions pour ce terme de vocabulaire."
 msgid "Actions in this section can lead to permanent data loss."
 msgstr "Les actions dans cette section peuvent entraîner une perte définitive "
 "de données."
-
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
-msgid "Active"
-msgstr "Actif"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:217
-msgid "Active vocabulary"
-msgstr "Vocabulaire actif"
 
 #: apps/web/src/features/review/components/study-targets-section.tsx:336
 msgid "Add a form"
@@ -340,6 +332,10 @@ msgstr "Ajouter une note"
 #: apps/extension/src/entrypoints/background.ts:180
 msgid "Add selection to Flicktionary"
 msgstr "Ajouter la sélection à Flicktionary"
+
+#: apps/web/src/features/practice/components/rate-sheet.tsx:183
+msgid "Add this term to production practice."
+msgstr "Ajouter ce terme à la pratique en production."
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:260
 msgid "Add translation"
@@ -1061,7 +1057,7 @@ msgstr "Définition (facultatif)"
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:46
 #: apps/web/src/features/review/components/focus-view.tsx:474
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:64
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:63
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:48
 msgid "Delete"
 msgstr "Supprimer"
@@ -1174,6 +1170,7 @@ msgstr "Modifier les cibles d'étude pour {headword}"
 
 #: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx:74
 #: apps/web/src/features/practice/components/rate-sheet.tsx:174
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:48
 msgid "Edit term"
 msgstr "Modifier le terme"
 
@@ -1848,7 +1845,7 @@ msgstr "Aidez-nous à améliorer Flicktionary"
 msgid "HI"
 msgstr "SM"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:65
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:64
 msgid "Hide from vocabulary and Practice"
 msgstr "Masquer du vocabulaire et de la pratique"
 
@@ -2033,7 +2030,7 @@ msgstr "Dialecte API"
 msgid "Jump to latest"
 msgstr "Aller au plus récent"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:58
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:57
 msgid "Jump to the session this term came from"
 msgstr "Accéder à la session d'origine de ce terme"
 
@@ -2288,12 +2285,8 @@ msgid "Move bottom subtitles up"
 msgstr "Move bottom subtitles up"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:192
-msgid "Move this term back to passive review only."
-msgstr "Renvoyer ce terme à la révision passive uniquement."
-
-#: apps/web/src/features/practice/components/rate-sheet.tsx:183
-msgid "Move this term into the active drilling pool."
-msgstr "Déplacer ce terme vers le pool d'entraînement actif."
+msgid "Move this term back to recognition practice only."
+msgstr "Remettre ce terme en pratique de reconnaissance uniquement."
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:402
 msgid "Move top subtitles down"
@@ -2590,7 +2583,7 @@ msgid "Open Mail App"
 msgstr "Ouvrir l'Application Mail"
 
 #: apps/web/src/features/review/components/focus-view.tsx:71
-#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:57
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:56
 msgid "Open source"
 msgstr "Ouvrir la source"
 
@@ -2607,6 +2600,11 @@ msgstr "Ouvrez le popup de l'extension et choisissez <0>Se connecter avec "
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une "
 "exploration complète."
+
+#: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:49
+msgid "Open the focus view to edit fields, forms, and skills."
+msgstr "Ouvrir la vue détaillée pour modifier les champs, les formes et les "
+"compétences."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts:370
 msgid "Opening triage"
@@ -2665,10 +2663,6 @@ msgstr "Partie du discours"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:264
 msgid "Particle"
 msgstr "Particule"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:230
-msgid "Passive vocabulary"
-msgstr "Vocabulaire passif"
 
 #: apps/web/src/features/sessions/components/text-paste-input.tsx:84
 msgid "Paste a Reddit comment, news excerpt, Telegram post…"
@@ -2907,8 +2901,13 @@ msgstr "Avertissements de traitement"
 #: apps/web/src/features/review/components/study-targets-section.tsx:120
 #: apps/web/src/features/review/components/study-targets-section.tsx:278
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
+#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 msgid "Production"
 msgstr "Production"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:217
+msgid "Production practice"
+msgstr "Pratique en production"
 
 #: apps/extension/common/components/SettingsProfileSelectMenu.tsx:117
 #: apps/native/src/features/navigation/components/tabs-layout.tsx:106
@@ -2982,6 +2981,10 @@ msgstr "Récemment ajouté"
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 msgid "Recognition"
 msgstr "Reconnaissance"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:230
+msgid "Recognition practice"
+msgstr "Pratique de reconnaissance"
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx:134
 msgid "Recording"
@@ -3664,12 +3667,12 @@ msgid "Switch"
 msgstr "Changer"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:182
-msgid "Switch to active vocabulary"
-msgstr "Passer au vocabulaire actif"
+msgid "Switch to production"
+msgstr "Passer en production"
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx:191
-msgid "Switch to passive vocabulary"
-msgstr "Passer au vocabulaire passif"
+msgid "Switch to recognition"
+msgstr "Passer en reconnaissance"
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:587
 msgid "Switching…"
