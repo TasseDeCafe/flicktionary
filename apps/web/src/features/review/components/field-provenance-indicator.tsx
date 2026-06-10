@@ -59,11 +59,11 @@ export const FieldProvenanceIndicator = ({ provenance, fieldLabel, formatValue, 
   let title: string
   let description: string
   if (provenance.state === 'wiktionary') {
-    icon = <BadgeCheck className='text-sky-600 h-3.5 w-3.5' />
+    icon = <BadgeCheck className='h-3.5 w-3.5 text-sky-600' />
     title = t`Verified by Wiktionary`
     description = t`This value was taken from Wiktionary's dictionary data during processing.`
   } else if (provenance.state === 'unverified') {
-    icon = <TriangleAlert className='text-amber-500 h-3.5 w-3.5' />
+    icon = <TriangleAlert className='h-3.5 w-3.5 text-amber-500' />
     title = t`Unverified`
     description = t`AI-generated and not verified against a dictionary — double-check before drilling it.`
   } else {

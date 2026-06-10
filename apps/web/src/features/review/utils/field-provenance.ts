@@ -35,7 +35,14 @@ export const deepEqualNormalized = (a: unknown, b: unknown): boolean => {
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((item, i) => deepEqualNormalized(item, b[i]))
   }
-  if (typeof a === 'object' && typeof b === 'object' && a !== null && b !== null && !Array.isArray(a) && !Array.isArray(b)) {
+  if (
+    typeof a === 'object' &&
+    typeof b === 'object' &&
+    a !== null &&
+    b !== null &&
+    !Array.isArray(a) &&
+    !Array.isArray(b)
+  ) {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)])
     return [...keys].every((k) =>
       deepEqualNormalized((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])

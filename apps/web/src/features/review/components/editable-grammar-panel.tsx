@@ -517,7 +517,6 @@ export const EditableGrammarPanel = ({
               />
             </div>
           )}
-
         </div>
       )}
       {/* Fixed-height status slot (rendered open or collapsed — a debounced
