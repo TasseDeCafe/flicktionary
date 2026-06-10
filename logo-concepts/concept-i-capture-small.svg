@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Concept I, favicon cut. -->
+  <rect width="32" height="32" rx="7" fill="#6D3FE3"/>
+  <rect x="3.5" y="8" width="19" height="10" rx="5" fill="#FFFFFF"/>
+  <rect x="6.5" y="11" width="13" height="4" rx="2" fill="#4338CA"/>
+  <g transform="translate(18.5 13.5)">
+    <path d="M0 0 L0 16 L4.6 12.4 L7.3 18.2 L9.9 17 L7.2 11.3 L12.6 11.3 Z"
+          fill="#1C1917" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round" paint-order="stroke"/>
+  </g>
+</svg>

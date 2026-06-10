@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Concept B — "Clapper entry": a clapperboard whose body reads like a
+       dictionary entry (headword + sense + definition lines).
+       Palette: warm paper, ink, cinema red. -->
+  <defs>
+    <clipPath id="bodyClip">
+      <rect x="80" y="210" width="352" height="196" rx="26"/>
+    </clipPath>
+    <clipPath id="slatClip">
+      <rect x="80" y="140" width="352" height="56" rx="18"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="#F5F1E8"/>
+
+  <!-- angled top slat, hinged bottom-left -->
+  <g transform="rotate(-10 92 196)">
+    <rect x="80" y="140" width="352" height="56" rx="18" fill="#1C1917"/>
+    <g clip-path="url(#slatClip)" fill="#F5F1E8">
+      <path d="M100 196 l20.4 -56 h34 l-20.4 56 Z"/>
+      <path d="M168 196 l20.4 -56 h34 l-20.4 56 Z"/>
+      <path d="M236 196 l20.4 -56 h34 l-20.4 56 Z"/>
+      <path d="M304 196 l20.4 -56 h34 l-20.4 56 Z"/>
+      <path d="M372 196 l20.4 -56 h34 l-20.4 56 Z"/>
+    </g>
+  </g>
+
+  <!-- board body -->
+  <rect x="80" y="210" width="352" height="196" rx="26" fill="#1C1917"/>
+  <g clip-path="url(#bodyClip)">
+    <g fill="#F5F1E8">
+      <path d="M96 252 l15.3 -42 h34 l-15.3 42 Z"/>
+      <path d="M164 252 l15.3 -42 h34 l-15.3 42 Z"/>
+      <path d="M232 252 l15.3 -42 h34 l-15.3 42 Z"/>
+      <path d="M300 252 l15.3 -42 h34 l-15.3 42 Z"/>
+      <path d="M368 252 l15.3 -42 h34 l-15.3 42 Z"/>
+    </g>
+  </g>
+
+  <!-- dictionary entry: headword · sense tag · definition lines -->
+  <rect x="116" y="276" width="128" height="34" rx="17" fill="#E5484D"/>
+  <rect x="262" y="282" width="54" height="22" rx="11" fill="#57534E"/>
+  <rect x="116" y="332" width="232" height="20" rx="10" fill="#E7E5E4"/>
+  <rect x="116" y="364" width="176" height="20" rx="10" fill="#A8A29E"/>
+</svg>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Concept A — "The Highlight": a subtitle caption with one chunk highlighted.
+       Accent: yellow-500 (#EAB308). -->
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.25" r="1.15">
+      <stop offset="0" stop-color="#1E293B"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </radialGradient>
+    <linearGradient id="hl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FACC15"/>
+      <stop offset="1" stop-color="#EAB308"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+
+  <!-- soft glow behind the highlighted chunk -->
+  <rect x="202" y="164" width="222" height="88" rx="30" fill="#EAB308" opacity="0.4" filter="url(#glow)"/>
+
+  <!-- subtitle line 1: word · [highlighted chunk] -->
+  <rect x="88" y="185" width="92" height="46" rx="23" fill="#CBD5E1"/>
+  <rect x="202" y="164" width="222" height="88" rx="30" fill="url(#hl)"/>
+  <rect x="230" y="185" width="166" height="46" rx="23" fill="#0F172A"/>
+
+  <!-- subtitle line 2 -->
+  <rect x="88" y="303" width="178" height="46" rx="23" fill="#CBD5E1"/>
+  <rect x="290" y="303" width="108" height="46" rx="23" fill="#94A3B8"/>
+</svg>

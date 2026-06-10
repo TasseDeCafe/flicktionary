@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Concept F, favicon cut: two cards, one highlight bar. -->
+  <rect width="32" height="32" rx="7" fill="#10B981"/>
+  <g transform="rotate(-8 16 17)">
+    <rect x="6" y="9" width="20" height="14" rx="3" fill="#A7F3D0"/>
+  </g>
+  <g transform="rotate(4 16 17)">
+    <rect x="6" y="9" width="20" height="14" rx="3" fill="#FFFFFF"/>
+    <rect x="9" y="12.5" width="8.5" height="3" rx="1.5" fill="#EAB308"/>
+    <rect x="9" y="18" width="12" height="2.2" rx="1.1" fill="#CBD5E1"/>
+  </g>
+</svg>

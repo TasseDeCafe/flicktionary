@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Concept J — "Orbit": spaced repetition as words orbiting your card —
+       they come back around, on schedule. Memorize without the grind. -->
+  <defs>
+    <radialGradient id="jbg" cx="0.5" cy="0.3" r="1.1">
+      <stop offset="0" stop-color="#134E4A"/>
+      <stop offset="1" stop-color="#042F2E"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#jbg)"/>
+
+  <!-- orbit ring -->
+  <ellipse cx="256" cy="256" rx="196" ry="86" fill="none" stroke="#5EEAD4"
+           stroke-width="13" opacity="0.8" transform="rotate(-18 256 256)"/>
+
+  <!-- the card being studied -->
+  <rect x="186" y="196" width="140" height="120" rx="24" fill="#FFFFFF"/>
+  <rect x="210" y="226" width="68" height="22" rx="11" fill="#F59E0B"/>
+  <rect x="210" y="264" width="92" height="16" rx="8" fill="#CBD5E1"/>
+
+  <!-- orbiting words -->
+  <circle cx="440" cy="227" r="20" fill="#FBBF24"/>
+  <circle cx="72" cy="285" r="14" fill="#FB7185"/>
+  <circle cx="283" cy="338" r="10" fill="#7DD3FC"/>
+</svg>

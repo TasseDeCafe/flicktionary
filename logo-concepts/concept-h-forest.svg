@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Firefly jar, variant: Forest — deep teal night, real firefly green. -->
+  <defs>
+    <radialGradient id="hfbg" cx="0.5" cy="0.3" r="1.1">
+      <stop offset="0" stop-color="#0F4C44"/>
+      <stop offset="1" stop-color="#03241F"/>
+    </radialGradient>
+    <filter id="hfglow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#hfbg)"/>
+
+  <ellipse cx="256" cy="330" rx="86" ry="60" fill="#84CC16" opacity="0.45" filter="url(#hfglow)"/>
+
+  <rect x="168" y="176" width="176" height="232" rx="38" fill="#FFFFFF" opacity="0.1"/>
+  <rect x="168" y="176" width="176" height="232" rx="38" fill="none" stroke="#99F6E4" stroke-width="12" opacity="0.95"/>
+  <rect x="150" y="148" width="212" height="26" rx="13" fill="#99F6E4"/>
+
+  <g transform="rotate(-18 256 96)">
+    <rect x="210" y="82" width="92" height="28" rx="14" fill="#A3E635"/>
+  </g>
+  <circle cx="344" cy="112" r="5" fill="#D9F99D"/>
+  <circle cx="166" cy="92" r="4" fill="#D9F99D" opacity="0.8"/>
+
+  <rect x="196" y="348" width="92" height="28" rx="14" fill="#A3E635"/>
+  <rect x="232" y="306" width="72" height="28" rx="14" fill="#84CC16"/>
+  <circle cx="216" cy="262" r="6" fill="#D9F99D"/>
+  <circle cx="306" cy="240" r="5" fill="#D9F99D" opacity="0.75"/>
+</svg>
