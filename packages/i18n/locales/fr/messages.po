@@ -158,8 +158,8 @@ msgstr "{productionDueCount, plural, one {# révision} other {# révisions}}, "
 #: apps/web/src/features/practice/components/practice-language-view.tsx:248
 msgid "{productionTotal, plural, one {# production term} other {# production "
 "terms}}. Nothing to review right now."
-msgstr "{productionTotal, plural, one {# terme en production} other {# termes en "
-"production}}. Rien à réviser pour le moment."
+msgstr "{productionTotal, plural, one {# terme en production} other {# termes "
+"en production}}. Rien à réviser pour le moment."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
