@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- F-strip, colorway: ink mark on warm paper. Editorial / print-friendly. -->
+  <defs>
+    <mask id="cimark">
+      <rect width="512" height="512" fill="black"/>
+      <rect x="150" y="124" width="76" height="264" rx="32" fill="white"/>
+      <rect x="150" y="124" width="212" height="68" rx="32" fill="white"/>
+      <rect x="150" y="238" width="158" height="60" rx="30" fill="white"/>
+      <rect x="175" y="202" width="26" height="26" rx="8" fill="black"/>
+      <rect x="175" y="310" width="26" height="26" rx="8" fill="black"/>
+      <rect x="175" y="350" width="26" height="26" rx="8" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#F6F1E7"/>
+  <rect width="512" height="512" fill="#1C1917" mask="url(#cimark)"/>
+</svg>

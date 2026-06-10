@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Concept G — "Ticket-F": the full-bleed ticket tile carrying the F-strip
+       monogram on the main section and a play glyph on the stub. The letterform
+       carries 16px; the perforation + bites carry the ticket. -->
+  <defs>
+    <linearGradient id="gbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FDE047"/>
+      <stop offset="1" stop-color="#EAB308"/>
+    </linearGradient>
+    <mask id="gtile">
+      <rect width="512" height="512" rx="116" fill="white"/>
+      <circle cx="348" cy="0" r="48" fill="black"/>
+      <circle cx="348" cy="512" r="48" fill="black"/>
+      <line x1="348" y1="90" x2="348" y2="422" stroke="black" stroke-width="13"
+            stroke-linecap="round" stroke-dasharray="0.1 41.5"/>
+    </mask>
+    <mask id="gf">
+      <rect width="512" height="512" fill="black"/>
+      <rect x="76" y="124" width="76" height="264" rx="32" fill="white"/>
+      <rect x="76" y="124" width="212" height="68" rx="32" fill="white"/>
+      <rect x="76" y="238" width="158" height="60" rx="30" fill="white"/>
+      <rect x="101" y="202" width="26" height="26" rx="8" fill="black"/>
+      <rect x="101" y="310" width="26" height="26" rx="8" fill="black"/>
+      <rect x="101" y="350" width="26" height="26" rx="8" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#gbg)" mask="url(#gtile)"/>
+  <rect width="512" height="512" fill="#1C1917" mask="url(#gf)"/>
+  <path d="M400 214 L400 298 L466 256 Z" fill="#1C1917"/>
+</svg>

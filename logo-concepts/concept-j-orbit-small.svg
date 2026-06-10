@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Concept J, favicon cut: ring + card + two satellites. -->
+  <rect width="32" height="32" rx="7" fill="#08332E"/>
+  <ellipse cx="16" cy="16" rx="12.5" ry="5.5" fill="none" stroke="#5EEAD4"
+           stroke-width="1.8" opacity="0.85" transform="rotate(-18 16 16)"/>
+  <rect x="11.5" y="11.5" width="9" height="8" rx="2" fill="#FFFFFF"/>
+  <rect x="13" y="13.5" width="5" height="1.8" rx="0.9" fill="#F59E0B"/>
+  <circle cx="27.5" cy="14" r="2.4" fill="#FBBF24"/>
+  <circle cx="4.5" cy="18" r="1.7" fill="#FB7185"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Concept F — "Card fan": fanned flashcards, the top one a vocabulary entry
+       with a highlighted headword. The Practice/SRS pillar of the app. -->
+  <defs>
+    <linearGradient id="fbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#fbg)"/>
+
+  <g transform="rotate(-9 256 266)">
+    <rect x="116" y="171" width="280" height="190" rx="28" fill="#A7F3D0"/>
+  </g>
+  <g transform="rotate(-2 256 266)">
+    <rect x="116" y="171" width="280" height="190" rx="28" fill="#D1FAE5"/>
+  </g>
+  <g transform="rotate(5 256 266)">
+    <rect x="116" y="171" width="280" height="190" rx="28" fill="#FFFFFF"/>
+    <rect x="152" y="210" width="112" height="32" rx="16" fill="#EAB308"/>
+    <rect x="152" y="266" width="172" height="20" rx="10" fill="#CBD5E1"/>
+    <rect x="152" y="300" width="128" height="20" rx="10" fill="#E2E8F0"/>
+  </g>
+</svg>

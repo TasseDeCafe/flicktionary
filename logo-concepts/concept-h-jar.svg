@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Concept H — "Firefly jar": words collected like fireflies in a jar —
+       gather easily, keep them alive. A word-pill drops in; others glow inside. -->
+  <defs>
+    <radialGradient id="hbg" cx="0.5" cy="0.3" r="1.1">
+      <stop offset="0" stop-color="#312E81"/>
+      <stop offset="1" stop-color="#0B1026"/>
+    </radialGradient>
+    <filter id="hglow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="116" fill="url(#hbg)"/>
+
+  <!-- glow inside the jar -->
+  <ellipse cx="256" cy="330" rx="86" ry="60" fill="#F59E0B" opacity="0.45" filter="url(#hglow)"/>
+
+  <!-- jar -->
+  <rect x="168" y="176" width="176" height="232" rx="38" fill="#FFFFFF" opacity="0.1"/>
+  <rect x="168" y="176" width="176" height="232" rx="38" fill="none" stroke="#C7D2FE" stroke-width="12" opacity="0.95"/>
+  <rect x="150" y="148" width="212" height="26" rx="13" fill="#C7D2FE"/>
+
+  <!-- word-pill dropping in -->
+  <g transform="rotate(-18 256 96)">
+    <rect x="210" y="82" width="92" height="28" rx="14" fill="#FBBF24"/>
+  </g>
+  <circle cx="344" cy="112" r="5" fill="#FDE68A"/>
+  <circle cx="166" cy="92" r="4" fill="#FDE68A" opacity="0.8"/>
+
+  <!-- collected word-pills + fireflies -->
+  <rect x="196" y="348" width="92" height="28" rx="14" fill="#FBBF24"/>
+  <rect x="232" y="306" width="72" height="28" rx="14" fill="#F59E0B"/>
+  <circle cx="216" cy="262" r="6" fill="#FDE68A"/>
+  <circle cx="306" cy="240" r="5" fill="#FDE68A" opacity="0.75"/>
+</svg>
