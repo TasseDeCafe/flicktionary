@@ -344,14 +344,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     advanceReadingText: implementer.advanceReadingText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await advanceReadingText(
-        userId,
-        input.textId,
-        input.pool,
-        input.scope,
-        input.ratings,
-        readingDeps
-      )
+      const result = await advanceReadingText(userId, input.textId, input.pool, input.scope, input.ratings, readingDeps)
       if (!result.ok) {
         if (result.reason === 'text_not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })

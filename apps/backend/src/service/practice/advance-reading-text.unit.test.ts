@@ -113,7 +113,9 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
 
   const deps = {
     practiceTextsRepository: {
-      findByIdForUser: vi.fn().mockResolvedValue({ practiceText: claimedText, targetLanguage: 'es', pool: 'recognition' }),
+      findByIdForUser: vi
+        .fn()
+        .mockResolvedValue({ practiceText: claimedText, targetLanguage: 'es', pool: 'recognition' }),
       claimFinalize,
       failMismatchedScopeSlots: vi.fn().mockResolvedValue(undefined),
       selectAndMarkReading,
