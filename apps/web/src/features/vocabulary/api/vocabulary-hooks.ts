@@ -175,14 +175,13 @@ export const useStudyTargets = (chunkId: string | null) => {
 // because a newly-ready form facet enters the opt-in-new queue.
 export const useGenerateFacetData = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.generateFacetData.mutationOptions({
-      onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.chunks.getStudyTargets.key(), orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Couldn't generate the form's data`,
+        showErrorModal: true,
       },
-      meta: { errorMessage: t`Couldn't generate the form's data`, showErrorModal: true },
     })
   )
 }
@@ -195,16 +194,18 @@ export const useGenerateFacetData = () => {
 // content now lives in the facet payload, which those queries carry).
 export const useSetFacetPayload = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.setFacetPayload.mutationOptions({
-      onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key() })
+      meta: {
+        invalidates: [
+          orpcQuery.chunks.getStudyTargets.key(),
+          orpcQuery.practice.dueSummary.key(),
+          orpcQuery.cards.get.key(),
+          orpcQuery.cards.listBySession.key(),
+        ],
+        errorMessage: t`Couldn't save the form's data`,
+        showErrorModal: true,
       },
-      meta: { errorMessage: t`Couldn't save the form's data`, showErrorModal: true },
     })
   )
 }
@@ -215,14 +216,13 @@ export const useSetFacetPayload = () => {
 // dueSummary because a removed facet leaves the queue.
 export const useDeleteFacet = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.deleteFacet.mutationOptions({
-      onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.chunks.getStudyTargets.key(), orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Couldn't remove the form`,
+        showErrorModal: true,
       },
-      meta: { errorMessage: t`Couldn't remove the form`, showErrorModal: true },
     })
   )
 }
