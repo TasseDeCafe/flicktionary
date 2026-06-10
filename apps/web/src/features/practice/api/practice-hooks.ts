@@ -1,5 +1,5 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { PracticePool, ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
@@ -45,13 +45,12 @@ export const useListReviewTerms = (targetLanguage: string, pool: PracticePool, s
 // don't refetch listReviewTerms mid-session.
 export const useRateTerm = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.rateTerm.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to record rating`,
       },
-      meta: { errorMessage: t`Failed to record rating` },
     })
   )
 }
@@ -62,13 +61,12 @@ export const useRateTerm = () => {
 // Invalidates the landing counts — the undo refunds review/new budget.
 export const useUndoRating = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.undoRating.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to undo rating`,
       },
-      meta: { errorMessage: t`Failed to undo rating` },
     })
   )
 }
@@ -89,13 +87,12 @@ export const useStartStrengthenSession = () => {
 // answer can advance rehab (and graduation changes parked/due counts).
 export const useSubmitExerciseAnswer = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.submitExerciseAnswer.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to submit answer`,
       },
-      meta: { errorMessage: t`Failed to submit answer` },
     })
   )
 }
@@ -125,13 +122,12 @@ export const usePrepareNextReadingText = () => {
 // annotation) and surface the next. Invalidates the landing's drifting counts.
 export const useAdvanceReadingText = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.practice.advanceReadingText.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to advance`,
       },
-      meta: { errorMessage: t`Failed to advance` },
     })
   )
 }
@@ -153,14 +149,12 @@ export const useReadingHistory = (targetLanguage: string, pool: PracticePool) =>
 // landing counts.
 export const useDeleteChunkFromPractice = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.deleteChunk.mutationOptions({
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to delete term`,
       },
-      meta: { errorMessage: t`Failed to delete term` },
     })
   )
 }
@@ -169,14 +163,12 @@ export const useDeleteChunkFromPractice = () => {
 // count/status — the chunk resumes participating in SRS with its existing schedule.
 export const useRestoreChunkFromPractice = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.restoreChunk.mutationOptions({
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
+      meta: {
+        invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to restore term`,
       },
-      meta: { errorMessage: t`Failed to restore term` },
     })
   )
 }

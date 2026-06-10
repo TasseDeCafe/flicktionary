@@ -7,7 +7,6 @@ import {
   cancelCardCachesOptionalSession,
   getCardDetailKey,
   getSessionCardsKey,
-  invalidateCardEverywhere,
   restoreCardCaches,
   restoreCardCachesOptionalSession,
   restoreSessionCardsCache,
@@ -125,23 +124,19 @@ export const useListChatForCard = (cardId: string) => {
 
 export const useSendChatMessage = (cardId: string, sessionId?: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.cardChat.sendMessage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.cardChat.listForCard.key({ input: { cardId } }),
-        })
-        if (sessionId) {
-          // The chat handler may have called update_card_fields server-side,
-          // so the card data on disk may have shifted — refetch both card caches.
-          invalidateCardEverywhere(queryClient, { sessionId, cardId })
-          return
-        }
-
-        queryClient.invalidateQueries({ queryKey: getCardDetailKey(cardId) })
+      meta: {
+        // The chat handler may have called update_card_fields server-side,
+        // so the card data on disk may have shifted — refetch the card caches
+        // (the session list only when there is a session scope).
+        invalidates: [
+          orpcQuery.cardChat.listForCard.key({ input: { cardId } }),
+          getCardDetailKey(cardId),
+          ...(sessionId ? [getSessionCardsKey(sessionId)] : []),
+        ],
+        errorMessage: t`Failed to send chat message`,
       },
-      meta: { errorMessage: t`Failed to send chat message` },
     })
   )
 }
@@ -218,18 +213,17 @@ export const useGetChunk = (chunkId: string, enabled: boolean) => {
 // invalidation is the simplest correct path.
 export const useUpdateChunkContent = (sessionId?: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.updateContent.mutationOptions({
-      onSuccess: () => {
-        if (sessionId) {
-          queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
-        }
-        queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
-        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.get.key() })
-        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+      meta: {
+        invalidates: [
+          ...(sessionId ? [getSessionCardsKey(sessionId)] : []),
+          orpcQuery.cards.get.key(),
+          orpcQuery.chunks.get.key(),
+          orpcQuery.chunks.listChunks.key(),
+        ],
+        errorMessage: t`Failed to update term`,
       },
-      meta: { errorMessage: t`Failed to update term` },
     })
   )
 }
@@ -239,18 +233,17 @@ export const useUpdateChunkContent = (sessionId?: string) => {
 // caller decides how to display that.
 export const useRenameChunk = (sessionId?: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.rename.mutationOptions({
-      onSuccess: () => {
-        if (sessionId) {
-          queryClient.invalidateQueries({ queryKey: getSessionCardsKey(sessionId) })
-        }
-        queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
-        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.get.key() })
-        queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
+      meta: {
+        invalidates: [
+          ...(sessionId ? [getSessionCardsKey(sessionId)] : []),
+          orpcQuery.cards.get.key(),
+          orpcQuery.chunks.get.key(),
+          orpcQuery.chunks.listChunks.key(),
+        ],
+        errorMessage: t`Failed to rename term`,
       },
-      meta: { errorMessage: t`Failed to rename term` },
     })
   )
 }

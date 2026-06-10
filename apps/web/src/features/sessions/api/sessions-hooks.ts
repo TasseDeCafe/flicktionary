@@ -1,6 +1,7 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
+import { applyOptimistic, optimisticPatch } from '@/lib/query/optimistic'
 import type { StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 type StudySessionQueryData = {
@@ -42,13 +43,10 @@ export const useListStudySessions = () => {
 
 export const useCreateStudySession = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.studySessions.create.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.studySessions.list.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.studySessions.list.key()],
         errorMessage: t`Failed to create session`,
         showErrorModal: true,
       },
@@ -152,13 +150,10 @@ export const useGetUserPrefs = () => {
 
 export const useSetCefrForLanguage = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setCefrForLanguage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to set CEFR level`,
         showErrorModal: true,
       },
@@ -196,25 +191,18 @@ export const useRemoveStudySession = () => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.studySessions.remove.mutationOptions({
-      onMutate: async (variables: { sessionId: string }) => {
-        const listKey = orpcQuery.studySessions.list.key()
-        await queryClient.cancelQueries({ queryKey: listKey })
-        const previous = queryClient.getQueryData(listKey)
-        queryClient.setQueryData<{ data: Array<{ id: string }> }>(listKey, (cached) => {
-          if (!cached?.data) return cached
-          return { ...cached, data: cached.data.filter((s) => s.id !== variables.sessionId) }
-        })
-        return { listKey, previous }
-      },
-      onError: (_error, _variables, context) => {
-        if (!context) return
-        const ctx = context as { listKey: readonly unknown[]; previous: unknown }
-        if (ctx.previous !== undefined) queryClient.setQueryData(ctx.listKey, ctx.previous)
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.studySessions.list.key() })
-      },
+      // Optimistically drop the session from the cached list so the row
+      // disappears the moment the user confirms.
+      onMutate: ({ sessionId }) =>
+        applyOptimistic(queryClient, [
+          optimisticPatch<{ data: Array<{ id: string }> }>(orpcQuery.studySessions.list.key(), (cached) => {
+            if (!cached?.data) return cached
+            return { ...cached, data: cached.data.filter((s) => s.id !== sessionId) }
+          }),
+        ]),
+      onError: (_error, _variables, context) => context?.rollback(),
       meta: {
+        invalidates: [orpcQuery.studySessions.list.key()],
         successMessage: t`Session removed`,
         errorMessage: t`Failed to remove session`,
         showErrorModal: true,
@@ -258,15 +246,12 @@ export const useGetProcessingStatus = (sessionId: string, refetchInterval?: numb
 
 export const useRetryEnrichment = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.studySessions.retryEnrichment.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.studySessions.getProcessingStatus.key({ input: { sessionId } }),
-        })
+      meta: {
+        invalidates: [orpcQuery.studySessions.getProcessingStatus.key({ input: { sessionId } })],
+        errorMessage: t`Failed to retry enrichment`,
       },
-      meta: { errorMessage: t`Failed to retry enrichment` },
     })
   )
 }
@@ -336,15 +321,10 @@ export const useListHighlightsBySession = (sessionId: string) => {
 
 export const useCreateHighlight = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.highlights.create.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
-        })
-      },
       meta: {
+        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
         showSuccessToast: true,
         successMessage: t`Highlight saved`,
         errorMessage: t`Failed to save highlight`,
@@ -355,18 +335,13 @@ export const useCreateHighlight = (sessionId: string) => {
 
 export const useProcessStudySession = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.studySessions.process.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.studySessions.get.key({ input: { sessionId } }),
-        })
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.studySessions.getStatus.key({ input: { sessionId } }),
-        })
-      },
       meta: {
+        invalidates: [
+          orpcQuery.studySessions.get.key({ input: { sessionId } }),
+          orpcQuery.studySessions.getStatus.key({ input: { sessionId } }),
+        ],
         successMessage: t`Opening triage`,
         errorMessage: t`Failed to open triage`,
         showErrorModal: true,
@@ -377,13 +352,10 @@ export const useProcessStudySession = (sessionId: string) => {
 
 export const useSetNativeLanguage = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setNativeLanguage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to set native language`,
         showErrorModal: true,
       },
@@ -393,13 +365,10 @@ export const useSetNativeLanguage = () => {
 
 export const useCompleteOnboarding = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.completeOnboarding.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to complete onboarding`,
         showErrorModal: true,
       },
@@ -409,13 +378,10 @@ export const useCompleteOnboarding = () => {
 
 export const useSetLlmHighlightsEnabled = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setLlmHighlightsEnabled.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to update LLM-highlights setting`,
         showErrorModal: true,
       },
@@ -425,13 +391,10 @@ export const useSetLlmHighlightsEnabled = () => {
 
 export const useSetShowTranslationsForLanguage = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setShowTranslationsForLanguage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to update show-translations setting`,
         showErrorModal: true,
       },
@@ -441,13 +404,10 @@ export const useSetShowTranslationsForLanguage = () => {
 
 export const useSetEnglishIpaDialect = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setEnglishIpaDialect.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to update English IPA dialect`,
         showErrorModal: true,
       },
@@ -457,19 +417,13 @@ export const useSetEnglishIpaDialect = () => {
 
 export const useSetUiTheme = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setUiTheme.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
-      // Invalidate on error too: the theme is applied optimistically, and
-      // <UserUiPrefsSync /> re-applies the server value on refetch, reverting
-      // a failed optimistic change.
-      onError: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
+      // invalidates fires on settle, so it also covers errors: the theme is
+      // applied optimistically, and <UserUiPrefsSync /> re-applies the server
+      // value on refetch, reverting a failed optimistic change.
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to update theme`,
       },
     })
@@ -478,18 +432,13 @@ export const useSetUiTheme = () => {
 
 export const useSetUiLanguage = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setUiLanguage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
-      // Invalidate on error too: the locale is activated optimistically, and
-      // <UserUiPrefsSync /> re-applies the server value on refetch.
-      onError: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
+      // invalidates fires on settle, so it also covers errors: the locale is
+      // activated optimistically, and <UserUiPrefsSync /> re-applies the
+      // server value on refetch.
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to update interface language`,
       },
     })
@@ -498,13 +447,10 @@ export const useSetUiLanguage = () => {
 
 export const useSetPracticeLimitsForLanguage = () => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.userPrefs.setPracticeLimitsForLanguage.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.userPrefs.getPrefs.key() })
-      },
       meta: {
+        invalidates: [orpcQuery.userPrefs.getPrefs.key()],
         errorMessage: t`Failed to update practice limits`,
         showErrorModal: true,
       },
@@ -539,15 +485,10 @@ export const useStatelessGloss = () => {
 
 export const useUpdateHighlightNoteAndTags = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.highlights.updateNoteAndTags.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
-        })
-      },
       meta: {
+        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
         successMessage: t`Note saved`,
         errorMessage: t`Failed to update highlight`,
       },
@@ -557,15 +498,10 @@ export const useUpdateHighlightNoteAndTags = (sessionId: string) => {
 
 export const useDeleteHighlight = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.highlights.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
-        })
-      },
       meta: {
+        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
         errorMessage: t`Failed to remove highlight`,
       },
     })
@@ -596,37 +532,31 @@ export const useListGhostsBySession = (sessionId: string, enabled = true, refetc
 
 export const useNominateWindow = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.ghosts.nominateWindow.mutationOptions({
-      onSuccess: () => {
+      meta: {
         // Refresh the coverage set so the just-requested window shows as pending
         // and the poll re-arms.
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
-        })
+        invalidates: [orpcQuery.ghosts.listBySession.key({ input: { sessionId } })],
+        errorMessage: t`Failed to request suggestions`,
       },
-      meta: { errorMessage: t`Failed to request suggestions` },
     })
   )
 }
 
 export const useSwitchGhost = (sessionId: string) => {
   const { t } = useLingui()
-  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.ghosts.switch.mutationOptions({
-      onSuccess: () => {
+      meta: {
         // The provisional highlight was swapped for the ghost's span and the ghost
         // dismissed — refresh both lists.
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
-        })
-        queryClient.invalidateQueries({
-          queryKey: orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
-        })
+        invalidates: [
+          orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
+          orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
+        ],
+        errorMessage: t`Failed to use suggestion`,
       },
-      meta: { errorMessage: t`Failed to use suggestion` },
     })
   )
 }
