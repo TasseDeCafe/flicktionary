@@ -3,8 +3,10 @@ import { z } from 'zod'
 import { VocabularyListView } from '@/features/vocabulary/components/vocabulary-list-view'
 
 const vocabularySearchSchema = z.object({
-  // Per-term learning mode filter. Omitted means "All".
-  mode: z.enum(['passive', 'active']).optional(),
+  // Per-term study filter: 'production' = in production study, 'recognition' =
+  // recognition-only. Omitted means "All". .catch degrades stale pre-rename
+  // URLs (mode=passive|active) to "All" instead of a route error.
+  mode: z.enum(['recognition', 'production']).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/vocabulary/')({

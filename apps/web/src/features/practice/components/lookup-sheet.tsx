@@ -37,7 +37,7 @@ interface LookupSheetProps {
   practiceTextId: string | null
   practiceTextBody: string
   targetLanguage: string
-  pool: 'passive' | 'active'
+  pool: 'recognition' | 'production'
   onClose: () => void
 }
 

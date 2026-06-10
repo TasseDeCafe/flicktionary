@@ -42,13 +42,22 @@ const listCurrentReadingLookupIds = async (
 // the two render modes. `requestedNewCount` is the explicit learn-new batch
 // size (flashcards only — the reading generator never passes it, so a
 // URL-crafted read+learn_new session stays within the daily budget).
+//
+// `excludeCurrentReadingTerms` is for the reading GENERATOR only: a new text
+// must not embed terms already held by the open 'reading' text. The flashcard
+// queue must NOT set it — an abandoned reading would otherwise hold its terms
+// hostage indefinitely (with a small pool, the entire due set), serving an
+// empty session while the due-summary landing still advertises the work.
+// Serving a held term in flashcards is FSRS-safe: the reading finalizer skips
+// any annotation reviewed after the text was prepared
+// (wasReviewedAfterTextWasPrepared in advance-reading-text).
 export const listReviewTerms = async (
   userId: string,
   targetLanguage: string,
   pool: PracticePool,
   scope: ReviewScope,
   deps: ListReviewTermsDependencies,
-  options?: { requestedNewCount?: number }
+  options?: { requestedNewCount?: number; excludeCurrentReadingTerms?: boolean }
 ): Promise<DbUserLookupWithFacet[]> => {
   const caps = await resolveReviewCaps({
     userId,
@@ -58,7 +67,9 @@ export const listReviewTerms = async (
     requestedNewCount: options?.requestedNewCount,
     deps,
   })
-  const excludeUserLookupIds = await listCurrentReadingLookupIds(userId, targetLanguage, pool, deps)
+  const excludeUserLookupIds = options?.excludeCurrentReadingTerms
+    ? await listCurrentReadingLookupIds(userId, targetLanguage, pool, deps)
+    : []
   return deps.userLookupsRepository.listReviewTerms({
     userId,
     targetLanguage,

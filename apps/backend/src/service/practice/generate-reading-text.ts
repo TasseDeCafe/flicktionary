@@ -177,9 +177,11 @@ export const produceNextReadable = async (params: {
   if (existing) return { ok: true, done: false, practiceText: existing }
 
   for (;;) {
-    const candidates = (await listReviewTerms(group.userId, group.targetLanguage, group.pool, scope, deps)).filter(
-      (row) => isCitationMeaningCandidate(row) && !exclude.has(row.id)
-    )
+    const candidates = (
+      await listReviewTerms(group.userId, group.targetLanguage, group.pool, scope, deps, {
+        excludeCurrentReadingTerms: true,
+      })
+    ).filter((row) => isCitationMeaningCandidate(row) && !exclude.has(row.id))
     if (candidates.length === 0) return { ok: true, done: true }
 
     const slot = await deps.practiceTextsRepository.reserveOrFindNextSlot(group, scope)
@@ -283,9 +285,9 @@ export const prepareNextReadingText = async (
 
   const group: ReadingGroup = { userId, targetLanguage, pool }
   const exclude = new Set(excludeUserLookupIds)
-  const candidates = (await listReviewTerms(userId, targetLanguage, pool, scope, deps)).filter(
-    (row) => isCitationMeaningCandidate(row) && !exclude.has(row.id)
-  )
+  const candidates = (
+    await listReviewTerms(userId, targetLanguage, pool, scope, deps, { excludeCurrentReadingTerms: true })
+  ).filter((row) => isCitationMeaningCandidate(row) && !exclude.has(row.id))
   if (candidates.length === 0) return { ok: true, status: 'no_work' }
 
   // Don't let the pre-gen latch onto a slot left over from a different scope.

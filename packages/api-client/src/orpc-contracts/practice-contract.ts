@@ -18,7 +18,8 @@ import {
 export const practiceContract = {
   // Per-language summary used by the Practice landing. Returns one row per
   // target_language the user has cards in, with daily review, intraday
-  // learning follow-up, new, and total counts (plus the active-pool mirror).
+  // learning follow-up, new, and total counts (plus the production-pool
+  // mirror).
   dueSummary: oc
     .route({ method: 'GET', path: '/practice/due-summary', successStatus: 200 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
@@ -39,7 +40,7 @@ export const practiceContract = {
     .input(
       z.object({
         targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         scope: ReviewScopeSchema.default('mixed'),
         // Explicit learn-new batch size (learn_new scope only). When set, the
         // server serves exactly this many unseen terms regardless of the
@@ -50,12 +51,12 @@ export const practiceContract = {
     )
     .output(z.object({ data: z.object({ terms: z.array(ReviewTermSchema) }) })),
 
-  // Grade a single term in flashcard mode. Applies FSRS directly to the pool's
-  // SRS columns (srs_* for passive, active_srs_* for active). New-term
-  // introductions (srs_state IS NULL) are gated by an atomic daily-cap guard
-  // for the passive pool; when the cap is already consumed the intro is refused
-  // and the response carries dailyCapReached=true (201, no FSRS applied) so the
-  // client drops the card. Active-pool introductions are not daily-capped.
+  // Grade a single term in flashcard mode. Applies FSRS directly to the rated
+  // facet's SRS state. New-term introductions (srs_state IS NULL) are gated by
+  // an atomic daily-cap guard for the recognition pool; when the cap is
+  // already consumed the intro is refused and the response carries
+  // dailyCapReached=true (201, no FSRS applied) so the client drops the card.
+  // Production-pool introductions are not daily-capped.
   rateTerm: oc
     .route({ method: 'POST', path: '/practice/review-terms/{userLookupId}/ratings', successStatus: 201 })
     .errors({
@@ -67,7 +68,7 @@ export const practiceContract = {
       z.object({
         userLookupId: z.string().uuid(),
         rating: PracticeRatingSchema,
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         // Facet identity of the rated card. `pool` names the session queue; the
         // queue can serve more than one facet per term, so identity rides
         // separately. Defaults preserve the citation-recognition card for any
@@ -118,7 +119,7 @@ export const practiceContract = {
     .input(
       z.object({
         userLookupId: z.string().uuid(),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         // Facet identity of the rating being reverted (matches the rateTerm
         // input). Defaults to the citation recognition card.
         skill: FacetSkillSchema.default('meaning_recognition'),
@@ -142,7 +143,7 @@ export const practiceContract = {
     .input(
       z.object({
         targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         scope: ReviewScopeSchema.default('mixed'),
       })
     )
@@ -169,7 +170,7 @@ export const practiceContract = {
     .input(
       z.object({
         targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         scope: ReviewScopeSchema.default('mixed'),
         excludeUserLookupIds: z.array(z.string().uuid()).default([]),
       })
@@ -201,7 +202,7 @@ export const practiceContract = {
     .input(
       z.object({
         textId: z.string().uuid(),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         scope: ReviewScopeSchema.default('mixed'),
         ratings: z.array(ReadingRatingSchema).default([]),
       })
@@ -227,7 +228,7 @@ export const practiceContract = {
     .input(
       z.object({
         targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
       })
     )
     .output(z.object({ data: z.object({ texts: z.array(PracticeTextSchema) }) })),
@@ -256,7 +257,7 @@ export const practiceContract = {
     .input(
       z.object({
         targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('passive'),
+        pool: PracticePoolSchema.default('recognition'),
         sessionHardUserLookupIds: z.array(z.string().uuid()).max(100).default([]),
       })
     )

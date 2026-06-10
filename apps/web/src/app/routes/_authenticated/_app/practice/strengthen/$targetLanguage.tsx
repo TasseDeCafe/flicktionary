@@ -6,7 +6,7 @@ import { StrengthenView } from '@/features/practice/components/strengthen-view'
 // userLookupIds as search params so the list survives a refresh. The server
 // re-validates ownership — these ids are never trusted as-is.
 const strengthenSearchSchema = z.object({
-  pool: z.enum(['passive', 'active']).default('passive'),
+  pool: z.enum(['recognition', 'production']).catch('recognition'),
   sessionHard: z.array(z.string().uuid()).optional(),
 })
 

@@ -8,8 +8,10 @@ import {
   mergeFacet,
   type DbUserLookup,
   type DbUserLookupWithFacet,
+  type PracticePool,
   type UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
+import type { PracticePool as ApiPracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   CITATION_FORM,
   skillForPool,
@@ -75,6 +77,13 @@ type ChunkContent = {
   isProductionEnabled: boolean
 }
 
+// The public API names the pools by skill direction ('recognition' |
+// 'production', matching ReviewMode and the UI labels); the internals and the
+// DB still use the legacy 'passive' | 'active'. Map at this boundary only —
+// these helpers disappear once the internal rename + data migration land.
+const toInternalPool = (pool: ApiPracticePool): PracticePool => (pool === 'production' ? 'active' : 'passive')
+const toApiPool = (pool: PracticePool): ApiPracticePool => (pool === 'active' ? 'production' : 'recognition')
+
 const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
 
 const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkContent>) => {
@@ -101,7 +110,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
   })
   return {
     id: row.id,
-    pool: (row.pool as 'passive' | 'active') ?? 'passive',
+    pool: toApiPool((row.pool as PracticePool) ?? 'passive'),
     ord: row.ord,
     status: row.status,
     body: row.body,
@@ -214,21 +223,27 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const userId = context.res.locals.userId
       // reviewedTodayCount comes off the rating-event log (passive review
       // budget only — the active pool has no review budget) in one grouped
-      // query, merged per language.
-      const [summary, reviewedTodayByLanguage] = await Promise.all([
+      // query, merged per language. Open reading-mode texts ride along so the
+      // landing can offer "continue reading" (they're otherwise invisible —
+      // an abandoned reading is only reachable by re-entering Read mode).
+      const [summary, reviewedTodayByLanguage, currentReadings] = await Promise.all([
         deps.userLookupsRepository.listDueSummary(userId),
         deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, mode: 'recognition' }),
+        deps.practiceTextsRepository.listCurrentReadings(userId),
       ])
       const perLanguage = summary.map((entry) => ({
         ...entry,
         reviewedTodayCount: reviewedTodayByLanguage.get(entry.targetLanguage) ?? 0,
+        currentReadings: currentReadings
+          .filter((reading) => reading.targetLanguage === entry.targetLanguage)
+          .map(({ pool, scope, termCount }) => ({ pool: toApiPool(pool), scope, termCount })),
       }))
       return { data: { perLanguage } }
     }),
 
     listReviewTerms: implementer.listReviewTerms.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps, {
+      const rows = await listReviewTerms(userId, input.targetLanguage, toInternalPool(input.pool), input.scope, capsDeps, {
         requestedNewCount: input.newBatchSize,
       })
       return { data: { terms: rows.map((row) => toReviewTermDto(row)) } }
@@ -240,7 +255,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         input.userLookupId,
         userId,
         input.rating,
-        input.pool,
+        toInternalPool(input.pool),
         input.skill,
         input.targetForm,
         {
@@ -278,7 +293,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await undoRating(
         input.userLookupId,
         userId,
-        input.pool,
+        toInternalPool(input.pool),
         input.skill,
         input.targetForm,
         input.eventId,
@@ -300,7 +315,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     generateNextReadingText: implementer.generateNextReadingText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await generateReadingText(userId, input.targetLanguage, input.pool, input.scope, readingDeps)
+      const result = await generateReadingText(userId, input.targetLanguage, toInternalPool(input.pool), input.scope, readingDeps)
       if (!result.ok) {
         if (result.reason === 'no_native_language') {
           throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
@@ -323,7 +338,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await prepareNextReadingText(
         userId,
         input.targetLanguage,
-        input.pool,
+        toInternalPool(input.pool),
         input.scope,
         input.excludeUserLookupIds,
         readingDeps
@@ -337,7 +352,14 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     advanceReadingText: implementer.advanceReadingText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await advanceReadingText(userId, input.textId, input.pool, input.scope, input.ratings, readingDeps)
+      const result = await advanceReadingText(
+        userId,
+        input.textId,
+        toInternalPool(input.pool),
+        input.scope,
+        input.ratings,
+        readingDeps
+      )
       if (!result.ok) {
         if (result.reason === 'text_not_found') {
           throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
@@ -366,7 +388,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const rows = await deps.practiceTextsRepository.listHistory({
         userId,
         targetLanguage: input.targetLanguage,
-        pool: input.pool,
+        pool: toInternalPool(input.pool),
       })
       const texts = await Promise.all(rows.map((row) => shapeText(row, userId, input.targetLanguage)))
       return { data: { texts } }
@@ -386,7 +408,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const exercises = await getStrengthenExercises({
         userId,
         targetLanguage: input.targetLanguage,
-        pool: input.pool,
+        pool: toInternalPool(input.pool),
         sessionHardUserLookupIds: input.sessionHardUserLookupIds,
         deps: exerciseBankDeps,
       })

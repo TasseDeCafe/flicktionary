@@ -18,7 +18,7 @@ export const getReviewCounts = (
   dailyNewAvailable: number
 ): QueueCounts => {
   if (!entry) return { new: 0, learning: 0, review: 0 }
-  if (pool === 'active') {
+  if (pool === 'production') {
     return { new: entry.activeNewCount, learning: entry.activeLearningDueCount, review: entry.activeReviewDueCount }
   }
   return { new: dailyNewAvailable, learning: entry.learningDueCount, review: entry.reviewDueCount }

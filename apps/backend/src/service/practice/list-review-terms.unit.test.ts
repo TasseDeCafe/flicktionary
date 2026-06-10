@@ -139,7 +139,7 @@ describe('listReviewTerms (service caps)', () => {
     expect(mixed.repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxOptInNewTerms: 0 }))
   })
 
-  it('excludes terms already embedded in the current reading text', async () => {
+  it('excludeCurrentReadingTerms (generator path) drops terms embedded in the current reading text', async () => {
     const { deps, repoListReviewTerms } = createDeps()
     ;(deps as ListReviewTermsDependencies).practiceTextsRepository = {
       findCurrentReading: vi.fn().mockResolvedValue({
@@ -153,10 +153,25 @@ describe('listReviewTerms (service caps)', () => {
         { id: '00000000-0000-0000-0000-0000000000bb', headword: 'perro', sense: 'dog' },
       ])
 
-    await listReviewTerms(userId, 'es', 'passive', 'mixed', deps)
+    await listReviewTerms(userId, 'es', 'passive', 'mixed', deps, { excludeCurrentReadingTerms: true })
 
     expect(repoListReviewTerms).toHaveBeenCalledWith(
       expect.objectContaining({ excludeUserLookupIds: ['00000000-0000-0000-0000-0000000000aa'] })
     )
+  })
+
+  it('the flashcard path (no option) serves current-reading terms — an abandoned reading must not starve the queue', async () => {
+    const { deps, repoListReviewTerms } = createDeps()
+    const findCurrentReading = vi.fn().mockResolvedValue({
+      annotations: [{ headword: 'gato', sense: 'cat' }],
+    })
+    ;(deps as ListReviewTermsDependencies).practiceTextsRepository = {
+      findCurrentReading,
+    } as unknown as ListReviewTermsDependencies['practiceTextsRepository']
+
+    await listReviewTerms(userId, 'es', 'passive', 'mixed', deps)
+
+    expect(findCurrentReading).not.toHaveBeenCalled()
+    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ excludeUserLookupIds: [] }))
   })
 })

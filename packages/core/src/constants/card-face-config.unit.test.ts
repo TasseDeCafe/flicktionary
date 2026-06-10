@@ -65,9 +65,9 @@ describe('resolveCardSlots', () => {
 
 describe('active card face', () => {
   it('getCardFaceConfig returns the active config for any language', () => {
-    expect(getCardFaceConfig('ru', 'active')).toBe(ACTIVE_CARD_FACE_CONFIG)
-    expect(getCardFaceConfig('de', 'active')).toBe(ACTIVE_CARD_FACE_CONFIG)
-    expect(getCardFaceConfig(null, 'active')).toBe(ACTIVE_CARD_FACE_CONFIG)
+    expect(getCardFaceConfig('ru', 'production')).toBe(ACTIVE_CARD_FACE_CONFIG)
+    expect(getCardFaceConfig('de', 'production')).toBe(ACTIVE_CARD_FACE_CONFIG)
+    expect(getCardFaceConfig(null, 'production')).toBe(ACTIVE_CARD_FACE_CONFIG)
   })
 
   it('front prompts with the translation when translations are on', () => {

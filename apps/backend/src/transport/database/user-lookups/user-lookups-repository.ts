@@ -443,21 +443,25 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // the active mirror reads the citation meaning_production facet. Both are 1:1
   // with the term (target_form=''), so the LEFT JOINs never fan out.
   //
-  // Every queue-feeding count requires an ENABLED facet (id IS NOT NULL via the
-  // state predicates, disabled_at IS NULL) — the queue (listReviewTerms) and
-  // the Strengthen track (listParkedTerms) both filter disabled facets, so a
-  // recognition skill the user switched off must not inflate the landing
-  // numbers (it would promise cards the queue then refuses to serve). new_count
-  // needs the explicit rf.id check because its `srs_state IS NULL` test is also
-  // true on a join miss. newIntroducedTodayCount intentionally stays
-  // unfiltered: it feeds the remaining-daily-new budget, and an introduction
-  // performed today consumed that budget even if the facet was disabled later.
+  // Every queue-feeding count requires an ENABLED (id IS NOT NULL via the
+  // state predicates, disabled_at IS NULL) and READY (data_status = 'ready')
+  // facet — the queue (listReviewTerms) filters both, so a recognition skill
+  // the user switched off, or a production facet whose card data is still
+  // generating, must not inflate the landing numbers (it would promise cards
+  // the queue then refuses to serve). The parked counts skip the data_status
+  // check to mirror their consumer (listParkedTerms doesn't filter it).
+  // new_count needs the explicit rf.id check because its `srs_state IS NULL`
+  // test is also true on a join miss. newIntroducedTodayCount intentionally
+  // stays unfiltered: it feeds the remaining-daily-new budget, and an
+  // introduction performed today consumed that budget even if the facet was
+  // disabled later.
   const result = await sql`
     SELECT
       ul.target_language,
       COUNT(*)::int AS total_kept,
       COUNT(*) FILTER (
         WHERE rf.disabled_at IS NULL
+          AND rf.data_status = 'ready'
           AND rf.srs_state IN ('new', 'review')
           AND rf.srs_due IS NOT NULL
           AND rf.srs_due <= NOW()
@@ -465,6 +469,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       )::int AS review_due_count,
       COUNT(*) FILTER (
         WHERE rf.disabled_at IS NULL
+          AND rf.data_status = 'ready'
           AND rf.srs_state IN ('learning', 'relearning')
           AND rf.srs_due IS NOT NULL
           AND rf.srs_due <= NOW()
@@ -472,13 +477,15 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       )::int AS learning_due_count,
       MIN(rf.srs_due) FILTER (
         WHERE rf.disabled_at IS NULL
+          AND rf.data_status = 'ready'
           AND rf.srs_state IN ('learning', 'relearning')
           AND rf.srs_due IS NOT NULL
           AND rf.srs_due > NOW()
           AND rf.leech_parked_at IS NULL
       ) AS next_learning_due_at,
       COUNT(*) FILTER (
-        WHERE rf.id IS NOT NULL AND rf.disabled_at IS NULL AND rf.srs_state IS NULL
+        WHERE rf.id IS NOT NULL AND rf.disabled_at IS NULL
+          AND rf.data_status = 'ready' AND rf.srs_state IS NULL
       )::int AS new_count,
       COUNT(*) FILTER (
         WHERE rf.introduced_at >= CURRENT_DATE
@@ -490,6 +497,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       COUNT(*) FILTER (WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL)::int AS active_total,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
+          AND pf.data_status = 'ready'
           AND pf.srs_state IN ('new', 'review')
           AND pf.srs_due IS NOT NULL
           AND pf.srs_due <= NOW()
@@ -497,6 +505,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       )::int AS active_review_due_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
+          AND pf.data_status = 'ready'
           AND pf.srs_state IN ('learning', 'relearning')
           AND pf.srs_due IS NOT NULL
           AND pf.srs_due <= NOW()
@@ -504,6 +513,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       )::int AS active_learning_due_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
+          AND pf.data_status = 'ready'
           AND pf.srs_state IS NULL
       )::int AS active_new_count,
       COUNT(*) FILTER (

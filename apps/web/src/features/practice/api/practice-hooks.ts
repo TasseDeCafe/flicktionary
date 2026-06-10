@@ -98,11 +98,16 @@ export const useSubmitExerciseAnswer = () => {
 }
 
 // Bootstrap or resume the current reading text for a (language, pool).
+// Invalidates the landing summary: this is the call that flips a text to
+// 'reading', and the landing's "continue reading" affordance reads off that.
 export const useGenerateNextReadingText = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.practice.generateNextReadingText.mutationOptions({
-      meta: { errorMessage: t`Failed to generate next text` },
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to generate next text`,
+      },
     })
   )
 }

@@ -455,12 +455,12 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     hasGrammarChips: !!content.grammar,
   }
 
-  // Active fronts are gloss-only; a card with no translation, no definition
-  // and no example translation would render a blank front — fall back to the
-  // recognition (passive) layout for that card.
+  // Production fronts are gloss-only; a card with no translation, no
+  // definition and no example translation would render a blank front — fall
+  // back to the recognition layout for that card.
   const poolConfig = getCardFaceConfig(targetLanguage, pool)
   const poolFront = resolveCardSlots(poolConfig.front, cond)
-  const faceConfig = poolFront.length > 0 ? poolConfig : getCardFaceConfig(targetLanguage, 'passive')
+  const faceConfig = poolFront.length > 0 ? poolConfig : getCardFaceConfig(targetLanguage, 'recognition')
   const frontSlots = poolFront.length > 0 ? poolFront : resolveCardSlots(faceConfig.front, cond)
   const backSlots = resolveCardSlots(faceConfig.back, cond)
   // Peeked cards are always shown fully (front + back), read-only.

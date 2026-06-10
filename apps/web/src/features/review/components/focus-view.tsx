@@ -94,7 +94,7 @@ export const FocusView = () => {
       // Scope is always 'mixed' on return: a flashcard queue re-seeds from a
       // fresh fetch anyway, and re-entering learn_new with its batch count
       // would serve a whole new batch of unseen terms.
-      search: { pool: practicePool ?? 'passive', scope: 'mixed', mode: practiceMode ?? 'read' },
+      search: { pool: practicePool ?? 'recognition', scope: 'mixed', mode: practiceMode ?? 'read' },
     })
   }
   const goPrev = () => {

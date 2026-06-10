@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { ReadingHistoryView } from '@/features/practice/components/reading-history-view'
 
 const historySearchSchema = z.object({
-  pool: z.enum(['passive', 'active']).default('passive'),
+  pool: z.enum(['recognition', 'production']).catch('recognition'),
 })
 
 export const Route = createFileRoute('/_authenticated/_app/practice/history/$targetLanguage')({

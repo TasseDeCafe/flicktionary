@@ -101,12 +101,12 @@ export const VocabularyListView = () => {
   const [sort, setSort] = useState<ChunksSort>('recent')
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
-  // URL `mode` tokens stay 'passive'/'active' (bookmark-safe); the filter is
-  // expressed to the API as a boolean isProductionEnabled (active = in
-  // production, passive = not).
-  const isProductionEnabled: boolean | null = mode === 'active' ? true : mode === 'passive' ? false : null
+  // The URL `mode` token is the user-facing pool vocabulary; the filter is
+  // expressed to the API as a boolean isProductionEnabled ('production' = in
+  // production study, 'recognition' = recognition-only).
+  const isProductionEnabled: boolean | null = mode === 'production' ? true : mode === 'recognition' ? false : null
   const setProductionFilter = (next: boolean | null) => {
-    void navigate({ to: '/vocabulary', search: next === null ? {} : { mode: next ? 'active' : 'passive' } })
+    void navigate({ to: '/vocabulary', search: next === null ? {} : { mode: next ? 'production' : 'recognition' } })
   }
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
