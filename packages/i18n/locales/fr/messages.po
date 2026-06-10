@@ -977,7 +977,7 @@ msgid "Could not set up your account. Please try restarting the app."
 msgstr "Impossible de configurer votre compte. Veuillez redémarrer "
 "l'application."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:185
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:135
 msgid "Couldn't generate the form's data"
 msgstr "Impossible de générer les données de la forme"
 
@@ -985,11 +985,11 @@ msgstr "Impossible de générer les données de la forme"
 msgid "Couldn't load exercises."
 msgstr "Impossible de charger les exercices."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:225
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:176
 msgid "Couldn't remove the form"
 msgstr "Impossible de supprimer la forme"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:207
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:159
 msgid "Couldn't save the form's data"
 msgstr "Impossible d'enregistrer les données de la forme"
 
@@ -1374,11 +1374,11 @@ msgstr "Raccourci de l'extension"
 msgid "Extension version"
 msgstr "Version de l'extension"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:134
+#: apps/web/src/features/practice/api/practice-hooks.ts:129
 msgid "Failed to advance"
 msgstr "Échec de l'avancement"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:403
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:372
 msgid "Failed to complete onboarding"
 msgstr "Échec de la finalisation de l'intégration"
 
@@ -1390,16 +1390,16 @@ msgstr "Échec de la création de la carte"
 msgid "Failed to create checkout session"
 msgstr "Échec de la création de la session de paiement"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:52
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:50
 msgid "Failed to create session"
 msgstr "Échec de la création de la session"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:163
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:279
+#: apps/web/src/features/practice/api/practice-hooks.ts:156
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:212
 msgid "Failed to delete term"
 msgstr "Échec de la suppression du terme"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:234
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:187
 msgid "Failed to export vocabulary"
 msgstr "Échec de l'export du vocabulaire"
 
@@ -1408,15 +1408,15 @@ msgstr "Échec de l'export du vocabulaire"
 msgid "Failed to fetch subscription details"
 msgstr "Échec de la récupération des détails de l'abonnement"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:190
+#: apps/web/src/features/practice/api/practice-hooks.ts:182
 msgid "Failed to fetch translation"
 msgstr "Échec de la récupération de la traduction"
 
-#: apps/web/src/features/review/api/review-hooks.ts:181
+#: apps/web/src/features/review/api/review-hooks.ts:176
 msgid "Failed to generate exploration"
 msgstr "Échec de la génération de l'exploration"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:108
+#: apps/web/src/features/practice/api/practice-hooks.ts:105
 msgid "Failed to generate next text"
 msgstr "Échec de la génération du texte suivant"
 
@@ -1424,11 +1424,11 @@ msgstr "Échec de la génération du texte suivant"
 msgid "Failed to import into Flicktionary."
 msgstr "Échec de l’import dans Flicktionary."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:136
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:134
 msgid "Failed to import pasted text"
 msgstr "Échec de l'importation du texte collé"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:112
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:110
 msgid "Failed to import subtitles"
 msgstr "Échec de l'importation des sous-titres"
 
@@ -1437,31 +1437,31 @@ msgid "Failed to initialize payment system. Please restart the app."
 msgstr "Échec de l'initialisation du système de paiement. Veuillez redémarrer "
 "l'application."
 
-#: apps/web/src/features/review/api/review-hooks.ts:56
+#: apps/web/src/features/review/api/review-hooks.ts:55
 msgid "Failed to load card"
 msgstr "Échec du chargement de la carte"
 
-#: apps/web/src/features/review/api/review-hooks.ts:38
+#: apps/web/src/features/review/api/review-hooks.ts:37
 msgid "Failed to load cards"
 msgstr "Échec du chargement des cartes"
 
-#: apps/web/src/features/review/api/review-hooks.ts:121
+#: apps/web/src/features/review/api/review-hooks.ts:120
 msgid "Failed to load chat"
 msgstr "Échec du chargement de la discussion"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:83
+#: apps/web/src/features/practice/api/practice-hooks.ts:81
 msgid "Failed to load exercises"
 msgstr "Échec du chargement des exercices"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:332
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:317
 msgid "Failed to load highlights"
 msgstr "Échec du chargement des surlignages"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:145
+#: apps/web/src/features/practice/api/practice-hooks.ts:141
 msgid "Failed to load history"
 msgstr "Échec du chargement de l'historique"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:17
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:20
 msgid "Failed to load languages"
 msgstr "Échec du chargement des langues"
 
@@ -1469,11 +1469,11 @@ msgstr "Échec du chargement des langues"
 msgid "Failed to load practice summary"
 msgstr "Échec du chargement du résumé de pratique"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:148
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:146
 msgid "Failed to load preferences"
 msgstr "Échec du chargement des préférences"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:254
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:242
 msgid "Failed to load processing status"
 msgstr "Échec du chargement de l'état de traitement"
 
@@ -1481,91 +1481,91 @@ msgstr "Échec du chargement de l'état de traitement"
 msgid "Failed to load review terms"
 msgstr "Échec du chargement des termes à réviser"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:177
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:172
 msgid "Failed to load session"
 msgstr "Échec du chargement de la session"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:189
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:184
 msgid "Failed to load session counts"
 msgstr "Échec du chargement du nombre de sessions"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:233
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:221
 msgid "Failed to load session status"
 msgstr "Échec du chargement du statut de la session"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:38
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:39
 msgid "Failed to load sessions"
 msgstr "Échec du chargement des sessions"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:166
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:119
 msgid "Failed to load study targets"
 msgstr "Échec du chargement des cibles d'étude"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:309
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:294
 msgid "Failed to load subtitle segments"
 msgstr "Échec du chargement des segments de sous-titres"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:592
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:528
 msgid "Failed to load suggestions"
 msgstr "Échec du chargement des suggestions"
 
-#: apps/web/src/features/review/api/review-hooks.ts:193
+#: apps/web/src/features/review/api/review-hooks.ts:188
 msgid "Failed to load surrounding context"
 msgstr "Échec du chargement du contexte environnant"
 
-#: apps/web/src/features/review/api/review-hooks.ts:209
+#: apps/web/src/features/review/api/review-hooks.ts:204
 msgid "Failed to load term"
 msgstr "Échec du chargement du terme"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:46
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:49
 msgid "Failed to load vocabulary"
 msgstr "Échec du chargement du vocabulaire"
 
-#: apps/web/src/features/review/api/review-hooks.ts:168
+#: apps/web/src/features/review/api/review-hooks.ts:163
 msgid "Failed to mark chat read"
 msgstr "Échec du marquage du chat comme lu"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:371
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:346
 msgid "Failed to open triage"
 msgstr "Échec de l'ouverture du tri"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:54
+#: apps/web/src/features/practice/api/practice-hooks.ts:52
 msgid "Failed to record rating"
 msgstr "Échec de l'enregistrement de l'évaluation"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:76
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:74
 msgid "Failed to register movie"
 msgstr "Échec de l'enregistrement du film"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:88
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:86
 msgid "Failed to register text"
 msgstr "Échec de l'enregistrement du texte"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:569
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:505
 msgid "Failed to remove highlight"
 msgstr "Échec de la suppression du surlignage"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:219
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:207
 msgid "Failed to remove session"
 msgstr "Échec de la suppression de la session"
 
-#: apps/web/src/features/review/api/review-hooks.ts:253
+#: apps/web/src/features/review/api/review-hooks.ts:245
 msgid "Failed to rename term"
 msgstr "Échec du renommage du terme"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:609
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:541
 msgid "Failed to request suggestions"
 msgstr "Échec de la demande de suggestions"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:179
+#: apps/web/src/features/practice/api/practice-hooks.ts:170
 msgid "Failed to restore term"
 msgstr "Échec de la restauration du terme"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:269
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:253
 msgid "Failed to retry enrichment"
 msgstr "Échec de la nouvelle tentative d'enrichissement"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:350
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:330
 msgid "Failed to save highlight"
 msgstr "Échec de l'enregistrement du surlignage"
 
@@ -1573,7 +1573,7 @@ msgstr "Échec de l'enregistrement du surlignage"
 msgid "Failed to save term"
 msgstr "Échec de l'enregistrement du terme"
 
-#: apps/web/src/features/review/api/review-hooks.ts:144
+#: apps/web/src/features/review/api/review-hooks.ts:138
 msgid "Failed to send chat message"
 msgstr "Échec de l'envoi du message de discussion"
 
@@ -1582,15 +1582,15 @@ msgstr "Échec de l'envoi du message de discussion"
 msgid "Failed to send feedback. Please try again."
 msgstr "Impossible d'envoyer le retour. Veuillez réessayer."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:162
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:157
 msgid "Failed to set CEFR level"
 msgstr "Échec de la définition du niveau CECR"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:387
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:359
 msgid "Failed to set native language"
 msgstr "Échec de la définition de la langue maternelle"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:98
+#: apps/web/src/features/practice/api/practice-hooks.ts:94
 msgid "Failed to submit answer"
 msgstr "Échec de l'envoi de la réponse"
 
@@ -1599,59 +1599,59 @@ msgstr "Échec de l'envoi de la réponse"
 msgid "Failed to trigger Sentry message"
 msgstr "Échec du déclenchement du message Sentry"
 
-#: apps/web/src/features/practice/api/practice-hooks.ts:71
+#: apps/web/src/features/practice/api/practice-hooks.ts:68
 msgid "Failed to undo rating"
 msgstr "Échec de l'annulation de la note"
 
-#: apps/web/src/features/review/api/review-hooks.ts:82
+#: apps/web/src/features/review/api/review-hooks.ts:81
 msgid "Failed to update card status"
 msgstr "Échec de la mise à jour du statut de la carte"
 
-#: apps/web/src/features/review/api/review-hooks.ts:110
+#: apps/web/src/features/review/api/review-hooks.ts:109
 msgid "Failed to update card statuses"
 msgstr "Échec de la mise à jour des statuts des cartes"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:451
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:411
 msgid "Failed to update English IPA dialect"
 msgstr "Échec de la mise à jour du dialecte API anglais"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:552
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:493
 msgid "Failed to update highlight"
 msgstr "Échec de la mise à jour de la surbrillance"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:493
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:442
 msgid "Failed to update interface language"
 msgstr "Échec de la mise à jour de la langue de l'interface"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:419
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:385
 msgid "Failed to update LLM-highlights setting"
 msgstr "Échec de la mise à jour du paramètre de surlignage par LLM"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:508
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:454
 msgid "Failed to update practice limits"
 msgstr "Échec de la mise à jour des limites de pratique"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:435
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:398
 msgid "Failed to update show-translations setting"
 msgstr "Échec de la mise à jour du paramètre d'affichage des traductions"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:147
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:100
 msgid "Failed to update study targets"
 msgstr "Échec de la mise à jour des cibles d'étude"
 
-#: apps/web/src/features/review/api/review-hooks.ts:232
+#: apps/web/src/features/review/api/review-hooks.ts:225
 msgid "Failed to update term"
 msgstr "Échec de la mise à jour du terme"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:473
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:427
 msgid "Failed to update theme"
 msgstr "Échec de la mise à jour du thème"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:124
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:122
 msgid "Failed to upload subtitles"
 msgstr "Échec de l'envoi des sous-titres"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:629
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:558
 msgid "Failed to use suggestion"
 msgstr "Échec de l'utilisation de la suggestion"
 
@@ -1906,7 +1906,7 @@ msgid "Hides this term from your vocabulary and Practice. You can revive it by "
 msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le "
 "restaurer en le conservant à nouveau dans une session."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:349
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:329
 msgid "Highlight saved"
 msgstr "Surlignage enregistré"
 
@@ -2530,7 +2530,7 @@ msgstr "Pas tout à fait."
 msgid "Notable forms"
 msgstr "Formes remarquables"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:551
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:492
 msgid "Note saved"
 msgstr "Note enregistrée"
 
@@ -2633,7 +2633,7 @@ msgid "Open the focus view to edit fields, forms, and skills."
 msgstr "Ouvrir la vue détaillée pour modifier les champs, les formes et les "
 "compétences."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:370
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:345
 msgid "Opening triage"
 msgstr "Ouverture du triage"
 
@@ -2641,7 +2641,7 @@ msgstr "Ouverture du triage"
 msgid "Opening…"
 msgstr "Ouverture…"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:102
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:100
 msgid "OpenSubtitles search failed"
 msgstr "La recherche OpenSubtitles a échoué"
 
@@ -2970,8 +2970,8 @@ msgstr "Prononciation"
 msgid "Quick gloss"
 msgstr "Glose rapide"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:520
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:534
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:466
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:480
 msgid "Quick gloss failed"
 msgstr "Glose rapide échouée"
 
@@ -3209,7 +3209,7 @@ msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
 
 #: apps/web/src/features/review/components/editable-card-fields.tsx:312
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:530
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:529
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:656
@@ -3221,7 +3221,7 @@ msgstr "Enregistrement…"
 msgid "Say it out loud"
 msgstr "Dites-le à voix haute"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:321
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:306
 msgid "Search failed"
 msgstr "Échec de la recherche"
 
@@ -3344,7 +3344,7 @@ msgstr "Session"
 msgid "Session not found."
 msgstr "Session introuvable."
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:218
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:206
 msgid "Session removed"
 msgstr "Session supprimée"
 
@@ -3893,7 +3893,7 @@ msgstr "Cette valeur provient des données du Wiktionnaire, intégrées lors du 
 msgid "Title"
 msgstr "Titre"
 
-#: apps/web/src/features/sessions/api/sessions-hooks.ts:66
+#: apps/web/src/features/sessions/api/sessions-hooks.ts:64
 msgid "TMDB search failed"
 msgstr "La recherche TMDB a échoué"
 
