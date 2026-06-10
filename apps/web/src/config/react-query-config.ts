@@ -145,6 +145,21 @@ export const queryClient = new QueryClient({
         })
       }
     },
+    // Declarative invalidation: hooks list the query keys a mutation affects in
+    // meta.invalidates instead of hand-rolling onSuccess/onSettled callbacks.
+    // Runs on settle (success AND error): a failed mutation may have partially
+    // landed, and optimistically-applied UI (theme, locale) self-heals from the
+    // refetched server value. This cache-level callback fires after the
+    // mutation-level onError, so optimistic rollbacks land before the refetch.
+    onSettled: (_data, _error, _variables, _context, mutation) => {
+      const invalidates = mutation.meta?.invalidates
+      if (!invalidates) return
+      for (const queryKey of invalidates) {
+        // Fire-and-forget: returning the promise would keep the mutation
+        // pending (and block mutateAsync) until the refetch completes.
+        void queryClient.invalidateQueries({ queryKey })
+      }
+    },
   }),
   defaultOptions: {
     queries: {

@@ -1,5 +1,5 @@
 import '@tanstack/react-query'
-import type { Register } from '@tanstack/react-query'
+import type { QueryKey, Register } from '@tanstack/react-query'
 
 // Augment React Query's types to add custom meta fields
 // See: https://github.com/TanStack/query/discussions/2772#discussioncomment-7566892
@@ -11,6 +11,15 @@ declare module '@tanstack/react-query' {
       successMessage?: string
       errorMessage?: string
       showErrorModal?: boolean
+      /**
+       * Query keys to invalidate when the mutation settles (success OR error).
+       * Fire-and-forget; handled centrally in react-query-config.ts. Keys may
+       * close over hook parameters but never mutation variables (meta is fixed
+       * when mutationOptions() is evaluated at render).
+       * NOTE: the native app's `invalidates` has different semantics — see the
+       * web-query-hooks skill.
+       */
+      invalidates?: readonly QueryKey[]
     }
     queryMeta: {
       showErrorToast?: boolean
