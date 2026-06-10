@@ -33,6 +33,7 @@ const toChunkDto = (chunk: DbChunkSummary) => ({
   explorationExtras: (chunk.exploration_extras ?? {}) as Record<string, unknown>,
   grammar: (chunk.grammar ?? {}) as Record<string, unknown>,
   groundedAt: toIsoString(chunk.grounded_at),
+  groundingPatch: chunk.grounding_patch ?? null,
   grammarUserEditedAt: toIsoString(chunk.grammar_user_edited_at),
   isProductionEnabled: chunk.is_production_enabled ?? false,
 })

@@ -21,6 +21,7 @@ import {
   type FormAutoSetup,
   type SelectedTarget,
 } from './study-target-helpers'
+import { citationGrammarFieldProvenance, generatedFieldProvenance } from '../utils/field-provenance'
 
 type Props = {
   chunk: Chunk
@@ -90,6 +91,15 @@ export const PerFormCardEditor = ({
           targetLanguage={chunk.targetLanguage}
           isPending={updateChunkContent.isPending}
           onSave={(patch) => updateChunkContent.mutate({ chunkId: chunk.id, patch: { grammarPatch: patch } })}
+          provenanceFor={(key, currentValue) =>
+            citationGrammarFieldProvenance({
+              key,
+              currentValue,
+              groundingPatch: chunk.groundingPatch,
+              groundedAt: chunk.groundedAt,
+              targetLanguage: chunk.targetLanguage,
+            })
+          }
         />
         <SourceContextBlock source={citationFacet?.source ?? null} fromVocabulary={fromVocabulary} />
       </div>
@@ -236,6 +246,15 @@ export const FormEditor = ({
     )
   }
 
+  // The generated snapshot to compare fields against. When the snapshot exists
+  // but omitted a key (e.g. generation produced no grammar), compare against
+  // the empty record so user-added values still read as "edited"; a null
+  // snapshot (manual / legacy facet) disables provenance claims entirely.
+  const generatedSnapshot = facet.generatedPayload
+  const generatedGrammar = generatedSnapshot
+    ? ((generatedSnapshot.grammar as Record<string, unknown> | undefined) ?? {})
+    : null
+
   // Ready: full editable field set, backed by the form facet's payload.
   return (
     <div className='flex flex-col gap-4'>
@@ -251,6 +270,9 @@ export const FormEditor = ({
         translationFieldsMode={translationFieldsMode}
         isPending={setFacetPayload.isPending}
         onSaveContent={(patch) => onSavePayload(patch)}
+        provenanceFor={(key, currentValue) =>
+          generatedFieldProvenance({ key, currentValue, generated: generatedSnapshot })
+        }
       />
       <EditableGrammarPanel
         key={`form-grammar:${targetForm}`}
@@ -260,6 +282,9 @@ export const FormEditor = ({
         // The shallow payload merge replaces the whole `grammar` sub-object, so
         // always write the COMPLETE bag (not the partial patch).
         onSave={(_patch, fullGrammar) => onSavePayload({ grammar: fullGrammar })}
+        provenanceFor={(key, currentValue) =>
+          generatedFieldProvenance({ key, currentValue, generated: generatedGrammar })
+        }
       />
       <SourceContextBlock source={source} fromVocabulary={fromVocabulary} />
     </div>

@@ -120,7 +120,11 @@ to **form-facet existence**, `hasFormFacet`).
   carrying only the surface string. The editor body offers **Generate** (a focused **Opus** pass,
   `generate-form-data.ts` → `generateFormFacetData` → `setFacetPayload`, synchronous, user behind a
   spinner — never the Haiku gloss) or **Enter manually**; either fills the payload and flips to
-  `ready`, after which the full editable field set replaces the affordance. Generation emits
+  `ready`, after which the full editable field set replaces the affordance. The generate path also
+  snapshots what it wrote into the server-write-only `generated_payload` column (the public
+  `setFacetPayload` contract never carries it); the editor's per-field provenance indicators compare
+  the live payload against it — diverged = "Edited" pencil with a one-tap revert. Manual entry
+  leaves it null: no snapshot, no provenance claims. Generation emits
   translation / definition / example / pos and **source-seeds** the `targetExample` from the form's
   encountered sentence (`facet.source`) — Opus translates that rather than inventing — but **never
   IPA/stress** (hallucination guard). Enabling Production on an already-filled form reuses its

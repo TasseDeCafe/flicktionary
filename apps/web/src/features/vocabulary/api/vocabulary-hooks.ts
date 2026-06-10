@@ -92,6 +92,7 @@ export const useSetFacetEnabled = () => {
                 dataStatus: isForm && !hasTranslation ? 'pending_data' : 'ready',
                 srsState: null,
                 payload: payload ?? {},
+                generatedPayload: null,
                 source: null,
               },
             ]

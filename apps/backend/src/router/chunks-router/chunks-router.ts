@@ -52,6 +52,7 @@ const toChunkRowAsChunkDto = (row: ChunkRow) => ({
   explorationExtras: row.explorationExtras,
   grammar: row.grammar,
   groundedAt: toIsoString(row.groundedAt),
+  groundingPatch: row.groundingPatch,
   grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
   isProductionEnabled: row.isProductionEnabled,
 })
@@ -69,6 +70,7 @@ const toChunkRowDto = (row: ChunkRow) => ({
   explorationExtras: row.explorationExtras,
   grammar: row.grammar,
   groundedAt: toIsoString(row.groundedAt),
+  groundingPatch: row.groundingPatch,
   grammarUserEditedAt: toIsoString(row.grammarUserEditedAt),
   isProductionEnabled: row.isProductionEnabled,
   count: row.count,
