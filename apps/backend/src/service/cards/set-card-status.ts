@@ -16,7 +16,7 @@ export type SetCardStatusDependencies = {
 //   no real transition                   →  no-op (idempotent re-clicks)
 // SRS state stays put on un-keep — re-keeping later resumes the schedule.
 //
-// Production study (the active pool) is no longer set here: it's toggled
+// Production study (the production pool) is no longer set here: it's toggled
 // independently via the citation meaning_production facet (setFacetEnabled).
 // Keep creates the DEFAULT recognition facet only when the term has no facet
 // rows yet — a pre-keep study-target configuration (e.g. pronunciation-only

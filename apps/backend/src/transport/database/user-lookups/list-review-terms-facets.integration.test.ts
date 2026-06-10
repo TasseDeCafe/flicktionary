@@ -58,7 +58,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       userId: params.userId,
       userLookupId: params.userLookupId,
       targetLanguage: 'es',
-      pool: params.skill === 'meaning_production' ? 'active' : 'passive',
+      pool: params.skill === 'meaning_production' ? 'production' : 'recognition',
       skill: params.skill,
       targetForm: params.targetForm,
       rating: 'good',
@@ -103,13 +103,13 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     await logReview({ userId, userLookupId: term.id, skill: 'meaning_recognition', targetForm: '' })
 
     expect(
-      await ratingEventsRepository.countReviewBudgetConsumedToday({ userId, targetLanguage: 'es', mode: 'recognition' })
+      await ratingEventsRepository.countReviewBudgetConsumedToday({ userId, targetLanguage: 'es', pool: 'recognition' })
     ).toBe(2)
 
     // Reverting the form facet's event refunds its slot.
     await ratingEventsRepository.markReverted({ eventId: formEventId, userId })
     expect(
-      await ratingEventsRepository.countReviewBudgetConsumedToday({ userId, targetLanguage: 'es', mode: 'recognition' })
+      await ratingEventsRepository.countReviewBudgetConsumedToday({ userId, targetLanguage: 'es', pool: 'recognition' })
     ).toBe(1)
   })
 
@@ -165,7 +165,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     const rows = await userLookupsRepository.listReviewTerms({
       userId,
       targetLanguage: 'es',
-      pool: 'passive',
+      pool: 'recognition',
       scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
@@ -195,7 +195,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     const rows = await userLookupsRepository.listReviewTerms({
       userId,
       targetLanguage: 'es',
-      pool: 'passive',
+      pool: 'recognition',
       scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
@@ -222,7 +222,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     const baseParams = {
       userId,
       targetLanguage: 'es',
-      pool: 'passive' as const,
+      pool: 'recognition' as const,
       maxReviewTerms: 0,
       maxLearningTerms: 0,
       maxNewTerms: 50,
@@ -240,10 +240,10 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     expect(learn.map((r) => r.target_form).sort()).toEqual(['', 'nuevos'])
   })
 
-  // Phase 4a: pronunciation is a recognition-mode (passive) facet. A ready,
-  // enabled, due pronunciation facet is served in the passive queue alongside
+  // Phase 4a: pronunciation is a recognition-mode (recognition) facet. A ready,
+  // enabled, due pronunciation facet is served in the recognition queue alongside
   // the citation meaning facet; a disabled or pending_data one is filtered out.
-  test('pronunciation facet is served in the passive queue (ready+enabled only)', async () => {
+  test('pronunciation facet is served in the recognition queue (ready+enabled only)', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const due = '2026-06-01T00:00:00Z'
 
@@ -276,7 +276,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     const rows = await userLookupsRepository.listReviewTerms({
       userId,
       targetLanguage: 'es',
-      pool: 'passive',
+      pool: 'recognition',
       scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
@@ -311,22 +311,22 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
       srsDue: due,
     })
 
-    const active = await userLookupsRepository.listReviewTerms({
+    const production = await userLookupsRepository.listReviewTerms({
       userId,
       targetLanguage: 'es',
-      pool: 'active',
+      pool: 'production',
       scope: 'review_due',
       maxReviewTerms: 100,
       maxLearningTerms: 100,
       maxNewTerms: 0,
       maxOptInNewTerms: 0,
     })
-    expect(active.some((r) => r.skill === 'pronunciation')).toBe(false)
+    expect(production.some((r) => r.skill === 'pronunciation')).toBe(false)
   })
 
   // Production FORM facets are opt-in news in the ACTIVE pool: served by the
   // opt-in bucket in learn_new, never in mixed (Trap 22 applies to both pools).
-  test('unseen production form facet is served in active learn_new, not mixed', async () => {
+  test('unseen production form facet is served in production learn_new, not mixed', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const term = await createKeptTerm(userId, 'hablar')
     // Citation production facet already scheduled (not new) — only the form is unseen.
@@ -350,7 +350,7 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     const baseParams = {
       userId,
       targetLanguage: 'es',
-      pool: 'active' as const,
+      pool: 'production' as const,
       maxReviewTerms: 0,
       maxLearningTerms: 0,
       maxNewTerms: 50,
@@ -462,6 +462,6 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     const summary = (await userLookupsRepository.listDueSummary(userId)).find((s) => s.targetLanguage === 'es')
     expect(summary?.newCount).toBe(1) // the citation recognition facet stays citation-only
     expect(summary?.optInNewCount).toBe(2)
-    expect(summary?.activeOptInNewCount).toBe(1)
+    expect(summary?.productionOptInNewCount).toBe(1)
   })
 })

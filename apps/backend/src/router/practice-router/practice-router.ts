@@ -11,7 +11,6 @@ import {
   type PracticePool,
   type UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
-import type { PracticePool as ApiPracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   CITATION_FORM,
   skillForPool,
@@ -77,13 +76,6 @@ type ChunkContent = {
   isProductionEnabled: boolean
 }
 
-// The public API names the pools by skill direction ('recognition' |
-// 'production', matching ReviewMode and the UI labels); the internals and the
-// DB still use the legacy 'passive' | 'active'. Map at this boundary only —
-// these helpers disappear once the internal rename + data migration land.
-const toInternalPool = (pool: ApiPracticePool): PracticePool => (pool === 'production' ? 'active' : 'passive')
-const toApiPool = (pool: PracticePool): ApiPracticePool => (pool === 'active' ? 'production' : 'recognition')
-
 const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
 
 const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkContent>) => {
@@ -110,7 +102,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
   })
   return {
     id: row.id,
-    pool: toApiPool((row.pool as PracticePool) ?? 'passive'),
+    pool: (row.pool as PracticePool) ?? 'recognition',
     ord: row.ord,
     status: row.status,
     body: row.body,
@@ -187,7 +179,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
-  const warmBank = (params: { lookup: DbUserLookup; pool: 'passive' | 'active' }) =>
+  const warmBank = (params: { lookup: DbUserLookup; pool: PracticePool }) =>
     warmExerciseBank({ ...params, deps: exerciseBankDeps })
 
   // FSRS write + rating-event insert commit atomically (see applyTermRating).
@@ -221,14 +213,14 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const router = implementer.router({
     dueSummary: implementer.dueSummary.handler(async ({ context }) => {
       const userId = context.res.locals.userId
-      // reviewedTodayCount comes off the rating-event log (passive review
-      // budget only — the active pool has no review budget) in one grouped
+      // reviewedTodayCount comes off the rating-event log (recognition review
+      // budget only — the production pool has no review budget) in one grouped
       // query, merged per language. Open reading-mode texts ride along so the
       // landing can offer "continue reading" (they're otherwise invisible —
       // an abandoned reading is only reachable by re-entering Read mode).
       const [summary, reviewedTodayByLanguage, currentReadings] = await Promise.all([
         deps.userLookupsRepository.listDueSummary(userId),
-        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, mode: 'recognition' }),
+        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'recognition' }),
         deps.practiceTextsRepository.listCurrentReadings(userId),
       ])
       const perLanguage = summary.map((entry) => ({
@@ -236,14 +228,14 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         reviewedTodayCount: reviewedTodayByLanguage.get(entry.targetLanguage) ?? 0,
         currentReadings: currentReadings
           .filter((reading) => reading.targetLanguage === entry.targetLanguage)
-          .map(({ pool, scope, termCount }) => ({ pool: toApiPool(pool), scope, termCount })),
+          .map(({ pool, scope, termCount }) => ({ pool, scope, termCount })),
       }))
       return { data: { perLanguage } }
     }),
 
     listReviewTerms: implementer.listReviewTerms.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const rows = await listReviewTerms(userId, input.targetLanguage, toInternalPool(input.pool), input.scope, capsDeps, {
+      const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps, {
         requestedNewCount: input.newBatchSize,
       })
       return { data: { terms: rows.map((row) => toReviewTermDto(row)) } }
@@ -255,7 +247,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         input.userLookupId,
         userId,
         input.rating,
-        toInternalPool(input.pool),
+        input.pool,
         input.skill,
         input.targetForm,
         {
@@ -269,8 +261,8 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         { bypassDailyCap: input.learnNewSession === true }
       )
       if (!result.ok) {
-        if (result.reason === 'not_in_active_pool') {
-          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the active pool.' }] } })
+        if (result.reason === 'not_in_production_pool') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the production pool.' }] } })
         }
         if (result.reason === 'illegal_pool_skill') {
           throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Illegal (pool, skill) pairing.' }] } })
@@ -293,7 +285,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await undoRating(
         input.userLookupId,
         userId,
-        toInternalPool(input.pool),
+        input.pool,
         input.skill,
         input.targetForm,
         input.eventId,
@@ -315,7 +307,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
 
     generateNextReadingText: implementer.generateNextReadingText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const result = await generateReadingText(userId, input.targetLanguage, toInternalPool(input.pool), input.scope, readingDeps)
+      const result = await generateReadingText(userId, input.targetLanguage, input.pool, input.scope, readingDeps)
       if (!result.ok) {
         if (result.reason === 'no_native_language') {
           throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language pref missing.' }] } })
@@ -338,7 +330,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await prepareNextReadingText(
         userId,
         input.targetLanguage,
-        toInternalPool(input.pool),
+        input.pool,
         input.scope,
         input.excludeUserLookupIds,
         readingDeps
@@ -355,7 +347,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await advanceReadingText(
         userId,
         input.textId,
-        toInternalPool(input.pool),
+        input.pool,
         input.scope,
         input.ratings,
         readingDeps
@@ -388,7 +380,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const rows = await deps.practiceTextsRepository.listHistory({
         userId,
         targetLanguage: input.targetLanguage,
-        pool: toInternalPool(input.pool),
+        pool: input.pool,
       })
       const texts = await Promise.all(rows.map((row) => shapeText(row, userId, input.targetLanguage)))
       return { data: { texts } }
@@ -408,7 +400,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const exercises = await getStrengthenExercises({
         userId,
         targetLanguage: input.targetLanguage,
-        pool: toInternalPool(input.pool),
+        pool: input.pool,
         sessionHardUserLookupIds: input.sessionHardUserLookupIds,
         deps: exerciseBankDeps,
       })
@@ -495,7 +487,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         }
       }
 
-      const exercisePool = exercise.pool as 'passive' | 'active'
+      const exercisePool = exercise.pool as PracticePool
       const termLookup = await deps.userLookupsRepository.findByIdForUser(exercise.user_lookup_id, userId)
 
       // Rehab: a gate exercise answered for a term parked in this pool drives

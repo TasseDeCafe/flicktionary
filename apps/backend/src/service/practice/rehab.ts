@@ -13,15 +13,15 @@ export type RehabDependencies = {
 }
 
 // Escalating gate-exercise ladder, derived from the term's rehab day count
-// (tier = rehab_correct_days, no extra column). Pool-matched: passive stays
-// in recognition, active escalates to typed production. Day 3 repeats the
-// hardest reached tier on a FRESH exercise (every answered attempt consumes
-// its exercise, so "fresh" is structural).
-const PASSIVE_LADDER: ExerciseType[] = ['mc_cloze', 'mc_comprehension', 'mc_cloze']
-const ACTIVE_LADDER: ExerciseType[] = ['mc_cloze', 'production_cloze', 'production_cloze']
+// (tier = rehab_correct_days, no extra column). Pool-matched: recognition
+// stays in MC exercises, production escalates to typed production. Day 3
+// repeats the hardest reached tier on a FRESH exercise (every answered attempt
+// consumes its exercise, so "fresh" is structural).
+const RECOGNITION_LADDER: ExerciseType[] = ['mc_cloze', 'mc_comprehension', 'mc_cloze']
+const PRODUCTION_LADDER: ExerciseType[] = ['mc_cloze', 'production_cloze', 'production_cloze']
 
 export const gateTypeForTier = (pool: PracticePool, rehabCorrectDays: number): ExerciseType => {
-  const ladder = pool === 'passive' ? PASSIVE_LADDER : ACTIVE_LADDER
+  const ladder = pool === 'recognition' ? RECOGNITION_LADDER : PRODUCTION_LADDER
   const tier = Math.max(0, Math.min(rehabCorrectDays, ladder.length - 1))
   return ladder[tier]!
 }

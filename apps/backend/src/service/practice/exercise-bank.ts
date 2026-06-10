@@ -33,12 +33,12 @@ export type ExerciseBankDependencies = {
   studyFacetsRepository: StudyFacetsRepositoryInterface
 }
 
-// Pool-dependent exercise ladder. Passive (recognition): MC cloze + MC
-// comprehension. Active (production): MC cloze + production cloze (typed).
+// Pool-dependent exercise ladder. Recognition: MC cloze + MC comprehension.
+// Production: MC cloze + production cloze (typed).
 // Use-in-a-sentence ships for both pools but as ungated bonus only — its
 // LLM grading must never block a leech graduation.
 const requiredExerciseTypes = (pool: PracticePool): ExerciseType[] =>
-  pool === 'passive'
+  pool === 'recognition'
     ? ['mc_cloze', 'mc_comprehension', 'use_in_sentence']
     : ['mc_cloze', 'production_cloze', 'use_in_sentence']
 
@@ -280,11 +280,11 @@ export const getStrengthenExercises = async (params: {
     (row): row is DbUserLookup =>
       row != null && row.target_language === targetLanguage && row.count > 0 && !parkedIds.has(row.id)
   )
-  // Active-pool membership is now the citation meaning_production facet being
-  // ENABLED (replaces the dropped learning_mode column). Re-validate each
+  // Production-pool membership is now the citation meaning_production facet
+  // being ENABLED (replaces the dropped learning_mode column). Re-validate each
   // candidate's production facet; a missing or disabled facet drops it.
   let hardLookups: DbUserLookup[]
-  if (pool === 'active') {
+  if (pool === 'production') {
     const enabledFlags = await Promise.all(
       candidateLookups.map(async (row) => {
         const facet = await deps.studyFacetsRepository.getFacet({
@@ -304,7 +304,7 @@ export const getStrengthenExercises = async (params: {
 
   for (const lookup of parked) {
     // Tier-typed gate: the exercise type escalates with the term's rehab day
-    // count (recognition ladder for passive, production ladder for active).
+    // count (the pool's matching ladder).
     const exercise = await deps.practiceExercisesRepository.selectNextExercise({
       userLookupId: lookup.id,
       pool,

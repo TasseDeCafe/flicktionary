@@ -62,9 +62,9 @@ const isEligibleForScope = (
   scope: ReviewScope,
   now: Date
 ): boolean => {
-  // Active-pool membership is the citation production facet being enabled
+  // Production-pool membership is the citation production facet being enabled
   // (is_production_enabled), derived from the merged facet's disabled_at.
-  if (pool === 'active' && !lookup.is_production_enabled) return false
+  if (pool === 'production' && !lookup.is_production_enabled) return false
   const state = lookup.srs_state
   const due = lookup.srs_due
   const wantsNew = scope === 'learn_new' || scope === 'mixed'
@@ -125,8 +125,9 @@ export const advanceReadingText = async (
       seen.add(lookup.id)
       ratedLookupIds.push(lookup.id)
       // Reading stays citation-meaning-only; load the facet for the pool's
-      // citation skill and merge it. A non-active term has no production facet —
-      // getFacet returns null and the term is simply skipped (not eligible).
+      // citation skill and merge it. A term outside production study has no
+      // production facet — getFacet returns null and the term is simply
+      // skipped (not eligible).
       const skill = skillForPool(effectivePool)
       if (skill === 'meaning_recognition') {
         await deps.studyFacetsRepository.ensureCitationFacet(lookup.id)

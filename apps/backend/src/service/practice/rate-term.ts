@@ -55,20 +55,20 @@ export type ApplyTermRatingResult =
 // (advanceReadingText) so both introduce/grade terms identically.
 //
 // New-term introductions (state IS NULL) are gated at introduction time:
-//   - passive: the atomic daily-cap guard stamps the row only if the day's
+//   - recognition: the atomic daily-cap guard stamps the row only if the day's
 //     introduced count is still under maxNewTerms. Refusal => no FSRS applied,
 //     the caller drops the term (flashcard) or leaves it new (reading).
 //     `bypassDailyCap` (an explicit learn-new session) skips only the count
 //     predicate — the row is still stamped, so it counts toward today.
-//   - active: not daily-capped — initialize unconditionally.
+//   - production: not daily-capped — initialize unconditionally.
 // Already-scheduled terms skip the guard entirely.
 //
 // Every APPLIED rating also appends a practice_rating_events row in the same
 // transaction as the FSRS write — the log is the daily review budget's source
 // of truth, so a half-applied rating must not re-open the refill bug. No event
-// on cap-refusal, parked no-op, or not-in-active-pool (nothing was applied).
+// on cap-refusal, parked no-op, or not-in-production-pool (nothing was applied).
 //
-// Known, accepted partial-failure window: the passive introduction guard runs
+// Known, accepted partial-failure window: the recognition introduction guard runs
 // in its OWN advisory-lock transaction. If the guard stamps the row and the
 // FSRS+event tx then fails, the card shows up due ('new', due now) and
 // self-heals on the next rating (which logs its event then); the consumed
@@ -76,8 +76,8 @@ export type ApplyTermRatingResult =
 // event to undo because no FSRS result was applied. Same risk window as the
 // pre-event-log code.
 export const applyTermRating = async (params: {
-  // The term joined with the facet being rated (recognition for passive,
-  // production for active). The callers build it via mergeFacet so the facet is
+  // The term joined with the facet being rated (the pool's citation skill).
+  // The callers build it via mergeFacet so the facet is
   // guaranteed to exist and carries the SRS/leech state to read.
   lookup: DbUserLookupWithFacet
   userId: string
@@ -207,7 +207,7 @@ export const applyTermRating = async (params: {
 
 export type RateTermResult =
   | { ok: true; introducedNew: boolean; dailyCapReached: boolean; parked: boolean; eventId: string | null }
-  | { ok: false; reason: 'lookup_not_found' | 'not_in_active_pool' | 'illegal_pool_skill' }
+  | { ok: false; reason: 'lookup_not_found' | 'not_in_production_pool' | 'illegal_pool_skill' }
 
 // Flashcard-mode single-card rating. The wire carries `pool` (the session queue
 // the rating came from) plus `skill`/`targetForm` (which facet was rated); the
@@ -225,8 +225,8 @@ export const rateTerm = async (
   deps: RateTermDependencies,
   options?: { bypassDailyCap?: boolean }
 ): Promise<RateTermResult> => {
-  // Reject illegal (pool, skill) pairings (e.g. active + pronunciation) before
-  // touching any state — pool and skill are distinct namespaces.
+  // Reject illegal (pool, skill) pairings (e.g. production + pronunciation)
+  // before touching any state — pool and skill are distinct namespaces.
   if (!isLegalPoolSkill(pool, skill)) return { ok: false, reason: 'illegal_pool_skill' }
 
   const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
@@ -241,18 +241,19 @@ export const rateTerm = async (
     await deps.studyFacetsRepository.ensureCitationFacet(lookup.id)
   }
   const facet = await deps.studyFacetsRepository.getFacet({ userLookupId: lookup.id, skill, targetForm })
-  if (!facet) return { ok: false, reason: 'not_in_active_pool' }
-  // Active-pool membership is now the production citation facet being ENABLED
-  // (replaces the dropped learning_mode column). A disabled (demoted) facet is
-  // not in the active pool — reject rather than re-rate a demoted term.
-  if (pool === 'active' && facet.disabled_at !== null) return { ok: false, reason: 'not_in_active_pool' }
+  if (!facet) return { ok: false, reason: 'not_in_production_pool' }
+  // Production-pool membership is now the production citation facet being
+  // ENABLED (replaces the dropped learning_mode column). A disabled (demoted)
+  // facet is not in the production pool — reject rather than re-rate a demoted
+  // term.
+  if (pool === 'production' && facet.disabled_at !== null) return { ok: false, reason: 'not_in_production_pool' }
   const facetRow = mergeFacet(lookup, facet)
 
   // Pass the FULL clamped per-language daily cap: the atomic guard does its
   // own today-count comparison against it (subtracting here would
-  // double-count). The active pool isn't daily-capped, so skip the fetch.
+  // double-count). The production pool isn't daily-capped, so skip the fetch.
   const maxNewTerms =
-    pool === 'active'
+    pool === 'production'
       ? HARD_MAX_PRACTICE_NEW_TERMS
       : clampPracticeSessionLimits(
           await deps.userTargetLanguagePrefsRepository.getPracticeLimitsForLanguage(userId, lookup.target_language)

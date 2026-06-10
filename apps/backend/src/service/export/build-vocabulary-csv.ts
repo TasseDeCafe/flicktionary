@@ -100,7 +100,7 @@ const extractContext = (chunk: ExportChunkRow): string => {
 
 const buildTags = (chunk: ExportChunkRow, targetLanguage: string): string => {
   const tags = ['flicktionary', targetLanguage]
-  if (chunk.isProductionEnabled) tags.push('active')
+  if (chunk.isProductionEnabled) tags.push('production')
   // Anki natively treats a "leech" tag specially (suspend/flag filters).
   if (chunk.isLeechParked) tags.push('leech')
   return tags.join(' ')

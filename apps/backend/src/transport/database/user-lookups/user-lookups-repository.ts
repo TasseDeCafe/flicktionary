@@ -7,8 +7,10 @@ import {
   ensureDefaultCitationFacetIfUnconfigured,
   ensureFacet,
   skillForPool,
+  skillsForPool,
   type DbStudyFacet,
   type FacetSkill,
+  type PracticePool,
 } from '../study-facets/study-facets-repository'
 
 export type DbUserLookup = Tables<'user_lookups'>
@@ -17,7 +19,7 @@ export type SrsState = Database['public']['Enums']['srs_state']
 // A user_lookups row joined with one facet's FSRS + leech state, flattened with
 // the legacy srs_*/leech_* column names so the rating/leech services read a
 // single column family (the facet's skill already encodes the pool — there is
-// no more active_* mirror). `skill`/`target_form` carry the facet identity for
+// no per-pool column mirror). `skill`/`target_form` carry the facet identity for
 // the writers. Produced by the facet-joined readers (listReviewTerms,
 // listParkedTerms) and by mergeFacet at the rating boundary.
 export type DbUserLookupWithFacet = DbUserLookup & {
@@ -38,12 +40,13 @@ export type DbUserLookupWithFacet = DbUserLookup & {
   // the queue DTO (facetPayload). Populated in Phase 4.
   payload: DbStudyFacet['payload']
   // True iff an ENABLED citation meaning_production facet exists for this term
-  // — the derived "in production study" / active-pool membership flag (replaces
-  // the dropped user_lookups.learning_mode column). For the active-pool readers
-  // (listReviewTerms/listParkedTerms with pool='active') the merged facet IS
-  // that production facet, so this mirrors `disabled_at IS NULL` on it; the
-  // active queries already filter to enabled production facets, so it is always
-  // true there. Service-layer guards read this instead of learning_mode.
+  // — the derived "in production study" / production-pool membership flag
+  // (replaces the dropped user_lookups.learning_mode column). For the
+  // production-pool readers (listReviewTerms/listParkedTerms with
+  // pool='production') the merged facet IS that production facet, so this
+  // mirrors `disabled_at IS NULL` on it; the production queries already filter
+  // to enabled production facets, so it is always true there. Service-layer
+  // guards read this instead of learning_mode.
   is_production_enabled: boolean
 }
 
@@ -66,11 +69,11 @@ export const mergeFacet = (lookup: DbUserLookup, facet: DbStudyFacet): DbUserLoo
   leech_rehab_last_correct_on: facet.leech_rehab_last_correct_on,
   introduced_at: facet.introduced_at,
   payload: facet.payload,
-  // The active-pool membership flag is the production citation facet's enabled
-  // state. mergeFacet is the rating boundary: an active rating merges THE
-  // production citation facet, so its own disabled_at is the source of truth.
-  // For any other facet (passive/recognition, forms) production-membership
-  // isn't carried here and is irrelevant to the active-pool guards, so it
+  // The production-pool membership flag is the production citation facet's
+  // enabled state. mergeFacet is the rating boundary: a production rating
+  // merges THE production citation facet, so its own disabled_at is the source
+  // of truth. For any other facet (recognition, forms) production-membership
+  // isn't carried here and is irrelevant to the production-pool guards, so it
   // resolves false.
   is_production_enabled:
     facet.skill === 'meaning_production' && facet.target_form === CITATION_FORM && facet.disabled_at === null,
@@ -106,10 +109,7 @@ export type ChunkFacetSummary = {
   source: FacetSource | null
 }
 
-// Which SRS column set to read or advance. 1:1 with practice_sessions.pool —
-// passive sessions read the legacy srs_* columns, active drills read
-// active_srs_*.
-export type PracticePool = 'passive' | 'active'
+export type { PracticePool }
 
 export type HeadwordSense = {
   headword: string
@@ -128,23 +128,23 @@ export type DueSummaryEntry = {
   newCount: number
   newIntroducedTodayCount: number
   // Unseen OPT-IN facets (pronunciation / specific forms — everything except
-  // the daily-new-capped citation facet of each mode) that are enabled+ready,
-  // split by review mode. These are served only in learn-new sessions, so the
-  // landing's Learn-new affordances need them; newCount/activeNewCount stay
+  // the daily-new-capped citation facet of each pool) that are enabled+ready,
+  // split by pool. These are served only in learn-new sessions, so the
+  // landing's Learn-new affordances need them; newCount/productionNewCount stay
   // citation-only because the mixed Practice queue never serves opt-ins.
   optInNewCount: number
-  activeOptInNewCount: number
+  productionOptInNewCount: number
   // Leech-parked terms (excluded from every practice queue until rehab
   // graduates them). The due/learning aggregates above already exclude them.
   parkedCount: number
-  // Active-drill pool counters. Parallel to the passive counters above but
+  // Production-pool counters. Parallel to the recognition counters above but
   // computed off the enabled citation meaning_production facet (membership) and
   // its SRS state.
-  activeTotal: number
-  activeReviewDueCount: number
-  activeLearningDueCount: number
-  activeNewCount: number
-  activeParkedCount: number
+  productionTotal: number
+  productionReviewDueCount: number
+  productionLearningDueCount: number
+  productionNewCount: number
+  productionParkedCount: number
 }
 
 export type RenameKeyResult = { ok: true } | { ok: false; reason: 'CONFLICT' }
@@ -439,8 +439,8 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 // part of the user's vocabulary until they keep at least one card for the
 // chunk — hence the count > 0 gate everywhere on the Practice path.
 const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
-  // Recognition (passive) numbers read the citation meaning_recognition facet;
-  // the active mirror reads the citation meaning_production facet. Both are 1:1
+  // Recognition numbers read the citation meaning_recognition facet; the
+  // production mirror reads the citation meaning_production facet. Both are 1:1
   // with the term (target_form=''), so the LEFT JOINs never fan out.
   //
   // Every queue-feeding count requires an ENABLED (id IS NOT NULL via the
@@ -494,7 +494,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       COUNT(*) FILTER (
         WHERE rf.disabled_at IS NULL AND rf.leech_parked_at IS NOT NULL
       )::int AS parked_count,
-      COUNT(*) FILTER (WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL)::int AS active_total,
+      COUNT(*) FILTER (WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL)::int AS production_total,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.data_status = 'ready'
@@ -502,7 +502,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
           AND pf.srs_due IS NOT NULL
           AND pf.srs_due <= NOW()
           AND pf.leech_parked_at IS NULL
-      )::int AS active_review_due_count,
+      )::int AS production_review_due_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.data_status = 'ready'
@@ -510,16 +510,16 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
           AND pf.srs_due IS NOT NULL
           AND pf.srs_due <= NOW()
           AND pf.leech_parked_at IS NULL
-      )::int AS active_learning_due_count,
+      )::int AS production_learning_due_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.data_status = 'ready'
           AND pf.srs_state IS NULL
-      )::int AS active_new_count,
+      )::int AS production_new_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.leech_parked_at IS NOT NULL
-      )::int AS active_parked_count
+      )::int AS production_parked_count
     FROM public.user_lookups ul
     LEFT JOIN public.study_facets rf
       ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
@@ -535,14 +535,14 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // are 1:many with the term here (forms + pronunciation), and joining them
   // into the grouped query above would fan out every other count. The
   // predicate mirrors listReviewTerms' opt-in new bucket exactly: enabled,
-  // ready, non-parked, unseen, and NOT the mode's daily-new-capped citation
+  // ready, non-parked, unseen, and NOT the pool's daily-new-capped citation
   // facet. Citation pronunciation counts (it is opt-in); citation
   // meaning_recognition/meaning_production are the primaries, excluded.
   const optInResult = await sql`
     SELECT
       ul.target_language,
       COUNT(*) FILTER (WHERE f.skill IN ('meaning_recognition', 'pronunciation'))::int AS opt_in_new_count,
-      COUNT(*) FILTER (WHERE f.skill = 'meaning_production')::int AS active_opt_in_new_count
+      COUNT(*) FILTER (WHERE f.skill = 'meaning_production')::int AS production_opt_in_new_count
     FROM public.study_facets f
     JOIN public.user_lookups ul ON ul.id = f.user_lookup_id
     WHERE ul.user_id = ${userId}
@@ -568,24 +568,25 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
     newCount: row.new_count as number,
     newIntroducedTodayCount: row.new_introduced_today_count as number,
     optInNewCount: (optInByLanguage.get(row.target_language as string)?.opt_in_new_count as number) ?? 0,
-    activeOptInNewCount: (optInByLanguage.get(row.target_language as string)?.active_opt_in_new_count as number) ?? 0,
+    productionOptInNewCount:
+      (optInByLanguage.get(row.target_language as string)?.production_opt_in_new_count as number) ?? 0,
     parkedCount: row.parked_count as number,
-    activeTotal: row.active_total as number,
-    activeReviewDueCount: row.active_review_due_count as number,
-    activeLearningDueCount: row.active_learning_due_count as number,
-    activeNewCount: row.active_new_count as number,
-    activeParkedCount: row.active_parked_count as number,
+    productionTotal: row.production_total as number,
+    productionReviewDueCount: row.production_review_due_count as number,
+    productionLearningDueCount: row.production_learning_due_count as number,
+    productionNewCount: row.production_new_count as number,
+    productionParkedCount: row.production_parked_count as number,
   }))
 }
 
 // The live review pool for a (language, pool), sliced by scope. Single source
 // for both render modes and the reading generator's candidate set.
 //
-//   - `pool` selects the facet skill SET, not a single skill: the passive queue
-//     serves the recognition skills {meaning_recognition, pronunciation}, the
-//     active queue serves {meaning_production}. Active-pool membership needs no
-//     extra row filter: the enabled-facet filter below IS the membership test
-//     (an enabled meaning_production facet == "in production study"; passive
+//   - `pool` selects the facet skill SET, not a single skill: the recognition
+//     queue serves {meaning_recognition, pronunciation}, the production queue
+//     serves {meaning_production}. Production-pool membership needs no extra
+//     row filter: the enabled-facet filter below IS the membership test (an
+//     enabled meaning_production facet == "in production study"; recognition
 //     spans every kept term via its recognition facet).
 //     Facets are filtered to enabled (disabled_at IS NULL — keeps demoted
 //     production facets out) and ready (data_status='ready' — keeps pending_data
@@ -599,7 +600,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
 // follow-ups {'learning','relearning'} are exempt under maxLearningTerms, a hard
 // ceiling, so a spent budget can't strand a failed card's relearning step).
 //
-// New cards split too: the citation card for the pool's review mode is the only
+// New cards split too: the pool's citation card is the only
 // daily-new-capped facet — capped by maxNewTerms, served in 'mixed' + 'learn_new'.
 // Opt-in new facets (pronunciation/forms, Phase 4) bypass the daily-new cap
 // (maxOptInNewTerms = a hard ceiling) and are served ONLY in 'learn_new', never
@@ -633,13 +634,13 @@ const listReviewTerms = async (params: {
   const learningLimit = wantDue ? params.maxLearningTerms : 0
   const newLimit = wantNew ? params.maxNewTerms : 0
   // maxOptInNewTerms is already pool+scope-gated by resolveReviewCaps (0 unless
-  // passive learn_new), so apply it directly.
+  // recognition learn_new), so apply it directly.
   const optInNewLimit = params.maxOptInNewTerms
   if (reviewLimit <= 0 && learningLimit <= 0 && newLimit <= 0 && optInNewLimit <= 0) return []
 
   // The skill set this queue serves, and its daily-new-capped primary citation
   // facet. 'pronunciation' has no rows until Phase 4, so listing it is inert now.
-  const skills = params.pool === 'active' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
+  const skills = skillsForPool(params.pool)
   const primarySkill = skillForPool(params.pool)
   const facetCols = sql`
     f.skill, f.target_form, f.srs_state, f.srs_due, f.srs_stability, f.srs_difficulty,
@@ -652,7 +653,7 @@ const listReviewTerms = async (params: {
   const excludeClause = excludedIds.length > 0 ? sql`AND NOT (ul.id = ANY(${excludedIds}::uuid[]))` : sql``
   // Shared eligibility: kept, live term; enabled, ready, non-parked facet in the
   // pool's skill set. Always-true conditions first so the optional AND clauses
-  // append cleanly. Active-pool membership needs no extra clause: the facetJoin
+  // append cleanly. Production-pool membership needs no extra clause: the facetJoin
   // is to the meaning_production facet and `f.disabled_at IS NULL` already keeps
   // demoted (disabled) production facets out — that IS the membership filter.
   const eligible = sql`
@@ -794,7 +795,8 @@ const getFirstCardPointerForChunk = async (params: {
 // Enable or disable a single study facet (skill x target_form) on a term. The
 // facet's `disabled_at` IS the membership flag — there is no more
 // user_lookups.learning_mode column. Enabling the citation meaning_production
-// facet is what "promote to active" used to be; disabling it is "demote".
+// facet is what "promote to production study" used to be; disabling it is
+// "demote".
 //   - enabled:true: ensure the facet exists (created with NULL srs state if
 //     absent) then CLEAR its disabled_at — re-enabling a previously-disabled,
 //     history-bearing facet so it resumes its schedule. `payload` (when
@@ -898,9 +900,10 @@ const listParkedTerms = async (params: {
   pool: PracticePool
 }): Promise<DbUserLookupWithFacet[]> => {
   const skill = skillForPool(params.pool)
-  // No active-mode clause: the join is to the pool's citation facet
-  // (meaning_production for active) and `f.disabled_at IS NULL` already enforces
-  // membership — a demoted (disabled) production facet is excluded.
+  // No membership clause: the join is to the pool's citation facet
+  // (meaning_production for the production pool) and `f.disabled_at IS NULL`
+  // already enforces membership — a demoted (disabled) production facet is
+  // excluded.
   return (await sql`
     SELECT
       ul.*,
@@ -1078,9 +1081,9 @@ export type ChunkRow = {
   srsDue: string | null
   srsReps: number
   isProductionEnabled: boolean
-  activeSrsState: SrsState | null
-  activeSrsDue: string | null
-  activeSrsReps: number
+  productionSrsState: SrsState | null
+  productionSrsDue: string | null
+  productionSrsReps: number
   createdAt: string
   firstCardId: string | null
   firstCardSegmentId: string | null
@@ -1109,9 +1112,9 @@ const SELECT_CHUNK_ROW_SQL = sql`
     rf.srs_due AS srs_due,
     rf.srs_reps AS srs_reps,
     (pf.disabled_at IS NULL AND pf.id IS NOT NULL) AS is_production_enabled,
-    pf.srs_state AS active_srs_state,
-    pf.srs_due AS active_srs_due,
-    pf.srs_reps AS active_srs_reps,
+    pf.srs_state AS production_srs_state,
+    pf.srs_due AS production_srs_due,
+    pf.srs_reps AS production_srs_reps,
     ul.created_at,
     ul.first_card_id,
     c.segment_id AS first_card_segment_id,
@@ -1147,9 +1150,9 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   srsDue: (row.srs_due as string | null) ?? null,
   srsReps: (row.srs_reps as number) ?? 0,
   isProductionEnabled: (row.is_production_enabled as boolean | null) ?? false,
-  activeSrsState: (row.active_srs_state as SrsState | null) ?? null,
-  activeSrsDue: (row.active_srs_due as string | null) ?? null,
-  activeSrsReps: (row.active_srs_reps as number) ?? 0,
+  productionSrsState: (row.production_srs_state as SrsState | null) ?? null,
+  productionSrsDue: (row.production_srs_due as string | null) ?? null,
+  productionSrsReps: (row.production_srs_reps as number) ?? 0,
   createdAt: row.created_at as string,
   firstCardId: (row.first_card_id as string | null) ?? null,
   firstCardSegmentId: (row.first_card_segment_id as string | null) ?? null,

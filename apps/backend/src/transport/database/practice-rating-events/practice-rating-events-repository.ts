@@ -1,8 +1,7 @@
 import type postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
-import type { PracticePool } from '../user-lookups/user-lookups-repository'
-import { skillsForReviewMode, type FacetSkill, type ReviewMode } from '../study-facets/study-facets-repository'
+import { skillsForPool, type FacetSkill, type PracticePool } from '../study-facets/study-facets-repository'
 
 export type DbPracticeRatingEvent = Tables<'practice_rating_events'>
 type SrsState = Database['public']['Enums']['srs_state']
@@ -100,8 +99,8 @@ const insert = async (params: InsertRatingEventInput, executor: postgres.Sql = s
 // The latest non-reverted event for one FACET (user, lookup, skill,
 // target_form) — the only event undoRating may revert (its prev_srs_* snapshot
 // describes the CURRENT facet state; older snapshots are stale). Keyed on the
-// facet identity, NOT pool: once the passive queue serves multiple facets per
-// term, pool would address the wrong card. FOR UPDATE serializes concurrent
+// facet identity, NOT pool: once the recognition queue serves multiple facets
+// per term, pool would address the wrong card. FOR UPDATE serializes concurrent
 // undos of the same facet: the loser re-reads after the winner's reverted_at
 // stamp and sees no live event. The user_id predicate is defense-in-depth —
 // callers already resolve the lookup through findByIdForUser.
@@ -140,13 +139,13 @@ const markReverted = async (
   `
 }
 
-// How much of today's daily REVIEW budget a (user, language, mode) has spent.
+// How much of today's daily REVIEW budget a (user, language, pool) has spent.
 //
-// - mode filter via skill set: caps are per-MODE, not per-pool. recognition
-//   covers {meaning_recognition, pronunciation}; production covers
-//   {meaning_production}. (Replaces the old pool filter: events of the wrong
-//   mode must not eat this mode's allowance.) pronunciation has no rows until
-//   Phase 4 but listing it is correct now.
+// - pool filter via skill set (authoritative, rather than the events' pool
+//   column): recognition covers {meaning_recognition, pronunciation};
+//   production covers {meaning_production}. Events of the wrong pool must not
+//   eat this pool's allowance. pronunciation has no rows until Phase 4 but
+//   listing it is correct now.
 // - was_introduction = false: introductions consume the NEW budget instead.
 // - prev_srs_state IN ('new','review'): only review-state cards charge the
 //   budget (same state grouping as listDueSummary's review_due_count);
@@ -161,9 +160,9 @@ const markReverted = async (
 const countReviewBudgetConsumedToday = async (params: {
   userId: string
   targetLanguage: string
-  mode: ReviewMode
+  pool: PracticePool
 }): Promise<number> => {
-  const skills = skillsForReviewMode(params.mode)
+  const skills = skillsForPool(params.pool)
   const rows = (await sql`
     SELECT COUNT(DISTINCT (user_lookup_id, skill, target_form))::int AS consumed
     FROM public.practice_rating_events
@@ -182,9 +181,9 @@ const countReviewBudgetConsumedToday = async (params: {
 // Per-language variant for the dueSummary handler: one query, not N.
 const countReviewBudgetConsumedTodayByLanguage = async (params: {
   userId: string
-  mode: ReviewMode
+  pool: PracticePool
 }): Promise<Map<string, number>> => {
-  const skills = skillsForReviewMode(params.mode)
+  const skills = skillsForPool(params.pool)
   const rows = (await sql`
     SELECT target_language, COUNT(DISTINCT (user_lookup_id, skill, target_form))::int AS consumed
     FROM public.practice_rating_events
@@ -210,11 +209,11 @@ export interface PracticeRatingEventsRepositoryInterface {
   countReviewBudgetConsumedToday: (params: {
     userId: string
     targetLanguage: string
-    mode: ReviewMode
+    pool: PracticePool
   }) => Promise<number>
   countReviewBudgetConsumedTodayByLanguage: (params: {
     userId: string
-    mode: ReviewMode
+    pool: PracticePool
   }) => Promise<Map<string, number>>
 }
 

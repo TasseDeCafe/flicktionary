@@ -40,7 +40,7 @@ export const DEFAULT_CARD_FACE_CONFIG: CardFaceConfig = {
 // needs hiding because the headword only appears on the back. A card with no
 // gloss data at all resolves to an empty front — callers fall back to the
 // recognition layout for that card.
-export const ACTIVE_CARD_FACE_CONFIG: CardFaceConfig = {
+export const PRODUCTION_CARD_FACE_CONFIG: CardFaceConfig = {
   front: ['definition', 'translation', 'nativeExample'],
   back: ['headword', 'ipa', 'targetExample', 'grammar'],
 }
@@ -67,7 +67,7 @@ export const getCardFaceConfig = (
   code: string | undefined | null,
   pool: 'recognition' | 'production' = 'recognition'
 ): CardFaceConfig => {
-  if (pool === 'production') return ACTIVE_CARD_FACE_CONFIG
+  if (pool === 'production') return PRODUCTION_CARD_FACE_CONFIG
   if (!code) return DEFAULT_CARD_FACE_CONFIG
   return LANGUAGE_CARD_FACE[code as SupportedLanguageCode] ?? DEFAULT_CARD_FACE_CONFIG
 }
