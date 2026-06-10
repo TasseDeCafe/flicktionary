@@ -2,11 +2,14 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
-import type { StudyFacetSummary } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-
-// The cached `getStudyTargets` query result (the raw response, before the
-// `useStudyTargets` select unwraps `.data`).
-type StudyTargetsCache = { data: { facets: StudyFacetSummary[]; candidateForms: string[] } }
+import { applyOptimistic, optimisticPatch, patchInfinitePages } from '@/lib/query/optimistic'
+import {
+  getStudyTargetsKey,
+  setRowProductionEnabled,
+  upsertFacetEnabled,
+  type StudyTargetsCache,
+  type VocabListRow,
+} from './facet-cache'
 
 export const useListLanguages = () => {
   const { t } = useLingui()
@@ -61,89 +64,39 @@ export const useSetFacetEnabled = () => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.setFacetEnabled.mutationOptions({
-      onMutate: async ({ chunkId, skill, targetForm, enabled, payload }) => {
+      onMutate: ({ chunkId, skill, targetForm, enabled, payload }) => {
         const form = targetForm ?? ''
-
-        // 1) The term's own study targets (scoped to this chunk — recognition's
-        // target_form '' is shared across every term, so a broad patch would
-        // corrupt siblings). Flip the matching facet, or insert it when enabling
-        // a skill with no row yet (mirrors the server's ensure-then-enable).
-        const studyTargetsKey = orpcQuery.chunks.getStudyTargets.key({ input: { chunkId } })
-        await queryClient.cancelQueries({ queryKey: studyTargetsKey })
-        const studyTargetsSnapshot = queryClient.getQueriesData<StudyTargetsCache>({ queryKey: studyTargetsKey })
-        queryClient.setQueriesData<StudyTargetsCache>({ queryKey: studyTargetsKey }, (old) => {
-          if (!old) return old
-          const facets = old.data.facets
-          const idx = facets.findIndex((f) => f.skill === skill && f.targetForm === form)
-          let nextFacets: StudyFacetSummary[]
-          if (idx >= 0) {
-            nextFacets = facets.map((f, i) =>
-              i === idx ? { ...f, enabled, ...(payload ? { payload: { ...f.payload, ...payload } } : {}) } : f
-            )
-          } else if (enabled) {
-            const isForm = form !== ''
-            const hasTranslation = !!payload && 'translation' in payload
-            nextFacets = [
-              ...facets,
-              {
-                skill,
-                targetForm: form,
-                enabled: true,
-                dataStatus: isForm && !hasTranslation ? 'pending_data' : 'ready',
-                srsState: null,
-                payload: payload ?? {},
-                generatedPayload: null,
-                source: null,
-              },
-            ]
-          } else {
-            nextFacets = facets
-          }
-          return { ...old, data: { ...old.data, facets: nextFacets } }
-        })
-
-        // 2) The vocab list's production chips (production-citation only).
+        // The vocab list's production chips only need patching for the
+        // production-citation facet (the only one with a list-visible flag).
         const isProductionCitation = skill === 'meaning_production' && form === ''
-        let listSnapshot: ReturnType<typeof queryClient.getQueriesData> | undefined
-        if (isProductionCitation) {
-          await queryClient.cancelQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-          listSnapshot = queryClient.getQueriesData({ queryKey: orpcQuery.chunks.listChunks.key() })
-          queryClient.setQueriesData<{
-            pages: Array<{ rows: Array<{ id: string; isProductionEnabled: boolean }>; nextCursor: string | null }>
-          }>({ queryKey: orpcQuery.chunks.listChunks.key() }, (old) => {
-            if (!old) return old
-            return {
-              ...old,
-              pages: old.pages.map((page) => ({
-                ...page,
-                rows: page.rows.map((row) => (row.id === chunkId ? { ...row, isProductionEnabled: enabled } : row)),
-              })),
-            }
-          })
-        }
-
-        return { studyTargetsSnapshot, listSnapshot }
+        return applyOptimistic(queryClient, [
+          // The term's own study targets — the chunk-scoped key matters, see
+          // upsertFacetEnabled.
+          optimisticPatch<StudyTargetsCache>(getStudyTargetsKey(chunkId), (old) =>
+            upsertFacetEnabled(old, { skill, targetForm: form, enabled, payload })
+          ),
+          ...(isProductionCitation
+            ? [
+                optimisticPatch<{ pages: Array<{ rows: VocabListRow[] }> }>(orpcQuery.chunks.listChunks.key(), (old) =>
+                  patchInfinitePages(old, (rows) => setRowProductionEnabled(rows, chunkId, enabled))
+                ),
+              ]
+            : []),
+        ])
       },
-      onError: (_err, _vars, context) => {
-        for (const [key, value] of context?.studyTargetsSnapshot ?? []) {
-          queryClient.setQueryData(key, value)
-        }
-        for (const [key, value] of context?.listSnapshot ?? []) {
-          queryClient.setQueryData(key, value)
-        }
-      },
-      onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.get.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.cards.listBySession.key() })
+      onError: (_err, _vars, context) => context?.rollback(),
+      meta: {
         // The Study-targets control reads facet membership from getStudyTargets;
         // refetch it so the just-toggled chip reflects the server state (the
         // pronunciation enable can also self-heal to "off" server-side when the
         // term has no IPA).
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.getStudyTargets.key() })
-      },
-      meta: {
+        invalidates: [
+          orpcQuery.chunks.listChunks.key(),
+          orpcQuery.practice.dueSummary.key(),
+          orpcQuery.cards.get.key(),
+          orpcQuery.cards.listBySession.key(),
+          orpcQuery.chunks.getStudyTargets.key(),
+        ],
         errorMessage: t`Failed to update study targets`,
         showErrorModal: true,
       },
@@ -247,35 +200,15 @@ export const useDeleteChunk = () => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.chunks.deleteChunk.mutationOptions({
-      onMutate: async ({ id }) => {
-        await queryClient.cancelQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        const snapshot = queryClient.getQueriesData({ queryKey: orpcQuery.chunks.listChunks.key() })
-        queryClient.setQueriesData<{ pages: Array<{ rows: Array<{ id: string }>; nextCursor: string | null }> }>(
-          { queryKey: orpcQuery.chunks.listChunks.key() },
-          (old) => {
-            if (!old) return old
-            return {
-              ...old,
-              pages: old.pages.map((page) => ({
-                ...page,
-                rows: page.rows.filter((row) => row.id !== id),
-              })),
-            }
-          }
-        )
-        return { snapshot }
-      },
-      onError: (_err, _vars, context) => {
-        if (!context) return
-        for (const [key, value] of context.snapshot) {
-          queryClient.setQueryData(key, value)
-        }
-      },
-      onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
-        void queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
-      },
+      onMutate: ({ id }) =>
+        applyOptimistic(queryClient, [
+          optimisticPatch<{ pages: Array<{ rows: Array<{ id: string }> }> }>(orpcQuery.chunks.listChunks.key(), (old) =>
+            patchInfinitePages(old, (rows) => rows.filter((row) => row.id !== id))
+          ),
+        ]),
+      onError: (_err, _vars, context) => context?.rollback(),
       meta: {
+        invalidates: [orpcQuery.chunks.listChunks.key(), orpcQuery.practice.dueSummary.key()],
         errorMessage: t`Failed to delete term`,
         showErrorModal: true,
       },

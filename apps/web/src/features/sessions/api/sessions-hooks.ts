@@ -1,6 +1,7 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
+import { applyOptimistic, optimisticPatch } from '@/lib/query/optimistic'
 import type { StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 type StudySessionQueryData = {
@@ -190,25 +191,18 @@ export const useRemoveStudySession = () => {
   const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.studySessions.remove.mutationOptions({
-      onMutate: async (variables: { sessionId: string }) => {
-        const listKey = orpcQuery.studySessions.list.key()
-        await queryClient.cancelQueries({ queryKey: listKey })
-        const previous = queryClient.getQueryData(listKey)
-        queryClient.setQueryData<{ data: Array<{ id: string }> }>(listKey, (cached) => {
-          if (!cached?.data) return cached
-          return { ...cached, data: cached.data.filter((s) => s.id !== variables.sessionId) }
-        })
-        return { listKey, previous }
-      },
-      onError: (_error, _variables, context) => {
-        if (!context) return
-        const ctx = context as { listKey: readonly unknown[]; previous: unknown }
-        if (ctx.previous !== undefined) queryClient.setQueryData(ctx.listKey, ctx.previous)
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: orpcQuery.studySessions.list.key() })
-      },
+      // Optimistically drop the session from the cached list so the row
+      // disappears the moment the user confirms.
+      onMutate: ({ sessionId }) =>
+        applyOptimistic(queryClient, [
+          optimisticPatch<{ data: Array<{ id: string }> }>(orpcQuery.studySessions.list.key(), (cached) => {
+            if (!cached?.data) return cached
+            return { ...cached, data: cached.data.filter((s) => s.id !== sessionId) }
+          }),
+        ]),
+      onError: (_error, _variables, context) => context?.rollback(),
       meta: {
+        invalidates: [orpcQuery.studySessions.list.key()],
         successMessage: t`Session removed`,
         errorMessage: t`Failed to remove session`,
         showErrorModal: true,
