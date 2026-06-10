@@ -97,6 +97,9 @@ export type ChunkFacetSummary = {
   dataStatus: 'ready' | 'pending_data'
   srsState: SrsState | null
   payload: Record<string, unknown>
+  // Snapshot of the payload as the generate pass wrote it (generated_payload
+  // column). Null for manually-entered / legacy form facets.
+  generatedPayload: Record<string, unknown> | null
   // The most-recent kept card backing this target (its inflection's occurrence;
   // the lemma's for citation), joined to its source segment. null when there's
   // no kept occurrence with a readable source (adhoc session / no text track).
@@ -351,9 +354,12 @@ const updateContent = async (params: {
 // patch` semantics used elsewhere. Other LLM-only keys are preserved.
 const applyGroundingPatch = async (params: { id: string; grammarPatch: Record<string, unknown> }): Promise<void> => {
   const grammarJson = sql.json(params.grammarPatch as unknown as postgres.JSONValue)
+  // grounding_patch is replaced wholesale (the latest grounding run owns the
+  // snapshot) — per-field provenance compares grammar values against it.
   await sql`
     UPDATE public.user_lookups
     SET grammar = grammar || ${grammarJson}::jsonb,
+        grounding_patch = ${grammarJson}::jsonb,
         grounded_at = NOW()
     WHERE id = ${params.id}
   `
@@ -1055,6 +1061,7 @@ export type ChunkRow = {
   explorationExtras: Record<string, unknown>
   grammar: Record<string, unknown>
   groundedAt: string | null
+  groundingPatch: Record<string, unknown> | null
   grammarUserEditedAt: string | null
   count: number
   srsState: SrsState | null
@@ -1085,6 +1092,7 @@ const SELECT_CHUNK_ROW_SQL = sql`
     ul.exploration_extras,
     ul.grammar,
     ul.grounded_at,
+    ul.grounding_patch,
     ul.grammar_user_edited_at,
     ul.count,
     rf.srs_state AS srs_state,
@@ -1122,6 +1130,7 @@ const mapChunkRow = (row: Record<string, unknown>): ChunkRow => ({
   explorationExtras: ((row.exploration_extras as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
   grammar: ((row.grammar as Record<string, unknown> | null) ?? {}) as Record<string, unknown>,
   groundedAt: (row.grounded_at as string | null) ?? null,
+  groundingPatch: (row.grounding_patch as Record<string, unknown> | null) ?? null,
   grammarUserEditedAt: (row.grammar_user_edited_at as string | null) ?? null,
   count: (row.count as number) ?? 0,
   srsState: (row.srs_state as SrsState | null) ?? null,
@@ -1231,7 +1240,7 @@ const resolveFacetSources = async (
 const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSummary[]> => {
   const [rows, sources] = await Promise.all([
     sql`
-      SELECT skill, target_form, srs_state, data_status, payload, disabled_at
+      SELECT skill, target_form, srs_state, data_status, payload, generated_payload, disabled_at
       FROM public.study_facets
       WHERE user_lookup_id = ${userLookupId}
       ORDER BY skill ASC, target_form ASC
@@ -1242,6 +1251,7 @@ const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSumma
         srs_state: SrsState | null
         data_status: 'ready' | 'pending_data'
         payload: Record<string, unknown>
+        generated_payload: Record<string, unknown> | null
         disabled_at: string | null
       }>
     >,
@@ -1254,6 +1264,7 @@ const listFacetsForChunk = async (userLookupId: string): Promise<ChunkFacetSumma
     dataStatus: r.data_status,
     srsState: r.srs_state,
     payload: r.payload ?? {},
+    generatedPayload: r.generated_payload ?? null,
     // Citation/pronunciation (target_form='') get the lemma occurrence; form
     // facets get their own inflection's occurrence (null if never kept w/ source).
     source: r.target_form === '' ? sources.citation : (sources.byForm.get(r.target_form) ?? null),
@@ -1272,11 +1283,20 @@ const setFacetPayload = async (params: {
   skill: FacetSkill
   targetForm: string
   payload: Record<string, unknown>
+  // Provenance snapshot, passed ONLY by the server-side generate pass (the
+  // public contract never carries it, so a client can't forge a "generated"
+  // claim). Omitted on manual edits — the existing snapshot is preserved so
+  // per-field comparison keeps working against what generation wrote.
+  generatedPayload?: Record<string, unknown>
 }): Promise<void> => {
   const payloadJson = sql.json(params.payload as unknown as postgres.JSONValue)
+  const generatedJson = params.generatedPayload
+    ? sql.json(params.generatedPayload as unknown as postgres.JSONValue)
+    : null
   await sql`
     UPDATE public.study_facets f
     SET payload = f.payload || ${payloadJson}::jsonb,
+        generated_payload = COALESCE(${generatedJson}::jsonb, f.generated_payload),
         data_status = 'ready',
         updated_at = NOW()
     FROM public.user_lookups ul
@@ -1654,6 +1674,7 @@ export interface UserLookupsRepositoryInterface {
     skill: FacetSkill
     targetForm: string
     payload: Record<string, unknown>
+    generatedPayload?: Record<string, unknown>
   }) => Promise<void>
   listCandidateFormsForChunk: (userLookupId: string) => Promise<string[]>
   deleteFacet: (params: { userLookupId: string; skill: FacetSkill; targetForm: string }) => Promise<void>

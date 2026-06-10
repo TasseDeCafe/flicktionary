@@ -16,6 +16,7 @@ const newRow: DbUserLookupWithFacet = {
   exploration_extras: {},
   grammar: {},
   grounded_at: null,
+  grounding_patch: null,
   grammar_user_edited_at: null,
   first_card_id: null,
   exported_at: null,

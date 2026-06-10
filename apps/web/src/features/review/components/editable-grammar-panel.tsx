@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Loader2, Plus, X } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import {
@@ -19,6 +19,8 @@ import type {
   GrammarNotableForm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
+import { FieldProvenanceIndicator } from './field-provenance-indicator'
+import type { FieldProvenance } from '../utils/field-provenance'
 
 type Props = {
   grammar: Grammar
@@ -30,6 +32,11 @@ type Props = {
   // whole `grammar` sub-object, so a partial patch would clobber it).
   onSave: (patch: Record<string, unknown>, fullGrammar: Grammar) => void
   isPending: boolean
+  // Per-field provenance for the indicator next to each label. Called with the
+  // panel's LIVE local value (for ipa: the whole bag, not the displayed
+  // bucket), so the icon flips to "edited" as the user types instead of after
+  // the refetch lands.
+  provenanceFor?: (key: GrammarFieldKey, currentValue: unknown) => FieldProvenance
 }
 
 // English edits the GA / RP bucket driven by the user's dialect preference,
@@ -110,7 +117,13 @@ const buildGrammarPatch = (current: Grammar, lastSaved: Grammar): Record<string,
 // Editable per-key editor. Sends a debounced PATCH on every change. Mirrors
 // the lastSavedRef pattern from EditableCardFields so concurrent updates
 // (chat tool, sibling tab) don't clobber in-flight edits.
-export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage, onSave, isPending }: Props) => {
+export const EditableGrammarPanel = ({
+  grammar: incomingGrammar,
+  targetLanguage,
+  onSave,
+  isPending,
+  provenanceFor,
+}: Props) => {
   const { t } = useLingui()
   const { data: userPrefs } = useGetUserPrefs()
   const englishIpaDialect: 'ga' | 'rp' = userPrefs?.englishIpaDialect ?? 'ga'
@@ -195,6 +208,33 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
     })
   }
 
+  // Revert = programmatic typing: write the source value into local state and
+  // let the debounced save persist it through the normal onSave path (a direct
+  // mutation would race the debounce timer). `ipa` restores the WHOLE bag —
+  // never go through setIpa, which edits a single dialect bucket and would
+  // leave a hybrid bag that compares as "edited" forever.
+  const revertKey = (key: GrammarFieldKey, sourceValue: unknown) => {
+    if (key === 'ipa') {
+      setGrammar((prev) => {
+        const next = { ...prev } as Record<string, unknown>
+        if (sourceValue === null || sourceValue === undefined) delete next.ipa
+        else next.ipa = sourceValue
+        return next as Grammar
+      })
+      return
+    }
+    setKey(key as keyof Grammar, sourceValue as Grammar[keyof Grammar] | undefined)
+  }
+
+  const provenanceIndicator = (key: GrammarFieldKey, label: string) =>
+    provenanceFor ? (
+      <FieldProvenanceIndicator
+        provenance={provenanceFor(key, (grammar as Record<string, unknown>)[key])}
+        fieldLabel={label}
+        onRevert={(sourceValue) => revertKey(key, sourceValue)}
+      />
+    ) : null
+
   const setNotableFormAt = (i: number, patch: Partial<GrammarNotableForm>) => {
     setGrammar((prev) => {
       const list = ([...((prev.notable_forms as GrammarNotableForm[]) ?? [])] as GrammarNotableForm[]).map((f, idx) =>
@@ -231,15 +271,18 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
         <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
           {has('ipa') && (
             <div>
-              <Label className='text-xs'>
-                {hint('ipa')?.label ?? t`IPA`}
-                {targetLanguage === 'en' && (
-                  <span className='text-muted-foreground ml-1 inline-flex items-center gap-1 font-normal'>
-                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />(
-                    {englishIpaDialect === 'ga' ? t`GA` : t`RP`})
-                  </span>
-                )}
-              </Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>
+                  {hint('ipa')?.label ?? t`IPA`}
+                  {targetLanguage === 'en' && (
+                    <span className='text-muted-foreground ml-1 inline-flex items-center gap-1 font-normal'>
+                      <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />(
+                      {englishIpaDialect === 'ga' ? t`GA` : t`RP`})
+                    </span>
+                  )}
+                </Label>
+                {provenanceIndicator('ipa', hint('ipa')?.label ?? t`IPA`)}
+              </div>
               <Input
                 value={displayedIpa}
                 onChange={(e) => setIpa(e.target.value)}
@@ -251,7 +294,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('pos') && (
             <div>
-              <Label className='text-xs'>{t`Part of speech`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Part of speech`}</Label>
+                {provenanceIndicator('pos', t`Part of speech`)}
+              </div>
               <SelectField
                 value={(grammar.pos as string | undefined) ?? ''}
                 onChange={(v) => setKey('pos', v ? (v as Grammar['pos']) : undefined)}
@@ -276,7 +322,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('display_form') && (
             <div>
-              <Label className='text-xs'>{hint('display_form')?.label ?? t`Display form (e.g. stress-marked)`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{hint('display_form')?.label ?? t`Display form (e.g. stress-marked)`}</Label>
+                {provenanceIndicator('display_form', hint('display_form')?.label ?? t`Display form`)}
+              </div>
               <Input
                 value={(grammar.display_form as string | undefined) ?? ''}
                 onChange={(e) => setKey('display_form', e.target.value || undefined)}
@@ -287,7 +336,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('gender') && (
             <div>
-              <Label className='text-xs'>{t`Gender`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Gender`}</Label>
+                {provenanceIndicator('gender', t`Gender`)}
+              </div>
               <SelectField
                 value={(grammar.gender as string | undefined) ?? ''}
                 onChange={(v) => setKey('gender', v ? (v as Grammar['gender']) : undefined)}
@@ -304,7 +356,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('aspect') && (
             <div>
-              <Label className='text-xs'>{t`Aspect`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Aspect`}</Label>
+                {provenanceIndicator('aspect', t`Aspect`)}
+              </div>
               <SelectField
                 value={(grammar.aspect as string | undefined) ?? ''}
                 onChange={(v) => setKey('aspect', v ? (v as Grammar['aspect']) : undefined)}
@@ -320,7 +375,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('aspect_pair_headword') && (
             <div>
-              <Label className='text-xs'>{t`Aspect pair (counterpart headword)`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Aspect pair (counterpart headword)`}</Label>
+                {provenanceIndicator('aspect_pair_headword', t`Aspect pair`)}
+              </div>
               <Input
                 value={(grammar.aspect_pair_headword as string | undefined) ?? ''}
                 onChange={(e) => setKey('aspect_pair_headword', e.target.value || undefined)}
@@ -331,7 +389,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('government') && (
             <div>
-              <Label className='text-xs'>{t`Government / case requirement`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Government / case requirement`}</Label>
+                {provenanceIndicator('government', t`Government`)}
+              </div>
               <Input
                 value={(grammar.government as string | undefined) ?? ''}
                 onChange={(e) => setKey('government', e.target.value || undefined)}
@@ -342,7 +403,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('number_only') && (
             <div>
-              <Label className='text-xs'>{t`Number-only`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Number-only`}</Label>
+                {provenanceIndicator('number_only', t`Number-only`)}
+              </div>
               <SelectField
                 value={(grammar.number_only as string | undefined) ?? ''}
                 onChange={(v) => setKey('number_only', v ? (v as Grammar['number_only']) : undefined)}
@@ -357,7 +421,10 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
 
           {has('animacy') && (
             <div>
-              <Label className='text-xs'>{t`Animacy`}</Label>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Animacy`}</Label>
+                {provenanceIndicator('animacy', t`Animacy`)}
+              </div>
               <SelectField
                 value={(grammar.animacy as string | undefined) ?? ''}
                 onChange={(v) => setKey('animacy', v ? (v as Grammar['animacy']) : undefined)}
@@ -382,6 +449,7 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
               <Label htmlFor={`indecl-${fieldId}`} className='text-xs'>
                 {t`Indeclinable`}
               </Label>
+              {provenanceIndicator('is_indeclinable', t`Indeclinable`)}
             </div>
           )}
 
@@ -397,6 +465,7 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
               <Label htmlFor={`refl-${fieldId}`} className='text-xs'>
                 {t`Reflexive`}
               </Label>
+              {provenanceIndicator('is_reflexive', t`Reflexive`)}
             </div>
           )}
 
@@ -449,9 +518,19 @@ export const EditableGrammarPanel = ({ grammar: incomingGrammar, targetLanguage,
             </div>
           )}
 
-          {isPending && <p className='text-muted-foreground text-xs'>{t`Saving…`}</p>}
         </div>
       )}
+      {/* Fixed-height status slot (rendered open or collapsed — a debounced
+          save can still be in flight after collapsing): the saving feedback
+          fades in instead of inserting a grid row, so fields never shift. */}
+      <div aria-live='polite' className='text-muted-foreground mt-2 flex h-4 items-center gap-1 text-xs'>
+        {isPending && (
+          <>
+            <Loader2 className='h-3 w-3 animate-spin' />
+            {t`Saving…`}
+          </>
+        )}
+      </div>
     </div>
   )
 }

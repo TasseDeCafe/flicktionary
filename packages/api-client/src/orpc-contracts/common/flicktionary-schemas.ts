@@ -221,6 +221,11 @@ export const StudyFacetSummarySchema = z.object({
   dataStatus: z.enum(['ready', 'pending_data']),
   srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
   payload: z.record(z.string(), z.unknown()),
+  // Snapshot of the payload as the generate pass wrote it (server-write-only
+  // column, never client-supplied). Per-field provenance compares `payload`
+  // against it: equal = generated, diverged = user-edited. Null for
+  // manually-entered or legacy form facets — those make no provenance claims.
+  generatedPayload: z.record(z.string(), z.unknown()).nullable().default(null),
   source: StudyFacetSourceSchema.nullable(),
 })
 export type StudyFacetSummary = z.infer<typeof StudyFacetSummarySchema>
@@ -244,6 +249,11 @@ export const ChunkSchema = z.object({
   // Null means pure-LLM (either grounding didn't run, or no kaikki entry
   // matched). Persists across user edits.
   groundedAt: z.string().nullable(),
+  // The exact kaikki patch merged into `grammar` at grounding time. Per-field
+  // provenance compares grammar values against it: equal = Wiktionary-verified,
+  // diverged = user-edited. Null when never grounded, or grounded before the
+  // snapshot column existed (legacy rows claim nothing until re-grounded).
+  groundingPatch: z.record(z.string(), z.unknown()).nullable().default(null),
   // Set when the user manually edits grammar-provenance-sensitive data.
   // Automatic processing/enrichment/chat patches do not stamp this.
   grammarUserEditedAt: z.string().nullable(),

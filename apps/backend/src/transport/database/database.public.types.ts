@@ -865,6 +865,7 @@ export type Database = {
           created_at: string
           data_status: string
           disabled_at: string | null
+          generated_payload: Json | null
           id: string
           introduced_at: string | null
           leech_parked_at: string | null
@@ -890,6 +891,7 @@ export type Database = {
           created_at?: string
           data_status?: string
           disabled_at?: string | null
+          generated_payload?: Json | null
           id?: string
           introduced_at?: string | null
           leech_parked_at?: string | null
@@ -915,6 +917,7 @@ export type Database = {
           created_at?: string
           data_status?: string
           disabled_at?: string | null
+          generated_payload?: Json | null
           id?: string
           introduced_at?: string | null
           leech_parked_at?: string | null
@@ -1101,6 +1104,7 @@ export type Database = {
           grammar: Json
           grammar_user_edited_at: string | null
           grounded_at: string | null
+          grounding_patch: Json | null
           headword: string
           id: string
           native_example: string | null
@@ -1121,6 +1125,7 @@ export type Database = {
           grammar?: Json
           grammar_user_edited_at?: string | null
           grounded_at?: string | null
+          grounding_patch?: Json | null
           headword: string
           id?: string
           native_example?: string | null
@@ -1141,6 +1146,7 @@ export type Database = {
           grammar?: Json
           grammar_user_edited_at?: string | null
           grounded_at?: string | null
+          grounding_patch?: Json | null
           headword?: string
           id?: string
           native_example?: string | null

@@ -33,6 +33,7 @@ const createRepos = (lookup: Record<string, unknown>) => {
       translation: null,
       definition: null,
       grounded_at: null,
+      grounding_patch: null,
       grammar_user_edited_at: null,
       ...lookup,
     }),

@@ -56,16 +56,19 @@ export const generateFormFacetData = async (
     if (languageMode.hideTranslationFields) {
       // Nothing to translate, so no model call — mark ready with the bare form
       // and (when known) the encountered sentence as its target-language example.
+      // The payload doubles as the generated_payload provenance snapshot.
+      const barePayload = {
+        form: surfaceForm,
+        translation: '',
+        ...(encounteredSentence ? { targetExample: encounteredSentence } : {}),
+      }
       await deps.userLookupsRepository.setFacetPayload({
         userLookupId: params.chunkId,
         userId: params.userId,
         skill: params.skill,
         targetForm: params.targetForm,
-        payload: {
-          form: surfaceForm,
-          translation: '',
-          ...(encounteredSentence ? { targetExample: encounteredSentence } : {}),
-        },
+        payload: barePayload,
+        generatedPayload: barePayload,
       })
       return 'generated'
     }
@@ -82,19 +85,23 @@ export const generateFormFacetData = async (
     // Forward the full generated content. `grammar` is written as a complete
     // object (only `pos` here) — the shallow JSONB merge replaces the whole
     // grammar sub-bag, which is correct since a freshly-generated form has none.
+    // The same object is stored as the generated_payload provenance snapshot:
+    // per-field provenance compares the live payload against it.
+    const generatedPayload = {
+      form: result.form,
+      translation: result.translation,
+      ...(result.definition ? { definition: result.definition } : {}),
+      ...(result.targetExample ? { targetExample: result.targetExample } : {}),
+      ...(result.nativeExample ? { nativeExample: result.nativeExample } : {}),
+      ...(result.pos ? { grammar: { pos: result.pos } } : {}),
+    }
     await deps.userLookupsRepository.setFacetPayload({
       userLookupId: params.chunkId,
       userId: params.userId,
       skill: params.skill,
       targetForm: params.targetForm,
-      payload: {
-        form: result.form,
-        translation: result.translation,
-        ...(result.definition ? { definition: result.definition } : {}),
-        ...(result.targetExample ? { targetExample: result.targetExample } : {}),
-        ...(result.nativeExample ? { nativeExample: result.nativeExample } : {}),
-        ...(result.pos ? { grammar: { pos: result.pos } } : {}),
-      },
+      payload: generatedPayload,
+      generatedPayload,
     })
     return 'generated'
   } catch (e) {

@@ -21,6 +21,7 @@ export type DbChunkSummary = {
   exploration_extras: Record<string, unknown>
   grammar: Record<string, unknown>
   grounded_at: string | null
+  grounding_patch: Record<string, unknown> | null
   grammar_user_edited_at: string | null
   is_production_enabled: boolean
 }
@@ -99,6 +100,7 @@ const SELECT_CARD_WITH_CHUNK_SQL = sql`
       'exploration_extras', ul.exploration_extras,
       'grammar', ul.grammar,
       'grounded_at', ul.grounded_at,
+      'grounding_patch', ul.grounding_patch,
       'grammar_user_edited_at', ul.grammar_user_edited_at,
       'is_production_enabled',
         (pf.disabled_at IS NULL AND pf.id IS NOT NULL)

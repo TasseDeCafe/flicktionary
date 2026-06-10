@@ -6,6 +6,9 @@ export type TouchedLookupInfo = {
   headword: string
   llmPos: string | null
   alreadyGrounded: boolean
+  // False on rows grounded before the grounding_patch column existed; the
+  // grounding runner re-grounds those to backfill the provenance snapshot.
+  hasGroundingPatch: boolean
   grammarUserEdited: boolean
 }
 
@@ -99,6 +102,7 @@ export const materializeBasicDataChunks = async (params: {
         headword: lookup.headword,
         llmPos,
         alreadyGrounded,
+        hasGroundingPatch: lookup.grounding_patch != null,
         grammarUserEdited,
       })
     }
@@ -163,6 +167,7 @@ export const materializeBasicDataChunks = async (params: {
         headword: lookup.headword,
         llmPos: null,
         alreadyGrounded: lookup.grounded_at !== null,
+        hasGroundingPatch: lookup.grounding_patch != null,
         grammarUserEdited: lookup.grammar_user_edited_at !== null,
       })
     }

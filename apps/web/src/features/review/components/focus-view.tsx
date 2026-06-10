@@ -24,7 +24,6 @@ import {
 import { useGetProcessingStatus, useGetStudySession, useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { FullExplorationRenderer } from './full-exploration-renderer'
 import { GrammarChips } from './grammar-chips'
-import { GroundingBadge } from './grounding-badge'
 import { ChatHeaderButton } from './chat-header-button'
 import { ChatPanel, ChatSidePanel, useChatReadSync } from './chat-panel'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
@@ -285,11 +284,6 @@ export const FocusView = () => {
                 <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase'>{t`Card`}</h2>
                 <div className='mb-3 flex flex-wrap items-center gap-2'>
                   <GrammarChips grammar={card.chunk.grammar} targetLanguage={targetLanguage} />
-                  <GroundingBadge
-                    groundedAt={card.chunk.groundedAt}
-                    grammarUserEditedAt={card.chunk.grammarUserEditedAt}
-                    targetLanguage={targetLanguage}
-                  />
                   {wiktionaryUrl && (
                     <a
                       href={wiktionaryUrl}

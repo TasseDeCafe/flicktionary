@@ -8,9 +8,10 @@ import { TouchedLookupInfo } from './materialize-basic-data-chunks'
 
 // For each unique user_lookups row touched by this run, look up the matching
 // kaikki entry and merge its structured grammar fields into the row's grammar
-// JSONB. Already-grounded rows are skipped (idempotent reprocess); per-row
-// failures are swallowed and counted - grounding is supplementary, never
-// load-bearing.
+// JSONB. Already-grounded rows are skipped (idempotent reprocess) UNLESS they
+// predate the grounding_patch snapshot column, in which case they re-ground to
+// backfill it; per-row failures are swallowed and counted - grounding is
+// supplementary, never load-bearing.
 export const runWiktionaryGrounding = async (params: {
   sessionId: string
   userId: string
@@ -24,6 +25,7 @@ export const runWiktionaryGrounding = async (params: {
   let attempted = 0
   let grounded = 0
   let alreadyGrounded = 0
+  let backfilled = 0
   let userEdited = 0
   let missed = 0
   let failed = 0
@@ -35,12 +37,18 @@ export const runWiktionaryGrounding = async (params: {
   // SELECT is needed.
   await Promise.all(
     Array.from(params.touchedLookups.entries()).map(async ([lookupId, info]) => {
-      if (info.alreadyGrounded) {
-        alreadyGrounded++
-        return
-      }
+      // userEdited must short-circuit BEFORE the backfill branch below — a
+      // user-edited grounded row must never have its grammar re-overwritten
+      // by kaikki on reprocess.
       if (info.grammarUserEdited) {
         userEdited++
+        return
+      }
+      // Rows grounded before the grounding_patch column existed fall through
+      // and re-ground: same kaikki values re-applied (idempotent), but the
+      // patch snapshot gets captured so per-field provenance works.
+      if (info.alreadyGrounded && info.hasGroundingPatch) {
+        alreadyGrounded++
         return
       }
       attempted++
@@ -58,6 +66,7 @@ export const runWiktionaryGrounding = async (params: {
         // TODO: This could be parallelized with a batch update.
         await params.userLookupsRepository.applyGroundingPatch({ id: lookupId, grammarPatch: result.patch })
         grounded++
+        if (info.alreadyGrounded) backfilled++
       } catch (e) {
         failed++
         logCustomErrorMessageAndError(
@@ -78,6 +87,7 @@ export const runWiktionaryGrounding = async (params: {
       attempted,
       grounded,
       alreadyGrounded,
+      backfilled,
       userEdited,
       missed,
       failed,

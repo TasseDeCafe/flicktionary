@@ -151,18 +151,23 @@ The enrichment path uses these shared steps:
    `display_form` because head-template expansions are noisy
    (`dictionary (plural dictionaries)`); English IPA is bucketed into GA/RP
    when tags allow it, while non-English IPA currently uses the untagged
-   bucket. `grounded_at` is stamped on success. Idempotent across re-process:
-   rows already grounded short-circuit. Automatic basic-data grammar patches
-   must not overwrite Wiktionary-owned keys on already grounded rows; after a
-   user manually edits grammar provenance, automatic grammar patches and
-   re-grounding skip that row so manual changes stay authoritative.
+   bucket. `grounded_at` is stamped on success, and the exact merged patch is
+   snapshotted into `grounding_patch` — the focus view's per-field provenance
+   indicators compare live grammar values against it. Idempotent across
+   re-process: rows already grounded short-circuit, EXCEPT rows grounded
+   before the snapshot column existed (`grounded_at` set, `grounding_patch`
+   null), which re-ground once to backfill the snapshot. Automatic basic-data
+   grammar patches must not overwrite Wiktionary-owned keys on already
+   grounded rows; after a user manually edits grammar provenance, automatic
+   grammar patches and re-grounding (including the backfill) skip that row so
+   manual changes stay authoritative.
    Languages outside the set are pure-LLM and `grounded_at` stays null.
    In local dev-tunnel, the reference tables are not part of ordinary user
    data; if a reset leaves `public.wiktionary_entries` empty, grounding will
-   still run but every lookup will miss and the UI will show `LLM only`.
-   Reload with `pnpm --filter @flicktionary/backend load:kaikki` (uses the
-   cached raw dump when present) and confirm non-zero per-language counts before
-   testing Wiktionary badges.
+   still run but every lookup will miss and no field will earn a Wiktionary
+   indicator. Reload with `pnpm --filter @flicktionary/backend load:kaikki`
+   (uses the cached raw dump when present) and confirm non-zero per-language
+   counts before testing Wiktionary indicators.
    See `WIKTIONARY_GROUNDING.md` and
    `.claude/skills/add-wiktionary-language/SKILL.md` for the operational
    workflow and per-language extraction guidance.
@@ -246,14 +251,25 @@ Two-layer UI.
   `number_only` / `notable_forms` / `notes`; English intentionally omits
   editable `display_form`). Same debounced-PATCH path, with `grammarPatch`
   shallow-merged into the JSONB column server-side; hidden fields' stored
-  values are preserved untouched. A small card-level grounding badge sits
-  next to the chips for kaikki-enabled languages (currently `ru` and `en`):
-  `✓ Wiktionary` when `grounded_at` is set and the user
-  has not manually edited grammar provenance, `Wiktionary, edited` when a
-  grounded row has been manually edited, `Edited` when an ungrounded row has
-  been manually edited, and `⚠ LLM only` when the language has a dump loaded
-  but the chunk did not match and has not been edited. Other languages get no
-  badge.
+  values are preserved untouched. Provenance is **per field**, not per card
+  (the old card-level grounding badge is gone; the external Wiktionary link
+  chip stays): each grammar field whose value matches the stored
+  `grounding_patch` snapshot shows a small check icon ("Verified by
+  Wiktionary"), a field edited away from its snapshot shows a pencil whose
+  popover (desktop) / bottom sheet (mobile) reveals the original value and a
+  one-tap **Revert** (revert writes through the same local-state +
+  debounced-save path as typing — never a direct mutation), and the IPA field
+  alone shows an amber "Unverified" warning when it has a displayed value
+  that isn't grounded (hallucinated IPA is the one silently-harmful case; for
+  other ungrounded/LLM fields the absence of an icon is the default state).
+  Form-facet fields get the same treatment against the facet's
+  `generated_payload` snapshot (pencil + revert when edited away from what
+  the Opus pass generated; no Wiktionary/unverified states). Indicators only
+  appear for kaikki-enabled languages (citation grammar) or facets with a
+  generation snapshot; legacy grounded rows without a `grounding_patch`
+  snapshot claim nothing until the backfill re-grounds them. Content fields
+  on the citation card (translation/examples/definition) are always
+  LLM-or-user-authored and carry no indicator.
 - Below the card: a collapsed `Context` block showing ±2 surrounding source
   segments. Open it with the chevron when needed.
 - Full exploration: rendered when `exploration_extras` has data. Otherwise
@@ -611,12 +627,19 @@ card
                                     -- `grammar`. Null = pure LLM (no dump for this language, or
                                     -- nothing matched). Historical provenance: does not get cleared
                                     -- by user edits.
+  grounding_patch     jsonb?        -- the exact kaikki patch merged at grounding time. Per-field
+                                    -- provenance compares grammar values against it (equal =
+                                    -- Wiktionary-verified, diverged = edited). Null = never grounded
+                                    -- or grounded before the column existed; such legacy rows claim
+                                    -- nothing and re-ground once (backfill) when next touched.
   grammar_user_edited_at timestamptz?
                                     -- stamped when the user manually edits grammar-provenance-
-                                    -- sensitive data (grammar fields, headword, or sense). Used with
-                                    -- grounded_at to derive badge states: Wiktionary, Wiktionary
-                                    -- edited, Edited, or LLM only. Automatic processing, grounding,
-                                    -- enrichment, and chat tool patches do not stamp this.
+                                    -- sensitive data (grammar fields, headword, or sense). Guards
+                                    -- reprocessing: automatic grammar patches and re-grounding skip
+                                    -- edited rows. (The UI no longer reads it — per-field provenance
+                                    -- is value-comparison against grounding_patch.) Automatic
+                                    -- processing, grounding, enrichment, and chat tool patches do
+                                    -- not stamp this.
   status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
   created_at          timestamptz
   updated_at          timestamptz

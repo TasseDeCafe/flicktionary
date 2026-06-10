@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Label } from '@flicktionary/ui/components/label'
 import { Input } from '@flicktionary/ui/components/input'
 import { Textarea } from '@flicktionary/ui/components/textarea'
+import { FieldProvenanceIndicator } from './field-provenance-indicator'
+import type { FieldProvenance } from '../utils/field-provenance'
 
 // How the translation/native-example inputs are presented:
 // - 'editable': pref on — always shown, translation is the primary gloss.
@@ -40,6 +42,11 @@ type Props = {
   onSaveContent: (patch: Partial<CardContentValues>) => void
   isPending: boolean
   headword?: HeadwordConfig
+  // Per-field provenance for the indicator next to each label, computed from
+  // the LIVE local value so the icon reacts as the user types (not after the
+  // refetch). Only the form editor passes this — citation content is always
+  // LLM-authored and stays indicator-free.
+  provenanceFor?: (key: keyof CardContentValues, currentValue: string) => FieldProvenance
 }
 
 const SAVE_DEBOUNCE_MS = 600
@@ -52,7 +59,14 @@ const SAVE_DEBOUNCE_MS = 600
 // payload. We compare server-vs-lastSaved (not server-vs-local) so the user's
 // in-flight typing isn't clobbered by a refetch that returns the value we just
 // sent.
-export const EditableCardFields = ({ values, translationFieldsMode, onSaveContent, isPending, headword }: Props) => {
+export const EditableCardFields = ({
+  values,
+  translationFieldsMode,
+  onSaveContent,
+  isPending,
+  headword,
+  provenanceFor,
+}: Props) => {
   const { t } = useLingui()
   const [renameError, setRenameError] = useState<string | null>(null)
 
@@ -161,6 +175,35 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
     return () => clearTimeout(id)
   }, [headwordValue, translation, definition, targetExample, nativeExample, onSaveContent, headword, t])
 
+  const revertSetters: Record<keyof CardContentValues, (v: string) => void> = {
+    translation: setTranslation,
+    definition: setDefinition,
+    targetExample: setTargetExample,
+    nativeExample: setNativeExample,
+  }
+  const currentValues: Record<keyof CardContentValues, string> = {
+    translation,
+    definition,
+    targetExample,
+    nativeExample,
+  }
+
+  const labelWithProvenance = (key: keyof CardContentValues, label: string) => (
+    <div className='flex items-center gap-1'>
+      <Label className='text-xs'>{label}</Label>
+      {provenanceFor && (
+        <FieldProvenanceIndicator
+          provenance={provenanceFor(key, currentValues[key])}
+          fieldLabel={label}
+          // Revert is "programmatic typing": set local state and let the
+          // debounced save persist it. A direct mutation here would race the
+          // debounce timer, which could re-save the pre-revert value.
+          onRevert={(sourceValue) => revertSetters[key](typeof sourceValue === 'string' ? sourceValue : '')}
+        />
+      )}
+    </div>
+  )
+
   return (
     <div className='flex flex-col gap-3'>
       {headword && (
@@ -172,7 +215,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
       )}
 
       <div>
-        <Label className='text-xs'>{t`Target example`}</Label>
+        {labelWithProvenance('targetExample', t`Target example`)}
         <Textarea
           value={targetExample}
           onChange={(e) => setTargetExample(e.target.value)}
@@ -184,7 +227,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
       {translationFieldsMode === 'editable' ? (
         <>
           <div>
-            <Label className='text-xs'>{t`Translation`}</Label>
+            {labelWithProvenance('translation', t`Translation`)}
             <Input
               value={translation}
               onChange={(e) => setTranslation(e.target.value)}
@@ -192,7 +235,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
             />
           </div>
           <div>
-            <Label className='text-xs'>{t`Native example`}</Label>
+            {labelWithProvenance('nativeExample', t`Native example`)}
             <Textarea
               value={nativeExample}
               onChange={(e) => setNativeExample(e.target.value)}
@@ -201,7 +244,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
             />
           </div>
           <div>
-            <Label className='text-xs'>{t`Definition (optional)`}</Label>
+            {labelWithProvenance('definition', t`Definition (optional)`)}
             <Textarea
               value={definition}
               onChange={(e) => setDefinition(e.target.value)}
@@ -213,7 +256,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
       ) : (
         <>
           <div>
-            <Label className='text-xs'>{t`Definition`}</Label>
+            {labelWithProvenance('definition', t`Definition`)}
             <Textarea
               value={definition}
               onChange={(e) => setDefinition(e.target.value)}
@@ -225,7 +268,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
             (translationOpen ? (
               <>
                 <div>
-                  <Label className='text-xs'>{t`Translation`}</Label>
+                  {labelWithProvenance('translation', t`Translation`)}
                   <Input
                     value={translation}
                     onChange={(e) => setTranslation(e.target.value)}
@@ -233,7 +276,7 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
                   />
                 </div>
                 <div>
-                  <Label className='text-xs'>{t`Native example`}</Label>
+                  {labelWithProvenance('nativeExample', t`Native example`)}
                   <Textarea
                     value={nativeExample}
                     onChange={(e) => setNativeExample(e.target.value)}
@@ -259,7 +302,17 @@ export const EditableCardFields = ({ values, translationFieldsMode, onSaveConten
         </>
       )}
 
-      {isPending && <p className='text-muted-foreground text-xs'>{t`Saving…`}</p>}
+      {/* Fixed-height status slot: the saving feedback fades in instead of
+          inserting a row, so the content never shifts while a save is in
+          flight. */}
+      <div aria-live='polite' className='text-muted-foreground flex h-4 items-center gap-1 text-xs'>
+        {isPending && (
+          <>
+            <Loader2 className='h-3 w-3 animate-spin' />
+            {t`Saving…`}
+          </>
+        )}
+      </div>
     </div>
   )
 }
