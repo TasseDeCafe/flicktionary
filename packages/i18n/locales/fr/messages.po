@@ -3208,8 +3208,8 @@ msgstr "Enregistrer la note"
 msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
 
-#: apps/web/src/features/review/components/editable-card-fields.tsx:305
-#: apps/web/src/features/review/components/editable-grammar-panel.tsx:521
+#: apps/web/src/features/review/components/editable-card-fields.tsx:312
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx:530
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:638
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:656
