@@ -152,7 +152,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     }
 
     // Anki-style: an 'again' card keeps coming back until it gets a
-    // non-'again' rating. Because every non-'again' passive rating is
+    // non-'again' rating. Because every non-'again' recognition rating is
     // clamped to >= +24h, redrilling until passed guarantees a finished
     // session leaves nothing immediately due — no straggler follow-ups
     // resurfacing right after the post-session Strengthen round. The
@@ -424,7 +424,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
 
-  // Pronunciation facet (citation only, passive queue): front prompts the
+  // Pronunciation facet (citation only, recognition queue): front prompts the
   // headword + an audio cue ("say it out loud"), the flip reveals the stressed
   // display form + IPA. Distinct enough from the meaning layouts (no slot
   // resolver, its own audio chip) that it gets a dedicated body. The IPA falls

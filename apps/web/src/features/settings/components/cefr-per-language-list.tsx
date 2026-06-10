@@ -26,7 +26,7 @@ type Pref = {
   showTranslationsEnabled: boolean
   practiceMaxNewTerms: number
   practiceMaxReviewTerms: number
-  practiceMaxReviewTermsActive: number | null
+  practiceMaxReviewTermsProduction: number | null
 }
 
 const clampLimit = (value: number, max: number) => Math.min(Math.max(Math.trunc(value), 0), max)
@@ -37,12 +37,12 @@ const PracticeLimitsRow = ({
   targetLanguage,
   maxNewTerms,
   maxReviewTerms,
-  maxReviewTermsActive,
+  maxReviewTermsProduction,
 }: {
   targetLanguage: string
   maxNewTerms: number
   maxReviewTerms: number
-  maxReviewTermsActive: number | null
+  maxReviewTermsProduction: number | null
 }) => {
   const { t } = useLingui()
   const { mutate, isPending, variables } = useSetPracticeLimitsForLanguage()
@@ -50,15 +50,15 @@ const PracticeLimitsRow = ({
   const [draftNew, setDraftNew] = useState(String(maxNewTerms))
   const [draftReview, setDraftReview] = useState(String(maxReviewTerms))
   // Nullable production cap: empty string means uncapped (null).
-  const [draftActiveReview, setDraftActiveReview] = useState(
-    maxReviewTermsActive == null ? '' : String(maxReviewTermsActive)
+  const [draftProductionReview, setDraftProductionReview] = useState(
+    maxReviewTermsProduction == null ? '' : String(maxReviewTermsProduction)
   )
 
   useEffect(() => {
     setDraftNew(String(maxNewTerms))
     setDraftReview(String(maxReviewTerms))
-    setDraftActiveReview(maxReviewTermsActive == null ? '' : String(maxReviewTermsActive))
-  }, [maxNewTerms, maxReviewTerms, maxReviewTermsActive])
+    setDraftProductionReview(maxReviewTermsProduction == null ? '' : String(maxReviewTermsProduction))
+  }, [maxNewTerms, maxReviewTerms, maxReviewTermsProduction])
 
   const save = () => {
     const parsedNew = Number.parseInt(draftNew, 10)
@@ -77,23 +77,23 @@ const PracticeLimitsRow = ({
 
     // Production review cap is independent and nullable: empty (or non-numeric)
     // means uncapped (null); a number is clamped like the others.
-    const trimmedActive = draftActiveReview.trim()
-    const parsedActive = Number.parseInt(trimmedActive, 10)
-    const nextActiveReview: number | null =
-      trimmedActive === '' || !Number.isFinite(parsedActive)
+    const trimmedProduction = draftProductionReview.trim()
+    const parsedProduction = Number.parseInt(trimmedProduction, 10)
+    const nextProductionReview: number | null =
+      trimmedProduction === '' || !Number.isFinite(parsedProduction)
         ? null
-        : clampLimit(parsedActive, PRACTICE_MAX_REVIEW_TERMS_LIMIT)
+        : clampLimit(parsedProduction, PRACTICE_MAX_REVIEW_TERMS_LIMIT)
 
     setDraftNew(String(recognition.maxNewTerms))
     setDraftReview(String(recognition.maxReviewTerms))
-    setDraftActiveReview(nextActiveReview == null ? '' : String(nextActiveReview))
+    setDraftProductionReview(nextProductionReview == null ? '' : String(nextProductionReview))
 
     const unchanged =
       recognition.maxNewTerms === maxNewTerms &&
       recognition.maxReviewTerms === maxReviewTerms &&
-      nextActiveReview === maxReviewTermsActive
+      nextProductionReview === maxReviewTermsProduction
     if (unchanged) return
-    mutate({ targetLanguage, ...recognition, maxReviewTermsActive: nextActiveReview })
+    mutate({ targetLanguage, ...recognition, maxReviewTermsProduction: nextProductionReview })
   }
 
   return (
@@ -154,20 +154,20 @@ const PracticeLimitsRow = ({
         <div className='grid grid-cols-2 gap-3'>
           <div className='flex flex-col gap-1.5'>
             <Label
-              htmlFor={`practice-max-review-terms-active-${targetLanguage}`}
+              htmlFor={`practice-max-review-terms-production-${targetLanguage}`}
               className='text-muted-foreground text-xs'
             >
               {t`Review terms`}
             </Label>
             <Input
-              id={`practice-max-review-terms-active-${targetLanguage}`}
+              id={`practice-max-review-terms-production-${targetLanguage}`}
               type='number'
               inputMode='numeric'
               min={0}
               max={PRACTICE_MAX_REVIEW_TERMS_LIMIT}
-              value={draftActiveReview}
+              value={draftProductionReview}
               disabled={isRowPending}
-              onChange={(event) => setDraftActiveReview(event.target.value)}
+              onChange={(event) => setDraftProductionReview(event.target.value)}
               onBlur={save}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') event.currentTarget.blur()
@@ -278,7 +278,7 @@ export const CefrPerLanguageList = ({ prefs, englishIpaDialect }: Props) => {
                 targetLanguage={p.targetLanguage}
                 maxNewTerms={p.practiceMaxNewTerms}
                 maxReviewTerms={p.practiceMaxReviewTerms}
-                maxReviewTermsActive={p.practiceMaxReviewTermsActive}
+                maxReviewTermsProduction={p.practiceMaxReviewTermsProduction}
               />
               {p.targetLanguage === 'en' && (
                 <div className='flex items-center justify-between gap-3 border-t pt-3'>

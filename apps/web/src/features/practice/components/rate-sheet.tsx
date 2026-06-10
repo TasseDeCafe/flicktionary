@@ -43,9 +43,9 @@ export type RateSheetChunkContent = {
   // CTA — rating a deleted chunk would be confusing, and the chunk no longer
   // participates in SRS until restored anyway.
   isDeleted: boolean
-  // Whether the term is in production study. Drives the "Switch to
-  // passive/active vocabulary" action in the 3-dots overflow. Null when the
-  // canonical row is missing — the switch action is hidden in that case.
+  // Whether the term is in production study. Drives the production-study
+  // toggle action in the 3-dots overflow. Null when the canonical row is
+  // missing — the switch action is hidden in that case.
   isProductionEnabled: boolean | null
 }
 

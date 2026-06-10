@@ -265,8 +265,8 @@ export const FocusView = () => {
     if (action === 'reject') {
       if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
     } else {
-      // Keep just enables recognition server-side; the passive/active fork is
-      // gone (production is now a per-target study facet edited elsewhere).
+      // Keep just enables recognition server-side; the pool fork is gone
+      // (production is now a per-target study facet edited elsewhere).
       if (card.status !== 'kept') updateStatus({ cardId: card.id, status: 'kept' })
     }
     setTimeout(() => advanceOrClose(), 220)

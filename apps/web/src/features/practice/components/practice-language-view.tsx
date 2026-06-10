@@ -65,11 +65,11 @@ export const PracticeLanguageView = () => {
   const reviewBudgetLeft = Math.max(0, maxReviewTerms - (entry?.reviewedTodayCount ?? 0))
   const servableReviewDue = entry ? Math.min(entry.reviewDueCount, reviewBudgetLeft) : 0
   const dueTermCount = entry ? servableReviewDue + entry.learningDueCount : 0
-  const activeTotal = entry?.activeTotal ?? 0
-  const activeDueCount = entry ? entry.activeReviewDueCount + entry.activeLearningDueCount : 0
-  const activeNewCount = entry?.activeNewCount ?? 0
-  const hasActiveWork = activeDueCount + activeNewCount > 0
-  const hasPassiveWork = dueTermCount > 0 || dailyNewAvailable > 0
+  const productionTotal = entry?.productionTotal ?? 0
+  const productionDueCount = entry ? entry.productionReviewDueCount + entry.productionLearningDueCount : 0
+  const productionNewCount = entry?.productionNewCount ?? 0
+  const hasProductionWork = productionDueCount + productionNewCount > 0
+  const hasRecognitionWork = dueTermCount > 0 || dailyNewAvailable > 0
 
   const handleBack = () => void navigate({ to: '/practice' })
 
@@ -97,7 +97,7 @@ export const PracticeLanguageView = () => {
   // Learning follow-ups due always count as servable work (budget-exempt).
   const statusLine = (() => {
     if (!entry) return ''
-    if (hasPassiveWork) {
+    if (hasRecognitionWork) {
       const parts = [
         dueTermCount > 0 ? plural(dueTermCount, { one: '# review', other: '# reviews' }) : null,
         dailyNewAvailable > 0 ? t`${dailyNewAvailable} new available today` : null,
@@ -128,7 +128,7 @@ export const PracticeLanguageView = () => {
   }
 
   const renderParkedAffordance = (pool: PracticePool) => {
-    const parked = pool === 'recognition' ? (entry?.parkedCount ?? 0) : (entry?.activeParkedCount ?? 0)
+    const parked = pool === 'recognition' ? (entry?.parkedCount ?? 0) : (entry?.productionParkedCount ?? 0)
     if (parked <= 0) return null
     return (
       <button
@@ -190,7 +190,7 @@ export const PracticeLanguageView = () => {
               disabled={
                 pool === 'recognition'
                   ? (entry?.newCount ?? 0) + (entry?.optInNewCount ?? 0) === 0
-                  : activeNewCount + (entry?.activeOptInNewCount ?? 0) === 0
+                  : productionNewCount + (entry?.productionOptInNewCount ?? 0) === 0
               }
               onClick={(event) => {
                 // Recognition learn-new picks a batch size first (the chosen N
@@ -236,16 +236,16 @@ export const PracticeLanguageView = () => {
 
           {entry && (
             <>
-              {activeTotal > 0 && (
+              {productionTotal > 0 && (
                 <section className='rounded-xl border bg-amber-50/40 p-4 dark:bg-amber-400/10'>
                   <h2 className='text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
                     <Star className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />
                     {t`Production practice`}
                   </h2>
                   <p className='text-foreground text-sm'>
-                    {hasActiveWork
-                      ? t`${plural(activeDueCount, { one: '# review', other: '# reviews' })}, ${activeNewCount} new`
-                      : t`${plural(activeTotal, { one: '# production term', other: '# production terms' })}. Nothing to review right now.`}
+                    {hasProductionWork
+                      ? t`${plural(productionDueCount, { one: '# review', other: '# reviews' })}, ${productionNewCount} new`
+                      : t`${plural(productionTotal, { one: '# production term', other: '# production terms' })}. Nothing to review right now.`}
                   </p>
                   {renderReadingAffordance('production')}
                   {renderParkedAffordance('production')}
@@ -256,13 +256,13 @@ export const PracticeLanguageView = () => {
               <section className='bg-card rounded-xl border p-4'>
                 <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Recognition practice`}</h2>
                 <div className='flex items-start gap-3'>
-                  {hasPassiveWork ? (
+                  {hasRecognitionWork ? (
                     <Brain className='mt-1 h-5 w-5 text-yellow-600 dark:text-yellow-400' />
                   ) : (
                     <CircleCheck className='mt-1 h-5 w-5 text-emerald-600' />
                   )}
                   <div className='min-w-0 flex-1'>
-                    <h3 className='font-semibold'>{hasPassiveWork ? t`Ready to practice` : t`All caught up`}</h3>
+                    <h3 className='font-semibold'>{hasRecognitionWork ? t`Ready to practice` : t`All caught up`}</h3>
                     {statusLine && <p className='text-muted-foreground mt-1 text-sm'>{statusLine}</p>}
                   </div>
                 </div>

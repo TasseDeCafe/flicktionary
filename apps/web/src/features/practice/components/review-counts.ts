@@ -19,7 +19,11 @@ export const getReviewCounts = (
 ): QueueCounts => {
   if (!entry) return { new: 0, learning: 0, review: 0 }
   if (pool === 'production') {
-    return { new: entry.activeNewCount, learning: entry.activeLearningDueCount, review: entry.activeReviewDueCount }
+    return {
+      new: entry.productionNewCount,
+      learning: entry.productionLearningDueCount,
+      review: entry.productionReviewDueCount,
+    }
   }
   return { new: dailyNewAvailable, learning: entry.learningDueCount, review: entry.reviewDueCount }
 }

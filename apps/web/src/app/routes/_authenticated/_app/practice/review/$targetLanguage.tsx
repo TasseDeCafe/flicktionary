@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { UnifiedReviewView } from '@/features/practice/components/unified-review-view'
 
 const reviewSearchSchema = z.object({
-  // .catch (not .default) so stale pre-rename URLs (pool=passive|active) and
+  // .catch (not .default) so stale pre-rename URLs (legacy pool values) and
   // garbage degrade to the recognition queue instead of a route error.
   pool: z.enum(['recognition', 'production']).catch('recognition'),
   scope: z.enum(['review_due', 'learn_new', 'mixed']).default('mixed'),

@@ -5,7 +5,7 @@ import { VocabularyListView } from '@/features/vocabulary/components/vocabulary-
 const vocabularySearchSchema = z.object({
   // Per-term study filter: 'production' = in production study, 'recognition' =
   // recognition-only. Omitted means "All". .catch degrades stale pre-rename
-  // URLs (mode=passive|active) to "All" instead of a route error.
+  // URLs (the legacy mode values) to "All" instead of a route error.
   mode: z.enum(['recognition', 'production']).optional().catch(undefined),
 })
 

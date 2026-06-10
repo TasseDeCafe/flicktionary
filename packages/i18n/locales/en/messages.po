@@ -41,18 +41,6 @@ msgstr "(Expired)"
 msgid "(unset)"
 msgstr "(unset)"
 
-#: apps/web/src/features/practice/components/practice-language-view.tsx:247
-msgid "{activeDueCount, plural, one {# review} other {# reviews}}, "
-"{activeNewCount} new"
-msgstr "{activeDueCount, plural, one {# review} other {# reviews}}, "
-"{activeNewCount} new"
-
-#: apps/web/src/features/practice/components/practice-language-view.tsx:248
-msgid "{activeTotal, plural, one {# production term} other {# production "
-"terms}}. Nothing to review right now."
-msgstr "{activeTotal, plural, one {# production term} other {# production "
-"terms}}. Nothing to review right now."
-
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:54
 msgid "{cardCount} card(s) — of which {keptCardCount} kept"
 msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
@@ -156,6 +144,18 @@ msgstr "{parkedTotal} parked"
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:47
 msgid "{productionCount} in production"
 msgstr "{productionCount} in production"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:247
+msgid "{productionDueCount, plural, one {# review} other {# reviews}}, "
+"{productionNewCount} new"
+msgstr "{productionDueCount, plural, one {# review} other {# reviews}}, "
+"{productionNewCount} new"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx:248
+msgid "{productionTotal, plural, one {# production term} other {# production "
+"terms}}. Nothing to review right now."
+msgstr "{productionTotal, plural, one {# production term} other {# production "
+"terms}}. Nothing to review right now."
 
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx:60
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
