@@ -3,7 +3,9 @@ import { z } from 'zod'
 import { UnifiedReviewView } from '@/features/practice/components/unified-review-view'
 
 const reviewSearchSchema = z.object({
-  pool: z.enum(['passive', 'active']).default('passive'),
+  // .catch (not .default) so stale pre-rename URLs (legacy pool values) and
+  // garbage degrade to the recognition queue instead of a route error.
+  pool: z.enum(['recognition', 'production']).catch('recognition'),
   scope: z.enum(['review_due', 'learn_new', 'mixed']).default('mixed'),
   mode: z.enum(['read', 'flashcards']).default('read'),
   // Explicit learn-new batch size picked on the landing sheet (learn_new +

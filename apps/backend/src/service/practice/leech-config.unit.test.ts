@@ -10,7 +10,6 @@ const makeFacetRow = (overrides: Partial<DbUserLookupWithFacet> = {}): DbUserLoo
     target_language: 'es',
     headword: 'gato',
     sense: 'cat',
-    learning_mode: 'passive',
     skill: 'meaning_recognition',
     target_form: '',
     srs_state: 'review',

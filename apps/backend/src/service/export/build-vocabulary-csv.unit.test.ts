@@ -55,14 +55,14 @@ describe('buildVocabularyCsv', () => {
     expect(cells[8]).toBe('moverse deprisa')
   })
 
-  it('tags active-pool and leech-parked terms', async () => {
+  it('tags production-pool and leech-parked terms', async () => {
     const { csv } = await buildVocabularyCsv(
       'u1',
       'es',
       createDeps([baseChunk({ isProductionEnabled: true, isLeechParked: true })])
     )
     const cells = parseLines(csv)[4].split(',')
-    expect(cells[3]).toBe('flicktionary es active leech')
+    expect(cells[3]).toBe('flicktionary es production leech')
   })
 
   it('flattens grammar and exploration extras into individual columns', async () => {

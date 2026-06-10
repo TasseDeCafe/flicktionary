@@ -52,8 +52,8 @@ export const useListChunksInfinite = (params: {
 }
 
 // Enable or disable one study facet (skill x target_form) on a term. This is the
-// unified study-target write path that replaced the old passive/active toggle:
-// enabling the citation meaning_production facet is what "promote to active"
+// unified study-target write path that replaced the old pool toggle: enabling
+// the citation meaning_production facet is what "promote to production study"
 // used to be (disable = demote), and the wire derives `isProductionEnabled` from
 // that facet's enabled state. Optimism is two-pronged: the term's own study-
 // targets view (the focus-view skills card/sheet) flips instantly for EVERY

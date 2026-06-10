@@ -152,7 +152,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     }
 
     // Anki-style: an 'again' card keeps coming back until it gets a
-    // non-'again' rating. Because every non-'again' passive rating is
+    // non-'again' rating. Because every non-'again' recognition rating is
     // clamped to >= +24h, redrilling until passed guarantees a finished
     // session leaves nothing immediately due — no straggler follow-ups
     // resurfacing right after the post-session Strengthen round. The
@@ -424,7 +424,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
 
-  // Pronunciation facet (citation only, passive queue): front prompts the
+  // Pronunciation facet (citation only, recognition queue): front prompts the
   // headword + an audio cue ("say it out loud"), the flip reveals the stressed
   // display form + IPA. Distinct enough from the meaning layouts (no slot
   // resolver, its own audio chip) that it gets a dedicated body. The IPA falls
@@ -455,12 +455,12 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     hasGrammarChips: !!content.grammar,
   }
 
-  // Active fronts are gloss-only; a card with no translation, no definition
-  // and no example translation would render a blank front — fall back to the
-  // recognition (passive) layout for that card.
+  // Production fronts are gloss-only; a card with no translation, no
+  // definition and no example translation would render a blank front — fall
+  // back to the recognition layout for that card.
   const poolConfig = getCardFaceConfig(targetLanguage, pool)
   const poolFront = resolveCardSlots(poolConfig.front, cond)
-  const faceConfig = poolFront.length > 0 ? poolConfig : getCardFaceConfig(targetLanguage, 'passive')
+  const faceConfig = poolFront.length > 0 ? poolConfig : getCardFaceConfig(targetLanguage, 'recognition')
   const frontSlots = poolFront.length > 0 ? poolFront : resolveCardSlots(faceConfig.front, cond)
   const backSlots = resolveCardSlots(faceConfig.back, cond)
   // Peeked cards are always shown fully (front + back), read-only.

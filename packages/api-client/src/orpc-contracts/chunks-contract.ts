@@ -143,8 +143,8 @@ export const chunksContract = {
 
   // Enable or disable a single study facet (skill x target_form) on a term.
   // This is the unified study-target control: the citation meaning_production
-  // facet is what "active vocabulary" used to mean (enabled => in production
-  // study), and meaning_recognition is enabled on keep. enabled:true upserts
+  // facet IS production-study membership (enabled => in production study), and
+  // meaning_recognition is enabled on keep. enabled:true upserts
   // the facet — creating it (NULL srs state) if absent, else CLEARING its
   // disabled_at so a previously-disabled, history-bearing facet resumes its
   // schedule. enabled:false sets disabled_at (disable != delete: SRS history is

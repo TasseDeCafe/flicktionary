@@ -8,6 +8,7 @@ import {
   mergeFacet,
   type DbUserLookup,
   type DbUserLookupWithFacet,
+  type PracticePool,
   type UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import {
@@ -101,7 +102,7 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
   })
   return {
     id: row.id,
-    pool: (row.pool as 'passive' | 'active') ?? 'passive',
+    pool: (row.pool as PracticePool) ?? 'recognition',
     ord: row.ord,
     status: row.status,
     body: row.body,
@@ -178,7 +179,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
-  const warmBank = (params: { lookup: DbUserLookup; pool: 'passive' | 'active' }) =>
+  const warmBank = (params: { lookup: DbUserLookup; pool: PracticePool }) =>
     warmExerciseBank({ ...params, deps: exerciseBankDeps })
 
   // FSRS write + rating-event insert commit atomically (see applyTermRating).
@@ -212,16 +213,22 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const router = implementer.router({
     dueSummary: implementer.dueSummary.handler(async ({ context }) => {
       const userId = context.res.locals.userId
-      // reviewedTodayCount comes off the rating-event log (passive review
-      // budget only — the active pool has no review budget) in one grouped
-      // query, merged per language.
-      const [summary, reviewedTodayByLanguage] = await Promise.all([
+      // reviewedTodayCount comes off the rating-event log (recognition review
+      // budget only — the production pool has no review budget) in one grouped
+      // query, merged per language. Open reading-mode texts ride along so the
+      // landing can offer "continue reading" (they're otherwise invisible —
+      // an abandoned reading is only reachable by re-entering Read mode).
+      const [summary, reviewedTodayByLanguage, currentReadings] = await Promise.all([
         deps.userLookupsRepository.listDueSummary(userId),
-        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, mode: 'recognition' }),
+        deps.practiceRatingEventsRepository.countReviewBudgetConsumedTodayByLanguage({ userId, pool: 'recognition' }),
+        deps.practiceTextsRepository.listCurrentReadings(userId),
       ])
       const perLanguage = summary.map((entry) => ({
         ...entry,
         reviewedTodayCount: reviewedTodayByLanguage.get(entry.targetLanguage) ?? 0,
+        currentReadings: currentReadings
+          .filter((reading) => reading.targetLanguage === entry.targetLanguage)
+          .map(({ pool, scope, termCount }) => ({ pool, scope, termCount })),
       }))
       return { data: { perLanguage } }
     }),
@@ -254,8 +261,8 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         { bypassDailyCap: input.learnNewSession === true }
       )
       if (!result.ok) {
-        if (result.reason === 'not_in_active_pool') {
-          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the active pool.' }] } })
+        if (result.reason === 'not_in_production_pool') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Term is not in the production pool.' }] } })
         }
         if (result.reason === 'illegal_pool_skill') {
           throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Illegal (pool, skill) pairing.' }] } })
@@ -473,7 +480,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         }
       }
 
-      const exercisePool = exercise.pool as 'passive' | 'active'
+      const exercisePool = exercise.pool as PracticePool
       const termLookup = await deps.userLookupsRepository.findByIdForUser(exercise.user_lookup_id, userId)
 
       // Rehab: a gate exercise answered for a term parked in this pool drives

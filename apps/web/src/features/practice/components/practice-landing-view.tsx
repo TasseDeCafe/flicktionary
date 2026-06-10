@@ -26,7 +26,7 @@ export const PracticeLandingView = () => {
     return Math.min(entry.newCount, remainingDailyNewTerms)
   }
 
-  const getPassiveSummaryLine = (entry: PracticeDueSummaryEntry) => {
+  const getRecognitionSummaryLine = (entry: PracticeDueSummaryEntry) => {
     // Daily limits are per language.
     const { maxNewTerms, maxReviewTerms } = getPracticeLimitsForLanguage(prefs, entry.targetLanguage)
     const dueTermCount = entry.reviewDueCount + entry.learningDueCount
@@ -41,12 +41,12 @@ export const PracticeLandingView = () => {
   }
 
   const getSummaryLine = (entry: PracticeDueSummaryEntry) => {
-    const parts = [getPassiveSummaryLine(entry)]
-    if (entry.activeTotal > 0) {
-      const activeCount = entry.activeTotal
-      parts.push(t`${activeCount} active`)
+    const parts = [getRecognitionSummaryLine(entry)]
+    if (entry.productionTotal > 0) {
+      const productionCount = entry.productionTotal
+      parts.push(t`${productionCount} in production`)
     }
-    const parkedTotal = entry.parkedCount + entry.activeParkedCount
+    const parkedTotal = entry.parkedCount + entry.productionParkedCount
     if (parkedTotal > 0) {
       parts.push(t`${parkedTotal} parked`)
     }

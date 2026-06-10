@@ -12,7 +12,7 @@ const focusViewSearchSchema = z.object({
   from: z.enum(['triage', 'vocabulary', 'practice']).optional(),
   source: z.enum(['available']).optional(),
   practiceLang: z.string().optional(),
-  practicePool: z.enum(['passive', 'active']).optional(),
+  practicePool: z.enum(['recognition', 'production']).optional().catch(undefined),
   practiceMode: z.enum(['read', 'flashcards']).optional(),
 })
 

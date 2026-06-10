@@ -191,6 +191,32 @@ const findCurrentReading = async (group: ReadingGroup): Promise<DbPracticeText |
   return result[0] ?? null
 }
 
+export type CurrentReadingSummary = {
+  targetLanguage: string
+  pool: PracticePool
+  scope: ReviewScope | null
+  termCount: number
+}
+
+// All open 'reading' texts for a user across languages/pools (at most one per
+// group), for the landing's "continue reading" affordance. The scope rides
+// along because resuming under a different scope discards the open text
+// (failMismatchedScopeSlots) — the affordance must re-enter with the text's
+// own scope. NULL scope (legacy rows) resumes under any scope.
+const listCurrentReadings = async (userId: string): Promise<CurrentReadingSummary[]> => {
+  const rows = (await sql`
+    SELECT target_language, pool, scope, jsonb_array_length(annotations)::int AS term_count
+    FROM public.practice_texts
+    WHERE user_id = ${userId} AND status = 'reading'
+  `) as Array<{ target_language: string; pool: string; scope: string | null; term_count: number }>
+  return rows.map((row) => ({
+    targetLanguage: row.target_language,
+    pool: row.pool as PracticePool,
+    scope: row.scope as ReviewScope | null,
+    termCount: row.term_count,
+  }))
+}
+
 // Abandon any in-flight / speculative / in-progress text built under a
 // different scope than the one now being requested. The reading queue is shared
 // across scopes (keyed only by user/language/pool), but each text embeds the
@@ -390,6 +416,7 @@ export interface PracticeTextsRepositoryInterface {
   } | null>
   listHistory: (group: ReadingGroup) => Promise<DbPracticeText[]>
   findCurrentReading: (group: ReadingGroup) => Promise<DbPracticeText | null>
+  listCurrentReadings: (userId: string) => Promise<CurrentReadingSummary[]>
   failMismatchedScopeSlots: (group: ReadingGroup, scope: ReviewScope) => Promise<void>
   selectAndMarkReading: (group: ReadingGroup) => Promise<DbPracticeText | null>
   reserveOrFindNextSlot: (group: ReadingGroup, scope: ReviewScope) => Promise<ReservedSlot>
@@ -406,6 +433,7 @@ export const PracticeTextsRepository = (): PracticeTextsRepositoryInterface => {
     findByIdForUser,
     listHistory,
     findCurrentReading,
+    listCurrentReadings,
     failMismatchedScopeSlots,
     selectAndMarkReading,
     reserveOrFindNextSlot,

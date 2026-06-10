@@ -1,6 +1,6 @@
 import { FSRS, generatorParameters, createEmptyCard, Rating, State, type Card as FsrsCard, type Grade } from 'ts-fsrs'
 import type { DbUserLookupWithFacet, SrsState } from '../../transport/database/user-lookups/user-lookups-repository'
-import { reviewModeForSkill } from '../../transport/database/study-facets/study-facets-repository'
+import { poolForSkill } from '../../transport/database/study-facets/study-facets-repository'
 import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
 
 const fsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
@@ -59,7 +59,7 @@ export type FsrsResult = {
   lapses: number
 }
 
-// Passive terms the user got right are never rescheduled sooner than this far
+// Recognition-pool terms the user got right are never rescheduled sooner than this far
 // out. FSRS's intraday learning/relearning steps (minutes away) would otherwise
 // surface as straggler follow-ups right after a session ends, requiring a fresh
 // session to clear. Clamping the output `due` to a next-day floor means finishing
@@ -68,7 +68,7 @@ export type FsrsResult = {
 // `srs_due`, and if a missed term gets abandoned before its retry we want it to
 // stay due soon rather than be pushed a full day out. `now + 24h` matches how
 // FSRS already expresses review intervals (offsets from `now`, not midnight).
-const MIN_PASSIVE_INTERVAL_MS = 24 * 60 * 60 * 1000
+const MIN_RECOGNITION_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 // Apply a rating event to a row. For never-reviewed rows the FSRS library's
 // createEmptyCard provides the seed; the rating then transitions it into
@@ -80,7 +80,7 @@ const MIN_PASSIVE_INTERVAL_MS = 24 * 60 * 60 * 1000
 // part of this result — history is preserved on the row, and the explicit
 // parked_at flag (not the lapse count) is the re-park gate. This is written
 // directly via unparkAndSoftReentry, NOT through applyRating, so the
-// MIN_PASSIVE_INTERVAL floor doesn't interfere and no FSRS transition runs.
+// MIN_RECOGNITION_INTERVAL floor doesn't interfere and no FSRS transition runs.
 export type SoftReentryResult = {
   state: SrsState
   due: Date
@@ -102,10 +102,10 @@ export const applyRating = (row: DbUserLookupWithFacet, rating: AppRating, now: 
   const card: FsrsCard = existing ?? createEmptyCard(now)
   const result = fsrs.next(card, now, RATING_MAP[rating])
   const next = result.card
-  // The next-day floor applies to recognition-mode facets (the passive queue),
-  // not production — that's meaning_recognition AND pronunciation (Phase 4).
-  const isRecognition = reviewModeForSkill(row.skill) === 'recognition'
-  const floor = now.getTime() + MIN_PASSIVE_INTERVAL_MS
+  // The next-day floor applies to recognition-pool facets, not production —
+  // that's meaning_recognition AND pronunciation (Phase 4).
+  const isRecognition = poolForSkill(row.skill) === 'recognition'
+  const floor = now.getTime() + MIN_RECOGNITION_INTERVAL_MS
   const due = isRecognition && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
   return {
     state: STATE_TO_DB[next.state],

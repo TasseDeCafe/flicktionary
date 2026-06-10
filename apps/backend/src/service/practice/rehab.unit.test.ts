@@ -12,7 +12,6 @@ const makeParkedFacet = (overrides: Partial<DbUserLookupWithFacet> = {}): DbUser
     target_language: 'es',
     headword: 'gato',
     sense: 'cat',
-    learning_mode: 'passive',
     skill: 'meaning_recognition',
     target_form: '',
     srs_state: 'relearning',
@@ -34,21 +33,21 @@ const createDeps = () => {
 }
 
 describe('gateTypeForTier', () => {
-  it('escalates the passive ladder: mc_cloze -> mc_comprehension -> mc_cloze (fresh)', () => {
-    expect(gateTypeForTier('passive', 0)).toBe('mc_cloze')
-    expect(gateTypeForTier('passive', 1)).toBe('mc_comprehension')
-    expect(gateTypeForTier('passive', 2)).toBe('mc_cloze')
+  it('escalates the recognition ladder: mc_cloze -> mc_comprehension -> mc_cloze (fresh)', () => {
+    expect(gateTypeForTier('recognition', 0)).toBe('mc_cloze')
+    expect(gateTypeForTier('recognition', 1)).toBe('mc_comprehension')
+    expect(gateTypeForTier('recognition', 2)).toBe('mc_cloze')
   })
 
-  it('escalates the active ladder: mc_cloze -> production_cloze -> production_cloze (fresh)', () => {
-    expect(gateTypeForTier('active', 0)).toBe('mc_cloze')
-    expect(gateTypeForTier('active', 1)).toBe('production_cloze')
-    expect(gateTypeForTier('active', 2)).toBe('production_cloze')
+  it('escalates the production ladder: mc_cloze -> production_cloze -> production_cloze (fresh)', () => {
+    expect(gateTypeForTier('production', 0)).toBe('mc_cloze')
+    expect(gateTypeForTier('production', 1)).toBe('production_cloze')
+    expect(gateTypeForTier('production', 2)).toBe('production_cloze')
   })
 
   it('clamps out-of-range tiers to the ladder bounds', () => {
-    expect(gateTypeForTier('passive', 7)).toBe('mc_cloze')
-    expect(gateTypeForTier('active', -1)).toBe('mc_cloze')
+    expect(gateTypeForTier('recognition', 7)).toBe('mc_cloze')
+    expect(gateTypeForTier('production', -1)).toBe('mc_cloze')
   })
 })
 
@@ -59,7 +58,7 @@ describe('applyGateAnswer', () => {
     const { deps, advanceRehabDayFacet, unparkAndSoftReentryFacet } = createDeps()
     const outcome = await applyGateAnswer({
       lookup: makeParkedFacet({ leech_parked_at: null }),
-      pool: 'passive',
+      pool: 'recognition',
       correct: true,
       deps,
     })
@@ -72,7 +71,7 @@ describe('applyGateAnswer', () => {
     const { deps, advanceRehabDayFacet } = createDeps()
     const outcome = await applyGateAnswer({
       lookup: makeParkedFacet({ leech_rehab_correct_days: 1 }),
-      pool: 'passive',
+      pool: 'recognition',
       correct: false,
       deps,
     })
@@ -83,7 +82,7 @@ describe('applyGateAnswer', () => {
   it('a correct answer advances one day (below the graduation threshold)', async () => {
     const { deps, advanceRehabDayFacet, unparkAndSoftReentryFacet } = createDeps()
     advanceRehabDayFacet.mockResolvedValue(1)
-    const outcome = await applyGateAnswer({ lookup: makeParkedFacet(), pool: 'passive', correct: true, deps })
+    const outcome = await applyGateAnswer({ lookup: makeParkedFacet(), pool: 'recognition', correct: true, deps })
     expect(outcome).toEqual({ rehabCorrectDays: 1, graduated: false })
     expect(advanceRehabDayFacet).toHaveBeenCalledWith({
       userLookupId: lookupId,
@@ -98,7 +97,7 @@ describe('applyGateAnswer', () => {
     advanceRehabDayFacet.mockResolvedValue(null) // already credited today
     const outcome = await applyGateAnswer({
       lookup: makeParkedFacet({ leech_rehab_correct_days: 1 }),
-      pool: 'passive',
+      pool: 'recognition',
       correct: true,
       deps,
     })
@@ -111,7 +110,7 @@ describe('applyGateAnswer', () => {
     advanceRehabDayFacet.mockResolvedValue(3)
     const outcome = await applyGateAnswer({
       lookup: makeParkedFacet({ leech_rehab_correct_days: 2 }),
-      pool: 'passive',
+      pool: 'recognition',
       correct: true,
       deps,
     })
@@ -128,11 +127,11 @@ describe('applyGateAnswer', () => {
     )
   })
 
-  it('addresses the production facet for the active pool', async () => {
+  it('addresses the production facet for the production pool', async () => {
     const { deps, advanceRehabDayFacet } = createDeps()
     advanceRehabDayFacet.mockResolvedValue(1)
     const lookup = makeParkedFacet({ skill: 'meaning_production' })
-    const outcome = await applyGateAnswer({ lookup, pool: 'active', correct: true, deps })
+    const outcome = await applyGateAnswer({ lookup, pool: 'production', correct: true, deps })
     expect(outcome).toEqual({ rehabCorrectDays: 1, graduated: false })
     expect(advanceRehabDayFacet).toHaveBeenCalledWith({
       userLookupId: lookupId,

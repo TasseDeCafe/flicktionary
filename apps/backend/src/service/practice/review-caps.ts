@@ -29,8 +29,8 @@ export type ReviewCapsDependencies = {
   practiceRatingEventsRepository: PracticeRatingEventsRepositoryInterface
 }
 
-// Effective per-fetch caps for a (user, language, pool, scope). The passive
-// pool runs two daily budgets:
+// Effective per-fetch caps for a (user, language, pool, scope). The
+// recognition pool runs two daily budgets:
 //
 //   - review budget: the clamped daily review limit minus review-state cards
 //     already rated today (counted off the practice_rating_events log) — a
@@ -46,12 +46,12 @@ export type ReviewCapsDependencies = {
 //     today and `mixed` won't re-add more). Without `requestedNewCount` (the
 //     reading-generator path) learn_new keeps the daily-remaining math.
 //
-// The active pool's NEW intake is never daily-capped (active introductions
-// don't consume the passive new allowance), so maxNewTerms stays the hard
-// ceiling. Its REVIEW cap is per-mode and optional: NULL (the default until the
-// Phase-3 UI sets it) means uncapped — the hard ceiling — preserving today's
-// behavior; a set value runs the same remaining-budget math against the
-// production-mode rating log.
+// The production pool's NEW intake is never daily-capped (production
+// introductions don't consume the recognition new allowance), so maxNewTerms
+// stays the hard ceiling. Its REVIEW cap is per-pool and optional: NULL (the
+// default until the Phase-3 UI sets it) means uncapped — the hard ceiling —
+// preserving today's behavior; a set value runs the same remaining-budget math
+// against the production-pool rating log.
 export const resolveReviewCaps = async (params: {
   userId: string
   targetLanguage: string
@@ -65,7 +65,7 @@ export const resolveReviewCaps = async (params: {
   maxNewTerms: number
   // Hard-ceiling cap for opt-in (non-citation) new facets — pronunciation and
   // specific forms. Non-zero ONLY in learn_new scope, for BOTH pools (the
-  // active pool serves production FORM facets, opt-in since the per-form
+  // production pool serves production FORM facets, opt-in since the per-form
   // editor shipped); the primary Practice button (mixed) never serves them
   // (Trap 22) — enabling a facet is a deliberate "go learn it via learn-new"
   // act.
@@ -80,8 +80,8 @@ export const resolveReviewCaps = async (params: {
   // enabled), so this is a hard ceiling, gated on the explicit learn-new entry.
   const maxOptInNewTerms = params.scope === 'learn_new' ? HARD_MAX_PRACTICE_NEW_TERMS : 0
 
-  if (params.pool === 'active') {
-    if (rawLimits.maxReviewTermsActive == null) {
+  if (params.pool === 'production') {
+    if (rawLimits.maxReviewTermsProduction == null) {
       return {
         maxReviewTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
         maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
@@ -89,14 +89,14 @@ export const resolveReviewCaps = async (params: {
         maxOptInNewTerms,
       }
     }
-    const cap = Math.min(Math.max(Math.trunc(rawLimits.maxReviewTermsActive), 0), HARD_MAX_PRACTICE_REVIEW_TERMS)
-    const consumedActiveReviews = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
+    const cap = Math.min(Math.max(Math.trunc(rawLimits.maxReviewTermsProduction), 0), HARD_MAX_PRACTICE_REVIEW_TERMS)
+    const consumedProductionReviews = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
       userId: params.userId,
       targetLanguage: params.targetLanguage,
-      mode: 'production',
+      pool: 'production',
     })
     return {
-      maxReviewTerms: Math.max(0, cap - consumedActiveReviews),
+      maxReviewTerms: Math.max(0, cap - consumedProductionReviews),
       maxLearningTerms: HARD_MAX_PRACTICE_REVIEW_TERMS,
       maxNewTerms: HARD_MAX_PRACTICE_NEW_TERMS,
       maxOptInNewTerms,
@@ -108,7 +108,7 @@ export const resolveReviewCaps = async (params: {
   const consumedReviewsToday = await params.deps.practiceRatingEventsRepository.countReviewBudgetConsumedToday({
     userId: params.userId,
     targetLanguage: params.targetLanguage,
-    mode: 'recognition',
+    pool: 'recognition',
   })
   const remainingReviews = Math.max(0, limits.maxReviewTerms - consumedReviewsToday)
 

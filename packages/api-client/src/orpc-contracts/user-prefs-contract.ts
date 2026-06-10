@@ -8,10 +8,11 @@ const TargetLanguagePrefSchema = z.object({
   showTranslationsEnabled: z.boolean(),
   practiceMaxNewTerms: z.number().int(),
   practiceMaxReviewTerms: z.number().int(),
-  // Production (active) review cap. null = uncapped (the historical default for
-  // active vocabulary); a number caps distinct production facets reviewed/day.
-  // Production has NO new cap by design (opt-in facets bypass daily-new).
-  practiceMaxReviewTermsActive: z.number().int().nullable(),
+  // Production review cap. null = uncapped (the historical default for
+  // production vocabulary); a number caps distinct production facets
+  // reviewed/day. Production has NO new cap by design (opt-in facets bypass
+  // daily-new).
+  practiceMaxReviewTermsProduction: z.number().int().nullable(),
 })
 
 const UserPrefsSchema = z.object({
@@ -34,10 +35,10 @@ const PracticeLimitsForLanguageInputSchema = z
     targetLanguage: z.string().min(1),
     maxNewTerms: z.number().int().min(0).max(PRACTICE_MAX_NEW_TERMS_LIMIT),
     maxReviewTerms: z.number().int().min(0).max(PRACTICE_MAX_REVIEW_TERMS_LIMIT),
-    // Production review cap. null = uncapped (preserves today's active
-    // behavior). Production has no new cap, so the >0 refine below covers only
-    // the recognition pair.
-    maxReviewTermsActive: z
+    // Production review cap. null = uncapped (preserves the historical
+    // production behavior). Production has no new cap, so the >0 refine below
+    // covers only the recognition pair.
+    maxReviewTermsProduction: z
       .number()
       .int()
       .min(0)

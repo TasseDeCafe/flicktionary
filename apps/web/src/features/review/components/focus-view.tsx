@@ -94,7 +94,7 @@ export const FocusView = () => {
       // Scope is always 'mixed' on return: a flashcard queue re-seeds from a
       // fresh fetch anyway, and re-entering learn_new with its batch count
       // would serve a whole new batch of unseen terms.
-      search: { pool: practicePool ?? 'passive', scope: 'mixed', mode: practiceMode ?? 'read' },
+      search: { pool: practicePool ?? 'recognition', scope: 'mixed', mode: practiceMode ?? 'read' },
     })
   }
   const goPrev = () => {
@@ -265,8 +265,8 @@ export const FocusView = () => {
     if (action === 'reject') {
       if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
     } else {
-      // Keep just enables recognition server-side; the passive/active fork is
-      // gone (production is now a per-target study facet edited elsewhere).
+      // Keep just enables recognition server-side; the pool fork is gone
+      // (production is now a per-target study facet edited elsewhere).
       if (card.status !== 'kept') updateStatus({ cardId: card.id, status: 'kept' })
     }
     setTimeout(() => advanceOrClose(), 220)

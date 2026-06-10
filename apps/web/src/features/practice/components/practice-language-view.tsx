@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
+import { plural } from '@lingui/core/macro'
 import { useLingui } from '@lingui/react/macro'
 import {
   BookOpen,
@@ -47,8 +48,8 @@ export const PracticeLanguageView = () => {
   // Per-pool "More" disclosure. Lives on the parent because nested component
   // definitions remount (and would drop their state) on every render.
   const [moreOpenByPool, setMoreOpenByPool] = useState<Record<PracticePool, boolean>>({
-    passive: false,
-    active: false,
+    recognition: false,
+    production: false,
   })
   // Learn-new batch sheet state — on the parent for the same remount reason.
   const [learnNewSheet, setLearnNewSheet] = useState<{ pool: PracticePool; anchor: FloatingSheetAnchor } | null>(null)
@@ -64,11 +65,11 @@ export const PracticeLanguageView = () => {
   const reviewBudgetLeft = Math.max(0, maxReviewTerms - (entry?.reviewedTodayCount ?? 0))
   const servableReviewDue = entry ? Math.min(entry.reviewDueCount, reviewBudgetLeft) : 0
   const dueTermCount = entry ? servableReviewDue + entry.learningDueCount : 0
-  const activeTotal = entry?.activeTotal ?? 0
-  const activeDueCount = entry ? entry.activeReviewDueCount + entry.activeLearningDueCount : 0
-  const activeNewCount = entry?.activeNewCount ?? 0
-  const hasActiveWork = activeDueCount + activeNewCount > 0
-  const hasPassiveWork = dueTermCount > 0 || dailyNewAvailable > 0
+  const productionTotal = entry?.productionTotal ?? 0
+  const productionDueCount = entry ? entry.productionReviewDueCount + entry.productionLearningDueCount : 0
+  const productionNewCount = entry?.productionNewCount ?? 0
+  const hasProductionWork = productionDueCount + productionNewCount > 0
+  const hasRecognitionWork = dueTermCount > 0 || dailyNewAvailable > 0
 
   const handleBack = () => void navigate({ to: '/practice' })
 
@@ -96,9 +97,9 @@ export const PracticeLanguageView = () => {
   // Learning follow-ups due always count as servable work (budget-exempt).
   const statusLine = (() => {
     if (!entry) return ''
-    if (hasPassiveWork) {
+    if (hasRecognitionWork) {
       const parts = [
-        dueTermCount > 0 ? t`${dueTermCount} reviews` : null,
+        dueTermCount > 0 ? plural(dueTermCount, { one: '# review', other: '# reviews' }) : null,
         dailyNewAvailable > 0 ? t`${dailyNewAvailable} new available today` : null,
       ].filter((p): p is string => p != null)
       return parts.join(' · ')
@@ -108,8 +109,26 @@ export const PracticeLanguageView = () => {
     return t`No terms are ready right now.`
   })()
 
+  // An open reading-mode text is otherwise invisible from the landing (it's
+  // only reachable by re-entering Read mode, and only under its own scope —
+  // a different scope discards it), so surface it with a resume affordance.
+  const renderReadingAffordance = (pool: PracticePool) => {
+    const reading = entry?.currentReadings.find((r) => r.pool === pool)
+    if (!reading) return null
+    return (
+      <button
+        type='button'
+        onClick={() => enterReview(pool, reading.scope ?? 'mixed', 'read')}
+        className='mt-3 flex w-full items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-left text-sm text-sky-800 transition-colors hover:bg-sky-100 active:bg-sky-100'
+      >
+        <BookOpen className='h-4 w-4 shrink-0' />
+        {t`Reading in progress (${plural(reading.termCount, { one: '# term', other: '# terms' })}) — continue`}
+      </button>
+    )
+  }
+
   const renderParkedAffordance = (pool: PracticePool) => {
-    const parked = pool === 'passive' ? (entry?.parkedCount ?? 0) : (entry?.activeParkedCount ?? 0)
+    const parked = pool === 'recognition' ? (entry?.parkedCount ?? 0) : (entry?.productionParkedCount ?? 0)
     if (parked <= 0) return null
     return (
       <button
@@ -129,7 +148,7 @@ export const PracticeLanguageView = () => {
       <div className='mt-4 flex flex-col gap-2'>
         <div className='flex flex-col gap-2 sm:flex-row sm:flex-wrap'>
           <Button type='button' size='lg' onClick={() => enterReview(pool, 'mixed', 'flashcards')}>
-            {pool === 'active' ? <Star className='h-4 w-4' /> : <Brain className='h-4 w-4' />}
+            {pool === 'production' ? <Star className='h-4 w-4' /> : <Brain className='h-4 w-4' />}
             {t`Practice`}
           </Button>
           <Button type='button' variant='outline' size='lg' onClick={() => openHistory(pool)}>
@@ -169,15 +188,15 @@ export const PracticeLanguageView = () => {
               // opt-in extras (enabled forms/pronunciation) exist — extras are
               // served only in learn-new sessions, never by Practice (mixed).
               disabled={
-                pool === 'passive'
+                pool === 'recognition'
                   ? (entry?.newCount ?? 0) + (entry?.optInNewCount ?? 0) === 0
-                  : activeNewCount + (entry?.activeOptInNewCount ?? 0) === 0
+                  : productionNewCount + (entry?.productionOptInNewCount ?? 0) === 0
               }
               onClick={(event) => {
-                // Passive learn-new picks a batch size first (the chosen N
-                // bypasses the daily-new budget). The active pool has no daily
-                // cap, so it enters directly like before.
-                if (pool === 'passive') {
+                // Recognition learn-new picks a batch size first (the chosen N
+                // bypasses the daily-new budget). The production pool has no
+                // daily cap, so it enters directly like before.
+                if (pool === 'recognition') {
                   setLearnNewSheet({ pool, anchor: event.currentTarget.getBoundingClientRect() })
                   return
                 }
@@ -217,37 +236,39 @@ export const PracticeLanguageView = () => {
 
           {entry && (
             <>
-              {activeTotal > 0 && (
+              {productionTotal > 0 && (
                 <section className='rounded-xl border bg-amber-50/40 p-4 dark:bg-amber-400/10'>
                   <h2 className='text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
                     <Star className='h-3.5 w-3.5 text-amber-600 dark:text-amber-400' />
                     {t`Production practice`}
                   </h2>
                   <p className='text-foreground text-sm'>
-                    {hasActiveWork
-                      ? t`${activeDueCount} reviews, ${activeNewCount} new`
-                      : t`${activeTotal} production term(s). Nothing to review right now.`}
+                    {hasProductionWork
+                      ? t`${plural(productionDueCount, { one: '# review', other: '# reviews' })}, ${productionNewCount} new`
+                      : t`${plural(productionTotal, { one: '# production term', other: '# production terms' })}. Nothing to review right now.`}
                   </p>
-                  {renderParkedAffordance('active')}
-                  {renderPoolActions('active')}
+                  {renderReadingAffordance('production')}
+                  {renderParkedAffordance('production')}
+                  {renderPoolActions('production')}
                 </section>
               )}
 
               <section className='bg-card rounded-xl border p-4'>
                 <h2 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>{t`Recognition practice`}</h2>
                 <div className='flex items-start gap-3'>
-                  {hasPassiveWork ? (
+                  {hasRecognitionWork ? (
                     <Brain className='mt-1 h-5 w-5 text-yellow-600 dark:text-yellow-400' />
                   ) : (
                     <CircleCheck className='mt-1 h-5 w-5 text-emerald-600' />
                   )}
                   <div className='min-w-0 flex-1'>
-                    <h3 className='font-semibold'>{hasPassiveWork ? t`Ready to practice` : t`All caught up`}</h3>
+                    <h3 className='font-semibold'>{hasRecognitionWork ? t`Ready to practice` : t`All caught up`}</h3>
                     {statusLine && <p className='text-muted-foreground mt-1 text-sm'>{statusLine}</p>}
                   </div>
                 </div>
-                {renderParkedAffordance('passive')}
-                {renderPoolActions('passive')}
+                {renderReadingAffordance('recognition')}
+                {renderParkedAffordance('recognition')}
+                {renderPoolActions('recognition')}
               </section>
 
               <section className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
@@ -270,7 +291,7 @@ export const PracticeLanguageView = () => {
                   // null batch = extras-only session: enter learn-new without a
                   // count; the citation bucket is empty and only opt-in extras
                   // (which need no daily-cap bypass) are served.
-                  enterReview(learnNewSheet?.pool ?? 'passive', 'learn_new', 'flashcards', batchSize ?? undefined)
+                  enterReview(learnNewSheet?.pool ?? 'recognition', 'learn_new', 'flashcards', batchSize ?? undefined)
                 }}
               />
             </>

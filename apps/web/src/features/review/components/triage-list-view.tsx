@@ -258,7 +258,7 @@ export const TriageListView = () => {
               void navigate({
                 to: '/practice/review/$targetLanguage',
                 params: { targetLanguage: session.targetLanguage },
-                search: { pool: 'passive', scope: 'mixed', mode: 'read' },
+                search: { pool: 'recognition', scope: 'mixed', mode: 'read' },
               })
             }}
           >

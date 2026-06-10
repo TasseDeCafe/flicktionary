@@ -2,7 +2,7 @@ import type { DbUserLookupWithFacet } from '../../transport/database/user-lookup
 import type { FsrsResult } from './fsrs'
 
 // Shared leech/rehab tuning. One source of truth for both pools — the
-// thresholds are deliberately identical for passive and active.
+// thresholds are deliberately identical for recognition and production.
 
 // A term whose FSRS lapses reach this count gets parked out of every practice
 // queue (flashcards AND reading-text candidate selection) until it graduates

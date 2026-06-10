@@ -154,16 +154,17 @@ export const GrammarSchema = z
   .passthrough()
 export type Grammar = z.infer<typeof GrammarSchema>
 
-// Which SRS column family a practice session reads and writes. Selects sources
-// per session (production iff an enabled citation meaning_production facet
-// exists); lives on practice_sessions so the rating layer knows whether to
-// advance srs_* or active_srs_*.
-export const PracticePoolSchema = z.enum(['passive', 'active'])
+// The two practice queues, named for their dominant skill direction:
+// 'recognition' serves the meaning_recognition + pronunciation facets,
+// 'production' serves meaning_production. Matches the backend's PracticePool,
+// the DB pool columns, and the UI labels ("Recognition practice" /
+// "Production practice").
+export const PracticePoolSchema = z.enum(['recognition', 'production'])
 export type PracticePool = z.infer<typeof PracticePoolSchema>
 
 // What you practise on a target — one axis of a study_facets facet. `pool` (the
-// session queue, above) is the DERIVED review mode of a skill and stays on the
-// wire; this is card identity. 'pronunciation' (recognition-mode, citation-only)
+// session queue, above) is the DERIVED pool of a skill and stays on the wire;
+// this is card identity. 'pronunciation' (recognition-pool, citation-only)
 // arrives in Phase 4 (widened CHECK).
 export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
 export type FacetSkill = z.infer<typeof FacetSkillSchema>
@@ -258,7 +259,7 @@ export const ChunkSchema = z.object({
   // Automatic processing/enrichment/chat patches do not stamp this.
   grammarUserEditedAt: z.string().nullable(),
   // True iff the citation meaning_production facet is enabled — i.e. the term
-  // is in production study (the active-drill pool, with its own SRS state).
+  // is in production study (the production pool, with its own SRS state).
   // Derived server-side from facet state (the user_lookups.learning_mode column
   // was dropped).
   isProductionEnabled: z.boolean().default(false),
@@ -273,11 +274,11 @@ export const ChunkRowSchema = ChunkSchema.extend({
   srsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
   srsDue: z.string().nullable(),
   srsReps: z.number().int(),
-  // Parallel active-pool SRS state. Null when the term hasn't been drilled in
-  // the active pool yet (including all 'passive' terms).
-  activeSrsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
-  activeSrsDue: z.string().nullable(),
-  activeSrsReps: z.number().int(),
+  // Parallel production-pool SRS state. Null when the term hasn't been drilled
+  // in the production pool yet (including all recognition-only terms).
+  productionSrsState: z.enum(['new', 'learning', 'review', 'relearning']).nullable(),
+  productionSrsDue: z.string().nullable(),
+  productionSrsReps: z.number().int(),
   createdAt: z.string(),
   firstCardId: z.string().uuid().nullable(),
   firstCardSegmentId: z.string().uuid().nullable(),
@@ -364,8 +365,8 @@ export type PracticeRating = z.infer<typeof PracticeRatingSchema>
 
 // Which slice of the live SRS pool a review pulls. review_due = cards due now;
 // learn_new = never-reviewed cards up to the daily cap; mixed = both, due-first.
-// Generalizes the old session "mode" without the learn_extra/active_drill
-// variants (active is now expressed via `pool`, extra-learning is gone).
+// Generalizes the old session "mode" without the learn_extra/production-drill
+// variants (production is now expressed via `pool`, extra-learning is gone).
 export const ReviewScopeSchema = z.enum(['review_due', 'learn_new', 'mixed'])
 export type ReviewScope = z.infer<typeof ReviewScopeSchema>
 
@@ -400,18 +401,18 @@ export const PracticeAnnotationSchema = z.object({
   // sheet, even after a refetch.
   deletedAt: z.string().nullable(),
   // Whether the term is in production study (citation meaning_production facet
-  // enabled), so the rate sheet can show the right "Switch to passive/active"
-  // action. Null when no canonical row.
+  // enabled), so the rate sheet can show the right "Switch to
+  // production/recognition-only" action. Null when no canonical row.
   isProductionEnabled: z.boolean().nullable(),
 })
 export type PracticeAnnotation = z.infer<typeof PracticeAnnotationSchema>
 
 export const PracticeTextSchema = z.object({
   id: z.string().uuid(),
-  // 'passive' for normal SRS reviews, 'active' for the active-drill pool. The
-  // rating layer routes FSRS writes to srs_* or active_srs_* based on this.
-  // Replaces the old practiceSessionId now that reading is sessionless: texts
-  // are kept per (user, target_language, pool) and double as history.
+  // Which practice queue the text was generated for. The rating layer routes
+  // FSRS writes to the pool's facet skill based on this. Replaces the old
+  // practiceSessionId now that reading is sessionless: texts are kept per
+  // (user, target_language, pool) and double as history.
   pool: PracticePoolSchema,
   ord: z.number().int(),
   status: PracticeTextStatusSchema,
@@ -436,10 +437,10 @@ export const PracticeDueSummaryEntrySchema = z.object({
   newCount: z.number().int(),
   newIntroducedTodayCount: z.number().int(),
   // Unseen opt-in facets (pronunciation / specific forms), enabled+ready, per
-  // review mode. Served only in learn-new sessions — newCount/activeNewCount
+  // pool. Served only in learn-new sessions — newCount/productionNewCount
   // stay citation-only because the mixed Practice queue never serves opt-ins.
   optInNewCount: z.number().int(),
-  activeOptInNewCount: z.number().int(),
+  productionOptInNewCount: z.number().int(),
   // Review-state cards rated today (the spent daily review budget, counted
   // off the rating-event log). Lets the landing distinguish "limit reached"
   // from "all caught up" when due work exists beyond the budget.
@@ -447,14 +448,25 @@ export const PracticeDueSummaryEntrySchema = z.object({
   // Leech-parked terms — excluded from every practice queue until rehab
   // graduates them; the due counts above already exclude them.
   parkedCount: z.number().int(),
-  // Active-drill pool counters. activeTotal is the number of user_lookups
-  // promoted to learning_mode='active'; the rest mirror the passive counts
-  // but read from active_srs_* state.
-  activeTotal: z.number().int(),
-  activeReviewDueCount: z.number().int(),
-  activeLearningDueCount: z.number().int(),
-  activeNewCount: z.number().int(),
-  activeParkedCount: z.number().int(),
+  // Production-pool counters. productionTotal is the number of terms in
+  // production study (enabled citation meaning_production facet); the rest
+  // mirror the recognition counts but read the production facets' SRS state.
+  productionTotal: z.number().int(),
+  productionReviewDueCount: z.number().int(),
+  productionLearningDueCount: z.number().int(),
+  productionNewCount: z.number().int(),
+  productionParkedCount: z.number().int(),
+  // In-progress reading-mode texts (status='reading'), at most one per pool.
+  // Feeds the landing's "continue reading" affordance. The scope is needed to
+  // resume: re-entering reading under a different scope discards the open
+  // text (failMismatchedScopeSlots). NULL scope = legacy row, any scope works.
+  currentReadings: z.array(
+    z.object({
+      pool: PracticePoolSchema,
+      scope: ReviewScopeSchema.nullable(),
+      termCount: z.number().int(),
+    })
+  ),
 })
 export type PracticeDueSummaryEntry = z.infer<typeof PracticeDueSummaryEntrySchema>
 

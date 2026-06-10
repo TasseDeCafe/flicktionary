@@ -28,7 +28,6 @@ const makeLookup = (id: string, overrides: Partial<DbUserLookup> = {}): DbUserLo
     first_card_id: null,
     exported_at: null,
     count: 1,
-    learning_mode: 'passive',
     created_at: '2026-05-12T00:00:00Z',
     deleted_at: null,
     ...overrides,
@@ -68,7 +67,7 @@ const claimedText = {
   id: textId,
   user_id: userId,
   target_language: 'es',
-  pool: 'passive',
+  pool: 'recognition',
   ord: 0,
   status: 'done',
   body: 'gato y perro',
@@ -114,7 +113,9 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
 
   const deps = {
     practiceTextsRepository: {
-      findByIdForUser: vi.fn().mockResolvedValue({ practiceText: claimedText, targetLanguage: 'es', pool: 'passive' }),
+      findByIdForUser: vi
+        .fn()
+        .mockResolvedValue({ practiceText: claimedText, targetLanguage: 'es', pool: 'recognition' }),
       claimFinalize,
       failMismatchedScopeSlots: vi.fn().mockResolvedValue(undefined),
       selectAndMarkReading,
@@ -175,7 +176,7 @@ describe('advanceReadingText', () => {
     const result = await advanceReadingText(
       userId,
       textId,
-      'passive',
+      'recognition',
       'mixed',
       [{ userLookupId: laId, rating: 'again' }],
       deps
@@ -187,7 +188,7 @@ describe('advanceReadingText', () => {
 
   it('is idempotent: a lost finalize claim applies no FSRS and still returns the next text', async () => {
     const { deps, applyFsrsResultForFacet, findByKey } = createDeps({ claimWins: false })
-    const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
+    const result = await advanceReadingText(userId, textId, 'recognition', 'mixed', [], deps)
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 0 })
     expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
     expect(findByKey).not.toHaveBeenCalled()
@@ -206,7 +207,7 @@ describe('advanceReadingText', () => {
       ready_at: '2026-05-12T00:00:00Z',
     })
 
-    const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
+    const result = await advanceReadingText(userId, textId, 'recognition', 'mixed', [], deps)
 
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
     expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
@@ -222,7 +223,7 @@ describe('advanceReadingText', () => {
       },
     })
 
-    const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
+    const result = await advanceReadingText(userId, textId, 'recognition', 'mixed', [], deps)
 
     expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
     expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
@@ -252,7 +253,7 @@ describe('advanceReadingText', () => {
     const result = await advanceReadingText(
       userId,
       textId,
-      'passive',
+      'recognition',
       'mixed',
       [{ userLookupId: laId, rating: 'again' }],
       deps
@@ -267,7 +268,7 @@ describe('advanceReadingText', () => {
   it('returns text_not_found when the text is missing or not owned', async () => {
     const { deps } = createDeps({ claimWins: true })
     ;(deps.practiceTextsRepository.findByIdForUser as ReturnType<typeof vi.fn>).mockResolvedValue(null)
-    const result = await advanceReadingText(userId, textId, 'passive', 'mixed', [], deps)
+    const result = await advanceReadingText(userId, textId, 'recognition', 'mixed', [], deps)
     expect(result).toEqual({ ok: false, reason: 'text_not_found' })
   })
 
@@ -276,7 +277,7 @@ describe('advanceReadingText', () => {
     const result = await advanceReadingText(
       userId,
       textId,
-      'passive',
+      'recognition',
       'mixed',
       [{ userLookupId: laId, rating: 'again' }],
       deps
@@ -309,7 +310,7 @@ describe('advanceReadingText', () => {
       claimWins: true,
     })
     initializeCitationFacetIfUnderDailyCap.mockResolvedValue(false)
-    const result = await advanceReadingText(userId, textId, 'passive', 'learn_new', [], deps)
+    const result = await advanceReadingText(userId, textId, 'recognition', 'learn_new', [], deps)
     expect(result.ok).toBe(true)
     // lb is the only learn_new-eligible annotation (la is scheduled); its
     // introduction is refused at the guard — no bypass, no FSRS, no event.

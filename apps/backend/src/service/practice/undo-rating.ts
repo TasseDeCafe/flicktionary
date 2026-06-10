@@ -53,7 +53,7 @@ export const undoRating = async (
 
   const undone = await deps.withTransaction(async (tx) => {
     // Address the latest live event by the FACET identity (skill, target_form),
-    // not pool — the passive queue can serve multiple facets per term.
+    // not pool — the recognition queue can serve multiple facets per term.
     const event = await deps.practiceRatingEventsRepository.findLatestLiveEventForUndo(
       { userId, userLookupId, skill, targetForm },
       tx

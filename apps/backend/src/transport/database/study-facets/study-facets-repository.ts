@@ -15,31 +15,27 @@ export type FacetSkill = 'meaning_recognition' | 'meaning_production' | 'pronunc
 // inflected forms (non-empty strings) arrive in Phase 4.
 export const CITATION_FORM = ''
 
-// `pool` (the session queue / wire param) is the DERIVED review mode of a
-// skill. It stays on the wire unchanged; this maps it to card identity at the
-// service boundary. recognition -> passive, production -> active.
-export type PracticePool = 'passive' | 'active'
+// `pool` (the session queue / wire param) names which review queue a facet
+// belongs to — the static per-skill property that also decides which per-pool
+// budget/cap applies. Budgets and daily caps are per-pool, NOT per-skill (see
+// the plan: no per-skill caps). This maps a pool to the citation card identity
+// at the service boundary.
+export type PracticePool = 'recognition' | 'production'
 export const skillForPool = (pool: PracticePool): FacetSkill =>
-  pool === 'active' ? 'meaning_production' : 'meaning_recognition'
+  pool === 'production' ? 'meaning_production' : 'meaning_recognition'
 
-// A skill's review MODE — the static property that decides which session queue
-// (and which per-mode budget/cap) a facet belongs to. recognition skills are
-// reviewed in the passive queue; production in the active queue. Budgets and
-// daily caps are per-mode, NOT per-skill (see the plan: no per-skill caps).
-export type ReviewMode = 'recognition' | 'production'
-
-// The skills that belong to each review mode. Returned as raw strings (not
+// The skills that belong to each pool. Returned as raw strings (not
 // FacetSkill) so 'pronunciation' is already covered for forward-compat: it has
-// no rows until Phase 4 widens the CHECK, but a recognition-mode budget/queue
+// no rows until Phase 4 widens the CHECK, but a recognition-pool budget/queue
 // filter that lists it is correct now and needs no change then.
-export const skillsForReviewMode = (mode: ReviewMode): string[] =>
-  mode === 'production' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
+export const skillsForPool = (pool: PracticePool): string[] =>
+  pool === 'production' ? ['meaning_production'] : ['meaning_recognition', 'pronunciation']
 
-// The inverse of skillsForReviewMode: a skill's review mode. Only
-// meaning_production is production-mode; meaning_recognition and pronunciation
-// are recognition-mode (passive queue). Used for mode-specific FSRS rules (e.g.
-// the next-day passive floor) that apply to recognition skills as a class.
-export const reviewModeForSkill = (skill: string): ReviewMode =>
+// The inverse of skillsForPool: a skill's pool. Only meaning_production is in
+// the production pool; meaning_recognition and pronunciation are in the
+// recognition pool. Used for pool-specific FSRS rules (e.g. the next-day
+// recognition floor) that apply to recognition skills as a class.
+export const poolForSkill = (skill: string): PracticePool =>
   skill === 'meaning_production' ? 'production' : 'recognition'
 
 // The ONLY daily-new-capped facet is the citation recognition card ("I'm
@@ -51,11 +47,12 @@ export const isDailyNewCappedFacet = (skill: string, targetForm: string): boolea
   skill === 'meaning_recognition' && targetForm === CITATION_FORM
 
 // `pool` (the session queue / wire param) names which queue you entered, not
-// card identity. These are the legal (pool, skill) pairs — the passive queue
-// serves recognition skills, the active queue serves production. Validate
-// server-side in rateTerm/undoRating so a crafted (active, pronunciation) 400s.
+// card identity. These are the legal (pool, skill) pairs — the recognition
+// queue serves recognition skills, the production queue serves production.
+// Validate server-side in rateTerm/undoRating so a crafted
+// (production, pronunciation) 400s.
 export const isLegalPoolSkill = (pool: PracticePool, skill: string): boolean =>
-  pool === 'active' ? skill === 'meaning_production' : skillsForReviewMode('recognition').includes(skill)
+  pool === 'production' ? skill === 'meaning_production' : skillsForPool('recognition').includes(skill)
 
 export type FacetAddress = {
   userLookupId: string
@@ -206,9 +203,8 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
 }
 
 // Unconditional facet introduction (no daily-new cap) — the production-citation
-// path. Mirrors the legacy active-pool initializer: it does NOT stamp
-// introduced_at, because production was never daily-new-capped. No-op if the
-// facet is already seen.
+// path. It does NOT stamp introduced_at, because production was never
+// daily-new-capped. No-op if the facet is already seen.
 const initializeFacet = async (params: FacetAddress): Promise<void> => {
   await sql`
     UPDATE public.study_facets
