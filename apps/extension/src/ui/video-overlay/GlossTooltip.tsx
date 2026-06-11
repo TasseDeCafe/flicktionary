@@ -410,9 +410,7 @@ export function SavedGlossTooltip({
         setActionError(t`Could not save the note.`)
       }
     })
-    // presetPrompts is a per-render literal of stable translations; listing
-    // every prompt string as a dep would just be noise.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // presetPrompts is a per-render literal of stable translations — not a dep.
   }, [sessionId, highlight.id, note, tags, onNotePatched, t])
 
   const toggleTag = (tag: PresetTag) => {
