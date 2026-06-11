@@ -774,7 +774,7 @@ msgstr "Choisissez comment remplir les données de cette forme."
 msgid "Choose subtitles"
 msgstr "Choisir les sous-titres"
 
-#: apps/web/src/features/review/components/form-selector.tsx:437
+#: apps/web/src/features/review/components/form-selector.tsx:439
 msgid "Choose what to study for this target."
 msgstr "Choisissez ce que vous voulez étudier pour cette cible."
 
@@ -2468,7 +2468,7 @@ msgstr "Aucune session dans ce filtre."
 msgid "No sessions yet. Start one to begin."
 msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 
-#: apps/web/src/features/review/components/form-selector.tsx:425
+#: apps/web/src/features/review/components/form-selector.tsx:427
 msgid "No skills selected"
 msgstr "Aucune compétence sélectionnée"
 
@@ -2931,7 +2931,7 @@ msgstr "Avertissements de traitement"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:190
 #: apps/web/src/features/review/components/form-selector.tsx:301
-#: apps/web/src/features/review/components/form-selector.tsx:365
+#: apps/web/src/features/review/components/form-selector.tsx:367
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 #: packages/ui/src/components/study-options-section.tsx:100
@@ -2969,7 +2969,7 @@ msgstr "Pronom"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:200
 #: apps/web/src/features/review/components/form-selector.tsx:308
-#: apps/web/src/features/review/components/form-selector.tsx:381
+#: apps/web/src/features/review/components/form-selector.tsx:383
 #: packages/ui/src/components/study-options-section.tsx:106
 msgid "Pronunciation"
 msgstr "Prononciation"
@@ -3020,7 +3020,7 @@ msgstr "Récemment ajouté"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:180
 #: apps/web/src/features/review/components/form-selector.tsx:294
-#: apps/web/src/features/review/components/form-selector.tsx:357
+#: apps/web/src/features/review/components/form-selector.tsx:359
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 #: packages/ui/src/components/study-options-section.tsx:94
 msgid "Recognition"
@@ -3105,7 +3105,7 @@ msgstr "Supprimer"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Supprimer « {sessionTitle} » ?"
 
-#: apps/web/src/features/review/components/form-selector.tsx:502
+#: apps/web/src/features/review/components/form-selector.tsx:504
 msgid "Remove form"
 msgstr "Supprimer la forme"
 
@@ -3484,11 +3484,11 @@ msgstr "Connexion…"
 msgid "Singular-only"
 msgstr "Singulier seulement"
 
-#: apps/web/src/features/review/components/form-selector.tsx:412
+#: apps/web/src/features/review/components/form-selector.tsx:414
 msgid "Skills"
 msgstr "Compétences"
 
-#: apps/web/src/features/review/components/form-selector.tsx:436
+#: apps/web/src/features/review/components/form-selector.tsx:438
 msgid "Skills for {label}"
 msgstr "Compétences pour {label}"
 

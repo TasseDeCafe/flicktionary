@@ -759,7 +759,7 @@ msgstr "Choose how to fill this form's data."
 msgid "Choose subtitles"
 msgstr "Choose subtitles"
 
-#: apps/web/src/features/review/components/form-selector.tsx:437
+#: apps/web/src/features/review/components/form-selector.tsx:439
 msgid "Choose what to study for this target."
 msgstr "Choose what to study for this target."
 
@@ -2433,7 +2433,7 @@ msgstr "No sessions in this filter."
 msgid "No sessions yet. Start one to begin."
 msgstr "No sessions yet. Start one to begin."
 
-#: apps/web/src/features/review/components/form-selector.tsx:425
+#: apps/web/src/features/review/components/form-selector.tsx:427
 msgid "No skills selected"
 msgstr "No skills selected"
 
@@ -2888,7 +2888,7 @@ msgstr "Processing warnings"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:190
 #: apps/web/src/features/review/components/form-selector.tsx:301
-#: apps/web/src/features/review/components/form-selector.tsx:365
+#: apps/web/src/features/review/components/form-selector.tsx:367
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 #: packages/ui/src/components/study-options-section.tsx:100
@@ -2926,7 +2926,7 @@ msgstr "Pronoun"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:200
 #: apps/web/src/features/review/components/form-selector.tsx:308
-#: apps/web/src/features/review/components/form-selector.tsx:381
+#: apps/web/src/features/review/components/form-selector.tsx:383
 #: packages/ui/src/components/study-options-section.tsx:106
 msgid "Pronunciation"
 msgstr "Pronunciation"
@@ -2977,7 +2977,7 @@ msgstr "Recently added"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:180
 #: apps/web/src/features/review/components/form-selector.tsx:294
-#: apps/web/src/features/review/components/form-selector.tsx:357
+#: apps/web/src/features/review/components/form-selector.tsx:359
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 #: packages/ui/src/components/study-options-section.tsx:94
 msgid "Recognition"
@@ -3062,7 +3062,7 @@ msgstr "Remove"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Remove \"{sessionTitle}\"?"
 
-#: apps/web/src/features/review/components/form-selector.tsx:502
+#: apps/web/src/features/review/components/form-selector.tsx:504
 msgid "Remove form"
 msgstr "Remove form"
 
@@ -3440,11 +3440,11 @@ msgstr "Signing in…"
 msgid "Singular-only"
 msgstr "Singular-only"
 
-#: apps/web/src/features/review/components/form-selector.tsx:412
+#: apps/web/src/features/review/components/form-selector.tsx:414
 msgid "Skills"
 msgstr "Skills"
 
-#: apps/web/src/features/review/components/form-selector.tsx:436
+#: apps/web/src/features/review/components/form-selector.tsx:438
 msgid "Skills for {label}"
 msgstr "Skills for {label}"
 
