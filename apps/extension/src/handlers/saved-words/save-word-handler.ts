@@ -116,6 +116,9 @@ export default class SaveWordHandler {
       startOffset: message.startCharOffset,
       endOffset: message.endCharOffset,
       selectionText: message.word,
+      // Study options from the gloss tooltip; the backend enrichment job
+      // applies them once the term materializes (full-set semantics).
+      studyIntent: message.studyIntent,
     })
   }
 }

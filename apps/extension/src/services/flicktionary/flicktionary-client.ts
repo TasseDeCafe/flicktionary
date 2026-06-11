@@ -7,10 +7,14 @@ import {
   SaveWordMessage,
   SaveWordResponse,
   SaveWordFlicktionaryVideoContext,
+  SaveWordStudyIntent,
   SetFlicktionaryCefrMessage,
   SetFlicktionaryCefrResponse,
 } from '@asbplayer-fork/common'
 import { v4 as uuidv4 } from 'uuid'
+
+// Re-exported so UI call sites get the intent type alongside SaveWordParams.
+export type { SaveWordStudyIntent } from '@asbplayer-fork/common'
 
 // Framework-agnostic Flicktionary messaging used by the React subtitle overlay.
 // These functions are pure async over `browser.runtime.sendMessage` — they NEVER
@@ -96,6 +100,10 @@ export interface SaveWordParams {
   translation: string
   segmentInfo?: SaveWordSegmentInfo
   closures: FlicktionaryVideoClosures
+  // Study options from the gloss tooltip (full-set semantics; undefined =
+  // backend default). Lives on the params so the CEFR-retry round-trip
+  // (pendingSave) keeps the configured options for free.
+  studyIntent?: SaveWordStudyIntent
   // Set when this save is the automatic retry after the user picked a CEFR
   // level. Suppresses the missing-cefr outcome (don't re-show the picker) and
   // surfaces the message instead if the save still fails.
@@ -108,6 +116,7 @@ export async function saveWord({
   translation,
   segmentInfo,
   closures,
+  studyIntent,
   isCefrRetry = false,
 }: SaveWordParams): Promise<SaveWordOutcome> {
   const saveDisabledReason = closures.getFlicktionarySaveDisabledReason()
@@ -130,6 +139,7 @@ export async function saveWord({
       startCharOffset: segmentInfo?.startCharOffset,
       endCharOffset: segmentInfo?.endCharOffset,
       flicktionaryVideo: closures.getFlicktionaryVideoContext(),
+      studyIntent,
     },
   }
 
