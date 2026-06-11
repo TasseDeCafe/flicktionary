@@ -11,6 +11,7 @@ import {
   GlossData,
   SaveWordParams,
   SaveWordSegmentInfo,
+  SaveWordStudyIntent,
   saveWord,
   setCefr,
   startFlicktionaryPairing,
@@ -263,7 +264,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   )
 
   const saveSingle = useCallback(
-    (line: SubtitleLineModel, token: LineToken) => {
+    (line: SubtitleLineModel, token: LineToken, studyIntent?: SaveWordStudyIntent) => {
       const translation = queryClient.getQueryData<GlossData>(glossQueryKey(token.text, line.text))?.gloss ?? ''
       const segmentInfo: SaveWordSegmentInfo = {
         startSegmentIndex: line.index,
@@ -271,13 +272,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         startCharOffset: token.charStart,
         endCharOffset: token.charEnd,
       }
-      void handleOutcome({ word: token.text, sentence: line.text, translation, segmentInfo, closures })
+      void handleOutcome({ word: token.text, sentence: line.text, translation, segmentInfo, closures, studyIntent })
     },
     [closures, handleOutcome, queryClient]
   )
 
   const saveSelection = useCallback(
-    (tl: TokenizedLine) => {
+    (tl: TokenizedLine, studyIntent?: SaveWordStudyIntent) => {
       const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
       if (!range) return
       const selectedWords = tl.wordTokens.slice(range.minOrd, range.maxOrd + 1)
@@ -293,7 +294,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         startCharOffset: first.charStart,
         endCharOffset: last.charEnd,
       }
-      void handleOutcome({ word: words, sentence: tl.line.text, translation, segmentInfo, closures })
+      void handleOutcome({ word: words, sentence: tl.line.text, translation, segmentInfo, closures, studyIntent })
     },
     [closures, handleOutcome, queryClient, interaction]
   )
@@ -569,9 +570,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
               signedIn={signedIn}
               onSignIn={onSignIn}
-              onSave={() => {
-                if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl)
-                else saveSingle(gloss.save.tl.line, gloss.save.token)
+              onSave={(studyIntent) => {
+                if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl, studyIntent)
+                else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent)
                 hideGloss()
               }}
               onPointerEnter={cancelGlossHide}

@@ -2328,6 +2328,7 @@ msgstr "Native language"
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:201
 #: packages/ui/src/components/study-options-section.tsx:109
 msgid "Needs a known transcription"
 msgstr "Needs a known transcription"
@@ -2454,7 +2455,7 @@ msgstr "No terms are ready right now."
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:102
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:123
 msgid "No translation available"
 msgstr "No translation available"
 
@@ -2889,6 +2890,7 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:188
 #: apps/web/src/features/review/components/form-selector.tsx:301
 #: apps/web/src/features/review/components/form-selector.tsx:353
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
@@ -2926,6 +2928,7 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:198
 #: apps/web/src/features/review/components/form-selector.tsx:308
 #: apps/web/src/features/review/components/form-selector.tsx:371
 #: packages/ui/src/components/study-options-section.tsx:106
@@ -2976,6 +2979,7 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:178
 #: apps/web/src/features/review/components/form-selector.tsx:294
 #: apps/web/src/features/review/components/form-selector.tsx:345
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
@@ -3158,8 +3162,8 @@ msgstr "Reviewing and practicing"
 msgid "RP"
 msgstr "RP"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:140
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:150
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:242
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:252
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
 msgid "Save"
@@ -3385,8 +3389,8 @@ msgstr "Show notes"
 msgid "Show suggested terms while reading"
 msgstr "Show suggested terms while reading"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:131
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:252
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:233
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:253
 msgid "Sign in"
 msgstr "Sign in"
 
@@ -3534,6 +3538,7 @@ msgstr "Strengthen · {languageName}"
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:153
 #: packages/ui/src/components/study-options-section.tsx:122
 msgid "Study options"
 msgstr "Study options"
@@ -3542,6 +3547,7 @@ msgstr "Study options"
 msgid "Study targets"
 msgstr "Study targets"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:214
 #: packages/ui/src/components/study-options-section.tsx:155
 msgid "Study this exact form"
 msgstr "Study this exact form"

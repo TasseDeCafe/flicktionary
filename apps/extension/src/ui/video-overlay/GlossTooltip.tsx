@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Trans } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
+import {
+  defaultStudyIntentDraft,
+  draftToStudyIntent,
+  type StudyIntentDraft,
+  type StudyIntentValue,
+} from '@flicktionary/ui/components/study-options-section'
 import { GlossData, pickIpa } from '../../services/flicktionary/flicktionary-client'
 
 export type GlossContent =
@@ -17,8 +23,11 @@ export interface GlossTooltipProps {
   word: string
   content: GlossContent
   // Explicit save (mirrors the right-click power-shortcut): persists the
-  // highlighted word. Looking via hover stays free.
-  onSave: () => void
+  // highlighted word. Looking via hover stays free. `studyIntent` carries any
+  // touched "Study options" draft (undefined = backend default); the
+  // right-click shortcut bypasses the tooltip and always saves with the
+  // default.
+  onSave: (studyIntent?: StudyIntentValue) => void
   // When set, saving is unavailable here (e.g. off YouTube, where saving isn't
   // wired up yet). Render Save disabled with this reason instead of an active
   // button — looking is still free, so the gloss above stays fully usable.
@@ -55,6 +64,18 @@ export function GlossTooltip({
   // otherwise it paints one frame at its initial top-left before moving (the
   // brief viewport-corner flash). Reset whenever the anchor changes.
   const [positioned, setPositioned] = useState(false)
+  // "Study options" draft (full-set semantics — see the shared component's
+  // model in @flicktionary/ui). Only the MODEL is shared: the controls below
+  // are native px-sized inputs because Radix Checkbox/Switch rem-size against
+  // the HOST page root font-size inside shadow surfaces (EXTENSION-SPEC.md).
+  const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
+  const [optionsExpanded, setOptionsExpanded] = useState(false)
+
+  // A new word = a new save target: re-collapse and re-arm the draft.
+  useEffect(() => {
+    setStudyDraft(defaultStudyIntentDraft)
+    setOptionsExpanded(false)
+  }, [word])
 
   useEffect(() => {
     const tooltip = ref.current
@@ -118,6 +139,89 @@ export function GlossTooltip({
         </>
       )}
 
+      {/* Study options — only when saving is actually available. Native
+          checkbox inputs (px-sized; see the draft-state comment above). */}
+      {signedIn && !saveDisabledReason && (
+        <div className='mt-1 flex flex-col gap-1'>
+          <button
+            type='button'
+            onClick={() => setOptionsExpanded((prev) => !prev)}
+            aria-expanded={optionsExpanded}
+            className='self-start text-[12px] font-medium text-white/60 transition-colors hover:text-white/90'
+          >
+            {optionsExpanded ? '▾ ' : '▸ '}
+            <Trans>Study options</Trans>
+          </button>
+          {optionsExpanded &&
+            (() => {
+              const checkedSkillCount = [
+                studyDraft.recognition,
+                studyDraft.production,
+                studyDraft.pronunciation,
+              ].filter(Boolean).length
+              const isLastCheckedSkill = (checked: boolean) => checked && checkedSkillCount === 1
+              const hasMeaningSkill = studyDraft.recognition || studyDraft.production
+              const pronunciationAvailable = !!ipaLabel
+              const patch = (partial: Partial<StudyIntentDraft>) =>
+                setStudyDraft((prev) => ({ ...prev, ...partial, touched: true }))
+              const rowClass = (rowDisabled: boolean) =>
+                `flex items-center gap-1.5 text-[13px] ${rowDisabled ? 'cursor-not-allowed text-white/40' : 'cursor-pointer text-white/90'}`
+              const boxClass = 'size-[13px] accent-white'
+              return (
+                <div className='flex flex-col gap-1'>
+                  <label className={rowClass(isLastCheckedSkill(studyDraft.recognition))}>
+                    <input
+                      type='checkbox'
+                      className={boxClass}
+                      checked={studyDraft.recognition}
+                      disabled={isLastCheckedSkill(studyDraft.recognition)}
+                      onChange={(e) => patch({ recognition: e.target.checked })}
+                    />
+                    <Trans>Recognition</Trans>
+                  </label>
+                  <label className={rowClass(isLastCheckedSkill(studyDraft.production))}>
+                    <input
+                      type='checkbox'
+                      className={boxClass}
+                      checked={studyDraft.production}
+                      disabled={isLastCheckedSkill(studyDraft.production)}
+                      onChange={(e) => patch({ production: e.target.checked })}
+                    />
+                    <Trans>Production</Trans>
+                  </label>
+                  <label className={rowClass(isLastCheckedSkill(studyDraft.pronunciation) || !pronunciationAvailable)}>
+                    <input
+                      type='checkbox'
+                      className={boxClass}
+                      checked={studyDraft.pronunciation}
+                      disabled={isLastCheckedSkill(studyDraft.pronunciation) || !pronunciationAvailable}
+                      onChange={(e) => patch({ pronunciation: e.target.checked })}
+                    />
+                    <Trans>Pronunciation</Trans>
+                    {!pronunciationAvailable && (
+                      <span className='text-[11px] text-white/40'>
+                        <Trans>Needs a known transcription</Trans>
+                      </span>
+                    )}
+                  </label>
+                  <label className={rowClass(!hasMeaningSkill)}>
+                    <input
+                      type='checkbox'
+                      className={boxClass}
+                      checked={studyDraft.exactForm}
+                      disabled={!hasMeaningSkill}
+                      onChange={(e) => patch({ exactForm: e.target.checked })}
+                    />
+                    <span className='min-w-0 break-words'>
+                      <Trans>Study this exact form</Trans> <span className='text-white/50'>(&ldquo;{word}&rdquo;)</span>
+                    </span>
+                  </label>
+                </div>
+              )
+            })()}
+        </div>
+      )}
+
       {/* Not signed in → both glossing and saving fail, so offer Sign in in
           place of Save (the gloss area shows the "Sign in to translate" note).
           Otherwise the explicit Save — discoverable counterpart to the
@@ -144,7 +248,7 @@ export function GlossTooltip({
       ) : (
         <button
           type='button'
-          onClick={onSave}
+          onClick={() => onSave(draftToStudyIntent(studyDraft))}
           className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
         >
           <Trans>Save</Trans>

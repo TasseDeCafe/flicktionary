@@ -377,7 +377,26 @@ resolves to an exact `text_segments` row + offsets.
 - **Save** — right-click (word or selection) shows the Save action; success
   drops a toast and clears the selection. Signed-out → a "Sign in" action;
   registration-failed → disabled Save with the reason. The save calls
-  `highlights.create({sessionId, start/endSegmentId, offsets, selectionText})`.
+  `highlights.create({sessionId, start/endSegmentId, offsets, selectionText,
+  studyIntent?})`.
+- **Study options** — the gloss tooltip carries a collapsed "Study options"
+  disclosure above its Save button (only when saving is available):
+  Recognition (pre-checked) / Production / Pronunciation checkboxes plus a
+  "Study this exact form" row labelled with the hovered word. FULL-SET
+  semantics: untouched → no `studyIntent` is sent and the backend's keep-time
+  default (citation recognition) applies; touched → exactly the checked set.
+  The last checked skill is locked (no empty set); exact-form locks when only
+  Pronunciation is checked (pronunciation never gets a form facet);
+  Pronunciation locks when the gloss has no displayable IPA. The tooltip owns
+  the draft (`StudyIntentDraft` + `draftToStudyIntent` imported from
+  `@flicktionary/ui/components/study-options-section` — MODEL only; the
+  controls are native px-sized inputs because Radix Checkbox/Switch rem-size
+  against the host page root inside shadow surfaces). The draft resets and
+  re-collapses when the hovered word changes. `studyIntent` rides
+  `SaveWordParams` → the `save-word` message → `highlights.create`, and
+  survives the CEFR-picker retry via `pendingSave`. The right-click power-save
+  bypasses the tooltip and always saves with the default. No ghost/"Use
+  suggested" affordance here (web-only for now).
   **Toast cold-start trap:** sonner's `toast()` publishes to subscribers only
   (no replay), and the page-global Toaster host is created lazily — a bare
   `ensureToasterHost(); toast(...)` drops the page's first toast (the save

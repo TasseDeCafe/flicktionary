@@ -453,6 +453,16 @@ export interface SaveWordFlicktionaryVideoContext {
   }>
 }
 
+// Structurally identical to the backend contract's StudyIntentSchema —
+// re-declared (mutable arrays included, so it assigns to the oRPC input type)
+// because this common module stays dependency-free. FULL-SET semantics: when
+// present, exactly the listed skills get study facets; absent = the backend's
+// keep-time default (citation recognition).
+export interface SaveWordStudyIntent {
+  readonly skills: Array<'meaning_recognition' | 'meaning_production' | 'pronunciation'>
+  readonly formScope: 'lemma' | 'both'
+}
+
 export interface SaveWordMessage extends MessageWithId {
   readonly command: 'save-word'
   readonly word: string
@@ -465,6 +475,9 @@ export interface SaveWordMessage extends MessageWithId {
   readonly startCharOffset?: number
   readonly endCharOffset?: number
   readonly flicktionaryVideo?: SaveWordFlicktionaryVideoContext
+  // Study options picked in the gloss tooltip; forwarded verbatim to
+  // highlights.create and applied by the backend enrichment job.
+  readonly studyIntent?: SaveWordStudyIntent
 }
 
 export interface SaveWordResponse {
