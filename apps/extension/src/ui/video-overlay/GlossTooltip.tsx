@@ -177,8 +177,6 @@ export function GlossTooltip({
     return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
   }, [onOutsidePointerDown])
 
-  const ipaLabel = content.status === 'ready' ? pickIpa(content.data.ipa) : null
-
   return (
     <div
       ref={ref}
@@ -216,7 +214,6 @@ export function GlossTooltip({
               ].filter(Boolean).length
               const isLastCheckedSkill = (checked: boolean) => checked && checkedSkillCount === 1
               const hasMeaningSkill = studyDraft.recognition || studyDraft.production
-              const pronunciationAvailable = !!ipaLabel
               const patch = (partial: Partial<StudyIntentDraft>) =>
                 setStudyDraft((prev) => ({ ...prev, ...partial, touched: true }))
               const rowClass = (rowDisabled: boolean) =>
@@ -244,20 +241,19 @@ export function GlossTooltip({
                     />
                     <Trans>Production</Trans>
                   </label>
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.pronunciation) || !pronunciationAvailable)}>
+                  {/* Always offerable: the preview's IPA is a Wiktionary-only
+                      lookup, but enrichment generates IPA for every saved
+                      selection — a pronunciation facet just stays pending
+                      until the generated IPA lands. */}
+                  <label className={rowClass(isLastCheckedSkill(studyDraft.pronunciation))}>
                     <input
                       type='checkbox'
                       className={boxClass}
                       checked={studyDraft.pronunciation}
-                      disabled={isLastCheckedSkill(studyDraft.pronunciation) || !pronunciationAvailable}
+                      disabled={isLastCheckedSkill(studyDraft.pronunciation)}
                       onChange={(e) => patch({ pronunciation: e.target.checked })}
                     />
                     <Trans>Pronunciation</Trans>
-                    {!pronunciationAvailable && (
-                      <span className='text-muted-foreground text-xs'>
-                        <Trans>Needs a known transcription</Trans>
-                      </span>
-                    )}
                   </label>
                   <label className={rowClass(!hasMeaningSkill)}>
                     <input

@@ -414,8 +414,11 @@ resolves to an exact `text_segments` row + offsets.
   semantics: untouched → no `studyIntent` is sent and the backend's keep-time
   default (citation recognition) applies; touched → exactly the checked set.
   The last checked skill is locked (no empty set); exact-form locks when only
-  Pronunciation is checked (pronunciation never gets a form facet);
-  Pronunciation locks when the gloss has no displayable IPA. The tooltip owns
+  Pronunciation is checked (pronunciation never gets a form facet).
+  Pronunciation is ALWAYS offerable — the preview's IPA is a Wiktionary-only
+  lookup and says nothing about studiability (enrichment generates IPA for
+  every saved selection; an IPA-less facet stays pending / is reconciled
+  backend-side, see docs/SRS.md). The tooltip owns
   the draft (`StudyIntentDraft` + `draftToStudyIntent` imported from
   `@flicktionary/ui/components/study-options-section` — MODEL only; the
   controls are native px-sized inputs because Radix Checkbox/Switch rem-size

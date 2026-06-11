@@ -52,9 +52,6 @@ type StudyOptionsSectionProps = {
   onChange: (next: StudyIntentDraft) => void
   // The highlighted surface form, labelling the "Study this exact form" row.
   surfaceForm: string
-  // Whether the gloss has a displayable IPA — pronunciation is a recognition
-  // card whose back IS the transcription, so without one it's unofferable.
-  pronunciationAvailable: boolean
   disabled?: boolean
 }
 
@@ -64,15 +61,13 @@ type StudyOptionsSectionProps = {
 // exactly what gets studied; the last checked skill is locked so the set can
 // never go empty. The exact-form switch applies to the checked MEANING skills
 // (pronunciation never gets a form facet), so it locks when only pronunciation
-// is checked. Expansion state is internal: pass a fresh `key` when the
-// selection changes so the section re-collapses with the draft reset.
-export const StudyOptionsSection = ({
-  value,
-  onChange,
-  surfaceForm,
-  pronunciationAvailable,
-  disabled,
-}: StudyOptionsSectionProps) => {
+// is checked. Pronunciation is always offerable: the preview's IPA (a
+// Wiktionary-only lookup) says nothing about studiability — enrichment
+// generates IPA for every saved selection, and a pronunciation facet without
+// one simply stays pending until the generated IPA lands (readiness guards in
+// apply-study-intent). Expansion state is internal: pass a fresh `key` when
+// the selection changes so the section re-collapses with the draft reset.
+export const StudyOptionsSection = ({ value, onChange, surfaceForm, disabled }: StudyOptionsSectionProps) => {
   const { t } = useLingui()
   const [expandedOptions, setExpandedOptions] = useState(false)
 
@@ -105,8 +100,7 @@ export const StudyOptionsSection = ({
       key: 'pronunciation',
       label: t`Pronunciation`,
       checked: value.pronunciation,
-      rowDisabled: !!disabled || isLastCheckedSkill(value.pronunciation) || !pronunciationAvailable,
-      hint: pronunciationAvailable ? undefined : t`Needs a known transcription`,
+      rowDisabled: !!disabled || isLastCheckedSkill(value.pronunciation),
     },
   ]
 
