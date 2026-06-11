@@ -33,8 +33,8 @@ export default class SaveWordHandler {
     void (async () => {
       try {
         await activateBackgroundLocale()
-        const highlight = await this._saveToFlicktionary(message)
-        sendResponse({ success: true, highlight })
+        const { highlight, sessionId } = await this._saveToFlicktionary(message)
+        sendResponse({ success: true, highlight, sessionId })
       } catch (error) {
         const {
           code,
@@ -50,9 +50,12 @@ export default class SaveWordHandler {
 
   // Returns the created highlight as an index-based DTO (segment ids converted
   // back through the cached map) so the overlay can paint the saved span
-  // optimistically. Undefined when a segment id doesn't resolve — the overlay
-  // then falls back to a full saved-highlights reload.
-  private async _saveToFlicktionary(message: SaveWordMessage): Promise<SavedHighlightDto | undefined> {
+  // optimistically, plus the session id (the overlay's store has no session
+  // before the video's first save). Highlight undefined when a segment id
+  // doesn't resolve — the overlay then falls back to a full reload.
+  private async _saveToFlicktionary(
+    message: SaveWordMessage
+  ): Promise<{ highlight: SavedHighlightDto | undefined; sessionId: string }> {
     const auth = await getFlicktionaryAuth()
     if (!auth) {
       throw new Error(i18n._(msg`Sign in to Flicktionary to save words.`))
@@ -131,17 +134,22 @@ export default class SaveWordHandler {
     }
     const startSegmentIndex = indexBySegmentId[created.startSegmentId]
     const endSegmentIndex = indexBySegmentId[created.endSegmentId]
-    if (startSegmentIndex === undefined || endSegmentIndex === undefined) return undefined
+    if (startSegmentIndex === undefined || endSegmentIndex === undefined) {
+      return { highlight: undefined, sessionId: cached.sessionId }
+    }
     return {
-      id: created.id,
-      startSegmentIndex,
-      endSegmentIndex,
-      startOffset: created.startOffset,
-      endOffset: created.endOffset,
-      selectionText: created.selectionText,
-      note: created.note,
-      presetTags: created.presetTags,
-      fastGloss: created.fastGloss,
+      highlight: {
+        id: created.id,
+        startSegmentIndex,
+        endSegmentIndex,
+        startOffset: created.startOffset,
+        endOffset: created.endOffset,
+        selectionText: created.selectionText,
+        note: created.note,
+        presetTags: created.presetTags,
+        fastGloss: created.fastGloss,
+      },
+      sessionId: cached.sessionId,
     }
   }
 }

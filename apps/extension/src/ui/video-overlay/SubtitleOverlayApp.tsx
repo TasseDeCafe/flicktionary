@@ -104,6 +104,14 @@ const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: Lin
 // has moved onto the popover.
 type GlossSaveTarget = { kind: 'single'; tl: TokenizedLine; token: LineToken } | { kind: 'chunk'; tl: TokenizedLine }
 
+// Where to re-open the popover after a Save from the gloss preview: the saved
+// outcome swaps the preview into the saved-mode popover IN PLACE (web
+// gloss-sheet parity — there Save morphs the open sheet into saved mode).
+interface GlossSaveHandoff {
+  lineIndex: number
+  anchor: HTMLElement
+}
+
 // Which gloss popover is open (anchor + lookup identity). The gloss CONTENT
 // is not stored here — it's the `useGloss` query for (word, sentence), so a
 // stale response can never hit the wrong popover.
@@ -168,6 +176,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const signedIn = useStore(interaction, (s) => s.signedIn)
 
   const [gloss, setGloss] = useState<GlossState | null>(null)
+  // Ref twin so the async save outcome can check whether the open gloss is
+  // still the one the user saved from (it may have moved to another word).
+  const glossRef = useRef<GlossState | null>(null)
+  glossRef.current = gloss
+  // A Save is in flight from the open gloss — renders the Save button as
+  // "Saving…" until the outcome swaps the preview into the saved-mode popover.
+  const [glossSaving, setGlossSaving] = useState(false)
   const [cefr, setCefrState] = useState<CefrState | null>(null)
 
   // Persistent saved-highlight spans, one store per overlay mount. Rendering
@@ -192,6 +207,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // Pending deferred hide of the gloss popover (the hover-bridge grace timer).
   const glossHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoveredKey = useRef<string | null>(null)
+  // Once the pointer has ENTERED the gloss popover it is pinned: pointer-leave
+  // no longer hides it (so picking study options can't be lost to a stray
+  // mouse move), only outside pointerdown / play / cue change / a new hover
+  // gloss replacing it. A hover that never enters the popover keeps the light
+  // hover-out dismissal — the quick-lookup flow stays friction-free.
+  const glossPinnedRef = useRef(false)
 
   // ---- helpers ---------------------------------------------------------------
 
@@ -211,18 +232,37 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const hideGloss = useCallback(() => {
     cancelGlossHide()
+    glossPinnedRef.current = false
+    setGlossSaving(false)
     setGloss(null)
   }, [cancelGlossHide])
 
   // Defer the hide so the pointer can cross the gap into the popover; entering
   // the popover calls cancelGlossHide, leaving it (or this firing) hides.
+  // No-op while pinned — a pinned gloss only dismisses explicitly.
   const scheduleGlossHide = useCallback(() => {
+    if (glossPinnedRef.current) return
     cancelGlossHide()
     glossHideTimer.current = setTimeout(() => {
       glossHideTimer.current = null
       hideGloss()
     }, GLOSS_HIDE_GRACE_MS)
   }, [cancelGlossHide, hideGloss])
+
+  // Hover bridge + pin: entering the popover cancels any pending hide AND pins
+  // the gloss (see glossPinnedRef).
+  const onGlossPointerEnter = useCallback(() => {
+    glossPinnedRef.current = true
+    cancelGlossHide()
+  }, [cancelGlossHide])
+
+  // Outside pointerdown is the dismiss gesture for a PINNED gloss (same
+  // gesture as the saved-mode popover). Unpinned glosses ignore it — their
+  // pointer-leave dismissal already covers every exit, and hiding here would
+  // flicker the popover on a click on the anchor word itself.
+  const onGlossOutsidePointerDown = useCallback(() => {
+    if (glossPinnedRef.current) hideGloss()
+  }, [hideGloss])
 
   const clearSelection = useCallback(() => {
     interaction.getState().clearSelection()
@@ -327,24 +367,57 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // ---- save flow -------------------------------------------------------------
 
   const handleOutcome = useCallback(
-    async (params: SaveWordParams) => {
+    async (params: SaveWordParams, handoff?: GlossSaveHandoff) => {
       const outcome = await saveWord(params)
+      // Close the "Saving…" preview the save came from — but never a DIFFERENT
+      // word's gloss the user opened while the save was in flight (showGloss
+      // already reset its saving state).
+      const hideSaveSourceGloss = () => {
+        const g = glossRef.current
+        if (handoff && g && g.anchor === handoff.anchor) hideGloss()
+      }
       switch (outcome.kind) {
-        case 'saved':
-          showToast(`Saved: ${outcome.word}`, false)
+        case 'saved': {
           clearSelection()
           // Paint the saved span immediately from the create response; a
           // response without the converted highlight (segment-map miss) falls
           // back to a full reload.
           if (outcome.highlight) {
-            savedStore.getState().add(outcome.highlight)
+            savedStore.getState().add(outcome.highlight, outcome.sessionId)
           } else {
             savedLoadedHashRef.current = null
             loadSaved()
           }
+          // In-place handoff (web gloss-sheet parity): the preview the user
+          // saved from becomes the saved-mode popover, so note/tags/Remove are
+          // immediately reachable. Falls back to the toast when the swap can't
+          // anchor (segment-map miss, video resumed, cue changed, or the user
+          // already hovered a different word's gloss).
+          const sessionId = outcome.sessionId ?? savedStore.getState().sessionId
+          const g = glossRef.current
+          if (
+            handoff &&
+            outcome.highlight &&
+            sessionId &&
+            video.paused &&
+            handoff.anchor.isConnected &&
+            (g === null || g.anchor === handoff.anchor)
+          ) {
+            hideGloss()
+            setSavedPopover({
+              lineIndex: handoff.lineIndex,
+              anchor: handoff.anchor,
+              highlightId: outcome.highlight.id,
+            })
+          } else {
+            hideSaveSourceGloss()
+            showToast(`Saved: ${outcome.word}`, false)
+          }
           break
+        }
         case 'disabled':
           // Video-context gate (e.g. off YouTube), not an auth issue — no Sign in.
+          hideSaveSourceGloss()
           showToast(outcome.reason, true)
           clearSelection()
           break
@@ -352,6 +425,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           // Surfaces the "Sign in to Flicktionary to save words." error when the
           // save is blocked on pairing — offer a Sign in action then, same flow
           // as the popup button.
+          hideSaveSourceGloss()
           showToast(
             outcome.message,
             true,
@@ -361,15 +435,16 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           break
         case 'missing-cefr':
           // Keep the selection so the retry has the same word in context.
+          hideSaveSourceGloss()
           setCefrState({ targetLanguage: outcome.targetLanguage, pendingSave: params })
           break
       }
     },
-    [showToast, clearSelection, onSignIn, interaction, savedStore, loadSaved]
+    [showToast, clearSelection, onSignIn, interaction, savedStore, loadSaved, hideGloss, video]
   )
 
   const saveSingle = useCallback(
-    (line: SubtitleLineModel, token: LineToken, studyIntent?: SaveWordStudyIntent) => {
+    (line: SubtitleLineModel, token: LineToken, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
       const translation = queryClient.getQueryData<GlossData>(glossQueryKey(token.text, line.text))?.gloss ?? ''
       const segmentInfo: SaveWordSegmentInfo = {
         startSegmentIndex: line.index,
@@ -377,13 +452,16 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         startCharOffset: token.charStart,
         endCharOffset: token.charEnd,
       }
-      void handleOutcome({ word: token.text, sentence: line.text, translation, segmentInfo, closures, studyIntent })
+      void handleOutcome(
+        { word: token.text, sentence: line.text, translation, segmentInfo, closures, studyIntent },
+        handoff
+      )
     },
     [closures, handleOutcome, queryClient]
   )
 
   const saveSelection = useCallback(
-    (tl: TokenizedLine, studyIntent?: SaveWordStudyIntent) => {
+    (tl: TokenizedLine, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
       const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
       if (!range) return
       const selectedWords = tl.wordTokens.slice(range.minOrd, range.maxOrd + 1)
@@ -399,7 +477,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         startCharOffset: first.charStart,
         endCharOffset: last.charEnd,
       }
-      void handleOutcome({ word: words, sentence: tl.line.text, translation, segmentInfo, closures, studyIntent })
+      void handleOutcome(
+        { word: words, sentence: tl.line.text, translation, segmentInfo, closures, studyIntent },
+        handoff
+      )
     },
     [closures, handleOutcome, queryClient, interaction]
   )
@@ -414,6 +495,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // gloss; anchor.isConnected is a render-time guard below.
   const showGloss = useCallback(
     (lineIndex: number, anchor: HTMLElement, word: string, sentence: string, save: GlossSaveTarget) => {
+      // A new gloss target starts unpinned (fresh hover semantics) and is not
+      // mid-save.
+      glossPinnedRef.current = false
+      setGlossSaving(false)
       setGloss({ lineIndex, anchor, word, sentence, save })
     },
     []
@@ -772,13 +857,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               saveDisabledReason={closures.getFlicktionarySaveDisabledReason()}
               signedIn={signedIn}
               onSignIn={onSignIn}
+              saving={glossSaving}
               onSave={(studyIntent) => {
-                if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl, studyIntent)
-                else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent)
-                hideGloss()
+                // Keep the popover open ("Saving…") — the saved outcome swaps
+                // it into the saved-mode popover in place (or toasts on the
+                // fallback paths).
+                setGlossSaving(true)
+                const handoff: GlossSaveHandoff = { lineIndex: gloss.lineIndex, anchor: gloss.anchor }
+                if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl, studyIntent, handoff)
+                else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent, handoff)
               }}
-              onPointerEnter={cancelGlossHide}
+              onPointerEnter={onGlossPointerEnter}
               onPointerLeave={scheduleGlossHide}
+              onOutsidePointerDown={onGlossOutsidePointerDown}
             />
           )}
           {cefr && (

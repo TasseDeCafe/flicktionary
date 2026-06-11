@@ -372,6 +372,13 @@ resolves to an exact `text_segments` row + offsets.
   change**; the background's target/native-language cache also resets on auth
   change (`resetFlicktionaryLanguageCache` — to `undefined`, not `null`, which
   would mean a known "no language" and skip the refetch). Nothing is persisted.
+  **Pin-on-entry:** a gloss that the pointer never enters keeps the light
+  hover-out dismissal (150 ms grace; quick lookups stay friction-free), but
+  once the pointer ENTERS the popover it is pinned — pointer-leave no longer
+  hides it (no more losing the Study options to a stray mouse move). A pinned
+  gloss dismisses on outside pointerdown (same gesture as the saved-mode
+  popover), play, cue change, overlay hide, or by hovering another word
+  (the new gloss replaces it and starts unpinned).
 - **Selection** — click selects a word; press-and-drag extends to a contiguous
   multi-word (even multi-segment) chunk, highlighted in yellow.
 - **Save** — right-click (word or selection) shows the Save action; success
@@ -379,6 +386,12 @@ resolves to an exact `text_segments` row + offsets.
   registration-failed → disabled Save with the reason. The save calls
   `highlights.create({sessionId, start/endSegmentId, offsets, selectionText,
   studyIntent?})`.
+  **In-place handoff (web gloss-sheet parity):** Save from the gloss popover
+  keeps the popover open as "Saving…" and, on success, swaps it into the
+  saved-mode popover anchored at the same word — note/tags/Remove are
+  immediately reachable, no re-click on the span. The toast only fires on the
+  fallback paths (right-click save, segment-map miss, video resumed, cue
+  changed, or the user already hovered a different word's gloss).
 - **Study options** — the gloss tooltip carries a collapsed "Study options"
   disclosure above its Save button (only when saving is available):
   Recognition (pre-checked) / Production / Pronunciation checkboxes plus a
@@ -427,9 +440,11 @@ resolves to an exact `text_segments` row + offsets.
     dropped (different track revision). Signed-out → `signedIn: false`, no
     paint, zero further calls.
   - **Optimistic save** — `save-word` now returns the created highlight
-    converted to segment-index coordinates; the overlay pushes it straight
-    into the store (replace-by-id) so the span paints without a reload. A
-    response without the field falls back to a full reload.
+    converted to segment-index coordinates plus the `sessionId`; the overlay
+    pushes both straight into the store (replace-by-id; the session id
+    backfills a store that loaded before the video's FIRST save created the
+    session — without it the saved-mode popover can't open on the new span).
+    A response without the highlight falls back to a full reload.
   - **Saved-mode popover** — a plain click (no drag) on a saved span opens a
     sticky popover (`SavedGlossTooltip`) — parity with the web session view's
     gloss sheet minus ghost-extend: cached `fastGloss` parses instantly

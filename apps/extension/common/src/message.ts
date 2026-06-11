@@ -494,6 +494,11 @@ export interface SaveWordResponse {
   // span optimistically without a full reload. Absent on conversion misses /
   // legacy paths: the overlay falls back to a full saved-highlights reload.
   readonly highlight?: SavedHighlightDto
+  // Session the highlight was created in. On the FIRST save of a video the
+  // overlay's saved-highlights store has no session yet (it loaded before the
+  // session existed) — without this the saved-mode popover can't open on the
+  // just-saved span until a reload.
+  readonly sessionId?: string
 }
 
 // One saved highlight as the subtitle overlay consumes it: SEGMENT INDEXES

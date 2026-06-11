@@ -61,6 +61,16 @@ describe('createSavedHighlightsStore', () => {
     expect(store.getState().highlights[0]!.endOffset).toBe(12)
   })
 
+  it('add backfills the session id on a first save (store loaded before the session existed)', () => {
+    const store = createSavedHighlightsStore()
+    store.getState().setAll(null, [])
+    store.getState().add(highlight({}), 's1')
+    expect(store.getState().sessionId).toBe('s1')
+    // An add without a session id keeps the existing one.
+    store.getState().add(highlight({ id: 'h2' }))
+    expect(store.getState().sessionId).toBe('s1')
+  })
+
   it('remove and patchNote target by id', () => {
     const store = createSavedHighlightsStore()
     store.getState().setAll('s1', [highlight({ id: 'a' }), highlight({ id: 'b' })])

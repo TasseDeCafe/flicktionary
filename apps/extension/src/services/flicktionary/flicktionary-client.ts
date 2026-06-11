@@ -61,8 +61,10 @@ export interface FlicktionaryVideoClosures {
 // Discriminated result of a save attempt, for the UI to act on. `highlight` is
 // the created row (index coordinates) for optimistic saved-span painting;
 // undefined when the background couldn't convert it — reload instead.
+// `sessionId` lets the overlay store learn the session on a video's FIRST save
+// (its load ran before the session existed).
 export type SaveWordOutcome =
-  | { kind: 'saved'; word: string; highlight?: SavedHighlightDto }
+  | { kind: 'saved'; word: string; highlight?: SavedHighlightDto; sessionId?: string }
   | { kind: 'disabled'; reason: string }
   | { kind: 'missing-cefr'; targetLanguage: string }
   | { kind: 'error'; message: string }
@@ -157,7 +159,7 @@ export async function saveWord({
   const response: SaveWordResponse = await browser.runtime.sendMessage(message)
 
   if (response.success) {
-    return { kind: 'saved', word, highlight: response.highlight }
+    return { kind: 'saved', word, highlight: response.highlight, sessionId: response.sessionId }
   }
 
   // No CEFR level set for this language yet — let the caller offer an inline
