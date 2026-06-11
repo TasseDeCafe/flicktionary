@@ -4,6 +4,7 @@ import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/commo
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
 import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropic-client'
 import { selectSurroundingSegments } from './select-surrounding-segments'
 import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
@@ -107,6 +108,13 @@ export const enrichHighlight = async (
     selectionText: highlight.selection_text,
   }
 
+  // English IPA follows the user's dialect preference (GA vs RP) — the basic
+  // data pass now generates grammar.ipa by default (grounding overwrites it
+  // with Wiktionary's where available).
+  const englishIpaDialect = isEnglishTargetLanguage(session.target_language)
+    ? await usersRepository.getEnglishIpaDialect(userId)
+    : undefined
+
   const chunks = await basicDataPass({
     nativeLanguage: languageModeNativeLanguage,
     targetLanguage: session.target_language,
@@ -116,6 +124,7 @@ export const enrichHighlight = async (
     highlights: [highlightInput],
     hideTranslationFields: languagePrefs.hideTranslationFields,
     allowL1Notes: languagePrefs.allowL1Notes,
+    englishIpaDialect,
     model: MODEL_ENRICHMENT,
   })
 

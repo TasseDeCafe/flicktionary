@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
+import { buildBasicDataGrammarPatch, materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import type { BasicDataChunk } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import type { CardsRepositoryInterface } from '../../transport/database/cards/cards-repository'
 import type { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
@@ -138,5 +138,21 @@ describe('materializeBasicDataChunks — grammar patch', () => {
 
     const args = repos.updateContent.mock.calls[0]![0]
     expect(args.grammarPatch).toEqual({ pos: 'noun' })
+  })
+})
+
+describe('buildBasicDataGrammarPatch — grounded ipa strip', () => {
+  const grammar = { pos: 'noun', ipa: { untagged: '[stɐˈla]' }, government: '+ gen' }
+
+  it('passes the full bag (ipa included) through for an ungrounded row', () => {
+    expect(buildBasicDataGrammarPatch(grammar, false, false)).toEqual(grammar)
+  })
+
+  it('strips ipa (and the other Wiktionary-owned keys) once the row is grounded', () => {
+    expect(buildBasicDataGrammarPatch(grammar, true, false)).toEqual({ government: '+ gen' })
+  })
+
+  it('returns null for a user-edited grammar bag', () => {
+    expect(buildBasicDataGrammarPatch(grammar, false, true)).toBeNull()
   })
 })

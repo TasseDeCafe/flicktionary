@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical, Volume2 } from 'lucide-react'
+import { BadgeCheck, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical, Volume2 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
@@ -12,6 +12,7 @@ import { GrammarChips } from '@/features/review/components/grammar-chips'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 import { pickIpaForDisplay } from '@flicktionary/core/utils/pick-ipa'
+import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import {
   getCardFaceConfig,
   resolveCardSlots,
@@ -19,6 +20,7 @@ import {
   type CardSlotKey,
 } from '@flicktionary/core/constants/card-face-config'
 import type {
+  Grammar,
   PracticePool,
   ReviewScope,
   ReviewTerm,
@@ -34,11 +36,6 @@ import { useListReviewTerms, useRateTerm, useUndoRating } from '../api/practice-
 // A persistently-failing rateTerm mutation re-appends its card to the queue end
 // (so it isn't silently lost) — capped so a hard failure can't loop forever.
 const MAX_RATE_RETRIES = 2
-
-// Russian display forms carry a combining acute (U+0301) marking stress
-// (e.g. находи́ться). Languages with hideStressOnFront strip it on the front
-// so the pronunciation isn't given away before the reveal.
-const stripStressMarks = (text: string) => text.replace(/\u0301/g, '')
 
 type QueueItem = {
   card: ReviewTerm
@@ -424,17 +421,41 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   const hideTranslationFields = sameLanguage || !getShowTranslationsEnabledForLanguage(userPrefs, targetLanguage)
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
 
-  // Pronunciation facet (citation only, recognition queue): front prompts the
-  // headword + an audio cue ("say it out loud"), the flip reveals the stressed
-  // display form + IPA. Distinct enough from the meaning layouts (no slot
-  // resolver, its own audio chip) that it gets a dedicated body. The IPA falls
-  // back across dialects so a card that passed the enable gate never reveals an
-  // empty back (the IPA-vanished case is handled server-side by deleting the
-  // facet — see reconcilePronunciationFacet).
+  // Pronunciation facet (recognition queue): front prompts the target + an
+  // audio cue ("say it out loud"), the flip reveals the stressed display form
+  // + IPA. Distinct enough from the meaning layouts (no slot resolver, its own
+  // audio chip) that it gets a dedicated body. Form-aware: a form card reads
+  // its own facetPayload (display + IPA — deliberately no lemma fallback, a
+  // lemma's transcription is wrong for an inflection); citation reads the
+  // lemma row. The IPA falls back across dialects so a card that passed the
+  // readiness gate never reveals an empty back (the citation IPA-vanished case
+  // is handled server-side by deleting the facet — see
+  // reconcilePronunciationFacet; a form facet without IPA never reaches ready).
   const isPronunciation = card.skill === 'pronunciation'
+  const isFormCard = card.targetForm !== ''
+  const facetPayload = (card.facetPayload ?? {}) as Record<string, unknown>
+  const formGrammar: Grammar =
+    facetPayload.grammar && typeof facetPayload.grammar === 'object' && !Array.isArray(facetPayload.grammar)
+      ? (facetPayload.grammar as Grammar)
+      : {}
+  const pronunciationDisplay =
+    isFormCard && typeof facetPayload.form === 'string'
+      ? formGrammar.display_form || facetPayload.form
+      : card.grammar?.display_form || card.headword
   const pronunciationIpa = isPronunciation
-    ? pickIpaForDisplay(card.grammar?.ipa, targetLanguage, englishIpaDialect)
+    ? isFormCard
+      ? pickIpaForDisplay(formGrammar.ipa, targetLanguage, englishIpaDialect)
+      : pickIpaForDisplay(card.grammar?.ipa, targetLanguage, englishIpaDialect)
     : undefined
+  // Blue check next to the IPA when the transcription is dictionary-grounded
+  // (citation cards only — ipaSource is computed server-side and always null
+  // for forms, whose IPA is generated).
+  const ipaBadge =
+    card.ipaSource === 'wiktionary' ? (
+      <span title={t`Verified by Wiktionary`} aria-label={t`Verified by Wiktionary`}>
+        <BadgeCheck className='h-3.5 w-3.5 text-sky-600' />
+      </span>
+    ) : null
 
   // A queued card whose target_form is a specific inflection now carries its OWN
   // full card content in facetPayload (translation / definition / examples /
@@ -491,6 +512,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
           <div key='ipa' className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
             <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
             <span>{content.ipa}</span>
+            {ipaBadge}
           </div>
         ) : null
       case 'targetExample':
@@ -545,11 +567,11 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
         <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8 text-center'>
           {isPronunciation ? (
             <>
-              {/* Front: bare headword (ru stress hidden so the answer isn't
+              {/* Front: bare target (ru stress hidden so the answer isn't
                   given away) + an audio cue. Audio playback is roadmap; the chip
                   is the "pronounce this" prompt, not a player. */}
               <StressMarkedText
-                text={stripStressMarks(card.grammar?.display_form || card.headword)}
+                text={stripStressMarks(pronunciationDisplay)}
                 lang={targetLanguage}
                 className='text-2xl font-bold'
               />
@@ -561,15 +583,12 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
                 <>
                   <div className='my-2 w-full border-t' />
                   {/* Back: stressed display form + IPA. */}
-                  <StressMarkedText
-                    text={card.grammar?.display_form || card.headword}
-                    lang={targetLanguage}
-                    className='text-2xl font-bold'
-                  />
+                  <StressMarkedText text={pronunciationDisplay} lang={targetLanguage} className='text-2xl font-bold' />
                   {pronunciationIpa && (
                     <div className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
                       <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
                       <span>{pronunciationIpa}</span>
+                      {ipaBadge}
                     </div>
                   )}
                 </>

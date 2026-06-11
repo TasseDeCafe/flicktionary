@@ -127,7 +127,7 @@ describe('applyStudyIntent', () => {
     )
   })
 
-  it('never creates a pronunciation form facet (per-form IPA is roadmap)', async () => {
+  it('creates a pronunciation form facet alongside the meaning skills (born pending_data)', async () => {
     const { deps, applyStudyIntentFacets } = createDeps()
 
     const result = await applyStudyIntent(
@@ -140,10 +140,21 @@ describe('applyStudyIntent', () => {
       deps
     )
 
-    expect(result.formFacetTargets).toEqual([{ skill: 'meaning_recognition', targetForm: 'palabras' }])
+    expect(result.formFacetTargets).toEqual([
+      { skill: 'pronunciation', targetForm: 'palabras' },
+      { skill: 'meaning_recognition', targetForm: 'palabras' },
+    ])
     const facets = applyStudyIntentFacets.mock.calls[0]![0].facets as Array<{ skill: string; targetForm: string }>
     expect(facets.filter((f) => f.skill === 'pronunciation')).toEqual([
       { userLookupId: lookupId, skill: 'pronunciation', targetForm: '' },
+      {
+        userLookupId: lookupId,
+        skill: 'pronunciation',
+        targetForm: 'palabras',
+        dataStatus: 'pending_data',
+        source: 'highlight',
+        payload: { form: 'palabras' },
+      },
     ])
   })
 
@@ -218,8 +229,13 @@ describe('applyStudyIntent', () => {
 describe('generateStudyIntentFormData', () => {
   const setFacetPayload = vi.fn().mockResolvedValue(undefined)
   const listFacetsForChunk = vi.fn()
+  // Target language source for the pronunciation sibling guard's
+  // displayable-IPA check.
+  const getChunkRowForUser = vi
+    .fn()
+    .mockResolvedValue({ id: lookupId, headword: 'palabra', translation: 'word', targetLanguage: 'es' })
   const deps = {
-    userLookupsRepository: { listFacetsForChunk, setFacetPayload },
+    userLookupsRepository: { listFacetsForChunk, setFacetPayload, getChunkRowForUser },
     usersRepository: {},
     userTargetLanguagePrefsRepository: {},
   } as unknown as GenerateFormFacetDataDeps
@@ -301,6 +317,79 @@ describe('generateStudyIntentFormData', () => {
       payload: generatedPayload,
       generatedPayload,
     })
+  })
+
+  it('generates via a meaning skill first even when pronunciation is listed first, and copies to the pronunciation sibling only with displayable form IPA', async () => {
+    const generatedPayload = {
+      form: 'palabras',
+      translation: 'words',
+      grammar: { pos: 'noun', ipa: { untagged: 'paˈlaβɾas' } },
+    }
+    listFacetsForChunk
+      .mockResolvedValueOnce([
+        pendingFacet('pronunciation', 'palabras'),
+        pendingFacet('meaning_recognition', 'palabras'),
+      ])
+      .mockResolvedValueOnce([
+        pendingFacet('pronunciation', 'palabras'),
+        { ...pendingFacet('meaning_recognition', 'palabras', 'ready'), payload: generatedPayload, generatedPayload },
+      ])
+    vi.mocked(generateFormFacetData).mockResolvedValue('generated')
+
+    await generateStudyIntentFormData(
+      {
+        userLookupId: lookupId,
+        userId,
+        formFacetTargets: [
+          { skill: 'pronunciation', targetForm: 'palabras' },
+          { skill: 'meaning_recognition', targetForm: 'palabras' },
+        ],
+        encounteredSentence: null,
+      },
+      deps
+    )
+
+    // Meaning first: its generation succeeds without IPA and the one shared
+    // call produces the IPA the pronunciation sibling needs.
+    expect(generateFormFacetData).toHaveBeenCalledTimes(1)
+    expect(generateFormFacetData).toHaveBeenCalledWith(
+      expect.objectContaining({ skill: 'meaning_recognition', targetForm: 'palabras' }),
+      deps
+    )
+    expect(setFacetPayload).toHaveBeenCalledTimes(1)
+    expect(setFacetPayload).toHaveBeenCalledWith(
+      expect.objectContaining({ skill: 'pronunciation', targetForm: 'palabras', payload: generatedPayload })
+    )
+  })
+
+  it('leaves the pronunciation sibling pending when the shared payload has no displayable form IPA', async () => {
+    const generatedPayload = { form: 'palabras', translation: 'words', grammar: { pos: 'noun' } }
+    listFacetsForChunk
+      .mockResolvedValueOnce([
+        pendingFacet('meaning_recognition', 'palabras'),
+        pendingFacet('pronunciation', 'palabras'),
+      ])
+      .mockResolvedValueOnce([
+        { ...pendingFacet('meaning_recognition', 'palabras', 'ready'), payload: generatedPayload, generatedPayload },
+        pendingFacet('pronunciation', 'palabras'),
+      ])
+    vi.mocked(generateFormFacetData).mockResolvedValue('generated')
+
+    await generateStudyIntentFormData(
+      {
+        userLookupId: lookupId,
+        userId,
+        formFacetTargets: [
+          { skill: 'meaning_recognition', targetForm: 'palabras' },
+          { skill: 'pronunciation', targetForm: 'palabras' },
+        ],
+        encounteredSentence: null,
+      },
+      deps
+    )
+
+    // Copying it would flip the facet ready with an empty card back.
+    expect(setFacetPayload).not.toHaveBeenCalled()
   })
 
   it('leaves siblings pending (no copy) when generation fails — and never throws', async () => {

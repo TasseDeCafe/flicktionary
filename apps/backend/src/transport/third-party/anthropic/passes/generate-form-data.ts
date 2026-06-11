@@ -1,19 +1,20 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import type { EnglishIpaDialect } from '../language-instructions'
 
 // Generate-and-confirm: when a learner adds a
 // specific inflected form as its own study target, the form facet is born
 // `pending_data` carrying only the surface string (a `cards` row stores nothing
 // else). This focused pass fills the form's FULL card content — its correct
 // written shape, a translation of THAT inflected form, a target-language
-// definition, an example, and its part of speech. It deliberately runs the
-// *better* model (Opus, never the Haiku fast-gloss): a wrong per-form gloss
-// drilled as truth is worse than none.
+// definition, an example, the part of speech, and the form's own IPA. It
+// deliberately runs the *better* model (Opus, never the Haiku fast-gloss): a
+// wrong per-form gloss drilled as truth is worse than none.
 //
-// Scope excludes pronunciation. Pronunciation/stress for an arbitrary form is
-// where LLMs hallucinate (wrong Russian stress is worse than no card), so
-// per-form pronunciation stays confirm-gated/roadmap — this pass never produces
-// IPA or stress.
+// The IPA is of THIS inflected form (a lemma's transcription is wrong for an
+// inflection) and may come back null — the model is told to skip it rather
+// than guess, and the pronunciation facet's readiness gate handles absence
+// (stays pending_data).
 //
 // Source-seeding: when the learner met the form in a real sentence we feed
 // that sentence in and ask Opus to use it verbatim as `targetExample` and
@@ -55,6 +56,9 @@ export type FormDataOutput = {
   nativeExample: string | null
   // Part of speech of the headword/form (null when unknown / not emitted).
   pos: Pos | null
+  // IPA of THIS inflected form (dialect-aware for English), with the dictionary
+  // delimiters in the string. Null when the model wasn't confident.
+  ipa: string | null
 }
 
 type GenerateFormDataArgs = {
@@ -66,6 +70,9 @@ type GenerateFormDataArgs = {
   // The real sentence the learner met this form in, when known. When present,
   // Opus reuses it as targetExample and translates it instead of inventing one.
   encounteredSentence: string | null
+  // English IPA dialect preference — steers which variety the `ipa` field
+  // transcribes for English targets. Undefined for other languages.
+  englishIpaDialect?: EnglishIpaDialect
 }
 
 const buildTool = (): Anthropic.Tool => ({
@@ -103,6 +110,11 @@ const buildTool = (): Anthropic.Tool => ({
         enum: [...POS_VALUES],
         description: 'The part of speech of the headword/form.',
       },
+      ipa: {
+        type: 'string',
+        description:
+          "IPA transcription of THIS exact inflected form — never the citation form's (a lemma transcription is wrong for an inflection: stress can move, endings change). For English, transcribe the dialect named in the system prompt. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/ˈhaʊzɪz/'), square brackets only for a narrow phonetic one (e.g. '[stɐˈla]'). Mark stress. OMIT this field entirely if you are not fully confident of the transcription — a wrong transcription drilled as truth is worse than none.",
+      },
     },
     required: ['form', 'translation'],
   },
@@ -111,7 +123,10 @@ const buildTool = (): Anthropic.Tool => ({
 const asString = (v: unknown): string | null => (typeof v === 'string' && v.trim().length > 0 ? v : null)
 
 export const generateFormData = async (args: GenerateFormDataArgs): Promise<FormDataOutput> => {
-  const system = `You are a meticulous ${args.targetLanguage} lexicographer preparing a single flashcard for a learner whose native language is ${args.nativeLanguage}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, and the part of speech. Do NOT produce IPA or stress marks beyond the form's own conventional spelling. Output only the tool call, no commentary.`
+  const dialectNote = args.englishIpaDialect
+    ? ` IPA transcriptions use ${args.englishIpaDialect === 'rp' ? 'Received Pronunciation (RP)' : 'General American (GA)'}.`
+    : ''
+  const system = `You are a meticulous ${args.targetLanguage} lexicographer preparing a single flashcard for a learner whose native language is ${args.nativeLanguage}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, the part of speech, and the inflected form's own IPA (skip the IPA when not fully confident — never guess a transcription).${dialectNote} Output only the tool call, no commentary.`
 
   const userMessage = `Headword (citation form): ${args.headword}${
     args.headwordTranslation ? ` — ${args.headwordTranslation}` : ''
@@ -152,5 +167,6 @@ Submit the form's data via the tool.`
     targetExample,
     nativeExample: asString(raw.native_example),
     pos,
+    ipa: asString(raw.ipa),
   }
 }

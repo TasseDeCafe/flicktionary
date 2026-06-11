@@ -108,14 +108,25 @@ export const useSetFacetEnabled = () => {
 // when the term view renders (kept off the chunk DTO so the vocab list stays
 // lean). Returns `{ facets, candidateForms }`: the facet summaries drive chip
 // membership / readiness, and candidateForms are the encountered surface forms
-// the "+ Add a form" picker can still offer.
-export const useStudyTargets = (chunkId: string | null) => {
+// the "+ Add a form" picker can still offer. `refetchInterval` lets the focus
+// view poll while a background enrich_highlight job is filling a pending facet.
+export const useStudyTargets = (chunkId: string | null, options?: { refetchInterval?: number | false }) => {
   const { t } = useLingui()
+  const pollMs = options?.refetchInterval
   return useQuery(
     orpcQuery.chunks.getStudyTargets.queryOptions({
       enabled: Boolean(chunkId),
       input: { chunkId: chunkId ?? '' },
       select: (response) => response.data,
+      // Self-stopping poll (mirrors useGetProcessingStatus): even while the
+      // caller asks for an interval, stop once no facet is pending_data — the
+      // background job filled it, or the user entered the data manually.
+      refetchInterval: pollMs
+        ? (query) => {
+            const facets = query.state.data?.data.facets
+            return facets?.some((facet) => facet.dataStatus === 'pending_data') ? pollMs : false
+          }
+        : false,
       meta: { errorMessage: t`Failed to load study targets` },
     })
   )
