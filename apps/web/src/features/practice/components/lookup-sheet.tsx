@@ -6,15 +6,19 @@ import { Bookmark } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { Badge } from '@flicktionary/ui/components/badge'
 import { Button } from '@flicktionary/ui/components/button'
-import { Skeleton } from '@flicktionary/ui/components/skeleton'
+import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
+import {
+  StudyOptionsSection,
+  defaultStudyIntentDraft,
+  draftToStudyIntent,
+  type StudyIntentDraft,
+} from '@flicktionary/ui/components/study-options-section'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import {
   FloatingSheet,
   FloatingSheetBody,
   FloatingSheetContent,
-  FloatingSheetDescription,
   FloatingSheetFooter,
   FloatingSheetHeader,
   FloatingSheetTitle,
@@ -61,11 +65,15 @@ export const LookupSheet = ({
 
   const [state, setState] = useState<GlossState>({ kind: 'idle' })
   const [showCefrDialog, setShowCefrDialog] = useState(false)
+  // The "Study options" draft. Untouched → no studyIntent on Save (the backend
+  // keep-time default applies); touched → the FULL SET of checked skills.
+  const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
 
   useLayoutEffect(() => {
     if (!open || !selection || !practiceTextId) return
     setState({ kind: 'loading' })
     setShowCefrDialog(false)
+    setStudyDraft(defaultStudyIntentDraft)
   }, [open, practiceTextId, selection])
 
   useEffect(() => {
@@ -110,6 +118,10 @@ export const LookupSheet = ({
         // Send the practice text body as the LLM's context window. Truncated
         // defensively even though our generated texts are well under 2k chars.
         context: practiceTextBody.slice(0, CONTEXT_MAX),
+        // Touched study options ride the save (applied inline, before the keep
+        // transition). Untouched → undefined → backend default. Read live so
+        // the CEFR-retry path keeps the configured draft.
+        studyIntent: draftToStudyIntent(studyDraft),
       },
       {
         onSuccess: (response) => {
@@ -169,48 +181,37 @@ export const LookupSheet = ({
         <FloatingSheetContent>
           <FloatingSheetHeader>
             <FloatingSheetTitle>{selection?.text ?? t`Lookup`}</FloatingSheetTitle>
-            {state.kind === 'loading' ? (
-              <>
-                <Skeleton className='h-5 w-20' />
-                <Skeleton className='h-4 w-11/12' />
-                <Skeleton className='h-4 w-3/4' />
-                <div className='mt-2 flex flex-wrap gap-1.5'>
-                  <Skeleton className='h-5 w-12 rounded-md' />
-                  <Skeleton className='h-5 w-16 rounded-md' />
-                </div>
-                <FloatingSheetDescription className='sr-only'>
-                  {t`Translation lookup and save action for the selected text.`}
-                </FloatingSheetDescription>
-              </>
-            ) : (
-              <>
-                {ipaLabel && (
-                  <p className='text-muted-foreground flex items-center gap-1.5 text-base leading-snug font-medium'>
-                    {showIpaFlag && (
-                      <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-                    )}
-                    <span>{ipaLabel}</span>
-                  </p>
-                )}
-                {state.kind === 'ready' ? (
-                  <FloatingSheetDescription>{state.gloss}</FloatingSheetDescription>
-                ) : (
-                  <FloatingSheetDescription className='sr-only'>
-                    {t`Translation lookup and save action for the selected text.`}
-                  </FloatingSheetDescription>
-                )}
-                {state.kind === 'ready' && (state.pos || state.register) && (
-                  <div className='mt-2 flex flex-wrap gap-1.5'>
-                    {state.pos && <Badge variant='outline'>{state.pos}</Badge>}
-                    {state.register && <Badge variant='secondary'>{state.register}</Badge>}
-                  </div>
-                )}
-              </>
-            )}
+            <GlossCardBody
+              loading={state.kind === 'loading'}
+              gloss={state.kind === 'ready' ? state.gloss : null}
+              pos={state.kind === 'ready' ? state.pos : null}
+              register={state.kind === 'ready' ? state.register : null}
+              ipaLabel={ipaLabel}
+              ipaPrefix={
+                showIpaFlag ? (
+                  <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                ) : undefined
+              }
+              srDescription={t`Translation lookup and save action for the selected text.`}
+            />
           </FloatingSheetHeader>
           {state.kind === 'error' && (
             <FloatingSheetBody>
               <p className='text-destructive text-sm'>{t`Could not fetch a translation right now.`}</p>
+            </FloatingSheetBody>
+          )}
+          {selection && (
+            <FloatingSheetBody>
+              <StudyOptionsSection
+                // Remount per selection so the disclosure re-collapses with the
+                // draft reset above.
+                key={`${practiceTextId}:${selection.text}`}
+                value={studyDraft}
+                onChange={setStudyDraft}
+                surfaceForm={selection.text}
+                pronunciationAvailable={!!displayedIpa}
+                disabled={isCreating || isSettingCefr}
+              />
             </FloatingSheetBody>
           )}
           <FloatingSheetFooter>
