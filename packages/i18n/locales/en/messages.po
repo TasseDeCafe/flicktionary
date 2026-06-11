@@ -666,20 +666,20 @@ msgstr "Browse community-uploaded tracks for this movie."
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx:110
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:43
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx:67
-#: apps/web/src/features/review/components/focus-view.tsx:399
+#: apps/web/src/features/review/components/focus-view.tsx:435
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:50
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:61
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:45
 msgid "Cancel"
 msgstr "Cancel"
 
-#: apps/web/src/features/review/components/focus-view.tsx:183
-#: apps/web/src/features/review/components/focus-view.tsx:190
-#: apps/web/src/features/review/components/focus-view.tsx:284
+#: apps/web/src/features/review/components/focus-view.tsx:219
+#: apps/web/src/features/review/components/focus-view.tsx:226
+#: apps/web/src/features/review/components/focus-view.tsx:320
 msgid "Card"
 msgstr "Card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:222
+#: apps/web/src/features/review/components/focus-view.tsx:258
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Card {cardPosition} of {cardTotal}"
 
@@ -687,7 +687,7 @@ msgstr "Card {cardPosition} of {cardTotal}"
 msgid "Card actions"
 msgstr "Card actions"
 
-#: apps/web/src/features/review/components/focus-view.tsx:191
+#: apps/web/src/features/review/components/focus-view.tsx:227
 msgid "Card not found."
 msgstr "Card not found."
 
@@ -775,7 +775,7 @@ msgstr "Choose your plan"
 msgid "Clear search"
 msgstr "Clear search"
 
-#: apps/web/src/features/review/components/focus-view.tsx:352
+#: apps/web/src/features/review/components/focus-view.tsx:388
 msgid "Click Generate full exploration to enrich this card with collocations, "
 "etymology, register, IPA, and more."
 msgstr "Click Generate full exploration to enrich this card with collocations, "
@@ -960,7 +960,7 @@ msgstr "Could not save. Please try again."
 msgid "Could not set up your account. Please try restarting the app."
 msgstr "Could not set up your account. Please try restarting the app."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:135
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:146
 msgid "Couldn't generate the form's data"
 msgstr "Couldn't generate the form's data"
 
@@ -968,11 +968,11 @@ msgstr "Couldn't generate the form's data"
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:176
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:187
 msgid "Couldn't remove the form"
 msgstr "Couldn't remove the form"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:159
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:170
 msgid "Couldn't save the form's data"
 msgstr "Couldn't save the form's data"
 
@@ -1067,13 +1067,13 @@ msgid "Definition (optional)"
 msgstr "Definition (optional)"
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:46
-#: apps/web/src/features/review/components/focus-view.tsx:418
+#: apps/web/src/features/review/components/focus-view.tsx:454
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx:63
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:48
 msgid "Delete"
 msgstr "Delete"
 
-#: apps/web/src/features/review/components/focus-view.tsx:386
+#: apps/web/src/features/review/components/focus-view.tsx:422
 msgid "Delete \"{deleteHeadword}\"?"
 msgstr "Delete \"{deleteHeadword}\"?"
 
@@ -1092,7 +1092,7 @@ msgstr "Delete from vocabulary"
 msgid "Delete my account"
 msgstr "Delete my account"
 
-#: apps/web/src/features/review/components/focus-view.tsx:339
+#: apps/web/src/features/review/components/focus-view.tsx:375
 msgid "Delete term"
 msgstr "Delete term"
 
@@ -1101,7 +1101,7 @@ msgid "Deleted \"{headword}\""
 msgstr "Deleted \"{headword}\""
 
 #: apps/web/src/features/practice/components/chunk-delete-confirm-sheet.tsx:46
-#: apps/web/src/features/review/components/focus-view.tsx:418
+#: apps/web/src/features/review/components/focus-view.tsx:454
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:48
 msgid "Deleting…"
 msgstr "Deleting…"
@@ -1372,11 +1372,11 @@ msgid "Failed to create session"
 msgstr "Failed to create session"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts:161
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:212
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:223
 msgid "Failed to delete term"
 msgstr "Failed to delete term"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:187
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:198
 msgid "Failed to export vocabulary"
 msgstr "Failed to export vocabulary"
 
@@ -1473,7 +1473,7 @@ msgstr "Failed to load session status"
 msgid "Failed to load sessions"
 msgstr "Failed to load sessions"
 
-#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:119
+#: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts:130
 msgid "Failed to load study targets"
 msgstr "Failed to load study targets"
 
@@ -1717,7 +1717,7 @@ msgstr "Free-form notes that don't fit the structured fields above."
 msgid "Frequency"
 msgstr "Frequency"
 
-#: apps/web/src/features/review/components/focus-view.tsx:343
+#: apps/web/src/features/review/components/focus-view.tsx:379
 msgid "Full exploration"
 msgstr "Full exploration"
 
@@ -1744,7 +1744,7 @@ msgstr "Generate"
 msgid "Generate card"
 msgstr "Generate card"
 
-#: apps/web/src/features/review/components/focus-view.tsx:362
+#: apps/web/src/features/review/components/focus-view.tsx:398
 msgid "Generate full exploration"
 msgstr "Generate full exploration"
 
@@ -1763,7 +1763,7 @@ msgid "Generate translations for new cards in this language. You can always add 
 msgstr "Generate translations for new cards in this language. You can always "
 "add a translation to a card manually."
 
-#: apps/web/src/features/review/components/focus-view.tsx:350
+#: apps/web/src/features/review/components/focus-view.tsx:386
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Generating full exploration… this takes a few seconds."
 
@@ -1773,7 +1773,7 @@ msgstr "Generating..."
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:220
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:397
-#: apps/web/src/features/review/components/focus-view.tsx:362
+#: apps/web/src/features/review/components/focus-view.tsx:398
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
 msgid "Generating…"
 msgstr "Generating…"
@@ -1873,7 +1873,7 @@ msgid "Hides this term from Practice and Vocabulary. You can restore it from "
 msgstr "Hides this term from Practice and Vocabulary. You can restore it from "
 "the toast right after, or by re-keeping it in a session."
 
-#: apps/web/src/features/review/components/focus-view.tsx:388
+#: apps/web/src/features/review/components/focus-view.tsx:424
 #: apps/web/src/features/vocabulary/components/vocabulary-delete-confirm-drawer.tsx:40
 msgid "Hides this term from your vocabulary and Practice. You can revive it by "
 "re-keeping it in a session."
@@ -2031,7 +2031,7 @@ msgstr "Jump to latest"
 msgid "Jump to the session this term came from"
 msgstr "Jump to the session this term came from"
 
-#: apps/web/src/features/review/components/focus-view.tsx:479
+#: apps/web/src/features/review/components/focus-view.tsx:515
 #: apps/web/src/features/review/components/triage-row.tsx:79
 msgid "Keep"
 msgstr "Keep"
@@ -2138,7 +2138,7 @@ msgstr "LLM-suggested terms"
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
-#: apps/web/src/features/review/components/focus-view.tsx:184
+#: apps/web/src/features/review/components/focus-view.tsx:220
 msgid "Loading card…"
 msgstr "Loading card…"
 
@@ -2328,7 +2328,7 @@ msgstr "Native language"
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:201
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:203
 #: packages/ui/src/components/study-options-section.tsx:109
 msgid "Needs a known transcription"
 msgstr "Needs a known transcription"
@@ -2374,7 +2374,7 @@ msgstr "New today"
 msgid "Next"
 msgstr "Next"
 
-#: apps/web/src/features/review/components/focus-view.tsx:241
+#: apps/web/src/features/review/components/focus-view.tsx:277
 msgid "Next card"
 msgstr "Next card"
 
@@ -2853,7 +2853,7 @@ msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Press \"{keys}\" to toggle subtitle display"
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx:608
-#: apps/web/src/features/review/components/focus-view.tsx:238
+#: apps/web/src/features/review/components/focus-view.tsx:274
 msgid "Previous card"
 msgstr "Previous card"
 
@@ -2890,7 +2890,7 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:188
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:190
 #: apps/web/src/features/review/components/form-selector.tsx:301
 #: apps/web/src/features/review/components/form-selector.tsx:353
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
@@ -2928,7 +2928,7 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:198
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:200
 #: apps/web/src/features/review/components/form-selector.tsx:308
 #: apps/web/src/features/review/components/form-selector.tsx:371
 #: packages/ui/src/components/study-options-section.tsx:106
@@ -2979,7 +2979,7 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:178
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:180
 #: apps/web/src/features/review/components/form-selector.tsx:294
 #: apps/web/src/features/review/components/form-selector.tsx:345
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
@@ -3035,7 +3035,7 @@ msgid "Rehab progress: day {days} of 3. A correct answer today still counts — 
 msgstr "Rehab progress: day {days} of 3. A correct answer today still counts — "
 "try again with a fresh exercise."
 
-#: apps/web/src/features/review/components/focus-view.tsx:476
+#: apps/web/src/features/review/components/focus-view.tsx:512
 #: apps/web/src/features/review/components/triage-row.tsx:87
 msgid "Reject"
 msgstr "Reject"
@@ -3162,8 +3162,8 @@ msgstr "Reviewing and practicing"
 msgid "RP"
 msgstr "RP"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:242
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:252
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:244
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:254
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
 msgid "Save"
@@ -3389,7 +3389,7 @@ msgstr "Show notes"
 msgid "Show suggested terms while reading"
 msgstr "Show suggested terms while reading"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:233
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:235
 #: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:253
 msgid "Sign in"
 msgstr "Sign in"
@@ -3481,7 +3481,7 @@ msgstr "Something went wrong."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
-#: apps/web/src/features/review/components/focus-view.tsx:222
+#: apps/web/src/features/review/components/focus-view.tsx:258
 msgid "Standalone"
 msgstr "Standalone"
 
@@ -3547,7 +3547,7 @@ msgstr "Study options"
 msgid "Study targets"
 msgstr "Study targets"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:214
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:216
 #: packages/ui/src/components/study-options-section.tsx:155
 msgid "Study this exact form"
 msgstr "Study this exact form"
@@ -3823,7 +3823,7 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx:353
+#: apps/web/src/features/review/components/focus-view.tsx:389
 msgid "This card looks incomplete. Re-process the session to populate its basic "
 "data, then come back to enrich it."
 msgstr "This card looks incomplete. Re-process the session to populate its "
@@ -4275,7 +4275,7 @@ msgstr "Why does it appear in this particular form here?"
 msgid "Why this form?"
 msgstr "Why this form?"
 
-#: apps/web/src/features/review/components/focus-view.tsx:295
+#: apps/web/src/features/review/components/focus-view.tsx:331
 msgid "Wiktionary"
 msgstr "Wiktionary"
 
