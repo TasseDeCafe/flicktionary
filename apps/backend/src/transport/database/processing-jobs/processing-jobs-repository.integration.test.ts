@@ -58,6 +58,7 @@ describe('processing-jobs-repository enqueue integration tests', () => {
       selectionText: 'palabra',
       note: null,
       presetTags: [],
+      studyIntent: null,
     })
     return { session, highlight }
   }

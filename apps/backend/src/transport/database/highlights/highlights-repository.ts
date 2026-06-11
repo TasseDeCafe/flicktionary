@@ -1,9 +1,10 @@
+import postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
 
 export type DbHighlight = Tables<'highlights'>
 
-const insertHighlight = async (params: {
+export type HighlightInsertParams = {
   studySessionId: string
   startSegmentId: string
   endSegmentId: string
@@ -12,11 +13,17 @@ const insertHighlight = async (params: {
   selectionText: string
   note: string | null
   presetTags: string[]
-}): Promise<DbHighlight> => {
+  // Gloss-save study intent (StudyIntentSchema shape), applied by the
+  // enrich_highlight job once the user_lookup materializes. Kept as a loose
+  // record here — the repo stays decoupled from the contract package.
+  studyIntent: Record<string, unknown> | null
+}
+
+const insertHighlight = async (params: HighlightInsertParams): Promise<DbHighlight> => {
   const result = (await sql`
     INSERT INTO public.highlights (
       study_session_id, start_segment_id, end_segment_id,
-      start_offset, end_offset, selection_text, note, preset_tags
+      start_offset, end_offset, selection_text, note, preset_tags, study_intent
     )
     VALUES (
       ${params.studySessionId},
@@ -26,7 +33,8 @@ const insertHighlight = async (params: {
       ${params.endOffset},
       ${params.selectionText},
       ${params.note},
-      ${params.presetTags}
+      ${params.presetTags},
+      ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null}
     )
     RETURNING *
   `) as DbHighlight[]
@@ -115,16 +123,7 @@ const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
 }
 
 export interface HighlightsRepositoryInterface {
-  insertHighlight: (params: {
-    studySessionId: string
-    startSegmentId: string
-    endSegmentId: string
-    startOffset: number
-    endOffset: number
-    selectionText: string
-    note: string | null
-    presetTags: string[]
-  }) => Promise<DbHighlight>
+  insertHighlight: (params: HighlightInsertParams) => Promise<DbHighlight>
   listBySessionId: (studySessionId: string) => Promise<DbHighlight[]>
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<void>

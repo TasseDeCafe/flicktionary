@@ -289,6 +289,7 @@ export const buildApp = ({
     highlightsRepository,
     cardsRepository,
     userLookupsRepository,
+    studyFacetsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository,
     processingTelemetryRepository,
@@ -337,7 +338,8 @@ export const buildApp = ({
       usersRepository,
       userTargetLanguagePrefsRepository,
       wiktionaryEntriesRepository,
-      processingJobsRepository
+      processingJobsRepository,
+      ghostCandidatesRepository
     )
   )
   app.use(

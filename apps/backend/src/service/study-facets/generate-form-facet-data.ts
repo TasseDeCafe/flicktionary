@@ -25,7 +25,18 @@ export type GenerateFormFacetDataOutcome = 'generated' | 'skipped' | 'failed'
 // manual entry). When translations are off for this language there is nothing to
 // translate, so we mark ready with the bare surface form, no model call.
 export const generateFormFacetData = async (
-  params: { chunkId: string; userId: string; skill: FacetSkill; targetForm: string },
+  params: {
+    chunkId: string
+    userId: string
+    skill: FacetSkill
+    targetForm: string
+    // Caller-supplied encountered sentence. The default below reads the facet's
+    // source join, which only sees the most-recent KEPT card — at study-intent
+    // time (enrichment / pre-keep adhoc) the card is still pending, so the join
+    // misses and Opus would invent an example. Intent callers know the real
+    // segment text and pass it here; `undefined` keeps the facet-derived lookup.
+    encounteredSentence?: string | null
+  },
   deps: GenerateFormFacetDataDeps
 ): Promise<GenerateFormFacetDataOutcome> => {
   try {
@@ -44,7 +55,8 @@ export const generateFormFacetData = async (
 
     // The real sentence the learner met this form in (source-seeding). Opus
     // reuses it as the targetExample and translates it, rather than inventing.
-    const encounteredSentence = target.source?.sentence ?? null
+    const encounteredSentence =
+      params.encounteredSentence !== undefined ? params.encounteredSentence : (target.source?.sentence ?? null)
 
     const languageMode = await getLanguageMode({
       userId: params.userId,

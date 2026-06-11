@@ -3,6 +3,7 @@ import { HighlightsRepositoryInterface } from '../../transport/database/highligh
 import { ProcessingTelemetryRepositoryInterface } from '../../transport/database/processing-telemetry/processing-telemetry-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
+import { StudyFacetsRepositoryInterface } from '../../transport/database/study-facets/study-facets-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
@@ -13,7 +14,13 @@ import { basicDataPass, HighlightInput } from '../../transport/third-party/anthr
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
+import {
+  applyStudyIntent,
+  generateStudyIntentFormData,
+  StudyIntentFormTarget,
+} from '../study-facets/apply-study-intent'
 import { getOrCreateAdhocSession } from './get-or-create-adhoc-session'
+import { StudyIntent } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 export type CreateAdhocCardDependencies = {
   textSegmentsRepository: TextSegmentsRepositoryInterface
@@ -21,6 +28,7 @@ export type CreateAdhocCardDependencies = {
   highlightsRepository: HighlightsRepositoryInterface
   cardsRepository: CardsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   processingTelemetryRepository: ProcessingTelemetryRepositoryInterface
@@ -59,9 +67,10 @@ export const createAdhocCard = async (params: {
   targetLanguage: string
   headword: string
   context: string | null
+  studyIntent: StudyIntent | null
   deps: CreateAdhocCardDependencies
 }): Promise<CreateAdhocCardResult> => {
-  const { userId, targetLanguage, headword, context, deps } = params
+  const { userId, targetLanguage, headword, context, studyIntent, deps } = params
 
   const languagePrefs = await getLanguageMode({
     userId,
@@ -109,6 +118,9 @@ export const createAdhocCard = async (params: {
     selectionText: headword,
     note: null,
     presetTags: [],
+    // Provenance only: adhoc intent is applied inline below (no enrich job runs
+    // for adhoc highlights); the applied_at stamp rides the same guard.
+    studyIntent: studyIntent,
   })
 
   const highlightInput: HighlightInput = {
@@ -168,6 +180,28 @@ export const createAdhocCard = async (params: {
     throw new AdhocCardCreationError('card_not_inserted', `no card created for highlight ${highlight.id}`)
   }
 
+  // Apply any gloss-save study intent BEFORE the keep transition: the intent's
+  // facet rows must already exist when applyKeepTransition runs, so its
+  // ensureDefaultCitationFacetIfUnconfigured row-existence check honors the
+  // full-set semantics (recognition unchecked => no recognition facet). Runs
+  // after grounding so the pronunciation reconcile sees the grounded IPA.
+  let intentApplied = false
+  let intentFormTargets: StudyIntentFormTarget[] = []
+  if (studyIntent) {
+    const intentResult = await applyStudyIntent(
+      {
+        userLookupId: insertedCard.user_lookup_id,
+        userId,
+        surfaceForm: insertedCard.surface_form ?? headword,
+        intent: studyIntent,
+        appliedGuardHighlightId: highlight.id,
+      },
+      { userLookupsRepository: deps.userLookupsRepository, studyFacetsRepository: deps.studyFacetsRepository }
+    )
+    intentApplied = intentResult.applied
+    intentFormTargets = intentResult.formFacetTargets
+  }
+
   // Adhoc entries are an explicit user action ("add this word to my
   // vocabulary"), so they bypass triage: stamp the card as kept and apply
   // the lookup transition that materialize no longer does.
@@ -176,6 +210,26 @@ export const createAdhocCard = async (params: {
     userLookupId: insertedCard.user_lookup_id,
     cardId: insertedCard.id,
   })
+
+  // Awaited deliberately (decided): the save is already an LLM-backed spinner
+  // and navigates straight to the card — arriving at a ready form facet beats
+  // racing a pending_data chip. Never throws; a failure leaves pending_data
+  // with the term view's retry chip.
+  if (intentApplied && intentFormTargets.length > 0) {
+    await generateStudyIntentFormData(
+      {
+        userLookupId: insertedCard.user_lookup_id,
+        userId,
+        formFacetTargets: intentFormTargets,
+        encounteredSentence: segment.text,
+      },
+      {
+        userLookupsRepository: deps.userLookupsRepository,
+        usersRepository: deps.usersRepository,
+        userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
+      }
+    )
+  }
 
   // Stamp the most-recent target language so the next adhoc-wizard open prefills it.
   void deps.usersRepository.setLastTargetLanguage(userId, targetLanguage).catch((e) => {

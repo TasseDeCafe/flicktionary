@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { basicDataPass } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
+import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
 import { enrichHighlight } from './enrich-highlight'
 import type { ProcessingDependencies } from './processing-dependencies'
 
@@ -10,6 +11,10 @@ vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', () => ({
 }))
 vi.mock('./wiktionary-grounding-runner', () => ({
   runWiktionaryGrounding: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('../study-facets/apply-study-intent', () => ({
+  applyStudyIntent: vi.fn().mockResolvedValue({ applied: true, formFacetTargets: [] }),
+  generateStudyIntentFormData: vi.fn().mockResolvedValue(undefined),
 }))
 vi.mock('../user-prefs/language-mode', () => ({
   getLanguageMode: vi.fn().mockResolvedValue({
@@ -42,7 +47,11 @@ const highlight = {
   selection_text: 'palabra',
   note: null,
   preset_tags: [] as string[],
+  study_intent: null as Record<string, unknown> | null,
+  study_intent_applied_at: null as string | null,
 }
+
+const studyIntent = { skills: ['meaning_production'], formScope: 'both' }
 
 const highlightChunk = {
   source: 'highlight' as const,
@@ -60,7 +69,12 @@ const highlightChunk = {
 }
 
 const createDeps = () => {
-  const insertCardForHighlightIdempotent = vi.fn().mockResolvedValue({ id: 'card-1' })
+  const insertCardForHighlightIdempotent = vi.fn().mockResolvedValue({
+    id: 'card-1',
+    highlight_id: highlightId,
+    user_lookup_id: lookupId,
+    surface_form: 'palabra',
+  })
   const insertCard = vi.fn().mockResolvedValue({ id: 'card-2' })
   const record = vi.fn().mockResolvedValue(undefined)
   const deps = {
@@ -135,6 +149,81 @@ describe('enrichHighlight', () => {
 
     expect(insertCardForHighlightIdempotent).toHaveBeenCalledTimes(2)
     expect(insertCard).not.toHaveBeenCalled()
+  })
+
+  it('applies a study intent against the highlight card lookup, with the guard id and segment sentence', async () => {
+    vi.mocked(basicDataPass).mockResolvedValue([highlightChunk])
+    vi.mocked(applyStudyIntent).mockResolvedValue({
+      applied: true,
+      formFacetTargets: [{ skill: 'meaning_production', targetForm: 'palabra' }],
+    })
+    const { deps } = createDeps()
+    vi.mocked(deps.highlightsRepository.findById).mockResolvedValue({
+      ...highlight,
+      study_intent: studyIntent,
+    } as never)
+
+    const outcome = await enrichHighlight({ sessionId, highlightId, userId }, deps)
+
+    expect(outcome).toBe('enriched')
+    expect(applyStudyIntent).toHaveBeenCalledWith(
+      {
+        userLookupId: lookupId,
+        userId,
+        surfaceForm: 'palabra',
+        intent: studyIntent,
+        appliedGuardHighlightId: highlightId,
+      },
+      expect.anything()
+    )
+    expect(generateStudyIntentFormData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userLookupId: lookupId,
+        formFacetTargets: [{ skill: 'meaning_production', targetForm: 'palabra' }],
+        encounteredSentence: 'foo palabra bar',
+      }),
+      expect.anything()
+    )
+  })
+
+  it('skips intent application when study_intent_applied_at is already stamped', async () => {
+    vi.mocked(basicDataPass).mockResolvedValue([highlightChunk])
+    const { deps } = createDeps()
+    vi.mocked(deps.highlightsRepository.findById).mockResolvedValue({
+      ...highlight,
+      study_intent: studyIntent,
+      study_intent_applied_at: '2026-06-11T00:00:00Z',
+    } as never)
+
+    await enrichHighlight({ sessionId, highlightId, userId }, deps)
+
+    expect(applyStudyIntent).not.toHaveBeenCalled()
+    expect(generateStudyIntentFormData).not.toHaveBeenCalled()
+  })
+
+  it('does not touch the intent machinery when the highlight has none', async () => {
+    vi.mocked(basicDataPass).mockResolvedValue([highlightChunk])
+    const { deps } = createDeps()
+
+    await enrichHighlight({ sessionId, highlightId, userId }, deps)
+
+    expect(applyStudyIntent).not.toHaveBeenCalled()
+    expect(generateStudyIntentFormData).not.toHaveBeenCalled()
+  })
+
+  it('skips generation when the intent application lost the guard race', async () => {
+    vi.mocked(basicDataPass).mockResolvedValue([highlightChunk])
+    vi.mocked(applyStudyIntent).mockResolvedValue({ applied: false, formFacetTargets: [] })
+    const { deps } = createDeps()
+    vi.mocked(deps.highlightsRepository.findById).mockResolvedValue({
+      ...highlight,
+      study_intent: studyIntent,
+    } as never)
+
+    await enrichHighlight({ sessionId, highlightId, userId }, deps)
+
+    expect(applyStudyIntent).toHaveBeenCalledTimes(1)
+    expect(generateStudyIntentFormData).not.toHaveBeenCalled()
   })
 
   it('cancels (no card) when the highlight was deleted mid-flight', async () => {

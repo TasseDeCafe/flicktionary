@@ -12,6 +12,7 @@ import { ProcessingTelemetryRepository } from '../../transport/database/processi
 import { WiktionaryEntriesRepository } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { GhostCandidatesRepository } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
 import { NominatedWindowsRepository } from '../../transport/database/nominated-windows/nominated-windows-repository'
+import { StudyFacetsRepository } from '../../transport/database/study-facets/study-facets-repository'
 import type { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import type { TextTracksRepositoryInterface } from '../../transport/database/text-tracks/text-tracks-repository'
 import type { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -26,6 +27,7 @@ import type { ProcessingTelemetryRepositoryInterface } from '../../transport/dat
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import type { GhostCandidatesRepositoryInterface } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
 import type { NominatedWindowsRepositoryInterface } from '../../transport/database/nominated-windows/nominated-windows-repository'
+import type { StudyFacetsRepositoryInterface } from '../../transport/database/study-facets/study-facets-repository'
 
 export type ProcessingDependencies = {
   contentSourcesRepository: ContentSourcesRepositoryInterface
@@ -42,6 +44,7 @@ export type ProcessingDependencies = {
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
   ghostCandidatesRepository: GhostCandidatesRepositoryInterface
   nominatedWindowsRepository: NominatedWindowsRepositoryInterface
+  studyFacetsRepository: StudyFacetsRepositoryInterface
 }
 
 // Repos are stateless factories over the shared postgres client, so the worker
@@ -62,4 +65,5 @@ export const buildProcessingDependencies = (): ProcessingDependencies => ({
   wiktionaryEntriesRepository: WiktionaryEntriesRepository(),
   ghostCandidatesRepository: GhostCandidatesRepository(),
   nominatedWindowsRepository: NominatedWindowsRepository(),
+  studyFacetsRepository: StudyFacetsRepository(),
 })

@@ -169,6 +169,23 @@ export type PracticePool = z.infer<typeof PracticePoolSchema>
 export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
 export type FacetSkill = z.infer<typeof FacetSkillSchema>
 
+// Optional facet configuration chosen in a gloss-save popover, applied
+// server-side once the term exists (the enrich_highlight job for highlight
+// saves; inline for adhoc saves). FULL-SET semantics: when present, exactly the
+// listed skills get citation facets — recognition must be listed explicitly
+// (this skips the keep-time default via the facet row-existence check). Absent
+// = today's default (citation recognition at Keep). `formScope: 'both'`
+// additionally creates form facets of the encountered surface form for the
+// listed MEANING skills (pronunciation never form-facets — per-form IPA is
+// roadmap); the server collapses to lemma-only when the surface IS the
+// headword (the client never knows the lemma). Application is enable-only and
+// additive on term dedupe — it never disables an existing facet.
+export const StudyIntentSchema = z.object({
+  skills: z.array(FacetSkillSchema).min(1),
+  formScope: z.enum(['lemma', 'both']),
+})
+export type StudyIntent = z.infer<typeof StudyIntentSchema>
+
 // Full per-form card content stored in a form facet's `study_facets.payload`
 // JSONB. A form is its own editable card: its `form` (display spelling)
 // plus its own translation / definition / examples / grammar subset, all

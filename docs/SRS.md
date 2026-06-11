@@ -56,6 +56,16 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
   picked in the triage focus view) is respected, not overwritten; a dormant (all-skills-disabled)
   term is not resurrected by a re-keep. A `(meaning_production, '')` facet exists only once
   production is enabled.
+- **Study intent** (gloss-save popovers): `highlights.create` / `cards.createAdhoc` accept an
+  optional `studyIntent {skills, formScope}` — a **full-set** facet configuration (recognition
+  only if listed) applied by `applyStudyIntent` once the term exists: inline for adhoc (before
+  the keep transition, so the keep default's row-existence check is skipped), and in the
+  `enrich_highlight` job for highlights (the intent is stored on the highlight row;
+  `study_intent_applied_at` is stamped atomically with the facet writes so a job retry never
+  re-applies). Application is enable-only and additive on term dedupe. `formScope:'both'` adds
+  per-form facets of the encountered surface (meaning skills only; lemma-collapse when the
+  surface IS the headword), born `pending_data`/`source='highlight'` and auto-filled via the
+  Opus pass (one call per form; sibling skills copy the payload).
 - `srs_state IS NULL` on a facet = never reviewed — the UI's **"Unseen"**.
 - `introduced_at` (on the citation recognition facet) is the source of truth for the daily-new
   count; it replaces the old `user_lookups.added_to_practice_at`.

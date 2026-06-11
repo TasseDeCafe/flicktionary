@@ -13,28 +13,9 @@ import { UsersRepositoryInterface } from '../../transport/database/users/users-r
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
 import { generateFormFacetData } from '../../service/study-facets/generate-form-facet-data'
+import { reconcilePronunciationFacet } from '../../service/study-facets/reconcile-pronunciation-facet'
 import { toIsoString } from '../router-utils'
-import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
-
-// Keep the citation pronunciation facet in sync with the term's IPA precondition
-// (Trap 12). A pronunciation card derives its back from grammar.ipa at render;
-// if no transcription is displayable the card is empty and there is nothing to
-// rehab, so the facet is DELETED (not disabled — decided). Self-healing: run
-// after grammar edits (IPA can vanish) and after a pronunciation enable (defends
-// an enable on a term that never had IPA). DELETE is a no-op when no such facet
-// exists, so this is safe to call unconditionally.
-const reconcilePronunciationFacet = async (
-  userLookupsRepository: UserLookupsRepositoryInterface,
-  chunkId: string,
-  grammar: Record<string, unknown>,
-  targetLanguage: string
-): Promise<void> => {
-  const ipa = (grammar?.ipa ?? null) as IpaBagShape | null
-  if (!hasDisplayableIpa(ipa, targetLanguage)) {
-    await userLookupsRepository.deleteFacet({ userLookupId: chunkId, skill: 'pronunciation', targetForm: '' })
-  }
-}
 
 // Project a facet-joined ChunkRow down to the bare ChunkSchema shape (the
 // setFacetEnabled response). ChunkRow already carries the DERIVED
