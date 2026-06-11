@@ -11,8 +11,8 @@ export interface WordProps {
   roundStart?: boolean
   roundEnd?: boolean
   // Part of a persistent saved highlight (a Flicktionary highlight row).
-  // Rendered as an understated underline + tint, deliberately distinct from the
-  // live-selection yellow; the live selection wins while both apply. Same
+  // Rendered with the web reader's saved-yellow treatment, distinct from the
+  // live-selection sky; the live selection wins while both apply. Same
   // outer-corner rounding scheme as selection.
   saved?: boolean
   savedRoundStart?: boolean
@@ -26,15 +26,25 @@ export interface WordProps {
 }
 
 // Saved-highlight paint, shared with the inter-word filler spans in
-// SubtitleOverlayApp so a multi-word saved span reads as one block.
-export const SAVED_SPAN_CLASS =
-  'bg-[rgba(94,234,212,0.16)] underline decoration-[rgba(94,234,212,0.85)] decoration-2 underline-offset-4'
+// SubtitleOverlayApp so a multi-word saved span reads as one block. Matches the
+// web reader's dark-mode committed highlight (yellow wash + yellow glyphs) —
+// written as explicit colors, not `dark:` variants, because the subtitle shadow
+// tree has no `.dark` ancestor. No shadow-ring cushion here: the web draws it
+// on ONE span per highlight, but these are per-token spans, and overlapping
+// translucent rings double-darken at every word boundary.
+export const SAVED_SPAN_CLASS = 'bg-yellow-400/20 text-yellow-200'
+
+// Live-selection paint (web parity: the reader's dark-mode word-selection wash),
+// shared with the whole-run wrapper span in SubtitleOverlayApp.
+export const SELECTION_SPAN_CLASS = 'bg-sky-400/25'
 
 // A single clickable subtitle word. Purely presentational — the hover debounce,
 // paused gate, selection, and save orchestration all live in SubtitleOverlayApp,
 // which coordinates across words and the popover layer. Styling is Tailwind
-// utilities adopted into the shadow root (zero `!important`); the yellow hover/
-// selection tint matches the legacy `video.css` `rgba(255,255,0,0.35)`.
+// utilities adopted into the shadow root (zero `!important`). Color semantics
+// match the web reader: sky = transient selection, yellow = saved highlight,
+// and the hover affordance is a neutral white wash (it means "glossable", a
+// state the click-driven web doesn't need to paint).
 //
 // When `selected`, the word paints NO background of its own — a single wrapper
 // span around the whole selected run supplies one continuous block (see
@@ -54,13 +64,13 @@ export const Word = memo(function Word({
   onMouseDown,
 }: WordProps) {
   const stateClass = selected
-    ? 'bg-[rgba(255,255,0,0.35)]' + (roundStart ? ' rounded-l-sm' : '') + (roundEnd ? ' rounded-r-sm' : '')
+    ? SELECTION_SPAN_CLASS + (roundStart ? ' rounded-l-sm' : '') + (roundEnd ? ' rounded-r-sm' : '')
     : saved
       ? SAVED_SPAN_CLASS +
-        ' hover:bg-[rgba(255,255,0,0.35)]' +
+        ' hover:bg-yellow-400/30' +
         (savedRoundStart ? ' rounded-l-sm' : '') +
         (savedRoundEnd ? ' rounded-r-sm' : '')
-      : 'rounded-sm hover:bg-[rgba(255,255,0,0.35)]'
+      : 'rounded-sm hover:bg-white/20'
   return (
     <span
       data-word={word}

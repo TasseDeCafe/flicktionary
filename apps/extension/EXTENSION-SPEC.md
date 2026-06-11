@@ -363,6 +363,16 @@ resolves to an exact `text_segments` row + offsets.
   (selection + context line + target language) and shows a floating tooltip
   (floating-ui, in a separate non-transformed popover shadow host): word, IPA
   (GA → RP → untagged preference), one-line gloss, POS and register badges.
+  Both popovers (preview + saved mode) are built from the web app's shared
+  components — `GlossCardBody`/`Badge`/`Button`/`Textarea` from
+  `@flicktionary/ui` — inside a card that copies the web FloatingSheet's
+  classes, with the web's DARK theme hardcoded via a `dark` class on the
+  popover root (they always float over video; tokens.css is already adopted
+  into the popover shadow root and `overlay.css` already `@source`-scans
+  `packages/ui/src`). Positioning stays floating-ui — only Radix-free shared
+  components are used (Radix Checkbox/Switch rem-size against the host page
+  root inside shadow surfaces, which is why Study options keeps native
+  checkboxes, model-only sharing).
   The lookup is a TanStack Query (`use-gloss.ts`) keyed
   `['gloss', word, sentence]` on the realm-wide `glossQueryClient`: successes
   cache (`staleTime: Infinity`, 30 min gcTime — re-hover is instant), errors
@@ -380,7 +390,12 @@ resolves to an exact `text_segments` row + offsets.
   popover), play, cue change, overlay hide, or by hovering another word
   (the new gloss replaces it and starts unpinned).
 - **Selection** — click selects a word; press-and-drag extends to a contiguous
-  multi-word (even multi-segment) chunk, highlighted in yellow.
+  multi-word (even multi-segment) chunk. Color semantics match the web reader:
+  selection paints the sky wash (`bg-sky-400/25`, the reader's dark-mode
+  word-selection color), saved highlights paint yellow (below), and the hover
+  affordance is a neutral white wash (`hover:bg-white/20` — hover means
+  "glossable" here, a state the click-driven web doesn't paint; the web reader
+  instead got an accent-tint hover affordance on selectable words).
 - **Save** — right-click (word or selection) shows the Save action; success
   drops a toast and clears the selection. Signed-out → a "Sign in" action;
   registration-failed → disabled Save with the reason. The save calls
@@ -416,10 +431,13 @@ resolves to an exact `text_segments` row + offsets.
   succeeds with no visual cue). All toast call sites go through
   `dispatchToast()` (`toaster-host.ts`), which queues until the Toaster's
   subscription is live.
-- **Saved highlights (persistent spans)** — saved words/chunks render a
-  persistent teal underline + tint on the subtitle (distinct from the
-  live-selection yellow; selection wins while both apply), with outer-corner
-  rounding per painted run. State lives in a per-mount vanilla zustand store
+- **Saved highlights (persistent spans)** — saved words/chunks render the web
+  reader's dark-mode committed-highlight treatment: yellow wash + yellow
+  glyphs (`bg-yellow-400/20 text-yellow-200`, hover `/30`; explicit colors,
+  not `dark:` variants — the subtitle shadow tree has no `.dark` ancestor; no
+  shadow-ring cushion — per-token spans would double-darken overlapping rings
+  at word boundaries). Distinct from the live-selection sky; selection wins
+  while both apply; outer-corner rounding per painted run. State lives in a per-mount vanilla zustand store
   (`saved-highlights-store.ts`); painting projects highlights onto cues via
   `buildLineRanges` (index-coordinate twin of the web reader's
   `buildSegmentRanges`: single-cue `[startOffset, endOffset]`, cross-cue

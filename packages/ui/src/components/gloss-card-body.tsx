@@ -20,9 +20,10 @@ type GlossCardBodyProps = {
 
 // The shared gloss-card body: IPA row, one-line gloss, POS/register badges and
 // their loading skeletons. Used by every gloss-save popover (session gloss
-// sheet, generated-texts lookup sheet) so the card reads identically across
-// surfaces. Must render inside a FloatingSheet (the description component
-// reads its context).
+// sheet, generated-texts lookup sheet, the extension's video-overlay popovers)
+// so the card reads identically across surfaces. Works inside OR outside a
+// FloatingSheet (the description component falls back to a plain <p> without
+// the sheet context — the extension popovers position with floating-ui).
 export const GlossCardBody = ({
   loading,
   gloss,

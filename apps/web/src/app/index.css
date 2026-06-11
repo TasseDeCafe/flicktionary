@@ -49,3 +49,14 @@ body {
 .dark [data-word-selected='true'] {
   background-color: color-mix(in oklab, var(--color-sky-400) 25%, transparent);
 }
+
+/* Hover affordance on selectable words — invites the click that opens the
+   gloss (extension-overlay parity, where hover already lights words up).
+   `--accent` re-resolves under `.dark`, so one rule covers both themes.
+   Excluded inside committed highlights (their own yellow hover wins) and on
+   words already painted by an in-flight selection. */
+span[data-word-start]:hover:not([data-highlight-id] *):not([data-word-selected='true']) {
+  background-color: hsl(var(--accent));
+  border-radius: 0.25rem;
+  cursor: pointer;
+}

@@ -20,7 +20,7 @@ import {
 } from '../../services/flicktionary/flicktionary-client'
 import { getFlicktionaryAuth, onFlicktionaryAuthChange } from '../../services/flicktionary/auth-storage'
 import { SubtitleLineModel, SubtitleStore } from './subtitle-store'
-import { SAVED_SPAN_CLASS, Word } from './Word'
+import { SAVED_SPAN_CLASS, SELECTION_SPAN_CLASS, Word } from './Word'
 import { GlossContent, GlossTooltip, SavedGlossTooltip } from './GlossTooltip'
 import { CefrPicker } from './CefrPicker'
 import { toast } from 'sonner'
@@ -799,7 +799,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                   const fillerSaved =
                     !inRange && savedRanges?.some((r) => token.charStart >= r.start && token.charEnd <= r.end)
                   return inRange ? (
-                    <span key={i} className='bg-[rgba(255,255,0,0.35)]'>
+                    <span key={i} className={SELECTION_SPAN_CLASS}>
                       {token.text}
                     </span>
                   ) : fillerSaved ? (

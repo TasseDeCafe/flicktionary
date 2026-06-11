@@ -518,8 +518,12 @@ interface FloatingSheetDescriptionProps {
 }
 
 export const FloatingSheetDescription = ({ className, children }: FloatingSheetDescriptionProps) => {
-  const { isMobile, modal } = useFloatingSheetContext()
-  if (isMobile && modal) {
+  // Null-tolerant on purpose: GlossCardBody renders this, and the extension's
+  // video-overlay popovers use GlossCardBody OUTSIDE any FloatingSheet (they
+  // position with floating-ui directly). Without a sheet there is no Radix
+  // Dialog to describe, so the plain <p> branch is always correct there.
+  const ctx = React.useContext(FloatingSheetContext)
+  if (ctx?.isMobile && ctx.modal) {
     return (
       <DialogPrimitive.Description className={cn('text-muted-foreground text-sm', className)}>
         {children}
