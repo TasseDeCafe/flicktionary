@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { CardSchema, CardStatusSchema } from './common/flicktionary-schemas'
+import { CardSchema, CardStatusSchema, StudyIntentSchema } from './common/flicktionary-schemas'
 
 export const cardsContract = {
   listBySession: oc
@@ -107,6 +107,9 @@ export const cardsContract = {
         targetLanguage: z.string().min(2).max(10),
         headword: z.string().trim().min(1).max(200),
         context: z.string().trim().max(2000).nullable(),
+        // See StudyIntentSchema: full-set facet configuration, applied inline
+        // (the adhoc save is synchronous) before the keep transition.
+        studyIntent: StudyIntentSchema.optional(),
       })
     )
     .output(

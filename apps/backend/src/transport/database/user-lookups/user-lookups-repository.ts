@@ -4,6 +4,7 @@ import { Tables, Database } from '../database.public.types'
 import { resolveRegconfig } from '../text-segments/text-segments-repository'
 import {
   CITATION_FORM,
+  enableFacet,
   ensureDefaultCitationFacetIfUnconfigured,
   ensureFacet,
   skillForPool,
@@ -854,21 +855,17 @@ const setFacetEnabled = async (params: {
         },
         tx
       )
-      // disabled_at IS DISTINCT FROM NULL is true only when the facet was
-      // actually disabled — so the leech-rehab reset fires on a real re-enable,
-      // not on an idempotent re-enable. payload merges via || when provided.
-      await tx`
-        UPDATE public.study_facets
-        SET disabled_at = NULL,
-            payload = ${payloadJson ? sql`payload || ${payloadJson}::jsonb` : sql`payload`},
-            leech_parked_at = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN NULL ELSE leech_parked_at END,
-            leech_rehab_correct_days = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN 0 ELSE leech_rehab_correct_days END,
-            leech_rehab_last_correct_on = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN NULL ELSE leech_rehab_last_correct_on END,
-            updated_at = NOW()
-        WHERE user_lookup_id = ${params.userLookupId}
-          AND skill = ${params.skill}
-          AND target_form = ${params.targetForm}
-      `
+      // enableFacet clears disabled_at, merges the payload, and resets
+      // leech-rehab state only on a REAL re-enable (see its doc comment).
+      await enableFacet(
+        {
+          userLookupId: params.userLookupId,
+          skill: params.skill,
+          targetForm: params.targetForm,
+          payload: params.payload,
+        },
+        tx
+      )
     } else {
       // A real disable flips a currently-NULL disabled_at to NOW(); only then is
       // the leech-rehab progress stale. Re-disabling an already-disabled facet

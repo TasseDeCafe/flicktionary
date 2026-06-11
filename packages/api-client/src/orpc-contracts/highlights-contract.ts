@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
-import { GrammarIpaBagSchema, HighlightSchema } from './common/flicktionary-schemas'
+import { GrammarIpaBagSchema, HighlightSchema, StudyIntentSchema } from './common/flicktionary-schemas'
 
 export const highlightsContract = {
   listBySession: oc
@@ -26,6 +26,13 @@ export const highlightsContract = {
         selectionText: z.string().min(1),
         note: z.string().nullable().optional(),
         presetTags: z.array(z.string()).default([]),
+        // See StudyIntentSchema: full-set facet configuration applied by the
+        // enrichment job once the user_lookup materializes.
+        studyIntent: StudyIntentSchema.optional(),
+        // The selection was swapped to this ghost candidate's span pre-save:
+        // dismiss the ghost in the same transaction as the highlight insert
+        // (the pre-save sibling of ghosts.switch, which handles post-save).
+        adoptedGhostId: z.string().uuid().optional(),
       })
     )
     .output(z.object({ data: HighlightSchema })),

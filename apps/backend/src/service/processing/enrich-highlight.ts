@@ -1,5 +1,7 @@
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
+import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
 import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
 import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropic-client'
@@ -41,6 +43,7 @@ export const enrichHighlight = async (
     userTargetLanguagePrefsRepository,
     processingTelemetryRepository,
     wiktionaryEntriesRepository,
+    studyFacetsRepository,
   } = deps
 
   const startedAt = Date.now()
@@ -129,7 +132,7 @@ export const enrichHighlight = async (
   const highlightChunks = chunks.filter((c) => c.source === 'highlight')
   const segmentIdSet = new Set(window.map((s) => s.id))
 
-  const { touchedLookups } = await materializeBasicDataChunks({
+  const { touchedLookups, insertedCards } = await materializeBasicDataChunks({
     sessionId,
     userId,
     targetLanguage: session.target_language,
@@ -152,6 +155,49 @@ export const enrichHighlight = async (
       wiktionaryEntriesRepository,
       processingTelemetryRepository,
     })
+  }
+
+  // Apply any gloss-save study intent now that the term exists — and after
+  // grounding, because the pronunciation reconcile inside applyStudyIntent
+  // needs the grounded grammar.ipa. The applied_at guard is stamped atomically
+  // with the facet writes (a job retry/re-enqueue no-ops), and form-data
+  // generation failures leave the facet pending_data (the term view's retry
+  // chip takes over) without failing the job — a thrown error would only
+  // trigger a retry the guard skips anyway.
+  if (stillExists.study_intent && !stillExists.study_intent_applied_at) {
+    const parsedIntent = StudyIntentSchema.safeParse(stillExists.study_intent)
+    const intentCard = insertedCards.find((c) => c.highlight_id === highlightId)
+    if (parsedIntent.success && intentCard) {
+      // Re-load grounded grammar via findByIdForUser inside applyStudyIntent;
+      // the surface form is the card's (the highlight's literal selection on
+      // the stub-fallback path, where they're equal anyway).
+      const { applied, formFacetTargets } = await applyStudyIntent(
+        {
+          userLookupId: intentCard.user_lookup_id,
+          userId,
+          surfaceForm: intentCard.surface_form ?? stillExists.selection_text,
+          intent: parsedIntent.data,
+          appliedGuardHighlightId: highlightId,
+        },
+        { userLookupsRepository, studyFacetsRepository }
+      )
+      if (applied) {
+        await generateStudyIntentFormData(
+          {
+            userLookupId: intentCard.user_lookup_id,
+            userId,
+            formFacetTargets,
+            encounteredSentence: window.find((s) => s.id === stillExists.start_segment_id)?.text ?? null,
+          },
+          { userLookupsRepository, usersRepository, userTargetLanguagePrefsRepository }
+        )
+      }
+    } else if (!parsedIntent.success) {
+      logWithSentry({
+        message: 'enrichHighlight: unparseable study_intent, skipping',
+        params: { highlightId },
+      })
+    }
   }
 
   await recordPassTelemetry(processingTelemetryRepository, {

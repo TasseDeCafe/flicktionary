@@ -305,6 +305,8 @@ export type Database = {
           selection_text: string
           start_offset: number
           start_segment_id: string
+          study_intent: Json | null
+          study_intent_applied_at: string | null
           study_session_id: string
         }
         Insert: {
@@ -319,6 +321,8 @@ export type Database = {
           selection_text: string
           start_offset: number
           start_segment_id: string
+          study_intent?: Json | null
+          study_intent_applied_at?: string | null
           study_session_id: string
         }
         Update: {
@@ -333,6 +337,8 @@ export type Database = {
           selection_text?: string
           start_offset?: number
           start_segment_id?: string
+          study_intent?: Json | null
+          study_intent_applied_at?: string | null
           study_session_id?: string
         }
         Relationships: [

@@ -143,6 +143,75 @@ const ensureFacet = async (
   `
 }
 
+// Clear a facet's disabled_at (membership ON), merging `payload` into its
+// JSONB when provided. A REAL re-enable (disabled_at was actually set) also
+// resets the leech-rehab state — membership changed, so any in-flight rehab
+// progress is stale; an idempotent re-enable never wipes progress. Shared by
+// setFacetEnabled's enable branch and applyStudyIntentFacets; pass a
+// transaction to commit atomically with the ensureFacet that precedes it.
+const enableFacet = async (
+  params: FacetAddress & { payload?: Record<string, unknown> },
+  executor: postgres.Sql = sql
+): Promise<void> => {
+  const payloadJson = params.payload ? sql.json(params.payload as unknown as postgres.JSONValue) : null
+  await executor`
+    UPDATE public.study_facets
+    SET disabled_at = NULL,
+        payload = ${payloadJson ? sql`payload || ${payloadJson}::jsonb` : sql`payload`},
+        leech_parked_at = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN NULL ELSE leech_parked_at END,
+        leech_rehab_correct_days = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN 0 ELSE leech_rehab_correct_days END,
+        leech_rehab_last_correct_on = CASE WHEN disabled_at IS DISTINCT FROM NULL THEN NULL ELSE leech_rehab_last_correct_on END,
+        updated_at = NOW()
+    WHERE user_lookup_id = ${params.userLookupId}
+      AND skill = ${params.skill}
+      AND target_form = ${params.targetForm}
+  `
+}
+
+// One facet of a gloss-save study intent, as prepared by the applyStudyIntent
+// service (which owns the lemma-collapse / skill rules). dataStatus / source /
+// payload only apply to a freshly-inserted row (ensureFacet semantics).
+export type StudyIntentFacetSpec = FacetAddress & {
+  dataStatus?: 'ready' | 'pending_data'
+  source?: 'system' | 'highlight' | 'paradigm' | 'manual'
+  payload?: Record<string, unknown>
+}
+
+// Apply a gloss-save study intent's facet set in ONE transaction: every spec is
+// idempotently created (ensureFacet — an existing facet keeps its stored
+// data_status/source/payload) and then enabled (enable-only, additive on term
+// dedupe; an intent never disables anything). `guardHighlightId` is the
+// double-application guard for the async enrichment path: the highlight's
+// study_intent_applied_at is stamped IN THIS transaction, so a job retry or
+// re-enqueue finds it set and no-ops — it can never re-enable facets the user
+// has since disabled, nor cause generation to re-fire over an edited payload.
+// Returns false when the guard lost (nothing was applied). The highlights
+// UPDATE living in this repository is a deliberate layering exception: the
+// stamp MUST be atomic with the facet writes or the guard is worthless.
+const applyStudyIntentFacets = async (params: {
+  userLookupId: string
+  facets: StudyIntentFacetSpec[]
+  guardHighlightId?: string
+}): Promise<boolean> => {
+  return await beginTx(async (tx) => {
+    if (params.guardHighlightId) {
+      const stamped = (await tx`
+        UPDATE public.highlights
+        SET study_intent_applied_at = NOW()
+        WHERE id = ${params.guardHighlightId}
+          AND study_intent_applied_at IS NULL
+        RETURNING id
+      `) as Array<{ id: string }>
+      if (!stamped[0]) return false
+    }
+    for (const facet of params.facets) {
+      await ensureFacet(facet, tx)
+      await enableFacet(facet, tx)
+    }
+    return true
+  })
+}
+
 // Race-safe daily-new-cap guard for the citation recognition facet — the ONLY
 // daily-new-capped facet. Introduces the never-seen facet (srs_state='new', due
 // now, introduced_at stamped) only when the day's introduced count for this
@@ -400,6 +469,11 @@ export interface StudyFacetsRepositoryInterface {
     },
     executor?: postgres.Sql
   ) => Promise<void>
+  applyStudyIntentFacets: (params: {
+    userLookupId: string
+    facets: StudyIntentFacetSpec[]
+    guardHighlightId?: string
+  }) => Promise<boolean>
   parkLeechFacet: (params: FacetAddress) => Promise<void>
   advanceRehabDayFacet: (params: FacetAddress) => Promise<number | null>
   unparkAndSoftReentryFacet: (
@@ -415,8 +489,8 @@ export interface StudyFacetsRepositoryInterface {
 
 // Module-level functions importable directly (e.g. user-lookups-repository's
 // keep transaction calls ensureDefaultCitationFacetIfUnconfigured inside its
-// tx, and setFacetEnabled calls ensureFacet to create the facet on enable).
-export { ensureCitationFacet, ensureDefaultCitationFacetIfUnconfigured, ensureFacet }
+// tx, and setFacetEnabled calls ensureFacet + enableFacet on enable).
+export { ensureCitationFacet, ensureDefaultCitationFacetIfUnconfigured, ensureFacet, enableFacet }
 
 export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   getFacet,
@@ -426,6 +500,7 @@ export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   initializeFacet,
   applyFsrsResultForFacet,
   restoreSrsSnapshotForFacet,
+  applyStudyIntentFacets,
   parkLeechFacet,
   advanceRehabDayFacet,
   unparkAndSoftReentryFacet,

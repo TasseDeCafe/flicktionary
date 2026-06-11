@@ -1,6 +1,7 @@
+import postgres from 'postgres'
 import { sql, beginTx } from '../postgres-client'
 import { Tables } from '../database.public.types'
-import { DbHighlight } from '../highlights/highlights-repository'
+import { DbHighlight, HighlightInsertParams } from '../highlights/highlights-repository'
 import { enqueue as enqueueProcessingJob } from '../processing-jobs/processing-jobs-repository'
 
 export type DbGhostCandidate = Tables<'ghost_candidates'>
@@ -171,6 +172,68 @@ const switchGhostToHighlight = async (params: {
   })
 }
 
+// Pre-save sibling of switchGhostToHighlight: the client already swapped its
+// LOCAL selection to the ghost's span (no provisional highlight exists), so in
+// one transaction we insert the highlight (with any study intent), dismiss the
+// ghost so it stops rendering, and enqueue enrichment. The span comes from the
+// CLIENT's request, not re-read from the ghost row — the user saved exactly
+// what the sheet showed. An already-dismissed or missing ghost must NOT fail
+// the save: the highlight is still inserted and enriched; only the
+// (already-done) dismissal is skipped. The dismiss UPDATE's row lock serializes
+// a race against switchGhostToHighlight's FOR UPDATE on the same ghost.
+const insertHighlightAdoptingGhost = async (
+  params: HighlightInsertParams & {
+    userId: string
+    ghostId: string
+    enrichDebounceMs: number
+  }
+): Promise<DbHighlight> => {
+  return await beginTx(async (tx) => {
+    const insertedRows = (await tx`
+      INSERT INTO public.highlights (
+        study_session_id, start_segment_id, end_segment_id,
+        start_offset, end_offset, selection_text, note, preset_tags, study_intent
+      )
+      VALUES (
+        ${params.studySessionId},
+        ${params.startSegmentId},
+        ${params.endSegmentId},
+        ${params.startOffset},
+        ${params.endOffset},
+        ${params.selectionText},
+        ${params.note},
+        ${params.presetTags},
+        ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null}
+      )
+      RETURNING *
+    `) as DbHighlight[]
+    const newHighlight = insertedRows[0]!
+
+    await tx`
+      UPDATE public.ghost_candidates
+      SET dismissed_at = now()
+      WHERE id = ${params.ghostId}
+        AND study_session_id = ${params.studySessionId}
+        AND dismissed_at IS NULL
+    `
+
+    // Same tx-bound enqueue as switchGhostToHighlight: the job rolls back with
+    // the insert if anything fails, and the ON CONFLICT predicate stays in
+    // lockstep with uq_processing_jobs_live_enrich.
+    await enqueueProcessingJob(
+      {
+        kind: 'enrich_highlight',
+        sessionId: params.studySessionId,
+        userId: params.userId,
+        highlightId: newHighlight.id,
+        runAfter: new Date(Date.now() + params.enrichDebounceMs),
+      },
+      tx
+    )
+    return newHighlight
+  })
+}
+
 export interface GhostCandidatesRepositoryInterface {
   insertMany: (candidates: GhostCandidateInsert[]) => Promise<void>
   listLiveBySession: (sessionId: string) => Promise<DbGhostCandidate[]>
@@ -182,6 +245,13 @@ export interface GhostCandidatesRepositoryInterface {
     userId: string
     enrichDebounceMs: number
   }) => Promise<SwitchGhostResult>
+  insertHighlightAdoptingGhost: (
+    params: HighlightInsertParams & {
+      userId: string
+      ghostId: string
+      enrichDebounceMs: number
+    }
+  ) => Promise<DbHighlight>
 }
 
 export const GhostCandidatesRepository = (): GhostCandidatesRepositoryInterface => {
@@ -190,5 +260,6 @@ export const GhostCandidatesRepository = (): GhostCandidatesRepositoryInterface 
     listLiveBySession,
     findById,
     switchGhostToHighlight,
+    insertHighlightAdoptingGhost,
   }
 }

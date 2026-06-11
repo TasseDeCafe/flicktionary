@@ -177,6 +177,7 @@ export const CardsRouter = (
           targetLanguage: input.targetLanguage,
           headword: input.headword,
           context: input.context,
+          studyIntent: input.studyIntent ?? null,
           deps: createAdhocCardDependencies,
         })
         return { data: result }

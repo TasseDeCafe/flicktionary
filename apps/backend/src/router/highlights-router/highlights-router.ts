@@ -10,6 +10,7 @@ import { TextSegmentsRepositoryInterface } from '../../transport/database/text-s
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
+import { GhostCandidatesRepositoryInterface } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import {
   fastGlossPass,
@@ -49,7 +50,8 @@ export const HighlightsRouter = (
   usersRepository: UsersRepositoryInterface,
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
-  processingJobsRepository: ProcessingJobsRepositoryInterface
+  processingJobsRepository: ProcessingJobsRepositoryInterface,
+  ghostCandidatesRepository: GhostCandidatesRepositoryInterface
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -78,7 +80,7 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
-      const inserted = await highlightsRepository.insertHighlight({
+      const insertParams = {
         studySessionId: input.sessionId,
         startSegmentId: input.startSegmentId,
         endSegmentId: input.endSegmentId,
@@ -87,7 +89,24 @@ export const HighlightsRouter = (
         selectionText: input.selectionText,
         note: input.note ?? null,
         presetTags: input.presetTags ?? [],
-      })
+        studyIntent: input.studyIntent ?? null,
+      }
+
+      // Pre-save ghost adoption: the client swapped its local selection to the
+      // ghost's span, so the insert + ghost dismissal + enrich enqueue happen in
+      // one transaction (see insertHighlightAdoptingGhost — an already-dismissed
+      // ghost never fails the save).
+      if (input.adoptedGhostId) {
+        const inserted = await ghostCandidatesRepository.insertHighlightAdoptingGhost({
+          ...insertParams,
+          userId,
+          ghostId: input.adoptedGhostId,
+          enrichDebounceMs: ENRICH_DEBOUNCE_MS,
+        })
+        return { data: toHighlightDto(inserted) }
+      }
+
+      const inserted = await highlightsRepository.insertHighlight(insertParams)
       // Kick off background enrichment so the card is (almost) ready by the time
       // the user reaches triage. Debounced to absorb mis-selections; idempotent
       // per live job. Best-effort — a failed enqueue must not fail the highlight.
