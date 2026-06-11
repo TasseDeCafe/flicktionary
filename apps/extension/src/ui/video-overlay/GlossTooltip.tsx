@@ -154,9 +154,11 @@ export function GlossTooltip({
           </button>
           {optionsExpanded &&
             (() => {
-              const checkedSkillCount = [studyDraft.recognition, studyDraft.production, studyDraft.pronunciation].filter(
-                Boolean
-              ).length
+              const checkedSkillCount = [
+                studyDraft.recognition,
+                studyDraft.production,
+                studyDraft.pronunciation,
+              ].filter(Boolean).length
               const isLastCheckedSkill = (checked: boolean) => checked && checkedSkillCount === 1
               const hasMeaningSkill = studyDraft.recognition || studyDraft.production
               const pronunciationAvailable = !!ipaLabel
