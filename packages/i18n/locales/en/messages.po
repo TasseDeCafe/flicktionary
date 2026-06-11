@@ -326,7 +326,7 @@ msgstr "Add form"
 msgid "Add New Profile..."
 msgstr "Add New Profile..."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:492
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:490
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
 msgid "Add note"
 msgstr "Add note"
@@ -1180,7 +1180,7 @@ msgstr "e.g. увидеть"
 msgid "Easy"
 msgstr "Easy"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:492
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:490
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
 msgid "Edit note"
 msgstr "Edit note"
@@ -1895,7 +1895,7 @@ msgid "Hides this term from your vocabulary and Practice. You can revive it by "
 msgstr "Hides this term from your vocabulary and Practice. You can revive it by "
 "re-keeping it in a session."
 
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:752
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:756
 msgid "Highlight removed"
 msgstr "Highlight removed"
 
@@ -2640,7 +2640,7 @@ msgstr "Optional"
 msgid "Optional contextual paraphrase in the target language."
 msgstr "Optional contextual paraphrase in the target language."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:442
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:440
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:624
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Optional note for the LLM (what specifically confuses you?)"
@@ -3090,7 +3090,7 @@ msgstr "Remove \"{sessionTitle}\"?"
 msgid "Remove form"
 msgstr "Remove form"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:475
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:473
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
 msgid "Remove highlight"
 msgstr "Remove highlight"
@@ -3099,7 +3099,7 @@ msgstr "Remove highlight"
 msgid "Remove session"
 msgstr "Remove session"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:475
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:473
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Removing…"
@@ -3199,7 +3199,7 @@ msgstr "Save a term"
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:484
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:482
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
 msgid "Save note"
 msgstr "Save note"
@@ -3208,7 +3208,7 @@ msgstr "Save note"
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:484
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:482
 #: apps/web/src/features/review/components/editable-card-fields.tsx:312
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:529
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
@@ -4366,7 +4366,7 @@ msgstr "You've reviewed every due term for this language. Come back later when "
 msgid "Your account has been deleted successfully."
 msgstr "Your account has been deleted successfully."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:463
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:461
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:643
 msgid "Your answer will appear in this card's chat."
 msgstr "Your answer will appear in this card's chat."
