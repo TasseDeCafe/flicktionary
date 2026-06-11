@@ -348,7 +348,9 @@ const SkillsCard = ({
     const ipaSibling = [recognitionFacet, productionFacet].find((f) => {
       const grammar = f?.payload.grammar
       const ipa =
-        grammar && typeof grammar === 'object' ? (((grammar as Record<string, unknown>).ipa ?? null) as IpaBagShape | null) : null
+        grammar && typeof grammar === 'object'
+          ? (((grammar as Record<string, unknown>).ipa ?? null) as IpaBagShape | null)
+          : null
       return hasDisplayableIpa(ipa, chunk.targetLanguage)
     })
     items = [

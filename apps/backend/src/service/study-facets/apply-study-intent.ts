@@ -158,7 +158,9 @@ export const generateStudyIntentFormData = async (
     for (const [targetForm, targets] of byForm) {
       // Meaning skills first: their generation succeeds without IPA, and the one
       // shared Opus call produces the form IPA the pronunciation sibling needs.
-      const ordered = [...targets].sort((a, b) => Number(a.skill === 'pronunciation') - Number(b.skill === 'pronunciation'))
+      const ordered = [...targets].sort(
+        (a, b) => Number(a.skill === 'pronunciation') - Number(b.skill === 'pronunciation')
+      )
       const [first, ...siblings] = ordered
       if (!first) continue
       const outcome = await generateFormFacetData(
@@ -176,7 +178,8 @@ export const generateStudyIntentFormData = async (
       const refreshed = await deps.userLookupsRepository.listFacetsForChunk(params.userLookupId)
       const generated = refreshed.find((f) => f.skill === first.skill && f.targetForm === targetForm)
       if (!generated) continue
-      const sharedIpa = ((generated.payload.grammar as Record<string, unknown> | undefined)?.ipa ?? null) as IpaBagShape | null
+      const sharedIpa = ((generated.payload.grammar as Record<string, unknown> | undefined)?.ipa ??
+        null) as IpaBagShape | null
       for (const sibling of siblings) {
         // Pronunciation sibling guard: copying a payload without displayable
         // form IPA would flip the facet ready with an empty card back. Leave it
