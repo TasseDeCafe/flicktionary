@@ -15,6 +15,7 @@ import {
   useListGhostsBySession,
   useUpdateReadingProgress,
 } from '../api/sessions-hooks'
+import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { SelectionResult } from '../utils/selection-adapter'
 import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
 import { useWordSelection } from '@/lib/dom/use-word-selection'
@@ -124,6 +125,10 @@ export const SessionView = () => {
   // points to an already-saved row the user just tapped.
   const [glossOpen, setGlossOpen] = useState(false)
   const [pendingSelection, setPendingSelection] = useState<SelectionResult | null>(null)
+  // Set when the pending selection came from a pre-save ghost adoption (the
+  // "Use suggested" tap in preview mode). Save sends it as `adoptedGhostId` so
+  // the backend dismisses the ghost in the same transaction as the insert.
+  const [pendingGhostId, setPendingGhostId] = useState<string | null>(null)
   const [existingHighlightId, setExistingHighlightId] = useState<string | null>(null)
   const [anchor, setAnchor] = useState<FloatingSheetAnchor>(null)
 
@@ -255,6 +260,7 @@ export const SessionView = () => {
       const sel: SelectionResult = { ...normalized, rect }
       setExistingHighlightId(null)
       setPendingSelection(sel)
+      setPendingGhostId(null)
       setAnchor(sel.rect)
       setGlossOpen(true)
     },
@@ -266,6 +272,7 @@ export const SessionView = () => {
     const target = e.target instanceof Element ? e.target.closest('[data-highlight-id]') : null
     if (!(target instanceof HTMLElement) || !target.dataset.highlightId) return
     setPendingSelection(null)
+    setPendingGhostId(null)
     setExistingHighlightId(target.dataset.highlightId)
     setAnchor(target.getBoundingClientRect())
     setGlossOpen(true)
@@ -290,6 +297,27 @@ export const SessionView = () => {
     if (!llmHighlightsEnabled || !pendingSelection) return null
     return findOverlappingGhost(pendingSelection, ghostCandidates, visibleSegments)
   }, [llmHighlightsEnabled, pendingSelection, ghostCandidates, visibleSegments])
+
+  // Pre-save ghost adoption: swap the LOCAL selection to the ghost's span — no
+  // highlight exists yet, so there is nothing to switch server-side. The sheet
+  // refetches its stateless gloss off the new selection (and the exact-match
+  // suppression in findOverlappingGhost hides the suggestion, which the
+  // selection now equals); Save then sends `adoptedGhostId`. The anchor rect is
+  // kept so the sheet doesn't jump under the tap.
+  const handleAdoptGhostPreSave = (ghost: GhostCandidate) => {
+    const segment = visibleSegments.find((s) => s.id === ghost.segmentId)
+    if (!segment || !pendingSelection) return
+    setPendingGhostId(ghost.id)
+    setPendingSelection({
+      startSegmentId: ghost.segmentId,
+      endSegmentId: ghost.segmentId,
+      startOffset: ghost.charStart,
+      endOffset: ghost.charEnd,
+      selectionText: ghost.surfaceForm,
+      contextLine: segment.text,
+      rect: pendingSelection.rect,
+    })
+  }
 
   const closeToSessions = () => {
     if (from === 'vocabulary') {
@@ -391,6 +419,8 @@ export const SessionView = () => {
         selection={pendingSelection}
         existingHighlight={existingHighlight}
         suggestedGhost={suggestedGhost}
+        pendingGhostId={pendingGhostId}
+        onAdoptGhostPreSave={handleAdoptGhostPreSave}
         anchor={anchor}
         onClose={() => {
           // Keep `anchor`, `pendingSelection`, `existingHighlightId` in state

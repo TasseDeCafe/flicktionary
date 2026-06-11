@@ -324,7 +324,13 @@ export const useCreateHighlight = (sessionId: string) => {
   return useMutation(
     orpcQuery.highlights.create.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.highlights.listBySession.key({ input: { sessionId } })],
+        invalidates: [
+          orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
+          // A pre-save ghost adoption (adoptedGhostId) dismisses the ghost
+          // server-side; refetch so its outline leaves the reader. Harmless
+          // (no live ghost change) on a plain save.
+          orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
+        ],
         showSuccessToast: true,
         successMessage: t`Highlight saved`,
         errorMessage: t`Failed to save highlight`,
