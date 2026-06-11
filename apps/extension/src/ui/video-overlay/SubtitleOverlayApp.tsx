@@ -741,22 +741,26 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         <>
           {/* Saved-mode popover (sticky; wins over the hover preview). Same
               anchor.isConnected guard as the hover gloss. */}
-          {snapshot.visible && savedPopover && savedPopoverHighlight && savedSessionId && savedPopover.anchor.isConnected && (
-            <SavedGlossTooltip
-              anchor={savedPopover.anchor}
-              sessionId={savedSessionId}
-              highlight={savedPopoverHighlight}
-              onRemoved={() => {
-                savedStore.getState().remove(savedPopoverHighlight.id)
-                setSavedPopover(null)
-                showToast(i18n._(msg`Highlight removed`), false)
-              }}
-              onNotePatched={(note, presetTags) =>
-                savedStore.getState().patchNote(savedPopoverHighlight.id, note, presetTags)
-              }
-              onClose={closeSavedPopover}
-            />
-          )}
+          {snapshot.visible &&
+            savedPopover &&
+            savedPopoverHighlight &&
+            savedSessionId &&
+            savedPopover.anchor.isConnected && (
+              <SavedGlossTooltip
+                anchor={savedPopover.anchor}
+                sessionId={savedSessionId}
+                highlight={savedPopoverHighlight}
+                onRemoved={() => {
+                  savedStore.getState().remove(savedPopoverHighlight.id)
+                  setSavedPopover(null)
+                  showToast(i18n._(msg`Highlight removed`), false)
+                }}
+                onNotePatched={(note, presetTags) =>
+                  savedStore.getState().patchNote(savedPopoverHighlight.id, note, presetTags)
+                }
+                onClose={closeSavedPopover}
+              />
+            )}
           {/* anchor.isConnected: cached data could otherwise appear against a
               disconnected anchor after an element remount, before the
               cue-change effect has cleared the gloss. */}
