@@ -175,9 +175,6 @@ export const generateStudyIntentFormData = async (
       }
     }
   } catch (e) {
-    logCustomErrorMessageAndError(
-      `generateStudyIntentFormData failed, userLookupId = ${params.userLookupId}`,
-      e
-    )
+    logCustomErrorMessageAndError(`generateStudyIntentFormData failed, userLookupId = ${params.userLookupId}`, e)
   }
 }
