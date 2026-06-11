@@ -57,6 +57,15 @@ export const storeFlicktionarySession = async (
   await writeCache(cache)
 }
 
+// Evict one video's entry — used when the cached session turns out to be stale
+// (e.g. the user deleted the session in the web app and listing its highlights
+// 404s). The next load/save re-resolves via lookupForVideo / find-or-create.
+export const removeFlicktionarySession = async (source: string, contentHash: string): Promise<void> => {
+  const cache = { ...(await readCache()) }
+  delete cache[cacheKey(source, contentHash)]
+  await writeCache(cache)
+}
+
 export const clearFlicktionarySessionCache = async (): Promise<void> => {
   memoryCache = {}
   await browser.storage.local.remove(STORAGE_KEY)

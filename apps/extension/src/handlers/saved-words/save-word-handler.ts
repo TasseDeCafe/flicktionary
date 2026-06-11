@@ -1,5 +1,5 @@
 import type { Browser } from 'wxt/browser'
-import type { Command, Message, SaveWordMessage, SaveWordResponse } from '@asbplayer-fork/common'
+import type { Command, Message, SavedHighlightDto, SaveWordMessage, SaveWordResponse } from '@asbplayer-fork/common'
 import { msg } from '@lingui/core/macro'
 import { getFlicktionaryAuth } from '../../services/flicktionary/auth-storage'
 import { getFlicktionaryApiClient } from '../../services/flicktionary/flicktionary-api-client'
@@ -33,8 +33,8 @@ export default class SaveWordHandler {
     void (async () => {
       try {
         await activateBackgroundLocale()
-        await this._saveToFlicktionary(message)
-        sendResponse({ success: true })
+        const highlight = await this._saveToFlicktionary(message)
+        sendResponse({ success: true, highlight })
       } catch (error) {
         const {
           code,
@@ -48,7 +48,11 @@ export default class SaveWordHandler {
     return true
   }
 
-  private async _saveToFlicktionary(message: SaveWordMessage): Promise<void> {
+  // Returns the created highlight as an index-based DTO (segment ids converted
+  // back through the cached map) so the overlay can paint the saved span
+  // optimistically. Undefined when a segment id doesn't resolve — the overlay
+  // then falls back to a full saved-highlights reload.
+  private async _saveToFlicktionary(message: SaveWordMessage): Promise<SavedHighlightDto | undefined> {
     const auth = await getFlicktionaryAuth()
     if (!auth) {
       throw new Error(i18n._(msg`Sign in to Flicktionary to save words.`))
@@ -109,7 +113,7 @@ export default class SaveWordHandler {
       throw new Error('Could not map this word to a subtitle segment.')
     }
 
-    await client.highlights.create({
+    const { data: created } = await client.highlights.create({
       sessionId: cached.sessionId,
       startSegmentId,
       endSegmentId,
@@ -120,5 +124,24 @@ export default class SaveWordHandler {
       // applies them once the term materializes (full-set semantics).
       studyIntent: message.studyIntent,
     })
+
+    const indexBySegmentId: Record<string, number> = {}
+    for (const [index, id] of Object.entries(cached.segmentIdByIndex)) {
+      indexBySegmentId[id] = Number(index)
+    }
+    const startSegmentIndex = indexBySegmentId[created.startSegmentId]
+    const endSegmentIndex = indexBySegmentId[created.endSegmentId]
+    if (startSegmentIndex === undefined || endSegmentIndex === undefined) return undefined
+    return {
+      id: created.id,
+      startSegmentIndex,
+      endSegmentIndex,
+      startOffset: created.startOffset,
+      endOffset: created.endOffset,
+      selectionText: created.selectionText,
+      note: created.note,
+      presetTags: created.presetTags,
+      fastGloss: created.fastGloss,
+    }
   }
 }

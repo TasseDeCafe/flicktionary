@@ -234,6 +234,43 @@ export const studySessionsContract = {
       })
     ),
 
+  // Lookup-only counterpart to the two find-or-create video flows, used by the
+  // extension to reload saved highlights when its session cache is cold (fresh
+  // install, another device, cleared storage). NEVER creates rows: resolves the
+  // documented identity chain — content_source by (user, type, metadata key:
+  // youtubeVideoId for YouTube / contentHash for streaming) → text_track by
+  // (content_source_id, hash) (hash only; the extension doesn't know the
+  // detected language) → live study_session (user, track, deleted_at IS NULL) —
+  // and returns the same response shape as find-or-create so the client needs
+  // one branch. `data: null` = no session exists for this video (the normal
+  // never-saved state, NOT an error/404).
+  lookupForVideo: oc
+    .route({ method: 'POST', path: '/study-sessions/lookup-for-video', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        source: z.enum(['youtube', 'streaming']),
+        // Required when source='youtube' (validated server-side).
+        youtubeVideoId: z.string().min(1).optional(),
+        contentHash: z.string().min(1),
+      })
+    )
+    .output(
+      z.object({
+        data: z
+          .object({
+            sessionId: z.string().uuid(),
+            textTrackId: z.string().uuid(),
+            contentSourceId: z.string().uuid(),
+            segments: z.array(TextSegmentSchema),
+          })
+          .nullable(),
+      })
+    ),
+
   // Text-import entry point used by the browser extension: a Readability-extracted
   // article (sourceUrl set → content_source type 'article') or an arbitrary text
   // selection (no sourceUrl → type 'text', semantically a paste). Idempotent by the

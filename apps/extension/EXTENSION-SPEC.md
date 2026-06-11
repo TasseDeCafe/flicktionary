@@ -403,6 +403,46 @@ resolves to an exact `text_segments` row + offsets.
   succeeds with no visual cue). All toast call sites go through
   `dispatchToast()` (`toaster-host.ts`), which queues until the Toaster's
   subscription is live.
+- **Saved highlights (persistent spans)** — saved words/chunks render a
+  persistent teal underline + tint on the subtitle (distinct from the
+  live-selection yellow; selection wins while both apply), with outer-corner
+  rounding per painted run. State lives in a per-mount vanilla zustand store
+  (`saved-highlights-store.ts`); painting projects highlights onto cues via
+  `buildLineRanges` (index-coordinate twin of the web reader's
+  `buildSegmentRanges`: single-cue `[startOffset, endOffset]`, cross-cue
+  start-tail / whole-middles / end-head, **clamped** to the cue length so
+  web-created offsets that drift from this tokenizer still paint). Tokens
+  paint on **intersection**, not exact offsets, for the same drift reason.
+  - **Loading** — on mount/sign-in (plus a 3×2 s retry while the binding's
+    video context is still landing) and on contentHash change, the overlay
+    sends `load-flicktionary-saved-highlights`. The background resolves the
+    session from its cache, or — cache cold (fresh install, second device,
+    cleared storage) — via the **lookup-only**
+    `studySessions.lookupForVideo` (NEVER find-or-create: loading must not
+    mint sessions for videos the user merely watched; `data: null` = no
+    session, normal state). A cached session whose highlight listing fails is
+    treated as stale (deleted in the web app): evicted
+    (`removeFlicktionarySession`) and re-resolved once via the lookup.
+    Highlights whose segment ids don't resolve in the cached index map are
+    dropped (different track revision). Signed-out → `signedIn: false`, no
+    paint, zero further calls.
+  - **Optimistic save** — `save-word` now returns the created highlight
+    converted to segment-index coordinates; the overlay pushes it straight
+    into the store (replace-by-id) so the span paints without a reload. A
+    response without the field falls back to a full reload.
+  - **Saved-mode popover** — a plain click (no drag) on a saved span opens a
+    sticky popover (`SavedGlossTooltip`) — parity with the web session view's
+    gloss sheet minus ghost-extend: cached `fastGloss` parses instantly
+    (`parse-fast-gloss.ts`, ported from the web sheet) and refreshes via
+    `flicktionary-saved-gloss` → `highlights.fastGloss`; **Remove highlight**
+    (`delete-flicktionary-highlight`, 404 counts as success) removes the span
+    and toasts; **Add/Edit note** offers the same textarea + preset tags as
+    the web and composes the same localized `chatSeedPrompt`
+    (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
+    No Study options / Save here. Saved mode wins over the hover preview
+    (the preview neither opens over it nor renders while it's up); it
+    dismisses on outside pointerdown (composedPath — shadow root), play,
+    cue change, or overlay hide — never on pointer-leave (it has a textarea).
 - **CEFR picker** — if a save bounces with `MISSING_CEFR`, an over-video A1–C2
   grid appears; picking a level calls `extensionAuth.setCefrLevel` and retries
   the save.
@@ -541,8 +581,13 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipa}` |
 | `studySessions.findOrCreateForYoutubeVideo` | session registration (YouTube, deduped on video id) |
 | `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
+| `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |
 | `studySessions.importText` | article/selection import |
 | `highlights.create` | saving a word/chunk |
+| `highlights.listBySession` | loading saved highlights for the persistent spans |
+| `highlights.fastGloss` | saved-mode popover gloss (server-cached, IPA-enriched) |
+| `highlights.updateNoteAndTags` | saved-mode note + preset tags (+ chatSeedPrompt) |
+| `highlights.delete` | Remove highlight from the saved-mode popover |
 | `userPrefs.getPrefs` | UI-prefs refresh on popup/options open; `nativeLanguage === null` gates the finish-setup section |
 | `userPrefs.setUiTheme` / `userPrefs.setUiLanguage` | write-through + pairing reconcile of theme/interface language (NULL round-trip supported) |
 | `userPrefs.setNativeLanguage` | JIT native-language picker |
@@ -558,9 +603,13 @@ extension typecheck sees them.
 |---|---|
 | `chrome.storage.local` | settings + profiles (`ExtensionSettingsStorage`), global state (FTUE flags), `flicktionary.auth.v1` session, `flicktionary.devTools.v1` admin debug toggles, cached target language, pairing nonces |
 | IndexedDB `asbplayer-transcript-cache` | generated Whisper SRTs per video id |
-| In-memory only | gloss query cache (`glossQueryClient`, cleared on auth change), session/segment-id cache |
+| In-memory only | gloss query cache (`glossQueryClient`, cleared on auth change), session/segment-id cache, saved-highlights store (per overlay mount) |
 
-No learning data is stored locally; highlights live in the backend.
+No learning data is stored locally; highlights live in the backend. The
+session/segment-id cache (`flicktionary.session-cache.v2` in
+`chrome.storage.local`) is evictable per video (`removeFlicktionarySession`):
+the saved-highlights loader evicts an entry whose session no longer lists
+(deleted in the web app) and re-resolves via `lookupForVideo`.
 
 ## Verification golden path
 
@@ -569,7 +618,14 @@ No learning data is stored locally; highlights live in the backend.
 1. Subtitles load (auto-sync or dialog) and the registration call succeeds.
 2. Hover a word → gloss popover shows **and dismisses**; moving onto the
    popover doesn't resume playback.
-3. Right-click save creates a highlight (verify in the backend / web app).
+3. Right-click save creates a highlight (verify in the backend / web app) and
+   the saved span paints immediately (teal underline).
+3a. Reload the page → the span reappears (cache); clear
+    `flicktionary.session-cache.v2` from `chrome.storage.local` → it reappears
+    via `lookupForVideo` with NO find-or-create issued (check Network). Click
+    the span → saved popover: gloss renders, note edits persist to the web
+    app, Remove syncs to the web app. Delete the session in the web app →
+    reload → clean empty + cache evicted. Signed out → nothing painted.
 4. An unsupported-language video shows the one-time notice; saving disabled.
 5. Pause → controls overlay appears; toggle-subtitles works.
 6. Popup: pairing status, settings tabs, profile switching/deletion.

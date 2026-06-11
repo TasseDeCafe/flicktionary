@@ -393,6 +393,32 @@ export const StudySessionsRouter = (
       }
     ),
 
+    lookupForVideo: implementer.lookupForVideo.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      if (input.source === 'youtube' && !input.youtubeVideoId) {
+        throw errors.BAD_REQUEST({
+          data: { errors: [{ message: 'youtubeVideoId is required for source=youtube' }] },
+        })
+      }
+      // SELECT-only: no CEFR / language-detection requirements — this never
+      // creates anything, it just resolves what an earlier ingest created.
+      const found = await studySessionsRepository.findForVideo({
+        userId,
+        source: input.source,
+        youtubeVideoId: input.youtubeVideoId,
+        contentHash: input.contentHash,
+      })
+      if (!found) return { data: null }
+      return {
+        data: {
+          sessionId: found.session.id,
+          textTrackId: found.track.id,
+          contentSourceId: found.contentSource.id,
+          segments: found.segments.map(toSegmentDto),
+        },
+      }
+    }),
+
     importText: implementer.importText.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
 

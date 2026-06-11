@@ -1,20 +1,29 @@
 import {
   TabToExtensionCommand,
+  DeleteFlicktionaryHighlightMessage,
+  DeleteFlicktionaryHighlightResponse,
   FlicktionaryGlossMessage,
   FlicktionaryGlossResponse,
   FlicktionaryGlossIpa,
+  FlicktionarySavedGlossMessage,
+  FlicktionarySavedGlossResponse,
   FlicktionaryStartPairingMessage,
+  LoadFlicktionarySavedHighlightsMessage,
+  LoadFlicktionarySavedHighlightsResponse,
+  SavedHighlightDto,
   SaveWordMessage,
   SaveWordResponse,
   SaveWordFlicktionaryVideoContext,
   SaveWordStudyIntent,
   SetFlicktionaryCefrMessage,
   SetFlicktionaryCefrResponse,
+  UpdateFlicktionaryHighlightNoteMessage,
+  UpdateFlicktionaryHighlightNoteResponse,
 } from '@asbplayer-fork/common'
 import { v4 as uuidv4 } from 'uuid'
 
 // Re-exported so UI call sites get the intent type alongside SaveWordParams.
-export type { SaveWordStudyIntent } from '@asbplayer-fork/common'
+export type { SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
 
 // Framework-agnostic Flicktionary messaging used by the React subtitle overlay.
 // These functions are pure async over `browser.runtime.sendMessage` — they NEVER
@@ -49,9 +58,11 @@ export interface FlicktionaryVideoClosures {
   getFlicktionarySaveDisabledReason: () => string | undefined
 }
 
-// Discriminated result of a save attempt, for the UI to act on.
+// Discriminated result of a save attempt, for the UI to act on. `highlight` is
+// the created row (index coordinates) for optimistic saved-span painting;
+// undefined when the background couldn't convert it — reload instead.
 export type SaveWordOutcome =
-  | { kind: 'saved'; word: string }
+  | { kind: 'saved'; word: string; highlight?: SavedHighlightDto }
   | { kind: 'disabled'; reason: string }
   | { kind: 'missing-cefr'; targetLanguage: string }
   | { kind: 'error'; message: string }
@@ -146,7 +157,7 @@ export async function saveWord({
   const response: SaveWordResponse = await browser.runtime.sendMessage(message)
 
   if (response.success) {
-    return { kind: 'saved', word }
+    return { kind: 'saved', word, highlight: response.highlight }
   }
 
   // No CEFR level set for this language yet — let the caller offer an inline
@@ -182,3 +193,76 @@ export async function setCefr(targetLanguage: string, cefrLevel: string): Promis
 // CEFR levels offered by the in-video picker, ascending. Mirrors the web app's
 // CEFR_LEVELS; kept local so the content script doesn't pull in web/core.
 export const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
+
+// ---- saved highlights (persistent spans + saved-mode popover) ----------------
+
+export async function loadSavedHighlights(params: {
+  source: 'youtube' | 'streaming'
+  youtubeVideoId?: string
+  contentHash: string
+}): Promise<LoadFlicktionarySavedHighlightsResponse> {
+  const message: TabToExtensionCommand<LoadFlicktionarySavedHighlightsMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'load-flicktionary-saved-highlights',
+      messageId: uuidv4(),
+      source: params.source,
+      youtubeVideoId: params.youtubeVideoId,
+      contentHash: params.contentHash,
+    },
+  }
+  // Undefined if no background handler answered (service worker mid-reload) —
+  // treat as a failed load; the caller leaves the store unloaded.
+  const response: LoadFlicktionarySavedHighlightsResponse | undefined = await browser.runtime.sendMessage(message)
+  return response ?? { success: false, signedIn: true, error: 'No response from background' }
+}
+
+export async function deleteSavedHighlight(sessionId: string, highlightId: string): Promise<boolean> {
+  const message: TabToExtensionCommand<DeleteFlicktionaryHighlightMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: { command: 'delete-flicktionary-highlight', messageId: uuidv4(), sessionId, highlightId },
+  }
+  const response: DeleteFlicktionaryHighlightResponse | undefined = await browser.runtime.sendMessage(message)
+  return response?.success ?? false
+}
+
+export async function updateSavedHighlightNote(params: {
+  sessionId: string
+  highlightId: string
+  note: string | null
+  presetTags: string[]
+  chatSeedPrompt: string | null
+}): Promise<boolean> {
+  const message: TabToExtensionCommand<UpdateFlicktionaryHighlightNoteMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'update-flicktionary-highlight-note',
+      messageId: uuidv4(),
+      sessionId: params.sessionId,
+      highlightId: params.highlightId,
+      note: params.note,
+      presetTags: params.presetTags,
+      chatSeedPrompt: params.chatSeedPrompt,
+    },
+  }
+  const response: UpdateFlicktionaryHighlightNoteResponse | undefined = await browser.runtime.sendMessage(message)
+  return response?.success ?? false
+}
+
+// Gloss for an existing highlight (saved-mode popover): server-cached, also
+// refreshes older rows with Wiktionary IPA. Returns null on failure — the
+// caller keeps whatever the cached fastGloss parse produced.
+export async function fetchSavedGloss(sessionId: string, highlightId: string): Promise<GlossData | null> {
+  const message: TabToExtensionCommand<FlicktionarySavedGlossMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: { command: 'flicktionary-saved-gloss', messageId: uuidv4(), sessionId, highlightId },
+  }
+  const response: FlicktionarySavedGlossResponse | undefined = await browser.runtime.sendMessage(message)
+  if (!response || response.error || response.gloss === undefined) return null
+  return {
+    gloss: response.gloss,
+    pos: response.pos ?? null,
+    register: response.register ?? null,
+    ipa: response.ipa ?? null,
+  }
+}
