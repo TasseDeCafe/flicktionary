@@ -17,6 +17,7 @@ const baseLemma: ReviewTerm = {
   skill: 'meaning_recognition',
   targetForm: '',
   facetPayload: null,
+  ipaSource: null,
 }
 
 describe('resolveCardContent', () => {

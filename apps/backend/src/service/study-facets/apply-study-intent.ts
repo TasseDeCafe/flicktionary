@@ -1,8 +1,10 @@
 import { StudyIntent } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
+import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import {
   CITATION_FORM,
+  FacetSkill,
   StudyFacetsRepositoryInterface,
   StudyIntentFacetSpec,
 } from '../../transport/database/study-facets/study-facets-repository'
@@ -16,10 +18,11 @@ export type ApplyStudyIntentDeps = {
 }
 
 // A form facet the intent created (or re-enabled) — the caller follows up with
-// generateStudyIntentFormData for any of these still pending data. Pronunciation
-// is never a form target (per-form IPA is roadmap), hence the narrowed skill.
+// generateStudyIntentFormData for any of these still pending data. All skills
+// can form-target now: a pronunciation form facet is born pending_data and
+// flips to ready only when generation produces the form's own IPA.
 export type StudyIntentFormTarget = {
-  skill: 'meaning_recognition' | 'meaning_production'
+  skill: FacetSkill
   targetForm: string
 }
 
@@ -36,13 +39,14 @@ export type ApplyStudyIntentResult = {
 // correctly skips force-adding recognition. Application is enable-only and
 // additive on term dedupe: it never disables an existing facet.
 //
-// `formScope: 'both'` adds form facets of the encountered surface form for the
-// intent's MEANING skills — unless the surface IS the headword (the client
-// never knows the lemma, so the lemma-collapse decision lives here): then the
-// citation facets already cover it and no duplicate form facet is minted. Form
-// facets key on normalizeTargetForm(surface); the payload keeps the display
-// form (stress intact). New form facets are born pending_data /
-// source='highlight' (an existing facet keeps its data and status).
+// `formScope: 'both'` adds form facets of the encountered surface form for ALL
+// the intent's skills (pronunciation included) — unless the surface IS the
+// headword (the client never knows the lemma, so the lemma-collapse decision
+// lives here): then the citation facets already cover it and no duplicate form
+// facet is minted. Form facets key on normalizeTargetForm(surface); the payload
+// keeps the display form (stress intact). New form facets are born
+// pending_data / source='highlight' (an existing facet keeps its data and
+// status).
 //
 // `appliedGuardHighlightId` (the async enrichment path) makes application
 // exactly-once: the highlight's study_intent_applied_at is stamped atomically
@@ -79,9 +83,7 @@ export const applyStudyIntent = async (
   }))
 
   const formFacetTargets: StudyIntentFormTarget[] = wantFormFacets
-    ? skills
-        .filter((s): s is StudyIntentFormTarget['skill'] => s !== 'pronunciation')
-        .map((skill) => ({ skill, targetForm: normalizedForm }))
+    ? skills.map((skill) => ({ skill, targetForm: normalizedForm }))
     : []
   for (const target of formFacetTargets) {
     facets.push({
@@ -120,10 +122,14 @@ export const applyStudyIntent = async (
 // content is never regenerated or overwritten. Sibling skills of the same form
 // reuse the one generated payload (a single Opus call per form — mirroring the
 // term view's "enabling a second skill on a filled form reuses the known
-// data"). Never throws: a failure leaves the facet pending_data, where the term
-// view's existing generate/retry chip takes over — and on the enrichment path a
-// thrown error would only trigger a job retry that the applied_at guard skips
-// anyway.
+// data"). A meaning skill generates first when present, so a pronunciation
+// facet that can't go ready (no confident IPA) never blocks its siblings; the
+// pronunciation sibling only receives the shared payload when it carries a
+// displayable form IPA (setFacetPayload flips ready unconditionally, and a
+// pronunciation card without IPA has no back). Never throws: a failure leaves
+// the facet pending_data, where the term view's existing generate/retry chip
+// takes over — and on the enrichment path a thrown error would only trigger a
+// job retry that the applied_at guard skips anyway.
 export const generateStudyIntentFormData = async (
   params: {
     userLookupId: string
@@ -145,8 +151,17 @@ export const generateStudyIntentFormData = async (
       byForm.set(target.targetForm, [...(byForm.get(target.targetForm) ?? []), target])
     }
 
+    // Target language for the sibling guard's displayable-IPA check.
+    const term = await deps.userLookupsRepository.getChunkRowForUser(params.userLookupId, params.userId)
+    if (!term) return
+
     for (const [targetForm, targets] of byForm) {
-      const [first, ...siblings] = targets
+      // Meaning skills first: their generation succeeds without IPA, and the one
+      // shared Opus call produces the form IPA the pronunciation sibling needs.
+      const ordered = [...targets].sort(
+        (a, b) => Number(a.skill === 'pronunciation') - Number(b.skill === 'pronunciation')
+      )
+      const [first, ...siblings] = ordered
       if (!first) continue
       const outcome = await generateFormFacetData(
         {
@@ -163,7 +178,13 @@ export const generateStudyIntentFormData = async (
       const refreshed = await deps.userLookupsRepository.listFacetsForChunk(params.userLookupId)
       const generated = refreshed.find((f) => f.skill === first.skill && f.targetForm === targetForm)
       if (!generated) continue
+      const sharedIpa = ((generated.payload.grammar as Record<string, unknown> | undefined)?.ipa ??
+        null) as IpaBagShape | null
       for (const sibling of siblings) {
+        // Pronunciation sibling guard: copying a payload without displayable
+        // form IPA would flip the facet ready with an empty card back. Leave it
+        // pending_data instead (retry chip / manual entry).
+        if (sibling.skill === 'pronunciation' && !hasDisplayableIpa(sharedIpa, term.targetLanguage)) continue
         await deps.userLookupsRepository.setFacetPayload({
           userLookupId: params.userLookupId,
           userId: params.userId,

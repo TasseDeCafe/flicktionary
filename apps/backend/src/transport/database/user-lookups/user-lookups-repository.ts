@@ -833,23 +833,32 @@ const setFacetEnabled = async (params: {
     const payloadJson = params.payload ? sql.json(params.payload as unknown as postgres.JSONValue) : null
 
     if (params.enabled) {
-      // A NEW form facet (non-empty target_form) added WITHOUT translation data
-      // is born `pending_data`: it has no render back until Opus generation or
+      // A NEW form facet (non-empty target_form) added WITHOUT render data is
+      // born `pending_data`: it has no render back until Opus generation or
       // manual entry fills its payload, so it's enabled-but-not-queued (the queue
       // filters data_status='ready'). Adding a form from a candidate sends only
-      // {form} -> pending_data; enabling a SECOND skill (production) on a form
-      // that's already filled sends {form, translation} -> born ready (reuses the
-      // known data, no regeneration). Citation facets (target_form='') are always
-      // ready. ON CONFLICT inside ensureFacet means an EXISTING facet keeps its
-      // data_status — a re-enabled form facet with generated data stays ready.
+      // {form} -> pending_data; enabling a SECOND skill on a form that's already
+      // filled sends the known payload -> born ready (no regeneration). "Has
+      // render data" is skill-aware: meaning skills key on the translation key,
+      // pronunciation on a non-empty grammar.ipa bag (its back IS the IPA — a
+      // copied meaning payload without form IPA must not flip it ready).
+      // Citation facets (target_form='') are always ready. ON CONFLICT inside
+      // ensureFacet means an EXISTING facet keeps its data_status — a re-enabled
+      // form facet with generated data stays ready.
       const isFormFacet = params.targetForm !== ''
-      const hasTranslationData = !!params.payload && 'translation' in params.payload
+      const payloadIpa = (params.payload?.grammar as Record<string, unknown> | undefined)?.ipa
+      const hasIpaData =
+        !!payloadIpa &&
+        typeof payloadIpa === 'object' &&
+        Object.values(payloadIpa).some((v) => typeof v === 'string' && v.trim().length > 0)
+      const hasRenderData =
+        params.skill === 'pronunciation' ? hasIpaData : !!params.payload && 'translation' in params.payload
       await ensureFacet(
         {
           userLookupId: params.userLookupId,
           skill: params.skill,
           targetForm: params.targetForm,
-          dataStatus: isFormFacet && !hasTranslationData ? 'pending_data' : 'ready',
+          dataStatus: isFormFacet && !hasRenderData ? 'pending_data' : 'ready',
           source: isFormFacet ? 'manual' : 'system',
           payload: params.payload,
         },

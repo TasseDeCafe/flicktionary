@@ -86,13 +86,8 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
       extras: {
         type: 'object',
         description:
-          'Enrichment fields, in two tiers. ALWAYS include for every chunk: `ipa`, `frequency`, `frequency_detail`, `more_frequent_synonym` (explicit null when none is needed), `more_examples`, `regionalism` (explicit verdict even when not regional), `register`, `register_alternatives` (explicit negatives when no alternative exists), `collocations`. Include when genuinely useful, omit otherwise: `etymology` (see its description), `l1_notes`, `notes`, `context_segment` (string with the chunk wrapped in **double asterisks**). Never skip an always-include key just because the answer is "nothing notable" — say so explicitly instead.',
+          'Enrichment fields, in two tiers. ALWAYS include for every chunk: `frequency`, `frequency_detail`, `more_frequent_synonym` (explicit null when none is needed), `more_examples`, `regionalism` (explicit verdict even when not regional), `register`, `register_alternatives` (explicit negatives when no alternative exists), `collocations`. Include when genuinely useful, omit otherwise: `etymology` (see its description), `l1_notes`, `notes`, `context_segment` (string with the chunk wrapped in **double asterisks**). Never skip an always-include key just because the answer is "nothing notable" — say so explicitly instead. Pronunciation does NOT live here — it goes in `grammar.ipa`.',
         properties: {
-          ipa: {
-            type: 'string',
-            description:
-              'IPA transcription of the headword, in the dialect specified by the system prompt when one is given.',
-          },
           frequency: {
             type: 'string',
             enum: ['high', 'medium', 'low'],
@@ -155,7 +150,6 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
           context_segment: { type: 'string' },
         },
         required: [
-          'ipa',
           'frequency',
           'frequency_detail',
           'more_frequent_synonym',
@@ -169,7 +163,7 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
       grammar: {
         type: 'object',
         description:
-          "Optional typed morphology / grammar facts for this chunk. Same shape as the basic-data pass's grammar object — refine or add keys based on deeper analysis with the surrounding context. Include keys only when useful for THIS chunk in THIS target language; omit the whole object when nothing applies. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть`), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string), `is_reflexive` (boolean), `government` (case/preposition pattern), `notable_forms` (array of {label, form}, max 3), `notes` (free-form). Per-language guidance is in the system prompt.",
+          "Typed morphology / grammar facts for this chunk. Same shape as the basic-data pass's grammar object — refine or add keys based on deeper analysis with the surrounding context. Include keys only when useful for THIS chunk in THIS target language — EXCEPT `ipa`, which you include for every chunk. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть`), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string), `is_reflexive` (boolean), `government` (case/preposition pattern), `notable_forms` (array of {label, form}, max 3), `ipa` (transcription bag, see its description), `notes` (free-form). Per-language guidance is in the system prompt.",
         properties: {
           pos: {
             type: 'string',
@@ -206,6 +200,16 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
                 form: { type: 'string' },
               },
               required: ['label', 'form'],
+            },
+          },
+          ipa: {
+            type: 'object',
+            description:
+              "IPA transcription of the HEADWORD (citation form). Include for every chunk. For English targets fill ONLY the dialect bucket the system prompt specifies (`ga` for General American, `rp` for Received Pronunciation); for every other language fill ONLY `untagged`. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/səˈliːn/'), square brackets only when giving a narrow phonetic one (e.g. '[sɐzˈdanʲɪje]'). Mark stress. If you are not confident of the transcription, omit the whole `ipa` object rather than guessing.",
+            properties: {
+              ga: { type: 'string' },
+              rp: { type: 'string' },
+              untagged: { type: 'string' },
             },
           },
           notes: { type: 'string' },
@@ -258,7 +262,9 @@ always-include key (with an explicit verdict or negative when the answer is
 when-relevant keys only when they genuinely earn their place. Use \`grammar\`
 for typed morphology / grammar facts (pos, gender, aspect, government,
 etc.) — see the per-target-language guidance in the system prompt for which
-keys to fill. Skip the \`grammar\` object entirely when nothing applies.`
+keys to fill. Always include \`grammar.ipa\` (the headword's transcription,
+dialect rules in its schema description); the other grammar keys only when
+they apply.`
 
   const response = await getAnthropicClient().messages.create({
     model: MODEL_OPUS,

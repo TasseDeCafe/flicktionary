@@ -164,8 +164,9 @@ export type PracticePool = z.infer<typeof PracticePoolSchema>
 
 // What you practise on a target — one axis of a study_facets facet. `pool` (the
 // session queue, above) is the DERIVED pool of a skill and stays on the wire;
-// this is card identity. 'pronunciation' (recognition-pool, citation-only)
-// arrives in Phase 4 (widened CHECK).
+// this is card identity. 'pronunciation' is recognition-pool and pairs with any
+// target_form: citation cards read the lemma's grammar.ipa, form cards read the
+// facet payload's grammar.ipa (generated per form, never the lemma's).
 export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
 export type FacetSkill = z.infer<typeof FacetSkillSchema>
 
@@ -175,9 +176,10 @@ export type FacetSkill = z.infer<typeof FacetSkillSchema>
 // listed skills get citation facets — recognition must be listed explicitly
 // (this skips the keep-time default via the facet row-existence check). Absent
 // = today's default (citation recognition at Keep). `formScope: 'both'`
-// additionally creates form facets of the encountered surface form for the
-// listed MEANING skills (pronunciation never form-facets — per-form IPA is
-// roadmap); the server collapses to lemma-only when the surface IS the
+// additionally creates form facets of the encountered surface form for ALL the
+// listed skills — including pronunciation, whose form facet is born
+// pending_data and flips to ready only when generation produces displayable
+// per-form IPA. The server collapses to lemma-only when the surface IS the
 // headword (the client never knows the lemma). Application is enable-only and
 // additive on term dedupe — it never disables an existing facet.
 export const StudyIntentSchema = z.object({
@@ -577,6 +579,11 @@ export const ReviewTermSchema = z.object({
   // Form facets ({form, translation}); '{}' / null for citation cards. Designed
   // now, populated in Phase 4.
   facetPayload: z.record(z.string(), z.unknown()).nullable(),
+  // 'wiktionary' when the citation card's displayed IPA is dictionary-grounded
+  // (grammar.ipa still matches the grounding snapshot) — drives the blue
+  // verified badge on flashcards. Computed server-side; always null for form
+  // cards (form IPA is generated, never grounded).
+  ipaSource: z.enum(['wiktionary']).nullable(),
 })
 export type ReviewTerm = z.infer<typeof ReviewTermSchema>
 

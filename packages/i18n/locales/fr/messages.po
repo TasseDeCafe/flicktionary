@@ -13,9 +13,9 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:210
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:297
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:322
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:207
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:294
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:319
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "« {headword} » vous pose problème — il est mis de côté pour des "
 "exercices de révision."
@@ -102,7 +102,7 @@ msgstr "{dueTermCount} révision(s) en attente"
 msgid "{fieldLabel}: {title}"
 msgstr "{fieldLabel} : {title}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:392
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:389
 msgid "{hardCount} term(s) gave you trouble. A quick exercise round can lock "
 "them in — optional."
 msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices "
@@ -430,7 +430,7 @@ msgstr "Tous les {newCount}"
 msgid "All caught up"
 msgstr "Tout est à jour"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:388
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:385
 msgid "All done!"
 msgstr "Terminé !"
 
@@ -604,8 +604,8 @@ msgstr "Avatar"
 msgid "Back"
 msgstr "Retour"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:405
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:410
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:402
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:407
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:315
 #: apps/web/src/features/practice/components/strengthen-view.tsx:62
 #: apps/web/src/features/practice/components/strengthen-view.tsx:72
@@ -613,7 +613,7 @@ msgstr "Retour"
 msgid "Back to {languageName}"
 msgstr "Retour à {languageName}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:639
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:658
 msgid "Back to current card"
 msgstr "Retour à la carte actuelle"
 
@@ -698,7 +698,7 @@ msgstr "Carte"
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Carte {cardPosition} sur {cardTotal}"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:537
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:559
 msgid "Card actions"
 msgstr "Actions de la carte"
 
@@ -714,7 +714,7 @@ msgstr "Cartes restantes"
 msgid "CEFR level"
 msgstr "Niveau CECRL"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:630
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:649
 msgid "Change your rating"
 msgstr "Modifier votre évaluation"
 
@@ -774,7 +774,7 @@ msgstr "Choisissez comment remplir les données de cette forme."
 msgid "Choose subtitles"
 msgstr "Choisir les sous-titres"
 
-#: apps/web/src/features/review/components/form-selector.tsx:421
+#: apps/web/src/features/review/components/form-selector.tsx:439
 msgid "Choose what to study for this target."
 msgstr "Choisissez ce que vous voulez étudier pour cette cible."
 
@@ -1028,7 +1028,7 @@ msgstr "Limite quotidienne de nouveaux termes atteinte"
 msgid "Daily new limit reached."
 msgstr "Limite quotidienne de nouveaux termes atteinte."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:389
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:386
 msgid "Daily new-card limit reached."
 msgstr "Limite quotidienne de nouvelles cartes atteinte."
 
@@ -1723,7 +1723,7 @@ msgstr "Forme (par ex. был)"
 msgid "Forms you've encountered"
 msgstr "Formes que vous avez rencontrées"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:619
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:638
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:375
 msgid "Forward"
 msgstr "Suivant"
@@ -2190,7 +2190,7 @@ msgstr "Chargement de l'historique…"
 msgid "Loading more…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:363
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:360
 msgid "Loading review terms…"
 msgstr "Chargement des termes à réviser…"
 
@@ -2211,7 +2211,7 @@ msgstr "Chargement..."
 
 #: apps/web/src/features/more/components/account-page.tsx:67
 #: apps/web/src/features/more/components/languages-page.tsx:17
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:419
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:416
 #: apps/web/src/features/practice/components/practice-landing-view.tsx:69
 #: apps/web/src/features/practice/components/practice-language-view.tsx:226
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:50
@@ -2443,7 +2443,7 @@ msgstr "Aucune langue trouvée."
 msgid "No matches."
 msgstr "Aucun résultat."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:374
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:371
 msgid "No new terms to learn."
 msgstr "Aucun nouveau terme à apprendre."
 
@@ -2456,7 +2456,7 @@ msgstr "Aucun texte précédent pour le moment. Lisez des textes d'exercice et "
 msgid "No pronunciation data yet"
 msgstr "Pas encore de données de prononciation"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:376
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:373
 msgid "No reviews are due right now."
 msgstr "Aucune révision à faire pour le moment."
 
@@ -2468,7 +2468,7 @@ msgstr "Aucune session dans ce filtre."
 msgid "No sessions yet. Start one to begin."
 msgstr "Aucune session pour le moment. Démarrez-en une pour commencer."
 
-#: apps/web/src/features/review/components/form-selector.tsx:409
+#: apps/web/src/features/review/components/form-selector.tsx:427
 msgid "No skills selected"
 msgstr "Aucune compétence sélectionnée"
 
@@ -2478,7 +2478,7 @@ msgid "No target languages yet. Preferences are set the first time you start a "
 msgstr "Aucune langue cible pour l'instant. Les préférences sont définies la "
 "première fois que vous démarrez une session dans une nouvelle langue."
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:377
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:374
 msgid "No terms are due right now."
 msgstr "Aucun terme n'est dû pour le moment."
 
@@ -2719,10 +2719,6 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
-#: apps/web/src/features/review/components/form-selector.tsx:372
-msgid "Per-form pronunciation coming soon"
-msgstr "Prononciation par forme bientôt disponible"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:369
 msgid "Perfective"
 msgstr "Perfectif"
@@ -2895,7 +2891,7 @@ msgid "Press \"{keys}\" to toggle subtitle display"
 msgstr "Appuyez sur \"{keys}\" pour activer/désactiver l'affichage des "
 "sous-titres"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:608
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:627
 #: apps/web/src/features/review/components/focus-view.tsx:274
 msgid "Previous card"
 msgstr "Carte précédente"
@@ -2935,7 +2931,7 @@ msgstr "Avertissements de traitement"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:190
 #: apps/web/src/features/review/components/form-selector.tsx:301
-#: apps/web/src/features/review/components/form-selector.tsx:353
+#: apps/web/src/features/review/components/form-selector.tsx:367
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
 #: packages/ui/src/components/study-options-section.tsx:100
@@ -2973,7 +2969,7 @@ msgstr "Pronom"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:200
 #: apps/web/src/features/review/components/form-selector.tsx:308
-#: apps/web/src/features/review/components/form-selector.tsx:371
+#: apps/web/src/features/review/components/form-selector.tsx:383
 #: packages/ui/src/components/study-options-section.tsx:106
 msgid "Pronunciation"
 msgstr "Prononciation"
@@ -3024,7 +3020,7 @@ msgstr "Récemment ajouté"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:180
 #: apps/web/src/features/review/components/form-selector.tsx:294
-#: apps/web/src/features/review/components/form-selector.tsx:345
+#: apps/web/src/features/review/components/form-selector.tsx:359
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
 #: packages/ui/src/components/study-options-section.tsx:94
 msgid "Recognition"
@@ -3109,7 +3105,7 @@ msgstr "Supprimer"
 msgid "Remove \"{sessionTitle}\"?"
 msgstr "Supprimer « {sessionTitle} » ?"
 
-#: apps/web/src/features/review/components/form-selector.tsx:486
+#: apps/web/src/features/review/components/form-selector.tsx:504
 msgid "Remove form"
 msgstr "Supprimer la forme"
 
@@ -3238,7 +3234,7 @@ msgstr "Enregistrer dans le vocabulaire"
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:558
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:580
 msgid "Say it out loud"
 msgstr "Dites-le à voix haute"
 
@@ -3421,7 +3417,7 @@ msgstr "Courte paraphrase dans la langue cible."
 msgid "Show {filteredCount} filtered out (below your level)"
 msgstr "Afficher {filteredCount} filtrés (en dessous de votre niveau)"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:646
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:665
 msgid "Show answer"
 msgstr "Afficher la réponse"
 
@@ -3488,11 +3484,11 @@ msgstr "Connexion…"
 msgid "Singular-only"
 msgstr "Singulier seulement"
 
-#: apps/web/src/features/review/components/form-selector.tsx:396
+#: apps/web/src/features/review/components/form-selector.tsx:414
 msgid "Skills"
 msgstr "Compétences"
 
-#: apps/web/src/features/review/components/form-selector.tsx:420
+#: apps/web/src/features/review/components/form-selector.tsx:438
 msgid "Skills for {label}"
 msgstr "Compétences pour {label}"
 
@@ -3570,7 +3566,7 @@ msgstr "Streaming"
 msgid "Streaming Video"
 msgstr "Streaming vidéo"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:402
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:399
 msgid "Strengthen"
 msgstr "Renforcer"
 
@@ -4190,6 +4186,8 @@ msgstr "Verbe"
 msgid "Verification successful! Redirecting..."
 msgstr "Vérification réussie ! Redirection en cours..."
 
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:455
+#: apps/web/src/features/practice/components/flashcard-mode-view.tsx:455
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx:63
 msgid "Verified by Wiktionary"
 msgstr "Vérifié par le Wiktionnaire"

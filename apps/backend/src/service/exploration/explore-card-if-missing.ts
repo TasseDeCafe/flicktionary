@@ -6,7 +6,10 @@ import { HighlightsRepositoryInterface } from '../../transport/database/highligh
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
+import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enrichment-pass'
+import { sanitizeGrammarIpa } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -102,7 +105,21 @@ export const exploreCardIfMissing = async (
       await deps.cardsRepository.updateFields(cardId, { surfaceForm: enrichment.surface_form })
     }
 
-    const grammarPatch = { ...enrichment.grammar }
+    // Pronunciation moved from extras.ipa to grammar.ipa — drop a legacy
+    // extras.ipa defensively (the schema no longer asks for it, but the model
+    // may still emit one and a stale value would shadow the grammar bag).
+    if (sanitizedExtras) delete sanitizedExtras.ipa
+
+    const grammarPatch = sanitizeGrammarIpa({ ...enrichment.grammar })
+    // Exploration fills grammar.ipa only when the stored bag has nothing
+    // displayable AND it isn't Wiktionary-grounded AND the user hasn't edited
+    // the grammar — never overwrite a grounded or hand-fixed transcription.
+    const existingGrammar = (card.chunk.grammar ?? {}) as Record<string, unknown>
+    const canPatchIpa =
+      !hasDisplayableIpa((existingGrammar.ipa ?? null) as IpaBagShape | null, session.target_language) &&
+      (!card.chunk.grounded_at || !deepEqualNormalized(existingGrammar.ipa, card.chunk.grounding_patch?.ipa)) &&
+      !card.chunk.grammar_user_edited_at
+    if (!canPatchIpa) delete grammarPatch.ipa
 
     // Content + extras + grammar live on the canonical chunk. When translations
     // are disabled the sanitized fields are null, and updateContent's COALESCE
