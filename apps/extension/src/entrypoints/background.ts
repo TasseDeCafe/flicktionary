@@ -34,6 +34,10 @@ import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-h
 import FlicktionaryStartPairingHandler from '@/handlers/flicktionary/start-pairing-handler'
 import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/register-subtitles-handler'
 import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler'
+import LoadFlicktionarySavedHighlightsHandler from '@/handlers/flicktionary/saved-highlights-handler'
+import DeleteFlicktionaryHighlightHandler from '@/handlers/flicktionary/delete-highlight-handler'
+import UpdateFlicktionaryHighlightNoteHandler from '@/handlers/flicktionary/update-highlight-note-handler'
+import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
 import { isVideoPlatformUrl } from '@/services/pages'
@@ -101,6 +105,10 @@ export default defineBackground(() => {
     new FlicktionaryStartPairingHandler(),
     new RegisterFlicktionarySubtitlesHandler(),
     new SetFlicktionaryCefrHandler(),
+    new LoadFlicktionarySavedHighlightsHandler(),
+    new DeleteFlicktionaryHighlightHandler(),
+    new UpdateFlicktionaryHighlightNoteHandler(),
+    new FlicktionarySavedGlossHandler(),
     new ImportArticleHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),

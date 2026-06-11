@@ -10,6 +10,13 @@ export interface WordProps {
   // detach the gloss anchor).
   roundStart?: boolean
   roundEnd?: boolean
+  // Part of a persistent saved highlight (a Flicktionary highlight row).
+  // Rendered as an understated underline + tint, deliberately distinct from the
+  // live-selection yellow; the live selection wins while both apply. Same
+  // outer-corner rounding scheme as selection.
+  saved?: boolean
+  savedRoundStart?: boolean
+  savedRoundEnd?: boolean
   // The pointer entered this word's box. `element` is the live span, used as the
   // floating-ui anchor and for the post-debounce "pointer still here" check.
   onEnter: (element: HTMLElement) => void
@@ -17,6 +24,11 @@ export interface WordProps {
   onContextMenu: (element: HTMLElement) => void
   onMouseDown: (element: HTMLElement) => void
 }
+
+// Saved-highlight paint, shared with the inter-word filler spans in
+// SubtitleOverlayApp so a multi-word saved span reads as one block.
+export const SAVED_SPAN_CLASS =
+  'bg-[rgba(94,234,212,0.16)] underline decoration-[rgba(94,234,212,0.85)] decoration-2 underline-offset-4'
 
 // A single clickable subtitle word. Purely presentational — the hover debounce,
 // paused gate, selection, and save orchestration all live in SubtitleOverlayApp,
@@ -33,21 +45,27 @@ export const Word = memo(function Word({
   selected,
   roundStart,
   roundEnd,
+  saved,
+  savedRoundStart,
+  savedRoundEnd,
   onEnter,
   onLeave,
   onContextMenu,
   onMouseDown,
 }: WordProps) {
+  const stateClass = selected
+    ? 'bg-[rgba(255,255,0,0.35)]' + (roundStart ? ' rounded-l-sm' : '') + (roundEnd ? ' rounded-r-sm' : '')
+    : saved
+      ? SAVED_SPAN_CLASS +
+        ' hover:bg-[rgba(255,255,0,0.35)]' +
+        (savedRoundStart ? ' rounded-l-sm' : '') +
+        (savedRoundEnd ? ' rounded-r-sm' : '')
+      : 'rounded-sm hover:bg-[rgba(255,255,0,0.35)]'
   return (
     <span
       data-word={word}
       data-sentence={sentence}
-      className={
-        'cursor-pointer px-px transition-colors duration-150 select-none ' +
-        (selected
-          ? 'bg-[rgba(255,255,0,0.35)]' + (roundStart ? ' rounded-l-sm' : '') + (roundEnd ? ' rounded-r-sm' : '')
-          : 'rounded-sm hover:bg-[rgba(255,255,0,0.35)]')
-      }
+      className={'cursor-pointer px-px transition-colors duration-150 select-none ' + stateClass}
       onMouseEnter={(e) => onEnter(e.currentTarget)}
       onMouseLeave={onLeave}
       onContextMenu={(e) => {

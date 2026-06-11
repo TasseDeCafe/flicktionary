@@ -436,6 +436,71 @@ const getOrCreateForImportedText = async (params: {
   })
 }
 
+// Lookup-only counterpart to the two find-or-create video flows — NEVER
+// creates rows. Resolves the documented identity chain: content_source by
+// (user, type, metadata natural key: youtubeVideoId / contentHash) →
+// text_track by (content_source_id, hash) — hash only, the extension doesn't
+// know the server-detected language — → live study_session
+// (user, track, deleted_at IS NULL) → segments by index. Null at any miss
+// (the normal never-saved state). Plain reads, no transaction needed.
+const findForVideo = async (params: {
+  userId: string
+  source: 'youtube' | 'streaming'
+  youtubeVideoId?: string
+  contentHash: string
+}): Promise<{
+  session: DbStudySession
+  track: DbTextTrack
+  contentSource: DbContentSource
+  segments: DbTextSegment[]
+} | null> => {
+  const sources = (await (params.source === 'youtube'
+    ? sql`
+        SELECT * FROM public.content_sources
+        WHERE created_by_user_id = ${params.userId}
+          AND type = 'youtube'
+          AND metadata ->> 'youtubeVideoId' = ${params.youtubeVideoId ?? ''}
+        LIMIT 1
+      `
+    : sql`
+        SELECT * FROM public.content_sources
+        WHERE created_by_user_id = ${params.userId}
+          AND type = 'streaming'
+          AND metadata ->> 'contentHash' = ${params.contentHash}
+        LIMIT 1
+      `)) as DbContentSource[]
+  const contentSource = sources[0]
+  if (!contentSource) return null
+
+  const tracks = (await sql`
+    SELECT * FROM public.text_tracks
+    WHERE content_source_id = ${contentSource.id}
+      AND hash = ${params.contentHash}
+    LIMIT 1
+  `) as DbTextTrack[]
+  const track = tracks[0]
+  if (!track) return null
+
+  const sessions = (await sql`
+    SELECT * FROM public.study_sessions
+    WHERE user_id = ${params.userId}
+      AND text_track_id = ${track.id}
+      AND deleted_at IS NULL
+    LIMIT 1
+  `) as DbStudySession[]
+  const session = sessions[0]
+  if (!session) return null
+
+  const segments = (await sql`
+    SELECT id, text_track_id, index, text, start_ms, end_ms, tsv
+    FROM public.text_segments
+    WHERE text_track_id = ${track.id}
+    ORDER BY index ASC
+  `) as DbTextSegment[]
+
+  return { session, track, contentSource, segments }
+}
+
 // Soft-deleted sessions are filtered out everywhere except softDelete itself
 // and the highlight/card chains, which keep working so kept vocabulary can
 // still back-link to its source. Hard erasure happens via account deletion
@@ -638,6 +703,17 @@ export interface StudySessionsRepositoryInterface {
     contentSource: DbContentSource
     segments: DbTextSegment[]
   }>
+  findForVideo: (params: {
+    userId: string
+    source: 'youtube' | 'streaming'
+    youtubeVideoId?: string
+    contentHash: string
+  }) => Promise<{
+    session: DbStudySession
+    track: DbTextTrack
+    contentSource: DbContentSource
+    segments: DbTextSegment[]
+  } | null>
   findByIdForUser: (sessionId: string, userId: string) => Promise<DbStudySession | null>
   findByIdForUserWithSource: (sessionId: string, userId: string) => Promise<DbStudySessionWithSource | null>
   hasTextTrackForUser: (textTrackId: string, userId: string) => Promise<boolean>
@@ -657,6 +733,7 @@ export const StudySessionsRepository = (): StudySessionsRepositoryInterface => {
     getOrCreateForYoutubeVideo,
     getOrCreateForStreamingVideo,
     getOrCreateForImportedText,
+    findForVideo,
     findByIdForUser,
     findByIdForUserWithSource,
     hasTextTrackForUser,

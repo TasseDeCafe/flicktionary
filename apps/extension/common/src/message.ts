@@ -489,6 +489,96 @@ export interface SaveWordResponse {
   // Detected target language for the save, surfaced on a 'MISSING_CEFR' failure
   // so the in-video CEFR picker knows which language to set a level for.
   readonly targetLanguage?: string
+  // The created highlight (indexes, not segment ids — converted in the
+  // background via the cached segment map) so the overlay can paint the saved
+  // span optimistically without a full reload. Absent on conversion misses /
+  // legacy paths: the overlay falls back to a full saved-highlights reload.
+  readonly highlight?: SavedHighlightDto
+}
+
+// One saved highlight as the subtitle overlay consumes it: SEGMENT INDEXES
+// (subtitle.index coordinates), mapped from the backend's segment ids in the
+// background via the session cache's segmentIdByIndex map. Offsets are char
+// positions in the segment's canonical text — the same coordinate space the
+// save path writes, so painting is symmetric with saving.
+export interface SavedHighlightDto {
+  readonly id: string
+  readonly startSegmentIndex: number
+  readonly endSegmentIndex: number
+  readonly startOffset: number
+  readonly endOffset: number
+  readonly selectionText: string
+  readonly note: string | null
+  readonly presetTags: ReadonlyArray<string>
+  readonly fastGloss: string | null
+}
+
+// Load the saved highlights for the current video so the overlay can paint
+// persistent spans. The background resolves the session from its cache, or —
+// cache cold (fresh install, another device, cleared storage) — via the
+// lookup-only `studySessions.lookupForVideo` endpoint (never creates rows).
+export interface LoadFlicktionarySavedHighlightsMessage extends MessageWithId {
+  readonly command: 'load-flicktionary-saved-highlights'
+  readonly source: 'youtube' | 'streaming'
+  // Present only when source === 'youtube'.
+  readonly youtubeVideoId?: string
+  readonly contentHash: string
+}
+
+export interface LoadFlicktionarySavedHighlightsResponse {
+  readonly success: boolean
+  // False when the user isn't paired — the overlay paints nothing and skips
+  // all saved-highlight calls (signed-out is a normal state, not an error).
+  readonly signedIn: boolean
+  readonly sessionId?: string
+  // Empty when no session exists for this video yet (the never-saved state).
+  readonly highlights?: ReadonlyArray<SavedHighlightDto>
+  readonly error?: string
+}
+
+export interface DeleteFlicktionaryHighlightMessage extends MessageWithId {
+  readonly command: 'delete-flicktionary-highlight'
+  readonly sessionId: string
+  readonly highlightId: string
+}
+
+export interface DeleteFlicktionaryHighlightResponse {
+  readonly success: boolean
+  readonly error?: string
+}
+
+export interface UpdateFlicktionaryHighlightNoteMessage extends MessageWithId {
+  readonly command: 'update-flicktionary-highlight-note'
+  readonly sessionId: string
+  readonly highlightId: string
+  readonly note: string | null
+  readonly presetTags: ReadonlyArray<string>
+  // Localized, frontend-composed chat question (selected presets rendered in
+  // the UI locale + the verbatim note); null when there is nothing to ask.
+  // Mirrors the web gloss sheet's composeChatSeedPrompt contract.
+  readonly chatSeedPrompt: string | null
+}
+
+export interface UpdateFlicktionaryHighlightNoteResponse {
+  readonly success: boolean
+  readonly error?: string
+}
+
+// Saved-mode gloss: wraps `highlights.fastGloss` for an EXISTING highlight
+// (cached server-side on the row), unlike `flicktionary-gloss` which is the
+// stateless hover-preview pass.
+export interface FlicktionarySavedGlossMessage extends MessageWithId {
+  readonly command: 'flicktionary-saved-gloss'
+  readonly sessionId: string
+  readonly highlightId: string
+}
+
+export interface FlicktionarySavedGlossResponse {
+  readonly gloss?: string
+  readonly pos?: string | null
+  readonly register?: string | null
+  readonly ipa?: FlicktionaryGlossIpa | null
+  readonly error?: string
 }
 
 // Sets the user's CEFR level for a language from the content script. Backed by
