@@ -10,6 +10,7 @@ import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import { useExploreCard, useGetCard, useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
 import { invalidateCardEverywhere } from '../api/card-cache'
 import { useDeleteChunk, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
+import { getStudyTargetsKey } from '@/features/vocabulary/api/facet-cache'
 import { FormSelector } from './form-selector'
 import { PerFormCardEditor } from './per-form-card-editor'
 import type { FormAutoSetup, SelectedTarget } from './study-target-helpers'
@@ -49,9 +50,38 @@ export const FocusView = () => {
   })
   const initialCard = useMemo(() => cards?.find((listCard) => listCard.id === cardId), [cards, cardId])
   const { data: card, isLoading } = useGetCard(cardId, initialCard, cardsUpdatedAt)
+
+  // Session scope for this view — undefined for language-wide (vocabulary/
+  // practice) entries. Hoisted above the early returns so the seed-watch effect
+  // and processing-status poll can read it without violating hook order.
+  const sourceSessionId = shouldLoadSessionScope ? card?.studySessionId : undefined
+
+  // Poll the session's processing status (only while something is in flight).
+  // Feeds the chat dot below AND the study-targets refresh: while this card's
+  // highlight is being enriched server-side, the background job is also filling
+  // any pending form facet created by a study-intent save.
+  const { data: processingStatus } = useGetProcessingStatus(sourceSessionId ?? '', 2000)
+  const isFormDataEnriching =
+    !!card?.highlightId && (processingStatus?.enrichingHighlightIds.includes(card.highlightId) ?? false)
+
+  // Entry paths without an observable session (vocabulary/practice) can't see
+  // enrichingHighlightIds, so give the study-targets poll a ~20s grace window
+  // after mount/card change to catch a just-saved card's background fill.
+  const [withinMountGrace, setWithinMountGrace] = useState(true)
+  useEffect(() => {
+    setWithinMountGrace(true)
+    const timer = setTimeout(() => setWithinMountGrace(false), 20_000)
+    return () => clearTimeout(timer)
+  }, [cardId])
+
   // Study facets for the unified editor's selector + per-target editor. Lazily
   // fetched once the card (hence its chunk id) is known; shared by both controls.
-  const { data: studyTargets } = useStudyTargets(card?.chunk.id ?? null)
+  // Polls while a background fill may land (the hook self-stops once no facet
+  // is pending_data, so deliberately-pending "enter manually" facets only cost
+  // the grace window).
+  const { data: studyTargets } = useStudyTargets(card?.chunk.id ?? null, {
+    refetchInterval: isFormDataEnriching || withinMountGrace ? 2000 : false,
+  })
   const facets = studyTargets?.facets ?? []
   const candidateForms = studyTargets?.candidateForms ?? []
   // Which study target the editor is focused on (reset to citation per card).
@@ -122,20 +152,13 @@ export const FocusView = () => {
   // keyboard nav live — you can page through cards with the panel open.
   useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext, enabled: !(chatOpen && isMobile) })
 
-  // Session scope for this view — undefined for language-wide (vocabulary/
-  // practice) entries. Hoisted above the early returns so the seed-watch effect
-  // and processing-status poll can read it without violating hook order.
-  const sourceSessionId = shouldLoadSessionScope ? card?.studySessionId : undefined
-
   // Persist read state on open / when fresh assistant turns arrive while open.
   // Lives here (single owner) so the mobile sheet and desktop panel don't both fire.
   useChatReadSync({ open: chatOpen, cardId, sessionId: sourceSessionId })
 
-  // Poll the session's processing status (only while something is in flight) to
-  // light the chat dot: amber while a seeded answer for this card's highlight
-  // generates, red when it failed. `hasUnreadChat` (server-derived) turns the
-  // dot green once an unread answer is ready.
-  const { data: processingStatus } = useGetProcessingStatus(sourceSessionId ?? '', 2000)
+  // Chat dot: amber while a seeded answer for this card's highlight generates,
+  // red when it failed. `hasUnreadChat` (server-derived) turns the dot green
+  // once an unread answer is ready.
   const seedHighlightId = card?.highlightId ?? null
   const isChatGenerating =
     !!seedHighlightId && (processingStatus?.seedChatHighlightIds.includes(seedHighlightId) ?? false)
@@ -153,6 +176,19 @@ export const FocusView = () => {
     }
     wasChatGeneratingRef.current = isChatGenerating
   }, [isChatGenerating, sourceSessionId, card, queryClient])
+
+  // When this card's background enrichment finishes (enriching → gone), refetch
+  // the study targets so a study-intent form facet's generated data appears
+  // without a reload, and the card itself — enrichment also writes chunk fields.
+  // Explicit keys: there is no client mutation to hang meta.invalidates on.
+  const wasFormDataEnrichingRef = useRef(false)
+  useEffect(() => {
+    if (wasFormDataEnrichingRef.current && !isFormDataEnriching && sourceSessionId && card) {
+      void queryClient.invalidateQueries({ queryKey: getStudyTargetsKey(card.chunk.id) })
+      invalidateCardEverywhere(queryClient, { sessionId: sourceSessionId, cardId: card.id })
+    }
+    wasFormDataEnrichingRef.current = isFormDataEnriching
+  }, [isFormDataEnriching, sourceSessionId, card, queryClient])
 
   // Brief "pressed" highlight before auto-advance: optimistic cache updates only
   // flip `status`, not `learning_mode`, so we can't rely on derived state alone
