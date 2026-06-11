@@ -325,7 +325,7 @@ msgstr "Add form"
 msgid "Add New Profile..."
 msgstr "Add New Profile..."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:688
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
 msgid "Add note"
 msgstr "Add note"
 
@@ -1170,7 +1170,7 @@ msgstr "e.g. увидеть"
 msgid "Easy"
 msgstr "Easy"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:688
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
 msgid "Edit note"
 msgstr "Edit note"
 
@@ -3066,7 +3066,7 @@ msgstr "Remove \"{sessionTitle}\"?"
 msgid "Remove form"
 msgstr "Remove form"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:673
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
@@ -3074,7 +3074,7 @@ msgstr "Remove highlight"
 msgid "Remove session"
 msgstr "Remove session"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:673
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Removing…"
 msgstr "Removing…"
@@ -3161,7 +3161,7 @@ msgstr "RP"
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:140
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:150
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:660
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
 msgid "Save"
 msgstr "Save"
 
@@ -3173,7 +3173,7 @@ msgstr "Save a term"
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:677
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
 msgid "Save note"
 msgstr "Save note"
 
@@ -3184,8 +3184,8 @@ msgstr "Save to vocabulary"
 #: apps/web/src/features/review/components/editable-card-fields.tsx:312
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:529
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:660
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:677
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Saving…"
 msgstr "Saving…"
