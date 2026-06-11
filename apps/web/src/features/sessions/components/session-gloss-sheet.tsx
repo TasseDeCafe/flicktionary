@@ -6,9 +6,14 @@ import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import type { GhostCandidate, GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
-import { Badge } from '@flicktionary/ui/components/badge'
 import { Button } from '@flicktionary/ui/components/button'
-import { Skeleton } from '@flicktionary/ui/components/skeleton'
+import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
+import {
+  StudyOptionsSection,
+  defaultStudyIntentDraft,
+  draftToStudyIntent,
+  type StudyIntentDraft,
+} from '@flicktionary/ui/components/study-options-section'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import {
   FloatingSheet,
@@ -63,6 +68,14 @@ interface SessionGlossSheetProps {
   // The sheet then offers to swap the just-created highlight for the LLM's span.
   // Already null whenever LLM suggestions are off (the parent gates it).
   suggestedGhost: GhostCandidate | null
+  // Set when the current `selection` came from a pre-save ghost adoption; Save
+  // forwards it as `adoptedGhostId` (the backend dismisses the ghost with the
+  // insert). The open/selection reset keys off it to keep the skill checkboxes
+  // across the swap while re-arming the exact-form toggle.
+  pendingGhostId: string | null
+  // Pre-save "Use suggested": swap the parent's LOCAL selection to the ghost's
+  // span (no highlight exists yet — the saved-mode path uses ghosts.switch).
+  onAdoptGhostPreSave: (ghost: GhostCandidate) => void
   anchor: FloatingSheetAnchor
   onClose: () => void
 }
@@ -158,6 +171,8 @@ export const SessionGlossSheet = ({
   selection,
   existingHighlight,
   suggestedGhost,
+  pendingGhostId,
+  onAdoptGhostPreSave,
   anchor,
   onClose,
 }: SessionGlossSheetProps) => {
@@ -202,12 +217,20 @@ export const SessionGlossSheet = ({
   const [adopted, setAdopted] = useState(false)
   // True while an explicit Save (preview → saved) is creating the highlight.
   const [isSaving, setIsSaving] = useState(false)
+  // The "Study options" draft. Untouched → no studyIntent on Save (the backend
+  // keep-time default applies); touched → the FULL SET of checked skills.
+  const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
 
   useLayoutEffect(() => {
     if (!open) return
     setExpanded(false)
     setAdopted(false)
     setIsSaving(false)
+    // Fresh open / new gesture selection → full reset. A pre-save ghost
+    // adoption swaps the selection too (pendingGhostId set in the same render):
+    // the skill choices are about the word, so they survive the swap, but the
+    // exact-form toggle is re-armed — its referent (the surface) just changed.
+    setStudyDraft((prev) => (pendingGhostId ? { ...prev, exactForm: false } : defaultStudyIntentDraft))
 
     if (existingHighlight) {
       setHighlightId(existingHighlight.id)
@@ -229,7 +252,7 @@ export const SessionGlossSheet = ({
       setTags([])
       setGlossState({ kind: 'loading' })
     }
-  }, [open, existingHighlight, selection])
+  }, [open, existingHighlight, selection, pendingGhostId])
 
   // Seed from the existing-highlight branch.
   useEffect(() => {
@@ -367,6 +390,11 @@ export const SessionGlossSheet = ({
         selectionText: selection.selectionText,
         note: null,
         presetTags: [],
+        // Touched study options ride the save; the enrichment job applies them
+        // once the term materializes. Untouched → undefined → backend default.
+        studyIntent: draftToStudyIntent(studyDraft),
+        // A pre-save ghost adoption dismisses the ghost with the insert.
+        adoptedGhostId: pendingGhostId ?? undefined,
       })
       setHighlightId(created.data.id)
     } catch {
@@ -374,7 +402,7 @@ export const SessionGlossSheet = ({
     } finally {
       setIsSaving(false)
     }
-  }, [selection, highlightId, createHighlight, sessionId])
+  }, [selection, highlightId, createHighlight, sessionId, studyDraft, pendingGhostId])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point
@@ -507,50 +535,19 @@ export const SessionGlossSheet = ({
           <div className='flex items-start justify-between gap-2'>
             <div className='flex min-w-0 flex-col gap-1'>
               <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
-              {glossState.kind === 'loading' ? (
-                <>
-                  <Skeleton className='h-5 w-20' />
-                  <Skeleton className='h-4 w-11/12' />
-                  <Skeleton className='h-4 w-3/4' />
-                  <div className='mt-1 flex flex-wrap gap-1.5'>
-                    <Skeleton className='h-5 w-12 rounded-md' />
-                    <Skeleton className='h-5 w-16 rounded-md' />
-                  </div>
-                  <p className='sr-only'>{ariaDescription}</p>
-                </>
-              ) : (
-                <>
-                  {ipaLabel && (
-                    <p className='text-muted-foreground flex items-center gap-1.5 text-base leading-snug font-medium'>
-                      {showIpaFlag && (
-                        <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-                      )}
-                      <span>{ipaLabel}</span>
-                    </p>
-                  )}
-                  {isReady ? (
-                    <p className='text-muted-foreground text-sm'>
-                      {(glossState as Extract<GlossState, { kind: 'ready' }>).gloss}
-                    </p>
-                  ) : (
-                    <p className='sr-only'>{ariaDescription}</p>
-                  )}
-                  {isReady &&
-                    ((glossState as Extract<GlossState, { kind: 'ready' }>).pos ||
-                      (glossState as Extract<GlossState, { kind: 'ready' }>).register) && (
-                      <div className='mt-1 flex flex-wrap gap-1.5'>
-                        {(glossState as Extract<GlossState, { kind: 'ready' }>).pos && (
-                          <Badge variant='outline'>{(glossState as Extract<GlossState, { kind: 'ready' }>).pos}</Badge>
-                        )}
-                        {(glossState as Extract<GlossState, { kind: 'ready' }>).register && (
-                          <Badge variant='secondary'>
-                            {(glossState as Extract<GlossState, { kind: 'ready' }>).register}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                </>
-              )}
+              <GlossCardBody
+                loading={glossState.kind === 'loading'}
+                gloss={isReady ? (glossState as Extract<GlossState, { kind: 'ready' }>).gloss : null}
+                pos={isReady ? (glossState as Extract<GlossState, { kind: 'ready' }>).pos : null}
+                register={isReady ? (glossState as Extract<GlossState, { kind: 'ready' }>).register : null}
+                ipaLabel={ipaLabel}
+                ipaPrefix={
+                  showIpaFlag ? (
+                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                  ) : undefined
+                }
+                srDescription={ariaDescription}
+              />
             </div>
             {/* Notes attach to a saved highlight, so the expand toggle only
                 appears once we're in saved mode (not during a free preview). */}
@@ -572,20 +569,43 @@ export const SessionGlossSheet = ({
           </div>
         </FloatingSheetHeader>
 
-        {suggestedGhost && !adopted && highlightId && (
+        {suggestedGhost && !adopted && (
           <FloatingSheetBody>
             {/* Label sits above the button; the button itself stays understated. Still
-                full-width so it's an easy tap target on mobile. */}
+                full-width so it's an easy tap target on mobile. In preview mode the
+                tap swaps the LOCAL selection (nothing saved yet); in saved mode it
+                runs the server-side ghosts.switch span swap. */}
             <p className='text-muted-foreground mb-1.5 text-xs font-medium'>{t`Use suggested`}</p>
             <Button
               type='button'
               variant='outline'
               className='w-full justify-center'
-              disabled={!highlightId || isSwitching}
-              onClick={() => void handleUseSuggested()}
+              disabled={isSwitching}
+              onClick={() => {
+                if (isPreview) {
+                  onAdoptGhostPreSave(suggestedGhost)
+                } else {
+                  void handleUseSuggested()
+                }
+              }}
             >
               {isSwitching ? t`Switching…` : suggestedSurface}
             </Button>
+          </FloatingSheetBody>
+        )}
+
+        {isPreview && selection && (
+          <FloatingSheetBody>
+            <StudyOptionsSection
+              // Remounting per selection re-collapses the disclosure; the draft
+              // itself lives above and survives a ghost swap (skills kept,
+              // exact-form re-armed).
+              key={`${selection.startSegmentId}:${selection.startOffset}:${selection.selectionText}`}
+              value={studyDraft}
+              onChange={setStudyDraft}
+              surfaceForm={selection.selectionText}
+              pronunciationAvailable={!!displayedIpa}
+            />
           </FloatingSheetBody>
         )}
 
@@ -626,18 +646,13 @@ export const SessionGlossSheet = ({
         <FloatingSheetFooter>
           <div className='flex items-center justify-between gap-2'>
             {isPreview ? (
-              // Preview mode: looking is free. Closing discards with nothing
-              // saved; Save is the explicit action that persists the highlight
-              // and fires the enrich/card job.
-              <>
-                <Button type='button' variant='ghost' size='sm' onClick={onClose}>
-                  {t`Cancel`}
-                </Button>
-                <Button type='button' size='sm' disabled={isSaving} onClick={() => void handleSave()}>
-                  <Save className='mr-1 h-4 w-4' />
-                  {isSaving ? t`Saving…` : t`Save`}
-                </Button>
-              </>
+              // Preview mode: looking is free, and clicking outside already
+              // discards — no Cancel button. Save is the explicit action that
+              // persists the highlight and fires the enrich/card job.
+              <Button type='button' size='xl' className='w-full' disabled={isSaving} onClick={() => void handleSave()}>
+                <Save className='mr-1 h-4 w-4' />
+                {isSaving ? t`Saving…` : t`Save`}
+              </Button>
             ) : (
               <>
                 <Button
