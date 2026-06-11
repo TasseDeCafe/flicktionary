@@ -1,6 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 import { buildMethodologySystem } from '../methodology-prompt'
+import type { EnglishIpaDialect } from '../language-instructions'
 
 const TOOL_NAME = 'submit_basic_data'
 
@@ -25,6 +26,9 @@ type BasicDataPassArgs = {
   highlights: HighlightInput[]
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
+  // English IPA dialect preference (GA vs RP) — steers which grammar.ipa
+  // bucket the model fills for English targets. Undefined for other languages.
+  englishIpaDialect?: EnglishIpaDialect
   // Which model runs the pass. The per-highlight enrichment path passes
   // MODEL_ENRICHMENT (Sonnet).
   model?: string
@@ -131,7 +135,7 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
             grammar: {
               type: 'object',
               description:
-                "Optional sparse bag of typed morphology / grammar facts for this chunk. Include keys only when they are useful for THIS chunk in THIS target language; omit the whole object when nothing applies. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть` — keep the headword itself clean), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string — the counterpart's clean lemma), `is_reflexive` (boolean), `government` (case/preposition pattern, e.g. '+ acc', 'от + gen', 'с + instr'), `notable_forms` (array of {label, form} for irregular paradigm cells, max 3), `notes` (free-form, last resort). The per-target-language instructions in the system prompt say WHEN to fill which keys.",
+                "Optional sparse bag of typed morphology / grammar facts for this chunk. Include keys only when they are useful for THIS chunk in THIS target language; omit the whole object when nothing applies — EXCEPT `ipa`, which you include for every chunk. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть` — keep the headword itself clean), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string — the counterpart's clean lemma), `is_reflexive` (boolean), `government` (case/preposition pattern, e.g. '+ acc', 'от + gen', 'с + instr'), `notable_forms` (array of {label, form} for irregular paradigm cells, max 3), `ipa` (transcription bag, see its description), `notes` (free-form, last resort). The per-target-language instructions in the system prompt say WHEN to fill which keys.",
               properties: {
                 pos: {
                   type: 'string',
@@ -168,6 +172,16 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
                       form: { type: 'string' },
                     },
                     required: ['label', 'form'],
+                  },
+                },
+                ipa: {
+                  type: 'object',
+                  description:
+                    "IPA transcription of the HEADWORD (citation form, not the inflected surface form). Include for every chunk. For English targets fill ONLY the dialect bucket the system prompt specifies (`ga` for General American, `rp` for Received Pronunciation); for every other language fill ONLY `untagged`. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/səˈliːn/'), square brackets only when giving a narrow phonetic one (e.g. '[sɐzˈdanʲɪje]'). Mark stress. If you are not confident of the transcription, omit the whole `ipa` object rather than guessing.",
+                  properties: {
+                    ga: { type: 'string' },
+                    rp: { type: 'string' },
+                    untagged: { type: 'string' },
                   },
                 },
                 notes: { type: 'string' },
@@ -207,6 +221,7 @@ export const basicDataPass = async ({
   highlights,
   hideTranslationFields = false,
   allowL1Notes,
+  englishIpaDialect,
   model = MODEL_OPUS,
 }: BasicDataPassArgs): Promise<BasicDataChunk[]> => {
   const sameLanguage = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase()
@@ -264,6 +279,7 @@ ${segmentLines}`
       movieContextBlob,
       hideTranslationFields: shouldHideTranslationFields,
       allowL1Notes,
+      englishIpaDialect,
     }),
     tools: [buildTool(shouldHideTranslationFields)],
     tool_choice: { type: 'tool', name: TOOL_NAME },
@@ -287,6 +303,23 @@ ${segmentLines}`
   return parseBasicDataChunks(input.chunks)
 }
 
+// Defensive shape-check on the model's grammar.ipa: keep only recognized
+// dialect buckets with non-empty string values, drop the key entirely when
+// nothing survives (a malformed bag must never reach the JSONB merge — the
+// renderer and the pronunciation readiness gate both index into it).
+const IPA_BUCKETS = ['ga', 'rp', 'untagged'] as const
+export const sanitizeGrammarIpa = (grammar: Record<string, unknown>): Record<string, unknown> => {
+  if (!('ipa' in grammar)) return grammar
+  const { ipa, ...rest } = grammar
+  if (!ipa || typeof ipa !== 'object' || Array.isArray(ipa)) return rest
+  const bag: Record<string, string> = {}
+  for (const bucket of IPA_BUCKETS) {
+    const value = (ipa as Record<string, unknown>)[bucket]
+    if (typeof value === 'string' && value.trim().length > 0) bag[bucket] = value
+  }
+  return Object.keys(bag).length > 0 ? { ...rest, ipa: bag } : rest
+}
+
 // Exported for unit tests. Maps the raw tool_use chunk objects to typed
 // BasicDataChunk values, defending against the model's occasional sloppiness.
 export const parseBasicDataChunks = (raw: Array<Record<string, unknown>>): BasicDataChunk[] =>
@@ -304,7 +337,7 @@ export const parseBasicDataChunks = (raw: Array<Record<string, unknown>>): Basic
     nativeExample: typeof c.native_example === 'string' ? c.native_example : null,
     grammar:
       c.grammar && typeof c.grammar === 'object' && !Array.isArray(c.grammar)
-        ? (c.grammar as Record<string, unknown>)
+        ? sanitizeGrammarIpa(c.grammar as Record<string, unknown>)
         : undefined,
     belowCefr: Boolean(c.below_cefr),
     reasoning: typeof c.reasoning === 'string' ? c.reasoning : undefined,

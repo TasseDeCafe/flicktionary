@@ -1,9 +1,11 @@
+import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { FacetSkill } from '../../transport/database/study-facets/study-facets-repository'
 import { generateFormData } from '../../transport/third-party/anthropic/passes/generate-form-data'
+import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { getLanguageMode } from '../user-prefs/language-mode'
 
 export type GenerateFormFacetDataDeps = {
@@ -21,9 +23,12 @@ export type GenerateFormFacetDataOutcome = 'generated' | 'skipped' | 'failed'
 // per-form data, and the user is waiting to see/confirm the result anyway.
 //
 // `skipped` = the facet or term vanished (idempotent no-op); `failed` = the Opus
-// call threw (the facet stays pending_data, the chip keeps offering retry /
-// manual entry). When translations are off for this language there is nothing to
-// translate, so we mark ready with the bare surface form, no model call.
+// call threw, OR a pronunciation facet's generation came back without a
+// confident per-form IPA (the facet stays pending_data either way — the chip
+// keeps offering retry / manual entry). When translations are off for this
+// language there is nothing to translate, so we mark ready with the bare
+// surface form, no model call — EXCEPT pronunciation, which always runs the
+// model (the form's IPA is the whole point of the facet).
 export const generateFormFacetData = async (
   params: {
     chunkId: string
@@ -65,10 +70,14 @@ export const generateFormFacetData = async (
       targetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     })
 
-    if (languageMode.hideTranslationFields) {
+    const isPronunciation = params.skill === 'pronunciation'
+
+    if (languageMode.hideTranslationFields && !isPronunciation) {
       // Nothing to translate, so no model call — mark ready with the bare form
       // and (when known) the encountered sentence as its target-language example.
       // The payload doubles as the generated_payload provenance snapshot.
+      // Pronunciation never takes this shortcut: its render data is the form's
+      // IPA, which only the model call produces.
       const barePayload = {
         form: surfaceForm,
         translation: '',
@@ -85,6 +94,11 @@ export const generateFormFacetData = async (
       return 'generated'
     }
 
+    // English form IPA follows the user's dialect preference (GA vs RP).
+    const englishIpaDialect = isEnglishTargetLanguage(term.targetLanguage)
+      ? await deps.usersRepository.getEnglishIpaDialect(params.userId)
+      : undefined
+
     const result = await generateFormData({
       nativeLanguage: languageMode.nativeLanguage ?? term.targetLanguage,
       targetLanguage: term.targetLanguage,
@@ -92,20 +106,44 @@ export const generateFormFacetData = async (
       headwordTranslation: term.translation,
       surfaceForm,
       encounteredSentence,
+      englishIpaDialect,
     })
 
+    // The form's own IPA goes into the payload's grammar bag in GrammarIpaBag
+    // shape — resolve-card-content reads facetPayload.grammar.ipa (deliberately
+    // no lemma fallback: a lemma's transcription is wrong for an inflection).
+    const ipaBag: IpaBagShape | null = result.ipa
+      ? isEnglishTargetLanguage(term.targetLanguage)
+        ? { [englishIpaDialect ?? 'ga']: result.ipa }
+        : { untagged: result.ipa }
+      : null
+
+    // Readiness guard: a pronunciation facet with no confident generated IPA
+    // must NOT flip to ready (setFacetPayload flips unconditionally) — leave it
+    // pending_data so the retry chip / manual entry path takes over.
+    if (isPronunciation && !hasDisplayableIpa(ipaBag, term.targetLanguage)) {
+      return 'failed'
+    }
+
     // Forward the full generated content. `grammar` is written as a complete
-    // object (only `pos` here) — the shallow JSONB merge replaces the whole
+    // object (pos + the form's ipa) — the shallow JSONB merge replaces the whole
     // grammar sub-bag, which is correct since a freshly-generated form has none.
     // The same object is stored as the generated_payload provenance snapshot:
-    // per-field provenance compares the live payload against it.
+    // per-field provenance compares the live payload against it. Translation
+    // fields are blanked when the language hides them (the pronunciation path
+    // can reach here with translations off).
+    const hideTranslations = languageMode.hideTranslationFields
+    const grammar = {
+      ...(result.pos ? { pos: result.pos } : {}),
+      ...(ipaBag ? { ipa: ipaBag } : {}),
+    }
     const generatedPayload = {
       form: result.form,
-      translation: result.translation,
+      translation: hideTranslations ? '' : result.translation,
       ...(result.definition ? { definition: result.definition } : {}),
       ...(result.targetExample ? { targetExample: result.targetExample } : {}),
-      ...(result.nativeExample ? { nativeExample: result.nativeExample } : {}),
-      ...(result.pos ? { grammar: { pos: result.pos } } : {}),
+      ...(!hideTranslations && result.nativeExample ? { nativeExample: result.nativeExample } : {}),
+      ...(Object.keys(grammar).length > 0 ? { grammar } : {}),
     }
     await deps.userLookupsRepository.setFacetPayload({
       userLookupId: params.chunkId,

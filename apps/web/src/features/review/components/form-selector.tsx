@@ -335,10 +335,22 @@ const SkillsCard = ({
       })
   } else {
     const productionFacet = facets.find((f) => f.skill === 'meaning_production' && f.targetForm === targetForm)
+    const pronunciationFacet = facets.find((f) => f.skill === 'pronunciation' && f.targetForm === targetForm)
     const recognitionOn = !!recognitionFacet?.enabled
     const productionOn = !!productionFacet?.enabled
+    const pronunciationOn = !!pronunciationFacet?.enabled
     const form = recognitionFacet ? formDisplay(recognitionFacet) : targetForm
     const translation = recognitionFacet ? payloadString(recognitionFacet.payload, 'translation') : ''
+    // A sibling facet whose payload already carries the form's own IPA: enabling
+    // pronunciation with that payload makes the facet born ready (no
+    // regeneration). Without one, send only {form} so it's born pending_data and
+    // the existing generate/retry chip fills it.
+    const ipaSibling = [recognitionFacet, productionFacet].find((f) => {
+      const grammar = f?.payload.grammar
+      const ipa =
+        grammar && typeof grammar === 'object' ? (((grammar as Record<string, unknown>).ipa ?? null) as IpaBagShape | null) : null
+      return hasDisplayableIpa(ipa, chunk.targetLanguage)
+    })
     items = [
       {
         key: 'recognition',
@@ -366,13 +378,17 @@ const SkillsCard = ({
       },
       {
         key: 'pronunciation',
-        // Per-form pronunciation needs per-form stress/IPA the lemma grammar.ipa
-        // doesn't carry — roadmap. The IPA field itself is editable below.
         label: t`Pronunciation`,
-        hint: t`Per-form pronunciation coming soon`,
-        enabled: false,
-        available: false,
-        toggle: () => {},
+        enabled: pronunciationOn,
+        available: true,
+        toggle: () =>
+          setFacetEnabled({
+            chunkId: chunk.id,
+            skill: 'pronunciation',
+            targetForm,
+            enabled: !pronunciationOn,
+            payload: !pronunciationOn ? (ipaSibling ? ipaSibling.payload : { form }) : undefined,
+          }),
       },
     ]
   }

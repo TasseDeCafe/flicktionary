@@ -11,6 +11,7 @@ import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/w
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
@@ -129,6 +130,13 @@ export const createAdhocCard = async (params: {
     selectionText: headword,
   }
 
+  // English IPA follows the user's dialect preference (GA vs RP) — the basic
+  // data pass now generates grammar.ipa by default (grounding overwrites it
+  // with Wiktionary's where available).
+  const englishIpaDialect = isEnglishTargetLanguage(targetLanguage)
+    ? await deps.usersRepository.getEnglishIpaDialect(userId)
+    : undefined
+
   let chunks
   try {
     chunks = await basicDataPass({
@@ -140,6 +148,7 @@ export const createAdhocCard = async (params: {
       highlights: [highlightInput],
       hideTranslationFields: languagePrefs.hideTranslationFields,
       allowL1Notes: languagePrefs.allowL1Notes,
+      englishIpaDialect,
     })
   } catch (e) {
     logCustomErrorMessageAndError(`createAdhocCard: basicDataPass failed for userId=${userId}`, e)

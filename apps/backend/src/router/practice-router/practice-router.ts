@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { implement } from '@orpc/server'
+import { deepEqualNormalized } from '@flicktionary/core/utils/deep-equal-normalized'
 import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-router'
 import { type OrpcContext } from '../orpc/orpc-context'
 import { practiceContract } from '@flicktionary/api-client/orpc-contracts/practice-contract'
@@ -114,6 +115,20 @@ const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkC
   }
 }
 
+// 'wiktionary' when the citation card's displayed IPA is dictionary-grounded:
+// the row was grounded, the grounding snapshot carried an IPA bag, and the live
+// grammar.ipa still matches it (an edit away from the snapshot drops the
+// claim). Form cards never badge — their IPA is generated, never grounded.
+// Exported for unit tests.
+export const computeIpaSource = (row: DbUserLookupWithFacet): 'wiktionary' | null => {
+  if (row.target_form !== '') return null
+  if (!row.grounded_at) return null
+  const patchIpa = (row.grounding_patch as Record<string, unknown> | null)?.ipa
+  if (!patchIpa) return null
+  const grammarIpa = (row.grammar as Record<string, unknown> | null)?.ipa
+  return deepEqualNormalized(grammarIpa, patchIpa) ? 'wiktionary' : null
+}
+
 // Maps a user_lookups row to the review-term DTO. grammar JSONB is passed
 // through like toPracticeTextDto does; the contract's GrammarSchema validates it.
 const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
@@ -131,6 +146,7 @@ const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
   skill: row.skill,
   targetForm: row.target_form,
   facetPayload: (row.payload as Record<string, unknown> | null) ?? null,
+  ipaSource: computeIpaSource(row),
 })
 
 // Builds the (headword, sense) -> content map for the row's annotations by

@@ -223,3 +223,35 @@ describe('parseBasicDataChunks', () => {
     expect(parsed[1].grammar).toBeUndefined()
   })
 })
+
+describe('parseBasicDataChunks — grammar.ipa sanitation', () => {
+  const base = {
+    source: 'llm',
+    headword: 'a',
+    surface_form: 'a',
+    segment_id: 's',
+    translation: null,
+    definition: null,
+    target_example: null,
+    native_example: null,
+    below_cefr: false,
+  }
+
+  it('keeps a well-formed dialect bag and drops unknown buckets / empty strings', () => {
+    const parsed = parseBasicDataChunks([
+      { ...base, grammar: { pos: 'noun', ipa: { untagged: '[stɐˈla]', ga: '  ', scouse: '/x/' } } },
+    ])
+    expect(parsed[0]!.grammar).toEqual({ pos: 'noun', ipa: { untagged: '[stɐˈla]' } })
+  })
+
+  it('drops a malformed ipa entirely (string, array, all-empty) without losing the rest of the bag', () => {
+    const parsed = parseBasicDataChunks([
+      { ...base, grammar: { pos: 'noun', ipa: '/flat-string/' } },
+      { ...base, grammar: { pos: 'verb', ipa: ['x'] } },
+      { ...base, grammar: { pos: 'verb', ipa: { ga: '' } } },
+    ])
+    expect(parsed[0]!.grammar).toEqual({ pos: 'noun' })
+    expect(parsed[1]!.grammar).toEqual({ pos: 'verb' })
+    expect(parsed[2]!.grammar).toEqual({ pos: 'verb' })
+  })
+})
