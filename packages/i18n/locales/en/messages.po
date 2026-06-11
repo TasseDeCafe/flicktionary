@@ -902,7 +902,7 @@ msgstr "Could not fetch a gloss."
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Could not fetch a gloss. The highlight is still saved."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:213
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:200
 msgid "Could not fetch a translation right now."
 msgstr "Could not fetch a translation right now."
 
@@ -1545,7 +1545,7 @@ msgstr "Failed to retry enrichment"
 msgid "Failed to save highlight"
 msgstr "Failed to save highlight"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:130
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:142
 msgid "Failed to save term"
 msgstr "Failed to save term"
 
@@ -1771,7 +1771,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 msgid "Generating..."
 msgstr "Generating..."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:397
 #: apps/web/src/features/review/components/focus-view.tsx:362
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
@@ -2196,7 +2196,7 @@ msgstr "Looking up and saving words"
 msgid "Looks like {suggestedLanguageName}"
 msgstr "Looks like {suggestedLanguageName}"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:171
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:183
 msgid "Lookup"
 msgstr "Lookup"
 
@@ -2475,7 +2475,7 @@ msgstr "No vocabulary to practice yet"
 msgid "No vocabulary yet"
 msgstr "No vocabulary yet"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:155
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:167
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:510
 msgid "No Wiktionary IPA"
 msgstr "No Wiktionary IPA"
@@ -3177,7 +3177,7 @@ msgstr "Save a term you heard or saw, no source needed"
 msgid "Save note"
 msgstr "Save note"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
@@ -3337,7 +3337,7 @@ msgid "Set your CEFR level, translation behavior and daily practice limits for "
 msgstr "Set your CEFR level, translation behavior and daily practice limits for "
 "each target language."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:127
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:139
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:117
 msgid "Set your native language first."
 msgstr "Set your native language first."
@@ -3978,8 +3978,7 @@ msgstr "Translation in your native language."
 msgid "Translation language"
 msgstr "Translation language"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:182
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:199
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:195
 msgid "Translation lookup and save action for the selected text."
 msgstr "Translation lookup and save action for the selected text."
 
