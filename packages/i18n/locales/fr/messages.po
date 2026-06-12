@@ -1924,7 +1924,7 @@ msgid "Hides this term from your vocabulary and Practice. You can revive it by "
 msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le "
 "restaurer en le conservant à nouveau dans une session."
 
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:893
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:898
 msgid "Highlight removed"
 msgstr "Surlignage supprimé"
 
@@ -2131,7 +2131,7 @@ msgstr "Langues"
 msgid "Last day to cancel before first charge"
 msgstr "Dernier jour pour annuler avant le premier prélèvement"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:401
+#: apps/web/src/features/sessions/components/session-view.tsx:410
 msgid "Last read"
 msgstr "Dernière lecture"
 
@@ -2213,11 +2213,11 @@ msgstr "Chargement…"
 msgid "Loading review terms…"
 msgstr "Chargement des termes à réviser…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:380
+#: apps/web/src/features/sessions/components/session-view.tsx:389
 msgid "Loading segments…"
 msgstr "Chargement des segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:333
+#: apps/web/src/features/sessions/components/session-view.tsx:342
 msgid "Loading session…"
 msgstr "Chargement de la session…"
 
@@ -3369,12 +3369,12 @@ msgstr "Envoi de l'email"
 msgid "Sending..."
 msgstr "Envoi en cours..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:332
-#: apps/web/src/features/sessions/components/session-view.tsx:339
+#: apps/web/src/features/sessions/components/session-view.tsx:341
+#: apps/web/src/features/sessions/components/session-view.tsx:348
 msgid "Session"
 msgstr "Session"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:340
+#: apps/web/src/features/sessions/components/session-view.tsx:349
 msgid "Session not found."
 msgstr "Session introuvable."
 
@@ -3447,7 +3447,7 @@ msgid "Show suggested terms while reading"
 msgstr "Afficher les termes suggérés pendant la lecture"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:210
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:437
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:436
 msgid "Sign in"
 msgstr "Se connecter"
 
@@ -4125,7 +4125,7 @@ msgid "Unseen"
 msgstr "Non vus"
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
-#: apps/web/src/features/sessions/components/session-view.tsx:345
+#: apps/web/src/features/sessions/components/session-view.tsx:354
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:77
 msgid "Untitled"
 msgstr "Sans titre"
