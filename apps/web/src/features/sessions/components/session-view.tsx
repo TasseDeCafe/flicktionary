@@ -254,9 +254,18 @@ export const SessionView = () => {
     enableEdgeAutoScroll: true,
     onSelect: ({ anchor: anchorWord, end: endWord, rect }) => {
       lastSelectionAtRef.current = Date.now()
-      if (glossOpen) return
+      // Bail paths must clear the paint themselves — it persists past
+      // pointerup (it shows what the open sheet refers to), so a selection
+      // that doesn't open a sheet would otherwise strand it.
+      if (glossOpen) {
+        clearPaint()
+        return
+      }
       const normalized = normalizeCrossSegmentSelection(anchorWord, endWord, visibleSegments)
-      if (!normalized || normalized.selectionText.length === 0) return
+      if (!normalized || normalized.selectionText.length === 0) {
+        clearPaint()
+        return
+      }
       const sel: SelectionResult = { ...normalized, rect }
       setExistingHighlightId(null)
       setPendingSelection(sel)

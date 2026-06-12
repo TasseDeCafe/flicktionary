@@ -351,7 +351,11 @@ export const useWordSelection = ({
         const rect = computeRect()
         if (rect) cbRef.current.onSelect({ anchor, end, rect })
       }
-      clearPaintIn(container)
+      // The paint PERSISTS past release (extension-overlay parity): it keeps
+      // showing what the open gloss sheet refers to. It clears on the next
+      // pointerdown, on cancel, or when the consumer calls clearPaint — which
+      // every onSelect bail path and sheet-close handler must do, since this
+      // no longer sweeps up after them.
       resetState()
     }
 

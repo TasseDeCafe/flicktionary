@@ -102,9 +102,8 @@ const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: Lin
 // What an explicit Save from the gloss popover should persist — captured when
 // the gloss opens, since the hovered word is cleared by the time the pointer
 // has moved onto the popover. The chunk range is SNAPSHOTTED (ordinals, not
-// the live selection): the painted selection clears at mouseup (web parity —
-// the popover represents the selection from then on), so a later Save can't
-// read it from the store.
+// the live selection) so Save stays correct even if the selection is cleared
+// independently of the gloss (play / cue change / a new mousedown).
 type GlossSaveTarget =
   | { kind: 'single'; tl: TokenizedLine; token: LineToken }
   | { kind: 'chunk'; tl: TokenizedLine; minOrd: number; maxOrd: number }
@@ -591,9 +590,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const state = interaction.getState()
       if (state.hovered?.token === token) state.setHovered(null)
 
-      // Mid-drag over a multi-word selection: don't hide-schedule (the chunk
-      // gloss may be open or about to open at mouseup). Post-release the
-      // selection is cleared and the chunk gloss is pinned instead.
+      // Over a multi-word selection (mid-drag or persisting post-release):
+      // don't hide-schedule — the chunk gloss persists with its selection
+      // (and is pinned besides).
       const range = rangeFor(state.selection, tl.line.index, tl.wordTokens)
       if (range && range.count > 1) return
 
@@ -694,13 +693,14 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   // ---- lifecycle effects -----------------------------------------------------
 
-  // End drag selection on mouseup anywhere. Web parity: the painted selection
-  // clears AT RELEASE — from here on the popover represents the selection
-  // (the chunk range is snapshotted into its save target). A multi-word drag
-  // opens the chunk gloss immediately (no hover debounce, like the web sheet);
-  // a plain click on a saved span opens the saved-mode popover; any other
-  // click re-arms the hover gloss for the word under the pointer (mouseenter
-  // won't re-fire on the word the pointer already sits on).
+  // End drag selection on mouseup anywhere. The painted selection PERSISTS
+  // after release (deliberate, and the web's painter was aligned to this):
+  // the sky wash keeps showing what the open popover refers to, and clears on
+  // save / play / cue change / saved-popover open / the next mousedown. A
+  // multi-word drag opens the chunk gloss immediately (no hover debounce,
+  // like the web sheet); a plain click on a saved span opens the saved-mode
+  // popover; any other click re-arms the hover gloss for the word under the
+  // pointer (mouseenter won't re-fire on the word the pointer already sits on).
   useEffect(() => {
     const onMouseUp = () => {
       const state = interaction.getState()
@@ -712,7 +712,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         sel && hovered && hovered.tl.line.index === sel.lineIndex
           ? rangeFor(sel, hovered.tl.line.index, hovered.tl.wordTokens)
           : null
-      state.clearSelection()
       if (!hovered) return
       if (range && range.count > 1) {
         // The pending hover debounce reads the (now cleared) live selection —

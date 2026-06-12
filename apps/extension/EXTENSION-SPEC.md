@@ -391,20 +391,22 @@ resolves to an exact `text_segments` row + offsets.
   popover), play, cue change, overlay hide, or by hovering another word
   (the new gloss replaces it and starts unpinned).
 - **Selection** — click selects a word; press-and-drag extends to a contiguous
-  multi-word (even multi-segment) chunk. Web-parity lifecycle: the painted
-  selection exists only DURING the gesture and clears at mouseup — from then
-  on the popover represents the selection. A multi-word release opens the
-  chunk gloss immediately (no hover debounce), **born pinned** (an intentional
-  drag shouldn't die to a stray hover-out; outside pointerdown / play / cue
-  change / hovering another word dismiss it), with the word-ordinal range
-  SNAPSHOTTED into the gloss's save target (`GlossSaveTarget` chunk carries
-  `minOrd`/`maxOrd` — Save and the right-click power-save can't read the
-  already-cleared live selection). Color semantics match the web reader:
-  selection paints the sky wash (`bg-sky-400/25`, the reader's dark-mode
-  word-selection color), saved highlights paint yellow (below), and the hover
-  affordance is a neutral white wash (`hover:bg-white/20` — hover means
-  "glossable" here, a state the click-driven web doesn't paint; the web reader
-  instead got an accent-tint hover affordance on selectable words).
+  multi-word (even multi-segment) chunk. The painted selection PERSISTS past
+  release (deliberate; the web's painter was aligned to this): the sky wash
+  keeps showing what the open popover refers to, clearing on save / play /
+  cue change / saved-popover open / the next mousedown. A multi-word release
+  opens the chunk gloss immediately (no hover debounce), **born pinned** (an
+  intentional drag shouldn't die to a stray hover-out; outside pointerdown /
+  play / cue change / hovering another word dismiss it), with the word-ordinal
+  range SNAPSHOTTED into the gloss's save target (`GlossSaveTarget` chunk
+  carries `minOrd`/`maxOrd`, so Save / right-click power-save stay correct
+  even if the live selection is cleared independently of the gloss). Color
+  semantics match the web reader: selection paints the sky wash
+  (`bg-sky-400/25`, the reader's dark-mode word-selection color), saved
+  highlights paint yellow (below), and the hover affordance is a neutral
+  white wash (`hover:bg-white/20` — hover means "glossable" here, a state the
+  click-driven web doesn't paint; the web reader instead got an accent-tint
+  hover affordance on selectable words).
 - **Save** — right-click (word or selection) shows the Save action; success
   drops a toast and clears the selection. Signed-out → a "Sign in" action;
   registration-failed → disabled Save with the reason. The save calls
