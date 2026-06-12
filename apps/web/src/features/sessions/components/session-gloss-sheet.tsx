@@ -378,7 +378,9 @@ export const SessionGlossSheet = ({
   // enrich/card job). Flips the sheet from preview into saved mode; the gloss
   // already on screen stays. Note/tags editing then unlocks behind `highlightId`.
   const handleSave = useCallback(async () => {
-    if (!selection || highlightId) return
+    // isSaving guards the right-click shortcut: the sheet now stays open
+    // through it, so a repeated right-click would otherwise double-create.
+    if (!selection || highlightId || isSaving) return
     setIsSaving(true)
     try {
       const created = await createHighlight({
@@ -402,7 +404,7 @@ export const SessionGlossSheet = ({
     } finally {
       setIsSaving(false)
     }
-  }, [selection, highlightId, createHighlight, sessionId, studyDraft, pendingGhostId])
+  }, [selection, highlightId, isSaving, createHighlight, sessionId, studyDraft, pendingGhostId])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point
@@ -436,19 +438,38 @@ export const SessionGlossSheet = ({
   // Hoisted so the lingui message uses a plain ${placeholder}, not a member access.
   const suggestedSurface = suggestedGhost?.surfaceForm ?? ''
 
-  const handleRemove = useCallback(() => {
-    // isDeleting guards the right-click shortcut — the button is disabled, but
-    // a repeated right-click would otherwise fire a second delete (a 404).
-    if (!highlightId || isDeleting) return
-    deleteHighlight(
-      { sessionId, highlightId },
-      {
-        onSuccess: () => {
-          onClose()
-        },
-      }
-    )
-  }, [highlightId, isDeleting, deleteHighlight, sessionId, onClose])
+  // `morphToPreview` (the right-click toggle) keeps the sheet open after the
+  // delete and flips it back to preview mode for the same selection — the
+  // toggle's visible counterpart to Save morphing preview → saved. Only
+  // possible when the sheet holds a live SelectionResult (a fresh selection
+  // that matched a saved row); a sheet opened from a highlight click has no
+  // selection to preview, so it closes as before.
+  const handleRemove = useCallback(
+    (opts?: { morphToPreview?: boolean }) => {
+      // isDeleting guards the right-click shortcut — the button is disabled,
+      // but a repeated right-click would otherwise fire a second delete (a 404).
+      if (!highlightId || isDeleting) return
+      deleteHighlight(
+        { sessionId, highlightId },
+        {
+          onSuccess: () => {
+            if (opts?.morphToPreview && selection && !existingHighlight) {
+              // Back to preview: same selection, nothing persisted anymore. The
+              // gloss on screen stays (same text); the removed row's note/tags
+              // must not leak into a future re-save.
+              setHighlightId(null)
+              setNote('')
+              setTags([])
+              setExpanded(false)
+            } else {
+              onClose()
+            }
+          },
+        }
+      )
+    },
+    [highlightId, isDeleting, deleteHighlight, sessionId, selection, existingHighlight, onClose]
+  )
 
   // Compose the localized chat question: each selected preset's sentence (in
   // gloss-sheet button order) followed by the verbatim note. Null when there is
@@ -488,19 +509,22 @@ export const SessionGlossSheet = ({
   // selection the sheet refers to, in saved mode it removes the highlight —
   // so right-click, right-click on the same word cycles save → remove.
   //
-  // We act on the right-button `pointerdown`, NOT `contextmenu`: the floating
-  // sheet (Radix) dismisses on an outside `pointerdown` (capture phase), which
-  // flips `open` to false and tears this listener down BEFORE `contextmenu`
-  // ever fires. Handling pointerdown runs the action within that same dispatch.
-  // The mutation is driven by the global mutation cache, so it completes even
-  // though the sheet then closes.
+  // The sheet STAYS OPEN through the toggle and morphs in place (preview ⇄
+  // saved) — FloatingSheet ignores right-button pointerdowns as a dismiss
+  // gesture, so the action is visible in the sheet instead of the sheet
+  // vanishing mid-cycle.
+  //
+  // We act on the right-button `pointerdown`, NOT `contextmenu`: the
+  // word-selection hook suppresses `contextmenu` inside the reader, and
+  // handling the initial press keeps this in the same dispatch as the
+  // (now-cancelled) outside-pointerdown dismissal.
   useEffect(() => {
     if (!open) return
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 2) return
       e.preventDefault()
       if (isPreview) void handleSave()
-      else handleRemove()
+      else handleRemove({ morphToPreview: true })
     }
     document.addEventListener('pointerdown', onPointerDown, { capture: true })
     return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
@@ -662,7 +686,7 @@ export const SessionGlossSheet = ({
                   variant='ghost'
                   size='sm'
                   disabled={isDeleting || !highlightId}
-                  onClick={handleRemove}
+                  onClick={() => handleRemove()}
                   className='text-destructive hover:bg-destructive/10'
                 >
                   <Trash2 className='mr-1 h-4 w-4' />

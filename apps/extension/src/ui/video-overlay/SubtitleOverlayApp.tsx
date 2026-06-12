@@ -100,6 +100,18 @@ const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: Lin
   return { minOrd, maxOrd, startCharStart: first.charStart, endCharEnd: last.charEnd, count: maxOrd - minOrd + 1 }
 }
 
+// Map a saved highlight back to the word-ordinal range it covers on a line
+// (intersection, same drift tolerance as the paint). Used by the right-click
+// remove to swap the saved-mode popover into the preview gloss for the SAME
+// span. Null for cross-cue highlights (the chunk gloss is single-line) or when
+// no word intersects.
+const ordinalRangeForHighlight = (tl: TokenizedLine, h: SavedHighlightDto) => {
+  if (h.startSegmentIndex !== tl.line.index || h.endSegmentIndex !== tl.line.index) return null
+  const words = tl.wordTokens.filter((w) => w.charStart < h.endOffset && w.charEnd > h.startOffset)
+  if (words.length === 0) return null
+  return { minOrd: words[0].ordinal, maxOrd: words[words.length - 1].ordinal }
+}
+
 // What an explicit Save from the gloss popover should persist — captured when
 // the gloss opens, since the hovered word is cleared by the time the pointer
 // has moved onto the popover. The chunk range is SNAPSHOTTED (ordinals, not
@@ -112,9 +124,14 @@ type GlossSaveTarget =
 // Where to re-open the popover after a Save from the gloss preview: the saved
 // outcome swaps the preview into the saved-mode popover IN PLACE (web
 // gloss-sheet parity — there Save morphs the open sheet into saved mode).
+// `hover` sets the swapped-in popover's dismissal mode: the Save button swaps
+// in STICKY (the pointer is inside the popover), while the right-click toggle
+// swaps in hover-mode (the pointer is on the word; the popover yields on
+// word-leave so rapid right-click saving isn't blocked by a sticky popover).
 interface GlossSaveHandoff {
   lineIndex: number
   anchor: HTMLElement
+  hover: boolean
 }
 
 // Which gloss popover is open (anchor + lookup identity). The gloss CONTENT
@@ -473,7 +490,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               lineIndex: handoff.lineIndex,
               anchor: handoff.anchor,
               highlightId: outcome.highlight.id,
-              hover: false,
+              hover: handoff.hover,
             })
           } else {
             hideSaveSourceGloss()
@@ -555,27 +572,6 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       )
     },
     [closures, handleOutcome, queryClient]
-  )
-
-  // The right-click toggle's remove half. No success toast — the yellow wash
-  // disappearing is the feedback (mirrors the silent save). The store update
-  // waits for the server ack (same as the saved popover's Remove); failures
-  // still toast.
-  const removeHighlight = useCallback(
-    (highlightId: string) => {
-      const sessionId = savedStore.getState().sessionId
-      if (!sessionId) return
-      clearSelection()
-      void deleteSavedHighlight(sessionId, highlightId).then((ok) => {
-        if (!ok) {
-          showToast(i18n._(msg`Could not remove the highlight.`), true)
-          return
-        }
-        savedStore.getState().remove(highlightId)
-        if (savedPopoverRef.current?.highlightId === highlightId) setSavedPopover(null)
-      })
-    },
-    [savedStore, clearSelection, showToast]
   )
 
   // ---- gloss (hover) flow ----------------------------------------------------
@@ -704,25 +700,81 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     [interaction, scheduleGlossHide]
   )
 
+  // The right-click toggle's remove half. No success toast — the yellow wash
+  // disappearing is the feedback (mirrors the silent save). The store update
+  // waits for the server ack (same as the saved popover's Remove); failures
+  // still toast. `swapCtx` (the right-clicked word) lets an open saved-mode
+  // popover for the removed highlight swap into the PREVIEW gloss for the same
+  // span instead of just vanishing — the visible counterpart of the save
+  // direction's preview→saved swap. With no popover open the removal stays
+  // silent.
+  const removeHighlight = useCallback(
+    (highlightId: string, swapCtx?: { tl: TokenizedLine; element: HTMLElement }) => {
+      const sessionId = savedStore.getState().sessionId
+      if (!sessionId) return
+      // Captured before the delete: the offsets are gone from the store after.
+      const highlight = savedStore.getState().highlights.find((h) => h.id === highlightId) ?? null
+      clearSelection()
+      void deleteSavedHighlight(sessionId, highlightId).then((ok) => {
+        if (!ok) {
+          showToast(i18n._(msg`Could not remove the highlight.`), true)
+          return
+        }
+        savedStore.getState().remove(highlightId)
+        if (savedPopoverRef.current?.highlightId !== highlightId) return
+        setSavedPopover(null)
+        // Swap to the preview gloss for the removed span (chunk gloss for a
+        // multi-word highlight — born pinned, as chunk glosses are; plain
+        // hover gloss for a single word). Skipped when the video resumed, the
+        // cue changed (disconnected anchor), or the highlight was cross-cue
+        // (no single-line chunk target exists).
+        if (!swapCtx || !highlight || !video.paused || !swapCtx.element.isConnected) return
+        const ords = ordinalRangeForHighlight(swapCtx.tl, highlight)
+        if (!ords) return
+        if (ords.maxOrd > ords.minOrd) {
+          openChunkGloss(swapCtx.tl, swapCtx.element, ords.minOrd, ords.maxOrd)
+        } else {
+          const word = swapCtx.tl.wordTokens[ords.minOrd]
+          if (!word) return
+          showGloss(swapCtx.tl.line.index, swapCtx.element, word.text, swapCtx.tl.line.text, {
+            kind: 'single',
+            tl: swapCtx.tl,
+            token: word,
+          })
+        }
+      })
+    },
+    [savedStore, clearSelection, showToast, video, openChunkGloss, showGloss]
+  )
+
   // Right-click is a TOGGLE: it saves the word/chunk under the pointer, or —
   // when that exact chunk / a span the word sits on is already saved — removes
   // it, so repeated right-clicks cycle save → remove instead of stacking
-  // duplicates. The gloss closes and the pending hover debounce is cleared
-  // up front: leaving them up would offer a stale Save button over a
-  // just-saved word (the old double-save vector).
+  // duplicates. An OPEN popover stays open and morphs through the toggle: a
+  // save from an open gloss rides the in-place handoff (preview → saved-mode
+  // popover, same as the Save button), and a remove swaps an open saved-mode
+  // popover back into the preview gloss (see removeHighlight). With no popover
+  // open the toggle stays silent — the wash is the feedback. The pending hover
+  // debounce is cleared so it can't pop a stale preview over the result.
   const onWordContextMenu = useCallback(
-    (tl: TokenizedLine, token: LineToken) => {
+    (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
       const g = glossRef.current
       clearHoverTimer()
-      hideGloss()
-      const toggleChunk = (chunkTl: TokenizedLine, minOrd: number, maxOrd: number) => {
+      const toggleChunk = (chunkTl: TokenizedLine, minOrd: number, maxOrd: number, handoff?: GlossSaveHandoff) => {
         const exact = findSavedChunkExact(chunkTl, minOrd, maxOrd)
-        if (exact) removeHighlight(exact.id)
-        else saveChunk(chunkTl, minOrd, maxOrd)
+        if (exact) {
+          // An open chunk gloss survives the remove untouched — it already IS
+          // the preview state for this span (Save offers the re-save).
+          removeHighlight(exact.id, { tl: chunkTl, element })
+        } else {
+          if (handoff) setGlossSaving(true)
+          saveChunk(chunkTl, minOrd, maxOrd, undefined, handoff)
+        }
       }
       // Right-click on a word inside an open chunk gloss acts on the chunk (the
       // live selection is already cleared once the gloss is open — the gloss
-      // target is the selection's surviving representation).
+      // target is the selection's surviving representation). The open gloss is
+      // the handoff anchor: it morphs into the saved-mode popover on save.
       if (
         g &&
         g.save.kind === 'chunk' &&
@@ -730,22 +782,37 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         token.ordinal >= g.save.minOrd &&
         token.ordinal <= g.save.maxOrd
       ) {
-        toggleChunk(g.save.tl, g.save.minOrd, g.save.maxOrd)
+        toggleChunk(g.save.tl, g.save.minOrd, g.save.maxOrd, { lineIndex: g.lineIndex, anchor: g.anchor, hover: true })
         return
       }
-      // Mid-drag right-click: the live selection still exists.
+      // Mid-drag right-click: the live selection still exists (no popover yet).
       const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
       if (range && range.count > 1) {
         toggleChunk(tl, range.minOrd, range.maxOrd)
         return
       }
-      // Single word: on a saved span (intersection — also any word of a saved
-      // chunk) remove it; otherwise save.
+      // Single word on a saved span (intersection — also any word of a saved
+      // chunk): remove, swapping an open saved-mode popover into the preview.
       const savedRange = savedRangeForToken(tl, token)
-      if (savedRange) removeHighlight(savedRange.highlightId)
-      else saveSingle(tl.line, token)
+      if (savedRange) {
+        removeHighlight(savedRange.highlightId, { tl, element })
+        return
+      }
+      // Single-word save. If this word's own gloss is open, ride the in-place
+      // handoff (popover stays, shows "Saving…", morphs into saved mode).
+      const glossIsForToken =
+        g &&
+        g.save.kind === 'single' &&
+        g.save.tl.line.index === tl.line.index &&
+        g.save.token.ordinal === token.ordinal
+      if (glossIsForToken) {
+        setGlossSaving(true)
+        saveSingle(tl.line, token, undefined, { lineIndex: g.lineIndex, anchor: g.anchor, hover: true })
+      } else {
+        saveSingle(tl.line, token)
+      }
     },
-    [interaction, saveChunk, saveSingle, hideGloss, findSavedChunkExact, savedRangeForToken, removeHighlight]
+    [interaction, saveChunk, saveSingle, findSavedChunkExact, savedRangeForToken, removeHighlight]
   )
 
   const onWordMouseDown = useCallback(
@@ -961,7 +1028,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                         savedRoundEnd={!!savedRange && token.charEnd >= savedRange.end}
                         onEnter={(el) => onWordEnter(tl, token, el)}
                         onLeave={() => onWordLeave(tl, token)}
-                        onContextMenu={() => onWordContextMenu(tl, token)}
+                        onContextMenu={(el) => onWordContextMenu(tl, token, el)}
                         onMouseDown={() => onWordMouseDown(tl, token)}
                       />
                     )
@@ -1043,7 +1110,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 // it into the saved-mode popover in place (or toasts on the
                 // fallback paths).
                 setGlossSaving(true)
-                const handoff: GlossSaveHandoff = { lineIndex: gloss.lineIndex, anchor: gloss.anchor }
+                // Sticky swap: the pointer is inside the popover (it clicked Save).
+                const handoff: GlossSaveHandoff = { lineIndex: gloss.lineIndex, anchor: gloss.anchor, hover: false }
                 if (gloss.save.kind === 'chunk')
                   saveChunk(gloss.save.tl, gloss.save.minOrd, gloss.save.maxOrd, studyIntent, handoff)
                 else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent, handoff)

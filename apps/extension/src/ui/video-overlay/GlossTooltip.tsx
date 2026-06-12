@@ -167,8 +167,11 @@ export function GlossTooltip({
   // Outside pointerdown → onOutsidePointerDown (the parent only acts on it
   // while pinned). composedPath (not target containment) because the popover
   // lives inside a shadow root — same dismissal as SavedGlossTooltip.
+  // Right-button presses are NOT a dismiss intent: right-click is the
+  // save/remove toggle, and an open popover survives it and morphs in place.
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
+      if (e.button === 2) return
       const el = ref.current
       if (el && e.composedPath().includes(el)) return
       onOutsidePointerDown()
@@ -323,9 +326,12 @@ export function SavedGlossTooltip({
   }, [sessionId, highlight.id])
 
   // Sticky dismissal: outside pointerdown closes. composedPath (not target
-  // containment) because the popover lives inside a shadow root.
+  // containment) because the popover lives inside a shadow root. Right-button
+  // presses are NOT a dismiss intent: right-click is the save/remove toggle —
+  // a right-click remove swaps this popover into the preview gloss instead.
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
+      if (e.button === 2) return
       const el = ref.current
       if (el && e.composedPath().includes(el)) return
       onClose()
