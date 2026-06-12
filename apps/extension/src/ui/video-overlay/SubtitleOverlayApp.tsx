@@ -468,7 +468,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // Save a multi-word chunk by its snapshotted word-ordinal range (see
   // GlossSaveTarget — the live selection is already cleared by save time).
   const saveChunk = useCallback(
-    (tl: TokenizedLine, minOrd: number, maxOrd: number, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
+    (
+      tl: TokenizedLine,
+      minOrd: number,
+      maxOrd: number,
+      studyIntent?: SaveWordStudyIntent,
+      handoff?: GlossSaveHandoff
+    ) => {
       const selectedWords = tl.wordTokens.slice(minOrd, maxOrd + 1)
       if (selectedWords.length === 0) return
       const words = selectedWords.map((w) => w.text).join(' ')
