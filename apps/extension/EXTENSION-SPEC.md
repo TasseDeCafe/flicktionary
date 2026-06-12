@@ -390,6 +390,10 @@ resolves to an exact `text_segments` row + offsets.
   gloss dismisses on outside pointerdown (same gesture as the saved-mode
   popover), play, cue change, overlay hide, or by hovering another word
   (the new gloss replaces it and starts unpinned).
+  **Saved words don't get the preview:** hovering a word on a saved span opens
+  the SAVED-MODE popover instead (hover variant — same 300 ms debounce and
+  150 ms hover-out grace; entering it flips it sticky), so a saved word never
+  shows a second Save button. Hover and click on a saved span agree.
 - **Selection** — click selects a word; press-and-drag extends to a contiguous
   multi-word (even multi-segment) chunk. The painted selection PERSISTS past
   release (deliberate; the web's painter was aligned to this): the sky wash
@@ -407,17 +411,26 @@ resolves to an exact `text_segments` row + offsets.
   white wash (`hover:bg-white/20` — hover means "glossable" here, a state the
   click-driven web doesn't paint; the web reader instead got an accent-tint
   hover affordance on selectable words).
-- **Save** — right-click (word or selection) shows the Save action; success
-  drops a toast and clears the selection. Signed-out → a "Sign in" action;
-  registration-failed → disabled Save with the reason. The save calls
+- **Save / right-click toggle** — right-click saves the word (or selection /
+  open chunk gloss) under the pointer; right-click on an already-saved span
+  (any word of it; a chunk toggles on an exact range match) REMOVES it instead,
+  so repeated right-clicks cycle save → remove rather than stacking duplicates
+  (web session-view parity — it has the same right-click toggle). Right-click
+  also closes any open gloss and pending hover debounce up front, so no stale
+  Save button survives over a just-saved word. **No success toasts** in either
+  direction: the span's yellow wash appearing/disappearing is the feedback
+  (toasts per word got noisy at volume); failures still toast. Success clears
+  the selection. Signed-out → a "Sign in" action; registration-failed →
+  disabled Save with the reason. The save calls
   `highlights.create({sessionId, start/endSegmentId, offsets, selectionText,
-  studyIntent?})`.
+  studyIntent?})`; the remove calls `highlights.delete` after the server ack.
   **In-place handoff (web gloss-sheet parity):** Save from the gloss popover
   keeps the popover open as "Saving…" and, on success, swaps it into the
   saved-mode popover anchored at the same word — note/tags/Remove are
-  immediately reachable, no re-click on the span. The toast only fires on the
-  fallback paths (right-click save, segment-map miss, video resumed, cue
-  changed, or the user already hovered a different word's gloss).
+  immediately reachable, no re-click on the span. On the fallback paths
+  (segment-map miss, video resumed, cue changed, or the user already hovered a
+  different word's gloss) the gloss simply closes — the painted span is the
+  only success cue.
 - **Study options** — the gloss tooltip carries a collapsed "Study options"
   disclosure above its Save button (only when saving is available):
   Recognition (pre-checked) / Production / Pronunciation checkboxes plus a
@@ -479,18 +492,23 @@ resolves to an exact `text_segments` row + offsets.
     session — without it the saved-mode popover can't open on the new span).
     A response without the highlight falls back to a full reload.
   - **Saved-mode popover** — a plain click (no drag) on a saved span opens a
-    sticky popover (`SavedGlossTooltip`) — parity with the web session view's
-    gloss sheet minus ghost-extend: cached `fastGloss` parses instantly
-    (`parse-fast-gloss.ts`, ported from the web sheet) and refreshes via
-    `flicktionary-saved-gloss` → `highlights.fastGloss`; **Remove highlight**
+    sticky popover (`SavedGlossTooltip`); HOVERING a saved span opens the same
+    popover in a hover variant (300 ms debounce, hover-out grace dismissal,
+    sticky once the pointer enters it) — there is no preview-with-Save over a
+    saved word. Parity with the web session view's gloss sheet minus
+    ghost-extend: cached `fastGloss` parses instantly (`parse-fast-gloss.ts`,
+    ported from the web sheet) and refreshes via `flicktionary-saved-gloss` →
+    `highlights.fastGloss`; **Remove highlight**
     (`delete-flicktionary-highlight`, 404 counts as success) removes the span
-    and toasts; **Add/Edit note** offers the same textarea + preset tags as
-    the web and composes the same localized `chatSeedPrompt`
+    silently (no success toast — the wash disappearing is the feedback, same
+    as the right-click remove); **Add/Edit note** offers the same textarea +
+    preset tags as the web and composes the same localized `chatSeedPrompt`
     (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
-    No Study options / Save here. Saved mode wins over the hover preview
-    (the preview neither opens over it nor renders while it's up); it
-    dismisses on outside pointerdown (composedPath — shadow root), play,
-    cue change, or overlay hide — never on pointer-leave (it has a textarea).
+    No Study options / Save here. A STICKY saved popover wins over the hover
+    preview (the preview neither opens over it nor renders while it's up); a
+    hover-opened one yields to hovering other words. Sticky dismissal is
+    outside pointerdown (composedPath — shadow root), play, cue change, or
+    overlay hide — never pointer-leave (it has a textarea).
 - **CEFR picker** — if a save bounces with `MISSING_CEFR`, an over-video A1–C2
   grid appears; picking a level calls `extensionAuth.setCefrLevel` and retries
   the save.

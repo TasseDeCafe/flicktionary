@@ -331,8 +331,9 @@ export const useCreateHighlight = (sessionId: string) => {
           // (no live ghost change) on a plain save.
           orpcQuery.ghosts.listBySession.key({ input: { sessionId } }),
         ],
-        showSuccessToast: true,
-        successMessage: t`Highlight saved`,
+        // No success toast: the span turning yellow is the save feedback, and a
+        // toast per word gets noisy (and overlaps buttons on mobile) when the
+        // user saves dozens of words in a row.
         errorMessage: t`Failed to save highlight`,
       },
     })

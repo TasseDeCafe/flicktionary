@@ -250,15 +250,22 @@ export interface SavedGlossTooltipProps {
   // re-open shows the saved values without a reload.
   onNotePatched: (note: string | null, presetTags: string[]) => void
   onClose: () => void
+  // The pointer entered the popover. A HOVER-opened popover (see
+  // SavedPopoverState.hover) uses this to cancel its pending word-leave hide
+  // and flip itself sticky; a click-opened one is sticky already.
+  onPointerEnter?: () => void
 }
 
-// Saved-mode popover for a click on an already-saved span — parity with the
-// web session view's gloss sheet minus ghost-extend: cached gloss instantly
-// (refreshed via highlights.fastGloss), Remove highlight, and the note + preset
-// tags editor that seeds the card chat. Unlike the hover preview it is STICKY:
-// it has a textarea, so it dismisses on outside pointerdown (composedPath —
-// the popover lives in its own shadow root) / play / cue change, never on
-// pointer-leave. No Study options / Save here — the word is already saved.
+// Saved-mode popover for a click OR hover on an already-saved span — parity
+// with the web session view's gloss sheet minus ghost-extend: cached gloss
+// instantly (refreshed via highlights.fastGloss), Remove highlight, and the
+// note + preset tags editor that seeds the card chat. A click open is STICKY
+// from the start: it has a textarea, so it dismisses on outside pointerdown
+// (composedPath — the popover lives in its own shadow root) / play / cue
+// change, never on pointer-leave. A hover open starts with the hover gloss's
+// grace-timer dismissal and turns sticky once the pointer enters it (the
+// parent's onPointerEnter wiring). No Study options / Save here — the word is
+// already saved.
 export function SavedGlossTooltip({
   anchor,
   sessionId,
@@ -266,6 +273,7 @@ export function SavedGlossTooltip({
   onRemoved,
   onNotePatched,
   onClose,
+  onPointerEnter,
 }: SavedGlossTooltipProps) {
   const { t } = useLingui()
   const ref = useRef<HTMLDivElement>(null)
@@ -371,6 +379,7 @@ export function SavedGlossTooltip({
     <div
       ref={ref}
       data-flicktionary-saved-popover=''
+      onMouseEnter={onPointerEnter}
       style={{ visibility: positioned ? 'visible' : 'hidden' }}
       className={POPOVER_CARD_CLASS}
     >

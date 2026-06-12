@@ -7,6 +7,8 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
+  useCreateHighlight,
+  useDeleteHighlight,
   useGetStudySession,
   useGetUserPrefs,
   useListSegmentsByTrack,
@@ -18,7 +20,7 @@ import {
 import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import type { SelectionResult } from '../utils/selection-adapter'
 import { normalizeCrossSegmentSelection } from '../utils/selection-adapter'
-import { useWordSelection } from '@/lib/dom/use-word-selection'
+import { useWordSelection, wordKeyFromSpan } from '@/lib/dom/use-word-selection'
 import { buildSegmentRanges, buildGhostSegmentRanges } from '../utils/build-segment-ranges'
 import { findOverlappingGhost } from '../utils/ghost-overlap'
 import { useVisibleSegmentRange } from '../hooks/use-visible-segment-range'
@@ -275,6 +277,54 @@ export const SessionView = () => {
     },
   })
 
+  // Right-click toggle (extension-overlay parity): on a bare word it saves
+  // immediately — no left-click selection or sheet involved — and on an
+  // already-saved highlight it removes it. Feedback is the span's yellow wash
+  // appearing/disappearing; the sheet stays closed so a power user can chain
+  // saves. While the sheet IS open, its own document-level right-click handler
+  // owns the gesture (save in preview / remove in saved mode), so bail here.
+  // Pointerdown (not contextmenu) for the same reason as the sheet: the
+  // word-selection hook already suppresses the native menu, and acting on the
+  // initial press keeps both handlers on one event.
+  const { mutate: createHighlightFromRightClick } = useCreateHighlight(sessionId)
+  const { mutate: deleteHighlightFromRightClick } = useDeleteHighlight(sessionId)
+  // Offsets of right-click saves currently in flight: until the created row is
+  // back in the list, the word has no `data-highlight-id` wrapper yet, so a
+  // double right-click faster than the roundtrip would save it twice.
+  const pendingRightClickSavesRef = useRef<Set<string>>(new Set())
+  const handleRightClickToggle = (e: React.PointerEvent) => {
+    if (e.button !== 2 || glossOpen) return
+    const target = e.target instanceof Element ? e.target : null
+    if (!target) return
+    const highlightEl = target.closest('[data-highlight-id]')
+    if (highlightEl instanceof HTMLElement && highlightEl.dataset.highlightId) {
+      deleteHighlightFromRightClick({ sessionId, highlightId: highlightEl.dataset.highlightId })
+      return
+    }
+    const span = target.closest('[data-word-start]')
+    if (!span) return
+    const key = wordKeyFromSpan(span)
+    if (!key) return
+    const normalized = normalizeCrossSegmentSelection(key, key, visibleSegments)
+    if (!normalized || normalized.selectionText.length === 0) return
+    const saveKey = `${normalized.startSegmentId}:${normalized.startOffset}:${normalized.endOffset}`
+    if (pendingRightClickSavesRef.current.has(saveKey)) return
+    pendingRightClickSavesRef.current.add(saveKey)
+    createHighlightFromRightClick(
+      {
+        sessionId,
+        startSegmentId: normalized.startSegmentId,
+        endSegmentId: normalized.endSegmentId,
+        startOffset: normalized.startOffset,
+        endOffset: normalized.endOffset,
+        selectionText: normalized.selectionText,
+        note: null,
+        presetTags: [],
+      },
+      { onSettled: () => pendingRightClickSavesRef.current.delete(saveKey) }
+    )
+  }
+
   const handleSegmentListClick = (e: React.MouseEvent) => {
     // Suppress the click that closes a freshly-completed selection.
     if (Date.now() - lastSelectionAtRef.current < 250) return
@@ -383,6 +433,7 @@ export const SessionView = () => {
           className='flex-1 touch-pan-y overflow-y-auto px-4 py-3 select-none'
           style={{ WebkitTouchCallout: 'none' }}
           onClick={handleSegmentListClick}
+          onPointerDown={handleRightClickToggle}
         >
           <div className='mx-auto max-w-4xl'>
             {isSegmentsLoading ? (

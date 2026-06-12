@@ -436,8 +436,10 @@ export const SessionGlossSheet = ({
   // Hoisted so the lingui message uses a plain ${placeholder}, not a member access.
   const suggestedSurface = suggestedGhost?.surfaceForm ?? ''
 
-  const handleRemove = () => {
-    if (!highlightId) return
+  const handleRemove = useCallback(() => {
+    // isDeleting guards the right-click shortcut — the button is disabled, but
+    // a repeated right-click would otherwise fire a second delete (a 404).
+    if (!highlightId || isDeleting) return
     deleteHighlight(
       { sessionId, highlightId },
       {
@@ -446,7 +448,7 @@ export const SessionGlossSheet = ({
         },
       }
     )
-  }
+  }, [highlightId, isDeleting, deleteHighlight, sessionId, onClose])
 
   // Compose the localized chat question: each selected preset's sentence (in
   // gloss-sheet button order) followed by the verbatim note. Null when there is
@@ -481,27 +483,28 @@ export const SessionGlossSheet = ({
   const isPreview = !!selection && !existingHighlight && !highlightId
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
 
-  // Right-click while previewing saves — the explicit power-shortcut that
-  // mirrors the extension's right-click-to-save. The sheet is only open in
-  // preview mode because a word/chunk is selected, so a right-click is "save
-  // this".
+  // Right-click while the sheet is open is the toggle power-shortcut that
+  // mirrors the extension's right-click-to-save: in preview mode it saves the
+  // selection the sheet refers to, in saved mode it removes the highlight —
+  // so right-click, right-click on the same word cycles save → remove.
   //
   // We act on the right-button `pointerdown`, NOT `contextmenu`: the floating
   // sheet (Radix) dismisses on an outside `pointerdown` (capture phase), which
   // flips `open` to false and tears this listener down BEFORE `contextmenu`
-  // ever fires. Handling pointerdown runs the save within that same dispatch.
-  // The save (createHighlight) and its success toast are driven by the global
-  // mutation cache, so they complete even though the sheet then closes.
+  // ever fires. Handling pointerdown runs the action within that same dispatch.
+  // The mutation is driven by the global mutation cache, so it completes even
+  // though the sheet then closes.
   useEffect(() => {
-    if (!open || !isPreview) return
+    if (!open) return
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 2) return
       e.preventDefault()
-      void handleSave()
+      if (isPreview) void handleSave()
+      else handleRemove()
     }
     document.addEventListener('pointerdown', onPointerDown, { capture: true })
     return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
-  }, [open, isPreview, handleSave])
+  }, [open, isPreview, handleSave, handleRemove])
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const displayedIpa = isReady
     ? (pickIpa((glossState as Extract<GlossState, { kind: 'ready' }>).ipa, targetLanguage, englishIpaDialect) ?? null)
