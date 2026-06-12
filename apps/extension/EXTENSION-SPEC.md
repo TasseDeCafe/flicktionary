@@ -411,7 +411,11 @@ uses intersection, not exact offsets.
   release (deliberate; the web's painter was aligned to this): the sky wash
   keeps showing what the open popover refers to, clearing on save / play /
   cue change / saved-popover open / the next mousedown. A multi-word release
-  opens the chunk gloss immediately (no hover debounce), **born pinned** (an
+  opens the chunk gloss immediately (no hover debounce) — unless the range
+  EXACTLY matches a saved highlight, in which case its sticky saved-mode
+  popover opens instead (a preview's Save would stack a duplicate row; the
+  chunk twin of the saved-span routing below, and the counterpart of the web
+  sheet's findCachedHighlight dedup) — **born pinned** (an
   intentional drag shouldn't die to a stray hover-out; outside pointerdown /
   play / cue change / hovering another word dismiss it), with the word-ordinal
   range SNAPSHOTTED into the gloss's save target (`GlossSaveTarget` chunk
