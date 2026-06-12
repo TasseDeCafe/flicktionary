@@ -347,6 +347,7 @@ export const StudySessionsRouter = (
           sessionId: session.id,
           textTrackId: track.id,
           contentSourceId: contentSource.id,
+          targetLanguage: session.target_language,
           segments: segments.map(toSegmentDto),
         },
       }
@@ -387,6 +388,7 @@ export const StudySessionsRouter = (
             sessionId: session.id,
             textTrackId: track.id,
             contentSourceId: contentSource.id,
+            targetLanguage: session.target_language,
             segments: segments.map(toSegmentDto),
           },
         }
@@ -414,6 +416,7 @@ export const StudySessionsRouter = (
           sessionId: found.session.id,
           textTrackId: found.track.id,
           contentSourceId: found.contentSource.id,
+          targetLanguage: found.session.target_language,
           segments: found.segments.map(toSegmentDto),
         },
       }

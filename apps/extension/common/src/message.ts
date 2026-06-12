@@ -407,17 +407,13 @@ export interface FlicktionaryStartPairingResponse {
   readonly error?: string
 }
 
-export interface FlicktionaryGlossIpa {
-  readonly ga?: string | null
-  readonly rp?: string | null
-  readonly untagged?: string | null
-}
-
 export interface FlicktionaryGlossResponse {
   readonly gloss?: string
   readonly pos?: string | null
   readonly register?: string | null
-  readonly ipa?: FlicktionaryGlossIpa | null
+  // Server-picked, dialect-correct IPA display string (the backend resolves
+  // the user's english_ipa_dialect pref) — render verbatim, no bag picking.
+  readonly ipaDisplay?: string | null
   readonly error?: string
 }
 
@@ -486,8 +482,10 @@ export interface SaveWordResponse {
   // Backend error code (e.g. 'MISSING_CEFR') so the content script can offer a
   // recovery flow instead of just toasting the message.
   readonly code?: string
-  // Detected target language for the save, surfaced on a 'MISSING_CEFR' failure
-  // so the in-video CEFR picker knows which language to set a level for.
+  // Detected target language. On a 'MISSING_CEFR' failure it tells the
+  // in-video CEFR picker which language to set a level for; on SUCCESS it
+  // backfills the overlay's tokenizer locale when the saved-highlights load
+  // ran before the video's first save created the session.
   readonly targetLanguage?: string
   // The created highlight (indexes, not segment ids — converted in the
   // background via the cached segment map) so the overlay can paint the saved
@@ -536,6 +534,10 @@ export interface LoadFlicktionarySavedHighlightsResponse {
   // all saved-highlight calls (signed-out is a normal state, not an error).
   readonly signedIn: boolean
   readonly sessionId?: string
+  // The server-detected subtitle language — threaded into the overlay's
+  // Intl.Segmenter so word boundaries match the web reader's. Absent when no
+  // session exists yet or the cache entry predates the field.
+  readonly targetLanguage?: string
   // Empty when no session exists for this video yet (the never-saved state).
   readonly highlights?: ReadonlyArray<SavedHighlightDto>
   readonly error?: string
@@ -582,7 +584,8 @@ export interface FlicktionarySavedGlossResponse {
   readonly gloss?: string
   readonly pos?: string | null
   readonly register?: string | null
-  readonly ipa?: FlicktionaryGlossIpa | null
+  // Server-picked display string — same convention as FlicktionaryGlossResponse.
+  readonly ipaDisplay?: string | null
   readonly error?: string
 }
 

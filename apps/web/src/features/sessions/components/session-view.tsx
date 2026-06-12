@@ -7,6 +7,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import {
+  isOptimisticHighlightId,
   useCreateHighlight,
   useDeleteHighlight,
   useGetStudySession,
@@ -298,6 +299,10 @@ export const SessionView = () => {
     if (!target) return
     const highlightEl = target.closest('[data-highlight-id]')
     if (highlightEl instanceof HTMLElement && highlightEl.dataset.highlightId) {
+      // An optimistic row isn't deletable yet (the server doesn't know its
+      // temp id) — a second right-click mid-save would 404. Drop the gesture;
+      // the row gets its real id when the create settles.
+      if (isOptimisticHighlightId(highlightEl.dataset.highlightId)) return
       deleteHighlightFromRightClick({ sessionId, highlightId: highlightEl.dataset.highlightId })
       return
     }
@@ -330,6 +335,10 @@ export const SessionView = () => {
     if (Date.now() - lastSelectionAtRef.current < 250) return
     const target = e.target instanceof Element ? e.target.closest('[data-highlight-id]') : null
     if (!(target instanceof HTMLElement) || !target.dataset.highlightId) return
+    // The sheet's saved mode fires fastGloss/note/delete against the id —
+    // none of which exist for an optimistic row. Ignore the click until the
+    // create settles and the span re-renders with its real id.
+    if (isOptimisticHighlightId(target.dataset.highlightId)) return
     setPendingSelection(null)
     setPendingGhostId(null)
     setExistingHighlightId(target.dataset.highlightId)

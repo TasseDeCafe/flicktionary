@@ -33,8 +33,8 @@ export default class SaveWordHandler {
     void (async () => {
       try {
         await activateBackgroundLocale()
-        const { highlight, sessionId } = await this._saveToFlicktionary(message)
-        sendResponse({ success: true, highlight, sessionId })
+        const { highlight, sessionId, targetLanguage } = await this._saveToFlicktionary(message)
+        sendResponse({ success: true, highlight, sessionId, targetLanguage })
       } catch (error) {
         const {
           code,
@@ -50,12 +50,12 @@ export default class SaveWordHandler {
 
   // Returns the created highlight as an index-based DTO (segment ids converted
   // back through the cached map) so the overlay can paint the saved span
-  // optimistically, plus the session id (the overlay's store has no session
-  // before the video's first save). Highlight undefined when a segment id
-  // doesn't resolve — the overlay then falls back to a full reload.
+  // optimistically, plus the session id and target language (the overlay's
+  // store has neither before the video's first save). Highlight undefined when
+  // a segment id doesn't resolve — the overlay then falls back to a full reload.
   private async _saveToFlicktionary(
     message: SaveWordMessage
-  ): Promise<{ highlight: SavedHighlightDto | undefined; sessionId: string }> {
+  ): Promise<{ highlight: SavedHighlightDto | undefined; sessionId: string; targetLanguage: string }> {
     const auth = await getFlicktionaryAuth()
     if (!auth) {
       throw new Error(i18n._(msg`Sign in to Flicktionary to save words.`))
@@ -104,6 +104,7 @@ export default class SaveWordHandler {
         sessionId: data.sessionId,
         textTrackId: data.textTrackId,
         contentSourceId: data.contentSourceId,
+        targetLanguage: data.targetLanguage,
         segmentIdByIndex,
       }
       await storeFlicktionarySession(videoCtx.source, videoCtx.contentHash, cached)
@@ -135,7 +136,7 @@ export default class SaveWordHandler {
     const startSegmentIndex = indexBySegmentId[created.startSegmentId]
     const endSegmentIndex = indexBySegmentId[created.endSegmentId]
     if (startSegmentIndex === undefined || endSegmentIndex === undefined) {
-      return { highlight: undefined, sessionId: cached.sessionId }
+      return { highlight: undefined, sessionId: cached.sessionId, targetLanguage: cached.targetLanguage }
     }
     return {
       highlight: {
@@ -150,6 +151,7 @@ export default class SaveWordHandler {
         fastGloss: created.fastGloss,
       },
       sessionId: cached.sessionId,
+      targetLanguage: cached.targetLanguage,
     }
   }
 }

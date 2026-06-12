@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
 import { PencilLine, Save, Trash2 } from 'lucide-react'
@@ -12,20 +12,24 @@ import {
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
 import { Button } from '@flicktionary/ui/components/button'
 import { Textarea } from '@flicktionary/ui/components/textarea'
+import {
+  PRESET_TAGS,
+  composeChatSeedPrompt,
+  usePresetTagTexts,
+  type PresetTag,
+} from '@flicktionary/ui/components/preset-tags'
+import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
+import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
 import type { SavedHighlightDto } from '@asbplayer-fork/common'
 import {
-  GlossData,
   deleteSavedHighlight,
   fetchSavedGloss,
-  pickIpa,
   updateSavedHighlightNote,
 } from '../../services/flicktionary/flicktionary-client'
-import { parseFastGloss } from './parse-fast-gloss'
 
-export type GlossContent =
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
-  | { status: 'ready'; data: GlossData }
+// The shared gloss view state under this file's historical name — the overlay
+// never constructs the web-only `idle` member.
+export type GlossContent = GlossViewState
 
 // Both popovers hardcode the web app's DARK theme: they always float over
 // video, where the light card would glare. The `dark` class on the root makes
@@ -44,15 +48,23 @@ const CARD_FOOTER_CLASS = 'mt-auto flex flex-col gap-2 px-2 pt-2 pb-3'
 // Floating-ui positioning shared by the preview and saved popovers: fixed
 // strategy against the anchor's viewport rect (the anchor lives in the
 // transformed subtitle shadow tree, the popover in the separate non-transformed
-// popover host — correct in both windowed and fullscreen). Returns the
-// `positioned` gate that hides the first unpositioned paint.
+// popover host — correct in both windowed and fullscreen).
+//
+// Placement happens BEFORE the mounting commit paints: the layout effect kicks
+// off computePosition, whose awaits are all microtasks (the DOM platform
+// methods are synchronous), so left/top/visibility land on the element before
+// the browser paints. The popover stays `visibility: hidden` until then —
+// imperatively, not via state: a state-gated reveal flips only in a SECOND,
+// post-paint render, which guarantees one painted frame with no popover. That
+// frame was invisible on a fresh open (nothing was there before) but showed as
+// a flash on the save handoff, where the preview popover unmounts and the
+// saved-mode popover mounts at the same anchor in one commit.
 const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivElement | null>) => {
-  const [positioned, setPositioned] = useState(false)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const tooltip = ref.current
     if (!tooltip) return
 
-    setPositioned(false)
+    tooltip.style.visibility = 'hidden'
     const update = () => {
       computePosition(anchor, tooltip, {
         strategy: 'fixed',
@@ -61,13 +73,12 @@ const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivEle
       }).then(({ x, y }) => {
         tooltip.style.left = `${x}px`
         tooltip.style.top = `${y}px`
-        setPositioned(true)
+        tooltip.style.visibility = 'visible'
       })
     }
 
     return autoUpdate(anchor, tooltip, update)
   }, [anchor, ref])
-  return positioned
 }
 
 // The gloss body, shared by the preview and saved modes: the web app's
@@ -77,13 +88,13 @@ const GlossBody = ({ content, srDescription }: { content: GlossContent; srDescri
   <>
     <GlossCardBody
       loading={content.status === 'loading'}
-      gloss={content.status === 'ready' ? content.data.gloss || null : null}
-      pos={content.status === 'ready' ? content.data.pos : null}
-      register={content.status === 'ready' ? content.data.register : null}
-      ipaLabel={content.status === 'ready' ? pickIpa(content.data.ipa) : null}
+      gloss={content.status === 'ready' ? content.gloss || null : null}
+      pos={content.status === 'ready' ? content.pos : null}
+      register={content.status === 'ready' ? content.register : null}
+      ipaLabel={content.status === 'ready' ? content.ipaDisplay : null}
       srDescription={srDescription}
     />
-    {content.status === 'ready' && !content.data.gloss && (
+    {content.status === 'ready' && !content.gloss && (
       <p className='text-muted-foreground text-sm'>
         <Trans>No translation available</Trans>
       </p>
@@ -148,10 +159,7 @@ export function GlossTooltip({
 }: GlossTooltipProps) {
   const { t } = useLingui()
   const ref = useRef<HTMLDivElement>(null)
-  // Gate visibility until the async computePosition has placed the tooltip;
-  // otherwise it paints one frame at its initial top-left before moving (the
-  // brief viewport-corner flash). Reset whenever the anchor changes.
-  const positioned = useTooltipPosition(anchor, ref)
+  useTooltipPosition(anchor, ref)
   // "Study options" draft (full-set semantics). The SECTION is the shared web
   // component — safe in shadow surfaces since the ui Checkbox/Switch were
   // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
@@ -186,7 +194,6 @@ export function GlossTooltip({
       data-flicktionary-gloss-popover=''
       onMouseEnter={onPointerEnter}
       onMouseLeave={onPointerLeave}
-      style={{ visibility: positioned ? 'visible' : 'hidden' }}
       className={POPOVER_CARD_CLASS}
     >
       <div className={CARD_HEADER_CLASS}>
@@ -237,11 +244,6 @@ export function GlossTooltip({
   )
 }
 
-// Preset tags offered in the saved-mode note editor — same ids as the web
-// gloss sheet, so a note edited here reads identically in the web app.
-const PRESET_TAGS = ['explain', '3_examples', 'synonyms', 'etymology', 'why_this_form'] as const
-type PresetTag = (typeof PRESET_TAGS)[number]
-
 export interface SavedGlossTooltipProps {
   anchor: HTMLElement
   sessionId: string
@@ -280,11 +282,11 @@ export function SavedGlossTooltip({
 }: SavedGlossTooltipProps) {
   const { t } = useLingui()
   const ref = useRef<HTMLDivElement>(null)
-  const positioned = useTooltipPosition(anchor, ref)
+  useTooltipPosition(anchor, ref)
 
   const [content, setContent] = useState<GlossContent>(() =>
     highlight.fastGloss
-      ? { status: 'ready', data: { ...parseFastGloss(highlight.fastGloss), ipa: null } }
+      ? { status: 'ready', ...parseFastGloss(highlight.fastGloss), ipaDisplay: null }
       : { status: 'loading' }
   )
   const [note, setNote] = useState(highlight.note ?? '')
@@ -293,24 +295,7 @@ export function SavedGlossTooltip({
   const [busy, setBusy] = useState<'remove' | 'note' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const presetLabels: Record<PresetTag, string> = {
-    explain: t`Explain`,
-    '3_examples': t`3 examples`,
-    synonyms: t`Synonyms`,
-    etymology: t`Etymology`,
-    why_this_form: t`Why this form?`,
-  }
-
-  // Localized natural-language phrasing for each preset, composed into the chat
-  // question sent to the backend — same contract as the web gloss sheet's
-  // composeChatSeedPrompt (localize client-side, backend stays language-agnostic).
-  const presetPrompts: Record<PresetTag, string> = {
-    explain: t`Explain this term in more depth.`,
-    '3_examples': t`Give me three more example sentences using it.`,
-    synonyms: t`What are some synonyms or near-synonyms, and how do they differ?`,
-    etymology: t`What's the etymology or origin of this term?`,
-    why_this_form: t`Why does it appear in this particular form here?`,
-  }
+  const { labels: presetLabels, prompts: presetPrompts } = usePresetTagTexts()
 
   // Refresh the gloss from the server even when a cached fastGloss rendered
   // instantly — this also enriches older rows with Wiktionary IPA.
@@ -318,7 +303,7 @@ export function SavedGlossTooltip({
     let cancelled = false
     void fetchSavedGloss(sessionId, highlight.id).then((data) => {
       if (cancelled || !data) return
-      setContent({ status: 'ready', data })
+      setContent({ status: 'ready', ...data })
     })
     return () => {
       cancelled = true
@@ -352,9 +337,6 @@ export function SavedGlossTooltip({
 
   const handleSaveNote = useCallback(() => {
     const trimmedNote = note.trim()
-    const selectedPrompts = PRESET_TAGS.filter((tag) => tags.includes(tag)).map((tag) => presetPrompts[tag])
-    const parts = trimmedNote ? [...selectedPrompts, trimmedNote] : selectedPrompts
-    const chatSeedPrompt = parts.length ? parts.join('\n') : null
     setBusy('note')
     setActionError(null)
     void updateSavedHighlightNote({
@@ -362,7 +344,7 @@ export function SavedGlossTooltip({
       highlightId: highlight.id,
       note: trimmedNote || null,
       presetTags: tags,
-      chatSeedPrompt,
+      chatSeedPrompt: composeChatSeedPrompt(tags, presetPrompts, note),
     }).then((ok) => {
       setBusy(null)
       if (ok) {
@@ -382,13 +364,7 @@ export function SavedGlossTooltip({
   const hasNoteDetails = (highlight.note ?? '').trim().length > 0 || highlight.presetTags.length > 0
 
   return (
-    <div
-      ref={ref}
-      data-flicktionary-saved-popover=''
-      onMouseEnter={onPointerEnter}
-      style={{ visibility: positioned ? 'visible' : 'hidden' }}
-      className={POPOVER_CARD_CLASS}
-    >
+    <div ref={ref} data-flicktionary-saved-popover='' onMouseEnter={onPointerEnter} className={POPOVER_CARD_CLASS}>
       <div className={CARD_HEADER_CLASS}>
         <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
         <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />

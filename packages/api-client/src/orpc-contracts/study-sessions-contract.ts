@@ -190,6 +190,10 @@ export const studySessionsContract = {
           sessionId: z.string().uuid(),
           textTrackId: z.string().uuid(),
           contentSourceId: z.string().uuid(),
+          // The server-detected subtitle language (also the session target
+          // language) — the extension threads it into Intl.Segmenter so word
+          // boundaries match the web reader's locale-aware tokenization.
+          targetLanguage: z.string(),
           // Full segment list so the extension can resolve a clicked
           // segment-index → text_segments.id without per-highlight round trips.
           segments: z.array(TextSegmentSchema),
@@ -229,6 +233,7 @@ export const studySessionsContract = {
           sessionId: z.string().uuid(),
           textTrackId: z.string().uuid(),
           contentSourceId: z.string().uuid(),
+          targetLanguage: z.string(),
           segments: z.array(TextSegmentSchema),
         }),
       })
@@ -265,6 +270,7 @@ export const studySessionsContract = {
             sessionId: z.string().uuid(),
             textTrackId: z.string().uuid(),
             contentSourceId: z.string().uuid(),
+            targetLanguage: z.string(),
             segments: z.array(TextSegmentSchema),
           })
           .nullable(),

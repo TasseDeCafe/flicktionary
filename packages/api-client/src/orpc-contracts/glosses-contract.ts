@@ -30,6 +30,11 @@ export const glossesContract = {
           pos: z.string().nullable(),
           register: z.string().nullable(),
           ipa: GrammarIpaBagSchema.nullable(),
+          // Server-picked, dialect-correct display string (the user's
+          // english_ipa_dialect pref for English, untagged otherwise) so
+          // clients render it verbatim instead of re-picking from the bag.
+          // The bag stays for deployed clients that still pick client-side.
+          ipaDisplay: z.string().nullable(),
         }),
       })
     ),

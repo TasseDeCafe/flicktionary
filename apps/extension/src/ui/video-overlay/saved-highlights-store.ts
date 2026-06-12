@@ -10,16 +10,20 @@ export interface SavedHighlightsState {
   // Session id the highlights belong to — needed by the saved-mode popover's
   // delete/note/gloss calls. Null while unloaded or signed out / no session.
   sessionId: string | null
+  // The session's server-detected subtitle language — the overlay's tokenizer
+  // locale. Null while unknown (unloaded / signed out / no session yet).
+  targetLanguage: string | null
   highlights: SavedHighlightDto[]
   // True once a load attempt settled (success OR signed-out/no-session empty).
   // Gates re-load scheduling, not rendering (an empty list paints nothing).
   loaded: boolean
 
-  setAll: (sessionId: string | null, highlights: ReadonlyArray<SavedHighlightDto>) => void
-  // `sessionId` (when known) backfills a store that loaded before the video's
-  // first save created the session — required for the saved-mode popover to
-  // open on the just-saved span.
-  add: (highlight: SavedHighlightDto, sessionId?: string) => void
+  setAll: (sessionId: string | null, highlights: ReadonlyArray<SavedHighlightDto>, targetLanguage?: string) => void
+  // `sessionId`/`targetLanguage` (when known) backfill a store that loaded
+  // before the video's first save created the session — required for the
+  // saved-mode popover to open on the just-saved span (and for the tokenizer
+  // locale to land without a reload).
+  add: (highlight: SavedHighlightDto, sessionId?: string, targetLanguage?: string) => void
   remove: (highlightId: string) => void
   patchNote: (highlightId: string, note: string | null, presetTags: string[]) => void
   reset: () => void
@@ -30,13 +34,16 @@ export type SavedHighlightsStore = StoreApi<SavedHighlightsState>
 export function createSavedHighlightsStore(): SavedHighlightsStore {
   return createStore<SavedHighlightsState>((set) => ({
     sessionId: null,
+    targetLanguage: null,
     highlights: [],
     loaded: false,
 
-    setAll: (sessionId, highlights) => set({ sessionId, highlights: [...highlights], loaded: true }),
-    add: (highlight, sessionId) =>
+    setAll: (sessionId, highlights, targetLanguage) =>
+      set({ sessionId, targetLanguage: targetLanguage ?? null, highlights: [...highlights], loaded: true }),
+    add: (highlight, sessionId, targetLanguage) =>
       set((state) => ({
         sessionId: sessionId ?? state.sessionId,
+        targetLanguage: targetLanguage ?? state.targetLanguage,
         // Replace-by-id keeps a re-save (or an optimistic add racing a reload)
         // from painting the same span twice.
         highlights: [...state.highlights.filter((h) => h.id !== highlight.id), highlight],
@@ -46,7 +53,7 @@ export function createSavedHighlightsStore(): SavedHighlightsStore {
       set((state) => ({
         highlights: state.highlights.map((h) => (h.id === highlightId ? { ...h, note, presetTags } : h)),
       })),
-    reset: () => set({ sessionId: null, highlights: [], loaded: false }),
+    reset: () => set({ sessionId: null, targetLanguage: null, highlights: [], loaded: false }),
   }))
 }
 

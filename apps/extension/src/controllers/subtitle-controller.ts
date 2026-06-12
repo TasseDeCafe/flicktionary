@@ -28,9 +28,11 @@ import { toast } from 'sonner'
 
 const BOUNDING_BOX_PADDING = 25
 
-// Marks the React gloss popover root so the pause-on-hover resume check can
-// find it (see `intersects`). Kept in sync with GlossTooltip.tsx.
-const GLOSS_POPOVER_SELECTOR = '[data-flicktionary-gloss-popover]'
+// Marks the React popover roots (preview gloss AND saved-mode — the save
+// handoff morphs one into the other, and hovering a saved span opens the
+// saved-mode popover directly) so the pause-on-hover resume check can find
+// them (see `intersects`). Kept in sync with GlossTooltip.tsx.
+const GLOSS_POPOVER_SELECTOR = '[data-flicktionary-gloss-popover], [data-flicktionary-saved-popover]'
 
 const _intersects = (clientX: number, clientY: number, element: HTMLElement): boolean => {
   const rect = element.getBoundingClientRect()
@@ -730,9 +732,10 @@ export default class SubtitleController {
       return true
     }
 
-    // Hover bridge: while a React gloss popover is open, treat the pointer as
-    // still "on the subtitles" when it's over the popover. Without this, moving
-    // from the hovered word up to the popover (to click Save) exits the
+    // Hover bridge: while a React popover is open (preview gloss or
+    // saved-mode), treat the pointer as still "on the subtitles" when it's
+    // over the popover. Without this, moving from the hovered word up to the
+    // popover (to click Save, or to edit a just-saved word's note) exits the
     // subtitle rect, auto-resumes playback, and dismisses the popover. Check
     // every mounted overlay's popover host (bottom and/or top).
     for (const kind of Object.keys(this._reactOverlays) as ReactOverlayKind[]) {

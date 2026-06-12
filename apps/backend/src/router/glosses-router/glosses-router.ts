@@ -10,6 +10,7 @@ import type { WiktionaryEntriesRepositoryInterface } from '../../transport/datab
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
 // Stateless gloss lookups (browser-extension subtitle hover). Mirrors the
 // practice.fastGloss handler but takes the context line directly and is bound
@@ -46,7 +47,11 @@ export const GlossesRouter = (
         pos: gloss.pos,
         wiktionaryEntriesRepository,
       })
-      return { data: { ...gloss, ipa } }
+      // Pre-pick the dialect-correct display string server-side so every
+      // client renders the same IPA. The dialect pref only matters for
+      // English; skip the DB roundtrip otherwise.
+      const dialect = input.targetLanguage === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : 'ga'
+      return { data: { ...gloss, ipa, ipaDisplay: pickIpa(ipa, input.targetLanguage, dialect) ?? null } }
     }),
   })
 
