@@ -50,6 +50,20 @@ body {
   background-color: color-mix(in oklab, var(--color-sky-400) 25%, transparent);
 }
 
+/* Round only the OUTER corners of the painted run (edge pieces tagged by the
+   painter) — per-piece rounding would notch the wash at every word/space
+   boundary. Logical properties so RTL text rounds the visually-outer corners. */
+[data-word-selected-edge='start'],
+[data-word-selected-edge='both'] {
+  border-start-start-radius: 0.25rem;
+  border-end-start-radius: 0.25rem;
+}
+[data-word-selected-edge='end'],
+[data-word-selected-edge='both'] {
+  border-start-end-radius: 0.25rem;
+  border-end-end-radius: 0.25rem;
+}
+
 /* Hover affordance on selectable words — invites the click that opens the
    gloss (extension-overlay parity, where hover already lights words up).
    `--accent` re-resolves under `.dark`, so one rule covers both themes.

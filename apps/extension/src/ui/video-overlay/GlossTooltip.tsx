@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
-import { ChevronDown, ChevronRight, PencilLine, Save, Trash2 } from 'lucide-react'
+import { PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
   draftToStudyIntent,
+  StudyOptionsSection,
   type StudyIntentDraft,
   type StudyIntentValue,
 } from '@flicktionary/ui/components/study-options-section'
@@ -151,17 +152,16 @@ export function GlossTooltip({
   // otherwise it paints one frame at its initial top-left before moving (the
   // brief viewport-corner flash). Reset whenever the anchor changes.
   const positioned = useTooltipPosition(anchor, ref)
-  // "Study options" draft (full-set semantics — see the shared component's
-  // model in @flicktionary/ui). Only the MODEL is shared: the controls below
-  // are native px-sized inputs because Radix Checkbox/Switch rem-size against
-  // the HOST page root font-size inside shadow surfaces (EXTENSION-SPEC.md).
+  // "Study options" draft (full-set semantics). The SECTION is the shared web
+  // component — safe in shadow surfaces since the ui Checkbox/Switch were
+  // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
+  // Switch's track-height comment).
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
-  const [optionsExpanded, setOptionsExpanded] = useState(false)
 
-  // A new word = a new save target: re-collapse and re-arm the draft.
+  // A new word = a new save target: re-arm the draft (the section re-collapses
+  // via its `key={word}` remount).
   useEffect(() => {
     setStudyDraft(defaultStudyIntentDraft)
-    setOptionsExpanded(false)
   }, [word])
 
   // Outside pointerdown → onOutsidePointerDown (the parent only acts on it
@@ -191,86 +191,12 @@ export function GlossTooltip({
         <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
       </div>
 
-      {/* Study options — only when saving is actually available. Native
-          checkbox inputs (px-sized; see the draft-state comment above), but
-          the disclosure/row styling mirrors the web StudyOptionsSection. */}
+      {/* Study options — only when saving is actually available. The shared
+          web section (Radix Checkbox + Switch, px-pinned at source), so the
+          controls are pixel-identical to the web sheet. */}
       {signedIn && !saveDisabledReason && (
         <div className={CARD_BODY_CLASS}>
-          <button
-            type='button'
-            onClick={() => setOptionsExpanded((prev) => !prev)}
-            aria-expanded={optionsExpanded}
-            className='text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-xs font-medium transition-colors'
-          >
-            {optionsExpanded ? <ChevronDown className='h-3.5 w-3.5' /> : <ChevronRight className='h-3.5 w-3.5' />}
-            <Trans>Study options</Trans>
-          </button>
-          {optionsExpanded &&
-            (() => {
-              const checkedSkillCount = [
-                studyDraft.recognition,
-                studyDraft.production,
-                studyDraft.pronunciation,
-              ].filter(Boolean).length
-              const isLastCheckedSkill = (checked: boolean) => checked && checkedSkillCount === 1
-              const hasMeaningSkill = studyDraft.recognition || studyDraft.production
-              const patch = (partial: Partial<StudyIntentDraft>) =>
-                setStudyDraft((prev) => ({ ...prev, ...partial, touched: true }))
-              const rowClass = (rowDisabled: boolean) =>
-                `flex items-center gap-2 text-sm ${rowDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`
-              const boxClass = 'size-4 accent-primary'
-              return (
-                <div className='flex flex-col gap-2'>
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.recognition))}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.recognition}
-                      disabled={isLastCheckedSkill(studyDraft.recognition)}
-                      onChange={(e) => patch({ recognition: e.target.checked })}
-                    />
-                    <Trans>Recognition</Trans>
-                  </label>
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.production))}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.production}
-                      disabled={isLastCheckedSkill(studyDraft.production)}
-                      onChange={(e) => patch({ production: e.target.checked })}
-                    />
-                    <Trans>Production</Trans>
-                  </label>
-                  {/* Always offerable: the preview's IPA is a Wiktionary-only
-                      lookup, but enrichment generates IPA for every saved
-                      selection — a pronunciation facet just stays pending
-                      until the generated IPA lands. */}
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.pronunciation))}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.pronunciation}
-                      disabled={isLastCheckedSkill(studyDraft.pronunciation)}
-                      onChange={(e) => patch({ pronunciation: e.target.checked })}
-                    />
-                    <Trans>Pronunciation</Trans>
-                  </label>
-                  <label className={rowClass(!hasMeaningSkill)}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.exactForm}
-                      disabled={!hasMeaningSkill}
-                      onChange={(e) => patch({ exactForm: e.target.checked })}
-                    />
-                    <span className='min-w-0 break-words'>
-                      <Trans>Study this exact form</Trans>{' '}
-                      <span className='text-muted-foreground'>(&ldquo;{word}&rdquo;)</span>
-                    </span>
-                  </label>
-                </div>
-              )
-            })()}
+          <StudyOptionsSection key={word} value={studyDraft} onChange={setStudyDraft} surfaceForm={word} />
         </div>
       )}
 

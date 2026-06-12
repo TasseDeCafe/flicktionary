@@ -369,10 +369,11 @@ resolves to an exact `text_segments` row + offsets.
   classes, with the web's DARK theme hardcoded via a `dark` class on the
   popover root (they always float over video; tokens.css is already adopted
   into the popover shadow root and `overlay.css` already `@source`-scans
-  `packages/ui/src`). Positioning stays floating-ui — only Radix-free shared
-  components are used (Radix Checkbox/Switch rem-size against the host page
-  root inside shadow surfaces, which is why Study options keeps native
-  checkboxes, model-only sharing).
+  `packages/ui/src`). Positioning stays floating-ui. The shared
+  `StudyOptionsSection` (Radix Checkbox + Switch) is used as-is: the old
+  rem-vs-host-root sizing trap was fixed at source — the ui Checkbox is
+  spacing/px-sized and the ui Switch's track height is pinned to px (see its
+  in-component comment) — so the controls are pixel-identical to the web.
   The lookup is a TanStack Query (`use-gloss.ts`) keyed
   `['gloss', word, sentence]` on the realm-wide `glossQueryClient`: successes
   cache (`staleTime: Infinity`, 30 min gcTime — re-hover is instant), errors
@@ -390,7 +391,15 @@ resolves to an exact `text_segments` row + offsets.
   popover), play, cue change, overlay hide, or by hovering another word
   (the new gloss replaces it and starts unpinned).
 - **Selection** — click selects a word; press-and-drag extends to a contiguous
-  multi-word (even multi-segment) chunk. Color semantics match the web reader:
+  multi-word (even multi-segment) chunk. Web-parity lifecycle: the painted
+  selection exists only DURING the gesture and clears at mouseup — from then
+  on the popover represents the selection. A multi-word release opens the
+  chunk gloss immediately (no hover debounce), **born pinned** (an intentional
+  drag shouldn't die to a stray hover-out; outside pointerdown / play / cue
+  change / hovering another word dismiss it), with the word-ordinal range
+  SNAPSHOTTED into the gloss's save target (`GlossSaveTarget` chunk carries
+  `minOrd`/`maxOrd` — Save and the right-click power-save can't read the
+  already-cleared live selection). Color semantics match the web reader:
   selection paints the sky wash (`bg-sky-400/25`, the reader's dark-mode
   word-selection color), saved highlights paint yellow (below), and the hover
   affordance is a neutral white wash (`hover:bg-white/20` — hover means
@@ -419,11 +428,12 @@ resolves to an exact `text_segments` row + offsets.
   lookup and says nothing about studiability (enrichment generates IPA for
   every saved selection; an IPA-less facet stays pending / is reconciled
   backend-side, see docs/SRS.md). The tooltip owns
-  the draft (`StudyIntentDraft` + `draftToStudyIntent` imported from
-  `@flicktionary/ui/components/study-options-section` — MODEL only; the
-  controls are native px-sized inputs because Radix Checkbox/Switch rem-size
-  against the host page root inside shadow surfaces). The draft resets and
-  re-collapses when the hovered word changes. `studyIntent` rides
+  the draft (`StudyIntentDraft` + `draftToStudyIntent`) and renders the
+  SHARED `StudyOptionsSection` from
+  `@flicktionary/ui/components/study-options-section` (Radix controls,
+  px-pinned at source — see the popover bullet above). The draft resets and
+  the section re-collapses (`key={word}` remount) when the hovered word
+  changes. `studyIntent` rides
   `SaveWordParams` → the `save-word` message → `highlights.create`, and
   survives the CEFR-picker retry via `pendingSave`. The right-click power-save
   bypasses the tooltip and always saves with the default. No ghost/"Use

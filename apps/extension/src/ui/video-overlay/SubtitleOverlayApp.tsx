@@ -101,8 +101,13 @@ const rangeFor = (sel: SelectionState | null, lineIndex: number, wordTokens: Lin
 
 // What an explicit Save from the gloss popover should persist — captured when
 // the gloss opens, since the hovered word is cleared by the time the pointer
-// has moved onto the popover.
-type GlossSaveTarget = { kind: 'single'; tl: TokenizedLine; token: LineToken } | { kind: 'chunk'; tl: TokenizedLine }
+// has moved onto the popover. The chunk range is SNAPSHOTTED (ordinals, not
+// the live selection): the painted selection clears at mouseup (web parity —
+// the popover represents the selection from then on), so a later Save can't
+// read it from the store.
+type GlossSaveTarget =
+  | { kind: 'single'; tl: TokenizedLine; token: LineToken }
+  | { kind: 'chunk'; tl: TokenizedLine; minOrd: number; maxOrd: number }
 
 // Where to re-open the popover after a Save from the gloss preview: the saved
 // outcome swaps the preview into the saved-mode popover IN PLACE (web
@@ -434,7 +439,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           clearSelection()
           break
         case 'missing-cefr':
-          // Keep the selection so the retry has the same word in context.
+          // pendingSave carries the full word/segment context for the retry.
           hideSaveSourceGloss()
           setCefrState({ targetLanguage: outcome.targetLanguage, pendingSave: params })
           break
@@ -460,11 +465,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     [closures, handleOutcome, queryClient]
   )
 
-  const saveSelection = useCallback(
-    (tl: TokenizedLine, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
-      const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
-      if (!range) return
-      const selectedWords = tl.wordTokens.slice(range.minOrd, range.maxOrd + 1)
+  // Save a multi-word chunk by its snapshotted word-ordinal range (see
+  // GlossSaveTarget — the live selection is already cleared by save time).
+  const saveChunk = useCallback(
+    (tl: TokenizedLine, minOrd: number, maxOrd: number, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
+      const selectedWords = tl.wordTokens.slice(minOrd, maxOrd + 1)
+      if (selectedWords.length === 0) return
       const words = selectedWords.map((w) => w.text).join(' ')
       const first = selectedWords[0]
       const last = selectedWords[selectedWords.length - 1]
@@ -482,7 +488,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         handoff
       )
     },
-    [closures, handleOutcome, queryClient, interaction]
+    [closures, handleOutcome, queryClient]
   )
 
   // ---- gloss (hover) flow ----------------------------------------------------
@@ -504,6 +510,23 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
     []
   )
 
+  // Open the chunk gloss for a snapshotted word range, BORN PINNED: a chunk is
+  // an intentional drag gesture, so it dismisses like a pinned gloss (outside
+  // pointerdown / play / cue change / hovering another word replaces it),
+  // never on a stray hover-out — re-creating it would mean re-dragging.
+  const openChunkGloss = useCallback(
+    (tl: TokenizedLine, anchor: HTMLElement, minOrd: number, maxOrd: number) => {
+      const words = tl.wordTokens
+        .slice(minOrd, maxOrd + 1)
+        .map((w) => w.text)
+        .join(' ')
+      showGloss(tl.line.index, anchor, words, tl.line.text, { kind: 'chunk', tl, minOrd, maxOrd })
+      // showGloss arms the unpinned default; chunk glosses override it.
+      glossPinnedRef.current = true
+    },
+    [showGloss]
+  )
+
   // Arm the 300ms hover debounce for the word under the pointer. On fire it
   // opens the chunk gloss if that word is inside an active multi-word selection,
   // else the single-word gloss. Reads the live selection from the store so it's
@@ -523,18 +546,15 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
         const overSelected = range && token.ordinal >= range.minOrd && token.ordinal <= range.maxOrd
         if (range && range.count > 1 && overSelected) {
-          // Chunk gloss: the whole selected phrase, anchored at the pointer.
-          const words = tl.wordTokens
-            .slice(range.minOrd, range.maxOrd + 1)
-            .map((w) => w.text)
-            .join(' ')
-          showGloss(tl.line.index, element, words, tl.line.text, { kind: 'chunk', tl })
+          // Chunk gloss mid-drag (the pointer paused on a selected word): the
+          // whole selected phrase, anchored at the pointer.
+          openChunkGloss(tl, element, range.minOrd, range.maxOrd)
         } else {
           showGloss(tl.line.index, element, token.text, tl.line.text, { kind: 'single', tl, token })
         }
       }, HOVER_DEBOUNCE_MS)
     },
-    [video, showGloss, interaction]
+    [video, showGloss, openChunkGloss, interaction]
   )
 
   const onWordEnter = useCallback(
@@ -565,8 +585,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const state = interaction.getState()
       if (state.hovered?.token === token) state.setHovered(null)
 
-      // For an active multi-word selection, let the chunk gloss persist (it
-      // clears on selection change / play / subtitle change) — mirrors legacy.
+      // Mid-drag over a multi-word selection: don't hide-schedule (the chunk
+      // gloss may be open or about to open at mouseup). Post-release the
+      // selection is cleared and the chunk gloss is pinned instead.
       const range = rangeFor(state.selection, tl.line.index, tl.wordTokens)
       if (range && range.count > 1) return
 
@@ -579,14 +600,29 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const onWordContextMenu = useCallback(
     (tl: TokenizedLine, token: LineToken) => {
+      // Right-click on a word inside an open chunk gloss saves the chunk (the
+      // live selection is already cleared once the gloss is open — the gloss
+      // target is the selection's surviving representation).
+      const g = glossRef.current
+      if (
+        g &&
+        g.save.kind === 'chunk' &&
+        g.save.tl.line.index === tl.line.index &&
+        token.ordinal >= g.save.minOrd &&
+        token.ordinal <= g.save.maxOrd
+      ) {
+        saveChunk(g.save.tl, g.save.minOrd, g.save.maxOrd)
+        return
+      }
+      // Mid-drag right-click: the live selection still exists.
       const range = rangeFor(interaction.getState().selection, tl.line.index, tl.wordTokens)
-      if (range) {
-        saveSelection(tl)
+      if (range && range.count > 1) {
+        saveChunk(tl, range.minOrd, range.maxOrd)
       } else {
         saveSingle(tl.line, token)
       }
     },
-    [interaction, saveSelection, saveSingle]
+    [interaction, saveChunk, saveSingle]
   )
 
   const onWordMouseDown = useCallback(
@@ -652,34 +688,50 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   // ---- lifecycle effects -----------------------------------------------------
 
-  // End drag selection on mouseup anywhere. If we were selecting and released
-  // over a word, re-arm the gloss for it — mouseenter won't re-fire on the word
-  // the pointer already sits on, so without this the chunk gloss never opens
-  // after a multi-word drag (you'd have to leave and re-enter a selected word).
+  // End drag selection on mouseup anywhere. Web parity: the painted selection
+  // clears AT RELEASE — from here on the popover represents the selection
+  // (the chunk range is snapshotted into its save target). A multi-word drag
+  // opens the chunk gloss immediately (no hover debounce, like the web sheet);
+  // a plain click on a saved span opens the saved-mode popover; any other
+  // click re-arms the hover gloss for the word under the pointer (mouseenter
+  // won't re-fire on the word the pointer already sits on).
   useEffect(() => {
     const onMouseUp = () => {
       const state = interaction.getState()
       if (!state.selecting) return
       state.setSelecting(false)
-      // A plain click (no drag: anchor == head) on a saved span opens the
-      // saved-mode popover instead of the hover preview — saved wins.
       const sel = state.selection
+      const hovered = state.hovered
+      const range =
+        sel && hovered && hovered.tl.line.index === sel.lineIndex
+          ? rangeFor(sel, hovered.tl.line.index, hovered.tl.wordTokens)
+          : null
+      state.clearSelection()
+      if (!hovered) return
+      if (range && range.count > 1) {
+        // The pending hover debounce reads the (now cleared) live selection —
+        // it would race this open with a single-word gloss.
+        clearHoverTimer()
+        if (video.paused && !savedPopoverRef.current) {
+          openChunkGloss(hovered.tl, hovered.element, range.minOrd, range.maxOrd)
+        }
+        return
+      }
+      // Plain click (no drag: anchor == head) on a saved span opens the
+      // saved-mode popover instead of the hover preview — saved wins.
       if (
         sel &&
         sel.anchorOrdinal === sel.headOrdinal &&
-        state.hovered &&
-        state.hovered.tl.line.index === sel.lineIndex &&
-        openSavedPopover(state.hovered.tl, state.hovered.token, state.hovered.element)
+        hovered.tl.line.index === sel.lineIndex &&
+        openSavedPopover(hovered.tl, hovered.token, hovered.element)
       ) {
         return
       }
-      if (state.hovered) {
-        scheduleHoverGloss(state.hovered.tl, state.hovered.token, state.hovered.element)
-      }
+      scheduleHoverGloss(hovered.tl, hovered.token, hovered.element)
     }
     window.addEventListener('mouseup', onMouseUp, true)
     return () => window.removeEventListener('mouseup', onMouseUp, true)
-  }, [interaction, scheduleHoverGloss, openSavedPopover])
+  }, [interaction, scheduleHoverGloss, openSavedPopover, openChunkGloss, video])
 
   // Resuming playback clears the hover gloss, the saved popover, and any
   // selection (legacy parity).
@@ -864,7 +916,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 // fallback paths).
                 setGlossSaving(true)
                 const handoff: GlossSaveHandoff = { lineIndex: gloss.lineIndex, anchor: gloss.anchor }
-                if (gloss.save.kind === 'chunk') saveSelection(gloss.save.tl, studyIntent, handoff)
+                if (gloss.save.kind === 'chunk')
+                  saveChunk(gloss.save.tl, gloss.save.minOrd, gloss.save.maxOrd, studyIntent, handoff)
                 else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent, handoff)
               }}
               onPointerEnter={onGlossPointerEnter}
