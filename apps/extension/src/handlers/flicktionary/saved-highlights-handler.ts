@@ -139,6 +139,7 @@ export default class LoadFlicktionarySavedHighlightsHandler {
       sessionId: data.sessionId,
       textTrackId: data.textTrackId,
       contentSourceId: data.contentSourceId,
+      targetLanguage: data.targetLanguage,
       segmentIdByIndex,
     }
   }
@@ -152,6 +153,7 @@ export default class LoadFlicktionarySavedHighlightsHandler {
       success: true,
       signedIn: true,
       sessionId: entry.sessionId,
+      targetLanguage: entry.targetLanguage,
       highlights: toSavedHighlightDtos(data, entry.segmentIdByIndex),
     }
   }

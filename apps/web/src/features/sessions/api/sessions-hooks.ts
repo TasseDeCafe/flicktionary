@@ -2,7 +2,14 @@ import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { applyOptimistic, optimisticPatch } from '@/lib/query/optimistic'
-import type { StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Highlight, StudySession } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+
+// Temp ids for optimistically-inserted highlight rows (the create response
+// swaps in the real row). Anything keyed on a highlight id (delete, fastGloss,
+// the saved-mode sheet) must skip rows still carrying this prefix — they don't
+// exist server-side yet.
+export const OPTIMISTIC_HIGHLIGHT_ID_PREFIX = 'optimistic-'
+export const isOptimisticHighlightId = (id: string): boolean => id.startsWith(OPTIMISTIC_HIGHLIGHT_ID_PREFIX)
 
 type StudySessionQueryData = {
   data: StudySession
@@ -321,8 +328,45 @@ export const useListHighlightsBySession = (sessionId: string) => {
 
 export const useCreateHighlight = (sessionId: string) => {
   const { t } = useLingui()
+  const queryClient = useQueryClient()
   return useMutation(
     orpcQuery.highlights.create.mutationOptions({
+      // Optimistic paint (extension parity): insert a temp row so the span
+      // washes yellow the moment the user saves, instead of after the
+      // invalidate round-trip. onSuccess swaps the temp row for the server
+      // row; meta.invalidates still settles the cache to the server's truth.
+      onMutate: async (vars) => {
+        const tempId = `${OPTIMISTIC_HIGHLIGHT_ID_PREFIX}${crypto.randomUUID()}`
+        const optimisticRow: Highlight = {
+          id: tempId,
+          studySessionId: vars.sessionId,
+          startSegmentId: vars.startSegmentId,
+          endSegmentId: vars.endSegmentId,
+          startOffset: vars.startOffset,
+          endOffset: vars.endOffset,
+          selectionText: vars.selectionText,
+          note: vars.note ?? null,
+          presetTags: vars.presetTags ?? [],
+          fastGloss: null,
+          createdAt: new Date().toISOString(),
+        }
+        const ctx = await applyOptimistic(queryClient, [
+          optimisticPatch<{ data: Highlight[] }>(
+            orpcQuery.highlights.listBySession.key({ input: { sessionId } }),
+            (cached) => (cached ? { ...cached, data: [...cached.data, optimisticRow] } : cached)
+          ),
+        ])
+        return { ...ctx, tempId }
+      },
+      onError: (_error, _variables, context) => context?.rollback(),
+      onSuccess: (res, _variables, context) => {
+        if (!context) return
+        queryClient.setQueryData<{ data: Highlight[] }>(
+          orpcQuery.highlights.listBySession.queryKey({ input: { sessionId } }),
+          (cached) =>
+            cached ? { ...cached, data: cached.data.map((h) => (h.id === context.tempId ? res.data : h)) } : cached
+        )
+      },
       meta: {
         invalidates: [
           orpcQuery.highlights.listBySession.key({ input: { sessionId } }),

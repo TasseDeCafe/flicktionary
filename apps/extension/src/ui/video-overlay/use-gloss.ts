@@ -30,7 +30,7 @@ export const glossQueryOptions = (word: string | undefined, sentence: string | u
         gloss: response.gloss,
         pos: response.pos ?? null,
         register: response.register ?? null,
-        ipa: response.ipa ?? null,
+        ipaDisplay: response.ipaDisplay ?? null,
       }
     },
     enabled: enabled && !!word && !!sentence,

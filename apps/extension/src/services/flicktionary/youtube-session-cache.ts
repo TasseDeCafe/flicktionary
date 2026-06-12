@@ -11,12 +11,18 @@
 // Keyed by (source, contentHash) so YouTube and streaming sessions never alias,
 // even in the (vanishingly unlikely) case of byte-identical subtitle content.
 
-const STORAGE_KEY = 'flicktionary.session-cache.v2'
+// v3: entries gained `targetLanguage`. Bumping the key drops v2 entries
+// wholesale instead of migrating — re-registering is idempotent, so the next
+// video load simply repopulates the entry with the new field.
+const STORAGE_KEY = 'flicktionary.session-cache.v3'
 
 export interface FlicktionaryYoutubeSessionCacheEntry {
   readonly sessionId: string
   readonly textTrackId: string
   readonly contentSourceId: string
+  // The server-detected subtitle language (= session target language) — feeds
+  // the overlay's Intl.Segmenter locale so tokenization matches the web reader.
+  readonly targetLanguage: string
   readonly segmentIdByIndex: Record<string, string>
 }
 

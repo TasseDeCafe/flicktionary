@@ -20,6 +20,7 @@ import {
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
+import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 
 // fast_gloss is a single text column; we round-trip the {gloss, pos, register}
 // triple as the same `<gloss>\n[POS]\n[register]` shape Haiku emits.
@@ -216,6 +217,10 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Highlight not found' }] },
         })
       }
+      // Pre-pick the dialect-correct display string server-side (same
+      // convention as glosses.fastGloss); only English needs the pref read.
+      const dialect =
+        session.target_language === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : ('ga' as const)
       if (highlight.fast_gloss) {
         const cachedGloss = parseFastGloss(highlight.fast_gloss)
         const ipa = await lookupFastGlossIpa({
@@ -224,7 +229,7 @@ export const HighlightsRouter = (
           pos: cachedGloss.pos,
           wiktionaryEntriesRepository,
         })
-        return { data: { ...cachedGloss, ipa } }
+        return { data: { ...cachedGloss, ipa, ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null } }
       }
       const startSegment = await textSegmentsRepository.findById(highlight.start_segment_id)
       if (!startSegment) {
@@ -268,7 +273,7 @@ export const HighlightsRouter = (
         pos: gloss.pos,
         wiktionaryEntriesRepository,
       })
-      return { data: { ...gloss, ipa } }
+      return { data: { ...gloss, ipa, ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null } }
     }),
   })
 

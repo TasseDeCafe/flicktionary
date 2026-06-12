@@ -2,12 +2,19 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'reac
 import { useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown, ChevronUp, PencilLine, Save, Trash2 } from 'lucide-react'
-import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
-import type { GhostCandidate, GrammarIpaBag } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
+import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
+import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Button } from '@flicktionary/ui/components/button'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
+import {
+  PRESET_TAGS,
+  composeChatSeedPrompt,
+  usePresetTagTexts,
+  type PresetTag,
+} from '@flicktionary/ui/components/preset-tags'
 import {
   StudyOptionsSection,
   defaultStudyIntentDraft,
@@ -28,6 +35,7 @@ import {
 } from '@flicktionary/ui/components/floating-sheet'
 import { Textarea } from '@flicktionary/ui/components/textarea'
 import {
+  isOptimisticHighlightId,
   useCreateHighlight,
   useDeleteHighlight,
   useFastGloss,
@@ -38,9 +46,6 @@ import {
 } from '../api/sessions-hooks'
 import type { SelectionResult } from '../utils/selection-adapter'
 
-const PRESET_TAGS = ['explain', '3_examples', 'synonyms', 'etymology', 'why_this_form'] as const
-type PresetTag = (typeof PRESET_TAGS)[number]
-
 export type ExistingHighlightInput = {
   id: string
   selectionText: string
@@ -48,12 +53,6 @@ export type ExistingHighlightInput = {
   presetTags: string[]
   fastGloss: string | null
 }
-
-type GlossState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null; ipa: GrammarIpaBag | null }
-  | { kind: 'error' }
 
 interface SessionGlossSheetProps {
   open: boolean
@@ -80,58 +79,6 @@ interface SessionGlossSheetProps {
   onClose: () => void
 }
 
-// Decodes the serialized fast_gloss column (gloss\n[POS]\n[register]) into the
-// same shape the GlossPass endpoint returns.
-const FAST_GLOSS_POS_ALIASES = new Set([
-  'n',
-  'noun',
-  'v',
-  'verb',
-  'transitive verb',
-  'intransitive verb',
-  'phrasal verb',
-  'modal verb',
-  'adj',
-  'adjective',
-  'adv',
-  'adverb',
-  'prep',
-  'preposition',
-  'pron',
-  'pronoun',
-  'particle',
-  'conj',
-  'conjunction',
-  'num',
-  'numeral',
-  'intj',
-  'interjection',
-])
-
-const normalizeCachedMetadataToken = (value: string): string =>
-  value
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}_ -]/gu, '')
-    .replace(/\s+/g, ' ')
-
-const isCachedGlossPos = (value: string): boolean => FAST_GLOSS_POS_ALIASES.has(normalizeCachedMetadataToken(value))
-
-const parseCachedGloss = (raw: string): { gloss: string; pos: string | null; register: string | null } => {
-  const lines = raw.trim().split(/\r?\n/)
-  const gloss = lines[0] ?? ''
-  const metadata = lines
-    .slice(1)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-  const first = metadata[0] ?? null
-  const second = metadata[1] ?? null
-
-  if (first && isCachedGlossPos(first)) return { gloss, pos: first, register: second }
-  if (second && isCachedGlossPos(second)) return { gloss, pos: second, register: first }
-  return { gloss, pos: null, register: first }
-}
-
 type CachedHighlight = {
   id: string
   selectionText: string
@@ -146,7 +93,9 @@ type CachedHighlight = {
 
 // Looks up a highlight row matching the given selection so a re-tap on the same
 // span doesn't create a duplicate. Inlined from the old use-tap-to-translate
-// hook — only used here now.
+// hook — only used here now. Optimistic rows are skipped: a re-selection while
+// the create is still in flight opens in preview mode instead of pointing the
+// sheet's note/delete actions at a temp id the server doesn't know.
 const findCachedHighlight = (
   cached: CachedHighlight[] | undefined,
   selection: SelectionResult
@@ -155,6 +104,7 @@ const findCachedHighlight = (
   return (
     cached.find(
       (h) =>
+        !isOptimisticHighlightId(h.id) &&
         h.startSegmentId === selection.startSegmentId &&
         h.endSegmentId === selection.endSegmentId &&
         h.startOffset === selection.startOffset &&
@@ -187,27 +137,9 @@ export const SessionGlossSheet = ({
   const { mutate: saveNoteAndTags, isPending: isSavingNote } = useUpdateHighlightNoteAndTags(sessionId)
   const { mutateAsync: switchGhost, isPending: isSwitching } = useSwitchGhost(sessionId)
 
-  const presetLabels: Record<PresetTag, string> = {
-    explain: t`Explain`,
-    '3_examples': t`3 examples`,
-    synonyms: t`Synonyms`,
-    etymology: t`Etymology`,
-    why_this_form: t`Why this form?`,
-  }
+  const { labels: presetLabels, prompts: presetPrompts } = usePresetTagTexts()
 
-  // Localized natural-language phrasing for each preset, composed into the chat
-  // question sent to the backend. Localizing here (in the UI locale) keeps the
-  // backend language-agnostic; the model is told separately which language to
-  // answer in (native, or target when translations are hidden).
-  const presetPrompts: Record<PresetTag, string> = {
-    explain: t`Explain this term in more depth.`,
-    '3_examples': t`Give me three more example sentences using it.`,
-    synonyms: t`What are some synonyms or near-synonyms, and how do they differ?`,
-    etymology: t`What's the etymology or origin of this term?`,
-    why_this_form: t`Why does it appear in this particular form here?`,
-  }
-
-  const [glossState, setGlossState] = useState<GlossState>({ kind: 'idle' })
+  const [glossState, setGlossState] = useState<GlossViewState>({ status: 'idle' })
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const [titleText, setTitleText] = useState<string>('')
   const [note, setNote] = useState('')
@@ -239,8 +171,8 @@ export const SessionGlossSheet = ({
       setTags(existingHighlight.presetTags)
       setGlossState(
         existingHighlight.fastGloss
-          ? { kind: 'ready', ...parseCachedGloss(existingHighlight.fastGloss), ipa: null }
-          : { kind: 'loading' }
+          ? { status: 'ready', ...parseFastGloss(existingHighlight.fastGloss), ipaDisplay: null }
+          : { status: 'loading' }
       )
       return
     }
@@ -250,7 +182,7 @@ export const SessionGlossSheet = ({
       setTitleText(selection.selectionText)
       setNote('')
       setTags([])
-      setGlossState({ kind: 'loading' })
+      setGlossState({ status: 'loading' })
     }
   }, [open, existingHighlight, selection, pendingGhostId])
 
@@ -262,11 +194,11 @@ export const SessionGlossSheet = ({
     setNote(existingHighlight.note ?? '')
     setTags(existingHighlight.presetTags)
     setExpanded(false)
-    const cachedGloss = existingHighlight.fastGloss ? parseCachedGloss(existingHighlight.fastGloss) : null
+    const cachedGloss = existingHighlight.fastGloss ? parseFastGloss(existingHighlight.fastGloss) : null
     if (cachedGloss) {
-      setGlossState({ kind: 'ready', ...cachedGloss, ipa: null })
+      setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null })
     } else {
-      setGlossState({ kind: 'loading' })
+      setGlossState({ status: 'loading' })
     }
     // Fetch even when a cached gloss exists so old highlight rows can be
     // enriched with Wiktionary IPA without changing the fast_gloss column.
@@ -276,14 +208,14 @@ export const SessionGlossSheet = ({
         const res = await fetchGloss({ sessionId, highlightId: existingHighlight.id })
         if (cancelled) return
         setGlossState({
-          kind: 'ready',
+          status: 'ready',
           gloss: res.data.gloss,
           pos: res.data.pos,
           register: res.data.register,
-          ipa: res.data.ipa,
+          ipaDisplay: res.data.ipaDisplay,
         })
       } catch {
-        if (!cancelled && !cachedGloss) setGlossState({ kind: 'error' })
+        if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
       }
     })()
     return () => {
@@ -303,7 +235,7 @@ export const SessionGlossSheet = ({
     setNote('')
     setTags([])
     setExpanded(false)
-    setGlossState({ kind: 'loading' })
+    setGlossState({ status: 'loading' })
 
     // The dedup lookup reads synchronously from the cache, so we can settle the
     // preview-vs-saved mode (and thus `highlightId`) before any await.
@@ -320,20 +252,20 @@ export const SessionGlossSheet = ({
           // (this also enriches old rows with Wiktionary IPA).
           setNote(match.note ?? '')
           setTags(match.presetTags ?? [])
-          const cachedGloss = match.fastGloss ? parseCachedGloss(match.fastGloss) : null
-          if (cachedGloss) setGlossState({ kind: 'ready', ...cachedGloss, ipa: null })
+          const cachedGloss = match.fastGloss ? parseFastGloss(match.fastGloss) : null
+          if (cachedGloss) setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null })
           try {
             const res = await fetchGloss({ sessionId, highlightId: match.id })
             if (cancelled) return
             setGlossState({
-              kind: 'ready',
+              status: 'ready',
               gloss: res.data.gloss,
               pos: res.data.pos,
               register: res.data.register,
-              ipa: res.data.ipa,
+              ipaDisplay: res.data.ipaDisplay,
             })
           } catch {
-            if (!cancelled && !cachedGloss) setGlossState({ kind: 'error' })
+            if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
           }
         } else {
           // Preview mode: free, stateless gloss — no highlight, no enrich job.
@@ -344,15 +276,15 @@ export const SessionGlossSheet = ({
           })
           if (cancelled) return
           setGlossState({
-            kind: 'ready',
+            status: 'ready',
             gloss: res.data.gloss,
             pos: res.data.pos,
             register: res.data.register,
-            ipa: res.data.ipa,
+            ipaDisplay: res.data.ipaDisplay,
           })
         }
       } catch {
-        if (!cancelled) setGlossState({ kind: 'error' })
+        if (!cancelled) setGlossState({ status: 'error', message: null })
       }
     })()
     return () => {
@@ -421,17 +353,17 @@ export const SessionGlossSheet = ({
       setTitleText(res.data.selectionText)
       setNote(res.data.note ?? '')
       setTags(res.data.presetTags ?? [])
-      setGlossState({ kind: 'loading' })
+      setGlossState({ status: 'loading' })
       const gloss = await fetchGloss({ sessionId, highlightId: newId })
       setGlossState({
-        kind: 'ready',
+        status: 'ready',
         gloss: gloss.data.gloss,
         pos: gloss.data.pos,
         register: gloss.data.register,
-        ipa: gloss.data.ipa,
+        ipaDisplay: gloss.data.ipaDisplay,
       })
     } catch {
-      setGlossState({ kind: 'error' })
+      setGlossState({ status: 'error', message: null })
     }
   }
 
@@ -471,20 +403,16 @@ export const SessionGlossSheet = ({
     [highlightId, isDeleting, deleteHighlight, sessionId, selection, existingHighlight, onClose]
   )
 
-  // Compose the localized chat question: each selected preset's sentence (in
-  // gloss-sheet button order) followed by the verbatim note. Null when there is
-  // nothing to ask, which suppresses the seed_card_chat job server-side.
-  const composeChatSeedPrompt = (): string | null => {
-    const selectedPrompts = PRESET_TAGS.filter((tag) => tags.includes(tag)).map((tag) => presetPrompts[tag])
-    const trimmedNote = note.trim()
-    const parts = trimmedNote ? [...selectedPrompts, trimmedNote] : selectedPrompts
-    return parts.length ? parts.join('\n') : null
-  }
-
   const handleSaveNote = () => {
     if (!highlightId) return
     saveNoteAndTags(
-      { sessionId, highlightId, note: note.trim() || null, presetTags: tags, chatSeedPrompt: composeChatSeedPrompt() },
+      {
+        sessionId,
+        highlightId,
+        note: note.trim() || null,
+        presetTags: tags,
+        chatSeedPrompt: composeChatSeedPrompt(tags, presetPrompts, note),
+      },
       {
         onSuccess: () => {
           setExpanded(false)
@@ -497,7 +425,7 @@ export const SessionGlossSheet = ({
     setTags((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]))
   }
 
-  const isReady = glossState.kind === 'ready'
+  const isReady = glossState.status === 'ready'
   // Preview mode = a fresh, unsaved selection. The gloss is a free, ephemeral
   // lookup; nothing is persisted until the user clicks Save. Saved mode (an
   // existing highlight or a just-saved selection) keeps the Remove/note actions.
@@ -530,9 +458,9 @@ export const SessionGlossSheet = ({
     return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
   }, [open, isPreview, handleSave, handleRemove])
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
-  const displayedIpa = isReady
-    ? (pickIpa((glossState as Extract<GlossState, { kind: 'ready' }>).ipa, targetLanguage, englishIpaDialect) ?? null)
-    : null
+  // Server-picked, dialect-correct display string — no client-side bag picking.
+  // The prefs read above still feeds the EnglishIpaDialectFlag next to it.
+  const displayedIpa = isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).ipaDisplay : null
   const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
   const ipaLabel = isReady ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
@@ -540,7 +468,7 @@ export const SessionGlossSheet = ({
   // Description fallback for accessibility — the title is the selection text,
   // which doesn't describe the sheet's purpose.
   const ariaDescription = useMemo(() => {
-    if (isReady) return (glossState as Extract<GlossState, { kind: 'ready' }>).gloss
+    if (isReady) return (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss
     return t`Quick gloss for the selected text.`
   }, [isReady, glossState, t])
 
@@ -563,10 +491,10 @@ export const SessionGlossSheet = ({
             <div className='flex min-w-0 flex-col gap-1'>
               <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
               <GlossCardBody
-                loading={glossState.kind === 'loading'}
-                gloss={isReady ? (glossState as Extract<GlossState, { kind: 'ready' }>).gloss : null}
-                pos={isReady ? (glossState as Extract<GlossState, { kind: 'ready' }>).pos : null}
-                register={isReady ? (glossState as Extract<GlossState, { kind: 'ready' }>).register : null}
+                loading={glossState.status === 'loading'}
+                gloss={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss : null}
+                pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
+                register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
                 ipaLabel={ipaLabel}
                 ipaPrefix={
                   showIpaFlag ? (
@@ -635,7 +563,7 @@ export const SessionGlossSheet = ({
           </FloatingSheetBody>
         )}
 
-        {glossState.kind === 'error' && (
+        {glossState.status === 'error' && (
           <FloatingSheetBody>
             <p className='text-destructive'>
               {isPreview ? t`Could not fetch a gloss.` : t`Could not fetch a gloss. The highlight is still saved.`}
