@@ -64,6 +64,7 @@ For our react code style:
 - Outside React (e.g., config files, query meta, utility modules), import `{ t }` from `@lingui/macro` and, when needed, the shared `i18n` instance for lookups. Keep text in template literals so translators see the full sentence.
 - When interpolating values, assign them to descriptive variables and reference them inside the template literal (`const savedCount = ...; t`You saved ${savedCount} phrases``). Avoid string concatenation or unnamed `${expression}` chains.
 - Do not set custom ids when calling `t`. The English source string remains the id so extraction keeps working without manual bookkeeping.
+- Do NOT translate new strings manually. The pre-push husky hook runs `pnpm lingui extract --clean` and then an AI translation script (`pnpm --filter @flicktionary/i18n translate`) that fills in any missing translations and auto-commits the result. The hook's translations have less context than you do, but that's accepted — just add the English copy and leave the catalogs alone.
 
 ## oRPC + TanStack Query
 
