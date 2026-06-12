@@ -113,10 +113,17 @@ export interface GlossTooltipProps {
   signedIn: boolean
   // Start the pairing flow (mirrors the popup's "Sign in with Flicktionary").
   onSignIn: () => void
-  // Hover bridge: the pointer entering/leaving the popover. Entering cancels the
-  // pending hide so the user can reach the Save button; leaving dismisses it.
+  // A save kicked off from this popover is in flight — Save renders disabled
+  // as "Saving…" until the outcome swaps the popover into saved mode.
+  saving?: boolean
+  // Hover bridge: the pointer entering/leaving the popover. Entering cancels
+  // the pending hide AND pins the popover (it stops hiding on pointer-leave —
+  // see glossPinnedRef in SubtitleOverlayApp); before that, leaving dismisses.
   onPointerEnter: () => void
   onPointerLeave: () => void
+  // Outside pointerdown — the parent dismisses a PINNED popover on it (same
+  // gesture as the saved-mode popover) and ignores it while unpinned.
+  onOutsidePointerDown: () => void
 }
 
 // Hover gloss popover — mirrors the web app's fast-gloss popover. Positioned
@@ -130,9 +137,11 @@ export function GlossTooltip({
   onSave,
   onPointerEnter,
   onPointerLeave,
+  onOutsidePointerDown,
   saveDisabledReason,
   signedIn,
   onSignIn,
+  saving,
 }: GlossTooltipProps) {
   const ref = useRef<HTMLDivElement>(null)
   // Gate visibility until the async computePosition has placed the tooltip;
@@ -151,6 +160,19 @@ export function GlossTooltip({
     setStudyDraft(defaultStudyIntentDraft)
     setOptionsExpanded(false)
   }, [word])
+
+  // Outside pointerdown → onOutsidePointerDown (the parent only acts on it
+  // while pinned). composedPath (not target containment) because the popover
+  // lives inside a shadow root — same dismissal as SavedGlossTooltip.
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const el = ref.current
+      if (el && e.composedPath().includes(el)) return
+      onOutsidePointerDown()
+    }
+    document.addEventListener('pointerdown', onPointerDown, { capture: true })
+    return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
+  }, [onOutsidePointerDown])
 
   const ipaLabel = content.status === 'ready' ? pickIpa(content.data.ipa) : null
 
@@ -276,10 +298,11 @@ export function GlossTooltip({
       ) : (
         <button
           type='button'
+          disabled={saving}
           onClick={() => onSave(draftToStudyIntent(studyDraft))}
-          className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
+          className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50'
         >
-          <Trans>Save</Trans>
+          {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
         </button>
       )}
     </div>

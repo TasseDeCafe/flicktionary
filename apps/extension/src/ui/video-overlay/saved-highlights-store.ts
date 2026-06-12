@@ -16,7 +16,10 @@ export interface SavedHighlightsState {
   loaded: boolean
 
   setAll: (sessionId: string | null, highlights: ReadonlyArray<SavedHighlightDto>) => void
-  add: (highlight: SavedHighlightDto) => void
+  // `sessionId` (when known) backfills a store that loaded before the video's
+  // first save created the session — required for the saved-mode popover to
+  // open on the just-saved span.
+  add: (highlight: SavedHighlightDto, sessionId?: string) => void
   remove: (highlightId: string) => void
   patchNote: (highlightId: string, note: string | null, presetTags: string[]) => void
   reset: () => void
@@ -31,8 +34,9 @@ export function createSavedHighlightsStore(): SavedHighlightsStore {
     loaded: false,
 
     setAll: (sessionId, highlights) => set({ sessionId, highlights: [...highlights], loaded: true }),
-    add: (highlight) =>
+    add: (highlight, sessionId) =>
       set((state) => ({
+        sessionId: sessionId ?? state.sessionId,
         // Replace-by-id keeps a re-save (or an optimistic add racing a reload)
         // from painting the same span twice.
         highlights: [...state.highlights.filter((h) => h.id !== highlight.id), highlight],
