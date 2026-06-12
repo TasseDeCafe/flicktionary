@@ -2,7 +2,13 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 import type { FlicktionaryGlossResponse } from '@asbplayer-fork/common'
 import { GlossData, requestGloss } from '../../services/flicktionary/flicktionary-client'
 
-export const glossQueryKey = (word: string, sentence: string) => ['gloss', word, sentence] as const
+// `targetLanguage` is the video's detected subtitle language ('' while the
+// overlay doesn't know it yet). It is part of the key: a gloss fetched during
+// the unknown-language window (which the background serves with the user's
+// PRIMARY target language as fallback) must not be served from cache once the
+// detected language lands — the key change makes the re-hover refetch.
+export const glossQueryKey = (word: string, sentence: string, targetLanguage = '') =>
+  ['gloss', targetLanguage, word, sentence] as const
 
 // The gloss lookup as a query. Errors must NOT be cached (the old per-mount
 // Map only stored successes; a cached "Sign in to translate" error surviving
@@ -13,13 +19,18 @@ export const glossQueryKey = (word: string, sentence: string) => ['gloss', word,
 //
 // Exported separately from the hook so the caching invariants are testable
 // against a bare QueryClient (no React).
-export const glossQueryOptions = (word: string | undefined, sentence: string | undefined, enabled: boolean) =>
+export const glossQueryOptions = (
+  word: string | undefined,
+  sentence: string | undefined,
+  enabled: boolean,
+  targetLanguage?: string
+) =>
   queryOptions({
-    queryKey: glossQueryKey(word ?? '', sentence ?? ''),
+    queryKey: glossQueryKey(word ?? '', sentence ?? '', targetLanguage ?? ''),
     queryFn: async (): Promise<GlossData> => {
       let response: FlicktionaryGlossResponse
       try {
-        response = await requestGloss(word!, sentence!)
+        response = await requestGloss(word!, sentence!, targetLanguage)
       } catch {
         throw new Error('Could not fetch a translation.')
       }
@@ -42,6 +53,11 @@ export const glossQueryOptions = (word: string | undefined, sentence: string | u
     retry: false,
   })
 
-export function useGloss(word: string | undefined, sentence: string | undefined, enabled: boolean) {
-  return useQuery(glossQueryOptions(word, sentence, enabled))
+export function useGloss(
+  word: string | undefined,
+  sentence: string | undefined,
+  enabled: boolean,
+  targetLanguage?: string
+) {
+  return useQuery(glossQueryOptions(word, sentence, enabled, targetLanguage))
 }

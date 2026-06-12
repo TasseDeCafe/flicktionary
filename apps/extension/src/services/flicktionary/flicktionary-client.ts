@@ -73,7 +73,13 @@ export type SaveWordOutcome =
 
 export type SetCefrResult = { ok: true } | { ok: false; message: string }
 
-export async function requestGloss(word: string, sentence: string): Promise<FlicktionaryGlossResponse> {
+export async function requestGloss(
+  word: string,
+  sentence: string,
+  // The video's detected subtitle language; undefined while unknown (the
+  // background then falls back to the user's primary target language).
+  targetLanguage?: string
+): Promise<FlicktionaryGlossResponse> {
   const message: TabToExtensionCommand<FlicktionaryGlossMessage> = {
     sender: 'asbplayer-video-tab',
     message: {
@@ -81,6 +87,7 @@ export async function requestGloss(word: string, sentence: string): Promise<Flic
       messageId: uuidv4(),
       selectionText: word,
       contextLine: sentence,
+      targetLanguage,
     },
   }
 
