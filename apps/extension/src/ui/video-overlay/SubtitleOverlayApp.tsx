@@ -608,8 +608,22 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // an intentional drag gesture, so it dismisses like a pinned gloss (outside
   // pointerdown / play / cue change / hovering another word replaces it),
   // never on a stray hover-out — re-creating it would mean re-dragging.
+  //
+  // A range EXACTLY matching a saved highlight opens its saved-mode popover
+  // instead (sticky, like a click on the span): a preview here would offer a
+  // second Save that stacks a duplicate row. The single-word paths already
+  // route saved spans to the saved popover; this is the chunk twin, and the
+  // web parity is the gloss sheet's findCachedHighlight dedup.
   const openChunkGloss = useCallback(
     (tl: TokenizedLine, anchor: HTMLElement, minOrd: number, maxOrd: number) => {
+      const exact = findSavedChunkExact(tl, minOrd, maxOrd)
+      if (exact) {
+        clearHoverTimer()
+        hideGloss()
+        interaction.getState().clearSelection()
+        setSavedPopover({ lineIndex: tl.line.index, anchor, highlightId: exact.id, hover: false })
+        return
+      }
       const words = tl.wordTokens
         .slice(minOrd, maxOrd + 1)
         .map((w) => w.text)
@@ -618,7 +632,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       // showGloss arms the unpinned default; chunk glosses override it.
       glossPinnedRef.current = true
     },
-    [showGloss]
+    [showGloss, findSavedChunkExact, hideGloss, interaction]
   )
 
   // Arm the 300ms hover debounce for the word under the pointer. On fire it
