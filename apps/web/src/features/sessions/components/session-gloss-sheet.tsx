@@ -604,7 +604,6 @@ export const SessionGlossSheet = ({
               value={studyDraft}
               onChange={setStudyDraft}
               surfaceForm={selection.selectionText}
-              pronunciationAvailable={!!displayedIpa}
             />
           </FloatingSheetBody>
         )}

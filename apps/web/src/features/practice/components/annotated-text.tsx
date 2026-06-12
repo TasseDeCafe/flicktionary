@@ -96,7 +96,11 @@ export const AnnotatedText = ({
     isBlockedTarget: (el) => el.closest('[data-kind="annotation"]') != null,
     enableEdgeAutoScroll: false,
     onSelect: ({ anchor, end, rect }) => {
-      if (!onPlainSelection) return
+      // Bail paths clear the paint themselves — it persists past pointerup.
+      if (!onPlainSelection) {
+        clearPaint()
+        return
+      }
       // Single owner (the paragraph), so offset order == document order.
       const charStart = Math.min(anchor.wordStart, end.wordStart)
       const charEnd = Math.max(anchor.wordEnd, end.wordEnd)

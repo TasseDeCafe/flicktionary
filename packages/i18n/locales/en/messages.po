@@ -229,7 +229,7 @@ msgstr "€{monthlyPriceFormatted}/month"
 msgid "€{yearlyPricePerMonth}/month"
 msgstr "€{yearlyPricePerMonth}/month"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:362
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:287
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:192
 msgid "3 examples"
 msgstr "3 examples"
@@ -326,8 +326,8 @@ msgstr "Add form"
 msgid "Add New Profile..."
 msgstr "Add New Profile..."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:513
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:433
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:681
 msgid "Add note"
 msgstr "Add note"
 
@@ -896,11 +896,11 @@ msgstr "Could not auto-load subtitles in your preferred language."
 msgid "Could not display payment options at this time."
 msgstr "Could not display payment options at this time."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:615
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:614
 msgid "Could not fetch a gloss."
 msgstr "Could not fetch a gloss."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:615
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:614
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Could not fetch a gloss. The highlight is still saved."
 
@@ -950,7 +950,7 @@ msgstr "Could not open upgrade screen."
 msgid "Could not read this page."
 msgstr "Could not read this page."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:410
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:335
 msgid "Could not remove the highlight."
 msgstr "Could not remove the highlight."
 
@@ -958,7 +958,7 @@ msgstr "Could not remove the highlight."
 msgid "Could not rename — please try again."
 msgstr "Could not rename — please try again."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:433
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:358
 msgid "Could not save the note."
 msgstr "Could not save the note."
 
@@ -1180,8 +1180,8 @@ msgstr "e.g. увидеть"
 msgid "Easy"
 msgstr "Easy"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:513
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:433
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:681
 msgid "Edit note"
 msgstr "Edit note"
 
@@ -1295,7 +1295,7 @@ msgstr "Error setting up user data"
 msgid "Error: {message}"
 msgstr "Error: {message}"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:364
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:289
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx:109
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:194
 msgid "Etymology"
@@ -1331,12 +1331,12 @@ msgstr "Examples"
 msgid "Expected:"
 msgstr "Expected:"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:361
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:286
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:191
 msgid "Explain"
 msgstr "Explain"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:372
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:297
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:203
 msgid "Explain this term in more depth."
 msgstr "Explain this term in more depth."
@@ -1785,7 +1785,7 @@ msgstr "Generating full exploration… this takes a few seconds."
 msgid "Generating..."
 msgstr "Generating..."
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 #: apps/web/src/features/practice/components/reading-mode-view.tsx:397
 #: apps/web/src/features/review/components/focus-view.tsx:398
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:177
@@ -1800,7 +1800,7 @@ msgstr "Get started"
 msgid "Getting started"
 msgstr "Getting started"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:373
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:298
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:204
 msgid "Give me three more example sentences using it."
 msgstr "Give me three more example sentences using it."
@@ -1895,7 +1895,7 @@ msgid "Hides this term from your vocabulary and Practice. You can revive it by "
 msgstr "Hides this term from your vocabulary and Practice. You can revive it by "
 "re-keeping it in a session."
 
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:841
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:898
 msgid "Highlight removed"
 msgstr "Highlight removed"
 
@@ -2099,7 +2099,7 @@ msgstr "Languages"
 msgid "Last day to cancel before first charge"
 msgstr "Last day to cancel before first charge"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:401
+#: apps/web/src/features/sessions/components/session-view.tsx:410
 msgid "Last read"
 msgstr "Last read"
 
@@ -2181,11 +2181,11 @@ msgstr "Loading more…"
 msgid "Loading review terms…"
 msgstr "Loading review terms…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:380
+#: apps/web/src/features/sessions/components/session-view.tsx:389
 msgid "Loading segments…"
 msgstr "Loading segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:333
+#: apps/web/src/features/sessions/components/session-view.tsx:342
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -2347,11 +2347,6 @@ msgstr "Native language"
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:253
-#: packages/ui/src/components/study-options-section.tsx:109
-msgid "Needs a known transcription"
-msgstr "Needs a known transcription"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:350
 msgid "Neuter"
 msgstr "Neuter"
@@ -2474,7 +2469,7 @@ msgstr "No terms are ready right now."
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "No tracks found in {languageName}. Try uploading a .srt file instead."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:70
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:88
 msgid "No translation available"
 msgstr "No translation available"
 
@@ -2640,8 +2635,8 @@ msgstr "Optional"
 msgid "Optional contextual paraphrase in the target language."
 msgstr "Optional contextual paraphrase in the target language."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:463
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:624
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:388
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:623
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Optional note for the LLM (what specifically confuses you?)"
 
@@ -2906,12 +2901,11 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:240
 #: apps/web/src/features/review/components/form-selector.tsx:301
 #: apps/web/src/features/review/components/form-selector.tsx:367
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:153
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx:47
-#: packages/ui/src/components/study-options-section.tsx:100
+#: packages/ui/src/components/study-options-section.tsx:95
 msgid "Production"
 msgstr "Production"
 
@@ -2944,10 +2938,9 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:250
 #: apps/web/src/features/review/components/form-selector.tsx:308
 #: apps/web/src/features/review/components/form-selector.tsx:383
-#: packages/ui/src/components/study-options-section.tsx:106
+#: packages/ui/src/components/study-options-section.tsx:101
 msgid "Pronunciation"
 msgstr "Pronunciation"
 
@@ -2995,11 +2988,10 @@ msgstr "Ready to practice"
 msgid "Recently added"
 msgstr "Recently added"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:230
 #: apps/web/src/features/review/components/form-selector.tsx:294
 #: apps/web/src/features/review/components/form-selector.tsx:359
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx:109
-#: packages/ui/src/components/study-options-section.tsx:94
+#: packages/ui/src/components/study-options-section.tsx:89
 msgid "Recognition"
 msgstr "Recognition"
 
@@ -3086,8 +3078,8 @@ msgstr "Remove \"{sessionTitle}\"?"
 msgid "Remove form"
 msgstr "Remove form"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:496
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:424
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:666
 msgid "Remove highlight"
 msgstr "Remove highlight"
 
@@ -3095,8 +3087,8 @@ msgstr "Remove highlight"
 msgid "Remove session"
 msgstr "Remove session"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:496
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:424
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:666
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Removing…"
 msgstr "Removing…"
@@ -3180,10 +3172,10 @@ msgstr "Reviewing and practicing"
 msgid "RP"
 msgstr "RP"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:294
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:305
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:216
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:229
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:653
 msgid "Save"
 msgstr "Save"
 
@@ -3195,22 +3187,22 @@ msgstr "Save a term"
 msgid "Save a term you heard or saw, no source needed"
 msgstr "Save a term you heard or saw, no source needed"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:505
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:428
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:670
 msgid "Save note"
 msgstr "Save note"
 
-#: apps/web/src/features/practice/components/lookup-sheet.tsx:220
+#: apps/web/src/features/practice/components/lookup-sheet.tsx:219
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:305
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:505
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:229
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:428
 #: apps/web/src/features/review/components/editable-card-fields.tsx:312
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:529
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:653
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:670
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Saving…"
 msgstr "Saving…"
@@ -3333,12 +3325,12 @@ msgstr "Sending an email"
 msgid "Sending..."
 msgstr "Sending..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:332
-#: apps/web/src/features/sessions/components/session-view.tsx:339
+#: apps/web/src/features/sessions/components/session-view.tsx:341
+#: apps/web/src/features/sessions/components/session-view.tsx:348
 msgid "Session"
 msgstr "Session"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:340
+#: apps/web/src/features/sessions/components/session-view.tsx:349
 msgid "Session not found."
 msgstr "Session not found."
 
@@ -3410,8 +3402,8 @@ msgstr "Show notes"
 msgid "Show suggested terms while reading"
 msgstr "Show suggested terms while reading"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:285
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:432
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:210
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:436
 msgid "Sign in"
 msgstr "Sign in"
 
@@ -3559,8 +3551,7 @@ msgstr "Strengthen · {languageName}"
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:203
-#: packages/ui/src/components/study-options-section.tsx:122
+#: packages/ui/src/components/study-options-section.tsx:116
 msgid "Study options"
 msgstr "Study options"
 
@@ -3568,8 +3559,7 @@ msgstr "Study options"
 msgid "Study targets"
 msgstr "Study targets"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:266
-#: packages/ui/src/components/study-options-section.tsx:155
+#: packages/ui/src/components/study-options-section.tsx:149
 msgid "Study this exact form"
 msgstr "Study this exact form"
 
@@ -3727,7 +3717,7 @@ msgstr "Switch to recognition"
 msgid "Switching…"
 msgstr "Switching…"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:363
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:288
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:193
 msgid "Synonyms"
 msgstr "Synonyms"
@@ -3997,6 +3987,14 @@ msgstr "Transcript Server URL"
 msgid "Translation"
 msgstr "Translation"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:379
+msgid "Translation and actions for the saved highlight."
+msgstr "Translation and actions for the saved highlight."
+
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:191
+msgid "Translation and save action for the hovered word."
+msgstr "Translation and save action for the hovered word."
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx:234
 #: apps/web/src/features/review/components/editable-card-fields.tsx:275
 msgid "Translation in your native language."
@@ -4074,7 +4072,7 @@ msgid "Unseen"
 msgstr "Unseen"
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
-#: apps/web/src/features/sessions/components/session-view.tsx:345
+#: apps/web/src/features/sessions/components/session-view.tsx:354
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:77
 msgid "Untitled"
 msgstr "Untitled"
@@ -4251,7 +4249,7 @@ msgstr "Welcome to Flicktionary"
 msgid "Welcome to Flicktionary."
 msgstr "Welcome to Flicktionary."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:374
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:299
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:205
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
 msgstr "What are some synonyms or near-synonyms, and how do they differ?"
@@ -4270,7 +4268,7 @@ msgid "What language do you speak natively? This is the language Flicktionary "
 msgstr "What language do you speak natively? This is the language Flicktionary "
 "will translate words and phrases into."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:375
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:300
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:206
 msgid "What's the etymology or origin of this term?"
 msgstr "What's the etymology or origin of this term?"
@@ -4293,12 +4291,12 @@ msgstr "Where did you hear this? Paste a sentence or leave blank."
 msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Which pronunciation to show for English vocabulary cards."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:376
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:301
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:207
 msgid "Why does it appear in this particular form here?"
 msgstr "Why does it appear in this particular form here?"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:365
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:290
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:195
 msgid "Why this form?"
 msgstr "Why this form?"
@@ -4365,8 +4363,8 @@ msgstr "You've reviewed every due term for this language. Come back later when "
 msgid "Your account has been deleted successfully."
 msgstr "Your account has been deleted successfully."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:484
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:643
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:408
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:642
 msgid "Your answer will appear in this card's chat."
 msgstr "Your answer will appear in this card's chat."
 

@@ -209,7 +209,6 @@ export const LookupSheet = ({
                 value={studyDraft}
                 onChange={setStudyDraft}
                 surfaceForm={selection.text}
-                pronunciationAvailable={!!displayedIpa}
                 disabled={isCreating || isSettingCefr}
               />
             </FloatingSheetBody>

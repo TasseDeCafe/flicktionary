@@ -72,6 +72,7 @@ const SCROLL_STEP = 6
 const clearPaintIn = (container: HTMLElement) => {
   for (const el of container.querySelectorAll('[data-word-selected]')) {
     el.removeAttribute('data-word-selected')
+    el.removeAttribute('data-word-selected-edge')
   }
 }
 
@@ -178,6 +179,11 @@ export const useWordSelection = ({
       const hi = Math.max(aLast, eLast)
       clearPaintIn(container)
       for (let i = lo; i <= hi; i++) spans[i]!.setAttribute('data-word-selected', 'true')
+      // Tag the run's edge pieces so CSS can round only the OUTER corners —
+      // rounding every piece would notch the wash at each word/space boundary
+      // (extension-overlay parity: its painted runs round outer corners only).
+      spans[lo]!.setAttribute('data-word-selected-edge', lo === hi ? 'both' : 'start')
+      if (hi > lo) spans[hi]!.setAttribute('data-word-selected-edge', 'end')
       return true
     }
 
@@ -345,7 +351,11 @@ export const useWordSelection = ({
         const rect = computeRect()
         if (rect) cbRef.current.onSelect({ anchor, end, rect })
       }
-      clearPaintIn(container)
+      // The paint PERSISTS past release (extension-overlay parity): it keeps
+      // showing what the open gloss sheet refers to. It clears on the next
+      // pointerdown, on cancel, or when the consumer calls clearPaint — which
+      // every onSelect bail path and sheet-close handler must do, since this
+      // no longer sweeps up after them.
       resetState()
     }
 

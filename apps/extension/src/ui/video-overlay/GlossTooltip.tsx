@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
+import { PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
   draftToStudyIntent,
+  StudyOptionsSection,
   type StudyIntentDraft,
   type StudyIntentValue,
 } from '@flicktionary/ui/components/study-options-section'
+import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
+import { Button } from '@flicktionary/ui/components/button'
+import { Textarea } from '@flicktionary/ui/components/textarea'
 import type { SavedHighlightDto } from '@asbplayer-fork/common'
 import {
   GlossData,
@@ -21,6 +26,20 @@ export type GlossContent =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; data: GlossData }
+
+// Both popovers hardcode the web app's DARK theme: they always float over
+// video, where the light card would glare. The `dark` class on the root makes
+// the shared tokens (tokens.css `.dark { … }`, adopted into the popover shadow
+// root) and every `dark:` variant in the shared components resolve — so the
+// card looks exactly like the web gloss sheet in dark mode.
+const POPOVER_CARD_CLASS =
+  'dark pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-80 max-w-[90vw] flex-col rounded-md border bg-popover text-popover-foreground shadow-xl px-2 py-0'
+
+// Web FloatingSheet section paddings (header/body/footer), so the composed
+// card matches the web sheet's rhythm.
+const CARD_HEADER_CLASS = 'flex flex-col gap-1 px-2 pt-3 pb-2'
+const CARD_BODY_CLASS = 'flex flex-col gap-2 px-2 pb-2 text-sm'
+const CARD_FOOTER_CLASS = 'mt-auto flex flex-col gap-2 px-2 pt-2 pb-3'
 
 // Floating-ui positioning shared by the preview and saved popovers: fixed
 // strategy against the anchor's viewport rect (the anchor lives in the
@@ -51,43 +70,27 @@ const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivEle
   return positioned
 }
 
-// The gloss body (spinner / error / ipa + gloss + pos/register chips), shared
-// by the preview and saved modes so both render identically.
-const GlossBody = ({ content }: { content: GlossContent }) => {
-  const ipaLabel = content.status === 'ready' ? pickIpa(content.data.ipa) : null
-  return (
-    <>
-      {content.status === 'loading' && (
-        <div className='my-0.5 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
-      )}
-
-      {content.status === 'error' && <div className='text-[13px] text-[#ff9b9b]'>{content.message}</div>}
-
-      {content.status === 'ready' && (
-        <>
-          {ipaLabel && <div className='text-[13px] text-white/70'>{ipaLabel}</div>}
-          <div className='text-sm break-words whitespace-pre-wrap text-white/90'>
-            {content.data.gloss || <Trans>No translation available</Trans>}
-          </div>
-          {(content.data.pos || content.data.register) && (
-            <div className='mt-0.5 flex flex-wrap gap-1.5'>
-              {content.data.pos && (
-                <span className='inline-block rounded-full border border-white/35 px-2 text-[11px] font-semibold leading-normal text-white/90'>
-                  {content.data.pos}
-                </span>
-              )}
-              {content.data.register && (
-                <span className='inline-block rounded-full border border-transparent bg-white/20 px-2 text-[11px] font-semibold leading-normal text-white/90'>
-                  {content.data.register}
-                </span>
-              )}
-            </div>
-          )}
-        </>
-      )}
-    </>
-  )
-}
+// The gloss body, shared by the preview and saved modes: the web app's
+// GlossCardBody (IPA + gloss + POS/register badges + loading skeletons) plus
+// the extension-only empty/error rows GlossCardBody doesn't model.
+const GlossBody = ({ content, srDescription }: { content: GlossContent; srDescription: string }) => (
+  <>
+    <GlossCardBody
+      loading={content.status === 'loading'}
+      gloss={content.status === 'ready' ? content.data.gloss || null : null}
+      pos={content.status === 'ready' ? content.data.pos : null}
+      register={content.status === 'ready' ? content.data.register : null}
+      ipaLabel={content.status === 'ready' ? pickIpa(content.data.ipa) : null}
+      srDescription={srDescription}
+    />
+    {content.status === 'ready' && !content.data.gloss && (
+      <p className='text-muted-foreground text-sm'>
+        <Trans>No translation available</Trans>
+      </p>
+    )}
+    {content.status === 'error' && <p className='text-destructive text-sm'>{content.message}</p>}
+  </>
+)
 
 export interface GlossTooltipProps {
   // The word span to anchor against. Lives in the (transformed) subtitle shadow
@@ -143,22 +146,22 @@ export function GlossTooltip({
   onSignIn,
   saving,
 }: GlossTooltipProps) {
+  const { t } = useLingui()
   const ref = useRef<HTMLDivElement>(null)
   // Gate visibility until the async computePosition has placed the tooltip;
   // otherwise it paints one frame at its initial top-left before moving (the
   // brief viewport-corner flash). Reset whenever the anchor changes.
   const positioned = useTooltipPosition(anchor, ref)
-  // "Study options" draft (full-set semantics — see the shared component's
-  // model in @flicktionary/ui). Only the MODEL is shared: the controls below
-  // are native px-sized inputs because Radix Checkbox/Switch rem-size against
-  // the HOST page root font-size inside shadow surfaces (EXTENSION-SPEC.md).
+  // "Study options" draft (full-set semantics). The SECTION is the shared web
+  // component — safe in shadow surfaces since the ui Checkbox/Switch were
+  // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
+  // Switch's track-height comment).
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
-  const [optionsExpanded, setOptionsExpanded] = useState(false)
 
-  // A new word = a new save target: re-collapse and re-arm the draft.
+  // A new word = a new save target: re-arm the draft (the section re-collapses
+  // via its `key={word}` remount).
   useEffect(() => {
     setStudyDraft(defaultStudyIntentDraft)
-    setOptionsExpanded(false)
   }, [word])
 
   // Outside pointerdown → onOutsidePointerDown (the parent only acts on it
@@ -174,8 +177,6 @@ export function GlossTooltip({
     return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
   }, [onOutsidePointerDown])
 
-  const ipaLabel = content.status === 'ready' ? pickIpa(content.data.ipa) : null
-
   return (
     <div
       ref={ref}
@@ -183,92 +184,19 @@ export function GlossTooltip({
       onMouseEnter={onPointerEnter}
       onMouseLeave={onPointerLeave}
       style={{ visibility: positioned ? 'visible' : 'hidden' }}
-      className='pointer-events-auto fixed left-0 top-0 z-[2147483647] flex max-w-[320px] flex-col gap-1 rounded-lg bg-black/90 px-3 py-2 text-sm leading-snug text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
+      className={POPOVER_CARD_CLASS}
     >
-      <div className='text-[15px] font-semibold break-words text-white'>{word}</div>
+      <div className={CARD_HEADER_CLASS}>
+        <div className='text-foreground text-base font-semibold break-words'>{word}</div>
+        <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
+      </div>
 
-      <GlossBody content={content} />
-
-      {/* Study options — only when saving is actually available. Native
-          checkbox inputs (px-sized; see the draft-state comment above). */}
+      {/* Study options — only when saving is actually available. The shared
+          web section (Radix Checkbox + Switch, px-pinned at source), so the
+          controls are pixel-identical to the web sheet. */}
       {signedIn && !saveDisabledReason && (
-        <div className='mt-1 flex flex-col gap-1'>
-          <button
-            type='button'
-            onClick={() => setOptionsExpanded((prev) => !prev)}
-            aria-expanded={optionsExpanded}
-            className='self-start text-[12px] font-medium text-white/60 transition-colors hover:text-white/90'
-          >
-            {optionsExpanded ? '▾ ' : '▸ '}
-            <Trans>Study options</Trans>
-          </button>
-          {optionsExpanded &&
-            (() => {
-              const checkedSkillCount = [
-                studyDraft.recognition,
-                studyDraft.production,
-                studyDraft.pronunciation,
-              ].filter(Boolean).length
-              const isLastCheckedSkill = (checked: boolean) => checked && checkedSkillCount === 1
-              const hasMeaningSkill = studyDraft.recognition || studyDraft.production
-              const pronunciationAvailable = !!ipaLabel
-              const patch = (partial: Partial<StudyIntentDraft>) =>
-                setStudyDraft((prev) => ({ ...prev, ...partial, touched: true }))
-              const rowClass = (rowDisabled: boolean) =>
-                `flex items-center gap-1.5 text-[13px] ${rowDisabled ? 'cursor-not-allowed text-white/40' : 'cursor-pointer text-white/90'}`
-              const boxClass = 'size-[13px] accent-white'
-              return (
-                <div className='flex flex-col gap-1'>
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.recognition))}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.recognition}
-                      disabled={isLastCheckedSkill(studyDraft.recognition)}
-                      onChange={(e) => patch({ recognition: e.target.checked })}
-                    />
-                    <Trans>Recognition</Trans>
-                  </label>
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.production))}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.production}
-                      disabled={isLastCheckedSkill(studyDraft.production)}
-                      onChange={(e) => patch({ production: e.target.checked })}
-                    />
-                    <Trans>Production</Trans>
-                  </label>
-                  <label className={rowClass(isLastCheckedSkill(studyDraft.pronunciation) || !pronunciationAvailable)}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.pronunciation}
-                      disabled={isLastCheckedSkill(studyDraft.pronunciation) || !pronunciationAvailable}
-                      onChange={(e) => patch({ pronunciation: e.target.checked })}
-                    />
-                    <Trans>Pronunciation</Trans>
-                    {!pronunciationAvailable && (
-                      <span className='text-[11px] text-white/40'>
-                        <Trans>Needs a known transcription</Trans>
-                      </span>
-                    )}
-                  </label>
-                  <label className={rowClass(!hasMeaningSkill)}>
-                    <input
-                      type='checkbox'
-                      className={boxClass}
-                      checked={studyDraft.exactForm}
-                      disabled={!hasMeaningSkill}
-                      onChange={(e) => patch({ exactForm: e.target.checked })}
-                    />
-                    <span className='min-w-0 break-words'>
-                      <Trans>Study this exact form</Trans> <span className='text-white/50'>(&ldquo;{word}&rdquo;)</span>
-                    </span>
-                  </label>
-                </div>
-              )
-            })()}
+        <div className={CARD_BODY_CLASS}>
+          <StudyOptionsSection key={word} value={studyDraft} onChange={setStudyDraft} surfaceForm={word} />
         </div>
       )}
 
@@ -276,35 +204,32 @@ export function GlossTooltip({
           place of Save (the gloss area shows the "Sign in to translate" note).
           Otherwise the explicit Save — discoverable counterpart to the
           right-click shortcut, disabled (with a reason) where unavailable. */}
-      {!signedIn ? (
-        <button
-          type='button'
-          onClick={onSignIn}
-          className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
-        >
-          <Trans>Sign in</Trans>
-        </button>
-      ) : saveDisabledReason ? (
-        <div className='mt-1.5 flex flex-col gap-1'>
-          <button
+      <div className={CARD_FOOTER_CLASS}>
+        {!signedIn ? (
+          <Button type='button' size='xl' className='w-full' onClick={onSignIn}>
+            <Trans>Sign in</Trans>
+          </Button>
+        ) : saveDisabledReason ? (
+          <>
+            <Button type='button' size='xl' className='w-full' disabled>
+              <Save className='mr-1 h-4 w-4' />
+              <Trans>Save</Trans>
+            </Button>
+            <div className='text-muted-foreground text-xs'>{saveDisabledReason}</div>
+          </>
+        ) : (
+          <Button
             type='button'
-            disabled
-            className='self-start cursor-not-allowed rounded-md bg-white/10 px-2.5 py-1 text-[13px] font-semibold text-white/40'
+            size='xl'
+            className='w-full'
+            disabled={saving}
+            onClick={() => onSave(draftToStudyIntent(studyDraft))}
           >
-            <Trans>Save</Trans>
-          </button>
-          <div className='text-[12px] text-white/60'>{saveDisabledReason}</div>
-        </div>
-      ) : (
-        <button
-          type='button'
-          disabled={saving}
-          onClick={() => onSave(draftToStudyIntent(studyDraft))}
-          className='mt-1.5 self-start rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50'
-        >
-          {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-        </button>
-      )}
+            <Save className='mr-1 h-4 w-4' />
+            {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
@@ -447,24 +372,23 @@ export function SavedGlossTooltip({
       ref={ref}
       data-flicktionary-saved-popover=''
       style={{ visibility: positioned ? 'visible' : 'hidden' }}
-      className='pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-[320px] max-w-[90vw] flex-col gap-1 rounded-lg bg-black/90 px-3 py-2 text-sm leading-snug text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
+      className={POPOVER_CARD_CLASS}
     >
-      <div className='text-[15px] font-semibold break-words text-white'>{highlight.selectionText}</div>
-
-      <GlossBody content={content} />
-
-      {actionError && <div className='text-[13px] text-[#ff9b9b]'>{actionError}</div>}
+      <div className={CARD_HEADER_CLASS}>
+        <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
+        <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
+        {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
+      </div>
 
       {noteExpanded && (
-        <div className='mt-1 flex flex-col gap-1.5'>
-          <textarea
+        <div className={CARD_BODY_CLASS}>
+          <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={t`Optional note for the LLM (what specifically confuses you?)`}
             rows={3}
-            className='w-full resize-none rounded-md border border-white/20 bg-white/10 px-2 py-1.5 text-[13px] text-white placeholder:text-white/40 focus:outline-none'
           />
-          <div className='flex flex-wrap gap-1.5'>
+          <div className='flex flex-wrap gap-2'>
             {PRESET_TAGS.map((tag) => (
               <button
                 key={tag}
@@ -472,47 +396,44 @@ export function SavedGlossTooltip({
                 onClick={() => toggleTag(tag)}
                 className={
                   tags.includes(tag)
-                    ? 'rounded-full border border-yellow-300/80 bg-yellow-300/20 px-2 py-0.5 text-[11px] text-white'
-                    : 'rounded-full border border-white/25 px-2 py-0.5 text-[11px] text-white/80 transition-colors hover:bg-white/10'
+                    ? 'rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs dark:bg-yellow-400/15'
+                    : 'hover:bg-accent rounded-full border px-3 py-1 text-xs'
                 }
               >
                 {presetLabels[tag]}
               </button>
             ))}
           </div>
-          <p className='text-[11px] text-white/50'>
+          <p className='text-muted-foreground mt-2 text-xs'>
             <Trans>Your answer will appear in this card's chat.</Trans>
           </p>
         </div>
       )}
 
-      <div className='mt-1.5 flex items-center justify-between gap-2'>
-        <button
-          type='button'
-          disabled={busy !== null}
-          onClick={handleRemove}
-          className='rounded-md px-2 py-1 text-[13px] font-semibold text-[#ff9b9b] transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50'
-        >
-          {busy === 'remove' ? <Trans>Removing…</Trans> : <Trans>Remove highlight</Trans>}
-        </button>
-        {noteExpanded ? (
-          <button
+      <div className={CARD_FOOTER_CLASS}>
+        <div className='flex items-center justify-between gap-2'>
+          <Button
             type='button'
+            variant='ghost'
+            size='sm'
             disabled={busy !== null}
-            onClick={handleSaveNote}
-            className='rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50'
+            onClick={handleRemove}
+            className='text-destructive hover:bg-destructive/10'
           >
-            {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
-          </button>
-        ) : (
-          <button
-            type='button'
-            onClick={() => setNoteExpanded(true)}
-            className='rounded-md bg-white/15 px-2.5 py-1 text-[13px] font-semibold text-white transition-colors hover:bg-white/25'
-          >
-            {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
-          </button>
-        )}
+            <Trash2 className='mr-1 h-4 w-4' />
+            {busy === 'remove' ? <Trans>Removing…</Trans> : <Trans>Remove highlight</Trans>}
+          </Button>
+          {noteExpanded ? (
+            <Button type='button' size='sm' disabled={busy !== null} onClick={handleSaveNote}>
+              {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
+            </Button>
+          ) : (
+            <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
+              <PencilLine className='h-4 w-4' />
+              {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )
