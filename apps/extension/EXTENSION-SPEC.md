@@ -369,7 +369,8 @@ known, and the re-tokenization when it lands is safe because saved-span paint
 uses intersection, not exact offsets.
 
 - **Hover gloss** — hovering a word (300 ms debounce) calls `glosses.fastGloss`
-  (selection + context line + target language) and shows a floating tooltip
+  (selection + context line + the video's detected target language, see the
+  query-key note below) and shows a floating tooltip
   (floating-ui, in a separate non-transformed popover shadow host): word, IPA
   (the server-picked `ipaDisplay` string — the backend resolves the user's
   `english_ipa_dialect` pref, so the overlay shows the same dialect as the web
@@ -386,14 +387,21 @@ uses intersection, not exact offsets.
   spacing/px-sized and the ui Switch's track height is pinned to px (see its
   in-component comment) — so the controls are pixel-identical to the web.
   The lookup is a TanStack Query (`use-gloss.ts`) keyed
-  `['gloss', word, sentence]` on the realm-wide `glossQueryClient`: successes
-  cache (`staleTime: Infinity`, 30 min gcTime — re-hover is instant), errors
-  THROW and are never cached (re-hover refetches; a "Sign in to translate"
-  error must not survive sign-in). The key omits the auth/target-language
-  context the background derives, so the client is **cleared on any auth
-  change**; the background's target/native-language cache also resets on auth
-  change (`resetFlicktionaryLanguageCache` — to `undefined`, not `null`, which
-  would mean a known "no language" and skip the refetch). Nothing is persisted.
+  `['gloss', targetLanguage, word, sentence]` on the realm-wide
+  `glossQueryClient`: successes cache (`staleTime: Infinity`, 30 min gcTime —
+  re-hover is instant), errors THROW and are never cached (re-hover refetches;
+  a "Sign in to translate" error must not survive sign-in). `targetLanguage`
+  is the VIDEO'S detected subtitle language (from the saved-highlights store,
+  riding the `flicktionary-gloss` message), so a Russian video glosses Russian
+  even for a user whose primary target language is Spanish; while the overlay
+  doesn't know it yet ('' in the key), the background falls back to the user's
+  primary target language, and the detected language landing changes the key
+  so a fallback-language gloss is never served from cache. The key still omits
+  the auth/native-language context the background derives, so the client is
+  **cleared on any auth change**; the background's target/native-language
+  cache also resets on auth change (`resetFlicktionaryLanguageCache` — to
+  `undefined`, not `null`, which would mean a known "no language" and skip the
+  refetch). Nothing is persisted.
   **Pin-on-entry:** a gloss that the pointer never enters keeps the light
   hover-out dismissal (150 ms grace; quick lookups stay friction-free), but
   once the pointer ENTERS the popover it is pinned — pointer-leave no longer

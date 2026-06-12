@@ -237,10 +237,14 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   )
 
   const queryClient = useQueryClient()
-  // The open popover's content. Keyed by (word, sentence): successes cache
-  // (re-hover is instant), errors throw and are NOT cached (re-hover
-  // refetches — a "Sign in to translate" error must not survive sign-in).
-  const glossQuery = useGloss(gloss?.word, gloss?.sentence, gloss !== null)
+  // The open popover's content. Keyed by (targetLanguage, word, sentence):
+  // successes cache (re-hover is instant), errors throw and are NOT cached
+  // (re-hover refetches — a "Sign in to translate" error must not survive
+  // sign-in). The video's detected language rides the request so the gloss is
+  // in the VIDEO'S language, not the user's primary target language; while
+  // it's still unknown the background falls back to the primary language, and
+  // the language landing changes the key so an open popover refetches.
+  const glossQuery = useGloss(gloss?.word, gloss?.sentence, gloss !== null, savedTargetLanguage ?? undefined)
 
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Pending deferred hide of the gloss popover (the hover-bridge grace timer).
@@ -538,7 +542,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const saveSingle = useCallback(
     (line: SubtitleLineModel, token: LineToken, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
-      const translation = queryClient.getQueryData<GlossData>(glossQueryKey(token.text, line.text))?.gloss ?? ''
+      const translation =
+        queryClient.getQueryData<GlossData>(
+          glossQueryKey(token.text, line.text, savedStore.getState().targetLanguage ?? '')
+        )?.gloss ?? ''
       const segmentInfo: SaveWordSegmentInfo = {
         startSegmentIndex: line.index,
         endSegmentIndex: undefined,
@@ -550,7 +557,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         handoff
       )
     },
-    [closures, handleOutcome, queryClient]
+    [closures, handleOutcome, queryClient, savedStore]
   )
 
   // Save a multi-word chunk by its snapshotted word-ordinal range (see
@@ -568,7 +575,10 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const words = selectedWords.map((w) => w.text).join(' ')
       const first = selectedWords[0]
       const last = selectedWords[selectedWords.length - 1]
-      const translation = queryClient.getQueryData<GlossData>(glossQueryKey(words, tl.line.text))?.gloss ?? ''
+      const translation =
+        queryClient.getQueryData<GlossData>(
+          glossQueryKey(words, tl.line.text, savedStore.getState().targetLanguage ?? '')
+        )?.gloss ?? ''
       // Single line → start and end segment are the same cue, so endSegmentIndex
       // is undefined (matches the legacy readSegmentRange payload).
       const segmentInfo: SaveWordSegmentInfo = {
@@ -582,7 +592,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         handoff
       )
     },
-    [closures, handleOutcome, queryClient]
+    [closures, handleOutcome, queryClient, savedStore]
   )
 
   // ---- gloss (hover) flow ----------------------------------------------------

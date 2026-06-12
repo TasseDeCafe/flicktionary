@@ -393,6 +393,11 @@ export interface FlicktionaryGlossMessage extends MessageWithId {
   readonly command: 'flicktionary-gloss'
   readonly selectionText: string
   readonly contextLine: string
+  // The video's server-detected subtitle language (from the session cache,
+  // via the overlay's saved-highlights store). Absent while the overlay
+  // doesn't know it yet (load still in flight) — the background then falls
+  // back to the user's primary target language, the historical behavior.
+  readonly targetLanguage?: string
 }
 
 // Asks the background to begin the Flicktionary pairing ("sign in") flow:

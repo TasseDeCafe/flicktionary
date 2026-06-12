@@ -30,7 +30,7 @@ describe('glossQueryOptions', () => {
     const data = await queryClient.fetchQuery(glossQueryOptions('кот', 'кот спит', true))
 
     expect(data).toEqual({ gloss: 'кот → cat', pos: 'noun', register: null, ipaDisplay: null })
-    expect(mockedRequestGloss).toHaveBeenCalledWith('кот', 'кот спит')
+    expect(mockedRequestGloss).toHaveBeenCalledWith('кот', 'кот спит', undefined)
   })
 
   it('caches successes: a re-hover does not refetch', async () => {
@@ -83,6 +83,20 @@ describe('glossQueryOptions', () => {
     await queryClient.fetchQuery(glossQueryOptions('кот', 'кот ест', true))
 
     expect(mockedRequestGloss).toHaveBeenCalledTimes(2)
+  })
+
+  it('keys by target language: the detected language landing refetches instead of serving the fallback gloss', async () => {
+    mockedRequestGloss.mockResolvedValue({ gloss: 'кот → cat' })
+
+    // Before the overlay knows the video's language the lookup runs without it
+    // (the background falls back to the user's primary target language)…
+    await queryClient.fetchQuery(glossQueryOptions('кот', 'кот спит', true))
+    // …and once the detected language lands, the same (word, sentence) is a
+    // NEW key — the possibly-wrong-language gloss must not be served.
+    await queryClient.fetchQuery(glossQueryOptions('кот', 'кот спит', true, 'ru'))
+
+    expect(mockedRequestGloss).toHaveBeenCalledTimes(2)
+    expect(mockedRequestGloss).toHaveBeenLastCalledWith('кот', 'кот спит', 'ru')
   })
 
   it('is disabled without a word/sentence', () => {

@@ -34,7 +34,12 @@ export default class FlicktionaryGlossHandler {
           sendResponse({ error: i18n._(msg`Sign in to Flicktionary to translate.`) })
           return
         }
-        const targetLanguage = await getFlicktionaryTargetLanguage()
+        // Prefer the VIDEO'S detected subtitle language (sent by the overlay
+        // from the session cache) over the user's primary target language —
+        // a Russian-subtitle video must gloss Russian even for a user whose
+        // primary language is Spanish. The primary-language fallback covers
+        // the window before the overlay learns the detected language.
+        const targetLanguage = message.targetLanguage ?? (await getFlicktionaryTargetLanguage())
         if (!targetLanguage) {
           sendResponse({ error: 'Set your target language on flicktionary.app.' })
           return
