@@ -219,8 +219,7 @@ msgstr "€{monthlyPriceFormatted}/month"
 msgid "€{yearlyPricePerMonth}/month"
 msgstr "€{yearlyPricePerMonth}/month"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "3 examples"
 msgstr "3 examples"
 
@@ -1267,9 +1266,8 @@ msgstr "Error setting up user data"
 msgid "Error: {message}"
 msgstr "Error: {message}"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Etymology"
 msgstr "Etymology"
 
@@ -1303,13 +1301,11 @@ msgstr "Examples"
 msgid "Expected:"
 msgstr "Expected:"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Explain"
 msgstr "Explain"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Explain this term in more depth."
 msgstr "Explain this term in more depth."
 
@@ -1770,8 +1766,7 @@ msgstr "Get started"
 msgid "Getting started"
 msgstr "Getting started"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Give me three more example sentences using it."
 msgstr "Give me three more example sentences using it."
 
@@ -3641,8 +3636,7 @@ msgstr "Switch to recognition"
 msgid "Switching…"
 msgstr "Switching…"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Synonyms"
 msgstr "Synonyms"
 
@@ -4165,8 +4159,7 @@ msgstr "Welcome to Flicktionary"
 msgid "Welcome to Flicktionary."
 msgstr "Welcome to Flicktionary."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
 msgstr "What are some synonyms or near-synonyms, and how do they differ?"
 
@@ -4184,8 +4177,7 @@ msgid "What language do you speak natively? This is the language Flicktionary "
 msgstr "What language do you speak natively? This is the language Flicktionary "
 "will translate words and phrases into."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "What's the etymology or origin of this term?"
 msgstr "What's the etymology or origin of this term?"
 
@@ -4207,13 +4199,11 @@ msgstr "Where did you hear this? Paste a sentence or leave blank."
 msgid "Which pronunciation to show for English vocabulary cards."
 msgstr "Which pronunciation to show for English vocabulary cards."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Why does it appear in this particular form here?"
 msgstr "Why does it appear in this particular form here?"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+#: packages/ui/src/components/preset-tags.tsx
 msgid "Why this form?"
 msgstr "Why this form?"
 
