@@ -76,7 +76,10 @@ const clearPaintIn = (container: HTMLElement) => {
   }
 }
 
-const keyOf = (span: Element): WordKey | null => {
+// Resolve a word span (an element carrying `data-word-start`/`data-word-end`)
+// to its WordKey. Exported for gestures outside the hook — e.g. the session
+// view's right-click save resolves the word under the pointer with it.
+export const wordKeyFromSpan = (span: Element): WordKey | null => {
   const wsAttr = span.getAttribute('data-word-start')
   const weAttr = span.getAttribute('data-word-end')
   if (wsAttr == null || weAttr == null) return null
@@ -163,7 +166,7 @@ export const useWordSelection = ({
       let eFirst = -1
       let eLast = -1
       spans.forEach((s, i) => {
-        const k = keyOf(s)
+        const k = wordKeyFromSpan(s)
         if (!k) return
         if (sameKey(k, anchor)) {
           if (aFirst < 0) aFirst = i
@@ -202,7 +205,7 @@ export const useWordSelection = ({
       const el = document.elementFromPoint(x, y)
       const span = el?.closest('[data-word-start]')
       if (!span || !container.contains(span)) return
-      const k = keyOf(span)
+      const k = wordKeyFromSpan(span)
       if (!k) return
       st.end = k
       paintSelection(st.anchor, k)
@@ -263,7 +266,7 @@ export const useWordSelection = ({
         resetState()
         return
       }
-      const key = keyOf(span)
+      const key = wordKeyFromSpan(span)
       if (!key) {
         resetState()
         return

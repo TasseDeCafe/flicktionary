@@ -97,6 +97,9 @@ export const FloatingSheet = ({
   React.useEffect(() => {
     if (!open || isMobile !== true || modal) return
     const handleOutsideStart = (event: Event) => {
+      // Right-click is never a dismiss intent: the readers bind it as the
+      // save/remove toggle and expect the open sheet to survive and morph.
+      if (event instanceof PointerEvent && event.button === 2) return
       const content = contentRef.current
       if (!content) return
       if (event.target instanceof Node && content.contains(event.target)) return
@@ -399,6 +402,15 @@ interface FloatingSheetContentProps {
   children: React.ReactNode
 }
 
+// Radix dismissal filter shared by the desktop popover and the modal mobile
+// dialog: a right-button pointerdown outside is never a dismiss intent (the
+// readers bind right-click as the save/remove toggle and expect the open sheet
+// to survive and morph), so cancel Radix's close for it.
+const ignoreRightClickOutside = (event: { detail: { originalEvent: Event }; preventDefault: () => void }) => {
+  const original = event.detail.originalEvent
+  if (original instanceof PointerEvent && original.button === 2) event.preventDefault()
+}
+
 export const FloatingSheetContent = ({ className, children }: FloatingSheetContentProps) => {
   const { open, isMobile, expandable, contentRef, modal, anchor, closeSheet } = useFloatingSheetContext()
   const flipStyle = useMobileFlipStyle({ open, isMobile, anchor, contentRef })
@@ -457,6 +469,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
             // we opt out of Radix's <Description> requirement via the
             // documented `aria-describedby={undefined}` escape hatch.
             aria-describedby={undefined}
+            onPointerDownOutside={ignoreRightClickOutside}
             className={contentClassName}
             style={flipStyle}
           >
@@ -475,6 +488,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
         align='start'
         sideOffset={6}
         collisionPadding={12}
+        onPointerDownOutside={ignoreRightClickOutside}
         className={cn(
           'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 w-80 origin-(--radix-popover-content-transform-origin) rounded-md border px-2 py-0 shadow-xl outline-hidden',
           className
