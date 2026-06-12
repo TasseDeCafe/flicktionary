@@ -339,7 +339,7 @@ msgid "Add New Profile..."
 msgstr "Ajouter un nouveau profil..."
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:442
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:684
 msgid "Add note"
 msgstr "Ajouter une note"
 
@@ -912,11 +912,11 @@ msgstr "Impossible de charger automatiquement les sous-titres dans la langue "
 msgid "Could not display payment options at this time."
 msgstr "Impossible d'afficher les options de paiement en ce moment."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:615
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:617
 msgid "Could not fetch a gloss."
 msgstr "Impossible de récupérer une glose."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:615
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:617
 msgid "Could not fetch a gloss. The highlight is still saved."
 msgstr "Impossible de récupérer une glose. Le surlignage est toujours "
 "enregistré."
@@ -970,7 +970,7 @@ msgid "Could not read this page."
 msgstr "Impossible de lire cette page."
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:343
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:557
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:571
 msgid "Could not remove the highlight."
 msgstr "Impossible de supprimer la surbrillance."
 
@@ -1203,7 +1203,7 @@ msgid "Easy"
 msgstr "Facile"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:442
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:682
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:684
 msgid "Edit note"
 msgstr "Modifier la note"
 
@@ -1896,7 +1896,7 @@ msgstr "SM"
 msgid "Hide from vocabulary and Practice"
 msgstr "Masquer du vocabulaire et de la pratique"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:558
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:560
 msgid "Hide notes"
 msgstr "Masquer les notes"
 
@@ -2124,7 +2124,7 @@ msgstr "Langues"
 msgid "Last day to cancel before first charge"
 msgstr "Dernier jour pour annuler avant le premier prélèvement"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:451
+#: apps/web/src/features/sessions/components/session-view.tsx:461
 msgid "Last read"
 msgstr "Dernière lecture"
 
@@ -2206,11 +2206,11 @@ msgstr "Chargement…"
 msgid "Loading review terms…"
 msgstr "Chargement des termes à réviser…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:430
+#: apps/web/src/features/sessions/components/session-view.tsx:440
 msgid "Loading segments…"
 msgstr "Chargement des segments…"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:382
+#: apps/web/src/features/sessions/components/session-view.tsx:392
 msgid "Loading session…"
 msgstr "Chargement de la session…"
 
@@ -2520,7 +2520,7 @@ msgid "No vocabulary yet"
 msgstr "Aucun vocabulaire pour l'instant"
 
 #: apps/web/src/features/practice/components/lookup-sheet.tsx:167
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:511
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:513
 msgid "No Wiktionary IPA"
 msgstr "Pas d'API Wiktionary"
 
@@ -2669,7 +2669,7 @@ msgid "Optional contextual paraphrase in the target language."
 msgstr "Paraphrase contextuelle optionnelle dans la langue cible."
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:397
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:624
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:626
 msgid "Optional note for the LLM (what specifically confuses you?)"
 msgstr "Note optionnelle pour le LLM (qu'est-ce qui vous confond précisément ?)"
 
@@ -2980,7 +2980,7 @@ msgstr "Pronom"
 msgid "Pronunciation"
 msgstr "Prononciation"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:538
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:540
 msgid "Quick gloss"
 msgstr "Glose rapide"
 
@@ -2989,7 +2989,7 @@ msgstr "Glose rapide"
 msgid "Quick gloss failed"
 msgstr "Glose rapide échouée"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:518
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:520
 msgid "Quick gloss for the selected text."
 msgstr "Glose rapide pour le texte sélectionné."
 
@@ -3115,7 +3115,7 @@ msgid "Remove form"
 msgstr "Supprimer la forme"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:433
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:669
 msgid "Remove highlight"
 msgstr "Supprimer le surlignage"
 
@@ -3124,7 +3124,7 @@ msgid "Remove session"
 msgstr "Supprimer la session"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:433
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:667
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:669
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx:64
 msgid "Removing…"
 msgstr "Suppression…"
@@ -3211,7 +3211,7 @@ msgstr "RP"
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:216
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:229
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx:51
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:656
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -3225,7 +3225,7 @@ msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source "
 "nécessaire"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:437
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:673
 msgid "Save note"
 msgstr "Enregistrer la note"
 
@@ -3238,8 +3238,8 @@ msgstr "Enregistrer dans le vocabulaire"
 #: apps/web/src/features/review/components/editable-card-fields.tsx:312
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx:529
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx:132
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:654
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:671
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:656
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:673
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx:159
 msgid "Saving…"
 msgstr "Enregistrement…"
@@ -3362,12 +3362,12 @@ msgstr "Envoi de l'email"
 msgid "Sending..."
 msgstr "Envoi en cours..."
 
-#: apps/web/src/features/sessions/components/session-view.tsx:381
-#: apps/web/src/features/sessions/components/session-view.tsx:388
+#: apps/web/src/features/sessions/components/session-view.tsx:391
+#: apps/web/src/features/sessions/components/session-view.tsx:398
 msgid "Session"
 msgstr "Session"
 
-#: apps/web/src/features/sessions/components/session-view.tsx:389
+#: apps/web/src/features/sessions/components/session-view.tsx:399
 msgid "Session not found."
 msgstr "Session introuvable."
 
@@ -3431,7 +3431,7 @@ msgstr "Afficher {filteredCount} filtrés (en dessous de votre niveau)"
 msgid "Show answer"
 msgstr "Afficher la réponse"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:558
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:560
 msgid "Show notes"
 msgstr "Afficher les notes"
 
@@ -3440,7 +3440,7 @@ msgid "Show suggested terms while reading"
 msgstr "Afficher les termes suggérés pendant la lecture"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:210
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:483
+#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx:497
 msgid "Sign in"
 msgstr "Se connecter"
 
@@ -3752,7 +3752,7 @@ msgstr "Passer en production"
 msgid "Switch to recognition"
 msgstr "Passer en reconnaissance"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:593
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:595
 msgid "Switching…"
 msgstr "Basculement…"
 
@@ -4118,7 +4118,7 @@ msgid "Unseen"
 msgstr "Non vus"
 
 #: apps/web/src/features/sessions/components/session-card.tsx:26
-#: apps/web/src/features/sessions/components/session-view.tsx:394
+#: apps/web/src/features/sessions/components/session-view.tsx:404
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx:77
 msgid "Untitled"
 msgstr "Sans titre"
@@ -4169,7 +4169,7 @@ msgstr "Utilisez « {term} » dans une phrase"
 msgid "Use a subtitle file you already have."
 msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:579
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:581
 msgid "Use suggested"
 msgstr "Utiliser la suggestion"
 
@@ -4417,7 +4417,7 @@ msgid "Your account has been deleted successfully."
 msgstr "Votre compte a été supprimé avec succès."
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx:417
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:643
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx:645
 msgid "Your answer will appear in this card's chat."
 msgstr "Votre réponse apparaîtra dans la discussion de cette carte."
 
