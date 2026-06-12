@@ -22,7 +22,9 @@ export default defineConfig({
       exclude: ['**/node_modules/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     },
   ],
-  format: formatter(),
+  // lineNumbers: false keeps the `#:` file-path origins but drops the `:NNN`
+  // suffixes, so unrelated line shifts in source files don't churn the catalogs.
+  format: formatter({ lineNumbers: false }),
   compileNamespace: 'ts',
   rootDir: __dirname,
 })
