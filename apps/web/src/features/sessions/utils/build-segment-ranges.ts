@@ -1,3 +1,4 @@
+import { projectHighlightSlice } from '@flicktionary/core/utils/project-highlight-slice'
 import type { SegmentGhostRange, SegmentHighlightRange } from './word-highlight-spans'
 
 type Segment = {
@@ -39,24 +40,36 @@ export const buildSegmentRanges = (
   }
 
   for (const h of highlights) {
+    const offsets = { startOffset: h.startOffset, endOffset: h.endOffset, clamp: false } as const
     if (h.startSegmentId === h.endSegmentId) {
-      push(h.startSegmentId, { highlightId: h.id, start: h.startOffset, end: h.endOffset })
+      // lineLength is unread for an unclamped 'single' projection.
+      push(h.startSegmentId, {
+        highlightId: h.id,
+        ...projectHighlightSlice({ relation: 'single', ...offsets, lineLength: 0 }),
+      })
       continue
     }
     const startIdx = indexById.get(h.startSegmentId)
     const endIdx = indexById.get(h.endSegmentId)
     if (startIdx !== undefined) {
       const startSeg = segments[startIdx]!
-      push(startSeg.id, { highlightId: h.id, start: h.startOffset, end: startSeg.text.length })
+      push(startSeg.id, {
+        highlightId: h.id,
+        ...projectHighlightSlice({ relation: 'start', ...offsets, lineLength: startSeg.text.length }),
+      })
     }
     if (endIdx !== undefined) {
       const endSeg = segments[endIdx]!
-      push(endSeg.id, { highlightId: h.id, start: 0, end: h.endOffset })
+      // lineLength is unread for an unclamped 'end' projection.
+      push(endSeg.id, { highlightId: h.id, ...projectHighlightSlice({ relation: 'end', ...offsets, lineLength: 0 }) })
     }
     if (startIdx !== undefined && endIdx !== undefined && endIdx > startIdx + 1) {
       for (let i = startIdx + 1; i < endIdx; i++) {
         const mid = segments[i]!
-        push(mid.id, { highlightId: h.id, start: 0, end: mid.text.length })
+        push(mid.id, {
+          highlightId: h.id,
+          ...projectHighlightSlice({ relation: 'middle', ...offsets, lineLength: mid.text.length }),
+        })
       }
     }
   }

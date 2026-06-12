@@ -11,13 +11,8 @@ import {
 } from '@flicktionary/ui/components/study-options-section'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
 import { Button } from '@flicktionary/ui/components/button'
-import { Textarea } from '@flicktionary/ui/components/textarea'
-import {
-  PRESET_TAGS,
-  composeChatSeedPrompt,
-  usePresetTagTexts,
-  type PresetTag,
-} from '@flicktionary/ui/components/preset-tags'
+import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
+import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
 import type { SavedHighlightDto } from '@asbplayer-fork/common'
@@ -295,7 +290,7 @@ export function SavedGlossTooltip({
   const [busy, setBusy] = useState<'remove' | 'note' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
-  const { labels: presetLabels, prompts: presetPrompts } = usePresetTagTexts()
+  const { prompts: presetPrompts } = usePresetTagTexts()
 
   // Refresh the gloss from the server even when a cached fastGloss rendered
   // instantly — this also enriches older rows with Wiktionary IPA.
@@ -373,31 +368,7 @@ export function SavedGlossTooltip({
 
       {noteExpanded && (
         <div className={CARD_BODY_CLASS}>
-          <Textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t`Optional note for the LLM (what specifically confuses you?)`}
-            rows={3}
-          />
-          <div className='flex flex-wrap gap-2'>
-            {PRESET_TAGS.map((tag) => (
-              <button
-                key={tag}
-                type='button'
-                onClick={() => toggleTag(tag)}
-                className={
-                  tags.includes(tag)
-                    ? 'rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs dark:bg-yellow-400/15'
-                    : 'hover:bg-accent rounded-full border px-3 py-1 text-xs'
-                }
-              >
-                {presetLabels[tag]}
-              </button>
-            ))}
-          </div>
-          <p className='text-muted-foreground mt-2 text-xs'>
-            <Trans>Your answer will appear in this card's chat.</Trans>
-          </p>
+          <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
         </div>
       )}
 

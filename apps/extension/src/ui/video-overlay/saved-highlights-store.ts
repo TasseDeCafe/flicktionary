@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
 import type { SavedHighlightDto } from '@asbplayer-fork/common'
+import { projectHighlightSlice } from '@flicktionary/core/utils/project-highlight-slice'
 
 // The overlay's saved-highlight state, one store per OverlayBody mount
 // (pattern: overlay-interaction-store). Rendering subscribes to `highlights`
@@ -81,12 +82,17 @@ export const buildLineRanges = (
   const out: SavedLineRange[] = []
   for (const h of highlights) {
     if (lineIndex < h.startSegmentIndex || lineIndex > h.endSegmentIndex) continue
-    const rawStart = lineIndex === h.startSegmentIndex ? h.startOffset : 0
-    const rawEnd = lineIndex === h.endSegmentIndex ? h.endOffset : lineLen
-    const start = Math.max(0, Math.min(rawStart, lineLen))
-    const end = Math.max(0, Math.min(rawEnd, lineLen))
-    if (end <= start) continue
-    out.push({ highlightId: h.id, start, end })
+    const isStart = lineIndex === h.startSegmentIndex
+    const isEnd = lineIndex === h.endSegmentIndex
+    const relation = isStart && isEnd ? 'single' : isStart ? 'start' : isEnd ? 'end' : 'middle'
+    const slice = projectHighlightSlice({
+      relation,
+      startOffset: h.startOffset,
+      endOffset: h.endOffset,
+      lineLength: lineLen,
+      clamp: true,
+    })
+    if (slice) out.push({ highlightId: h.id, ...slice })
   }
   return out
 }
