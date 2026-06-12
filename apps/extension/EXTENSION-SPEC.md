@@ -542,8 +542,11 @@ uses intersection, not exact offsets.
   the save.
 - **Pause-on-hover** — `pauseOnHoverMode` defaults to `inAndOut`: hovering the
   subtitle pauses, leaving resumes. The subtitle hit-rect "hover bridge" also
-  counts the gloss popover as inside, and the tooltip has a 150 ms hide grace,
-  so moving from word → popover doesn't auto-resume and tear the popover down.
+  counts BOTH popovers as inside — the preview gloss and the saved-mode
+  popover (the save handoff morphs one into the other, and hovering a saved
+  span opens the saved-mode popover directly) — and the tooltip has a 150 ms
+  hide grace, so moving from word → popover doesn't auto-resume and tear the
+  popover down.
 
 ### Controls overlay
 
