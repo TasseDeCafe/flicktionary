@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
 import { PencilLine, Save, Trash2 } from 'lucide-react'
@@ -48,15 +48,23 @@ const CARD_FOOTER_CLASS = 'mt-auto flex flex-col gap-2 px-2 pt-2 pb-3'
 // Floating-ui positioning shared by the preview and saved popovers: fixed
 // strategy against the anchor's viewport rect (the anchor lives in the
 // transformed subtitle shadow tree, the popover in the separate non-transformed
-// popover host — correct in both windowed and fullscreen). Returns the
-// `positioned` gate that hides the first unpositioned paint.
+// popover host — correct in both windowed and fullscreen).
+//
+// Placement happens BEFORE the mounting commit paints: the layout effect kicks
+// off computePosition, whose awaits are all microtasks (the DOM platform
+// methods are synchronous), so left/top/visibility land on the element before
+// the browser paints. The popover stays `visibility: hidden` until then —
+// imperatively, not via state: a state-gated reveal flips only in a SECOND,
+// post-paint render, which guarantees one painted frame with no popover. That
+// frame was invisible on a fresh open (nothing was there before) but showed as
+// a flash on the save handoff, where the preview popover unmounts and the
+// saved-mode popover mounts at the same anchor in one commit.
 const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivElement | null>) => {
-  const [positioned, setPositioned] = useState(false)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const tooltip = ref.current
     if (!tooltip) return
 
-    setPositioned(false)
+    tooltip.style.visibility = 'hidden'
     const update = () => {
       computePosition(anchor, tooltip, {
         strategy: 'fixed',
@@ -65,13 +73,12 @@ const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivEle
       }).then(({ x, y }) => {
         tooltip.style.left = `${x}px`
         tooltip.style.top = `${y}px`
-        setPositioned(true)
+        tooltip.style.visibility = 'visible'
       })
     }
 
     return autoUpdate(anchor, tooltip, update)
   }, [anchor, ref])
-  return positioned
 }
 
 // The gloss body, shared by the preview and saved modes: the web app's
@@ -152,10 +159,7 @@ export function GlossTooltip({
 }: GlossTooltipProps) {
   const { t } = useLingui()
   const ref = useRef<HTMLDivElement>(null)
-  // Gate visibility until the async computePosition has placed the tooltip;
-  // otherwise it paints one frame at its initial top-left before moving (the
-  // brief viewport-corner flash). Reset whenever the anchor changes.
-  const positioned = useTooltipPosition(anchor, ref)
+  useTooltipPosition(anchor, ref)
   // "Study options" draft (full-set semantics). The SECTION is the shared web
   // component — safe in shadow surfaces since the ui Checkbox/Switch were
   // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
@@ -190,7 +194,6 @@ export function GlossTooltip({
       data-flicktionary-gloss-popover=''
       onMouseEnter={onPointerEnter}
       onMouseLeave={onPointerLeave}
-      style={{ visibility: positioned ? 'visible' : 'hidden' }}
       className={POPOVER_CARD_CLASS}
     >
       <div className={CARD_HEADER_CLASS}>
@@ -279,7 +282,7 @@ export function SavedGlossTooltip({
 }: SavedGlossTooltipProps) {
   const { t } = useLingui()
   const ref = useRef<HTMLDivElement>(null)
-  const positioned = useTooltipPosition(anchor, ref)
+  useTooltipPosition(anchor, ref)
 
   const [content, setContent] = useState<GlossContent>(() =>
     highlight.fastGloss
@@ -361,13 +364,7 @@ export function SavedGlossTooltip({
   const hasNoteDetails = (highlight.note ?? '').trim().length > 0 || highlight.presetTags.length > 0
 
   return (
-    <div
-      ref={ref}
-      data-flicktionary-saved-popover=''
-      onMouseEnter={onPointerEnter}
-      style={{ visibility: positioned ? 'visible' : 'hidden' }}
-      className={POPOVER_CARD_CLASS}
-    >
+    <div ref={ref} data-flicktionary-saved-popover='' onMouseEnter={onPointerEnter} className={POPOVER_CARD_CLASS}>
       <div className={CARD_HEADER_CLASS}>
         <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
         <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
