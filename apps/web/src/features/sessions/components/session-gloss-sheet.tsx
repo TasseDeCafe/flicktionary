@@ -9,12 +9,8 @@ import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/com
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Button } from '@flicktionary/ui/components/button'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
-import {
-  PRESET_TAGS,
-  composeChatSeedPrompt,
-  usePresetTagTexts,
-  type PresetTag,
-} from '@flicktionary/ui/components/preset-tags'
+import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
+import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
 import {
   StudyOptionsSection,
   defaultStudyIntentDraft,
@@ -33,7 +29,6 @@ import {
   FloatingSheetTitle,
   type FloatingSheetAnchor,
 } from '@flicktionary/ui/components/floating-sheet'
-import { Textarea } from '@flicktionary/ui/components/textarea'
 import {
   isOptimisticHighlightId,
   useCreateHighlight,
@@ -137,7 +132,7 @@ export const SessionGlossSheet = ({
   const { mutate: saveNoteAndTags, isPending: isSavingNote } = useUpdateHighlightNoteAndTags(sessionId)
   const { mutateAsync: switchGhost, isPending: isSwitching } = useSwitchGhost(sessionId)
 
-  const { labels: presetLabels, prompts: presetPrompts } = usePresetTagTexts()
+  const { prompts: presetPrompts } = usePresetTagTexts()
 
   const [glossState, setGlossState] = useState<GlossViewState>({ status: 'idle' })
   const [highlightId, setHighlightId] = useState<string | null>(null)
@@ -572,29 +567,7 @@ export const SessionGlossSheet = ({
         )}
 
         <FloatingSheetExpanded>
-          <Textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t`Optional note for the LLM (what specifically confuses you?)`}
-            rows={3}
-          />
-          <div className='flex flex-wrap gap-2'>
-            {PRESET_TAGS.map((tag) => (
-              <button
-                key={tag}
-                type='button'
-                onClick={() => toggleTag(tag)}
-                className={
-                  tags.includes(tag)
-                    ? 'rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs dark:bg-yellow-400/15'
-                    : 'hover:bg-accent rounded-full border px-3 py-1 text-xs'
-                }
-              >
-                {presetLabels[tag]}
-              </button>
-            ))}
-          </div>
-          <p className='text-muted-foreground mt-2 text-xs'>{t`Your answer will appear in this card's chat.`}</p>
+          <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
         </FloatingSheetExpanded>
 
         <FloatingSheetFooter>
