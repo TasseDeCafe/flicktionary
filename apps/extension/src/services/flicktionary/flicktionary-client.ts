@@ -4,7 +4,6 @@ import {
   DeleteFlicktionaryHighlightResponse,
   FlicktionaryGlossMessage,
   FlicktionaryGlossResponse,
-  FlicktionaryGlossIpa,
   FlicktionarySavedGlossMessage,
   FlicktionarySavedGlossResponse,
   FlicktionaryStartPairingMessage,
@@ -31,12 +30,14 @@ export type { SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/com
 // stays in the caller.
 
 // Structured gloss for the hover tooltip — mirrors the web app's fast-gloss
-// popover (selection + IPA + gloss + POS/register).
+// popover (selection + IPA + gloss + POS/register). `ipaDisplay` is the
+// server-picked, dialect-correct display string (the backend resolves the
+// user's english_ipa_dialect pref) — rendered verbatim.
 export interface GlossData {
   gloss: string
   pos: string | null
   register: string | null
-  ipa: FlicktionaryGlossIpa | null
+  ipaDisplay: string | null
 }
 
 // The (segment index, char offsets) trio that resolves a clicked occurrence to
@@ -61,10 +62,11 @@ export interface FlicktionaryVideoClosures {
 // Discriminated result of a save attempt, for the UI to act on. `highlight` is
 // the created row (index coordinates) for optimistic saved-span painting;
 // undefined when the background couldn't convert it — reload instead.
-// `sessionId` lets the overlay store learn the session on a video's FIRST save
-// (its load ran before the session existed).
+// `sessionId`/`targetLanguage` let the overlay store learn the session (and
+// the tokenizer locale) on a video's FIRST save (its load ran before the
+// session existed).
 export type SaveWordOutcome =
-  | { kind: 'saved'; word: string; highlight?: SavedHighlightDto; sessionId?: string }
+  | { kind: 'saved'; word: string; highlight?: SavedHighlightDto; sessionId?: string; targetLanguage?: string }
   | { kind: 'disabled'; reason: string }
   | { kind: 'missing-cefr'; targetLanguage: string }
   | { kind: 'error'; message: string }
@@ -98,13 +100,6 @@ export async function startFlicktionaryPairing(): Promise<void> {
   }
 
   await browser.runtime.sendMessage(message)
-}
-
-// Prefer General American, then Received Pronunciation, then an untagged entry
-// — matching the fields the backend's GrammarIpaBag exposes.
-export function pickIpa(ipa: FlicktionaryGlossIpa | null): string | null {
-  if (!ipa) return null
-  return ipa.ga ?? ipa.rp ?? ipa.untagged ?? null
 }
 
 export interface SaveWordParams {
@@ -159,7 +154,13 @@ export async function saveWord({
   const response: SaveWordResponse = await browser.runtime.sendMessage(message)
 
   if (response.success) {
-    return { kind: 'saved', word, highlight: response.highlight, sessionId: response.sessionId }
+    return {
+      kind: 'saved',
+      word,
+      highlight: response.highlight,
+      sessionId: response.sessionId,
+      targetLanguage: response.targetLanguage,
+    }
   }
 
   // No CEFR level set for this language yet — let the caller offer an inline
@@ -265,6 +266,6 @@ export async function fetchSavedGloss(sessionId: string, highlightId: string): P
     gloss: response.gloss,
     pos: response.pos ?? null,
     register: response.register ?? null,
-    ipa: response.ipa ?? null,
+    ipaDisplay: response.ipaDisplay ?? null,
   }
 }

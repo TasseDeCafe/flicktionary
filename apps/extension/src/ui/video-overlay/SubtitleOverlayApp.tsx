@@ -61,8 +61,10 @@ interface HoveredWord {
   element: HTMLElement
 }
 
-const tokenizeLine = (line: SubtitleLineModel): TokenizedLine => {
-  const raw = tokenizeText(line.text)
+// `locale` is the session's server-detected subtitle language ('' until it is
+// known) — keeps Intl.Segmenter word boundaries identical to the web reader's.
+const tokenizeLine = (line: SubtitleLineModel, locale: string): TokenizedLine => {
+  const raw = tokenizeText(line.text, locale)
   const tokens: LineToken[] = []
   const wordTokens: LineToken[] = []
   let cursor = 0
@@ -191,7 +193,6 @@ export function SubtitleOverlayApp(props: SubtitleOverlayAppProps) {
 
 function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverlayAppProps) {
   const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot)
-  const tokenized = useMemo(() => snapshot.lines.map(tokenizeLine), [snapshot.lines])
 
   // Pointer-interaction state, one store per overlay mount. Rendering
   // subscribes to `selection`/`signedIn` only; the imperative handlers read
@@ -221,9 +222,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const [savedStore] = useState(() => createSavedHighlightsStore())
   const savedHighlights = useStore(savedStore, (s) => s.highlights)
   const savedSessionId = useStore(savedStore, (s) => s.sessionId)
+  const savedTargetLanguage = useStore(savedStore, (s) => s.targetLanguage)
   const [savedPopover, setSavedPopover] = useState<SavedPopoverState | null>(null)
   const savedPopoverRef = useRef<SavedPopoverState | null>(null)
   savedPopoverRef.current = savedPopover
+
+  // Tokenize with the session's detected language once the saved-highlights
+  // load (or the first save) delivers it — '' (locale-less) until then. The
+  // re-tokenization when the locale lands is safe: the saved-span paint uses
+  // intersection, not exact offsets, so it tolerates the boundary shift.
+  const tokenized = useMemo(
+    () => snapshot.lines.map((line) => tokenizeLine(line, savedTargetLanguage ?? '')),
+    [snapshot.lines, savedTargetLanguage]
+  )
 
   const queryClient = useQueryClient()
   // The open popover's content. Keyed by (word, sentence): successes cache
@@ -341,7 +352,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           savedStore.getState().setAll(null, [])
           return
         }
-        savedStore.getState().setAll(res.sessionId ?? null, res.highlights ?? [])
+        savedStore.getState().setAll(res.sessionId ?? null, res.highlights ?? [], res.targetLanguage)
       }
     )
   }, [closures, savedStore])
@@ -463,7 +474,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           // response without the converted highlight (segment-map miss) falls
           // back to a full reload.
           if (outcome.highlight) {
-            savedStore.getState().add(outcome.highlight, outcome.sessionId)
+            savedStore.getState().add(outcome.highlight, outcome.sessionId, outcome.targetLanguage)
           } else {
             savedLoadedHashRef.current = null
             loadSaved()
@@ -981,7 +992,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // ready immediately; a disabled/idle query renders as loading, but the
   // tooltip only mounts while `gloss` is set).
   const glossContent: GlossContent = glossQuery.data
-    ? { status: 'ready', data: glossQuery.data }
+    ? { status: 'ready', ...glossQuery.data }
     : glossQuery.isError
       ? { status: 'error', message: glossQuery.error.message }
       : { status: 'loading' }

@@ -1,9 +1,10 @@
 // Decodes the serialized `highlights.fast_gloss` column (gloss\n[POS]\n[register])
-// into the GlossData shape the popover renders — ported from the web gloss
-// sheet's parseCachedGloss so a saved highlight shows its cached gloss
-// instantly while the fastGloss refresh is in flight.
+// into the {gloss, pos, register} triple the gloss popovers render — shared by
+// the web gloss sheet and the extension's subtitle-overlay popovers so a saved
+// highlight shows its cached gloss instantly while the fastGloss refresh is in
+// flight.
 
-const FAST_GLOSS_POS_ALIASES = new Set([
+export const FAST_GLOSS_POS_ALIASES = new Set([
   'n',
   'noun',
   'v',

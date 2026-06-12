@@ -39,10 +39,13 @@ function wordRangesToTokens(text: string, ranges: WordRange[]): TokenizedWord[] 
 /**
  * Tokenizes text into words and non-word segments (punctuation, spaces, etc.)
  *
- * Locale-less segmentation (`''`) is sufficient for the languages we support —
- * Unicode word-break and ICU dictionary breaking don't need the locale tag for
- * German/Portuguese/Korean/CJK/Thai.
+ * `locale` is the video's server-detected subtitle language, matching what the
+ * web reader passes for the same text — Intl.Segmenter word rules are
+ * locale-sensitive (apostrophes/hyphens), so a shared locale keeps word
+ * boundaries (and therefore saved offsets) identical across platforms. `''`
+ * (locale-less segmentation) is the fallback while the session — and with it
+ * the detected language — is still unknown.
  */
-export function tokenizeText(text: string): TokenizedWord[] {
-  return wordRangesToTokens(text, getWordRanges(text, ''))
+export function tokenizeText(text: string, locale = ''): TokenizedWord[] {
+  return wordRangesToTokens(text, getWordRanges(text, locale))
 }

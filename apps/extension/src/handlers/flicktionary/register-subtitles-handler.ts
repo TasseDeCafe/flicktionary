@@ -68,6 +68,7 @@ export default class RegisterFlicktionarySubtitlesHandler {
           sessionId: data.sessionId,
           textTrackId: data.textTrackId,
           contentSourceId: data.contentSourceId,
+          targetLanguage: data.targetLanguage,
           segmentIdByIndex,
         })
 

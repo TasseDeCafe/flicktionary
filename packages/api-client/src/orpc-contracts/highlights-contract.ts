@@ -51,6 +51,9 @@ export const highlightsContract = {
           pos: z.string().nullable(),
           register: z.string().nullable(),
           ipa: GrammarIpaBagSchema.nullable(),
+          // Server-picked, dialect-correct display string — see
+          // glosses-contract's fastGloss output for the convention.
+          ipaDisplay: z.string().nullable(),
         }),
       })
     ),

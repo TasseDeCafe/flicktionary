@@ -341,8 +341,10 @@ When subtitles load, the binding awaits `register-flicktionary-subtitles`: the
 background calls `studySessions.findOrCreateForYoutubeVideo` (deduped on video
 id) or `findOrCreateForStreamingVideo` (any other platform), which creates the
 `content_source`/`text_track`/`text_segments` server-side and returns a
-segment-index → `text_segments.id` map, cached per `(source, contentHash)`
-(`youtube-session-cache.ts`) so saves are a single round trip.
+segment-index → `text_segments.id` map plus the detected `targetLanguage`,
+cached per `(source, contentHash)` (`youtube-session-cache.ts`, storage key
+`flicktionary.session-cache.v3` — the v3 bump dropped v2 entries instead of
+migrating; re-registration is idempotent) so saves are a single round trip.
 
 The extension sends **no language** — the backend detects it (Haiku) and uses it
 as both content and target language. Failure modes are explicit: `422
@@ -357,12 +359,21 @@ The subtitle renderer is a single React app in a shadow root
 word interaction is **always on** (the old `wordClickEnabled` setting is gone).
 Each cue is tokenized (`services/word-tokenizer.ts`) into `Word` spans carrying
 `data-word`/`data-sentence` plus segment-index and char-offset data so any save
-resolves to an exact `text_segments` row + offsets.
+resolves to an exact `text_segments` row + offsets. The tokenizer locale is the
+session's server-detected subtitle language (delivered by the saved-highlights
+load / the first save's response, held in the saved-highlights store), matching
+what the web reader passes for the same text — `Intl.Segmenter` word rules are
+locale-sensitive, so this keeps word boundaries (and saved offsets) identical
+across platforms; `''` (locale-less) is the fallback until the language is
+known, and the re-tokenization when it lands is safe because saved-span paint
+uses intersection, not exact offsets.
 
 - **Hover gloss** — hovering a word (300 ms debounce) calls `glosses.fastGloss`
   (selection + context line + target language) and shows a floating tooltip
   (floating-ui, in a separate non-transformed popover shadow host): word, IPA
-  (GA → RP → untagged preference), one-line gloss, POS and register badges.
+  (the server-picked `ipaDisplay` string — the backend resolves the user's
+  `english_ipa_dialect` pref, so the overlay shows the same dialect as the web
+  app; no client-side bag picking), one-line gloss, POS and register badges.
   Both popovers (preview + saved mode) are built from the web app's shared
   components — `GlossCardBody`/`Badge`/`Button`/`Textarea` from
   `@flicktionary/ui` — inside a card that copies the web FloatingSheet's
@@ -498,18 +509,20 @@ resolves to an exact `text_segments` row + offsets.
     dropped (different track revision). Signed-out → `signedIn: false`, no
     paint, zero further calls.
   - **Optimistic save** — `save-word` now returns the created highlight
-    converted to segment-index coordinates plus the `sessionId`; the overlay
-    pushes both straight into the store (replace-by-id; the session id
-    backfills a store that loaded before the video's FIRST save created the
-    session — without it the saved-mode popover can't open on the new span).
-    A response without the highlight falls back to a full reload.
+    converted to segment-index coordinates plus the `sessionId` and
+    `targetLanguage`; the overlay pushes them straight into the store
+    (replace-by-id; the session id and tokenizer locale backfill a store that
+    loaded before the video's FIRST save created the session — without them
+    the saved-mode popover can't open on the new span and tokenization stays
+    locale-less). A response without the highlight falls back to a full reload.
   - **Saved-mode popover** — a plain click (no drag) on a saved span opens a
     sticky popover (`SavedGlossTooltip`); HOVERING a saved span opens the same
     popover in a hover variant (300 ms debounce, hover-out grace dismissal,
     sticky once the pointer enters it) — there is no preview-with-Save over a
     saved word. Parity with the web session view's gloss sheet minus
-    ghost-extend: cached `fastGloss` parses instantly (`parse-fast-gloss.ts`,
-    ported from the web sheet) and refreshes via `flicktionary-saved-gloss` →
+    ghost-extend: cached `fastGloss` parses instantly (the shared
+    `@flicktionary/core/utils/parse-fast-gloss`, same decoder as the web
+    sheet) and refreshes via `flicktionary-saved-gloss` →
     `highlights.fastGloss`; **Remove highlight**
     (`delete-flicktionary-highlight`, 404 counts as success) removes the span
     silently (no success toast — the wash disappearing is the feedback, same
@@ -659,7 +672,7 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `extensionAuth.bootstrapPrefs` | primary target language after pairing |
 | `extensionAuth.revokeSession` | sign-out |
 | `extensionAuth.setCefrLevel` | CEFR picker |
-| `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipa}` |
+| `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag) |
 | `studySessions.findOrCreateForYoutubeVideo` | session registration (YouTube, deduped on video id) |
 | `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |
@@ -687,8 +700,9 @@ extension typecheck sees them.
 | In-memory only | gloss query cache (`glossQueryClient`, cleared on auth change), session/segment-id cache, saved-highlights store (per overlay mount) |
 
 No learning data is stored locally; highlights live in the backend. The
-session/segment-id cache (`flicktionary.session-cache.v2` in
-`chrome.storage.local`) is evictable per video (`removeFlicktionarySession`):
+session/segment-id cache (`flicktionary.session-cache.v3` in
+`chrome.storage.local`; entries also carry the detected `targetLanguage`) is
+evictable per video (`removeFlicktionarySession`):
 the saved-highlights loader evicts an entry whose session no longer lists
 (deleted in the web app) and re-resolves via `lookupForVideo`.
 
@@ -702,7 +716,7 @@ the saved-highlights loader evicts an entry whose session no longer lists
 3. Right-click save creates a highlight (verify in the backend / web app) and
    the saved span paints immediately (teal underline).
 3a. Reload the page → the span reappears (cache); clear
-    `flicktionary.session-cache.v2` from `chrome.storage.local` → it reappears
+    `flicktionary.session-cache.v3` from `chrome.storage.local` → it reappears
     via `lookupForVideo` with NO find-or-create issued (check Network). Click
     the span → saved popover: gloss renders, note edits persist to the web
     app, Remove syncs to the web app. Delete the session in the web app →
