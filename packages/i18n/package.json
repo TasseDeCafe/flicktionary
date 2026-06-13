@@ -14,7 +14,8 @@
     "lingui:extract": "cd ../.. && pnpm exec lingui extract --clean",
     "lingui:watch": "cd ../.. && pnpm exec lingui extract --watch",
     "lingui:compile": "cd ../.. && pnpm exec lingui compile",
-    "translate": "doppler run --project backend --config dev_personal -- node scripts/translate-missing.mjs"
+    "translate": "doppler run --project backend --config dev_personal -- node scripts/translate-missing.mjs",
+    "translate:check": "node scripts/translate-missing.mjs --check"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "catalog:",

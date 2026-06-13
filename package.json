@@ -24,6 +24,8 @@
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "translate": "pnpm --filter @flicktionary/i18n translate",
+    "translate:sync": "pnpm lingui extract --clean && pnpm --filter @flicktionary/i18n translate && pnpm lingui extract --clean",
+    "translate:check": "pnpm --filter @flicktionary/i18n translate:check",
     "sync-env": "./apps/native/scripts/sync-env-if-changed.sh",
     "sync-env:force": "pnpm --filter native sync-env",
     "db:reset": "pnpm --filter @flicktionary/backend db:dev:tunnel:reset",

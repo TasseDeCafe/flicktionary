@@ -147,7 +147,13 @@ async function addTranslations(filledTranslations) {
       po.translations[''][translation.key]['msgstr'] = [translation.translation]
     }
 
-    const buffer = gettextParser.po.compile(po, { foldLength: 0 })
+    // Fold at 76 columns to match `@lingui/format-po`'s own output. Writing in
+    // a different fold width (e.g. unfolded) makes the next `lingui extract`
+    // reformat the whole file, churning the diff. The create-pr flow still runs
+    // a final `lingui extract --clean` to normalize, but matching here keeps a
+    // standalone `pnpm translate` from leaving the catalog in a non-canonical
+    // shape that would trip the pre-push catalog guard.
+    const buffer = gettextParser.po.compile(po, { foldLength: 76 })
     await fs.writeFile(catalogFile, buffer)
     console.log(`✅ Updated ${catalogFile}`)
   }
@@ -157,12 +163,11 @@ async function addTranslations(filledTranslations) {
  * Main function
  */
 async function main() {
-  // Check for API key
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set')
-    process.exit(1)
-  }
+  // `--check` is the pre-push gate: report whether any translations are missing
+  // and exit non-zero if so, WITHOUT calling the API (no key needed). The actual
+  // translating happens at PR time via the create-pr flow, so the hook stays
+  // fast and never auto-commits.
+  const checkOnly = process.argv.includes('--check')
 
   console.log('🔍 Finding catalog files...')
   const catalogFiles = await getCatalogFiles()
@@ -178,6 +183,21 @@ async function main() {
   if (allMissingTranslations.length === 0) {
     console.log('✅ No missing translations found!')
     process.exit(0)
+  }
+
+  if (checkOnly) {
+    console.error(`❌ ${allMissingTranslations.length} missing translation(s). Run 'pnpm translate' and commit the result.`)
+    for (const missing of allMissingTranslations) {
+      console.error(`   • ${missing.locale}: "${missing.key}"`)
+    }
+    process.exit(1)
+  }
+
+  // Check for API key (only the real translating path needs it).
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set')
+    process.exit(1)
   }
 
   console.log(`Found ${allMissingTranslations.length} missing translations`)
