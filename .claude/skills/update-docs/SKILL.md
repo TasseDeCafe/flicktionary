@@ -1,21 +1,28 @@
 ---
 name: update-docs
-description: Update SPEC.md and RESUME.md to reflect the work that just shipped in this conversation. Run this when the user is satisfied with the changes.
+description: Update the behavior specs (SPEC.md, EXTENSION-SPEC.md, docs/SRS.md) to reflect the work that just shipped in this conversation. Run this when the user is satisfied with the changes, or as the doc step of the create-pr skill.
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Read, Edit
 ---
 
-You are updating two top-level docs to reflect changes that just shipped:
+You are syncing the **behavior specs** to changes that just shipped. These three docs track the code; keep them honest. They are edited **in place** — none of them is a changelog, so never add dated entries.
 
-- `SPEC.md` — the canonical product spec. Edit only when product behavior, data model, user flows, navigation chrome, settings, or LLM methodology actually changed. Pure refactors, bug fixes, dependency bumps, or internal-only changes do NOT belong here. Update the relevant fact **in place** — SPEC.md is not a changelog, never add dated entries to it. If nothing in the diff is spec-worthy, leave it untouched and say so.
-- `RESUME.md` — the running build-status doc. Append to or extend the most recent dated subsection under "Status of the build (as of last session)" to reflect what just shipped. Match the existing voice: dense bullets, concrete file paths, "don't re-introduce …" callouts when a prior approach was replaced, and today's date on any new dated subheading. Today's date is in the system context.
+Which spec owns what (only edit the ones the diff actually touches):
+
+- `SPEC.md` — the web app's product spec: product behavior, data model, user flows, navigation chrome, settings, processing pipeline, LLM methodology.
+- `apps/extension/EXTENSION-SPEC.md` — the browser extension: behavior, architecture, fork lineage, removed-subsystem / donor-model policy. Edit when extension behavior or structure changed.
+- `docs/SRS.md` — the practice / spaced-repetition system (web): scheduler, queue, study facets, leeches, daily budgets, rating flow. Edit when practice/SRS behavior changed.
+
+What does NOT belong in any of them: pure refactors, bug fixes, dependency bumps, formatting, or internal-only changes with no behavior/structure impact. If the diff isn't spec-worthy, leave the specs untouched and say so.
+
+Do NOT touch the reference/artifact docs here (`docs/DOPPLER_CLI.md`, `apps/extension/STORE-LISTING.md`, READMEs, `DISABLED.md`) — they aren't code-driven. Do NOT touch anything in `old-docs/` or `docs/proposals/`. (See the Project docs map in `AGENTS.md`.)
 
 Process:
 
 1. Inspect what concretely changed: `git status`, then `git diff HEAD` for uncommitted work; if the tree is clean, use `git log --oneline -20` and `git diff main...HEAD` to see what's on the branch.
-2. Read `SPEC.md` and `RESUME.md` in full before editing.
-3. Decide per file whether an edit is warranted. Skip SPEC.md entirely when the changes are not spec-relevant — do not invent edits to look thorough.
+2. From the changed paths, decide which spec(s) are even in scope — `apps/extension/**` → EXTENSION-SPEC; practice/SRS backend or `apps/web` practice feature → SRS.md; web product behavior → SPEC.md.
+3. Read each in-scope spec in full before editing it. Skip any spec whose area the diff doesn't touch — do not invent edits to look thorough.
 4. Use `Edit` with surgical replacements. Don't rewrite whole sections when a few lines change. Don't reflow paragraphs you aren't actually changing.
-5. End with a one-sentence summary per file (e.g. "SPEC.md: updated processing pipeline section to mention the pre-filter. RESUME.md: appended bullet under 2026-05-08 covering the chunk-keep fix.").
+5. End with a one-sentence summary per spec you touched (e.g. "SPEC.md: updated processing-pipeline section to mention the pre-filter. SRS.md: untouched — change was an internal refactor."). Name the specs you deliberately left alone and why.
 
-Tone for any prose you write into either file: terse, factual, file-path-anchored. Match the surrounding voice. No emojis. No marketing language. No "we now…" — the docs describe the system, not the journey.
+Tone for any prose you write: terse, factual, file-path-anchored. Match the surrounding voice. No emojis. No marketing language. No "we now…" — the docs describe the system, not the journey.

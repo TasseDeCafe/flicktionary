@@ -15,7 +15,7 @@ Format: `<type>(<scopes>): <description>`
   - `apps/backend/**` → `backend`
   - `apps/native/**` → `native`
   - `packages/**` → `packages`
-  - top-level files (`SPEC.md`, `RESUME.md`, `package.json`, `pnpm-lock.yaml`, `turbo.json`, `scripts/**`, `.github/**`, etc.) → `root`
+  - top-level files (`SPEC.md`, `AGENTS.md`, `CLAUDE.md`, `package.json`, `pnpm-lock.yaml`, `turbo.json`, `scripts/**`, `.github/**`, `docs/**`, etc.) → `root`
 - **description**: short, lowercase-leading, imperative mood, no trailing period. Focus on the *what* — concise like `add pre-filter for chunk processing` or `handle vocabulary edits for removed source sessions`. If a single sentence can't capture it, the commit is probably doing too much; flag that to the user instead of writing a vague message.
 
 Process:
