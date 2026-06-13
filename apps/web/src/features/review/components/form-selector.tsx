@@ -6,6 +6,7 @@ import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
+import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import type { Chunk, StudyFacetSummary } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   ResponsiveOverlay,
@@ -73,7 +74,9 @@ export const FormSelector = ({
         {formFacets.map((facet) => (
           <SelectorChip
             key={facet.targetForm}
-            label={formDisplay(facet)}
+            // Chips drop the Russian stress mark (the lemma chip is unstressed
+            // too); the stressed form still shows in the FORM heading + editor.
+            label={stripStressMarks(formDisplay(facet))}
             selected={isSelected(selectedTarget, { kind: 'form', targetForm: facet.targetForm })}
             dormant={enabledSkillCount(facets, facet.targetForm) === 0}
             pending={facet.dataStatus === 'pending_data'}

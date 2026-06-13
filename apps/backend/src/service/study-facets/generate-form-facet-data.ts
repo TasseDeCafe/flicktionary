@@ -135,6 +135,10 @@ export const generateFormFacetData = async (
     const hideTranslations = languageMode.hideTranslationFields
     const grammar = {
       ...(result.pos ? { pos: result.pos } : {}),
+      // Stress-marked display form so the form's grammar matches the lemma's
+      // (Russian stress lives here as well as in payload.form). Null for
+      // languages that don't use one (e.g. English).
+      ...(result.displayForm ? { display_form: result.displayForm } : {}),
       ...(ipaBag ? { ipa: ipaBag } : {}),
     }
     const generatedPayload = {

@@ -20,3 +20,10 @@
    auto-detection picking them up. */
 @source '../../../../packages/ui/src';
 @source '../../common/components';
+
+/* Noto Sans is the app-wide UI font (matches the web app + the overlay). The
+   faces are registered on the document by ensure-noto-sans.ts from each page
+   entry; this points Tailwind's `font-sans` utility + base font at it. */
+@theme {
+  --font-sans: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
+}

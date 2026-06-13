@@ -339,9 +339,14 @@ Two-layer UI.
     sub-object). A form added from **"+ Add a form"** (encountered surface forms
     from `getStudyTargets.candidateForms`) is born `pending_data`; the editor body
     offers **Generate** (an Opus pass, `chunks.generateFacetData`, which seeds the
-    example from the encountered sentence) or **Enter manually** — either fills
-    the payload, flips the facet to `ready`, and swaps in the full editable field
-    set (a skeleton shows while generation is in flight).
+    example from the encountered sentence and runs under the per-language
+    instructions block, so the form's `grammar` carries a stress-marked
+    `display_form` like the lemma's — Russian stressed, English unset) or **Enter
+    manually** — either fills the payload, flips the facet to `ready`, and swaps
+    in the full editable field set (a skeleton shows while generation is in
+    flight). The form-target chips themselves render the form **without** the
+    stress mark (matching the unstressed citation chip); the stressed spelling
+    still shows in the FORM heading + editor.
   - **Context** block per target: the most-recent kept occurrence backing the
     selected target (`getStudyTargets` `facet.source` — the form's own inflection,
     the lemma's for citation), with an "Open source" deep-link; hidden when the

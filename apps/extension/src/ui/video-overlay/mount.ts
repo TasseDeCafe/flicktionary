@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { applyOverlayStyles } from '../shadow/overlay-stylesheet'
+import { ensureNotoSansFonts } from '../fonts/ensure-noto-sans'
 import { SubtitleStore } from './subtitle-store'
 import { SubtitleOverlayApp } from './SubtitleOverlayApp'
 import { FlicktionaryVideoClosures } from '../../services/flicktionary/flicktionary-client'
@@ -30,6 +31,11 @@ export interface OverlayMountHandle {
 // stay visible in fullscreen). Returns a handle whose unmount() tears
 // everything down — call it before ElementOverlay.disposePersistentHost().
 export function mountSubtitleOverlay(host: HTMLElement, options: OverlayMountOptions): OverlayMountHandle {
+  // Register Noto Sans on the host document so the overlay's `font-sans` resolves
+  // to it (a shadow root can't register its own @font-face) — otherwise the
+  // popovers fall back to the host's system-ui, which mis-renders Cyrillic stress.
+  ensureNotoSansFonts(document)
+
   // Subtitle shadow tree on the persistent host.
   const subtitleShadow = host.attachShadow({ mode: 'open' })
   applyOverlayStyles(subtitleShadow)

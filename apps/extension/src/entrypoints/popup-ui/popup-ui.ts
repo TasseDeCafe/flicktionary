@@ -1,7 +1,10 @@
 import { ExtensionSettingsStorage } from '@/services/extension-settings-storage'
 import { renderPopupUi, type PopupCommands } from '@/ui/popup'
 import { SettingsProvider } from '@asbplayer-fork/common/settings'
+import { ensureNotoSansFonts } from '@/ui/fonts/ensure-noto-sans'
 import '@/ui/pages.css'
+
+ensureNotoSansFonts()
 
 // Radix Select closes itself on any window 'resize' while open, and Firefox
 // emits one when the select's portal/scroll-lock mounts and the auto-sized

@@ -1,6 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
-import type { EnglishIpaDialect } from '../language-instructions'
+import { getLanguageInstructions, type EnglishIpaDialect } from '../language-instructions'
 
 // Generate-and-confirm: when a learner adds a
 // specific inflected form as its own study target, the form facet is born
@@ -45,6 +45,11 @@ export type FormDataOutput = {
   // preserved for the stressed-display path; the facet key is normalized
   // separately, payload keeps the full display form).
   form: string
+  // Stress-marked / decorated display form of THIS inflected form, matching the
+  // lemma's grammar.display_form convention (Russian: U+0301 on the stressed
+  // vowel). Null for languages that don't use one (e.g. English) or per the
+  // per-language rules. Mirrors `form` for stress languages.
+  displayForm: string | null
   // Translation of the inflected form as it grammatically functions.
   translation: string
   // Short target-language paraphrase of this form's meaning (optional).
@@ -86,6 +91,11 @@ const buildTool = (): Anthropic.Tool => ({
         description:
           'The inflected form itself in its correct conventional spelling and case. For languages that mark stress with a combining acute (Russian), put the stress mark on the stressed vowel (e.g. "стола́"). Otherwise reproduce the form as it is normally written.',
       },
+      display_form: {
+        type: 'string',
+        description:
+          'Stress-marked / decorated display form of THIS inflected form for UI display, following the per-language grammar conventions in the system prompt (Russian: combining acute U+0301 on the stressed vowel, e.g. "кре́сла"; usually equals `form`). OMIT for languages that do not use a separate display form (e.g. English) or per the per-language rules (monosyllables, words containing ё).',
+      },
       translation: {
         type: 'string',
         description:
@@ -123,10 +133,15 @@ const buildTool = (): Anthropic.Tool => ({
 const asString = (v: unknown): string | null => (typeof v === 'string' && v.trim().length > 0 ? v : null)
 
 export const generateFormData = async (args: GenerateFormDataArgs): Promise<FormDataOutput> => {
-  const dialectNote = args.englishIpaDialect
-    ? ` IPA transcriptions use ${args.englishIpaDialect === 'rp' ? 'Received Pronunciation (RP)' : 'General American (GA)'}.`
-    : ''
-  const system = `You are a meticulous ${args.targetLanguage} lexicographer preparing a single flashcard for a learner whose native language is ${args.nativeLanguage}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, the part of speech, and the inflected form's own IPA (skip the IPA when not fully confident — never guess a transcription).${dialectNote} Output only the tool call, no commentary.`
+  // The per-language instructions block carries the display_form rules (Russian:
+  // stress-marked; English: leave unset) + IPA dialect, so the form's grammar
+  // matches the lemma's basic-data pass instead of the model guessing.
+  const languageInstructions = getLanguageInstructions(args.targetLanguage, {
+    englishIpaDialect: args.englishIpaDialect,
+  })
+  const system = `You are a meticulous ${args.targetLanguage} lexicographer preparing a single flashcard for a learner whose native language is ${args.nativeLanguage}. You are given a headword (citation form) and one inflected surface form of it the learner met while reading. Return the form's correct written shape, its stress-marked display form where the language uses one, a short accurate translation of that exact inflected form (never of the citation form, carry over its person/tense/number/gender/case), an optional short target-language definition, one example sentence using this exact form, its native-language translation, the part of speech, and the inflected form's own IPA (skip the IPA when not fully confident — never guess a transcription).${
+    languageInstructions ? `\n\n${languageInstructions}` : ''
+  }\n\nOutput only the tool call, no commentary.`
 
   const userMessage = `Headword (citation form): ${args.headword}${
     args.headwordTranslation ? ` — ${args.headwordTranslation}` : ''
@@ -162,6 +177,7 @@ Submit the form's data via the tool.`
   const pos = rawPos && (POS_VALUES as readonly string[]).includes(rawPos) ? (rawPos as Pos) : null
   return {
     form,
+    displayForm: asString(raw.display_form),
     translation,
     definition: asString(raw.definition),
     targetExample,

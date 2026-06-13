@@ -17,7 +17,6 @@ import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
-import { StressMarkedText } from './stress-marked-text'
 
 export type RateSheetChunkContent = {
   headword: string
@@ -120,7 +119,7 @@ export const RateSheet = ({
           <div className='relative'>
             <div className={`flex flex-col gap-1 ${showOverflow ? 'pr-10' : ''}`}>
               <FloatingSheetTitle>
-                <StressMarkedText text={titleText} lang={chunk?.targetLanguage} />
+                <span lang={chunk?.targetLanguage}>{titleText}</span>
               </FloatingSheetTitle>
               {mode === 'rate' && chunk?.ipa && (
                 <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
