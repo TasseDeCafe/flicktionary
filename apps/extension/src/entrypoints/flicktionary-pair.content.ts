@@ -7,6 +7,11 @@ import { getPendingFlicktionaryPairNonce } from '@/services/flicktionary/pairing
 const POST_MESSAGE_SOURCE = 'flicktionary-extension-pair'
 const ACK_SOURCE = 'flicktionary-extension-pair-ack'
 
+// How long the success copy stays visible before the tab auto-closes. The timer
+// lives here (in the page) rather than in the background service worker, which
+// can be suspended once the pair message settles, dropping a bare `setTimeout`.
+const CLOSE_TAB_DELAY_MS = 1500
+
 interface PairMessageData {
   source: string
   tokenHash: string
@@ -104,6 +109,15 @@ export default defineContentScript({
 
         // Echo back to the broker page so it knows pairing succeeded.
         window.postMessage({ source: ACK_SOURCE, nonce: event.data.nonce, ok: true }, window.location.origin)
+
+        // Let the user read the success copy, then ask the background to close
+        // this tab (content scripts can't call `browser.tabs` themselves).
+        setTimeout(() => {
+          void browser.runtime.sendMessage({
+            sender: 'flicktionary-extension-pair-content',
+            message: { command: 'flicktionary-close-pairing-tab' },
+          })
+        }, CLOSE_TAB_DELAY_MS)
       } catch {
         // Background error already logged in handler; page falls back
         // to its 10s timeout state and prompts user to retry.

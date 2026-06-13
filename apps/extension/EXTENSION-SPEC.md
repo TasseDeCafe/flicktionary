@@ -207,7 +207,10 @@ cleanup.
     `/extension-pair` route; forwards the pairing payload to the background.
     Runs at `document_start` — the pair page posts its one-shot message within
     a few hundred ms of booting, so a listener registered at `document_idle`
-    loses the race and pairing silently times out.
+    loses the race and pairing silently times out. On success it also owns the
+    ~1.5s delay before the tab auto-closes (the timer lives in the page, not the
+    background service worker, which can be suspended and drop a bare
+    `setTimeout`).
   - `flicktionary-import.content.ts` — injected on demand for article import.
 
 ## Feature spec
@@ -222,9 +225,15 @@ instead of hanging); the
 background runs `verifyOtp` and persists the session in its own
 `browser.storage.local` namespace (`flicktionary.auth.v1`) — deliberately
 **outside** the settings provider, so it is never profile-synced or included in
-settings export. The popup shows the paired email + sign-out (revokes the
-session server-side via `extensionAuth.revokeSession`). Auth state changes
-propagate live to open overlays via a storage subscription.
+settings export. On success the page shows a brief "Pairing complete — closing
+this tab…" message, then the pairing tab auto-closes (~1.5s) and the browser
+returns to wherever the user was: the content script can't call `browser.tabs`
+itself, so it sends a `flicktionary-close-pairing-tab` command and the
+background removes the sender tab; `start-pairing.ts` sets `openerTabId` to the
+tab the user paired from so closing re-focuses it. The popup shows the paired
+email + sign-out (revokes the session server-side via
+`extensionAuth.revokeSession`). Auth state changes propagate live to open
+overlays via a storage subscription.
 
 Right after the session persists, the background handler reconciles the
 server-synced UI prefs (`ui-prefs-sync.ts`): for each of theme/interface
