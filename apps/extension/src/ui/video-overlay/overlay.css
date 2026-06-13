@@ -46,6 +46,11 @@
    inside a shadow tree. Values match web's computed px at the default 16px
    root: sm 4px / md 6px / lg 8px (xs 2px, xl 12px are the Tailwind defaults). */
 @theme {
+  /* Noto Sans renders the Cyrillic combining acute (U+0301) correctly, unlike
+     the host's system-ui fallback. The faces are registered on the host document
+     by ensure-noto-sans.ts (a shadow root can't register its own @font-face). */
+  --font-sans: 'Noto Sans', ui-sans-serif, system-ui, sans-serif;
+
   --spacing: 4px;
 
   --text-xs: 12px;

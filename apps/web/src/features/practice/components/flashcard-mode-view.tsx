@@ -26,7 +26,6 @@ import type {
   ReviewTerm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { resolveCardContent } from '../utils/resolve-card-content'
-import { StressMarkedText } from './stress-marked-text'
 import { PracticeLoader } from './practice-loader'
 import { ReviewQueueStats } from './review-queue-stats'
 import { FlashcardActionsOverlay } from './flashcard-actions-overlay'
@@ -499,12 +498,9 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
       case 'headword': {
         const fullForm = content.displayForm
         return (
-          <StressMarkedText
-            key='headword'
-            text={faceConfig.hideStressOnFront && !showBack ? stripStressMarks(fullForm) : fullForm}
-            lang={targetLanguage}
-            className='text-2xl font-bold'
-          />
+          <span key='headword' lang={targetLanguage} className='text-2xl font-bold'>
+            {faceConfig.hideStressOnFront && !showBack ? stripStressMarks(fullForm) : fullForm}
+          </span>
         )
       }
       case 'ipa':
@@ -570,11 +566,9 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
               {/* Front: bare target (ru stress hidden so the answer isn't
                   given away) + an audio cue. Audio playback is roadmap; the chip
                   is the "pronounce this" prompt, not a player. */}
-              <StressMarkedText
-                text={stripStressMarks(pronunciationDisplay)}
-                lang={targetLanguage}
-                className='text-2xl font-bold'
-              />
+              <span lang={targetLanguage} className='text-2xl font-bold'>
+                {stripStressMarks(pronunciationDisplay)}
+              </span>
               <div className='text-muted-foreground flex items-center gap-1.5 text-sm'>
                 <Volume2 className='h-4 w-4' />
                 <span>{t`Say it out loud`}</span>
@@ -583,7 +577,9 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
                 <>
                   <div className='my-2 w-full border-t' />
                   {/* Back: stressed display form + IPA. */}
-                  <StressMarkedText text={pronunciationDisplay} lang={targetLanguage} className='text-2xl font-bold' />
+                  <span lang={targetLanguage} className='text-2xl font-bold'>
+                    {pronunciationDisplay}
+                  </span>
                   {pronunciationIpa && (
                     <div className='text-muted-foreground flex items-center justify-center gap-1.5 text-base'>
                       <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
@@ -602,11 +598,9 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
                   <div className='my-2 w-full border-t' />
                   {content.lemma && (
                     <p className='text-muted-foreground text-sm'>
-                      <StressMarkedText
-                        text={content.lemma.displayForm}
-                        lang={targetLanguage}
-                        className='font-medium'
-                      />
+                      <span lang={targetLanguage} className='font-medium'>
+                        {content.lemma.displayForm}
+                      </span>
                       {content.lemma.translation ? ` — ${content.lemma.translation}` : null}
                     </p>
                   )}

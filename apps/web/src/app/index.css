@@ -9,7 +9,10 @@
 
 @theme {
   --font-nunito: 'Nunito', sans-serif;
-  --font-inter: 'Inter', sans-serif;
+  /* Noto Sans is the app's default UI font: unlike Inter it anchors the Cyrillic
+     combining acute (U+0301 stress mark) correctly above the vowel. Setting
+     --font-sans also points Tailwind's `font-sans` utility + base font at it. */
+  --font-sans: 'Noto Sans', sans-serif;
 
   --breakpoint-xs: 475px;
   --breakpoint-3xl: 1600px;
@@ -24,7 +27,7 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 @layer base {
