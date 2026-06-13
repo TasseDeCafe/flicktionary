@@ -1,6 +1,7 @@
 # Plan: catch production-only runtime dep failures in pre-push
 
-Status: **proposal** (not yet implemented). Owner: TBD.
+> **Status: proposal — not implemented.** An open design for a future safeguard;
+> nothing here ships today. Implement only when explicitly picked up.
 
 ## The bug this is meant to catch
 

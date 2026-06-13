@@ -1,6 +1,34 @@
 This turborepo monorepo is the repo of Flicktionary.app. This is a work in progress, don't treat it like a polished product.
 
-The specs of the project are here: @SPEC.md, and I try to keep a log of the changes here: @RESUME.md. The browser extension (`apps/extension`, a vendored asbplayer fork) has its own dedicated spec: `apps/extension/EXTENSION-SPEC.md` — the source of truth for extension behavior, architecture, fork lineage, and the do-not-reintroduce/donor-model policy. Read it before working on the extension. The specs should generally be up-to-date, but you can suggest changes if you notice differences in the actual codebase, or if you make a change that requires an update of the specs. Don't update by yourself, I will give you the green light.
+The product spec is @SPEC.md (auto-loaded above). The browser extension (`apps/extension`, a vendored asbplayer fork) has its own dedicated spec: `apps/extension/EXTENSION-SPEC.md` — the source of truth for extension behavior, architecture, fork lineage, and the do-not-reintroduce/donor-model policy. Read it before working on the extension. See the **Project docs map** below for the full set of docs and what each one owns.
+
+Keeping the docs honest: the behavior specs are meant to match the code. If you notice drift, or you make a change that needs a spec update, do it **as part of shipping that change** — running the `create-pr` or `update-docs` skill is your green light to edit the behavior specs (`SPEC.md`, `apps/extension/EXTENSION-SPEC.md`, `docs/SRS.md`). Outside that flow, don't rewrite a spec unprompted mid-conversation — surface the drift and let me confirm. Never edit the reference/artifact docs (see the map) to "keep them current"; they don't track the code.
+
+# Project docs map
+
+Where the documentation lives and how much to trust each piece. When in doubt about "which doc is authoritative for X", this is the answer.
+
+**Behavior specs** — authoritative, and they track the code. Read the relevant one before working in its area; update it (in place — these are not changelogs) when you change what it describes, via the `create-pr` / `update-docs` flow.
+
+- `SPEC.md` — the web app's product spec: data model, user flows, processing pipeline, navigation/settings, LLM methodology.
+- `apps/extension/EXTENSION-SPEC.md` — the browser extension: behavior, architecture, fork lineage, removed-subsystem & donor-model policy. **Read before any extension work.**
+- `docs/SRS.md` — the practice / spaced-repetition system (web): scheduler, queue, study facets, leeches, daily budgets.
+- `AGENTS.md` (this file) — conventions, stack, commands, and hard-won traps.
+
+**Reference / artifact docs** — authoritative for their subject but **not** code-driven. Do **not** edit them to "stay current"; touch one only when its specific subject actually changes.
+
+- `docs/DOPPLER_CLI.md` — a verbatim copy of Doppler's own CLI docs. Vendored reference; never rewrite.
+- `apps/extension/STORE-LISTING.md` — canonical Chrome Web Store listing copy (edit only when the listing changes; note the keyword-spam policy inside).
+- `DISABLED.md` — log of parked/disabled template machinery; check it before deleting "unused" code.
+- READMEs (`apps/web/README.md`, `apps/backend/README.md`, `apps/backend/src/transport/database/README.md`, and other scoped `**/README.md`) — local how-tos for one area. Update only if you change the thing they document.
+
+**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `backend-deploy-smoke-test-plan.md`). Useful context; **never** treat as current behavior.
+
+**Scratch** — `docs/brand/` holds brand-asset generation prompts (`LOGO-PROMPTS.md`, `IMAGE-PROMPTS.md`). Not specs; ignore when reasoning about app behavior.
+
+**Historical** — `old-docs/` is the archive: superseded plans and the former running build-log (`RESUME.md`). Kept for history only. **Never** read these as current-state reference and never update them.
+
+Creating or relocating a doc? Follow the `writing-docs` skill (labels, locations, when to archive).
 
 The following stack is used:
 

@@ -1,5 +1,9 @@
 # Study facets v2: a two-axis (target × skill) note/cards model for the SRS
 
+> **Status: historical — archived 2026-06-13.** The refactor this planned is fully
+> shipped (PRs #116–#122). Kept as design context for the SRS; current behavior is
+> documented in `docs/SRS.md`. Do not follow the plan steps below as if pending.
+
 > **STATUS (2026-06-09): Phases 1–4 are MERGED** (PRs #116–#122, including the 4b follow-up PRs
 > #121/#122 which added the per-form card editor and made recognition deselectable). Only the
 > **Roadmap** section remains future work. Post-merge fixes landed 2026-06-09:
