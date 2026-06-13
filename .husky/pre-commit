@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Load nvm and switch to the version pinned in .nvmrc so this hook doesn't
+# silently use whatever Node the calling shell happened to have (GUI git
+# clients often launch with a bare PATH).
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  \. "$NVM_DIR/nvm.sh"
+  nvm use --silent >/dev/null 2>&1 || true
+fi
+
+# Auto-fix staged files with eslint and re-stage the result, so the fixes land
+# inside the commit being made. By push time the tree is already clean — no
+# stranded "style: apply eslint auto-fixes" commit, no "push again" dance.
+# lint-staged discovers the per-workspace `lint-staged` config nearest each
+# staged file and runs eslint from that workspace's directory, so the workspace
+# flat config resolves correctly.
+pnpm exec lint-staged
