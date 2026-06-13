@@ -1,5 +1,8 @@
 # Image prompts — Flicktionary brand imagery
 
+> **Status: scratch.** Brand-asset generation prompts, not a spec. Not code-driven;
+> ignore when reasoning about app behavior.
+
 The **logo** is finalized: a flat black-and-yellow **projector light-beam** mark —
 black wing-shapes + three bold motion rays on the left, a central ring (lens) with
 a bright yellow core, a yellow triangular beam cone on the right. Transparent

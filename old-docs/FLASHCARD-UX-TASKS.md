@@ -1,5 +1,9 @@
 # Flashcard / Practice UX — task tracker
 
+> **Status: historical — archived 2026-06-13.** Stale task tracker, no longer
+> updated. Kept for reference only. Current practice/SRS behavior lives in
+> `docs/SRS.md`.
+
 Tracker for a batch of flashcard improvements in the practice view. Each task is meant to be
 tackled in its own focused session/PR (one or two tasks max per PR). Update the **Status** line
 as work progresses (`todo` → `in progress (branch)` → `PR #N` → `done`).

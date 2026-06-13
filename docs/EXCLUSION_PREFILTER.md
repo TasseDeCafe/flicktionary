@@ -1,8 +1,13 @@
 # Exclusion-list pre-filter + tiebreaker — how they work and language support
 
-Companion doc to `EXCLUSION_LIST_SCALING.md` (the problem framing). This one
-explains the implementation that shipped, with enough detail to audit
-behavior per language down the line.
+> **Status: reference (historical design).** `SPEC.md` cites this as historical
+> context for a planned future feature, not a description of current behavior — see
+> the exclusion/dedup section in `SPEC.md`. The `EXCLUSION_LIST_SCALING.md` companion
+> referenced below no longer exists. Retained because the design is still relevant to
+> that future work.
+
+This one explains the exclusion pre-filter / tiebreaker design, with enough detail
+to audit behavior per language down the line.
 
 ## Why it exists
 

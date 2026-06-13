@@ -1,5 +1,8 @@
 # Flicktionary — Logo Generation Prompts
 
+> **Status: scratch.** Brand-asset generation prompts, not a spec. Not code-driven;
+> ignore when reasoning about app behavior.
+
 **Flicktionary** is a language-learning app. From any source — pasted text, ad-hoc
 words, subtitles, YouTube videos, and (soon) books — you **highlight the chunks you
 don't understand**, each becomes a structured deep-dive card, and you **review them

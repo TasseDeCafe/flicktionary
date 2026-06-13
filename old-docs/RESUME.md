@@ -1,5 +1,11 @@
 # Resume prompt — Flicktionary MVP build
 
+> **Status: historical — archived 2026-06-13.** This running build-log is no longer
+> maintained. It is kept for history only; do **not** treat it as a description of
+> current behavior, and do not append to it. Per-PR descriptions and conventional
+> commits are now the change log — they point at the actual commits. For current
+> behavior see `SPEC.md`, `apps/extension/EXTENSION-SPEC.md`, and `docs/SRS.md`.
+
 ---
 
 I'm building the Flicktionary web app described in `/Users/sebastien/Documents/flicktionary/SPEC.md` on top of the existing template in this repo.
