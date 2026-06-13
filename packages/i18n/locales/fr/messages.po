@@ -1131,10 +1131,6 @@ msgstr "Forme d'affichage (par ex. accentuée)"
 msgid "Display subtitles"
 msgstr "Afficher les sous-titres"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
-msgid "Done. You can close this tab and return to the extension."
-msgstr "Terminé. Vous pouvez fermer cet onglet et retourner à l'extension."
-
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Télécharger tous les termes conservés pour {languageName} au format CSV "
@@ -2632,6 +2628,11 @@ msgstr "Pages"
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pair the Flicktionary extension"
 msgstr "Associer l'extension Flicktionary"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Pairing complete — closing this tab and returning you to the "
+"extension..."
+msgstr "Jumelage terminé — fermeture de cet onglet et retour à l'extension..."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pairing your browser extension..."

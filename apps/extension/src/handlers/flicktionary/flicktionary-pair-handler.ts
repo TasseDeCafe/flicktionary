@@ -16,6 +16,13 @@ interface FlicktionaryPairMessage extends Message {
   nonce: string
 }
 
+// The pairing tab is opened with `browser.tabs.create`, so the web page can't
+// close itself (`window.close()` only works on script-opened windows). We close
+// it from here after a short delay so the user sees the success copy first. 1.5s
+// is well inside the MV3 service-worker idle timeout (~30s), so the timer fires
+// before the worker can be suspended.
+const PAIRING_TAB_CLOSE_DELAY_MS = 1500
+
 const isPairMessage = (msg: unknown): msg is FlicktionaryPairMessage => {
   if (!msg || typeof msg !== 'object') return false
   const m = msg as Record<string, unknown>
@@ -42,7 +49,7 @@ export default class FlicktionaryPairHandler {
     return 'flicktionary-pair'
   }
 
-  handle(command: Command<Message>, _sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
     const msg = command.message
     if (!isPairMessage(msg)) {
       sendResponse({ ok: false, error: 'Invalid pair payload' })
@@ -79,6 +86,16 @@ export default class FlicktionaryPairHandler {
         // success must not depend on the prefs round-trip.
         void reconcileUiPrefsOnPairing()
         sendResponse({ ok: true })
+
+        // Close the pairing tab the extension opened, leaving the success copy
+        // up briefly. `start-pairing.ts` set `openerTabId`, so the browser
+        // re-focuses the tab the user paired from.
+        const pairingTabId = sender.tab?.id
+        if (pairingTabId !== undefined) {
+          setTimeout(() => {
+            void browser.tabs.remove(pairingTabId)
+          }, PAIRING_TAB_CLOSE_DELAY_MS)
+        }
       } catch (error) {
         sendResponse({ ok: false, error: error instanceof Error ? error.message : 'Pairing failed' })
       } finally {

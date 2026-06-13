@@ -102,7 +102,8 @@ export default defineContentScript({
           return
         }
 
-        // Echo back to the broker page so it knows pairing succeeded.
+        // Echo back to the broker page so it knows pairing succeeded. The
+        // background handler closes this tab shortly after.
         window.postMessage({ source: ACK_SOURCE, nonce: event.data.nonce, ok: true }, window.location.origin)
       } catch {
         // Background error already logged in handler; page falls back

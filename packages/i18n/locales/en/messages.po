@@ -1111,10 +1111,6 @@ msgstr "Display form (e.g. stress-marked)"
 msgid "Display subtitles"
 msgstr "Display subtitles"
 
-#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
-msgid "Done. You can close this tab and return to the extension."
-msgstr "Done. You can close this tab and return to the extension."
-
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
@@ -2592,6 +2588,12 @@ msgstr "Pages"
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pair the Flicktionary extension"
 msgstr "Pair the Flicktionary extension"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Pairing complete — closing this tab and returning you to the "
+"extension..."
+msgstr "Pairing complete — closing this tab and returning you to the "
+"extension..."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pairing your browser extension..."

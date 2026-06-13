@@ -10,5 +10,8 @@ export const openFlicktionaryPairingTab = async (): Promise<void> => {
   const nonce = uuidv4()
   await setPendingFlicktionaryPairNonce(nonce)
   const url = `${getFlicktionaryConfig().webUrl}/extension-pair?nonce=${encodeURIComponent(nonce)}`
-  await browser.tabs.create({ url, active: true })
+  // Set `openerTabId` to the current tab so the browser re-focuses it when the
+  // pairing tab auto-closes after a successful pair.
+  const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true })
+  await browser.tabs.create({ url, active: true, openerTabId: activeTab?.id })
 }

@@ -222,9 +222,14 @@ instead of hanging); the
 background runs `verifyOtp` and persists the session in its own
 `browser.storage.local` namespace (`flicktionary.auth.v1`) — deliberately
 **outside** the settings provider, so it is never profile-synced or included in
-settings export. The popup shows the paired email + sign-out (revokes the
-session server-side via `extensionAuth.revokeSession`). Auth state changes
-propagate live to open overlays via a storage subscription.
+settings export. On success the page shows a brief "Pairing complete — closing
+this tab…" message, then the background handler removes the pairing tab after
+~1.5s (the page can't close itself — `window.close()` only works on
+script-opened windows — so the background closes the tab it opened);
+`start-pairing.ts` sets `openerTabId` to the tab the user paired from, so the
+browser re-focuses it on close. The popup shows the paired email + sign-out
+(revokes the session server-side via `extensionAuth.revokeSession`). Auth state
+changes propagate live to open overlays via a storage subscription.
 
 Right after the session persists, the background handler reconciles the
 server-synced UI prefs (`ui-prefs-sync.ts`): for each of theme/interface
