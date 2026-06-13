@@ -144,6 +144,10 @@ cleanup.
 - **Build: WXT** (Vite/Rolldown). `pnpm dev` / `pnpm build`; Firefox via
   `build:firefox`. Doppler injects `VITE_*` env (API host, Supabase keys);
   `DOPPLER_CONFIG=prd` gates dev-host permissions out of store builds.
+  The Firefox manifest declares `browser_specific_settings.gecko.data_collection_permissions`
+  (`required: ['websiteContent', 'personallyIdentifyingInfo']`) — AMO mandates
+  this consent declaration for new add-ons; it covers the selected subtitle text
+  sent for glossing/highlights and the account email/name captured on sign-in.
   `check:types` (`tsc --noEmit`) is clean and gates CI; the WXT build is
   additionally validated pre-push. Tests: vitest (jsdom).
 - **UI stack: React 19 + Radix + Tailwind v4** via the shared `@flicktionary/ui`

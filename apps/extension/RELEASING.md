@@ -1,7 +1,7 @@
 # Releasing the extension
 
 Store listing text (the dashboard description fields) is maintained in
-[`STORE-LISTING.md`](./STORE-LISTING.md) — edit there, then paste into the
+[`CHROME-WEB-STORE-LISTING.md`](./CHROME-WEB-STORE-LISTING.md) — edit there, then paste into the
 dashboard. It also records the CWS keyword-spam constraint that got a draft
 rejected.
 

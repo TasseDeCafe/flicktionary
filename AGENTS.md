@@ -18,7 +18,8 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 **Reference / artifact docs** — authoritative for their subject but **not** code-driven. Do **not** edit them to "stay current"; touch one only when its specific subject actually changes.
 
 - `docs/DOPPLER_CLI.md` — a verbatim copy of Doppler's own CLI docs. Vendored reference; never rewrite.
-- `apps/extension/STORE-LISTING.md` — canonical Chrome Web Store listing copy (edit only when the listing changes; note the keyword-spam policy inside).
+- `apps/extension/CHROME-WEB-STORE-LISTING.md` — canonical Chrome Web Store listing copy (edit only when the listing changes; note the keyword-spam policy inside).
+- `apps/extension/AMO-LISTING.md` — canonical Firefox Add-ons (AMO) submission copy: listing summary, the privacy-policy plain-text mirror, and the source-build reviewer notes (edit only when the listing changes).
 - `DISABLED.md` — log of parked/disabled template machinery; check it before deleting "unused" code.
 - READMEs (`apps/web/README.md`, `apps/backend/README.md`, `apps/backend/src/transport/database/README.md`, and other scoped `**/README.md`) — local how-tos for one area. Update only if you change the thing they document.
 

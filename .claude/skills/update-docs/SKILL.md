@@ -15,7 +15,7 @@ Which spec owns what (only edit the ones the diff actually touches):
 
 What does NOT belong in any of them: pure refactors, bug fixes, dependency bumps, formatting, or internal-only changes with no behavior/structure impact. If the diff isn't spec-worthy, leave the specs untouched and say so.
 
-Do NOT touch the reference/artifact docs here (`docs/DOPPLER_CLI.md`, `apps/extension/STORE-LISTING.md`, READMEs, `DISABLED.md`) — they aren't code-driven. Do NOT touch anything in `old-docs/` or `docs/proposals/`. (See the Project docs map in `AGENTS.md`.)
+Do NOT touch the reference/artifact docs here (`docs/DOPPLER_CLI.md`, `apps/extension/CHROME-WEB-STORE-LISTING.md`, `apps/extension/AMO-LISTING.md`, READMEs, `DISABLED.md`) — they aren't code-driven. Do NOT touch anything in `old-docs/` or `docs/proposals/`. (See the Project docs map in `AGENTS.md`.)
 
 Process:
 
