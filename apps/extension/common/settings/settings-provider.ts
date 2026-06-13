@@ -91,7 +91,7 @@ export const defaultSettings: AsbplayerSettings = {
   streamingDisplaySubtitles: true,
   streamingSubsDragAndDrop: true,
   streamingAutoSync: true,
-  streamingAutoSyncPromptOnFailure: true,
+  streamingAutoSyncPromptOnFailure: false,
   streamingLastLanguagesSynced: {},
   streamingCondensedPlaybackMinimumSkipIntervalMs: 1000,
   streamingSubtitleListPreference: SubtitleListPreference.noSubtitleList,
