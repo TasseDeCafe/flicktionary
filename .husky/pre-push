@@ -245,16 +245,18 @@ cd apps/backend
 pnpm check-templates
 cd ../..
 
+# Read-only lint gate. eslint auto-fixes are applied by the pre-commit hook
+# (lint-staged) at commit time, so they ride along in the same push — there is
+# no in-hook --fix here, nothing to auto-commit, and no "push again" dance. This
+# only fails on genuine lint errors (including a fixable issue committed with
+# --no-verify, which the pre-commit hook would otherwise have fixed).
 echo "Running lint..."
-if pnpm lint; then
+if pnpm lint:check; then
     echo "✅ Lint passed"
 else
-    echo "❌ Lint failed"
+    echo "❌ Lint failed (run 'pnpm lint' to auto-fix, then commit)"
     exit 1
 fi
-
-# Check if lint --fix generated any changes
-auto_commit_changes "style: apply eslint auto-fixes"
 
 echo "Checking types..."
 if pnpm check:types; then

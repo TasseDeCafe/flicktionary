@@ -17,8 +17,12 @@
     "postinstall": "wxt prepare",
     "check": "pnpm run lint && pnpm run check:types",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "test": "vitest",
     "test:run": "vitest run"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
   },
   "dependencies": {
     "@flatten-js/interval-tree": "catalog:",

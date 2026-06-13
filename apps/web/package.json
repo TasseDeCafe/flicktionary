@@ -13,7 +13,11 @@
     "preview": "doppler run --project web --config dev_personal -- sh -c 'vite build && vite preview'",
     "analyze": "vite-bundle-visualizer",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "check:types": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
   },
   "dependencies": {
     "@flicktionary/api-client": "workspace:*",

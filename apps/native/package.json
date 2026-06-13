@@ -12,11 +12,15 @@
     "android": "./scripts/expo-run-on-device.sh android",
     "android:emulator": "APP_VARIANT=development doppler run --project native --config dev_personal -- npx expo run:android",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "check:types": "npx expo customize tsconfig.json && tsc --noEmit",
     "sync-env": "tsx scripts/sync-env.ts production",
     "reset": "bash scripts/reset-expo-app.sh",
     "reset:and-run-ios": "bash scripts/reset-expo-app.sh && pnpm ios",
     "reset:and-run-android": "bash scripts/reset-expo-app.sh && cd apps/native && pnpm android"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
   },
   "jest": {
     "preset": "jest-expo"
@@ -104,6 +108,7 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@eslint/compat": "catalog:",
     "@lingui/babel-plugin-lingui-macro": "catalog:",
     "@lingui/cli": "catalog:",
     "@lingui/metro-transformer": "catalog:",

@@ -1,12 +1,24 @@
 // https://docs.expo.dev/guides/using-eslint/
+const path = require('node:path')
 const { defineConfig } = require('eslint/config')
+const { includeIgnoreFile } = require('@eslint/compat')
 const expoConfig = require('eslint-config-expo/flat')
+
+// eslint runs with the workspace dir as cwd, so `.gitignore` resolves to this
+// package's own ignore file without relying on __dirname (which the expo flat
+// config doesn't register as a global when it lints this config file).
+const gitignorePath = path.resolve('.gitignore')
 const prettierPlugin = require('eslint-plugin-prettier')
 const tanstackPlugin = require('@tanstack/eslint-plugin-query')
 const reactCompiler = require('eslint-plugin-react-compiler')
 const pluginLingui = require('eslint-plugin-lingui')
 
 module.exports = defineConfig([
+  // Skip everything git ignores (Expo's generated expo-env.d.ts, .expo/,
+  // web-build/, android/, ios/, *.tsbuildinfo, …) — these are never
+  // hand-edited, so linting them is pointless and read-only lint would fail on
+  // their formatting with nothing to commit a fix to.
+  includeIgnoreFile(gitignorePath),
   ...tanstackPlugin.configs['flat/recommended'],
   pluginLingui.configs['flat/recommended'],
   expoConfig,

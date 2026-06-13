@@ -21,6 +21,7 @@
     "db:dev:tunnel:gen-types": "./scripts/db--dev-tunnel--gen-types.sh",
     "preview-emails": "email dev --dir emails",
     "lint": "eslint . --fix",
+    "lint:check": "eslint .",
     "check:types": "tsc --noEmit",
     "clean": "rm -rf dist",
     "build:dev": "npx tsc --project tsconfig.dev.json && npx tsc-alias --project tsconfig.dev.json",
@@ -37,6 +38,9 @@
     "prod": "scripts/deployment/prod.sh",
     "build:and:prod": "pnpm run build && pnpm run prod",
     "check:changes": "scripts/deployment/check-backend-changes.sh"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
   },
   "author": "TasseDeCafe",
   "dependencies": {
