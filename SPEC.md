@@ -193,8 +193,8 @@ The enrichment path uses these shared steps:
      `grammar` bag (same
      shape as the basic-data pass; the deeper analysis can correct or
      fill keys the basic pass left empty). Pronunciation lives in the
-     grammar bag, not extras: `extras.ipa` was dropped from the schema
-     (2026-06-11; legacy rows keep theirs as dead-but-rendered data) and
+     grammar bag, not extras: `extras.ipa` is no longer in the schema
+     (legacy rows keep theirs as dead-but-rendered data) and
      the pass instead emits `grammar.ipa` — a dialect bag like grounding
      writes (English → the user's `english_ipa_dialect` bucket, others →
      `untagged`, delimiters included) — which is merged ONLY when the
@@ -361,7 +361,7 @@ Per-card chat seed prompt = methodology + `(L1, target, CEFR)` + source context 
 A separate top-level destination from the per-session review flow. Practice is **cross-session** — its review pool is every kept card the user has accumulated, regardless of which study session it came from.
 
 - **Pool source.** Every card with `status='kept'` flows into `user_lookup` automatically (the keep transition writes the row). `user_lookup` is the canonical "user vocabulary" record; it carries FSRS state per `(user_id, target_language, headword, sense)`.
-- **Passive vs active pools (now facets).** SRS state lives in `public.study_facets` rows ("facets"), each keyed by `(user_lookup_id, skill, target_form)` and owning its own FSRS + leech state — no longer on `user_lookups`. A kept term's passive (recognition) card is its `(meaning_recognition, '')` facet; promoting to the **active** pool (production) enables its `(meaning_production, '')` facet. A term is "active / in production" IFF it has an enabled (`disabled_at IS NULL`) citation `(meaning_production, '')` facet — there is no stored `learning_mode` column (dropped in Phase 3); the wire still exposes a **derived** `learningMode` ('active'/'passive') for read-only display. `pool` (`passive`/`active`) stays on the wire and route params but is **derived** — the review mode of the skill, mapped at the service boundary (`skillForPool`), not a stored column. Active membership is additive — an active term still appears in the passive queue when its recognition facet is due. The two are independent: a passive rating advances the recognition facet, an active rating the production facet. `practice_session.pool` carries the routing decision per generated-text session and selects which facet `rate-chunk` writes; flashcard ratings apply FSRS directly to the recognition facet. (See `docs/SRS.md` §1 for the full data model.)
+- **Passive vs active pools (now facets).** SRS state lives in `public.study_facets` rows ("facets"), each keyed by `(user_lookup_id, skill, target_form)` and owning its own FSRS + leech state — no longer on `user_lookups`. A kept term's passive (recognition) card is its `(meaning_recognition, '')` facet; promoting to the **active** pool (production) enables its `(meaning_production, '')` facet. A term is "active / in production" IFF it has an enabled (`disabled_at IS NULL`) citation `(meaning_production, '')` facet — there is no stored `learning_mode` column; the wire still exposes a **derived** `learningMode` ('active'/'passive') for read-only display. `pool` (`passive`/`active`) stays on the wire and route params but is **derived** — the review mode of the skill, mapped at the service boundary (`skillForPool`), not a stored column. Active membership is additive — an active term still appears in the passive queue when its recognition facet is due. The two are independent: a passive rating advances the recognition facet, an active rating the production facet. `practice_session.pool` carries the routing decision per generated-text session and selects which facet `rate-chunk` writes; flashcard ratings apply FSRS directly to the recognition facet. (See `docs/SRS.md` §1 for the full data model.)
 - **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`. When the language has any active-pool terms the summary line appends `· N active`; when any terms are leech-parked it appends `· N parked` (passive + active parked combined).
 - **Language action screen.** `/practice/language/$targetLanguage` shows one card per pool — **Active vocabulary** first (rendered only when `activeTotal > 0`), then **Passive vocabulary**. The system makes the strategic decision, not the user: each pool has a single primary **Practice** button that enters the unified review screen in **flashcards mode over the `mixed` scope** (due first, then new under the daily allowance; `{ pool, scope: 'mixed', mode: 'flashcards' }` is passed explicitly because the review route's Zod default is `mode: 'read'`). The Active primary button is always tappable — an empty queue lands on the flashcard view's existing "No terms are due right now" screen. Per-pool secondary actions: **History**, and a **More** disclosure (local per-pool boolean) exposing `Read` (`mixed` + reading mode), `Review only` (`review_due` + flashcards), `Learn new` (`learn_new` + flashcards). When a pool has leech-parked terms the card also shows an `N word(s) parked — strengthen them` affordance that opens the Strengthen route for that pool (see "Strengthen exercises + leech rehab"). The passive stat cards (Follow-ups / New today / Unseen / Total) render below the pool sections.
 - **Stale session URLs.** Reloading or deep-linking to `/practice/$sessionId` for a completed/abandoned session silently redirects back to that language's action screen. Background pre-generation is opportunistic and must not show user-facing errors for inactive sessions.
@@ -377,7 +377,6 @@ A separate top-level destination from the per-session review flow. Practice is *
 - **End condition.** When the eligible pool minus chunks already covered in this session is empty, `generateNextText` returns `done: true` and the session view shows an "All caught up" view. Eligibility is the frozen mode-aware snapshot in `practice_session_chunks`; live rows do not enter mid-session. New rows enter as `state='new'` lazily on first surfacing/rating and count against the per-day new-term allowance via the recognition facet's `introduced_at`.
 - **Daily new-term budget.** Passive generated-text sessions and flashcards share the same daily new-term cap. Both count introductions by `introduced_at` on the citation `meaning_recognition` facet (joined back to non-deleted kept `user_lookups` rows). Generated-text sessions reserve a capped snapshot when the session starts and stamp new rows when they are first surfaced. Flashcards compute the remaining allowance at list time for the returned batch and also guard at rating time with an advisory transaction lock keyed by `(user, target_language)`, so concurrent tabs/devices cannot introduce two different new flashcards past the cap.
 - **FSRS.** `ts-fsrs` package, default parameters with `enable_fuzz: true`. The adapter at `apps/backend/src/service/practice/fsrs.ts` round-trips `study_facets` rows ↔ `ts-fsrs` Card objects. Recognition-facet ratings other than `again` are floored to `now + 24h` (`MIN_PASSIVE_INTERVAL_MS`) so finishing a generated-text or flashcard sitting leaves no immediately-due straggler follow-ups; `again` keeps FSRS's native intraday interval (generated-text in-session redrill is rating-driven via the stubborn path; flashcards requeue one local copy after an accepted `again`; and an abandoned miss should stay due soon), and production facets are never clamped.
-- **Out of scope (v2).** Pre-generation pipeline, coverage guarantee + cleanup pass for stubborn chunks, custom FSRS parameters, audio TTS. (The "remove from practice" affordance and the browseable "my vocabulary" view both shipped as the Vocabulary tab — see below.)
 
 ### Strengthen exercises + leech rehab
 
@@ -728,14 +727,13 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- (floored at 0). SRS state is preserved
                                     -- across un-keep so re-keeping resumes the
                                     -- schedule.
-  -- SRS/FSRS scheduling, leech-rehab, and first-introduction state NO LONGER
-  -- live on user_lookups. The study-facets cutover (Phase 1) moved them to
-  -- public.study_facets — one row per (user_lookup_id, skill, target_form),
-  -- each owning its own srs_* columns, leech_* columns, and introduced_at
-  -- (the daily-new stamp that replaced added_to_practice_at). The old
-  -- per-term learning_mode column was dropped in Phase 3: "in production" is
-  -- now an enabled (disabled_at IS NULL) (meaning_production,'') facet,
-  -- surfaced on the wire as a DERIVED `learningMode` for read-only display.
+  -- SRS/FSRS scheduling, leech-rehab, and first-introduction state do NOT
+  -- live on user_lookups. They live in public.study_facets — one row per
+  -- (user_lookup_id, skill, target_form), each owning its own srs_* columns,
+  -- leech_* columns, and introduced_at (the daily-new stamp). There is no
+  -- per-term learning_mode column: "in production" is an enabled
+  -- (disabled_at IS NULL) (meaning_production,'') facet, surfaced on the
+  -- wire as a DERIVED `learningMode` for read-only display.
   -- See the "Passive vs active pools (now facets)" bullet above and
   -- docs/SRS.md §1 for the study_facets schema + the full data model.
   created_at          timestamptz   -- powers Vocabulary "Recently added" sort
@@ -934,7 +932,7 @@ explicit nulls behind, so consumers must be defensive).
 }
 ```
 
-`ipa` is generated by default (since 2026-06-11): the basic-data pass fills it
+`ipa` is generated by default: the basic-data pass fills it
 for every chunk (English → the user's `english_ipa_dialect` bucket, others →
 `untagged`; dictionary delimiters kept in the string, omit-when-unconfident),
 and Wiktionary grounding overwrites it where kaikki has data. The flashcard
@@ -950,7 +948,7 @@ iterates known keys; missing keys collapse silently.
 
 ```json
 {
-  "ipa": "string (legacy only — dropped from the schema 2026-06-11, new explorations write grammar.ipa instead; old rows keep it)",
+  "ipa": "string (legacy only — no longer in the schema; new explorations write grammar.ipa instead, old rows keep it)",
   "frequency": "high | medium | low",
   "more_frequent_synonym": "string | null",
   "regionalism": "string | null",
@@ -1068,21 +1066,7 @@ cached result instantly.
 2. The mid-watch UI is always browsable while the session is `active` — `Triage` jumps back; highlighting still works.
 3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up in triage when the worker finishes. Ghost nomination continues window-by-window as the user reads.
 
-## Open questions / TBD
+## Future work
 
-- Exact target count for difficult-words pass — start at 25, tune.
-- Per-card chat token budget and prompt cache strategy depend on chosen model.
-- Whether `user_lookup` is exclusion-only or also informs the difficulty model ("user has seen N B1 words → bar moves up").
-- Auto-rejection threshold relative to CEFR (one level below? two?).
-
-## v2 / out-of-scope ideas worth not forgetting
-
-- Books and articles as additional `content_source.type`s (pasted text already shipped — books/articles need their own ingestion path but reuse the rest of the pipeline).
-- Multi-headword merge UX inside the Vocabulary tab (collapse two senses into one without manual re-export).
-- `.apkg` Anki export with audio + images.
-- Inline subtitle player with sync, for users who actually want it.
-- User-customizable methodology prompt for advanced users (the gf use case). The MVP already has per-target-language instructions hardcoded in `language-instructions.ts` — v2 promotes them to a DB-backed, per-user editable field.
-- Multi-deck organization (per language pair, or by tag).
-- Spaced-repetition history pulled back from Anki to close the loop.
-- Practice v2: pre-generation pipeline (queue 2–3 texts ahead of the user), coverage-guarantee + cleanup pass for chunks the LLM persistently fails to fit naturally, custom FSRS parameters, audio TTS for generated texts, and richer flashcard options such as audio or typed answers. (The browseable "my vocabulary" list shipped as the Vocabulary tab — Delete there is the "remove from practice" affordance.)
-- Production-oriented active drills. Partially shipped: the Strengthen surface now delivers typed production cloze, MC cloze/comprehension, and LLM-graded use-in-a-sentence — but only for leech-rehab gates and post-session again/hard bonus terms (see "Strengthen exercises + leech rehab"). v2 generalizes those exercise formats into the main active-drill loop (prompted recall, dictation/typing as a first-class drill mode) so the active label cashes out as a different exercise rather than the same exercise over a different pool. Also plausible: a Strengthen CTA on the reading-mode completion screen (v1 is flashcards-only) and tunable leech thresholds.
+Post-MVP ideas and undecided design questions are kept out of this spec — it
+describes what ships today. See `docs/proposals/web-future-ideas-and-open-questions.md`.

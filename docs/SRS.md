@@ -1,8 +1,7 @@
 # How the SRS works
 
-Reference for the practice/SRS system (web app). Describes the code as of PR #113
-(flashcard re-rate + mid-session edit). Update this doc alongside behavior changes — same
-convention as `apps/extension/EXTENSION-SPEC.md`.
+Reference for the practice/SRS system (web app). Describes current behavior. Update this doc
+alongside behavior changes — same convention as `apps/extension/EXTENSION-SPEC.md`.
 
 Code map:
 
@@ -30,11 +29,9 @@ Each independently-scheduled card is a **facet** — one `public.study_facets` r
 FSRS + leech-rehab state and `introduced_at`. A facet is a `(skill, target_form)` pair on a
 term:
 
-- **skill** — `meaning_recognition` | `meaning_production` | `pronunciation` (the last added in
-  Phase 4a; recognition-mode — see §pronunciation below; per-form pronunciation since 2026-06-11).
-  `target_form`-bearing form facets are Phase 4b.
-- **target_form** — `''` is the citation/lemma (every Phase-1 facet); a non-empty string is a
-  specific inflected form (Phase 4b).
+- **skill** — `meaning_recognition` | `meaning_production` | `pronunciation` (the last is
+  recognition-mode — see §pronunciation below; pronunciation can be per-form).
+- **target_form** — `''` is the citation/lemma; a non-empty string is a specific inflected form.
 
 `pool` (`passive`/`active`) stays on the wire and route params unchanged, but it is **derived**:
 it is the review mode of a skill, mapped at the service boundary (`skillForPool` /
@@ -64,15 +61,15 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
   `study_intent_applied_at` is stamped atomically with the facet writes so a job retry never
   re-applies). Application is enable-only and additive on term dedupe. `formScope:'both'` adds
   per-form facets of the encountered surface for ALL listed skills — pronunciation included
-  since 2026-06-11 (lemma-collapse when the surface IS the headword), born
+  (lemma-collapse when the surface IS the headword), born
   `pending_data`/`source='highlight'` and auto-filled via the Opus pass (one call per form,
   meaning skill first; sibling skills copy the payload — the pronunciation sibling only when it
   carries displayable form IPA).
 - `srs_state IS NULL` on a facet = never reviewed — the UI's **"Unseen"**.
 - `introduced_at` (on the citation recognition facet) is the source of truth for the daily-new
   count; it replaces the old `user_lookups.added_to_practice_at`.
-- **Membership vs existence**: as of Phase 3 there is **no `learning_mode` column** — it was
-  dropped (migration `drop_learning_mode`). "In production" means an *enabled*
+- **Membership vs existence**: there is **no `learning_mode` column** (dropped in migration
+  `drop_learning_mode`). "In production" means an *enabled*
   (`disabled_at IS NULL`) citation production facet, never mere row existence: a demoted term
   keeps its production facet (history intact) with `disabled_at` set. The wire still exposes a
   **derived** `learningMode` (`'active'` iff that facet is enabled) for read-only surfaces (vocab
@@ -80,7 +77,7 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
   `setFacetEnabled({skill, targetForm, enabled})` (it replaced `setLearningMode`): enable upserts
   the facet and clears `disabled_at`; disable sets it; a real flip resets that facet's leech state.
 
-### Pronunciation facet (Phase 4a citation; per-form since 2026-06-11)
+### Pronunciation facet (citation + per-form)
 
 `(pronunciation, <form>)` is a recognition-mode facet (passive queue, own schedule, counts toward
 the recognition budget) drilling how the target *sounds* — `''` for the headword, a non-empty
@@ -102,17 +99,16 @@ Recognition/Production (both citation and form targets).
   returns `'failed'` without a confident form IPA (no `setFacetPayload`), the study-intent
   sibling copy skips IPA-less payloads, and `setFacetEnabled`'s born-ready heuristic is
   skill-aware (pronunciation keys on `payload.grammar.ipa`, not the `translation` key).
-  **Auto-ready on generated IPA is a deliberate 2026-06-11 reversal of the v2 plan's
-  confirm-gate**: generated form IPA serves without user confirmation (the front-end retry chip
-  and per-field provenance/manual edit remain the correction paths).
+  **Generated form IPA serves without user confirmation** (no confirm-gate); the front-end retry
+  chip and per-field provenance/manual edit are the correction paths.
 - **IPA-vanished → delete** (citation only, decided over rehab): a citation pronunciation card
   derives its back from `grammar.ipa` at render; if a later grammar edit removes the IPA, the
   facet is hard-deleted (`chunks.updateContent` → `reconcilePronunciationFacet` → `deleteFacet`).
   There is nothing to rehab a soundless pronunciation with, so disable-keeps-history doesn't
   apply here. Form pronunciation needs no delete sync: without IPA it never reaches `ready`.
 - **Card** (`flashcard-mode-view`, dedicated body, not the slot resolver): front = target (ru
-  stress hidden) + an audio cue (`Volume2` + "Say it out loud"; playback is roadmap, the chip is a
-  prompt); back = stressed display + IPA (`pickIpaForDisplay`, falls back across dialects so a
+  stress hidden) + an audio cue (`Volume2` + "Say it out loud"; the chip is a prompt — there is no
+  audio playback); back = stressed display + IPA (`pickIpaForDisplay`, falls back across dialects so a
   card that passed the gate never reveals an empty back). Form-aware: a form card reads its own
   `facetPayload` (`grammar.display_form || form`, payload `grammar.ipa` — never the lemma's);
   citation reads the lemma row. Citation backs show the blue `BadgeCheck` when
@@ -122,23 +118,18 @@ Recognition/Production (both citation and form targets).
   live. A form facet's payload carries its own `grammar.ipa` bag (English → the user's dialect
   bucket, others → `untagged`).
 
-### Form facets (Phase 4b)
+### Form facets
 
 A `(meaning_recognition | meaning_production, '<form>')` facet drills a **specific inflection** of
-a term (e.g. `(meaning_recognition, 'стола')`) on its own schedule — replacing the old single-slot
-`grammar.study_form_enabled` / `grammar.studied_form` display toggle (which last-write-wins
-overwrote across inflections and rode the citation card's schedule; the bug). Each form is now an
-independent facet (Worked example 2). The migration `migrate_study_form_to_form_facet` created an
-enabled, ready `(meaning_recognition, <normalized form>)` facet for every term the user had
-`study_form_enabled='true'` on, then stripped the toggle from all grammar bags; `grammar.studied_form`
-stays as a write-only generation artifact (its never-overwrite gate moved from the removed boolean
-to **form-facet existence**, `hasFormFacet`).
+a term (e.g. `(meaning_recognition, 'стола')`) on its own independent schedule. `grammar.studied_form`
+stays as a write-only generation artifact; its never-overwrite gate is **form-facet existence**
+(`hasFormFacet`).
 
 - **Key normalization** — `target_form` is normalized on every write path by
   `normalizeTargetForm(text)` (`packages/core/utils/normalize-target-form.ts`: strip combining
   acute U+0301 → NFC → trim → lowercase) so `стола`/`стола́`/`Houses`/`houses` collapse to one key.
   The SQL twin (`lower(trim(normalize(regexp_replace(form, U+0301, '', 'g'), NFC)))`) is pinned
-  byte-for-byte in the migration and the candidate query (Trap 21). `payload` keeps the **full
+  byte-for-byte in the migration and the candidate query. `payload` keeps the **full
   display form** (stress/case intact); only the key folds. This is **not** the display
   `stripStressMarks` helper (which preserves case for the front render).
 - **payload** = the form's own full card content (`FormFacetPayloadSchema`: `form`, plus optional
@@ -159,9 +150,8 @@ to **form-facet existence**, `hasFormFacet`).
   `setFacetPayload` contract never carries it); the editor's per-field provenance indicators compare
   the live payload against it — diverged = "Edited" pencil with a one-tap revert. Manual entry
   leaves it null: no snapshot, no provenance claims. Generation emits
-  translation / definition / example / pos / **the form's own IPA** (since 2026-06-11 — the
-  never-IPA hallucination guard was replaced by an omit-when-unconfident instruction plus the
-  pronunciation readiness gate) and **source-seeds** the `targetExample` from the form's
+  translation / definition / example / pos / **the form's own IPA** (omit-when-unconfident, backed
+  by the pronunciation readiness gate) and **source-seeds** the `targetExample` from the form's
   encountered sentence (`facet.source`) — Opus translates that rather than inventing. Enabling
   Production on an already-filled form reuses its payload and is born `ready` (the `translation`
   key signals "data provided"). Per-form **pronunciation** is a real toggle: with a sibling
@@ -169,7 +159,7 @@ to **form-facet existence**, `hasFormFacet`).
   `pending_data` → the same generate/retry chip (see §pronunciation's form readiness gate).
 - **Candidates** — "+ Add a form" sources encountered forms from
   `listCandidateFormsForChunk` (distinct kept-card `surface_form`, minus the lemma and any
-  already-faceted form; Worked example 3), surfaced on demand, not auto-added.
+  already-faceted form), surfaced on demand, not auto-added.
 
 ## 2. The scheduler (fsrs.ts)
 
@@ -203,7 +193,7 @@ if the FSRS transaction fails the row survives as `'new'`/due-now and self-heals
 rating. This is why `'new'` is grouped with `'review'` everywhere (queue bucket, budget
 predicate).
 
-## 3. Daily limits (per language since PR #111)
+## 3. Daily limits (per language)
 
 `practice_max_new_terms` / `practice_max_review_terms` live on
 `user_target_language_prefs` (Languages settings screen) and are the **recognition-mode**
@@ -214,8 +204,8 @@ refine; the settings UI snaps invalid drafts back on blur).
 
 Caps are **per review mode** (recognition / production), not per skill. Production gets an
 optional **review** cap only — `practice_max_review_terms_active` (nullable; **NULL = uncapped
-= hard ceiling**, the default, preserving the historical active behaviour). As of Phase 3 the
-settings UI (`cefr-per-language-list.tsx`) surfaces it: a Recognition group {New, Review} and a
+= hard ceiling**, the default). The settings UI
+(`cefr-per-language-list.tsx`) surfaces it: a Recognition group {New, Review} and a
 Production group {Review only}, where an empty Production-review input means uncapped (NULL).
 Production has **no** new cap: the citation recognition card is the only daily-new-capped facet,
 so production-new is uncapped by design (`isDailyNewCappedFacet`).
@@ -255,7 +245,7 @@ active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) an
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
 `(meaning_recognition,'')`, active → `(meaning_production,'')`). **Opt-in new** facets
-(pronunciation/forms, Phase 4) bypass the daily-new cap but are served **only in `learn_new`**,
+(pronunciation/forms) bypass the daily-new cap but are served **only in `learn_new`**,
 never `mixed` — otherwise the primary Practice button would flood a session with every
 enabled-but-unseen facet. `resolveReviewCaps` enforces this (it returns `maxOptInNewTerms=0`
 outside passive `learn_new`).
@@ -265,8 +255,8 @@ ranked within its term by priority (due-review > intraday-learning > unseen) via
 OVER (PARTITION BY user_lookup_id …)`; the outer queue orders by that rank first, so every
 term's rank-1 facet precedes any rank-2. Best-effort: a term dominating the due set has no
 separators left for its high-rank siblings, which go adjacent at the tail (accepted, not a
-guarantee). In Phase 2 each term has one citation facet, so the rank is always 1 and the order
-collapses to today's due-time-then-new ordering (behaviour-preserving).
+guarantee). For a term with only its citation facet the rank is always 1, so the order collapses
+to plain due-time-then-new ordering.
 
 Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`) and terms woven into the
 currently-open reading text (`excludeUserLookupIds`).

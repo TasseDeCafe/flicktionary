@@ -1,7 +1,7 @@
 # Flicktionary browser extension — spec
 
 > **Source of truth** for the extension — behavior, architecture, and fork
-> policy. Last full audit: 2026-06-04. Removal/migration history lives in git.
+> policy. Removal/migration history lives in git, not here.
 
 ## What it is
 
