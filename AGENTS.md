@@ -22,7 +22,7 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 - `DISABLED.md` — log of parked/disabled template machinery; check it before deleting "unused" code.
 - READMEs (`apps/web/README.md`, `apps/backend/README.md`, `apps/backend/src/transport/database/README.md`, and other scoped `**/README.md`) — local how-tos for one area. Update only if you change the thing they document.
 
-**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `backend-deploy-smoke-test-plan.md`). Useful context; **never** treat as current behavior.
+**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `backend-deploy-smoke-test-plan.md`) and post-MVP backlog/idea lists (e.g. `web-future-ideas-and-open-questions.md`). Useful context; **never** treat as current behavior.
 
 **Scratch** — `docs/brand/` holds brand-asset generation prompts (`LOGO-PROMPTS.md`, `IMAGE-PROMPTS.md`). Not specs; ignore when reasoning about app behavior.
 
@@ -222,6 +222,23 @@ Rules:
  // based on https://elevenlabs.io/docs/api-reference/twilio/outbound-call
  export const initiateCancelCallViaTwilio = async (
 ```
+
+- **No log-like comments.** Comments describe how the code behaves *now*, not the
+  history of how it got here. Do **not** reference implementation plans, phases,
+  migration steps, "as of", dated changes, or "this used to be X, now it's Y" —
+  plans are ephemeral and dates are meaningless to a future reader. Describe the
+  current behavior directly instead.
+  - Bad: `// Phase 4b: forms are now independent facets` /
+    `// dropped the learning_mode column on 2026-06-11` /
+    `// reversal of the v2 plan's confirm-gate`
+  - Good: `// each inflected form is an independent facet with its own schedule`
+- The **only** allowed time/issue references are ones a future reader genuinely
+  needs to act on: a link to a GitHub issue (or similar tracker), a specific PR,
+  or a still-open problem whose comment needs a timestamp/condition so someone
+  knows when to re-check it (e.g. `// workaround for https://github.com/owner/repo/issues/123 — remove once fixed`).
+- When you edit code that already carries a log-like comment, rewrite it to
+  describe current behavior (or delete it) as part of your change — don't leave
+  it just because you didn't write it.
 
 # Local Supabase Instance
 
