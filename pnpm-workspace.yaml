@@ -7,6 +7,7 @@ catalog:
   '@anthropic-ai/sdk': 0.64.0
   '@astrojs/check': 0.9.9
   '@babel/plugin-transform-react-jsx': 7.28.6
+  '@eslint/compat': 2.1.0
   '@expo/metro-runtime': 55.0.7
   '@expo/vector-icons': 15.1.1
   '@flatten-js/interval-tree': 1.0.19

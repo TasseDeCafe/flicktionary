@@ -108,6 +108,7 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@eslint/compat": "catalog:",
     "@lingui/babel-plugin-lingui-macro": "catalog:",
     "@lingui/cli": "catalog:",
     "@lingui/metro-transformer": "catalog:",
