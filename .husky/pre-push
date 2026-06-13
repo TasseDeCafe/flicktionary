@@ -99,26 +99,31 @@ else
   echo "✅ Branch is up-to-date with main"
 fi
 
-# Clean Lingui catalogs so dead entries don't linger
-echo "🧹 Cleaning Lingui catalogs..."
-if pnpm lingui extract --clean; then
-  echo "✅ Lingui catalogs updated"
-else
+# Guard the Lingui catalogs. We do NOT translate here: the AI call is slow and
+# its auto-commit can't join an in-flight push (forcing a "push again" dance),
+# and the gettext re-serialization used to ping-pong the catalog format. Instead
+# translation happens at PR time (`pnpm translate:sync`, run by the create-pr
+# flow), and this stays a fast, deterministic gate that fails if the catalogs
+# are stale or any string is untranslated.
+echo "🧹 Checking Lingui catalogs..."
+if ! pnpm lingui extract --clean; then
   echo "❌ Lingui extract failed"
   exit 1
 fi
 
-# Translate missing translations using AI
-echo "🤖 Translating missing translations with Claude..."
-if pnpm --filter @flicktionary/i18n translate; then
-  echo "✅ Translation check completed"
-else
-  echo "❌ Translation failed"
+if ! git diff --quiet -- packages/i18n/locales; then
+  echo "❌ Lingui catalogs are out of date (extract changed them)."
+  echo "   Run 'pnpm translate:sync' and commit packages/i18n/locales before pushing."
+  git --no-pager diff --stat -- packages/i18n/locales
   exit 1
 fi
 
-# Check if translation generated any changes
-auto_commit_changes "chore(i18n): update translations" packages/i18n/locales
+if ! pnpm --filter @flicktionary/i18n translate:check; then
+  echo "❌ Some strings are untranslated."
+  echo "   Run 'pnpm translate:sync' and commit packages/i18n/locales before pushing."
+  exit 1
+fi
+echo "✅ Lingui catalogs are up to date and fully translated"
 
 # Check if native app requires a new build using expo fingerprint
 echo "📱 Checking native app fingerprint..."
