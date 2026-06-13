@@ -100,15 +100,6 @@ export default defineConfig({
   webExt: {
     disabled: true,
   },
-  // AMO requires `browser_specific_settings.gecko.data_collection_permissions`
-  // for NEW extensions (Nov 2025+) — which categories Flicktionary must declare
-  // (the word-sync API sees subtitle text; auth goes through Supabase) is a
-  // product/privacy decision to make at Firefox submission time, not a build
-  // concern, so silence the dev-time nag until then. See
-  // https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/
-  suppressWarnings: {
-    firefoxDataCollection: true,
-  },
   vite: () => ({
     resolve: {
       alias: {
@@ -266,6 +257,17 @@ export default defineConfig({
             // AMO listing (description, author, rating), and AMO would reject
             // an upload under a taken ID anyway.
             id: 'extension@flicktionary.app',
+            // AMO requires this consent declaration for new extensions
+            // (Nov 2025+); it surfaces in the install prompt. We declare what
+            // the backend actually receives: the subtitle text the user selects
+            // (glossing + saved highlights) is `websiteContent`, and signing in
+            // ties captures to the user's account email / name
+            // (`personallyIdentifyingInfo`). No telemetry/analytics ships in the
+            // extension, so `technicalAndInteraction` is omitted. See
+            // https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/
+            data_collection_permissions: {
+              required: ['websiteContent', 'personallyIdentifyingInfo'],
+            },
           },
         },
       }
