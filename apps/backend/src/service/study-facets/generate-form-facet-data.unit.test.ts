@@ -18,6 +18,7 @@ const chunkId = '00000000-0000-0000-0000-000000000002'
 
 const formResult = {
   form: 'стола́',
+  displayForm: 'стола́',
   translation: 'of the table',
   definition: null,
   targetExample: 'У стола́ четыре ножки.',
@@ -91,7 +92,7 @@ describe('generateFormFacetData — per-form pronunciation', () => {
         targetForm: 'стола',
         payload: expect.objectContaining({
           form: 'стола́',
-          grammar: { pos: 'noun', ipa: { untagged: '[stɐˈla]' } },
+          grammar: { pos: 'noun', display_form: 'стола́', ipa: { untagged: '[stɐˈla]' } },
         }),
       })
     )
@@ -109,7 +110,12 @@ describe('generateFormFacetData — per-form pronunciation', () => {
 
   it('buckets English form IPA into the user dialect (rp)', async () => {
     const { deps, setFacetPayload } = createDeps({ targetLanguage: 'en', englishIpaDialect: 'rp' })
-    vi.mocked(generateFormData).mockResolvedValue({ ...formResult, form: 'houses', ipa: '/ˈhaʊzɪz/' })
+    vi.mocked(generateFormData).mockResolvedValue({
+      ...formResult,
+      form: 'houses',
+      displayForm: null,
+      ipa: '/ˈhaʊzɪz/',
+    })
 
     await run(deps, 'pronunciation')
 
@@ -134,7 +140,7 @@ describe('generateFormFacetData — per-form pronunciation', () => {
     const payload = setFacetPayload.mock.calls[0]![0].payload as Record<string, unknown>
     expect(payload.translation).toBe('')
     expect(payload.nativeExample).toBeUndefined()
-    expect(payload.grammar).toEqual({ pos: 'noun', ipa: { untagged: '[stɐˈla]' } })
+    expect(payload.grammar).toEqual({ pos: 'noun', display_form: 'стола́', ipa: { untagged: '[stɐˈla]' } })
   })
 
   it('translations-off still takes the bare no-model shortcut for meaning skills', async () => {
