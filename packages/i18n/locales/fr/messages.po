@@ -2181,10 +2181,6 @@ msgstr "Chargement de l'historique…"
 msgid "Loading more…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx
-msgid "Loading review terms…"
-msgstr "Chargement des termes à réviser…"
-
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "Loading seasons…"
 msgstr "Chargement des saisons…"
@@ -2201,9 +2197,7 @@ msgstr "Chargement..."
 
 #: apps/web/src/features/more/components/account-page.tsx
 #: apps/web/src/features/more/components/languages-page.tsx
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Loading…"
 msgstr "Chargement…"
 
