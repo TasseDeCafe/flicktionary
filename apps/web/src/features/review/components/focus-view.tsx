@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
@@ -217,7 +218,7 @@ export const FocusView = () => {
   if (isLoading) {
     return (
       <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
-        <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Loading card…`}</div>
+        <FocusViewSkeleton />
       </ModalScreen>
     )
   }
@@ -485,6 +486,50 @@ export const FocusView = () => {
     </div>
   )
 }
+
+// A labeled input/textarea placeholder, mirroring the editor's field layout.
+const FieldSkeleton = ({ multiline = false }: { multiline?: boolean }) => (
+  <div>
+    <Skeleton className='h-3 w-24' />
+    <Skeleton className={`mt-1.5 w-full rounded-md ${multiline ? 'h-20' : 'h-10'}`} />
+  </div>
+)
+
+// Mirrors the focus view body: CARD chips, the study-target chip + Skills card,
+// then the labeled content fields — so the layout doesn't jump when the card loads.
+const FocusViewSkeleton = () => (
+  <div className='flex-1 overflow-y-auto px-4 py-4'>
+    <div className='mx-auto flex max-w-4xl flex-col gap-6'>
+      <section>
+        <Skeleton className='mb-3 h-3 w-12' />
+        <div className='mb-3 flex flex-wrap items-center gap-2'>
+          <Skeleton className='h-6 w-14 rounded-md' />
+          <Skeleton className='h-6 w-24 rounded-md' />
+        </div>
+
+        <Skeleton className='mb-3 h-3 w-28' />
+        <Skeleton className='h-9 w-24 rounded-full' />
+
+        <div className='mt-4 rounded-xl border p-4'>
+          <div className='flex items-start justify-between gap-2'>
+            <div className='flex flex-col gap-2'>
+              <Skeleton className='h-4 w-16' />
+              <Skeleton className='h-6 w-28 rounded-md' />
+            </div>
+            <Skeleton className='h-8 w-8 shrink-0 rounded-full' />
+          </div>
+        </div>
+
+        <div className='mt-4 flex flex-col gap-4'>
+          <FieldSkeleton />
+          <FieldSkeleton multiline />
+          <FieldSkeleton />
+          <FieldSkeleton multiline />
+        </div>
+      </section>
+    </div>
+  </div>
+)
 
 type FocusActionBarProps = {
   card: {
