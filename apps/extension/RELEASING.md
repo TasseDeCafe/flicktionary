@@ -38,6 +38,8 @@ doppler secrets set NAME --project root --config prd   # prompts for the value
 | `CHROME_CLIENT_ID` | OAuth client ID (see below) |
 | `CHROME_CLIENT_SECRET` | OAuth client secret (see below) |
 | `CHROME_REFRESH_TOKEN` | Long-lived token minted from that client (see below) |
+| `AMO_JWT_ISSUER` | addons.mozilla.org API key (Tools → Manage API Keys → JWT issuer). Used by `web-ext sign` for Firefox |
+| `AMO_JWT_SECRET` | The matching AMO API JWT secret (shown once when the key is created) |
 | `EXTENSION_PRD_DOPPLER_TOKEN` | Read-only Doppler service token for `extension`/`prd`, so CI builds get the `WXT_PUBLIC_*` env vars (`flicktionary-config.ts` throws at runtime without them) |
 
 If `EXTENSION_PRD_DOPPLER_TOKEN` ever needs recreating:
@@ -103,6 +105,11 @@ doppler run --project root --config prd -- \
 - **CWS rejects the zip because the manifest contains `key`** — should not happen (the
   Chrome `key` is emitted only for `mode === 'development'` in `wxt.config.ts`); if it
   reappears, that regressed.
-- **Firefox/AMO** — not automated yet. `publish-browser-extension` supports it via
-  `--firefox-*` flags (JWT issuer/secret from addons.mozilla.org → Tools → API keys)
-  when we get there.
+- **Firefox/AMO submission fails / is skipped** — the workflow signs via
+  `web-ext sign --channel listed` (not `publish-browser-extension`, which cannot
+  attach reviewer notes). It needs `AMO_JWT_ISSUER` / `AMO_JWT_SECRET`; without
+  them the step skips with a notice. The reviewer notes and source-build
+  instructions come from [`amo-metadata.json`](./amo-metadata.json)
+  (`version.approval_notes`) — keep it in sync with the human mirror in
+  [`AMO-LISTING.md`](./AMO-LISTING.md). web-ext reads the add-on id from the
+  manifest's `browser_specific_settings.gecko.id`.
