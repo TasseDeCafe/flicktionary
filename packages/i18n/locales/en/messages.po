@@ -2129,10 +2129,6 @@ msgstr "LLM-suggested terms"
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
-#: apps/web/src/features/review/components/focus-view.tsx
-msgid "Loading card…"
-msgstr "Loading card…"
-
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Loading chat…"
 msgstr "Loading chat…"
@@ -2152,10 +2148,6 @@ msgstr "Loading more…"
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "Loading seasons…"
 msgstr "Loading seasons…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading session…"
-msgstr "Loading session…"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx

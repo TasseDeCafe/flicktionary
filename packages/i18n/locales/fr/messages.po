@@ -2161,10 +2161,6 @@ msgstr "Termes suggérés par IA"
 msgid "Load Subtitles"
 msgstr "Charger des sous-titres"
 
-#: apps/web/src/features/review/components/focus-view.tsx
-msgid "Loading card…"
-msgstr "Chargement de la carte…"
-
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Loading chat…"
 msgstr "Chargement de la discussion…"
@@ -2184,10 +2180,6 @@ msgstr "Chargement…"
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "Loading seasons…"
 msgstr "Chargement des saisons…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading session…"
-msgstr "Chargement de la session…"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
