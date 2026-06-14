@@ -1,4 +1,13 @@
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
+
+// Uniform pill placeholders matching the language codes' chip size, shown while
+// the language list loads.
+export const VocabularyLanguageSwitcherSkeleton = () => (
+  <div className='flex flex-wrap gap-2'>
+    <SkeletonList count={4} className='h-7 w-12 rounded-full' />
+  </div>
+)
 
 interface VocabularyLanguageSwitcherProps {
   languages: string[]

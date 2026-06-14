@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { SkeletonList } from '@flicktionary/ui/components/skeleton'
+import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useListStudySessions } from '../api/sessions-hooks'
 import { SessionCard, SessionCardSkeleton } from './session-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
@@ -37,6 +37,8 @@ export const SessionsListView = () => {
   return (
     <div className='mx-auto max-w-4xl px-4 py-6'>
       <h1 className='text-2xl font-bold'>{t`Sessions`}</h1>
+
+      {isLoading && <FilterChipsSkeleton />}
 
       {/* Horizontally scrollable on narrow viewports: the chips never wrap or shrink,
           and the row bleeds to the screen edges (-mx-4 px-4) so it scrolls cleanly past
@@ -95,6 +97,17 @@ export const SessionsListView = () => {
     </div>
   )
 }
+
+// Varied widths so the placeholder reads as the labelled filter chips rather
+// than identical pills, in the same scrollable row as the real chips.
+const FILTER_CHIP_SKELETON_WIDTHS = ['w-16', 'w-20', 'w-12', 'w-16', 'w-20', 'w-24', 'w-24']
+const FilterChipsSkeleton = () => (
+  <div className='-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+    {FILTER_CHIP_SKELETON_WIDTHS.map((width, i) => (
+      <Skeleton key={i} className={`h-7 shrink-0 rounded-full ${width}`} />
+    ))}
+  </div>
+)
 
 const FilterChip = ({
   active,

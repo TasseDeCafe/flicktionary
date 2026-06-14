@@ -13,7 +13,7 @@ import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
-import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
+import { VocabularyLanguageSwitcher, VocabularyLanguageSwitcherSkeleton } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
 import { VocabularyRow, VocabularyRowSkeleton } from './vocabulary-row'
 import { Button } from '@flicktionary/ui/components/button'
@@ -252,6 +252,8 @@ export const VocabularyListView = () => {
       <p className='text-muted-foreground text-sm'>
         {t`Every term you've kept, across every session. Tap a row to edit, or open the menu for more options.`}
       </p>
+
+      {languagesLoading && <VocabularyLanguageSwitcherSkeleton />}
 
       {languages && languages.length > 1 && selectedLanguage && (
         <VocabularyLanguageSwitcher
