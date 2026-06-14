@@ -2158,10 +2158,6 @@ msgid "Loading seasons…"
 msgstr "Loading seasons…"
 
 #: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading segments…"
-msgstr "Loading segments…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Loading session…"
 msgstr "Loading session…"
 
@@ -2174,11 +2170,8 @@ msgstr "Loading..."
 #: apps/web/src/features/more/components/account-page.tsx
 #: apps/web/src/features/more/components/languages-page.tsx
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-#: apps/web/src/features/practice/components/practice-language-view.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Loading…"
 msgstr "Loading…"
 
