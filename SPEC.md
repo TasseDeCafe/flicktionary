@@ -37,9 +37,9 @@ internal model, it uses "chunk".
 
 Three source kinds in the MVP, all feeding the same `text_segment` table. (A fourth ingestion path — **YouTube via the companion browser extension** — also lands in `text_segment` but is not a web-app flow; see "Browser extension (companion)".)
 
-- **Movie subtitles.**
-  - **OpenSubtitles search.** Search by title; results filtered to the user's target language. The track's `language` must match the chosen study language — never inferred.
-  - **Manual `.srt` upload.** First-class, not a fallback. Language is auto-detected from the SRT contents server-side (Haiku call) on upload and applied to the picker; the user can override before the upload completes.
+- **Movie & TV subtitles.** Movies and TV episodes share one wizard flow; the user picks `Movie` or `TV show` after choosing the study language. TV adds a season → episode selection (TMDB `/search/tv` → `/tv/{id}` seasons, season 0 / Specials hidden → `/tv/{id}/season/{n}` episodes). Each episode is its own `content_source(type='tv')` titled `"<show> · S0xE0y · <episode>"`, deduped globally on `(tmdbShowId, seasonNumber, episodeNumber)` (a DB partial unique index backs the app-level check); movies stay `type='movie'`.
+  - **OpenSubtitles search.** Search by title; results filtered to the user's target language. The track's `language` must match the chosen study language — never inferred. TV episodes search OpenSubtitles `/subtitles` with `parent_tmdb_id` + `season_number` + `episode_number` + `type=episode`; movies search by `tmdb_id`.
+  - **Manual `.srt` upload.** First-class, not a fallback (available in both the movie and TV branches). Language is auto-detected from the SRT contents server-side (Haiku call) on upload and applied to the picker; the user can override before the upload completes.
   - On import, SRTs are normalized into per-line `text_segment` records (with `start_ms`/`end_ms`) and indexed for full-text search. The raw SRT is not preserved as a single blob.
 - **Pasted text.** First-class, not a fallback. The user pastes raw text (50–20,000 chars), provides a short title (auto-suggested from the first ~60 chars), and picks the language (auto-detected from the paste via a Haiku call as the user pauses typing; the manual override always wins).
   - Segmented one row per non-empty line (`\n`-split, trimmed). `start_ms`/`end_ms` are null.
@@ -469,7 +469,7 @@ chunks` CTA. The `cards.exportCsv` backend endpoint still exists (and still
 
 Native-style shell so the eventual React Native port is a translation, not a redesign.
 
-- **Mobile** (`< 768px`): bottom tab bar with five slots — `Sessions` / `Practice` / central `+` button / `Vocabulary` / `More`. The `+` opens an action sheet with three options: `Start a movie session`, `Practice with a text`, `Add a word` (designed to grow as more `content_source.type`s land). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text. "Add a word" creates a single card without any source (see Source content → Ad-hoc vocab entries). "Vocabulary" the tab is the browseable cross-session list of kept chunks (see Vocabulary section).
+- **Mobile** (`< 768px`): bottom tab bar with five slots — `Sessions` / `Practice` / central `+` button / `Vocabulary` / `More`. The `+` opens an action sheet with three options: `Start a movie or TV session`, `Practice with a text`, `Add a word` (designed to grow as more `content_source.type`s land). `Start a movie or TV session` covers both movies and TV shows via one wizard (an in-wizard `Movie` / `TV show` choice); it fetches subtitles for something the user is watching elsewhere and does **not** play video (in-video capture is the browser extension's job). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text. "Add a word" creates a single card without any source (see Source content → Ad-hoc vocab entries). "Vocabulary" the tab is the browseable cross-session list of kept chunks (see Vocabulary section).
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / Texts` filter chips with counts so the unified list stays scannable as content types diversify. Synthetic adhoc sessions (the per-(user, language) "Personal vocabulary" pseudo-sessions backing the Add-a-word flow) are filtered out at the query layer — they never appear under any chip. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
 - **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, new-session wizard, and the `More` sub-pages (Account, Languages). (A standalone processing-poller screen still exists in the route tree but is no longer in the main flow — `Go to triage` jumps straight to triage, which shows per-highlight enrichment progress inline.) Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
@@ -536,7 +536,13 @@ Generic source shape so non-movie content can plug in later without migration.
 ```
 content_source
   id                  uuid pk
-  type                'movie' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc'
+  type                'movie' | 'tv' | 'youtube' | 'book' | 'article' | 'text' | 'adhoc'
+                                   -- 'tv' rows are one content_source per
+                                   -- episode (metadata: tmdbShowId, showTitle,
+                                   -- seasonNumber, episodeNumber, episodeTitle,
+                                   -- year, posterUrl); deduped globally on
+                                   -- (tmdbShowId, seasonNumber, episodeNumber)
+                                   -- via a partial unique index, like movies.
                                    -- 'youtube' rows are created by the browser
                                    -- extension; deduped per user on
                                    -- metadata->>'youtubeVideoId'.
@@ -1007,13 +1013,15 @@ cached result instantly.
 
 ## User flows
 
-**Start a movie session**
+**Start a movie or TV session**
 
-1. Pick or search a movie (TMDB-backed metadata).
-2. Pick a subtitle track: OpenSubtitles search filtered to target language, or upload `.srt`.
-3. App verifies the chosen track's language matches target language; can't proceed otherwise.
-4. If first session in this target language: prompt for CEFR level.
-5. Session created.
+1. From the `+` overlay, pick `Start a movie or TV session`.
+2. Pick the study language. If first session in this target language: prompt for CEFR level.
+3. Choose `Movie` or `TV show`.
+4. Pick the content (TMDB-backed metadata): a movie, or a TV show → season → episode.
+5. Pick a subtitle track: OpenSubtitles search filtered to target language (movie by `tmdb_id`, episode by `parent_tmdb_id` + season + episode), or upload `.srt`.
+6. App verifies the chosen track's language matches target language; can't proceed otherwise.
+7. Session created.
 
 **Start a text session**
 
