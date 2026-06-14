@@ -85,6 +85,10 @@ msgstr "{dueTermCount, plural, one {# review} other {# reviews}}"
 msgid "{dueTermCount} follow-up(s) due"
 msgstr "{dueTermCount} follow-up(s) due"
 
+#: apps/web/src/features/sessions/components/tv-season-picker.tsx
+msgid "{episodeCount} episodes"
+msgstr "{episodeCount} episodes"
+
 #: apps/web/src/features/review/components/field-provenance-indicator.tsx
 msgid "{fieldLabel}: {title}"
 msgstr "{fieldLabel}: {title}"
@@ -240,6 +244,10 @@ msgstr "A sentence using this term in its natural setting."
 #: apps/web/src/features/sessions/components/text-paste-input.tsx
 msgid "A short label for this session"
 msgstr "A short label for this session"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "A single film."
+msgstr "A single film."
 
 #: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
 msgid "A video element must be synced with Flicktionary before it can be mined. "
@@ -640,8 +648,8 @@ msgid "British"
 msgstr "British"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
-msgid "Browse community-uploaded tracks for this movie."
-msgstr "Browse community-uploaded tracks for this movie."
+msgid "Browse community-uploaded tracks."
+msgstr "Browse community-uploaded tracks."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
@@ -1403,6 +1411,10 @@ msgstr "Failed to load cards"
 msgid "Failed to load chat"
 msgstr "Failed to load chat"
 
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to load episodes"
+msgstr "Failed to load episodes"
+
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to load exercises"
 msgstr "Failed to load exercises"
@@ -1434,6 +1446,10 @@ msgstr "Failed to load processing status"
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to load review terms"
 msgstr "Failed to load review terms"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to load seasons"
+msgstr "Failed to load seasons"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to load session"
@@ -1486,6 +1502,10 @@ msgstr "Failed to open triage"
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to record rating"
 msgstr "Failed to record rating"
+
+#: apps/web/src/features/sessions/api/sessions-hooks.ts
+msgid "Failed to register episode"
+msgstr "Failed to register episode"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to register movie"
@@ -1628,6 +1648,10 @@ msgstr "Fast-forward mode playback rate"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Feminine"
 msgstr "Feminine"
+
+#: apps/web/src/features/navigation/components/main-action-overlay.tsx
+msgid "Find a movie or show and load its subtitles"
+msgstr "Find a movie or show and load its subtitles"
 
 #: apps/web/src/features/sessions/components/triage-footer.tsx
 msgid "Finding suggestions…"
@@ -2117,6 +2141,10 @@ msgstr "Loading cards…"
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
+#: apps/web/src/features/sessions/components/tv-episode-picker.tsx
+msgid "Loading episodes…"
+msgstr "Loading episodes…"
+
 #: apps/web/src/features/practice/components/reading-history-view.tsx
 msgid "Loading history…"
 msgstr "Loading history…"
@@ -2128,6 +2156,10 @@ msgstr "Loading more…"
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 msgid "Loading review terms…"
 msgstr "Loading review terms…"
+
+#: apps/web/src/features/sessions/components/tv-season-picker.tsx
+msgid "Loading seasons…"
+msgstr "Loading seasons…"
 
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Loading segments…"
@@ -2257,6 +2289,10 @@ msgstr "Move top subtitles down"
 msgid "Move top subtitles up"
 msgstr "Move top subtitles up"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Movie"
+msgstr "Movie"
+
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Movies"
 msgstr "Movies"
@@ -2349,6 +2385,10 @@ msgid "No cards yet. Select some highlights in the source text to generate new "
 msgstr "No cards yet. Select some highlights in the source text to generate new "
 "cards."
 
+#: apps/web/src/features/sessions/components/tv-episode-picker.tsx
+msgid "No episodes found."
+msgstr "No episodes found."
+
 #: apps/web/src/features/sessions/components/triage-footer.tsx
 msgid "No highlights yet."
 msgstr "No highlights yet."
@@ -2358,6 +2398,7 @@ msgid "No languages found."
 msgstr "No languages found."
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx
+#: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "No matches."
 msgstr "No matches."
@@ -2377,6 +2418,10 @@ msgstr "No pronunciation data yet"
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 msgid "No reviews are due right now."
 msgstr "No reviews are due right now."
+
+#: apps/web/src/features/sessions/components/tv-season-picker.tsx
+msgid "No seasons found."
+msgstr "No seasons found."
 
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "No sessions in this filter."
@@ -2665,19 +2710,31 @@ msgstr "Pick a language from the list."
 msgid "Pick a movie"
 msgstr "Pick a movie"
 
-#: apps/web/src/features/navigation/components/main-action-overlay.tsx
-msgid "Pick a movie and load its subtitles"
-msgstr "Pick a movie and load its subtitles"
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Pick a season"
+msgstr "Pick a season"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Pick a season and episode."
+msgstr "Pick a season and episode."
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "Pick a subtitle track"
 msgstr "Pick a subtitle track"
 
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
-msgid "Pick the language of the movie you'll watch. Subtitles and explanations "
-"will be in this language."
-msgstr "Pick the language of the movie you'll watch. Subtitles and explanations "
-"will be in this language."
+msgid "Pick a TV show"
+msgstr "Pick a TV show"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Pick an episode"
+msgstr "Pick an episode"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Pick the language of the movie or show you'll watch. Subtitles and "
+"explanations will be in this language."
+msgstr "Pick the language of the movie or show you'll watch. Subtitles and "
+"explanations will be in this language."
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
 msgid "Pick what to create next."
@@ -2964,6 +3021,10 @@ msgstr "Register alternatives"
 msgid "Registering {movieTitle}…"
 msgstr "Registering {movieTitle}…"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Registering episode…"
+msgstr "Registering episode…"
+
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Rehab"
 msgstr "Rehab"
@@ -3162,6 +3223,10 @@ msgstr "Search shadow roots for video elements"
 msgid "Search terms…"
 msgstr "Search terms…"
 
+#: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
+msgid "Search TV shows…"
+msgstr "Search TV shows…"
+
 #: apps/web/src/features/review/components/triage-list-view.tsx
 #: apps/web/src/features/sessions/components/track-search-bar.tsx
 msgid "Search…"
@@ -3172,6 +3237,7 @@ msgid "Searching OpenSubtitles…"
 msgstr "Searching OpenSubtitles…"
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx
+#: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 msgid "Searching…"
 msgstr "Searching…"
 
@@ -3435,8 +3501,8 @@ msgid "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 msgstr "START {NUMBER_OF_DAYS_IN_FREE_TRIAL}-DAY FREE TRIAL"
 
 #: apps/web/src/features/navigation/components/main-action-overlay.tsx
-msgid "Start a movie session"
-msgstr "Start a movie session"
+msgid "Start a movie or TV session"
+msgstr "Start a movie or TV session"
 
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 msgid "Start session"
@@ -3937,6 +4003,14 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 "started. You can pick the target language each time you add new "
 "content."
 
+#: apps/web/src/features/sessions/components/sessions-list-view.tsx
+msgid "TV"
+msgstr "TV"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "TV show"
+msgstr "TV show"
+
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Type the missing word…"
 msgstr "Type the missing word…"
@@ -3972,6 +4046,7 @@ msgid "Unbound"
 msgstr "Unbound"
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx
+#: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 msgid "Unknown year"
 msgstr "Unknown year"
 
@@ -4139,6 +4214,10 @@ msgid "We support .srt subtitle files. The language is detected automatically "
 msgstr "We support .srt subtitle files. The language is detected automatically "
 "from the file contents."
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "We'll find subtitles for it — this doesn't play the video."
+msgstr "We'll find subtitles for it — this doesn't play the video."
+
 #: apps/native/src/features/auth/components/account-removed-view.tsx
 #: apps/web/src/features/auth/components/account-removed-view.tsx
 msgid "We're sorry to see you go. Your account has been successfully removed."
@@ -4163,6 +4242,10 @@ msgstr "Welcome to Flicktionary."
 #: packages/ui/src/components/preset-tags.tsx
 msgid "What are some synonyms or near-synonyms, and how do they differ?"
 msgstr "What are some synonyms or near-synonyms, and how do they differ?"
+
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "What are you watching?"
+msgstr "What are you watching?"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "What is Flicktionary?"
