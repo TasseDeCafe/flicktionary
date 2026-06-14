@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Film } from 'lucide-react'
-import { OptionCard } from '@flicktionary/ui/components/option-card'
+import { OptionCard, OptionCardSkeleton } from '@flicktionary/ui/components/option-card'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
 import { useSearchTmdb } from '../api/sessions-hooks'
@@ -29,8 +30,12 @@ export const TmdbSearch = ({ onPick, disabled }: Props) => {
   return (
     <div className='flex flex-col gap-3'>
       <SearchInput value={query} onChange={setQuery} placeholder={t`Search movies…`} disabled={disabled} autoFocus />
-      {isFetching && <p className='text-muted-foreground text-sm'>{t`Searching…`}</p>}
       <div className='flex flex-col gap-2'>
+        {/* Skeletons only when there's nothing to show yet — a type-ahead
+            refetch keeps the previous results visible instead of flashing. */}
+        {isFetching && (data?.length ?? 0) === 0 && (
+          <SkeletonList count={5} renderItem={() => <OptionCardSkeleton />} />
+        )}
         {(data ?? []).slice(0, 10).map((movie) => {
           const yearLabel = movie.year != null ? String(movie.year) : t`Unknown year`
           const description = movie.originalTitle !== movie.title ? `${yearLabel} · ${movie.originalTitle}` : yearLabel

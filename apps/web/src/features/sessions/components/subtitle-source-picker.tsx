@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
-import { OptionCard } from '@flicktionary/ui/components/option-card'
+import { OptionCard, OptionCardSkeleton } from '@flicktionary/ui/components/option-card'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import {
   useImportFromOpenSubtitles,
   useSearchOpenSubtitles,
@@ -79,7 +80,9 @@ const OpenSubtitlesResults = ({
 
   return (
     <div className='flex flex-col gap-3'>
-      {isFetching && <p className='text-muted-foreground text-sm'>{t`Searching OpenSubtitles…`}</p>}
+      {isFetching && (results?.length ?? 0) === 0 && (
+        <SkeletonList count={5} renderItem={() => <OptionCardSkeleton icon={false} />} />
+      )}
       {!isFetching && (results?.length ?? 0) === 0 && (
         <p className='text-muted-foreground text-sm'>
           {t`No tracks found in ${languageName}. Try uploading a .srt file instead.`}

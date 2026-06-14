@@ -1,6 +1,21 @@
 import type { ReactNode } from 'react'
 import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { Skeleton } from './skeleton'
+
+// Placeholder matching an OptionCard's `navigation` row (icon box + title /
+// description lines + trailing indicator) so list-pick wizard steps don't jump
+// when results arrive. `icon={false}` for rows rendered without a leading icon.
+export const OptionCardSkeleton = ({ icon = true }: { icon?: boolean }) => (
+  <div className='bg-card flex w-full items-center gap-3 rounded-xl border p-4'>
+    {icon && <Skeleton className='h-10 w-10 shrink-0 rounded-lg' />}
+    <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+      <Skeleton className='h-4 w-2/5' />
+      <Skeleton className='h-3 w-3/5' />
+    </div>
+    <Skeleton className='h-5 w-5 shrink-0 rounded-md' />
+  </div>
+)
 
 type OptionCardProps = {
   icon?: ReactNode

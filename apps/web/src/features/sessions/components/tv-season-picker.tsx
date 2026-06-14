@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { Layers } from 'lucide-react'
-import { OptionCard } from '@flicktionary/ui/components/option-card'
+import { OptionCard, OptionCardSkeleton } from '@flicktionary/ui/components/option-card'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useTmdbTvSeasons } from '../api/sessions-hooks'
 
 export type TvSeasonPick = {
@@ -19,7 +20,7 @@ export const TvSeasonPicker = ({ tmdbShowId, onPick }: Props) => {
 
   return (
     <div className='flex flex-col gap-2'>
-      {isFetching && <p className='text-muted-foreground text-sm'>{t`Loading seasons…`}</p>}
+      {isFetching && (data?.length ?? 0) === 0 && <SkeletonList count={4} renderItem={() => <OptionCardSkeleton />} />}
       {(data ?? []).map((season) => {
         const episodeCount = season.episodeCount
         return (
