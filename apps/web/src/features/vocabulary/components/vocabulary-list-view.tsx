@@ -15,8 +15,9 @@ import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawe
 import { VocabularyEmptyState } from './vocabulary-empty-state'
 import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
-import { VocabularyRow } from './vocabulary-row'
+import { VocabularyRow, VocabularyRowSkeleton } from './vocabulary-row'
 import { Button } from '@flicktionary/ui/components/button'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 const ESTIMATED_ROW_HEIGHT = 72
@@ -283,7 +284,7 @@ export const VocabularyListView = () => {
           onScroll={onParentScroll}
         >
           {isInitialLoad ? (
-            <div className='text-muted-foreground py-8 text-center text-sm'>{t`Loading…`}</div>
+            <SkeletonList count={8} renderItem={() => <VocabularyRowSkeleton />} />
           ) : (
             <div
               style={{

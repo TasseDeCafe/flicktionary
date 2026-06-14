@@ -27,7 +27,7 @@ import { findOverlappingGhost } from '../utils/ghost-overlap'
 import { useVisibleSegmentRange } from '../hooks/use-visible-segment-range'
 import { useSegmentPosition } from '../hooks/use-segment-position'
 import { useGhostNomination } from '../hooks/use-ghost-nomination'
-import { SegmentList } from './segment-list'
+import { SegmentList, SegmentListSkeleton } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { TriageFooter } from './triage-footer'
@@ -446,7 +446,7 @@ export const SessionView = () => {
         >
           <div className='mx-auto max-w-4xl'>
             {isSegmentsLoading ? (
-              <p className='text-muted-foreground text-sm'>{t`Loading segments…`}</p>
+              <SegmentListSkeleton />
             ) : (
               <SegmentList
                 segments={visibleSegments}
