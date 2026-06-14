@@ -4,6 +4,7 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
@@ -16,7 +17,7 @@ import {
 import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
 import { getSessionCardsKey } from '../api/card-cache'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { TriageRow, TriageEnrichingRow } from './triage-row'
+import { TriageRow, TriageEnrichingRow, TriageRowSkeleton } from './triage-row'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
@@ -67,7 +68,7 @@ export const TriageListView = () => {
   const queryClient = useQueryClient()
   const { data: session } = useGetStudySession(sessionId)
   const { data: highlights } = useListHighlightsBySession(sessionId)
-  const { data: processingStatus } = useGetProcessingStatus(sessionId, 2000)
+  const { data: processingStatus, isLoading: isProcessingStatusLoading } = useGetProcessingStatus(sessionId, 2000)
   const { mutate: retryEnrichment, isPending: isRetrying } = useRetryEnrichment(sessionId)
   // While the background worker is still enriching highlights, the cards list
   // grows underneath us — poll it so newly-materialized
@@ -124,10 +125,18 @@ export const TriageListView = () => {
     return (highlights ?? [])
       .filter((h) => !cardHighlightIds.has(h.id))
       .map((h): { id: string; surfaceForm: string; status: 'enriching' | 'failed' | 'missing' } => {
-        const status = failedSet.has(h.id) ? 'failed' : activeSet.has(h.id) ? 'enriching' : 'missing'
+        // Until the processing-status query has returned, we don't yet know
+        // whether an uncarded highlight is enqueued or genuinely not started —
+        // default to the enriching shimmer rather than flashing a Start/Retry
+        // affordance that makes a freshly-opened triage look like it failed.
+        const status = failedSet.has(h.id)
+          ? 'failed'
+          : activeSet.has(h.id) || isProcessingStatusLoading
+            ? 'enriching'
+            : 'missing'
         return { id: h.id, surfaceForm: h.selectionText, status }
       })
-  }, [highlights, cards, processingStatus])
+  }, [highlights, cards, processingStatus, isProcessingStatusLoading])
 
   // Restores scroll position when the container remounts (e.g. focus-view
   // round-trip). Resets when search changes so a stale offset from a different
@@ -184,13 +193,17 @@ export const TriageListView = () => {
             </div>
           )}
 
-          {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading cards…`}</p>}
+          {isLoading && (
+            <div className='mt-2'>
+              <SkeletonList count={Math.min(highlights?.length || 4, 8)} renderItem={() => <TriageRowSkeleton />} />
+            </div>
+          )}
 
           {!isLoading && (cards?.length ?? 0) === 0 && pendingHighlightRows.length === 0 && (
             <p className='text-muted-foreground text-sm'>{t`No cards yet. Select some highlights in the source text to generate new cards.`}</p>
           )}
 
-          {(grouped.yourHighlights.length > 0 || pendingHighlightRows.length > 0) && (
+          {!isLoading && (grouped.yourHighlights.length > 0 || pendingHighlightRows.length > 0) && (
             <section className='mb-6'>
               <div className='flex items-center justify-between gap-2'>
                 <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>

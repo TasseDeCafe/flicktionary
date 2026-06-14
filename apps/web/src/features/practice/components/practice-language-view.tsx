@@ -16,6 +16,7 @@ import {
   Star,
 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
@@ -223,7 +224,36 @@ export const PracticeLanguageView = () => {
             <h1 className='min-w-0 flex-1 truncate text-2xl font-bold'>{languageName}</h1>
           </header>
 
-          {isLoading && <div className='text-muted-foreground py-8 text-center text-sm'>{t`Loading…`}</div>}
+          {isLoading && (
+            <>
+              <section className='bg-card rounded-xl border p-4'>
+                <Skeleton className='h-3 w-32' />
+                <div className='mt-3 flex items-start gap-3'>
+                  <Skeleton className='mt-1 h-5 w-5 shrink-0 rounded-full' />
+                  <div className='min-w-0 flex-1'>
+                    <Skeleton className='h-5 w-40' />
+                    <Skeleton className='mt-2 h-3 w-28' />
+                  </div>
+                </div>
+                <div className='mt-4 flex flex-wrap gap-2'>
+                  <Skeleton className='h-10 w-28' />
+                  <Skeleton className='h-10 w-24' />
+                  <Skeleton className='h-10 w-20' />
+                </div>
+              </section>
+              <section className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+                <SkeletonList
+                  count={4}
+                  renderItem={() => (
+                    <div className='bg-card rounded-xl border p-4'>
+                      <Skeleton className='h-3 w-16' />
+                      <Skeleton className='mt-3 h-7 w-10' />
+                    </div>
+                  )}
+                />
+              </section>
+            </>
+          )}
 
           {!isLoading && !entry && (
             <div className='rounded-xl border bg-yellow-50 p-6 dark:bg-yellow-400/10'>

@@ -2,6 +2,21 @@ import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/fl
 import { useLingui } from '@lingui/react/macro'
 import { MoreVertical, Star } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
+
+// Placeholder shaped like a real VocabularyRow (headword + preview, trailing
+// menu slot) so the list doesn't jump when the first page lands.
+export const VocabularyRowSkeleton = () => (
+  <div className='border-border bg-card flex items-stretch border-b'>
+    <div className='flex min-w-0 flex-1 flex-col gap-1.5 px-4 py-3'>
+      <Skeleton className='h-4 w-32' />
+      <Skeleton className='h-3 w-44' />
+    </div>
+    <div className='flex w-10 shrink-0 items-center justify-center'>
+      <Skeleton className='h-5 w-5' />
+    </div>
+  </div>
+)
 
 interface VocabularyRowProps {
   chunk: ChunkRow

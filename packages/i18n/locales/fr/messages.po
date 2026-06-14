@@ -2161,14 +2161,6 @@ msgstr "Termes suggérés par IA"
 msgid "Load Subtitles"
 msgstr "Charger des sous-titres"
 
-#: apps/web/src/features/review/components/focus-view.tsx
-msgid "Loading card…"
-msgstr "Chargement de la carte…"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Loading cards…"
-msgstr "Chargement des cartes…"
-
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Loading chat…"
 msgstr "Chargement de la discussion…"
@@ -2185,21 +2177,9 @@ msgstr "Chargement de l'historique…"
 msgid "Loading more…"
 msgstr "Chargement…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx
-msgid "Loading review terms…"
-msgstr "Chargement des termes à réviser…"
-
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "Loading seasons…"
 msgstr "Chargement des saisons…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading segments…"
-msgstr "Chargement des segments…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading session…"
-msgstr "Chargement de la session…"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
@@ -2209,12 +2189,7 @@ msgstr "Chargement..."
 
 #: apps/web/src/features/more/components/account-page.tsx
 #: apps/web/src/features/more/components/languages-page.tsx
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-#: apps/web/src/features/practice/components/practice-language-view.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Loading…"
 msgstr "Chargement…"
 

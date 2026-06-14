@@ -1,8 +1,24 @@
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { Check, Loader2, RotateCw, X } from 'lucide-react'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+
+// Placeholder shaped like a real TriageRow (headword bar + preview line + the
+// two icon-button squares) so the list doesn't jump when cards load.
+export const TriageRowSkeleton = () => (
+  <div className='flex items-start gap-3 border-b'>
+    <div className='flex-1 px-2 py-3'>
+      <Skeleton className='h-5 w-32' />
+      <Skeleton className='mt-2 h-4 w-48' />
+    </div>
+    <div className='flex shrink-0 items-center gap-1 py-3'>
+      <Skeleton className='h-9 w-9' />
+      <Skeleton className='h-9 w-9' />
+    </div>
+  </div>
+)
 
 // Presence-based: with the translations pref off, `translation` is only ever
 // set manually — when present it's worth surfacing over the definition.

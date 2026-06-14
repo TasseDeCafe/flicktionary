@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { BadgeCheck, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, MoreVertical, Volume2 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
@@ -26,7 +27,6 @@ import type {
   ReviewTerm,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { resolveCardContent } from '../utils/resolve-card-content'
-import { PracticeLoader } from './practice-loader'
 import { ReviewQueueStats } from './review-queue-stats'
 import { FlashcardActionsOverlay } from './flashcard-actions-overlay'
 import type { QueueCounts } from './review-counts'
@@ -78,6 +78,35 @@ const getRemainingCounts = (queue: QueueItem[], index: number): QueueCounts =>
     },
     { new: 0, learning: 0, review: 0 }
   )
+
+// Mirrors the card body (centered prompt + example lines) and the bottom bar
+// (nav chevrons + queue-stat pills + the full-width "Show answer" button) so the
+// reviewer doesn't jump when the queue lands.
+const FlashcardSkeleton = () => (
+  <div className='flex flex-1 flex-col overflow-hidden'>
+    <div className='flex-1 overflow-y-auto'>
+      <div className='mx-auto flex w-full max-w-xl flex-col items-center gap-4 px-4 py-8'>
+        <Skeleton className='h-8 w-56' />
+        <Skeleton className='h-5 w-full max-w-md' />
+        <Skeleton className='h-5 w-3/4 max-w-md' />
+      </div>
+    </div>
+    <div className='bg-background border-t px-4 py-3'>
+      <div className='mx-auto flex w-full max-w-xl flex-col gap-3'>
+        <div className='flex items-center justify-between gap-2'>
+          <Skeleton className='h-9 w-9 rounded-md' />
+          <div className='flex gap-2'>
+            <Skeleton className='h-6 w-16 rounded-full' />
+            <Skeleton className='h-6 w-20 rounded-full' />
+            <Skeleton className='h-6 w-16 rounded-full' />
+          </div>
+          <Skeleton className='h-9 w-9 rounded-md' />
+        </div>
+        <Skeleton className='h-12 w-full' />
+      </div>
+    </div>
+  </div>
+)
 
 type FlashcardModeViewProps = {
   targetLanguage: string
@@ -356,7 +385,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
   )
 
   if (isLoading) {
-    return wrap(<PracticeLoader label={t`Loading review terms…`} />)
+    return wrap(<FlashcardSkeleton />)
   }
 
   // Done: live queue exhausted (also the empty-batch / nothing-due case).
@@ -412,7 +441,7 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
     )
   }
 
-  if (!current) return wrap(<PracticeLoader label={t`Loading…`} />)
+  if (!current) return wrap(<FlashcardSkeleton />)
 
   const card = current.card
   const nativeLanguage = userPrefs?.nativeLanguage ?? null

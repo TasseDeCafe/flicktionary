@@ -2129,14 +2129,6 @@ msgstr "LLM-suggested terms"
 msgid "Load Subtitles"
 msgstr "Load Subtitles"
 
-#: apps/web/src/features/review/components/focus-view.tsx
-msgid "Loading card…"
-msgstr "Loading card…"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Loading cards…"
-msgstr "Loading cards…"
-
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Loading chat…"
 msgstr "Loading chat…"
@@ -2153,21 +2145,9 @@ msgstr "Loading history…"
 msgid "Loading more…"
 msgstr "Loading more…"
 
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx
-msgid "Loading review terms…"
-msgstr "Loading review terms…"
-
 #: apps/web/src/features/sessions/components/tv-season-picker.tsx
 msgid "Loading seasons…"
 msgstr "Loading seasons…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading segments…"
-msgstr "Loading segments…"
-
-#: apps/web/src/features/sessions/components/session-view.tsx
-msgid "Loading session…"
-msgstr "Loading session…"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
@@ -2177,12 +2157,7 @@ msgstr "Loading..."
 
 #: apps/web/src/features/more/components/account-page.tsx
 #: apps/web/src/features/more/components/languages-page.tsx
-#: apps/web/src/features/practice/components/flashcard-mode-view.tsx
-#: apps/web/src/features/practice/components/practice-landing-view.tsx
-#: apps/web/src/features/practice/components/practice-language-view.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
-#: apps/web/src/features/sessions/components/sessions-list-view.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Loading…"
 msgstr "Loading…"
 

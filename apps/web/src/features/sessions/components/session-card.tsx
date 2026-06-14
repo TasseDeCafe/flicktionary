@@ -3,7 +3,23 @@ import { useLingui } from '@lingui/react/macro'
 import { Clapperboard, FileText, MonitorPlay, Newspaper, Trash2, Tv } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent } from '@flicktionary/ui/components/card'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+
+// Mirrors SessionCard: poster box + title / meta / timestamp lines, same Card
+// chrome, so the list doesn't reflow when sessions land.
+export const SessionCardSkeleton = () => (
+  <Card>
+    <CardContent className='flex items-center gap-4 p-4 pr-14'>
+      <Skeleton className='h-20 w-14 shrink-0 rounded' />
+      <div className='flex min-w-0 flex-1 flex-col gap-2'>
+        <Skeleton className='h-5 w-2/3' />
+        <Skeleton className='h-3 w-24' />
+        <Skeleton className='h-3 w-40' />
+      </div>
+    </CardContent>
+  </Card>
+)
 
 type SessionRow = {
   id: string

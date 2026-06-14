@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Brain, ChevronRight } from 'lucide-react'
+import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useDueSummary } from '../api/practice-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
@@ -66,7 +67,25 @@ export const PracticeLandingView = () => {
             {t`Read short generated texts that weave in your kept vocabulary. Tap a term to rate it; terms you don't tap are scored as recognized when you advance.`}
           </p>
 
-          {isLoading && <div className='text-muted-foreground py-8 text-center text-sm'>{t`Loading…`}</div>}
+          {isLoading && (
+            <section className='flex flex-col gap-2'>
+              <h2 className='text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase'>{t`Languages`}</h2>
+              <div className='divide-border bg-card divide-y overflow-hidden rounded-xl border'>
+                <SkeletonList
+                  count={5}
+                  renderItem={() => (
+                    <div className='flex items-center gap-3 px-4 py-4'>
+                      <div className='flex min-w-0 flex-1 flex-col gap-2'>
+                        <Skeleton className='h-4 w-24' />
+                        <Skeleton className='h-3 w-40' />
+                      </div>
+                      <Skeleton className='h-5 w-5 shrink-0 rounded-full' />
+                    </div>
+                  )}
+                />
+              </div>
+            </section>
+          )}
 
           {!isLoading && (!summary || summary.length === 0) && (
             <div className='rounded-xl border bg-yellow-50 p-6 dark:bg-yellow-400/10'>

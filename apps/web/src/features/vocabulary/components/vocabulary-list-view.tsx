@@ -13,10 +13,11 @@ import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
-import { VocabularyLanguageSwitcher } from './vocabulary-language-switcher'
+import { VocabularyLanguageSwitcher, VocabularyLanguageSwitcherSkeleton } from './vocabulary-language-switcher'
 import { VocabularyOptionsOverlay } from './vocabulary-options-overlay'
-import { VocabularyRow } from './vocabulary-row'
+import { VocabularyRow, VocabularyRowSkeleton } from './vocabulary-row'
 import { Button } from '@flicktionary/ui/components/button'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 const ESTIMATED_ROW_HEIGHT = 72
@@ -252,6 +253,8 @@ export const VocabularyListView = () => {
         {t`Every term you've kept, across every session. Tap a row to edit, or open the menu for more options.`}
       </p>
 
+      {languagesLoading && <VocabularyLanguageSwitcherSkeleton />}
+
       {languages && languages.length > 1 && selectedLanguage && (
         <VocabularyLanguageSwitcher
           languages={languages}
@@ -283,7 +286,7 @@ export const VocabularyListView = () => {
           onScroll={onParentScroll}
         >
           {isInitialLoad ? (
-            <div className='text-muted-foreground py-8 text-center text-sm'>{t`Loading…`}</div>
+            <SkeletonList count={8} renderItem={() => <VocabularyRowSkeleton />} />
           ) : (
             <div
               style={{

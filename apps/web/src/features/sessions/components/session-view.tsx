@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { FloatingSheetAnchor } from '@flicktionary/ui/components/floating-sheet'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
@@ -27,7 +28,7 @@ import { findOverlappingGhost } from '../utils/ghost-overlap'
 import { useVisibleSegmentRange } from '../hooks/use-visible-segment-range'
 import { useSegmentPosition } from '../hooks/use-segment-position'
 import { useGhostNomination } from '../hooks/use-ghost-nomination'
-import { SegmentList } from './segment-list'
+import { SegmentList, SegmentListSkeleton } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { TriageFooter } from './triage-footer'
@@ -396,9 +397,27 @@ export const SessionView = () => {
   }
 
   if (isSessionLoading) {
+    // Mirror the loaded reader (title + search bar + segment list) with
+    // skeletons rather than a bare full-view spinner, so the chrome is stable
+    // from the first paint.
+    const titleSkeleton = (
+      <span className='flex min-w-0 flex-col gap-1.5'>
+        <Skeleton className='h-4 w-40' />
+        <Skeleton className='h-3 w-20' />
+      </span>
+    )
     return (
-      <ModalScreen onClose={closeToSessions} title={t`Session`}>
-        <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Loading session…`}</div>
+      <ModalScreen onClose={closeToSessions} title={titleSkeleton}>
+        <div className='bg-background border-b px-4 py-3'>
+          <div className='mx-auto max-w-4xl'>
+            <Skeleton className='h-10 w-full rounded-md' />
+          </div>
+        </div>
+        <div className='flex-1 overflow-y-auto px-4 py-3'>
+          <div className='mx-auto max-w-4xl'>
+            <SegmentListSkeleton />
+          </div>
+        </div>
       </ModalScreen>
     )
   }
@@ -446,7 +465,7 @@ export const SessionView = () => {
         >
           <div className='mx-auto max-w-4xl'>
             {isSegmentsLoading ? (
-              <p className='text-muted-foreground text-sm'>{t`Loading segments…`}</p>
+              <SegmentListSkeleton />
             ) : (
               <SegmentList
                 segments={visibleSegments}
