@@ -106,8 +106,13 @@ Questions about this policy or your data? Email us at support@flicktionary.app.
 
 ## Notes to Reviewer
 
-Upload `flicktionaryextension-<version>-sources.zip` (produced by `wxt zip`)
-when AMO asks for source code, then paste:
+The release workflow submits these notes automatically: `web-ext sign
+--amo-metadata` reads them from [`amo-metadata.json`](./amo-metadata.json)
+(`version.approval_notes`) and attaches the source archive via
+`--upload-source-code`. This block is the human-readable mirror — edit both
+together. When submitting by hand instead, upload
+`flicktionaryextension-<version>-sources.zip` (produced by `wxt zip`) when AMO
+asks for source code, then paste:
 
 ```
 This add-on is built with WXT (https://wxt.dev) from a pnpm monorepo. The
