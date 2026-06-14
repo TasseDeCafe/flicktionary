@@ -2133,10 +2133,6 @@ msgstr "Load Subtitles"
 msgid "Loading card…"
 msgstr "Loading card…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Loading cards…"
-msgstr "Loading cards…"
-
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Loading chat…"
 msgstr "Loading chat…"

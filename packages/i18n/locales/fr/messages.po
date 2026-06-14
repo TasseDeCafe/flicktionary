@@ -2165,10 +2165,6 @@ msgstr "Charger des sous-titres"
 msgid "Loading card…"
 msgstr "Chargement de la carte…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Loading cards…"
-msgstr "Chargement des cartes…"
-
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Loading chat…"
 msgstr "Chargement de la discussion…"
