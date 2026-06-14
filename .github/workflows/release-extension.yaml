@@ -39,6 +39,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Lingui compiles the catalogs into gitignored `messages.ts` files that
+      # the extension imports (`@flicktionary/i18n/locales/*/messages.ts`). A
+      # fresh CI checkout doesn't have them, so the typecheck and the zip build
+      # both fail with "Cannot find module .../messages.ts" without this step.
+      - name: Compile i18n catalogs
+        run: pnpm --filter @flicktionary/i18n lingui:compile
+
       - name: Verify tag matches package version
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
