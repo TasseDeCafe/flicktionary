@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useListStudySessions } from '../api/sessions-hooks'
-import { SessionCard } from './session-card'
+import { SessionCard, SessionCardSkeleton } from './session-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 
 type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming'
@@ -67,7 +68,7 @@ export const SessionsListView = () => {
       )}
 
       <div className='mt-4 flex flex-col gap-2'>
-        {isLoading && <p className='text-muted-foreground text-sm'>{t`Loading…`}</p>}
+        {isLoading && <SkeletonList count={4} renderItem={() => <SessionCardSkeleton />} />}
         {!isLoading && (data?.length ?? 0) === 0 && (
           <p className='text-muted-foreground text-sm'>{t`No sessions yet. Start one to begin.`}</p>
         )}
