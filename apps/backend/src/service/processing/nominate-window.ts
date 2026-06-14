@@ -97,7 +97,7 @@ export const nominateWindow = async (
     )
     contextBlob = await generateContextBlob({
       contentTitle: contentSource.title,
-      contentLanguage: contentSource.language,
+      contentLanguage: session.target_language,
       contentType: contentSource.type,
       segmentSample: sampleSegments.map((s) => s.text).join('\n'),
     })

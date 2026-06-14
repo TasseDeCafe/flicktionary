@@ -79,16 +79,7 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
 
     createFromTmdbTv: implementer.createFromTmdbTv.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const existing = await contentSourcesRepository.findTvEpisode(
-        input.tmdbShowId,
-        input.seasonNumber,
-        input.episodeNumber
-      )
-      if (existing) {
-        return { data: toContentSourceDto(existing) }
-      }
-      const inserted = await contentSourcesRepository.insertContentSource({
-        type: 'tv',
+      const contentSource = await contentSourcesRepository.getOrCreateTvEpisode({
         title: tvEpisodeTitle(input.showTitle, input.seasonNumber, input.episodeNumber, input.episodeTitle),
         language: input.language,
         metadata: {
@@ -103,7 +94,7 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
         },
         createdByUserId: userId,
       })
-      return { data: toContentSourceDto(inserted) }
+      return { data: toContentSourceDto(contentSource) }
     }),
 
     createText: implementer.createText.handler(async ({ input, context }) => {
