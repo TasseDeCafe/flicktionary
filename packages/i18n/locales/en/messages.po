@@ -2133,10 +2133,6 @@ msgstr "Load Subtitles"
 msgid "Loading chat…"
 msgstr "Loading chat…"
 
-#: apps/web/src/features/sessions/components/tv-episode-picker.tsx
-msgid "Loading episodes…"
-msgstr "Loading episodes…"
-
 #: apps/web/src/features/practice/components/reading-history-view.tsx
 msgid "Loading history…"
 msgstr "Loading history…"
@@ -2144,10 +2140,6 @@ msgstr "Loading history…"
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Loading more…"
 msgstr "Loading more…"
-
-#: apps/web/src/features/sessions/components/tv-season-picker.tsx
-msgid "Loading seasons…"
-msgstr "Loading seasons…"
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
@@ -3206,15 +3198,6 @@ msgstr "Search TV shows…"
 #: apps/web/src/features/sessions/components/track-search-bar.tsx
 msgid "Search…"
 msgstr "Search…"
-
-#: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
-msgid "Searching OpenSubtitles…"
-msgstr "Searching OpenSubtitles…"
-
-#: apps/web/src/features/sessions/components/tmdb-search.tsx
-#: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
-msgid "Searching…"
-msgstr "Searching…"
 
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 #: apps/extension/common/components/VideoOverlay.tsx
