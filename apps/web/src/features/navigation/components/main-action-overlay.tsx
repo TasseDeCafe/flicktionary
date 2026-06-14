@@ -39,8 +39,8 @@ export const MainActionOverlay = ({ open, onOpenChange }: MainActionOverlayProps
   const rows: ActionRow[] = [
     {
       icon: Clapperboard,
-      label: t`Start a movie session`,
-      description: t`Pick a movie and load its subtitles`,
+      label: t`Start a movie or TV session`,
+      description: t`Find a movie or show and load its subtitles`,
       onSelect: () => {
         void navigate({ to: '/sessions/new' })
       },

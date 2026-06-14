@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Clapperboard, FileText, MonitorPlay, Newspaper, Trash2 } from 'lucide-react'
+import { Clapperboard, FileText, MonitorPlay, Newspaper, Trash2, Tv } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Card, CardContent } from '@flicktionary/ui/components/card'
 import type { ContentSourceType } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -25,6 +25,7 @@ export const SessionCard = ({ session, onRemove }: Props) => {
   const { t } = useLingui()
   const title = session.contentSourceTitle ?? t`Untitled`
   const isText = session.contentSourceType === 'text'
+  const isTv = session.contentSourceType === 'tv'
   const isArticle = session.contentSourceType === 'article'
   const isYoutube = session.contentSourceType === 'youtube'
   const isStreaming = session.contentSourceType === 'streaming'
@@ -46,6 +47,10 @@ export const SessionCard = ({ session, onRemove }: Props) => {
           ) : isText ? (
             <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-yellow-100 text-yellow-900 dark:bg-yellow-400/15 dark:text-yellow-300'>
               <FileText className='h-6 w-6' />
+            </div>
+          ) : isTv ? (
+            <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300'>
+              <Tv className='h-6 w-6' />
             </div>
           ) : isArticle ? (
             <div className='flex h-20 w-14 shrink-0 items-center justify-center rounded bg-sky-100 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300'>

@@ -4,7 +4,7 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { textTracksContract } from '@flicktionary/api-client/orpc-contracts/text-tracks-contract'
-import { searchByTmdbId } from '../../transport/third-party/opensubtitles/opensubtitles-client'
+import { searchByTmdbId, searchEpisodeSubtitles } from '../../transport/third-party/opensubtitles/opensubtitles-client'
 import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { TextTracksRepositoryInterface, DbTextTrack } from '../../transport/database/text-tracks/text-tracks-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
@@ -35,6 +35,11 @@ export const TextTracksRouter = (deps: TextTracksRouterDependencies): Router => 
   const router = implementer.router({
     searchOpenSubtitles: implementer.searchOpenSubtitles.handler(async ({ input }) => {
       const tracks = await searchByTmdbId(input.tmdbId, input.language)
+      return { data: tracks }
+    }),
+
+    searchOpenSubtitlesEpisode: implementer.searchOpenSubtitlesEpisode.handler(async ({ input }) => {
+      const tracks = await searchEpisodeSubtitles(input)
       return { data: tracks }
     }),
 

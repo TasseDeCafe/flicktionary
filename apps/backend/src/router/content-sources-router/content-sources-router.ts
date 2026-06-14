@@ -8,7 +8,19 @@ import {
   ContentSourcesRepositoryInterface,
   DbContentSource,
 } from '../../transport/database/content-sources/content-sources-repository'
-import { searchMovies } from '../../transport/third-party/tmdb/tmdb-client'
+import { searchMovies, searchTvShows, getTvSeasons, getTvEpisodes } from '../../transport/third-party/tmdb/tmdb-client'
+
+const pad2 = (n: number): string => String(n).padStart(2, '0')
+
+const tvEpisodeTitle = (
+  showTitle: string,
+  seasonNumber: number,
+  episodeNumber: number,
+  episodeTitle: string
+): string => {
+  const code = `S${pad2(seasonNumber)}E${pad2(episodeNumber)}`
+  return episodeTitle ? `${showTitle} · ${code} · ${episodeTitle}` : `${showTitle} · ${code}`
+}
 
 const toContentSourceDto = (row: DbContentSource) => ({
   id: row.id,
@@ -48,6 +60,41 @@ export const ContentSourcesRouter = (contentSourcesRepository: ContentSourcesRep
         createdByUserId: userId,
       })
       return { data: toContentSourceDto(inserted) }
+    }),
+
+    searchTmdbTv: implementer.searchTmdbTv.handler(async ({ input }) => {
+      const shows = await searchTvShows(input.query)
+      return { data: shows }
+    }),
+
+    tmdbTvSeasons: implementer.tmdbTvSeasons.handler(async ({ input }) => {
+      const seasons = await getTvSeasons(input.tmdbId)
+      return { data: seasons }
+    }),
+
+    tmdbTvEpisodes: implementer.tmdbTvEpisodes.handler(async ({ input }) => {
+      const episodes = await getTvEpisodes(input.tmdbId, input.seasonNumber)
+      return { data: episodes }
+    }),
+
+    createFromTmdbTv: implementer.createFromTmdbTv.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const contentSource = await contentSourcesRepository.getOrCreateTvEpisode({
+        title: tvEpisodeTitle(input.showTitle, input.seasonNumber, input.episodeNumber, input.episodeTitle),
+        language: input.language,
+        metadata: {
+          tmdbShowId: input.tmdbShowId,
+          showTitle: input.showTitle,
+          originalTitle: input.originalTitle,
+          seasonNumber: input.seasonNumber,
+          episodeNumber: input.episodeNumber,
+          episodeTitle: input.episodeTitle,
+          year: input.year,
+          posterUrl: input.posterUrl,
+        },
+        createdByUserId: userId,
+      })
+      return { data: toContentSourceDto(contentSource) }
     }),
 
     createText: implementer.createText.handler(async ({ input, context }) => {

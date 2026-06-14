@@ -2,9 +2,23 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
-import { useImportFromOpenSubtitles, useSearchOpenSubtitles, useUploadSrt } from '../api/sessions-hooks'
+import {
+  useImportFromOpenSubtitles,
+  useSearchOpenSubtitles,
+  useSearchOpenSubtitlesEpisode,
+  useUploadSrt,
+} from '../api/sessions-hooks'
 import { useDetectLanguage } from '../api/languages-hooks'
 import { SrtUploadInput } from './srt-upload-input'
+
+type OpenSubtitlesTrackRow = {
+  fileId: number
+  language: string
+  release: string
+  hearingImpaired: boolean
+  uploaderName: string | null
+  downloadCount: number
+}
 
 // Strip SRT timecodes / sequence numbers / inline tags so the detector sees pure dialogue.
 const SRT_LINE_PATTERN = /^\s*(\d+|\d{2}:\d{2}:\d{2}[,.]\d{3} --> \d{2}:\d{2}:\d{2}[,.]\d{3})\s*$/
@@ -22,19 +36,25 @@ export type ImportedTrack = {
   segmentCount: number
 }
 
-type OpenSubtitlesStepProps = {
+// Shared results list + import flow for both the movie and TV-episode
+// OpenSubtitles steps. The two wrappers below differ only in which search hook
+// feeds `results`.
+type OpenSubtitlesResultsProps = {
   contentSourceId: string
-  tmdbId: number
   language: string
+  results: OpenSubtitlesTrackRow[] | undefined
+  isFetching: boolean
   onImported: (track: ImportedTrack) => void
 }
 
-export const OpenSubtitlesStep = ({ contentSourceId, tmdbId, language, onImported }: OpenSubtitlesStepProps) => {
+const OpenSubtitlesResults = ({
+  contentSourceId,
+  language,
+  results,
+  isFetching,
+  onImported,
+}: OpenSubtitlesResultsProps) => {
   const { t } = useLingui()
-  const trimmed = language.trim()
-  const { data: results, isFetching } = useSearchOpenSubtitles(
-    trimmed.length > 0 ? { tmdbId, language: trimmed } : null
-  )
   const { mutate: importFromOs, isPending: isImporting } = useImportFromOpenSubtitles()
   const [importingFileId, setImportingFileId] = useState<number | null>(null)
 
@@ -55,7 +75,7 @@ export const OpenSubtitlesStep = ({ contentSourceId, tmdbId, language, onImporte
     )
   }
 
-  const languageName = getLanguageName(trimmed)
+  const languageName = getLanguageName(language)
 
   return (
     <div className='flex flex-col gap-3'>
@@ -84,6 +104,61 @@ export const OpenSubtitlesStep = ({ contentSourceId, tmdbId, language, onImporte
       })}
       {importingFileId !== null && <p className='text-muted-foreground text-sm'>{t`Importing…`}</p>}
     </div>
+  )
+}
+
+type OpenSubtitlesStepProps = {
+  contentSourceId: string
+  tmdbId: number
+  language: string
+  onImported: (track: ImportedTrack) => void
+}
+
+export const OpenSubtitlesStep = ({ contentSourceId, tmdbId, language, onImported }: OpenSubtitlesStepProps) => {
+  const trimmed = language.trim()
+  const { data: results, isFetching } = useSearchOpenSubtitles(
+    trimmed.length > 0 ? { tmdbId, language: trimmed } : null
+  )
+  return (
+    <OpenSubtitlesResults
+      contentSourceId={contentSourceId}
+      language={trimmed}
+      results={results}
+      isFetching={isFetching}
+      onImported={onImported}
+    />
+  )
+}
+
+type OpenSubtitlesEpisodeStepProps = {
+  contentSourceId: string
+  tmdbShowId: number
+  seasonNumber: number
+  episodeNumber: number
+  language: string
+  onImported: (track: ImportedTrack) => void
+}
+
+export const OpenSubtitlesEpisodeStep = ({
+  contentSourceId,
+  tmdbShowId,
+  seasonNumber,
+  episodeNumber,
+  language,
+  onImported,
+}: OpenSubtitlesEpisodeStepProps) => {
+  const trimmed = language.trim()
+  const { data: results, isFetching } = useSearchOpenSubtitlesEpisode(
+    trimmed.length > 0 ? { tmdbShowId, seasonNumber, episodeNumber, language: trimmed } : null
+  )
+  return (
+    <OpenSubtitlesResults
+      contentSourceId={contentSourceId}
+      language={trimmed}
+      results={results}
+      isFetching={isFetching}
+      onImported={onImported}
+    />
   )
 }
 
