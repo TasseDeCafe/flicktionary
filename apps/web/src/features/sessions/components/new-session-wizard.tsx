@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
-import { Search, Upload } from 'lucide-react'
+import { Clapperboard, Search, Tv, Upload } from 'lucide-react'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { WizardShell, WizardStepHeading } from '@/components/ui/wizard-shell'
 import { LanguageOptionList } from '@/components/language-option-list'
 import {
   useCreateContentSourceFromTmdb,
+  useCreateContentSourceFromTmdbTv,
   useCreateStudySession,
   useGetUserPrefs,
   useSetCefrForLanguage,
@@ -14,10 +15,28 @@ import {
 import { CefrStep } from './cefr-step'
 import type { CefrLevel } from '../constants/cefr'
 import { TmdbSearch, type TmdbMoviePick } from './tmdb-search'
-import { OpenSubtitlesStep, SrtUploadStep, type ImportedTrack } from './subtitle-source-picker'
+import { TmdbTvSearch, type TmdbTvShowPick } from './tmdb-tv-search'
+import { TvSeasonPicker, type TvSeasonPick } from './tv-season-picker'
+import { TvEpisodePicker, type TvEpisodePick } from './tv-episode-picker'
+import {
+  OpenSubtitlesStep,
+  OpenSubtitlesEpisodeStep,
+  SrtUploadStep,
+  type ImportedTrack,
+} from './subtitle-source-picker'
 import { getShowTranslationsEnabledForLanguage } from '../utils/show-translations-pref'
 
-type Step = 'language' | 'cefr' | 'movie' | 'subtitle-source' | 'subtitle-pick'
+type Step =
+  | 'language'
+  | 'cefr'
+  | 'content-type'
+  | 'movie'
+  | 'tv-show'
+  | 'tv-season'
+  | 'tv-episode'
+  | 'subtitle-source'
+  | 'subtitle-pick'
+type ContentType = 'movie' | 'tv'
 type SubtitleMode = 'opensubtitles' | 'upload'
 
 export const NewSessionWizard = () => {
@@ -37,7 +56,11 @@ export const NewSessionWizard = () => {
   }, [prefs?.lastTargetLanguage, languageTouched, targetLanguage])
 
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
+  const [contentType, setContentType] = useState<ContentType | null>(null)
   const [movie, setMovie] = useState<TmdbMoviePick | null>(null)
+  const [tvShow, setTvShow] = useState<TmdbTvShowPick | null>(null)
+  const [season, setSeason] = useState<TvSeasonPick | null>(null)
+  const [episode, setEpisode] = useState<TvEpisodePick | null>(null)
   const [contentSourceId, setContentSourceId] = useState<string | null>(null)
   const [subtitleMode, setSubtitleMode] = useState<SubtitleMode | null>(null)
   const [importedTrack, setImportedTrack] = useState<ImportedTrack | null>(null)
@@ -46,20 +69,29 @@ export const NewSessionWizard = () => {
 
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromTmdb()
+  const { mutate: createTvContentSource, isPending: isCreatingTvSource } = useCreateContentSourceFromTmdbTv()
   const { mutate: createSession, isPending: isCreatingSession } = useCreateStudySession()
 
   const cefrForLanguage = (lang: string): CefrLevel | undefined =>
     prefs?.targetLanguagePrefs.find((p) => p.targetLanguage === lang)?.cefrLevel as CefrLevel | undefined
 
   const requiresCefrStep = !!targetLanguage && !cefrForLanguage(targetLanguage)
-  const totalSteps = 4 + (requiresCefrStep ? 1 : 0)
 
-  const stepIndex: Record<Step, number> = (() => {
-    if (requiresCefrStep) {
-      return { language: 1, cefr: 2, movie: 3, 'subtitle-source': 4, 'subtitle-pick': 5 }
-    }
-    return { language: 1, cefr: 2, movie: 2, 'subtitle-source': 3, 'subtitle-pick': 4 }
-  })()
+  // Branch-aware step ordering: the TV path inserts show → season → episode
+  // where the movie path has a single pick step. The progress bar and back
+  // navigation both derive from this array, so they stay honest in both
+  // branches. Before a content type is chosen we size as the movie branch.
+  const activeSteps: Step[] = [
+    'language',
+    ...(requiresCefrStep ? (['cefr'] as const) : []),
+    'content-type',
+    ...(contentType === 'tv' ? (['tv-show', 'tv-season', 'tv-episode'] as const) : (['movie'] as const)),
+    'subtitle-source',
+    'subtitle-pick',
+  ]
+  const totalSteps = activeSteps.length
+  const currentStep = Math.max(activeSteps.indexOf(step), 0) + 1
+  const prevStep = (): Step => activeSteps[Math.max(activeSteps.indexOf(step) - 1, 0)]!
 
   const closeWizard = () => navigate({ to: '/sessions' })
 
@@ -86,26 +118,26 @@ export const NewSessionWizard = () => {
     )
   }
 
-  // === Step 1: language ===
+  // === Step: language ===
   if (step === 'language') {
     return (
       <WizardShell
         title={t`New session`}
-        currentStep={stepIndex.language}
+        currentStep={currentStep}
         totalSteps={totalSteps}
         onClose={closeWizard}
         primary={{
           label: t`Continue`,
           onClick: () => {
             if (!targetLanguage) return
-            setStep(requiresCefrStep ? 'cefr' : 'movie')
+            setStep(requiresCefrStep ? 'cefr' : 'content-type')
           },
           disabled: !targetLanguage,
         }}
       >
         <WizardStepHeading
           title={t`What language are you studying?`}
-          subtitle={t`Pick the language of the movie you'll watch. Subtitles and explanations will be in this language.`}
+          subtitle={t`Pick the language of the movie or show you'll watch. Subtitles and explanations will be in this language.`}
         />
         <LanguageOptionList
           value={targetLanguage}
@@ -119,12 +151,12 @@ export const NewSessionWizard = () => {
     )
   }
 
-  // === Step 2 (conditional): CEFR ===
+  // === Step (conditional): CEFR ===
   if (step === 'cefr' && targetLanguage) {
     return (
       <WizardShell
         title={t`New session`}
-        currentStep={stepIndex.cefr}
+        currentStep={currentStep}
         totalSteps={totalSteps}
         onClose={closeWizard}
         onBack={() => setStep('language')}
@@ -135,7 +167,7 @@ export const NewSessionWizard = () => {
             setCefr(
               { targetLanguage, cefrLevel: cefrChoice },
               {
-                onSuccess: () => setStep('movie'),
+                onSuccess: () => setStep('content-type'),
               }
             )
           },
@@ -148,7 +180,45 @@ export const NewSessionWizard = () => {
     )
   }
 
-  // === Step 3: movie ===
+  // === Step: content type (movie vs TV) ===
+  if (step === 'content-type' && targetLanguage) {
+    const pickType = (type: ContentType) => {
+      setContentType(type)
+      setStep(type === 'tv' ? 'tv-show' : 'movie')
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep(prevStep())}
+      >
+        <WizardStepHeading
+          title={t`What are you watching?`}
+          subtitle={t`We'll find subtitles for it — this doesn't play the video.`}
+        />
+        <div className='flex flex-col gap-2'>
+          <OptionCard
+            variant='navigation'
+            icon={<Clapperboard />}
+            title={t`Movie`}
+            description={t`A single film.`}
+            onSelect={() => pickType('movie')}
+          />
+          <OptionCard
+            variant='navigation'
+            icon={<Tv />}
+            title={t`TV show`}
+            description={t`Pick a season and episode.`}
+            onSelect={() => pickType('tv')}
+          />
+        </div>
+      </WizardShell>
+    )
+  }
+
+  // === Step: movie ===
   if (step === 'movie' && targetLanguage) {
     const handlePick = (picked: TmdbMoviePick) => {
       setMovie(picked)
@@ -172,10 +242,10 @@ export const NewSessionWizard = () => {
     return (
       <WizardShell
         title={t`New session`}
-        currentStep={stepIndex.movie}
+        currentStep={currentStep}
         totalSteps={totalSteps}
         onClose={closeWizard}
-        onBack={() => setStep(requiresCefrStep ? 'cefr' : 'language')}
+        onBack={() => setStep('content-type')}
       >
         <WizardStepHeading title={t`Pick a movie`} />
         <TmdbSearch onPick={handlePick} disabled={isCreatingSource} />
@@ -189,24 +259,117 @@ export const NewSessionWizard = () => {
     )
   }
 
-  // === Step 4: subtitle source ===
+  // === Step: TV show ===
+  if (step === 'tv-show' && targetLanguage) {
+    const handlePick = (picked: TmdbTvShowPick) => {
+      setTvShow(picked)
+      setSeason(null)
+      setEpisode(null)
+      setStep('tv-season')
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep('content-type')}
+      >
+        <WizardStepHeading title={t`Pick a TV show`} />
+        <TmdbTvSearch onPick={handlePick} />
+      </WizardShell>
+    )
+  }
+
+  // === Step: TV season ===
+  if (step === 'tv-season' && targetLanguage && tvShow) {
+    const handlePick = (picked: TvSeasonPick) => {
+      setSeason(picked)
+      setEpisode(null)
+      setStep('tv-episode')
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep('tv-show')}
+      >
+        <WizardStepHeading title={t`Pick a season`} subtitle={tvShow.title} />
+        <TvSeasonPicker tmdbShowId={tvShow.tmdbId} onPick={handlePick} />
+      </WizardShell>
+    )
+  }
+
+  // === Step: TV episode ===
+  if (step === 'tv-episode' && targetLanguage && tvShow && season) {
+    const handlePick = (picked: TvEpisodePick) => {
+      setEpisode(picked)
+      createTvContentSource(
+        {
+          tmdbShowId: tvShow.tmdbId,
+          showTitle: tvShow.title,
+          originalTitle: tvShow.originalTitle,
+          seasonNumber: season.seasonNumber,
+          episodeNumber: picked.episodeNumber,
+          episodeTitle: picked.name,
+          year: tvShow.year,
+          posterUrl: tvShow.posterUrl,
+          language: targetLanguage,
+        },
+        {
+          onSuccess: (response) => {
+            setContentSourceId(response.data.id)
+            setStep('subtitle-source')
+          },
+        }
+      )
+    }
+    return (
+      <WizardShell
+        title={t`New session`}
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        onClose={closeWizard}
+        onBack={() => setStep('tv-season')}
+      >
+        <WizardStepHeading title={t`Pick an episode`} subtitle={season.name} />
+        <TvEpisodePicker
+          tmdbShowId={tvShow.tmdbId}
+          seasonNumber={season.seasonNumber}
+          onPick={handlePick}
+          disabled={isCreatingTvSource}
+        />
+        {isCreatingTvSource && <p className='text-muted-foreground text-sm'>{t`Registering episode…`}</p>}
+      </WizardShell>
+    )
+  }
+
+  // === Step: subtitle source ===
   if (step === 'subtitle-source' && contentSourceId && targetLanguage) {
     const pickSource = (mode: SubtitleMode) => {
       setSubtitleMode(mode)
       setStep('subtitle-pick')
     }
+    const backToPick = () => {
+      setSubtitleMode(null)
+      setContentSourceId(null)
+      if (contentType === 'tv') {
+        setEpisode(null)
+        setStep('tv-episode')
+      } else {
+        setMovie(null)
+        setStep('movie')
+      }
+    }
     return (
       <WizardShell
         title={t`New session`}
-        currentStep={stepIndex['subtitle-source']}
+        currentStep={currentStep}
         totalSteps={totalSteps}
         onClose={closeWizard}
-        onBack={() => {
-          setSubtitleMode(null)
-          setMovie(null)
-          setContentSourceId(null)
-          setStep('movie')
-        }}
+        onBack={backToPick}
       >
         <WizardStepHeading title={t`Choose subtitles`} />
         <div className='flex flex-col gap-2'>
@@ -214,7 +377,7 @@ export const NewSessionWizard = () => {
             variant='navigation'
             icon={<Search />}
             title={t`Search OpenSubtitles`}
-            description={t`Browse community-uploaded tracks for this movie.`}
+            description={t`Browse community-uploaded tracks.`}
             onSelect={() => pickSource('opensubtitles')}
           />
           <OptionCard
@@ -229,8 +392,9 @@ export const NewSessionWizard = () => {
     )
   }
 
-  // === Step 5: subtitle pick ===
-  if (step === 'subtitle-pick' && contentSourceId && targetLanguage && movie && subtitleMode) {
+  // === Step: subtitle pick ===
+  const hasPick = contentType === 'tv' ? !!(tvShow && season && episode) : !!movie
+  if (step === 'subtitle-pick' && contentSourceId && targetLanguage && hasPick && subtitleMode) {
     const handleImported = (track: ImportedTrack) => {
       setImportedTrack(track)
       startSession(track)
@@ -238,7 +402,7 @@ export const NewSessionWizard = () => {
     return (
       <WizardShell
         title={t`New session`}
-        currentStep={stepIndex['subtitle-pick']}
+        currentStep={currentStep}
         totalSteps={totalSteps}
         onClose={closeWizard}
         onBack={() => {
@@ -249,14 +413,26 @@ export const NewSessionWizard = () => {
         <WizardStepHeading
           title={subtitleMode === 'opensubtitles' ? t`Pick a subtitle track` : t`Upload your .srt file`}
         />
-        {subtitleMode === 'opensubtitles' && (
-          <OpenSubtitlesStep
-            contentSourceId={contentSourceId}
-            tmdbId={movie.tmdbId}
-            language={targetLanguage}
-            onImported={handleImported}
-          />
-        )}
+        {subtitleMode === 'opensubtitles' &&
+          (contentType === 'tv' && tvShow && season && episode ? (
+            <OpenSubtitlesEpisodeStep
+              contentSourceId={contentSourceId}
+              tmdbShowId={tvShow.tmdbId}
+              seasonNumber={season.seasonNumber}
+              episodeNumber={episode.episodeNumber}
+              language={targetLanguage}
+              onImported={handleImported}
+            />
+          ) : (
+            movie && (
+              <OpenSubtitlesStep
+                contentSourceId={contentSourceId}
+                tmdbId={movie.tmdbId}
+                language={targetLanguage}
+                onImported={handleImported}
+              />
+            )
+          ))}
         {subtitleMode === 'upload' && (
           <SrtUploadStep
             contentSourceId={contentSourceId}

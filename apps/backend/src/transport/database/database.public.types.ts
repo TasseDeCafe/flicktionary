@@ -1328,7 +1328,7 @@ export type Database = {
     Enums: {
       card_chat_role: 'user' | 'assistant'
       card_status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
-      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming'
+      content_source_type: 'movie' | 'book' | 'article' | 'text' | 'adhoc' | 'youtube' | 'streaming' | 'tv'
       exercise_status: 'pending' | 'generating' | 'ready' | 'used' | 'failed'
       exercise_type: 'mc_cloze' | 'mc_comprehension' | 'production_cloze' | 'use_in_sentence'
       practice_text_status: 'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
@@ -1616,7 +1616,7 @@ export const Constants = {
     Enums: {
       card_chat_role: ['user', 'assistant'],
       card_status: ['pending', 'kept', 'rejected', 'auto_rejected'],
-      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming'],
+      content_source_type: ['movie', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming', 'tv'],
       exercise_status: ['pending', 'generating', 'ready', 'used', 'failed'],
       exercise_type: ['mc_cloze', 'mc_comprehension', 'production_cloze', 'use_in_sentence'],
       practice_text_status: ['pending', 'generating', 'ready', 'reading', 'done', 'failed'],

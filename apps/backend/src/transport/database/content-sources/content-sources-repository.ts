@@ -44,6 +44,24 @@ const findByTmdbId = async (tmdbId: number): Promise<DbContentSource | null> => 
   return result[0] ?? null
 }
 
+// Global dedup (mirrors findByTmdbId): TMDB rows are a shared catalog, so one
+// content_source per (show, season, episode) is reused across users.
+const findTvEpisode = async (
+  tmdbShowId: number,
+  seasonNumber: number,
+  episodeNumber: number
+): Promise<DbContentSource | null> => {
+  const result = (await sql`
+    SELECT * FROM public.content_sources
+    WHERE type = 'tv'
+      AND metadata->>'tmdbShowId' = ${String(tmdbShowId)}
+      AND metadata->>'seasonNumber' = ${String(seasonNumber)}
+      AND metadata->>'episodeNumber' = ${String(episodeNumber)}
+    LIMIT 1
+  `) as DbContentSource[]
+  return result[0] ?? null
+}
+
 export interface ContentSourcesRepositoryInterface {
   insertContentSource: (params: {
     type: ContentSourceType
@@ -54,6 +72,7 @@ export interface ContentSourcesRepositoryInterface {
   }) => Promise<DbContentSource>
   findById: (id: string) => Promise<DbContentSource | null>
   findByTmdbId: (tmdbId: number) => Promise<DbContentSource | null>
+  findTvEpisode: (tmdbShowId: number, seasonNumber: number, episodeNumber: number) => Promise<DbContentSource | null>
 }
 
 export const ContentSourcesRepository = (): ContentSourcesRepositoryInterface => {
@@ -61,5 +80,6 @@ export const ContentSourcesRepository = (): ContentSourcesRepositoryInterface =>
     insertContentSource,
     findById,
     findByTmdbId,
+    findTvEpisode,
   }
 }

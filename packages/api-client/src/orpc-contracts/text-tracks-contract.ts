@@ -27,6 +27,19 @@ export const textTracksContract = {
     .input(z.object({ tmdbId: z.coerce.number().int(), language: z.string() }))
     .output(z.object({ data: z.array(OpenSubtitlesTrackSchema) })),
 
+  searchOpenSubtitlesEpisode: oc
+    .route({ method: 'GET', path: '/text-tracks/opensubtitles/episode/search', successStatus: 200 })
+    .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
+    .input(
+      z.object({
+        tmdbShowId: z.coerce.number().int(),
+        seasonNumber: z.coerce.number().int(),
+        episodeNumber: z.coerce.number().int(),
+        language: z.string(),
+      })
+    )
+    .output(z.object({ data: z.array(OpenSubtitlesTrackSchema) })),
+
   importFromOpenSubtitles: oc
     .route({ method: 'POST', path: '/text-tracks/opensubtitles/import', successStatus: 201 })
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })

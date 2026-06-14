@@ -85,6 +85,54 @@ export const useCreateContentSourceFromTmdb = () => {
   )
 }
 
+export const useSearchTmdbTv = (query: string, enabled: boolean) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.contentSources.searchTmdbTv.queryOptions({
+      input: { query },
+      select: (response) => response.data,
+      enabled,
+      meta: { errorMessage: t`TMDB search failed` },
+    })
+  )
+}
+
+export const useTmdbTvSeasons = (tmdbId: number | null) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.contentSources.tmdbTvSeasons.queryOptions({
+      input: { tmdbId: tmdbId ?? 0 },
+      select: (response) => response.data,
+      enabled: tmdbId !== null,
+      meta: { errorMessage: t`Failed to load seasons` },
+    })
+  )
+}
+
+export const useTmdbTvEpisodes = (tmdbId: number | null, seasonNumber: number | null) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.contentSources.tmdbTvEpisodes.queryOptions({
+      input: { tmdbId: tmdbId ?? 0, seasonNumber: seasonNumber ?? 0 },
+      select: (response) => response.data,
+      enabled: tmdbId !== null && seasonNumber !== null,
+      meta: { errorMessage: t`Failed to load episodes` },
+    })
+  )
+}
+
+export const useCreateContentSourceFromTmdbTv = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.contentSources.createFromTmdbTv.mutationOptions({
+      meta: {
+        errorMessage: t`Failed to register episode`,
+        showErrorModal: true,
+      },
+    })
+  )
+}
+
 export const useCreateContentSourceFromText = () => {
   const { t } = useLingui()
   return useMutation(
@@ -102,6 +150,20 @@ export const useSearchOpenSubtitles = (input: { tmdbId: number; language: string
   return useQuery(
     orpcQuery.textTracks.searchOpenSubtitles.queryOptions({
       input: input ?? { tmdbId: 0, language: '' },
+      select: (response) => response.data,
+      enabled: input !== null,
+      meta: { errorMessage: t`OpenSubtitles search failed` },
+    })
+  )
+}
+
+export const useSearchOpenSubtitlesEpisode = (
+  input: { tmdbShowId: number; seasonNumber: number; episodeNumber: number; language: string } | null
+) => {
+  const { t } = useLingui()
+  return useQuery(
+    orpcQuery.textTracks.searchOpenSubtitlesEpisode.queryOptions({
+      input: input ?? { tmdbShowId: 0, seasonNumber: 0, episodeNumber: 0, language: '' },
       select: (response) => response.data,
       enabled: input !== null,
       meta: { errorMessage: t`OpenSubtitles search failed` },

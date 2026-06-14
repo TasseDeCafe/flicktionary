@@ -66,6 +66,41 @@ export const searchByTmdbId = async (tmdbId: number, language: string): Promise<
     .sort((a, b) => b.downloadCount - a.downloadCount)
 }
 
+export const searchEpisodeSubtitles = async (params: {
+  tmdbShowId: number
+  seasonNumber: number
+  episodeNumber: number
+  language: string
+}): Promise<OpenSubtitlesTrack[]> => {
+  const query = new URLSearchParams({
+    parent_tmdb_id: String(params.tmdbShowId),
+    season_number: String(params.seasonNumber),
+    episode_number: String(params.episodeNumber),
+    type: 'episode',
+    languages: params.language,
+    order_by: 'download_count',
+    order_direction: 'desc',
+  })
+  const url = `${OPENSUBTITLES_BASE_URL}/subtitles?${query.toString()}`
+  const response = await fetch(url, { headers: headers() })
+  if (!response.ok) {
+    throw new Error(`OpenSubtitles episode search failed: ${response.status} ${response.statusText}`)
+  }
+  const data = (await response.json()) as SearchResponse
+  return data.data
+    .filter((row) => row.attributes.files.length > 0)
+    .map((row) => ({
+      fileId: row.attributes.files[0]!.file_id,
+      language: row.attributes.language,
+      release: row.attributes.release,
+      fps: row.attributes.fps,
+      hearingImpaired: row.attributes.hearing_impaired,
+      uploaderName: row.attributes.uploader?.name ?? null,
+      downloadCount: row.attributes.download_count,
+    }))
+    .sort((a, b) => b.downloadCount - a.downloadCount)
+}
+
 // Two-step download per OpenSubtitles API: request a short-lived URL via POST /download,
 // then GET the URL for the raw SRT body.
 export const downloadSrtByFileId = async (fileId: number): Promise<string> => {
