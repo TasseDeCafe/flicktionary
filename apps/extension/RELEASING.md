@@ -7,6 +7,10 @@ rejected.
 
 ## Normal release flow
 
+The `/release-extension X.Y.Z` skill drives this end to end (bump → PR → tag →
+watch the run). The manual steps below are what it automates — follow them by
+hand if you're not using the skill.
+
 1. Bump `version` in `apps/extension/package.json` (Chrome requires strictly increasing versions).
 2. Tag and push — the tag (minus `v`) must match the package version:
 
