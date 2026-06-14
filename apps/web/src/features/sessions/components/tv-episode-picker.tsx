@@ -1,6 +1,7 @@
 import { useLingui } from '@lingui/react/macro'
 import { Clapperboard } from 'lucide-react'
-import { OptionCard } from '@flicktionary/ui/components/option-card'
+import { OptionCard, OptionCardSkeleton } from '@flicktionary/ui/components/option-card'
+import { SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useTmdbTvEpisodes } from '../api/sessions-hooks'
 
 export type TvEpisodePick = {
@@ -23,7 +24,7 @@ export const TvEpisodePicker = ({ tmdbShowId, seasonNumber, onPick, disabled }: 
 
   return (
     <div className='flex flex-col gap-2'>
-      {isFetching && <p className='text-muted-foreground text-sm'>{t`Loading episodes…`}</p>}
+      {isFetching && (data?.length ?? 0) === 0 && <SkeletonList count={6} renderItem={() => <OptionCardSkeleton />} />}
       {(data ?? []).map((episode) => {
         const code = `S${pad2(seasonNumber)}E${pad2(episode.episodeNumber)}`
         return (
