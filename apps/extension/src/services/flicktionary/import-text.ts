@@ -5,16 +5,9 @@ import { getFlicktionaryApiClient } from './flicktionary-api-client'
 import { getFlicktionaryAuth } from './auth-storage'
 import { getFlicktionaryConfig } from './flicktionary-config'
 import { extractFlicktionaryApiError } from './api-error'
+import type { ArticleExtractionErrorCode, ArticleExtractionResult } from './extract-article'
 
-// Stable codes the content script returns instead of localized prose, so the
-// always-injected content bundle never pulls in the Lingui catalog. The
-// background (here) maps them to localized messages.
-export type ArticleExtractionErrorCode = 'no-readable-article' | 'extract-failed'
-
-// Result the import content script returns for an extraction request.
-export type ArticleExtractionResult =
-  | { ok: true; title: string; text: string }
-  | { ok: false; errorCode: ArticleExtractionErrorCode }
+export type { ArticleExtractionErrorCode, ArticleExtractionResult }
 
 export type ImportOutcome = { ok: true; sessionId: string } | { ok: false; error: string }
 

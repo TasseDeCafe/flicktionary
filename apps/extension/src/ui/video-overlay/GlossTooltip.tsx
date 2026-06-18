@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
+import { computePosition, flip, shift, offset, autoUpdate, type VirtualElement } from '@floating-ui/dom'
 import { PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
@@ -26,13 +26,15 @@ import {
 // never constructs the web-only `idle` member.
 export type GlossContent = GlossViewState
 
-// Both popovers hardcode the web app's DARK theme: they always float over
-// video, where the light card would glare. The `dark` class on the root makes
-// the shared tokens (tokens.css `.dark { … }`, adopted into the popover shadow
-// root) and every `dark:` variant in the shared components resolve — so the
-// card looks exactly like the web gloss sheet in dark mode.
-const POPOVER_CARD_CLASS =
-  'dark pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-80 max-w-[90vw] flex-col rounded-md border bg-popover text-popover-foreground shadow-xl px-2 py-0'
+// Popover surface theme. Video call sites pass `'dark'` (the default): they
+// always float over video, where the light card would glare, so the `dark`
+// class makes the shared tokens (tokens.css `.dark { … }`, adopted into the
+// popover shadow root) and every `dark:` variant resolve. The on-page article
+// flow passes `'light'` to match the page it floats over.
+export type PopoverTheme = 'dark' | 'light'
+
+const popoverCardClass = (theme: PopoverTheme): string =>
+  `${theme === 'dark' ? 'dark ' : ''}pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-80 max-w-[90vw] flex-col rounded-md border bg-popover text-popover-foreground shadow-xl px-2 py-0`
 
 // Web FloatingSheet section paddings (header/body/footer), so the composed
 // card matches the web sheet's rhythm.
@@ -54,7 +56,10 @@ const CARD_FOOTER_CLASS = 'mt-auto flex flex-col gap-2 px-2 pt-2 pb-3'
 // frame was invisible on a fresh open (nothing was there before) but showed as
 // a flash on the save handoff, where the preview popover unmounts and the
 // saved-mode popover mounts at the same anchor in one commit.
-const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivElement | null>) => {
+// `anchor` may be a real element (the subtitle word span) or a floating-ui
+// virtual element (the article flow's live selection rect) — both expose
+// getBoundingClientRect, which is all computePosition/autoUpdate need.
+const useTooltipPosition = (anchor: HTMLElement | VirtualElement, ref: React.RefObject<HTMLDivElement | null>) => {
   useLayoutEffect(() => {
     const tooltip = ref.current
     if (!tooltip) return
@@ -102,8 +107,11 @@ export interface GlossTooltipProps {
   // The word span to anchor against. Lives in the (transformed) subtitle shadow
   // tree, but THIS tooltip is portaled into the separate, non-transformed
   // popover shadow host — so floating-ui's `strategy: 'fixed'` against the
-  // anchor's viewport rect is correct in both windowed and fullscreen.
-  anchor: HTMLElement
+  // anchor's viewport rect is correct in both windowed and fullscreen. The
+  // article flow passes a virtual element (the live selection rect).
+  anchor: HTMLElement | VirtualElement
+  // Surface theme — defaults to 'dark' (video). Article passes 'light'.
+  theme?: PopoverTheme
   word: string
   content: GlossContent
   // Explicit save (mirrors the right-click power-shortcut): persists the
@@ -141,6 +149,7 @@ export interface GlossTooltipProps {
 // legacy `display:flex !important` hide trap is gone.
 export function GlossTooltip({
   anchor,
+  theme = 'dark',
   word,
   content,
   onSave,
@@ -189,7 +198,7 @@ export function GlossTooltip({
       data-flicktionary-gloss-popover=''
       onMouseEnter={onPointerEnter}
       onMouseLeave={onPointerLeave}
-      className={POPOVER_CARD_CLASS}
+      className={popoverCardClass(theme)}
     >
       <div className={CARD_HEADER_CLASS}>
         <div className='text-foreground text-base font-semibold break-words'>{word}</div>
@@ -240,7 +249,9 @@ export function GlossTooltip({
 }
 
 export interface SavedGlossTooltipProps {
-  anchor: HTMLElement
+  anchor: HTMLElement | VirtualElement
+  // Surface theme — defaults to 'dark' (video). Article passes 'light'.
+  theme?: PopoverTheme
   sessionId: string
   highlight: SavedHighlightDto
   // The delete landed (or the row was already gone) — the caller removes the
@@ -268,6 +279,7 @@ export interface SavedGlossTooltipProps {
 // already saved.
 export function SavedGlossTooltip({
   anchor,
+  theme = 'dark',
   sessionId,
   highlight,
   onRemoved,
@@ -359,7 +371,7 @@ export function SavedGlossTooltip({
   const hasNoteDetails = (highlight.note ?? '').trim().length > 0 || highlight.presetTags.length > 0
 
   return (
-    <div ref={ref} data-flicktionary-saved-popover='' onMouseEnter={onPointerEnter} className={POPOVER_CARD_CLASS}>
+    <div ref={ref} data-flicktionary-saved-popover='' onMouseEnter={onPointerEnter} className={popoverCardClass(theme)}>
       <div className={CARD_HEADER_CLASS}>
         <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
         <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />

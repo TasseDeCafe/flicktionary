@@ -213,6 +213,9 @@ cleanup.
     a few hundred ms of booting, so a listener registered at `document_idle`
     loses the race and pairing silently times out.
   - `flicktionary-import.content.ts` — injected on demand for article import.
+  - `flicktionary-article-highlight.content.ts` — always-injected tiny listener
+    for on-page article highlighting; dynamically `import()`s the React
+    orchestrator only when the user toggles highlighting on.
 
 ## Feature spec
 
@@ -625,11 +628,91 @@ The import button injects `flicktionary-import.content.ts`, which clones the
 document and runs `@mozilla/readability` — extracting the title and
 paragraph-segmented text (one line per block element, flat-text fallback) — then
 the background calls `studySessions.importText({title, text, sourceUrl})`. The
+shared `extract-article.ts` prepends `article.title` as the first text line
+(Readability strips the `<h1>` from `content`), so the headline is part of the
+reading text (and, on the highlight surface, highlightable when it matches the
+page `<h1>`). Readability still drops the standfirst/dek and can mis-score
+JS-rendered pages (e.g. on Reddit it may grab the comments and miss the
+shadow-DOM OP post body) — those are upstream-library limitations, not bugs in
+the mapper. The
 backend detects language, segments, and creates a session; success opens it in
 a new tab. A selection-based path imports highlighted text as a paste (no
 sourceUrl). Errors show inline in the popup with retry, plus an on-page toast.
 Both paths check pairing up front — a signed-out user gets a sign-in prompt
 before any extraction is attempted.
+
+### On-page article highlighting (Readwise-style)
+
+A second use of the same article-extraction subsystem: instead of opening the
+web app, the user can highlight words **directly on the live article page** and
+each selection becomes a real Flicktionary highlight without leaving the page.
+It is **on-demand** — activated from the popup ("Highlight on this page") or the
+page context menu ("Highlight words on this page") — and is hidden on video
+platforms (same `updateImportMenuVisibility` gate as the import menus).
+
+- **Activation.** The always-injected `flicktionary-article-highlight.content.ts`
+  is a tiny listener only; the toggle dynamically `import()`s the orchestrator
+  (`ui/article-highlight/start.tsx`), which pulls React / `@flicktionary/ui` /
+  Readability — so every other page pays just the listener cost (mirrors the
+  import script's lazy-Readability pattern). The orchestrator mounts ONE
+  viewport-filling, click-through, **untransformed** shadow host
+  (`mountArticleHighlightHost`) rendering both the top banner and the conditional
+  gloss popover (`applyOverlayStyles` Firefox-Xray-safe + `ensureNotoSansFonts`).
+- **Ensure session.** On activation the orchestrator extracts the article via the
+  shared `extract-article.ts` (the same block selector + `textContent.trim()`
+  rule the import flow feeds the backend — this byte-identity is load-bearing)
+  and calls the background **`ensure-article-session`** handler (sender
+  `flicktionary-extension-highlight`), which runs `studySessions.importText`
+  (now returning `targetLanguage` + full `segments`), caches the result by
+  `sourceUrl` (round-trip avoidance only — the backend is already idempotent on
+  the text hash), and returns the canonical segment texts, the
+  `segmentIdByIndex` map, and the session's already-saved highlights. The toolbar
+  badge animates `· ·· ···` → `✓`/`!` during the round trip.
+- **Live-DOM ↔ segment mapping** (`services/article-highlight/segment-dom-map.ts`).
+  The backend segments ARE the Readability block `textContent`s, in order. The
+  mapper queries the **same live selector** and matches live blocks to segment
+  strings on their **whitespace-normalized** form with a monotonic cursor
+  (duplicate paragraphs resolve positionally; stripped/extra live blocks are
+  skipped). Whitespace-tolerance matters because Readability's serialized content
+  and the live DOM routinely differ only in internal whitespace (source-formatting
+  newlines/indentation), and the prepended title is Readability's collapsed
+  `article.title` — an exact-trim match silently dropped `<h1>`/standfirst blocks,
+  causing an extension-vs-web-app highlightability gap. It stays provably correct:
+  a match requires the two strings to be identical under whitespace-normalization
+  (same non-whitespace character sequence), so offsets align character-for-
+  character by non-whitespace index (`alignOffset`, used by both the
+  block-start-Range forward conversion and the inverse `TreeWalker` walk) and can
+  never corrupt. Blocks that differ by anything other than whitespace (e.g.
+  Readability stripped inline text, or a `<pre>` split into >1 segment) normalize
+  differently and are left unmapped. Selections that cross a block boundary are
+  rejected (single-segment v1).
+- **Select → save → paint.** A `mouseup` (capture) on `document` snaps the native
+  selection outward to whole words (`getWordRanges`, locale = the detected
+  target language), clears the native selection, and paints a sky wash via the
+  **CSS Custom Highlight API** (`highlight-painter.ts` — one injected `<style>`,
+  no body-DOM mutation/reflow). A light-themed gloss popover (the shared
+  `GlossTooltip`, now `theme`-parameterized, anchored to the selection rect via a
+  floating-ui virtual element) fetches the fast gloss through the **existing**
+  `requestGloss` helper (no handler change). Save → the
+  **`save-article-highlight`** handler (a thin `highlights.create` wrapper,
+  single-segment) → yellow paint + count bump; the popover morphs in place into
+  saved mode. `MISSING_CEFR` surfaces a banner error pointing at the web app (no
+  inline picker in v1).
+- **Saved spans + reopen.** Saved spans paint persistently (yellow). Because CSS
+  highlights are paint with no event target, a `click`-capture caret hit-test
+  (`caretPositionFromPoint` / `caretRangeFromPoint` → `Range.isPointInRange`)
+  reopens a saved span's saved-mode popover (cached gloss refreshed via the
+  existing `highlights.fastGloss`; Remove via `highlights.delete`; note/tags via
+  `highlights.updateNoteAndTags` — all reused verbatim).
+- **Persistence / reload.** The server session is the source of truth: paint
+  **survives reload** because `ensure-article-session` re-lists the session's
+  highlights on every activation, and a per-tab `sessionStorage` flag (keyed by
+  URL) auto-reactivates after a reload. It vanishes on tab close. We do **not**
+  solve robust re-anchoring onto a fresh DOM days later (ephemeral, best-effort).
+- **v1 limitations.** `<pre>`/poetry blocks with internal newlines split into
+  multiple segments and are unhighlightable; SPA in-place re-renders can stale
+  the element map (save no-ops, no MutationObserver); one host-page `<style>`
+  injection is required for `::highlight()`.
 
 ### Settings, profiles & options page
 
@@ -700,9 +783,9 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `studySessions.findOrCreateForYoutubeVideo` | session registration (YouTube, deduped on video id) |
 | `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |
-| `studySessions.importText` | article/selection import |
-| `highlights.create` | saving a word/chunk |
-| `highlights.listBySession` | loading saved highlights for the persistent spans |
+| `studySessions.importText` | article/selection import; also backs on-page article highlighting (returns `targetLanguage` + `segments` for the live-DOM mapper) |
+| `highlights.create` | saving a word/chunk (video + on-page article) |
+| `highlights.listBySession` | loading saved highlights for the persistent spans (video + on-page article repaint) |
 | `highlights.fastGloss` | saved-mode popover gloss (server-cached, IPA-enriched) |
 | `highlights.updateNoteAndTags` | saved-mode note + preset tags (+ chatSeedPrompt) |
 | `highlights.delete` | Remove highlight from the saved-mode popover |

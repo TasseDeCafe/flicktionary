@@ -312,6 +312,13 @@ export const studySessionsContract = {
           contentSourceId: z.string().uuid(),
           textTrackId: z.string().uuid(),
           segmentCount: z.number().int(),
+          // Server-detected language (also the session target language) and the
+          // full segment list, so the on-page article-highlight flow can map a
+          // live-DOM word selection back to a text_segment without a second round
+          // trip — mirrors the video find-or-create response. The existing
+          // import-text callers ignore these.
+          targetLanguage: z.string(),
+          segments: z.array(TextSegmentSchema),
         }),
       })
     ),

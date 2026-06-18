@@ -1,0 +1,50 @@
+URL: https://www.theguardian.com/world/2026/jun/15/tallying-the-global-cost-of-the-us-israel-war-against-iran
+Fetched HTML: 489003 chars (HTTP 200)
+
+--- Defuddle metadata ---
+title      : Tallying the global cost of the US-Israel war against Iran
+author     : Oliver Holmes, Paul Scruton
+description: From thousands of lives lost to an economic shock likely to plunge millions into poverty, the world is paying dearly
+wordCount  : 1441
+extractor  : (generic)
+content len: 13807
+
+--- Segmented blocks via ARTICLE_BLOCK_SELECTOR (38) ---
+[  0] From thousands of lives lost to an economic shock likely to plunge millions into poverty, the world is paying dearly
+[  1] It would be hard to find a human on Earth unaffected by the US-Israel war against Iran. Several thousand have been killed. Millions are paying more each day in steeper food prices or at the petrol pump, and as inflation eats away at the value of their earnings.
+[  2] For many, the final bill has not yet come, but it will eventually. They will pay for the long-term damage caused by the biggest threat of all to the global economy: uncertainty.
+[  3] Uncertainty is hard to measure, but one way is to look at geopolitical risk, which stalls investment and employment. The US Federal Reserve economists Dario Caldara and Matteo Iacoviello have created an index that tracks reports of global tension. It shows the Iran war has been more destabilising than the Covid-19 pandemic, but on a par with either the invasion of Ukraine in 2022 or that of Iraq in 2003.
+[  4] So how does the world tally the cost of this war? Some costs are easier to calculate than others, such as bills for surface-to-air missiles that cost hundreds of thousands of dollars each. Others are harder to quantify, including the damage caused to Iranian and Lebanese hospitals and power networks. Much cannot be valued at all – the lives lost, including the 120 primary schoolchildren in Iran killed on the first day of the war.
+[  5] Then there are hypothetical costs. A senior UN aid official framed the conflict in terms of opportunity cost, noting that the $2bn (£1.5bn) a day spent on military operations could otherwise cover lifesaving aid for roughly 87 million people.
+[  6] And what about the beneficiaries of this war, the oil companies and the shareholders of arms manufacturers?
+[  7] Here are some ways the impact of the war has been assessed:
+[  8] Lives lost
+[  9] The vast majority of the killings have targeted Iranian and Lebanese people.
+[ 10] In Iran, US and Israel bombings have killed more than 3,300 people and injured more than ten times that number, according to Iranian authorities. Twenty schools have been destroyed, and 240 health and medical facilities have been damaged. Water pipes have been blown up and cultural sites damaged, including five world heritage sites and 54 museums.
+[ 11] Israel opened a second front of the war when it invaded its northern neighbour, Lebanon, where it is fighting against the Iran-allied militant group Hezbollah. That war within a war has now become the most deadly part of the broader conflict – Israeli attacks have killed more than 3,700 people, according to Lebanese authorities, including women, children and medics. The widespread Israeli bombing of civilian areas has displaced more than 1 million Lebanese people – roughly a fifth of the country’s population.
+[ 12] More than 100 people have been killed in Iraq, where Iran-allied groups operate, and in Israel, about 50 people have been killed. Since the start of the Iran war on 28 February, at least 15 US military personnel have died, and American bases across the region have been significant damaged.
+[ 13] Gulf countries, including the United Arab Emirates, Qatar, Kuwait, Bahrain and Oman, faced Iranian drone and missile attacks, which have killed civilians and damaged hotels, airports, and critical oil and gas infrastructure.
+[ 14] Israeli forces have not halted the killing of Palestinians during the conflict, including dozens in Gaza and the West Bank, adding to the more than 70,000 killed in Palestine since the Gaza war began in 2023.
+[ 15] Stunted global economic growth
+[ 16] For years, Israel had pushed the US to bomb Iran, but no administration in Washington agreed, seeing it as counterproductive and fearing the political, security and economic chaos that is now playing out.
+[ 17] The conflict has not achieved regime change or ended Iran’s nuclear ambitions, but instead left governments and businesses scrambling in the fallout. A peace deal has been announced but the terms, or how it will be implemented, remain unclear.
+[ 18] In its World Economic Outlook published in April, the International Monetary Fund said the global economy was already on edge after “higher trade barriers and elevated uncertainty last year”, alluding to Donald Trump’s tariff war.
+[ 19] The IMF and the World Bank have marked down their forecasts for the global economy, showing how the Iran war has stalled growth.
+[ 20] Economists at the investment bank Goldman Sachs estimate that US economic growth will be 0.5 percentage points lower as a result of the war. Even if the war ends swiftly, the US will take years to pay it off.
+[ 21] Not even the White House denies that the war will be a massive cost, but ithas attempted to play down its probable price tag. One estimate in May came from a senior Pentagon official, who said the conflict had cost $29bn by then.
+[ 22] Justin Wolfers, a professor of economics and public policy at the University of Michigan, wrote in the New York Times that when accounting for the full macroeconomic fallout, a typical US household would probably have to pay thousands – or even tens of thousands – of dollars for the war.
+[ 23] Severe business shocks have started to emerge. The world’s largest carmaker, Toyota, has reported a £3bn hit, as prices of parts and materials soared and sales dropped.
+[ 24] A doubling of jet fuel prices
+[ 25] The International Energy Agency, the world’s energy watchdog set up in the 1970s as a response to an oil crisis, has been clear in its assessment of the impact of the conflict on fossil fuels. “The war in the Middle East is creating the largest supply disruption in the history of the global oil market,” it said.
+[ 26] Responding to the US-Israeli bombing, Iran closed the strait of Hormuz, the waterway through which about 20% of the world’s oil and gas supply previously moved.
+[ 27] Facing calls to reopen the waterway, Trump put pressure on Iran to end its blockade, but failed and later decided to impose his own blockade, leading to more fuel price hikes and threats of long-term inflation.
+[ 28] Jet fuel prices have doubled, and thousands of flights have been cut. One US-based airline has already gone under. While the deal announced this week led oil prices to drop, they only reduced by a few US dollars.
+[ 29] With oil prices hitting highs, the big energy companies’ profits have soared. Defence contractors are also profiting from the insecurity and rush to buy anti-missile technology. Shareholders, too, are celebrating that stock markets have shown resilience, in large part because of the AI boom, although there are concerns that traders are not properly considering the risk of long-term upheaval.
+[ 30] There is hope, however, that in the long-term the crisis could reshape the global energy order, spotlighting a reliance on Middle East fossil fuels and accelerating a move towards renewables.
+[ 31] A new crisis during a cost of living crisis
+[ 32] The closure has created a bottleneck in which energy disruptions cascade through chemicals and fertiliser production into food prices, amplifying losses for the world’s poorest countries.
+[ 33] There are already signs of the war’s burden on people and businesses worldwide. In Asia, the most populous continent, restaurants have closed owing to a lack of cooking gas and petrol stations are rationing fuel. In Thailand, some temples have stopped cremations.
+[ 34] More than 800 ships and roughly 20,000 crew members remain stranded west of the narrow waterway.
+[ 35] The consequent rise in the oil price has fuelled fears of damaging inflation. Last month, Turkey’s central bank raised its year-end inflation forecast to 26% from 16%.
+[ 36] Meanwhile, exports of vital goods, such as fertilisers required for food production, have collapsed.
+[ 37] The UN estimates that 32 million people could be plunged into poverty as a result of the war, largely through its impact on energy and fertiliser supplies.

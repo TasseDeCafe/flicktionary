@@ -474,6 +474,8 @@ export const StudySessionsRouter = (
           contentSourceId: contentSource.id,
           textTrackId: track.id,
           segmentCount: segments.length,
+          targetLanguage: detectedLanguage,
+          segments: segments.map(toSegmentDto),
         },
       }
     }),

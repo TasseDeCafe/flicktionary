@@ -39,6 +39,9 @@ import DeleteFlicktionaryHighlightHandler from '@/handlers/flicktionary/delete-h
 import UpdateFlicktionaryHighlightNoteHandler from '@/handlers/flicktionary/update-highlight-note-handler'
 import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
+import EnsureArticleSessionHandler from '@/handlers/flicktionary/ensure-article-session-handler'
+import SaveArticleHighlightHandler from '@/handlers/flicktionary/save-article-highlight-handler'
+import ToggleArticleHighlightingHandler from '@/handlers/flicktionary/toggle-article-highlighting-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
 import { isVideoPlatformUrl } from '@/services/pages'
 import SupadataGenerateHandler from '@/handlers/supadata/supadata-generate-handler'
@@ -110,6 +113,9 @@ export default defineBackground(() => {
     new UpdateFlicktionaryHighlightNoteHandler(),
     new FlicktionarySavedGlossHandler(),
     new ImportArticleHandler(),
+    new EnsureArticleSessionHandler(),
+    new SaveArticleHighlightHandler(),
+    new ToggleArticleHighlightingHandler(),
     new SupadataGenerateHandler(settings),
     new GetCachedTranscriptHandler(),
     new ExportTranscriptCacheHandler(),
@@ -156,6 +162,7 @@ export default defineBackground(() => {
     try {
       await browser.contextMenus.update('flicktionary-import-article', { visible })
       await browser.contextMenus.update('flicktionary-import-selection', { visible })
+      await browser.contextMenus.update('flicktionary-highlight-page', { visible })
     } catch {
       // The menus may not exist yet (mid-rebuild) — the rebuild re-applies this.
     }
@@ -187,6 +194,12 @@ export default defineBackground(() => {
         id: 'flicktionary-import-selection',
         title: i18n._(msg`Add selection to Flicktionary`),
         contexts: ['selection'],
+      })
+      // Toggle on-page word highlighting (Readwise-style) for the current article.
+      browser.contextMenus.create({
+        id: 'flicktionary-highlight-page',
+        title: i18n._(msg`Highlight words on this page`),
+        contexts: ['page'],
       })
       const [activeTab] = await browser.tabs.query({ active: true, currentWindow: true })
       await updateImportMenuVisibility(activeTab?.url)
@@ -253,6 +266,18 @@ export default defineBackground(() => {
 
     if (info.menuItemId === 'flicktionary-import-selection' && tab) {
       void importSelectionFromTab(tab, info.selectionText ?? '')
+      return
+    }
+
+    if (info.menuItemId === 'flicktionary-highlight-page' && tab?.id !== undefined) {
+      void browser.tabs
+        .sendMessage(tab.id, {
+          sender: 'flicktionary-extension-highlight',
+          message: { command: 'toggle-article-highlighting' },
+        })
+        .catch(() => {
+          // Content script not reachable (restricted page / pre-install load).
+        })
       return
     }
   })

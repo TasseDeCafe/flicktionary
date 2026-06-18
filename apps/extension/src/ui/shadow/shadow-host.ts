@@ -1,6 +1,7 @@
 import { createRoot, type Root } from 'react-dom/client'
 import type { ReactNode } from 'react'
 import { applyOverlayStyles } from './overlay-stylesheet'
+import { ensureNotoSansFonts } from '../fonts/ensure-noto-sans'
 import { MAX_Z_INDEX, YOUTUBE_OVERLAY_Z_INDEX } from '@/constants'
 import { isYoutubeHost } from '@/services/flicktionary/youtube-context'
 
@@ -119,6 +120,49 @@ export function mountModalHost(options: ModalHostOptions): ShadowHostHandle {
     unmount() {
       root.unmount()
       disposeFullscreen()
+      host.remove()
+    },
+  }
+}
+
+export interface ArticleHighlightHostOptions {
+  hostAttribute: string
+  render: (ctx: ShadowMountContext) => ReactNode
+}
+
+// A single viewport-filling, click-through shadow host for the on-page
+// article-highlight surface — it renders BOTH the top banner and the conditional
+// floating gloss popover from one React root (the banner card and the popover
+// each re-enable pointer events on themselves). Critically it carries NO
+// transform, so floating-ui's `position: fixed` popover (anchored to a live
+// selection-rect virtual element) resolves against the viewport. Not
+// fullscreen-aware (articles aren't fullscreen): parented straight to body.
+export function mountArticleHighlightHost(options: ArticleHighlightHostOptions): ShadowHostHandle {
+  // Without Noto Sans the banner/popover fall back to the host's system-ui,
+  // which mis-renders Cyrillic stress marks (same trap as the video overlay).
+  ensureNotoSansFonts(document)
+
+  const { host, shadowRoot, appRoot, root } = createShadowHost({
+    hostAttribute: options.hostAttribute,
+    adoptTailwind: true,
+    render: options.render,
+  })
+
+  host.style.setProperty('position', 'fixed')
+  host.style.setProperty('inset', '0')
+  host.style.setProperty('z-index', String(MAX_Z_INDEX))
+  host.style.setProperty('pointer-events', 'none')
+  // appRoot has no layout box of its own (banner + popover are fixed-positioned
+  // and re-enable pointer events themselves), so it stays click-through.
+  appRoot.style.setProperty('pointer-events', 'none')
+
+  document.body.appendChild(host)
+
+  return {
+    host,
+    shadowRoot,
+    unmount() {
+      root.unmount()
       host.remove()
     },
   }

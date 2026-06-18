@@ -594,6 +594,75 @@ export interface FlicktionarySavedGlossResponse {
   readonly error?: string
 }
 
+// On-page article highlighting. The content script (sender
+// 'flicktionary-extension-highlight') extracts the article and asks the
+// background to find-or-create its study session, then maps live-DOM word
+// selections back to segments and saves each as a real highlight — without
+// leaving the page.
+
+export interface ArticleSegmentDto {
+  readonly index: number
+  readonly text: string
+}
+
+// Ensure (find-or-create, idempotent on the text hash) the study session for an
+// extracted article. The background returns the canonical segment texts (so the
+// content script can match them to live blocks) and the index→segment-id map (so
+// a save can cite a real text_segments row without another round trip).
+export interface EnsureArticleSessionMessage extends MessageWithId {
+  readonly command: 'ensure-article-session'
+  readonly title: string
+  readonly text: string
+  readonly sourceUrl: string
+}
+
+export interface EnsureArticleSessionResponse {
+  readonly success: boolean
+  // False when the user isn't paired — the banner surfaces a Sign in button.
+  readonly signedIn: boolean
+  readonly error?: string
+  // Backend error code (e.g. 'UNSUPPORTED_LANGUAGE') so the banner can show a
+  // specific message and disable saving.
+  readonly code?: string
+  readonly sessionId?: string
+  readonly targetLanguage?: string
+  readonly segments?: ReadonlyArray<ArticleSegmentDto>
+  readonly segmentIdByIndex?: Readonly<Record<string, string>>
+  // The session's already-saved highlights (segment-index coordinates), so a
+  // re-activation / reload repaints them with full note/tags/gloss for the
+  // saved-mode popover. Single-segment only; cross-segment or unmappable rows
+  // are dropped.
+  readonly highlights?: ReadonlyArray<SavedHighlightDto>
+}
+
+// Save a mapped word/range as a Flicktionary highlight. The content script has
+// already resolved the live selection to a single segment + char offsets, so the
+// background is a thin highlights.create wrapper (no segment cache needed here).
+export interface SaveArticleHighlightMessage extends MessageWithId {
+  readonly command: 'save-article-highlight'
+  readonly sessionId: string
+  readonly segmentId: string
+  readonly startOffset: number
+  readonly endOffset: number
+  readonly selectionText: string
+  // Study options from the gloss popover (full-set semantics; absent = backend
+  // default), forwarded verbatim to highlights.create.
+  readonly studyIntent?: SaveWordStudyIntent
+}
+
+export interface SaveArticleHighlightResponse {
+  readonly success: boolean
+  readonly error?: string
+  // Backend error code (e.g. 'MISSING_CEFR') so the banner can point the user at
+  // the web app to set their level.
+  readonly code?: string
+  // The created highlight id (paint key + saved-mode popover handle) and its
+  // server-cached fast gloss, if any. The content script already holds the
+  // segment index / offsets / selection text it sent.
+  readonly id?: string
+  readonly fastGloss?: string | null
+}
+
 // Sets the user's CEFR level for a language from the content script. Backed by
 // the same `userPrefs.setCefrForLanguage` endpoint the web app's wizards use;
 // the content script can't reach the authed oRPC client directly, so it routes

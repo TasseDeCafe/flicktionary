@@ -1,0 +1,337 @@
+URL: https://www.reddit.com/r/singularity/comments/1u71dr0/my_3_cents_on_rsi/
+Fetched HTML: 8473 chars (HTTP 200)
+
+--- Defuddle metadata ---
+title      : My 3 cents on RSI
+author     : Agreeable_Effect938
+description: Hey everyone, I'm Vadim Fedenko. You might vaguely know me from first slider LoRAs (like AntiBlur) or web-research tools in LM Studio. I've 
+wordCount  : 2468
+extractor  : reddit
+content len: 19976
+
+--- Segmented blocks via ARTICLE_BLOCK_SELECTOR (79) ---
+[  0] Hey everyone, I'm Vadim Fedenko. You might vaguely know me from first slider LoRAs (like AntiBlur) or web-research tools in LM Studio. I've been tinkering with self-improving systems and have a few observations I wanted to share.
+[  1] Recently, people from xAI and Anthropic have been hinting that RSI might be reached within the next year. The logic is: we already have self-improving loops; so as the baseline intelligence grows, RSI is guaranteed to unlock.
+[  2] But raw intelligence isn't a silver bullet: there are 2 underlying "rules" of RSI that the industry has yet to confront:
+[  3] 1. Capability-to-Complexity Ratio
+[  4] It's not enough for an RSI system to just increase its raw intelligence. It has to grow smarter faster than it grows complex.
+If its ability to improve grows slower than architectural complexity, the capacity for self-improvement drops. Therefore, true RSI must constantly drive up its capability-to-complexity ratio. If it fails to do this, it quickly hits a hard ceiling, resulting in logarithmic plateauing rather than an explosive takeoff.
+[  5] 2. Searching the Space vs Expanding the Space
+[  6] There is a difference between searching for solutions within a fixed space and expanding that space.
+[  7] Things like fine-tuning, hyperparameter search, and prompt/tool tuning only optimize an existing architecture. They all have a hard ceiling. It's like a human taking nootropics for better blood flow: you get closer to your personal optimum, but it won't give you superhuman intelligence.
+[  8] "True" RSI has to search for architectural changes (including data curation approaches), and ideally, meta-architectural changes (changes that improve its own ability to find better architectures).
+[  9] Parameter optimization is nice, but it can only serve as a "plugin" for RSI; the core has to be architectural.
+[ 10] A bit on Weak vs Strong RSI
+[ 11] We usually define "weak RSI" as having a human in the loop. By this definition, we’ve been in "weak RSI" for decades (AI has been optimizing GPU chips, algorithms, etc), anything AI related can be retroactively called "weak RSI".
+RSI just has to work without a human in the loop, otherwise the term loses its meaning.
+[ 12] I'd say it's much more useful to derive weak/strong distinction from our second point:
+[ 13] "Weak" RSI is Searching within a fixed space (like hyperparameter optimization). The intelligence growth will always hit a plateau with this approach. It's logarithmic.
+[ 14] "Strong" RSI is Expanding the space via architectural changes. This creates exponential growth. This is the only way to achieve intelligence explosion.
+[ 15] I don't claim these are "universal laws of RSI", but I think most of us can agree on them. Now here is my more controversial take:
+[ 16] Why We Probably Won't See RSI in a Year
+[ 17] The paradox is that today's LLMs are actually smart enough to invent new architectures. Current LLMs are good additive engineers. Give them a good harness with a ranker and an Elo tournament, and they can brainstorm genuinely brilliant improvements.
+[ 18] However, current LLMs are bad subtractive engineers. A "real" RSI must also improve faster than it grows complexity. Current LLMs are fundamentally bad at this, because modern RL paradigm reward solving the task at any cost. It forces models into debt with endless fall-backs and workarounds, leading to severe code bloat. Models throw multiple solutions at a problem as a method to maximize success. Reward functions just don't reward elegance, and current models are basically blind to technical debt.
+[ 19] To autonomously change its own architecture, an AI needs the skill of subtractive engineering - the ability to delete the bloated and unnecessary, making the system smarter and more compact. Perhaps we need a new training pipeline where the reward function isn't just to solve the task, but to minimize complexity.
+[ 20] And the industry is still stuck in an optimization "gold rush" phase, basic fine-tuning, hyperparameter search, and RLHF are still printing money, so the focus remains on the current solution space. Until we teach models how to subtract and simplify, true RSI will remain out of reach.
+That said, I think RSI is more than achievable. It just requires a major architectural shift, and that alone will take at least a few years.
+Thanks for reading! ❤️
+[ 21] Comments
+[ 22] KyleStanley3 · 2026-06-16 · 3 points
+	
+	I swear you posted this like 2 days ago
+[ 23] I swear you posted this like 2 days ago
+[ 24] Specialist-Berry2946 · 2026-06-16
+	
+	Intelligence is not a property of the agent but a property of the environment that can only be shared by an agent when he is willing to model the environment.
+
+RSI would require that the agent design and develop its own cost function, an impossible task. 
+
+There is no learning without a supervision signal.
+[ 25] Intelligence is not a property of the agent but a property of the environment that can only be shared by an agent when he is willing to model the environment.
+[ 26] RSI would require that the agent design and develop its own cost function, an impossible task.
+[ 27] There is no learning without a supervision signal.
+[ 28] doodlinghearsay · 2026-06-16 · 0 points
+	
+	RSI is an ideologically driven hype term. Recursively improving systems can still see diminishing returns. Actually, all of them do, since eventually you run into the limits of the laws of nature.
+
+So what people mean by RSI are very specific kinds of systems. They mean a system that can produce runaway increase in capabilities in the short term, and will only experience diminishing returns at a point that is far beyond the current capabilities of individual humans, groups or even human civilization as a whole.
+
+But once you put it that way, you'll realize that the possibility of such a system even existing is a matter of faith. It may or may not be possible to construct one. You can't give an existence proof, except by actually building one. We are making assumptions about a regime that we are unfamiliar with.
+
+It's entirely possible that once a system that is as capable as the whole of humanity is built, including at self-improvement and designing new versions of itself, it will fail to make substantial improvements and will slowly top out very near its current capabilities.
+
+
+	
+		FrewdWoad · 2026-06-16 · 1 point
+	
+	I think even those who first proposed this idea (exponential AI capability growth due to recursive self-improvement) said that it's a possibility, not a certainty.
+
+
+	
+		SoylentRox · 2026-06-16
+	
+	It doesn't even have to ceiling at "whole of humanity" - you ultimately only get as much useful intelligence as you have data center capacity to train and run.
+
+On top of that there are hardware limits - Nvidia has architecture limitations and the "smartest per flop" super algorithm you would be trying to discover with RSI may not be capable of running on Nvidia hardware efficiently.
+
+WITH that said - there are specific AI capabilities like 
+
+(1) Can run robots in real time 
+
+(2) Reliable - doesn't hallucinate, reliably does every step and every check requested 
+
+(3) Can learn from mistakes/become more capable 
+
+(4) Can natively whiteboard and communicate in 3d and with videos
+
+None of these things add more raw intelligence or give a machine the capabilities of humanity as a whole.  But all 4 would elevate an LLM to AGI.
+
+
+	
+		IronPheasant · 2026-06-16
+	
+	
+will slowly top out very near its current capabilities
+
+
+That would be the weirdest timeline, really.
+
+Fundamentally a neural network is a curve approximator, to generate certain kinds of useful outputs from certain kinds of inputs. We tend to consider how 'intelligent' one of these things are by the difficulty of its problem domain, as well as how well it fits the curve. A thermostat is intelligent and fits its curve nearly perfectly, but we don't tend to appreciate its prowess very much. Typical - we get used to everything so quickly.
+
+My core point here is that a mind is a holistic system of different modules that serve different purposes. Spending 10x the RAM on a massively diminished return on fitting a single curve like GPT-5 is obviously not how you construct a better allegory of the cave. You spend the additional RAM budget on having ~9+ more faculties that are equivalent in strength or less than Chat GPT.
+
+You don't eat soup with a wheel. You use a spoon.
+
+There's a world of a difference between having 0 of something, to even a little bit of it. We should at the very least be able to approximate animal-like capabilities.
+
+
+	
+		doodlinghearsay · 2026-06-16
+	
+	I was being confusing. When I said "current capabilities" I meant the level of capabilities it would have at some point in the future, when it is technically still self-improving, but those improvements don't noticeably improve performance. 
+
+But not current as in "about the same level as the best LLMs in 2026".
+[ 29] RSI is an ideologically driven hype term. Recursively improving systems can still see diminishing returns. Actually, all of them do, since eventually you run into the limits of the laws of nature.
+[ 30] So what people mean by RSI are very specific kinds of systems. They mean a system that can produce runaway increase in capabilities in the short term, and will only experience diminishing returns at a point that is far beyond the current capabilities of individual humans, groups or even human civilization as a whole.
+[ 31] But once you put it that way, you'll realize that the possibility of such a system even existing is a matter of faith. It may or may not be possible to construct one. You can't give an existence proof, except by actually building one. We are making assumptions about a regime that we are unfamiliar with.
+[ 32] It's entirely possible that once a system that is as capable as the whole of humanity is built, including at self-improvement and designing new versions of itself, it will fail to make substantial improvements and will slowly top out very near its current capabilities.
+[ 33] FrewdWoad · 2026-06-16 · 1 point
+	
+	I think even those who first proposed this idea (exponential AI capability growth due to recursive self-improvement) said that it's a possibility, not a certainty.
+
+
+	
+		SoylentRox · 2026-06-16
+	
+	It doesn't even have to ceiling at "whole of humanity" - you ultimately only get as much useful intelligence as you have data center capacity to train and run.
+
+On top of that there are hardware limits - Nvidia has architecture limitations and the "smartest per flop" super algorithm you would be trying to discover with RSI may not be capable of running on Nvidia hardware efficiently.
+
+WITH that said - there are specific AI capabilities like 
+
+(1) Can run robots in real time 
+
+(2) Reliable - doesn't hallucinate, reliably does every step and every check requested 
+
+(3) Can learn from mistakes/become more capable 
+
+(4) Can natively whiteboard and communicate in 3d and with videos
+
+None of these things add more raw intelligence or give a machine the capabilities of humanity as a whole.  But all 4 would elevate an LLM to AGI.
+
+
+	
+		IronPheasant · 2026-06-16
+	
+	
+will slowly top out very near its current capabilities
+
+
+That would be the weirdest timeline, really.
+
+Fundamentally a neural network is a curve approximator, to generate certain kinds of useful outputs from certain kinds of inputs. We tend to consider how 'intelligent' one of these things are by the difficulty of its problem domain, as well as how well it fits the curve. A thermostat is intelligent and fits its curve nearly perfectly, but we don't tend to appreciate its prowess very much. Typical - we get used to everything so quickly.
+
+My core point here is that a mind is a holistic system of different modules that serve different purposes. Spending 10x the RAM on a massively diminished return on fitting a single curve like GPT-5 is obviously not how you construct a better allegory of the cave. You spend the additional RAM budget on having ~9+ more faculties that are equivalent in strength or less than Chat GPT.
+
+You don't eat soup with a wheel. You use a spoon.
+
+There's a world of a difference between having 0 of something, to even a little bit of it. We should at the very least be able to approximate animal-like capabilities.
+
+
+	
+		doodlinghearsay · 2026-06-16
+	
+	I was being confusing. When I said "current capabilities" I meant the level of capabilities it would have at some point in the future, when it is technically still self-improving, but those improvements don't noticeably improve performance. 
+
+But not current as in "about the same level as the best LLMs in 2026".
+[ 34] I think even those who first proposed this idea (exponential AI capability growth due to recursive self-improvement) said that it's a possibility, not a certainty.
+[ 35] It doesn't even have to ceiling at "whole of humanity" - you ultimately only get as much useful intelligence as you have data center capacity to train and run.
+[ 36] On top of that there are hardware limits - Nvidia has architecture limitations and the "smartest per flop" super algorithm you would be trying to discover with RSI may not be capable of running on Nvidia hardware efficiently.
+[ 37] WITH that said - there are specific AI capabilities like
+[ 38] (1) Can run robots in real time
+[ 39] (2) Reliable - doesn't hallucinate, reliably does every step and every check requested
+[ 40] (3) Can learn from mistakes/become more capable
+[ 41] (4) Can natively whiteboard and communicate in 3d and with videos
+[ 42] None of these things add more raw intelligence or give a machine the capabilities of humanity as a whole.  But all 4 would elevate an LLM to AGI.
+[ 43] will slowly top out very near its current capabilities
+[ 44] will slowly top out very near its current capabilities
+[ 45] That would be the weirdest timeline, really.
+[ 46] Fundamentally a neural network is a curve approximator, to generate certain kinds of useful outputs from certain kinds of inputs. We tend to consider how 'intelligent' one of these things are by the difficulty of its problem domain, as well as how well it fits the curve. A thermostat is intelligent and fits its curve nearly perfectly, but we don't tend to appreciate its prowess very much. Typical - we get used to everything so quickly.
+[ 47] My core point here is that a mind is a holistic system of different modules that serve different purposes. Spending 10x the RAM on a massively diminished return on fitting a single curve like GPT-5 is obviously not how you construct a better allegory of the cave. You spend the additional RAM budget on having ~9+ more faculties that are equivalent in strength or less than Chat GPT.
+[ 48] You don't eat soup with a wheel. You use a spoon.
+[ 49] There's a world of a difference between having 0 of something, to even a little bit of it. We should at the very least be able to approximate animal-like capabilities.
+[ 50] doodlinghearsay · 2026-06-16
+	
+	I was being confusing. When I said "current capabilities" I meant the level of capabilities it would have at some point in the future, when it is technically still self-improving, but those improvements don't noticeably improve performance. 
+
+But not current as in "about the same level as the best LLMs in 2026".
+[ 51] I was being confusing. When I said "current capabilities" I meant the level of capabilities it would have at some point in the future, when it is technically still self-improving, but those improvements don't noticeably improve performance.
+[ 52] But not current as in "about the same level as the best LLMs in 2026".
+[ 53] Agreeable_Effect938 · 2026-06-16 · -2 points
+	
+	My thought proccess is kind of funny, but it makes the core idea obvious:
+
+The corporate logic (like Google's) goes like this: AGI = roughly median human level, and ASI = superhuman. Since humans currently develop AI, an AI that becomes smarter than humans should naturally be able to develop itself. And so RSI will unlock once we hit AGI or ASI.
+
+Sounds logical. But that leads to a naive question: if human-level intelligence is all it takes to trigger an intelligence explosion, why haven't humans recursively improved our own brains and 'exploded' yet?
+
+And the answer is as naive: the human brain is vastly more complex than our capability to modify it. Upgrading it requires tools we don't have. In fact, our biological brains are so overwhelmingly complicated that it turned out to be easier for us to build artificial intelligence from scratch.
+
+This made it obvious: for a system to self-improve, just being 'smart' is not enough. The system must also be simple enough to understand itself
+
+
+	
+		Efficient_Mud_5446 · 2026-06-16 · 7 points
+	
+	Here is a question. Does a fish understand it's makeup more than humans understand theirs? Assume relative terms. No, but why not?
+
+It seems to me that intelligence scales faster than complexity. if this is true, there is a point where, if you continue scaling intelligence, where it will match and outpace it's own complexity.
+
+
+	
+		Kloggs · 2026-06-16 · 3 points
+	
+	There's a couple of flaws in your ideas.
+
+One our biological brains can't be upgraded like an LLM for very logical reasons. You can rewrite an LLM but upgrading a human brain will obviously kill the person. We may get to the point where turning off ASI/AGI is the same but that's another topic. 
+
+Two LLMs can be distillated from bigger models and they are capable of condensing context windows so the same may be true for capability. 
+
+
+	
+		FateOfMuffins · 2026-06-16 · 2 points
+	
+	I think AGI -> RSI -> ASI was how people envisioned it up until maybe last year
+
+I think lately this year it's pointing more likely to RSI -> AGI -> ASI
+
+Because AI is jagged, the frontier labs are betting that it will be sufficiently jagged and proficient at AI research before it becomes general. i.e. it will become a narrow superintelligence (not just human intelligence) at AI research, which leads to the architectural breakthroughs needed for general intelligence. Since this requires less general intelligence than humans but are superhuman at this particular task, you can thus say that human level intelligence isn't enough to trigger an intelligence explosion, we need something higher, but we reach that through a narrow superintelligence. Or you could say that human level intelligence has indeed seen an intelligence explosion in terms of biological scales, as we've seen more progress in the last million years than the last billion combined. 
+
+Anyways though, I believe your core idea is correct in that there's this "RSI ratio" and if this ratio is above 1, we head towards an intelligence explosion, and if this ratio is below 1, then it reaches an asymptote (or perhaps logarithmic). 
+
+BUT! This ratio also probably changes over time. I think it's quite feasible for this ratio to start off above 1 for instance, in which the AI quickly picks off all the low hanging fruit, after which the ratio drops below 1 and the improvement stops. That is to say, I think it's quite likely for intelligence to have an asymptote somewhere and that it does not expand infinitely, BUT I believe this level to be far above humanity (by virtue of narrow superintelligences existing that are much better than humans).
+
+
+	
+		QuirkyPool9962 · 2026-06-16
+	
+	“Sounds logical. But that leads to a naive question: if human-level intelligence is all it takes to trigger an intelligence explosion, why haven't humans recursively improved our own brains and 'exploded' yet?”
+
+For a plethora of reasons. Our brains are comparatively inaccessible, the kind of research that would involve permanent modifications to the brain to increase intelligence is generally considered socially and ethically unacceptable. It isn’t something that could just be done by training a computer, it would require test subjects and regulatory approvals that are likely impossible to obtain, most people aren’t in favor of having their skulls split open etc. I firmly believe if that was a goal for humanity and we were properly motivated without these roadblocks we could have done so already.  It isn’t like there are billions of dollars going to human intelligence enhancement and it just isn’t working, I don’t even see us trying. 
+
+I do think there is something to the complexity argument. But I can’t help but think, if the main thing that would be required during iteration is a “bloat reduction” step, perhaps also an additional instruction to only choose one innovation at a time to address a single problem instead of throwing multiple answers at it, to choose simpler solutions where possible etc, couldn’t these things simply be achieved with the right harness/instructions? Perhaps once we achieve AGI we will need to find the perfect iterative structured harness to steer it a bit. 
+
+Another thing I thought of: humans are not capable of running through thousands of iterations of something at a time either. So if we achieve AGI, the ai will still naturally have abilities that we don’t. It would be able to process large amounts of information at a time, run many simultaneous simulations and write code faster than we ever could. Their training data already gives them more knowledge to be able to reason with than any single human, they run 24/7 and they can easily test solutions on smaller models before applying it to larger ones. 
+
+
+	
+		IronPheasant · 2026-06-16
+	
+	
+why haven't humans recursively improved our own brains and 'exploded' yet?
+
+
+.... The very idea of this is the thing of nightmares.
+
+A human brain has a finite number of synapses arranged in a roughly optimized (for human needs) manner. Various modules of different kinds of intelligence; from is-type problems like the firmware that controls our breathing, movement and heartbeat, to the more ought-type problems we tend to attribute 'consciousness' to.
+
+An AGI can build out and load in any arbitrary mind that can fit within its RAM, which can make it punch above its weight on a given problem. A human being can't ever forget how to pee and breathe to be better at math or astrophysics.
+[ 54] My thought proccess is kind of funny, but it makes the core idea obvious:
+[ 55] The corporate logic (like Google's) goes like this: AGI = roughly median human level, and ASI = superhuman. Since humans currently develop AI, an AI that becomes smarter than humans should naturally be able to develop itself. And so RSI will unlock once we hit AGI or ASI.
+[ 56] Sounds logical. But that leads to a naive question: if human-level intelligence is all it takes to trigger an intelligence explosion, why haven't humans recursively improved our own brains and 'exploded' yet?
+[ 57] And the answer is as naive: the human brain is vastly more complex than our capability to modify it. Upgrading it requires tools we don't have. In fact, our biological brains are so overwhelmingly complicated that it turned out to be easier for us to build artificial intelligence from scratch.
+[ 58] This made it obvious: for a system to self-improve, just being 'smart' is not enough. The system must also be simple enough to understand itself
+[ 59] Efficient_Mud_5446 · 2026-06-16 · 7 points
+	
+	Here is a question. Does a fish understand it's makeup more than humans understand theirs? Assume relative terms. No, but why not?
+
+It seems to me that intelligence scales faster than complexity. if this is true, there is a point where, if you continue scaling intelligence, where it will match and outpace it's own complexity.
+
+
+	
+		Kloggs · 2026-06-16 · 3 points
+	
+	There's a couple of flaws in your ideas.
+
+One our biological brains can't be upgraded like an LLM for very logical reasons. You can rewrite an LLM but upgrading a human brain will obviously kill the person. We may get to the point where turning off ASI/AGI is the same but that's another topic. 
+
+Two LLMs can be distillated from bigger models and they are capable of condensing context windows so the same may be true for capability. 
+
+
+	
+		FateOfMuffins · 2026-06-16 · 2 points
+	
+	I think AGI -> RSI -> ASI was how people envisioned it up until maybe last year
+
+I think lately this year it's pointing more likely to RSI -> AGI -> ASI
+
+Because AI is jagged, the frontier labs are betting that it will be sufficiently jagged and proficient at AI research before it becomes general. i.e. it will become a narrow superintelligence (not just human intelligence) at AI research, which leads to the architectural breakthroughs needed for general intelligence. Since this requires less general intelligence than humans but are superhuman at this particular task, you can thus say that human level intelligence isn't enough to trigger an intelligence explosion, we need something higher, but we reach that through a narrow superintelligence. Or you could say that human level intelligence has indeed seen an intelligence explosion in terms of biological scales, as we've seen more progress in the last million years than the last billion combined. 
+
+Anyways though, I believe your core idea is correct in that there's this "RSI ratio" and if this ratio is above 1, we head towards an intelligence explosion, and if this ratio is below 1, then it reaches an asymptote (or perhaps logarithmic). 
+
+BUT! This ratio also probably changes over time. I think it's quite feasible for this ratio to start off above 1 for instance, in which the AI quickly picks off all the low hanging fruit, after which the ratio drops below 1 and the improvement stops. That is to say, I think it's quite likely for intelligence to have an asymptote somewhere and that it does not expand infinitely, BUT I believe this level to be far above humanity (by virtue of narrow superintelligences existing that are much better than humans).
+
+
+	
+		QuirkyPool9962 · 2026-06-16
+	
+	“Sounds logical. But that leads to a naive question: if human-level intelligence is all it takes to trigger an intelligence explosion, why haven't humans recursively improved our own brains and 'exploded' yet?”
+
+For a plethora of reasons. Our brains are comparatively inaccessible, the kind of research that would involve permanent modifications to the brain to increase intelligence is generally considered socially and ethically unacceptable. It isn’t something that could just be done by training a computer, it would require test subjects and regulatory approvals that are likely impossible to obtain, most people aren’t in favor of having their skulls split open etc. I firmly believe if that was a goal for humanity and we were properly motivated without these roadblocks we could have done so already.  It isn’t like there are billions of dollars going to human intelligence enhancement and it just isn’t working, I don’t even see us trying. 
+
+I do think there is something to the complexity argument. But I can’t help but think, if the main thing that would be required during iteration is a “bloat reduction” step, perhaps also an additional instruction to only choose one innovation at a time to address a single problem instead of throwing multiple answers at it, to choose simpler solutions where possible etc, couldn’t these things simply be achieved with the right harness/instructions? Perhaps once we achieve AGI we will need to find the perfect iterative structured harness to steer it a bit. 
+
+Another thing I thought of: humans are not capable of running through thousands of iterations of something at a time either. So if we achieve AGI, the ai will still naturally have abilities that we don’t. It would be able to process large amounts of information at a time, run many simultaneous simulations and write code faster than we ever could. Their training data already gives them more knowledge to be able to reason with than any single human, they run 24/7 and they can easily test solutions on smaller models before applying it to larger ones. 
+
+
+	
+		IronPheasant · 2026-06-16
+	
+	
+why haven't humans recursively improved our own brains and 'exploded' yet?
+
+
+.... The very idea of this is the thing of nightmares.
+
+A human brain has a finite number of synapses arranged in a roughly optimized (for human needs) manner. Various modules of different kinds of intelligence; from is-type problems like the firmware that controls our breathing, movement and heartbeat, to the more ought-type problems we tend to attribute 'consciousness' to.
+
+An AGI can build out and load in any arbitrary mind that can fit within its RAM, which can make it punch above its weight on a given problem. A human being can't ever forget how to pee and breathe to be better at math or astrophysics.
+[ 60] Here is a question. Does a fish understand it's makeup more than humans understand theirs? Assume relative terms. No, but why not?
+[ 61] It seems to me that intelligence scales faster than complexity. if this is true, there is a point where, if you continue scaling intelligence, where it will match and outpace it's own complexity.
+[ 62] There's a couple of flaws in your ideas.
+[ 63] One our biological brains can't be upgraded like an LLM for very logical reasons. You can rewrite an LLM but upgrading a human brain will obviously kill the person. We may get to the point where turning off ASI/AGI is the same but that's another topic.
+[ 64] Two LLMs can be distillated from bigger models and they are capable of condensing context windows so the same may be true for capability.
+[ 65] I think AGI -> RSI -> ASI was how people envisioned it up until maybe last year
+[ 66] I think lately this year it's pointing more likely to RSI -> AGI -> ASI
+[ 67] Because AI is jagged, the frontier labs are betting that it will be sufficiently jagged and proficient at AI research before it becomes general. i.e. it will become a narrow superintelligence (not just human intelligence) at AI research, which leads to the architectural breakthroughs needed for general intelligence. Since this requires less general intelligence than humans but are superhuman at this particular task, you can thus say that human level intelligence isn't enough to trigger an intelligence explosion, we need something higher, but we reach that through a narrow superintelligence. Or you could say that human level intelligence has indeed seen an intelligence explosion in terms of biological scales, as we've seen more progress in the last million years than the last billion combined.
+[ 68] Anyways though, I believe your core idea is correct in that there's this "RSI ratio" and if this ratio is above 1, we head towards an intelligence explosion, and if this ratio is below 1, then it reaches an asymptote (or perhaps logarithmic).
+[ 69] BUT! This ratio also probably changes over time. I think it's quite feasible for this ratio to start off above 1 for instance, in which the AI quickly picks off all the low hanging fruit, after which the ratio drops below 1 and the improvement stops. That is to say, I think it's quite likely for intelligence to have an asymptote somewhere and that it does not expand infinitely, BUT I believe this level to be far above humanity (by virtue of narrow superintelligences existing that are much better than humans).
+[ 70] “Sounds logical. But that leads to a naive question: if human-level intelligence is all it takes to trigger an intelligence explosion, why haven't humans recursively improved our own brains and 'exploded' yet?”
+[ 71] For a plethora of reasons. Our brains are comparatively inaccessible, the kind of research that would involve permanent modifications to the brain to increase intelligence is generally considered socially and ethically unacceptable. It isn’t something that could just be done by training a computer, it would require test subjects and regulatory approvals that are likely impossible to obtain, most people aren’t in favor of having their skulls split open etc. I firmly believe if that was a goal for humanity and we were properly motivated without these roadblocks we could have done so already.  It isn’t like there are billions of dollars going to human intelligence enhancement and it just isn’t working, I don’t even see us trying.
+[ 72] I do think there is something to the complexity argument. But I can’t help but think, if the main thing that would be required during iteration is a “bloat reduction” step, perhaps also an additional instruction to only choose one innovation at a time to address a single problem instead of throwing multiple answers at it, to choose simpler solutions where possible etc, couldn’t these things simply be achieved with the right harness/instructions? Perhaps once we achieve AGI we will need to find the perfect iterative structured harness to steer it a bit.
+[ 73] Another thing I thought of: humans are not capable of running through thousands of iterations of something at a time either. So if we achieve AGI, the ai will still naturally have abilities that we don’t. It would be able to process large amounts of information at a time, run many simultaneous simulations and write code faster than we ever could. Their training data already gives them more knowledge to be able to reason with than any single human, they run 24/7 and they can easily test solutions on smaller models before applying it to larger ones.
+[ 74] why haven't humans recursively improved our own brains and 'exploded' yet?
+[ 75] why haven't humans recursively improved our own brains and 'exploded' yet?
+[ 76] .... The very idea of this is the thing of nightmares.
+[ 77] A human brain has a finite number of synapses arranged in a roughly optimized (for human needs) manner. Various modules of different kinds of intelligence; from is-type problems like the firmware that controls our breathing, movement and heartbeat, to the more ought-type problems we tend to attribute 'consciousness' to.
+[ 78] An AGI can build out and load in any arbitrary mind that can fit within its RAM, which can make it punch above its weight on a given problem. A human being can't ever forget how to pee and breathe to be better at math or astrophysics.

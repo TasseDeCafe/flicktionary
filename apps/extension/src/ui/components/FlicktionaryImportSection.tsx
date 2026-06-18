@@ -23,10 +23,27 @@ export const FlicktionaryImportSection = () => {
     meta: { showErrorToast: false },
   })
 
-  const error = importMutation.error?.message ?? null
+  // Toggle on-page word highlighting (Readwise-style) for the current article —
+  // routes through the background, which forwards the toggle to the active tab's
+  // content script. The popup closes itself afterward so the page is in focus.
+  const highlightMutation = useMutation({
+    mutationFn: async () => {
+      const response = (await browser.runtime.sendMessage({
+        sender: 'asbplayer-popup',
+        message: { command: 'flicktionary-toggle-highlighting' },
+      })) as { success: boolean; error?: string } | undefined
+      if (!response?.success) {
+        throw new Error(response?.error ?? t`Could not start highlighting on this page.`)
+      }
+      window.close()
+    },
+    meta: { showErrorToast: false },
+  })
+
+  const error = importMutation.error?.message ?? highlightMutation.error?.message ?? null
 
   return (
-    <div className='rounded-lg border p-3'>
+    <div className='flex flex-col gap-2 rounded-lg border p-3'>
       <Button
         type='button'
         variant='outline'
@@ -36,6 +53,16 @@ export const FlicktionaryImportSection = () => {
         disabled={importMutation.isPending}
       >
         {importMutation.isPending ? <Trans>Importing…</Trans> : <Trans>Import this article</Trans>}
+      </Button>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        className='w-full'
+        onClick={() => highlightMutation.mutate()}
+        disabled={highlightMutation.isPending}
+      >
+        <Trans>Highlight on this page</Trans>
       </Button>
       {error && <p className='text-destructive mt-2 text-xs'>{error}</p>}
     </div>
