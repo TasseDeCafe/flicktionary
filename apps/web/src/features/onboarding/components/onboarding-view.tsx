@@ -26,7 +26,17 @@ export const OnboardingView = () => {
     mutate({ nativeLanguage: language }, { onSuccess: () => setStep('welcome') })
   }
 
-  const handleGetStarted = () => {
+  // The X leaves onboarding without completing it. It lands on More — the only
+  // place a not-yet-onboarded user can reach — so they can sign out, delete the
+  // account, or re-enter onboarding. The app itself stays gated behind the
+  // mandatory values.
+  const handleExit = () => {
+    void navigate({ to: '/more' })
+  }
+
+  // Only reachable on the welcome step, after completeOnboarding flipped
+  // is_onboarded, so the gate lets /sessions through.
+  const handleFinish = () => {
     void navigate({ to: '/sessions' })
   }
 
@@ -35,7 +45,7 @@ export const OnboardingView = () => {
       <WizardShell
         currentStep={1}
         totalSteps={2}
-        onClose={handleGetStarted}
+        onClose={handleExit}
         primary={{
           label: t`Continue`,
           onClick: handleContinue,
@@ -56,11 +66,11 @@ export const OnboardingView = () => {
     <WizardShell
       currentStep={2}
       totalSteps={2}
-      onClose={handleGetStarted}
+      onClose={handleFinish}
       onBack={() => setStep('pick')}
       primary={{
         label: t`Get started`,
-        onClick: handleGetStarted,
+        onClick: handleFinish,
       }}
     >
       <WizardStepHeading

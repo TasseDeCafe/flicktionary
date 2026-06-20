@@ -1700,7 +1700,12 @@ msgstr "Trouvez un film ou une série et chargez ses sous-titres"
 msgid "Finding suggestions…"
 msgstr "Recherche de suggestions…"
 
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "Finish setting up Flicktionary"
+msgstr "Terminer la configuration de Flicktionary"
+
 #: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx
+#: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Finish setup"
 msgstr "Terminer la configuration"
 
@@ -4375,6 +4380,12 @@ msgstr "Vous pouvez regarder des vidéos avec sous-titres sans vous connecter �
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "You have already used your free trial."
 msgstr "Vous avez déjà utilisé votre essai gratuit."
+
+#: apps/web/src/features/more/components/more-tab-view.tsx
+msgid "You haven't finished onboarding yet. Complete it to start adding movies "
+"and texts."
+msgstr "Vous n'avez pas terminé l'intégration. Finalisez-la pour commencer à "
+"ajouter des films et des textes."
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "You used your free trial"
