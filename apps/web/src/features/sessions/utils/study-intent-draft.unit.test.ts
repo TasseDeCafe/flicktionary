@@ -27,10 +27,10 @@ describe('draftToStudyIntent', () => {
     })
   })
 
-  it("maps the exact-form toggle to formScope 'both'", () => {
+  it("maps the exact-form toggle to formScope 'form'", () => {
     expect(
       draftToStudyIntent({ recognition: true, production: false, pronunciation: false, exactForm: true, touched: true })
-    ).toEqual({ skills: ['meaning_recognition'], formScope: 'both' })
+    ).toEqual({ skills: ['meaning_recognition'], formScope: 'form' })
   })
 
   it('an emptied (touched, 0-skill) draft is undefined — no intent on the wire, a pending triage card', () => {
