@@ -87,26 +87,41 @@ export const StudySkillCards = ({
                 setTooltipKey((current) => (current === card.key ? null : current))
               }}
               className={cn(
-                'group/skill relative flex flex-col items-center gap-1.5 rounded-lg border px-2 py-2.5 text-center transition-colors',
+                'group/skill relative flex min-h-20 flex-col justify-between rounded-xl border-[1.5px] px-2 py-3 text-center transition-colors',
                 'focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none',
                 card.available === false
                   ? 'border-border bg-background text-muted-foreground/60 cursor-not-allowed'
                   : card.selected
-                    ? 'border-foreground bg-muted text-foreground'
-                    : 'border-border bg-background text-foreground/70 hover:border-foreground/40 hover:bg-accent hover:text-foreground',
+                    ? 'border-foreground bg-muted text-foreground ring-foreground ring-1'
+                    : 'border-border bg-background text-foreground hover:border-foreground/40 hover:bg-accent',
                 card.disabled && card.available !== false && 'cursor-not-allowed'
               )}
             >
-              {/* Filled checkmark badge in the corner when selected. */}
-              {card.selected && card.available !== false && (
-                <span className='bg-foreground text-background absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full'>
-                  <Check className='h-2.5 w-2.5' strokeWidth={3} />
-                </span>
-              )}
-              <span className={cn('flex h-5 w-5 items-center justify-center', card.selected && 'text-foreground')}>
+              {/* Top-right selection badge: a filled check when selected, an
+                  empty ring when not — so every card reads as a multi-select
+                  toggle. Hidden only when the skill is unavailable. */}
+              {card.available !== false &&
+                (card.selected ? (
+                  <span className='bg-foreground text-background absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full'>
+                    <Check className='h-3 w-3' strokeWidth={3} />
+                  </span>
+                ) : (
+                  <span
+                    aria-hidden
+                    className='border-muted-foreground/30 absolute top-2 right-2 h-5 w-5 rounded-full border-1'
+                  />
+                ))}
+              {/* Icon pinned top-left (nudged in slightly); label sits at the
+                  bottom (justify-between). */}
+              <span
+                className={cn(
+                  'ml-1 flex h-5 w-5 items-center justify-center',
+                  card.available === false ? '' : card.selected ? 'text-foreground' : 'text-muted-foreground'
+                )}
+              >
                 {card.icon}
               </span>
-              <span className='text-xs leading-tight font-medium'>{card.label}</span>
+              <span className='text-[11px] leading-tight font-semibold'>{card.label}</span>
 
               {tooltip && tooltipKey === card.key && (
                 <span
@@ -151,7 +166,7 @@ const FormScopeControl = ({ formScope, surfaceForm, onFormScopeChange, disabled 
     { value: 'form', label: t`Exact form`, subtitle: surfaceForm },
   ]
   return (
-    <div className={cn('bg-muted flex gap-1 rounded-lg p-1', disabled && 'opacity-50')}>
+    <div className={cn('bg-muted flex gap-1 rounded-xl p-1', disabled && 'opacity-50')}>
       {options.map((option) => {
         const active = formScope === option.value
         return (
@@ -162,7 +177,7 @@ const FormScopeControl = ({ formScope, surfaceForm, onFormScopeChange, disabled 
             disabled={disabled}
             onClick={() => onFormScopeChange(option.value)}
             className={cn(
-              'flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+              'flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors',
               'focus-visible:ring-ring/50 focus-visible:ring-[2px] focus-visible:outline-none',
               disabled && 'cursor-not-allowed',
               active ? 'bg-background text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'

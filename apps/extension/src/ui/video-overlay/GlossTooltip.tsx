@@ -41,7 +41,7 @@ const CARD_FOOTER_CLASS = 'bg-popover sticky bottom-0 z-10 mt-auto flex flex-col
 // video, where the light card would glare. FloatingSheetContent is the same
 // scroll-capped Radix popover surface the web reader uses; `desktopOnly` keeps
 // the extension's desktop overlay anchored even in narrow browser windows.
-const POPOVER_CONTENT_CLASS = 'dark pointer-events-auto z-[2147483647]'
+const POPOVER_CONTENT_CLASS = 'dark w-88 pointer-events-auto z-[2147483647]'
 
 // The gloss body, shared by the preview and saved modes: the web app's
 // GlossCardBody (IPA + gloss + POS/register badges + loading skeletons) plus
