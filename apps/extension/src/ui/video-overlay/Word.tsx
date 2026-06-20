@@ -18,7 +18,7 @@ export interface WordProps {
   savedRoundStart?: boolean
   savedRoundEnd?: boolean
   // The pointer entered this word's box. `element` is the live span, used as the
-  // floating-ui anchor and for the post-debounce "pointer still here" check.
+  // FloatingSheet anchor and for the post-debounce "pointer still here" check.
   onEnter: (element: HTMLElement) => void
   onLeave: () => void
   onContextMenu: (element: HTMLElement) => void

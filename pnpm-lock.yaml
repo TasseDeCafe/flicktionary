@@ -30,9 +30,6 @@ catalogs:
     '@flatten-js/interval-tree':
       specifier: 1.0.19
       version: 1.0.19
-    '@floating-ui/dom':
-      specifier: 1.7.6
-      version: 1.7.6
     '@formatjs/intl-locale':
       specifier: 5.3.1
       version: 5.3.1
@@ -900,9 +897,6 @@ importers:
       '@flicktionary/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@floating-ui/dom':
-        specifier: 'catalog:'
-        version: 1.7.6
       '@lingui/core':
         specifier: 'catalog:'
         version: 6.2.0
