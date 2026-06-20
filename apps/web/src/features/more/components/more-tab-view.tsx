@@ -2,6 +2,7 @@ import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { toast } from 'sonner'
 import { AlertOctagon, Globe, Languages, LifeBuoy, LogOut, Palette, Sparkles, UserCircle, Wrench } from 'lucide-react'
+import { Button } from '@flicktionary/ui/components/button'
 import { Switch } from '@flicktionary/ui/components/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@flicktionary/ui/components/select'
 import { i18nConfig } from '@flicktionary/i18n/i18n-config'
@@ -72,6 +73,25 @@ export const MoreTabView = () => {
   return (
     <div className='mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6'>
       <h1 className='text-2xl font-bold'>{t`More`}</h1>
+
+      {/* Re-entry into onboarding for a user who left it via the X. The gate keeps
+          the rest of the app walled until the mandatory values are provided. */}
+      {prefs && !prefs.isOnboarded && (
+        <div className='border-border bg-accent/40 flex flex-col gap-3 rounded-xl border p-4'>
+          <div className='flex items-start gap-3'>
+            <Sparkles className='text-foreground mt-0.5 size-5 shrink-0' />
+            <div className='flex flex-col gap-1'>
+              <p className='font-semibold'>{t`Finish setting up Flicktionary`}</p>
+              <p className='text-muted-foreground text-sm'>
+                {t`You haven't finished onboarding yet. Complete it to start adding movies and texts.`}
+              </p>
+            </div>
+          </div>
+          <Button size='lg' className='w-full sm:w-auto sm:self-start' onClick={() => navigate({ to: '/onboarding' })}>
+            {t`Finish setup`}
+          </Button>
+        </div>
+      )}
 
       <MoreListSection title={t`General`}>
         <MoreListRow
