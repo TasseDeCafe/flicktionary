@@ -1,11 +1,11 @@
 ---
 name: release-extension
-description: Cut a browser-extension release given a target version. Drives the two-phase flow — bump apps/extension/package.json + open a PR when the version isn't on main yet, then (once merged) tag main and push so the release workflow publishes to the Chrome Web Store. Run when the user says "release the extension X.Y.Z" / "cut extension vX.Y.Z" / "publish the extension".
+description: Cut a browser-extension release given a target version. Drives the two-phase flow — bump apps/extension/package.json + open a PR when the version isn't on main yet, then (once merged) tag main and push so the release workflow publishes to the Chrome Web Store and Firefox Add-ons (AMO). Run when the user says "release the extension X.Y.Z" / "cut extension vX.Y.Z" / "publish the extension".
 disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git fetch:*), Bash(git checkout:*), Bash(git switch:*), Bash(git branch:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git tag:*), Bash(git rev-parse:*), Bash(git show:*), Bash(git ls-remote:*), Bash(gh pr create:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(gh run list:*), Bash(gh run watch:*), Bash(gh run view:*), Bash(node:*), Read, Edit
 ---
 
-You are cutting a release of the browser extension (`apps/extension`). The release is tag-driven: pushing a `vX.Y.Z` tag fires `.github/workflows/release-extension.yaml`, which builds the zips, creates a GitHub Release, and **submits to the Chrome Web Store** (the Firefox/AMO step is currently commented out). The tag (minus `v`) must equal `apps/extension/package.json`'s `version` on the tagged commit, or the workflow's verify step fails.
+You are cutting a release of the browser extension (`apps/extension`). The release is tag-driven: pushing a `vX.Y.Z` tag fires `.github/workflows/release-extension.yaml`, which builds the zips, creates a GitHub Release, and **submits to both the Chrome Web Store and Firefox Add-ons (AMO)**. Each store step skips itself with a notice if its credentials aren't configured, so a missing AMO key never blocks the Chrome submission (or vice versa). The tag (minus `v`) must equal `apps/extension/package.json`'s `version` on the tagged commit, or the workflow's verify step fails.
 
 `apps/extension/RELEASING.md` is the companion reference (one-time OAuth/secret setup, the secrets table, troubleshooting). This skill does **not** duplicate it — link to it when a setup/credential problem comes up.
 
@@ -49,7 +49,7 @@ The bump is on `main`. Now publish.
 1. Be on `main`, up to date: `git checkout main`, confirm `git rev-parse HEAD` == `git rev-parse origin/main` (pull if behind), working tree clean.
 2. Re-verify `apps/extension/package.json` on the checked-out `main` reads `X.Y.Z` — never tag a commit whose version doesn't match.
 3. Capture the commit being tagged: `git rev-parse --short HEAD`.
-4. **Confirm before the irreversible action.** Tell the user plainly: this tags `vX.Y.Z` on `<short-sha>` and pushes it, which triggers a **live Chrome Web Store submission** (auto-publishes when CWS review passes). Also remind: don't cut a new tag while a previous CWS submission is still in review (the API returns `ITEM_NOT_UPDATABLE`). **Wait for an explicit yes.** Never push the tag without it.
+4. **Confirm before the irreversible action.** Tell the user plainly: this tags `vX.Y.Z` on `<short-sha>` and pushes it, which triggers **live submissions to both the Chrome Web Store and Firefox Add-ons (AMO)** (each auto-publishes when its review passes). Also remind: don't cut a new tag while a previous CWS submission is still in review (the API returns `ITEM_NOT_UPDATABLE`). **Wait for an explicit yes.** Never push the tag without it.
 5. `git tag v<X.Y.Z>` then `git push origin v<X.Y.Z> --no-verify`.
    - `--no-verify` is intentional and safe: a tag push carries no new code, but the pre-push hook would still run the entire lint/typecheck/test/build suite (minutes) for nothing, and the workflow re-runs all checks anyway. (The hook now *allows* tag pushes; `--no-verify` is purely to skip the redundant local run.)
 6. Go to Step 4.
@@ -57,10 +57,11 @@ The bump is on `main`. Now publish.
 ## Step 4 — Watch the run and report
 
 1. `gh run watch $(gh run list --workflow=release-extension.yaml --limit 1 --json databaseId -q '.[0].databaseId') --exit-status` (give the run a moment to register first; re-list if it doesn't appear).
-2. On success: report that the Chrome submission went through (review is asynchronous — "submitted", not yet "live") and link the run + the GitHub Release.
-3. On failure: name the failing step and surface the relevant log lines. Map common causes to `RELEASING.md` → Troubleshooting:
-   - `invalid_grant` → refresh token died (consent screen in Testing mode, revoked token, deleted client).
-   - `ITEM_NOT_UPDATABLE` → a prior submission is still in review; re-run the failed job later, no re-tag needed.
+2. On success: report that both the Chrome and Firefox/AMO submissions went through (review is asynchronous — "submitted", not yet "live"; and either store step may have skipped with a notice if its credentials aren't set — check the step logs) and link the run + the GitHub Release.
+3. On failure: name the failing step and surface the relevant log lines. The two store submissions are independent steps, so one can fail or skip while the other succeeds. Map common causes to `RELEASING.md` → Troubleshooting:
+   - `invalid_grant` (Chrome) → refresh token died (consent screen in Testing mode, revoked token, deleted client).
+   - `ITEM_NOT_UPDATABLE` (Chrome) → a prior submission is still in review; re-run the failed job later, no re-tag needed.
+   - AMO step fails or skips → `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` missing or invalid, or the add-on id in the manifest's `browser_specific_settings.gecko.id` doesn't match the AMO listing; reviewer notes come from `amo-metadata.json`.
    - `Cannot find module .../messages.ts` → i18n catalogs weren't compiled (should be fixed by the workflow's compile step; if it regressed, that's the cause).
    - version-match failure → the tag and `package.json` on the tagged commit disagree (wrong commit tagged).
 

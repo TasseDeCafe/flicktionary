@@ -106,33 +106,32 @@ jobs:
             --chrome-client-secret "$CHROME_CLIENT_SECRET" \
             --chrome-refresh-token "$CHROME_REFRESH_TOKEN"
 
-#      # Uncomment everything below when the Firefox extension is published, then remove this line
-#      # Submits the new version to addons.mozilla.org for review (channel
-#      # `listed` → AMO publishes automatically once review passes). We use
-#      # Mozilla's own `web-ext sign` here instead of publish-browser-extension
-#      # because only web-ext can attach the reviewer notes: --amo-metadata feeds
-#      # apps/extension/amo-metadata.json, whose `version.approval_notes` is the
-#      # AMO "Notes to Reviewer" field (build instructions for our bundled WXT
-#      # output — keep it in sync with the human copy in AMO-LISTING.md).
-#      # --upload-source-code attaches the workspace source archive `wxt zip`
-#      # already produced, so AMO can rebuild the minified bundle. web-ext reads
-#      # the add-on id from the manifest's browser_specific_settings.gecko.id.
-#      # Pinned: 10.4.0 is current and runs on Node 24; an unpinned npx would run
-#      # whatever the registry serves next. Skips with a notice until the AMO API
-#      # credentials exist, so tagging still cuts a GitHub release without them.
-#      - name: Submit to Firefox Add-ons (AMO)
-#        env:
-#          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
-#          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-#        run: |
-#          if [ -z "$AMO_JWT_ISSUER" ]; then
-#            echo "::notice::AMO API credentials not configured; skipping Firefox submission"
-#            exit 0
-#          fi
-#          npx -y web-ext@10.4.0 sign \
-#            --channel listed \
-#            --source-dir apps/extension/.output/firefox-mv2 \
-#            --upload-source-code apps/extension/.output/*-sources.zip \
-#            --amo-metadata apps/extension/amo-metadata.json \
-#            --api-key "$AMO_JWT_ISSUER" \
-#            --api-secret "$AMO_JWT_SECRET"
+      # Submits the new version to addons.mozilla.org for review (channel
+      # `listed` → AMO publishes automatically once review passes). We use
+      # Mozilla's own `web-ext sign` here instead of publish-browser-extension
+      # because only web-ext can attach the reviewer notes: --amo-metadata feeds
+      # apps/extension/amo-metadata.json, whose `version.approval_notes` is the
+      # AMO "Notes to Reviewer" field (build instructions for our bundled WXT
+      # output — keep it in sync with the human copy in AMO-LISTING.md).
+      # --upload-source-code attaches the workspace source archive `wxt zip`
+      # already produced, so AMO can rebuild the minified bundle. web-ext reads
+      # the add-on id from the manifest's browser_specific_settings.gecko.id.
+      # Pinned: 10.4.0 is current and runs on Node 24; an unpinned npx would run
+      # whatever the registry serves next. Skips with a notice until the AMO API
+      # credentials exist, so tagging still cuts a GitHub release without them.
+      - name: Submit to Firefox Add-ons (AMO)
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$AMO_JWT_ISSUER" ]; then
+            echo "::notice::AMO API credentials not configured; skipping Firefox submission"
+            exit 0
+          fi
+          npx -y web-ext@10.4.0 sign \
+            --channel listed \
+            --source-dir apps/extension/.output/firefox-mv2 \
+            --upload-source-code apps/extension/.output/*-sources.zip \
+            --amo-metadata apps/extension/amo-metadata.json \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET"
