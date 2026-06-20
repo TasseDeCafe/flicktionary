@@ -37,11 +37,11 @@ jobs:
       SUPABASE_CONNECTION_STRING: ${{ secrets.SUPABASE_PROD_SESSION_POOLER_URL }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -50,7 +50,7 @@ jobs:
       # The dump changes infrequently; bump the cache key (or clear caches in
       # the GH UI) to force a fresh download.
       - name: Cache kaikki download
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/backend/scripts/.cache/kaikki
           key: kaikki-raw-v1
