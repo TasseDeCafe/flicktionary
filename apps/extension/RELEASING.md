@@ -20,8 +20,11 @@ hand if you're not using the skill.
 
 3. `.github/workflows/release-extension.yaml` then: typechecks, builds both zips under
    `doppler run` (project `extension`, config `prd` — the real prod env vars), creates a
-   GitHub release with the zips attached, and uploads + submits the Chrome zip to the
-   Chrome Web Store for review. Publishing happens automatically when CWS review passes.
+   GitHub release with the zips attached, and submits both stores — the Chrome zip to the
+   Chrome Web Store (via `publish-browser-extension`) and the Firefox zip to
+   addons.mozilla.org (via `web-ext sign --channel listed`). Each store step skips itself
+   with a notice if its credentials aren't set, so one store missing keys never blocks the
+   other. Publishing happens automatically when each store's review passes.
 
 **Don't tag while a previous CWS submission is still in review** — the API rejects
 uploads with `ITEM_NOT_UPDATABLE` until the pending review resolves (including the very
