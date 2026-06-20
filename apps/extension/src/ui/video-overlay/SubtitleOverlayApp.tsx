@@ -134,6 +134,7 @@ interface GlossSaveHandoff {
   lineIndex: number
   anchor: HTMLElement
   hover: boolean
+  initialGloss?: GlossData
 }
 
 // Which gloss popover is open (anchor + lookup identity). The gloss CONTENT
@@ -159,6 +160,7 @@ interface SavedPopoverState {
   lineIndex: number
   anchor: HTMLElement
   highlightId: string
+  initialGloss?: GlossData
   // True while the popover was opened by HOVERING the saved span (not a click)
   // and the pointer hasn't entered it yet: it then dismisses like the hover
   // gloss (the 150 ms grace timer on word-leave) and yields to hovering other
@@ -506,6 +508,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               anchor: handoff.anchor,
               highlightId: outcome.highlight.id,
               hover: handoff.hover,
+              initialGloss: handoff.initialGloss,
             })
           } else {
             hideSaveSourceGloss()
@@ -542,10 +545,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
 
   const saveSingle = useCallback(
     (line: SubtitleLineModel, token: LineToken, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
-      const translation =
-        queryClient.getQueryData<GlossData>(
-          glossQueryKey(token.text, line.text, savedStore.getState().targetLanguage ?? '')
-        )?.gloss ?? ''
+      const cachedGloss = queryClient.getQueryData<GlossData>(
+        glossQueryKey(token.text, line.text, savedStore.getState().targetLanguage ?? '')
+      )
+      const translation = cachedGloss?.gloss ?? ''
+      const fastGloss = cachedGloss
+        ? { gloss: cachedGloss.gloss, pos: cachedGloss.pos, register: cachedGloss.register }
+        : undefined
       const segmentInfo: SaveWordSegmentInfo = {
         startSegmentIndex: line.index,
         endSegmentIndex: undefined,
@@ -553,7 +559,15 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         endCharOffset: token.charEnd,
       }
       void handleOutcome(
-        { word: token.text, sentence: line.text, translation, segmentInfo, closures, studyIntent },
+        {
+          word: token.text,
+          sentence: line.text,
+          translation,
+          segmentInfo,
+          closures,
+          studyIntent,
+          ...(fastGloss ? { fastGloss } : {}),
+        },
         handoff
       )
     },
@@ -575,10 +589,13 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
       const words = selectedWords.map((w) => w.text).join(' ')
       const first = selectedWords[0]
       const last = selectedWords[selectedWords.length - 1]
-      const translation =
-        queryClient.getQueryData<GlossData>(
-          glossQueryKey(words, tl.line.text, savedStore.getState().targetLanguage ?? '')
-        )?.gloss ?? ''
+      const cachedGloss = queryClient.getQueryData<GlossData>(
+        glossQueryKey(words, tl.line.text, savedStore.getState().targetLanguage ?? '')
+      )
+      const translation = cachedGloss?.gloss ?? ''
+      const fastGloss = cachedGloss
+        ? { gloss: cachedGloss.gloss, pos: cachedGloss.pos, register: cachedGloss.register }
+        : undefined
       // Single line → start and end segment are the same cue, so endSegmentIndex
       // is undefined (matches the legacy readSegmentRange payload).
       const segmentInfo: SaveWordSegmentInfo = {
@@ -588,7 +605,15 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         endCharOffset: last.charEnd,
       }
       void handleOutcome(
-        { word: words, sentence: tl.line.text, translation, segmentInfo, closures, studyIntent },
+        {
+          word: words,
+          sentence: tl.line.text,
+          translation,
+          segmentInfo,
+          closures,
+          studyIntent,
+          ...(fastGloss ? { fastGloss } : {}),
+        },
         handoff
       )
     },
@@ -794,6 +819,9 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   const onWordContextMenu = useCallback(
     (tl: TokenizedLine, token: LineToken, element: HTMLElement) => {
       const g = glossRef.current
+      const initialGloss = g
+        ? queryClient.getQueryData<GlossData>(glossQueryKey(g.word, g.sentence, savedTargetLanguage ?? ''))
+        : undefined
       clearHoverTimer()
       const toggleChunk = (chunkTl: TokenizedLine, minOrd: number, maxOrd: number, handoff?: GlossSaveHandoff) => {
         const exact = findSavedChunkExact(chunkTl, minOrd, maxOrd)
@@ -817,7 +845,12 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         token.ordinal >= g.save.minOrd &&
         token.ordinal <= g.save.maxOrd
       ) {
-        toggleChunk(g.save.tl, g.save.minOrd, g.save.maxOrd, { lineIndex: g.lineIndex, anchor: g.anchor, hover: true })
+        toggleChunk(g.save.tl, g.save.minOrd, g.save.maxOrd, {
+          lineIndex: g.lineIndex,
+          anchor: g.anchor,
+          hover: true,
+          initialGloss,
+        })
         return
       }
       // Mid-drag right-click: the live selection still exists (no popover yet).
@@ -842,12 +875,21 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
         g.save.token.ordinal === token.ordinal
       if (glossIsForToken) {
         setGlossSaving(true)
-        saveSingle(tl.line, token, undefined, { lineIndex: g.lineIndex, anchor: g.anchor, hover: true })
+        saveSingle(tl.line, token, undefined, { lineIndex: g.lineIndex, anchor: g.anchor, hover: true, initialGloss })
       } else {
         saveSingle(tl.line, token)
       }
     },
-    [interaction, saveChunk, saveSingle, findSavedChunkExact, savedRangeForToken, removeHighlight]
+    [
+      interaction,
+      queryClient,
+      savedTargetLanguage,
+      saveChunk,
+      saveSingle,
+      findSavedChunkExact,
+      savedRangeForToken,
+      removeHighlight,
+    ]
   )
 
   const onWordMouseDown = useCallback(
@@ -1110,6 +1152,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 anchor={savedPopover.anchor}
                 sessionId={savedSessionId}
                 highlight={savedPopoverHighlight}
+                initialGloss={savedPopover.initialGloss}
                 onRemoved={() => {
                   // No success toast — the yellow wash disappearing is the
                   // feedback (web parity; saves are equally silent).
@@ -1120,6 +1163,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                   savedStore.getState().patchNote(savedPopoverHighlight.id, note, presetTags)
                 }
                 onClose={closeSavedPopover}
+                portalContainer={popoverContainer}
                 onPointerEnter={() => {
                   // Hover bridge for a hover-opened popover: entering cancels
                   // the pending word-leave hide and pins it sticky.
@@ -1147,6 +1191,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 setGlossSaving(true)
                 // Sticky swap: the pointer is inside the popover (it clicked Save).
                 const handoff: GlossSaveHandoff = { lineIndex: gloss.lineIndex, anchor: gloss.anchor, hover: false }
+                if (glossQuery.data) handoff.initialGloss = glossQuery.data
                 if (gloss.save.kind === 'chunk')
                   saveChunk(gloss.save.tl, gloss.save.minOrd, gloss.save.maxOrd, studyIntent, handoff)
                 else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent, handoff)
@@ -1154,6 +1199,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               onPointerEnter={onGlossPointerEnter}
               onPointerLeave={scheduleGlossHide}
               onOutsidePointerDown={onGlossOutsidePointerDown}
+              portalContainer={popoverContainer}
             />
           )}
           {cefr && (

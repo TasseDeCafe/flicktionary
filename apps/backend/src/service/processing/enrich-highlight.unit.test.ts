@@ -51,7 +51,7 @@ const highlight = {
   study_intent_applied_at: null as string | null,
 }
 
-const studyIntent = { skills: ['meaning_production'], formScope: 'both' }
+const studyIntent = { skills: ['meaning_production'], formScope: 'form' }
 
 const highlightChunk = {
   source: 'highlight' as const,

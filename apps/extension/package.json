@@ -30,7 +30,6 @@
     "@flicktionary/core": "workspace:*",
     "@flicktionary/i18n": "workspace:*",
     "@flicktionary/ui": "workspace:*",
-    "@floating-ui/dom": "catalog:",
     "@lingui/core": "catalog:",
     "@lingui/react": "catalog:",
     "@mozilla/readability": "catalog:",

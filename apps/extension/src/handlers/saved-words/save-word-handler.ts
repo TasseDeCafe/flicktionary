@@ -127,6 +127,7 @@ export default class SaveWordHandler {
       // Study options from the gloss tooltip; the backend enrichment job
       // applies them once the term materializes (full-set semantics).
       studyIntent: message.studyIntent,
+      fastGloss: message.fastGloss,
     })
 
     const indexBySegmentId: Record<string, number> = {}
@@ -149,6 +150,10 @@ export default class SaveWordHandler {
         note: created.note,
         presetTags: created.presetTags,
         fastGloss: created.fastGloss,
+        // Pre-enrich on a fresh save: carry the chosen intent; chunkId is null
+        // until the enrich job materializes the term.
+        studyIntent: created.studyIntent,
+        chunkId: created.chunkId,
       },
       sessionId: cached.sessionId,
       targetLanguage: cached.targetLanguage,

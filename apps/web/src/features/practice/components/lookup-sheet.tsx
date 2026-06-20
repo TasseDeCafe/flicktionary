@@ -203,8 +203,7 @@ export const LookupSheet = ({
           {selection && (
             <FloatingSheetBody>
               <StudyOptionsSection
-                // Remount per selection so the disclosure re-collapses with the
-                // draft reset above.
+                // Remount per selection so the draft re-arms from the reset above.
                 key={`${practiceTextId}:${selection.text}`}
                 value={studyDraft}
                 onChange={setStudyDraft}

@@ -793,6 +793,16 @@ const getFirstCardPointerForChunk = async (params: {
   return { cardId: rows[0]?.card_id ?? null, sessionId: rows[0]?.study_session_id ?? null }
 }
 
+// Thrown by setFacetEnabled when disabling would leave a kept term with zero
+// enabled facets. The router maps it to a 409 CONFLICT — it's a client-correctable
+// invariant (delete the term instead), not a 500.
+export class LastFacetFloorError extends Error {
+  constructor() {
+    super('Cannot disable the last enabled facet of a kept term')
+    this.name = 'LastFacetFloorError'
+  }
+}
+
 // Enable or disable a single study facet (skill x target_form) on a term. The
 // facet's `disabled_at` IS the membership flag — there is no more
 // user_lookups.learning_mode column. Enabling the citation meaning_production
@@ -822,15 +832,41 @@ const setFacetEnabled = async (params: {
     // Ownership / existence guard. The facet UPDATEs below are not user-scoped
     // (study_facets has no user_id filter here), so verify the term first.
     const owned = (await tx`
-      SELECT id
+      SELECT id, count
       FROM public.user_lookups
       WHERE id = ${params.userLookupId}
         AND user_id = ${params.userId}
         AND deleted_at IS NULL
-    `) as Array<{ id: string }>
+    `) as Array<{ id: string; count: number }>
     if (!owned[0]) return null
 
     const payloadJson = params.payload ? sql.json(params.payload as unknown as postgres.JSONValue) : null
+
+    // Floor guard: a KEPT term (count > 0) must keep ≥1 enabled facet somewhere —
+    // a term studied for nothing is an orphan. Reject a disable that would zero
+    // out its last enabled facet. Pre-keep terms keep their freedom to drop to
+    // zero (a pending triage card with no pre-configured skills). Re-disabling an
+    // already-disabled facet is a no-op and never trips the guard.
+    if (!params.enabled && owned[0].count > 0) {
+      const otherEnabled = (await tx`
+        SELECT COUNT(*)::int AS n
+        FROM public.study_facets
+        WHERE user_lookup_id = ${params.userLookupId}
+          AND disabled_at IS NULL
+          AND NOT (skill = ${params.skill} AND target_form = ${params.targetForm})
+      `) as Array<{ n: number }>
+      const thisEnabled = (await tx`
+        SELECT 1
+        FROM public.study_facets
+        WHERE user_lookup_id = ${params.userLookupId}
+          AND skill = ${params.skill}
+          AND target_form = ${params.targetForm}
+          AND disabled_at IS NULL
+      `) as Array<{ '?column?': number }>
+      if (thisEnabled[0] && (otherEnabled[0]?.n ?? 0) === 0) {
+        throw new LastFacetFloorError()
+      }
+    }
 
     if (params.enabled) {
       // A NEW form facet (non-empty target_form) added WITHOUT render data is

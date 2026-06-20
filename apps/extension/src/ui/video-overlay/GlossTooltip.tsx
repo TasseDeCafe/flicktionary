@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
-import { PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, Eye, Lock, Mic, Pencil, PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
   draftToStudyIntent,
@@ -9,72 +8,40 @@ import {
   type StudyIntentDraft,
   type StudyIntentValue,
 } from '@flicktionary/ui/components/study-options-section'
+import { StudySkillCards, type StudySkillCardItem } from '@flicktionary/ui/components/study-skill-cards'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
 import { Button } from '@flicktionary/ui/components/button'
+import { FloatingSheet, FloatingSheetContent } from '@flicktionary/ui/components/floating-sheet'
 import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
 import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
+import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
-import type { SavedHighlightDto } from '@asbplayer-fork/common'
+import type { FlicktionaryStudyFacetDto, SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
 import {
   deleteSavedHighlight,
   fetchSavedGloss,
+  fetchStudyTargets,
   updateSavedHighlightNote,
+  type FlicktionaryFacetSkill,
+  type GlossData,
 } from '../../services/flicktionary/flicktionary-client'
 
 // The shared gloss view state under this file's historical name — the overlay
 // never constructs the web-only `idle` member.
 export type GlossContent = GlossViewState
 
-// Both popovers hardcode the web app's DARK theme: they always float over
-// video, where the light card would glare. The `dark` class on the root makes
-// the shared tokens (tokens.css `.dark { … }`, adopted into the popover shadow
-// root) and every `dark:` variant in the shared components resolve — so the
-// card looks exactly like the web gloss sheet in dark mode.
-const POPOVER_CARD_CLASS =
-  'dark pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-80 max-w-[90vw] flex-col rounded-md border bg-popover text-popover-foreground shadow-xl px-2 py-0'
-
 // Web FloatingSheet section paddings (header/body/footer), so the composed
 // card matches the web sheet's rhythm.
 const CARD_HEADER_CLASS = 'flex flex-col gap-1 px-2 pt-3 pb-2'
 const CARD_BODY_CLASS = 'flex flex-col gap-2 px-2 pb-2 text-sm'
-const CARD_FOOTER_CLASS = 'mt-auto flex flex-col gap-2 px-2 pt-2 pb-3'
+const CARD_FOOTER_CLASS = 'bg-popover sticky bottom-0 z-10 mt-auto flex flex-col gap-2 px-2 pt-3 pb-3'
 
-// Floating-ui positioning shared by the preview and saved popovers: fixed
-// strategy against the anchor's viewport rect (the anchor lives in the
-// transformed subtitle shadow tree, the popover in the separate non-transformed
-// popover host — correct in both windowed and fullscreen).
-//
-// Placement happens BEFORE the mounting commit paints: the layout effect kicks
-// off computePosition, whose awaits are all microtasks (the DOM platform
-// methods are synchronous), so left/top/visibility land on the element before
-// the browser paints. The popover stays `visibility: hidden` until then —
-// imperatively, not via state: a state-gated reveal flips only in a SECOND,
-// post-paint render, which guarantees one painted frame with no popover. That
-// frame was invisible on a fresh open (nothing was there before) but showed as
-// a flash on the save handoff, where the preview popover unmounts and the
-// saved-mode popover mounts at the same anchor in one commit.
-const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivElement | null>) => {
-  useLayoutEffect(() => {
-    const tooltip = ref.current
-    if (!tooltip) return
-
-    tooltip.style.visibility = 'hidden'
-    const update = () => {
-      computePosition(anchor, tooltip, {
-        strategy: 'fixed',
-        placement: 'top',
-        middleware: [offset(8), flip({ fallbackPlacements: ['bottom', 'top'] }), shift({ padding: 5 })],
-      }).then(({ x, y }) => {
-        tooltip.style.left = `${x}px`
-        tooltip.style.top = `${y}px`
-        tooltip.style.visibility = 'visible'
-      })
-    }
-
-    return autoUpdate(anchor, tooltip, update)
-  }, [anchor, ref])
-}
+// Both popovers hardcode the web app's DARK theme: they always float over
+// video, where the light card would glare. FloatingSheetContent is the same
+// scroll-capped Radix popover surface the web reader uses; `desktopOnly` keeps
+// the extension's desktop overlay anchored even in narrow browser windows.
+const POPOVER_CONTENT_CLASS = 'dark pointer-events-auto z-[2147483647]'
 
 // The gloss body, shared by the preview and saved modes: the web app's
 // GlossCardBody (IPA + gloss + POS/register badges + loading skeletons) plus
@@ -100,9 +67,8 @@ const GlossBody = ({ content, srDescription }: { content: GlossContent; srDescri
 
 export interface GlossTooltipProps {
   // The word span to anchor against. Lives in the (transformed) subtitle shadow
-  // tree, but THIS tooltip is portaled into the separate, non-transformed
-  // popover shadow host — so floating-ui's `strategy: 'fixed'` against the
-  // anchor's viewport rect is correct in both windowed and fullscreen.
+  // tree, while the tooltip content is portaled into the separate,
+  // non-transformed popover shadow host.
   anchor: HTMLElement
   word: string
   content: GlossContent
@@ -125,6 +91,7 @@ export interface GlossTooltipProps {
   // A save kicked off from this popover is in flight — Save renders disabled
   // as "Saving…" until the outcome swaps the popover into saved mode.
   saving?: boolean
+  portalContainer: HTMLElement
   // Hover bridge: the pointer entering/leaving the popover. Entering cancels
   // the pending hide AND pins the popover (it stops hiding on pointer-leave —
   // see glossPinnedRef in SubtitleOverlayApp); before that, leaving dismisses.
@@ -135,10 +102,8 @@ export interface GlossTooltipProps {
   onOutsidePointerDown: () => void
 }
 
-// Hover gloss popover — mirrors the web app's fast-gloss popover. Positioned
-// with @floating-ui/dom (fixed strategy, top placement, flip + shift), kept in
-// sync via autoUpdate. No `display` toggling: React mounts/unmounts it, so the
-// legacy `display:flex !important` hide trap is gone.
+// Hover gloss popover — mirrors the web app's fast-gloss popover. FloatingSheet
+// handles anchoring, collision, and internal scrolling through Radix Popover.
 export function GlossTooltip({
   anchor,
   word,
@@ -151,10 +116,9 @@ export function GlossTooltip({
   signedIn,
   onSignIn,
   saving,
+  portalContainer,
 }: GlossTooltipProps) {
   const { t } = useLingui()
-  const ref = useRef<HTMLDivElement>(null)
-  useTooltipPosition(anchor, ref)
   // "Study options" draft (full-set semantics). The SECTION is the shared web
   // component — safe in shadow surfaces since the ui Checkbox/Switch were
   // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
@@ -167,82 +131,174 @@ export function GlossTooltip({
     setStudyDraft(defaultStudyIntentDraft)
   }, [word])
 
-  // Outside pointerdown → onOutsidePointerDown (the parent only acts on it
-  // while pinned). composedPath (not target containment) because the popover
-  // lives inside a shadow root — same dismissal as SavedGlossTooltip.
-  // Right-button presses are NOT a dismiss intent: right-click is the
-  // save/remove toggle, and an open popover survives it and morphs in place.
+  return (
+    <FloatingSheet
+      open
+      onOpenChange={(open) => {
+        if (!open) onOutsidePointerDown()
+      }}
+      anchor={anchor}
+      modal={false}
+      portalContainer={portalContainer}
+      desktopOnly
+    >
+      <FloatingSheetContent
+        data-flicktionary-gloss-popover=''
+        onMouseEnter={onPointerEnter}
+        onMouseLeave={onPointerLeave}
+        disableAnimation
+        visualScrollAffordance
+        className={POPOVER_CONTENT_CLASS}
+      >
+        <div className={CARD_HEADER_CLASS}>
+          <div className='text-foreground text-base font-semibold break-words'>{word}</div>
+          <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
+        </div>
+
+        {/* Study options — only when saving is actually available. The shared
+            web section (Radix Checkbox + Switch, px-pinned at source), so the
+            controls are pixel-identical to the web sheet. */}
+        {signedIn && !saveDisabledReason && (
+          <div className={CARD_BODY_CLASS}>
+            <StudyOptionsSection key={word} value={studyDraft} onChange={setStudyDraft} surfaceForm={word} />
+          </div>
+        )}
+
+        {/* Not signed in → both glossing and saving fail, so offer Sign in in
+            place of Save (the gloss area shows the "Sign in to translate" note).
+            Otherwise the explicit Save — discoverable counterpart to the
+            right-click shortcut, disabled (with a reason) where unavailable. */}
+        <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
+          {!signedIn ? (
+            <Button type='button' size='xl' className='w-full' onClick={onSignIn}>
+              <Trans>Sign in</Trans>
+            </Button>
+          ) : saveDisabledReason ? (
+            <>
+              <Button type='button' size='xl' className='w-full' disabled>
+                <Save className='mr-1 h-4 w-4' />
+                <Trans>Save</Trans>
+              </Button>
+              <div className='text-muted-foreground text-xs'>{saveDisabledReason}</div>
+            </>
+          ) : (
+            <Button
+              type='button'
+              size='xl'
+              className='w-full'
+              disabled={saving}
+              onClick={() => onSave(draftToStudyIntent(studyDraft))}
+            >
+              <Save className='mr-1 h-4 w-4' />
+              {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+            </Button>
+          )}
+        </div>
+      </FloatingSheetContent>
+    </FloatingSheet>
+  )
+}
+
+// The three studiable skills, in render order.
+const SAVED_SKILLS: FlicktionaryFacetSkill[] = ['meaning_recognition', 'meaning_production', 'pronunciation']
+
+// Study targets inside the saved-mode popover — parity with the web reader's
+// saved gloss sheet. Read-only: the picker keeps its preview layout but is
+// uniformly dimmed + non-interactive (the study-target choice is a SAVE-TIME
+// decision; editing it afterwards lives in the web app's term view alone, since
+// switching scope post-enrich means creating/deleting durable form facets this
+// compact popover can't represent). The displayed state comes from the stored
+// study_intent pre-enrich, then the term's live facets once a chunkId resolves.
+function SavedStudyTargetsSection({ highlight }: { highlight: SavedHighlightDto }) {
+  const { t } = useLingui()
+  const chunkId = highlight.chunkId
+  const [facets, setFacets] = useState<ReadonlyArray<FlicktionaryStudyFacetDto> | null>(null)
+
+  // Post-enrich: load the live facets so the cards reflect the term's real state.
   useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.button === 2) return
-      const el = ref.current
-      if (el && e.composedPath().includes(el)) return
-      onOutsidePointerDown()
+    if (!chunkId) return
+    let cancelled = false
+    void fetchStudyTargets(chunkId).then((loaded) => {
+      if (!cancelled && loaded) setFacets(loaded)
+    })
+    return () => {
+      cancelled = true
     }
-    document.addEventListener('pointerdown', onPointerDown, { capture: true })
-    return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
-  }, [onOutsidePointerDown])
+  }, [chunkId])
+
+  const meta: Record<FlicktionaryFacetSkill, { icon: React.ReactNode; label: string }> = {
+    meaning_recognition: { icon: <Eye className='h-5 w-5' />, label: t`Recognition` },
+    meaning_production: { icon: <Pencil className='h-5 w-5' />, label: t`Production` },
+    pronunciation: { icon: <Mic className='h-5 w-5' />, label: t`Pronunciation` },
+  }
+
+  const { skills, formScope } = resolveSavedTargets({
+    storedIntent: highlight.studyIntent,
+    facets: chunkId ? facets : null,
+    surfaceForm: highlight.selectionText,
+  })
+
+  const cards: StudySkillCardItem[] = SAVED_SKILLS.map((skill) => ({
+    key: skill,
+    icon: meta[skill].icon,
+    label: meta[skill].label,
+    selected: skills.has(skill),
+    onToggle: () => {},
+  }))
 
   return (
-    <div
-      ref={ref}
-      data-flicktionary-gloss-popover=''
-      onMouseEnter={onPointerEnter}
-      onMouseLeave={onPointerLeave}
-      className={POPOVER_CARD_CLASS}
-    >
-      <div className={CARD_HEADER_CLASS}>
-        <div className='text-foreground text-base font-semibold break-words'>{word}</div>
-        <GlossBody content={content} srDescription={t`Translation and save action for the hovered word.`} />
+    <div className='flex flex-col gap-2'>
+      {/* Uniformly dimmed + non-interactive — `pointer-events-none` locks every
+          control at once, with no per-element opacity mismatch. */}
+      <div className='pointer-events-none opacity-70'>
+        <StudySkillCards
+          cards={cards}
+          formScope={formScope}
+          surfaceForm={highlight.selectionText}
+          onFormScopeChange={() => {}}
+        />
       </div>
-
-      {/* Study options — only when saving is actually available. The shared
-          web section (Radix Checkbox + Switch, px-pinned at source), so the
-          controls are pixel-identical to the web sheet. */}
-      {signedIn && !saveDisabledReason && (
-        <div className={CARD_BODY_CLASS}>
-          <StudyOptionsSection key={word} value={studyDraft} onChange={setStudyDraft} surfaceForm={word} />
-        </div>
-      )}
-
-      {/* Not signed in → both glossing and saving fail, so offer Sign in in
-          place of Save (the gloss area shows the "Sign in to translate" note).
-          Otherwise the explicit Save — discoverable counterpart to the
-          right-click shortcut, disabled (with a reason) where unavailable. */}
-      <div className={CARD_FOOTER_CLASS}>
-        {!signedIn ? (
-          <Button type='button' size='xl' className='w-full' onClick={onSignIn}>
-            <Trans>Sign in</Trans>
-          </Button>
-        ) : saveDisabledReason ? (
-          <>
-            <Button type='button' size='xl' className='w-full' disabled>
-              <Save className='mr-1 h-4 w-4' />
-              <Trans>Save</Trans>
-            </Button>
-            <div className='text-muted-foreground text-xs'>{saveDisabledReason}</div>
-          </>
-        ) : (
-          <Button
-            type='button'
-            size='xl'
-            className='w-full'
-            disabled={saving}
-            onClick={() => onSave(draftToStudyIntent(studyDraft))}
-          >
-            <Save className='mr-1 h-4 w-4' />
-            {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-          </Button>
-        )}
+      <div className='text-muted-foreground/70 flex items-center gap-1 text-xs'>
+        <Lock className='h-3 w-3' />
+        {t`Edit these in the web app`}
       </div>
     </div>
   )
+}
+
+// Resolves the enabled skills + scope from whichever source is authoritative.
+// Pre-enrich: the highlight's stored study_intent. Post-enrich: the live facets,
+// reading the skills attached to the active target (the form when one exists for
+// this surface, otherwise the lemma).
+function resolveSavedTargets({
+  storedIntent,
+  facets,
+  surfaceForm,
+}: {
+  storedIntent: SaveWordStudyIntent | null
+  facets: ReadonlyArray<FlicktionaryStudyFacetDto> | null
+  surfaceForm: string
+}): { skills: Set<FlicktionaryFacetSkill>; formScope: 'lemma' | 'form' } {
+  if (!facets) {
+    return {
+      skills: new Set<FlicktionaryFacetSkill>(storedIntent?.skills ?? []),
+      formScope: storedIntent?.formScope ?? 'lemma',
+    }
+  }
+  const surfaceTarget = normalizeTargetForm(surfaceForm)
+  const hasForm = surfaceTarget.length > 0 && facets.some((f) => f.targetForm === surfaceTarget && f.enabled)
+  const activeTargetForm = hasForm ? surfaceTarget : ''
+  const skills = new Set<FlicktionaryFacetSkill>(
+    facets.filter((f) => f.targetForm === activeTargetForm && f.enabled).map((f) => f.skill)
+  )
+  return { skills, formScope: hasForm ? 'form' : 'lemma' }
 }
 
 export interface SavedGlossTooltipProps {
   anchor: HTMLElement
   sessionId: string
   highlight: SavedHighlightDto
+  initialGloss?: GlossData
   // The delete landed (or the row was already gone) — the caller removes the
   // span from the store and closes the popover.
   onRemoved: () => void
@@ -250,6 +306,7 @@ export interface SavedGlossTooltipProps {
   // re-open shows the saved values without a reload.
   onNotePatched: (note: string | null, presetTags: string[]) => void
   onClose: () => void
+  portalContainer: HTMLElement
   // The pointer entered the popover. A HOVER-opened popover (see
   // SavedPopoverState.hover) uses this to cancel its pending word-leave hide
   // and flip itself sticky; a click-opened one is sticky already.
@@ -270,19 +327,21 @@ export function SavedGlossTooltip({
   anchor,
   sessionId,
   highlight,
+  initialGloss,
   onRemoved,
   onNotePatched,
   onClose,
   onPointerEnter,
+  portalContainer,
 }: SavedGlossTooltipProps) {
   const { t } = useLingui()
-  const ref = useRef<HTMLDivElement>(null)
-  useTooltipPosition(anchor, ref)
 
   const [content, setContent] = useState<GlossContent>(() =>
-    highlight.fastGloss
-      ? { status: 'ready', ...parseFastGloss(highlight.fastGloss), ipaDisplay: null }
-      : { status: 'loading' }
+    initialGloss
+      ? { status: 'ready', ...initialGloss }
+      : highlight.fastGloss
+        ? { status: 'ready', ...parseFastGloss(highlight.fastGloss), ipaDisplay: null }
+        : { status: 'loading' }
   )
   const [note, setNote] = useState(highlight.note ?? '')
   const [tags, setTags] = useState<string[]>([...highlight.presetTags])
@@ -292,9 +351,13 @@ export function SavedGlossTooltip({
 
   const { prompts: presetPrompts } = usePresetTagTexts()
 
-  // Refresh the gloss from the server even when a cached fastGloss rendered
-  // instantly — this also enriches older rows with Wiktionary IPA.
+  // Direct opens of older saved highlights may only have the compact persisted
+  // fastGloss (or no gloss at all), so refresh them from the saved-gloss path.
+  // Save handoffs already carry the freshly displayed preview gloss; refreshing
+  // immediately would run a second fast-gloss path and can visibly change the
+  // POS/register/translation right after the user clicks Save.
   useEffect(() => {
+    if (initialGloss) return
     let cancelled = false
     void fetchSavedGloss(sessionId, highlight.id).then((data) => {
       if (cancelled || !data) return
@@ -303,22 +366,7 @@ export function SavedGlossTooltip({
     return () => {
       cancelled = true
     }
-  }, [sessionId, highlight.id])
-
-  // Sticky dismissal: outside pointerdown closes. composedPath (not target
-  // containment) because the popover lives inside a shadow root. Right-button
-  // presses are NOT a dismiss intent: right-click is the save/remove toggle —
-  // a right-click remove swaps this popover into the preview gloss instead.
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.button === 2) return
-      const el = ref.current
-      if (el && e.composedPath().includes(el)) return
-      onClose()
-    }
-    document.addEventListener('pointerdown', onPointerDown, { capture: true })
-    return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true })
-  }, [onClose])
+  }, [sessionId, highlight.id, initialGloss])
 
   const handleRemove = useCallback(() => {
     setBusy('remove')
@@ -359,44 +407,77 @@ export function SavedGlossTooltip({
   const hasNoteDetails = (highlight.note ?? '').trim().length > 0 || highlight.presetTags.length > 0
 
   return (
-    <div ref={ref} data-flicktionary-saved-popover='' onMouseEnter={onPointerEnter} className={POPOVER_CARD_CLASS}>
-      <div className={CARD_HEADER_CLASS}>
-        <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
-        <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
-        {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
-      </div>
+    <FloatingSheet
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+      anchor={anchor}
+      modal={false}
+      portalContainer={portalContainer}
+      desktopOnly
+    >
+      <FloatingSheetContent
+        data-flicktionary-saved-popover=''
+        onMouseEnter={onPointerEnter}
+        disableAnimation
+        visualScrollAffordance
+        className={POPOVER_CONTENT_CLASS}
+      >
+        <div className={CARD_HEADER_CLASS}>
+          <div className='text-foreground text-base font-semibold break-words'>{highlight.selectionText}</div>
+          <GlossBody content={content} srDescription={t`Translation and actions for the saved highlight.`} />
+          {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
+        </div>
 
-      {noteExpanded && (
+        {/* Study targets — always visible (parity with the web saved sheet),
+            read-only here: editing lives in the web app's term view. */}
         <div className={CARD_BODY_CLASS}>
-          <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+          <SavedStudyTargetsSection highlight={highlight} />
         </div>
-      )}
 
-      <div className={CARD_FOOTER_CLASS}>
-        <div className='flex items-center justify-between gap-2'>
-          <Button
-            type='button'
-            variant='ghost'
-            size='sm'
-            disabled={busy !== null}
-            onClick={handleRemove}
-            className='text-destructive hover:bg-destructive/10'
-          >
-            <Trash2 className='mr-1 h-4 w-4' />
-            {busy === 'remove' ? <Trans>Removing…</Trans> : <Trans>Remove highlight</Trans>}
-          </Button>
-          {noteExpanded ? (
-            <Button type='button' size='sm' disabled={busy !== null} onClick={handleSaveNote}>
-              {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
-            </Button>
-          ) : (
-            <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
-              <PencilLine className='h-4 w-4' />
-              {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
-            </Button>
-          )}
+        {noteExpanded && (
+          <div className={CARD_BODY_CLASS}>
+            <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+          </div>
+        )}
+
+        {/* Unified footer (parity with the web saved sheet): a green "Saved" state
+            (the note editor turns it into "Save note") + a trash icon to remove. */}
+        <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
+          <div className='flex items-center justify-between gap-2'>
+            {noteExpanded ? (
+              <Button type='button' size='sm' disabled={busy !== null} onClick={handleSaveNote}>
+                {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
+              </Button>
+            ) : (
+              <span className='inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-950/40 px-3 py-1.5 text-sm font-medium text-emerald-400'>
+                <Check className='h-4 w-4' />
+                <Trans>Saved</Trans>
+              </span>
+            )}
+            <div className='flex items-center gap-1'>
+              {!noteExpanded && (
+                <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
+                  <PencilLine className='h-4 w-4' />
+                  {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
+                </Button>
+              )}
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                aria-label={t`Remove highlight`}
+                disabled={busy !== null}
+                onClick={handleRemove}
+                className='text-destructive hover:bg-destructive/10'
+              >
+                <Trash2 className='h-4 w-4' />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </FloatingSheetContent>
+    </FloatingSheet>
   )
 }

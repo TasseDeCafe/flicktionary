@@ -4,7 +4,6 @@ import { ChevronLeft, Pencil, Plus, Sparkles, Star, Trash2 } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
-import { hasDisplayableIpa, type IpaBagShape } from '@flicktionary/core/utils/pick-ipa'
 import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 import { stripStressMarks } from '@flicktionary/core/utils/strip-stress-marks'
 import type { Chunk, StudyFacetSummary } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -17,11 +16,13 @@ import {
 } from '@/components/ui/responsive-overlay'
 import { useDeleteFacet, useSetFacetEnabled } from '@/features/vocabulary/api/vocabulary-hooks'
 import {
+  buildLiveSkillItems,
   enabledSkillCount,
   formDisplay,
-  formRecognitionFacets,
-  payloadString,
+  formTargetFacet,
+  formTargets,
   type FormAutoSetup,
+  type LiveSkillKey,
   type SelectedTarget,
 } from './study-target-helpers'
 
@@ -30,6 +31,9 @@ type FormSelectorProps = {
   facets: StudyFacetSummary[]
   candidateForms: string[]
   selectedTarget: SelectedTarget
+  // Whether the term is kept (count > 0). Gates the last-skill lock — a kept
+  // term must keep ≥1 enabled skill per target (backend floor guard).
+  isKept: boolean
   onSelect: (target: SelectedTarget) => void
   // Picked a form + chose how to fill it: the focus view selects the form and
   // its inline editor runs the action (so the data loads on the main view).
@@ -51,11 +55,12 @@ export const FormSelector = ({
   facets,
   candidateForms,
   selectedTarget,
+  isKept,
   onSelect,
   onSetupForm,
 }: FormSelectorProps) => {
   const { t } = useLingui()
-  const formFacets = formRecognitionFacets(facets)
+  const formFacets = formTargets(facets)
   // Derived from the facets (not chunk.isProductionEnabled) so the citation star
   // tracks the same source the skills card reads — and updates optimistically.
   const citationProductionOn = facets.some((f) => f.skill === 'meaning_production' && f.targetForm === '' && f.enabled)
@@ -93,6 +98,7 @@ export const FormSelector = ({
         chunk={chunk}
         facets={facets}
         selectedTarget={selectedTarget}
+        isKept={isKept}
         onRemoved={() => onSelect({ kind: 'citation' })}
       />
     </section>
@@ -253,6 +259,8 @@ type SkillItem = {
   hint?: string
   enabled: boolean
   available: boolean
+  // The last enabled skill of a kept term — locked on (backend floor guard).
+  locked: boolean
   toggle: () => void
 }
 
@@ -264,11 +272,13 @@ const SkillsCard = ({
   chunk,
   facets,
   selectedTarget,
+  isKept,
   onRemoved,
 }: {
   chunk: Chunk
   facets: StudyFacetSummary[]
   selectedTarget: SelectedTarget
+  isKept: boolean
   onRemoved: () => void
 }) => {
   const { t } = useLingui()
@@ -276,11 +286,12 @@ const SkillsCard = ({
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const targetForm = selectedTarget.kind === 'form' ? selectedTarget.targetForm : ''
-  const recognitionFacet = facets.find((f) => f.skill === 'meaning_recognition' && f.targetForm === targetForm)
+  // The form's content anchor (any skill — a form may lack a recognition facet).
+  const repFacet = selectedTarget.kind === 'form' ? formTargetFacet(facets, targetForm) : null
 
   // A pending form has no skills until its data is filled (done in the editor
   // body / Add-a-form sheet), but it can still be removed.
-  if (selectedTarget.kind === 'form' && recognitionFacet?.dataStatus === 'pending_data') {
+  if (selectedTarget.kind === 'form' && repFacet?.dataStatus === 'pending_data') {
     return (
       <div className='mt-3'>
         <RemoveFormButton chunkId={chunk.id} facets={facets} targetForm={targetForm} onRemoved={onRemoved} />
@@ -288,118 +299,29 @@ const SkillsCard = ({
     )
   }
 
-  let items: SkillItem[]
-  if (selectedTarget.kind === 'citation') {
-    const ipaAvailable = hasDisplayableIpa((chunk.grammar?.ipa ?? null) as IpaBagShape | null, chunk.targetLanguage)
-    items = [
-      {
-        key: 'recognition',
-        label: t`Recognition`,
-        enabled: facets.some((f) => f.skill === 'meaning_recognition' && f.targetForm === '' && f.enabled),
-        available: true,
-        toggle: () => {},
-      },
-      {
-        key: 'production',
-        label: t`Production`,
-        enabled: facets.some((f) => f.skill === 'meaning_production' && f.targetForm === '' && f.enabled),
-        available: true,
-        toggle: () => {},
-      },
-      {
-        key: 'pronunciation',
-        label: t`Pronunciation`,
-        hint: ipaAvailable ? undefined : t`No pronunciation data yet`,
-        enabled: facets.some((f) => f.skill === 'pronunciation' && f.targetForm === '' && f.enabled),
-        available: ipaAvailable,
-        toggle: () => {},
-      },
-    ]
-    items[0]!.toggle = () =>
-      setFacetEnabled({
-        chunkId: chunk.id,
-        skill: 'meaning_recognition',
-        targetForm: '',
-        enabled: !items[0]!.enabled,
-      })
-    items[1]!.toggle = () =>
-      setFacetEnabled({
-        chunkId: chunk.id,
-        skill: 'meaning_production',
-        targetForm: '',
-        enabled: !items[1]!.enabled,
-      })
-    items[2]!.toggle = () =>
-      setFacetEnabled({
-        chunkId: chunk.id,
-        skill: 'pronunciation',
-        targetForm: '',
-        enabled: !items[2]!.enabled,
-      })
-  } else {
-    const productionFacet = facets.find((f) => f.skill === 'meaning_production' && f.targetForm === targetForm)
-    const pronunciationFacet = facets.find((f) => f.skill === 'pronunciation' && f.targetForm === targetForm)
-    const recognitionOn = !!recognitionFacet?.enabled
-    const productionOn = !!productionFacet?.enabled
-    const pronunciationOn = !!pronunciationFacet?.enabled
-    const form = recognitionFacet ? formDisplay(recognitionFacet) : targetForm
-    const translation = recognitionFacet ? payloadString(recognitionFacet.payload, 'translation') : ''
-    // A sibling facet whose payload already carries the form's own IPA: enabling
-    // pronunciation with that payload makes the facet born ready (no
-    // regeneration). Without one, send only {form} so it's born pending_data and
-    // the existing generate/retry chip fills it.
-    const ipaSibling = [recognitionFacet, productionFacet].find((f) => {
-      const grammar = f?.payload.grammar
-      const ipa =
-        grammar && typeof grammar === 'object'
-          ? (((grammar as Record<string, unknown>).ipa ?? null) as IpaBagShape | null)
-          : null
-      return hasDisplayableIpa(ipa, chunk.targetLanguage)
-    })
-    items = [
-      {
-        key: 'recognition',
-        label: t`Recognition`,
-        enabled: recognitionOn,
-        available: true,
-        toggle: () =>
-          setFacetEnabled({ chunkId: chunk.id, skill: 'meaning_recognition', targetForm, enabled: !recognitionOn }),
-      },
-      {
-        key: 'production',
-        label: t`Production`,
-        enabled: productionOn,
-        available: true,
-        toggle: () =>
-          // Reuse the form's known {form, translation} so the production facet is
-          // born ready (the translation key signals "data provided").
-          setFacetEnabled({
-            chunkId: chunk.id,
-            skill: 'meaning_production',
-            targetForm,
-            enabled: !productionOn,
-            payload: !productionOn ? { form, translation } : undefined,
-          }),
-      },
-      {
-        key: 'pronunciation',
-        label: t`Pronunciation`,
-        enabled: pronunciationOn,
-        available: true,
-        toggle: () =>
-          setFacetEnabled({
-            chunkId: chunk.id,
-            skill: 'pronunciation',
-            targetForm,
-            enabled: !pronunciationOn,
-            payload: !pronunciationOn ? (ipaSibling ? ipaSibling.payload : { form }) : undefined,
-          }),
-      },
-    ]
+  const skillLabels: Record<LiveSkillKey, string> = {
+    recognition: t`Recognition`,
+    production: t`Production`,
+    pronunciation: t`Pronunciation`,
   }
+  const items: SkillItem[] = buildLiveSkillItems({
+    chunk,
+    facets,
+    selectedTarget,
+    isKept,
+    setFacetEnabled,
+    noIpaHint: t`No pronunciation data yet`,
+  }).map((live) => ({
+    key: live.key,
+    label: skillLabels[live.key],
+    hint: live.locked ? t`Keep at least one skill` : live.unavailableHint,
+    enabled: live.enabled,
+    available: live.available,
+    locked: live.locked,
+    toggle: live.toggle,
+  }))
 
-  const label =
-    selectedTarget.kind === 'citation' ? chunk.headword : recognitionFacet ? formDisplay(recognitionFacet) : ''
+  const label = selectedTarget.kind === 'citation' ? chunk.headword : repFacet ? formDisplay(repFacet) : ''
   const enabledLabels = items.filter((i) => i.enabled).map((i) => i.label)
 
   return (
@@ -449,7 +371,7 @@ const SkillsCard = ({
                 title={item.label}
                 description={item.hint}
                 selected={item.enabled}
-                disabled={busy || !item.available}
+                disabled={busy || !item.available || item.locked}
                 onSelect={item.toggle}
               />
             ))}

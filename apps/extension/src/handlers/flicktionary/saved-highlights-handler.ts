@@ -31,6 +31,11 @@ const toSavedHighlightDtos = (
     note: string | null
     presetTags: string[]
     fastGloss: string | null
+    studyIntent: {
+      skills: Array<'meaning_recognition' | 'meaning_production' | 'pronunciation'>
+      formScope: 'lemma' | 'form'
+    } | null
+    chunkId: string | null
   }>,
   segmentIdByIndex: Record<string, string>
 ): SavedHighlightDto[] => {
@@ -53,6 +58,8 @@ const toSavedHighlightDtos = (
       note: row.note,
       presetTags: row.presetTags,
       fastGloss: row.fastGloss,
+      studyIntent: row.studyIntent,
+      chunkId: row.chunkId,
     })
   }
   return out

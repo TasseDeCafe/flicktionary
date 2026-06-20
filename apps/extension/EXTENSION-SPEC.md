@@ -379,18 +379,23 @@ uses intersection, not exact offsets.
 
 - **Hover gloss** — hovering a word (300 ms debounce) calls `glosses.fastGloss`
   (selection + context line + the video's detected target language, see the
-  query-key note below) and shows a floating tooltip
-  (floating-ui, in a separate non-transformed popover shadow host): word, IPA
+  query-key note below) and shows a floating tooltip (the shared
+  `FloatingSheet` desktop popover, portaled into a separate non-transformed
+  popover shadow host): word, IPA
   (the server-picked `ipaDisplay` string — the backend resolves the user's
   `english_ipa_dialect` pref, so the overlay shows the same dialect as the web
   app; no client-side bag picking), one-line gloss, POS and register badges.
   Both popovers (preview + saved mode) are built from the web app's shared
-  components — `GlossCardBody`/`Badge`/`Button`/`Textarea` from
-  `@flicktionary/ui` — inside a card that copies the web FloatingSheet's
-  classes, with the web's DARK theme hardcoded via a `dark` class on the
-  popover root (they always float over video; tokens.css is already adopted
-  into the popover shadow root and `overlay.css` already `@source`-scans
-  `packages/ui/src`). Positioning stays floating-ui. The shared
+  components — `FloatingSheet`/`GlossCardBody`/`Badge`/`Button`/`Textarea`
+  from `@flicktionary/ui` — with the web's DARK theme hardcoded via a `dark`
+  class on the popover root (they always float over video; tokens.css is
+  already adopted into the popover shadow root and `overlay.css` already
+  `@source`-scans `packages/ui/src`). Desktop positioning/collision/viewport
+  height are handled by the shared Radix-backed `FloatingSheet` in `desktopOnly`
+  mode. The scrollable body owns the viewport cap and overscroll containment;
+  the main action footer is sticky below it, and the extension uses the
+  `visualScrollAffordance` scrollbar so the track only spans the scrollable
+  region. The shared
   `StudyOptionsSection` (Radix Checkbox + Switch) is used as-is: the old
   rem-vs-host-root sizing trap was fixed at source — the ui Checkbox is
   spacing/px-sized and the ui Switch's track height is pinned to px (see its
@@ -463,14 +468,19 @@ uses intersection, not exact offsets.
   volume); failures still toast. Success clears the selection. Signed-out → a
   "Sign in" action; registration-failed → disabled Save with the reason. The
   save calls `highlights.create({sessionId, start/endSegmentId, offsets,
-  selectionText, studyIntent?})`; the remove calls `highlights.delete` after
-  the server ack.
+  selectionText, studyIntent?, fastGloss?})`; when the preview gloss is already
+  loaded, the compact `{gloss, pos, register}` triple is persisted with the new
+  row so saved mode does not run a second first-gloss LLM pass that can infer
+  slightly different metadata. The remove calls `highlights.delete` after the
+  server ack.
   **In-place handoff (web gloss-sheet parity):** a save from an open gloss
   popover keeps it open as "Saving…" and, on success, swaps it into the
   saved-mode popover anchored at the same word — note/tags/Remove are
-  immediately reachable, no re-click on the span. The Save button swaps in
-  STICKY (the pointer is inside the popover); the right-click toggle swaps in
-  the HOVER variant (the pointer is on the word — the popover yields on
+  immediately reachable, no re-click on the span. That handoff carries the
+  richer preview gloss including `ipaDisplay`; saved mode prefers it over the
+  compact row cache so the IPA line does not disappear. The Save button swaps
+  in STICKY (the pointer is inside the popover); the right-click toggle swaps
+  in the HOVER variant (the pointer is on the word — the popover yields on
   word-leave so rapid right-click saving isn't blocked). On the fallback paths
   (segment-map miss, video resumed, cue changed, or the user already hovered a
   different word's gloss) the gloss simply closes — the painted span is the
@@ -543,14 +553,23 @@ uses intersection, not exact offsets.
     saved word. Parity with the web session view's gloss sheet minus
     ghost-extend: cached `fastGloss` parses instantly (the shared
     `@flicktionary/core/utils/parse-fast-gloss`, same decoder as the web
-    sheet) and refreshes via `flicktionary-saved-gloss` →
-    `highlights.fastGloss`; **Remove highlight**
+    sheet). A direct open refreshes via `flicktionary-saved-gloss` →
+    `highlights.fastGloss` to add the server-picked IPA; a just-saved handoff
+    keeps the richer preview gloss already on screen and skips that immediate
+    refresh. **Remove highlight**
     (`delete-flicktionary-highlight`, 404 counts as success) removes the span
     silently (no success toast — the wash disappearing is the feedback, same
     as the right-click remove); **Add/Edit note** offers the same textarea +
     preset tags as the web and composes the same localized `chatSeedPrompt`
     (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
-    No Study options / Save here. A STICKY saved popover wins over the hover
+    The **study-target picker is shown but locked read-only** (the same
+    `StudySkillCards` as the preview, uniformly dimmed + non-interactive via
+    `pointer-events-none`, with a lock caption): it displays the saved skills +
+    scope from the highlight's stored `study_intent` pre-enrich, then the term's
+    live facets once a `chunkId` resolves (`get-flicktionary-study-targets` →
+    `chunks.getStudyTargets`, read-only). Editing study targets is a save-time
+    decision — afterwards it happens only in the web app's term view (the
+    extension has none); there is no Save here. A STICKY saved popover wins over the hover
     preview (the preview neither opens over it nor renders while it's up); a
     hover-opened one yields to hovering other words. Sticky dismissal is
     outside pointerdown (composedPath — shadow root; right-button presses are
@@ -701,9 +720,9 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |
 | `studySessions.importText` | article/selection import |
-| `highlights.create` | saving a word/chunk |
+| `highlights.create` | saving a word/chunk, optionally with the preview `{gloss, pos, register}` persisted as `fastGloss` |
 | `highlights.listBySession` | loading saved highlights for the persistent spans |
-| `highlights.fastGloss` | saved-mode popover gloss (server-cached, IPA-enriched) |
+| `highlights.fastGloss` | saved-mode popover gloss for direct/older saved-highlight opens (server-cached, IPA-enriched) |
 | `highlights.updateNoteAndTags` | saved-mode note + preset tags (+ chatSeedPrompt) |
 | `highlights.delete` | Remove highlight from the saved-mode popover |
 | `userPrefs.getPrefs` | UI-prefs refresh on popup/options open; `nativeLanguage === null` gates the finish-setup section |

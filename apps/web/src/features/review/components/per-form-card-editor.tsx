@@ -6,6 +6,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import type {
   Chunk,
+  FacetSkill,
   Grammar,
   StudyFacetSource,
   StudyFacetSummary,
@@ -16,6 +17,7 @@ import { EditableCardFields, type TranslationFieldsMode } from './editable-card-
 import { EditableGrammarPanel } from './editable-grammar-panel'
 import {
   formDisplay,
+  formTargetFacet,
   payloadGrammar,
   payloadString,
   type FormAutoSetup,
@@ -149,7 +151,12 @@ export const FormEditor = ({
   const [awaiting, setAwaiting] = useState(false)
   const autoRanRef = useRef(false)
 
-  const facet = facets.find((f) => f.skill === 'meaning_recognition' && f.targetForm === targetForm)
+  // The form's content anchor — any skill, since a form may have no recognition
+  // facet (e.g. a production-only exact-form save). Generate / manual / payload
+  // edits all target this facet's skill so the content lands where the editor
+  // reads it.
+  const facet = formTargetFacet(facets, targetForm)
+  const editSkill: FacetSkill = facet?.skill ?? 'meaning_recognition'
   const form = facet ? formDisplay(facet) : targetForm
   const source = facet?.source ?? null
   const pending = facet?.dataStatus === 'pending_data'
@@ -161,13 +168,13 @@ export const FormEditor = ({
   // encountered sentence when one is known.
   const runGenerate = () => {
     setAwaiting(true)
-    generateFacetData.mutate({ chunkId: chunk.id, skill: 'meaning_recognition', targetForm })
+    generateFacetData.mutate({ chunkId: chunk.id, skill: editSkill, targetForm })
   }
   const runManual = () => {
     setAwaiting(true)
     setFacetPayload.mutate({
       chunkId: chunk.id,
-      skill: 'meaning_recognition',
+      skill: editSkill,
       targetForm,
       payload: { form, ...(source?.sentence ? { targetExample: source.sentence } : {}) },
     })
@@ -194,7 +201,7 @@ export const FormEditor = ({
   if (!facet) return null
 
   const onSavePayload = (patch: Record<string, unknown>) =>
-    setFacetPayload.mutate({ chunkId: chunk.id, skill: 'meaning_recognition', targetForm, payload: { form, ...patch } })
+    setFacetPayload.mutate({ chunkId: chunk.id, skill: editSkill, targetForm, payload: { form, ...patch } })
 
   const header = (
     <div>

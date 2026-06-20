@@ -4,6 +4,7 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { ghostsContract } from '@flicktionary/api-client/orpc-contracts/ghosts-contract'
+import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import {
   DbGhostCandidate,
@@ -35,19 +36,26 @@ const toWindowDto = (row: DbNominatedWindow) => ({
   status: row.status as 'pending' | 'done' | 'failed',
 })
 
-const toHighlightDto = (row: DbHighlight) => ({
-  id: row.id,
-  studySessionId: row.study_session_id,
-  startSegmentId: row.start_segment_id,
-  endSegmentId: row.end_segment_id,
-  startOffset: row.start_offset,
-  endOffset: row.end_offset,
-  selectionText: row.selection_text,
-  note: row.note,
-  presetTags: row.preset_tags,
-  fastGloss: row.fast_gloss,
-  createdAt: new Date(row.created_at).toISOString(),
-})
+const toHighlightDto = (row: DbHighlight) => {
+  // A switch creates a brand-new highlight (pre-enrich), so chunkId is always
+  // null here; study_intent is validated back to the contract shape (or null).
+  const parsedIntent = StudyIntentSchema.safeParse(row.study_intent)
+  return {
+    id: row.id,
+    studySessionId: row.study_session_id,
+    startSegmentId: row.start_segment_id,
+    endSegmentId: row.end_segment_id,
+    startOffset: row.start_offset,
+    endOffset: row.end_offset,
+    selectionText: row.selection_text,
+    note: row.note,
+    presetTags: row.preset_tags,
+    fastGloss: row.fast_gloss,
+    studyIntent: parsedIntent.success ? parsedIntent.data : null,
+    chunkId: null,
+    createdAt: new Date(row.created_at).toISOString(),
+  }
+}
 
 export const GhostsRouter = (
   studySessionsRepository: StudySessionsRepositoryInterface,

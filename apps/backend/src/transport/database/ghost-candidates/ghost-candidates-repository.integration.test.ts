@@ -66,6 +66,7 @@ describe('ghost-candidates-repository insertHighlightAdoptingGhost integration t
     note: null,
     presetTags: [],
     studyIntent: { skills: ['meaning_production'], formScope: 'both' },
+    fastGloss: null,
     userId,
     ghostId: fixture.ghost.id,
     enrichDebounceMs: 0,

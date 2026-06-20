@@ -619,6 +619,10 @@ msgstr "Back to Practice"
 msgid "Back to session"
 msgstr "Back to session"
 
+#: packages/ui/src/components/study-skill-cards.tsx
+msgid "Base form"
+msgstr "Base form"
+
 #: apps/web/src/features/sessions/components/cefr-step.tsx
 msgid "Beginner — basic phrases and immediate needs."
 msgstr "Beginner — basic phrases and immediate needs."
@@ -1166,6 +1170,14 @@ msgstr "Edit note"
 msgid "Edit term"
 msgstr "Edit term"
 
+#: apps/web/src/features/sessions/components/saved-study-targets.tsx
+msgid "Edit these in the term view"
+msgstr "Edit these in the term view"
+
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+msgid "Edit these in the web app"
+msgstr "Edit these in the web app"
+
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Edit this shortcut from the Plugin manager at about:addons."
 msgstr "Edit this shortcut from the Plugin manager at about:addons."
@@ -1292,6 +1304,10 @@ msgid "Everything you save lands in the web app, where you can review your "
 "sessions, browse your vocabulary, and practice what you collected."
 msgstr "Everything you save lands in the web app, where you can review your "
 "sessions, browse your vocabulary, and practice what you collected."
+
+#: packages/ui/src/components/study-skill-cards.tsx
+msgid "Exact form"
+msgstr "Exact form"
 
 #: apps/web/src/features/review/components/full-exploration-renderer.tsx
 msgid "Example"
@@ -2032,6 +2048,10 @@ msgstr "Keep"
 #: apps/web/src/features/review/components/triage-list-view.tsx
 msgid "Keep all"
 msgstr "Keep all"
+
+#: apps/web/src/features/review/components/form-selector.tsx
+msgid "Keep at least one skill"
+msgstr "Keep at least one skill"
 
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Keep practicing this one."
@@ -2794,6 +2814,10 @@ msgstr "Practice with a text"
 msgid "Practice your terms"
 msgstr "Practice your terms"
 
+#: packages/ui/src/components/study-options-section.tsx
+msgid "Practise saying it"
+msgstr "Practise saying it"
+
 #: apps/native/src/features/dashboard/components/dashboard-view.tsx
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "Premium Features"
@@ -2861,7 +2885,9 @@ msgstr "Processing has moved to the background"
 msgid "Processing warnings"
 msgstr "Processing warnings"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
+#: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
 #: packages/ui/src/components/study-options-section.tsx
@@ -2897,7 +2923,9 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronoun"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
+#: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Pronunciation"
 msgstr "Pronunciation"
@@ -2941,11 +2969,17 @@ msgstr "Reading in progress ({0, plural, one {# term} other {# terms}}) — "
 msgid "Ready to practice"
 msgstr "Ready to practice"
 
+#: packages/ui/src/components/study-options-section.tsx
+msgid "Recall and produce it yourself"
+msgstr "Recall and produce it yourself"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Recently added"
 msgstr "Recently added"
 
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
+#: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Recognition"
@@ -3046,8 +3080,6 @@ msgstr "Remove highlight"
 msgid "Remove session"
 msgstr "Remove session"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "Removing…"
 msgstr "Removing…"
@@ -3152,6 +3184,11 @@ msgstr "Save note"
 #: apps/web/src/features/practice/components/lookup-sheet.tsx
 msgid "Save to vocabulary"
 msgstr "Save to vocabulary"
+
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+msgid "Saved"
+msgstr "Saved"
 
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
@@ -3498,17 +3535,9 @@ msgstr "Strengthen · {languageName}"
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
 
-#: packages/ui/src/components/study-options-section.tsx
-msgid "Study options"
-msgstr "Study options"
-
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Study targets"
 msgstr "Study targets"
-
-#: packages/ui/src/components/study-options-section.tsx
-msgid "Study this exact form"
-msgstr "Study this exact form"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Style Value"
@@ -4002,6 +4031,10 @@ msgstr "Unblur subtitle track {0} in asbplayer"
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 msgid "Unbound"
 msgstr "Unbound"
+
+#: packages/ui/src/components/study-options-section.tsx
+msgid "Understand it when you read or hear it"
+msgstr "Understand it when you read or hear it"
 
 #: apps/web/src/features/sessions/components/tmdb-search.tsx
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx

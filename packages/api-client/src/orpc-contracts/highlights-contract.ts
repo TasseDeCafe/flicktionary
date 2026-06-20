@@ -29,6 +29,16 @@ export const highlightsContract = {
         // See StudyIntentSchema: full-set facet configuration applied by the
         // enrichment job once the user_lookup materializes.
         studyIntent: StudyIntentSchema.optional(),
+        // Preview gloss already shown to the user before Save. When present,
+        // persist it so saved-mode display does not run a second first-gloss
+        // pass that can infer slightly different metadata.
+        fastGloss: z
+          .object({
+            gloss: z.string(),
+            pos: z.string().nullable(),
+            register: z.string().nullable(),
+          })
+          .optional(),
         // The selection was swapped to this ghost candidate's span pre-save:
         // dismiss the ghost in the same transaction as the highlight insert
         // (the pre-save sibling of ghosts.switch, which handles post-save).
@@ -38,7 +48,11 @@ export const highlightsContract = {
     .output(z.object({ data: HighlightSchema })),
 
   fastGloss: oc
-    .route({ method: 'POST', path: '/study-sessions/{sessionId}/highlights/{highlightId}/fast-gloss', successStatus: 200 })
+    .route({
+      method: 'POST',
+      path: '/study-sessions/{sessionId}/highlights/{highlightId}/fast-gloss',
+      successStatus: 200,
+    })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
@@ -75,6 +89,30 @@ export const highlightsContract = {
         // when there is nothing to ask. The backend stores it verbatim and the
         // seed_card_chat worker uses it as the chat turn.
         chatSeedPrompt: z.string().nullable().optional(),
+      })
+    )
+    .output(z.object({ data: HighlightSchema })),
+
+  updateStudyIntent: oc
+    .route({
+      method: 'PUT',
+      path: '/study-sessions/{sessionId}/highlights/{highlightId}/study-intent',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      // The enrich job already applied the intent — the term now has live facets,
+      // so the client must edit those instead of the stored intent.
+      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        highlightId: z.string().uuid(),
+        // `null` CLEARS the stored intent (back to zero pre-configured skills) —
+        // StudyIntentSchema is `.min(1)`, so "no skills" can't be an empty set.
+        studyIntent: StudyIntentSchema.nullable(),
       })
     )
     .output(z.object({ data: HighlightSchema })),

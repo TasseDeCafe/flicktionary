@@ -154,6 +154,9 @@ export const chunksContract = {
     .route({ method: 'PATCH', path: '/chunks/{chunkId}/facets/enabled', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      // Disabling the last enabled facet of a KEPT term would leave it studied
+      // for nothing — the floor guard rejects it (delete the term instead).
+      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(

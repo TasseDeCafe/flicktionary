@@ -122,6 +122,7 @@ export const createAdhocCard = async (params: {
     // Provenance only: adhoc intent is applied inline below (no enrich job runs
     // for adhoc highlights); the applied_at stamp rides the same guard.
     studyIntent: studyIntent,
+    fastGloss: null,
   })
 
   const highlightInput: HighlightInput = {

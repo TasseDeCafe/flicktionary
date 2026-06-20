@@ -7,11 +7,15 @@ import {
   FlicktionarySavedGlossMessage,
   FlicktionarySavedGlossResponse,
   FlicktionaryStartPairingMessage,
+  FlicktionaryStudyFacetDto,
+  GetFlicktionaryStudyTargetsMessage,
+  GetFlicktionaryStudyTargetsResponse,
   LoadFlicktionarySavedHighlightsMessage,
   LoadFlicktionarySavedHighlightsResponse,
   SavedHighlightDto,
   SaveWordMessage,
   SaveWordResponse,
+  SaveWordFastGloss,
   SaveWordFlicktionaryVideoContext,
   SaveWordStudyIntent,
   SetFlicktionaryCefrMessage,
@@ -22,7 +26,10 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 
 // Re-exported so UI call sites get the intent type alongside SaveWordParams.
-export type { SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
+export type { SavedHighlightDto, SaveWordStudyIntent, FlicktionaryStudyFacetDto } from '@asbplayer-fork/common'
+
+// The three studiable skills, as the saved-mode popover toggles them.
+export type FlicktionaryFacetSkill = 'meaning_recognition' | 'meaning_production' | 'pronunciation'
 
 // Framework-agnostic Flicktionary messaging used by the React subtitle overlay.
 // These functions are pure async over `browser.runtime.sendMessage` — they NEVER
@@ -119,6 +126,7 @@ export interface SaveWordParams {
   // backend default). Lives on the params so the CEFR-retry round-trip
   // (pendingSave) keeps the configured options for free.
   studyIntent?: SaveWordStudyIntent
+  fastGloss?: SaveWordFastGloss
   // Set when this save is the automatic retry after the user picked a CEFR
   // level. Suppresses the missing-cefr outcome (don't re-show the picker) and
   // surfaces the message instead if the save still fails.
@@ -132,6 +140,7 @@ export async function saveWord({
   segmentInfo,
   closures,
   studyIntent,
+  fastGloss,
   isCefrRetry = false,
 }: SaveWordParams): Promise<SaveWordOutcome> {
   const saveDisabledReason = closures.getFlicktionarySaveDisabledReason()
@@ -155,6 +164,7 @@ export async function saveWord({
       endCharOffset: segmentInfo?.endCharOffset,
       flicktionaryVideo: closures.getFlicktionaryVideoContext(),
       studyIntent,
+      ...(fastGloss ? { fastGloss } : {}),
     },
   }
 
@@ -275,4 +285,16 @@ export async function fetchSavedGloss(sessionId: string, highlightId: string): P
     register: response.register ?? null,
     ipaDisplay: response.ipaDisplay ?? null,
   }
+}
+
+// Reads a materialized term's live facets (post-enrich saved popover). Returns
+// null on failure.
+export async function fetchStudyTargets(chunkId: string): Promise<ReadonlyArray<FlicktionaryStudyFacetDto> | null> {
+  const message: TabToExtensionCommand<GetFlicktionaryStudyTargetsMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: { command: 'get-flicktionary-study-targets', messageId: uuidv4(), chunkId },
+  }
+  const response: GetFlicktionaryStudyTargetsResponse | undefined = await browser.runtime.sendMessage(message)
+  if (!response?.success || !response.facets) return null
+  return response.facets
 }

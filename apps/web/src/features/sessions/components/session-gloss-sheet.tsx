@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { ChevronDown, ChevronUp, PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, PencilLine, Save, Trash2 } from 'lucide-react'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
@@ -39,6 +39,7 @@ import {
   useSwitchGhost,
   useUpdateHighlightNoteAndTags,
 } from '../api/sessions-hooks'
+import { SavedStudyTargets } from './saved-study-targets'
 import type { SelectionResult } from '../utils/selection-adapter'
 
 export type ExistingHighlightInput = {
@@ -147,6 +148,24 @@ export const SessionGlossSheet = ({
   // The "Study options" draft. Untouched → no studyIntent on Save (the backend
   // keep-time default applies); touched → the FULL SET of checked skills.
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
+
+  // The saved highlight's live row, used to drive the always-visible study
+  // targets: `studyIntent` (pre-enrich) and `chunkId` (post-enrich). We poll
+  // while the open sheet's highlight is still pre-enrich (chunkId == null) so the
+  // study targets flip from intent-editing to live-facet editing without a manual
+  // refresh once the enrich job materializes the term.
+  const { data: sessionHighlights } = useQuery(
+    orpcQuery.highlights.listBySession.queryOptions({
+      input: { sessionId },
+      enabled: open,
+      select: (response) => response.data,
+      refetchInterval: (query) => {
+        const row = query.state.data?.data.find((h) => h.id === highlightId)
+        return open && highlightId && row && row.chunkId == null ? 2000 : false
+      },
+    })
+  )
+  const currentHighlight = highlightId ? (sessionHighlights?.find((h) => h.id === highlightId) ?? null) : null
 
   useLayoutEffect(() => {
     if (!open) return
@@ -310,6 +329,10 @@ export const SessionGlossSheet = ({
     if (!selection || highlightId || isSaving) return
     setIsSaving(true)
     try {
+      const fastGloss =
+        glossState.status === 'ready'
+          ? { gloss: glossState.gloss, pos: glossState.pos, register: glossState.register }
+          : undefined
       const created = await createHighlight({
         sessionId,
         startSegmentId: selection.startSegmentId,
@@ -324,6 +347,7 @@ export const SessionGlossSheet = ({
         studyIntent: draftToStudyIntent(studyDraft),
         // A pre-save ghost adoption dismisses the ghost with the insert.
         adoptedGhostId: pendingGhostId ?? undefined,
+        ...(fastGloss ? { fastGloss } : {}),
       })
       setHighlightId(created.data.id)
     } catch {
@@ -331,7 +355,7 @@ export const SessionGlossSheet = ({
     } finally {
       setIsSaving(false)
     }
-  }, [selection, highlightId, isSaving, createHighlight, sessionId, studyDraft, pendingGhostId])
+  }, [selection, highlightId, isSaving, createHighlight, sessionId, studyDraft, pendingGhostId, glossState])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point
@@ -480,7 +504,7 @@ export const SessionGlossSheet = ({
       modal={false}
       closeOnScroll
     >
-      <FloatingSheetContent>
+      <FloatingSheetContent visualScrollAffordance>
         <FloatingSheetHeader>
           <div className='flex items-start justify-between gap-2'>
             <div className='flex min-w-0 flex-col gap-1'>
@@ -544,19 +568,29 @@ export const SessionGlossSheet = ({
           </FloatingSheetBody>
         )}
 
-        {isPreview && selection && (
+        {/* Study targets are ALWAYS visible. Preview binds to the local draft
+            (applied on Save); saved mode edits the highlight's stored intent
+            pre-enrich, then its live facets once a chunkId resolves. */}
+        {isPreview && selection ? (
           <FloatingSheetBody>
             <StudyOptionsSection
-              // Remounting per selection re-collapses the disclosure; the draft
-              // itself lives above and survives a ghost swap (skills kept,
-              // exact-form re-armed).
+              // Remounting per selection re-arms the draft; it lives above and
+              // survives a ghost swap (skills kept, exact-form re-armed).
               key={`${selection.startSegmentId}:${selection.startOffset}:${selection.selectionText}`}
               value={studyDraft}
               onChange={setStudyDraft}
               surfaceForm={selection.selectionText}
             />
           </FloatingSheetBody>
-        )}
+        ) : highlightId ? (
+          <FloatingSheetBody>
+            <SavedStudyTargets
+              chunkId={currentHighlight?.chunkId ?? null}
+              storedIntent={currentHighlight?.studyIntent ?? null}
+              surfaceForm={titleText}
+            />
+          </FloatingSheetBody>
+        ) : null}
 
         {glossState.status === 'error' && (
           <FloatingSheetBody>
@@ -581,34 +615,45 @@ export const SessionGlossSheet = ({
                 {isSaving ? t`Saving…` : t`Save`}
               </Button>
             ) : (
+              // Saved mode: the Save button morphs into a green "Saved" state
+              // (the note editor, when expanded, turns it into "Save note"), with
+              // a trash icon to remove the highlight.
               <>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  disabled={isDeleting || !highlightId}
-                  onClick={() => handleRemove()}
-                  className='text-destructive hover:bg-destructive/10'
-                >
-                  <Trash2 className='mr-1 h-4 w-4' />
-                  {isDeleting ? t`Removing…` : t`Remove highlight`}
-                </Button>
                 {expanded ? (
                   <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
                     {isSavingNote ? t`Saving…` : t`Save note`}
                   </Button>
                 ) : (
+                  <span className='inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700'>
+                    <Check className='h-4 w-4' />
+                    {t`Saved`}
+                  </span>
+                )}
+                <div className='flex items-center gap-1'>
+                  {!expanded && (
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      disabled={!highlightId}
+                      onClick={() => setExpanded(true)}
+                    >
+                      <PencilLine className='h-4 w-4' />
+                      {hasNoteDetails ? t`Edit note` : t`Add note`}
+                    </Button>
+                  )}
                   <Button
                     type='button'
-                    variant='outline'
-                    size='sm'
-                    disabled={!highlightId}
-                    onClick={() => setExpanded(true)}
+                    variant='ghost'
+                    size='icon'
+                    aria-label={t`Remove highlight`}
+                    disabled={isDeleting || !highlightId}
+                    onClick={() => handleRemove()}
+                    className='text-destructive hover:bg-destructive/10'
                   >
-                    <PencilLine className='h-4 w-4' />
-                    {hasNoteDetails ? t`Edit note` : t`Add note`}
+                    <Trash2 className='h-4 w-4' />
                   </Button>
-                )}
+                </div>
               </>
             )}
           </div>

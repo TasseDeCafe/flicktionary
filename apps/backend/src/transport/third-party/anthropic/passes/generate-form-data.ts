@@ -109,7 +109,7 @@ const buildTool = (): Anthropic.Tool => ({
       target_example: {
         type: 'string',
         description:
-          'One natural example sentence in the target language that uses THIS exact inflected form. If the user provided an "Encountered sentence", return that sentence VERBATIM here, unchanged. Otherwise write a short natural sentence.',
+          'One short, natural, self-contained example sentence in the target language that uses THIS exact inflected form and makes its meaning clear on its own. Write a fresh sentence — do NOT copy the "Encountered sentence" if one was provided; use it only to understand the form\'s sense and register.',
       },
       native_example: {
         type: 'string',
@@ -147,7 +147,7 @@ export const generateFormData = async (args: GenerateFormDataArgs): Promise<Form
     args.headwordTranslation ? ` — ${args.headwordTranslation}` : ''
   }
 Encountered inflected form: ${args.surfaceForm}
-${args.encounteredSentence ? `Encountered sentence (use verbatim as target_example): ${args.encounteredSentence}\n` : ''}Target language: ${args.targetLanguage}
+${args.encounteredSentence ? `Encountered sentence (context for the form's sense and register — do NOT copy it; write a fresh, short standalone target_example): ${args.encounteredSentence}\n` : ''}Target language: ${args.targetLanguage}
 Native language: ${args.nativeLanguage}
 
 Submit the form's data via the tool.`
@@ -170,9 +170,11 @@ Submit the form's data via the tool.`
   // usable for `form` — better the raw form than an empty front.
   const form = typeof raw.form === 'string' && raw.form.trim().length > 0 ? raw.form : args.surfaceForm
   const translation = typeof raw.translation === 'string' ? raw.translation : ''
-  // Prefer the real encountered sentence over whatever the model echoed (it is
-  // instructed to copy it, but pin it ourselves so seeding is exact).
-  const targetExample = args.encounteredSentence ?? asString(raw.target_example)
+  // Opus writes a fresh, short standalone sentence using the exact form; the
+  // encountered sentence is passed only as context (raw segments can be whole
+  // paragraphs, so copying them verbatim makes a poor example). Fall back to the
+  // encountered sentence only if the model returned nothing usable.
+  const targetExample = asString(raw.target_example) ?? args.encounteredSentence ?? null
   const rawPos = typeof raw.pos === 'string' ? raw.pos : null
   const pos = rawPos && (POS_VALUES as readonly string[]).includes(rawPos) ? (rawPos as Pos) : null
   return {

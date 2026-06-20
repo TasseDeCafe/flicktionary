@@ -39,14 +39,15 @@ export type ApplyStudyIntentResult = {
 // correctly skips force-adding recognition. Application is enable-only and
 // additive on term dedupe: it never disables an existing facet.
 //
-// `formScope: 'both'` adds form facets of the encountered surface form for ALL
-// the intent's skills (pronunciation included) — unless the surface IS the
-// headword (the client never knows the lemma, so the lemma-collapse decision
-// lives here): then the citation facets already cover it and no duplicate form
-// facet is minted. Form facets key on normalizeTargetForm(surface); the payload
-// keeps the display form (stress intact). New form facets are born
-// pending_data / source='highlight' (an existing facet keeps its data and
-// status).
+// `formScope` is EXCLUSIVE: 'lemma' attaches the skills to citation facets;
+// 'form' attaches them to form facets of the encountered surface form, leaving
+// the lemma a skill-less base anchor (the user_lookup row still exists — vocab
+// entry + the focus view's citation chip — it just isn't studied). 'form'
+// collapses to 'lemma' when the surface IS the headword (no distinct inflection;
+// the client never knows the lemma, so the collapse decision lives here). Form
+// facets key on normalizeTargetForm(surface); the payload keeps the display form
+// (stress intact). New form facets are born pending_data / source='highlight'
+// (an existing facet keeps its data and status).
 //
 // `appliedGuardHighlightId` (the async enrichment path) makes application
 // exactly-once: the highlight's study_intent_applied_at is stamped atomically
@@ -71,16 +72,22 @@ export const applyStudyIntent = async (
 
   const skills = [...new Set(params.intent.skills)]
   const normalizedForm = normalizeTargetForm(params.surfaceForm)
+  // Form scope only studies a DISTINCT inflection; when the surface is the
+  // headword it collapses to lemma (no separate form to study).
   const wantFormFacets =
-    params.intent.formScope === 'both' &&
+    params.intent.formScope === 'form' &&
     normalizedForm !== '' &&
     normalizedForm !== normalizeTargetForm(lookup.headword)
 
-  const facets: StudyIntentFacetSpec[] = skills.map((skill) => ({
-    userLookupId: params.userLookupId,
-    skill,
-    targetForm: CITATION_FORM,
-  }))
+  // Exclusive routing: form scope sends the skills to the FORM only, leaving the
+  // lemma a skill-less base anchor; otherwise they go to the citation facets.
+  const facets: StudyIntentFacetSpec[] = wantFormFacets
+    ? []
+    : skills.map((skill) => ({
+        userLookupId: params.userLookupId,
+        skill,
+        targetForm: CITATION_FORM,
+      }))
 
   const formFacetTargets: StudyIntentFormTarget[] = wantFormFacets
     ? skills.map((skill) => ({ skill, targetForm: normalizedForm }))
@@ -103,7 +110,10 @@ export const applyStudyIntent = async (
   })
   if (!applied) return notApplied
 
-  if (skills.includes('pronunciation')) {
+  // The reconcile guards the CITATION pronunciation facet against missing IPA;
+  // it only applies when this intent created citation facets (lemma scope). A
+  // form pronunciation facet is born pending_data and handled by generation.
+  if (!wantFormFacets && skills.includes('pronunciation')) {
     await reconcilePronunciationFacet(
       deps.userLookupsRepository,
       params.userLookupId,

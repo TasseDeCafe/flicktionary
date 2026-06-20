@@ -4,6 +4,11 @@ import { Tables } from '../database.public.types'
 
 export type DbHighlight = Tables<'highlights'>
 
+// A highlight joined to its materialized term: chunk_id is cards.user_lookup_id
+// for the highlight's card (the partial unique index on cards(highlight_id)
+// guarantees at most one). Null until the enrich job materializes the card.
+export type DbHighlightWithChunk = DbHighlight & { chunk_id: string | null }
+
 export type HighlightInsertParams = {
   studySessionId: string
   startSegmentId: string
@@ -17,13 +22,14 @@ export type HighlightInsertParams = {
   // enrich_highlight job once the user_lookup materializes. Kept as a loose
   // record here — the repo stays decoupled from the contract package.
   studyIntent: Record<string, unknown> | null
+  fastGloss: string | null
 }
 
 const insertHighlight = async (params: HighlightInsertParams): Promise<DbHighlight> => {
   const result = (await sql`
     INSERT INTO public.highlights (
       study_session_id, start_segment_id, end_segment_id,
-      start_offset, end_offset, selection_text, note, preset_tags, study_intent
+      start_offset, end_offset, selection_text, note, preset_tags, study_intent, fast_gloss
     )
     VALUES (
       ${params.studySessionId},
@@ -34,19 +40,22 @@ const insertHighlight = async (params: HighlightInsertParams): Promise<DbHighlig
       ${params.selectionText},
       ${params.note},
       ${params.presetTags},
-      ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null}
+      ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null},
+      ${params.fastGloss}
     )
     RETURNING *
   `) as DbHighlight[]
   return result[0]!
 }
 
-const listBySessionId = async (studySessionId: string): Promise<DbHighlight[]> => {
+const listBySessionId = async (studySessionId: string): Promise<DbHighlightWithChunk[]> => {
   return (await sql`
-    SELECT * FROM public.highlights
-    WHERE study_session_id = ${studySessionId}
-    ORDER BY created_at ASC
-  `) as DbHighlight[]
+    SELECT h.*, c.user_lookup_id AS chunk_id
+    FROM public.highlights h
+    LEFT JOIN public.cards c ON c.highlight_id = h.id
+    WHERE h.study_session_id = ${studySessionId}
+    ORDER BY h.created_at ASC
+  `) as DbHighlightWithChunk[]
 }
 
 const findById = async (id: string): Promise<DbHighlight | null> => {
@@ -70,6 +79,25 @@ const updateNoteAndTags = async (
     UPDATE public.highlights
     SET note = ${note}, preset_tags = ${presetTags}, chat_seed_prompt = ${chatSeedPrompt}
     WHERE id = ${id}
+    RETURNING *
+  `) as DbHighlight[]
+  return result[0] ?? null
+}
+
+// Update the stored study_intent — but ONLY while it hasn't been applied yet
+// (study_intent_applied_at IS NULL). Once the enrich job applied it, the term has
+// live facets and the intent column is frozen; the WHERE clause returns no row
+// and the router maps that to a 409. `null` clears the intent (back to zero
+// pre-configured skills).
+const updateStudyIntent = async (
+  id: string,
+  studyIntent: Record<string, unknown> | null
+): Promise<DbHighlight | null> => {
+  const result = (await sql`
+    UPDATE public.highlights
+    SET study_intent = ${studyIntent ? sql.json(studyIntent as unknown as postgres.JSONValue) : null}
+    WHERE id = ${id}
+      AND study_intent_applied_at IS NULL
     RETURNING *
   `) as DbHighlight[]
   return result[0] ?? null
@@ -124,7 +152,7 @@ const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
 
 export interface HighlightsRepositoryInterface {
   insertHighlight: (params: HighlightInsertParams) => Promise<DbHighlight>
-  listBySessionId: (studySessionId: string) => Promise<DbHighlight[]>
+  listBySessionId: (studySessionId: string) => Promise<DbHighlightWithChunk[]>
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<void>
   updateNoteAndTags: (
@@ -133,6 +161,7 @@ export interface HighlightsRepositoryInterface {
     presetTags: string[],
     chatSeedPrompt: string | null
   ) => Promise<DbHighlight | null>
+  updateStudyIntent: (id: string, studyIntent: Record<string, unknown> | null) => Promise<DbHighlight | null>
   deleteWithCardCleanup: (id: string) => Promise<boolean>
 }
 
@@ -143,6 +172,7 @@ export const HighlightsRepository = (): HighlightsRepositoryInterface => {
     findById,
     updateFastGloss,
     updateNoteAndTags,
+    updateStudyIntent,
     deleteWithCardCleanup,
   }
 }

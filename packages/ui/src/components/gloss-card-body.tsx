@@ -23,7 +23,7 @@ type GlossCardBodyProps = {
 // sheet, generated-texts lookup sheet, the extension's video-overlay popovers)
 // so the card reads identically across surfaces. Works inside OR outside a
 // FloatingSheet (the description component falls back to a plain <p> without
-// the sheet context — the extension popovers position with floating-ui).
+// the sheet context).
 export const GlossCardBody = ({
   loading,
   gloss,
@@ -37,8 +37,7 @@ export const GlossCardBody = ({
     return (
       <>
         <Skeleton className='h-5 w-20' />
-        <Skeleton className='h-4 w-11/12' />
-        <Skeleton className='h-4 w-3/4' />
+        <Skeleton className='h-4 w-3/5' />
         <div className='mt-1 flex flex-wrap gap-1.5'>
           <Skeleton className='h-5 w-12 rounded-md' />
           <Skeleton className='h-5 w-16 rounded-md' />

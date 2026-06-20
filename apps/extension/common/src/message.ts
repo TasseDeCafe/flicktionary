@@ -461,7 +461,13 @@ export interface SaveWordFlicktionaryVideoContext {
 // keep-time default (citation recognition).
 export interface SaveWordStudyIntent {
   readonly skills: Array<'meaning_recognition' | 'meaning_production' | 'pronunciation'>
-  readonly formScope: 'lemma' | 'both'
+  readonly formScope: 'lemma' | 'form'
+}
+
+export interface SaveWordFastGloss {
+  readonly gloss: string
+  readonly pos: string | null
+  readonly register: string | null
 }
 
 export interface SaveWordMessage extends MessageWithId {
@@ -479,6 +485,9 @@ export interface SaveWordMessage extends MessageWithId {
   // Study options picked in the gloss tooltip; forwarded verbatim to
   // highlights.create and applied by the backend enrichment job.
   readonly studyIntent?: SaveWordStudyIntent
+  // Preview gloss already shown before Save. Persisted with the highlight so
+  // saved-mode display does not have to generate a second first gloss.
+  readonly fastGloss?: SaveWordFastGloss
 }
 
 export interface SaveWordResponse {
@@ -519,6 +528,12 @@ export interface SavedHighlightDto {
   readonly note: string | null
   readonly presetTags: ReadonlyArray<string>
   readonly fastGloss: string | null
+  // The stored study intent before the enrich job applies it. Null once cleared,
+  // or never set. The saved popover edits this directly while pre-enrich.
+  readonly studyIntent: SaveWordStudyIntent | null
+  // The materialized term id (null pre-enrich). When set, the saved popover edits
+  // live facets instead of the stored intent.
+  readonly chunkId: string | null
 }
 
 // Load the saved highlights for the current video so the overlay can paint
@@ -591,6 +606,26 @@ export interface FlicktionarySavedGlossResponse {
   readonly register?: string | null
   // Server-picked display string — same convention as FlicktionaryGlossResponse.
   readonly ipaDisplay?: string | null
+  readonly error?: string
+}
+
+// One live study facet (skill x target_form) as the saved popover consumes it.
+export interface FlicktionaryStudyFacetDto {
+  readonly skill: 'meaning_recognition' | 'meaning_production' | 'pronunciation'
+  readonly targetForm: string
+  readonly enabled: boolean
+}
+
+// Read a materialized term's live facets so the saved popover can render the
+// citation skill cards post-enrich. Wraps chunks.getStudyTargets.
+export interface GetFlicktionaryStudyTargetsMessage extends MessageWithId {
+  readonly command: 'get-flicktionary-study-targets'
+  readonly chunkId: string
+}
+
+export interface GetFlicktionaryStudyTargetsResponse {
+  readonly success: boolean
+  readonly facets?: ReadonlyArray<FlicktionaryStudyFacetDto>
   readonly error?: string
 }
 
