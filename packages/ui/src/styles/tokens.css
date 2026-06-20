@@ -140,3 +140,32 @@
     @apply border-border;
   }
 }
+
+/* Persistent scroll affordance for overflow-capped popovers (the web gloss
+   sheet and the extension's video-overlay popovers): an always-visible
+   scrollbar when the card overflows, so the user sees there's more below.
+   No-op when the content fits. Shared by web and the extension shadow surfaces,
+   so it lives here next to the design tokens.
+
+   Styling ::-webkit-scrollbar opts the element out of macOS's auto-hiding
+   overlay scrollbar and into a classic, always-visible one. We deliberately do
+   NOT set the standard `scrollbar-width`/`scrollbar-color`: the moment either is
+   present Chromium reverts to the standard (auto-hiding) scrollbar and ignores
+   the ::-webkit-scrollbar styling, so the bar only appears mid-scroll. That left
+   Firefox without a thin scrollbar, but macOS overlay hiding can't be overridden
+   from CSS there anyway, so the standard properties bought nothing. */
+.scrollbar-affordance::-webkit-scrollbar {
+  width: 10px;
+}
+.scrollbar-affordance::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-affordance::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.45);
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.scrollbar-affordance:hover::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.65);
+}

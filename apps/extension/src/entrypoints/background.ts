@@ -37,9 +37,7 @@ import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler
 import LoadFlicktionarySavedHighlightsHandler from '@/handlers/flicktionary/saved-highlights-handler'
 import DeleteFlicktionaryHighlightHandler from '@/handlers/flicktionary/delete-highlight-handler'
 import UpdateFlicktionaryHighlightNoteHandler from '@/handlers/flicktionary/update-highlight-note-handler'
-import UpdateFlicktionaryStudyIntentHandler from '@/handlers/flicktionary/update-study-intent-handler'
 import GetFlicktionaryStudyTargetsHandler from '@/handlers/flicktionary/get-study-targets-handler'
-import SetFlicktionaryFacetEnabledHandler from '@/handlers/flicktionary/set-facet-enabled-handler'
 import FlicktionarySavedGlossHandler from '@/handlers/flicktionary/saved-gloss-handler'
 import ImportArticleHandler from '@/handlers/flicktionary/import-article-handler'
 import { importArticleFromTab, importSelectionFromTab } from '@/services/flicktionary/import-text'
@@ -111,9 +109,7 @@ export default defineBackground(() => {
     new LoadFlicktionarySavedHighlightsHandler(),
     new DeleteFlicktionaryHighlightHandler(),
     new UpdateFlicktionaryHighlightNoteHandler(),
-    new UpdateFlicktionaryStudyIntentHandler(),
     new GetFlicktionaryStudyTargetsHandler(),
-    new SetFlicktionaryFacetEnabledHandler(),
     new FlicktionarySavedGlossHandler(),
     new ImportArticleHandler(),
     new SupadataGenerateHandler(settings),

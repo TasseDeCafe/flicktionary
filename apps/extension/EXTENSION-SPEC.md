@@ -550,7 +550,14 @@ uses intersection, not exact offsets.
     as the right-click remove); **Add/Edit note** offers the same textarea +
     preset tags as the web and composes the same localized `chatSeedPrompt`
     (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
-    No Study options / Save here. A STICKY saved popover wins over the hover
+    The **study-target picker is shown but locked read-only** (the same
+    `StudySkillCards` as the preview, uniformly dimmed + non-interactive via
+    `pointer-events-none`, with a lock caption): it displays the saved skills +
+    scope from the highlight's stored `study_intent` pre-enrich, then the term's
+    live facets once a `chunkId` resolves (`get-flicktionary-study-targets` →
+    `chunks.getStudyTargets`, read-only). Editing study targets is a save-time
+    decision — afterwards it happens only in the web app's term view (the
+    extension has none); there is no Save here. A STICKY saved popover wins over the hover
     preview (the preview neither opens over it nor renders while it's up); a
     hover-opened one yields to hovering other words. Sticky dismissal is
     outside pointerdown (composedPath — shadow root; right-button presses are

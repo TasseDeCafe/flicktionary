@@ -89,7 +89,7 @@ export const StudySkillCards = ({
                   ? 'border-border bg-background text-muted-foreground/60 cursor-not-allowed'
                   : card.selected
                     ? 'border-foreground bg-muted text-foreground'
-                    : 'border-border bg-background text-muted-foreground hover:border-foreground/40 hover:bg-accent',
+                    : 'border-border bg-background text-foreground/70 hover:border-foreground/40 hover:bg-accent hover:text-foreground',
                 card.disabled && card.available !== false && 'cursor-not-allowed'
               )}
             >
@@ -161,7 +161,7 @@ const FormScopeControl = ({ formScope, surfaceForm, onFormScopeChange, disabled 
               'flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
               'focus-visible:ring-ring/50 focus-visible:ring-[2px] focus-visible:outline-none',
               disabled && 'cursor-not-allowed',
-              active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              active ? 'bg-background text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'
             )}
           >
             <span>{option.label}</span>

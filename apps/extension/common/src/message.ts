@@ -600,23 +600,6 @@ export interface FlicktionarySavedGlossResponse {
   readonly error?: string
 }
 
-// Edit the stored study_intent of a not-yet-enriched saved highlight. `null`
-// clears it (back to zero pre-configured skills). Wraps highlights.updateStudyIntent.
-export interface UpdateFlicktionaryStudyIntentMessage extends MessageWithId {
-  readonly command: 'update-flicktionary-study-intent'
-  readonly sessionId: string
-  readonly highlightId: string
-  readonly studyIntent: SaveWordStudyIntent | null
-}
-
-export interface UpdateFlicktionaryStudyIntentResponse {
-  readonly success: boolean
-  // True when the enrich job already applied the intent (409) — the caller
-  // should switch to live-facet editing.
-  readonly applied?: boolean
-  readonly error?: string
-}
-
 // One live study facet (skill x target_form) as the saved popover consumes it.
 export interface FlicktionaryStudyFacetDto {
   readonly skill: 'meaning_recognition' | 'meaning_production' | 'pronunciation'
@@ -634,20 +617,6 @@ export interface GetFlicktionaryStudyTargetsMessage extends MessageWithId {
 export interface GetFlicktionaryStudyTargetsResponse {
   readonly success: boolean
   readonly facets?: ReadonlyArray<FlicktionaryStudyFacetDto>
-  readonly error?: string
-}
-
-// Toggle one live facet on a materialized term. Wraps chunks.setFacetEnabled.
-export interface SetFlicktionaryFacetEnabledMessage extends MessageWithId {
-  readonly command: 'set-flicktionary-facet-enabled'
-  readonly chunkId: string
-  readonly skill: 'meaning_recognition' | 'meaning_production' | 'pronunciation'
-  readonly targetForm: string
-  readonly enabled: boolean
-}
-
-export interface SetFlicktionaryFacetEnabledResponse {
-  readonly success: boolean
   readonly error?: string
 }
 

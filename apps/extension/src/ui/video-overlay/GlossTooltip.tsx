@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
-import { Check, Eye, Mic, Pencil, PencilLine, Save, Trash2 } from 'lucide-react'
+import { computePosition, flip, shift, offset, size, autoUpdate } from '@floating-ui/dom'
+import { Check, Eye, Lock, Mic, Pencil, PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
   draftToStudyIntent,
@@ -15,15 +15,14 @@ import { Button } from '@flicktionary/ui/components/button'
 import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
 import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
+import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-form'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
 import type { FlicktionaryStudyFacetDto, SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
 import {
   deleteSavedHighlight,
   fetchSavedGloss,
   fetchStudyTargets,
-  setFacetEnabled as setFacetEnabledRequest,
   updateSavedHighlightNote,
-  updateHighlightStudyIntent,
   type FlicktionaryFacetSkill,
 } from '../../services/flicktionary/flicktionary-client'
 
@@ -36,14 +35,35 @@ export type GlossContent = GlossViewState
 // the shared tokens (tokens.css `.dark { … }`, adopted into the popover shadow
 // root) and every `dark:` variant in the shared components resolve — so the
 // card looks exactly like the web gloss sheet in dark mode.
+// `overflow-y-auto` + the floating-ui `size` middleware (which caps max-height
+// to the available viewport space) keep a tall popover from bleeding past the
+// screen edge — it scrolls internally instead, matching the web gloss sheet.
+// `scrollbar-affordance` (tokens.css) shows a persistent scrollbar when it does.
 const POPOVER_CARD_CLASS =
-  'dark pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-80 max-w-[90vw] flex-col rounded-md border bg-popover text-popover-foreground shadow-xl px-2 py-0'
+  'scrollbar-affordance dark pointer-events-auto fixed left-0 top-0 z-[2147483647] flex w-80 max-w-[90vw] flex-col overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-xl px-2 py-0'
 
 // Web FloatingSheet section paddings (header/body/footer), so the composed
 // card matches the web sheet's rhythm.
 const CARD_HEADER_CLASS = 'flex flex-col gap-1 px-2 pt-3 pb-2'
 const CARD_BODY_CLASS = 'flex flex-col gap-2 px-2 pb-2 text-sm'
 const CARD_FOOTER_CLASS = 'mt-auto flex flex-col gap-2 px-2 pt-2 pb-3'
+const POPOVER_VIEWPORT_PADDING = 5
+
+const viewportHeight = () => window.innerHeight || document.documentElement.clientHeight || 0
+
+const capPopoverHeight = (tooltip: HTMLElement, top: number) => {
+  const availableFromTop = Math.max(
+    0,
+    viewportHeight() - Math.max(top, POPOVER_VIEWPORT_PADDING) - POPOVER_VIEWPORT_PADDING
+  )
+  const middlewareMaxHeight = Number.parseFloat(tooltip.style.maxHeight)
+  const maxHeight =
+    Number.isFinite(middlewareMaxHeight) && middlewareMaxHeight > 0
+      ? Math.min(middlewareMaxHeight, availableFromTop)
+      : availableFromTop
+
+  tooltip.style.maxHeight = `${maxHeight}px`
+}
 
 // Floating-ui positioning shared by the preview and saved popovers: fixed
 // strategy against the anchor's viewport rect (the anchor lives in the
@@ -69,10 +89,33 @@ const useTooltipPosition = (anchor: HTMLElement, ref: React.RefObject<HTMLDivEle
       computePosition(anchor, tooltip, {
         strategy: 'fixed',
         placement: 'top',
-        middleware: [offset(8), flip({ fallbackPlacements: ['bottom', 'top'] }), shift({ padding: 5 })],
+        middleware: [
+          offset(8),
+          flip({ fallbackPlacements: ['bottom', 'top'] }),
+          shift({ padding: POPOVER_VIEWPORT_PADDING }),
+          // Cap the popover to the space available in the chosen placement so a
+          // tall card (full save options + note editor) scrolls internally
+          // instead of bleeding past the viewport edge. Runs after flip so it
+          // measures the final side; the viewport fallback below handles hosts
+          // where Floating UI's availableHeight is too generous.
+          size({
+            padding: POPOVER_VIEWPORT_PADDING,
+            apply({ availableHeight, elements }) {
+              const viewportCap = Math.max(0, viewportHeight() - POPOVER_VIEWPORT_PADDING * 2)
+              const maxHeight =
+                Number.isFinite(availableHeight) && availableHeight > 0
+                  ? Math.min(availableHeight, viewportCap)
+                  : viewportCap
+
+              elements.floating.style.maxHeight = `${maxHeight}px`
+            },
+          }),
+        ],
       }).then(({ x, y }) => {
+        const top = Math.max(POPOVER_VIEWPORT_PADDING, y)
+        capPopoverHeight(tooltip, top)
         tooltip.style.left = `${x}px`
-        tooltip.style.top = `${y}px`
+        tooltip.style.top = `${top}px`
         tooltip.style.visibility = 'visible'
       })
     }
@@ -248,16 +291,15 @@ export function GlossTooltip({
 const SAVED_SKILLS: FlicktionaryFacetSkill[] = ['meaning_recognition', 'meaning_production', 'pronunciation']
 
 // Study targets inside the saved-mode popover — parity with the web reader's
-// saved gloss sheet. Two-phase: while the highlight is pre-enrich (chunkId null)
-// it edits the stored study_intent; once a chunkId is present it edits the term's
-// live citation facets. The saved highlight is a pending triage card (not kept),
-// so there's no last-skill lock — clearing every skill is allowed (intent → null).
-function SavedStudyTargetsSection({ sessionId, highlight }: { sessionId: string; highlight: SavedHighlightDto }) {
+// saved gloss sheet. Read-only: the picker keeps its preview layout but is
+// uniformly dimmed + non-interactive (the study-target choice is a SAVE-TIME
+// decision; editing it afterwards lives in the web app's term view alone, since
+// switching scope post-enrich means creating/deleting durable form facets this
+// compact popover can't represent). The displayed state comes from the stored
+// study_intent pre-enrich, then the term's live facets once a chunkId resolves.
+function SavedStudyTargetsSection({ highlight }: { highlight: SavedHighlightDto }) {
   const { t } = useLingui()
   const chunkId = highlight.chunkId
-  // Local state is optimistic (it updates before the request resolves), so the
-  // controls are never disabled mid-request — that flashed the picker grey.
-  const [intent, setIntent] = useState<SaveWordStudyIntent | null>(highlight.studyIntent)
   const [facets, setFacets] = useState<ReadonlyArray<FlicktionaryStudyFacetDto> | null>(null)
 
   // Post-enrich: load the live facets so the cards reflect the term's real state.
@@ -278,73 +320,66 @@ function SavedStudyTargetsSection({ sessionId, highlight }: { sessionId: string;
     pronunciation: { icon: <Mic className='h-5 w-5' />, label: t`Pronunciation` },
   }
 
-  // Post-enrich: edit live citation facets. Forms are managed in the web app, so
-  // the Base/Exact control is read-only here.
-  if (chunkId) {
-    const isOn = (skill: FlicktionaryFacetSkill) =>
-      facets?.some((f) => f.skill === skill && f.targetForm === '' && f.enabled) ?? false
-    const toggle = (skill: FlicktionaryFacetSkill) => {
-      const next = !isOn(skill)
-      setFacets((prev) => {
-        const others = (prev ?? []).filter((f) => !(f.skill === skill && f.targetForm === ''))
-        return [...others, { skill, targetForm: '', enabled: next }]
-      })
-      void setFacetEnabledRequest({ chunkId, skill, targetForm: '', enabled: next })
-        .then(() => fetchStudyTargets(chunkId))
-        .then((loaded) => {
-          if (loaded) setFacets(loaded)
-        })
-    }
-    const cards: StudySkillCardItem[] = SAVED_SKILLS.map((skill) => ({
-      key: skill,
-      icon: meta[skill].icon,
-      label: meta[skill].label,
-      selected: isOn(skill),
-      disabled: facets === null,
-      onToggle: () => toggle(skill),
-    }))
-    return (
-      <StudySkillCards
-        cards={cards}
-        formScope='lemma'
-        surfaceForm={highlight.selectionText}
-        onFormScopeChange={() => {}}
-        formScopeDisabled
-      />
-    )
-  }
+  const { skills, formScope } = resolveSavedTargets({
+    storedIntent: highlight.studyIntent,
+    facets: chunkId ? facets : null,
+    surfaceForm: highlight.selectionText,
+  })
 
-  // Pre-enrich: every toggle persists the stored study_intent (null when emptied).
-  const skills = new Set<FlicktionaryFacetSkill>(intent?.skills ?? [])
-  const formScope = intent?.formScope ?? 'lemma'
-  const hasAnySkill = skills.size > 0
-  const persist = (nextSkills: Set<FlicktionaryFacetSkill>, nextScope: 'lemma' | 'form') => {
-    const arr = [...nextSkills]
-    const next = arr.length > 0 ? { skills: arr, formScope: nextScope } : null
-    setIntent(next)
-    void updateHighlightStudyIntent({ sessionId, highlightId: highlight.id, studyIntent: next })
-  }
   const cards: StudySkillCardItem[] = SAVED_SKILLS.map((skill) => ({
     key: skill,
     icon: meta[skill].icon,
     label: meta[skill].label,
     selected: skills.has(skill),
-    onToggle: () => {
-      const nextSkills = new Set(skills)
-      if (nextSkills.has(skill)) nextSkills.delete(skill)
-      else nextSkills.add(skill)
-      persist(nextSkills, formScope)
-    },
+    onToggle: () => {},
   }))
+
   return (
-    <StudySkillCards
-      cards={cards}
-      formScope={formScope}
-      surfaceForm={highlight.selectionText}
-      onFormScopeChange={(scope) => persist(skills, scope)}
-      formScopeDisabled={!hasAnySkill}
-    />
+    <div className='flex flex-col gap-2'>
+      {/* Uniformly dimmed + non-interactive — `pointer-events-none` locks every
+          control at once, with no per-element opacity mismatch. */}
+      <div className='pointer-events-none opacity-70'>
+        <StudySkillCards
+          cards={cards}
+          formScope={formScope}
+          surfaceForm={highlight.selectionText}
+          onFormScopeChange={() => {}}
+        />
+      </div>
+      <div className='text-muted-foreground/70 flex items-center gap-1 text-xs'>
+        <Lock className='h-3 w-3' />
+        {t`Edit these in the web app`}
+      </div>
+    </div>
   )
+}
+
+// Resolves the enabled skills + scope from whichever source is authoritative.
+// Pre-enrich: the highlight's stored study_intent. Post-enrich: the live facets,
+// reading the skills attached to the active target (the form when one exists for
+// this surface, otherwise the lemma).
+function resolveSavedTargets({
+  storedIntent,
+  facets,
+  surfaceForm,
+}: {
+  storedIntent: SaveWordStudyIntent | null
+  facets: ReadonlyArray<FlicktionaryStudyFacetDto> | null
+  surfaceForm: string
+}): { skills: Set<FlicktionaryFacetSkill>; formScope: 'lemma' | 'form' } {
+  if (!facets) {
+    return {
+      skills: new Set<FlicktionaryFacetSkill>(storedIntent?.skills ?? []),
+      formScope: storedIntent?.formScope ?? 'lemma',
+    }
+  }
+  const surfaceTarget = normalizeTargetForm(surfaceForm)
+  const hasForm = surfaceTarget.length > 0 && facets.some((f) => f.targetForm === surfaceTarget && f.enabled)
+  const activeTargetForm = hasForm ? surfaceTarget : ''
+  const skills = new Set<FlicktionaryFacetSkill>(
+    facets.filter((f) => f.targetForm === activeTargetForm && f.enabled).map((f) => f.skill)
+  )
+  return { skills, formScope: hasForm ? 'form' : 'lemma' }
 }
 
 export interface SavedGlossTooltipProps {
@@ -474,9 +509,10 @@ export function SavedGlossTooltip({
         {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
       </div>
 
-      {/* Study targets — always visible (parity with the web saved sheet). */}
+      {/* Study targets — always visible (parity with the web saved sheet),
+          read-only here: editing lives in the web app's term view. */}
       <div className={CARD_BODY_CLASS}>
-        <SavedStudyTargetsSection sessionId={sessionId} highlight={highlight} />
+        <SavedStudyTargetsSection highlight={highlight} />
       </div>
 
       {noteExpanded && (

@@ -425,7 +425,9 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
         collisionPadding={12}
         onPointerDownOutside={ignoreRightClickOutside}
         className={cn(
-          'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 max-h-[var(--radix-popover-content-available-height)] w-80 origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-md border px-2 py-0 shadow-xl outline-hidden',
+          // scrollbar-affordance (tokens.css): a persistent scrollbar when the
+          // capped popover overflows, so the user sees there's more to scroll.
+          'scrollbar-affordance bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 max-h-[var(--radix-popover-content-available-height)] w-80 origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-md border px-2 py-0 shadow-xl outline-hidden',
           className
         )}
       >
