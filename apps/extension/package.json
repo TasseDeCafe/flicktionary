@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@flicktionary/extension",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "doppler run --project extension --config dev_personal -- wxt",
