@@ -33,7 +33,7 @@ describe('draftToStudyIntent', () => {
     ).toEqual({ skills: ['meaning_recognition'], formScope: 'both' })
   })
 
-  it('never emits an empty skill set (defensive — the UI locks the last checked skill)', () => {
+  it('an emptied (touched, 0-skill) draft is undefined — no intent on the wire, a pending triage card', () => {
     expect(
       draftToStudyIntent({
         recognition: false,

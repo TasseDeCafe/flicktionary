@@ -410,6 +410,10 @@ export const useCreateHighlight = (sessionId: string) => {
           note: vars.note ?? null,
           presetTags: vars.presetTags ?? [],
           fastGloss: null,
+          // Carry the chosen intent so the saved sheet reads it back immediately;
+          // chunkId is null until the enrich job materializes the term.
+          studyIntent: vars.studyIntent ?? null,
+          chunkId: null,
           createdAt: new Date().toISOString(),
         }
         const ctx = await applyOptimistic(queryClient, [

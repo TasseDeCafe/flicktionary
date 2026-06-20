@@ -79,6 +79,30 @@ export const highlightsContract = {
     )
     .output(z.object({ data: HighlightSchema })),
 
+  updateStudyIntent: oc
+    .route({
+      method: 'PUT',
+      path: '/study-sessions/{sessionId}/highlights/{highlightId}/study-intent',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      // The enrich job already applied the intent — the term now has live facets,
+      // so the client must edit those instead of the stored intent.
+      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        sessionId: z.string().uuid(),
+        highlightId: z.string().uuid(),
+        // `null` CLEARS the stored intent (back to zero pre-configured skills) —
+        // StudyIntentSchema is `.min(1)`, so "no skills" can't be an empty set.
+        studyIntent: StudyIntentSchema.nullable(),
+      })
+    )
+    .output(z.object({ data: HighlightSchema })),
+
   delete: oc
     .route({ method: 'DELETE', path: '/study-sessions/{sessionId}/highlights/{highlightId}', successStatus: 200 })
     .errors({

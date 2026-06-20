@@ -7,6 +7,13 @@ import {
   FlicktionarySavedGlossMessage,
   FlicktionarySavedGlossResponse,
   FlicktionaryStartPairingMessage,
+  FlicktionaryStudyFacetDto,
+  GetFlicktionaryStudyTargetsMessage,
+  GetFlicktionaryStudyTargetsResponse,
+  SetFlicktionaryFacetEnabledMessage,
+  SetFlicktionaryFacetEnabledResponse,
+  UpdateFlicktionaryStudyIntentMessage,
+  UpdateFlicktionaryStudyIntentResponse,
   LoadFlicktionarySavedHighlightsMessage,
   LoadFlicktionarySavedHighlightsResponse,
   SavedHighlightDto,
@@ -22,7 +29,10 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 
 // Re-exported so UI call sites get the intent type alongside SaveWordParams.
-export type { SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
+export type { SavedHighlightDto, SaveWordStudyIntent, FlicktionaryStudyFacetDto } from '@asbplayer-fork/common'
+
+// The three studiable skills, as the saved-mode popover toggles them.
+export type FlicktionaryFacetSkill = 'meaning_recognition' | 'meaning_production' | 'pronunciation'
 
 // Framework-agnostic Flicktionary messaging used by the React subtitle overlay.
 // These functions are pure async over `browser.runtime.sendMessage` — they NEVER
@@ -275,4 +285,60 @@ export async function fetchSavedGloss(sessionId: string, highlightId: string): P
     register: response.register ?? null,
     ipaDisplay: response.ipaDisplay ?? null,
   }
+}
+
+// Edits a not-yet-enriched highlight's stored study_intent (`null` clears it).
+// `applied: true` means the enrich job already applied the intent — the saved
+// popover should switch to live-facet editing.
+export async function updateHighlightStudyIntent(params: {
+  sessionId: string
+  highlightId: string
+  studyIntent: SaveWordStudyIntent | null
+}): Promise<{ ok: boolean; applied: boolean }> {
+  const message: TabToExtensionCommand<UpdateFlicktionaryStudyIntentMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'update-flicktionary-study-intent',
+      messageId: uuidv4(),
+      sessionId: params.sessionId,
+      highlightId: params.highlightId,
+      studyIntent: params.studyIntent,
+    },
+  }
+  const response: UpdateFlicktionaryStudyIntentResponse | undefined = await browser.runtime.sendMessage(message)
+  return { ok: response?.success ?? false, applied: response?.applied ?? false }
+}
+
+// Reads a materialized term's live facets (post-enrich saved popover). Returns
+// null on failure.
+export async function fetchStudyTargets(chunkId: string): Promise<ReadonlyArray<FlicktionaryStudyFacetDto> | null> {
+  const message: TabToExtensionCommand<GetFlicktionaryStudyTargetsMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: { command: 'get-flicktionary-study-targets', messageId: uuidv4(), chunkId },
+  }
+  const response: GetFlicktionaryStudyTargetsResponse | undefined = await browser.runtime.sendMessage(message)
+  if (!response?.success || !response.facets) return null
+  return response.facets
+}
+
+// Toggles one live facet on a materialized term (post-enrich saved popover).
+export async function setFacetEnabled(params: {
+  chunkId: string
+  skill: FlicktionaryFacetSkill
+  targetForm: string
+  enabled: boolean
+}): Promise<boolean> {
+  const message: TabToExtensionCommand<SetFlicktionaryFacetEnabledMessage> = {
+    sender: 'asbplayer-video-tab',
+    message: {
+      command: 'set-flicktionary-facet-enabled',
+      messageId: uuidv4(),
+      chunkId: params.chunkId,
+      skill: params.skill,
+      targetForm: params.targetForm,
+      enabled: params.enabled,
+    },
+  }
+  const response: SetFlicktionaryFacetEnabledResponse | undefined = await browser.runtime.sendMessage(message)
+  return response?.success ?? false
 }

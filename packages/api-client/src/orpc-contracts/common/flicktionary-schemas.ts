@@ -24,6 +24,36 @@ export const TextSegmentSchema = z.object({
 })
 export type TextSegment = z.infer<typeof TextSegmentSchema>
 
+// What you practise on a target — one axis of a study_facets facet. `pool` (the
+// session queue) is the DERIVED pool of a skill and stays on the wire; this is
+// card identity. 'pronunciation' is recognition-pool and pairs with any
+// target_form: citation cards read the lemma's grammar.ipa, form cards read the
+// facet payload's grammar.ipa (generated per form, never the lemma's).
+export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
+export type FacetSkill = z.infer<typeof FacetSkillSchema>
+
+// Optional facet configuration chosen in a gloss-save popover, applied
+// server-side once the term exists (the enrich_highlight job for highlight
+// saves; inline for adhoc saves). FULL-SET semantics: when present, exactly the
+// listed skills get facets — recognition must be listed explicitly (this skips
+// the keep-time default via the facet row-existence check). Absent = today's
+// default (citation recognition at Keep).
+//
+// `formScope` chooses WHICH target the skills attach to (exclusive, not
+// additive): 'lemma' studies the dictionary form (citation facets); 'form'
+// studies the encountered inflection (form facets keyed on
+// normalizeTargetForm(surface)), leaving the lemma as a skill-less base anchor
+// (it still exists as the user_lookup row + vocab entry + the focus view's
+// citation chip). 'form' collapses to 'lemma' when the surface IS the headword
+// (no distinct inflection; the client never knows the lemma, so the collapse
+// decision lives server-side). Application is enable-only and additive on term
+// dedupe — it never disables an existing facet.
+export const StudyIntentSchema = z.object({
+  skills: z.array(FacetSkillSchema).min(1),
+  formScope: z.enum(['lemma', 'form']),
+})
+export type StudyIntent = z.infer<typeof StudyIntentSchema>
+
 export const HighlightSchema = z.object({
   id: z.string().uuid(),
   studySessionId: z.string().uuid(),
@@ -35,6 +65,15 @@ export const HighlightSchema = z.object({
   note: z.string().nullable(),
   presetTags: z.array(z.string()),
   fastGloss: z.string().nullable(),
+  // The gloss-save study intent stored on the highlight row, before the
+  // enrich_highlight job applies it. Null once cleared, or never set. The saved
+  // gloss sheet edits this directly (highlights.updateStudyIntent) while the
+  // term is still pre-enrich (no facets exist yet).
+  studyIntent: StudyIntentSchema.nullable(),
+  // The user_lookups id once the enrich job has materialized this highlight's
+  // card/term (cards.highlight_id → cards.user_lookup_id). Null pre-enrich. When
+  // set, the saved gloss sheet switches from intent-editing to live-facet editing.
+  chunkId: z.string().uuid().nullable(),
   createdAt: z.string(),
 })
 export type Highlight = z.infer<typeof HighlightSchema>
@@ -161,32 +200,6 @@ export type Grammar = z.infer<typeof GrammarSchema>
 // "Production practice").
 export const PracticePoolSchema = z.enum(['recognition', 'production'])
 export type PracticePool = z.infer<typeof PracticePoolSchema>
-
-// What you practise on a target — one axis of a study_facets facet. `pool` (the
-// session queue, above) is the DERIVED pool of a skill and stays on the wire;
-// this is card identity. 'pronunciation' is recognition-pool and pairs with any
-// target_form: citation cards read the lemma's grammar.ipa, form cards read the
-// facet payload's grammar.ipa (generated per form, never the lemma's).
-export const FacetSkillSchema = z.enum(['meaning_recognition', 'meaning_production', 'pronunciation'])
-export type FacetSkill = z.infer<typeof FacetSkillSchema>
-
-// Optional facet configuration chosen in a gloss-save popover, applied
-// server-side once the term exists (the enrich_highlight job for highlight
-// saves; inline for adhoc saves). FULL-SET semantics: when present, exactly the
-// listed skills get citation facets — recognition must be listed explicitly
-// (this skips the keep-time default via the facet row-existence check). Absent
-// = today's default (citation recognition at Keep). `formScope: 'both'`
-// additionally creates form facets of the encountered surface form for ALL the
-// listed skills — including pronunciation, whose form facet is born
-// pending_data and flips to ready only when generation produces displayable
-// per-form IPA. The server collapses to lemma-only when the surface IS the
-// headword (the client never knows the lemma). Application is enable-only and
-// additive on term dedupe — it never disables an existing facet.
-export const StudyIntentSchema = z.object({
-  skills: z.array(FacetSkillSchema).min(1),
-  formScope: z.enum(['lemma', 'both']),
-})
-export type StudyIntent = z.infer<typeof StudyIntentSchema>
 
 // Full per-form card content stored in a form facet's `study_facets.payload`
 // JSONB. A form is its own editable card: its `form` (display spelling)

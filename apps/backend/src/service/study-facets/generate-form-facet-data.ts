@@ -58,8 +58,9 @@ export const generateFormFacetData = async (
         ? (target.payload.form as string)
         : params.targetForm
 
-    // The real sentence the learner met this form in (source-seeding). Opus
-    // reuses it as the targetExample and translates it, rather than inventing.
+    // The real sentence the learner met this form in, passed to Opus as context
+    // for the form's sense and register. Opus writes a fresh standalone example;
+    // it does not copy this verbatim (raw segments can be whole paragraphs).
     const encounteredSentence =
       params.encounteredSentence !== undefined ? params.encounteredSentence : (target.source?.sentence ?? null)
 

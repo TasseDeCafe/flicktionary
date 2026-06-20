@@ -61,7 +61,7 @@ describe('applyStudyIntent', () => {
     })
   })
 
-  it("formScope 'both' adds pending_data form facets for the meaning skills, keyed on the normalized form", async () => {
+  it("formScope 'form' studies the form ONLY — no citation facets (the lemma stays a skill-less base)", async () => {
     const { deps, applyStudyIntentFacets } = createDeps()
 
     const result = await applyStudyIntent(
@@ -69,7 +69,7 @@ describe('applyStudyIntent', () => {
         userLookupId: lookupId,
         userId,
         surfaceForm: 'Palabras ',
-        intent: { skills: ['meaning_recognition', 'meaning_production'], formScope: 'both' },
+        intent: { skills: ['meaning_recognition', 'meaning_production'], formScope: 'form' },
         appliedGuardHighlightId: highlightId,
       },
       deps
@@ -83,8 +83,6 @@ describe('applyStudyIntent', () => {
       userLookupId: lookupId,
       guardHighlightId: highlightId,
       facets: [
-        { userLookupId: lookupId, skill: 'meaning_recognition', targetForm: '' },
-        { userLookupId: lookupId, skill: 'meaning_production', targetForm: '' },
         {
           userLookupId: lookupId,
           skill: 'meaning_recognition',
@@ -106,7 +104,28 @@ describe('applyStudyIntent', () => {
     })
   })
 
-  it('collapses to lemma-only when the surface IS the headword (case/stress variants included)', async () => {
+  it("production-only formScope 'form' studies only the form's production facet (no citation, no recognition base)", async () => {
+    const { deps, applyStudyIntentFacets } = createDeps()
+
+    const result = await applyStudyIntent(
+      {
+        userLookupId: lookupId,
+        userId,
+        surfaceForm: 'palabras',
+        intent: { skills: ['meaning_production'], formScope: 'form' },
+      },
+      deps
+    )
+
+    expect(result.formFacetTargets).toEqual([{ skill: 'meaning_production', targetForm: 'palabras' }])
+    const facets = applyStudyIntentFacets.mock.calls[0]![0].facets as Array<{ skill: string; targetForm: string }>
+    // The lemma gets NO facets — it stays a skill-less base anchor.
+    expect(facets.filter((f) => f.targetForm === '')).toEqual([])
+    // The form gets exactly production (no forced recognition base).
+    expect(facets.filter((f) => f.targetForm === 'palabras').map((f) => f.skill)).toEqual(['meaning_production'])
+  })
+
+  it("formScope 'form' collapses to lemma-only when the surface IS the headword (case/stress variants included)", async () => {
     const { deps, applyStudyIntentFacets } = createDeps()
 
     const result = await applyStudyIntent(
@@ -114,7 +133,7 @@ describe('applyStudyIntent', () => {
         userLookupId: lookupId,
         userId,
         surfaceForm: 'Palabra',
-        intent: { skills: ['meaning_recognition'], formScope: 'both' },
+        intent: { skills: ['meaning_recognition'], formScope: 'form' },
       },
       deps
     )
@@ -127,7 +146,7 @@ describe('applyStudyIntent', () => {
     )
   })
 
-  it('creates a pronunciation form facet alongside the meaning skills (born pending_data)', async () => {
+  it("formScope 'form' creates form facets only (pronunciation + recognition), no citation", async () => {
     const { deps, applyStudyIntentFacets } = createDeps()
 
     const result = await applyStudyIntent(
@@ -135,7 +154,7 @@ describe('applyStudyIntent', () => {
         userLookupId: lookupId,
         userId,
         surfaceForm: 'palabras',
-        intent: { skills: ['pronunciation', 'meaning_recognition'], formScope: 'both' },
+        intent: { skills: ['pronunciation', 'meaning_recognition'], formScope: 'form' },
       },
       deps
     )
@@ -145,8 +164,9 @@ describe('applyStudyIntent', () => {
       { skill: 'meaning_recognition', targetForm: 'palabras' },
     ])
     const facets = applyStudyIntentFacets.mock.calls[0]![0].facets as Array<{ skill: string; targetForm: string }>
+    // No citation facets at all (form scope leaves the lemma untouched).
+    expect(facets.filter((f) => f.targetForm === '')).toEqual([])
     expect(facets.filter((f) => f.skill === 'pronunciation')).toEqual([
-      { userLookupId: lookupId, skill: 'pronunciation', targetForm: '' },
       {
         userLookupId: lookupId,
         skill: 'pronunciation',
@@ -198,7 +218,7 @@ describe('applyStudyIntent', () => {
         userLookupId: lookupId,
         userId,
         surfaceForm: 'palabras',
-        intent: { skills: ['pronunciation'], formScope: 'both' },
+        intent: { skills: ['pronunciation'], formScope: 'form' },
         appliedGuardHighlightId: highlightId,
       },
       deps

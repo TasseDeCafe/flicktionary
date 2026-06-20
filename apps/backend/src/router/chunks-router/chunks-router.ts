@@ -8,7 +8,11 @@ import {
   ChunksCursorSchema,
   type ChunksCursor,
 } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
-import { ChunkRow, UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import {
+  ChunkRow,
+  LastFacetFloorError,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
@@ -197,14 +201,23 @@ export const ChunksRouter = (
       // Normalize the facet key server-side (Trap 21) so the same form keyed
       // from any path collapses identically (''.normalized is still '').
       const targetForm = normalizeTargetForm(input.targetForm)
-      const updated = await userLookupsRepository.setFacetEnabled({
-        userLookupId: input.chunkId,
-        userId,
-        skill: input.skill,
-        targetForm,
-        enabled: input.enabled,
-        payload: input.payload,
-      })
+      let updated: Awaited<ReturnType<typeof userLookupsRepository.setFacetEnabled>>
+      try {
+        updated = await userLookupsRepository.setFacetEnabled({
+          userLookupId: input.chunkId,
+          userId,
+          skill: input.skill,
+          targetForm,
+          enabled: input.enabled,
+          payload: input.payload,
+        })
+      } catch (error) {
+        // The floor guard rejects disabling a kept term's last enabled facet.
+        if (error instanceof LastFacetFloorError) {
+          throw errors.CONFLICT({ data: { errors: [{ message: error.message }] } })
+        }
+        throw error
+      }
       if (!updated) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
       }

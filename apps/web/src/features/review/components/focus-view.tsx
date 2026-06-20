@@ -261,6 +261,10 @@ export const FocusView = () => {
   // keep/reject toggles and the per-session position counter don't apply.
   // Show the chunk's headword as the title instead.
   const isLanguageWideEntry = fromVocabulary || fromPractice
+  // A kept term must keep ≥1 enabled skill per target (backend floor guard); the
+  // SkillsCard last-skill lock is the friendly front. Language-wide entries are
+  // kept by definition; triage entries follow the (optimistic) keep decision.
+  const isKeptTerm = isLanguageWideEntry || (pendingAction ? pendingAction === 'keep' : card.status === 'kept')
   const deleteHeadword = card.chunk.headword
   const title = isLanguageWideEntry ? card.chunk.headword : positionLabel
 
@@ -342,6 +346,7 @@ export const FocusView = () => {
                   facets={facets}
                   candidateForms={candidateForms}
                   selectedTarget={selectedTarget}
+                  isKept={isKeptTerm}
                   onSelect={setSelectedTarget}
                   onSetupForm={handleSetupForm}
                 />

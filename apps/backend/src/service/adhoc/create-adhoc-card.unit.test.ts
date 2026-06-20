@@ -87,7 +87,7 @@ describe('createAdhocCard study intent', () => {
       targetLanguage: 'es',
       headword: 'palabra',
       context: 'unas frases',
-      studyIntent: { skills: ['meaning_production'], formScope: 'both' },
+      studyIntent: { skills: ['meaning_production'], formScope: 'form' },
       deps,
     })
 
@@ -96,7 +96,7 @@ describe('createAdhocCard study intent', () => {
         userLookupId: lookupId,
         userId,
         surfaceForm: 'palabras',
-        intent: { skills: ['meaning_production'], formScope: 'both' },
+        intent: { skills: ['meaning_production'], formScope: 'form' },
         appliedGuardHighlightId: highlightId,
       },
       expect.anything()
@@ -120,7 +120,7 @@ describe('createAdhocCard study intent', () => {
       targetLanguage: 'es',
       headword: 'palabra',
       context: 'unas frases',
-      studyIntent: { skills: ['meaning_production'], formScope: 'both' },
+      studyIntent: { skills: ['meaning_production'], formScope: 'form' },
       deps,
     })
 

@@ -149,6 +149,10 @@ export default class SaveWordHandler {
         note: created.note,
         presetTags: created.presetTags,
         fastGloss: created.fastGloss,
+        // Pre-enrich on a fresh save: carry the chosen intent; chunkId is null
+        // until the enrich job materializes the term.
+        studyIntent: created.studyIntent,
+        chunkId: created.chunkId,
       },
       sessionId: cached.sessionId,
       targetLanguage: cached.targetLanguage,

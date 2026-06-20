@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { computePosition, flip, shift, offset, autoUpdate } from '@floating-ui/dom'
-import { PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, Eye, Mic, Pencil, PencilLine, Save, Trash2 } from 'lucide-react'
 import {
   defaultStudyIntentDraft,
   draftToStudyIntent,
@@ -9,17 +9,22 @@ import {
   type StudyIntentDraft,
   type StudyIntentValue,
 } from '@flicktionary/ui/components/study-options-section'
+import { StudySkillCards, type StudySkillCardItem } from '@flicktionary/ui/components/study-skill-cards'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
 import { Button } from '@flicktionary/ui/components/button'
 import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
 import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
-import type { SavedHighlightDto } from '@asbplayer-fork/common'
+import type { FlicktionaryStudyFacetDto, SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
 import {
   deleteSavedHighlight,
   fetchSavedGloss,
+  fetchStudyTargets,
+  setFacetEnabled as setFacetEnabledRequest,
   updateSavedHighlightNote,
+  updateHighlightStudyIntent,
+  type FlicktionaryFacetSkill,
 } from '../../services/flicktionary/flicktionary-client'
 
 // The shared gloss view state under this file's historical name — the overlay
@@ -239,6 +244,109 @@ export function GlossTooltip({
   )
 }
 
+// The three studiable skills, in render order.
+const SAVED_SKILLS: FlicktionaryFacetSkill[] = ['meaning_recognition', 'meaning_production', 'pronunciation']
+
+// Study targets inside the saved-mode popover — parity with the web reader's
+// saved gloss sheet. Two-phase: while the highlight is pre-enrich (chunkId null)
+// it edits the stored study_intent; once a chunkId is present it edits the term's
+// live citation facets. The saved highlight is a pending triage card (not kept),
+// so there's no last-skill lock — clearing every skill is allowed (intent → null).
+function SavedStudyTargetsSection({ sessionId, highlight }: { sessionId: string; highlight: SavedHighlightDto }) {
+  const { t } = useLingui()
+  const chunkId = highlight.chunkId
+  // Local state is optimistic (it updates before the request resolves), so the
+  // controls are never disabled mid-request — that flashed the picker grey.
+  const [intent, setIntent] = useState<SaveWordStudyIntent | null>(highlight.studyIntent)
+  const [facets, setFacets] = useState<ReadonlyArray<FlicktionaryStudyFacetDto> | null>(null)
+
+  // Post-enrich: load the live facets so the cards reflect the term's real state.
+  useEffect(() => {
+    if (!chunkId) return
+    let cancelled = false
+    void fetchStudyTargets(chunkId).then((loaded) => {
+      if (!cancelled && loaded) setFacets(loaded)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [chunkId])
+
+  const meta: Record<FlicktionaryFacetSkill, { icon: React.ReactNode; label: string }> = {
+    meaning_recognition: { icon: <Eye className='h-5 w-5' />, label: t`Recognition` },
+    meaning_production: { icon: <Pencil className='h-5 w-5' />, label: t`Production` },
+    pronunciation: { icon: <Mic className='h-5 w-5' />, label: t`Pronunciation` },
+  }
+
+  // Post-enrich: edit live citation facets. Forms are managed in the web app, so
+  // the Base/Exact control is read-only here.
+  if (chunkId) {
+    const isOn = (skill: FlicktionaryFacetSkill) =>
+      facets?.some((f) => f.skill === skill && f.targetForm === '' && f.enabled) ?? false
+    const toggle = (skill: FlicktionaryFacetSkill) => {
+      const next = !isOn(skill)
+      setFacets((prev) => {
+        const others = (prev ?? []).filter((f) => !(f.skill === skill && f.targetForm === ''))
+        return [...others, { skill, targetForm: '', enabled: next }]
+      })
+      void setFacetEnabledRequest({ chunkId, skill, targetForm: '', enabled: next })
+        .then(() => fetchStudyTargets(chunkId))
+        .then((loaded) => {
+          if (loaded) setFacets(loaded)
+        })
+    }
+    const cards: StudySkillCardItem[] = SAVED_SKILLS.map((skill) => ({
+      key: skill,
+      icon: meta[skill].icon,
+      label: meta[skill].label,
+      selected: isOn(skill),
+      disabled: facets === null,
+      onToggle: () => toggle(skill),
+    }))
+    return (
+      <StudySkillCards
+        cards={cards}
+        formScope='lemma'
+        surfaceForm={highlight.selectionText}
+        onFormScopeChange={() => {}}
+        formScopeDisabled
+      />
+    )
+  }
+
+  // Pre-enrich: every toggle persists the stored study_intent (null when emptied).
+  const skills = new Set<FlicktionaryFacetSkill>(intent?.skills ?? [])
+  const formScope = intent?.formScope ?? 'lemma'
+  const hasAnySkill = skills.size > 0
+  const persist = (nextSkills: Set<FlicktionaryFacetSkill>, nextScope: 'lemma' | 'form') => {
+    const arr = [...nextSkills]
+    const next = arr.length > 0 ? { skills: arr, formScope: nextScope } : null
+    setIntent(next)
+    void updateHighlightStudyIntent({ sessionId, highlightId: highlight.id, studyIntent: next })
+  }
+  const cards: StudySkillCardItem[] = SAVED_SKILLS.map((skill) => ({
+    key: skill,
+    icon: meta[skill].icon,
+    label: meta[skill].label,
+    selected: skills.has(skill),
+    onToggle: () => {
+      const nextSkills = new Set(skills)
+      if (nextSkills.has(skill)) nextSkills.delete(skill)
+      else nextSkills.add(skill)
+      persist(nextSkills, formScope)
+    },
+  }))
+  return (
+    <StudySkillCards
+      cards={cards}
+      formScope={formScope}
+      surfaceForm={highlight.selectionText}
+      onFormScopeChange={(scope) => persist(skills, scope)}
+      formScopeDisabled={!hasAnySkill}
+    />
+  )
+}
+
 export interface SavedGlossTooltipProps {
   anchor: HTMLElement
   sessionId: string
@@ -366,35 +474,50 @@ export function SavedGlossTooltip({
         {actionError && <p className='text-destructive text-sm'>{actionError}</p>}
       </div>
 
+      {/* Study targets — always visible (parity with the web saved sheet). */}
+      <div className={CARD_BODY_CLASS}>
+        <SavedStudyTargetsSection sessionId={sessionId} highlight={highlight} />
+      </div>
+
       {noteExpanded && (
         <div className={CARD_BODY_CLASS}>
           <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
         </div>
       )}
 
+      {/* Unified footer (parity with the web saved sheet): a green "Saved" state
+          (the note editor turns it into "Save note") + a trash icon to remove. */}
       <div className={CARD_FOOTER_CLASS}>
         <div className='flex items-center justify-between gap-2'>
-          <Button
-            type='button'
-            variant='ghost'
-            size='sm'
-            disabled={busy !== null}
-            onClick={handleRemove}
-            className='text-destructive hover:bg-destructive/10'
-          >
-            <Trash2 className='mr-1 h-4 w-4' />
-            {busy === 'remove' ? <Trans>Removing…</Trans> : <Trans>Remove highlight</Trans>}
-          </Button>
           {noteExpanded ? (
             <Button type='button' size='sm' disabled={busy !== null} onClick={handleSaveNote}>
               {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
             </Button>
           ) : (
-            <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
-              <PencilLine className='h-4 w-4' />
-              {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
-            </Button>
+            <span className='inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-950/40 px-3 py-1.5 text-sm font-medium text-emerald-400'>
+              <Check className='h-4 w-4' />
+              <Trans>Saved</Trans>
+            </span>
           )}
+          <div className='flex items-center gap-1'>
+            {!noteExpanded && (
+              <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
+                <PencilLine className='h-4 w-4' />
+                {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
+              </Button>
+            )}
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon'
+              aria-label={t`Remove highlight`}
+              disabled={busy !== null}
+              onClick={handleRemove}
+              className='text-destructive hover:bg-destructive/10'
+            >
+              <Trash2 className='h-4 w-4' />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

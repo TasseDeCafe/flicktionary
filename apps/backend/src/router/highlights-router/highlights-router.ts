@@ -4,7 +4,12 @@ import { createOrpcExpressRouter } from '../orpc/helpers/create-orpc-express-rou
 import { type OrpcContext } from '../orpc/orpc-context'
 import { errorBoundaryMiddleware } from '../orpc/helpers/error-boundary-middleware'
 import { highlightsContract } from '@flicktionary/api-client/orpc-contracts/highlights-contract'
-import { DbHighlight, HighlightsRepositoryInterface } from '../../transport/database/highlights/highlights-repository'
+import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import {
+  DbHighlight,
+  DbHighlightWithChunk,
+  HighlightsRepositoryInterface,
+} from '../../transport/database/highlights/highlights-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { TextSegmentsRepositoryInterface } from '../../transport/database/text-segments/text-segments-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
@@ -30,19 +35,26 @@ const parseFastGloss = (s: string): FastGloss => {
   return parseFastGlossText(s)
 }
 
-const toHighlightDto = (row: DbHighlight) => ({
-  id: row.id,
-  studySessionId: row.study_session_id,
-  startSegmentId: row.start_segment_id,
-  endSegmentId: row.end_segment_id,
-  startOffset: row.start_offset,
-  endOffset: row.end_offset,
-  selectionText: row.selection_text,
-  note: row.note,
-  presetTags: row.preset_tags,
-  fastGloss: row.fast_gloss,
-  createdAt: new Date(row.created_at).toISOString(),
-})
+const toHighlightDto = (row: DbHighlight | DbHighlightWithChunk) => {
+  // study_intent is stored as loose JSONB; validate it back to the contract shape
+  // (or null) so a legacy/garbled value never breaks output validation.
+  const parsedIntent = StudyIntentSchema.safeParse(row.study_intent)
+  return {
+    id: row.id,
+    studySessionId: row.study_session_id,
+    startSegmentId: row.start_segment_id,
+    endSegmentId: row.end_segment_id,
+    startOffset: row.start_offset,
+    endOffset: row.end_offset,
+    selectionText: row.selection_text,
+    note: row.note,
+    presetTags: row.preset_tags,
+    fastGloss: row.fast_gloss,
+    studyIntent: parsedIntent.success ? parsedIntent.data : null,
+    chunkId: 'chunk_id' in row ? row.chunk_id : null,
+    createdAt: new Date(row.created_at).toISOString(),
+  }
+}
 
 export const HighlightsRouter = (
   highlightsRepository: HighlightsRepositoryInterface,
@@ -178,6 +190,30 @@ export const HighlightsRouter = (
             error,
           })
         }
+      }
+      return { data: toHighlightDto(updated) }
+    }),
+
+    updateStudyIntent: implementer.updateStudyIntent.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
+      if (!session) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found' }] } })
+      }
+      const existing = await highlightsRepository.findById(input.highlightId)
+      if (!existing || existing.study_session_id !== input.sessionId) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Highlight not found' }] } })
+      }
+      // Once the enrich job applied the intent the term has live facets — the
+      // client must edit those, not this frozen column.
+      if (existing.study_intent_applied_at) {
+        throw errors.CONFLICT({ data: { errors: [{ message: 'Study intent already applied' }] } })
+      }
+      const updated = await highlightsRepository.updateStudyIntent(input.highlightId, input.studyIntent)
+      // No row updated means the job applied the intent between the read and the
+      // write (study_intent_applied_at IS NULL no longer holds) — same 409.
+      if (!updated) {
+        throw errors.CONFLICT({ data: { errors: [{ message: 'Study intent already applied' }] } })
       }
       return { data: toHighlightDto(updated) }
     }),
