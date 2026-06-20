@@ -466,6 +466,10 @@ const FloatingSheetScrollAffordance = ({ metrics }: { metrics: ScrollAffordanceM
 type FloatingSheetContentProps = React.HTMLAttributes<HTMLDivElement> & {
   disableAnimation?: boolean
   visualScrollAffordance?: boolean
+  // Desktop popover width (Tailwind class). Defaults to `w-80`. Only applies to
+  // the desktop popover branch — the mobile drawer is always full-width
+  // (`inset-x-0`), so a width class here would break it.
+  desktopWidthClassName?: string
 }
 
 export const FloatingSheetContent = ({
@@ -473,6 +477,7 @@ export const FloatingSheetContent = ({
   children,
   disableAnimation = false,
   visualScrollAffordance = false,
+  desktopWidthClassName = 'w-80',
   style,
   ...props
 }: FloatingSheetContentProps) => {
@@ -564,7 +569,8 @@ export const FloatingSheetContent = ({
         collisionPadding={12}
         onPointerDownOutside={ignoreRightClickOutside}
         className={cn(
-          'bg-popover text-popover-foreground z-50 w-80 origin-(--radix-popover-content-transform-origin) overflow-hidden rounded-md border shadow-xl outline-hidden',
+          'bg-popover text-popover-foreground z-50 origin-(--radix-popover-content-transform-origin) overflow-hidden rounded-md border shadow-xl outline-hidden',
+          desktopWidthClassName,
           !disableAnimation &&
             'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
           className

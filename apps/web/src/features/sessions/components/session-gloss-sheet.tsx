@@ -502,7 +502,7 @@ export const SessionGlossSheet = ({
       modal={false}
       closeOnScroll
     >
-      <FloatingSheetContent visualScrollAffordance>
+      <FloatingSheetContent visualScrollAffordance desktopWidthClassName='w-88'>
         <FloatingSheetHeader>
           <div className='flex min-w-0 flex-col gap-1'>
             <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
