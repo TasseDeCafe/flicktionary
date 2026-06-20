@@ -127,6 +127,7 @@ export default class SaveWordHandler {
       // Study options from the gloss tooltip; the backend enrichment job
       // applies them once the term materializes (full-set semantics).
       studyIntent: message.studyIntent,
+      fastGloss: message.fastGloss,
     })
 
     const indexBySegmentId: Record<string, number> = {}

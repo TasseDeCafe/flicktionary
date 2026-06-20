@@ -192,7 +192,7 @@ const insertHighlightAdoptingGhost = async (
     const insertedRows = (await tx`
       INSERT INTO public.highlights (
         study_session_id, start_segment_id, end_segment_id,
-        start_offset, end_offset, selection_text, note, preset_tags, study_intent
+        start_offset, end_offset, selection_text, note, preset_tags, study_intent, fast_gloss
       )
       VALUES (
         ${params.studySessionId},
@@ -203,7 +203,8 @@ const insertHighlightAdoptingGhost = async (
         ${params.selectionText},
         ${params.note},
         ${params.presetTags},
-        ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null}
+        ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null},
+        ${params.fastGloss}
       )
       RETURNING *
     `) as DbHighlight[]

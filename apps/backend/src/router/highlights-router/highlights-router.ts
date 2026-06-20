@@ -103,6 +103,7 @@ export const HighlightsRouter = (
         note: input.note ?? null,
         presetTags: input.presetTags ?? [],
         studyIntent: input.studyIntent ?? null,
+        fastGloss: input.fastGloss ? serializeFastGloss(input.fastGloss) : null,
       }
 
       // Pre-save ghost adoption: the client swapped its local selection to the

@@ -18,6 +18,7 @@ interface FloatingSheetContextValue {
   closeSheet: () => void
   contentRef: React.RefObject<HTMLDivElement | null>
   modal: boolean
+  portalContainer: HTMLElement | null
   // The element / rect the trigger lives at. On mobile we use it to flip the
   // sheet above the word when the default bottom placement would cover it.
   anchor: FloatingSheetAnchor
@@ -42,6 +43,8 @@ interface FloatingSheetProps {
   onExpandedChange?: (expanded: boolean) => void
   modal?: boolean
   closeOnScroll?: boolean
+  portalContainer?: HTMLElement | null
+  desktopOnly?: boolean
   children: React.ReactNode
 }
 
@@ -54,9 +57,12 @@ export const FloatingSheet = ({
   onExpandedChange,
   modal = true,
   closeOnScroll = false,
+  portalContainer = null,
+  desktopOnly = false,
   children,
 }: FloatingSheetProps) => {
-  const isMobile = useIsMobile()
+  const responsiveIsMobile = useIsMobile()
+  const isMobile = desktopOnly ? false : responsiveIsMobile
 
   const [localExpanded, setLocalExpanded] = React.useState(false)
   const contentRef = React.useRef<HTMLDivElement | null>(null)
@@ -130,6 +136,7 @@ export const FloatingSheet = ({
     closeSheet,
     contentRef,
     modal,
+    portalContainer,
     anchor,
   }
 
@@ -169,11 +176,7 @@ const SHEET_TRANSITION = `transform ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.
 //
 // The sheet always docks at the bottom: enter slides up, exit slides back down
 // to the edge (from wherever it sits — resting or mid-drag).
-const useBottomSheetMotion = (
-  open: boolean,
-  isMobile: boolean,
-  contentRef: React.RefObject<HTMLDivElement | null>
-) => {
+const useBottomSheetMotion = (open: boolean, isMobile: boolean, contentRef: React.RefObject<HTMLDivElement | null>) => {
   const [rendered, setRendered] = React.useState(open)
 
   // Mount the moment we open — during render, not in an effect. This re-renders
@@ -334,11 +337,6 @@ const DesktopAnchor = ({ anchor }: { anchor: FloatingSheetAnchor }) => {
   )
 }
 
-interface FloatingSheetContentProps {
-  className?: string
-  children: React.ReactNode
-}
-
 // Radix dismissal filter shared by the desktop popover and the modal mobile
 // dialog: a right-button pointerdown outside is never a dismiss intent (the
 // readers bind right-click as the save/remove toggle and expect the open sheet
@@ -348,10 +346,144 @@ const ignoreRightClickOutside = (event: { detail: { originalEvent: Event }; prev
   if (original instanceof PointerEvent && original.button === 2) event.preventDefault()
 }
 
-export const FloatingSheetContent = ({ className, children }: FloatingSheetContentProps) => {
-  const { open, isMobile, expandable, expanded, setExpanded, contentRef, modal, closeSheet } = useFloatingSheetContext()
+type ScrollAffordanceMetrics = {
+  overflowing: boolean
+  trackHeight: number
+  thumbHeight: number
+  thumbOffset: number
+  bottomInset: number
+}
+
+const emptyScrollAffordanceMetrics: ScrollAffordanceMetrics = {
+  overflowing: false,
+  trackHeight: 0,
+  thumbHeight: 0,
+  thumbOffset: 0,
+  bottomInset: 0,
+}
+
+const scrollAffordanceMetricsEqual = (a: ScrollAffordanceMetrics, b: ScrollAffordanceMetrics) =>
+  a.overflowing === b.overflowing &&
+  a.trackHeight === b.trackHeight &&
+  a.thumbHeight === b.thumbHeight &&
+  a.thumbOffset === b.thumbOffset &&
+  a.bottomInset === b.bottomInset
+
+const FLOATING_SHEET_STICKY_FOOTER_ATTR = 'data-floating-sheet-sticky-footer'
+
+const measureStickyFooterInset = (el: HTMLElement) => {
+  const footer = el.querySelector<HTMLElement>(`[${FLOATING_SHEET_STICKY_FOOTER_ATTR}]`)
+  if (!footer) return 0
+  if (window.getComputedStyle(footer).position !== 'sticky') return 0
+  return Math.min(Math.max(0, el.clientHeight - 24), Math.ceil(footer.getBoundingClientRect().height))
+}
+
+const measureScrollAffordance = (el: HTMLElement): ScrollAffordanceMetrics => {
+  const clientHeight = el.clientHeight
+  const scrollHeight = el.scrollHeight
+  if (scrollHeight <= clientHeight + 1) return emptyScrollAffordanceMetrics
+
+  const bottomInset = measureStickyFooterInset(el)
+  const visibleScrollAreaHeight = Math.max(1, clientHeight - bottomInset)
+  const trackHeight = Math.max(24, visibleScrollAreaHeight - 16)
+  const thumbHeight = Math.max(24, Math.round((trackHeight * visibleScrollAreaHeight) / scrollHeight))
+  const maxScroll = Math.max(1, scrollHeight - clientHeight)
+  const thumbOffset = Math.round((trackHeight - thumbHeight) * (el.scrollTop / maxScroll))
+
+  return { overflowing: true, trackHeight, thumbHeight, thumbOffset, bottomInset }
+}
+
+const useScrollAffordanceMetrics = (
+  enabled: boolean,
+  contentRef: React.RefObject<HTMLDivElement | null>
+): { metrics: ScrollAffordanceMetrics; onScroll: () => void } => {
+  const [metrics, setMetrics] = React.useState<ScrollAffordanceMetrics>(emptyScrollAffordanceMetrics)
+  const frameRef = React.useRef(0)
+
+  const update = React.useCallback(() => {
+    const el = contentRef.current
+    const next = enabled && el ? measureScrollAffordance(el) : emptyScrollAffordanceMetrics
+    setMetrics((prev) => (scrollAffordanceMetricsEqual(prev, next) ? prev : next))
+  }, [contentRef, enabled])
+
+  // rAF-throttled re-measure. Driven by the scroller's `onScroll` (bound
+  // declaratively in JSX — see below), resize, and content-size mutations.
+  const scheduleUpdate = React.useCallback(() => {
+    if (frameRef.current) window.cancelAnimationFrame(frameRef.current)
+    frameRef.current = window.requestAnimationFrame(update)
+  }, [update])
+
+  React.useLayoutEffect(() => {
+    update()
+  })
+
+  React.useEffect(() => {
+    const el = contentRef.current
+    if (!enabled || !el) return
+
+    // The scroll position itself is tracked via React's onScroll on the element
+    // (reliable regardless of when Radix mounts the content); these observers
+    // only catch size changes (viewport resize, content growth) that move the
+    // overflow boundary.
+    window.addEventListener('resize', scheduleUpdate)
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(scheduleUpdate) : null
+    resizeObserver?.observe(el)
+    const mutationObserver = new MutationObserver(scheduleUpdate)
+    mutationObserver.observe(el, { childList: true, subtree: true, characterData: true })
+
+    scheduleUpdate()
+    return () => {
+      if (frameRef.current) window.cancelAnimationFrame(frameRef.current)
+      window.removeEventListener('resize', scheduleUpdate)
+      resizeObserver?.disconnect()
+      mutationObserver.disconnect()
+    }
+  }, [contentRef, enabled, scheduleUpdate])
+
+  return { metrics, onScroll: scheduleUpdate }
+}
+
+const FloatingSheetScrollAffordance = ({ metrics }: { metrics: ScrollAffordanceMetrics }) => {
+  if (!metrics.overflowing) return null
+  return (
+    <div aria-hidden className='pointer-events-none sticky top-0 z-10 h-0'>
+      <div
+        className='bg-muted-foreground/20 absolute top-2 -right-1.5 w-1 rounded-full'
+        style={{ height: `${metrics.trackHeight}px` }}
+      >
+        <div
+          className='bg-muted-foreground/65 absolute left-0 w-full rounded-full'
+          style={{
+            height: `${metrics.thumbHeight}px`,
+            transform: `translateY(${metrics.thumbOffset}px)`,
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+type FloatingSheetContentProps = React.HTMLAttributes<HTMLDivElement> & {
+  disableAnimation?: boolean
+  visualScrollAffordance?: boolean
+}
+
+export const FloatingSheetContent = ({
+  className,
+  children,
+  disableAnimation = false,
+  visualScrollAffordance = false,
+  style,
+  ...props
+}: FloatingSheetContentProps) => {
+  const { open, isMobile, expandable, expanded, setExpanded, contentRef, modal, portalContainer, closeSheet } =
+    useFloatingSheetContext()
   const rendered = useBottomSheetMotion(open, isMobile, contentRef)
   const dragHandleProps = useDragToDismiss(contentRef, closeSheet, { expandable, expanded, setExpanded })
+  const { metrics: scrollMetrics, onScroll: onScrollAffordance } = useScrollAffordanceMetrics(
+    visualScrollAffordance,
+    contentRef
+  )
 
   if (isMobile) {
     if (!rendered) return null
@@ -374,7 +506,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
         >
           <div className='bg-muted h-1.5 w-12 rounded-full' />
         </div>
-        <div className='flex flex-1 flex-col overflow-y-auto px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]'>
+        <div className='flex flex-1 flex-col overflow-y-auto overscroll-none px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]'>
           {children}
         </div>
       </>
@@ -383,10 +515,10 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
     if (!modal) {
       if (typeof document === 'undefined') return null
       return createPortal(
-        <div ref={contentRef} className={contentClassName}>
+        <div ref={contentRef} className={contentClassName} {...props}>
           {inner}
         </div>,
-        document.body
+        portalContainer ?? document.body
       )
     }
 
@@ -395,7 +527,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
       // slide-out finishes); a Radix-initiated close (escape / outside tap)
       // routes through closeSheet so the same animation plays.
       <DialogPrimitive.Root open modal onOpenChange={(next) => !next && closeSheet()}>
-        <DialogPrimitive.Portal>
+        <DialogPrimitive.Portal container={portalContainer ?? undefined}>
           {/* Transparent overlay — captures outside taps as a dismiss intent
               without tinting the source content. */}
           <DialogPrimitive.Overlay className='fixed inset-0 z-40 bg-transparent' />
@@ -407,6 +539,7 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
             aria-describedby={undefined}
             onPointerDownOutside={ignoreRightClickOutside}
             className={contentClassName}
+            {...props}
           >
             {inner}
           </DialogPrimitive.Content>
@@ -416,22 +549,57 @@ export const FloatingSheetContent = ({ className, children }: FloatingSheetConte
   }
 
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal container={portalContainer ?? undefined}>
+      {/* Thin outer box: the opaque background, rounded border and shadow, and
+          it CLIPS (`overflow-hidden`). It shrink-wraps the inner scroller, whose
+          own `max-height` owns the cap + the scroll (the proven
+          max-height + overflow-y-auto pattern). The only job of this wrapper is
+          to clip an overscroll bounce / any stray overflow so it can never paint
+          past the rounded border (the bleed bug) — and its bg backs the bounce
+          so the gap is never see-through. */}
       <PopoverPrimitive.Content
-        ref={contentRef}
         side='bottom'
         align='start'
         sideOffset={6}
         collisionPadding={12}
         onPointerDownOutside={ignoreRightClickOutside}
         className={cn(
-          // scrollbar-affordance (tokens.css): a persistent scrollbar when the
-          // capped popover overflows, so the user sees there's more to scroll.
-          'scrollbar-affordance bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 z-50 max-h-[var(--radix-popover-content-available-height)] w-80 origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-md border px-2 py-0 shadow-xl outline-hidden',
+          'bg-popover text-popover-foreground z-50 w-80 origin-(--radix-popover-content-transform-origin) overflow-hidden rounded-md border shadow-xl outline-hidden',
+          !disableAnimation &&
+            'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
           className
         )}
+        style={style}
+        {...props}
       >
-        {children}
+        {/* Inner scroller owns the height cap + scroll. `scrollbar-affordance`
+            (tokens.css) styles a persistent native scrollbar; `visualScrollAffordance`
+            hides it in favor of the overlaid custom bar (shadow-DOM surfaces,
+            where native scrollbar styling is unreliable).
+
+            max-height / overflow-y / overscroll-behavior are set INLINE, not via
+            utility classes, on purpose: in the web app's Tailwind build the
+            `overflow-y-*` utility did not reliably land on this element (it
+            computed `overflow-y: visible`, so the scroller was capped but couldn't
+            scroll). Inline values can't be dropped by tailwind-merge or shadowed
+            in the cascade, so the scroll is guaranteed on every surface. */}
+        <div
+          ref={contentRef}
+          onScroll={onScrollAffordance}
+          data-overflowing={scrollMetrics.overflowing ? '' : undefined}
+          className={cn(
+            'scrollbar-affordance px-2 py-0',
+            visualScrollAffordance && '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          )}
+          style={{
+            maxHeight: 'min(var(--radix-popover-content-available-height, calc(100vh - 24px)), calc(100vh - 24px))',
+            overflowY: 'auto',
+            overscrollBehavior: 'none',
+          }}
+        >
+          {visualScrollAffordance && <FloatingSheetScrollAffordance metrics={scrollMetrics} />}
+          {children}
+        </div>
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   )
@@ -470,9 +638,9 @@ interface FloatingSheetDescriptionProps {
 
 export const FloatingSheetDescription = ({ className, children }: FloatingSheetDescriptionProps) => {
   // Null-tolerant on purpose: GlossCardBody renders this, and the extension's
-  // video-overlay popovers use GlossCardBody OUTSIDE any FloatingSheet (they
-  // position with floating-ui directly). Without a sheet there is no Radix
-  // Dialog to describe, so the plain <p> branch is always correct there.
+  // video-overlay popovers can render GlossCardBody outside a modal sheet.
+  // Without a modal sheet there is no Radix Dialog to describe, so the plain
+  // <p> branch is always correct there.
   const ctx = React.useContext(FloatingSheetContext)
   if (ctx?.isMobile && ctx.modal) {
     return (
@@ -499,7 +667,12 @@ interface FloatingSheetFooterProps {
 }
 
 export const FloatingSheetFooter = ({ className, children }: FloatingSheetFooterProps) => (
-  <div className={cn('mt-auto flex flex-col gap-2 px-2 pt-2 pb-3', className)}>{children}</div>
+  <div
+    data-floating-sheet-sticky-footer=''
+    className={cn('bg-popover sticky bottom-0 z-10 mt-auto flex flex-col gap-2 px-2 pt-3 pb-3', className)}
+  >
+    {children}
+  </div>
 )
 
 interface FloatingSheetExpandedProps {

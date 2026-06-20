@@ -464,6 +464,12 @@ export interface SaveWordStudyIntent {
   readonly formScope: 'lemma' | 'form'
 }
 
+export interface SaveWordFastGloss {
+  readonly gloss: string
+  readonly pos: string | null
+  readonly register: string | null
+}
+
 export interface SaveWordMessage extends MessageWithId {
   readonly command: 'save-word'
   readonly word: string
@@ -479,6 +485,9 @@ export interface SaveWordMessage extends MessageWithId {
   // Study options picked in the gloss tooltip; forwarded verbatim to
   // highlights.create and applied by the backend enrichment job.
   readonly studyIntent?: SaveWordStudyIntent
+  // Preview gloss already shown before Save. Persisted with the highlight so
+  // saved-mode display does not have to generate a second first gloss.
+  readonly fastGloss?: SaveWordFastGloss
 }
 
 export interface SaveWordResponse {

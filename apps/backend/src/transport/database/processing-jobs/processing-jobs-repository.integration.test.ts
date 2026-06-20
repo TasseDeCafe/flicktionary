@@ -59,6 +59,7 @@ describe('processing-jobs-repository enqueue integration tests', () => {
       note: null,
       presetTags: [],
       studyIntent: null,
+      fastGloss: null,
     })
     return { session, highlight }
   }

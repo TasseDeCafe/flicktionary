@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Check } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
@@ -43,11 +43,10 @@ type StudySkillCardsProps = {
 // border / background), so the same markup reads correct on the web's light
 // theme AND inverts cleanly on the extension's hardcoded-dark video overlay.
 //
-// The hover tooltip is a CSS-only absolute child (NOT Radix Tooltip): Radix
-// portals to document.body, which the extension's shadow-DOM overlay can't
-// reach, so a portal-free tooltip is the only thing that renders there. It
-// flips DOWN (below the card) because these cards sit near the top of the
-// popover and an upward tooltip would clip past the popover's top edge.
+// The hover tooltip is a portal-free absolute child (NOT Radix Tooltip), so it
+// stays inside the extension's shadow-DOM overlay. It opens only after pointer
+// movement over a card; a newly mounted popover can appear under the stationary
+// cursor, and CSS hover would otherwise show a tooltip immediately.
 export const StudySkillCards = ({
   cards,
   formScope,
@@ -56,6 +55,8 @@ export const StudySkillCards = ({
   formScopeDisabled,
   className,
 }: StudySkillCardsProps) => {
+  const [tooltipKey, setTooltipKey] = useState<string | null>(null)
+
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       <div className='grid grid-cols-3 gap-2'>
@@ -66,11 +67,7 @@ export const StudySkillCards = ({
           // so it never overflows the popover (whose overflow-y-auto would clip
           // it). First card → align left; last → align right; middle → centered.
           const tooltipAlign =
-            index === 0
-              ? 'left-0'
-              : index === cards.length - 1
-                ? 'right-0'
-                : 'left-1/2 -translate-x-1/2'
+            index === 0 ? 'left-0' : index === cards.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2'
           return (
             <button
               key={card.key}
@@ -81,6 +78,13 @@ export const StudySkillCards = ({
               disabled={!interactive}
               onClick={() => {
                 if (interactive) card.onToggle()
+              }}
+              onPointerMove={() => setTooltipKey(card.key)}
+              onPointerLeave={() => {
+                setTooltipKey((current) => (current === card.key ? null : current))
+              }}
+              onBlur={() => {
+                setTooltipKey((current) => (current === card.key ? null : current))
               }}
               className={cn(
                 'group/skill relative flex flex-col items-center gap-1.5 rounded-lg border px-2 py-2.5 text-center transition-colors',
@@ -102,13 +106,13 @@ export const StudySkillCards = ({
               <span className={cn('flex h-5 w-5 items-center justify-center', card.selected && 'text-foreground')}>
                 {card.icon}
               </span>
-              <span className='text-xs font-medium leading-tight'>{card.label}</span>
+              <span className='text-xs leading-tight font-medium'>{card.label}</span>
 
-              {tooltip && (
+              {tooltip && tooltipKey === card.key && (
                 <span
                   role='tooltip'
                   className={cn(
-                    'bg-foreground text-background pointer-events-none absolute top-full z-50 mt-1.5 hidden w-40 rounded-md px-2 py-1 text-center text-xs font-normal leading-snug shadow-md group-hover/skill:block group-focus-visible/skill:block',
+                    'bg-foreground text-background pointer-events-none absolute bottom-full z-50 mb-1.5 w-40 rounded-md px-2 py-1 text-center text-xs leading-snug font-normal shadow-md',
                     tooltipAlign
                   )}
                 >
@@ -166,7 +170,9 @@ const FormScopeControl = ({ formScope, surfaceForm, onFormScopeChange, disabled 
           >
             <span>{option.label}</span>
             {option.subtitle && (
-              <span className={cn('max-w-full truncate', active ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
+              <span
+                className={cn('max-w-full truncate', active ? 'text-muted-foreground' : 'text-muted-foreground/70')}
+              >
                 &ldquo;{option.subtitle}&rdquo;
               </span>
             )}

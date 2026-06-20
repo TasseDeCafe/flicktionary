@@ -15,6 +15,7 @@ import {
   SavedHighlightDto,
   SaveWordMessage,
   SaveWordResponse,
+  SaveWordFastGloss,
   SaveWordFlicktionaryVideoContext,
   SaveWordStudyIntent,
   SetFlicktionaryCefrMessage,
@@ -125,6 +126,7 @@ export interface SaveWordParams {
   // backend default). Lives on the params so the CEFR-retry round-trip
   // (pendingSave) keeps the configured options for free.
   studyIntent?: SaveWordStudyIntent
+  fastGloss?: SaveWordFastGloss
   // Set when this save is the automatic retry after the user picked a CEFR
   // level. Suppresses the missing-cefr outcome (don't re-show the picker) and
   // surfaces the message instead if the save still fails.
@@ -138,6 +140,7 @@ export async function saveWord({
   segmentInfo,
   closures,
   studyIntent,
+  fastGloss,
   isCefrRetry = false,
 }: SaveWordParams): Promise<SaveWordOutcome> {
   const saveDisabledReason = closures.getFlicktionarySaveDisabledReason()
@@ -161,6 +164,7 @@ export async function saveWord({
       endCharOffset: segmentInfo?.endCharOffset,
       flicktionaryVideo: closures.getFlicktionaryVideoContext(),
       studyIntent,
+      ...(fastGloss ? { fastGloss } : {}),
     },
   }
 

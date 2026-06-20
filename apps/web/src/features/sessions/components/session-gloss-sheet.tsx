@@ -329,6 +329,10 @@ export const SessionGlossSheet = ({
     if (!selection || highlightId || isSaving) return
     setIsSaving(true)
     try {
+      const fastGloss =
+        glossState.status === 'ready'
+          ? { gloss: glossState.gloss, pos: glossState.pos, register: glossState.register }
+          : undefined
       const created = await createHighlight({
         sessionId,
         startSegmentId: selection.startSegmentId,
@@ -343,6 +347,7 @@ export const SessionGlossSheet = ({
         studyIntent: draftToStudyIntent(studyDraft),
         // A pre-save ghost adoption dismisses the ghost with the insert.
         adoptedGhostId: pendingGhostId ?? undefined,
+        ...(fastGloss ? { fastGloss } : {}),
       })
       setHighlightId(created.data.id)
     } catch {
@@ -350,7 +355,7 @@ export const SessionGlossSheet = ({
     } finally {
       setIsSaving(false)
     }
-  }, [selection, highlightId, isSaving, createHighlight, sessionId, studyDraft, pendingGhostId])
+  }, [selection, highlightId, isSaving, createHighlight, sessionId, studyDraft, pendingGhostId, glossState])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point
@@ -499,7 +504,7 @@ export const SessionGlossSheet = ({
       modal={false}
       closeOnScroll
     >
-      <FloatingSheetContent>
+      <FloatingSheetContent visualScrollAffordance>
         <FloatingSheetHeader>
           <div className='flex items-start justify-between gap-2'>
             <div className='flex min-w-0 flex-col gap-1'>
