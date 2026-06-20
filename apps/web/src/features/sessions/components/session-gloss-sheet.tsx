@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { Check, ChevronDown, ChevronUp, PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, PencilLine, Save, Trash2 } from 'lucide-react'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
@@ -22,8 +22,6 @@ import {
   FloatingSheet,
   FloatingSheetBody,
   FloatingSheetContent,
-  FloatingSheetExpanded,
-  FloatingSheetExpandToggle,
   FloatingSheetFooter,
   FloatingSheetHeader,
   FloatingSheetTitle,
@@ -506,40 +504,21 @@ export const SessionGlossSheet = ({
     >
       <FloatingSheetContent visualScrollAffordance>
         <FloatingSheetHeader>
-          <div className='flex items-start justify-between gap-2'>
-            <div className='flex min-w-0 flex-col gap-1'>
-              <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
-              <GlossCardBody
-                loading={glossState.status === 'loading'}
-                gloss={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss : null}
-                pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
-                register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
-                ipaLabel={ipaLabel}
-                ipaPrefix={
-                  showIpaFlag ? (
-                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-                  ) : undefined
-                }
-                srDescription={ariaDescription}
-              />
-            </div>
-            {/* Notes attach to a saved highlight, so the expand toggle only
-                appears once we're in saved mode (not during a free preview). */}
-            {!isPreview && (
-              <FloatingSheetExpandToggle
-                className='hover:bg-accent text-muted-foreground rounded-md p-1 transition-colors'
-                ariaLabel={expanded ? t`Hide notes` : t`Show notes`}
-              >
-                {(isExpanded, isMobile) => {
-                  // Mobile drawer grows upward visually → up arrow invites the
-                  // expand. Desktop popover grows downward inside its content
-                  // box → down arrow invites the expand. Either way the icon
-                  // flips on toggle.
-                  const pointsUp = isMobile ? !isExpanded : isExpanded
-                  return pointsUp ? <ChevronUp className='h-4 w-4' /> : <ChevronDown className='h-4 w-4' />
-                }}
-              </FloatingSheetExpandToggle>
-            )}
+          <div className='flex min-w-0 flex-col gap-1'>
+            <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
+            <GlossCardBody
+              loading={glossState.status === 'loading'}
+              gloss={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss : null}
+              pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
+              register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
+              ipaLabel={ipaLabel}
+              ipaPrefix={
+                showIpaFlag ? (
+                  <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                ) : undefined
+              }
+              srDescription={ariaDescription}
+            />
           </div>
         </FloatingSheetHeader>
 
@@ -600,9 +579,11 @@ export const SessionGlossSheet = ({
           </FloatingSheetBody>
         )}
 
-        <FloatingSheetExpanded>
-          <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
-        </FloatingSheetExpanded>
+        {expanded && (
+          <div className='flex flex-col gap-3 border-t px-2 pt-3 pb-2'>
+            <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+          </div>
+        )}
 
         <FloatingSheetFooter>
           <div className='flex items-center justify-between gap-2'>
