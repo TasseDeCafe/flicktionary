@@ -562,6 +562,13 @@ uses intersection, not exact offsets.
     as the right-click remove); **Add/Edit note** offers the same textarea +
     preset tags as the web and composes the same localized `chatSeedPrompt`
     (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
+    Like the web sheet, **the note/presets seed the card chat exactly once and
+    lock on save**: a committed note/preset set renders the editor read-only
+    (saved note + selected chips, dimmed + non-interactive, lock caption) and
+    the footer collapses to **Saved** + trash with no `Add/Edit note` — the seed
+    is keyed per highlight, so re-saving would post a duplicate chat turn. The
+    only way to change a committed note is to delete the highlight; an empty save
+    seeds nothing and stays editable.
     The **study-target picker is shown but locked read-only** (the same
     `StudySkillCards` as the preview, uniformly dimmed + non-interactive via
     `pointer-events-none`, with a lock caption): it displays the saved skills +
