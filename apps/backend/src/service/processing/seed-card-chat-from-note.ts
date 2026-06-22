@@ -8,15 +8,19 @@ export type SeedCardChatOutcome = 'seeded' | 'skipped'
 // learner sees when they open the card. The reply is informational and must not
 // rewrite the just-enriched card (allowCardEdits: false).
 //
-// Idempotency comes from the deterministic sourceKey (seed_card_chat:<jobId>):
-// runCardChat skips the Opus call and reuses the stored turn if this key already
-// produced an assistant reply, so a worker retry after a partial write does not
-// duplicate the turn or call the model twice.
+// Idempotency comes from the deterministic per-highlight sourceKey
+// (seed_card_chat:<highlightId>): runCardChat skips the Opus call and reuses the
+// stored turn if this key already produced an assistant reply. Keying on the
+// highlight (not the job) makes the seed once-per-highlight: a highlight's
+// note/presets seed the chat exactly once, even if the user re-saves the saved
+// sheet several times (each Save enqueues a fresh job once the prior one is no
+// longer pending). The note editor is locked read-only after the first save, so
+// the only way to re-seed is to delete the highlight and start over.
 export const seedCardChatFromNote = async (
   params: { jobId: string; sessionId: string; highlightId: string; userId: string },
   deps: ProcessingDependencies
 ): Promise<SeedCardChatOutcome> => {
-  const { jobId, sessionId, highlightId, userId } = params
+  const { sessionId, highlightId, userId } = params
 
   const highlight = await deps.highlightsRepository.findById(highlightId)
   if (!highlight || highlight.study_session_id !== sessionId) {
@@ -48,7 +52,7 @@ export const seedCardChatFromNote = async (
       content,
       allowCardEdits: false,
       source: 'highlight_note_seed',
-      sourceKey: `seed_card_chat:${jobId}`,
+      sourceKey: `seed_card_chat:${highlightId}`,
     },
     deps
   )

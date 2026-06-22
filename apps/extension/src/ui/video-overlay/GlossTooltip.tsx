@@ -405,6 +405,12 @@ export function SavedGlossTooltip({
   }
 
   const hasNoteDetails = (highlight.note ?? '').trim().length > 0 || highlight.presetTags.length > 0
+  // A committed note/preset locks the editor read-only: it seeds the card chat
+  // exactly once and re-saving would duplicate that turn, so the only way to
+  // change it is to delete the highlight (web parity). `highlight` is the
+  // store-backed row, patched in place by onNotePatched on save, so this flips
+  // the instant a save lands.
+  const noteLocked = hasNoteDetails
 
   return (
     <FloatingSheet
@@ -436,17 +442,27 @@ export function SavedGlossTooltip({
           <SavedStudyTargetsSection highlight={highlight} />
         </div>
 
-        {noteExpanded && (
+        {/* Locked notes render the read-only editor (saved note/chips, no Edit
+            affordance); an unsaved highlight shows the editable editor once
+            expanded. */}
+        {(noteExpanded || noteLocked) && (
           <div className={CARD_BODY_CLASS}>
-            <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+            <HighlightNoteEditor
+              note={note}
+              tags={tags}
+              onNoteChange={setNote}
+              onToggleTag={toggleTag}
+              readOnly={noteLocked}
+            />
           </div>
         )}
 
-        {/* Unified footer (parity with the web saved sheet): a green "Saved" state
-            (the note editor turns it into "Save note") + a trash icon to remove. */}
+        {/* Unified footer (parity with the web saved sheet): a green "Saved" state.
+            While composing a new note it turns into "Save note"; once a note is
+            committed it locks — just "Saved" + the trash to remove the highlight. */}
         <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
           <div className='flex items-center justify-between gap-2'>
-            {noteExpanded ? (
+            {noteExpanded && !noteLocked ? (
               <Button type='button' size='sm' disabled={busy !== null} onClick={handleSaveNote}>
                 {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
               </Button>
@@ -457,7 +473,7 @@ export function SavedGlossTooltip({
               </span>
             )}
             <div className='flex items-center gap-1'>
-              {!noteExpanded && (
+              {!noteExpanded && !noteLocked && (
                 <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
                   <PencilLine className='h-4 w-4' />
                   {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
