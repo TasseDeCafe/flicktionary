@@ -139,6 +139,10 @@ export const SessionGlossSheet = ({
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [expanded, setExpanded] = useState(false)
+  // True the instant a note/preset Save lands, so the editor locks without
+  // waiting for the listBySession refetch to surface the committed note. Reset on
+  // every (re)open / selection change.
+  const [localNoteSaved, setLocalNoteSaved] = useState(false)
   // Set once a ghost has been adopted in this open session, to hide the action.
   const [adopted, setAdopted] = useState(false)
   // True while an explicit Save (preview → saved) is creating the highlight.
@@ -168,6 +172,7 @@ export const SessionGlossSheet = ({
   useLayoutEffect(() => {
     if (!open) return
     setExpanded(false)
+    setLocalNoteSaved(false)
     setAdopted(false)
     setIsSaving(false)
     // Fresh open / new gesture selection → full reset. A pre-save ghost
@@ -410,6 +415,7 @@ export const SessionGlossSheet = ({
               setNote('')
               setTags([])
               setExpanded(false)
+              setLocalNoteSaved(false)
             } else {
               onClose()
             }
@@ -422,17 +428,23 @@ export const SessionGlossSheet = ({
 
   const handleSaveNote = () => {
     if (!highlightId) return
+    const chatSeedPrompt = composeChatSeedPrompt(tags, presetPrompts, note)
     saveNoteAndTags(
       {
         sessionId,
         highlightId,
         note: note.trim() || null,
         presetTags: tags,
-        chatSeedPrompt: composeChatSeedPrompt(tags, presetPrompts, note),
+        chatSeedPrompt,
       },
       {
         onSuccess: () => {
           setExpanded(false)
+          // Lock the editor the moment a note/preset is committed: it seeds the
+          // card chat once and can't be edited again (delete the highlight to
+          // redo). An empty save (no note, no presets) seeds nothing and stays
+          // editable so the user can still add one.
+          if (chatSeedPrompt) setLocalNoteSaved(true)
         },
       }
     )
@@ -448,6 +460,19 @@ export const SessionGlossSheet = ({
   // existing highlight or a just-saved selection) keeps the Remove/note actions.
   const isPreview = !!selection && !existingHighlight && !highlightId
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
+
+  // A note/preset committed to this highlight locks the editor read-only: it
+  // seeds the card chat exactly once and re-saving would duplicate that turn, so
+  // the only way to change it is to delete the highlight. Committed state is the
+  // server row (currentHighlight, refetched after the save; existingHighlight as
+  // the synchronous fallback on first open) plus localNoteSaved for the instant
+  // after a save, before the refetch lands.
+  const committedHasNote =
+    (!!currentHighlight &&
+      ((currentHighlight.note?.trim().length ?? 0) > 0 || currentHighlight.presetTags.length > 0)) ||
+    (!!existingHighlight &&
+      ((existingHighlight.note?.trim().length ?? 0) > 0 || existingHighlight.presetTags.length > 0))
+  const noteLocked = !!highlightId && (localNoteSaved || committedHasNote)
 
   // Right-click while the sheet is open is the toggle power-shortcut that
   // mirrors the extension's right-click-to-save: in preview mode it saves the
@@ -579,9 +604,18 @@ export const SessionGlossSheet = ({
           </FloatingSheetBody>
         )}
 
-        {expanded && (
+        {/* Locked notes render without an Edit affordance (the read-only editor
+            shows the saved note/chips); an unsaved highlight shows the editable
+            editor once the user expands it. */}
+        {(expanded || noteLocked) && (
           <div className='flex flex-col gap-3 border-t px-2 pt-3 pb-2'>
-            <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+            <HighlightNoteEditor
+              note={note}
+              tags={tags}
+              onNoteChange={setNote}
+              onToggleTag={toggleTag}
+              readOnly={noteLocked}
+            />
           </div>
         )}
 
@@ -596,11 +630,12 @@ export const SessionGlossSheet = ({
                 {isSaving ? t`Saving…` : t`Save`}
               </Button>
             ) : (
-              // Saved mode: the Save button morphs into a green "Saved" state
-              // (the note editor, when expanded, turns it into "Save note"), with
-              // a trash icon to remove the highlight.
+              // Saved mode: the Save button morphs into a green "Saved" state.
+              // While composing a brand-new note (expanded, not yet locked) it
+              // turns into "Save note"; once a note is committed it locks — no
+              // Save/Edit, just "Saved" + the trash to remove the highlight.
               <>
-                {expanded ? (
+                {expanded && !noteLocked ? (
                   <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
                     {isSavingNote ? t`Saving…` : t`Save note`}
                   </Button>
@@ -611,7 +646,7 @@ export const SessionGlossSheet = ({
                   </span>
                 )}
                 <div className='flex items-center gap-1'>
-                  {!expanded && (
+                  {!expanded && !noteLocked && (
                     <Button
                       type='button'
                       variant='outline'

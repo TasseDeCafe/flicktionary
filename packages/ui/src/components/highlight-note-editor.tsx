@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useLingui } from '@lingui/react/macro'
+import { Lock } from 'lucide-react'
 import { Textarea } from './textarea'
 import { PRESET_TAGS, usePresetTagTexts, type PresetTag } from './preset-tags'
 
@@ -22,16 +23,25 @@ const getScrollParent = (el: HTMLElement | null): HTMLElement | null => {
 // on mount it scrolls its popover scroller to the bottom to bring the textarea
 // into view above the sticky footer. Renders a `display: contents` wrapper (no
 // box of its own) so the host's flex gap still applies to the fields.
+//
+// `readOnly` is the locked, post-save view: the note/presets seed the card chat
+// exactly once and can never be edited afterwards (re-saving would duplicate the
+// seeded turn — see seed-card-chat-from-note.ts). The only way to change them is
+// to delete the highlight. So it mirrors the study-targets lock above it: the
+// saved note + selected chips, uniformly dimmed and non-interactive, with a lock
+// caption — instead of a deletable affordance the compact sheet can't model.
 export const HighlightNoteEditor = ({
   note,
   tags,
   onNoteChange,
   onToggleTag,
+  readOnly = false,
 }: {
   note: string
   tags: readonly string[]
   onNoteChange: (note: string) => void
   onToggleTag: (tag: PresetTag) => void
+  readOnly?: boolean
 }) => {
   const { t } = useLingui()
   const { labels } = usePresetTagTexts()
@@ -41,6 +51,30 @@ export const HighlightNoteEditor = ({
     const scroller = getScrollParent(rootRef.current)
     scroller?.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
   }, [])
+
+  if (readOnly) {
+    return (
+      <div ref={rootRef} style={{ display: 'contents' }}>
+        {note.trim() ? <p className='text-foreground/80 text-sm whitespace-pre-wrap'>{note}</p> : null}
+        {tags.length > 0 && (
+          <div className='pointer-events-none flex flex-wrap gap-2 opacity-70'>
+            {PRESET_TAGS.filter((tag) => tags.includes(tag)).map((tag) => (
+              <span
+                key={tag}
+                className='rounded-full border border-yellow-400 bg-yellow-100 px-3 py-1 text-xs dark:bg-yellow-400/15'
+              >
+                {labels[tag]}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className='text-muted-foreground/70 flex items-center gap-1 text-xs'>
+          <Lock className='h-3 w-3' />
+          {t`Saved to this card's chat — delete the highlight to change it.`}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div ref={rootRef} style={{ display: 'contents' }}>

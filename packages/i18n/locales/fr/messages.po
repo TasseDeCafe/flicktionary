@@ -3234,6 +3234,11 @@ msgstr "Enregistrer dans le vocabulaire"
 msgid "Saved"
 msgstr "Enregistré"
 
+#: packages/ui/src/components/highlight-note-editor.tsx
+msgid "Saved to this card's chat — delete the highlight to change it."
+msgstr "Enregistré dans le chat de cette carte — supprimez le surlignage pour "
+"le modifier."
+
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
