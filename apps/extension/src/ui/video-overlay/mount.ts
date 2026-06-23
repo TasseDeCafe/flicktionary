@@ -53,6 +53,14 @@ export function mountSubtitleOverlay(host: HTMLElement, options: OverlayMountOpt
   const popoverShadow = popoverHost.attachShadow({ mode: 'open' })
   applyOverlayStyles(popoverShadow)
   const popoverContainer = document.createElement('div')
+  // The overlay popovers are hardcoded dark (POPOVER_CONTENT_CLASS), and this
+  // container is the portal target for any portalled chrome (Radix tooltips,
+  // selects) rendered inside them. Mark it `dark` + base font/colour (mirroring
+  // ShadowUiProvider) so portalled content — a sibling of the dark popover
+  // content, not a descendant — resolves the dark token scope instead of falling
+  // back to the light `:host` values (e.g. a dark-navy `--primary` invisible on
+  // the video).
+  popoverContainer.classList.add('dark', 'font-sans', 'text-foreground')
   popoverShadow.appendChild(popoverContainer)
 
   const placePopoverHost = () => {
