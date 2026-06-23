@@ -19,8 +19,8 @@ interface FloatingSheetContextValue {
   contentRef: React.RefObject<HTMLDivElement | null>
   modal: boolean
   portalContainer: HTMLElement | null
-  // The element / rect the trigger lives at. On mobile we use it to flip the
-  // sheet above the word when the default bottom placement would cover it.
+  // The element / rect the trigger lives at. Desktop uses it for popover
+  // anchoring; mobile drawers stay docked to the bottom.
   anchor: FloatingSheetAnchor
 }
 
@@ -167,7 +167,20 @@ const rectFromAnchor = (anchor: FloatingSheetAnchor): DOMRect | null => {
 // with a CSS *transition* (not a keyframe animation) so the inline transform we
 // set while dragging composes with it instead of being overridden.
 const SHEET_DURATION_MS = 240
-const SHEET_TRANSITION = `transform ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
+const SHEET_TRANSITION = `transform ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1), max-height ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
+const SHEET_SNAP_TRANSITION = `max-height ${SHEET_DURATION_MS}ms cubic-bezier(0.32, 0.72, 0, 1)`
+const MOBILE_SHEET_COLLAPSED_MAX_HEIGHT = 'min(34rem, 35dvh)'
+const MOBILE_SHEET_EXPANDED_MAX_HEIGHT = '96dvh'
+const MOBILE_SHEET_DEFAULT_MAX_HEIGHT = '85dvh'
+const MOBILE_SHEET_DRAG_Y = '--floating-sheet-drag-y'
+
+type MobileSheetStyle = React.CSSProperties & {
+  [MOBILE_SHEET_DRAG_Y]?: string
+}
+
+const setSheetDragY = (el: HTMLElement, value: string) => {
+  el.style.setProperty(MOBILE_SHEET_DRAG_Y, value)
+}
 
 // Mounts/unmounts the mobile sheet around an open/close animation, replacing the
 // enter/exit that vaul used to give us. `rendered` stays true through the exit
@@ -192,10 +205,10 @@ const useBottomSheetMotion = (open: boolean, isMobile: boolean, contentRef: Reac
     const el = contentRef.current
     if (!el) return
     el.style.transition = 'none'
-    el.style.transform = 'translateY(100%)'
+    setSheetDragY(el, '100%')
     void el.offsetHeight // force reflow so the next change actually transitions
     el.style.transition = SHEET_TRANSITION
-    el.style.transform = 'translateY(0)'
+    setSheetDragY(el, '0px')
   }, [isMobile, open, rendered, contentRef])
 
   // Exit: slide down from wherever it is (resting, or mid-drag) to the edge,
@@ -208,7 +221,7 @@ const useBottomSheetMotion = (open: boolean, isMobile: boolean, contentRef: Reac
       return
     }
     el.style.transition = SHEET_TRANSITION
-    el.style.transform = 'translateY(100%)'
+    setSheetDragY(el, '100%')
     let settled = false
     const finish = () => {
       if (settled) return
@@ -233,13 +246,14 @@ const useBottomSheetMotion = (open: boolean, isMobile: boolean, contentRef: Reac
 }
 
 // Bidirectional drag on the drag handle. We only ever start a drag from the
-// handle, so this never competes with scrolling the sheet's own content. The
-// finger drives an inline translateY; on release we resolve to one of: dismiss
-// (slide-out handed to useBottomSheetMotion), expand, collapse, or spring back.
+// handle, so this never competes with scrolling the sheet's own content. Snap
+// changes are intent gestures rather than free sheet movement: dragging up from
+// collapsed expands on release, and dragging down from expanded collapses on
+// release. Only collapsed downward dismiss follows the finger.
 //
 //  - Drag DOWN past the threshold: dismiss (or, if expanded, collapse first).
 //  - Drag UP past the threshold (only when expandable & not yet expanded):
-//    expand and spring back to rest (the now-taller content fills the space).
+//    expand.
 const DRAG_DISMISS_DISTANCE = 80 // px dragged down past which we dismiss on release
 const DRAG_EXPAND_DISTANCE = 40 // px dragged up past which we expand on release
 const DRAG_VELOCITY = 0.5 // px/ms — a fast flick triggers even if short
@@ -251,11 +265,22 @@ const useDragToDismiss = (
 ) => {
   const drag = React.useRef({ active: false, startY: 0, lastY: 0, lastT: 0, velocity: 0 })
 
-  const springBack = () => {
+  const resetDragImmediately = () => {
     const el = contentRef.current
     if (!el) return
+    el.style.transition = 'none'
+    setSheetDragY(el, '0px')
+    void el.offsetHeight
     el.style.transition = SHEET_TRANSITION
-    el.style.transform = 'translateY(0)'
+  }
+
+  const clearDragForSnapChange = () => {
+    const el = contentRef.current
+    if (!el) return
+    el.style.transition = 'none'
+    setSheetDragY(el, '0px')
+    void el.offsetHeight
+    el.style.transition = SHEET_SNAP_TRANSITION
   }
 
   const onPointerDown = (event: React.PointerEvent) => {
@@ -272,12 +297,9 @@ const useDragToDismiss = (
     const el = contentRef.current
     if (!el) return
     const dy = event.clientY - state.startY // signed: negative = up, positive = down
-    // Up-drag is only meaningful as an expand affordance, and only while there's
-    // more to reveal. When already expanded (or not expandable) rubber-band it so
-    // the sheet doesn't tear away from the screen edge.
-    const canExpand = expand.expandable && !expand.expanded
-    const applied = dy < 0 && !canExpand ? dy / 4 : dy
-    el.style.transform = `translateY(${applied}px)`
+    const isSnapIntent = expand.expandable && (dy < 0 || expand.expanded)
+    const applied = isSnapIntent ? 0 : dy
+    setSheetDragY(el, `${applied}px`)
     const dt = event.timeStamp - state.lastT
     if (dt > 0) state.velocity = (event.clientY - state.lastY) / dt
     state.lastY = event.clientY
@@ -298,16 +320,20 @@ const useDragToDismiss = (
       // Leave the transform where the finger is; the exit effect (or spring-back)
       // takes it from there.
       if (expand.expandable && expand.expanded) {
+        clearDragForSnapChange()
         expand.setExpanded(false)
-        springBack()
       } else {
         onDismiss()
       }
     } else if (dy < -DRAG_EXPAND_DISTANCE || fastUp) {
-      if (expand.expandable && !expand.expanded) expand.setExpanded(true)
-      springBack()
+      if (expand.expandable && !expand.expanded) {
+        clearDragForSnapChange()
+        expand.setExpanded(true)
+      } else {
+        resetDragImmediately()
+      }
     } else {
-      springBack()
+      resetDragImmediately()
     }
   }
 
@@ -463,6 +489,29 @@ const FloatingSheetScrollAffordance = ({ metrics }: { metrics: ScrollAffordanceM
   )
 }
 
+interface FloatingSheetFooterProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export const FloatingSheetFooter = ({ className, children }: FloatingSheetFooterProps) => {
+  const { isMobile } = useFloatingSheetContext()
+
+  return (
+    <div
+      data-floating-sheet-sticky-footer=''
+      className={cn(
+        isMobile
+          ? 'bg-background relative z-10 flex shrink-0 flex-col gap-2 px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]'
+          : 'bg-popover sticky bottom-0 z-10 mt-auto flex flex-col gap-2 px-2 pt-3 pb-3',
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
 type FloatingSheetContentProps = React.HTMLAttributes<HTMLDivElement> & {
   disableAnimation?: boolean
   visualScrollAffordance?: boolean
@@ -483,22 +532,48 @@ export const FloatingSheetContent = ({
 }: FloatingSheetContentProps) => {
   const { open, isMobile, expandable, expanded, setExpanded, contentRef, modal, portalContainer, closeSheet } =
     useFloatingSheetContext()
+  const mobileScrollAreaRef = React.useRef<HTMLDivElement | null>(null)
   const rendered = useBottomSheetMotion(open, isMobile, contentRef)
   const dragHandleProps = useDragToDismiss(contentRef, closeSheet, { expandable, expanded, setExpanded })
   const { metrics: scrollMetrics, onScroll: onScrollAffordance } = useScrollAffordanceMetrics(
-    visualScrollAffordance,
+    visualScrollAffordance && !isMobile,
     contentRef
   )
+  const mobileMaxHeight = expandable
+    ? expanded
+      ? MOBILE_SHEET_EXPANDED_MAX_HEIGHT
+      : MOBILE_SHEET_COLLAPSED_MAX_HEIGHT
+    : MOBILE_SHEET_DEFAULT_MAX_HEIGHT
+  const mobileScrollEnabled = !expandable || expanded
+
+  React.useLayoutEffect(() => {
+    if (!isMobile || expanded) return
+    const el = mobileScrollAreaRef.current
+    if (el) el.scrollTop = 0
+  }, [isMobile, expanded])
 
   if (isMobile) {
     if (!rendered) return null
 
+    const mobileChildren = React.Children.toArray(children)
+    const mobileFooterChildren = mobileChildren.filter(
+      (child) => React.isValidElement(child) && child.type === FloatingSheetFooter
+    )
+    const mobileBodyChildren = mobileChildren.filter(
+      (child) => !(React.isValidElement(child) && child.type === FloatingSheetFooter)
+    )
+    const hasMobileFooter = mobileFooterChildren.length > 0
+    const showMobileFooterFade = expandable && !expanded && hasMobileFooter
+
     const contentClassName = cn(
       'group/floating-sheet bg-background fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-lg border-t shadow-xl outline-none will-change-transform',
-      // Always docked at the bottom; the body scrolls internally past the cap.
-      expandable ? 'max-h-[96vh]' : 'max-h-[85vh]',
       className
     )
+    const mobileSheetStyle: MobileSheetStyle = {
+      ...style,
+      maxHeight: mobileMaxHeight,
+      transform: `translateY(var(${MOBILE_SHEET_DRAG_Y}, 0px))`,
+    }
 
     const inner = (
       <>
@@ -511,16 +586,30 @@ export const FloatingSheetContent = ({
         >
           <div className='bg-muted h-1.5 w-12 rounded-full' />
         </div>
-        <div className='flex flex-1 flex-col overflow-y-auto overscroll-none px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]'>
-          {children}
+        <div
+          ref={mobileScrollAreaRef}
+          className={cn(
+            'flex min-h-0 flex-1 flex-col overscroll-none px-4',
+            hasMobileFooter ? 'pb-0' : 'pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+            mobileScrollEnabled ? 'overflow-y-auto' : 'overflow-hidden'
+          )}
+        >
+          {mobileBodyChildren}
         </div>
+        {showMobileFooterFade && (
+          <div
+            aria-hidden
+            className='from-background/0 to-background pointer-events-none relative z-10 -mt-8 h-8 shrink-0 bg-linear-to-b'
+          />
+        )}
+        {mobileFooterChildren}
       </>
     )
 
     if (!modal) {
       if (typeof document === 'undefined') return null
       return createPortal(
-        <div ref={contentRef} className={contentClassName} {...props}>
+        <div ref={contentRef} className={contentClassName} style={mobileSheetStyle} {...props}>
           {inner}
         </div>,
         portalContainer ?? document.body
@@ -544,6 +633,7 @@ export const FloatingSheetContent = ({
             aria-describedby={undefined}
             onPointerDownOutside={ignoreRightClickOutside}
             className={contentClassName}
+            style={mobileSheetStyle}
             {...props}
           >
             {inner}
@@ -665,18 +755,4 @@ interface FloatingSheetBodyProps {
 
 export const FloatingSheetBody = ({ className, children }: FloatingSheetBodyProps) => (
   <div className={cn('flex flex-col gap-2 px-2 pb-2 text-sm', className)}>{children}</div>
-)
-
-interface FloatingSheetFooterProps {
-  className?: string
-  children: React.ReactNode
-}
-
-export const FloatingSheetFooter = ({ className, children }: FloatingSheetFooterProps) => (
-  <div
-    data-floating-sheet-sticky-footer=''
-    className={cn('bg-popover sticky bottom-0 z-10 mt-auto flex flex-col gap-2 px-2 pt-3 pb-3', className)}
-  >
-    {children}
-  </div>
 )
