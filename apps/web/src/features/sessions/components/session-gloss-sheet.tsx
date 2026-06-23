@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import { Check, PencilLine, Save, Trash2 } from 'lucide-react'
+import { Check, Lightbulb, PencilLine, Save, Trash2 } from 'lucide-react'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { parseFastGloss } from '@flicktionary/core/utils/parse-fast-gloss'
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
@@ -9,6 +9,7 @@ import type { GhostCandidate } from '@flicktionary/api-client/orpc-contracts/com
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { Button } from '@flicktionary/ui/components/button'
 import { GlossCardBody } from '@flicktionary/ui/components/gloss-card-body'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@flicktionary/ui/components/tooltip'
 import { composeChatSeedPrompt, usePresetTagTexts, type PresetTag } from '@flicktionary/ui/components/preset-tags'
 import { HighlightNoteEditor } from '@flicktionary/ui/components/highlight-note-editor'
 import {
@@ -447,6 +448,7 @@ export const SessionGlossSheet = ({
 
   // Hoisted so the lingui message uses a plain ${placeholder}, not a member access.
   const suggestedSurface = suggestedGhost?.surfaceForm ?? ''
+  const useSuggestedLabel = t`Use suggested term: ${suggestedSurface}`
 
   // `morphToPreview` keeps the sheet open after the delete and flips it back to
   // preview mode for the same selection — the visible counterpart to Save
@@ -620,48 +622,56 @@ export const SessionGlossSheet = ({
     >
       <FloatingSheetContent visualScrollAffordance desktopWidthClassName='w-88'>
         <FloatingSheetHeader>
-          <div className='flex min-w-0 flex-col gap-1'>
-            <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
-            <GlossCardBody
-              loading={glossState.status === 'loading'}
-              gloss={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss : null}
-              pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
-              register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
-              ipaLabel={ipaLabel}
-              ipaPrefix={
-                showIpaFlag ? (
-                  <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
-                ) : undefined
-              }
-              srDescription={ariaDescription}
-            />
+          <div className='flex items-start gap-2'>
+            <div className='flex min-w-0 flex-1 flex-col gap-1'>
+              <FloatingSheetTitle className='truncate'>{titleText || t`Quick gloss`}</FloatingSheetTitle>
+              <GlossCardBody
+                loading={glossState.status === 'loading'}
+                gloss={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).gloss : null}
+                pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
+                register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
+                ipaLabel={ipaLabel}
+                ipaPrefix={
+                  showIpaFlag ? (
+                    <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
+                  ) : undefined
+                }
+                srDescription={ariaDescription}
+              />
+            </div>
+            {/* The LLM ghost suggestion is offered as an understated icon in the
+                top-right (with a tooltip explaining it on desktop) rather than a
+                full-width button — the suggested surface form can be a long phrase
+                that overflows a button, and it declutters the sheet. Preview mode
+                swaps the LOCAL selection (nothing saved yet); saved mode runs the
+                server-side ghosts.switch span swap. `stopPropagation` keeps a tap
+                from starting the header drag (the mobile header is a drag surface). */}
+            {suggestedGhost && !adopted && (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='icon-sm'
+                      className='shrink-0'
+                      disabled={isSwitching}
+                      aria-label={useSuggestedLabel}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => {
+                        if (isPreview) onAdoptGhostPreSave(suggestedGhost)
+                        else void handleUseSuggested()
+                      }}
+                    >
+                      <Lightbulb className='h-4 w-4' />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side='left'>{useSuggestedLabel}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </FloatingSheetHeader>
-
-        {suggestedGhost && !adopted && (
-          <FloatingSheetBody>
-            {/* Label sits above the button; the button itself stays understated. Still
-                full-width so it's an easy tap target on mobile. In preview mode the
-                tap swaps the LOCAL selection (nothing saved yet); in saved mode it
-                runs the server-side ghosts.switch span swap. */}
-            <p className='text-muted-foreground mb-1.5 text-xs font-medium'>{t`Use suggested`}</p>
-            <Button
-              type='button'
-              variant='outline'
-              className='w-full justify-center'
-              disabled={isSwitching}
-              onClick={() => {
-                if (isPreview) {
-                  onAdoptGhostPreSave(suggestedGhost)
-                } else {
-                  void handleUseSuggested()
-                }
-              }}
-            >
-              {isSwitching ? t`Switching…` : suggestedSurface}
-            </Button>
-          </FloatingSheetBody>
-        )}
 
         {/* Study targets are ALWAYS visible. Preview binds to the local draft
             (applied on Save); saved mode edits the highlight's stored intent
