@@ -142,7 +142,8 @@ export const SessionGlossSheet = ({
   const [titleText, setTitleText] = useState<string>('')
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [expanded, setExpanded] = useState(false)
+  const [noteExpanded, setNoteExpanded] = useState(false)
+  const [sheetExpanded, setSheetExpanded] = useState(false)
   const [locallyRemovedHighlightId, setLocallyRemovedHighlightId] = useState<string | null>(null)
   // True the instant a note/preset Save lands, so the editor locks without
   // waiting for the listBySession refetch to surface the committed note. Reset on
@@ -189,7 +190,8 @@ export const SessionGlossSheet = ({
 
   useLayoutEffect(() => {
     if (!open) return
-    setExpanded(false)
+    setNoteExpanded(false)
+    setSheetExpanded(false)
     setLocalNoteSaved(false)
     setAdopted(false)
     setIsSaving(false)
@@ -232,7 +234,8 @@ export const SessionGlossSheet = ({
     setTitleText(activeExistingHighlight.selectionText)
     setNote(activeExistingHighlight.note ?? '')
     setTags(activeExistingHighlight.presetTags)
-    setExpanded(false)
+    setNoteExpanded(false)
+    setSheetExpanded(false)
     const cachedGloss = activeExistingHighlight.fastGloss ? parseFastGloss(activeExistingHighlight.fastGloss) : null
     if (cachedGloss) {
       setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null })
@@ -273,7 +276,8 @@ export const SessionGlossSheet = ({
     setTitleText(selection.selectionText)
     setNote('')
     setTags([])
-    setExpanded(false)
+    setNoteExpanded(false)
+    setSheetExpanded(false)
     const preservedPreviewGloss =
       locallyRemovedHighlightId && preservedPreviewGlossRef.current?.selectionKey === selectionIdentity(selection)
         ? preservedPreviewGlossRef.current.state
@@ -403,7 +407,8 @@ export const SessionGlossSheet = ({
       // A committed note seeds the chat once — lock the editor (matches the
       // note-only lane). An empty save leaves it editable.
       if (args.chatSeedPrompt) setLocalNoteSaved(true)
-      setExpanded(false)
+      setNoteExpanded(false)
+      setSheetExpanded(false)
     } catch {
       // The mutation's meta.errorMessage surfaces a toast; stay in preview mode.
     } finally {
@@ -467,7 +472,8 @@ export const SessionGlossSheet = ({
               setHighlightId(null)
               setNote('')
               setTags([])
-              setExpanded(false)
+              setNoteExpanded(false)
+              setSheetExpanded(false)
               setLocalNoteSaved(false)
             } else {
               onClose()
@@ -494,7 +500,8 @@ export const SessionGlossSheet = ({
         const created = await createHighlight(args)
         setHighlightId(created.data.id)
         if (args.chatSeedPrompt) setLocalNoteSaved(true)
-        setExpanded(false)
+        setNoteExpanded(false)
+        setSheetExpanded(false)
       } catch {
         // meta.errorMessage surfaces a toast; stay in preview.
       } finally {
@@ -514,7 +521,8 @@ export const SessionGlossSheet = ({
       },
       {
         onSuccess: () => {
-          setExpanded(false)
+          setNoteExpanded(false)
+          setSheetExpanded(false)
           // Lock the editor the moment a note/preset is committed: it seeds the
           // card chat once and can't be edited again (delete the highlight to
           // redo). An empty save (no note, no presets) seeds nothing and stays
@@ -605,8 +613,8 @@ export const SessionGlossSheet = ({
       }}
       anchor={anchor}
       expandable
-      expanded={expanded}
-      onExpandedChange={setExpanded}
+      expanded={sheetExpanded}
+      onExpandedChange={setSheetExpanded}
       modal={false}
       closeOnScroll
     >
@@ -689,8 +697,8 @@ export const SessionGlossSheet = ({
 
         {/* Locked notes render without an Edit affordance (the read-only editor
             shows the saved note/chips); an unsaved highlight shows the editable
-            editor once the user expands it. */}
-        {(expanded || noteLocked) && (
+            editor once the user opens it. */}
+        {(noteExpanded || noteLocked) && (
           <div className='flex flex-col gap-3 border-t px-2 pt-3 pb-2'>
             <HighlightNoteEditor
               note={note}
@@ -710,12 +718,12 @@ export const SessionGlossSheet = ({
           <div className='grid grid-cols-2 gap-2'>
             {isPreview ? (
               // Preview mode: two commit lanes, both full-size and 50/50 wide
-              // (no morph between collapsed/expanded). Save = full card. Save
+              // (no morph between closed/open note editor). Save = full card. Save
               // note = note-only (empty stub card hosting the seeded chat),
               // disabled until there's a note or preset — an empty note-only
               // save would make a useless data-less stub with no seeded chat.
               // Looking is free and clicking outside discards, so no Cancel.
-              expanded ? (
+              noteExpanded ? (
                 <>
                   <Button
                     type='button'
@@ -756,7 +764,10 @@ export const SessionGlossSheet = ({
                     size='xl'
                     className='w-full'
                     disabled={isSaving}
-                    onClick={() => setExpanded(true)}
+                    onClick={() => {
+                      setNoteExpanded(true)
+                      setSheetExpanded(true)
+                    }}
                   >
                     <PencilLine className='mr-1 h-4 w-4' />
                     {t`Add note`}
@@ -764,12 +775,12 @@ export const SessionGlossSheet = ({
                 </>
               )
             ) : (
-              // Saved mode. While composing a brand-new note (expanded, not yet
+              // Saved mode. While composing a brand-new note (note editor open, not yet
               // locked) the left slot is "Save note"; otherwise it's the cyclable
               // green "Saved" — clicking it REMOVES the highlight (mirrors the
               // right-click toggle), replacing the old standalone trash button.
               <>
-                {expanded && !noteLocked ? (
+                {noteExpanded && !noteLocked ? (
                   <Button
                     type='button'
                     size='xl'
@@ -795,14 +806,17 @@ export const SessionGlossSheet = ({
                     <span className='hidden group-hover:inline'>{t`Remove`}</span>
                   </button>
                 )}
-                {!expanded && !noteLocked && (
+                {!noteExpanded && !noteLocked && (
                   <Button
                     type='button'
                     variant='outline'
                     size='xl'
                     className='w-full'
                     disabled={!highlightId}
-                    onClick={() => setExpanded(true)}
+                    onClick={() => {
+                      setNoteExpanded(true)
+                      setSheetExpanded(true)
+                    }}
                   >
                     <PencilLine className='mr-1 h-4 w-4' />
                     {hasNoteDetails ? t`Edit note` : t`Add note`}
