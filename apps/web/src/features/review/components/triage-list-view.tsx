@@ -18,6 +18,7 @@ import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } 
 import { getSessionCardsKey } from '../api/card-cache'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { TriageRow, TriageEnrichingRow, TriageRowSkeleton } from './triage-row'
+import { cardHasBasicData } from '../utils/card-has-basic-data'
 import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
@@ -153,7 +154,11 @@ export const TriageListView = () => {
   }
 
   const handleBulkStatusChange = (sectionCards: Card[], status: CardStatus) => {
-    const cardIds = sectionCards.filter((c) => c.status !== status).map((c) => c.id)
+    // "Keep all" skips data-less note-only cards (mirrors the backend batch
+    // filter): they stay pending until the user generates their data.
+    const cardIds = sectionCards
+      .filter((c) => c.status !== status && (status !== 'kept' || cardHasBasicData(c)))
+      .map((c) => c.id)
     if (cardIds.length === 0) return
     updateStatusBatch({ sessionId, cardIds, status })
   }

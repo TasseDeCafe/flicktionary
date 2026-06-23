@@ -507,6 +507,18 @@ uses intersection, not exact offsets.
   survives the CEFR-picker retry via `pendingSave`. The right-click power-save
   bypasses the tooltip and always saves with the default. No ghost/"Use
   suggested" affordance here (web-only for now).
+- **Two commit lanes (pre-save note editor)** — web parity. The preview tooltip
+  carries an **Add note** affordance beside Save; tapping it opens the shared
+  `HighlightNoteEditor` (textarea + preset chips) and the footer shows both
+  **Save** and **Save note**. **Save** is the main lane (full card; a typed note
+  rides along and seeds the chat). **Save note** is the **note-only** lane: the
+  `save-word` message carries `noteOnly: true` (+ `note` / `presetTags` /
+  `chatSeedPrompt`), `highlights.create` makes an empty stub card + seeds the
+  chat with NO enrichment / study facets, and the card stays data-less until the
+  user generates it in the web app (it can't be kept into Vocabulary/Practice
+  until then). The note fields ride `SaveWordParams` → the `save-word` message →
+  `highlights.create`, alongside `studyIntent` (ignored in the note-only lane),
+  and survive the CEFR-picker retry via `pendingSave`.
   **Toast cold-start trap:** sonner's `toast()` publishes to subscribers only
   (no replay), and the page-global Toaster host is created lazily — a bare
   `ensureToasterHost(); toast(...)` drops the page's first toast (the save
@@ -556,16 +568,23 @@ uses intersection, not exact offsets.
     sheet). A direct open refreshes via `flicktionary-saved-gloss` →
     `highlights.fastGloss` to add the server-picked IPA; a just-saved handoff
     keeps the richer preview gloss already on screen and skips that immediate
-    refresh. **Remove highlight**
-    (`delete-flicktionary-highlight`, 404 counts as success) removes the span
-    silently (no success toast — the wash disappearing is the feedback, same
-    as the right-click remove); **Add/Edit note** offers the same textarea +
+    refresh. **Remove highlight** is the **cyclable green "Saved" control**
+    itself — clicking it removes the span (`delete-flicktionary-highlight`, 404
+    counts as success) silently (no success toast — the wash disappearing is the
+    feedback, same as the right-click remove), replacing the old standalone trash
+    button (web parity). Like the right-click remove, the on-screen Remove routes
+    through the parent's `removeHighlight` so it **morphs the popover back into the
+    preview gloss** for that span (chunk gloss for a multi-word highlight,
+    single-word hover gloss otherwise) instead of just closing — it only closes
+    for a cross-cue highlight or a resumed/detached anchor. **Add/Edit note**
+    offers the same textarea +
     preset tags as the web and composes the same localized `chatSeedPrompt`
     (`update-flicktionary-highlight-note` → `highlights.updateNoteAndTags`).
     Like the web sheet, **the note/presets seed the card chat exactly once and
     lock on save**: a committed note/preset set renders the editor read-only
     (saved note + selected chips, dimmed + non-interactive, lock caption) and
-    the footer collapses to **Saved** + trash with no `Add/Edit note` — the seed
+    the footer collapses to the cyclable **Saved** control with no `Add/Edit
+    note` — the seed
     is keyed per highlight, so re-saving would post a duplicate chat turn. The
     only way to change a committed note is to delete the highlight; an empty save
     seeds nothing and stays editable.

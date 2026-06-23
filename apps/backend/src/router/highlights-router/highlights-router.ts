@@ -16,6 +16,10 @@ import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/data
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { ProcessingJobsRepositoryInterface } from '../../transport/database/processing-jobs/processing-jobs-repository'
 import { GhostCandidatesRepositoryInterface } from '../../transport/database/ghost-candidates/ghost-candidates-repository'
+import {
+  createNoteOnlyHighlight,
+  CreateNoteOnlyHighlightDependencies,
+} from '../../service/highlights/create-note-only-highlight'
 import { logWithSentry } from '../../transport/third-party/sentry/error-monitoring'
 import {
   fastGlossPass,
@@ -64,7 +68,8 @@ export const HighlightsRouter = (
   targetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface,
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface,
   processingJobsRepository: ProcessingJobsRepositoryInterface,
-  ghostCandidatesRepository: GhostCandidatesRepositoryInterface
+  ghostCandidatesRepository: GhostCandidatesRepositoryInterface,
+  noteOnlyDependencies: CreateNoteOnlyHighlightDependencies
 ): Router => {
   const implementer = implement(highlightsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
 
@@ -93,6 +98,29 @@ export const HighlightsRouter = (
           data: { errors: [{ message: 'Study session not found' }] },
         })
       }
+      // The localized chat-seed question composed on the frontend (presets + the
+      // verbatim note). Shared by both lanes.
+      const chatSeedPrompt = (input.chatSeedPrompt ?? '').trim() || null
+
+      // Enqueue a seed_card_chat job — best-effort, debounced behind enrich so
+      // the card is likely materialized first; the worker retries if not.
+      const enqueueSeedBestEffort = async (highlightId: string): Promise<void> => {
+        try {
+          await processingJobsRepository.enqueueSeedCardChat({
+            sessionId: input.sessionId,
+            highlightId,
+            userId,
+            runAfter: new Date(Date.now() + ENRICH_DEBOUNCE_MS),
+          })
+        } catch (error) {
+          logWithSentry({
+            message: 'enqueue seed_card_chat failed',
+            params: { sessionId: input.sessionId, highlightId },
+            error,
+          })
+        }
+      }
+
       const insertParams = {
         studySessionId: input.sessionId,
         startSegmentId: input.startSegmentId,
@@ -104,6 +132,20 @@ export const HighlightsRouter = (
         presetTags: input.presetTags ?? [],
         studyIntent: input.studyIntent ?? null,
         fastGloss: input.fastGloss ? serializeFastGloss(input.fastGloss) : null,
+        chatSeedPrompt,
+      }
+
+      // Note-only lane ("ask a question, don't make a card"): highlight + empty
+      // stub card in one transaction, then seed the chat. NO basic-data pass /
+      // grounding / study facets — the card stays data-less until the user
+      // generates it. Skill selection (studyIntent) is ignored here.
+      if (input.noteOnly) {
+        const inserted = await createNoteOnlyHighlight(
+          { ...insertParams, userId, targetLanguage: session.target_language, adoptedGhostId: input.adoptedGhostId },
+          noteOnlyDependencies
+        )
+        if (chatSeedPrompt) await enqueueSeedBestEffort(inserted.id)
+        return { data: toHighlightDto(inserted) }
       }
 
       // Pre-save ghost adoption: the client swapped its local selection to the
@@ -117,6 +159,8 @@ export const HighlightsRouter = (
           ghostId: input.adoptedGhostId,
           enrichDebounceMs: ENRICH_DEBOUNCE_MS,
         })
+        // A note typed in the main lane still seeds the chat (behind enrich).
+        if (chatSeedPrompt) await enqueueSeedBestEffort(inserted.id)
         return { data: toHighlightDto(inserted) }
       }
 
@@ -139,6 +183,8 @@ export const HighlightsRouter = (
           error,
         })
       }
+      // A note typed in the main lane still seeds the chat (behind enrich).
+      if (chatSeedPrompt) await enqueueSeedBestEffort(inserted.id)
       return { data: toHighlightDto(inserted) }
     }),
 

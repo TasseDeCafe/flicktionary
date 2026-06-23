@@ -125,9 +125,16 @@ export default class SaveWordHandler {
       endOffset: message.endCharOffset,
       selectionText: message.word,
       // Study options from the gloss tooltip; the backend enrichment job
-      // applies them once the term materializes (full-set semantics).
+      // applies them once the term materializes (full-set semantics). Ignored
+      // by the backend in the note-only lane.
       studyIntent: message.studyIntent,
       fastGloss: message.fastGloss,
+      // Note-only lane + a note typed before saving (web parity): the backend
+      // creates an empty stub card and seeds the chat instead of enriching.
+      noteOnly: message.noteOnly,
+      note: message.note,
+      presetTags: message.presetTags ? [...message.presetTags] : undefined,
+      chatSeedPrompt: message.chatSeedPrompt,
     })
 
     const indexBySegmentId: Record<string, number> = {}

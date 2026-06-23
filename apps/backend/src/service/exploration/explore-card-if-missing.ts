@@ -12,6 +12,8 @@ import { enrichmentPass } from '../../transport/third-party/anthropic/passes/enr
 import { sanitizeGrammarIpa } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
+import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
+import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import {
   sanitizeExplorationExtrasForLanguageMode,
@@ -26,6 +28,9 @@ export type ExploreCardDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  // Lets Generate-full-exploration mint the context blob for a note-only
+  // session that never ran an enrich job (otherwise it would skip forever).
+  contentSourcesRepository: ContentSourcesRepositoryInterface
 }
 
 export type ExploreCardOutcome = 'updated' | 'skipped' | 'failed'
@@ -53,7 +58,16 @@ export const exploreCardIfMissing = async (
     if (!options.force && !isExtrasEmpty(card.chunk.exploration_extras)) return 'skipped'
 
     const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, userId)
-    if (!session || !session.context_blob) return 'skipped'
+    if (!session) return 'skipped'
+
+    // Mint-and-persist the context blob if absent (note-only sessions never ran
+    // an enrich job). null only when the content source is gone — then skip.
+    const contextBlob = await ensureSessionContextBlob(session, userId, {
+      contentSourcesRepository: deps.contentSourcesRepository,
+      textSegmentsRepository: deps.textSegmentsRepository,
+      studySessionsRepository: deps.studySessionsRepository,
+    })
+    if (!contextBlob) return 'skipped'
 
     const surrounding = await selectSurroundingSegments(
       session.text_track_id,
@@ -81,7 +95,7 @@ export const exploreCardIfMissing = async (
       nativeLanguage: languageModeNativeLanguage,
       targetLanguage: session.target_language,
       cefrLevel: session.cefr_level,
-      movieContextBlob: session.context_blob,
+      movieContextBlob: contextBlob,
       surfaceForm: card.surface_form || card.chunk.headword,
       surroundingSegments: surroundingFormatted,
       hideTranslationFields: languagePrefs.hideTranslationFields,

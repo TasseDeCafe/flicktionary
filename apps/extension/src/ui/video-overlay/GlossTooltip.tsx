@@ -19,7 +19,6 @@ import { normalizeTargetForm } from '@flicktionary/core/utils/normalize-target-f
 import type { GlossViewState } from '@flicktionary/core/types/gloss-view-state'
 import type { FlicktionaryStudyFacetDto, SavedHighlightDto, SaveWordStudyIntent } from '@asbplayer-fork/common'
 import {
-  deleteSavedHighlight,
   fetchSavedGloss,
   fetchStudyTargets,
   updateSavedHighlightNote,
@@ -30,6 +29,18 @@ import {
 // The shared gloss view state under this file's historical name — the overlay
 // never constructs the web-only `idle` member.
 export type GlossContent = GlossViewState
+
+// Save-time options from the tooltip's two commit lanes (web gloss-sheet
+// parity). The plain Save lane sends studyIntent (+ a note typed before saving,
+// which rides along and seeds the chat once); the Save-note lane sets
+// noteOnly=true (empty stub card + seeded chat, no enrichment / study facets).
+export interface GlossSaveOptions {
+  studyIntent?: StudyIntentValue
+  noteOnly?: boolean
+  note?: string | null
+  presetTags?: string[]
+  chatSeedPrompt?: string | null
+}
 
 // Web FloatingSheet section paddings (header/body/footer), so the composed
 // card matches the web sheet's rhythm.
@@ -73,11 +84,11 @@ export interface GlossTooltipProps {
   word: string
   content: GlossContent
   // Explicit save (mirrors the right-click power-shortcut): persists the
-  // highlighted word. Looking via hover stays free. `studyIntent` carries any
-  // touched "Study options" draft (undefined = backend default); the
-  // right-click shortcut bypasses the tooltip and always saves with the
-  // default.
-  onSave: (studyIntent?: StudyIntentValue) => void
+  // highlighted word. Looking via hover stays free. The payload carries the
+  // touched "Study options" draft and, when the note editor was used, the
+  // note/tags + the note-only flag. The right-click shortcut bypasses the
+  // tooltip and always saves with the backend default.
+  onSave: (save: GlossSaveOptions) => void
   // When set, saving is unavailable here (e.g. off YouTube, where saving isn't
   // wired up yet). Render Save disabled with this reason instead of an active
   // button — looking is still free, so the gloss above stays fully usable.
@@ -124,12 +135,34 @@ export function GlossTooltip({
   // px-pinned at source (the rem-vs-host-root trap is fixed there, see the
   // Switch's track-height comment).
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
+  // Pre-save note editor (web parity): the two commit lanes are Save (full card,
+  // a typed note rides along) and Save note (note-only stub + seeded chat).
+  const [note, setNote] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [noteExpanded, setNoteExpanded] = useState(false)
+  const { prompts: presetPrompts } = usePresetTagTexts()
 
-  // A new word = a new save target: re-arm the draft (the section re-collapses
-  // via its `key={word}` remount).
+  // A new word = a new save target: re-arm the draft + note editor (the section
+  // re-collapses via its `key={word}` remount).
   useEffect(() => {
     setStudyDraft(defaultStudyIntentDraft)
+    setNote('')
+    setTags([])
+    setNoteExpanded(false)
   }, [word])
+
+  const toggleTag = (tag: PresetTag) => {
+    setTags((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]))
+  }
+
+  // Both lanes build the same note payload; noteOnly flips which lane runs.
+  const buildSave = (noteOnly: boolean): GlossSaveOptions => ({
+    studyIntent: noteOnly ? undefined : draftToStudyIntent(studyDraft),
+    noteOnly,
+    note: note.trim() || null,
+    presetTags: tags,
+    chatSeedPrompt: composeChatSeedPrompt(tags, presetPrompts, note),
+  })
 
   return (
     <FloatingSheet
@@ -164,6 +197,13 @@ export function GlossTooltip({
           </div>
         )}
 
+        {/* Pre-save note editor — shown once the user taps Add note. */}
+        {signedIn && !saveDisabledReason && noteExpanded && (
+          <div className={CARD_BODY_CLASS}>
+            <HighlightNoteEditor note={note} tags={tags} onNoteChange={setNote} onToggleTag={toggleTag} />
+          </div>
+        )}
+
         {/* Not signed in → both glossing and saving fail, so offer Sign in in
             place of Save (the gloss area shows the "Sign in to translate" note).
             Otherwise the explicit Save — discoverable counterpart to the
@@ -181,17 +221,58 @@ export function GlossTooltip({
               </Button>
               <div className='text-muted-foreground text-xs'>{saveDisabledReason}</div>
             </>
+          ) : noteExpanded ? (
+            // Two commit lanes, both full-size and 50/50 wide (no morph). Save
+            // (full card; the note rides along + seeds chat) and Save note
+            // (note-only stub + seeded chat, no enrichment) — Save note is
+            // disabled until there's a note or preset to seed the chat with.
+            <div className='grid grid-cols-2 gap-2'>
+              <Button
+                type='button'
+                size='xl'
+                className='w-full'
+                disabled={saving}
+                onClick={() => onSave(buildSave(false))}
+              >
+                <Save className='mr-1 h-4 w-4' />
+                {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                size='xl'
+                className='w-full'
+                disabled={saving || (!note.trim() && tags.length === 0)}
+                onClick={() => onSave(buildSave(true))}
+              >
+                <Trans>Save note</Trans>
+              </Button>
+            </div>
           ) : (
-            <Button
-              type='button'
-              size='xl'
-              className='w-full'
-              disabled={saving}
-              onClick={() => onSave(draftToStudyIntent(studyDraft))}
-            >
-              <Save className='mr-1 h-4 w-4' />
-              {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
-            </Button>
+            // Collapsed: Save (full card) + Add note (opens the editor).
+            <div className='grid grid-cols-2 gap-2'>
+              <Button
+                type='button'
+                size='xl'
+                className='w-full'
+                disabled={saving}
+                onClick={() => onSave(buildSave(false))}
+              >
+                <Save className='mr-1 h-4 w-4' />
+                {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                size='xl'
+                className='w-full'
+                disabled={saving}
+                onClick={() => setNoteExpanded(true)}
+              >
+                <PencilLine className='mr-1 h-4 w-4' />
+                <Trans>Add note</Trans>
+              </Button>
+            </div>
           )}
         </div>
       </FloatingSheetContent>
@@ -299,9 +380,10 @@ export interface SavedGlossTooltipProps {
   sessionId: string
   highlight: SavedHighlightDto
   initialGloss?: GlossData
-  // The delete landed (or the row was already gone) — the caller removes the
-  // span from the store and closes the popover.
-  onRemoved: () => void
+  // The Remove toggle was clicked. The PARENT performs the delete (so it can
+  // capture the span's offsets before they leave the store and morph the popover
+  // back into the preview gloss for that span — web parity), not the tooltip.
+  onRemove: () => void
   // The note/tags write landed — the caller patches the store entry so a
   // re-open shows the saved values without a reload.
   onNotePatched: (note: string | null, presetTags: string[]) => void
@@ -328,7 +410,7 @@ export function SavedGlossTooltip({
   sessionId,
   highlight,
   initialGloss,
-  onRemoved,
+  onRemove,
   onNotePatched,
   onClose,
   onPointerEnter,
@@ -346,7 +428,9 @@ export function SavedGlossTooltip({
   const [note, setNote] = useState(highlight.note ?? '')
   const [tags, setTags] = useState<string[]>([...highlight.presetTags])
   const [noteExpanded, setNoteExpanded] = useState(false)
-  const [busy, setBusy] = useState<'remove' | 'note' | null>(null)
+  // Only the note save runs in the tooltip now; Remove is delegated to the
+  // parent (see onRemove) so it can morph back to the preview gloss.
+  const [busy, setBusy] = useState<'note' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const { prompts: presetPrompts } = usePresetTagTexts()
@@ -367,16 +451,6 @@ export function SavedGlossTooltip({
       cancelled = true
     }
   }, [sessionId, highlight.id, initialGloss])
-
-  const handleRemove = useCallback(() => {
-    setBusy('remove')
-    setActionError(null)
-    void deleteSavedHighlight(sessionId, highlight.id).then((ok) => {
-      setBusy(null)
-      if (ok) onRemoved()
-      else setActionError(t`Could not remove the highlight.`)
-    })
-  }, [sessionId, highlight.id, onRemoved, t])
 
   const handleSaveNote = useCallback(() => {
     const trimmedNote = note.trim()
@@ -457,40 +531,48 @@ export function SavedGlossTooltip({
           </div>
         )}
 
-        {/* Unified footer (parity with the web saved sheet): a green "Saved" state.
-            While composing a new note it turns into "Save note"; once a note is
-            committed it locks — just "Saved" + the trash to remove the highlight. */}
+        {/* Unified footer (parity with the web saved sheet): a cyclable green
+            "Saved" state that REMOVES the highlight on click (replacing the old
+            standalone trash). While composing a new note it turns into "Save
+            note"; once a note is committed it locks — just the Saved toggle. */}
         <div data-floating-sheet-sticky-footer='' className={CARD_FOOTER_CLASS}>
-          <div className='flex items-center justify-between gap-2'>
+          <div className='grid grid-cols-2 gap-2'>
             {noteExpanded && !noteLocked ? (
-              <Button type='button' size='sm' disabled={busy !== null} onClick={handleSaveNote}>
+              <Button type='button' size='xl' className='w-full' disabled={busy !== null} onClick={handleSaveNote}>
                 {busy === 'note' ? <Trans>Saving…</Trans> : <Trans>Save note</Trans>}
               </Button>
             ) : (
-              <span className='inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-950/40 px-3 py-1.5 text-sm font-medium text-emerald-400'>
-                <Check className='h-4 w-4' />
-                <Trans>Saved</Trans>
-              </span>
+              // Cyclable Saved → Remove, sized to match Button size='xl'
+              // (h-12 px-6 text-base) + w-full so it fills its 50% grid cell.
+              <button
+                type='button'
+                aria-label={t`Saved — click to remove highlight`}
+                disabled={busy !== null}
+                onClick={onRemove}
+                className='group inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-950/40 px-6 text-base font-medium text-emerald-400 transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:opacity-50'
+              >
+                <Check className='h-4 w-4 group-hover:hidden' />
+                <Trash2 className='hidden h-4 w-4 group-hover:block' />
+                <span className='group-hover:hidden'>
+                  <Trans>Saved</Trans>
+                </span>
+                <span className='hidden group-hover:inline'>
+                  <Trans>Remove</Trans>
+                </span>
+              </button>
             )}
-            <div className='flex items-center gap-1'>
-              {!noteExpanded && !noteLocked && (
-                <Button type='button' variant='outline' size='sm' onClick={() => setNoteExpanded(true)}>
-                  <PencilLine className='h-4 w-4' />
-                  {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
-                </Button>
-              )}
+            {!noteExpanded && !noteLocked && (
               <Button
                 type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={t`Remove highlight`}
-                disabled={busy !== null}
-                onClick={handleRemove}
-                className='text-destructive hover:bg-destructive/10'
+                variant='outline'
+                size='xl'
+                className='w-full'
+                onClick={() => setNoteExpanded(true)}
               >
-                <Trash2 className='h-4 w-4' />
+                <PencilLine className='mr-1 h-4 w-4' />
+                {hasNoteDetails ? <Trans>Edit note</Trans> : <Trans>Add note</Trans>}
               </Button>
-            </div>
+            )}
           </div>
         </div>
       </FloatingSheetContent>

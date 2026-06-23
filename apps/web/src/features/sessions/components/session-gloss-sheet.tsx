@@ -169,6 +169,11 @@ export const SessionGlossSheet = ({
   )
   const currentHighlight = highlightId ? (sessionHighlights?.find((h) => h.id === highlightId) ?? null) : null
 
+  // Preview mode = a fresh, unsaved selection. The gloss is a free, ephemeral
+  // lookup; nothing is persisted until the user clicks Save / Save note. Saved
+  // mode (an existing highlight or a just-saved selection) keeps Remove/note.
+  const isPreview = !!selection && !existingHighlight && !highlightId
+
   useLayoutEffect(() => {
     if (!open) return
     setExpanded(false)
@@ -323,42 +328,65 @@ export const SessionGlossSheet = ({
     queryClient,
   ])
 
-  // Explicit Save: the only thing that persists a highlight (and fires the
-  // enrich/card job). Flips the sheet from preview into saved mode; the gloss
-  // already on screen stays. Note/tags editing then unlocks behind `highlightId`.
-  const handleSave = useCallback(async () => {
-    // isSaving guards the right-click shortcut: the sheet now stays open
-    // through it, so a repeated right-click would otherwise double-create.
-    if (!selection || highlightId || isSaving) return
-    setIsSaving(true)
-    try {
+  // Shared builder so the plain Save lane and the note-only Save-note lane build
+  // identical create args (span + fastGloss + note/tags). `noteOnly` flips the
+  // lane: the note-only lane skips study facets entirely (studyIntent omitted)
+  // and the backend creates an empty stub card instead of running enrichment. A
+  // typed note rides along in BOTH lanes and seeds the card chat once.
+  const buildCreateArgs = useCallback(
+    (noteOnly: boolean) => {
+      if (!selection) return null
       const fastGloss =
         glossState.status === 'ready'
           ? { gloss: glossState.gloss, pos: glossState.pos, register: glossState.register }
           : undefined
-      const created = await createHighlight({
+      return {
         sessionId,
         startSegmentId: selection.startSegmentId,
         endSegmentId: selection.endSegmentId,
         startOffset: selection.startOffset,
         endOffset: selection.endOffset,
         selectionText: selection.selectionText,
-        note: null,
-        presetTags: [],
-        // Touched study options ride the save; the enrichment job applies them
-        // once the term materializes. Untouched → undefined → backend default.
-        studyIntent: draftToStudyIntent(studyDraft),
+        note: note.trim() || null,
+        presetTags: tags,
+        chatSeedPrompt: composeChatSeedPrompt(tags, presetPrompts, note),
+        // Note-only ignores skill selection; the plain lane applies touched
+        // study options once the term materializes (untouched → undefined →
+        // backend default).
+        studyIntent: noteOnly ? undefined : draftToStudyIntent(studyDraft),
         // A pre-save ghost adoption dismisses the ghost with the insert.
         adoptedGhostId: pendingGhostId ?? undefined,
+        noteOnly,
         ...(fastGloss ? { fastGloss } : {}),
-      })
+      }
+    },
+    [selection, glossState, sessionId, note, tags, presetPrompts, studyDraft, pendingGhostId]
+  )
+
+  // Explicit Save (main lane): persists a full highlight + fires the enrich/card
+  // job. Flips the sheet from preview into saved mode; the gloss already on
+  // screen stays. A note typed before saving rides along and seeds the chat once
+  // (locking the editor). Note/tags editing then unlocks behind `highlightId`.
+  const handleSave = useCallback(async () => {
+    // isSaving guards the right-click shortcut: the sheet now stays open
+    // through it, so a repeated right-click would otherwise double-create.
+    if (!selection || highlightId || isSaving) return
+    const args = buildCreateArgs(false)
+    if (!args) return
+    setIsSaving(true)
+    try {
+      const created = await createHighlight(args)
       setHighlightId(created.data.id)
+      // A committed note seeds the chat once — lock the editor (matches the
+      // note-only lane). An empty save leaves it editable.
+      if (args.chatSeedPrompt) setLocalNoteSaved(true)
+      setExpanded(false)
     } catch {
       // The mutation's meta.errorMessage surfaces a toast; stay in preview mode.
     } finally {
       setIsSaving(false)
     }
-  }, [selection, highlightId, isSaving, createHighlight, sessionId, studyDraft, pendingGhostId, glossState])
+  }, [selection, highlightId, isSaving, createHighlight, buildCreateArgs])
 
   // Atomic span swap: drop the provisional highlight the literal selection created
   // and replace it with the ghost's span (one backend transaction), then re-point
@@ -426,7 +454,29 @@ export const SessionGlossSheet = ({
     [highlightId, isDeleting, deleteHighlight, sessionId, selection, existingHighlight, onClose]
   )
 
-  const handleSaveNote = () => {
+  // Save note: the note-only commit lane. In preview (nothing saved yet) it
+  // creates a NEW highlight with noteOnly=true — an empty stub card that exists
+  // only to host the seeded chat answer (no basic-data pass, no study facets).
+  // On an already-saved highlight it just patches the note/tags via
+  // updateNoteAndTags. Either way a committed note seeds the chat once and locks.
+  const handleSaveNote = useCallback(async () => {
+    if (isPreview) {
+      if (!selection || isSaving) return
+      const args = buildCreateArgs(true)
+      if (!args) return
+      setIsSaving(true)
+      try {
+        const created = await createHighlight(args)
+        setHighlightId(created.data.id)
+        if (args.chatSeedPrompt) setLocalNoteSaved(true)
+        setExpanded(false)
+      } catch {
+        // meta.errorMessage surfaces a toast; stay in preview.
+      } finally {
+        setIsSaving(false)
+      }
+      return
+    }
     if (!highlightId) return
     const chatSeedPrompt = composeChatSeedPrompt(tags, presetPrompts, note)
     saveNoteAndTags(
@@ -448,17 +498,25 @@ export const SessionGlossSheet = ({
         },
       }
     )
-  }
+  }, [
+    isPreview,
+    selection,
+    isSaving,
+    buildCreateArgs,
+    createHighlight,
+    highlightId,
+    tags,
+    presetPrompts,
+    note,
+    saveNoteAndTags,
+    sessionId,
+  ])
 
   const toggleTag = (tag: PresetTag) => {
     setTags((prev) => (prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]))
   }
 
   const isReady = glossState.status === 'ready'
-  // Preview mode = a fresh, unsaved selection. The gloss is a free, ephemeral
-  // lookup; nothing is persisted until the user clicks Save. Saved mode (an
-  // existing highlight or a just-saved selection) keeps the Remove/note actions.
-  const isPreview = !!selection && !existingHighlight && !highlightId
   const hasNoteDetails = note.trim().length > 0 || tags.length > 0
 
   // A note/preset committed to this highlight locks the editor read-only: it
@@ -620,56 +678,111 @@ export const SessionGlossSheet = ({
         )}
 
         <FloatingSheetFooter>
-          <div className='flex items-center justify-between gap-2'>
+          {/* A 2-column grid so every button cell is EXACTLY 50% in every state,
+              independent of label width or button count (flex-1's min-content
+              floor otherwise nudges the split by a pixel or two, and a lone
+              flex-1 button goes full-width). Buttons are w-full to fill the cell. */}
+          <div className='grid grid-cols-2 gap-2'>
             {isPreview ? (
-              // Preview mode: looking is free, and clicking outside already
-              // discards — no Cancel button. Save is the explicit action that
-              // persists the highlight and fires the enrich/card job.
-              <Button type='button' size='xl' className='w-full' disabled={isSaving} onClick={() => void handleSave()}>
-                <Save className='mr-1 h-4 w-4' />
-                {isSaving ? t`Saving…` : t`Save`}
-              </Button>
+              // Preview mode: two commit lanes, both full-size and 50/50 wide
+              // (no morph between collapsed/expanded). Save = full card. Save
+              // note = note-only (empty stub card hosting the seeded chat),
+              // disabled until there's a note or preset — an empty note-only
+              // save would make a useless data-less stub with no seeded chat.
+              // Looking is free and clicking outside discards, so no Cancel.
+              expanded ? (
+                <>
+                  <Button
+                    type='button'
+                    size='xl'
+                    className='w-full'
+                    disabled={isSaving}
+                    onClick={() => void handleSave()}
+                  >
+                    <Save className='mr-1 h-4 w-4' />
+                    {isSaving ? t`Saving…` : t`Save`}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='xl'
+                    className='w-full'
+                    disabled={isSaving || !hasNoteDetails}
+                    onClick={() => void handleSaveNote()}
+                  >
+                    {t`Save note`}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type='button'
+                    size='xl'
+                    className='w-full'
+                    disabled={isSaving}
+                    onClick={() => void handleSave()}
+                  >
+                    <Save className='mr-1 h-4 w-4' />
+                    {isSaving ? t`Saving…` : t`Save`}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='xl'
+                    className='w-full'
+                    disabled={isSaving}
+                    onClick={() => setExpanded(true)}
+                  >
+                    <PencilLine className='mr-1 h-4 w-4' />
+                    {t`Add note`}
+                  </Button>
+                </>
+              )
             ) : (
-              // Saved mode: the Save button morphs into a green "Saved" state.
-              // While composing a brand-new note (expanded, not yet locked) it
-              // turns into "Save note"; once a note is committed it locks — no
-              // Save/Edit, just "Saved" + the trash to remove the highlight.
+              // Saved mode. While composing a brand-new note (expanded, not yet
+              // locked) the left slot is "Save note"; otherwise it's the cyclable
+              // green "Saved" — clicking it REMOVES the highlight (mirrors the
+              // right-click toggle), replacing the old standalone trash button.
               <>
                 {expanded && !noteLocked ? (
-                  <Button type='button' size='sm' disabled={isSavingNote || !highlightId} onClick={handleSaveNote}>
+                  <Button
+                    type='button'
+                    size='xl'
+                    className='w-full'
+                    disabled={isSavingNote || !highlightId}
+                    onClick={() => void handleSaveNote()}
+                  >
                     {isSavingNote ? t`Saving…` : t`Save note`}
                   </Button>
                 ) : (
-                  <span className='inline-flex items-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700'>
-                    <Check className='h-4 w-4' />
-                    {t`Saved`}
-                  </span>
+                  // Cyclable Saved → Remove. Sized to match Button size='xl'
+                  // (h-12 px-6 text-base) + w-full so it fills its 50% grid cell.
+                  <button
+                    type='button'
+                    aria-label={t`Saved — click to remove highlight`}
+                    disabled={isDeleting || !highlightId}
+                    onClick={() => handleRemove({ morphToPreview: true })}
+                    className='group hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-md border border-emerald-600/40 bg-emerald-50 px-6 text-base font-medium text-emerald-700 transition-colors disabled:opacity-50'
+                  >
+                    <Check className='h-4 w-4 group-hover:hidden' />
+                    <Trash2 className='hidden h-4 w-4 group-hover:block' />
+                    <span className='group-hover:hidden'>{t`Saved`}</span>
+                    <span className='hidden group-hover:inline'>{t`Remove`}</span>
+                  </button>
                 )}
-                <div className='flex items-center gap-1'>
-                  {!expanded && !noteLocked && (
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      disabled={!highlightId}
-                      onClick={() => setExpanded(true)}
-                    >
-                      <PencilLine className='h-4 w-4' />
-                      {hasNoteDetails ? t`Edit note` : t`Add note`}
-                    </Button>
-                  )}
+                {!expanded && !noteLocked && (
                   <Button
                     type='button'
-                    variant='ghost'
-                    size='icon'
-                    aria-label={t`Remove highlight`}
-                    disabled={isDeleting || !highlightId}
-                    onClick={() => handleRemove()}
-                    className='text-destructive hover:bg-destructive/10'
+                    variant='outline'
+                    size='xl'
+                    className='w-full'
+                    disabled={!highlightId}
+                    onClick={() => setExpanded(true)}
                   >
-                    <Trash2 className='h-4 w-4' />
+                    <PencilLine className='mr-1 h-4 w-4' />
+                    {hasNoteDetails ? t`Edit note` : t`Add note`}
                   </Button>
-                </div>
+                )}
               </>
             )}
           </div>

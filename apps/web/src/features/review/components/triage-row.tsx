@@ -4,6 +4,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { Check, Loader2, RotateCw, X } from 'lucide-react'
 import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { cardHasBasicData } from '../utils/card-has-basic-data'
 
 // Placeholder shaped like a real TriageRow (headword bar + preview line + the
 // two icon-button squares) so the list doesn't jump when cards load.
@@ -74,6 +75,8 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
   const isKept = card.status === 'kept'
   const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
   const preview = getBackPreview(card)
+  // Block keeping a data-less note-only card; the user generates its data first.
+  const keepDisabled = !isKept && !cardHasBasicData(card)
 
   return (
     <div className='flex items-start gap-3 border-b'>
@@ -86,13 +89,18 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
         {card.chunk.headword && card.surfaceForm && card.chunk.headword !== card.surfaceForm && (
           <span className='text-muted-foreground ml-2 text-sm'>({card.surfaceForm})</span>
         )}
-        {preview && <p className='mt-1 text-sm'>{preview}</p>}
+        {preview ? (
+          <p className='mt-1 text-sm'>{preview}</p>
+        ) : (
+          keepDisabled && <p className='text-muted-foreground mt-1 text-sm'>{t`Needs data — open to generate`}</p>
+        )}
       </Link>
       <div className='flex shrink-0 items-center gap-1 py-3'>
         <Button
           size='icon'
           variant={isKept ? 'default' : 'outline'}
           aria-label={t`Keep`}
+          disabled={keepDisabled}
           onClick={() => onStatusChange(card.id, isKept ? 'pending' : 'kept')}
         >
           <Check className='h-4 w-4' />

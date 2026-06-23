@@ -1,8 +1,10 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
 import { buildPromptContext } from '../processing/build-prompt-context'
+import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
 import { CardsRepositoryInterface, DbCardWithChunk } from '../../transport/database/cards/cards-repository'
+import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import {
   CardChatMessagesRepositoryInterface,
   DbCardChatMessage,
@@ -24,6 +26,10 @@ export type RunCardChatDependencies = {
   userLookupsRepository: UserLookupsRepositoryInterface
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+  // Lets chat lazily mint the session context blob on first use. A note-only
+  // session never ran an enrich job, so its blob is absent — without this the
+  // seeded turn and any manual chat would throw "session not processed yet".
+  contentSourcesRepository: ContentSourcesRepositoryInterface
 }
 
 export type RunCardChatInput = {
@@ -264,6 +270,15 @@ export const runCardChat = async (
 
   const session = await deps.studySessionsRepository.findByIdForUser(card.study_session_id, input.userId)
   if (!session) throw new Error('Session not found')
+
+  // A note-only session never ran an enrich job, so its context_blob may be
+  // absent. Mint-and-persist it lazily here (before buildPromptContext, which
+  // returns null without it) so seeded + manual chat self-bootstrap.
+  await ensureSessionContextBlob(session, input.userId, {
+    contentSourcesRepository: deps.contentSourcesRepository,
+    textSegmentsRepository: deps.textSegmentsRepository,
+    studySessionsRepository: deps.studySessionsRepository,
+  })
 
   // Idempotency gate for worker-seeded turns: if this seed key already produced
   // an assistant reply, return the stored turn without calling Opus again. The
