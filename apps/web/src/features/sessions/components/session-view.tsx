@@ -340,9 +340,20 @@ export const SessionView = () => {
     // none of which exist for an optimistic row. Ignore the click until the
     // create settles and the span re-renders with its real id.
     if (isOptimisticHighlightId(target.dataset.highlightId)) return
-    setPendingSelection(null)
+    const match = highlights?.find((h) => h.id === target.dataset.highlightId)
+    if (!match) return
+    const startSegment = visibleSegments.find((s) => s.id === match.startSegmentId)
+    setPendingSelection({
+      startSegmentId: match.startSegmentId,
+      endSegmentId: match.endSegmentId,
+      startOffset: match.startOffset,
+      endOffset: match.endOffset,
+      selectionText: match.selectionText,
+      contextLine: startSegment?.text ?? match.selectionText,
+      rect: target.getBoundingClientRect(),
+    })
     setPendingGhostId(null)
-    setExistingHighlightId(target.dataset.highlightId)
+    setExistingHighlightId(match.id)
     setAnchor(target.getBoundingClientRect())
     setGlossOpen(true)
   }
