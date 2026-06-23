@@ -165,20 +165,28 @@ export type GrammarIpaBag = z.infer<typeof GrammarIpaBagSchema>
 // editable panel's "clear" path stamps `null` via JSONB `||`). The renderer
 // treats null and absent identically, so accepting null on read keeps the
 // view from 500ing on otherwise-valid rows.
+// Every enum-typed key is `.catch(undefined)`: LLM passes (basic-data /
+// exploration models AND the per-card chat's `update_card_fields` tool) author
+// this bag and occasionally emit a valid-but-out-of-enum value — e.g.
+// `pos: "determiner"` for a Russian определитель, which our POS set doesn't
+// list. A strict enum would 500 EVERY read of the card (and its whole session)
+// on output validation. `.catch` coerces an unrecognized value to `undefined`
+// (dropped on read; the raw value stays harmlessly in the JSONB), honoring this
+// schema's "never 500 on a partial/garbled bag" contract.
 export const GrammarSchema = z
   .object({
-    pos: GrammarPosSchema.nullable().optional(),
+    pos: GrammarPosSchema.nullable().optional().catch(undefined),
     // Display variant — canonical-but-decorated form. Russian: stress-marked
     // (`ви́деть`); the headword stays clean (`видеть`) for matching/lemmatization.
     display_form: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
     // Nominal
-    gender: GrammarGenderSchema.nullable().optional(),
-    number_only: GrammarNumberOnlySchema.nullable().optional(),
+    gender: GrammarGenderSchema.nullable().optional().catch(undefined),
+    number_only: GrammarNumberOnlySchema.nullable().optional().catch(undefined),
     is_indeclinable: z.boolean().nullable().optional(),
-    animacy: GrammarAnimacySchema.nullable().optional(),
+    animacy: GrammarAnimacySchema.nullable().optional().catch(undefined),
     // Verbal
-    aspect: GrammarAspectSchema.nullable().optional(),
+    aspect: GrammarAspectSchema.nullable().optional().catch(undefined),
     aspect_pair_headword: z.string().nullable().optional(),
     is_reflexive: z.boolean().nullable().optional(),
     // Government / case requirements (e.g. "+ acc", "от + gen", "с + instr")

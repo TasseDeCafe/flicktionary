@@ -1,6 +1,53 @@
-import { CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
-import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
+import type postgres from 'postgres'
+import { CardsRepositoryInterface, CardStatus, DbCard } from '../../transport/database/cards/cards-repository'
+import {
+  DbUserLookup,
+  UserLookupsRepositoryInterface,
+} from '../../transport/database/user-lookups/user-lookups-repository'
 import { BasicDataChunk, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+
+// The single definition of an "empty card": the canonical user_lookup (deduped
+// per (user, target_language, headword='selectionText', sense='')) plus the
+// idempotent highlight-backed card in 'pending' (or 'auto_rejected'). Shared by
+// the basic-data fallback loop (a highlight the model dropped) and the note-only
+// save lane (which deliberately skips the basic-data pass entirely). Both repo
+// methods accept the optional executor so the note-only lane can run the whole
+// insert atomically inside one transaction.
+export const insertStubCardForHighlight = async (
+  params: {
+    sessionId: string
+    userId: string
+    targetLanguage: string
+    highlightId: string
+    segmentId: string
+    selectionText: string
+    status?: CardStatus
+  },
+  deps: { cardsRepository: CardsRepositoryInterface; userLookupsRepository: UserLookupsRepositoryInterface },
+  executor?: postgres.Sql
+): Promise<{ lookup: DbUserLookup; card: DbCard }> => {
+  const lookup = await deps.userLookupsRepository.findOrCreate(
+    {
+      userId: params.userId,
+      targetLanguage: params.targetLanguage,
+      headword: params.selectionText,
+      sense: '',
+    },
+    executor
+  )
+  const card = await deps.cardsRepository.insertCardForHighlightIdempotent(
+    {
+      studySessionId: params.sessionId,
+      highlightId: params.highlightId,
+      segmentId: params.segmentId,
+      userLookupId: lookup.id,
+      surfaceForm: params.selectionText,
+      status: params.status ?? 'pending',
+    },
+    executor
+  )
+  return { lookup, card }
+}
 
 export type TouchedLookupInfo = {
   headword: string
@@ -156,12 +203,17 @@ export const materializeBasicDataChunks = async (params: {
   // back to the raw selection text.
   for (const highlight of newHighlights) {
     if (coveredHighlightIds.has(highlight.highlightId)) continue
-    const lookup = await userLookupsRepository.findOrCreate({
-      userId,
-      targetLanguage,
-      headword: highlight.selectionText,
-      sense: '',
-    })
+    const { lookup, card } = await insertStubCardForHighlight(
+      {
+        sessionId,
+        userId,
+        targetLanguage,
+        highlightId: highlight.highlightId,
+        segmentId: highlight.segmentId,
+        selectionText: highlight.selectionText,
+      },
+      { cardsRepository, userLookupsRepository }
+    )
     if (!touchedLookups.has(lookup.id)) {
       touchedLookups.set(lookup.id, {
         headword: lookup.headword,
@@ -171,15 +223,7 @@ export const materializeBasicDataChunks = async (params: {
         grammarUserEdited: lookup.grammar_user_edited_at !== null,
       })
     }
-    const insertedCard = await cardsRepository.insertCardForHighlightIdempotent({
-      studySessionId: sessionId,
-      highlightId: highlight.highlightId,
-      segmentId: highlight.segmentId,
-      userLookupId: lookup.id,
-      surfaceForm: highlight.selectionText,
-      status: 'pending',
-    })
-    insertedCards.push(insertedCard)
+    insertedCards.push(card)
   }
 
   return { touchedLookups, insertedCards }

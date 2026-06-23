@@ -31,6 +31,10 @@ export const cardsContract = {
     .route({ method: 'PATCH', path: '/cards/{cardId}/status', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      // A data-less card (note-only stub with no translation/definition/example)
+      // cannot be kept into Vocabulary/Practice — the user must generate its data
+      // first (Generate full exploration / chat). Mirrors the floor-guard pattern.
+      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
     .input(

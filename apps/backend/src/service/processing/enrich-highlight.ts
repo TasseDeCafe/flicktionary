@@ -2,7 +2,7 @@ import { logWithSentry } from '../../transport/third-party/sentry/error-monitori
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
-import { generateContextBlob } from '../../transport/third-party/anthropic/passes/generate-context-blob'
+import { ensureSessionContextBlob } from './ensure-session-context-blob'
 import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropic-client'
@@ -12,8 +12,6 @@ import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { recordPassTelemetry } from './telemetry'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import type { ProcessingDependencies } from './processing-dependencies'
-
-const CONTEXT_BLOB_SAMPLE_SIZE = 150
 
 export type EnrichHighlightOutcome = 'enriched' | 'cancelled'
 
@@ -62,26 +60,15 @@ export const enrichHighlight = async (
   }
 
   // Context blob: generate-and-persist on the first job for a session, read the
-  // cached value on later jobs. Sampling the
-  // opening slice avoids loading the whole track for long reads.
-  let contextBlob = session.context_blob
+  // cached value on later jobs (shared with chat + on-demand exploration).
+  const contextBlob = await ensureSessionContextBlob(session, userId, {
+    contentSourcesRepository,
+    textSegmentsRepository,
+    studySessionsRepository,
+  })
   if (!contextBlob) {
-    const contentSource = await contentSourcesRepository.findById(session.content_source_id)
-    if (!contentSource) {
-      logWithSentry({ message: 'enrichHighlight: content source not found', params: { sessionId } })
-      return 'cancelled'
-    }
-    const sampleSegments = await textSegmentsRepository.listFirstByTrackId(
-      session.text_track_id,
-      CONTEXT_BLOB_SAMPLE_SIZE
-    )
-    contextBlob = await generateContextBlob({
-      contentTitle: contentSource.title,
-      contentLanguage: session.target_language,
-      contentType: contentSource.type,
-      segmentSample: sampleSegments.map((s) => s.text).join('\n'),
-    })
-    await studySessionsRepository.updateContextBlob(sessionId, userId, contextBlob)
+    logWithSentry({ message: 'enrichHighlight: content source not found', params: { sessionId } })
+    return 'cancelled'
   }
 
   const [languagePrefs, window] = await Promise.all([

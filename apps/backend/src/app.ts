@@ -48,11 +48,13 @@ import { TextTracksRouter } from './router/text-tracks-router/text-tracks-router
 import { TextSegmentsRouter } from './router/text-segments-router/text-segments-router'
 import { StudySessionsRouter } from './router/study-sessions-router/study-sessions-router'
 import { HighlightsRouter } from './router/highlights-router/highlights-router'
+import type { WithTransaction } from './service/highlights/create-note-only-highlight'
 import { GhostsRouter } from './router/ghosts-router/ghosts-router'
 import { CardsRouter } from './router/cards-router/cards-router'
 import { CardChatRouter } from './router/card-chat-router/card-chat-router'
 import { ChunksRouter } from './router/chunks-router/chunks-router'
 import { UserPrefsRouter } from './router/user-prefs-router/user-prefs-router'
+import { beginTx } from './transport/database/postgres-client'
 import { ContentSourcesRepository } from './transport/database/content-sources/content-sources-repository'
 import { TextTracksRepository } from './transport/database/text-tracks/text-tracks-repository'
 import { TextSegmentsRepository } from './transport/database/text-segments/text-segments-repository'
@@ -281,6 +283,7 @@ export const buildApp = ({
     userLookupsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository,
+    contentSourcesRepository,
   }
 
   const createAdhocCardDependencies = {
@@ -304,6 +307,16 @@ export const buildApp = ({
     userLookupsRepository,
     usersRepository,
     userTargetLanguagePrefsRepository,
+    contentSourcesRepository,
+  }
+
+  const withTransaction: WithTransaction = (fn) => beginTx(fn) as ReturnType<typeof fn>
+  const noteOnlyHighlightDependencies = {
+    highlightsRepository,
+    cardsRepository,
+    userLookupsRepository,
+    ghostCandidatesRepository,
+    withTransaction,
   }
 
   const subscriptionMiddlewareInstance = subscriptionMiddleware(accessCache, usersWithFreeAccess)
@@ -339,7 +352,8 @@ export const buildApp = ({
       userTargetLanguagePrefsRepository,
       wiktionaryEntriesRepository,
       processingJobsRepository,
-      ghostCandidatesRepository
+      ghostCandidatesRepository,
+      noteOnlyHighlightDependencies
     )
   )
   app.use(

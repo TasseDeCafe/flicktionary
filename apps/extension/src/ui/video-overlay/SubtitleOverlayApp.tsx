@@ -12,7 +12,6 @@ import {
   SavedHighlightDto,
   SaveWordParams,
   SaveWordSegmentInfo,
-  SaveWordStudyIntent,
   deleteSavedHighlight,
   loadSavedHighlights,
   saveWord,
@@ -22,7 +21,7 @@ import {
 import { getFlicktionaryAuth, onFlicktionaryAuthChange } from '../../services/flicktionary/auth-storage'
 import { SubtitleLineModel, SubtitleStore } from './subtitle-store'
 import { SAVED_SPAN_CLASS, SELECTION_SPAN_CLASS, Word } from './Word'
-import { GlossContent, GlossTooltip, SavedGlossTooltip } from './GlossTooltip'
+import { GlossContent, GlossSaveOptions, GlossTooltip, SavedGlossTooltip } from './GlossTooltip'
 import { CefrPicker } from './CefrPicker'
 import { toast } from 'sonner'
 import { dispatchToast } from './toaster-host'
@@ -544,7 +543,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   )
 
   const saveSingle = useCallback(
-    (line: SubtitleLineModel, token: LineToken, studyIntent?: SaveWordStudyIntent, handoff?: GlossSaveHandoff) => {
+    (line: SubtitleLineModel, token: LineToken, save?: GlossSaveOptions, handoff?: GlossSaveHandoff) => {
       const cachedGloss = queryClient.getQueryData<GlossData>(
         glossQueryKey(token.text, line.text, savedStore.getState().targetLanguage ?? '')
       )
@@ -565,7 +564,11 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           translation,
           segmentInfo,
           closures,
-          studyIntent,
+          studyIntent: save?.studyIntent,
+          noteOnly: save?.noteOnly,
+          note: save?.note,
+          presetTags: save?.presetTags,
+          chatSeedPrompt: save?.chatSeedPrompt,
           ...(fastGloss ? { fastGloss } : {}),
         },
         handoff
@@ -577,13 +580,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
   // Save a multi-word chunk by its snapshotted word-ordinal range (see
   // GlossSaveTarget — the live selection is already cleared by save time).
   const saveChunk = useCallback(
-    (
-      tl: TokenizedLine,
-      minOrd: number,
-      maxOrd: number,
-      studyIntent?: SaveWordStudyIntent,
-      handoff?: GlossSaveHandoff
-    ) => {
+    (tl: TokenizedLine, minOrd: number, maxOrd: number, save?: GlossSaveOptions, handoff?: GlossSaveHandoff) => {
       const selectedWords = tl.wordTokens.slice(minOrd, maxOrd + 1)
       if (selectedWords.length === 0) return
       const words = selectedWords.map((w) => w.text).join(' ')
@@ -611,7 +608,11 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           translation,
           segmentInfo,
           closures,
-          studyIntent,
+          studyIntent: save?.studyIntent,
+          noteOnly: save?.noteOnly,
+          note: save?.note,
+          presetTags: save?.presetTags,
+          chatSeedPrompt: save?.chatSeedPrompt,
           ...(fastGloss ? { fastGloss } : {}),
         },
         handoff
@@ -1153,11 +1154,16 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 sessionId={savedSessionId}
                 highlight={savedPopoverHighlight}
                 initialGloss={savedPopover.initialGloss}
-                onRemoved={() => {
-                  // No success toast — the yellow wash disappearing is the
-                  // feedback (web parity; saves are equally silent).
-                  savedStore.getState().remove(savedPopoverHighlight.id)
-                  setSavedPopover(null)
+                onRemove={() => {
+                  // Route through removeHighlight so it captures the span's
+                  // offsets before the delete and morphs this saved popover back
+                  // into the preview gloss for that span — exactly what the
+                  // right-click remove does (web parity: the on-screen Remove no
+                  // longer just closes). No success toast — the wash disappearing
+                  // is the feedback. The morph is skipped (popover just closes)
+                  // for cross-cue highlights / a resumed or detached anchor.
+                  const tl = tokenized.find((t) => t.line.index === savedPopover.lineIndex)
+                  removeHighlight(savedPopoverHighlight.id, tl ? { tl, element: savedPopover.anchor } : undefined)
                 }}
                 onNotePatched={(note, presetTags) =>
                   savedStore.getState().patchNote(savedPopoverHighlight.id, note, presetTags)
@@ -1184,7 +1190,7 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
               signedIn={signedIn}
               onSignIn={onSignIn}
               saving={glossSaving}
-              onSave={(studyIntent) => {
+              onSave={(save) => {
                 // Keep the popover open ("Saving…") — the saved outcome swaps
                 // it into the saved-mode popover in place (or toasts on the
                 // fallback paths).
@@ -1193,8 +1199,8 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
                 const handoff: GlossSaveHandoff = { lineIndex: gloss.lineIndex, anchor: gloss.anchor, hover: false }
                 if (glossQuery.data) handoff.initialGloss = glossQuery.data
                 if (gloss.save.kind === 'chunk')
-                  saveChunk(gloss.save.tl, gloss.save.minOrd, gloss.save.maxOrd, studyIntent, handoff)
-                else saveSingle(gloss.save.tl.line, gloss.save.token, studyIntent, handoff)
+                  saveChunk(gloss.save.tl, gloss.save.minOrd, gloss.save.maxOrd, save, handoff)
+                else saveSingle(gloss.save.tl.line, gloss.save.token, save, handoff)
               }}
               onPointerEnter={onGlossPointerEnter}
               onPointerLeave={scheduleGlossHide}

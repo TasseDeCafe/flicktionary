@@ -127,6 +127,13 @@ export interface SaveWordParams {
   // (pendingSave) keeps the configured options for free.
   studyIntent?: SaveWordStudyIntent
   fastGloss?: SaveWordFastGloss
+  // Note-only lane (web parity): an empty stub card + seeded chat, no enrichment.
+  // The note/tags + composed chat seed travel alongside (a typed note rides the
+  // main lane too). Kept on the params so the CEFR-retry round-trip preserves them.
+  noteOnly?: boolean
+  note?: string | null
+  presetTags?: readonly string[]
+  chatSeedPrompt?: string | null
   // Set when this save is the automatic retry after the user picked a CEFR
   // level. Suppresses the missing-cefr outcome (don't re-show the picker) and
   // surfaces the message instead if the save still fails.
@@ -141,6 +148,10 @@ export async function saveWord({
   closures,
   studyIntent,
   fastGloss,
+  noteOnly,
+  note,
+  presetTags,
+  chatSeedPrompt,
   isCefrRetry = false,
 }: SaveWordParams): Promise<SaveWordOutcome> {
   const saveDisabledReason = closures.getFlicktionarySaveDisabledReason()
@@ -165,6 +176,10 @@ export async function saveWord({
       flicktionaryVideo: closures.getFlicktionaryVideoContext(),
       studyIntent,
       ...(fastGloss ? { fastGloss } : {}),
+      noteOnly,
+      note,
+      presetTags,
+      chatSeedPrompt,
     },
   }
 

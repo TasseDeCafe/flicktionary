@@ -1,3 +1,4 @@
+import type postgres from 'postgres'
 import { sql } from '../postgres-client'
 import { Tables, Database } from '../database.public.types'
 
@@ -60,8 +61,11 @@ const insertCard = async (params: CardInsertInput): Promise<DbCard> => {
 // transient failure, so a single highlight must never produce two cards. On
 // conflict the INSERT does nothing and RETURNING is empty, so we read back the
 // pre-existing row. Callers must pass a non-null highlightId.
-const insertCardForHighlightIdempotent = async (params: CardInsertInput & { highlightId: string }): Promise<DbCard> => {
-  const inserted = (await sql`
+const insertCardForHighlightIdempotent = async (
+  params: CardInsertInput & { highlightId: string },
+  executor: postgres.Sql = sql
+): Promise<DbCard> => {
+  const inserted = (await executor`
     INSERT INTO public.cards (
       study_session_id, highlight_id, segment_id, user_lookup_id, surface_form, status
     )
@@ -78,7 +82,7 @@ const insertCardForHighlightIdempotent = async (params: CardInsertInput & { high
     RETURNING *
   `) as DbCard[]
   if (inserted[0]) return inserted[0]
-  const existing = (await sql`
+  const existing = (await executor`
     SELECT * FROM public.cards WHERE highlight_id = ${params.highlightId}
   `) as DbCard[]
   return existing[0]!
@@ -212,7 +216,10 @@ const listKeptForSession = async (studySessionId: string): Promise<DbCardWithChu
 
 export interface CardsRepositoryInterface {
   insertCard: (params: CardInsertInput) => Promise<DbCard>
-  insertCardForHighlightIdempotent: (params: CardInsertInput & { highlightId: string }) => Promise<DbCard>
+  insertCardForHighlightIdempotent: (
+    params: CardInsertInput & { highlightId: string },
+    executor?: postgres.Sql
+  ) => Promise<DbCard>
   listBySessionId: (studySessionId: string, status?: CardStatus) => Promise<DbCardWithChunk[]>
   findById: (id: string) => Promise<DbCardWithChunk | null>
   findByIdForUser: (id: string, userId: string) => Promise<DbCardWithChunk | null>

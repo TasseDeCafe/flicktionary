@@ -392,7 +392,7 @@ export const FocusView = () => {
                         ? t`Generating full exploration… this takes a few seconds.`
                         : hasBasicData
                           ? t`Click Generate full exploration to enrich this card with collocations, etymology, register, IPA, and more.`
-                          : t`This card looks incomplete. Re-process the session to populate its basic data, then come back to enrich it.`}
+                          : t`This is a note-only card with no flashcard data yet. Click Generate full exploration to fill its translation, definition, and examples — then you can keep it.`}
                     </p>
                     <Button
                       variant='outline'
@@ -418,6 +418,7 @@ export const FocusView = () => {
               pendingAction={pendingAction}
               onReject={() => triggerAction('reject')}
               onKeep={() => triggerAction('keep')}
+              keepDisabled={!hasBasicData}
             />
           )}
 
@@ -545,9 +546,12 @@ type FocusActionBarProps = {
   pendingAction: 'reject' | 'keep' | null
   onReject: () => void
   onKeep: () => void
+  // A note-only card has no flashcard data — keeping it would push a blank card
+  // into Vocabulary/Practice. Disable Keep until the user generates its data.
+  keepDisabled?: boolean
 }
 
-const FocusActionBar = ({ card, pendingAction, onReject, onKeep }: FocusActionBarProps) => {
+const FocusActionBar = ({ card, pendingAction, onReject, onKeep, keepDisabled }: FocusActionBarProps) => {
   const { t } = useLingui()
   const isRejected = pendingAction
     ? pendingAction === 'reject'
@@ -556,14 +560,25 @@ const FocusActionBar = ({ card, pendingAction, onReject, onKeep }: FocusActionBa
 
   return (
     <div className='bg-background shrink-0 border-t px-4 py-3'>
-      <div className='mx-auto flex w-full max-w-4xl items-stretch gap-2'>
-        <Button size='xl' variant={isRejected ? 'destructive' : 'outline'} className='flex-1' onClick={onReject}>
-          <X className='mr-1 h-4 w-4' />
-          {t`Reject`}
-        </Button>
-        <Button size='xl' variant={isKept ? 'default' : 'outline'} className='flex-1' onClick={onKeep}>
-          {t`Keep`}
-        </Button>
+      <div className='mx-auto w-full max-w-4xl'>
+        <div className='flex items-stretch gap-2'>
+          <Button size='xl' variant={isRejected ? 'destructive' : 'outline'} className='flex-1' onClick={onReject}>
+            <X className='mr-1 h-4 w-4' />
+            {t`Reject`}
+          </Button>
+          <Button
+            size='xl'
+            variant={isKept ? 'default' : 'outline'}
+            className='flex-1'
+            onClick={onKeep}
+            disabled={keepDisabled}
+          >
+            {t`Keep`}
+          </Button>
+        </div>
+        {keepDisabled && (
+          <p className='text-muted-foreground mt-2 text-center text-xs'>{t`Generate this card's data first`}</p>
+        )}
       </div>
     </div>
   )

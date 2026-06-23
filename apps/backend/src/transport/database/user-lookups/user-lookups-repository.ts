@@ -280,15 +280,18 @@ const findPotentialExistingSensesByHeadwords = async (params: {
 // Called at card-creation time so the user_lookups row always exists by the
 // time the card row references it. The no-op DO UPDATE clause exists solely so
 // RETURNING gives us the existing row when there's a conflict.
-const findOrCreate = async (params: {
-  userId: string
-  targetLanguage: string
-  headword: string
-  sense: string
-}): Promise<DbUserLookup> => {
+const findOrCreate = async (
+  params: {
+    userId: string
+    targetLanguage: string
+    headword: string
+    sense: string
+  },
+  executor: postgres.Sql = sql
+): Promise<DbUserLookup> => {
   // Re-keeping a previously soft-deleted chunk revives it: clear deleted_at
   // on conflict so the row reappears in the Vocabulary list and Practice queue.
-  const result = (await sql`
+  const result = (await executor`
     INSERT INTO public.user_lookups (user_id, target_language, headword, sense)
     VALUES (
       ${params.userId},
@@ -1662,12 +1665,15 @@ export interface UserLookupsRepositoryInterface {
     targetLanguage: string
     headwords: string[]
   }) => Promise<Map<string, Array<{ headword: string; sense: string; definition: string | null }>>>
-  findOrCreate: (params: {
-    userId: string
-    targetLanguage: string
-    headword: string
-    sense: string
-  }) => Promise<DbUserLookup>
+  findOrCreate: (
+    params: {
+      userId: string
+      targetLanguage: string
+      headword: string
+      sense: string
+    },
+    executor?: postgres.Sql
+  ) => Promise<DbUserLookup>
   updateContent: (params: {
     id: string
     translation?: string | null

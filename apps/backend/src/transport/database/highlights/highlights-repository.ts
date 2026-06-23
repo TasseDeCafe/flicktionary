@@ -23,13 +23,17 @@ export type HighlightInsertParams = {
   // record here — the repo stays decoupled from the contract package.
   studyIntent: Record<string, unknown> | null
   fastGloss: string | null
+  // The frontend-composed, localized chat seed question (presets + note). Stored
+  // so the seed_card_chat worker can turn it into a chat turn. Optional — only
+  // the create paths that carry a note set it; updateNoteAndTags writes it later.
+  chatSeedPrompt?: string | null
 }
 
-const insertHighlight = async (params: HighlightInsertParams): Promise<DbHighlight> => {
-  const result = (await sql`
+const insertHighlight = async (params: HighlightInsertParams, executor: postgres.Sql = sql): Promise<DbHighlight> => {
+  const result = (await executor`
     INSERT INTO public.highlights (
       study_session_id, start_segment_id, end_segment_id,
-      start_offset, end_offset, selection_text, note, preset_tags, study_intent, fast_gloss
+      start_offset, end_offset, selection_text, note, preset_tags, study_intent, fast_gloss, chat_seed_prompt
     )
     VALUES (
       ${params.studySessionId},
@@ -41,7 +45,8 @@ const insertHighlight = async (params: HighlightInsertParams): Promise<DbHighlig
       ${params.note},
       ${params.presetTags},
       ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null},
-      ${params.fastGloss}
+      ${params.fastGloss},
+      ${params.chatSeedPrompt ?? null}
     )
     RETURNING *
   `) as DbHighlight[]
@@ -151,7 +156,7 @@ const deleteWithCardCleanup = async (id: string): Promise<boolean> => {
 }
 
 export interface HighlightsRepositoryInterface {
-  insertHighlight: (params: HighlightInsertParams) => Promise<DbHighlight>
+  insertHighlight: (params: HighlightInsertParams, executor?: postgres.Sql) => Promise<DbHighlight>
   listBySessionId: (studySessionId: string) => Promise<DbHighlightWithChunk[]>
   findById: (id: string) => Promise<DbHighlight | null>
   updateFastGloss: (id: string, fastGloss: string) => Promise<void>

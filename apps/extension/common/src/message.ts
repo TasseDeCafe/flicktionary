@@ -483,11 +483,22 @@ export interface SaveWordMessage extends MessageWithId {
   readonly endCharOffset?: number
   readonly flicktionaryVideo?: SaveWordFlicktionaryVideoContext
   // Study options picked in the gloss tooltip; forwarded verbatim to
-  // highlights.create and applied by the backend enrichment job.
+  // highlights.create and applied by the backend enrichment job. Ignored in the
+  // note-only lane (no enrichment runs).
   readonly studyIntent?: SaveWordStudyIntent
   // Preview gloss already shown before Save. Persisted with the highlight so
   // saved-mode display does not have to generate a second first gloss.
   readonly fastGloss?: SaveWordFastGloss
+  // Note-only lane ("ask a question, don't make a card"): when true the backend
+  // creates an empty stub card + seeds the chat from chatSeedPrompt, with NO
+  // basic-data pass / grounding / study facets.
+  readonly noteOnly?: boolean
+  // A free-text note + preset tags typed in the tooltip before saving.
+  readonly note?: string | null
+  readonly presetTags?: readonly string[]
+  // The localized, frontend-composed chat-seed question (presets + note).
+  // Forwarded to highlights.create; the backend seeds the card chat from it.
+  readonly chatSeedPrompt?: string | null
 }
 
 export interface SaveWordResponse {

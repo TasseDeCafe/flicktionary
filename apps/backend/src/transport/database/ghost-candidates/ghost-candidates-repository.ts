@@ -49,6 +49,20 @@ const findById = async (id: string): Promise<DbGhostCandidate | null> => {
   return result[0] ?? null
 }
 
+// Dismiss a live ghost so it stops rendering. Executor-aware so the note-only
+// save lane can dismiss an adopted ghost inside the same transaction as the
+// highlight + stub-card insert. An already-dismissed or missing ghost is a no-op
+// (the highlight is still saved — see insertHighlightAdoptingGhost's rationale).
+const dismissGhost = async (ghostId: string, sessionId: string, executor: postgres.Sql = sql): Promise<void> => {
+  await executor`
+    UPDATE public.ghost_candidates
+    SET dismissed_at = now()
+    WHERE id = ${ghostId}
+      AND study_session_id = ${sessionId}
+      AND dismissed_at IS NULL
+  `
+}
+
 export type SwitchGhostResult =
   | { kind: 'switched'; highlight: DbHighlight }
   | { kind: 'ghost_not_found' }
@@ -192,7 +206,7 @@ const insertHighlightAdoptingGhost = async (
     const insertedRows = (await tx`
       INSERT INTO public.highlights (
         study_session_id, start_segment_id, end_segment_id,
-        start_offset, end_offset, selection_text, note, preset_tags, study_intent, fast_gloss
+        start_offset, end_offset, selection_text, note, preset_tags, study_intent, fast_gloss, chat_seed_prompt
       )
       VALUES (
         ${params.studySessionId},
@@ -204,7 +218,8 @@ const insertHighlightAdoptingGhost = async (
         ${params.note},
         ${params.presetTags},
         ${params.studyIntent ? sql.json(params.studyIntent as unknown as postgres.JSONValue) : null},
-        ${params.fastGloss}
+        ${params.fastGloss},
+        ${params.chatSeedPrompt ?? null}
       )
       RETURNING *
     `) as DbHighlight[]
@@ -239,6 +254,7 @@ export interface GhostCandidatesRepositoryInterface {
   insertMany: (candidates: GhostCandidateInsert[]) => Promise<void>
   listLiveBySession: (sessionId: string) => Promise<DbGhostCandidate[]>
   findById: (id: string) => Promise<DbGhostCandidate | null>
+  dismissGhost: (ghostId: string, sessionId: string, executor?: postgres.Sql) => Promise<void>
   switchGhostToHighlight: (params: {
     sessionId: string
     ghostId: string
@@ -260,6 +276,7 @@ export const GhostCandidatesRepository = (): GhostCandidatesRepositoryInterface 
     insertMany,
     listLiveBySession,
     findById,
+    dismissGhost,
     switchGhostToHighlight,
     insertHighlightAdoptingGhost,
   }

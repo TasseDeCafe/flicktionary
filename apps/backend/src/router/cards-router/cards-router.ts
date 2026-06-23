@@ -11,7 +11,12 @@ import {
 } from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
-import { setCardStatus, setCardStatusBatch, SetCardStatusDependencies } from '../../service/cards/set-card-status'
+import {
+  setCardStatus,
+  setCardStatusBatch,
+  SetCardStatusDependencies,
+  CardKeepBlockedError,
+} from '../../service/cards/set-card-status'
 import {
   createAdhocCard,
   CreateAdhocCardDependencies,
@@ -96,7 +101,15 @@ export const CardsRouter = (
 
     updateStatus: implementer.updateStatus.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      const updated = await setCardStatus(input.cardId, userId, input.status, setCardStatusDependencies)
+      let updated: DbCard | null
+      try {
+        updated = await setCardStatus(input.cardId, userId, input.status, setCardStatusDependencies)
+      } catch (e) {
+        if (e instanceof CardKeepBlockedError) {
+          throw errors.CONFLICT({ data: { errors: [{ message: e.message }] } })
+        }
+        throw e
+      }
       if (!updated) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Card not found' }] },

@@ -1,4 +1,9 @@
-import { CardStatus, CardsRepositoryInterface, DbCard } from '../../transport/database/cards/cards-repository'
+import {
+  CardStatus,
+  CardsRepositoryInterface,
+  DbCard,
+  DbCardWithChunk,
+} from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { UserLookupsRepositoryInterface } from '../../transport/database/user-lookups/user-lookups-repository'
 
@@ -6,6 +11,21 @@ export type SetCardStatusDependencies = {
   cardsRepository: CardsRepositoryInterface
   studySessionsRepository: StudySessionsRepositoryInterface
   userLookupsRepository: UserLookupsRepositoryInterface
+}
+
+// A card can be kept into Vocabulary/Practice only once it has basic flashcard
+// data. A note-only stub has none (translation/definition/target_example all
+// empty) until the user runs Generate full exploration / chat. Mirror the same
+// rule the frontend uses to disable Keep.
+export const cardHasBasicData = (card: DbCardWithChunk): boolean =>
+  Boolean(card.chunk.translation || card.chunk.definition || card.chunk.target_example)
+
+// Thrown when Keep is attempted on a data-less card. The router maps it to 409.
+export class CardKeepBlockedError extends Error {
+  constructor() {
+    super('Card has no basic data yet — generate it before keeping')
+    this.name = 'CardKeepBlockedError'
+  }
 }
 
 // Wraps cardsRepository.updateStatus with transition-aware bookkeeping on the
@@ -34,6 +54,12 @@ export const setCardStatus = async (
 
   // Re-clicking the same status is idempotent.
   if (prevStatus === status) return card
+
+  // Block keeping a data-less card (note-only stub) — it would push a blank
+  // flashcard into Vocabulary + Practice.
+  if (prevStatus !== 'kept' && status === 'kept' && !cardHasBasicData(card)) {
+    throw new CardKeepBlockedError()
+  }
 
   const updated = await deps.cardsRepository.updateStatus(cardId, status)
   if (!updated) return null
@@ -70,9 +96,15 @@ export const setCardStatusBatch = async (
     .map((id) => existingById.get(id))
     .filter((c): c is (typeof existing)[number] => c !== undefined)
 
-  const enteringKept = targets.filter((c) => c.status !== 'kept' && status === 'kept')
+  // "Keep all" must not slip data-less cards through — silently leave them
+  // pending (the per-row UI already won't offer Keep on them). When status isn't
+  // 'kept', keepBlocked is empty so nothing is filtered.
+  const keepBlocked =
+    status === 'kept' ? new Set(targets.filter((c) => !cardHasBasicData(c)).map((c) => c.id)) : new Set<string>()
+
+  const enteringKept = targets.filter((c) => c.status !== 'kept' && status === 'kept' && !keepBlocked.has(c.id))
   const leavingKept = targets.filter((c) => c.status === 'kept' && status !== 'kept')
-  const transitioning = targets.filter((c) => c.status !== status)
+  const transitioning = targets.filter((c) => c.status !== status && !keepBlocked.has(c.id))
 
   if (transitioning.length === 0) return []
 
