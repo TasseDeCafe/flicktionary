@@ -936,7 +936,6 @@ msgstr "Could not open upgrade screen."
 msgid "Could not read this page."
 msgstr "Could not read this page."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx
 msgid "Could not remove the highlight."
 msgstr "Could not remove the highlight."
@@ -1774,6 +1773,10 @@ msgstr "Generate full exploration"
 msgid "Generate Subtitles"
 msgstr "Generate Subtitles"
 
+#: apps/web/src/features/review/components/focus-view.tsx
+msgid "Generate this card's data first"
+msgstr "Generate this card's data first"
+
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Generate translations"
 msgstr "Generate translations"
@@ -2314,6 +2317,10 @@ msgstr "Native language"
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Native language and CEFR levels"
 msgstr "Native language and CEFR levels"
+
+#: apps/web/src/features/review/components/triage-row.tsx
+msgid "Needs data — open to generate"
+msgstr "Needs data — open to generate"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Neuter"
@@ -3059,7 +3066,9 @@ msgid "Remember these track choices for this site"
 msgstr "Remember these track choices for this site"
 
 #: apps/extension/common/components/MiscSettingsTab.tsx
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
 msgid "Remove"
 msgstr "Remove"
@@ -3071,11 +3080,6 @@ msgstr "Remove \"{sessionTitle}\"?"
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Remove form"
 msgstr "Remove form"
-
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
-msgid "Remove highlight"
-msgstr "Remove highlight"
 
 #: apps/web/src/features/sessions/components/session-card.tsx
 msgid "Remove session"
@@ -3190,6 +3194,11 @@ msgstr "Save to vocabulary"
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Saved"
 msgstr "Saved"
+
+#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
+msgid "Saved — click to remove highlight"
+msgstr "Saved — click to remove highlight"
 
 #: packages/ui/src/components/highlight-note-editor.tsx
 msgid "Saved to this card's chat — delete the highlight to change it."
@@ -3805,12 +3814,6 @@ msgstr "This action cannot be undone. This will permanently delete your account 
 msgid "This calibrates the difficult-words pass and the depth of explanations."
 msgstr "This calibrates the difficult-words pass and the depth of explanations."
 
-#: apps/web/src/features/review/components/focus-view.tsx
-msgid "This card looks incomplete. Re-process the session to populate its basic "
-"data, then come back to enrich it."
-msgstr "This card looks incomplete. Re-process the session to populate its "
-"basic data, then come back to enrich it."
-
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/review/components/per-form-card-editor.tsx
 msgid "This form needs data before you can study it."
@@ -3825,6 +3828,14 @@ msgstr "This hides the session from your list. Your kept vocabulary stays in "
 "your collection. The source text is retained so you can trace your kept "
 "words back to where you learned them. To erase everything, delete your "
 "account."
+
+#: apps/web/src/features/review/components/focus-view.tsx
+msgid "This is a note-only card with no flashcard data yet. Click Generate full "
+"exploration to fill its translation, definition, and examples — then you "
+"can keep it."
+msgstr "This is a note-only card with no flashcard data yet. Click Generate "
+"full exploration to fill its translation, definition, and examples — "
+"then you can keep it."
 
 #: apps/native/src/features/premium-demo/components/premium-demo-view.tsx
 msgid "This screen is only accessible to subscribed users. You can showcase "
