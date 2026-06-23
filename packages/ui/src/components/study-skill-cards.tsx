@@ -135,7 +135,12 @@ const SkillCard = ({ card }: { card: StudySkillCardItem }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side='top' sideOffset={6} className='max-w-44'>
+      {/* Max z-index: in the extension overlay the tooltip and the gloss popover
+          are sibling portals in the same container, and the popover sits at the
+          32-bit max (POPOVER_CONTENT_CLASS) to beat the host page. Match it so
+          the tooltip — appended later, on hover — paints above the popover
+          instead of under it. Harmless on web (tooltips belong on top anyway). */}
+      <TooltipContent side='top' sideOffset={6} className='z-[2147483647] max-w-44'>
         {tooltip}
       </TooltipContent>
     </Tooltip>
