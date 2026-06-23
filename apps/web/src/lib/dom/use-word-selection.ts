@@ -114,7 +114,11 @@ export const useWordSelection = ({
   onSelect,
   enableEdgeAutoScroll,
   enabled = true,
-}: UseWordSelectionParams): { ref: ContainerRef; clearPaint: () => void } => {
+}: UseWordSelectionParams): {
+  ref: ContainerRef
+  clearPaint: () => void
+  paintOffsetRange: (ownerKey: string, startOffset: number, endOffset: number) => boolean
+} => {
   // The container node, tracked as state via a callback ref so the listener
   // effect re-binds when the node mounts, unmounts, or is replaced.
   const [container, setContainer] = useState<HTMLElement | null>(null)
@@ -131,6 +135,38 @@ export const useWordSelection = ({
   const clearPaint = useCallback(() => {
     if (container) clearPaintIn(container)
   }, [container])
+
+  // Imperatively paint an arbitrary word span addressed by owner + char offsets,
+  // for selections set programmatically rather than by the gesture — e.g.
+  // adopting an LLM ghost suggestion expands the paint from the single tapped
+  // word to the full suggested span. Single owner (a ghost lives in one segment).
+  // Sweeps every piece between the first and last word fully inside the range, so
+  // the wash is continuous across the spaces, matching the gesture's paint.
+  const paintOffsetRange = useCallback(
+    (ownerKey: string, startOffset: number, endOffset: number): boolean => {
+      if (!container) return false
+      const pieces = Array.from(container.querySelectorAll<HTMLElement>('[data-word-piece]'))
+      let lo = -1
+      let hi = -1
+      pieces.forEach((piece, i) => {
+        if (piece.closest('[data-word-owner]')?.getAttribute('data-word-owner') !== ownerKey) return
+        const ws = piece.getAttribute('data-word-start')
+        const we = piece.getAttribute('data-word-end')
+        if (ws == null || we == null) return // non-word piece (whitespace / punctuation)
+        if (Number(ws) >= startOffset && Number(we) <= endOffset) {
+          if (lo < 0) lo = i
+          hi = i
+        }
+      })
+      if (lo < 0) return false
+      clearPaintIn(container)
+      for (let i = lo; i <= hi; i++) pieces[i]!.setAttribute('data-word-selected', 'true')
+      pieces[lo]!.setAttribute('data-word-selected-edge', lo === hi ? 'both' : 'start')
+      if (hi > lo) pieces[hi]!.setAttribute('data-word-selected-edge', 'end')
+      return true
+    },
+    [container]
+  )
 
   useEffect(() => {
     if (!container || !enabled) return
@@ -392,5 +428,5 @@ export const useWordSelection = ({
     }
   }, [container, enabled])
 
-  return { ref, clearPaint }
+  return { ref, clearPaint, paintOffsetRange }
 }

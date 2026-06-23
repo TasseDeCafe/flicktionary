@@ -619,6 +619,9 @@ export const SessionGlossSheet = ({
       onExpandedChange={setSheetExpanded}
       modal={false}
       closeOnScroll
+      // A tap on a reader word / highlight swaps the open sheet's content in
+      // place instead of dismissing + reopening it (no flash).
+      ignoreOutsidePointerDownSelector='[data-word-start],[data-highlight-id]'
     >
       <FloatingSheetContent visualScrollAffordance desktopWidthClassName='w-88'>
         <FloatingSheetHeader>

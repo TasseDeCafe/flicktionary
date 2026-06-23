@@ -22,6 +22,11 @@ interface FloatingSheetContextValue {
   // The element / rect the trigger lives at. Desktop uses it for popover
   // anchoring; mobile drawers stay docked to the bottom.
   anchor: FloatingSheetAnchor
+  // CSS selector for outside-pointerdown targets that should NOT dismiss the
+  // sheet (the consumer updates the open sheet in place instead). The reader
+  // passes its word / highlight spans so tapping a new word swaps the sheet's
+  // content without a close/reopen flash.
+  ignoreOutsidePointerDownSelector?: string
 }
 
 const FloatingSheetContext = React.createContext<FloatingSheetContextValue | null>(null)
@@ -45,6 +50,7 @@ interface FloatingSheetProps {
   closeOnScroll?: boolean
   portalContainer?: HTMLElement | null
   desktopOnly?: boolean
+  ignoreOutsidePointerDownSelector?: string
   children: React.ReactNode
 }
 
@@ -59,6 +65,7 @@ export const FloatingSheet = ({
   closeOnScroll = false,
   portalContainer = null,
   desktopOnly = false,
+  ignoreOutsidePointerDownSelector,
   children,
 }: FloatingSheetProps) => {
   const responsiveIsMobile = useIsMobile()
@@ -115,6 +122,14 @@ export const FloatingSheet = ({
       const content = contentRef.current
       if (!content) return
       if (event.target instanceof Node && content.contains(event.target)) return
+      // Taps on the consumer's "persistent" targets (the reader's word /
+      // highlight spans) update the open sheet in place instead of dismissing it.
+      if (
+        ignoreOutsidePointerDownSelector &&
+        event.target instanceof Element &&
+        event.target.closest(ignoreOutsidePointerDownSelector)
+      )
+        return
       onOpenChange(false)
     }
     document.addEventListener('pointerdown', handleOutsideStart, { capture: true })
@@ -123,7 +138,7 @@ export const FloatingSheet = ({
       document.removeEventListener('pointerdown', handleOutsideStart, { capture: true })
       document.removeEventListener('touchstart', handleOutsideStart, { capture: true })
     }
-  }, [open, isMobile, modal, onOpenChange])
+  }, [open, isMobile, modal, onOpenChange, ignoreOutsidePointerDownSelector])
 
   if (isMobile === undefined) return null
 
@@ -138,6 +153,7 @@ export const FloatingSheet = ({
     modal,
     portalContainer,
     anchor,
+    ignoreOutsidePointerDownSelector,
   }
 
   // Both mobile variants render through FloatingSheetContent: the modal one
@@ -485,13 +501,22 @@ const DesktopAnchor = ({ anchor }: { anchor: FloatingSheetAnchor }) => {
 }
 
 // Radix dismissal filter shared by the desktop popover and the modal mobile
-// dialog: a right-button pointerdown outside is never a dismiss intent (the
-// readers bind right-click as the save/remove toggle and expect the open sheet
-// to survive and morph), so cancel Radix's close for it.
-const ignoreRightClickOutside = (event: { detail: { originalEvent: Event }; preventDefault: () => void }) => {
-  const original = event.detail.originalEvent
-  if (original instanceof PointerEvent && original.button === 2) event.preventDefault()
-}
+// dialog. Cancels Radix's close for two cases: a right-button pointerdown
+// outside (readers bind right-click as the save/remove toggle and expect the
+// open sheet to survive and morph), and a pointerdown on a consumer-declared
+// "persistent" target (the reader's word / highlight spans, which update the
+// open sheet in place instead of dismissing it).
+const makeIgnoreOutsidePointerDown =
+  (ignoreSelector?: string) => (event: { detail: { originalEvent: Event }; preventDefault: () => void }) => {
+    const original = event.detail.originalEvent
+    if (original instanceof PointerEvent && original.button === 2) {
+      event.preventDefault()
+      return
+    }
+    if (ignoreSelector && original.target instanceof Element && original.target.closest(ignoreSelector)) {
+      event.preventDefault()
+    }
+  }
 
 type ScrollAffordanceMetrics = {
   overflowing: boolean
@@ -658,8 +683,22 @@ export const FloatingSheetContent = ({
   style,
   ...props
 }: FloatingSheetContentProps) => {
-  const { open, isMobile, expandable, expanded, setExpanded, contentRef, modal, portalContainer, closeSheet } =
-    useFloatingSheetContext()
+  const {
+    open,
+    isMobile,
+    expandable,
+    expanded,
+    setExpanded,
+    contentRef,
+    modal,
+    portalContainer,
+    closeSheet,
+    ignoreOutsidePointerDownSelector,
+  } = useFloatingSheetContext()
+  const ignoreOutsidePointerDown = React.useMemo(
+    () => makeIgnoreOutsidePointerDown(ignoreOutsidePointerDownSelector),
+    [ignoreOutsidePointerDownSelector]
+  )
   const mobileScrollAreaRef = React.useRef<HTMLDivElement | null>(null)
   const rendered = useBottomSheetMotion(open, isMobile, contentRef)
   const dragHandleProps = useSheetDragGesture(contentRef, mobileScrollAreaRef, closeSheet, {
@@ -781,7 +820,7 @@ export const FloatingSheetContent = ({
             // we opt out of Radix's <Description> requirement via the
             // documented `aria-describedby={undefined}` escape hatch.
             aria-describedby={undefined}
-            onPointerDownOutside={ignoreRightClickOutside}
+            onPointerDownOutside={ignoreOutsidePointerDown}
             className={contentClassName}
             style={mobileSheetStyle}
             {...props}
@@ -807,7 +846,7 @@ export const FloatingSheetContent = ({
         align='start'
         sideOffset={6}
         collisionPadding={12}
-        onPointerDownOutside={ignoreRightClickOutside}
+        onPointerDownOutside={ignoreOutsidePointerDown}
         className={cn(
           'bg-popover text-popover-foreground z-50 origin-(--radix-popover-content-transform-origin) overflow-hidden rounded-md border shadow-xl outline-hidden',
           desktopWidthClassName,
