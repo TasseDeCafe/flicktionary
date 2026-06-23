@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
 import { Check, PencilLine, Save, Trash2 } from 'lucide-react'
@@ -52,9 +52,10 @@ interface SessionGlossSheetProps {
   open: boolean
   sessionId: string
   targetLanguage: string
-  // Provide exactly one when `open=true`. `selection` is a fresh mouseup/touchend
-  // result (the sheet creates the highlight). `existingHighlight` is a click on
-  // an already-saved highlight span (the sheet reads cached metadata).
+  // `selection` is the span the sheet refers to. For a fresh mouseup/touchend it
+  // starts in preview mode; for a click on an already-saved highlight,
+  // `existingHighlight` is also set so the sheet opens in saved mode while still
+  // being able to morph back to preview after Remove.
   selection: SelectionResult | null
   existingHighlight: ExistingHighlightInput | null
   // Set (for a fresh selection only) when the selection overlaps a ghost candidate.
@@ -108,6 +109,9 @@ const findCachedHighlight = (
   )
 }
 
+const selectionIdentity = (selection: SelectionResult): string =>
+  `${selection.startSegmentId}:${selection.endSegmentId}:${selection.startOffset}:${selection.endOffset}:${selection.selectionText}`
+
 export const SessionGlossSheet = ({
   open,
   sessionId,
@@ -139,6 +143,7 @@ export const SessionGlossSheet = ({
   const [note, setNote] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [expanded, setExpanded] = useState(false)
+  const [locallyRemovedHighlightId, setLocallyRemovedHighlightId] = useState<string | null>(null)
   // True the instant a note/preset Save lands, so the editor locks without
   // waiting for the listBySession refetch to surface the committed note. Reset on
   // every (re)open / selection change.
@@ -150,6 +155,7 @@ export const SessionGlossSheet = ({
   // The "Study options" draft. Untouched → no studyIntent on Save (the backend
   // keep-time default applies); touched → the FULL SET of checked skills.
   const [studyDraft, setStudyDraft] = useState<StudyIntentDraft>(defaultStudyIntentDraft)
+  const preservedPreviewGlossRef = useRef<{ selectionKey: string; state: GlossViewState } | null>(null)
 
   // The saved highlight's live row, used to drive the always-visible study
   // targets: `studyIntent` (pre-enrich) and `chunkId` (post-enrich). We poll
@@ -168,11 +174,18 @@ export const SessionGlossSheet = ({
     })
   )
   const currentHighlight = highlightId ? (sessionHighlights?.find((h) => h.id === highlightId) ?? null) : null
+  const activeExistingHighlight = existingHighlight?.id === locallyRemovedHighlightId ? null : existingHighlight
+
+  useEffect(() => {
+    if (open) return
+    setLocallyRemovedHighlightId(null)
+    preservedPreviewGlossRef.current = null
+  }, [open])
 
   // Preview mode = a fresh, unsaved selection. The gloss is a free, ephemeral
   // lookup; nothing is persisted until the user clicks Save / Save note. Saved
   // mode (an existing highlight or a just-saved selection) keeps Remove/note.
-  const isPreview = !!selection && !existingHighlight && !highlightId
+  const isPreview = !!selection && !activeExistingHighlight && !highlightId
 
   useLayoutEffect(() => {
     if (!open) return
@@ -186,14 +199,14 @@ export const SessionGlossSheet = ({
     // exact-form toggle is re-armed — its referent (the surface) just changed.
     setStudyDraft((prev) => (pendingGhostId ? { ...prev, exactForm: false } : defaultStudyIntentDraft))
 
-    if (existingHighlight) {
-      setHighlightId(existingHighlight.id)
-      setTitleText(existingHighlight.selectionText)
-      setNote(existingHighlight.note ?? '')
-      setTags(existingHighlight.presetTags)
+    if (activeExistingHighlight) {
+      setHighlightId(activeExistingHighlight.id)
+      setTitleText(activeExistingHighlight.selectionText)
+      setNote(activeExistingHighlight.note ?? '')
+      setTags(activeExistingHighlight.presetTags)
       setGlossState(
-        existingHighlight.fastGloss
-          ? { status: 'ready', ...parseFastGloss(existingHighlight.fastGloss), ipaDisplay: null }
+        activeExistingHighlight.fastGloss
+          ? { status: 'ready', ...parseFastGloss(activeExistingHighlight.fastGloss), ipaDisplay: null }
           : { status: 'loading' }
       )
       return
@@ -204,19 +217,23 @@ export const SessionGlossSheet = ({
       setTitleText(selection.selectionText)
       setNote('')
       setTags([])
-      setGlossState({ status: 'loading' })
+      const preservedPreviewGloss =
+        locallyRemovedHighlightId && preservedPreviewGlossRef.current?.selectionKey === selectionIdentity(selection)
+          ? preservedPreviewGlossRef.current.state
+          : null
+      setGlossState(preservedPreviewGloss ?? { status: 'loading' })
     }
-  }, [open, existingHighlight, selection, pendingGhostId])
+  }, [open, activeExistingHighlight, selection, pendingGhostId, locallyRemovedHighlightId])
 
   // Seed from the existing-highlight branch.
   useEffect(() => {
-    if (!open || !existingHighlight) return
-    setHighlightId(existingHighlight.id)
-    setTitleText(existingHighlight.selectionText)
-    setNote(existingHighlight.note ?? '')
-    setTags(existingHighlight.presetTags)
+    if (!open || !activeExistingHighlight) return
+    setHighlightId(activeExistingHighlight.id)
+    setTitleText(activeExistingHighlight.selectionText)
+    setNote(activeExistingHighlight.note ?? '')
+    setTags(activeExistingHighlight.presetTags)
     setExpanded(false)
-    const cachedGloss = existingHighlight.fastGloss ? parseFastGloss(existingHighlight.fastGloss) : null
+    const cachedGloss = activeExistingHighlight.fastGloss ? parseFastGloss(activeExistingHighlight.fastGloss) : null
     if (cachedGloss) {
       setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null })
     } else {
@@ -227,7 +244,7 @@ export const SessionGlossSheet = ({
     let cancelled = false
     void (async () => {
       try {
-        const res = await fetchGloss({ sessionId, highlightId: existingHighlight.id })
+        const res = await fetchGloss({ sessionId, highlightId: activeExistingHighlight.id })
         if (cancelled) return
         setGlossState({
           status: 'ready',
@@ -243,7 +260,7 @@ export const SessionGlossSheet = ({
     return () => {
       cancelled = true
     }
-  }, [open, existingHighlight, sessionId, fetchGloss])
+  }, [open, activeExistingHighlight, sessionId, fetchGloss])
 
   // Seed from a fresh selection. Preview-first: looking is free and ephemeral.
   //  - If the selection matches an already-saved highlight → open in "saved"
@@ -251,20 +268,25 @@ export const SessionGlossSheet = ({
   //  - Otherwise → open in "preview" mode: fetch a FREE stateless gloss and
   //    create NO highlight. Persisting is the explicit Save action below.
   useEffect(() => {
-    if (!open || !selection || existingHighlight) return
+    if (!open || !selection || activeExistingHighlight) return
     let cancelled = false
     setTitleText(selection.selectionText)
     setNote('')
     setTags([])
     setExpanded(false)
-    setGlossState({ status: 'loading' })
+    const preservedPreviewGloss =
+      locallyRemovedHighlightId && preservedPreviewGlossRef.current?.selectionKey === selectionIdentity(selection)
+        ? preservedPreviewGlossRef.current.state
+        : null
+    setGlossState(preservedPreviewGloss ?? { status: 'loading' })
 
     // The dedup lookup reads synchronously from the cache, so we can settle the
     // preview-vs-saved mode (and thus `highlightId`) before any await.
     const cached = queryClient.getQueryData(orpcQuery.highlights.listBySession.key({ input: { sessionId } })) as
       | { data: CachedHighlight[] }
       | undefined
-    const match = findCachedHighlight(cached?.data, selection)
+    const cachedMatch = findCachedHighlight(cached?.data, selection)
+    const match = cachedMatch?.id === locallyRemovedHighlightId ? null : cachedMatch
     setHighlightId(match ? match.id : null)
 
     void (async () => {
@@ -320,7 +342,8 @@ export const SessionGlossSheet = ({
     selection?.startOffset,
     selection?.endOffset,
     selection?.contextLine,
-    existingHighlight,
+    activeExistingHighlight,
+    locallyRemovedHighlightId,
     sessionId,
     targetLanguage,
     fetchGloss,
@@ -420,25 +443,27 @@ export const SessionGlossSheet = ({
   // Hoisted so the lingui message uses a plain ${placeholder}, not a member access.
   const suggestedSurface = suggestedGhost?.surfaceForm ?? ''
 
-  // `morphToPreview` (the right-click toggle) keeps the sheet open after the
-  // delete and flips it back to preview mode for the same selection — the
-  // toggle's visible counterpart to Save morphing preview → saved. Only
-  // possible when the sheet holds a live SelectionResult (a fresh selection
-  // that matched a saved row); a sheet opened from a highlight click has no
-  // selection to preview, so it closes as before.
+  // `morphToPreview` keeps the sheet open after the delete and flips it back to
+  // preview mode for the same selection — the visible counterpart to Save
+  // morphing preview → saved. It needs a SelectionResult so the preview can be
+  // saved again; callers without one still close after deletion.
   const handleRemove = useCallback(
     (opts?: { morphToPreview?: boolean }) => {
       // isDeleting guards the right-click shortcut — the button is disabled,
       // but a repeated right-click would otherwise fire a second delete (a 404).
       if (!highlightId || isDeleting) return
+      const removedId = highlightId
       deleteHighlight(
         { sessionId, highlightId },
         {
           onSuccess: () => {
-            if (opts?.morphToPreview && selection && !existingHighlight) {
+            if (opts?.morphToPreview && selection) {
               // Back to preview: same selection, nothing persisted anymore. The
               // gloss on screen stays (same text); the removed row's note/tags
               // must not leak into a future re-save.
+              setLocallyRemovedHighlightId(removedId)
+              preservedPreviewGlossRef.current =
+                glossState.status === 'ready' ? { selectionKey: selectionIdentity(selection), state: glossState } : null
               setHighlightId(null)
               setNote('')
               setTags([])
@@ -451,7 +476,7 @@ export const SessionGlossSheet = ({
         }
       )
     },
-    [highlightId, isDeleting, deleteHighlight, sessionId, selection, existingHighlight, onClose]
+    [highlightId, isDeleting, deleteHighlight, sessionId, selection, glossState, onClose]
   )
 
   // Save note: the note-only commit lane. In preview (nothing saved yet) it
@@ -528,8 +553,8 @@ export const SessionGlossSheet = ({
   const committedHasNote =
     (!!currentHighlight &&
       ((currentHighlight.note?.trim().length ?? 0) > 0 || currentHighlight.presetTags.length > 0)) ||
-    (!!existingHighlight &&
-      ((existingHighlight.note?.trim().length ?? 0) > 0 || existingHighlight.presetTags.length > 0))
+    (!!activeExistingHighlight &&
+      ((activeExistingHighlight.note?.trim().length ?? 0) > 0 || activeExistingHighlight.presetTags.length > 0))
   const noteLocked = !!highlightId && (localNoteSaved || committedHasNote)
 
   // Right-click while the sheet is open is the toggle power-shortcut that
