@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Check } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip'
 
 // One pressable skill card. Pure data — the caller owns whether it maps to a
 // draft flag (popover) or a live facet (focus view / saved sheet).
@@ -43,10 +44,12 @@ type StudySkillCardsProps = {
 // border / background), so the same markup reads correct on the web's light
 // theme AND inverts cleanly on the extension's hardcoded-dark video overlay.
 //
-// The hover tooltip is a portal-free absolute child (NOT Radix Tooltip), so it
-// stays inside the extension's shadow-DOM overlay. It opens only after pointer
-// movement over a card; a newly mounted popover can appear under the stationary
-// cursor, and CSS hover would otherwise show a tooltip immediately.
+// Hints use the shared Radix Tooltip (portals into the extension's in-shadow
+// popover container, so it works on the video overlay too). `onFocusCapture` +
+// stopPropagation on the grid swallows the focus event the popover fires when it
+// autofocuses a card on mount, so the tooltip never self-opens just because the
+// popover appeared (radix-ui/primitives#2248). Keyboard focus still works; the
+// tooltip simply opens on hover.
 export const StudySkillCards = ({
   cards,
   formScope,
@@ -55,89 +58,15 @@ export const StudySkillCards = ({
   formScopeDisabled,
   className,
 }: StudySkillCardsProps) => {
-  const [tooltipKey, setTooltipKey] = useState<string | null>(null)
-
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <div className='grid grid-cols-3 gap-2'>
-        {cards.map((card, index) => {
-          const interactive = !card.disabled && card.available !== false
-          const tooltip = card.available === false ? (card.unavailableHint ?? card.tooltip) : card.tooltip
-          // Anchor the tooltip to the card's near edge instead of centering it,
-          // so it never overflows the popover (whose overflow-y-auto would clip
-          // it). First card → align left; last → align right; middle → centered.
-          const tooltipAlign =
-            index === 0 ? 'left-0' : index === cards.length - 1 ? 'right-0' : 'left-1/2 -translate-x-1/2'
-          return (
-            <button
-              key={card.key}
-              type='button'
-              role='checkbox'
-              aria-checked={card.selected}
-              aria-label={card.label}
-              disabled={!interactive}
-              onClick={() => {
-                if (interactive) card.onToggle()
-              }}
-              onPointerMove={() => setTooltipKey(card.key)}
-              onPointerLeave={() => {
-                setTooltipKey((current) => (current === card.key ? null : current))
-              }}
-              onBlur={() => {
-                setTooltipKey((current) => (current === card.key ? null : current))
-              }}
-              className={cn(
-                'group/skill relative flex min-h-20 flex-col justify-between rounded-xl border-[1.5px] px-2 py-3 text-center transition-colors',
-                'focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none',
-                card.available === false
-                  ? 'border-border bg-background text-muted-foreground/60 cursor-not-allowed'
-                  : card.selected
-                    ? 'border-foreground bg-muted text-foreground ring-foreground ring-1'
-                    : 'border-border bg-background text-foreground hover:border-foreground/40 hover:bg-accent',
-                card.disabled && card.available !== false && 'cursor-not-allowed'
-              )}
-            >
-              {/* Top-right selection badge: a filled check when selected, an
-                  empty ring when not — so every card reads as a multi-select
-                  toggle. Hidden only when the skill is unavailable. */}
-              {card.available !== false &&
-                (card.selected ? (
-                  <span className='bg-foreground text-background absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full'>
-                    <Check className='h-3 w-3' strokeWidth={3} />
-                  </span>
-                ) : (
-                  <span
-                    aria-hidden
-                    className='border-muted-foreground/30 absolute top-2 right-2 h-5 w-5 rounded-full border-1'
-                  />
-                ))}
-              {/* Icon pinned top-left (nudged in slightly); label sits at the
-                  bottom (justify-between). */}
-              <span
-                className={cn(
-                  'ml-1 flex h-5 w-5 items-center justify-center',
-                  card.available === false ? '' : card.selected ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
-                {card.icon}
-              </span>
-              <span className='text-[11px] leading-tight font-semibold'>{card.label}</span>
-
-              {tooltip && tooltipKey === card.key && (
-                <span
-                  role='tooltip'
-                  className={cn(
-                    'bg-foreground text-background pointer-events-none absolute bottom-full z-50 mb-1.5 w-40 rounded-md px-2 py-1 text-center text-xs leading-snug font-normal shadow-md',
-                    tooltipAlign
-                  )}
-                >
-                  {tooltip}
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+      <TooltipProvider delayDuration={300}>
+        <div className='grid grid-cols-3 gap-2' onFocusCapture={(e) => e.stopPropagation()}>
+          {cards.map((card) => (
+            <SkillCard key={card.key} card={card} />
+          ))}
+        </div>
+      </TooltipProvider>
 
       <FormScopeControl
         formScope={formScope}
@@ -146,6 +75,70 @@ export const StudySkillCards = ({
         disabled={formScopeDisabled}
       />
     </div>
+  )
+}
+
+const SkillCard = ({ card }: { card: StudySkillCardItem }) => {
+  const interactive = !card.disabled && card.available !== false
+  const tooltip = card.available === false ? (card.unavailableHint ?? card.tooltip) : card.tooltip
+
+  const button = (
+    <button
+      type='button'
+      role='checkbox'
+      aria-checked={card.selected}
+      aria-label={card.label}
+      disabled={!interactive}
+      onClick={() => {
+        if (interactive) card.onToggle()
+      }}
+      className={cn(
+        'group/skill relative flex min-h-20 flex-col justify-between rounded-xl border-[1.5px] px-2 py-3 text-center transition-colors',
+        'focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none',
+        card.available === false
+          ? 'border-border bg-background text-muted-foreground/60 cursor-not-allowed'
+          : card.selected
+            ? 'border-foreground bg-muted text-foreground ring-foreground ring-1'
+            : 'border-border bg-background text-foreground hover:border-foreground/40 hover:bg-accent',
+        card.disabled && card.available !== false && 'cursor-not-allowed'
+      )}
+    >
+      {/* Top-right selection badge: a filled check when selected, an empty ring
+          when not — so every card reads as a multi-select toggle. Hidden only
+          when the skill is unavailable. */}
+      {card.available !== false &&
+        (card.selected ? (
+          <span className='bg-foreground text-background absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full'>
+            <Check className='h-3 w-3' strokeWidth={3} />
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className='border-muted-foreground/30 absolute top-2 right-2 h-5 w-5 rounded-full border-1'
+          />
+        ))}
+      {/* Icon pinned top-left (nudged in slightly); label sits at the bottom
+          (justify-between). */}
+      <span
+        className={cn(
+          'ml-1 flex h-5 w-5 items-center justify-center',
+          card.available === false ? '' : card.selected ? 'text-foreground' : 'text-muted-foreground'
+        )}
+      >
+        {card.icon}
+      </span>
+      <span className='text-[11px] leading-tight font-semibold'>{card.label}</span>
+    </button>
+  )
+
+  if (!tooltip) return button
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side='top' sideOffset={6} className='max-w-44'>
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

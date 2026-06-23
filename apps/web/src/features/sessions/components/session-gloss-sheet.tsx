@@ -447,8 +447,9 @@ export const SessionGlossSheet = ({
   }
 
   // Hoisted so the lingui message uses a plain ${placeholder}, not a member access.
-  const suggestedSurface = suggestedGhost?.surfaceForm ?? ''
-  const useSuggestedLabel = t`Use suggested term: ${suggestedSurface}`
+  // The suggested surface form can be a long phrase, so it lives in the sheet's
+  // morph (the saved span) rather than the tooltip label, which stays short.
+  const useSuggestedLabel = t`Use suggested term`
 
   // `morphToPreview` keeps the sheet open after the delete and flips it back to
   // preview mode for the same selection — the visible counterpart to Save
@@ -661,6 +662,10 @@ export const SessionGlossSheet = ({
                       disabled={isSwitching}
                       aria-label={useSuggestedLabel}
                       onPointerDown={(e) => e.stopPropagation()}
+                      // Swallow the focus the popover fires when it autofocuses
+                      // this button on mount, so the tooltip doesn't self-open
+                      // (radix-ui/primitives#2248). Hover still opens it.
+                      onFocusCapture={(e) => e.stopPropagation()}
                       onClick={() => {
                         if (isPreview) onAdoptGhostPreSave(suggestedGhost)
                         else void handleUseSuggested()
@@ -669,7 +674,9 @@ export const SessionGlossSheet = ({
                       <Lightbulb className='h-4 w-4' />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side='left'>{useSuggestedLabel}</TooltipContent>
+                  <TooltipContent side='left' sideOffset={6}>
+                    {useSuggestedLabel}
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
