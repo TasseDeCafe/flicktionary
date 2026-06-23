@@ -252,24 +252,28 @@ export const SessionView = () => {
   // the two word endpoints to a SelectionResult and opens the floating gloss
   // sheet. Lifecycle is eager: the sheet itself creates the highlight row if
   // the selection doesn't match an existing one.
-  const { ref: wordSelectionRef, clearPaint } = useWordSelection({
+  const {
+    ref: wordSelectionRef,
+    clearPaint,
+    paintOffsetRange,
+  } = useWordSelection({
     // Let taps on existing highlights fall through to their onClick handler.
     isBlockedTarget: (el) => el.closest('[data-highlight-id]') != null,
     enableEdgeAutoScroll: true,
     onSelect: ({ anchor: anchorWord, end: endWord, rect }) => {
       lastSelectionAtRef.current = Date.now()
-      // Bail paths must clear the paint themselves — it persists past
-      // pointerup (it shows what the open sheet refers to), so a selection
-      // that doesn't open a sheet would otherwise strand it.
-      if (glossOpen) {
-        clearPaint()
-        return
-      }
       const normalized = normalizeCrossSegmentSelection(anchorWord, endWord, visibleSegments)
+      // Bail paths must clear the paint themselves — it persists past pointerup
+      // (it shows what the open sheet refers to), so a selection that doesn't
+      // open a sheet would otherwise strand it.
       if (!normalized || normalized.selectionText.length === 0) {
         clearPaint()
         return
       }
+      // A new selection while the sheet is already open swaps its content in
+      // place rather than closing + reopening (the gloss sheet's
+      // ignoreOutsidePointerDownSelector keeps the tap from dismissing it, and
+      // the gesture already repainted the new word).
       const sel: SelectionResult = { ...normalized, rect }
       setExistingHighlightId(null)
       setPendingSelection(sel)
@@ -342,6 +346,10 @@ export const SessionView = () => {
     if (isOptimisticHighlightId(target.dataset.highlightId)) return
     const match = highlights?.find((h) => h.id === target.dataset.highlightId)
     if (!match) return
+    // Switching to a saved highlight while the sheet is open: drop any lingering
+    // blue selection paint from the previous preview word (the highlight shows
+    // its own yellow wash; the gesture didn't run to clear it here).
+    clearPaint()
     const startSegment = visibleSegments.find((s) => s.id === match.startSegmentId)
     setPendingSelection({
       startSegmentId: match.startSegmentId,
@@ -397,6 +405,9 @@ export const SessionView = () => {
       contextLine: segment.text,
       rect: pendingSelection.rect,
     })
+    // Expand the blue selection paint from the single tapped word to the full
+    // adopted span so the text matches what the sheet now refers to.
+    paintOffsetRange(ghost.segmentId, ghost.charStart, ghost.charEnd)
   }
 
   const closeToSessions = () => {

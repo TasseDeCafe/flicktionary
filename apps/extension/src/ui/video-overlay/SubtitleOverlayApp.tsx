@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { I18nProvider } from '@lingui/react'
+import { PortalContainerContext } from '@flicktionary/ui/components/portal'
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { useStore } from 'zustand'
 import { msg } from '@lingui/core/macro'
@@ -186,7 +187,14 @@ export function SubtitleOverlayApp(props: SubtitleOverlayAppProps) {
   return (
     <I18nProvider i18n={i18n}>
       <QueryClientProvider client={glossQueryClient}>
-        <OverlayBody {...props} />
+        {/* Portal target for any portalled chrome rendered inside the gloss
+            popovers (the shared Radix Tooltip on the study-skill cards). Without
+            it, usePortalContainer() is null and the tooltip portals to
+            document.body — outside the shadow tree, so the overlay stylesheet
+            never reaches it (an unstyled, transparent tooltip). */}
+        <PortalContainerContext.Provider value={props.popoverContainer}>
+          <OverlayBody {...props} />
+        </PortalContainerContext.Provider>
       </QueryClientProvider>
     </I18nProvider>
   )

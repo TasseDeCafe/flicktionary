@@ -824,6 +824,12 @@ Hard-won; check these before "fixing" related symptoms.
 - MUI is gone, but the lesson generalizes: anything portalled must portal into
   the shadow root, and rem-based sizing resolves against the host page's
   `<html>` (10 px on YouTube) — avoid bare-rem values in shared components.
+  Concretely: `SubtitleOverlayApp` must provide `PortalContainerContext` =
+  `popoverContainer`, or shared components that portal via context (the Radix
+  tooltip on `StudySkillCards`) fall back to `document.body` and render
+  unstyled/transparent. `popoverContainer` is also marked `dark` + max z-index so
+  portalled chrome — a sibling of the hardcoded-dark popover content — resolves
+  the dark token scope and stacks above the popover, not under it.
 - Don't trust "mobile" in inherited names — check the actual gating before
   removing anything.
 - Settings schema is strict both ways (see "Settings" above).

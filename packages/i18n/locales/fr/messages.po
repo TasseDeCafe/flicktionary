@@ -3742,10 +3742,6 @@ msgstr "Passer en production"
 msgid "Switch to recognition"
 msgstr "Passer en reconnaissance"
 
-#: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
-msgid "Switching…"
-msgstr "Basculement…"
-
 #: packages/ui/src/components/preset-tags.tsx
 msgid "Synonyms"
 msgstr "Synonymes"
@@ -4168,8 +4164,8 @@ msgid "Use a subtitle file you already have."
 msgstr "Utilisez un fichier de sous-titres que vous possédez déjà."
 
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
-msgid "Use suggested"
-msgstr "Utiliser la suggestion"
+msgid "Use suggested term"
+msgstr "Utiliser le terme suggéré"
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx
 msgid "Use these options to test Sentry error reporting in your environment."
