@@ -155,4 +155,22 @@ describe('buildBasicDataGrammarPatch — grounded ipa strip', () => {
   it('returns null for a user-edited grammar bag', () => {
     expect(buildBasicDataGrammarPatch(grammar, false, true)).toBeNull()
   })
+
+  it('strips the German grounded keys once the row is grounded but keeps LLM-owned notable_forms', () => {
+    const germanGrammar = {
+      pos: 'noun',
+      gender: 'm',
+      plural: 'Namen',
+      genitive: 'Namens',
+      is_weak_noun: true,
+      is_separable: true,
+      auxiliary: 'sein',
+      notable_forms: [{ label: 'pret', form: 'fuhr' }],
+      notes: 'keep me',
+    }
+    expect(buildBasicDataGrammarPatch(germanGrammar, true, false)).toEqual({
+      notable_forms: [{ label: 'pret', form: 'fuhr' }],
+      notes: 'keep me',
+    })
+  })
 })

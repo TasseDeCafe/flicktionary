@@ -11,6 +11,11 @@ export type GrammarFieldKey =
   | 'animacy'
   | 'is_indeclinable'
   | 'is_reflexive'
+  | 'plural'
+  | 'genitive'
+  | 'is_weak_noun'
+  | 'is_separable'
+  | 'auxiliary'
   | 'notable_forms'
   | 'notes'
   | 'ipa'
@@ -81,6 +86,30 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
     fields: ['pos', 'gender', 'is_reflexive', 'government', 'number_only', 'notable_forms', 'notes'],
     hints: { government: { placeholder: 'e.g. + de, + a, + em' } },
   },
+  de: {
+    fields: [
+      'pos',
+      'display_form',
+      'ipa',
+      'gender',
+      'plural',
+      'genitive',
+      'is_weak_noun',
+      'is_separable',
+      'auxiliary',
+      'is_reflexive',
+      'number_only',
+      'government',
+      'notable_forms',
+      'notes',
+    ],
+    hints: {
+      government: { placeholder: 'e.g. + dat, + akk, auf + akk' },
+      plural: { placeholder: 'e.g. Häuser' },
+      genitive: { placeholder: 'e.g. Namens' },
+      ipa: { label: 'IPA' },
+    },
+  },
 }
 
 // Languages for which we have a kaikki dump loaded into wiktionary_entries /
@@ -90,7 +119,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
 // gloss/lookup sheets). Add languages here only after running
 // `pnpm load:kaikki` for them and validating the extraction shape
 // (head_templates structure varies by language).
-export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en'])
+export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en', 'de'])
 
 export const getLanguageGrammarConfig = (code: string | undefined | null): LanguageGrammarConfig => {
   if (!code) return DEFAULT_GRAMMAR_CONFIG
@@ -99,7 +128,7 @@ export const getLanguageGrammarConfig = (code: string | undefined | null): Langu
 
 // Fields that are meaningful for any part of speech (when the language lists
 // them at all). The POS-specific additions below layer on top of this set.
-const UNIVERSAL_FIELDS: ReadonlyArray<GrammarFieldKey> = [
+export const UNIVERSAL_GRAMMAR_FIELDS: ReadonlyArray<GrammarFieldKey> = [
   'pos',
   'display_form',
   'ipa',
@@ -116,8 +145,8 @@ const UNIVERSAL_FIELDS: ReadonlyArray<GrammarFieldKey> = [
 // through to "no narrowing" — those categories are catch-alls where we can't
 // safely hide fields the user might want.
 const POS_SPECIFIC_FIELDS: Record<string, ReadonlyArray<GrammarFieldKey>> = {
-  noun: ['gender', 'number_only', 'animacy', 'is_indeclinable', 'government'],
-  verb: ['aspect', 'aspect_pair_headword', 'is_reflexive', 'government'],
+  noun: ['gender', 'number_only', 'animacy', 'is_indeclinable', 'government', 'plural', 'genitive', 'is_weak_noun'],
+  verb: ['aspect', 'aspect_pair_headword', 'is_reflexive', 'government', 'is_separable', 'auxiliary'],
   adjective: ['government'],
   adverb: [],
   preposition: ['government'],
@@ -140,6 +169,6 @@ export const getEffectiveGrammarFields = (
   if (!pos) return langFields
   const posSpecific = POS_SPECIFIC_FIELDS[pos]
   if (!posSpecific) return langFields
-  const allowed = new Set<GrammarFieldKey>([...UNIVERSAL_FIELDS, ...posSpecific])
+  const allowed = new Set<GrammarFieldKey>([...UNIVERSAL_GRAMMAR_FIELDS, ...posSpecific])
   return langFields.filter((f) => allowed.has(f))
 }

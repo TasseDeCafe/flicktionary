@@ -1,9 +1,13 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 import { buildMethodologySystem } from '../methodology-prompt'
+import { buildGrammarSchema } from '../grammar-tool-schema'
 import type { EnglishIpaDialect } from '../language-instructions'
 
 const TOOL_NAME = 'submit_enrichment'
+
+const GRAMMAR_OBJECT_DESCRIPTION =
+  'Typed morphology / grammar facts for this chunk. Same shape as the basic-data pass — refine or add keys based on deeper analysis with the surrounding context. Include a key only when useful for THIS chunk in THIS target language — EXCEPT `ipa`, which you include for every chunk. Per-language guidance is in the system prompt.'
 
 // Output of the enrichment pass.
 //
@@ -38,7 +42,11 @@ type EnrichmentPassArgs = {
   englishIpaDialect?: EnglishIpaDialect
 }
 
-const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean }): Anthropic.Tool => ({
+const buildTool = (args: {
+  hideTranslationFields: boolean
+  allowL1Notes: boolean
+  targetLanguage: string
+}): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
     'Submit a deep enrichment of a single chunk for the learner. Required fields are the basic columns (you may refine them based on the surrounding context). Optional fields all live inside `extras` and may be omitted individually when not relevant.',
@@ -160,61 +168,7 @@ const buildTool = (args: { hideTranslationFields: boolean; allowL1Notes: boolean
           'collocations',
         ],
       },
-      grammar: {
-        type: 'object',
-        description:
-          "Typed morphology / grammar facts for this chunk. Same shape as the basic-data pass's grammar object — refine or add keys based on deeper analysis with the surrounding context. Include keys only when useful for THIS chunk in THIS target language — EXCEPT `ipa`, which you include for every chunk. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть`), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string), `is_reflexive` (boolean), `government` (case/preposition pattern), `notable_forms` (array of {label, form}, max 3), `ipa` (transcription bag, see its description), `notes` (free-form). Per-language guidance is in the system prompt.",
-        properties: {
-          pos: {
-            type: 'string',
-            enum: [
-              'noun',
-              'verb',
-              'adjective',
-              'adverb',
-              'preposition',
-              'pronoun',
-              'particle',
-              'conjunction',
-              'numeral',
-              'phrase',
-              'idiom',
-              'other',
-            ],
-          },
-          display_form: { type: 'string' },
-          gender: { type: 'string', enum: ['m', 'f', 'n', 'c'] },
-          number_only: { type: 'string', enum: ['plurale_tantum', 'singulare_tantum'] },
-          is_indeclinable: { type: 'boolean' },
-          animacy: { type: 'string', enum: ['animate', 'inanimate'] },
-          aspect: { type: 'string', enum: ['impf', 'perf', 'biaspectual'] },
-          aspect_pair_headword: { type: 'string' },
-          is_reflexive: { type: 'boolean' },
-          government: { type: 'string' },
-          notable_forms: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                label: { type: 'string' },
-                form: { type: 'string' },
-              },
-              required: ['label', 'form'],
-            },
-          },
-          ipa: {
-            type: 'object',
-            description:
-              "IPA transcription of the HEADWORD (citation form). Include for every chunk. For English targets fill ONLY the dialect bucket the system prompt specifies (`ga` for General American, `rp` for Received Pronunciation); for every other language fill ONLY `untagged`. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/səˈliːn/'), square brackets only when giving a narrow phonetic one (e.g. '[sɐzˈdanʲɪje]'). Mark stress. If you are not confident of the transcription, omit the whole `ipa` object rather than guessing.",
-            properties: {
-              ga: { type: 'string' },
-              rp: { type: 'string' },
-              untagged: { type: 'string' },
-            },
-          },
-          notes: { type: 'string' },
-        },
-      },
+      grammar: buildGrammarSchema(args.targetLanguage, GRAMMAR_OBJECT_DESCRIPTION),
     },
     required: [
       'headword',
@@ -278,7 +232,7 @@ they apply.`
       allowL1Notes,
       englishIpaDialect,
     }),
-    tools: [buildTool({ hideTranslationFields, allowL1Notes })],
+    tools: [buildTool({ hideTranslationFields, allowL1Notes, targetLanguage })],
     tool_choice: { type: 'tool', name: TOOL_NAME },
     messages: [{ role: 'user', content: userMessage }],
   })

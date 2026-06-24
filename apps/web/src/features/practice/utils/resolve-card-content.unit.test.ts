@@ -95,4 +95,33 @@ describe('resolveCardContent', () => {
     const c = resolveCardContent(card, 'ru', 'ga')
     expect(c.translation).toBe('to take a look')
   })
+
+  it('non-German citation has no German forms sub-line', () => {
+    const c = resolveCardContent(baseLemma, 'ru', 'ga')
+    expect(c.citationForms).toBeNull()
+  })
+
+  it('German citation noun gets the articled title + a forms sub-line', () => {
+    const card: ReviewTerm = {
+      ...baseLemma,
+      headword: 'Bestandteil',
+      targetLanguage: 'de',
+      grammar: { pos: 'noun', gender: 'm', plural: 'Bestandteile', genitive: 'Bestandteils' },
+    }
+    const c = resolveCardContent(card, 'de', 'ga')
+    expect(c.displayForm).toBe('der Bestandteil')
+    expect(c.citationForms).toBe('pl -e')
+  })
+
+  it('German irregular-plural noun uses the plural article in its forms line', () => {
+    const card: ReviewTerm = {
+      ...baseLemma,
+      headword: 'Haus',
+      targetLanguage: 'de',
+      grammar: { pos: 'noun', gender: 'n', plural: 'Häuser', genitive: 'Hauses' },
+    }
+    const c = resolveCardContent(card, 'de', 'ga')
+    expect(c.displayForm).toBe('das Haus')
+    expect(c.citationForms).toBe('die Häuser')
+  })
 })

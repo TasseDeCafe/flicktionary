@@ -527,9 +527,16 @@ export const FlashcardModeView = ({ targetLanguage, pool, scope, count }: Flashc
       case 'headword': {
         const fullForm = content.displayForm
         return (
-          <span key='headword' lang={targetLanguage} className='text-2xl font-bold'>
-            {faceConfig.hideStressOnFront && !showBack ? stripStressMarks(fullForm) : fullForm}
-          </span>
+          <div key='headword' className='flex flex-col items-center gap-1'>
+            <span lang={targetLanguage} className='text-2xl font-bold'>
+              {faceConfig.hideStressOnFront && !showBack ? stripStressMarks(fullForm) : fullForm}
+            </span>
+            {content.citationForms && (
+              <span lang={targetLanguage} className='text-muted-foreground text-base'>
+                {content.citationForms}
+              </span>
+            )}
+          </div>
         )
       }
       case 'ipa':

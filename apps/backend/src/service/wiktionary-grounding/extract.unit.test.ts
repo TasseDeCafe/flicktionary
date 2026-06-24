@@ -417,3 +417,120 @@ describe('extractGrammarPatch — IPA integration', () => {
     expect(patch.ipa).toBeUndefined()
   })
 })
+
+// Fixtures shaped after real kaikki German entries (Haus, Junge, Name, fahren,
+// aufstehen).
+const nounHaus: KaikkiEntry = {
+  word: 'Haus',
+  pos: 'noun',
+  head_templates: [
+    { name: 'de-noun', args: { '1': 'n,,^er' }, expansion: 'Haus n (strong, genitive Hauses, plural Häuser, ...)' },
+  ],
+  forms: [
+    { form: 'Hauses', tags: ['genitive'] },
+    { form: 'Häuser', tags: ['plural'] },
+    { form: 'Haus', tags: ['nominative', 'singular'], source: 'declension' },
+    { form: 'Hauses', tags: ['genitive', 'singular'], source: 'declension' },
+  ],
+}
+
+const nounName: KaikkiEntry = {
+  word: 'Name',
+  pos: 'noun',
+  head_templates: [
+    { name: 'de-noun', args: { '1': 'm,ns.weak' }, expansion: 'Name m (weak, genitive Namens, plural Namen)' },
+  ],
+  forms: [
+    { form: 'Namens', tags: ['genitive'] },
+    { form: 'Namen', tags: ['plural'] },
+  ],
+}
+
+const verbFahren: KaikkiEntry = {
+  word: 'fahren',
+  pos: 'verb',
+  head_templates: [{ name: 'de-verb', args: { '1': 'fahren<fährt#fuhr,gefahren,führe.haben,sein>' } }],
+  forms: [
+    { form: 'haben', tags: ['auxiliary'] },
+    { form: 'sein', tags: ['auxiliary'] },
+    { form: 'haben or sein', source: 'conjugation', tags: ['auxiliary'] },
+  ],
+}
+
+const verbAufstehen: KaikkiEntry = {
+  word: 'aufstehen',
+  pos: 'verb',
+  head_templates: [{ name: 'de-verb', args: { '1': 'auf.stehen<stand,gestanden,stände:stünde.sein>' } }],
+  forms: [{ form: 'sein', tags: ['auxiliary'] }],
+}
+
+describe('extractGrammarPatch — German nouns', () => {
+  it('reads gender + plural + genitive for a regular noun and skips the noisy display form', () => {
+    expect(extractGrammarPatch(nounHaus, 'de')).toEqual({
+      pos: 'noun',
+      gender: 'n',
+      plural: 'Häuser',
+      genitive: 'Hauses',
+    })
+  })
+
+  it('flags a weak (n-declension) noun', () => {
+    expect(extractGrammarPatch(nounName, 'de')).toEqual({
+      pos: 'noun',
+      gender: 'm',
+      plural: 'Namen',
+      genitive: 'Namens',
+      is_weak_noun: true,
+    })
+  })
+
+  it('does NOT run German extraction when langCode is not de', () => {
+    const patch = extractGrammarPatch(nounHaus, 'en')
+    expect(patch.gender).toBeUndefined()
+    expect(patch.plural).toBeUndefined()
+  })
+})
+
+describe('extractGrammarPatch — German verbs', () => {
+  it('marks a dual-auxiliary non-separable verb', () => {
+    expect(extractGrammarPatch(verbFahren, 'de')).toEqual({ pos: 'verb', auxiliary: 'haben_or_sein' })
+  })
+
+  it('marks a separable verb with a single auxiliary', () => {
+    expect(extractGrammarPatch(verbAufstehen, 'de')).toEqual({ pos: 'verb', is_separable: true, auxiliary: 'sein' })
+  })
+})
+
+describe('extractIpaBag — German', () => {
+  it('keeps untagged and standard-tagged sounds, dropping regional ones', () => {
+    const entry: KaikkiEntry = {
+      word: 'fahren',
+      pos: 'verb',
+      sounds: [
+        { ipa: '/ˈfaːʁɛn/' },
+        { ipa: '[ˈfaːʁən]', tags: ['standard'] },
+        { ipa: '[ˈfaːn]', tags: ['Austria', 'Southern-Germany', 'Switzerland'] },
+      ],
+    }
+    // Phonemic (slashes) is preferred over the standard phonetic candidate.
+    expect(extractIpaBag(entry, 'de')).toEqual({ untagged: '/ˈfaːʁɛn/' })
+  })
+
+  it('keeps a standard-only sound when there is no untagged one', () => {
+    const entry: KaikkiEntry = {
+      word: 'x',
+      pos: 'noun',
+      sounds: [{ ipa: '/ˈʃtandard/', tags: ['standard'] }],
+    }
+    expect(extractIpaBag(entry, 'de')).toEqual({ untagged: '/ˈʃtandard/' })
+  })
+
+  it('drops a purely regional sound', () => {
+    const entry: KaikkiEntry = {
+      word: 'x',
+      pos: 'noun',
+      sounds: [{ ipa: '[ˈfaːn]', tags: ['Austria'] }],
+    }
+    expect(extractIpaBag(entry, 'de')).toEqual({})
+  })
+})

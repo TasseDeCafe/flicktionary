@@ -63,6 +63,9 @@ export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
   const numberOnly = asString(g.number_only)
   const isIndeclinable = isTruthyBool(g.is_indeclinable)
   const isReflexive = isTruthyBool(g.is_reflexive)
+  const isWeakNoun = isTruthyBool(g.is_weak_noun)
+  const isSeparable = isTruthyBool(g.is_separable)
+  const auxiliary = asString(g.auxiliary)
 
   // Narrow by language allowlist AND by POS — stray data on the wrong POS
   // (e.g. an aspect value accidentally left on an adjective by the LLM)
@@ -132,6 +135,29 @@ export const GrammarChips = ({ grammar, targetLanguage }: Props) => {
     chips.push(
       <Badge key='refl' variant='outline'>
         refl.
+      </Badge>
+    )
+  }
+  if (isWeakNoun && allowed.includes('is_weak_noun')) {
+    chips.push(
+      <Badge key='weak' variant='outline' aria-label={t`Weak noun (n-declension)`}>
+        weak
+      </Badge>
+    )
+  }
+  if (isSeparable && allowed.includes('is_separable')) {
+    chips.push(
+      <Badge key='sep' variant='outline' aria-label={t`Separable verb`}>
+        sep.
+      </Badge>
+    )
+  }
+  // 'haben' is the default auxiliary and not worth a chip; surface only the
+  // notable 'sein' and dual 'haben/sein'.
+  if (auxiliary && auxiliary !== 'haben' && allowed.includes('auxiliary')) {
+    chips.push(
+      <Badge key='aux' variant='outline' aria-label={t`Perfect auxiliary`}>
+        {auxiliary === 'haben_or_sein' ? 'aux haben/sein' : 'aux sein'}
       </Badge>
     )
   }

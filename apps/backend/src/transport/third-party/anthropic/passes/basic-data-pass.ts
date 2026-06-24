@@ -1,9 +1,13 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
 import { buildMethodologySystem } from '../methodology-prompt'
+import { buildGrammarSchema } from '../grammar-tool-schema'
 import type { EnglishIpaDialect } from '../language-instructions'
 
 const TOOL_NAME = 'submit_basic_data'
+
+const GRAMMAR_OBJECT_DESCRIPTION =
+  'Optional sparse bag of typed morphology / grammar facts for this chunk. Fill a key only when it is useful for THIS chunk in THIS target language; omit the whole object when nothing applies — EXCEPT `ipa`, which you include for every chunk. The per-target-language instructions in the system prompt say WHEN to fill which keys.'
 
 type SegmentInput = {
   id: string
@@ -58,7 +62,7 @@ export type BasicDataChunk = {
   reasoning?: string
 }
 
-const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
+const buildTool = (hideTranslationFields: boolean, targetLanguage: string): Anthropic.Tool => ({
   name: TOOL_NAME,
   description:
     'Submit basic card data for the user-provided highlights. You must produce exactly one row per highlight.',
@@ -132,61 +136,7 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
               description:
                 "Always false for user highlights. The user explicitly selected this text, so enrich it even if it is below the learner's CEFR level.",
             },
-            grammar: {
-              type: 'object',
-              description:
-                "Optional sparse bag of typed morphology / grammar facts for this chunk. Include keys only when they are useful for THIS chunk in THIS target language; omit the whole object when nothing applies — EXCEPT `ipa`, which you include for every chunk. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть` — keep the headword itself clean), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string — the counterpart's clean lemma), `is_reflexive` (boolean), `government` (case/preposition pattern, e.g. '+ acc', 'от + gen', 'с + instr'), `notable_forms` (array of {label, form} for irregular paradigm cells, max 3), `ipa` (transcription bag, see its description), `notes` (free-form, last resort). The per-target-language instructions in the system prompt say WHEN to fill which keys.",
-              properties: {
-                pos: {
-                  type: 'string',
-                  enum: [
-                    'noun',
-                    'verb',
-                    'adjective',
-                    'adverb',
-                    'preposition',
-                    'pronoun',
-                    'particle',
-                    'conjunction',
-                    'numeral',
-                    'phrase',
-                    'idiom',
-                    'other',
-                  ],
-                },
-                display_form: { type: 'string' },
-                gender: { type: 'string', enum: ['m', 'f', 'n', 'c'] },
-                number_only: { type: 'string', enum: ['plurale_tantum', 'singulare_tantum'] },
-                is_indeclinable: { type: 'boolean' },
-                animacy: { type: 'string', enum: ['animate', 'inanimate'] },
-                aspect: { type: 'string', enum: ['impf', 'perf', 'biaspectual'] },
-                aspect_pair_headword: { type: 'string' },
-                is_reflexive: { type: 'boolean' },
-                government: { type: 'string' },
-                notable_forms: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      label: { type: 'string' },
-                      form: { type: 'string' },
-                    },
-                    required: ['label', 'form'],
-                  },
-                },
-                ipa: {
-                  type: 'object',
-                  description:
-                    "IPA transcription of the HEADWORD (citation form, not the inflected surface form). Include for every chunk. For English targets fill ONLY the dialect bucket the system prompt specifies (`ga` for General American, `rp` for Received Pronunciation); for every other language fill ONLY `untagged`. Write it the way a dictionary does, with the enclosing delimiters as part of the string: slashes for a phonemic transcription (preferred, e.g. '/səˈliːn/'), square brackets only when giving a narrow phonetic one (e.g. '[sɐzˈdanʲɪje]'). Mark stress. If you are not confident of the transcription, omit the whole `ipa` object rather than guessing.",
-                  properties: {
-                    ga: { type: 'string' },
-                    rp: { type: 'string' },
-                    untagged: { type: 'string' },
-                  },
-                },
-                notes: { type: 'string' },
-              },
-            },
+            grammar: buildGrammarSchema(targetLanguage, GRAMMAR_OBJECT_DESCRIPTION),
             reasoning: {
               type: 'string',
               description: 'One-line note on why this chunk is worth studying. Optional.',
@@ -281,7 +231,7 @@ ${segmentLines}`
       allowL1Notes,
       englishIpaDialect,
     }),
-    tools: [buildTool(shouldHideTranslationFields)],
+    tools: [buildTool(shouldHideTranslationFields, targetLanguage)],
     tool_choice: { type: 'tool', name: TOOL_NAME },
     messages: [{ role: 'user', content: userMessage }],
   })
