@@ -11,12 +11,7 @@ import {
 } from '../../transport/database/cards/cards-repository'
 import { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { exploreCardIfMissing, ExploreCardDependencies } from '../../service/exploration/explore-card-if-missing'
-import {
-  setCardStatus,
-  setCardStatusBatch,
-  SetCardStatusDependencies,
-  CardKeepBlockedError,
-} from '../../service/cards/set-card-status'
+import { removeCardFromSession, CardStatusDependencies } from '../../service/cards/set-card-status'
 import {
   createAdhocCard,
   CreateAdhocCardDependencies,
@@ -57,9 +52,8 @@ const toCardDto = (row: DbCardWithChunk) => ({
   chunk: toChunkDto(row.chunk),
 })
 
-// updateStatus / updateStatusBatch return DbCard (no chunk join). Re-fetch by
-// id to surface the chunk on the response, or accept a smaller shape and let
-// the frontend reconcile from cache. Re-fetching is the simplest correct path.
+// removeFromSession returns DbCard (no chunk join). Re-fetch by id to surface
+// the chunk on the response so the frontend reconciles from a full card row.
 const cardWithChunkOrError = async (
   cardsRepository: CardsRepositoryInterface,
   card: DbCard,
@@ -70,7 +64,7 @@ export const CardsRouter = (
   cardsRepository: CardsRepositoryInterface,
   studySessionsRepository: StudySessionsRepositoryInterface,
   exploreDependencies: ExploreCardDependencies,
-  setCardStatusDependencies: SetCardStatusDependencies,
+  cardStatusDependencies: CardStatusDependencies,
   createAdhocCardDependencies: CreateAdhocCardDependencies
 ): Router => {
   const implementer = implement(cardsContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -99,17 +93,9 @@ export const CardsRouter = (
       return { data: toCardDto(card) }
     }),
 
-    updateStatus: implementer.updateStatus.handler(async ({ input, context, errors }) => {
+    removeFromSession: implementer.removeFromSession.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
-      let updated: DbCard | null
-      try {
-        updated = await setCardStatus(input.cardId, userId, input.status, setCardStatusDependencies)
-      } catch (e) {
-        if (e instanceof CardKeepBlockedError) {
-          throw errors.CONFLICT({ data: { errors: [{ message: e.message }] } })
-        }
-        throw e
-      }
+      const updated = await removeCardFromSession(input.cardId, userId, cardStatusDependencies)
       if (!updated) {
         throw errors.NOT_FOUND({
           data: { errors: [{ message: 'Card not found' }] },
@@ -117,28 +103,9 @@ export const CardsRouter = (
       }
       const withChunk = await cardWithChunkOrError(cardsRepository, updated, userId)
       if (!withChunk) {
-        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Card disappeared after status update' }] } })
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Card disappeared after removal' }] } })
       }
       return { data: toCardDto(withChunk) }
-    }),
-
-    updateStatusBatch: implementer.updateStatusBatch.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const session = await studySessionsRepository.findByIdForUser(input.sessionId, userId)
-      if (!session) {
-        throw errors.NOT_FOUND({
-          data: { errors: [{ message: 'Study session not found' }] },
-        })
-      }
-      const updated = await setCardStatusBatch(
-        input.sessionId,
-        input.cardIds,
-        userId,
-        input.status,
-        setCardStatusDependencies
-      )
-      const withChunks = await Promise.all(updated.map((card) => cardWithChunkOrError(cardsRepository, card, userId)))
-      return { data: withChunks.filter((c): c is DbCardWithChunk => c !== null).map(toCardDto) }
     }),
 
     updateFields: implementer.updateFields.handler(async ({ input, context, errors }) => {

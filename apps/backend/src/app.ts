@@ -269,7 +269,7 @@ export const buildApp = ({
   const ghostCandidatesRepository = GhostCandidatesRepository()
   const nominatedWindowsRepository = NominatedWindowsRepository()
 
-  const setCardStatusDependencies = {
+  const cardStatusDependencies = {
     cardsRepository,
     studySessionsRepository,
     userLookupsRepository,
@@ -366,7 +366,7 @@ export const buildApp = ({
       cardsRepository,
       studySessionsRepository,
       exploreDependencies,
-      setCardStatusDependencies,
+      cardStatusDependencies,
       createAdhocCardDependencies
     )
   )

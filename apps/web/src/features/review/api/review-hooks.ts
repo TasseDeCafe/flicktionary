@@ -1,7 +1,7 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import {
   cancelCardCaches,
   cancelCardCachesOptionalSession,
@@ -9,17 +9,13 @@ import {
   getSessionCardsKey,
   restoreCardCaches,
   restoreCardCachesOptionalSession,
-  restoreSessionCardsCache,
   reviewCardCacheStaleTimeMs,
   setCardEverywhere,
-  setCardStatusBatchEverywhere,
   setCardStatusEverywhere,
   setCardUnreadEverywhere,
   snapshotCardCaches,
   snapshotCardCachesOptionalSession,
-  snapshotSessionCardsCache,
   type CardCacheSnapshot,
-  type CardListSnapshot,
   type OptionalSessionCardSnapshot,
 } from './card-cache'
 
@@ -57,15 +53,20 @@ export const useGetCard = (cardId: string, initialCard?: Card, initialCardUpdate
   )
 }
 
-export const useUpdateCardStatus = (sessionId: string) => {
+// Remove (unkeep) a card from its session vocabulary list. Optimistically flips
+// the card's status to `removed` so the row drops out of the list immediately
+// (the list filters to kept | needs_data). Non-destructive on the server: it
+// decrements the lookup count only if the card was kept and never soft-deletes
+// the term.
+export const useRemoveCardFromSession = (sessionId: string) => {
   const { t } = useLingui()
   const queryClient = useQueryClient()
   return useMutation(
-    orpcQuery.cards.updateStatus.mutationOptions({
-      onMutate: async (variables: { cardId: string; status: CardStatus }) => {
+    orpcQuery.cards.removeFromSession.mutationOptions({
+      onMutate: async (variables: { cardId: string }) => {
         await cancelCardCaches(queryClient, { sessionId, cardId: variables.cardId })
         const snapshot = snapshotCardCaches(queryClient, { sessionId, cardId: variables.cardId })
-        setCardStatusEverywhere(queryClient, { sessionId, cardId: variables.cardId, status: variables.status })
+        setCardStatusEverywhere(queryClient, { sessionId, cardId: variables.cardId, status: 'removed' })
         return snapshot
       },
       onError: (_error, _variables, context) => {
@@ -73,40 +74,12 @@ export const useUpdateCardStatus = (sessionId: string) => {
       },
       onSuccess: (response) => {
         setCardEverywhere(queryClient, response.data)
-        // Keeping a card may change downstream counts; invalidate vocabulary
+        // Removing a kept card changes downstream counts; invalidate vocabulary
         // list + practice due summary so chips and counts refresh.
         queryClient.invalidateQueries({ queryKey: orpcQuery.chunks.listChunks.key() })
         queryClient.invalidateQueries({ queryKey: orpcQuery.practice.dueSummary.key() })
       },
-      meta: { errorMessage: t`Failed to update card status` },
-    })
-  )
-}
-
-export const useUpdateCardStatusBatch = (sessionId: string) => {
-  const { t } = useLingui()
-  const queryClient = useQueryClient()
-  return useMutation(
-    orpcQuery.cards.updateStatusBatch.mutationOptions({
-      onMutate: async (variables: { sessionId: string; cardIds: string[]; status: CardStatus }) => {
-        await queryClient.cancelQueries({ queryKey: getSessionCardsKey(sessionId) })
-        const snapshot = snapshotSessionCardsCache(queryClient, sessionId)
-        setCardStatusBatchEverywhere(queryClient, {
-          sessionId,
-          cardIds: variables.cardIds,
-          status: variables.status,
-        })
-        return snapshot
-      },
-      onError: (_error, _variables, context) => {
-        restoreSessionCardsCache(queryClient, context as CardListSnapshot | undefined)
-      },
-      onSuccess: (response) => {
-        for (const card of response.data) {
-          setCardEverywhere(queryClient, card)
-        }
-      },
-      meta: { errorMessage: t`Failed to update card statuses` },
+      meta: { errorMessage: t`Failed to remove term` },
     })
   )
 }

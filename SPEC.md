@@ -52,8 +52,8 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (A fou
 - No in-movie sync. The app is for triage and lookup, not playback.
 - The mid-source screen is a search bar over the track plus a scrollable list of segments. Movie segments show a timestamp; text segments don't. That is the entire mid-source UI.
 - Tap-to-select on plain segment text opens a small **floating gloss sheet** anchored to the selection, in PREVIEW mode — looking is free; nothing persists until the explicit **Save** (desktop popover, capped to the viewport's available height with internal scroll so an expanded sheet never clips; its main action footer is sticky below the scrollable body, and wheel/touch overscroll is contained so the page behind it does not scroll; mobile bottom drawer with a transparent overlay so the source line stays visible — the drawer always docks at the bottom and opens collapsed, showing the header (term, gloss, IPA, register chips) pinned in full plus a short peek of the detail region below it; the action footer is a distinct pinned bar (top border, plus a soft upward shadow only while collapsed so the peeking content reads as tucking under it). Dragging from the handle **or** the header follows the finger continuously — the sheet grows/shrinks between the collapsed and expanded detents (rubber-banding past the expanded cap) and snaps to the nearest one on release by final position + flick velocity; a downward drag past the collapsed edge dismisses. The detail region scrolls internally only once expanded). A single click/tap selects one `Intl.Segmenter` word in the session's target language; press-and-drag extends to a contiguous word range, including multi-line / multi-segment ranges. Selectable words show a subtle accent-tint hover affordance; the selection paints a sky wash (outer corners rounded) that PERSISTS while the sheet is open — it shows what the sheet refers to — and clears on sheet close or the next press. Tapping another word while the sheet is open swaps its content in place (no close/reopen flash) — the sheet's `ignoreOutsidePointerDownSelector` keeps the tap on a word/highlight span from dismissing it. Native browser text selection is disabled in the segment list so the gesture vocabulary stays consistent. Clicking an existing yellow highlight opens the existing-highlight sheet instead. The sheet fetches a fast one-line gloss + POS + register tag; on Save, that already-shown preview gloss is sent to `highlights.create` and persisted on the new highlight so saved mode does not run a second first-gloss LLM pass. A re-tap on the same span is instant. There is no backdrop tint and no separate tap-to-translate opt-out (the old setting was retired when the sheet became unobtrusive enough to be always-on). **Right-click is the save/remove toggle** (extension parity): on a bare word it saves immediately — no selection, no sheet — and on a saved highlight it removes it; with the sheet open it saves in preview mode and removes in saved mode, so repeated right-clicks cycle save → remove. The open sheet SURVIVES the toggle and morphs in place (right-button pointerdown is never a dismiss gesture for the floating sheet): preview → saved on save, and saved → preview on remove when the sheet holds a live selection (a sheet opened from a highlight click has no selection to preview, so a remove closes it). Saving and removing show **no success toast** — the span's yellow wash appearing/disappearing is the feedback (a toast per word gets noisy at volume and overlapped controls on mobile); failures still toast. **Saves paint optimistically** (extension parity): `useCreateHighlight` inserts a temp row (`optimistic-` id prefix) into the highlights cache in `onMutate`, so the yellow wash appears the moment the user saves; the create response swaps in the real row, errors roll back, and the settle-time invalidate keeps the server's view the truth. Interactions keyed on a highlight id (the right-click remove, clicking a highlight span, the sheet's saved-row dedup) skip optimistic rows until the real id lands. The sheet's IPA line renders the **server-picked `ipaDisplay`** from the fastGloss responses (the backend resolves the user's `english_ipa_dialect` pref), so web and extension show the same dialect for the same word; the `ipa` bag stays in the contract for older clients.
-- The sheet shows an always-visible **study-target picker** (shared `StudySkillCards`, wrapped by `StudyOptionsSection`, also used by the practice lookup sheet and the extension's in-video popover): three monochrome, pressable icon-cards — Recognition (eye) / Production (pencil) / Pronunciation (mic), selected = dark border + filled-check badge, desktop tooltip = a shared Radix Tooltip opened on hover and positioned above the card — its `onFocusCapture` swallows the focus the popover fires when it autofocuses a card on mount, so the tooltip never self-opens just because the popover appeared (radix-ui/primitives#2248); in the extension it portals into the in-shadow popover container, which is marked `dark` and at the popover's max z-index so the tooltip is styled, dark-themed, and stacks above the popover instead of under it — plus a **Base form | Exact form** segmented control (Exact form shows the highlighted surface as its subtitle). The control is **exclusive**, not additive: it chooses WHICH target the selected skills attach to — *Base form* studies the lemma (citation facets), *Exact form* studies the encountered inflection (form facets), leaving the lemma a skill-less base anchor (it still exists as the term + vocab row + the focus view's citation chip; the form is shown beside it). `formScope: 'lemma' | 'form'`; `'form'` collapses to `'lemma'` server-side when the surface IS the headword. The cards are mono semantic tokens so they invert cleanly on the extension's dark video overlay. FULL-SET semantics — an untouched draft sends no `studyIntent` (the backend keep-time default applies); a touched draft sends exactly the checked set, riding `highlights.create` and applied by the enrichment job. **Nothing is pre-checked and 0 selected is allowed** in the popover (an empty set sends no intent → a `pending` triage card with no pre-configured facet; the keep-time default then enables recognition). The Base/Exact control locks until at least one skill is selected (skills need a target to attach to); Pronunciation is ALWAYS offerable (the preview's IPA is a Wiktionary-only lookup — enrichment generates IPA for every saved selection, and IPA-less facets are defended backend-side; see `docs/SRS.md`). On Save the sheet morphs in place into saved mode, where the **same study-target picker stays visible but is locked read-only** — it keeps its preview layout, uniformly dimmed + non-interactive (`pointer-events-none`, no per-control disabling so there's no half-greyed mismatch), with a lock caption pointing at the term view. It *displays* the saved skills + scope: from the highlight's stored `study_intent` pre-enrich, then from the term's live facets once the enrich job materializes it and a `chunkId` resolves (`chunks.getStudyTargets`, read-only — the sheet still polls `highlights.listBySession` only to switch that display source). The study-target choice is a SAVE-TIME decision: the only places to change it are the preview picker (before saving) and the focus / term view afterwards (or deleting the highlight). This is deliberate — switching scope post-enrich means creating/deleting durable form facets, which the compact sheet can't represent, so editing lives in the focus view alone.
-- **Two commit lanes (preview footer).** The pre-save footer exposes both an **Add note** affordance and the main **Save** button — looking is free; nothing persists until one of the two commits. **Save** (main lane) creates the highlight and runs the normal `enrich_highlight` → full card pipeline; a note typed before saving rides along and seeds the card chat once. **Save note** (the note editor's own commit, shown once the editor is open) is the **note-only** lane ("ask a question, don't make a card"): it sends `highlights.create` with `noteOnly: true`, which synchronously creates an **empty stub card** (no basic-data pass, no Wiktionary grounding, no study facets) and seeds the card chat from the composed note/presets. A note-only save is still a real highlight (yellow span, triage row, removable) — only the card body is empty until the user generates it later (see triage). Skill selection is ignored in the note-only lane. When the note editor is open in preview, the footer shows **both** `Save` and `Save note`; collapsed, it shows `Save` + `Add note`. Both footer buttons keep the same size and split the width 50/50 in every state. **`Save note` is disabled until a note or preset is entered** — an empty note-only save would create a data-less stub whose chat never gets seeded (nothing to ask), so it is not allowed.
+- The sheet shows an always-visible **study-target picker** (shared `StudySkillCards`, wrapped by `StudyOptionsSection`, also used by the practice lookup sheet and the extension's in-video popover): three monochrome, pressable icon-cards — Recognition (eye) / Production (pencil) / Pronunciation (mic), selected = dark border + filled-check badge, desktop tooltip = a shared Radix Tooltip opened on hover and positioned above the card — its `onFocusCapture` swallows the focus the popover fires when it autofocuses a card on mount, so the tooltip never self-opens just because the popover appeared (radix-ui/primitives#2248); in the extension it portals into the in-shadow popover container, which is marked `dark` and at the popover's max z-index so the tooltip is styled, dark-themed, and stacks above the popover instead of under it — plus a **Base form | Exact form** segmented control (Exact form shows the highlighted surface as its subtitle). The control is **exclusive**, not additive: it chooses WHICH target the selected skills attach to — *Base form* studies the lemma (citation facets), *Exact form* studies the encountered inflection (form facets), leaving the lemma a skill-less base anchor (it still exists as the term + vocab row + the focus view's citation chip; the form is shown beside it). `formScope: 'lemma' | 'form'`; `'form'` collapses to `'lemma'` server-side when the surface IS the headword. The cards are mono semantic tokens so they invert cleanly on the extension's dark video overlay. FULL-SET semantics — an untouched draft sends no `studyIntent` (the backend keep-time default applies); a touched draft sends exactly the checked set, riding `highlights.create` and applied by the enrichment job. **Nothing is pre-checked and 0 selected is allowed** in the popover (an empty set sends no intent → a `needs_data` card with no pre-configured facet; the keep-time default then enables recognition). The Base/Exact control locks until at least one skill is selected (skills need a target to attach to); Pronunciation is ALWAYS offerable (the preview's IPA is a Wiktionary-only lookup — enrichment generates IPA for every saved selection, and IPA-less facets are defended backend-side; see `docs/SRS.md`). On Save the sheet morphs in place into saved mode, where the **same study-target picker stays visible but is locked read-only** — it keeps its preview layout, uniformly dimmed + non-interactive (`pointer-events-none`, no per-control disabling so there's no half-greyed mismatch), with a lock caption pointing at the term view. It *displays* the saved skills + scope: from the highlight's stored `study_intent` pre-enrich, then from the term's live facets once the enrich job materializes it and a `chunkId` resolves (`chunks.getStudyTargets`, read-only — the sheet still polls `highlights.listBySession` only to switch that display source). The study-target choice is a SAVE-TIME decision: the only places to change it are the preview picker (before saving) and the focus / term view afterwards (or deleting the highlight). This is deliberate — switching scope post-enrich means creating/deleting durable form facets, which the compact sheet can't represent, so editing lives in the focus view alone.
+- **Two commit lanes (preview footer).** The pre-save footer exposes both an **Add note** affordance and the main **Save** button — looking is free; nothing persists until one of the two commits. **Save** (main lane) creates the highlight and runs the normal `enrich_highlight` → full card pipeline; a note typed before saving rides along and seeds the card chat once. **Save note** (the note editor's own commit, shown once the editor is open) is the **note-only** lane ("ask a question, don't make a card"): it sends `highlights.create` with `noteOnly: true`, which synchronously creates an **empty stub card** (no basic-data pass, no Wiktionary grounding, no study facets) and seeds the card chat from the composed note/presets. A note-only save is still a real highlight (yellow span, session-vocabulary row, removable) — only the card body is empty until the user generates it later (see the session vocabulary list). Skill selection is ignored in the note-only lane. When the note editor is open in preview, the footer shows **both** `Save` and `Save note`; collapsed, it shows `Save` + `Add note`. Both footer buttons keep the same size and split the width 50/50 in every state. **`Save note` is disabled until a note or preset is entered** — an empty note-only save would create a data-less stub whose chat never gets seeded (nothing to ask), so it is not allowed.
 - **Cyclable Save ⇄ Saved.** Once saved, the green **Saved** state is itself the remove control — clicking it removes the highlight and morphs the sheet back to preview (the on-screen counterpart of the right-click save→remove toggle), replacing the old standalone trash button. While composing a brand-new, not-yet-committed note it shows **Save note** instead.
 - In saved mode the floating sheet bundles every action that used to live in a second-tap menu: optional free-text note, preset chips (`Explain`, `3 examples`, `Synonyms`, `Etymology`, `Why this form?`), and the cyclable **Saved** remove control. The note editor and chips live behind an accordion chevron in the header on both mobile and desktop; the mobile sheet can be flicked down by its drag handle to dismiss. The note and tags are passed to the LLM at processing time. **The note/presets seed the card chat exactly once and lock on save** (like the study-target picker): a committed note/preset set renders the editor read-only — the saved note + selected chips, uniformly dimmed + non-interactive, with a lock caption — and the footer collapses to the cyclable **Saved** control (no `Edit note` / `Save note`). Re-saving would post a duplicate seeded chat turn (the seed is keyed per highlight, not per save), so the only way to change a committed note is to delete the highlight and start over; the card's own chat input handles genuine follow-ups. An empty save (no note, no chips) seeds nothing and stays editable, so a word saved without a note can still get one — once.
 - **Reading position.** The reader tracks the deepest segment the user reaches by
@@ -68,7 +68,7 @@ Three source kinds in the MVP, all feeding the same `text_segment` table. (A fou
   also suppressed under a deep-link open (the `Open source` jump from a card /
   Vocabulary carries `?segment=`), so peeking at a term's source never moves the
   saved position. An explicit `?segment=` target also wins over resume on open.
-- When `LLM-suggested terms` is enabled, the reader also shows **ghost candidates**: passive underlined spans nominated by the LLM for the reading window around the user's current scroll position. Ghosts never use `data-highlight-id`, never intercept pointer events, and have no click handler; the user still selects text normally. If a fresh selection overlaps a ghost, the floating gloss sheet shows an understated **lightbulb icon button** in the sheet header (a `Use suggested term` tooltip on desktop hover). Tapping it atomically swaps the provisional user-selected highlight for the ghost's exact segment/offset span, expands the sky-wash paint to cover the full suggested span, dismisses the ghost, and sends the adopted span through the same background enrichment path as any manual highlight. Because nomination is an LLM call that can take several seconds, the reader's sticky footer shows a `Finding suggestions…` loader (beside the highlight-count hint, left of `Go to triage`) whenever a nomination request is in flight or a window's job is still `pending`, so the delay does not read as broken. Turning the pref off disables nomination, ghost fetching/rendering, the adoption action, and the loader.
+- When `LLM-suggested terms` is enabled, the reader also shows **ghost candidates**: passive underlined spans nominated by the LLM for the reading window around the user's current scroll position. Ghosts never use `data-highlight-id`, never intercept pointer events, and have no click handler; the user still selects text normally. If a fresh selection overlaps a ghost, the floating gloss sheet shows an understated **lightbulb icon button** in the sheet header (a `Use suggested term` tooltip on desktop hover). Tapping it atomically swaps the provisional user-selected highlight for the ghost's exact segment/offset span, expands the sky-wash paint to cover the full suggested span, dismisses the ghost, and sends the adopted span through the same background enrichment path as any manual highlight. Because nomination is an LLM call that can take several seconds, the reader's sticky footer shows a `Finding suggestions…` loader (beside the highlight-count hint, left of `Session vocabulary`) whenever a nomination request is in flight or a window's job is still `pending`, so the delay does not read as broken. Turning the pref off disables nomination, ghost fetching/rendering, the adoption action, and the loader.
 
 ### Processing pipeline
 
@@ -83,7 +83,8 @@ not hit SDK duration limits.
 
 - **Per-highlight enrichment** (`enrich_highlight` job) — enqueued the moment a
   highlight is committed during reading (debounced ~5s to absorb mis-selections),
-  so cards are mostly ready by the time the user reaches triage. One job enriches
+  so cards are mostly ready by the time the user reaches the session vocabulary
+  list. One job enriches
   exactly one highlight: a highlight-only basic-data pass over a DB-windowed
   slice of surrounding segments (not the whole track), on
   `MODEL_ENRICHMENT` (Sonnet by default; the `ENRICHMENT_MODEL` env var flips it
@@ -91,6 +92,21 @@ not hit SDK duration limits.
   still exists immediately before writing, so deleting a highlight mid-flight
   cancels cleanly (no card, non-retryable). Card creation is idempotent (partial
   unique index on `cards(highlight_id)`), so a retry never double-creates.
+  - **Auto-keep.** Saving a highlight is already an explicit commit, so the card
+    auto-keeps the moment it has basic flashcard data — there is no separate
+    Keep step. The shared helper `autoKeepNeedsDataIfEligible` re-fetches the
+    card and keeps it **only if** its status is still `needs_data` **and** it has
+    basic data (`cardHasBasicData`): the `needs_data` gate means a `removed`
+    card is never resurrected by a later
+    retry/chat/exploration write, and the data gate skips note-only stubs. It runs
+    at every basic-data write path — `enrich_highlight` (after `applyStudyIntent`),
+    on-demand `Generate full exploration`, and the chat tool's content write — and
+    **always after `applyStudyIntent`** so the intent's facets exist before the
+    keep-time recognition default fires (otherwise a production-only / exact-form
+    intent would gain a stray recognition facet). The adhoc Add-a-word flow has
+    always auto-kept; this generalizes that pattern. Adopted ghost suggestions
+    flow through `enrich_highlight` like any manual highlight, so they auto-keep
+    too.
 - **Ghost nomination** (`nominate_window` job) — enqueued as the reader settles
   on a scroll position, windowed by segment index rather than client array
   position. A nominated window is recorded in `nominated_windows` even when it
@@ -106,12 +122,14 @@ not hit SDK duration limits.
 
 There is no synchronous processing step in the reader anymore — highlights are
 enriched one at a time by the background queue as they are committed. The reader's
-footer carries a single `Go to triage` button that is pure navigation: it runs no
-pass (the backend `process` endpoint it still calls is a backward-compatible no-op
-for old clients). Sessions have no lifecycle status column at all — enrichment progress lives in `processing_jobs`,
-surfaced to triage via a status endpoint (which highlights are still enriching,
-which failed); triage renders a placeholder row per not-yet-materialized
-highlight and a retry affordance for failed jobs, polling until enrichment drains.
+footer carries a single `Session vocabulary` button that is pure navigation: it
+runs no pass (the backend `process` endpoint it still calls is a
+backward-compatible no-op for old clients). Sessions have no lifecycle status
+column at all — enrichment progress lives in `processing_jobs`, surfaced to the
+session vocabulary list via a status endpoint (which highlights are still
+enriching, which failed); the list renders a placeholder row per
+not-yet-materialized highlight and a retry affordance for failed jobs, polling
+until enrichment drains.
 
 The enrichment path uses these shared steps:
 
@@ -216,31 +234,57 @@ The enrichment path uses these shared steps:
 
 Two-layer UI.
 
-**Layer 1 — Triage list (default landing).**
+**Layer 1 — Session vocabulary list (default landing).**
 
-- Primary section: "Your highlights". These include literal manual selections
-  and adopted ghost suggestions, because adopting a ghost creates a real
-  highlight before enrichment. Legacy LLM-suggested / auto-rejected rows may still
-  render defensively, but the current pipeline no longer creates new triage cards
-  with `highlight_id = null`.
-- Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, a plain **Keep** button (toggles kept⇄pending, no learning mode) and a **Reject** toggle, tap target. Production is no longer a triage decision — it is set later in the term view. `Keep all` keeps the visible cards as plain kept (no passive/active distinction).
-- **Keep is blocked until a card has basic data.** A note-only card (created via **Save note**) has no `translation` / `definition` / `target_example` — keeping it would push a blank flashcard into Vocabulary + Practice. The row's **Keep** is disabled (with a subtle "needs data" affordance) until the user generates the card's data, and `Keep all` silently **skips** data-less cards (they stay `pending`). The user unblocks Keep by opening the card and running **Generate full exploration** (or generating data via chat), which works even though the note-only session never ran an `enrich_highlight` job — the on-demand exploration mints the session context blob lazily on first use. The `cards.updateStatus` backend guard rejects a data-less keep with **409 CONFLICT** as the authoritative safety net; `cards.updateStatusBatch` filters data-less cards out of the keep set.
-- Filter, search, sort across both sections.
-- Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
-- Reader-saved highlights materialize as `pending` triage cards (the enrichment job inserts cards in `pending`, or `auto_rejected` below the CEFR floor) — vocabulary membership and the recognition floor happen on the **Keep** transition, not at save time. The `cards.updateStatus` endpoint still **accepts** an optional `learningMode` field even when the status is `kept` (backend maps it to `setFacetEnabled` on the production facet), but the collapsed Keep/Reject triage UI no longer sends it — keep-as-active is no longer a triage action, so the param remains only for compatibility and isn't exercised here.
+Saving a highlight while reading is already an explicit commit, so there is no
+separate Keep step: a card **auto-keeps** the moment it has basic flashcard data
+(see "Auto-keep" under the processing pipeline). This screen is therefore a
+review-and-prune list of the session's kept terms, not a keep/reject queue.
+
+- One list of the session's terms: literal manual selections and adopted ghost
+  suggestions (adopting a ghost creates a real highlight before enrichment). The
+  list client-filters to `status ∈ {kept, needs_data}`; `removed` rows never
+  show. Legacy `highlight_id = null` rows are no longer produced, so there is no
+  separate "LLM-suggested" section.
+- Each row: chunk surface form, a 1-line gloss preview, a tap target (opens the
+  focus view), and a single **Remove** (trash) control. **Remove = unkeep this
+  card** (`cards.removeFromSession` → `removed`): non-destructive — it survives in
+  Vocabulary if kept elsewhere, the "added N×" badge decrements, and the last
+  keep takes `count` to 0 so it leaves Vocabulary naturally. No `deleted_at`, no
+  cross-session nuking, no warning. Because the optimistic cache flips status in
+  place, a Remove drops the row from the list immediately (no refetch).
+- **Note-only "needs data" rows.** A note-only card (created via **Save note**)
+  has no `translation` / `definition` / `target_example`, so it stays `needs_data`
+  and shows here as a "needs data — open to generate" row (it still has a
+  Remove). Opening it and running **Generate full exploration** (or generating
+  data via chat) fills its basic data and **auto-keeps it** — the on-demand
+  exploration mints the session context blob lazily on first use even though the
+  note-only session never ran an `enrich_highlight` job.
+- Filter and search across the single list. There is no bulk Keep all / Reject
+  all and no generic card-status mutation: cards keep themselves once they gain
+  basic data, so the only user-driven transition is `cards.removeFromSession`.
+- Reader-saved highlights materialize as `needs_data` cards (the enrichment job
+  inserts cards in `needs_data`; user highlights bypass the CEFR floor) and then
+  auto-keep once basic data lands. Vocabulary membership and the recognition
+  floor happen on the keep transition, which is now automatic.
 - **Floor guard:** a **kept** term (`count > 0`, not deleted) must always keep ≥1 enabled facet — `chunks.setFacetEnabled` rejects (409) a disable that would zero out its last enabled facet (delete the term instead). Pre-keep terms keep their freedom to drop to zero. The focus view's per-target last-skill lock is the friendly UI front for this invariant; the backend guard is the authoritative safety net.
+- The enriching/failed **placeholder rows** + status polling stay (a highlight
+  still being enriched has no card yet), and a **retry** affordance for failed
+  enrichment.
 - Sticky footer: `Practice these terms` button (full-width on mobile,
   right-aligned on desktop) that starts a Practice session in the session's
-  target language. Disabled when no cards are kept. Per-session CSV export is
-  gone from this screen — exports happen from the Vocabulary tab instead.
-- No chat here. This layer is for fast triage.
+  target language. Disabled when no cards are kept (effectively always enabled
+  once any term has data). Per-session CSV export is gone from this screen —
+  exports happen from the Vocabulary tab instead.
+- No chat here. This layer is for fast review.
 
 **Layer 2 — Focus view (modal screen pushed above the tab navigator).**
 
-- Modal header: chevron-back to triage, position counter (`Card N of M`),
-  and a chat toggle button carrying the unread indicator (see the per-card
-  chat bullet below). Keep/reject and learning-mode controls live in the fixed
-  bottom action bar below — see the next-to-last bullet in this section.
+- Modal header: chevron-back to the session-vocabulary list, position counter
+  (`Card N of M`), and a chat toggle button carrying the unread indicator (see
+  the per-card chat bullet below). There is **no keep/reject bottom bar** — cards
+  auto-keep on basic data; removal is a single scope-aware affordance inline in
+  the card body (see the next-to-last bullet in this section).
 - Prev/next navigation uses two fixed, viewport-mid-height circular buttons
   pinned to the left and right edges so they stay reachable on long cards;
   the `Open in subtitles` deep-link still lives inside the collapsible
@@ -311,23 +355,25 @@ Two-layer UI.
   collocations, etymology, l1_notes, …) is reserved for an explicit
   full / deep-exploration request or a named extra, so casual "make this card"
   asks no longer dump a whole exploration.
-- For **triage entries** a fixed bottom action bar carries the per-card
-  decision: two equal-width buttons — `Reject` (destructive) and `Keep`
-  (default; `cards.updateStatus` with status `kept`, no learning mode) — with
-  the button matching the card's current state filled, the other outlined. A
-  tap fires the mutation, holds a brief ~220ms confirmation highlight on the
-  just-tapped button, then auto-advances to the next card via the cursor. If
-  the tapped card is the last one in the cursor, the focus view closes back to
-  the triage list instead. Production is no longer a triage decision — there is
-  no `★ Active` button and no inline `Learning mode` row; the bar is just
-  keep/reject.
+- **Scope-aware Remove (no keep/reject bar).** There is no bottom action bar.
+  Removal is a single inline affordance in the card body, chosen by entry scope:
+  - **From a session** (session-vocabulary list / focus-view-from-session):
+    **Remove from session** → `cards.removeFromSession` (status `removed`,
+    unkeep). Non-destructive (survives in Vocabulary if kept elsewhere; no
+    `deleted_at`, no confirm). After removing, it advances to the next card via
+    the cursor, or closes back to the session-vocabulary list if it was the last.
+  - **From vocabulary / practice** (`?from=vocabulary` / `?from=practice` over
+    already-kept chunks, i.e. `isLanguageWideEntry`): **Delete term** →
+    `chunks.deleteChunk` (term-level soft-delete, behind a confirm). Unchanged.
+  - A data-less `needs_data` note-only stub opened from a session has no keep
+    button — generating its data auto-keeps it, and **Remove from session**
+    discards the stub.
 - The card section always shows the **study-target selector + unified editor**
-  (in triage too — keeping a card on `Keep` just enables recognition; the editor
-  lets the learner set up forms/skills and edit content either side of that
-  decision). **Language-wide entries** (entered via `?from=practice` or
-  `?from=vocabulary` over already-kept chunks) additionally get a secondary
-  **Delete term** affordance and **no bottom keep/reject bar** (they're already
-  kept); triage entries keep the bar and delete via `Reject`.
+  (the editor lets the learner set up forms/skills and edit content; keeping a
+  card just enables recognition, which now happens automatically on basic data).
+  The prev/next pager is gated on having a session cursor, so session entries
+  page through their cards and language-wide entries (which don't load the
+  session card list) don't.
   - **Form selector** (`form-selector.tsx`): a chip-per-target row at the top —
     one **Citation** chip (the headword), one chip per **form** target, and a
     **"+ Add a form"** chip. Selecting a chip sets which target the editor below
@@ -385,7 +431,7 @@ A separate top-level destination from the per-session review flow. Practice is *
 - **Landing.** `/practice` is a per-language selector. Each row shows the full language name plus a compact status summary (follow-up timing / unseen / total) and opens `/practice/language/$targetLanguage`. When the language has any active-pool terms the summary line appends `· N active`; when any terms are leech-parked it appends `· N parked` (passive + active parked combined).
 - **Language action screen.** `/practice/language/$targetLanguage` shows one card per pool — **Active vocabulary** first (rendered only when `activeTotal > 0`), then **Passive vocabulary**. The system makes the strategic decision, not the user: each pool has a single primary **Practice** button that enters the unified review screen in **flashcards mode over the `mixed` scope** (due first, then new under the daily allowance; `{ pool, scope: 'mixed', mode: 'flashcards' }` is passed explicitly because the review route's Zod default is `mode: 'read'`). The Active primary button is always tappable — an empty queue lands on the flashcard view's existing "No terms are due right now" screen. Per-pool secondary actions: **History**, and a **More** disclosure (local per-pool boolean) exposing `Read` (`mixed` + reading mode), `Review only` (`review_due` + flashcards), `Learn new` (`learn_new` + flashcards). When a pool has leech-parked terms the card also shows an `N word(s) parked — strengthen them` affordance that opens the Strengthen route for that pool (see "Strengthen exercises + leech rehab"). The passive stat cards (Follow-ups / New today / Unseen / Total) render below the pool sections.
 - **Stale session URLs.** Reloading or deep-linking to `/practice/$sessionId` for a completed/abandoned session silently redirects back to that language's action screen. Background pre-generation is opportunistic and must not show user-facing errors for inactive sessions.
-- **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` snapshots due terms plus unseen passive terms up to the remaining daily new-term allowance — used by source/triage entry points and by the default **Practice** action on the language screen so a single session clears follow-ups and then introduces the day's new terms; `active_drill` snapshots only terms with an enabled `(meaning_production, '')` facet — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
+- **Session modes.** A practice session is scoped to one target language, one start mode, and one pool: `review_due` snapshots only already-introduced due terms in the passive pool; `learn_new` snapshots unseen passive terms up to the remaining per-day new-term allowance; `learn_extra` intentionally bypasses the daily new-term cap for users who choose to keep going; `mixed` snapshots due terms plus unseen passive terms up to the remaining daily new-term allowance — used by source/session-vocabulary entry points and by the default **Practice** action on the language screen so a single session clears follow-ups and then introduces the day's new terms; `active_drill` snapshots only terms with an enabled `(meaning_production, '')` facet — all currently-due active terms and all unseen active terms with **no daily new-term cap** (the cap is a passive-pool concept, intentionally not inherited so active drills never eat the passive new-term allowance). The one-active-session-per-(language, pool) rule still wins: starting while an active session exists for the same pool resumes that session.
 - **Session.** Generates one short text on demand at a time (~80–120 words, B1–B2 surrounding grammar regardless of chunk level). The schema's `practice_text.status` + `ord` columns are designed for v2 pre-generation — multiple texts queued ahead — but MVP walks one at a time.
 - **Generation prompt.** Methodology preamble + language instructions + user profile + the chunk list (`headword`, `sense`, `translation`, `definition`, `target_example`, `native_example`). Tool-use output: `body` + `used_chunks: [{ headword, sense, surface_form }]` + `skipped_chunks`. **No char offsets in the tool schema** — LLMs are unreliable at character arithmetic; the server locates each `surface_form` in `body` and computes offsets itself, claiming non-overlapping positions when a surface form repeats.
 - **Reading UX.** Body renders with each annotation as a clickable yellow span (rated → muted gray; soft-deleted → strikethrough). Tapping an annotated chunk opens a `RateSheet` (`Again / Hard / Good / Easy`) on `ResponsiveOverlay`. A 3-dots overflow on the sheet opens `Edit term` (navigates to the focus view of the chunk's representative card with `?from=practice` so chevron-back returns to the same practice text), `Switch to active vocabulary` / `Switch to passive vocabulary` (label flips based on the term's derived `learningMode`; calls `chunks.setFacetEnabled` with `skill=meaning_production`, `targetForm=''`, `enabled` = switching-to-active, and dismisses the sheet on success; hidden when the annotation has no canonical `user_lookup` row), and `Delete from vocabulary` (soft-deletes the chunk via `chunks.deleteChunk` and shows a Sonner toast with a `Restore` action backed by `chunks.restoreChunk`). Tapping a soft-deleted annotation opens a slim Restore-only variant of the RateSheet. The "Next text" button advances; **every annotation not explicitly rated is auto-rated `good`** (`was_explicit=false`) so passive reading still informs the SRS.
@@ -471,7 +517,7 @@ A separate top-level destination at `/vocabulary` for cross-session browsing of 
 - **Entry point** is the Vocabulary tab's 3-dots menu → `Export vocabulary`.
   Output is one CSV per target language covering every kept (non-deleted)
   chunk, regardless of which session it came from. Per-session CSV is no
-  longer surfaced in the UI; the triage footer is now a `Practice these
+  longer surfaced in the UI; the session vocabulary footer is now a `Practice these
 chunks` CTA. The `cards.exportCsv` backend endpoint still exists (and still
   stamps `exported_at` on `user_lookups` if hit directly) but is unreachable
   from the UI.
@@ -487,7 +533,7 @@ Native-style shell so the eventual React Native port is a translation, not a red
 - **Mobile** (`< 768px`): bottom tab bar with five slots — `Sessions` / `Practice` / central `+` button / `Vocabulary` / `More`. The `+` opens an action sheet with three options: `Start a movie or TV session`, `Practice with a text`, `Add a word` (designed to grow as more `content_source.type`s land). `Start a movie or TV session` covers both movies and TV shows via one wizard (an in-wizard `Movie` / `TV show` choice); it fetches subtitles for something the user is watching elsewhere and does **not** play video (in-video capture is the browser extension's job). Note the naming overlap: "Practice" the tab is the SRS reading flow over kept vocabulary; "Practice with a text" inside `+` is a content-source flow that creates a study session from a pasted text. "Add a word" creates a single card without any source (see Source content → Ad-hoc vocab entries). "Vocabulary" the tab is the browseable cross-session list of kept chunks (see Vocabulary section).
 - **Desktop** (`≥ 768px`): left sidebar with the same item set, with a prominent `+ New` button at the top opening the same action overlay. The Sessions list itself has no `+` — it would be redundant.
 - **Sessions list** offers `All / Movies / TV / Texts / Articles / YouTube / Streaming` filter chips with counts so the unified list stays scannable as content types diversify. Synthetic adhoc sessions (the per-(user, language) "Personal vocabulary" pseudo-sessions backing the Add-a-word flow) are filtered out at the query layer — they never appear under any chip. Each row has a **Remove** action (trash icon) that soft-deletes the session via `study_session.deleted_at` — the session disappears from the list, but the kept cards stay in the user's vocabulary and the source text is retained so future "my vocabulary" views can back-link to it. The confirmation overlay is explicit about this and points users at account deletion for full erasure.
-- **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, triage list, focus view, new-session wizard, and the `More` sub-pages (Account, Languages). (A standalone processing-poller screen still exists in the route tree but is no longer in the main flow — `Go to triage` jumps straight to triage, which shows per-highlight enrichment progress inline.) Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
+- **Modal screens** hide the chrome (no tab bar, no sidebar) and fill the viewport. They are: subtitles / mid-watch, session vocabulary list, focus view, new-session wizard, and the `More` sub-pages (Account, Languages). (A standalone processing-poller screen still exists in the route tree but is no longer in the main flow — `Session vocabulary` jumps straight to the list, which shows per-highlight enrichment progress inline.) Top of a modal stack uses an **X** close in the top-left; in-stack pushes use a **chevron-back**. This mirrors React Navigation's `presentation: 'modal'` / `'fullScreenModal'` semantics.
 - **More tab** consolidates user prefs and account pages: a sectioned list (General / Settings / About) with sub-pages for Account and Languages, plus an inline `Switch` row for `LLM-suggested terms`.
 - **Onboarding gate.** A user with `is_onboarded = false` is held in the onboarding wizard (native language → welcome) — every `_app` surface (Sessions, Practice, Vocabulary, +New) redirects there so the mandatory values can't be skipped. The wizard's top-left **X is an escape hatch**, not a skip: it lands on the **More** tab, the one in-app destination a not-yet-onboarded user may reach (sign out, delete the account via Danger zone, change appearance). More shows a `Finish setup` banner that re-enters the wizard. The gate lives only on the `_app` layout and keys off the committed matched routes, so leaving `_app` for a sibling route (e.g. Danger zone at `/profile/danger-zone`) is never bounced. Completing onboarding (`completeOnboarding`) flips `is_onboarded` and releases the gate.
 
@@ -524,7 +570,7 @@ The extension has its own spec — behavior, architecture, fork lineage, and the
 - LLM-suggested chunks toggle (default on). When off, ghost nomination is inert:
   no windows are requested, no ghost outlines render, and no `Use suggested`
   adoption action appears. Manual highlights are still enriched into cards. The
-  `Go to triage` button remains available even with zero highlights.
+  `Session vocabulary` button remains available even with zero highlights.
 - Show translations toggle per target language (default on). This means
   "show/generate native-language translation fields for this target language",
   not "pretend the learner has no native language." Backend call sites use the
@@ -674,7 +720,19 @@ card
                                     -- is value-comparison against grounding_patch.) Automatic
                                     -- processing, grounding, enrichment, and chat tool patches do
                                     -- not stamp this.
-  status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
+  status              'needs_data' | 'kept' | 'removed'
+                                    -- auto-transitions 'needs_data' -> 'kept' the
+                                    -- moment the card gains basic data (after
+                                    -- applyStudyIntent, so intent facets exist
+                                    -- before the keep-time recognition default).
+                                    -- 'needs_data' is therefore transient (a card
+                                    -- between materialization and its first
+                                    -- basic-data write) or a note-only stub with
+                                    -- no data yet. 'removed' = unkept via
+                                    -- Remove-from-session; auto-keep never
+                                    -- resurrects a 'removed' row. (NOT a
+                                    -- soft-delete of the term — chunks.deleteChunk
+                                    -- is that, via user_lookups.deleted_at.)
   created_at          timestamptz
   updated_at          timestamptz
 
@@ -748,7 +806,7 @@ user_lookup                          -- cross-source dedup + canonical user voca
                                     -- pointing at this lookup. count > 0 is the
                                     -- visibility gate for both Vocabulary and
                                     -- Practice (alongside deleted_at IS NULL).
-                                    -- pending/rejected/auto_rejected → kept
+                                    -- needs_data/removed → kept
                                     -- bumps +1 (and clears deleted_at);
                                     -- kept → anything-else decrements -1
                                     -- (floored at 0). SRS state is preserved
@@ -921,9 +979,10 @@ Cards have two tiers of data:
 ### Basic data (populated by step 3 — basic-data pass)
 
 Promoted to typed columns on `cards`. Every card has these populated after
-processing (except for `below_cefr=true` rows where the example/translation
-fields are skipped to save tokens — those land as `auto_rejected` and the
-user can override + click `Generate full exploration` to populate them).
+processing — user highlights bypass the CEFR floor (the basic-data pass forces
+`below_cefr=false` for them), so they always get full basic data and a card that
+auto-keeps. (`below_cefr` is still parsed for telemetry but never maps to a card
+status.)
 
 - `headword` — LLM-normalized dictionary citation form
 - `sense` — 1-5 word disambiguator (NOT a definition; used for cross-session dedup)
@@ -1062,26 +1121,28 @@ cached result instantly.
 2. Search the track or scroll. Optionally tap-to-translate (sheet) for quick checks.
 3. Select text in a line (or across lines) → highlight sheet → optional note/presets → save.
 
-**Reading → triage**
+**Reading → session vocabulary**
 
 1. As the user highlights while reading, each highlight is enqueued for
-   background enrichment (debounced ~5s) and the worker materializes its card —
-   so most cards are ready before the user finishes reading.
+   background enrichment (debounced ~5s) and the worker materializes its card and
+   **auto-keeps it** once basic data lands — so most terms are kept and ready
+   before the user finishes reading.
 2. As the user scrolls, settled reading windows can enqueue ghost nomination
    jobs. Ghosts render as passive suggestions in the reader; adopting one swaps
    the provisional selection for the suggested span and then enriches it as a
-   normal highlight.
-3. User taps `Go to triage` (or opens `Triage`). This navigates
-   straight to triage — no synchronous pass, no status flip, no polling page.
-4. Triage shows ready cards immediately, a placeholder row per highlight still
-   enriching, and a retry affordance for any failed enrichment; it polls the
-   `processing_jobs`-backed status until everything drains.
+   normal highlight (so it auto-keeps too).
+3. User taps `Session vocabulary` (or opens the session-vocabulary list). This
+   navigates straight there — no synchronous pass, no status flip, no polling page.
+4. The session-vocabulary list shows kept terms immediately, a placeholder row
+   per highlight still enriching, and a retry affordance for any failed
+   enrichment; it polls the `processing_jobs`-backed status until everything
+   drains.
 
 **Review and practice**
 
-1. Triage list — keep/reject across both sections. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
-2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`.
-3. Sticky-footer `Practice these chunks` button starts a Practice session in the session's target language (language-wide pool — kept chunks from this session feed into it via the user-lookups upsert that fires on the keep transition).
+1. Session-vocabulary list — review the kept terms, Remove (unkeep) any you don't want. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
+2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`; **Remove from session** unkeeps.
+3. Sticky-footer `Practice these chunks` button starts a Practice session in the session's target language (language-wide pool — kept chunks from this session feed into it via the user-lookups upsert that fires on the auto-keep transition).
 
 **Export vocabulary**
 
@@ -1091,9 +1152,9 @@ cached result instantly.
 
 **Add more highlights later**
 
-1. From the triage list, tap the `Source` button (or open the session card again).
-2. The mid-watch UI is always browsable while the session is `active` — `Triage` jumps back; highlighting still works.
-3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up in triage when the worker finishes. Ghost nomination continues window-by-window as the user reads.
+1. From the session-vocabulary list, tap the `Source` button (or open the session card again).
+2. The mid-watch UI is always browsable while the session is `active` — the session-vocabulary list jumps back; highlighting still works.
+3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up — auto-kept — in the session-vocabulary list when the worker finishes. Ghost nomination continues window-by-window as the user reads.
 
 ## Future work
 

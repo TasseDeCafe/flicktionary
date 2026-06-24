@@ -2,20 +2,19 @@ import { Link } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
-import { Check, Loader2, RotateCw, X } from 'lucide-react'
-import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { Loader2, RotateCw, Trash2 } from 'lucide-react'
+import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { cardHasBasicData } from '../utils/card-has-basic-data'
 
-// Placeholder shaped like a real TriageRow (headword bar + preview line + the
-// two icon-button squares) so the list doesn't jump when cards load.
-export const TriageRowSkeleton = () => (
+// Placeholder shaped like a real row (headword bar + preview line + the single
+// Remove icon-button square) so the list doesn't jump when cards load.
+export const SessionVocabularyRowSkeleton = () => (
   <div className='flex items-start gap-3 border-b'>
     <div className='flex-1 px-2 py-3'>
       <Skeleton className='h-5 w-32' />
       <Skeleton className='mt-2 h-4 w-48' />
     </div>
     <div className='flex shrink-0 items-center gap-1 py-3'>
-      <Skeleton className='h-9 w-9' />
       <Skeleton className='h-9 w-9' />
     </div>
   </div>
@@ -36,7 +35,7 @@ type EnrichingRowProps = {
 
 // Placeholder row for a highlight whose card hasn't been materialized yet:
 // either still being enriched in the background, or failed (with a retry).
-export const TriageEnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }: EnrichingRowProps) => {
+export const EnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }: EnrichingRowProps) => {
   const { t } = useLingui()
   const canRetry = status === 'failed' || status === 'missing'
   return (
@@ -67,16 +66,19 @@ export const TriageEnrichingRow = ({ surfaceForm, status, isRetrying, onRetry }:
 type Props = {
   sessionId: string
   card: Card
-  onStatusChange: (cardId: string, status: CardStatus) => void
+  onRemove: (cardId: string) => void
 }
 
-export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
+// One row in the Session vocabulary list. Cards auto-keep once they have basic
+// data, so there is no Keep step — the only control is Remove-from-session
+// (unkeep), which drops the row from the list immediately (the optimistic
+// status flip moves it to `rejected`, filtered out of the view). A data-less
+// note-only stub still shows here with a "needs data" hint; opening it and
+// generating data auto-keeps it.
+export const SessionVocabularyRow = ({ sessionId, card, onRemove }: Props) => {
   const { t } = useLingui()
-  const isKept = card.status === 'kept'
-  const isRejected = card.status === 'rejected' || card.status === 'auto_rejected'
   const preview = getBackPreview(card)
-  // Block keeping a data-less note-only card; the user generates its data first.
-  const keepDisabled = !isKept && !cardHasBasicData(card)
+  const needsData = !cardHasBasicData(card)
 
   return (
     <div className='flex items-start gap-3 border-b'>
@@ -92,26 +94,12 @@ export const TriageRow = ({ sessionId, card, onStatusChange }: Props) => {
         {preview ? (
           <p className='mt-1 text-sm'>{preview}</p>
         ) : (
-          keepDisabled && <p className='text-muted-foreground mt-1 text-sm'>{t`Needs data — open to generate`}</p>
+          needsData && <p className='text-muted-foreground mt-1 text-sm'>{t`Needs data — open to generate`}</p>
         )}
       </Link>
       <div className='flex shrink-0 items-center gap-1 py-3'>
-        <Button
-          size='icon'
-          variant={isKept ? 'default' : 'outline'}
-          aria-label={t`Keep`}
-          disabled={keepDisabled}
-          onClick={() => onStatusChange(card.id, isKept ? 'pending' : 'kept')}
-        >
-          <Check className='h-4 w-4' />
-        </Button>
-        <Button
-          size='icon'
-          variant={isRejected ? 'default' : 'outline'}
-          aria-label={t`Reject`}
-          onClick={() => onStatusChange(card.id, isRejected ? 'pending' : 'rejected')}
-        >
-          <X className='h-4 w-4' />
+        <Button size='icon' variant='outline' aria-label={t`Remove from session`} onClick={() => onRemove(card.id)}>
+          <Trash2 className='h-4 w-4' />
         </Button>
       </div>
     </div>

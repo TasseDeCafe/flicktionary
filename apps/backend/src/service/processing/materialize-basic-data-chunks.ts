@@ -8,11 +8,11 @@ import { BasicDataChunk, HighlightInput } from '../../transport/third-party/anth
 
 // The single definition of an "empty card": the canonical user_lookup (deduped
 // per (user, target_language, headword='selectionText', sense='')) plus the
-// idempotent highlight-backed card in 'pending' (or 'auto_rejected'). Shared by
-// the basic-data fallback loop (a highlight the model dropped) and the note-only
-// save lane (which deliberately skips the basic-data pass entirely). Both repo
-// methods accept the optional executor so the note-only lane can run the whole
-// insert atomically inside one transaction.
+// idempotent highlight-backed card in 'needs_data'. Shared by the basic-data
+// fallback loop (a highlight the model dropped) and the note-only save lane
+// (which deliberately skips the basic-data pass entirely). Both repo methods
+// accept the optional executor so the note-only lane can run the whole insert
+// atomically inside one transaction.
 export const insertStubCardForHighlight = async (
   params: {
     sessionId: string
@@ -42,7 +42,7 @@ export const insertStubCardForHighlight = async (
       segmentId: params.segmentId,
       userLookupId: lookup.id,
       surfaceForm: params.selectionText,
-      status: params.status ?? 'pending',
+      status: params.status ?? 'needs_data',
     },
     executor
   )
@@ -95,10 +95,11 @@ export const buildBasicDataGrammarPatch = (
 }
 
 // Writes basic-data-pass output to the DB: upserts user_lookups, fills first-time
-// content, and inserts cards in 'pending' status (or 'auto_rejected' for
-// below-CEFR rows). Also covers the fallback path where the model dropped a
-// highlight on the floor — every user highlight gets at least a stub card so
-// nothing is silently lost.
+// content, and inserts cards in 'needs_data' status (they auto-keep once basic
+// data lands). Also covers the fallback path where the model dropped a highlight
+// on the floor — every user highlight gets at least a stub card so nothing is
+// silently lost. User highlights always produce a card (they bypass the CEFR
+// floor), so there is no below-CEFR auto-reject here.
 //
 // Returns the touched user_lookups map so the caller can drive wiktionary
 // grounding without re-querying, plus the freshly-inserted card rows so
@@ -184,7 +185,10 @@ export const materializeBasicDataChunks = async (params: {
     }
 
     const highlightId = chunk.source === 'highlight' ? (chunk.highlightId ?? null) : null
-    const status = chunk.belowCefr ? 'auto_rejected' : 'pending'
+    // User highlights bypass the CEFR floor — always a real card that auto-keeps
+    // once basic data lands. `belowCefr` is still parsed for telemetry but never
+    // maps to a card status.
+    const status: CardStatus = 'needs_data'
     const insertedCard = highlightId
       ? await cardsRepository.insertCardForHighlightIdempotent({
           studySessionId: sessionId,

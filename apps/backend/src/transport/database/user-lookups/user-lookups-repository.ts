@@ -405,7 +405,7 @@ const applyKeepTransition = async (params: { userLookupId: string; cardId: strin
   // together: once a queueable facet is required on keep, a failure between the
   // two would leave a kept term that can never appear in practice. The facet is
   // a DEFAULT, not a mandate: it's created only when the term has no facet rows
-  // yet — a study-target configuration made pre-keep in the triage focus view
+  // yet — a study-target configuration made pre-keep in the focus view
   // (e.g. pronunciation-only) must survive Keep. Idempotent, so a re-keep /
   // repair pass is safe.
   await beginTx(async (tx) => {
@@ -439,7 +439,7 @@ const applyUnkeepTransition = async (params: { userLookupId: string }): Promise<
 // - newCount: rows with srs_state IS NULL (never reviewed; would enter as 'new')
 //
 // Rows with count = 0 exist because user_lookups is created eagerly at card
-// insertion time (so content has a home before triage). Those rows are NOT
+// insertion time (so content has a home before keep). Those rows are NOT
 // part of the user's vocabulary until they keep at least one card for the
 // chunk — hence the count > 0 gate everywhere on the Practice path.
 const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
@@ -848,7 +848,7 @@ const setFacetEnabled = async (params: {
     // Floor guard: a KEPT term (count > 0) must keep ≥1 enabled facet somewhere —
     // a term studied for nothing is an orphan. Reject a disable that would zero
     // out its last enabled facet. Pre-keep terms keep their freedom to drop to
-    // zero (a pending triage card with no pre-configured skills). Re-disabling an
+    // zero (a needs-data card with no pre-configured skills). Re-disabling an
     // already-disabled facet is a no-op and never trips the guard.
     if (!params.enabled && owned[0].count > 0) {
       const otherEnabled = (await tx`

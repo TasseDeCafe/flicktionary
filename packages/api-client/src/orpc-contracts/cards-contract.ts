@@ -27,41 +27,20 @@ export const cardsContract = {
     .input(z.object({ cardId: z.string().uuid() }))
     .output(z.object({ data: CardSchema })),
 
-  updateStatus: oc
-    .route({ method: 'PATCH', path: '/cards/{cardId}/status', successStatus: 200 })
+  // Remove (unkeep) a card from its session vocabulary list. Sets status to
+  // `removed`: non-destructive — it decrements user_lookups.count only if the
+  // card was kept, never sets deleted_at, and the term survives in Vocabulary if
+  // kept elsewhere. Term-level deletion is chunks.deleteChunk. There is no
+  // generic status mutation: cards keep themselves automatically once they gain
+  // basic data, so the only user-driven transition is removal.
+  removeFromSession: oc
+    .route({ method: 'PATCH', path: '/cards/{cardId}/remove-from-session', successStatus: 200 })
     .errors({
       NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      // A data-less card (note-only stub with no translation/definition/example)
-      // cannot be kept into Vocabulary/Practice — the user must generate its data
-      // first (Generate full exploration / chat). Mirrors the floor-guard pattern.
-      CONFLICT: { status: 409, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(
-      z.object({
-        cardId: z.string().uuid(),
-        status: CardStatusSchema,
-      })
-    )
+    .input(z.object({ cardId: z.string().uuid() }))
     .output(z.object({ data: CardSchema })),
-
-  // Bulk status update for triage's "Keep all" / "Reject all". Scoped to a
-  // session so the SQL UPDATE can WHERE-filter on study_session_id and the
-  // ownership check is a single lookup.
-  updateStatusBatch: oc
-    .route({ method: 'PATCH', path: '/study-sessions/{sessionId}/cards/status', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        sessionId: z.string().uuid(),
-        cardIds: z.array(z.string().uuid()).min(1).max(500),
-        status: CardStatusSchema,
-      })
-    )
-    .output(z.object({ data: z.array(CardSchema) })),
 
   explore: oc
     .route({ method: 'POST', path: '/cards/{cardId}/explore', successStatus: 200 })

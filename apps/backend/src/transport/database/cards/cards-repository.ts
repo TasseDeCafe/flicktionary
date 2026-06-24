@@ -181,17 +181,6 @@ const updateStatus = async (id: string, status: CardStatus): Promise<DbCard | nu
   return result[0] ?? null
 }
 
-const updateStatusBatch = async (studySessionId: string, cardIds: string[], status: CardStatus): Promise<DbCard[]> => {
-  if (cardIds.length === 0) return []
-  const result = (await sql`
-    UPDATE public.cards
-    SET status = ${status}, updated_at = NOW()
-    WHERE study_session_id = ${studySessionId} AND id = ANY(${cardIds}::uuid[])
-    RETURNING *
-  `) as DbCard[]
-  return result
-}
-
 // Card-level field patch. Vocabulary content (headword/sense/translation/etc.)
 // lives on user_lookups now and is patched via userLookupsRepository.
 export type CardFieldsPatch = {
@@ -225,7 +214,6 @@ export interface CardsRepositoryInterface {
   findByIdForUser: (id: string, userId: string) => Promise<DbCardWithChunk | null>
   findByHighlightId: (highlightId: string) => Promise<DbCardWithChunk | null>
   updateStatus: (id: string, status: CardStatus) => Promise<DbCard | null>
-  updateStatusBatch: (studySessionId: string, cardIds: string[], status: CardStatus) => Promise<DbCard[]>
   updateFields: (id: string, patch: CardFieldsPatch) => Promise<DbCard | null>
   listKeptForSession: (studySessionId: string) => Promise<DbCardWithChunk[]>
 }
@@ -239,7 +227,6 @@ export const CardsRepository = (): CardsRepositoryInterface => {
     findByIdForUser,
     findByHighlightId,
     updateStatus,
-    updateStatusBatch,
     updateFields,
     listKeptForSession,
   }

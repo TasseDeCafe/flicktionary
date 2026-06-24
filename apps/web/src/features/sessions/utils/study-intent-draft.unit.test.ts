@@ -33,7 +33,7 @@ describe('draftToStudyIntent', () => {
     ).toEqual({ skills: ['meaning_recognition'], formScope: 'form' })
   })
 
-  it('an emptied (touched, 0-skill) draft is undefined — no intent on the wire, a pending triage card', () => {
+  it('an emptied (touched, 0-skill) draft is undefined — no intent on the wire, a needs-data card', () => {
     expect(
       draftToStudyIntent({
         recognition: false,

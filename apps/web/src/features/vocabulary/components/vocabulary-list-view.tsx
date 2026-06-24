@@ -170,7 +170,7 @@ export const VocabularyListView = () => {
     if (!chunk.studySessionId || !chunk.firstCardId) return
     setDrawerOpen(false)
     // `from: 'vocabulary'` tells the focus view to close back to /vocabulary
-    // instead of the triage list (its default parent).
+    // instead of the session vocabulary list (its default parent).
     void navigate({
       to: '/sessions/$sessionId/review/$cardId',
       params: { sessionId: chunk.studySessionId, cardId: chunk.firstCardId },

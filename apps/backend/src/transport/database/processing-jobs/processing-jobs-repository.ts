@@ -154,7 +154,7 @@ const markFailedOrRetry = async (params: {
 // Retry affordance: flip a failed enrich job for this highlight back to pending
 // with a clean slate so the worker picks it up again. Kind-scoped to
 // enrich_highlight so a failed seed_card_chat job (which shares highlight_id) is
-// never accidentally requeued by the enrichment retry button in triage.
+// never accidentally requeued by the enrichment retry button in the session vocabulary list.
 const requeueFailedByHighlightId = async (params: {
   sessionId: string
   highlightId: string
@@ -172,7 +172,7 @@ const requeueFailedByHighlightId = async (params: {
   return result[0] ?? null
 }
 
-// All non-terminal (or failed) jobs for a session, for the triage status read:
+// All non-terminal (or failed) jobs for a session, for the session-vocabulary status read:
 // which highlights are still enriching, and which failed.
 const listActiveBySession = async (sessionId: string): Promise<DbProcessingJob[]> => {
   return (await sql`

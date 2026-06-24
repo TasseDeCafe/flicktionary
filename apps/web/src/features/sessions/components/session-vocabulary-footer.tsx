@@ -9,22 +9,27 @@ type Props = {
   // True while suggestion spans are being generated for the reader's window.
   // Shown as a subtle loader so the multi-second wait doesn't look broken.
   isGeneratingCandidates?: boolean
-  onOpenTriage?: () => void
+  onOpenSessionVocabulary?: () => void
 }
 
-export const TriageFooter = ({ sessionId, highlightCount, isGeneratingCandidates = false, onOpenTriage }: Props) => {
+export const SessionVocabularyFooter = ({
+  sessionId,
+  highlightCount,
+  isGeneratingCandidates = false,
+  onOpenSessionVocabulary,
+}: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
 
   // Highlights are enriched in the background as they're selected, so opening
-  // triage is just a navigation. The click only enqueues background discovery
-  // (the backend process route is a near no-op kept for old clients).
+  // Session vocabulary is just a navigation. The click only enqueues background
+  // discovery (the backend process route is a near no-op kept for old clients).
   const hint = highlightCount === 0 ? t`No highlights yet.` : t`${highlightCount} highlight(s) saved.`
 
-  const label = isPending ? t`Opening…` : t`Go to triage`
+  const label = isPending ? t`Opening…` : t`Session vocabulary`
 
   const handleClick = () => {
-    mutate({ sessionId }, { onSuccess: () => onOpenTriage?.() })
+    mutate({ sessionId }, { onSuccess: () => onOpenSessionVocabulary?.() })
   }
 
   return (

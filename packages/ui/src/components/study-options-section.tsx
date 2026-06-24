@@ -39,7 +39,7 @@ export const draftToStudyIntent = (draft: StudyIntentDraft): StudyIntentValue | 
     ...(draft.pronunciation ? (['pronunciation'] as const) : []),
   ]
   // An empty set must never go on the wire (the contract rejects it). When the
-  // user clears every skill the intent becomes `undefined` — a pending triage
+  // user clears every skill the intent becomes `undefined` — a needs-data
   // card with no facet pre-configured.
   if (skills.length === 0) return undefined
   return { skills, formScope: draft.exactForm ? 'form' : 'lemma' }
@@ -57,7 +57,7 @@ type StudyOptionsSectionProps = {
 // icon-cards (recognition / production / pronunciation) + a "Base form | Exact
 // form" segmented control. FULL-SET semantics — touching anything means the
 // checked set is exactly what gets studied. The popover allows 0 selected (a
-// pending triage card with no pre-configured facet); the keep-time default then
+// needs-data card with no pre-configured facet); the keep-time default then
 // enables recognition. The exact-form scope applies to the checked MEANING
 // skills (pronunciation never gets a form facet), so it locks when no meaning
 // skill is selected. Pronunciation is always offerable: the preview's IPA (a

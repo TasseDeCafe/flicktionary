@@ -18,11 +18,11 @@ export const ProcessingView = () => {
         <div className='bg-card flex flex-col gap-3 rounded-md border p-6'>
           <div className='font-medium'>{t`Processing has moved to the background`}</div>
           <p className='text-muted-foreground text-sm'>
-            {t`Highlights are enriched as you read. Triage is available immediately.`}
+            {t`Highlights are enriched as you read. Session vocabulary is available immediately.`}
           </p>
           <div className='flex gap-2'>
             <Button asChild>
-              <Link to='/sessions/$sessionId/review' params={{ sessionId }}>{t`Go to triage`}</Link>
+              <Link to='/sessions/$sessionId/review' params={{ sessionId }}>{t`Session vocabulary`}</Link>
             </Button>
             <Button variant='outline' asChild>
               <Link to='/sessions/$sessionId' params={{ sessionId }}>{t`Back to session`}</Link>
