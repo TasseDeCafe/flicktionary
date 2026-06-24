@@ -210,7 +210,7 @@ export const StudySessionsRouter = (
       }
       // Highlights are enriched in the background as they're committed; Phase 2
       // ghost nomination replaced whole-text discovery. Process is now a
-      // backwards-compatible no-op that lets old clients jump to triage without
+      // backwards-compatible no-op that lets old clients jump to session vocabulary without
       // mutating study_sessions.status.
       return { data: { accepted: true as const } }
     }),
@@ -238,7 +238,7 @@ export const StudySessionsRouter = (
       const enrichingHighlightIds: string[] = []
       const failedHighlightIds: string[] = []
       // Seed-chat jobs are tracked separately from enrichment: a pending seeded
-      // answer is not a missing card, so it must not show up as a triage straggler.
+      // answer is not a missing card, so it must not show up as a session-vocabulary straggler.
       const seedChatHighlightIds: string[] = []
       const failedSeedChatHighlightIds: string[] = []
       for (const job of jobs) {

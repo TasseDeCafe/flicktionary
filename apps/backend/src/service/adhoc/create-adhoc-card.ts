@@ -213,7 +213,7 @@ export const createAdhocCard = async (params: {
   }
 
   // Adhoc entries are an explicit user action ("add this word to my
-  // vocabulary"), so they bypass triage: stamp the card as kept and apply
+  // vocabulary"), so they keep immediately: stamp the card as kept and apply
   // the lookup transition that materialize no longer does.
   await deps.cardsRepository.updateStatus(insertedCard.id, 'kept')
   await deps.userLookupsRepository.applyKeepTransition({

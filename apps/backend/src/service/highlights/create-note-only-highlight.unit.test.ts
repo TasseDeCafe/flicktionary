@@ -83,7 +83,7 @@ describe('createNoteOnlyHighlight', () => {
     // insertCardForHighlightIdempotent), threading the same tx executor.
     expect(m.findOrCreate).toHaveBeenCalledWith({ userId, targetLanguage: 'es', headword: 'word', sense: '' }, m.tx)
     expect(m.insertCardForHighlightIdempotent).toHaveBeenCalledWith(
-      expect.objectContaining({ highlightId: newHighlightId, userLookupId: lookupId, status: 'pending' }),
+      expect.objectContaining({ highlightId: newHighlightId, userLookupId: lookupId, status: 'needs_data' }),
       m.tx
     )
   })

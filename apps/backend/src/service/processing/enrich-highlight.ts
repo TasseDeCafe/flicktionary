@@ -9,18 +9,18 @@ import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropi
 import { selectSurroundingSegments } from './select-surrounding-segments'
 import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
-import { autoKeepPendingIfEligible } from '../cards/set-card-status'
+import { autoKeepNeedsDataIfEligible } from '../cards/set-card-status'
 import { recordPassTelemetry } from './telemetry'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import type { ProcessingDependencies } from './processing-dependencies'
 
 export type EnrichHighlightOutcome = 'enriched' | 'cancelled'
 
-// Enrich exactly one user highlight into a pending card + user_lookups row, in
-// the background, the moment it is committed during reading. Independent of
-// every other highlight: user highlights bypass the discovery-only exclusion
-// prefilter and sense-disambiguation tiebreaker, so no cross-highlight
-// coordination is needed here.
+// Enrich exactly one user highlight into a card + user_lookups row, in the
+// background, the moment it is committed during reading. The card is inserted
+// `needs_data` and auto-keeps once basic data lands. Independent of every other
+// highlight: user highlights bypass the discovery-only exclusion prefilter and
+// sense-disambiguation tiebreaker, so no cross-highlight coordination is needed.
 //
 // Returns 'cancelled' (a non-retryable terminal outcome) when the session or
 // highlight no longer exists — the highlight was deleted mid-flight. The
@@ -199,10 +199,11 @@ export const enrichHighlight = async (
 
   // Auto-keep now that the card has basic data and any study intent has already
   // created its facets — saving the highlight was the explicit commit, so the
-  // card skips triage. Mirrors the adhoc flow's materialize→ground→intent→keep
-  // order so the keep-time recognition default honors full-set intent semantics.
+  // card keeps itself with no separate Keep step. Mirrors the adhoc flow's
+  // materialize→ground→intent→keep order so the keep-time recognition default
+  // honors full-set intent semantics.
   for (const inserted of insertedCards) {
-    await autoKeepPendingIfEligible(inserted.id, userId, {
+    await autoKeepNeedsDataIfEligible(inserted.id, userId, {
       cardsRepository,
       studySessionsRepository,
       userLookupsRepository,

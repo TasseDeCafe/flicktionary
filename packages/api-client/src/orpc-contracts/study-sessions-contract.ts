@@ -97,7 +97,7 @@ export const studySessionsContract = {
       })
     ),
 
-  // Triage loaders: which highlights still have an enrich job in flight, and
+  // Session-vocabulary loaders: which highlights still have an enrich job in flight, and
   // which failed (retry affordance).
   getProcessingStatus: oc
     .route({ method: 'GET', path: '/study-sessions/{sessionId}/processing-status', successStatus: 200 })
@@ -114,7 +114,7 @@ export const studySessionsContract = {
           // Highlights whose saved note/preset is being answered in the card chat
           // (pending/processing), and those whose seed job parked as failed. Kept
           // separate from enriching/failed so a pending answer is not mistaken for
-          // a missing card in triage.
+          // a missing card in the session vocabulary list.
           seedChatHighlightIds: z.array(z.string().uuid()),
           failedSeedChatHighlightIds: z.array(z.string().uuid()),
         }),

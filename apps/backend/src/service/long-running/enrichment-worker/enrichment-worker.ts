@@ -16,7 +16,7 @@ export interface EnrichmentWorkerInterface {
 
 // Poll cadence and lease/retry tuning. STALE_AFTER reclaims a lease held by a
 // crashed worker; MAX_ATTEMPTS caps retries before a job is parked as failed
-// (surfaced to the user with a retry affordance in triage).
+// (surfaced to the user with a retry affordance in the session vocabulary list).
 const POLL_INTERVAL_MS = 2000
 const BATCH_SIZE = 3
 const STALE_AFTER_SECONDS = 5 * 60

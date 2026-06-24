@@ -6,7 +6,16 @@ export type ContentSourceType = z.infer<typeof ContentSourceTypeSchema>
 export const TextTrackSourceSchema = z.enum(['opensubtitles', 'upload', 'paste', 'url'])
 export type TextTrackSource = z.infer<typeof TextTrackSourceSchema>
 
-export const CardStatusSchema = z.enum(['pending', 'kept', 'rejected', 'auto_rejected'])
+// Auto-keep session-vocabulary model:
+//   needs_data — a card with no basic flashcard data yet (usually a note-only
+//                stub awaiting Generate full exploration / chat).
+//   kept       — has basic data; contributes to user_lookups.count and is in
+//                Vocabulary/Practice. Cards auto-keep into this the moment they
+//                gain basic data (saving the highlight was the explicit commit).
+//   removed    — removed from its session vocabulary list (unkept). NOT a
+//                soft-delete of the term — it survives in Vocabulary if kept
+//                elsewhere. Term-level deletion is chunks.deleteChunk.
+export const CardStatusSchema = z.enum(['needs_data', 'kept', 'removed'])
 export type CardStatus = z.infer<typeof CardStatusSchema>
 
 export const CardChatRoleSchema = z.enum(['user', 'assistant'])

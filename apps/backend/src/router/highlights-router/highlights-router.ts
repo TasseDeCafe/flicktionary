@@ -166,7 +166,7 @@ export const HighlightsRouter = (
 
       const inserted = await highlightsRepository.insertHighlight(insertParams)
       // Kick off background enrichment so the card is (almost) ready by the time
-      // the user reaches triage. Debounced to absorb mis-selections; idempotent
+      // the user reaches the session vocabulary list. Debounced to absorb mis-selections; idempotent
       // per live job. Best-effort — a failed enqueue must not fail the highlight.
       try {
         await processingJobsRepository.enqueue({

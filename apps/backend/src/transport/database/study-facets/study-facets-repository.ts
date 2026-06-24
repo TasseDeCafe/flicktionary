@@ -91,7 +91,7 @@ const ensureCitationFacet = async (userLookupId: string, executor: postgres.Sql 
 // Keep-time DEFAULT: create the citation recognition facet only when the term
 // has NO study-facet rows at all. Any existing row — enabled, disabled, another
 // skill or form — means the user already configured study targets pre-keep
-// (e.g. pronunciation-only from the triage focus view), and Keep must respect
+// (e.g. pronunciation-only from the focus view), and Keep must respect
 // that instead of force-adding recognition. The plain Keep path (selector never
 // touched → zero rows) keeps its recognition default. Row-existence, not
 // "no ENABLED facet", so a deliberately dormant (all-skills-off) term isn't
