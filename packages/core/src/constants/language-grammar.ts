@@ -119,7 +119,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
 // gloss/lookup sheets). Add languages here only after running
 // `pnpm load:kaikki` for them and validating the extraction shape
 // (head_templates structure varies by language).
-export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en'])
+export const KAIKKI_LANGUAGES: ReadonlySet<string> = new Set(['ru', 'en', 'de'])
 
 export const getLanguageGrammarConfig = (code: string | undefined | null): LanguageGrammarConfig => {
   if (!code) return DEFAULT_GRAMMAR_CONFIG

@@ -138,8 +138,8 @@ The enrichment path uses these shared steps:
      `ran out of milk` → `headword = "run out of"`.
 3. **Wiktionary grounding (post-basic-data, per-language).** For target
    languages loaded from the raw Kaikki/Wiktextract dump into our
-   `wiktionary_entries` / `wiktionary_forms` tables (currently `ru` and
-   `en` — gated by `KAIKKI_ENABLED_LANGUAGES`), each newly-touched
+   `wiktionary_entries` / `wiktionary_forms` tables (currently `ru`,
+   `en`, and `de` — gated by `KAIKKI_LANGUAGES`), each newly-touched
    `user_lookups` row is looked up via a four-path chain: real-lemma direct
    hit → real-lemma POS-agnostic → form-of pseudo-entry resolved to its
    underlying lemma → `wiktionary_forms` paradigm-cell match. For English
@@ -147,14 +147,19 @@ The enrichment path uses these shared steps:
    under the same verb POS (`to stink` → `stink`) before falling back to
    broader paths. When something matches, the structured grammar fields the
    extractor knows about (e.g. POS, Russian gender/animacy/aspect fields,
+   German gender/plural/genitive/weak-noun + separable/auxiliary fields,
    display_form where appropriate, and Wiktionary IPA) are shallow-merged
    into the row's `grammar` JSONB with **kaikki winning where both sides
    have a value**; LLM-only keys (e.g. `government`, `notes`,
-   `notable_forms`) are preserved untouched. English skips Wiktionary
-   `display_form` because head-template expansions are noisy
-   (`dictionary (plural dictionaries)`); English IPA is bucketed into GA/RP
-   when tags allow it, while non-English IPA currently uses the untagged
-   bucket. `grounded_at` is stamped on success, and the exact merged patch is
+   `notable_forms` — German keeps principal parts LLM-owned) are preserved
+   untouched. English **and German** skip Wiktionary `display_form` because
+   head-template expansions are noisy (`dictionary (plural dictionaries)`;
+   German `Haus n (strong, genitive Hauses, …)`); English IPA is bucketed
+   into GA/RP when tags allow it, while non-English IPA uses the untagged
+   bucket — for German, sounds tagged only `standard` / `Germany` count as
+   untagged too, and any regional tag (Austria / Switzerland /
+   Southern-Germany) is dropped so a learner never gets a regional
+   pronunciation. `grounded_at` is stamped on success, and the exact merged patch is
    snapshotted into `grounding_patch` — the focus view's per-field provenance
    indicators compare live grammar values against it. Idempotent across
    re-process: rows already grounded short-circuit, EXCEPT rows grounded
@@ -862,7 +867,7 @@ Notes:
 
 ## LLM methodology prompt
 
-Used as the system prompt for every heavy pass (context blob, basic-data, full-exploration, practice-text-generation) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{source_context_blob}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`). Three blocks ship today: Spanish (rioplatense / peninsular / Mexican variant rules, pronominal-verb headword rules, plus grammar-field guidance for unpredictable gender + reflexive verbs + fixed-preposition verbs); Russian (clean-headword convention, soft-sign-masculine flagging, aspect + aspect_pair_headword + government rules, plurale tantum, stress-marked `display_form`); English (marked-infinitive headword convention `to <verb>`, prepositional-verb government, irregular-form `notable_forms` for irregular pasts / plurals / comparatives, plurale tantum). The English block is parameterized on the user's `english_ipa_dialect` pref (GA vs RP): it sets the default variety for usage, spelling, and IPA, and flips which variety gets flagged as regional — each dialect is its own stable cache-prefix variant; the dialect is threaded into the full-exploration pass and per-card chat (other passes default to GA). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
+Used as the system prompt for every heavy pass (context blob, basic-data, full-exploration, practice-text-generation) and per-card chat. Runtime variables: `{native_language}`, `{target_language}`, `{cefr_level}`, `{source_context_blob}`, plus a per-target-language instruction block (hardcoded in `language-instructions.ts`). Four blocks ship today: Spanish (rioplatense / peninsular / Mexican variant rules, pronominal-verb headword rules, plus grammar-field guidance for unpredictable gender + reflexive verbs + fixed-preposition verbs); Russian (clean-headword convention, soft-sign-masculine flagging, aspect + aspect_pair_headword + government rules, plurale tantum, stress-marked `display_form`); English (marked-infinitive headword convention `to <verb>`, prepositional-verb government, irregular-form `notable_forms` for irregular pasts / plurals / comparatives, plurale tantum); German (bare-capitalized-noun / article-derived-from-gender convention — the article is never in the headword — required gender + plural + genitive forms + weak-noun flag for nouns, joined-prefix infinitive + separable flag + perfect auxiliary (`haben` / `sein` / `haben_or_sein`) for verbs, principal parts in `notable_forms`). The German citation line is composed at render time by a shared helper (`packages/core/src/utils/german-noun-forms.ts`): `der/die/das` from gender, the plural as a `pl -e` suffix or full `die Häuser` form, and the genitive only when it deviates from the predictable masc/neut `-(e)s`. The English block is parameterized on the user's `english_ipa_dialect` pref (GA vs RP): it sets the default variety for usage, spelling, and IPA, and flips which variety gets flagged as regional — each dialect is its own stable cache-prefix variant; the dialect is threaded into the full-exploration pass and per-card chat (other passes default to GA). The block is injected right after the methodology preamble, inside the cacheable prefix; sessions in a target language with no entry fall through silently.
 
 ```
 You are a linguistic co-pilot for a language learner. Methodology: lexical approach.

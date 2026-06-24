@@ -69,6 +69,13 @@ const WIKTIONARY_GROUNDED_GRAMMAR_KEYS = new Set([
   'aspect',
   'aspect_pair_headword',
   'is_reflexive',
+  // German grounded keys. notable_forms is intentionally excluded — German
+  // grounding never writes principal parts, so they stay LLM-owned.
+  'plural',
+  'genitive',
+  'is_weak_noun',
+  'is_separable',
+  'auxiliary',
   'ipa',
 ])
 
