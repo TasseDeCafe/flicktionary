@@ -50,7 +50,7 @@ it is the review mode of a skill, mapped at the service boundary (`skillForPool`
 - Keeping a term creates a `(meaning_recognition, '')` facet **as a default** (atomic with the
   `count` bump; `ensureDefaultCitationFacetIfUnconfigured`, idempotent) — but only when the term
   has no facet rows yet. A study-target configuration made before Keep (e.g. pronunciation-only
-  picked in the triage focus view) is respected, not overwritten; a dormant (all-skills-disabled)
+  picked in the focus view) is respected, not overwritten; a dormant (all-skills-disabled)
   term is not resurrected by a re-keep. A `(meaning_production, '')` facet exists only once
   production is enabled.
 - **Study intent** (gloss-save popovers): `highlights.create` / `cards.createAdhoc` accept an
