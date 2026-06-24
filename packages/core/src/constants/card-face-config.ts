@@ -47,10 +47,10 @@ export const PRODUCTION_CARD_FACE_CONFIG: CardFaceConfig = {
 
 // Languages absent here use the default. ru/en (Kaikki languages) carry a
 // Wiktionary-grounded `grammar.ipa`; other languages have no ipa bag and the
-// slot falls out naturally via pickIpa. English surfaces IPA on the front
-// (spelling doesn't give pronunciation away); Russian defers it to the back —
-// stress position + IPA *are* part of the answer on a recognition card, so
-// the front shows the unstressed form and reveals both with the back.
+// slot falls out naturally via pickIpa. Both defer IPA to the back on a
+// recognition card — pronunciation is part of the answer, so the front shows
+// the term and the back reveals how it sounds. Russian additionally hides the
+// stress mark on the front since stress position is also part of the answer.
 export const LANGUAGE_CARD_FACE: Partial<Record<SupportedLanguageCode, CardFaceConfig>> = {
   ru: {
     front: ['headword', 'targetExample'],
@@ -58,8 +58,8 @@ export const LANGUAGE_CARD_FACE: Partial<Record<SupportedLanguageCode, CardFaceC
     hideStressOnFront: true,
   },
   en: {
-    front: ['headword', 'ipa', 'targetExample'],
-    back: ['definition', 'translation', 'nativeExample', 'grammar'],
+    front: ['headword', 'targetExample'],
+    back: ['ipa', 'definition', 'translation', 'nativeExample', 'grammar'],
   },
 }
 
