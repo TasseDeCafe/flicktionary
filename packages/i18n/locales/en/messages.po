@@ -573,6 +573,10 @@ msgstr "Auto-pause: Off"
 msgid "Auto-pause: On"
 msgstr "Auto-pause: On"
 
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "Auxiliary"
+msgstr "Auxiliary"
+
 #: apps/web/src/features/more/components/account-page.tsx
 msgid "Avatar"
 msgstr "Avatar"
@@ -1145,6 +1149,14 @@ msgstr "e.g. /ˈkæt/"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "e.g. + acc, от + gen"
 msgstr "e.g. + acc, от + gen"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "e.g. Häuser"
+msgstr "e.g. Häuser"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "e.g. Namens"
+msgstr "e.g. Namens"
 
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
 msgid "e.g. подоконник, ran out of, à propos"
@@ -1802,6 +1814,10 @@ msgstr "Generating..."
 msgid "Generating…"
 msgstr "Generating…"
 
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "Genitive"
+msgstr "Genitive"
+
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 msgid "Get started"
 msgstr "Get started"
@@ -1855,6 +1871,14 @@ msgstr "Grammar"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Grammar notes"
 msgstr "Grammar notes"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "haben"
+msgstr "haben"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "haben or sein"
+msgstr "haben or sein"
 
 #: packages/ui/src/components/rate-buttons.tsx
 msgid "Hard"
@@ -2672,6 +2696,10 @@ msgstr "Path hash regex for subtitle detection"
 msgid "Path regex for subtitle detection"
 msgstr "Path regex for subtitle detection"
 
+#: apps/web/src/features/review/components/grammar-chips.tsx
+msgid "Perfect auxiliary"
+msgstr "Perfect auxiliary"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Perfective"
 msgstr "Perfective"
@@ -2796,6 +2824,10 @@ msgstr "Please try again or refresh the page."
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 msgid "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
 msgstr "Please type \"{EXPECTED_CONFIRMATION_TEXT}\""
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "Plural"
+msgstr "Plural"
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Plural-only"
@@ -3278,6 +3310,10 @@ msgstr "Seek to next subtitle"
 msgid "Seek to previous subtitle"
 msgstr "Seek to previous subtitle"
 
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "sein"
+msgstr "sein"
+
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
 msgid "Select a language"
 msgstr "Select a language"
@@ -3326,6 +3362,11 @@ msgstr "Sending an email"
 #: apps/web/src/features/removals/components/delete-account-overlay-content.tsx
 msgid "Sending..."
 msgstr "Sending..."
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+#: apps/web/src/features/review/components/grammar-chips.tsx
+msgid "Separable verb"
+msgstr "Separable verb"
 
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Session"
@@ -4229,6 +4270,15 @@ msgstr "We've sent a verification email to:"
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "We've sent a verification link to:"
 msgstr "We've sent a verification link to:"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+msgid "Weak noun"
+msgstr "Weak noun"
+
+#: apps/web/src/features/review/components/editable-grammar-panel.tsx
+#: apps/web/src/features/review/components/grammar-chips.tsx
+msgid "Weak noun (n-declension)"
+msgstr "Weak noun (n-declension)"
 
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
 msgid "Welcome to Flicktionary"
