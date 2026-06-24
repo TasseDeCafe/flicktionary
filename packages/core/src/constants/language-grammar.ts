@@ -128,7 +128,7 @@ export const getLanguageGrammarConfig = (code: string | undefined | null): Langu
 
 // Fields that are meaningful for any part of speech (when the language lists
 // them at all). The POS-specific additions below layer on top of this set.
-const UNIVERSAL_FIELDS: ReadonlyArray<GrammarFieldKey> = [
+export const UNIVERSAL_GRAMMAR_FIELDS: ReadonlyArray<GrammarFieldKey> = [
   'pos',
   'display_form',
   'ipa',
@@ -169,6 +169,6 @@ export const getEffectiveGrammarFields = (
   if (!pos) return langFields
   const posSpecific = POS_SPECIFIC_FIELDS[pos]
   if (!posSpecific) return langFields
-  const allowed = new Set<GrammarFieldKey>([...UNIVERSAL_FIELDS, ...posSpecific])
+  const allowed = new Set<GrammarFieldKey>([...UNIVERSAL_GRAMMAR_FIELDS, ...posSpecific])
   return langFields.filter((f) => allowed.has(f))
 }
