@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { setCardStatus, setCardStatusBatch, CardKeepBlockedError } from './set-card-status'
+import { autoKeepPendingIfEligible, setCardStatus, setCardStatusBatch, CardKeepBlockedError } from './set-card-status'
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const sessionId = '00000000-0000-0000-0000-000000000002'
@@ -57,6 +57,45 @@ describe('setCardStatus keep guard', () => {
     const m = makeDeps([makeCard('c1', 'pending', {})])
     const result = await setCardStatus('c1', userId, 'rejected', m.deps)
     expect(result?.status).toBe('rejected')
+  })
+})
+
+describe('autoKeepPendingIfEligible', () => {
+  it('keeps a data-bearing pending card', async () => {
+    const m = makeDeps([makeCard('c1', 'pending', { target_example: 'eat it' })])
+    const result = await autoKeepPendingIfEligible('c1', userId, m.deps)
+    expect(result?.status).toBe('kept')
+    expect(m.applyKeepTransition).toHaveBeenCalledOnce()
+  })
+
+  it('no-ops on a data-less (note-only) pending card', async () => {
+    const m = makeDeps([makeCard('c1', 'pending', {})])
+    const result = await autoKeepPendingIfEligible('c1', userId, m.deps)
+    expect(result).toBeNull()
+    expect(m.updateStatus).not.toHaveBeenCalled()
+    expect(m.applyKeepTransition).not.toHaveBeenCalled()
+  })
+
+  it('no-ops on an already-kept card', async () => {
+    const m = makeDeps([makeCard('c1', 'kept', { definition: 'a sense' })])
+    const result = await autoKeepPendingIfEligible('c1', userId, m.deps)
+    expect(result).toBeNull()
+    expect(m.updateStatus).not.toHaveBeenCalled()
+  })
+
+  it('never resurrects a removed (rejected) card', async () => {
+    const m = makeDeps([makeCard('c1', 'rejected', { translation: 'x' })])
+    const result = await autoKeepPendingIfEligible('c1', userId, m.deps)
+    expect(result).toBeNull()
+    expect(m.updateStatus).not.toHaveBeenCalled()
+    expect(m.applyKeepTransition).not.toHaveBeenCalled()
+  })
+
+  it('never resurrects an auto_rejected card', async () => {
+    const m = makeDeps([makeCard('c1', 'auto_rejected', { translation: 'x' })])
+    const result = await autoKeepPendingIfEligible('c1', userId, m.deps)
+    expect(result).toBeNull()
+    expect(m.updateStatus).not.toHaveBeenCalled()
   })
 })
 

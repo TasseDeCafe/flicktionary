@@ -5,7 +5,7 @@ import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2 } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
@@ -192,14 +192,10 @@ export const FocusView = () => {
     wasFormDataEnrichingRef.current = isFormDataEnriching
   }, [isFormDataEnriching, sourceSessionId, card, queryClient])
 
-  // Brief "pressed" highlight before auto-advance: optimistic cache updates only
-  // flip `status`, not `learning_mode`, so we can't rely on derived state alone
-  // for the visual confirmation. Reset on cardId change so the next card mounts
+  // Reset the per-card editor selection on cardId change so the next card mounts
   // with a clean slate. Declared above the early returns to keep hook order
   // stable across loading/empty states.
-  const [pendingAction, setPendingAction] = useState<'reject' | 'keep' | null>(null)
   useEffect(() => {
-    setPendingAction(null)
     setSelectedTarget({ kind: 'citation' })
     setAutoSetup(null)
   }, [cardId])
@@ -264,8 +260,9 @@ export const FocusView = () => {
   const isLanguageWideEntry = fromVocabulary || fromPractice
   // A kept term must keep ≥1 enabled skill per target (backend floor guard); the
   // SkillsCard last-skill lock is the friendly front. Language-wide entries are
-  // kept by definition; triage entries follow the (optimistic) keep decision.
-  const isKeptTerm = isLanguageWideEntry || (pendingAction ? pendingAction === 'keep' : card.status === 'kept')
+  // kept by definition; session entries auto-keep once they have basic data, so
+  // a data-bearing session card reads as kept here too.
+  const isKeptTerm = isLanguageWideEntry || card.status === 'kept'
   const deleteHeadword = card.chunk.headword
   // German citation nouns show the derived article title (`der Bestandteil`); the
   // helper falls back to display_form || headword for every other language.
@@ -277,12 +274,14 @@ export const FocusView = () => {
   const title = isLanguageWideEntry ? headwordTitle : positionLabel
 
   // Prev/next pager lives in the header (right side, away from the back
-  // chevron) so it never overlaps the scrolling card content. Only triage
-  // cards have a position to page through; vocabulary/practice entries don't.
+  // chevron) so it never overlaps the scrolling card content. Only session
+  // entries have a position to page through; vocabulary/practice entries don't
+  // load the session card list, so they have no cursor.
   // The chat button is always present — chat exists for all card types.
+  const hasSessionCursor = cursor.index >= 0
   const headerNav = (
     <>
-      {!isLanguageWideEntry && (
+      {hasSessionCursor && (
         <>
           <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
             <ChevronLeft className='size-6 md:size-5' />
@@ -301,24 +300,20 @@ export const FocusView = () => {
     </>
   )
 
-  // Advance to the next card on a triage decision; if we're on the last card,
-  // bounce back to the triage list so the user isn't stranded.
+  // Advance to the next card after a remove; if we're on the last card, bounce
+  // back to the session-vocabulary list so the user isn't stranded.
   const advanceOrClose = () => {
     if (cursor.next) goNext()
     else closeToTriage()
   }
 
-  const triggerAction = (action: 'reject' | 'keep') => {
-    if (pendingAction) return
-    setPendingAction(action)
-    if (action === 'reject') {
-      if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
-    } else {
-      // Keep just enables recognition server-side; the pool fork is gone
-      // (production is now a per-target study facet edited elsewhere).
-      if (card.status !== 'kept') updateStatus({ cardId: card.id, status: 'kept' })
-    }
-    setTimeout(() => advanceOrClose(), 220)
+  // Remove-from-session = unkeep this card (non-destructive). It survives in
+  // Vocabulary if kept elsewhere; the count badge decrements; the last keep
+  // takes count to 0 and it leaves Vocabulary naturally. No deleted_at, no
+  // cross-session nuking, no warning — then advance like the old triage flow.
+  const handleRemoveFromSession = () => {
+    if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
+    advanceOrClose()
   }
 
   const desktopChatOpen = chatOpen && isMobile === false
@@ -346,9 +341,9 @@ export const FocusView = () => {
                   )}
                 </div>
                 {/* Study-target selector (Citation + forms + Add a form) drives
-                    the editor below. Shown in triage too — keeping a card on
-                    Keep just enables recognition; this lets the learner set up
-                    forms/skills + edit content before/after that decision. */}
+                    the editor below. Session entries are auto-kept once they
+                    have data, so learners can set up forms/skills and edit
+                    content directly from here. */}
                 <FormSelector
                   chunk={card.chunk}
                   facets={facets}
@@ -374,11 +369,12 @@ export const FocusView = () => {
               </section>
 
               <section>
-                {/* Language-wide entries are already-kept terms: offer a
-                    secondary delete affordance (triage cards delete via the
-                    Reject bar, so this is gated to kept entries). */}
-                {isLanguageWideEntry && (
-                  <div className='mb-6'>
+                {/* Scope-aware remove affordance. Language-wide entries
+                    (vocabulary/practice) Delete the term everywhere (soft-delete,
+                    behind a confirm). Session entries Remove-from-session, which
+                    just unkeeps this card — non-destructive, no confirm. */}
+                <div className='mb-6'>
+                  {isLanguageWideEntry ? (
                     <Button
                       variant='ghost'
                       size='sm'
@@ -388,8 +384,18 @@ export const FocusView = () => {
                       <Trash2 className='mr-1 h-4 w-4' />
                       {t`Delete term`}
                     </Button>
-                  </div>
-                )}
+                  ) : (
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                      onClick={handleRemoveFromSession}
+                    >
+                      <Trash2 className='mr-1 h-4 w-4' />
+                      {t`Remove from session`}
+                    </Button>
+                  )}
+                </div>
                 <h2 className='text-muted-foreground mb-3 text-sm font-semibold tracking-wide uppercase'>{t`Full exploration`}</h2>
                 {hasExtras ? (
                   <FullExplorationRenderer card={card} hideExtrasIpa={!!displayedIpa} showL1Notes={showL1Notes} />
@@ -417,19 +423,9 @@ export const FocusView = () => {
             </div>
           </div>
 
-          {/* Language-wide entries (vocabulary AND practice origins) are
-              already kept — their study targets + delete affordance live inline
-              in the scrollable content above, so there's no bottom action bar. */}
-          {!isLanguageWideEntry && (
-            <FocusActionBar
-              card={card}
-              pendingAction={pendingAction}
-              onReject={() => triggerAction('reject')}
-              onKeep={() => triggerAction('keep')}
-              keepDisabled={!hasBasicData}
-            />
-          )}
-
+          {/* No bottom keep/reject bar: cards auto-keep once they have basic
+              data, and removal lives inline in the scrollable content above
+              (Remove from session / Delete term). */}
           {isLanguageWideEntry && (
             <ResponsiveOverlay open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
               <OverlayContent>
@@ -544,50 +540,3 @@ const FocusViewSkeleton = () => (
     </div>
   </div>
 )
-
-type FocusActionBarProps = {
-  card: {
-    status: 'pending' | 'kept' | 'rejected' | 'auto_rejected'
-  }
-  // When set, overrides the state-derived highlight so the just-tapped button
-  // stays filled during the brief delay before navigation.
-  pendingAction: 'reject' | 'keep' | null
-  onReject: () => void
-  onKeep: () => void
-  // A note-only card has no flashcard data — keeping it would push a blank card
-  // into Vocabulary/Practice. Disable Keep until the user generates its data.
-  keepDisabled?: boolean
-}
-
-const FocusActionBar = ({ card, pendingAction, onReject, onKeep, keepDisabled }: FocusActionBarProps) => {
-  const { t } = useLingui()
-  const isRejected = pendingAction
-    ? pendingAction === 'reject'
-    : card.status === 'rejected' || card.status === 'auto_rejected'
-  const isKept = pendingAction ? pendingAction === 'keep' : card.status === 'kept'
-
-  return (
-    <div className='bg-background shrink-0 border-t px-4 py-3'>
-      <div className='mx-auto w-full max-w-4xl'>
-        <div className='flex items-stretch gap-2'>
-          <Button size='xl' variant={isRejected ? 'destructive' : 'outline'} className='flex-1' onClick={onReject}>
-            <X className='mr-1 h-4 w-4' />
-            {t`Reject`}
-          </Button>
-          <Button
-            size='xl'
-            variant={isKept ? 'default' : 'outline'}
-            className='flex-1'
-            onClick={onKeep}
-            disabled={keepDisabled}
-          >
-            {t`Keep`}
-          </Button>
-        </div>
-        {keepDisabled && (
-          <p className='text-muted-foreground mt-2 text-center text-xs'>{t`Generate this card's data first`}</p>
-        )}
-      </div>
-    </div>
-  )
-}

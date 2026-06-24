@@ -15,6 +15,7 @@ import { UserLookupsRepositoryInterface } from '../../transport/database/user-lo
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
 import { getLanguageMode, type LanguageMode } from '../user-prefs/language-mode'
+import { autoKeepPendingIfEligible } from '../cards/set-card-status'
 import { sanitizeExplorationExtrasForLanguageMode } from '../user-prefs/language-output-guards'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 
@@ -416,6 +417,15 @@ export const runCardChat = async (
           nativeExample: parsed.patch.nativeExample,
           explorationExtrasPatch: parsed.patch.extrasPatch,
           grammarPatch: parsed.patch.grammarPatch,
+        })
+        // A note-only stub whose chat just generated basic data auto-keeps. A
+        // normal highlight is already kept by enrichment, so this only ever
+        // fires for a data-less stub gaining data — no study-intent ordering
+        // race (note-only saves carry no intent).
+        await autoKeepPendingIfEligible(input.cardId, input.userId, {
+          cardsRepository: deps.cardsRepository,
+          studySessionsRepository: deps.studySessionsRepository,
+          userLookupsRepository: deps.userLookupsRepository,
         })
       }
       if (parsed.patch.headword !== null || parsed.patch.sense !== null) {

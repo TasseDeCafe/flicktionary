@@ -15,6 +15,7 @@ import { selectSurroundingSegments, formatSurroundingSegments } from '../process
 import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
 import { ContentSourcesRepositoryInterface } from '../../transport/database/content-sources/content-sources-repository'
 import { getLanguageMode } from '../user-prefs/language-mode'
+import { autoKeepPendingIfEligible } from '../cards/set-card-status'
 import {
   sanitizeExplorationExtrasForLanguageMode,
   sanitizeTextFieldsForLanguageMode,
@@ -173,6 +174,14 @@ export const exploreCardIfMissing = async (
         })
       }
     }
+
+    // A note-only stub gaining basic data here auto-keeps it — generating its
+    // exploration is the same explicit commit Save was for a normal highlight.
+    await autoKeepPendingIfEligible(cardId, userId, {
+      cardsRepository: deps.cardsRepository,
+      studySessionsRepository: deps.studySessionsRepository,
+      userLookupsRepository: deps.userLookupsRepository,
+    })
 
     return 'updated'
   } catch (e) {

@@ -76,6 +76,29 @@ export const setCardStatus = async (
   return updated
 }
 
+// Auto-keep a freshly data-bearing card. Saving a highlight is already an
+// explicit commit, so a card keeps itself the moment it gains basic flashcard
+// data — no separate triage Keep step. Gated two ways:
+//   - status === 'pending'   →  never resurrect a Removed (rejected) or
+//     auto_rejected card via a later retry/chat/exploration write.
+//   - cardHasBasicData(card) →  skip note-only stubs (they keep until the user
+//     generates data).
+// Idempotent and reuses setCardStatus's keep-transition machinery. MUST run
+// AFTER applyStudyIntent at every call site: the keep-time recognition default
+// (ensureDefaultCitationFacetIfUnconfigured) only fires when the term has no
+// facet rows, so the intent's facets must already exist for full-set semantics
+// (production-only / pronunciation-only / exact-form) to survive the keep.
+export const autoKeepPendingIfEligible = async (
+  cardId: string,
+  userId: string,
+  deps: SetCardStatusDependencies
+): Promise<DbCard | null> => {
+  const card = await deps.cardsRepository.findByIdForUser(cardId, userId)
+  if (!card) return null
+  if (card.status !== 'pending' || !cardHasBasicData(card)) return null
+  return setCardStatus(cardId, userId, 'kept', deps)
+}
+
 // Bulk variant for the triage list's "Keep all" / "Reject all" buttons. Same
 // transition semantics as setCardStatus, partitioned across the batch.
 export const setCardStatusBatch = async (

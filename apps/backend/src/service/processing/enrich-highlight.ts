@@ -9,6 +9,7 @@ import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropi
 import { selectSurroundingSegments } from './select-surrounding-segments'
 import { materializeBasicDataChunks } from './materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
+import { autoKeepPendingIfEligible } from '../cards/set-card-status'
 import { recordPassTelemetry } from './telemetry'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import type { ProcessingDependencies } from './processing-dependencies'
@@ -194,6 +195,18 @@ export const enrichHighlight = async (
         params: { highlightId },
       })
     }
+  }
+
+  // Auto-keep now that the card has basic data and any study intent has already
+  // created its facets — saving the highlight was the explicit commit, so the
+  // card skips triage. Mirrors the adhoc flow's materialize→ground→intent→keep
+  // order so the keep-time recognition default honors full-set intent semantics.
+  for (const inserted of insertedCards) {
+    await autoKeepPendingIfEligible(inserted.id, userId, {
+      cardsRepository,
+      studySessionsRepository,
+      userLookupsRepository,
+    })
   }
 
   await recordPassTelemetry(processingTelemetryRepository, {

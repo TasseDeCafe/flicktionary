@@ -91,6 +91,21 @@ not hit SDK duration limits.
   still exists immediately before writing, so deleting a highlight mid-flight
   cancels cleanly (no card, non-retryable). Card creation is idempotent (partial
   unique index on `cards(highlight_id)`), so a retry never double-creates.
+  - **Auto-keep.** Saving a highlight is already an explicit commit, so the card
+    auto-keeps the moment it has basic flashcard data — there is no separate
+    triage Keep step. The shared helper `autoKeepPendingIfEligible` re-fetches the
+    card and keeps it **only if** its status is still `pending` **and** it has
+    basic data (`cardHasBasicData`): the `pending` gate means a Removed
+    (`rejected`) or `auto_rejected` card is never resurrected by a later
+    retry/chat/exploration write, and the data gate skips note-only stubs. It runs
+    at every basic-data write path — `enrich_highlight` (after `applyStudyIntent`),
+    on-demand `Generate full exploration`, and the chat tool's content write — and
+    **always after `applyStudyIntent`** so the intent's facets exist before the
+    keep-time recognition default fires (otherwise a production-only / exact-form
+    intent would gain a stray recognition facet). The adhoc Add-a-word flow has
+    always auto-kept; this generalizes that pattern. Adopted ghost suggestions
+    flow through `enrich_highlight` like any manual highlight, so they auto-keep
+    too.
 - **Ghost nomination** (`nominate_window` job) — enqueued as the reader settles
   on a scroll position, windowed by segment index rather than client array
   position. A nominated window is recorded in `nominated_windows` even when it
@@ -216,31 +231,57 @@ The enrichment path uses these shared steps:
 
 Two-layer UI.
 
-**Layer 1 — Triage list (default landing).**
+**Layer 1 — Session vocabulary list (default landing).**
 
-- Primary section: "Your highlights". These include literal manual selections
-  and adopted ghost suggestions, because adopting a ghost creates a real
-  highlight before enrichment. Legacy LLM-suggested / auto-rejected rows may still
-  render defensively, but the current pipeline no longer creates new triage cards
-  with `highlight_id = null`.
-- Each row: chunk surface form, the subtitle line as greyed context, a 1-line gloss, a plain **Keep** button (toggles kept⇄pending, no learning mode) and a **Reject** toggle, tap target. Production is no longer a triage decision — it is set later in the term view. `Keep all` keeps the visible cards as plain kept (no passive/active distinction).
-- **Keep is blocked until a card has basic data.** A note-only card (created via **Save note**) has no `translation` / `definition` / `target_example` — keeping it would push a blank flashcard into Vocabulary + Practice. The row's **Keep** is disabled (with a subtle "needs data" affordance) until the user generates the card's data, and `Keep all` silently **skips** data-less cards (they stay `pending`). The user unblocks Keep by opening the card and running **Generate full exploration** (or generating data via chat), which works even though the note-only session never ran an `enrich_highlight` job — the on-demand exploration mints the session context blob lazily on first use. The `cards.updateStatus` backend guard rejects a data-less keep with **409 CONFLICT** as the authoritative safety net; `cards.updateStatusBatch` filters data-less cards out of the keep set.
-- Filter, search, sort across both sections.
-- Each section header has `Keep all` / `Reject all` bulk-action buttons that act on the visible (search-filtered) cards in that section.
-- Reader-saved highlights materialize as `pending` triage cards (the enrichment job inserts cards in `pending`, or `auto_rejected` below the CEFR floor) — vocabulary membership and the recognition floor happen on the **Keep** transition, not at save time. The `cards.updateStatus` endpoint still **accepts** an optional `learningMode` field even when the status is `kept` (backend maps it to `setFacetEnabled` on the production facet), but the collapsed Keep/Reject triage UI no longer sends it — keep-as-active is no longer a triage action, so the param remains only for compatibility and isn't exercised here.
+Saving a highlight while reading is already an explicit commit, so there is no
+separate Keep step: a card **auto-keeps** the moment it has basic flashcard data
+(see "Auto-keep" under the processing pipeline). This screen is therefore a
+review-and-prune list of the session's kept terms, not a keep/reject queue.
+
+- One list of the session's terms: literal manual selections and adopted ghost
+  suggestions (adopting a ghost creates a real highlight before enrichment). The
+  list client-filters to `status ∈ {kept, pending}`; `rejected` /
+  `auto_rejected` rows never show. Legacy `highlight_id = null` rows are no
+  longer produced, so there is no separate "LLM-suggested" section.
+- Each row: chunk surface form, a 1-line gloss preview, a tap target (opens the
+  focus view), and a single **Remove** (trash) control. **Remove = unkeep this
+  card** (`cards.updateStatus` → `rejected`): non-destructive — it survives in
+  Vocabulary if kept elsewhere, the "added N×" badge decrements, and the last
+  keep takes `count` to 0 so it leaves Vocabulary naturally. No `deleted_at`, no
+  cross-session nuking, no warning. Because the optimistic cache flips status in
+  place, a Remove drops the row from the list immediately (no refetch).
+- **Note-only "needs data" rows.** A note-only card (created via **Save note**)
+  has no `translation` / `definition` / `target_example`, so it stays `pending`
+  and shows here as a "needs data — open to generate" row (it still has a
+  Remove). Opening it and running **Generate full exploration** (or generating
+  data via chat) fills its basic data and **auto-keeps it** — the on-demand
+  exploration mints the session context blob lazily on first use even though the
+  note-only session never ran an `enrich_highlight` job.
+- Filter and search across the single list. No bulk Keep all / Reject all
+  (meaningless once auto-kept; bulk unkeep is a footgun). The
+  `cards.updateStatusBatch` endpoint stays for compatibility but is unused here.
+- Reader-saved highlights materialize as `pending` cards (the enrichment job
+  inserts cards in `pending`, or `auto_rejected` below the CEFR floor) and then
+  auto-keep once basic data lands. Vocabulary membership and the recognition
+  floor happen on the keep transition, which is now automatic.
 - **Floor guard:** a **kept** term (`count > 0`, not deleted) must always keep ≥1 enabled facet — `chunks.setFacetEnabled` rejects (409) a disable that would zero out its last enabled facet (delete the term instead). Pre-keep terms keep their freedom to drop to zero. The focus view's per-target last-skill lock is the friendly UI front for this invariant; the backend guard is the authoritative safety net.
+- The enriching/failed **placeholder rows** + status polling stay (a highlight
+  still being enriched has no card yet), and a **retry** affordance for failed
+  enrichment.
 - Sticky footer: `Practice these terms` button (full-width on mobile,
   right-aligned on desktop) that starts a Practice session in the session's
-  target language. Disabled when no cards are kept. Per-session CSV export is
-  gone from this screen — exports happen from the Vocabulary tab instead.
-- No chat here. This layer is for fast triage.
+  target language. Disabled when no cards are kept (effectively always enabled
+  once any term has data). Per-session CSV export is gone from this screen —
+  exports happen from the Vocabulary tab instead.
+- No chat here. This layer is for fast review.
 
 **Layer 2 — Focus view (modal screen pushed above the tab navigator).**
 
-- Modal header: chevron-back to triage, position counter (`Card N of M`),
-  and a chat toggle button carrying the unread indicator (see the per-card
-  chat bullet below). Keep/reject and learning-mode controls live in the fixed
-  bottom action bar below — see the next-to-last bullet in this section.
+- Modal header: chevron-back to the session-vocabulary list, position counter
+  (`Card N of M`), and a chat toggle button carrying the unread indicator (see
+  the per-card chat bullet below). There is **no keep/reject bottom bar** — cards
+  auto-keep on basic data; removal is a single scope-aware affordance inline in
+  the card body (see the next-to-last bullet in this section).
 - Prev/next navigation uses two fixed, viewport-mid-height circular buttons
   pinned to the left and right edges so they stay reachable on long cards;
   the `Open in subtitles` deep-link still lives inside the collapsible
@@ -311,23 +352,25 @@ Two-layer UI.
   collocations, etymology, l1_notes, …) is reserved for an explicit
   full / deep-exploration request or a named extra, so casual "make this card"
   asks no longer dump a whole exploration.
-- For **triage entries** a fixed bottom action bar carries the per-card
-  decision: two equal-width buttons — `Reject` (destructive) and `Keep`
-  (default; `cards.updateStatus` with status `kept`, no learning mode) — with
-  the button matching the card's current state filled, the other outlined. A
-  tap fires the mutation, holds a brief ~220ms confirmation highlight on the
-  just-tapped button, then auto-advances to the next card via the cursor. If
-  the tapped card is the last one in the cursor, the focus view closes back to
-  the triage list instead. Production is no longer a triage decision — there is
-  no `★ Active` button and no inline `Learning mode` row; the bar is just
-  keep/reject.
+- **Scope-aware Remove (no keep/reject bar).** There is no bottom action bar.
+  Removal is a single inline affordance in the card body, chosen by entry scope:
+  - **From a session** (session-vocabulary list / focus-view-from-session):
+    **Remove from session** → `cards.updateStatus` with status `rejected`
+    (unkeep). Non-destructive (survives in Vocabulary if kept elsewhere; no
+    `deleted_at`, no confirm). After removing, it advances to the next card via
+    the cursor, or closes back to the session-vocabulary list if it was the last.
+  - **From vocabulary / practice** (`?from=vocabulary` / `?from=practice` over
+    already-kept chunks, i.e. `isLanguageWideEntry`): **Delete term** →
+    `chunks.deleteChunk` (term-level soft-delete, behind a confirm). Unchanged.
+  - A data-less `pending` note-only stub opened from a session has no keep
+    button — generating its data auto-keeps it, and **Remove from session**
+    discards the stub.
 - The card section always shows the **study-target selector + unified editor**
-  (in triage too — keeping a card on `Keep` just enables recognition; the editor
-  lets the learner set up forms/skills and edit content either side of that
-  decision). **Language-wide entries** (entered via `?from=practice` or
-  `?from=vocabulary` over already-kept chunks) additionally get a secondary
-  **Delete term** affordance and **no bottom keep/reject bar** (they're already
-  kept); triage entries keep the bar and delete via `Reject`.
+  (the editor lets the learner set up forms/skills and edit content; keeping a
+  card just enables recognition, which now happens automatically on basic data).
+  The prev/next pager is gated on having a session cursor, so session entries
+  page through their cards and language-wide entries (which don't load the
+  session card list) don't.
   - **Form selector** (`form-selector.tsx`): a chip-per-target row at the top —
     one **Citation** chip (the headword), one chip per **form** target, and a
     **"+ Add a form"** chip. Selecting a chip sets which target the editor below
@@ -675,6 +718,16 @@ card
                                     -- processing, grounding, enrichment, and chat tool patches do
                                     -- not stamp this.
   status              'pending' | 'kept' | 'rejected' | 'auto_rejected'
+                                    -- auto-transitions 'pending' -> 'kept' the
+                                    -- moment the card gains basic data (after
+                                    -- applyStudyIntent, so intent facets exist
+                                    -- before the keep-time recognition default).
+                                    -- 'pending' is therefore transient (a card
+                                    -- between materialization and its first
+                                    -- basic-data write) or a note-only stub with
+                                    -- no data yet. 'rejected' = unkept via
+                                    -- Remove-from-session; auto-keep never
+                                    -- resurrects a 'rejected'/'auto_rejected' row.
   created_at          timestamptz
   updated_at          timestamptz
 
@@ -1062,26 +1115,28 @@ cached result instantly.
 2. Search the track or scroll. Optionally tap-to-translate (sheet) for quick checks.
 3. Select text in a line (or across lines) → highlight sheet → optional note/presets → save.
 
-**Reading → triage**
+**Reading → session vocabulary**
 
 1. As the user highlights while reading, each highlight is enqueued for
-   background enrichment (debounced ~5s) and the worker materializes its card —
-   so most cards are ready before the user finishes reading.
+   background enrichment (debounced ~5s) and the worker materializes its card and
+   **auto-keeps it** once basic data lands — so most terms are kept and ready
+   before the user finishes reading.
 2. As the user scrolls, settled reading windows can enqueue ghost nomination
    jobs. Ghosts render as passive suggestions in the reader; adopting one swaps
    the provisional selection for the suggested span and then enriches it as a
-   normal highlight.
-3. User taps `Go to triage` (or opens `Triage`). This navigates
-   straight to triage — no synchronous pass, no status flip, no polling page.
-4. Triage shows ready cards immediately, a placeholder row per highlight still
-   enriching, and a retry affordance for any failed enrichment; it polls the
-   `processing_jobs`-backed status until everything drains.
+   normal highlight (so it auto-keeps too).
+3. User taps `Go to triage` (or opens the session-vocabulary list). This
+   navigates straight there — no synchronous pass, no status flip, no polling page.
+4. The session-vocabulary list shows kept terms immediately, a placeholder row
+   per highlight still enriching, and a retry affordance for any failed
+   enrichment; it polls the `processing_jobs`-backed status until everything
+   drains.
 
 **Review and practice**
 
-1. Triage list — keep/reject across both sections. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
-2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`.
-3. Sticky-footer `Practice these chunks` button starts a Practice session in the session's target language (language-wide pool — kept chunks from this session feed into it via the user-lookups upsert that fires on the keep transition).
+1. Session-vocabulary list — review the kept terms, Remove (unkeep) any you don't want. The modal-header chevron closes back to the sessions list; a `Source` button in the right slot cross-jumps to the mid-watch view.
+2. Drill into focus view for any card. Edit fields, chat to refine, optionally `Generate full exploration`; **Remove from session** unkeeps.
+3. Sticky-footer `Practice these chunks` button starts a Practice session in the session's target language (language-wide pool — kept chunks from this session feed into it via the user-lookups upsert that fires on the auto-keep transition).
 
 **Export vocabulary**
 
@@ -1091,9 +1146,9 @@ cached result instantly.
 
 **Add more highlights later**
 
-1. From the triage list, tap the `Source` button (or open the session card again).
-2. The mid-watch UI is always browsable while the session is `active` — `Triage` jumps back; highlighting still works.
-3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up in triage when the worker finishes. Ghost nomination continues window-by-window as the user reads.
+1. From the session-vocabulary list, tap the `Source` button (or open the session card again).
+2. The mid-watch UI is always browsable while the session is `active` — the session-vocabulary list jumps back; highlighting still works.
+3. Each new highlight is enriched in the background on commit (no explicit "process" step needed); its card shows up — auto-kept — in the session-vocabulary list when the worker finishes. Ghost nomination continues window-by-window as the user reads.
 
 ## Future work
 

@@ -14,12 +14,10 @@ import {
   useListHighlightsBySession,
   useRetryEnrichment,
 } from '@/features/sessions/api/sessions-hooks'
-import { useListCardsBySession, useUpdateCardStatus, useUpdateCardStatusBatch } from '../api/review-hooks'
+import { useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
 import { getSessionCardsKey } from '../api/card-cache'
-import type { Card, CardStatus } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { TriageRow, TriageEnrichingRow, TriageRowSkeleton } from './triage-row'
-import { cardHasBasicData } from '../utils/card-has-basic-data'
-import { AutoRejectedCollapsible } from './auto-rejected-collapsible'
+import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { SessionVocabularyRow, EnrichingRow, SessionVocabularyRowSkeleton } from './session-vocabulary-row'
 import { useScrollRestoration } from '@/hooks/use-scroll-restoration'
 
 const matchesSearch = (card: Card, q: string): boolean => {
@@ -28,41 +26,7 @@ const matchesSearch = (card: Card, q: string): boolean => {
   return haystack.includes(q.toLowerCase())
 }
 
-type BulkActionsProps = {
-  cards: Card[]
-  disabled: boolean
-  onBulkStatusChange: (cards: Card[], status: CardStatus) => void
-}
-
-const BulkActions = ({ cards, disabled, onBulkStatusChange }: BulkActionsProps) => {
-  const { t } = useLingui()
-  const allKept = cards.every((c) => c.status === 'kept')
-  const allRejected = cards.every((c) => c.status === 'rejected')
-  return (
-    <div className='flex shrink-0 gap-1'>
-      <Button
-        variant='ghost'
-        size='sm'
-        className='h-7 text-xs'
-        disabled={disabled || allKept}
-        onClick={() => onBulkStatusChange(cards, 'kept')}
-      >
-        {t`Keep all`}
-      </Button>
-      <Button
-        variant='ghost'
-        size='sm'
-        className='h-7 text-xs'
-        disabled={disabled || allRejected}
-        onClick={() => onBulkStatusChange(cards, 'rejected')}
-      >
-        {t`Reject all`}
-      </Button>
-    </div>
-  )
-}
-
-export const TriageListView = () => {
+export const SessionVocabularyView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/' })
@@ -88,15 +52,23 @@ export const TriageListView = () => {
     wasProcessingActiveRef.current = isProcessingActive
   }, [isProcessingActive, sessionId, queryClient])
   const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
-  const { mutate: updateStatusBatch, isPending: isBatchPending } = useUpdateCardStatusBatch(sessionId)
-  const warnings = session?.processingWarnings ?? []
 
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search.trim(), 200)
 
-  const firstNavigableCardId = useMemo(() => {
-    return (cards ?? []).find((c) => c.status !== 'auto_rejected')?.id ?? null
-  }, [cards])
+  // Cards auto-keep once they have basic data, so this list shows the kept terms
+  // plus any data-less note-only stubs still waiting on data (`pending`).
+  // `rejected` / `auto_rejected` never show — and because Remove flips status in
+  // place (the optimistic cache mutates rather than dropping the row), removing
+  // a row moves it to `rejected` and this filter drops it immediately.
+  const visibleCards = useMemo(() => {
+    const all = cards ?? []
+    return all.filter((c) => (c.status === 'kept' || c.status === 'pending') && matchesSearch(c, debouncedSearch))
+  }, [cards, debouncedSearch])
+
+  const keptCount = (cards ?? []).filter((c) => c.status === 'kept').length
+
+  const firstNavigableCardId = useMemo(() => visibleCards[0]?.id ?? null, [visibleCards])
 
   const handleReviewCards = () => {
     if (!firstNavigableCardId) return
@@ -105,17 +77,6 @@ export const TriageListView = () => {
       params: { sessionId, cardId: firstNavigableCardId },
     })
   }
-
-  const grouped = useMemo(() => {
-    const all = cards ?? []
-    const filtered = all.filter((c) => matchesSearch(c, debouncedSearch))
-    const yourHighlights = filtered.filter((c) => c.highlightId !== null)
-    const llmSuggested = filtered.filter((c) => c.highlightId === null && c.status !== 'auto_rejected')
-    const autoRejected = filtered.filter((c) => c.status === 'auto_rejected')
-    return { yourHighlights, llmSuggested, autoRejected }
-  }, [cards, debouncedSearch])
-
-  const keptCount = (cards ?? []).filter((c) => c.status === 'kept').length
 
   // Highlights still being enriched in the background have no card yet — render a
   // placeholder row per straggler (and a retry affordance for failed ones).
@@ -129,7 +90,7 @@ export const TriageListView = () => {
         // Until the processing-status query has returned, we don't yet know
         // whether an uncarded highlight is enqueued or genuinely not started —
         // default to the enriching shimmer rather than flashing a Start/Retry
-        // affordance that makes a freshly-opened triage look like it failed.
+        // affordance that makes a freshly-opened list look like it failed.
         const status = failedSet.has(h.id)
           ? 'failed'
           : activeSet.has(h.id) || isProcessingStatusLoading
@@ -149,26 +110,22 @@ export const TriageListView = () => {
     ready: (cards?.length ?? 0) > 0 || pendingHighlightRows.length > 0,
   })
 
-  const handleStatusChange = (cardId: string, status: CardStatus) => {
-    updateStatus({ cardId, status })
+  const handleRemove = (cardId: string) => {
+    // Remove-from-session = unkeep this card. Non-destructive: it survives in
+    // Vocabulary if kept elsewhere; the count badge decrements; the last keep
+    // takes count to 0 and it leaves Vocabulary naturally.
+    updateStatus({ cardId, status: 'rejected' })
   }
 
-  const handleBulkStatusChange = (sectionCards: Card[], status: CardStatus) => {
-    // "Keep all" skips data-less note-only cards (mirrors the backend batch
-    // filter): they stay pending until the user generates their data.
-    const cardIds = sectionCards
-      .filter((c) => c.status !== status && (status !== 'kept' || cardHasBasicData(c)))
-      .map((c) => c.id)
-    if (cardIds.length === 0) return
-    updateStatusBatch({ sessionId, cardIds, status })
-  }
+  const warnings = session?.processingWarnings ?? []
+  const hasVisibleContent = visibleCards.length > 0 || pendingHighlightRows.length > 0
 
-  // Back follows the screen hierarchy: sessions → source → triage → focus.
+  // Back follows the screen hierarchy: sessions → source → session vocabulary → focus.
   return (
     <ModalScreen
       onClose={() => navigate({ to: '/sessions/$sessionId', params: { sessionId } })}
       closeIcon='chevron'
-      title={t`Triage`}
+      title={t`Session vocabulary`}
       rightSlot={
         <Button variant='outline' size='sm' onClick={handleReviewCards} disabled={!firstNavigableCardId}>
           {t`Review`}
@@ -200,68 +157,33 @@ export const TriageListView = () => {
 
           {isLoading && (
             <div className='mt-2'>
-              <SkeletonList count={Math.min(highlights?.length || 4, 8)} renderItem={() => <TriageRowSkeleton />} />
+              <SkeletonList
+                count={Math.min(highlights?.length || 4, 8)}
+                renderItem={() => <SessionVocabularyRowSkeleton />}
+              />
             </div>
           )}
 
-          {!isLoading && (cards?.length ?? 0) === 0 && pendingHighlightRows.length === 0 && (
-            <p className='text-muted-foreground text-sm'>{t`No cards yet. Select some highlights in the source text to generate new cards.`}</p>
+          {!isLoading && !hasVisibleContent && (
+            <p className='text-muted-foreground text-sm'>{t`No terms yet. Select some highlights in the source text to add terms.`}</p>
           )}
 
-          {!isLoading && (grouped.yourHighlights.length > 0 || pendingHighlightRows.length > 0) && (
-            <section className='mb-6'>
-              <div className='flex items-center justify-between gap-2'>
-                <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-                  {t`Your highlights`} ({grouped.yourHighlights.length + pendingHighlightRows.length})
-                </h2>
-                <BulkActions
-                  cards={grouped.yourHighlights}
-                  disabled={isBatchPending}
-                  onBulkStatusChange={handleBulkStatusChange}
+          {!isLoading && hasVisibleContent && (
+            <div className='mt-2'>
+              {visibleCards.map((card) => (
+                <SessionVocabularyRow key={card.id} sessionId={sessionId} card={card} onRemove={handleRemove} />
+              ))}
+              {pendingHighlightRows.map((row) => (
+                <EnrichingRow
+                  key={row.id}
+                  surfaceForm={row.surfaceForm}
+                  status={row.status}
+                  isRetrying={isRetrying}
+                  onRetry={() => retryEnrichment({ sessionId, highlightId: row.id })}
                 />
-              </div>
-              <div className='mt-2'>
-                {grouped.yourHighlights.map((card) => (
-                  <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
-                ))}
-                {pendingHighlightRows.map((row) => (
-                  <TriageEnrichingRow
-                    key={row.id}
-                    surfaceForm={row.surfaceForm}
-                    status={row.status}
-                    isRetrying={isRetrying}
-                    onRetry={() => retryEnrichment({ sessionId, highlightId: row.id })}
-                  />
-                ))}
-              </div>
-            </section>
+              ))}
+            </div>
           )}
-
-          {grouped.llmSuggested.length > 0 && (
-            <section className='mb-6'>
-              <div className='flex items-center justify-between gap-2'>
-                <h2 className='text-muted-foreground text-sm font-semibold tracking-wide uppercase'>
-                  {t`LLM-suggested terms`} ({grouped.llmSuggested.length})
-                </h2>
-                <BulkActions
-                  cards={grouped.llmSuggested}
-                  disabled={isBatchPending}
-                  onBulkStatusChange={handleBulkStatusChange}
-                />
-              </div>
-              <div className='mt-2'>
-                {grouped.llmSuggested.map((card) => (
-                  <TriageRow key={card.id} sessionId={sessionId} card={card} onStatusChange={handleStatusChange} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          <AutoRejectedCollapsible
-            sessionId={sessionId}
-            cards={grouped.autoRejected}
-            onStatusChange={handleStatusChange}
-          />
         </div>
       </div>
 

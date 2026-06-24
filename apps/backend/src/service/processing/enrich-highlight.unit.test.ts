@@ -3,6 +3,7 @@ import { basicDataPass } from '../../transport/third-party/anthropic/passes/basi
 import { runWiktionaryGrounding } from './wiktionary-grounding-runner'
 import { getLanguageMode } from '../user-prefs/language-mode'
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
+import { autoKeepPendingIfEligible } from '../cards/set-card-status'
 import { enrichHighlight } from './enrich-highlight'
 import type { ProcessingDependencies } from './processing-dependencies'
 
@@ -15,6 +16,9 @@ vi.mock('./wiktionary-grounding-runner', () => ({
 vi.mock('../study-facets/apply-study-intent', () => ({
   applyStudyIntent: vi.fn().mockResolvedValue({ applied: true, formFacetTargets: [] }),
   generateStudyIntentFormData: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('../cards/set-card-status', () => ({
+  autoKeepPendingIfEligible: vi.fn().mockResolvedValue(null),
 }))
 vi.mock('../user-prefs/language-mode', () => ({
   getLanguageMode: vi.fn().mockResolvedValue({
@@ -138,6 +142,30 @@ describe('enrichHighlight', () => {
     )
     expect(insertCard).not.toHaveBeenCalled()
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ passName: 'highlight_enrichment' }))
+    // Auto-keep fires for the materialized card — saving the highlight already
+    // committed it, so it skips triage.
+    expect(autoKeepPendingIfEligible).toHaveBeenCalledWith('card-1', userId, expect.anything())
+  })
+
+  it('auto-keeps the card AFTER applying a production-only study intent (no stray recognition facet)', async () => {
+    vi.mocked(basicDataPass).mockResolvedValue([highlightChunk])
+    vi.mocked(applyStudyIntent).mockResolvedValue({ applied: true, formFacetTargets: [] })
+    const { deps } = createDeps()
+    vi.mocked(deps.highlightsRepository.findById).mockResolvedValue({
+      ...highlight,
+      study_intent: { skills: ['meaning_production'], formScope: 'lemma' },
+    } as never)
+
+    await enrichHighlight({ sessionId, highlightId, userId }, deps)
+
+    expect(autoKeepPendingIfEligible).toHaveBeenCalledWith('card-1', userId, expect.anything())
+    // Finding-1 ordering guard: the intent's facets must be created BEFORE the
+    // keep-time recognition default runs (it only force-adds recognition when the
+    // term has no facet rows). Keep before intent would give a production-only
+    // term a stray recognition facet.
+    const intentOrder = vi.mocked(applyStudyIntent).mock.invocationCallOrder[0]
+    const keepOrder = vi.mocked(autoKeepPendingIfEligible).mock.invocationCallOrder[0]
+    expect(intentOrder).toBeLessThan(keepOrder)
   })
 
   it('always routes the card through the idempotent insert, so a retry cannot duplicate', async () => {

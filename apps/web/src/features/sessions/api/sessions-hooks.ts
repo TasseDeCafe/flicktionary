@@ -461,8 +461,8 @@ export const useProcessStudySession = (sessionId: string) => {
           orpcQuery.studySessions.get.key({ input: { sessionId } }),
           orpcQuery.studySessions.getStatus.key({ input: { sessionId } }),
         ],
-        successMessage: t`Opening triage`,
-        errorMessage: t`Failed to open triage`,
+        successMessage: t`Opening Session vocabulary`,
+        errorMessage: t`Failed to open Session vocabulary`,
         showErrorModal: true,
       },
     })

@@ -7,11 +7,11 @@ export type CardCursor = {
   total: number
 }
 
-// The focus view navigates the same set the user sees in triage: every card
-// except auto_rejected. Order matches listBySession (created_at ASC), so the
-// total/position stay stable as the user toggles statuses.
+// The focus view navigates the same set the user sees in Session vocabulary:
+// kept cards plus pending note-only stubs. Removed cards stay out of the cursor
+// so removing one card never advances into another removed card.
 export const buildKeptCardCursor = (cards: Card[], currentCardId: string): CardCursor => {
-  const navigable = cards.filter((c) => c.status !== 'auto_rejected')
+  const navigable = cards.filter((c) => c.status === 'kept' || c.status === 'pending')
   const index = navigable.findIndex((c) => c.id === currentCardId)
   if (index === -1) {
     return { prev: null, next: null, index: -1, total: navigable.length }
