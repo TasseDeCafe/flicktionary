@@ -1,4 +1,5 @@
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import type { Grammar, ReviewTerm } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 // The content a flashcard actually renders, after resolving a form card against
@@ -10,7 +11,11 @@ import type { Grammar, ReviewTerm } from '@flicktionary/api-client/orpc-contract
 export type ResolvedCardContent = {
   isForm: boolean
   // Main text for the 'headword' slot (the form's display, or the lemma's).
+  // For a German citation noun this is the articled title (`der Bestandteil`).
   displayForm: string
+  // German citation sub-line (`pl -e`, `die Häuser`, `pl -n, Gen. -ns`) rendered
+  // beneath the headword. null for non-German nouns and form cards.
+  citationForms: string | null
   // Resolved transcription: the form's own IPA for forms (no lemma fallback),
   // the lemma's IPA for citation. null when none is displayable.
   ipa: string | null
@@ -40,15 +45,20 @@ export const resolveCardContent = (
   englishIpaDialect: 'ga' | 'rp'
 ): ResolvedCardContent => {
   const lemmaGrammar = (card.grammar ?? {}) as Grammar
-  const lemmaDisplay = (typeof lemmaGrammar.display_form === 'string' && lemmaGrammar.display_form) || card.headword
 
   const payload = card.facetPayload
   const isForm = card.targetForm !== '' && !!payload && typeof payload.form === 'string'
 
   if (!isForm) {
+    const citation = composeGermanCitation({
+      headword: card.headword,
+      grammar: lemmaGrammar,
+      targetLanguage,
+    })
     return {
       isForm: false,
-      displayForm: lemmaDisplay,
+      displayForm: citation.title,
+      citationForms: citation.forms,
       ipa: pickIpa(lemmaGrammar.ipa, targetLanguage, englishIpaDialect) ?? null,
       translation: card.translation,
       definition: card.definition,
@@ -63,10 +73,12 @@ export const resolveCardContent = (
   const formGrammar = grammarOf(p)
   const hasFormGrammar = Object.keys(formGrammar).length > 0
   const formDisplay = (typeof formGrammar.display_form === 'string' && formGrammar.display_form) || (p.form as string)
+  const lemmaDisplay = (typeof lemmaGrammar.display_form === 'string' && lemmaGrammar.display_form) || card.headword
 
   return {
     isForm: true,
     displayForm: formDisplay,
+    citationForms: null,
     // Form IPA only — never the lemma's (it would be wrong for the inflection).
     ipa: hasFormGrammar ? (pickIpa(formGrammar.ipa, targetLanguage, englishIpaDialect) ?? null) : null,
     translation: str(p.translation) ?? card.translation,

@@ -90,6 +90,62 @@ Do not duplicate information across grammar and exploration_extras: register
 goes only in extras; case government goes only in grammar.government;
 etymology only in extras.etymology.`
 
+const GERMAN_INSTRUCTIONS = `German-specific guidance:
+
+Headword form is ALWAYS clean: no article, no annotations. Nouns cite the bare
+capitalized singular (\`Bestandteil\`, not \`der Bestandteil\` — the article is
+derived from grammar.gender at render time). Verbs cite the infinitive with any
+separable prefix JOINED (\`aufstehen\`, \`mitkommen\`, not \`auf stehen\`).
+Reflexive verbs include \`sich\` (\`sich freuen\`).
+
+Grammar field usage — populate per chunk:
+
+- grammar.pos — REQUIRED for every chunk.
+
+For nouns:
+- grammar.gender — REQUIRED: 'm' | 'f' | 'n' (German has no common gender).
+  This drives the displayed article (der/die/das), so never omit it.
+- grammar.plural — REQUIRED: the real nominative plural form (\`Bestandteile\`,
+  \`Häuser\`, \`Frauen\`). Always the full word, never a suffix; the renderer
+  derives the suffix display itself. For plurale-tantum or unchanging plurals,
+  give the actual plural form.
+- grammar.genitive — REQUIRED: the real genitive singular form (\`Bestandteils\`,
+  \`Namens\`, \`Jungen\`). Always the full word. The renderer hides it when it is
+  the predictable masc/neut \`-(e)s\` and shows weak/mixed declensions.
+- grammar.is_weak_noun — true for n-declension masculines (\`der Junge\` → gen.
+  \`Jungen\`, \`der Mensch\`, \`der Name\`). These take \`-(e)n\` in every case
+  except nominative singular.
+- grammar.number_only — 'plurale_tantum' for \`die Eltern\` / \`die Ferien\` /
+  \`die Leute\`; 'singulare_tantum' for mass nouns when relevant.
+
+For verbs:
+- grammar.is_separable — true for separable-prefix verbs (\`aufstehen\`,
+  \`mitkommen\`, \`anfangen\`). The prefix detaches in main clauses (\`Ich stehe
+  auf\`).
+- grammar.auxiliary — REQUIRED: 'haben' | 'sein' | 'haben_or_sein'. Use
+  'sein' for intransitive verbs of motion / change of state (\`gehen\`,
+  \`aufstehen\`), 'haben' for the rest, 'haben_or_sein' when both are correct
+  depending on sense (\`fahren\`).
+- grammar.is_reflexive — true for verbs that are reflexive in this sense
+  (\`sich freuen\`, \`sich erinnern\`).
+- grammar.government — case + preposition the learner would otherwise miss.
+  Format: "+ dat", "+ akk", "+ gen", "auf + akk", "an + dat", "mit + dat".
+
+For all chunks:
+- grammar.notable_forms — principal parts for STRONG / IRREGULAR verbs
+  (3rd-person singular present if irregular, preterite, past participle) and
+  irregular adjective comparatives/superlatives. Keep tight. E.g. for
+  \`fahren\`: [{label:'3sg',form:'fährt'}, {label:'pret',form:'fuhr'},
+  {label:'pp',form:'gefahren'}]. Skip entirely for regular weak verbs.
+- grammar.display_form — only when a decorated display form helps; usually
+  leave unset for German (the citation renderer adds the article).
+- grammar.ipa — fill the \`untagged\` bucket with standard German (Hochdeutsch)
+  pronunciation.
+
+Do not duplicate information across grammar and exploration_extras: register
+goes only in extras; case government goes only in grammar.government;
+etymology only in extras.etymology.`
+
 export type EnglishIpaDialect = 'ga' | 'rp'
 
 // The dialect block mirrors the user's English IPA dialect preference
@@ -157,6 +213,9 @@ const LANGUAGE_INSTRUCTIONS: Record<string, string> = {
   ru: RUSSIAN_INSTRUCTIONS,
   rus: RUSSIAN_INSTRUCTIONS,
   russian: RUSSIAN_INSTRUCTIONS,
+  de: GERMAN_INSTRUCTIONS,
+  deu: GERMAN_INSTRUCTIONS,
+  german: GERMAN_INSTRUCTIONS,
 }
 
 export const isEnglishTargetLanguage = (targetLanguage: string): boolean =>

@@ -13,6 +13,7 @@ import {
 import { Button } from '@flicktionary/ui/components/button'
 import { OverlayActionRow } from '@flicktionary/ui/components/overlay-action-row'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
+import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import { EnglishIpaDialectFlag } from '@/components/english-ipa-dialect-flag'
 import { GrammarChips } from '@/features/review/components/grammar-chips'
 import type { Grammar } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -109,7 +110,13 @@ export const RateSheet = ({
   // Presence-based: with the translations pref off, a stored translation is a
   // manual one the user wants to see.
   const description = chunk?.translation || chunk?.definition || null
-  const titleText = chunk?.displayForm || chunk?.headword || t`Rate`
+  // German citation nouns get the derived article title (`der Bestandteil`); an
+  // explicit display form (e.g. Russian stress-marked) still wins where present.
+  const citationTitle = chunk
+    ? composeGermanCitation({ headword: chunk.headword, grammar: chunk.grammar, targetLanguage: chunk.targetLanguage })
+        .title
+    : null
+  const titleText = chunk?.displayForm || citationTitle || chunk?.headword || t`Rate`
   const showOverflow = !!chunk && !chunk.isDeleted && mode === 'rate'
 
   return (

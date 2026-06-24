@@ -11,6 +11,11 @@ export type GrammarFieldKey =
   | 'animacy'
   | 'is_indeclinable'
   | 'is_reflexive'
+  | 'plural'
+  | 'genitive'
+  | 'is_weak_noun'
+  | 'is_separable'
+  | 'auxiliary'
   | 'notable_forms'
   | 'notes'
   | 'ipa'
@@ -81,6 +86,30 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
     fields: ['pos', 'gender', 'is_reflexive', 'government', 'number_only', 'notable_forms', 'notes'],
     hints: { government: { placeholder: 'e.g. + de, + a, + em' } },
   },
+  de: {
+    fields: [
+      'pos',
+      'display_form',
+      'ipa',
+      'gender',
+      'plural',
+      'genitive',
+      'is_weak_noun',
+      'is_separable',
+      'auxiliary',
+      'is_reflexive',
+      'number_only',
+      'government',
+      'notable_forms',
+      'notes',
+    ],
+    hints: {
+      government: { placeholder: 'e.g. + dat, + akk, auf + akk' },
+      plural: { placeholder: 'e.g. Häuser' },
+      genitive: { placeholder: 'e.g. Namens' },
+      ipa: { label: 'IPA' },
+    },
+  },
 }
 
 // Languages for which we have a kaikki dump loaded into wiktionary_entries /
@@ -116,8 +145,8 @@ const UNIVERSAL_FIELDS: ReadonlyArray<GrammarFieldKey> = [
 // through to "no narrowing" — those categories are catch-alls where we can't
 // safely hide fields the user might want.
 const POS_SPECIFIC_FIELDS: Record<string, ReadonlyArray<GrammarFieldKey>> = {
-  noun: ['gender', 'number_only', 'animacy', 'is_indeclinable', 'government'],
-  verb: ['aspect', 'aspect_pair_headword', 'is_reflexive', 'government'],
+  noun: ['gender', 'number_only', 'animacy', 'is_indeclinable', 'government', 'plural', 'genitive', 'is_weak_noun'],
+  verb: ['aspect', 'aspect_pair_headword', 'is_reflexive', 'government', 'is_separable', 'auxiliary'],
   adjective: ['government'],
   adverb: [],
   preposition: ['government'],

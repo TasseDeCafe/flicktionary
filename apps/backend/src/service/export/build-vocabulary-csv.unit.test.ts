@@ -148,4 +148,43 @@ describe('buildVocabularyCsv', () => {
     const cells = parseLines(csv)[4].split(',')
     expect(cells[0]).toBe('corre')
   })
+
+  it('exports a German noun with the articled Anki front and the new grammar columns', async () => {
+    const chunk = baseChunk({
+      headword: 'Bestandteil',
+      sense: 'component',
+      translation: 'component',
+      targetExample: 'Wasser ist ein Bestandteil.',
+      nativeExample: 'Water is a component.',
+      grammar: { pos: 'noun', gender: 'm', plural: 'Bestandteile', genitive: 'Bestandteils' },
+    })
+    const { csv } = await buildVocabularyCsv('u1', 'de', createDeps([chunk]))
+    const lines = parseLines(csv)
+    const columns = lines[3].replace('#columns:', '').split(',')
+    const cells = lines[4].split(',')
+    const cell = (name: string) => cells[columns.indexOf(name)]
+    // Anki front matches the in-app card: article + headword.
+    expect(cell('front')).toBe('der Bestandteil<br><br>Wasser ist ein Bestandteil.')
+    expect(cell('gender')).toBe('m')
+    expect(cell('plural')).toBe('Bestandteile')
+    expect(cell('genitive')).toBe('Bestandteils')
+  })
+
+  it('exports German verb auxiliary and folds weak/separable into morphology', async () => {
+    const chunk = baseChunk({
+      headword: 'aufstehen',
+      sense: 'get up',
+      targetExample: null,
+      grammar: { pos: 'verb', is_separable: true, auxiliary: 'sein' },
+    })
+    const { csv } = await buildVocabularyCsv('u1', 'de', createDeps([chunk]))
+    const lines = parseLines(csv)
+    const columns = lines[3].replace('#columns:', '').split(',')
+    const cells = lines[4].split(',')
+    const cell = (name: string) => cells[columns.indexOf(name)]
+    expect(cell('auxiliary')).toBe('sein')
+    expect(cell('morphology')).toContain('separable')
+    // A verb is not a noun, so it keeps its bare headword on the front.
+    expect(cell('front')).toBe('aufstehen')
+  })
 })

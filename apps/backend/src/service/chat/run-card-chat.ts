@@ -80,7 +80,7 @@ const updateCardFieldsTool: Anthropic.Tool = {
       grammar_patch: {
         type: 'object',
         description:
-          'Object of typed morphology / grammar keys to merge into the grammar bag. Recognized keys: pos, display_form, gender, number_only, is_indeclinable, animacy, aspect, aspect_pair_headword, is_reflexive, government, notable_forms, notes. See the per-target-language guidance in the system prompt for which keys to fill.',
+          'Object of typed morphology / grammar keys to merge into the grammar bag. Recognized keys: pos, display_form, gender, number_only, is_indeclinable, animacy, aspect, aspect_pair_headword, is_reflexive, government, plural, genitive, is_weak_noun, is_separable, auxiliary, notable_forms, notes. See the per-target-language guidance in the system prompt for which keys to fill.',
       },
     },
   },

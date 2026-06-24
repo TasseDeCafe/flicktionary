@@ -142,6 +142,11 @@ export type GrammarNumberOnly = z.infer<typeof GrammarNumberOnlySchema>
 export const GrammarAnimacySchema = z.enum(['animate', 'inanimate'])
 export type GrammarAnimacy = z.infer<typeof GrammarAnimacySchema>
 
+// German perfect auxiliary. `haben_or_sein` is real (fahren, aufstehen take
+// either depending on transitivity / motion sense).
+export const GrammarAuxiliarySchema = z.enum(['haben', 'sein', 'haben_or_sein'])
+export type GrammarAuxiliary = z.infer<typeof GrammarAuxiliarySchema>
+
 export const GrammarNotableFormSchema = z.object({
   label: z.string(),
   form: z.string(),
@@ -189,6 +194,15 @@ export const GrammarSchema = z
     aspect: GrammarAspectSchema.nullable().optional().catch(undefined),
     aspect_pair_headword: z.string().nullable().optional(),
     is_reflexive: z.boolean().nullable().optional(),
+    // German-specific morphology. Plural / genitive store the REAL form
+    // always; the renderer derives the display (article, suffix-vs-full plural,
+    // notable-genitive gating). `is_weak_noun` is its own learner-facing fact
+    // (n-declension); `auxiliary` is the perfect-tense helper verb.
+    plural: z.string().nullable().optional(),
+    genitive: z.string().nullable().optional(),
+    is_weak_noun: z.boolean().nullable().optional(),
+    is_separable: z.boolean().nullable().optional(),
+    auxiliary: GrammarAuxiliarySchema.nullable().optional().catch(undefined),
     // Government / case requirements (e.g. "+ acc", "от + gen", "с + instr")
     government: z.string().nullable().optional(),
     // Irregular / notable forms — open list of (label, form) pairs.

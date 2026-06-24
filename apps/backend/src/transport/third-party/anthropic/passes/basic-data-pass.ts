@@ -135,7 +135,7 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
             grammar: {
               type: 'object',
               description:
-                "Optional sparse bag of typed morphology / grammar facts for this chunk. Include keys only when they are useful for THIS chunk in THIS target language; omit the whole object when nothing applies — EXCEPT `ipa`, which you include for every chunk. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть` — keep the headword itself clean), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string — the counterpart's clean lemma), `is_reflexive` (boolean), `government` (case/preposition pattern, e.g. '+ acc', 'от + gen', 'с + instr'), `notable_forms` (array of {label, form} for irregular paradigm cells, max 3), `ipa` (transcription bag, see its description), `notes` (free-form, last resort). The per-target-language instructions in the system prompt say WHEN to fill which keys.",
+                "Optional sparse bag of typed morphology / grammar facts for this chunk. Include keys only when they are useful for THIS chunk in THIS target language; omit the whole object when nothing applies — EXCEPT `ipa`, which you include for every chunk. Recognized keys: `pos` (one of noun/verb/adjective/adverb/preposition/pronoun/particle/conjunction/numeral/phrase/idiom/other), `display_form` (canonical-but-decorated form for UI display, e.g. stress-marked Russian `ви́деть` — keep the headword itself clean), `gender` (m/f/n/c — only when ambiguous or surprising), `number_only` (plurale_tantum/singulare_tantum), `is_indeclinable` (boolean), `animacy` (animate/inanimate), `aspect` (impf/perf/biaspectual — Slavic verbs), `aspect_pair_headword` (string — the counterpart's clean lemma), `is_reflexive` (boolean), `government` (case/preposition pattern, e.g. '+ acc', 'от + gen', 'с + instr'), `plural` (German: real nominative plural form), `genitive` (German: real genitive singular form), `is_weak_noun` (German n-declension boolean), `is_separable` (German separable-prefix verb boolean), `auxiliary` (German perfect auxiliary: haben/sein/haben_or_sein), `notable_forms` (array of {label, form} for irregular paradigm cells, max 3), `ipa` (transcription bag, see its description), `notes` (free-form, last resort). The per-target-language instructions in the system prompt say WHEN to fill which keys.",
               properties: {
                 pos: {
                   type: 'string',
@@ -163,6 +163,11 @@ const buildTool = (hideTranslationFields: boolean): Anthropic.Tool => ({
                 aspect_pair_headword: { type: 'string' },
                 is_reflexive: { type: 'boolean' },
                 government: { type: 'string' },
+                plural: { type: 'string' },
+                genitive: { type: 'string' },
+                is_weak_noun: { type: 'boolean' },
+                is_separable: { type: 'boolean' },
+                auxiliary: { type: 'string', enum: ['haben', 'sein', 'haben_or_sein'] },
                 notable_forms: {
                   type: 'array',
                   items: {

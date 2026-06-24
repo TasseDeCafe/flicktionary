@@ -1,3 +1,4 @@
+import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import type {
   ExportChunkRow,
   UserLookupsRepositoryInterface,
@@ -31,8 +32,11 @@ const CSV_COLUMNS = [
   'pos',
   'display_form',
   'gender',
+  'plural',
+  'genitive',
   'aspect',
   'aspect_pair_headword',
+  'auxiliary',
   'government',
   'morphology',
   'ipa',
@@ -82,8 +86,15 @@ const strArray = (value: unknown): string[] =>
 // Same default-computation rules the focus view documents (SPEC "Default card
 // front/back at export time"), joined with <br><br> because the import runs
 // with #html:true — literal newlines would collapse on the rendered card.
-const computeDefaults = (chunk: ExportChunkRow): { front: string; back: string } => {
-  const headword = chunk.headword || chunk.surfaceForm
+const computeDefaults = (chunk: ExportChunkRow, targetLanguage: string): { front: string; back: string } => {
+  // German citation nouns export the articled form (`der Bestandteil`) so the
+  // Anki front matches the in-app card; the helper falls back to the bare
+  // headword for every other language / POS.
+  const headword = composeGermanCitation({
+    headword: chunk.headword || chunk.surfaceForm,
+    grammar: chunk.grammar,
+    targetLanguage,
+  }).title
   const targetExample = chunk.targetExample ?? ''
   const backFirstLine = chunk.translation || chunk.definition || ''
   const nativeExample = chunk.nativeExample ?? ''
@@ -116,6 +127,8 @@ const renderMorphology = (grammar: Record<string, unknown>): string => {
   const animacy = str(grammar['animacy'])
   if (animacy) flags.push(animacy)
   if (grammar['is_reflexive'] === true) flags.push('reflexive')
+  if (grammar['is_weak_noun'] === true) flags.push('weak')
+  if (grammar['is_separable'] === true) flags.push('separable')
   return flags.join('; ')
 }
 
@@ -165,7 +178,7 @@ const renderRegisterAlternatives = (extras: Record<string, unknown>): string => 
 }
 
 const buildRow = (chunk: ExportChunkRow, targetLanguage: string): string => {
-  const { front, back } = computeDefaults(chunk)
+  const { front, back } = computeDefaults(chunk, targetLanguage)
   const grammar = chunk.grammar
   const extras = chunk.explorationExtras
   return renderRow([
@@ -183,8 +196,11 @@ const buildRow = (chunk: ExportChunkRow, targetLanguage: string): string => {
     str(grammar['pos']),
     str(grammar['display_form']),
     str(grammar['gender']),
+    str(grammar['plural']),
+    str(grammar['genitive']),
     str(grammar['aspect']),
     str(grammar['aspect_pair_headword']),
+    str(grammar['auxiliary']),
     str(grammar['government']),
     renderMorphology(grammar),
     renderIpa(chunk),

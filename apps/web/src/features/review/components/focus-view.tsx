@@ -7,6 +7,7 @@ import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2, X } from 'lucide-react'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
+import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
 import { useExploreCard, useGetCard, useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
 import { invalidateCardEverywhere } from '../api/card-cache'
@@ -266,7 +267,14 @@ export const FocusView = () => {
   // kept by definition; triage entries follow the (optimistic) keep decision.
   const isKeptTerm = isLanguageWideEntry || (pendingAction ? pendingAction === 'keep' : card.status === 'kept')
   const deleteHeadword = card.chunk.headword
-  const title = isLanguageWideEntry ? card.chunk.headword : positionLabel
+  // German citation nouns show the derived article title (`der Bestandteil`); the
+  // helper falls back to display_form || headword for every other language.
+  const headwordTitle = composeGermanCitation({
+    headword: card.chunk.headword,
+    grammar: card.chunk.grammar,
+    targetLanguage,
+  }).title
+  const title = isLanguageWideEntry ? headwordTitle : positionLabel
 
   // Prev/next pager lives in the header (right side, away from the back
   // chevron) so it never overlaps the scrolling card content. Only triage

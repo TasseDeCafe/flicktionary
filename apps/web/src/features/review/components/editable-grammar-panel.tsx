@@ -401,6 +401,53 @@ export const EditableGrammarPanel = ({
             </div>
           )}
 
+          {has('plural') && (
+            <div>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Plural`}</Label>
+                {provenanceIndicator('plural', t`Plural`)}
+              </div>
+              <Input
+                value={(grammar.plural as string | undefined) ?? ''}
+                onChange={(e) => setKey('plural', e.target.value || undefined)}
+                placeholder={hint('plural')?.placeholder ?? t`e.g. Häuser`}
+              />
+            </div>
+          )}
+
+          {has('genitive') && (
+            <div>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Genitive`}</Label>
+                {provenanceIndicator('genitive', t`Genitive`)}
+              </div>
+              <Input
+                value={(grammar.genitive as string | undefined) ?? ''}
+                onChange={(e) => setKey('genitive', e.target.value || undefined)}
+                placeholder={hint('genitive')?.placeholder ?? t`e.g. Namens`}
+              />
+            </div>
+          )}
+
+          {has('auxiliary') && (
+            <div>
+              <div className='flex items-center gap-1'>
+                <Label className='text-xs'>{t`Auxiliary`}</Label>
+                {provenanceIndicator('auxiliary', t`Auxiliary`)}
+              </div>
+              <SelectField
+                value={(grammar.auxiliary as string | undefined) ?? ''}
+                onChange={(v) => setKey('auxiliary', v ? (v as Grammar['auxiliary']) : undefined)}
+                placeholder={t`(unset)`}
+                options={[
+                  { value: 'haben', label: t`haben` },
+                  { value: 'sein', label: t`sein` },
+                  { value: 'haben_or_sein', label: t`haben or sein` },
+                ]}
+              />
+            </div>
+          )}
+
           {has('number_only') && (
             <div>
               <div className='flex items-center gap-1'>
@@ -466,6 +513,38 @@ export const EditableGrammarPanel = ({
                 {t`Reflexive`}
               </Label>
               {provenanceIndicator('is_reflexive', t`Reflexive`)}
+            </div>
+          )}
+
+          {has('is_weak_noun') && (
+            <div className='flex items-center gap-2'>
+              <input
+                id={`weak-${fieldId}`}
+                type='checkbox'
+                checked={Boolean(grammar.is_weak_noun)}
+                onChange={(e) => setKey('is_weak_noun', e.target.checked || undefined)}
+                className='h-4 w-4'
+              />
+              <Label htmlFor={`weak-${fieldId}`} className='text-xs'>
+                {t`Weak noun (n-declension)`}
+              </Label>
+              {provenanceIndicator('is_weak_noun', t`Weak noun`)}
+            </div>
+          )}
+
+          {has('is_separable') && (
+            <div className='flex items-center gap-2'>
+              <input
+                id={`sep-${fieldId}`}
+                type='checkbox'
+                checked={Boolean(grammar.is_separable)}
+                onChange={(e) => setKey('is_separable', e.target.checked || undefined)}
+                className='h-4 w-4'
+              />
+              <Label htmlFor={`sep-${fieldId}`} className='text-xs'>
+                {t`Separable verb`}
+              </Label>
+              {provenanceIndicator('is_separable', t`Separable verb`)}
             </div>
           )}
 
