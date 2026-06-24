@@ -106,7 +106,7 @@ msgstr "{hardCount} terme(s) vous ont posé problème. Une série d'exercices "
 msgid "{highlightCount} highlight(s)"
 msgstr "{highlightCount} surlignage(s)"
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx
+#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "{highlightCount} highlight(s) saved."
 msgstr "{highlightCount} surlignage(s) enregistré(s)."
 
@@ -1271,15 +1271,15 @@ msgid "Enjoy unlimited access to all our premium features and content."
 msgstr "Profitez d'un accès illimité à toutes nos fonctionnalités et contenus "
 "premium."
 
-#: apps/web/src/features/review/components/triage-row.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Enriching…"
 msgstr "Enrichissement…"
 
-#: apps/web/src/features/review/components/triage-row.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Enrichment failed"
 msgstr "Échec de l'enrichissement"
 
-#: apps/web/src/features/review/components/triage-row.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Enrichment has not started yet."
 msgstr "L'enrichissement n'a pas encore commencé."
 
@@ -1550,8 +1550,8 @@ msgid "Failed to mark chat read"
 msgstr "Échec du marquage du chat comme lu"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Failed to open triage"
-msgstr "Échec de l'ouverture du tri"
+msgid "Failed to open Session vocabulary"
+msgstr "Échec de l'ouverture du vocabulaire de la session"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to record rating"
@@ -1576,6 +1576,10 @@ msgstr "Échec de la suppression du surlignage"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to remove session"
 msgstr "Échec de la suppression de la session"
+
+#: apps/web/src/features/review/api/review-hooks.ts
+msgid "Failed to remove term"
+msgstr "Échec de la suppression du terme"
 
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to rename term"
@@ -1630,14 +1634,6 @@ msgstr "Échec du déclenchement du message Sentry"
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to undo rating"
 msgstr "Échec de l'annulation de la note"
-
-#: apps/web/src/features/review/api/review-hooks.ts
-msgid "Failed to update card status"
-msgstr "Échec de la mise à jour du statut de la carte"
-
-#: apps/web/src/features/review/api/review-hooks.ts
-msgid "Failed to update card statuses"
-msgstr "Échec de la mise à jour des statuts des cartes"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to update English IPA dialect"
@@ -1707,7 +1703,7 @@ msgstr "Féminin"
 msgid "Find a movie or show and load its subtitles"
 msgstr "Trouvez un film ou une série et chargez ses sous-titres"
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx
+#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Finding suggestions…"
 msgstr "Recherche de suggestions…"
 
@@ -1812,10 +1808,6 @@ msgstr "Générer l'exploration complète"
 msgid "Generate Subtitles"
 msgstr "Générer les sous-titres"
 
-#: apps/web/src/features/review/components/focus-view.tsx
-msgid "Generate this card's data first"
-msgstr "Générez d'abord les données de cette carte"
-
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
 msgid "Generate translations"
 msgstr "Générer les traductions"
@@ -1861,18 +1853,13 @@ msgstr "Donne-moi trois autres exemples de phrases l'utilisant."
 msgid "Go Back"
 msgstr "Retour"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
 msgid "Go back to the source view to add or retry highlights."
 msgstr "Retournez à la vue source pour ajouter ou réessayer des surlignages."
 
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx
 msgid "Go to Sessions"
 msgstr "Aller aux Sessions"
-
-#: apps/web/src/features/review/components/processing-view.tsx
-#: apps/web/src/features/sessions/components/triage-footer.tsx
-msgid "Go to triage"
-msgstr "Aller au tri"
 
 #: packages/ui/src/components/rate-buttons.tsx
 msgid "Good"
@@ -1954,9 +1941,10 @@ msgstr "Masque ce terme de votre vocabulaire et de la Pratique. Vous pouvez le "
 "restaurer en le conservant à nouveau dans une session."
 
 #: apps/web/src/features/review/components/processing-view.tsx
-msgid "Highlights are enriched as you read. Triage is available immediately."
+msgid "Highlights are enriched as you read. Session vocabulary is available "
+"immediately."
 msgstr "Les surlignages sont enrichis au fur et à mesure de votre lecture. Le "
-"tri est disponible immédiatement."
+"vocabulaire de la session est disponible immédiatement."
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint:"
@@ -2100,15 +2088,6 @@ msgstr "Aller au plus récent"
 msgid "Jump to the session this term came from"
 msgstr "Accéder à la session d'origine de ce terme"
 
-#: apps/web/src/features/review/components/focus-view.tsx
-#: apps/web/src/features/review/components/triage-row.tsx
-msgid "Keep"
-msgstr "Conserver"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Keep all"
-msgstr "Tout conserver"
-
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Keep at least one skill"
 msgstr "Garder au moins une compétence"
@@ -2200,7 +2179,6 @@ msgid "Link expired or invalid"
 msgstr "Lien expiré ou invalide"
 
 #: apps/web/src/features/more/components/more-tab-view.tsx
-#: apps/web/src/features/review/components/triage-list-view.tsx
 msgid "LLM-suggested terms"
 msgstr "Termes suggérés par IA"
 
@@ -2376,7 +2354,7 @@ msgstr "Langue maternelle"
 msgid "Native language and CEFR levels"
 msgstr "Langue maternelle et niveaux CECRL"
 
-#: apps/web/src/features/review/components/triage-row.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Needs data — open to generate"
 msgstr "Données requises — ouvrez pour générer"
 
@@ -2432,17 +2410,11 @@ msgstr "Aucun onglet actif à importer."
 msgid "No active tab."
 msgstr "Aucun onglet actif."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "No cards yet. Select some highlights in the source text to generate new "
-"cards."
-msgstr "Aucune carte pour le moment. Sélectionnez des surlignages dans le texte "
-"source pour générer de nouvelles cartes."
-
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "No episodes found."
 msgstr "Aucun épisode trouvé."
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx
+#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "No highlights yet."
 msgstr "Aucune sélection pour le moment."
 
@@ -2502,6 +2474,11 @@ msgstr "Aucun terme n'est dû pour le moment."
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "No terms are ready right now."
 msgstr "Aucun terme n'est prêt pour le moment."
+
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
+msgid "No terms yet. Select some highlights in the source text to add terms."
+msgstr "Aucun terme pour le moment. Sélectionnez des surlignages dans le texte "
+"source pour ajouter des termes."
 
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
@@ -2654,10 +2631,10 @@ msgstr "Ouvrir la vue détaillée pour modifier les champs, les formes et les "
 "compétences."
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
-msgid "Opening triage"
-msgstr "Ouverture du triage"
+msgid "Opening Session vocabulary"
+msgstr "Ouverture du vocabulaire de la session"
 
-#: apps/web/src/features/sessions/components/triage-footer.tsx
+#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Opening…"
 msgstr "Ouverture…"
 
@@ -2891,7 +2868,7 @@ msgstr "Limites de pratique"
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
 msgid "Practice your terms"
 msgstr "Pratiquer vos termes"
 
@@ -2963,7 +2940,7 @@ msgstr "Traitement"
 msgid "Processing has moved to the background"
 msgstr "Le traitement s'effectue en arrière-plan"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
 msgid "Processing warnings"
 msgstr "Avertissements de traitement"
 
@@ -3118,15 +3095,6 @@ msgid "Rehab progress: day {days} of 3. A correct answer today still counts — 
 msgstr "Progrès de réhabilitation : jour {days} sur 3. Une bonne réponse "
 "aujourd'hui compte toujours — réessayez avec un nouvel exercice."
 
-#: apps/web/src/features/review/components/focus-view.tsx
-#: apps/web/src/features/review/components/triage-row.tsx
-msgid "Reject"
-msgstr "Rejeter"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Reject all"
-msgstr "Tout rejeter"
-
 #: apps/extension/src/services/flicktionary/import-text.ts
 msgid "Reload the page, then try importing again."
 msgstr "Rechargez la page, puis réessayez l’import."
@@ -3154,6 +3122,11 @@ msgstr "Supprimer « {sessionTitle} » ?"
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Remove form"
 msgstr "Supprimer la forme"
+
+#: apps/web/src/features/review/components/focus-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
+msgid "Remove from session"
+msgstr "Retirer de la session"
 
 #: apps/web/src/features/sessions/components/session-card.tsx
 msgid "Remove session"
@@ -3208,7 +3181,7 @@ msgstr "Restaurer la valeur du Wiktionnaire"
 msgid "Restoring…"
 msgstr "Restauration…"
 
-#: apps/web/src/features/review/components/triage-row.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Retry"
 msgstr "Réessayer"
 
@@ -3221,7 +3194,7 @@ msgid "Revert"
 msgstr "Revert"
 
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
-#: apps/web/src/features/review/components/triage-list-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
 msgid "Review"
 msgstr "Réviser"
 
@@ -3321,7 +3294,7 @@ msgstr "Rechercher des termes…"
 msgid "Search TV shows…"
 msgstr "Rechercher des séries TV…"
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
 #: apps/web/src/features/sessions/components/track-search-bar.tsx
 msgid "Search…"
 msgstr "Rechercher…"
@@ -3424,6 +3397,12 @@ msgstr "Session introuvable."
 msgid "Session removed"
 msgstr "Session supprimée"
 
+#: apps/web/src/features/review/components/processing-view.tsx
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
+#: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
+msgid "Session vocabulary"
+msgstr "Vocabulaire de la session"
+
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
@@ -3471,10 +3450,6 @@ msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Short paraphrase in the target language."
 msgstr "Courte paraphrase dans la langue cible."
-
-#: apps/web/src/features/review/components/auto-rejected-collapsible.tsx
-msgid "Show {filteredCount} filtered out (below your level)"
-msgstr "Afficher {filteredCount} filtrés (en dessous de votre niveau)"
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 msgid "Show answer"
@@ -3581,7 +3556,7 @@ msgstr "Autonome"
 
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 #: apps/web/src/features/practice/components/learn-new-batch-sheet.tsx
-#: apps/web/src/features/review/components/triage-row.tsx
+#: apps/web/src/features/review/components/session-vocabulary-row.tsx
 msgid "Start"
 msgstr "Commencer"
 
@@ -4076,10 +4051,6 @@ msgid "Translation lookup and save action for the selected text."
 msgstr "Recherche de traduction et action de sauvegarde pour le texte "
 "sélectionné."
 
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Triage"
-msgstr "Tri"
-
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Troubleshooting"
 msgstr "Dépannage"
@@ -4480,10 +4451,6 @@ msgstr "Votre forfait actuel"
 #: apps/web/src/features/auth/components/login-email-sent-view.tsx
 msgid "your email address"
 msgstr "votre adresse e-mail"
-
-#: apps/web/src/features/review/components/triage-list-view.tsx
-msgid "Your highlights"
-msgstr "Vos surlignages"
 
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/cefr-step.tsx
