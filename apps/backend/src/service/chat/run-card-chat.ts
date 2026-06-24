@@ -163,7 +163,9 @@ ${surroundingSegmentsBlock}`
 
 When the learner asks you to change something on the card (${editableFields}),
 call the \`${UPDATE_TOOL_NAME}\` tool with only the fields that should change. Do not echo unchanged fields.
-Confirm the change briefly in your reply.${translationModeNote}`
+Confirm the change briefly in your reply.${translationModeNote}
+
+When the learner asks you to fill in, create, or generate the card's data without specifying how deep to go, populate only the basic fields (translation, definition, target_example, native_example) plus the core \`grammar_patch\` keys — leave \`extras_patch\` (the full-exploration bag: frequency, register, register_alternatives, more_frequent_synonym, more_examples, regionalism, collocations, etymology, l1_notes, context_segment) empty. Only populate \`extras_patch\` when the learner explicitly asks for a full / deep / complete exploration, or asks for one of those specific extras by name.`
 }
 
 const summarizeOlderTurns = (older: DbCardChatMessage[]): string => {

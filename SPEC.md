@@ -304,7 +304,13 @@ Two-layer UI.
   (true when the newest assistant turn is newer than `last_read_at`). The chat
   tool can call `update_card_fields` to patch any basic column or merge into
   `exploration_extras` / `grammar` server-side; the assistant body gets a
-  `_Updated: …_` italic line and the focus view re-fetches the card.
+  `_Updated: …_` italic line and the focus view re-fetches the card. An
+  unqualified request to fill / create / generate the card's data populates
+  only the basic fields (translation, definition, target/native example) plus
+  core grammar — `extras_patch` (the full-exploration bag: frequency, register,
+  collocations, etymology, l1_notes, …) is reserved for an explicit
+  full / deep-exploration request or a named extra, so casual "make this card"
+  asks no longer dump a whole exploration.
 - For **triage entries** a fixed bottom action bar carries the per-card
   decision: two equal-width buttons — `Reject` (destructive) and `Keep`
   (default; `cards.updateStatus` with status `kept`, no learning mode) — with
