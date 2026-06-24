@@ -9,10 +9,15 @@ type Props = {
   // True while suggestion spans are being generated for the reader's window.
   // Shown as a subtle loader so the multi-second wait doesn't look broken.
   isGeneratingCandidates?: boolean
-  onOpenTriage?: () => void
+  onOpenSessionVocabulary?: () => void
 }
 
-export const TriageFooter = ({ sessionId, highlightCount, isGeneratingCandidates = false, onOpenTriage }: Props) => {
+export const SessionVocabularyFooter = ({
+  sessionId,
+  highlightCount,
+  isGeneratingCandidates = false,
+  onOpenSessionVocabulary,
+}: Props) => {
   const { t } = useLingui()
   const { mutate, isPending } = useProcessStudySession(sessionId)
 
@@ -24,7 +29,7 @@ export const TriageFooter = ({ sessionId, highlightCount, isGeneratingCandidates
   const label = isPending ? t`Opening…` : t`Session vocabulary`
 
   const handleClick = () => {
-    mutate({ sessionId }, { onSuccess: () => onOpenTriage?.() })
+    mutate({ sessionId }, { onSuccess: () => onOpenSessionVocabulary?.() })
   }
 
   return (

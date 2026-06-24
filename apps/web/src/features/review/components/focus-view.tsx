@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2 } from 'lucid
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
 import { composeGermanCitation } from '@flicktionary/core/utils/german-noun-forms'
 import { buildWiktionaryUrl } from '@flicktionary/core/utils/wiktionary-url'
-import { useExploreCard, useGetCard, useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
+import { useExploreCard, useGetCard, useListCardsBySession, useRemoveCardFromSession } from '../api/review-hooks'
 import { invalidateCardEverywhere } from '../api/card-cache'
 import { useDeleteChunk, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
 import { getStudyTargetsKey } from '@/features/vocabulary/api/facet-cache'
@@ -44,7 +44,7 @@ export const FocusView = () => {
   const fromVocabulary = from === 'vocabulary'
   const fromPractice = from === 'practice'
   // Practice & Vocabulary entries are language-wide views over kept chunks,
-  // not session-scoped triage queues — same loading shortcut applies.
+  // not session-scoped vocabulary lists — same loading shortcut applies.
   const shouldLoadSessionScope = (!fromVocabulary && !fromPractice) || source === 'available'
 
   const { data: cards, dataUpdatedAt: cardsUpdatedAt } = useListCardsBySession(sessionId, {
@@ -102,7 +102,7 @@ export const FocusView = () => {
   // IS loaded, we still prefer it (it carries the snapshotted native
   // language at session creation time, which matches what the LLM saw).
   const { data: userPrefs } = useGetUserPrefs()
-  const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
+  const { mutate: removeFromSession } = useRemoveCardFromSession(sessionId)
   const { mutate: deleteChunk, isPending: isDeletingChunk } = useDeleteChunk()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const { mutate: exploreCard, isPending: isExploringAny, variables: exploringVariables } = useExploreCard()
@@ -200,7 +200,7 @@ export const FocusView = () => {
     setAutoSetup(null)
   }, [cardId])
 
-  const closeToTriage = () => {
+  const closeToSessionVocabulary = () => {
     if (from === 'vocabulary') {
       void navigate({ to: '/vocabulary' })
       return
@@ -214,14 +214,14 @@ export const FocusView = () => {
 
   if (isLoading) {
     return (
-      <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
+      <ModalScreen onClose={closeToSessionVocabulary} closeIcon='chevron' title={t`Card`}>
         <FocusViewSkeleton />
       </ModalScreen>
     )
   }
   if (!card) {
     return (
-      <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={t`Card`}>
+      <ModalScreen onClose={closeToSessionVocabulary} closeIcon='chevron' title={t`Card`}>
         <div className='text-muted-foreground mx-auto max-w-4xl px-4 py-6 text-sm'>{t`Card not found.`}</div>
       </ModalScreen>
     )
@@ -304,15 +304,15 @@ export const FocusView = () => {
   // back to the session-vocabulary list so the user isn't stranded.
   const advanceOrClose = () => {
     if (cursor.next) goNext()
-    else closeToTriage()
+    else closeToSessionVocabulary()
   }
 
   // Remove-from-session = unkeep this card (non-destructive). It survives in
   // Vocabulary if kept elsewhere; the count badge decrements; the last keep
   // takes count to 0 and it leaves Vocabulary naturally. No deleted_at, no
-  // cross-session nuking, no warning — then advance like the old triage flow.
+  // cross-session nuking, no warning — then advance to the next card.
   const handleRemoveFromSession = () => {
-    if (card.status !== 'rejected') updateStatus({ cardId: card.id, status: 'rejected' })
+    if (card.status !== 'removed') removeFromSession({ cardId: card.id })
     advanceOrClose()
   }
 
@@ -321,7 +321,7 @@ export const FocusView = () => {
   return (
     <div className='flex h-dvh'>
       <div className='flex min-w-0 flex-1 flex-col'>
-        <ModalScreen onClose={closeToTriage} closeIcon='chevron' title={title} rightSlot={headerNav}>
+        <ModalScreen onClose={closeToSessionVocabulary} closeIcon='chevron' title={title} rightSlot={headerNav}>
           <div className='flex-1 overflow-y-auto px-4 py-4'>
             <div className='mx-auto flex max-w-4xl flex-col gap-6'>
               <section>
@@ -456,7 +456,7 @@ export const FocusView = () => {
                         {
                           onSuccess: () => {
                             setDeleteConfirmOpen(false)
-                            closeToTriage()
+                            closeToSessionVocabulary()
                           },
                         }
                       )

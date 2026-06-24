@@ -36,7 +36,7 @@ export const AppShellLayout = () => {
     return <Navigate to={ONBOARDING_PATH} />
   }
 
-  // Modal routes (subtitles, triage, focus, processing, new-session, onboarding) own
+  // Modal routes (subtitles, session vocabulary, focus, processing, new-session, onboarding) own
   // the full viewport: no sidebar, no tab bar. They render their own ModalScreen
   // header. Mirrors React Navigation's `presentation: 'modal'` pattern.
   if (isModal) return <Outlet />

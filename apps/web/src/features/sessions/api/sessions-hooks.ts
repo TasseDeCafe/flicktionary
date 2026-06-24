@@ -292,7 +292,7 @@ export const useGetStudySessionStatus = (sessionId: string, refetchInterval?: nu
   )
 }
 
-// Triage loaders: poll the background enrichment job state while anything is
+// Session-vocabulary loaders: poll the background enrichment job state while anything is
 // still in flight, then stop. Mirrors useGetStudySessionStatus.
 export const useGetProcessingStatus = (sessionId: string, refetchInterval?: number) => {
   const { t } = useLingui()

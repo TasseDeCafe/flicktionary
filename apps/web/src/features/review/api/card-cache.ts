@@ -94,43 +94,6 @@ export const setCardStatusEverywhere = (
   updateCardDetailCache(queryClient, params.cardId, updateStatus)
 }
 
-export const setCardStatusBatchEverywhere = (
-  queryClient: QueryClient,
-  params: { sessionId: string; cardIds: string[]; status: CardStatus }
-) => {
-  const idSet = new Set(params.cardIds)
-  queryClient.setQueryData<SessionCardsQueryData>(getSessionCardsKey(params.sessionId), (cachedList) => {
-    if (!cachedList?.data) return cachedList
-    return {
-      ...cachedList,
-      data: cachedList.data.map((card) => (idSet.has(card.id) ? { ...card, status: params.status } : card)),
-    }
-  })
-  for (const cardId of params.cardIds) {
-    updateCardDetailCache(queryClient, cardId, (card) => ({ ...card, status: params.status }))
-  }
-}
-
-export type CardListSnapshot = {
-  listKey: readonly unknown[]
-  previousList: unknown
-}
-
-export const snapshotSessionCardsCache = (queryClient: QueryClient, sessionId: string): CardListSnapshot => {
-  const listKey = getSessionCardsKey(sessionId)
-  return {
-    listKey,
-    previousList: queryClient.getQueryData(listKey),
-  }
-}
-
-export const restoreSessionCardsCache = (queryClient: QueryClient, snapshot: CardListSnapshot | undefined) => {
-  if (!snapshot) return
-  if (snapshot.previousList !== undefined) {
-    queryClient.setQueryData(snapshot.listKey, snapshot.previousList)
-  }
-}
-
 export const invalidateCardEverywhere = (queryClient: QueryClient, params: { sessionId: string; cardId: string }) => {
   void queryClient.invalidateQueries({ queryKey: getSessionCardsKey(params.sessionId) })
   void queryClient.invalidateQueries({ queryKey: getCardDetailKey(params.cardId) })

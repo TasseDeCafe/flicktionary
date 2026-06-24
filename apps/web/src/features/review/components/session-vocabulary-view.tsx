@@ -14,7 +14,7 @@ import {
   useListHighlightsBySession,
   useRetryEnrichment,
 } from '@/features/sessions/api/sessions-hooks'
-import { useListCardsBySession, useUpdateCardStatus } from '../api/review-hooks'
+import { useListCardsBySession, useRemoveCardFromSession } from '../api/review-hooks'
 import { getSessionCardsKey } from '../api/card-cache'
 import type { Card } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { SessionVocabularyRow, EnrichingRow, SessionVocabularyRowSkeleton } from './session-vocabulary-row'
@@ -51,19 +51,19 @@ export const SessionVocabularyView = () => {
     }
     wasProcessingActiveRef.current = isProcessingActive
   }, [isProcessingActive, sessionId, queryClient])
-  const { mutate: updateStatus } = useUpdateCardStatus(sessionId)
+  const { mutate: removeFromSession } = useRemoveCardFromSession(sessionId)
 
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search.trim(), 200)
 
   // Cards auto-keep once they have basic data, so this list shows the kept terms
-  // plus any data-less note-only stubs still waiting on data (`pending`).
-  // `rejected` / `auto_rejected` never show — and because Remove flips status in
-  // place (the optimistic cache mutates rather than dropping the row), removing
-  // a row moves it to `rejected` and this filter drops it immediately.
+  // plus any data-less note-only stubs still waiting on data (`needs_data`).
+  // `removed` never shows — and because Remove flips status in place (the
+  // optimistic cache mutates rather than dropping the row), removing a row moves
+  // it to `removed` and this filter drops it immediately.
   const visibleCards = useMemo(() => {
     const all = cards ?? []
-    return all.filter((c) => (c.status === 'kept' || c.status === 'pending') && matchesSearch(c, debouncedSearch))
+    return all.filter((c) => (c.status === 'kept' || c.status === 'needs_data') && matchesSearch(c, debouncedSearch))
   }, [cards, debouncedSearch])
 
   const keptCount = (cards ?? []).filter((c) => c.status === 'kept').length
@@ -105,7 +105,7 @@ export const SessionVocabularyView = () => {
   // filtered set never gets applied.
   const filterKey = `${sessionId}|${debouncedSearch}`
   const { ref: scrollRef, onScroll: onScrollSave } = useScrollRestoration<HTMLDivElement>({
-    scope: 'triage',
+    scope: 'session-vocabulary',
     filterKey,
     ready: (cards?.length ?? 0) > 0 || pendingHighlightRows.length > 0,
   })
@@ -114,7 +114,7 @@ export const SessionVocabularyView = () => {
     // Remove-from-session = unkeep this card. Non-destructive: it survives in
     // Vocabulary if kept elsewhere; the count badge decrements; the last keep
     // takes count to 0 and it leaves Vocabulary naturally.
-    updateStatus({ cardId, status: 'rejected' })
+    removeFromSession({ cardId })
   }
 
   const warnings = session?.processingWarnings ?? []

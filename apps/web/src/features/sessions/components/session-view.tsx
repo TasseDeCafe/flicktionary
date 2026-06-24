@@ -31,7 +31,7 @@ import { useGhostNomination } from '../hooks/use-ghost-nomination'
 import { SegmentList, SegmentListSkeleton } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
-import { TriageFooter } from './triage-footer'
+import { SessionVocabularyFooter } from './session-vocabulary-footer'
 
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
   const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
@@ -143,7 +143,7 @@ export const SessionView = () => {
 
   // Background per-highlight enrichment keeps the session `active` throughout —
   // there is no synchronous Process step to redirect to a /processing screen,
-  // and triage is reachable while active. (Discovery runs as a background job.)
+  // and session vocabulary is reachable while active. (Discovery runs as a background job.)
 
   // Scroll a segment to the center of the viewport and flash it briefly. Shared by
   // the deep-link (`?segment=`) restore and the "jump to last highlight" button.
@@ -513,11 +513,11 @@ export const SessionView = () => {
         )}
       </div>
 
-      <TriageFooter
+      <SessionVocabularyFooter
         sessionId={sessionId}
         highlightCount={highlights?.length ?? 0}
         isGeneratingCandidates={isGeneratingCandidates}
-        onOpenTriage={() => {
+        onOpenSessionVocabulary={() => {
           void navigate({ to: '/sessions/$sessionId/review', params: { sessionId } })
         }}
       />
