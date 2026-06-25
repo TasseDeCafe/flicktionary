@@ -796,6 +796,10 @@ msgstr "Choisissez votre langue maternelle pour activer les recherches."
 msgid "Choose your plan"
 msgstr "Choisissez votre forfait"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Clear filters"
+msgstr "Effacer les filtres"
+
 #: packages/ui/src/components/search-input.tsx
 msgid "Clear search"
 msgstr "Effacer la recherche"

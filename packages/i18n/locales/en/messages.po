@@ -781,6 +781,10 @@ msgstr "Choose your native language to enable lookups."
 msgid "Choose your plan"
 msgstr "Choose your plan"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Clear filters"
+msgstr "Clear filters"
+
 #: packages/ui/src/components/search-input.tsx
 msgid "Clear search"
 msgstr "Clear search"
