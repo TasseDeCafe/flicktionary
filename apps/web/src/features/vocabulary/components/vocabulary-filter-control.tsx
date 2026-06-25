@@ -78,6 +78,7 @@ const FilterPanel = ({ filters, onChange }: Props) => {
   }
   // 'all' is the UI-only "no status filter" choice; it maps to `undefined`.
   const statusValue: VocabStatus | 'all' = filters.status ?? 'all'
+  const filtersActive = filters.status !== undefined || filters.skills.length > 0 || filters.hasMultipleForms
 
   return (
     <div className='flex flex-col gap-5'>
@@ -129,6 +130,16 @@ const FilterPanel = ({ filters, onChange }: Props) => {
           onSelect={() => onChange({ ...filters, hasMultipleForms: !filters.hasMultipleForms })}
         />
       </section>
+
+      {filtersActive && (
+        <button
+          type='button'
+          onClick={() => onChange({ ...filters, status: undefined, skills: [], hasMultipleForms: false })}
+          className='text-muted-foreground hover:text-foreground self-end text-xs font-medium underline-offset-2 hover:underline'
+        >
+          {t`Clear filters`}
+        </button>
+      )}
     </div>
   )
 }
