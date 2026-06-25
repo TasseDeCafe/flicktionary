@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useListStudySessions } from '../api/sessions-hooks'
+import { deriveTvShows } from '../utils/derive-tv-shows'
 import { SessionCard, SessionCardSkeleton } from './session-card'
+import { ShowGroupCard } from './show-group-card'
 import { SessionRemoveDialog } from './session-remove-dialog'
 
 type Filter = 'all' | 'movie' | 'tv' | 'text' | 'article' | 'youtube' | 'streaming'
@@ -20,6 +22,29 @@ export const SessionsListView = () => {
     if (filter === 'all') return all
     return all.filter((s) => s.contentSourceType === filter)
   }, [data, filter])
+
+  // TV sessions collapse into one expandable group per show; every other source
+  // type stays an individual row. Groups and rows interleave by recency so an
+  // active show bubbles up alongside recent movies/texts. The TV filter shows
+  // only groups; non-TV filters never produce a group.
+  const items = useMemo(() => {
+    const groups =
+      filter === 'movie' || filter === 'text' || filter === 'article' || filter === 'youtube' || filter === 'streaming'
+        ? []
+        : deriveTvShows(filtered)
+    const loose = filtered.filter((s) => s.contentSourceType !== 'tv')
+    const merged = [
+      ...groups.map((group) => ({
+        kind: 'group' as const,
+        key: `show-${group.tmdbShowId}`,
+        sortKey: group.latestCreatedAt,
+        group,
+      })),
+      ...loose.map((session) => ({ kind: 'session' as const, key: session.id, sortKey: session.createdAt, session })),
+    ]
+    merged.sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+    return merged
+  }, [filtered, filter])
 
   const counts = useMemo(() => {
     const all = data ?? []
@@ -77,13 +102,17 @@ export const SessionsListView = () => {
         {!isLoading && (data?.length ?? 0) > 0 && filtered.length === 0 && (
           <p className='text-muted-foreground text-sm'>{t`No sessions in this filter.`}</p>
         )}
-        {filtered.map((session) => (
-          <SessionCard
-            key={session.id}
-            session={session}
-            onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
-          />
-        ))}
+        {items.map((item) =>
+          item.kind === 'group' ? (
+            <ShowGroupCard key={item.key} group={item.group} />
+          ) : (
+            <SessionCard
+              key={item.key}
+              session={item.session}
+              onRemove={(s) => setRemoveTarget({ id: s.id, title: s.contentSourceTitle ?? t`Untitled` })}
+            />
+          )
+        )}
       </div>
 
       <SessionRemoveDialog

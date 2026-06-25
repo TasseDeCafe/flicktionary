@@ -39,6 +39,7 @@ import { Route as AuthenticatedAppSessionsNewRouteImport } from './routes/_authe
 import { Route as AuthenticatedAppMoreLanguagesRouteImport } from './routes/_authenticated/_app/more/languages'
 import { Route as AuthenticatedAppMoreAccountRouteImport } from './routes/_authenticated/_app/more/account'
 import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/index'
+import { Route as AuthenticatedAppSessionsShowTmdbShowIdRouteImport } from './routes/_authenticated/_app/sessions/show/$tmdbShowId'
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
 import { Route as AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/strengthen/$targetLanguage'
 import { Route as AuthenticatedAppPracticeReviewTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/review/$targetLanguage'
@@ -213,6 +214,12 @@ const AuthenticatedAppSessionsSessionIdIndexRoute =
     path: '/sessions/$sessionId/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppSessionsShowTmdbShowIdRoute =
+  AuthenticatedAppSessionsShowTmdbShowIdRouteImport.update({
+    id: '/sessions/show/$tmdbShowId',
+    path: '/sessions/show/$tmdbShowId',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppSessionsSessionIdProcessingRoute =
   AuthenticatedAppSessionsSessionIdProcessingRouteImport.update({
     id: '/sessions/$sessionId/processing',
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
   '/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
   '/sessions/$sessionId/review/': typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
   '/sessions/$sessionId': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
   '/sessions/$sessionId/review': typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
@@ -366,6 +375,7 @@ export interface FileRoutesById {
   '/_authenticated/_app/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/_authenticated/_app/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  '/_authenticated/_app/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
   '/_authenticated/_app/sessions/$sessionId/': typeof AuthenticatedAppSessionsSessionIdIndexRoute
   '/_authenticated/_app/sessions/$sessionId/review/$cardId': typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
   '/_authenticated/_app/sessions/$sessionId/review/': typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/practice/review/$targetLanguage'
     | '/practice/strengthen/$targetLanguage'
     | '/sessions/$sessionId/processing'
+    | '/sessions/show/$tmdbShowId'
     | '/sessions/$sessionId/'
     | '/sessions/$sessionId/review/$cardId'
     | '/sessions/$sessionId/review/'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/practice/review/$targetLanguage'
     | '/practice/strengthen/$targetLanguage'
     | '/sessions/$sessionId/processing'
+    | '/sessions/show/$tmdbShowId'
     | '/sessions/$sessionId'
     | '/sessions/$sessionId/review/$cardId'
     | '/sessions/$sessionId/review'
@@ -481,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/practice/review/$targetLanguage'
     | '/_authenticated/_app/practice/strengthen/$targetLanguage'
     | '/_authenticated/_app/sessions/$sessionId/processing'
+    | '/_authenticated/_app/sessions/show/$tmdbShowId'
     | '/_authenticated/_app/sessions/$sessionId/'
     | '/_authenticated/_app/sessions/$sessionId/review/$cardId'
     | '/_authenticated/_app/sessions/$sessionId/review/'
@@ -712,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSessionsSessionIdIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/_app/sessions/show/$tmdbShowId': {
+      id: '/_authenticated/_app/sessions/show/$tmdbShowId'
+      path: '/sessions/show/$tmdbShowId'
+      fullPath: '/sessions/show/$tmdbShowId'
+      preLoaderRoute: typeof AuthenticatedAppSessionsShowTmdbShowIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/_app/sessions/$sessionId/processing': {
       id: '/_authenticated/_app/sessions/$sessionId/processing'
       path: '/sessions/$sessionId/processing'
@@ -780,6 +800,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPracticeReviewTargetLanguageRoute: typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   AuthenticatedAppPracticeStrengthenTargetLanguageRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
+  AuthenticatedAppSessionsShowTmdbShowIdRoute: typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
   AuthenticatedAppSessionsSessionIdIndexRoute: typeof AuthenticatedAppSessionsSessionIdIndexRoute
   AuthenticatedAppSessionsSessionIdReviewCardIdRoute: typeof AuthenticatedAppSessionsSessionIdReviewCardIdRoute
   AuthenticatedAppSessionsSessionIdReviewIndexRoute: typeof AuthenticatedAppSessionsSessionIdReviewIndexRoute
@@ -807,6 +828,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppPracticeStrengthenTargetLanguageRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:
     AuthenticatedAppSessionsSessionIdProcessingRoute,
+  AuthenticatedAppSessionsShowTmdbShowIdRoute:
+    AuthenticatedAppSessionsShowTmdbShowIdRoute,
   AuthenticatedAppSessionsSessionIdIndexRoute:
     AuthenticatedAppSessionsSessionIdIndexRoute,
   AuthenticatedAppSessionsSessionIdReviewCardIdRoute:

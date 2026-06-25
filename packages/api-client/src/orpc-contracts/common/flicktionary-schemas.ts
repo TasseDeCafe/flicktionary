@@ -416,6 +416,15 @@ export const StudySessionSchema = z.object({
   contentSourceType: ContentSourceTypeSchema.nullable(),
   contentSourcePosterUrl: z.string().nullable(),
   contentSourceYear: z.number().int().nullable(),
+  // TV-only show identity, read from content_source.metadata. Null for every
+  // other source type. Powers grouping the Sessions list by show and the
+  // "Add episode" shortcut that pre-seeds the new-session wizard.
+  tmdbShowId: z.number().int().nullable(),
+  seasonNumber: z.number().int().nullable(),
+  episodeNumber: z.number().int().nullable(),
+  showTitle: z.string().nullable(),
+  originalTitle: z.string().nullable(),
+  episodeTitle: z.string().nullable(),
 })
 export type StudySession = z.infer<typeof StudySessionSchema>
 

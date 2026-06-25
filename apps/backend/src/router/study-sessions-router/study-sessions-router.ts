@@ -48,6 +48,16 @@ const readYear = (metadata: Record<string, unknown> | null): number | null => {
   return typeof v === 'number' ? v : null
 }
 
+const readMetaString = (metadata: Record<string, unknown> | null, key: string): string | null => {
+  const v = metadata?.[key]
+  return typeof v === 'string' ? v : null
+}
+
+const readMetaInt = (metadata: Record<string, unknown> | null, key: string): number | null => {
+  const v = metadata?.[key]
+  return typeof v === 'number' ? v : null
+}
+
 const toSegmentDto = (row: DbTextSegment) => ({
   id: row.id,
   index: row.index,
@@ -72,6 +82,12 @@ const toStudySessionDto = (row: DbStudySessionWithSource) => ({
   contentSourceType: row.content_source_type,
   contentSourcePosterUrl: readPosterUrl(row.content_source_metadata),
   contentSourceYear: readYear(row.content_source_metadata),
+  tmdbShowId: readMetaInt(row.content_source_metadata, 'tmdbShowId'),
+  seasonNumber: readMetaInt(row.content_source_metadata, 'seasonNumber'),
+  episodeNumber: readMetaInt(row.content_source_metadata, 'episodeNumber'),
+  showTitle: readMetaString(row.content_source_metadata, 'showTitle'),
+  originalTitle: readMetaString(row.content_source_metadata, 'originalTitle'),
+  episodeTitle: readMetaString(row.content_source_metadata, 'episodeTitle'),
 })
 
 export const StudySessionsRouter = (

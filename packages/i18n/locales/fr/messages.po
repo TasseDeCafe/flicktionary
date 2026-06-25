@@ -46,6 +46,10 @@ msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} caractères"
 msgid "{correctCount} of {total} correct."
 msgstr "{correctCount} sur {total} correctes."
 
+#: apps/web/src/features/sessions/components/show-group-card.tsx
+msgid "{count} episodes"
+msgstr "{count} épisodes"
+
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 msgid "{dailyNewAvailable} new available"
 msgstr "{dailyNewAvailable} nouveau(x) disponible(s)"
@@ -231,6 +235,10 @@ msgstr "{monthlyPriceFormatted} €/mois"
 msgid "€{yearlyPricePerMonth}/month"
 msgstr "{yearlyPricePerMonth} €/mois"
 
+#: apps/web/src/features/sessions/components/show-group-card.tsx
+msgid "1 episode"
+msgstr "1 épisode"
+
 #: packages/ui/src/components/preset-tags.tsx
 msgid "3 examples"
 msgstr "3 exemples"
@@ -324,6 +332,10 @@ msgstr "Ajouter un mot"
 msgid "Add Custom CSS"
 msgstr "Ajouter un CSS personnalisé"
 
+#: apps/web/src/features/sessions/components/show-detail-view.tsx
+msgid "Add episode"
+msgstr "Ajouter un épisode"
+
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Add form"
 msgstr "Ajouter une forme"
@@ -348,6 +360,10 @@ msgstr "Ajouter ce terme à la pratique en production."
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Add translation"
 msgstr "Ajouter une traduction"
+
+#: apps/web/src/features/sessions/components/tv-episode-picker.tsx
+msgid "Added"
+msgstr "Ajouté"
 
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Additional hosts"
@@ -2391,6 +2407,7 @@ msgstr "Nouveaux aujourd'hui"
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
+#: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "Next"
 msgstr "Suivant"
 
@@ -3032,6 +3049,7 @@ msgstr "Prêt à pratiquer"
 msgid "Recall and produce it yourself"
 msgstr "Rappelez-vous et produisez-le vous-même"
 
+#: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Recently added"
 msgstr "Récemment ajouté"
@@ -3129,6 +3147,7 @@ msgid "Remove from session"
 msgstr "Retirer de la session"
 
 #: apps/web/src/features/sessions/components/session-card.tsx
+#: apps/web/src/features/sessions/components/show-detail-view.tsx
 msgid "Remove session"
 msgstr "Supprimer la session"
 
@@ -3299,6 +3318,10 @@ msgstr "Rechercher des séries TV…"
 msgid "Search…"
 msgstr "Rechercher…"
 
+#: apps/web/src/features/sessions/components/new-session-wizard.tsx
+msgid "Season {seasonNumber}"
+msgstr "Saison {seasonNumber}"
+
 #: apps/extension/common/components/KeyboardShortcutsSettingsTab.tsx
 #: apps/extension/common/components/VideoOverlay.tsx
 msgid "Seek backward"
@@ -3450,6 +3473,10 @@ msgstr "Partagez votre avis ou suggérez des améliorations aux fondateurs. Nous
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Short paraphrase in the target language."
 msgstr "Courte paraphrase dans la langue cible."
+
+#: apps/web/src/features/sessions/components/show-detail-view.tsx
+msgid "Show"
+msgstr "Série"
 
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 msgid "Show answer"
@@ -3905,6 +3932,10 @@ msgid "This screen is only accessible to subscribed users. You can showcase "
 "premium features here."
 msgstr "Cet écran est accessible uniquement aux utilisateurs abonnés. Vous "
 "pouvez présenter les fonctionnalités premium ici."
+
+#: apps/web/src/features/sessions/components/show-detail-view.tsx
+msgid "This show has no episodes."
+msgstr "Cette série n'a aucun épisode."
 
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "This term is removed from your vocabulary. Restore it to keep "

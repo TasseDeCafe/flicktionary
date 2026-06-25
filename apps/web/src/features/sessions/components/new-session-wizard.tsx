@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Clapperboard, Search, Tv, Upload } from 'lucide-react'
 import { OptionCard } from '@flicktionary/ui/components/option-card'
@@ -10,8 +10,10 @@ import {
   useCreateContentSourceFromTmdbTv,
   useCreateStudySession,
   useGetUserPrefs,
+  useListStudySessions,
   useSetCefrForLanguage,
 } from '../api/sessions-hooks'
+import { deriveTvShows } from '../utils/derive-tv-shows'
 import { CefrStep } from './cefr-step'
 import type { CefrLevel } from '../constants/cefr'
 import { TmdbSearch, type TmdbMoviePick } from './tmdb-search'
@@ -39,10 +41,14 @@ type Step =
 type ContentType = 'movie' | 'tv'
 type SubtitleMode = 'opensubtitles' | 'upload'
 
+const routeApi = getRouteApi('/_authenticated/_app/sessions/new')
+
 export const NewSessionWizard = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { data: prefs } = useGetUserPrefs()
+  const { data: sessions } = useListStudySessions()
+  const { tmdbShowId: seedShowId, tgt: seedLanguage, season: seedSeason } = routeApi.useSearch()
 
   const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
   const [languageTouched, setLanguageTouched] = useState(false)
@@ -66,6 +72,43 @@ export const NewSessionWizard = () => {
   const [importedTrack, setImportedTrack] = useState<ImportedTrack | null>(null)
 
   const [step, setStep] = useState<Step>('language')
+
+  // "Add episode" shortcut: when the route carries a show seed, jump straight to
+  // the episode picker with the show/season pre-filled (CEFR is already set for
+  // an existing show, so that step is skipped). Reconstruct the show from the
+  // cached session list. Applied once, when the data is available.
+  const seedGroup = useMemo(
+    () => (seedShowId != null ? deriveTvShows(sessions ?? []).find((g) => g.tmdbShowId === seedShowId) : undefined),
+    [sessions, seedShowId]
+  )
+  const seedApplied = useRef(false)
+  useEffect(() => {
+    if (seedApplied.current) return
+    if (seedShowId == null || !seedLanguage || seedSeason == null || !seedGroup) return
+    seedApplied.current = true
+    setContentType('tv')
+    setTargetLanguage(seedLanguage)
+    setLanguageTouched(true)
+    setTvShow({
+      tmdbId: seedGroup.tmdbShowId,
+      title: seedGroup.showTitle,
+      originalTitle: seedGroup.originalTitle ?? seedGroup.showTitle,
+      year: seedGroup.year,
+      posterUrl: seedGroup.posterUrl,
+    })
+    setSeason({ seasonNumber: seedSeason, name: '' })
+    setEpisode(null)
+    setStep('tv-episode')
+  }, [seedShowId, seedLanguage, seedSeason, seedGroup])
+
+  // Episodes of the selected show+season already in the user's sessions — the
+  // picker marks these "Added" and highlights the first not-yet-added episode.
+  const addedEpisodeNumbers = useMemo(() => {
+    if (!tvShow || !season) return undefined
+    const group = deriveTvShows(sessions ?? []).find((g) => g.tmdbShowId === tvShow.tmdbId)
+    if (!group) return undefined
+    return new Set(group.episodes.filter((e) => e.seasonNumber === season.seasonNumber).map((e) => e.episodeNumber))
+  }, [sessions, tvShow, season])
 
   const { mutate: setCefr, isPending: isSettingCefr } = useSetCefrForLanguage()
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromTmdb()
@@ -304,6 +347,7 @@ export const NewSessionWizard = () => {
 
   // === Step: TV episode ===
   if (step === 'tv-episode' && targetLanguage && tvShow && season) {
+    const seasonNumber = season.seasonNumber
     const handlePick = (picked: TvEpisodePick) => {
       setEpisode(picked)
       createTvContentSource(
@@ -334,12 +378,13 @@ export const NewSessionWizard = () => {
         onClose={closeWizard}
         onBack={() => setStep('tv-season')}
       >
-        <WizardStepHeading title={t`Pick an episode`} subtitle={season.name} />
+        <WizardStepHeading title={t`Pick an episode`} subtitle={season.name || t`Season ${seasonNumber}`} />
         <TvEpisodePicker
           tmdbShowId={tvShow.tmdbId}
           seasonNumber={season.seasonNumber}
           onPick={handlePick}
           disabled={isCreatingTvSource}
+          addedEpisodeNumbers={addedEpisodeNumbers}
         />
         {isCreatingTvSource && <p className='text-muted-foreground text-sm'>{t`Registering episode…`}</p>}
       </WizardShell>
