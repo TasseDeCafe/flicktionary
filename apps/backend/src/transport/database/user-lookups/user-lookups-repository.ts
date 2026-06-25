@@ -1414,6 +1414,27 @@ const buildSearchClause = (q: string | null) => {
   return sql`AND (ul.headword ILIKE ${pattern} OR ul.translation ILIKE ${pattern} OR ul.definition ILIKE ${pattern})`
 }
 
+// Vocabulary "Skills" filter tokens → the study_facets.skill they match. The
+// filter matches an enabled facet of the mapped skill on ANY target_form
+// (citation or a specific inflection), so a term studied for production only on
+// a form still matches "production".
+const FILTER_SKILL_TO_FACET: Record<string, FacetSkill> = {
+  recognition: 'meaning_recognition',
+  production: 'meaning_production',
+  pronunciation: 'pronunciation',
+}
+
+// Parse the CSV `skills` filter into the distinct facet skills it maps to,
+// ignoring unknown tokens (the wire is a free CSV string — see the contract).
+const parseSkillFilter = (csv: string | null | undefined): FacetSkill[] => {
+  if (!csv) return []
+  const mapped = csv
+    .split(',')
+    .map((token) => FILTER_SKILL_TO_FACET[token.trim()])
+    .filter((skill): skill is FacetSkill => skill !== undefined)
+  return [...new Set(mapped)]
+}
+
 const listChunksForLanguage = async (params: {
   userId: string
   targetLanguage: string
@@ -1421,20 +1442,52 @@ const listChunksForLanguage = async (params: {
   cursor: ChunksCursor | null
   limit: number
   q: string | null
-  isProductionEnabled?: boolean | null
+  skills?: string | null
+  status?: 'due' | 'unseen' | null
+  hasMultipleForms?: boolean | null
 }): Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }> => {
   const limit = Math.max(1, Math.min(params.limit, 200))
   const fetchLimit = limit + 1
   const searchClause = buildSearchClause(params.q)
-  // Derived membership filter: true = an enabled citation production facet
-  // exists (pf joined in SELECT_CHUNK_ROW_SQL); false = it doesn't (absent or
-  // disabled); null/undefined = no filter.
-  const productionClause =
-    params.isProductionEnabled == null
+
+  // Study-state filter on the citation recognition facet (rf, joined in
+  // SELECT_CHUNK_ROW_SQL): the same facet whose state the old per-row Due/New
+  // chip read. 'due' = a review is waiting now; 'unseen' = no recognition facet
+  // state yet (never reviewed, or no recognition facet at all).
+  const statusClause =
+    params.status === 'due'
+      ? sql`AND rf.srs_state IS NOT NULL AND rf.srs_due IS NOT NULL AND rf.srs_due <= now()`
+      : params.status === 'unseen'
+        ? sql`AND rf.srs_state IS NULL`
+        : sql``
+
+  // Skill-membership filter: keep terms with an enabled facet of any selected
+  // skill, on the citation OR any form. EXISTS (not a join) so a term matching
+  // on multiple facets isn't duplicated.
+  const facetSkills = parseSkillFilter(params.skills)
+  const skillsClause =
+    facetSkills.length === 0
       ? sql``
-      : params.isProductionEnabled
-        ? sql`AND (pf.id IS NOT NULL AND pf.disabled_at IS NULL)`
-        : sql`AND (pf.id IS NULL OR pf.disabled_at IS NOT NULL)`
+      : sql`AND EXISTS (
+          SELECT 1 FROM public.study_facets sf
+          WHERE sf.user_lookup_id = ul.id
+            AND sf.disabled_at IS NULL
+            AND sf.skill = ANY(${facetSkills})
+        )`
+
+  // "Has multiple forms": studied in at least one inflected form (an enabled
+  // facet keyed to a non-empty target_form, beyond the citation lemma).
+  const formsClause = params.hasMultipleForms
+    ? sql`AND EXISTS (
+        SELECT 1 FROM public.study_facets sf
+        WHERE sf.user_lookup_id = ul.id
+          AND sf.disabled_at IS NULL
+          AND sf.target_form <> ''
+      )`
+    : sql``
+
+  // Composed once, injected verbatim into every sort/phase branch below.
+  const filterClause = sql`${statusClause} ${skillsClause} ${formsClause}`
 
   if (params.sort === 'recent') {
     const cursor = params.cursor && params.cursor.sort === 'recent' ? params.cursor : null
@@ -1445,7 +1498,7 @@ const listChunksForLanguage = async (params: {
         AND ul.deleted_at IS NULL
         AND ul.count > 0
         ${searchClause}
-        ${productionClause}
+        ${filterClause}
         AND ${cursor ? sql`(ul.created_at, ul.id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)` : sql`TRUE`}
       ORDER BY ul.created_at DESC, ul.id ASC
       LIMIT ${fetchLimit}
@@ -1474,7 +1527,7 @@ const listChunksForLanguage = async (params: {
         AND ul.count > 0
         AND rf.srs_due IS NOT NULL
         ${searchClause}
-        ${productionClause}
+        ${filterClause}
         AND ${
           cursor && cursor.phase === 'scheduled'
             ? sql`(rf.srs_due, ul.id) > (${cursor.srsDue}::timestamptz, ${cursor.id}::uuid)`
@@ -1513,7 +1566,7 @@ const listChunksForLanguage = async (params: {
         AND ul.count > 0
         AND rf.srs_due IS NULL
         ${searchClause}
-        ${productionClause}
+        ${filterClause}
       ORDER BY ul.id ASC
       LIMIT ${tailFetchLimit}
     `) as Array<Record<string, unknown>>
@@ -1537,7 +1590,7 @@ const listChunksForLanguage = async (params: {
       AND ul.count > 0
       AND rf.srs_due IS NULL
       ${searchClause}
-      ${productionClause}
+      ${filterClause}
       AND ul.id > ${cursor!.id}::uuid
     ORDER BY ul.id ASC
     LIMIT ${fetchLimit}
@@ -1753,7 +1806,9 @@ export interface UserLookupsRepositoryInterface {
     cursor: ChunksCursor | null
     limit: number
     q: string | null
-    isProductionEnabled?: boolean | null
+    skills?: string | null
+    status?: 'due' | 'unseen' | null
+    hasMultipleForms?: boolean | null
   }) => Promise<{ rows: ChunkRow[]; nextCursor: ChunksCursor | null }>
   softDeleteChunk: (id: string, userId: string) => Promise<void>
   restoreChunk: (id: string, userId: string) => Promise<void>
