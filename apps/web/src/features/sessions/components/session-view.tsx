@@ -32,6 +32,7 @@ import { SegmentList, SegmentListSkeleton } from './segment-list'
 import { TrackSearchBar } from './track-search-bar'
 import { SessionGlossSheet, type ExistingHighlightInput } from './session-gloss-sheet'
 import { SessionVocabularyFooter } from './session-vocabulary-footer'
+import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 
 const alignSegmentToBottom = (scrollContainer: HTMLElement, segmentId: string): boolean => {
   const target = scrollContainer.querySelector(`[data-segment-id="${segmentId}"]`)
@@ -412,7 +413,9 @@ export const SessionView = () => {
 
   const closeToSessions = () => {
     if (from === 'vocabulary') {
-      void navigate({ to: '/vocabulary' })
+      // Restore the sort/filter state the user was browsing under (same as the
+      // focus view's back), so an Open-source detour doesn't reset the list.
+      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch() })
       return
     }
     void navigate({ to: '/sessions' })

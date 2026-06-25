@@ -9,6 +9,7 @@ import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
 import { VocabularyFilterControl, type VocabFilters } from './vocabulary-filter-control'
+import { setSavedVocabularySearch } from '../saved-search'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
@@ -60,6 +61,12 @@ export const VocabularyListView = () => {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [deleteConfirmChunk, setDeleteConfirmChunk] = useState<ChunkRow | null>(null)
+
+  // Mirror the URL filters into the module stash so the focus view's
+  // chevron-back can restore them when returning from a card.
+  useEffect(() => {
+    setSavedVocabularySearch(search)
+  }, [search])
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
