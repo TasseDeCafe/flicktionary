@@ -414,7 +414,7 @@ msgstr "AI-generated and not verified against a dictionary — double-check "
 
 #: apps/extension/common/components/SubtitleAppearanceTrackSelector.tsx
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "All"
 msgstr "All"
 
@@ -780,6 +780,10 @@ msgstr "Choose your native language to enable lookups."
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "Choose your plan"
 msgstr "Choose your plan"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Clear filters"
+msgstr "Clear filters"
 
 #: packages/ui/src/components/search-input.tsx
 msgid "Clear search"
@@ -1150,11 +1154,11 @@ msgstr "Download all kept terms for {languageName} as CSV (Anki-compatible)"
 msgid "downloads"
 msgstr "downloads"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Due"
 msgstr "Due"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Due soonest"
 msgstr "Due soonest"
 
@@ -1319,12 +1323,6 @@ msgid "Even if you get charged you can request an unconditional refund. Just "
 "let us know by clicking the \"Contact Us\" button above."
 msgstr "Even if you get charged you can request an unconditional refund. Just "
 "let us know by clicking the \"Contact Us\" button above."
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
-msgid "Every term you've kept, across every session. Tap a row to edit, or open "
-"the menu for more options."
-msgstr "Every term you've kept, across every session. Tap a row to edit, or "
-"open the menu for more options."
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Everything you save lands in the web app, where you can review your "
@@ -1738,6 +1736,10 @@ msgstr "Form"
 msgid "Form (e.g. был)"
 msgstr "Form (e.g. был)"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Forms"
+msgstr "Forms"
+
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Forms you've encountered"
 msgstr "Forms you've encountered"
@@ -1887,6 +1889,10 @@ msgstr "haben or sein"
 msgid "Hard"
 msgstr "Hard"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Has multiple forms"
+msgstr "Has multiple forms"
+
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 msgid "Headword"
 msgstr "Headword"
@@ -2003,10 +2009,6 @@ msgstr "Importing articles"
 msgid "Importing…"
 msgstr "Importing…"
 
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
-msgid "In production"
-msgstr "In production"
-
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Inanimate"
 msgstr "Inanimate"
@@ -2119,10 +2121,6 @@ msgstr "Last day to cancel before first charge"
 #: apps/web/src/features/sessions/components/session-view.tsx
 msgid "Last read"
 msgstr "Last read"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
-msgid "Later"
-msgstr "Later"
 
 #: apps/extension/common/components/SubtitleAppearanceSettingsTab.tsx
 msgid "Layout"
@@ -2348,7 +2346,6 @@ msgstr "Neuter"
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
 #: apps/web/src/features/practice/components/review-queue-stats.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
 msgid "New"
 msgstr "New"
 
@@ -2499,10 +2496,6 @@ msgstr "Normal"
 #: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
 msgid "not available"
 msgstr "not available"
-
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
-msgid "Not in production"
-msgstr "Not in production"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
@@ -2923,7 +2916,7 @@ msgstr "Processing warnings"
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-row.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Production"
 msgstr "Production"
@@ -2960,6 +2953,7 @@ msgstr "Pronoun"
 #: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Pronunciation"
 msgstr "Pronunciation"
@@ -3008,7 +3002,7 @@ msgid "Recall and produce it yourself"
 msgstr "Recall and produce it yourself"
 
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
-#: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Recently added"
 msgstr "Recently added"
 
@@ -3016,6 +3010,7 @@ msgstr "Recently added"
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Recognition"
 msgstr "Recognition"
@@ -3497,6 +3492,7 @@ msgid "Singular-only"
 msgstr "Singular-only"
 
 #: apps/web/src/features/review/components/form-selector.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Skills"
 msgstr "Skills"
 
@@ -3533,6 +3529,18 @@ msgstr "Something went wrong."
 msgid "Something went wrong. Please refresh the page and try again."
 msgstr "Something went wrong. Please refresh the page and try again."
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Sort"
+msgstr "Sort"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Sort & filter"
+msgstr "Sort & filter"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Sort and filter"
+msgstr "Sort and filter"
+
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Standalone"
 msgstr "Standalone"
@@ -3568,6 +3576,10 @@ msgstr "Starting session…"
 msgid "Starting…"
 msgstr "Starting…"
 
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Status"
+msgstr "Status"
+
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Streaming"
 msgstr "Streaming"
@@ -3587,6 +3599,10 @@ msgstr "Strengthen · {languageName}"
 #: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
+
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
+msgid "Studied in at least one inflected form"
+msgstr "Studied in at least one inflected form"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Study targets"
@@ -4097,6 +4113,7 @@ msgid "Unlock Premium"
 msgstr "Unlock Premium"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx
+#: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Unseen"
 msgstr "Unseen"
 

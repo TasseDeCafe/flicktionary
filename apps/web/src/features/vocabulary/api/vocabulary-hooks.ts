@@ -1,7 +1,7 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
+import type { ChunksSort, VocabFilterSkill, VocabStatus } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { applyOptimistic, optimisticPatch, patchInfinitePages } from '@/lib/query/optimistic'
 import {
   getStudyTargetsKey,
@@ -27,12 +27,14 @@ export const useListChunksInfinite = (params: {
   sort: ChunksSort
   q?: string
   limit?: number
-  isProductionEnabled?: boolean | null
+  skills?: VocabFilterSkill[]
+  status?: VocabStatus
+  hasMultipleForms?: boolean
 }) => {
   const { t } = useLingui()
   const targetLanguage = params.targetLanguage
   const q = params.q?.trim() ?? ''
-  const isProductionEnabled = params.isProductionEnabled ?? null
+  const skills = params.skills ?? []
   return useInfiniteQuery(
     orpcQuery.chunks.listChunks.infiniteOptions({
       enabled: Boolean(targetLanguage),
@@ -42,7 +44,10 @@ export const useListChunksInfinite = (params: {
         cursor: pageParam ?? null,
         limit: params.limit ?? 50,
         ...(q.length > 0 ? { q } : {}),
-        ...(isProductionEnabled === null ? {} : { isProductionEnabled }),
+        // The wire takes skills as a CSV string (see the contract); join here.
+        ...(skills.length > 0 ? { skills: skills.join(',') } : {}),
+        ...(params.status ? { status: params.status } : {}),
+        ...(params.hasMultipleForms ? { hasMultipleForms: true } : {}),
       }),
       initialPageParam: null as string | null,
       getNextPageParam: (last) => last.nextCursor,

@@ -3,13 +3,13 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { BookOpen, MoreVertical } from 'lucide-react'
-import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { toast } from 'sonner'
 import type { ChunkRow } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import type { ChunksSort } from '@flicktionary/api-client/orpc-contracts/chunks-contract'
 import { useDeleteChunk, useListChunksInfinite, useListLanguages } from '../api/vocabulary-hooks'
 import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value'
 import { SearchInput } from '@flicktionary/ui/components/search-input'
+import { VocabularyFilterControl, type VocabFilters } from './vocabulary-filter-control'
+import { setSavedVocabularySearch } from '../saved-search'
 import { VocabularyActionDrawer } from './vocabulary-action-drawer'
 import { VocabularyDeleteConfirmDrawer } from './vocabulary-delete-confirm-drawer'
 import { VocabularyEmptyState } from './vocabulary-empty-state'
@@ -26,93 +26,47 @@ const ESTIMATED_ROW_HEIGHT = 72
 // lands back on languages[0] instead of whatever they were browsing.
 let savedLanguage: string | null = null
 
-const SortPills = ({ value, onChange }: { value: ChunksSort; onChange: (next: ChunksSort) => void }) => {
-  const { t } = useLingui()
-  const options: Array<{ value: ChunksSort; label: string }> = [
-    { value: 'recent', label: t`Recently added` },
-    { value: 'due', label: t`Due soonest` },
-  ]
-  return (
-    <div className='bg-muted flex gap-1 rounded-full p-1'>
-      {options.map((opt) => {
-        const isActive = opt.value === value
-        return (
-          <button
-            key={opt.value}
-            type='button'
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              isActive ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-const ProductionFilterPills = ({
-  value,
-  onChange,
-}: {
-  value: boolean | null
-  onChange: (next: boolean | null) => void
-}) => {
-  const { t } = useLingui()
-  const options: Array<{ value: boolean | null; label: string }> = [
-    { value: null, label: t`All` },
-    { value: true, label: t`In production` },
-    { value: false, label: t`Not in production` },
-  ]
-  return (
-    <div className='bg-muted flex gap-1 rounded-full p-1'>
-      {options.map((opt) => {
-        const isActive = opt.value === value
-        return (
-          <button
-            key={opt.label}
-            type='button'
-            onClick={() => onChange(opt.value)}
-            className={cn(
-              'rounded-full px-3 py-1 text-xs font-medium transition-colors',
-              isActive ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {opt.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 export const VocabularyListView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
-  const { mode } = useSearch({ from: '/_authenticated/_app/vocabulary/' })
+  const search = useSearch({ from: '/_authenticated/_app/vocabulary/' })
 
   const [selectedLanguage, setSelectedLanguageState] = useState<string | null>(savedLanguage)
   const setSelectedLanguage = (next: string | null) => {
     savedLanguage = next
     setSelectedLanguageState(next)
   }
-  const [sort, setSort] = useState<ChunksSort>('recent')
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
-  // The URL `mode` token is the user-facing pool vocabulary; the filter is
-  // expressed to the API as a boolean isProductionEnabled ('production' = in
-  // production study, 'recognition' = recognition-only).
-  const isProductionEnabled: boolean | null = mode === 'production' ? true : mode === 'recognition' ? false : null
-  const setProductionFilter = (next: boolean | null) => {
-    void navigate({ to: '/vocabulary', search: next === null ? {} : { mode: next ? 'production' : 'recognition' } })
+  // Sort & filter state lives in the URL (see the route's search schema). Drop
+  // default/empty values when writing back so the URL stays clean.
+  const filters: VocabFilters = {
+    sort: search.sort ?? 'recent',
+    status: search.status,
+    skills: search.skills ?? [],
+    hasMultipleForms: search.forms ?? false,
+  }
+  const setFilters = (next: VocabFilters) => {
+    void navigate({
+      to: '/vocabulary',
+      search: {
+        ...(next.sort !== 'recent' ? { sort: next.sort } : {}),
+        ...(next.status ? { status: next.status } : {}),
+        ...(next.skills.length > 0 ? { skills: next.skills } : {}),
+        ...(next.hasMultipleForms ? { forms: true } : {}),
+      },
+    })
   }
   const [activeChunk, setActiveChunk] = useState<ChunkRow | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [optionsOpen, setOptionsOpen] = useState(false)
   const [deleteConfirmChunk, setDeleteConfirmChunk] = useState<ChunkRow | null>(null)
+
+  // Mirror the URL filters into the module stash so the focus view's
+  // chevron-back can restore them when returning from a card.
+  useEffect(() => {
+    setSavedVocabularySearch(search)
+  }, [search])
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
@@ -130,7 +84,14 @@ export const VocabularyListView = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useListChunksInfinite({ targetLanguage: selectedLanguage, sort, q: debouncedSearch, isProductionEnabled })
+  } = useListChunksInfinite({
+    targetLanguage: selectedLanguage,
+    sort: filters.sort,
+    q: debouncedSearch,
+    skills: filters.skills,
+    status: filters.status,
+    hasMultipleForms: filters.hasMultipleForms,
+  })
   const rows: ChunkRow[] = useMemo(() => {
     if (!data) return []
     return data.pages.flatMap((page) => page.rows)
@@ -139,7 +100,7 @@ export const VocabularyListView = () => {
   // Restores scroll position when the container remounts (e.g. focus-view
   // round-trip). Resets when the filter combo changes so a stale offset from
   // a different result set never gets applied.
-  const filterKey = `${selectedLanguage ?? ''}|${sort}|${debouncedSearch}|${isProductionEnabled === null ? 'all' : isProductionEnabled ? 'prod' : 'noprod'}`
+  const filterKey = `${selectedLanguage ?? ''}|${filters.sort}|${debouncedSearch}|${filters.status ?? 'all'}|${filters.skills.join(',')}|${filters.hasMultipleForms ? 'forms' : ''}`
   const { ref: parentRef, onScroll: onParentScroll } = useScrollRestoration<HTMLDivElement>({
     scope: 'vocabulary',
     filterKey,
@@ -249,10 +210,6 @@ export const VocabularyListView = () => {
         </Button>
       </header>
 
-      <p className='text-muted-foreground text-sm'>
-        {t`Every term you've kept, across every session. Tap a row to edit, or open the menu for more options.`}
-      </p>
-
       {languagesLoading && <VocabularyLanguageSwitcherSkeleton />}
 
       {languages && languages.length > 1 && selectedLanguage && (
@@ -263,18 +220,18 @@ export const VocabularyListView = () => {
         />
       )}
 
-      <SearchInput value={searchInput} onChange={setSearchInput} placeholder={t`Search terms…`} className='w-full' />
-
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <ProductionFilterPills value={isProductionEnabled} onChange={setProductionFilter} />
-        <SortPills value={sort} onChange={setSort} />
+      <div className='flex items-center gap-2'>
+        <SearchInput value={searchInput} onChange={setSearchInput} placeholder={t`Search terms…`} className='flex-1' />
+        <VocabularyFilterControl filters={filters} onChange={setFilters} />
       </div>
 
       {showEmpty && <VocabularyEmptyState />}
 
       {showLanguageEmpty && (
         <div className='bg-muted text-muted-foreground rounded-xl border p-6 text-center text-sm'>
-          {debouncedSearch.length > 0 ? t`No matches.` : t`No vocabulary in this language yet.`}
+          {debouncedSearch.length > 0 || filters.status || filters.skills.length > 0 || filters.hasMultipleForms
+            ? t`No matches.`
+            : t`No vocabulary in this language yet.`}
         </div>
       )}
 

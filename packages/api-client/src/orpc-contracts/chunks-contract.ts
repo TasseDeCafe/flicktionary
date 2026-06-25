@@ -15,6 +15,18 @@ import {
 export const ChunksSortSchema = z.enum(['recent', 'due'])
 export type ChunksSort = z.infer<typeof ChunksSortSchema>
 
+// Vocabulary list filters (Sort & filter control). `skills` is a multi-select
+// over study-skill membership (OR within the set: a term matches if it has an
+// enabled facet of ANY listed skill, on the citation OR any form). `status` is
+// a single study-state bucket on the term's citation recognition facet, and
+// `hasMultipleForms` keeps only terms studied in at least one inflected form.
+export const VOCAB_FILTER_SKILLS = ['recognition', 'production', 'pronunciation'] as const
+export const VocabFilterSkillSchema = z.enum(VOCAB_FILTER_SKILLS)
+export type VocabFilterSkill = z.infer<typeof VocabFilterSkillSchema>
+
+export const VocabStatusSchema = z.enum(['due', 'unseen'])
+export type VocabStatus = z.infer<typeof VocabStatusSchema>
+
 export const ChunksCursorSchema = z.union([
   z.object({
     sort: z.literal('recent'),
@@ -125,13 +137,18 @@ export const chunksContract = {
         // Optional case-insensitive substring filter applied across headword,
         // translation, and definition. Empty string is treated as no filter.
         q: z.string().optional(),
-        // Optional production-study filter. Omitted/null means "All"; true =
-        // only terms in production (citation meaning_production enabled), false
-        // = only terms not in production. Accepts a real boolean (client input)
-        // OR the 'true'/'false' string a GET query delivers — z.boolean() alone
-        // rejects the string, and z.coerce.boolean() would parse 'false' as
-        // true (it's just Boolean(value)). z.stringbool() handles the string.
-        isProductionEnabled: z.union([z.boolean(), z.stringbool()]).nullable().optional(),
+        // Skill-membership filter, a comma-separated list of VOCAB_FILTER_SKILLS
+        // tokens (e.g. "production,pronunciation"). OR within the set. Sent as a
+        // CSV string rather than z.array to dodge array-over-GET query
+        // serialization; the server splits + validates, ignoring unknown tokens.
+        skills: z.string().optional(),
+        // Study-state bucket on the citation recognition facet: 'due' = a review
+        // is waiting now, 'unseen' = never studied. Omitted = no status filter.
+        status: VocabStatusSchema.optional(),
+        // Keep only terms studied in at least one inflected form (an enabled
+        // facet with a non-empty target_form). GET delivers the boolean as a
+        // string, so accept either (z.stringbool() parses 'true'/'false').
+        hasMultipleForms: z.union([z.boolean(), z.stringbool()]).optional(),
       })
     )
     .output(

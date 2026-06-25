@@ -187,7 +187,9 @@ export const ChunksRouter = (
         cursor: decodeCursor(input.cursor),
         limit: input.limit,
         q: trimmedQ.length > 0 ? trimmedQ : null,
-        isProductionEnabled: input.isProductionEnabled ?? null,
+        skills: input.skills ?? null,
+        status: input.status ?? null,
+        hasMultipleForms: input.hasMultipleForms ?? null,
       })
       return { rows: rows.map(toChunkRowDto), nextCursor: encodeCursor(nextCursor) }
     }),

@@ -13,6 +13,7 @@ import { useExploreCard, useGetCard, useListCardsBySession, useRemoveCardFromSes
 import { invalidateCardEverywhere } from '../api/card-cache'
 import { useDeleteChunk, useStudyTargets } from '@/features/vocabulary/api/vocabulary-hooks'
 import { getStudyTargetsKey } from '@/features/vocabulary/api/facet-cache'
+import { getSavedVocabularySearch } from '@/features/vocabulary/saved-search'
 import { FormSelector } from './form-selector'
 import { PerFormCardEditor } from './per-form-card-editor'
 import type { FormAutoSetup, SelectedTarget } from './study-target-helpers'
@@ -202,7 +203,9 @@ export const FocusView = () => {
 
   const closeToSessionVocabulary = () => {
     if (from === 'vocabulary') {
-      void navigate({ to: '/vocabulary' })
+      // Restore the sort/filter state the user was browsing under (the close
+      // nav would otherwise rebuild /vocabulary with an empty search).
+      void navigate({ to: '/vocabulary', search: getSavedVocabularySearch() })
       return
     }
     if (from === 'practice' && practiceLang) {
