@@ -42,6 +42,7 @@ export const glossQueryOptions = (
         pos: response.pos ?? null,
         register: response.register ?? null,
         ipaDisplay: response.ipaDisplay ?? null,
+        ipaLemma: response.ipaLemma ?? null,
       }
     },
     enabled: enabled && !!word && !!sentence,

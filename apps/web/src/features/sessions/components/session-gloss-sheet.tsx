@@ -209,7 +209,7 @@ export const SessionGlossSheet = ({
       setTags(activeExistingHighlight.presetTags)
       setGlossState(
         activeExistingHighlight.fastGloss
-          ? { status: 'ready', ...parseFastGloss(activeExistingHighlight.fastGloss), ipaDisplay: null }
+          ? { status: 'ready', ...parseFastGloss(activeExistingHighlight.fastGloss), ipaDisplay: null, ipaLemma: null }
           : { status: 'loading' }
       )
       return
@@ -239,7 +239,7 @@ export const SessionGlossSheet = ({
     setSheetExpanded(false)
     const cachedGloss = activeExistingHighlight.fastGloss ? parseFastGloss(activeExistingHighlight.fastGloss) : null
     if (cachedGloss) {
-      setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null })
+      setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null, ipaLemma: null })
     } else {
       setGlossState({ status: 'loading' })
     }
@@ -256,6 +256,7 @@ export const SessionGlossSheet = ({
           pos: res.data.pos,
           register: res.data.register,
           ipaDisplay: res.data.ipaDisplay,
+          ipaLemma: res.data.ipaLemma,
         })
       } catch {
         if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
@@ -302,7 +303,7 @@ export const SessionGlossSheet = ({
           setNote(match.note ?? '')
           setTags(match.presetTags ?? [])
           const cachedGloss = match.fastGloss ? parseFastGloss(match.fastGloss) : null
-          if (cachedGloss) setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null })
+          if (cachedGloss) setGlossState({ status: 'ready', ...cachedGloss, ipaDisplay: null, ipaLemma: null })
           try {
             const res = await fetchGloss({ sessionId, highlightId: match.id })
             if (cancelled) return
@@ -312,6 +313,7 @@ export const SessionGlossSheet = ({
               pos: res.data.pos,
               register: res.data.register,
               ipaDisplay: res.data.ipaDisplay,
+              ipaLemma: res.data.ipaLemma,
             })
           } catch {
             if (!cancelled && !cachedGloss) setGlossState({ status: 'error', message: null })
@@ -330,6 +332,7 @@ export const SessionGlossSheet = ({
             pos: res.data.pos,
             register: res.data.register,
             ipaDisplay: res.data.ipaDisplay,
+            ipaLemma: res.data.ipaLemma,
           })
         }
       } catch {
@@ -440,6 +443,7 @@ export const SessionGlossSheet = ({
         pos: gloss.data.pos,
         register: gloss.data.register,
         ipaDisplay: gloss.data.ipaDisplay,
+        ipaLemma: gloss.data.ipaLemma,
       })
     } catch {
       setGlossState({ status: 'error', message: null })
@@ -597,6 +601,10 @@ export const SessionGlossSheet = ({
   // Server-picked, dialect-correct display string — no client-side bag picking.
   // The prefs read above still feeds the EnglishIpaDialectFlag next to it.
   const displayedIpa = isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).ipaDisplay : null
+  // Only label the IPA with its lemma when there's an actual IPA to label (never
+  // next to the "No Wiktionary IPA" fallback).
+  const displayedIpaLemma =
+    isReady && displayedIpa ? (glossState as Extract<GlossViewState, { status: 'ready' }>).ipaLemma : null
   const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
   const ipaLabel = isReady ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
@@ -635,6 +643,7 @@ export const SessionGlossSheet = ({
                 pos={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).pos : null}
                 register={isReady ? (glossState as Extract<GlossViewState, { status: 'ready' }>).register : null}
                 ipaLabel={ipaLabel}
+                ipaLemma={displayedIpaLemma}
                 ipaPrefix={
                   showIpaFlag ? (
                     <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />

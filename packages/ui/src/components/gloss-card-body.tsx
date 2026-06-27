@@ -12,6 +12,11 @@ type GlossCardBodyProps = {
   // Resolved by the caller (pickIpa + dialect + "No Wiktionary IPA" fallback) —
   // the caller owns user prefs and language constants.
   ipaLabel: string | null
+  // The lemma the IPA belongs to when it was sourced from a form-of fallback
+  // (the selected surface form has no pronunciation of its own). Rendered as a
+  // muted prefix — "beheben /bəˈheːbən/" — so the inflected surface form isn't
+  // implied to be pronounced that way. Null when the IPA is the surface's own.
+  ipaLemma?: string | null
   // Slot for the English dialect flag (an app-level component).
   ipaPrefix?: ReactNode
   // Accessibility fallback announced while there is no visible gloss text.
@@ -30,6 +35,7 @@ export const GlossCardBody = ({
   pos,
   register,
   ipaLabel,
+  ipaLemma,
   ipaPrefix,
   srDescription,
 }: GlossCardBodyProps) => {
@@ -51,6 +57,7 @@ export const GlossCardBody = ({
       {ipaLabel && (
         <p className='text-muted-foreground flex items-center gap-1.5 text-base leading-snug font-medium'>
           {ipaPrefix}
+          {ipaLemma && <span className='opacity-70'>{ipaLemma}</span>}
           <span>{ipaLabel}</span>
         </p>
       )}

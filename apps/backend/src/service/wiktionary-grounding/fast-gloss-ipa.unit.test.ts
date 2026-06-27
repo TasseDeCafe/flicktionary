@@ -41,7 +41,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'noun',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/ˈɡɹædʒuət/' })
+    ).resolves.toEqual({ ipa: { ga: '/ˈɡɹædʒuət/' }, lemma: null })
   })
 
   it('uses POS to pick the verb pronunciation for an ambiguous English word', async () => {
@@ -57,7 +57,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'verb',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/ˈɡɹædʒueɪt/' })
+    ).resolves.toEqual({ ipa: { ga: '/ˈɡɹædʒueɪt/' }, lemma: null })
   })
 
   it('returns null for an ambiguous English word without a mappable POS', async () => {
@@ -90,7 +90,29 @@ describe('lookupFastGlossIpa', () => {
         pos: null,
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ untagged: '/sɐˈbakə/' })
+    ).resolves.toEqual({ ipa: { untagged: '/sɐˈbakə/' }, lemma: null })
+  })
+
+  it('labels the lemma when a non-English form falls back to its lemma pronunciation', async () => {
+    // behoben (past participle) has no IPA of its own in Wiktionary; it form-of
+    // resolves to beheben, whose pronunciation we surface — but labeled as the
+    // lemma so the inflected form is not implied to be pronounced that way.
+    const beheben = entry(1, 'beheben', 'verb', '/bəˈheːbn̩/')
+    const repo = mockRepository({
+      findFormOfLemma: vi.fn(async ({ headword }) => (headword === 'behoben' ? 'beheben' : null)),
+      findRealLemmaByHeadwordAndPos: vi.fn(async ({ headword, pos }) =>
+        headword === 'beheben' && pos === 'verb' ? beheben : null
+      ),
+    })
+
+    await expect(
+      lookupFastGlossIpa({
+        targetLanguage: 'de',
+        selectionText: 'behoben',
+        pos: 'verb',
+        wiktionaryEntriesRepository: repo,
+      })
+    ).resolves.toEqual({ ipa: { untagged: '/bəˈheːbn̩/' }, lemma: 'beheben' })
   })
 
   it('uses exact Russian surface pronunciation before a wrong-POS form fallback', async () => {
@@ -110,7 +132,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'adjective',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ untagged: '[ˈpoznə]' })
+    ).resolves.toEqual({ ipa: { untagged: '[ˈpoznə]' }, lemma: null })
   })
 
   it('tries lowercase Russian surface candidates for sentence-initial selections', async () => {
@@ -128,7 +150,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'noun',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ untagged: '[ɡəspɐˈdʲin]' })
+    ).resolves.toEqual({ ipa: { untagged: '[ɡəspɐˈdʲin]' }, lemma: null })
   })
 
   it('uses surface-form pronunciation for English form-of entries', async () => {
@@ -148,7 +170,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'noun',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/ˈt͡ʃɪldɹən/' })
+    ).resolves.toEqual({ ipa: { ga: '/ˈt͡ʃɪldɹən/' }, lemma: null })
     expect(repo.findRealLemmaByHeadwordAndPos).not.toHaveBeenCalled()
   })
 
@@ -185,7 +207,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'verb',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/wɝ/' })
+    ).resolves.toEqual({ ipa: { ga: '/wɝ/' }, lemma: null })
   })
 
   it('tries lowercase English surface candidates for sentence-initial inflections', async () => {
@@ -203,7 +225,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'noun',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/ˈθaʊzəndz/' })
+    ).resolves.toEqual({ ipa: { ga: '/ˈθaʊzəndz/' }, lemma: null })
   })
 
   it('uses surface entries without head templates', async () => {
@@ -221,7 +243,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'interjection',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/wɛl/' })
+    ).resolves.toEqual({ ipa: { ga: '/wɛl/' }, lemma: null })
   })
 
   it('accepts broad US pronunciation rows even when another broad region is also listed', async () => {
@@ -237,7 +259,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'verb',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/səˈplænt/' })
+    ).resolves.toEqual({ ipa: { ga: '/səˈplænt/' }, lemma: null })
   })
 
   it('tries lowercase English candidates for sentence-initial selections', async () => {
@@ -255,7 +277,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'verb',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/ʃoʊ/' })
+    ).resolves.toEqual({ ipa: { ga: '/ʃoʊ/' }, lemma: null })
   })
 
   it('keeps direct unambiguous English surface lookups working without POS', async () => {
@@ -271,7 +293,7 @@ describe('lookupFastGlossIpa', () => {
         pos: null,
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/swiːt/' })
+    ).resolves.toEqual({ ipa: { ga: '/swiːt/' }, lemma: null })
   })
 
   it('merges multiple POS-matched surface pronunciation entries', async () => {
@@ -288,7 +310,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'pronoun',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ ga: '/wi/', rp: '/wiː/' })
+    ).resolves.toEqual({ ipa: { ga: '/wi/', rp: '/wiː/' }, lemma: null })
   })
 
   it('uses POS-only Wiktionary pronunciation tags for surface entries like rebuild', async () => {
@@ -314,7 +336,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'verb',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ untagged: '/ɹiːˈbɪld/' })
+    ).resolves.toEqual({ ipa: { untagged: '/ɹiːˈbɪld/' }, lemma: null })
   })
 
   it('maps common verb subtypes from the fast gloss POS line', async () => {
@@ -330,7 +352,7 @@ describe('lookupFastGlossIpa', () => {
         pos: 'transitive verb',
         wiktionaryEntriesRepository: repo,
       })
-    ).resolves.toEqual({ untagged: '/dɪˈfiːt/' })
+    ).resolves.toEqual({ ipa: { untagged: '/dɪˈfiːt/' }, lemma: null })
   })
 
   it('returns null without hitting the repository for unsupported languages', async () => {

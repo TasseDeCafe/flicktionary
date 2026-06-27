@@ -65,6 +65,7 @@ const GlossBody = ({ content, srDescription }: { content: GlossContent; srDescri
       pos={content.status === 'ready' ? content.pos : null}
       register={content.status === 'ready' ? content.register : null}
       ipaLabel={content.status === 'ready' ? content.ipaDisplay : null}
+      ipaLemma={content.status === 'ready' && content.ipaDisplay ? content.ipaLemma : null}
       srDescription={srDescription}
     />
     {content.status === 'ready' && !content.gloss && (
@@ -422,7 +423,7 @@ export function SavedGlossTooltip({
     initialGloss
       ? { status: 'ready', ...initialGloss }
       : highlight.fastGloss
-        ? { status: 'ready', ...parseFastGloss(highlight.fastGloss), ipaDisplay: null }
+        ? { status: 'ready', ...parseFastGloss(highlight.fastGloss), ipaDisplay: null, ipaLemma: null }
         : { status: 'loading' }
   )
   const [note, setNote] = useState(highlight.note ?? '')

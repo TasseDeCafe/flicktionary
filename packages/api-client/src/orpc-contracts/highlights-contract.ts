@@ -80,6 +80,9 @@ export const highlightsContract = {
           // Server-picked, dialect-correct display string — see
           // glosses-contract's fastGloss output for the convention.
           ipaDisplay: z.string().nullable(),
+          // Lemma the IPA was sourced from on form-of fallback — see
+          // glosses-contract's fastGloss output for the convention.
+          ipaLemma: z.string().nullable(),
         }),
       })
     ),
