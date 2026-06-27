@@ -376,10 +376,20 @@ cached per `(source, contentHash)` (`youtube-session-cache.ts`, storage key
 migrating; re-registration is idempotent) so saves are a single round trip.
 
 The extension sends **no language** — the backend detects it (Haiku) and uses it
-as both content and target language. Failure modes are explicit: `422
-UNSUPPORTED_LANGUAGE` → one-time notice, saving disabled for that video; `422
-MISSING_CEFR` → surfaced at save time as the CEFR picker (below). Unpaired users
-can still watch with subtitles; saving is simply unavailable (no local fallback).
+as both content and target language. The two missing-prefs failures are
+**distinct codes** (the backend splits them so the extension picks the right
+recovery — conflating them once stranded users who had a CEFR but no native
+language in an unbreakable "set your level" loop):
+- `422 NEEDS_ONBOARDING` (no native language → onboarding incomplete) → not an
+  in-context fix (native language is global): the save toasts a **Finish setup**
+  action that opens the pairing/onboarding tab (opener = the video tab, so it
+  returns the user here when done). After onboarding, re-saving works.
+- `422 MISSING_CEFR` (native set, CEFR for the detected language missing) →
+  surfaced at save time as the in-video CEFR picker (below) and retried.
+- `422 UNSUPPORTED_LANGUAGE` → one-time notice, saving disabled for that video.
+
+Unpaired users can still watch with subtitles; saving is simply unavailable (no
+local fallback).
 
 ### Subtitle overlay & word interaction
 
@@ -672,15 +682,18 @@ Two variants, switched by the active tab's URL (`popup-ui.tsx`):
 
 Both variants also show a **"Finish setup"** section
 (`FlicktionaryFinishOnboardingSection`) when paired with `isOnboarded === false`
-(a user who paired without completing web onboarding — glosses would fail and
-the web gate walls them): a CTA that opens the web app (which routes a
-not-onboarded user to `/onboarding`). There is **no** second native-language
-picker in the popup — web onboarding is the single onboarding surface, so the
-popup can't drift when onboarding grows past native language. Keyed on
-`!isOnboarded`, NOT `nativeLanguage === null`, so a user who already set native
-language via the retired inline picker (while `is_onboarded` stayed false) still
-sees it. Popup open also refreshes the UI prefs from the server (one shared
-`getPrefs` per open, memo invalidated on auth change).
+(a user who paired without completing web onboarding — saving would fail and the
+web gate walls them): a CTA that opens the **pairing tab**
+(`openFlicktionaryPairingTab`), NOT the bare app. That tab re-runs pairing,
+renders onboarding in the `extensionPair` variant, and on completion the
+extension closes it and the browser returns the user to the tab they came from
+(opener-tab return) — so "finish setup" never dead-ends on the app. There is
+**no** second native-language picker in the popup — web onboarding is the single
+onboarding surface, so the popup can't drift when onboarding grows past native
+language. Keyed on `!isOnboarded`, NOT `nativeLanguage === null`, so a user who
+already set native language via the retired inline picker (while `is_onboarded`
+stayed false) still sees it. Popup open also refreshes the UI prefs from the
+server (one shared `getPrefs` per open, memo invalidated on auth change).
 
 On video pages, paired accounts on the test-user allow-list also get an
 **Admin** tab (`AdminSettingsTab`, `SettingsForm`'s `adminTab` prop): debugging

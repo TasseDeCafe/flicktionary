@@ -49,7 +49,7 @@ const Popup = ({
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
       <FlicktionaryPairSection />
-      <FlicktionaryFinishOnboardingSection onOpenApp={onOpenApp} />
+      <FlicktionaryFinishOnboardingSection />
       <div className='h-[390px]'>
         <SettingsForm
           heightConstrained

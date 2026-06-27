@@ -540,6 +540,19 @@ function OverlayBody({ store, popoverContainer, video, closures }: SubtitleOverl
           )
           clearSelection()
           break
+        case 'needs-onboarding':
+          // No native language yet (onboarding incomplete). Native language is a
+          // global, one-time value, so we can't fix it with an in-video picker;
+          // route the user into web onboarding via the pairing tab (opener = this
+          // video tab, so it lands them back here when done). Re-saving after the
+          // round-trip works once their native language is set.
+          hideSaveSourceGloss()
+          showToast(i18n._(msg`Finish setting up Flicktionary to save words.`), true, {
+            label: i18n._(msg`Finish setup`),
+            onClick: onSignIn,
+          })
+          clearSelection()
+          break
         case 'missing-cefr':
           // pendingSave carries the full word/segment context for the retry.
           hideSaveSourceGloss()

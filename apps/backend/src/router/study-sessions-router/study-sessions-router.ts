@@ -107,6 +107,12 @@ export const StudySessionsRouter = (
   type ExtensionIngestPrefs =
     | { ok: true; detectedLanguage: string; nativeLanguage: string; cefrLevel: string }
     | { ok: false; reason: 'unsupported' }
+    // Native language is missing → the user hasn't completed onboarding. This is
+    // NOT recoverable in-context (it's a global, one-time setup), so the
+    // extension routes the user to web onboarding rather than offering a picker.
+    | { ok: false; reason: 'needs-onboarding' }
+    // Native language is set but CEFR for the detected language is missing → the
+    // extension offers an inline per-language CEFR picker and retries.
     | { ok: false; reason: 'missing-cefr'; targetLanguage: string }
 
   const resolveExtensionIngestPrefs = async (
@@ -123,24 +129,41 @@ export const StudySessionsRouter = (
       targetLanguagePrefsRepository.findForLanguage(userId, detectedLanguage),
     ])
     // native + CEFR live in user_prefs (set during onboarding), keyed by the
-    // language being studied. Without both we can't shape an enrichment-ready
-    // session — the extension prompts the user to set their level.
-    if (!nativeLanguage || !prefs?.cefr_level) {
-      return { ok: false, reason: 'missing-cefr', targetLanguage: detectedLanguage }
-    }
+    // language being studied. The two gaps are distinct recovery flows: a
+    // missing native language means onboarding wasn't completed (global,
+    // one-time → onboarding); a missing CEFR is per-language (→ in-context
+    // picker). Conflating them stranded users who set CEFR but had no native
+    // language in an unbreakable "set your level" loop.
+    if (!nativeLanguage) return { ok: false, reason: 'needs-onboarding' }
+    if (!prefs?.cefr_level) return { ok: false, reason: 'missing-cefr', targetLanguage: detectedLanguage }
     return { ok: true, detectedLanguage, nativeLanguage, cefrLevel: prefs.cefr_level }
   }
 
   // Build the UNPROCESSABLE_ENTITY error body for a failed prefs resolution.
   // The handler throws its own typed `errors.UNPROCESSABLE_ENTITY({ data })` —
-  // this just shares the code/message shaping between the two ingest flows.
+  // this just shares the code/message shaping between the ingest flows.
   const ingestPrefsErrorData = (
-    prefs: { reason: 'unsupported' } | { reason: 'missing-cefr'; targetLanguage: string }
+    prefs:
+      | { reason: 'unsupported' }
+      | { reason: 'needs-onboarding' }
+      | { reason: 'missing-cefr'; targetLanguage: string }
   ) => {
     if (prefs.reason === 'unsupported') {
       return {
         errors: [
           { code: 'UNSUPPORTED_LANGUAGE', message: 'This content is not in a language Flicktionary supports yet.' },
+        ],
+      }
+    }
+    if (prefs.reason === 'needs-onboarding') {
+      return {
+        errors: [
+          {
+            code: 'NEEDS_ONBOARDING',
+            // The extension reads this code to drive the user into web
+            // onboarding (which sets their native language), not a CEFR picker.
+            message: 'Finish setting up Flicktionary to start saving words.',
+          },
         ],
       }
     }

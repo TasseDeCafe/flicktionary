@@ -46,7 +46,7 @@ const ImportPopup = ({ settings, onSettingsChanged, onOpenApp, onOpenUserGuide }
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
       <FlicktionaryPairSection />
-      <FlicktionaryFinishOnboardingSection onOpenApp={onOpenApp} />
+      <FlicktionaryFinishOnboardingSection />
       <FlicktionaryImportSection />
       <Tabs defaultValue='misc' orientation='vertical' className='flex-row gap-1'>
         <TabsList className='h-fit w-[164px] shrink-0 flex-col items-stretch gap-0.5 rounded-none bg-transparent p-0'>

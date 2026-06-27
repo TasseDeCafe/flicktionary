@@ -41,7 +41,12 @@ export default class FlicktionaryGlossHandler {
         // the window before the overlay learns the detected language.
         const targetLanguage = message.targetLanguage ?? (await getFlicktionaryTargetLanguage())
         if (!targetLanguage) {
-          sendResponse({ error: 'Set your target language on flicktionary.app.' })
+          // The subtitle language is detected server-side once a session is
+          // registered; reaching here means no session exists yet AND the user
+          // has no studied language to fall back on — i.e. onboarding isn't
+          // done. Don't tell them to "set a target language" (the target IS the
+          // subtitle language); point them at finishing setup.
+          sendResponse({ error: i18n._(msg`Finish setting up Flicktionary to translate.`) })
           return
         }
 
