@@ -723,6 +723,15 @@ sourceUrl). Errors show inline in the popup with retry, plus an on-page toast.
 Both paths check pairing up front — a signed-out user gets a sign-in prompt
 before any extraction is attempted.
 
+A `MISSING_CEFR` failure (the detected language has no CEFR level yet) is
+handled in-context, not dead-ended: the **popup** import surfaces an inline
+A1–C2 picker (same recovery shape as the in-video CEFR picker), sets the level
+via `userPrefs.setCefrForLanguage`, and replays the import once (an `isCefrRetry`
+flag prevents looping). The **context-menu** import has no popup to host a
+picker, so it keeps toasting — with copy pointing the user at the extension
+popup to set their level there. The import service threads a `presentation:
+'popup' | 'contextMenu'` flag so the same path can surface either way.
+
 ### Settings, profiles & options page
 
 The options page and the popup share `SettingsForm`. Tabs: subtitle appearance

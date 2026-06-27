@@ -16,7 +16,19 @@ export type ArticleExtractionResult =
   | { ok: true; title: string; text: string }
   | { ok: false; errorCode: ArticleExtractionErrorCode }
 
-export type ImportOutcome = { ok: true; sessionId: string } | { ok: false; error: string }
+export type ImportOutcome =
+  | { ok: true; sessionId: string }
+  // The detected target language has no CEFR level set yet. Only the popup
+  // caller (`presentation: 'popup'`) gets this structured variant so it can host
+  // an inline picker and replay; the context menu keeps toasting (no popup to
+  // host a picker). Mirrors SaveWordOutcome's `missing-cefr` shape.
+  | { ok: false; kind: 'missing-cefr'; targetLanguage: string }
+  | { ok: false; error: string }
+
+// Where the import was triggered from, which decides how a MISSING_CEFR failure
+// is surfaced: the popup can host an inline picker; the context menu can't, so
+// it keeps toasting.
+export type ImportPresentation = 'popup' | 'contextMenu'
 
 const IMPORT_SENDER = 'flicktionary-extension-import'
 const EXTRACT_COMMAND = 'flicktionary-extract-article'
@@ -96,25 +108,50 @@ const deriveTitle = (raw: string, fallback: string): string => {
   return (firstLine || fallback || i18n._(msg`Imported text`)).slice(0, 200)
 }
 
-const finishImport = async (tabId: number, input: ImportTextInput): Promise<ImportOutcome> => {
+const finishImport = async (
+  tabId: number,
+  input: ImportTextInput,
+  presentation: ImportPresentation,
+  isCefrRetry: boolean
+): Promise<ImportOutcome> => {
   try {
     const sessionId = await importTextToFlicktionary(input)
     await openFlicktionarySession(sessionId)
     return { ok: true, sessionId }
   } catch (error) {
-    const { message } = extractFlicktionaryApiError(error, i18n._(msg`Failed to import into Flicktionary.`))
-    await showToast(tabId, 'error', message)
-    return { ok: false, error: message }
+    const { code, message, targetLanguage } = extractFlicktionaryApiError(
+      error,
+      i18n._(msg`Failed to import into Flicktionary.`)
+    )
+    // The language has no CEFR level yet. In the popup we hand the structured
+    // signal back so it can show an inline picker and replay (unless this WAS
+    // the replay — then fall through to the toast). The context menu has no
+    // popup to host a picker, so it always toasts.
+    if (code === 'MISSING_CEFR' && targetLanguage && presentation === 'popup' && !isCefrRetry) {
+      return { ok: false, kind: 'missing-cefr', targetLanguage }
+    }
+    // Context-menu MISSING_CEFR can't host a picker — toast copy that points the
+    // user at the extension popup, where the inline picker lives.
+    const surfaced =
+      code === 'MISSING_CEFR'
+        ? i18n._(msg`Open the Flicktionary extension popup to set your level for this language, then import again.`)
+        : message
+    await showToast(tabId, 'error', surfaced)
+    return { ok: false, error: surfaced }
   }
 }
 
 // Readability path (popup button + page context menu): ask the tab's content
 // script to extract the main article, then import it as an 'article' source.
-export const importArticleFromTab = async (tab: {
-  id?: number
-  url?: string
-  title?: string
-}): Promise<ImportOutcome> => {
+export const importArticleFromTab = async (
+  tab: {
+    id?: number
+    url?: string
+    title?: string
+  },
+  options: { presentation?: ImportPresentation; isCefrRetry?: boolean } = {}
+): Promise<ImportOutcome> => {
+  const { presentation = 'contextMenu', isCefrRetry = false } = options
   await activateBackgroundLocale()
   if (tab.id === undefined) {
     return { ok: false, error: i18n._(msg`No active tab to import from.`) }
@@ -139,15 +176,22 @@ export const importArticleFromTab = async (tab: {
     await showToast(tab.id, 'error', error)
     return { ok: false, error }
   }
-  return finishImport(tab.id, { title: extracted.title, text: extracted.text, sourceUrl: tab.url })
+  return finishImport(
+    tab.id,
+    { title: extracted.title, text: extracted.text, sourceUrl: tab.url },
+    presentation,
+    isCefrRetry
+  )
 }
 
 // Selection path (selection context menu): the highlighted text is a paste, so
 // it imports as a 'text' source (no sourceUrl).
 export const importSelectionFromTab = async (
   tab: { id?: number; title?: string },
-  selectionText: string
+  selectionText: string,
+  options: { presentation?: ImportPresentation; isCefrRetry?: boolean } = {}
 ): Promise<ImportOutcome> => {
+  const { presentation = 'contextMenu', isCefrRetry = false } = options
   await activateBackgroundLocale()
   if (tab.id === undefined) {
     return { ok: false, error: i18n._(msg`No active tab.`) }
@@ -161,5 +205,10 @@ export const importSelectionFromTab = async (
     await showToast(tab.id, 'error', i18n._(msg`Select some text first.`))
     return { ok: false, error: 'No text selected.' }
   }
-  return finishImport(tab.id, { title: deriveTitle(text, tab.title ?? i18n._(msg`Selection`)), text })
+  return finishImport(
+    tab.id,
+    { title: deriveTitle(text, tab.title ?? i18n._(msg`Selection`)), text },
+    presentation,
+    isCefrRetry
+  )
 }
