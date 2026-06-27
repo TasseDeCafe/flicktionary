@@ -34,27 +34,24 @@ export default class FlicktionaryGlossHandler {
           sendResponse({ error: i18n._(msg`Sign in to Flicktionary to translate.`) })
           return
         }
-        // Prefer the VIDEO'S detected subtitle language (sent by the overlay
-        // from the session cache) over the user's primary target language —
-        // a Russian-subtitle video must gloss Russian even for a user whose
-        // primary language is Spanish. The primary-language fallback covers
-        // the window before the overlay learns the detected language.
-        const targetLanguage = message.targetLanguage ?? (await getFlicktionaryTargetLanguage())
-        if (!targetLanguage) {
-          // The subtitle language is detected server-side once a session is
-          // registered; reaching here means no session exists yet AND the user
-          // has no studied language to fall back on — i.e. onboarding isn't
-          // done. Don't tell them to "set a target language" (the target IS the
-          // subtitle language); point them at finishing setup.
-          sendResponse({ error: i18n._(msg`Finish setting up Flicktionary to translate.`) })
-          return
-        }
+        // Warm the bootstrap-prefs cache (memoized → one fetch per session) so
+        // the content-script track-select dialog can read the user's native
+        // language without hitting the API. This used to double as the gloss's
+        // language fallback; that's gone (see below), but the cache-warming
+        // side effect is still the only populator of the native-language cache.
+        void getFlicktionaryTargetLanguage()
 
+        // The gloss target IS the language of the subtitle line. The overlay
+        // sends it once it has learned it (from the video's registered session);
+        // before then we send NOTHING and let the backend detect it from the
+        // context line. We deliberately do NOT fall back to the user's primary
+        // study language — that's wrong for a video in a different language and
+        // empty for a just-onboarded user.
         const client = getFlicktionaryApiClient()
         const { data } = await client.glosses.fastGloss({
           selectionText: message.selectionText,
           contextLine: message.contextLine,
-          targetLanguage,
+          ...(message.targetLanguage ? { targetLanguage: message.targetLanguage } : {}),
         })
         sendResponse({
           gloss: data.gloss,

@@ -8,6 +8,7 @@ import type { UsersRepositoryInterface } from '../../transport/database/users/us
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { fastGlossPass } from '../../transport/third-party/anthropic/passes/fast-gloss-pass'
+import { languageDetectionPass } from '../../transport/third-party/anthropic/passes/language-detection-pass'
 import { getLanguageMode } from '../../service/user-prefs/language-mode'
 import { lookupFastGlossIpa } from '../../service/wiktionary-grounding/fast-gloss-ipa'
 import { pickIpa } from '@flicktionary/core/utils/pick-ipa'
@@ -25,9 +26,17 @@ export const GlossesRouter = (
   const router = implementer.router({
     fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
+      // The target language IS the language of the text being glossed. When the
+      // client doesn't supply it (it hasn't learned the subtitle language yet),
+      // detect it from the context line — never fall back to the user's primary
+      // study language, which is wrong for a video in a different language.
+      const targetLanguage = input.targetLanguage ?? (await languageDetectionPass(input.contextLine))
+      if (!targetLanguage) {
+        throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Could not detect the language of this text.' }] } })
+      }
       const languagePrefs = await getLanguageMode({
         userId,
-        targetLanguage: input.targetLanguage,
+        targetLanguage,
         usersRepository,
         targetLanguagePrefsRepository: userTargetLanguagePrefsRepository,
       })
@@ -35,14 +44,14 @@ export const GlossesRouter = (
         throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Native language not set' }] } })
       }
       const gloss = await fastGlossPass({
-        targetLanguage: input.targetLanguage,
+        targetLanguage,
         nativeLanguage: languagePrefs.nativeLanguage,
         hideTranslationFields: languagePrefs.hideTranslationFields,
         contextLine: input.contextLine,
         selectionText: input.selectionText,
       })
       const ipaResult = await lookupFastGlossIpa({
-        targetLanguage: input.targetLanguage,
+        targetLanguage,
         selectionText: input.selectionText,
         pos: gloss.pos,
         wiktionaryEntriesRepository,
@@ -51,12 +60,12 @@ export const GlossesRouter = (
       // Pre-pick the dialect-correct display string server-side so every
       // client renders the same IPA. The dialect pref only matters for
       // English; skip the DB roundtrip otherwise.
-      const dialect = input.targetLanguage === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : 'ga'
+      const dialect = targetLanguage === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : 'ga'
       return {
         data: {
           ...gloss,
           ipa,
-          ipaDisplay: pickIpa(ipa, input.targetLanguage, dialect) ?? null,
+          ipaDisplay: pickIpa(ipa, targetLanguage, dialect) ?? null,
           ipaLemma: ipaResult?.lemma ?? null,
         },
       }
