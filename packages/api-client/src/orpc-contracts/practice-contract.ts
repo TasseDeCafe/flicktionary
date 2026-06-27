@@ -321,6 +321,9 @@ export const practiceContract = {
           pos: z.string().nullable(),
           register: z.string().nullable(),
           ipa: GrammarIpaBagSchema.nullable(),
+          // Lemma the IPA was sourced from on form-of fallback — see
+          // glosses-contract's fastGloss output for the convention.
+          ipaLemma: z.string().nullable(),
         }),
       })
     ),

@@ -35,6 +35,12 @@ export const glossesContract = {
           // clients render it verbatim instead of re-picking from the bag.
           // The bag stays for deployed clients that still pick client-side.
           ipaDisplay: z.string().nullable(),
+          // The lemma the IPA was sourced from when the surface form has no
+          // pronunciation of its own and we fell back to its lemma's (e.g.
+          // "beheben" under a "behoben" selection). Null when the IPA belongs
+          // to the surface form itself; clients label it so the inflected form
+          // is not implied to be pronounced this way.
+          ipaLemma: z.string().nullable(),
         }),
       })
     ),

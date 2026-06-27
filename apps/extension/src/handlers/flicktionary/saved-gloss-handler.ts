@@ -34,7 +34,13 @@ export default class FlicktionarySavedGlossHandler {
           sessionId: message.sessionId,
           highlightId: message.highlightId,
         })
-        sendResponse({ gloss: data.gloss, pos: data.pos, register: data.register, ipaDisplay: data.ipaDisplay })
+        sendResponse({
+          gloss: data.gloss,
+          pos: data.pos,
+          register: data.register,
+          ipaDisplay: data.ipaDisplay,
+          ipaLemma: data.ipaLemma,
+        })
       } catch (error) {
         const { message: errorMessage } = extractFlicktionaryApiError(error, 'flicktionary-saved-gloss failed')
         sendResponse({ error: errorMessage })

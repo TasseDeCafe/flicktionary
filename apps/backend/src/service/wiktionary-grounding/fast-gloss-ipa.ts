@@ -238,12 +238,24 @@ const appearsToBeEnglishInflectedForm = async (params: {
   return !!byForm && byForm.headword.toLocaleLowerCase('en-US') !== normalizedHeadword
 }
 
+// The fast-gloss IPA plus the lemma it was sourced from. `lemma` is non-null
+// only when the IPA came from form-of fallback (the surface form has no
+// pronunciation of its own) AND the resolved lemma differs from the selection,
+// so clients can label it (e.g. "beheben /bəˈheːbən/" under a "behoben"
+// selection) instead of implying the inflected form is pronounced that way.
+export type FastGlossIpaResult = { ipa: GrammarIpaBag; lemma: string | null }
+
+const sameSurface = (a: string, b: string, targetLanguage: string): boolean => {
+  const norm = (s: string) => (targetLanguage === 'en' ? s.toLocaleLowerCase('en-US') : s.toLocaleLowerCase()).trim()
+  return norm(a) === norm(b)
+}
+
 export const lookupFastGlossIpa = async (params: {
   targetLanguage: string
   selectionText: string
   pos: string | null
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
-}): Promise<GrammarIpaBag | null> => {
+}): Promise<FastGlossIpaResult | null> => {
   const { targetLanguage, selectionText, wiktionaryEntriesRepository } = params
   if (!KAIKKI_LANGUAGES.has(targetLanguage)) return null
 
@@ -257,7 +269,7 @@ export const lookupFastGlossIpa = async (params: {
     pos: kaikkiPos,
     wiktionaryEntriesRepository,
   })
-  if (surface.kind === 'found') return surface.ipa
+  if (surface.kind === 'found') return { ipa: surface.ipa, lemma: null }
   if (surface.kind === 'ambiguous') return null
 
   if (
@@ -276,5 +288,9 @@ export const lookupFastGlossIpa = async (params: {
     : await findUnambiguousEntry({ targetLanguage, headword, wiktionaryEntriesRepository })
   if (!entry) return null
 
-  return extractEntryIpa(entry, targetLanguage)
+  const ipa = extractEntryIpa(entry, targetLanguage)
+  if (!ipa) return null
+
+  const lemma = sameSurface(entry.headword, headword, targetLanguage) ? null : entry.headword
+  return { ipa, lemma }
 }

@@ -45,6 +45,9 @@ export interface GlossData {
   pos: string | null
   register: string | null
   ipaDisplay: string | null
+  // Lemma the IPA was sourced from on form-of fallback (the surface form has no
+  // pronunciation of its own); labeled next to the IPA. Null otherwise.
+  ipaLemma: string | null
 }
 
 // The (segment index, char offsets) trio that resolves a clicked occurrence to
@@ -299,6 +302,7 @@ export async function fetchSavedGloss(sessionId: string, highlightId: string): P
     pos: response.pos ?? null,
     register: response.register ?? null,
     ipaDisplay: response.ipaDisplay ?? null,
+    ipaLemma: response.ipaLemma ?? null,
   }
 }
 

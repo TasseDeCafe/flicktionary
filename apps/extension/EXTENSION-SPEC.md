@@ -384,7 +384,12 @@ uses intersection, not exact offsets.
   popover shadow host): word, IPA
   (the server-picked `ipaDisplay` string — the backend resolves the user's
   `english_ipa_dialect` pref, so the overlay shows the same dialect as the web
-  app; no client-side bag picking), one-line gloss, POS and register badges.
+  app; no client-side bag picking). When the surface form has no Wiktionary
+  pronunciation of its own and the lookup fell back to its lemma's, the
+  response's `ipaLemma` labels the IPA with that lemma (`beheben /bəˈheːbən/`
+  under a `behoben` selection) so an inflected form is not implied to be
+  pronounced like its lemma; null otherwise. Then a one-line gloss, POS and
+  register badges.
   Both popovers (preview + saved mode) are built from the web app's shared
   components — `FloatingSheet`/`GlossCardBody`/`Badge`/`Button`/`Textarea`
   from `@flicktionary/ui` — with the web's DARK theme hardcoded via a `dark`
@@ -748,7 +753,7 @@ All via the oRPC client (`@flicktionary/api-client`) against `VITE_API_HOST`:
 | `extensionAuth.bootstrapPrefs` | primary target language after pairing |
 | `extensionAuth.revokeSession` | sign-out |
 | `extensionAuth.setCefrLevel` | CEFR picker |
-| `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag) |
+| `glosses.fastGloss` | hover gloss `{gloss, pos, register, ipaDisplay, ipaLemma}` (the overlay relays the server-picked `ipaDisplay`, not the `ipa` bag; `ipaLemma` labels the IPA with its lemma on form-of fallback) |
 | `studySessions.findOrCreateForYoutubeVideo` | session registration (YouTube, deduped on video id) |
 | `studySessions.findOrCreateForStreamingVideo` | session registration (all other platforms) |
 | `studySessions.lookupForVideo` | lookup-only session resolve for saved-highlight loading (never creates rows; `data: null` = no session) |

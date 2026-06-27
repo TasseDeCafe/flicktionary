@@ -41,17 +41,25 @@ export const GlossesRouter = (
         contextLine: input.contextLine,
         selectionText: input.selectionText,
       })
-      const ipa = await lookupFastGlossIpa({
+      const ipaResult = await lookupFastGlossIpa({
         targetLanguage: input.targetLanguage,
         selectionText: input.selectionText,
         pos: gloss.pos,
         wiktionaryEntriesRepository,
       })
+      const ipa = ipaResult?.ipa ?? null
       // Pre-pick the dialect-correct display string server-side so every
       // client renders the same IPA. The dialect pref only matters for
       // English; skip the DB roundtrip otherwise.
       const dialect = input.targetLanguage === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : 'ga'
-      return { data: { ...gloss, ipa, ipaDisplay: pickIpa(ipa, input.targetLanguage, dialect) ?? null } }
+      return {
+        data: {
+          ...gloss,
+          ipa,
+          ipaDisplay: pickIpa(ipa, input.targetLanguage, dialect) ?? null,
+          ipaLemma: ipaResult?.lemma ?? null,
+        },
+      }
     }),
   })
 

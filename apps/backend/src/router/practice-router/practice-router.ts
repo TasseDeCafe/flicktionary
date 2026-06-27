@@ -577,13 +577,13 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         contextLine: body,
         selectionText: input.selectionText,
       })
-      const ipa = await lookupFastGlossIpa({
+      const ipaResult = await lookupFastGlossIpa({
         targetLanguage: found.targetLanguage,
         selectionText: input.selectionText,
         pos: gloss.pos,
         wiktionaryEntriesRepository: deps.wiktionaryEntriesRepository,
       })
-      return { data: { ...gloss, ipa } }
+      return { data: { ...gloss, ipa: ipaResult?.ipa ?? null, ipaLemma: ipaResult?.lemma ?? null } }
     }),
   })
 

@@ -306,13 +306,21 @@ export const HighlightsRouter = (
         session.target_language === 'en' ? await usersRepository.getEnglishIpaDialect(userId) : ('ga' as const)
       if (highlight.fast_gloss) {
         const cachedGloss = parseFastGloss(highlight.fast_gloss)
-        const ipa = await lookupFastGlossIpa({
+        const ipaResult = await lookupFastGlossIpa({
           targetLanguage: session.target_language,
           selectionText: highlight.selection_text,
           pos: cachedGloss.pos,
           wiktionaryEntriesRepository,
         })
-        return { data: { ...cachedGloss, ipa, ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null } }
+        const ipa = ipaResult?.ipa ?? null
+        return {
+          data: {
+            ...cachedGloss,
+            ipa,
+            ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null,
+            ipaLemma: ipaResult?.lemma ?? null,
+          },
+        }
       }
       const startSegment = await textSegmentsRepository.findById(highlight.start_segment_id)
       if (!startSegment) {
@@ -350,13 +358,21 @@ export const HighlightsRouter = (
         selectionText: highlight.selection_text,
       })
       await highlightsRepository.updateFastGloss(highlight.id, serializeFastGloss(gloss))
-      const ipa = await lookupFastGlossIpa({
+      const ipaResult = await lookupFastGlossIpa({
         targetLanguage: session.target_language,
         selectionText: highlight.selection_text,
         pos: gloss.pos,
         wiktionaryEntriesRepository,
       })
-      return { data: { ...gloss, ipa, ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null } }
+      const ipa = ipaResult?.ipa ?? null
+      return {
+        data: {
+          ...gloss,
+          ipa,
+          ipaDisplay: pickIpa(ipa, session.target_language, dialect) ?? null,
+          ipaLemma: ipaResult?.lemma ?? null,
+        },
+      }
     }),
   })
 

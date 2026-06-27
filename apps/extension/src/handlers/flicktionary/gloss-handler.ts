@@ -51,7 +51,13 @@ export default class FlicktionaryGlossHandler {
           contextLine: message.contextLine,
           targetLanguage,
         })
-        sendResponse({ gloss: data.gloss, pos: data.pos, register: data.register, ipaDisplay: data.ipaDisplay })
+        sendResponse({
+          gloss: data.gloss,
+          pos: data.pos,
+          register: data.register,
+          ipaDisplay: data.ipaDisplay,
+          ipaLemma: data.ipaLemma,
+        })
       } catch (error) {
         sendResponse({
           error: error instanceof Error ? error.message : 'Could not fetch a translation.',

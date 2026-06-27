@@ -32,7 +32,14 @@ import type { PlainSelection } from './annotated-text'
 type GlossState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'ready'; gloss: string; pos: string | null; register: string | null; ipa: GrammarIpaBag | null }
+  | {
+      kind: 'ready'
+      gloss: string
+      pos: string | null
+      register: string | null
+      ipa: GrammarIpaBag | null
+      ipaLemma: string | null
+    }
   | { kind: 'error' }
 
 interface LookupSheetProps {
@@ -90,6 +97,7 @@ export const LookupSheet = ({
           pos: result.data.pos,
           register: result.data.register,
           ipa: result.data.ipa,
+          ipaLemma: result.data.ipaLemma,
         })
       } catch {
         if (!cancelled) setState({ kind: 'error' })
@@ -163,6 +171,8 @@ export const LookupSheet = ({
 
   const englishIpaDialect = userPrefs?.englishIpaDialect ?? 'ga'
   const displayedIpa = state.kind === 'ready' ? (pickIpa(state.ipa, targetLanguage, englishIpaDialect) ?? null) : null
+  // Only label the IPA with its lemma when there's an actual IPA to label.
+  const displayedIpaLemma = state.kind === 'ready' && displayedIpa ? state.ipaLemma : null
   const hasWiktionaryData = KAIKKI_LANGUAGES.has(targetLanguage)
   const ipaLabel = state.kind === 'ready' ? (displayedIpa ?? (hasWiktionaryData ? t`No Wiktionary IPA` : null)) : null
   const showIpaFlag = !!displayedIpa && targetLanguage === 'en'
@@ -187,6 +197,7 @@ export const LookupSheet = ({
               pos={state.kind === 'ready' ? state.pos : null}
               register={state.kind === 'ready' ? state.register : null}
               ipaLabel={ipaLabel}
+              ipaLemma={displayedIpaLemma}
               ipaPrefix={
                 showIpaFlag ? (
                   <EnglishIpaDialectFlag targetLanguage={targetLanguage} englishIpaDialect={englishIpaDialect} />
