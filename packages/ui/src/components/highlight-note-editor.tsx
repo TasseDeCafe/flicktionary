@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type KeyboardEvent } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { Lock } from 'lucide-react'
 import { Textarea } from './textarea'
@@ -52,6 +52,17 @@ export const HighlightNoteEditor = ({
     scroller?.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
   }, [])
 
+  // In the extension this editor lives in a shadow root floating over the video.
+  // Keyboard events are composed, so they bubble out of the shadow tree and get
+  // retargeted to the host <div> — the video site (YouTube etc.) then sees "no
+  // input focused" and runs its own shortcuts (space pauses, j/k seek…) instead
+  // of letting the user type. Stop the NATIVE event so it never reaches the
+  // page's document-level handlers. React's synthetic stopPropagation does not
+  // touch native bubbling, so we go through nativeEvent. Harmless in the web app.
+  const stopKeyPropagation = (e: KeyboardEvent) => {
+    e.nativeEvent.stopPropagation()
+  }
+
   if (readOnly) {
     return (
       <div ref={rootRef} style={{ display: 'contents' }}>
@@ -81,6 +92,8 @@ export const HighlightNoteEditor = ({
       <Textarea
         value={note}
         onChange={(e) => onNoteChange(e.target.value)}
+        onKeyDown={stopKeyPropagation}
+        onKeyUp={stopKeyPropagation}
         placeholder={t`Optional note for the LLM (what specifically confuses you?)`}
         rows={3}
       />

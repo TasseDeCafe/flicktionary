@@ -2,6 +2,28 @@ import { SubtitleModel } from '../src/model'
 import hotkeys from 'hotkeys-js'
 import { KeyBindSet } from '../settings/settings'
 
+// True when the keystroke is going into a text field the user is typing in.
+// Shortcuts are bound on `document` in the capture phase, so `event.target` is
+// retargeted to the shadow host for fields inside our overlay's shadow root and
+// hotkeys-js's default INPUT/TEXTAREA filter never sees them. composedPath()
+// pierces shadow boundaries, so we check the real path the event travelled.
+function isEditableTargetInPath(event: KeyboardEvent) {
+  const path = typeof event.composedPath === 'function' ? event.composedPath() : []
+
+  for (const node of path) {
+    if (!(node instanceof HTMLElement)) {
+      continue
+    }
+
+    const tagName = node.tagName
+    if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || node.isContentEditable) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function adjacentSubtitle(forward: boolean, time: number, subtitles: SubtitleModel[]) {
   const now = time
   let adjacentSubtitleIndex = -1
@@ -729,7 +751,9 @@ export class DefaultKeyBinder implements KeyBinder {
 
     const wrappedHandler = (event: KeyboardEvent) => {
       if (event.type === 'keydown') {
-        handled = handler(event)
+        // Never steal keystrokes from a focused text field (e.g. the notes
+        // textarea in the in-video overlay popover).
+        handled = isEditableTargetInPath(event) ? false : handler(event)
       } else if (event.type === 'keyup') {
         if (handled) {
           event.preventDefault()

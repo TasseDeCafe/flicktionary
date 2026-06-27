@@ -721,7 +721,14 @@ fast-forward modes, subtitle toggle (global and per-track ×3), blur toggle ×3,
 seeking (±, previous/next/current subtitle), subtitle offset (to
 previous/next, ±, reset), playback rate ±, repeat, and top/bottom subtitle
 position nudges. All editable in the shortcuts tab. The mining-era binds
-(copy/export/screenshot/record, token marking, side panel) are gone.
+(copy/export/screenshot/record, token marking, side panel) are gone. The
+`KeyBindSet` is bound on `document` in the capture phase; a shared guard skips
+every shortcut while a text field is focused (`INPUT` / `TEXTAREA` / `SELECT` /
+contenteditable), detected via `event.composedPath()` so it sees fields inside
+the overlay's shadow root despite event retargeting — otherwise typing in the
+saved-highlight note textarea triggers seek/play. The note textarea additionally
+stops its own native keyboard propagation so the host site's shortcuts (YouTube
+space/`j`/`k`) don't fire either.
 
 ### FTUE
 
