@@ -14,7 +14,7 @@ import Binding from '../services/binding'
 import { ExtensionSettingsStorage } from '../services/extension-settings-storage'
 import { setupLingui } from '../ui/lingui'
 import { mountModalHost, type ShadowHostHandle } from '../ui/shadow/shadow-host'
-import { ShadowVideoSelectApp, type VideoSelectCommands } from '../ui/video-select/ShadowVideoSelectApp'
+import { ShadowVideoSelectApp, type VideoSelectCommands } from '../ui/video-select/shadow-video-select-app'
 import {
   createVideoSelectStore,
   type VideoElement,

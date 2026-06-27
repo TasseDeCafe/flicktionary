@@ -30,7 +30,7 @@ import { checkCurrentUserIsTestUser } from '@/services/flicktionary/test-users'
 import { getCachedFlicktionaryNativeLanguage } from '@/services/flicktionary/flicktionary-target-language'
 import { normalizeSyncedTracks, resolveSyncedTrackId } from '@/services/synced-track-resolution'
 import { mountModalHost, type ShadowHostHandle } from '@/ui/shadow/shadow-host'
-import { ShadowVideoDataSyncApp, type VideoDataCommands } from '@/ui/video-data-sync/ShadowVideoDataSyncApp'
+import { ShadowVideoDataSyncApp, type VideoDataCommands } from '@/ui/video-data-sync/shadow-video-data-sync-app'
 import { createVideoDataSyncStore, type VideoDataSyncStore } from '@/ui/video-data-sync/video-data-sync-store'
 
 // The in-realm model sink (the store's updateState action) exposes updateState;

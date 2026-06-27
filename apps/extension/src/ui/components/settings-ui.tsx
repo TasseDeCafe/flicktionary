@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react'
 import { useSettings } from '../hooks/use-settings'
-import SettingsPage from './SettingsPage'
+import SettingsPage from './settings-page'
 import { I18nProvider } from '@lingui/react'
 import { TooltipProvider } from '@flicktionary/ui/components/tooltip'
 import { Toaster } from 'sonner'

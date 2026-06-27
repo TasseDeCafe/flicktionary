@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { applyOverlayStyles } from '../shadow/overlay-stylesheet'
 import { ensureNotoSansFonts } from '../fonts/ensure-noto-sans'
 import { SubtitleStore } from './subtitle-store'
-import { SubtitleOverlayApp } from './SubtitleOverlayApp'
+import { SubtitleOverlayApp } from './subtitle-overlay-app'
 import { FlicktionaryVideoClosures } from '../../services/flicktionary/flicktionary-client'
 
 const POPOVER_HOST_ATTR = 'data-asbplayer-react-popover-host'

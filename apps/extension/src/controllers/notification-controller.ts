@@ -6,7 +6,7 @@ import {
   ShadowNotificationApp,
   type NotificationState,
   type NotificationStore,
-} from '../ui/notification/ShadowNotificationApp'
+} from '../ui/notification/shadow-notification-app'
 
 // Marker for the in-realm notification shadow host.
 const NOTIFICATION_HOST_ATTR = 'data-asbplayer-notification-host'
