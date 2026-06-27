@@ -364,7 +364,7 @@ can still watch with subtitles; saving is simply unavailable (no local fallback)
 ### Subtitle overlay & word interaction
 
 The subtitle renderer is a single React app in a shadow root
-(`SubtitleOverlayApp.tsx`) — the sole renderer; there is no legacy DOM path and
+(`subtitle-overlay-app.tsx`) — the sole renderer; there is no legacy DOM path and
 word interaction is **always on** (the old `wordClickEnabled` setting is gone).
 Each cue is tokenized (`services/word-tokenizer.ts`) into `Word` spans carrying
 `data-word`/`data-sentence` plus segment-index and char-offset data so any save
@@ -642,7 +642,7 @@ when the async model push landed after the play-event hide.
 
 ### Popup
 
-Two variants, switched by the active tab's URL (`PopupUi.tsx`):
+Two variants, switched by the active tab's URL (`popup-ui.tsx`):
 
 - **On a supported video page:** OPEN APP + USER GUIDE header (→ Flicktionary
   web app / its public `/user-guide` page), pairing section, the full embedded
