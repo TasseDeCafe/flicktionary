@@ -175,7 +175,7 @@ const FormScopeControl = ({ formScope, surfaceForm, onFormScopeChange, disabled 
             disabled={disabled}
             onClick={() => onFormScopeChange(option.value)}
             className={cn(
-              'flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors',
+              'flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors',
               'focus-visible:ring-ring/50 focus-visible:ring-[2px] focus-visible:outline-none',
               disabled && 'cursor-not-allowed',
               active ? 'bg-background text-foreground shadow-sm' : 'text-foreground/70 hover:text-foreground'
