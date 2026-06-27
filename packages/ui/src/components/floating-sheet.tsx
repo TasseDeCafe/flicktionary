@@ -101,14 +101,20 @@ export const FloatingSheet = ({
   const closeSheet = React.useCallback(() => onOpenChange(false), [onOpenChange])
 
   React.useEffect(() => {
-    if (!open || isMobile !== false || !closeOnScroll) return
+    if (!open || isMobile === undefined || !closeOnScroll) return
     const handleScroll = (event: Event) => {
-      // Scrolling INSIDE the popover (its own overflow-y-auto body) must not
-      // dismiss it — only a scroll of the page behind it counts as "look away".
+      // Scrolling INSIDE the sheet (its own overflow-y-auto body) must not
+      // dismiss it — only a scroll of the content behind it counts as "look away".
       const content = contentRef.current
       if (content && event.target instanceof Node && content.contains(event.target)) return
       onOpenChange(false)
     }
+    // Runs on mobile too, not just the desktop popover. Mobile's other dismissal
+    // path (outside pointerdown) deliberately ignores taps on the reader's word /
+    // highlight spans so tapping a new word swaps the sheet in place — but that
+    // same exclusion means a *scroll* that starts on a word never fires that
+    // path. Listening to the real scroll event closes the sheet regardless of
+    // where the gesture began (a tap-to-swap produces no scroll, so it's unaffected).
     document.addEventListener('scroll', handleScroll, { capture: true })
     return () => document.removeEventListener('scroll', handleScroll, { capture: true })
   }, [open, isMobile, closeOnScroll, onOpenChange])
