@@ -3,7 +3,7 @@ import { useStore } from 'zustand'
 import { ConfirmedVideoDataSubtitleTrack, SerializedSubtitleFile, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { bufferToBase64 } from '@asbplayer-fork/common/base64'
 import { useLingui } from '@lingui/react/macro'
-import VideoDataSyncDialog from '../components/VideoDataSyncDialog'
+import VideoDataSyncDialog from '../components/video-data-sync-dialog'
 import { ShadowUiProvider } from '../shadow/shadow-ui-provider'
 import type { VideoDataSyncStore } from './video-data-sync-store'
 

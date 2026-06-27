@@ -7,10 +7,10 @@ import About from '@asbplayer-fork/common/components/About'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@flicktionary/ui/components/tabs'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
-import { FlicktionaryPairSection } from './FlicktionaryPairSection'
-import { FlicktionaryFinishSetupSection } from './FlicktionaryFinishSetupSection'
-import { FlicktionaryImportSection } from './FlicktionaryImportSection'
-import { PopupHeader } from './PopupHeader'
+import { FlicktionaryPairSection } from './flicktionary-pair-section'
+import { FlicktionaryFinishSetupSection } from './flicktionary-finish-setup-section'
+import { FlicktionaryImportSection } from './flicktionary-import-section'
+import { PopupHeader } from './popup-header'
 
 interface Props {
   settings: AsbplayerSettings

@@ -1,7 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
-import SettingsUi from '../components/SettingsUi'
+import SettingsUi from '../components/settings-ui'
 import { makeExtensionQueryClient } from '../query/query-client'
 
 export const renderSettingsUi = (element: Element) => {

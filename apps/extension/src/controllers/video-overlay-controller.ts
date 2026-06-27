@@ -10,7 +10,7 @@ import {
   type VideoOverlayCommands,
   type VideoOverlayState,
   type VideoOverlayStore,
-} from '../ui/video-overlay/ShadowVideoOverlayApp'
+} from '../ui/video-overlay/shadow-video-overlay-app'
 
 const smallScreenVideoHeightThreshold = 300
 

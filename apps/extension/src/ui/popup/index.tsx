@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { PopupUi } from '../components/PopupUi'
+import { PopupUi } from '../components/popup-ui'
 import { AsbplayerSettings } from '@asbplayer-fork/common/settings'
 import { makeExtensionQueryClient } from '../query/query-client'
 

@@ -266,7 +266,7 @@ msgstr "Un libellé court pour cette session"
 msgid "A single film."
 msgstr "Un seul film."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "A video element must be synced with Flicktionary before it can be mined. "
 "Select a video element to sync it with Flicktionary."
 msgstr "Un élément vidéo doit être synchronisé avec Flicktionary avant de "
@@ -278,7 +278,7 @@ msgid "About"
 msgstr "À propos"
 
 #: apps/extension/common/components/SettingsForm.tsx
-#: apps/extension/src/ui/components/ImportPopup.tsx
+#: apps/extension/src/ui/components/import-popup.tsx
 msgid "About Flicktionary"
 msgstr "À propos de Flicktionary"
 
@@ -344,7 +344,7 @@ msgstr "Ajouter une forme"
 msgid "Add New Profile..."
 msgstr "Ajouter un nouveau profil..."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Add note"
 msgstr "Ajouter une note"
@@ -554,11 +554,11 @@ msgstr "À la fin des sous-titres"
 msgid "At Subtitle Start"
 msgstr "Au début des sous-titres"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
 msgid "Audio recording enabled"
 msgstr "Enregistrement audio activé"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
 msgid "Audio recording has been enabled for this tab. You can now begin mining."
 msgstr "L’enregistrement audio a été activé pour cet onglet. Vous pouvez "
 "maintenant commencer l’extraction."
@@ -571,7 +571,7 @@ msgstr "Échec de l'authentification"
 msgid "Auto-copy current subtitle to clipboard"
 msgstr "Copie automatique des sous-titres actuels dans le presse-papiers"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Auto-detected subtitle tracks can be selected here. Flicktionary does "
 "not know how to detect subtitles on every site. You can always load your "
 "own subtitle files."
@@ -756,7 +756,7 @@ msgstr "Chat — préparation de la réponse"
 msgid "Check"
 msgstr "Vérifier"
 
-#: apps/extension/src/ui/components/FtueUi.tsx
+#: apps/extension/src/ui/components/ftue-ui.tsx
 msgid "Check out the <0>user guide</0> to get started."
 msgstr "Consultez le <0>guide utilisateur</0> pour commencer."
 
@@ -788,7 +788,7 @@ msgstr "Choisir les sous-titres"
 msgid "Choose what to study for this target."
 msgstr "Choisissez ce que vous voulez étudier pour cette cible."
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx
+#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
 msgid "Choose your native language to enable lookups."
 msgstr "Choisissez votre langue maternelle pour activer les recherches."
 
@@ -810,7 +810,7 @@ msgid "Click Generate full exploration to enrich this card with collocations, "
 msgstr "Cliquez sur Générer l'exploration complète pour enrichir cette carte "
 "avec des collocations, l'étymologie, le registre, l'API et plus encore."
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
 msgid "Click on the Flicktionary action button in the top-right of the browser "
 "window to enable audio recording for this tab."
 msgstr "Cliquez sur le bouton Flicktionary en haut à droite de la fenêtre du "
@@ -824,9 +824,9 @@ msgstr "Cliquez sur le lien dans l'e-mail pour continuer."
 msgid "Click to unlock font menu"
 msgstr "Cliquez pour déverrouiller le menu de police"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 #: apps/web/src/features/navigation/components/modal-screen.tsx
 #: apps/web/src/features/review/components/chat-panel.tsx
 msgid "Close"
@@ -913,7 +913,7 @@ msgstr "Continuer avec Google"
 msgid "Correct!"
 msgstr "Correct !"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Could not auto-load subtitles in your preferred language."
 msgstr "Impossible de charger automatiquement les sous-titres dans la langue "
 "préférée."
@@ -943,7 +943,7 @@ msgstr "Impossible de trouver un article lisible sur cette page."
 msgid "Could not import the pasted text."
 msgstr "Impossible d'importer le texte collé."
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Could not import this page."
 msgstr "Impossible d’importer cette page."
 
@@ -979,7 +979,7 @@ msgstr "Impossible d'ouvrir l'écran de mise à niveau."
 msgid "Could not read this page."
 msgstr "Impossible de lire cette page."
 
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 msgid "Could not remove the highlight."
 msgstr "Impossible de supprimer la surbrillance."
 
@@ -987,11 +987,11 @@ msgstr "Impossible de supprimer la surbrillance."
 msgid "Could not rename — please try again."
 msgstr "Impossible de renommer — veuillez réessayer."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Could not save the note."
 msgstr "Impossible d'enregistrer la note."
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx
+#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
 msgid "Could not save. Please try again."
 msgstr "Impossible d'enregistrer. Veuillez réessayer."
 
@@ -1211,7 +1211,7 @@ msgstr "p. ex. увидеть"
 msgid "Easy"
 msgstr "Facile"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Edit note"
 msgstr "Modifier la note"
@@ -1226,7 +1226,7 @@ msgstr "Modifier le terme"
 msgid "Edit these in the term view"
 msgstr "Modifier dans la vue du terme"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Edit these in the web app"
 msgstr "Modifiez-les dans l'application web"
 
@@ -1262,11 +1262,11 @@ msgid "Email Verification Sent"
 msgstr "Email de Vérification Envoyé"
 
 #: apps/extension/src/controllers/video-data-sync-controller.ts
-#: apps/extension/src/ui/video-data-sync/ShadowVideoDataSyncApp.tsx
+#: apps/extension/src/ui/video-data-sync/shadow-video-data-sync-app.tsx
 msgid "Empty"
 msgstr "Vide"
 
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
 msgid "Enable audio recording"
 msgstr "Activer l'enregistrement audio"
 
@@ -1312,7 +1312,7 @@ msgstr "Saisir manuellement"
 msgid "Enter profile name"
 msgstr "Entrer le nom du profil"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 #: apps/native/src/components/gates/force-update-gate.tsx
 #: apps/native/src/features/billing/hooks/use-paywall.ts
 #: apps/web/src/features/overlay/components/something-went-wrong-overlay-content.tsx
@@ -1724,12 +1724,12 @@ msgstr "Recherche de suggestions…"
 msgid "Finish setting up Flicktionary"
 msgstr "Terminer la configuration de Flicktionary"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx
+#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Finish setup"
 msgstr "Terminer la configuration"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
 msgid "Flicktionary"
 msgstr "Flicktionary"
@@ -1741,7 +1741,7 @@ msgstr "Flicktionary se compose de deux parties qui fonctionnent ensemble : une 
 "<0>extension de navigateur</0> et cette <1>application web</1>."
 
 #. placeholder {0}: state.newVersion
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
 msgid "Flicktionary updated to version {0}. Check out the <0>release notes</0>."
 msgstr "Flicktionary a été mis à jour vers la version {0}. Consultez les "
 "<0>notes de version</0>."
@@ -1821,7 +1821,7 @@ msgstr "Générer la carte"
 msgid "Generate full exploration"
 msgstr "Générer l'exploration complète"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Generate Subtitles"
 msgstr "Générer les sous-titres"
 
@@ -1839,7 +1839,7 @@ msgstr "Générer des traductions pour les nouvelles cartes dans cette langue. "
 msgid "Generating full exploration… this takes a few seconds."
 msgstr "Génération de l'exploration complète… cela prend quelques secondes."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Generating..."
 msgstr "Génération..."
 
@@ -1991,7 +1991,7 @@ msgstr "Host regex"
 msgid "How your free trial works"
 msgstr "Comment fonctionne votre essai gratuit"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Human translation"
 msgstr "Traduction humaine"
 
@@ -2021,7 +2021,7 @@ msgstr "Importer l’article dans Flicktionary"
 msgid "Import Settings"
 msgstr "Importer les paramètres"
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
 msgid "Import this article"
 msgstr "Importer cet article"
 
@@ -2033,7 +2033,7 @@ msgstr "Texte importé"
 msgid "Importing articles"
 msgstr "Importer des articles"
 
-#: apps/extension/src/ui/components/FlicktionaryImportSection.tsx
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 #: apps/web/src/features/sessions/components/subtitle-source-picker.tsx
 msgid "Importing…"
@@ -2236,7 +2236,7 @@ msgstr "On dirait {suggestedLanguageName}"
 msgid "Lookup"
 msgstr "Recherche"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Machine translation"
 msgstr "Traduction automatique"
 
@@ -2270,7 +2270,7 @@ msgstr "Message pour les fondateurs"
 
 #: apps/extension/common/components/SettingsForm.tsx
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx
-#: apps/extension/src/ui/components/ImportPopup.tsx
+#: apps/extension/src/ui/components/import-popup.tsx
 msgid "Misc"
 msgstr "Divers"
 
@@ -2337,7 +2337,7 @@ msgstr "Film"
 msgid "Movies"
 msgstr "Films"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "Multiple Video Elements Detected"
 msgstr "Plusieurs éléments vidéo détectés"
 
@@ -2358,7 +2358,7 @@ msgstr "Nom de l'onglet"
 msgid "Native example"
 msgstr "Exemple en langue maternelle"
 
-#: apps/extension/src/ui/components/FlicktionaryFinishSetupSection.tsx
+#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
 #: apps/web/src/features/settings/components/native-language-selector.tsx
 msgid "Native language"
 msgstr "Langue maternelle"
@@ -2498,11 +2498,11 @@ msgid "No tracks found in {languageName}. Try uploading a .srt file instead."
 msgstr "Aucune piste trouvée en {languageName}. Essayez de télécharger un "
 "fichier .srt à la place."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "No translation available"
 msgstr "Aucune traduction disponible"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "No videos detected."
 msgstr "Aucune vidéo détectée."
 
@@ -2528,7 +2528,7 @@ msgstr "Pas d'API Wiktionary"
 msgid "Normal"
 msgstr "Normal"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "not available"
 msgstr "non disponible"
 
@@ -2566,9 +2566,9 @@ msgid "Numeral"
 msgstr "Numéral"
 
 #: apps/extension/common/components/PageSettingsForm.tsx
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
-#: apps/extension/src/ui/notification/ShadowNotificationApp.tsx
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
+#: apps/extension/src/ui/notification/shadow-notification-app.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 #: apps/native/src/components/gates/force-update-gate.tsx
 msgid "OK"
 msgstr "OK"
@@ -2595,7 +2595,7 @@ msgstr "Ouvrez une vidéo sur une plateforme prise en charge. La première fois,
 "Vous pouvez également charger votre propre fichier de sous-titres en le "
 "glissant-déposant sur la vidéo."
 
-#: apps/extension/src/ui/components/PopupHeader.tsx
+#: apps/extension/src/ui/components/popup-header.tsx
 msgid "Open App"
 msgstr "Ouvrir l'app"
 
@@ -2603,7 +2603,7 @@ msgstr "Ouvrir l'app"
 msgid "Open chat"
 msgstr "Ouvrir le chat"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Open Files"
 msgstr "Ouvrir des fichiers"
 
@@ -2953,7 +2953,7 @@ msgstr "Le traitement s'effectue en arrière-plan"
 msgid "Processing warnings"
 msgstr "Avertissements de traitement"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
@@ -2991,7 +2991,7 @@ msgstr "Prompt on failure to auto-load subtitles"
 msgid "Pronoun"
 msgstr "Pronom"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
@@ -3047,7 +3047,7 @@ msgstr "Rappelez-vous et produisez-le vous-même"
 msgid "Recently added"
 msgstr "Récemment ajouté"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/form-selector.tsx
 #: apps/web/src/features/sessions/components/saved-study-targets.tsx
 #: apps/web/src/features/settings/components/cefr-per-language-list.tsx
@@ -3115,12 +3115,12 @@ msgstr "Rechargez la page, puis réessayez l’import."
 msgid "Remember subtitle offset"
 msgstr "Mémoriser le décalage des sous-titres"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Remember these track choices for this site"
 msgstr "Se souvenir de ces choix de piste pour ce site"
 
 #: apps/extension/common/components/MiscSettingsTab.tsx
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 #: apps/web/src/features/sessions/components/session-remove-dialog.tsx
@@ -3227,7 +3227,7 @@ msgstr "Révision et pratique"
 msgid "RP"
 msgstr "RP"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/cefr-prompt-dialog.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Save"
@@ -3242,7 +3242,7 @@ msgid "Save a term you heard or saw, no source needed"
 msgstr "Enregistrez un terme que vous avez entendu ou vu, aucune source "
 "nécessaire"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Save note"
 msgstr "Enregistrer la note"
@@ -3251,12 +3251,12 @@ msgstr "Enregistrer la note"
 msgid "Save to vocabulary"
 msgstr "Enregistrer dans le vocabulaire"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Saved"
 msgstr "Enregistré"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/sessions/components/session-gloss-sheet.tsx
 msgid "Saved — click to remove highlight"
 msgstr "Enregistré — cliquez pour supprimer le surlignage"
@@ -3266,7 +3266,7 @@ msgid "Saved to this card's chat — delete the highlight to change it."
 msgstr "Enregistré dans le chat de cette carte — supprimez le surlignage pour "
 "le modifier."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 #: apps/web/src/features/review/components/editable-card-fields.tsx
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
@@ -3348,15 +3348,15 @@ msgstr "Aller au sous-titre précédent"
 msgid "sein"
 msgstr "sein"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Select a language"
 msgstr "Sélectionner une langue"
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "Select a video element to sync it with Flicktionary."
 msgstr "Sélectionnez un élément vidéo pour le synchroniser avec Flicktionary."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "Select a video element…"
 msgstr "Sélectionnez un élément vidéo…"
 
@@ -3368,7 +3368,7 @@ msgstr "Sélectionnez d’abord du texte."
 msgid "Select subtitle tracks to load."
 msgstr "Sélectionner les pistes de sous-titres à charger."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Select Subtitles"
 msgstr "Sélectionner des sous-titres"
 
@@ -3446,9 +3446,9 @@ msgid "Setting up account..."
 msgstr "Configuration du compte..."
 
 #: apps/extension/common/components/MiscSettingsTab.tsx
-#: apps/extension/src/ui/components/SettingsPage.tsx
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/components/settings-page.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Settings"
 msgstr "Paramètres"
@@ -3480,8 +3480,8 @@ msgstr "Afficher la réponse"
 msgid "Show suggested terms while reading"
 msgstr "Afficher les termes suggérés pendant la lecture"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
-#: apps/extension/src/ui/video-overlay/SubtitleOverlayApp.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 msgid "Sign in"
 msgstr "Se connecter"
 
@@ -3501,11 +3501,11 @@ msgstr "Connectez-vous à Flicktionary pour définir votre niveau."
 msgid "Sign in to Flicktionary to translate."
 msgstr "Connectez-vous à Flicktionary pour traduire."
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Sign in with Flicktionary"
 msgstr "Se connecter à Flicktionary"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 #: apps/native/src/features/profile/components/profile-view.tsx
 #: apps/web/src/features/billing/components/pricing-view.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
@@ -3522,11 +3522,11 @@ msgid "Sign up"
 msgstr "S'inscrire"
 
 #. placeholder {0}: auth.email
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signed in as {0}"
 msgstr "Connecté en tant que {0}"
 
-#: apps/extension/src/ui/components/FlicktionaryPairSection.tsx
+#: apps/extension/src/ui/components/flicktionary-pair-section.tsx
 msgid "Signing in…"
 msgstr "Connexion…"
 
@@ -3765,7 +3765,7 @@ msgid "Subtitle Track"
 msgstr "Piste des sous-titres"
 
 #. placeholder {0}: i + 1
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Subtitle Track {0}"
 msgstr "Piste des sous-titres {0}"
 
@@ -3774,7 +3774,7 @@ msgstr "Piste des sous-titres {0}"
 msgid "Subtitles"
 msgstr "Subtitles"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Subtitles must be loaded before you can start mining."
 msgstr "Les sous-titres doivent être chargés avant de pouvoir commencer "
 "l’extraction."
@@ -4076,11 +4076,11 @@ msgstr "URL du serveur de transcription"
 msgid "Translation"
 msgstr "Traduction"
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Translation and actions for the saved highlight."
 msgstr "Traduction et actions pour le surlignage enregistré."
 
-#: apps/extension/src/ui/video-overlay/GlossTooltip.tsx
+#: apps/extension/src/ui/video-overlay/gloss-tooltip.tsx
 msgid "Translation and save action for the hovered word."
 msgstr "Traduction et action de sauvegarde pour le mot survolé."
 
@@ -4088,7 +4088,7 @@ msgstr "Traduction et action de sauvegarde pour le mot survolé."
 msgid "Translation in your native language."
 msgstr "Traduction dans votre langue maternelle."
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Translation language"
 msgstr "Langue de traduction"
 
@@ -4239,7 +4239,7 @@ msgstr "Utilisée comme votre L1 dans les prompts LLM."
 msgid "User"
 msgstr "Utilisateur"
 
-#: apps/extension/src/ui/components/PopupHeader.tsx
+#: apps/extension/src/ui/components/popup-header.tsx
 msgid "User Guide"
 msgstr "Guide d'utilisation"
 
@@ -4278,11 +4278,11 @@ msgstr "Vérifiez Votre Email"
 msgid "Verifying..."
 msgstr "Vérification..."
 
-#: apps/extension/src/ui/video-select/ShadowVideoSelectApp.tsx
+#: apps/extension/src/ui/video-select/shadow-video-select-app.tsx
 msgid "Video Element"
 msgstr "Élément vidéo"
 
-#: apps/extension/src/ui/components/VideoDataSyncDialog.tsx
+#: apps/extension/src/ui/components/video-data-sync-dialog.tsx
 msgid "Video Name"
 msgstr "Nom de la vidéo"
 
@@ -4362,7 +4362,7 @@ msgstr "Nom faible (déclinaison en n)"
 msgid "Welcome to Flicktionary"
 msgstr "Bienvenue sur Flicktionary"
 
-#: apps/extension/src/ui/components/FtueUi.tsx
+#: apps/extension/src/ui/components/ftue-ui.tsx
 msgid "Welcome to Flicktionary."
 msgstr "Bienvenue sur Flicktionary."
 
