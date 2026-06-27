@@ -14,7 +14,16 @@ const detectBrowserLanguage = (): SupportedLanguageCode => {
 
 type Step = 'pick' | 'welcome'
 
-export const OnboardingView = () => {
+interface OnboardingViewProps {
+  // 'web' (default) is the standalone route: finishing navigates to /sessions.
+  // 'extensionPair' embeds the same wizard in the extension pairing tab: the
+  // two-step sequence is identical, but finishing calls `onFinish` (which posts
+  // the pairing-done signal) instead of navigating.
+  variant?: 'web' | 'extensionPair'
+  onFinish?: () => void
+}
+
+export const OnboardingView = ({ variant = 'web', onFinish }: OnboardingViewProps) => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('pick')
@@ -35,8 +44,16 @@ export const OnboardingView = () => {
   }
 
   // Only reachable on the welcome step, after completeOnboarding flipped
-  // is_onboarded, so the gate lets /sessions through.
+  // is_onboarded. In the web variant the gate now lets /sessions through; in the
+  // extensionPair variant we hand control back to the pairing page (which posts
+  // the pairing-done signal to close the tab). Posting from here — the "Get
+  // started" button — and NOT from the native-language save keeps the two-step
+  // sequence intact and guarantees is_onboarded is already true.
   const handleFinish = () => {
+    if (variant === 'extensionPair') {
+      onFinish?.()
+      return
+    }
     void navigate({ to: '/sessions' })
   }
 

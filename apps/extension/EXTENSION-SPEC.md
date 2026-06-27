@@ -226,12 +226,32 @@ instead of hanging); the
 background runs `verifyOtp` and persists the session in its own
 `browser.storage.local` namespace (`flicktionary.auth.v1`) — deliberately
 **outside** the settings provider, so it is never profile-synced or included in
-settings export. On success the page shows a brief "Pairing complete — closing
-this tab…" message, then the background handler removes the pairing tab after
-~1.5s (the page can't close itself — `window.close()` only works on
-script-opened windows — so the background closes the tab it opened);
-`start-pairing.ts` sets `openerTabId` to the tab the user paired from, so the
-browser re-focuses it on close. The popup shows the paired email + sign-out
+settings export.
+
+The pairing tab is closed by a **signal**, not a timer. The page can't close
+itself (`window.close()` only works on script-opened windows — the extension
+opened this one with `tabs.create`), so the page decides when pairing is *done*
+and posts `flicktionary-pair-finished`; the pair content script forwards it and
+a background handler removes the tab. On success the pair handler records the
+paired `sender.tab.id` in `browser.storage.local` (so it survives an MV3 worker
+suspend between the ack and the finished signal); the finished handler **only
+ever closes `sender.tab.id`** and uses the recorded id purely as a guard
+(refuse if a recorded id is present and does not match; close `sender.tab.id`
+anyway if the record was lost to a suspend — the pair content script is
+URL-gated to `app.flicktionary.app/extension-pair*` and the message only closes
+its own sender tab). `start-pairing.ts` sets `openerTabId` to the tab the user
+paired from, so the browser re-focuses it on close.
+
+What counts as "done" depends on web onboarding (single onboarding surface, no
+drift — see "Onboarding" below): an **onboarded** account posts `finished`
+immediately (the old UX — the tab closes right away); a **not-onboarded**
+account runs web onboarding *in the pairing tab* and posts `finished` from its
+"Get started" button. With the timer gone the tab can no longer auto-close on a
+stall, so the page also exposes a manual **"Return to the extension"** fallback
+(re-posts `finished`, tells the user to close the tab) on the loading /
+onboarded-but-not-yet-closed and prefs-error/retry states.
+
+The popup shows the paired email + sign-out
 (revokes the session server-side via `extensionAuth.revokeSession`). Auth state
 changes propagate live to open overlays via a storage subscription.
 
@@ -356,10 +376,20 @@ cached per `(source, contentHash)` (`youtube-session-cache.ts`, storage key
 migrating; re-registration is idempotent) so saves are a single round trip.
 
 The extension sends **no language** — the backend detects it (Haiku) and uses it
-as both content and target language. Failure modes are explicit: `422
-UNSUPPORTED_LANGUAGE` → one-time notice, saving disabled for that video; `422
-MISSING_CEFR` → surfaced at save time as the CEFR picker (below). Unpaired users
-can still watch with subtitles; saving is simply unavailable (no local fallback).
+as both content and target language. The two missing-prefs failures are
+**distinct codes** (the backend splits them so the extension picks the right
+recovery — conflating them once stranded users who had a CEFR but no native
+language in an unbreakable "set your level" loop):
+- `422 NEEDS_ONBOARDING` (no native language → onboarding incomplete) → not an
+  in-context fix (native language is global): the save toasts a **Finish setup**
+  action that opens the pairing/onboarding tab (opener = the video tab, so it
+  returns the user here when done). After onboarding, re-saving works.
+- `422 MISSING_CEFR` (native set, CEFR for the detected language missing) →
+  surfaced at save time as the in-video CEFR picker (below) and retried.
+- `422 UNSUPPORTED_LANGUAGE` → one-time notice, saving disabled for that video.
+
+Unpaired users can still watch with subtitles; saving is simply unavailable (no
+local fallback).
 
 ### Subtitle overlay & word interaction
 
@@ -378,8 +408,9 @@ known, and the re-tokenization when it lands is safe because saved-span paint
 uses intersection, not exact offsets.
 
 - **Hover gloss** — hovering a word (300 ms debounce) calls `glosses.fastGloss`
-  (selection + context line + the video's detected target language, see the
-  query-key note below) and shows a floating tooltip (the shared
+  (selection + context line + the video's detected target language when known,
+  else server-detected from the context line — see the query-key note below)
+  and shows a floating tooltip (the shared
   `FloatingSheet` desktop popover, portaled into a separate non-transformed
   popover shadow host): word, IPA
   (the server-picked `ipaDisplay` string — the backend resolves the user's
@@ -412,15 +443,20 @@ uses intersection, not exact offsets.
   a "Sign in to translate" error must not survive sign-in). `targetLanguage`
   is the VIDEO'S detected subtitle language (from the saved-highlights store,
   riding the `flicktionary-gloss` message), so a Russian video glosses Russian
-  even for a user whose primary target language is Spanish; while the overlay
-  doesn't know it yet ('' in the key), the background falls back to the user's
-  primary target language, and the detected language landing changes the key
-  so a fallback-language gloss is never served from cache. The key still omits
-  the auth/native-language context the background derives, so the client is
-  **cleared on any auth change**; the background's target/native-language
-  cache also resets on auth change (`resetFlicktionaryLanguageCache` — to
-  `undefined`, not `null`, which would mean a known "no language" and skip the
-  refetch). Nothing is persisted.
+  even for a user whose primary target language is Spanish. While the overlay
+  doesn't know it yet ('' in the key), the background sends **no** language and
+  the backend **detects it from the context line** (`glosses.fastGloss`'s
+  `targetLanguage` is optional). It deliberately does NOT fall back to the
+  user's primary study language — that's wrong for a video in another language
+  and empty for a just-onboarded user (this caused a bogus "set your target
+  language" gloss error). The detected language landing later changes the key so
+  a no-language gloss is never re-served from cache. The key still omits the
+  auth/native-language context the background derives, so the client is
+  **cleared on any auth change**. The background still warms a target/native
+  bootstrap cache (the content-script track-select dialog reads the cached
+  native language) and resets it on auth change (`resetFlicktionaryLanguageCache`
+  — to `undefined`, not `null`, which would mean a known "no language" and skip
+  the refetch). Nothing is persisted.
   **Pin-on-entry:** a gloss that the pointer never enters keeps the light
   hover-out dismissal (150 ms grace; quick lookups stay friction-free), but
   once the pointer ENTERS the popover it is pinned — pointer-leave no longer
@@ -651,13 +687,19 @@ Two variants, switched by the active tab's URL (`popup-ui.tsx`):
   article"**, and slim Misc (theme/language) + About tabs.
 
 Both variants also show a **"Finish setup"** section
-(`FlicktionaryFinishSetupSection`) when paired with `nativeLanguage === NULL`
-(a user who paired without completing web onboarding — glosses would fail with
-`BAD_REQUEST`): a native-language select (`SUPPORTED_LANGUAGES` native names)
-that calls `userPrefs.setNativeLanguage` and hides itself. Keyed on
-`nativeLanguage === null`, NOT `isOnboarded` — web onboarding remains the full
-flow; this only unblocks lookups. Popup open also refreshes the UI prefs from
-the server (one shared `getPrefs` per open, memo invalidated on auth change).
+(`FlicktionaryFinishOnboardingSection`) when paired with `isOnboarded === false`
+(a user who paired without completing web onboarding — saving would fail and the
+web gate walls them): a CTA that opens the **pairing tab**
+(`openFlicktionaryPairingTab`), NOT the bare app. That tab re-runs pairing,
+renders onboarding in the `extensionPair` variant, and on completion the
+extension closes it and the browser returns the user to the tab they came from
+(opener-tab return) — so "finish setup" never dead-ends on the app. There is
+**no** second native-language picker in the popup — web onboarding is the single
+onboarding surface, so the popup can't drift when onboarding grows past native
+language. Keyed on `!isOnboarded`, NOT `nativeLanguage === null`, so a user who
+already set native language via the retired inline picker (while `is_onboarded`
+stayed false) still sees it. Popup open also refreshes the UI prefs from the
+server (one shared `getPrefs` per open, memo invalidated on auth change).
 
 On video pages, paired accounts on the test-user allow-list also get an
 **Admin** tab (`AdminSettingsTab`, `SettingsForm`'s `adminTab` prop): debugging
@@ -680,6 +722,15 @@ a new tab. A selection-based path imports highlighted text as a paste (no
 sourceUrl). Errors show inline in the popup with retry, plus an on-page toast.
 Both paths check pairing up front — a signed-out user gets a sign-in prompt
 before any extraction is attempted.
+
+A `MISSING_CEFR` failure (the detected language has no CEFR level yet) is
+handled in-context, not dead-ended: the **popup** import surfaces an inline
+A1–C2 picker (same recovery shape as the in-video CEFR picker), sets the level
+via `userPrefs.setCefrForLanguage`, and replays the import once (an `isCefrRetry`
+flag prevents looping). The **context-menu** import has no popup to host a
+picker, so it keeps toasting — with copy pointing the user at the extension
+popup to set their level there. The import service threads a `presentation:
+'popup' | 'contextMenu'` flag so the same path can surface either way.
 
 ### Settings, profiles & options page
 
@@ -812,14 +863,19 @@ the saved-highlights loader evicts an entry whose session no longer lists
 9. Sync: pair with server-NULL prefs → local values pushed (PUT in Network);
    pair with server-set prefs → local pulled; change theme/language while
    paired → PUT fires; a second browser pulls on popup open.
-10. JIT picker: pair an account with `native_language` NULL → "Finish setup"
-    shows in both popup variants → picking a language calls
-    `setNativeLanguage`, the section hides, and glosses work.
+10. Onboarding: pair a **not-onboarded** account → web onboarding renders in the
+    pairing tab → complete → tab closes and focus returns to the page you paired
+    from. Pair an **already-onboarded** account → tab closes immediately. A
+    paired-but-not-onboarded account (incl. native language already set) → the
+    "Finish setup" CTA shows in both popup variants and opens web onboarding
+    (keyed on `!isOnboarded`). Force a prefs-load failure on the pairing tab
+    (offline) → error/retry + manual "Return to the extension" fallback instead
+    of hanging; confirm the finished handshake closes only the paired tab.
 11. **Firefox build** (`build:firefox`, `web-ext run`) — smoke-test manually;
     Firefox-only failure modes (Xray wrappers, promise-only `sendMessage`) are
     invisible to CI. For this feature: matchMedia in popup/options AND inside
     shadow-DOM overlays, `.dark` toggling on shadow roots, orpc sync calls,
-    JIT-picker Radix portal rendering.
+    the pairing-tab `flicktionary-pair-finished` handshake + tab close.
 
 ## Known engineering traps
 

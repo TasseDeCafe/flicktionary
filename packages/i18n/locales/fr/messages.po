@@ -788,10 +788,6 @@ msgstr "Choisir les sous-titres"
 msgid "Choose what to study for this target."
 msgstr "Choisissez ce que vous voulez étudier pour cette cible."
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
-msgid "Choose your native language to enable lookups."
-msgstr "Choisissez votre langue maternelle pour activer les recherches."
-
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "Choose your plan"
 msgstr "Choisissez votre forfait"
@@ -843,6 +839,12 @@ msgstr "Liste de chaînes séparées par des virgules"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Common"
 msgstr "Commun"
+
+#: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
+msgid "Complete a quick setup to start saving words. We'll bring you right "
+"back."
+msgstr "Complétez une configuration rapide pour commencer à enregistrer des "
+"mots. Nous vous ramènerons tout de suite."
 
 #: apps/extension/common/components/PlayModeSelector.tsx
 msgid "Condensed"
@@ -991,9 +993,9 @@ msgstr "Impossible de renommer — veuillez réessayer."
 msgid "Could not save the note."
 msgstr "Impossible d'enregistrer la note."
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
-msgid "Could not save. Please try again."
-msgstr "Impossible d'enregistrer. Veuillez réessayer."
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
+msgid "Could not save your level. Please try again."
+msgstr "Impossible d'enregistrer votre niveau. Veuillez réessayer."
 
 #: apps/native/src/features/auth/components/user-setup-gate.tsx
 msgid "Could not set up your account. Please try restarting the app."
@@ -1724,7 +1726,12 @@ msgstr "Recherche de suggestions…"
 msgid "Finish setting up Flicktionary"
 msgstr "Terminer la configuration de Flicktionary"
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
+msgid "Finish setting up Flicktionary to save words."
+msgstr "Terminez la configuration de Flicktionary pour enregistrer des mots."
+
+#: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Finish setup"
 msgstr "Terminer la configuration"
@@ -1998,6 +2005,11 @@ msgstr "Traduction humaine"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Idiom"
 msgstr "Expression idiomatique"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "If this tab does not close on its own, you can close it now."
+msgstr "Si cet onglet ne se ferme pas automatiquement, vous pouvez le fermer "
+"maintenant."
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx
 msgid "If you'd like to create a new account, sign up again below."
@@ -2358,7 +2370,6 @@ msgstr "Nom de l'onglet"
 msgid "Native example"
 msgstr "Exemple en langue maternelle"
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
 #: apps/web/src/features/settings/components/native-language-selector.tsx
 msgid "Native language"
 msgstr "Langue maternelle"
@@ -2628,6 +2639,12 @@ msgstr "Ouvrez le popup de l'extension et choisissez <0>Se connecter avec "
 "Flicktionary</0>. Une page d'appairage s'ouvre dans l'application web "
 "et connecte automatiquement l'extension à votre compte."
 
+#: apps/extension/src/services/flicktionary/import-text.ts
+msgid "Open the Flicktionary extension popup to set your level for this "
+"language, then import again."
+msgstr "Ouvrez la popup de l'extension Flicktionary pour définir votre niveau "
+"dans cette langue, puis importez à nouveau."
+
 #: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
@@ -2643,6 +2660,7 @@ msgstr "Ouvrir la vue détaillée pour modifier les champs, les formes et les "
 msgid "Opening Session vocabulary"
 msgstr "Ouverture du vocabulaire de la session"
 
+#: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Opening…"
 msgstr "Ouverture…"
@@ -2683,6 +2701,10 @@ msgstr "Associer l'extension Flicktionary"
 msgid "Pairing complete — closing this tab and returning you to the "
 "extension..."
 msgstr "Jumelage terminé — fermeture de cet onglet et retour à l'extension..."
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Pairing complete, but we could not load your profile."
+msgstr "Appariement terminé, mais nous n'avons pas pu charger votre profil."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pairing your browser extension..."
@@ -3202,6 +3224,10 @@ msgstr "Réessayer"
 msgid "Return to Login"
 msgstr "Retour à la connexion"
 
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Return to the extension"
+msgstr "Retourner à l'extension"
+
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Revert"
 msgstr "Revert"
@@ -3425,6 +3451,11 @@ msgstr "Vocabulaire de la session"
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Sessions"
 msgstr "Sessions"
+
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
+msgid "Set this once to start importing text in this language."
+msgstr "Définissez ceci une fois pour commencer à importer du texte dans cette "
+"langue."
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Set up form"
@@ -4108,6 +4139,10 @@ msgstr "Essayez d'ajouter un film ou de coller un texte dans n'importe quelle "
 "langue pour commencer. Vous pouvez choisir la langue cible à chaque "
 "fois que vous ajoutez du nouveau contenu."
 
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Try again"
+msgstr "Réessayer"
+
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "TV"
 msgstr "Séries"
@@ -4481,6 +4516,10 @@ msgid "You've reviewed every due term for this language. Come back later when "
 "more are ready."
 msgstr "Vous avez révisé tous les termes dus pour cette langue. Revenez plus "
 "tard lorsque d'autres seront prêts."
+
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
+msgid "Your {pendingLanguageName} level"
+msgstr "Votre niveau de {pendingLanguageName}"
 
 #: apps/native/src/features/removals/api/removals-hooks.ts
 #: apps/web/src/features/removals/api/removals-hooks.ts

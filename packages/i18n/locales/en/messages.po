@@ -773,10 +773,6 @@ msgstr "Choose subtitles"
 msgid "Choose what to study for this target."
 msgstr "Choose what to study for this target."
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
-msgid "Choose your native language to enable lookups."
-msgstr "Choose your native language to enable lookups."
-
 #: apps/web/src/features/billing/components/pricing-view.tsx
 msgid "Choose your plan"
 msgstr "Choose your plan"
@@ -828,6 +824,12 @@ msgstr "Comma-separated list of strings"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Common"
 msgstr "Common"
+
+#: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
+msgid "Complete a quick setup to start saving words. We'll bring you right "
+"back."
+msgstr "Complete a quick setup to start saving words. We'll bring you right "
+"back."
 
 #: apps/extension/common/components/PlayModeSelector.tsx
 msgid "Condensed"
@@ -972,9 +974,9 @@ msgstr "Could not rename — please try again."
 msgid "Could not save the note."
 msgstr "Could not save the note."
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
-msgid "Could not save. Please try again."
-msgstr "Could not save. Please try again."
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
+msgid "Could not save your level. Please try again."
+msgstr "Could not save your level. Please try again."
 
 #: apps/native/src/features/auth/components/user-setup-gate.tsx
 msgid "Could not set up your account. Please try restarting the app."
@@ -1698,7 +1700,12 @@ msgstr "Finding suggestions…"
 msgid "Finish setting up Flicktionary"
 msgstr "Finish setting up Flicktionary"
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
+msgid "Finish setting up Flicktionary to save words."
+msgstr "Finish setting up Flicktionary to save words."
+
+#: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
+#: apps/extension/src/ui/video-overlay/subtitle-overlay-app.tsx
 #: apps/web/src/features/more/components/more-tab-view.tsx
 msgid "Finish setup"
 msgstr "Finish setup"
@@ -1970,6 +1977,10 @@ msgstr "Human translation"
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Idiom"
 msgstr "Idiom"
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "If this tab does not close on its own, you can close it now."
+msgstr "If this tab does not close on its own, you can close it now."
 
 #: apps/web/src/features/auth/components/account-removed-view.tsx
 msgid "If you'd like to create a new account, sign up again below."
@@ -2326,7 +2337,6 @@ msgstr "Name of the tab"
 msgid "Native example"
 msgstr "Native example"
 
-#: apps/extension/src/ui/components/flicktionary-finish-setup-section.tsx
 #: apps/web/src/features/settings/components/native-language-selector.tsx
 msgid "Native language"
 msgstr "Native language"
@@ -2591,6 +2601,12 @@ msgstr "Open the extension popup and choose <0>Sign in with Flicktionary</0>. A 
 "pairing page opens in the web app and connects the extension to your "
 "account automatically."
 
+#: apps/extension/src/services/flicktionary/import-text.ts
+msgid "Open the Flicktionary extension popup to set your level for this "
+"language, then import again."
+msgstr "Open the Flicktionary extension popup to set your level for this "
+"language, then import again."
+
 #: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
@@ -2604,6 +2620,7 @@ msgstr "Open the focus view to edit fields, forms, and skills."
 msgid "Opening Session vocabulary"
 msgstr "Opening Session vocabulary"
 
+#: apps/extension/src/ui/components/flicktionary-finish-onboarding-section.tsx
 #: apps/web/src/features/sessions/components/session-vocabulary-footer.tsx
 msgid "Opening…"
 msgstr "Opening…"
@@ -2645,6 +2662,10 @@ msgid "Pairing complete — closing this tab and returning you to the "
 "extension..."
 msgstr "Pairing complete — closing this tab and returning you to the "
 "extension..."
+
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Pairing complete, but we could not load your profile."
+msgstr "Pairing complete, but we could not load your profile."
 
 #: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
 msgid "Pairing your browser extension..."
@@ -3161,6 +3182,10 @@ msgstr "Retry"
 msgid "Return to Login"
 msgstr "Return to Login"
 
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Return to the extension"
+msgstr "Return to the extension"
+
 #: apps/extension/common/components/PageSettingsForm.tsx
 msgid "Revert"
 msgstr "Revert"
@@ -3382,6 +3407,10 @@ msgstr "Session vocabulary"
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "Sessions"
 msgstr "Sessions"
+
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
+msgid "Set this once to start importing text in this language."
+msgstr "Set this once to start importing text in this language."
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Set up form"
@@ -4057,6 +4086,10 @@ msgstr "Try adding a movie or pasting a piece of text in any language to get "
 "started. You can pick the target language each time you add new "
 "content."
 
+#: apps/web/src/features/extension-pair/components/extension-pair-view.tsx
+msgid "Try again"
+msgstr "Try again"
+
 #: apps/web/src/features/sessions/components/sessions-list-view.tsx
 msgid "TV"
 msgstr "TV"
@@ -4420,6 +4453,10 @@ msgid "You've reviewed every due term for this language. Come back later when "
 "more are ready."
 msgstr "You've reviewed every due term for this language. Come back later when "
 "more are ready."
+
+#: apps/extension/src/ui/components/flicktionary-import-section.tsx
+msgid "Your {pendingLanguageName} level"
+msgstr "Your {pendingLanguageName} level"
 
 #: apps/native/src/features/removals/api/removals-hooks.ts
 #: apps/web/src/features/removals/api/removals-hooks.ts

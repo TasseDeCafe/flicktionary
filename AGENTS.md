@@ -23,7 +23,7 @@ Where the documentation lives and how much to trust each piece. When in doubt ab
 - `DISABLED.md` — log of parked/disabled template machinery; check it before deleting "unused" code.
 - READMEs (`apps/web/README.md`, `apps/backend/README.md`, `apps/backend/src/transport/database/README.md`, and other scoped `**/README.md`) — local how-tos for one area. Update only if you change the thing they document.
 
-**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `backend-deploy-smoke-test-plan.md`, `unified-extension-onboarding.md`) and post-MVP backlog/idea lists (e.g. `web-future-ideas-and-open-questions.md`). Useful context; **never** treat as current behavior.
+**Proposals** — `docs/proposals/` holds open designs not yet implemented (e.g. `backend-deploy-smoke-test-plan.md`, `chat-generate-form-facets.md`) and post-MVP backlog/idea lists (e.g. `web-future-ideas-and-open-questions.md`). Useful context; **never** treat as current behavior.
 
 **Scratch** — `docs/brand/` holds brand-asset generation prompts (`LOGO-PROMPTS.md`, `IMAGE-PROMPTS.md`). Not specs; ignore when reasoning about app behavior.
 

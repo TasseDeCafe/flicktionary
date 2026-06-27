@@ -20,7 +20,12 @@ export const glossesContract = {
       z.object({
         selectionText: z.string().trim().min(1).max(200),
         contextLine: z.string().trim().min(1).max(2000),
-        targetLanguage: z.string().trim().min(1).max(40),
+        // Optional: the language of the text. When omitted (e.g. the extension
+        // hasn't registered the video's session yet, so it doesn't know the
+        // subtitle language), the server detects it from `contextLine`. The
+        // gloss must never depend on the user's *primary* target language —
+        // the target IS the language of the text being glossed.
+        targetLanguage: z.string().trim().min(1).max(40).optional(),
       })
     )
     .output(

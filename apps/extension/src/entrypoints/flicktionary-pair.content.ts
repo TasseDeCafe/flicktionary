@@ -6,6 +6,10 @@ import { getPendingFlicktionaryPairNonce } from '@/services/flicktionary/pairing
 
 const POST_MESSAGE_SOURCE = 'flicktionary-extension-pair'
 const ACK_SOURCE = 'flicktionary-extension-pair-ack'
+// Posted by the pairing page once pairing is *done* (immediately when already
+// onboarded, or after web onboarding completes in the pairing tab). Forwarded to
+// the background, which closes this tab. Replaces the old auto-close timer.
+const FINISHED_SOURCE = 'flicktionary-extension-pair-finished'
 
 interface PairMessageData {
   source: string
@@ -60,6 +64,22 @@ export default defineContentScript({
     window.addEventListener('message', async (event) => {
       if (event.source !== window) return
       if (event.origin !== window.location.origin) return
+
+      // Pairing-done signal: forward to the background, which closes this tab.
+      // Best-effort — if the background is mid-suspend the page's manual
+      // "close this tab" fallback covers it.
+      if ((event.data as { source?: string } | undefined)?.source === FINISHED_SOURCE) {
+        try {
+          await browser.runtime.sendMessage({
+            sender: 'flicktionary-extension-pair-content',
+            message: { command: 'flicktionary-pair-finished' },
+          })
+        } catch {
+          // Background unreachable; the page keeps its manual close fallback.
+        }
+        return
+      }
+
       if (!isPairMessage(event.data)) return
 
       try {

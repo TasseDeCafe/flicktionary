@@ -78,6 +78,10 @@ export interface FlicktionaryVideoClosures {
 export type SaveWordOutcome =
   | { kind: 'saved'; word: string; highlight?: SavedHighlightDto; sessionId?: string; targetLanguage?: string }
   | { kind: 'disabled'; reason: string }
+  // The user has no native language yet (onboarding incomplete). Unlike CEFR,
+  // this isn't a per-language in-context fix — the caller routes them to web
+  // onboarding (which returns them to the video when done).
+  | { kind: 'needs-onboarding' }
   | { kind: 'missing-cefr'; targetLanguage: string }
   | { kind: 'error'; message: string }
 
@@ -196,6 +200,12 @@ export async function saveWord({
       sessionId: response.sessionId,
       targetLanguage: response.targetLanguage,
     }
+  }
+
+  // No native language yet (onboarding incomplete) — the caller drives the user
+  // into web onboarding; a CEFR picker can't fix this.
+  if (response.code === 'NEEDS_ONBOARDING') {
+    return { kind: 'needs-onboarding' }
   }
 
   // No CEFR level set for this language yet — let the caller offer an inline
