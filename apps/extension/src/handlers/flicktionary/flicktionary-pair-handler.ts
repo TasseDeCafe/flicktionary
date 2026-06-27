@@ -6,6 +6,7 @@ import {
 import {
   clearPendingFlicktionaryPairNonce,
   getPendingFlicktionaryPairNonce,
+  setFlicktionaryPairedTabId,
 } from '../../services/flicktionary/pairing-nonce-storage'
 import { reconcileUiPrefsOnPairing } from '../../services/flicktionary/ui-prefs-sync'
 
@@ -15,13 +16,6 @@ interface FlicktionaryPairMessage extends Message {
   email: string
   nonce: string
 }
-
-// The pairing tab is opened with `browser.tabs.create`, so the web page can't
-// close itself (`window.close()` only works on script-opened windows). We close
-// it from here after a short delay so the user sees the success copy first. 1.5s
-// is well inside the MV3 service-worker idle timeout (~30s), so the timer fires
-// before the worker can be suspended.
-const PAIRING_TAB_CLOSE_DELAY_MS = 1500
 
 const isPairMessage = (msg: unknown): msg is FlicktionaryPairMessage => {
   if (!msg || typeof msg !== 'object') return false
@@ -85,17 +79,18 @@ export default class FlicktionaryPairHandler {
         // in the popup's auth-change listener). Fire-and-forget: pairing
         // success must not depend on the prefs round-trip.
         void reconcileUiPrefsOnPairing()
-        sendResponse({ ok: true })
 
-        // Close the pairing tab the extension opened, leaving the success copy
-        // up briefly. `start-pairing.ts` set `openerTabId`, so the browser
-        // re-focuses the tab the user paired from.
+        // The pairing tab is opened with `browser.tabs.create`, so the page
+        // can't `window.close()` itself — the extension closes it. We no longer
+        // close it on a timer here: the page now decides when pairing is *done*
+        // (immediately when already onboarded, or after web onboarding) and
+        // posts `flicktionary-pair-finished`. Record the paired tab id so that
+        // handler can validate it only ever closes this exact tab.
         const pairingTabId = sender.tab?.id
         if (pairingTabId !== undefined) {
-          setTimeout(() => {
-            void browser.tabs.remove(pairingTabId)
-          }, PAIRING_TAB_CLOSE_DELAY_MS)
+          await setFlicktionaryPairedTabId(pairingTabId)
         }
+        sendResponse({ ok: true })
       } catch (error) {
         sendResponse({ ok: false, error: error instanceof Error ? error.message : 'Pairing failed' })
       } finally {

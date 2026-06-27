@@ -8,7 +8,7 @@ import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@flicktionary/ui/components/tabs'
 import { useSupportedLanguages } from '../hooks/use-supported-languages'
 import { FlicktionaryPairSection } from './flicktionary-pair-section'
-import { FlicktionaryFinishSetupSection } from './flicktionary-finish-setup-section'
+import { FlicktionaryFinishOnboardingSection } from './flicktionary-finish-onboarding-section'
 import { FlicktionaryImportSection } from './flicktionary-import-section'
 import { PopupHeader } from './popup-header'
 
@@ -46,7 +46,7 @@ const ImportPopup = ({ settings, onSettingsChanged, onOpenApp, onOpenUserGuide }
     <div className='flex flex-col gap-3 p-3'>
       <PopupHeader onOpenApp={onOpenApp} onOpenUserGuide={onOpenUserGuide} />
       <FlicktionaryPairSection />
-      <FlicktionaryFinishSetupSection />
+      <FlicktionaryFinishOnboardingSection onOpenApp={onOpenApp} />
       <FlicktionaryImportSection />
       <Tabs defaultValue='misc' orientation='vertical' className='flex-row gap-1'>
         <TabsList className='h-fit w-[164px] shrink-0 flex-col items-stretch gap-0.5 rounded-none bg-transparent p-0'>

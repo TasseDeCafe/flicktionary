@@ -1,10 +1,10 @@
 # Unify extension-first onboarding through web onboarding
 
-> **Status: proposal — not implemented.** A design for routing extension-first
-> users through the same web onboarding as web-first users, then returning them
-> to the streaming platform. Not current behavior; `SPEC.md` and
-> `apps/extension/EXTENSION-SPEC.md` describe what ships today. This is the
-> planned follow-up to the web onboarding escape-hatch work.
+> **Status: historical — implemented and archived.** This proposal shipped: the
+> extension pairing tab now runs web onboarding for not-onboarded accounts and
+> the popup's inline native-language picker is retired in favor of a "Finish
+> setup" CTA. Current behavior lives in `SPEC.md` and
+> `apps/extension/EXTENSION-SPEC.md`. Kept for design history only.
 
 ## Problem
 

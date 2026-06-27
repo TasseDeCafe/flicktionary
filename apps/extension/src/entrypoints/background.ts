@@ -31,6 +31,7 @@ import PageConfigHandler from '@/handlers/asbplayerv2/page-config-handler'
 import FlicktionaryGlossHandler from '@/handlers/flicktionary/gloss-handler'
 import SaveWordHandler from '@/handlers/saved-words/save-word-handler'
 import FlicktionaryPairHandler from '@/handlers/flicktionary/flicktionary-pair-handler'
+import FlicktionaryPairFinishedHandler from '@/handlers/flicktionary/flicktionary-pair-finished-handler'
 import FlicktionaryStartPairingHandler from '@/handlers/flicktionary/start-pairing-handler'
 import RegisterFlicktionarySubtitlesHandler from '@/handlers/flicktionary/register-subtitles-handler'
 import SetFlicktionaryCefrHandler from '@/handlers/flicktionary/set-cefr-handler'
@@ -103,6 +104,7 @@ export default defineBackground(() => {
     new FlicktionaryGlossHandler(),
     new SaveWordHandler(),
     new FlicktionaryPairHandler(),
+    new FlicktionaryPairFinishedHandler(),
     new FlicktionaryStartPairingHandler(),
     new RegisterFlicktionarySubtitlesHandler(),
     new SetFlicktionaryCefrHandler(),

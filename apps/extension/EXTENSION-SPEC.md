@@ -226,12 +226,32 @@ instead of hanging); the
 background runs `verifyOtp` and persists the session in its own
 `browser.storage.local` namespace (`flicktionary.auth.v1`) — deliberately
 **outside** the settings provider, so it is never profile-synced or included in
-settings export. On success the page shows a brief "Pairing complete — closing
-this tab…" message, then the background handler removes the pairing tab after
-~1.5s (the page can't close itself — `window.close()` only works on
-script-opened windows — so the background closes the tab it opened);
-`start-pairing.ts` sets `openerTabId` to the tab the user paired from, so the
-browser re-focuses it on close. The popup shows the paired email + sign-out
+settings export.
+
+The pairing tab is closed by a **signal**, not a timer. The page can't close
+itself (`window.close()` only works on script-opened windows — the extension
+opened this one with `tabs.create`), so the page decides when pairing is *done*
+and posts `flicktionary-pair-finished`; the pair content script forwards it and
+a background handler removes the tab. On success the pair handler records the
+paired `sender.tab.id` in `browser.storage.local` (so it survives an MV3 worker
+suspend between the ack and the finished signal); the finished handler **only
+ever closes `sender.tab.id`** and uses the recorded id purely as a guard
+(refuse if a recorded id is present and does not match; close `sender.tab.id`
+anyway if the record was lost to a suspend — the pair content script is
+URL-gated to `app.flicktionary.app/extension-pair*` and the message only closes
+its own sender tab). `start-pairing.ts` sets `openerTabId` to the tab the user
+paired from, so the browser re-focuses it on close.
+
+What counts as "done" depends on web onboarding (single onboarding surface, no
+drift — see "Onboarding" below): an **onboarded** account posts `finished`
+immediately (the old UX — the tab closes right away); a **not-onboarded**
+account runs web onboarding *in the pairing tab* and posts `finished` from its
+"Get started" button. With the timer gone the tab can no longer auto-close on a
+stall, so the page also exposes a manual **"Return to the extension"** fallback
+(re-posts `finished`, tells the user to close the tab) on the loading /
+onboarded-but-not-yet-closed and prefs-error/retry states.
+
+The popup shows the paired email + sign-out
 (revokes the session server-side via `extensionAuth.revokeSession`). Auth state
 changes propagate live to open overlays via a storage subscription.
 
@@ -651,13 +671,16 @@ Two variants, switched by the active tab's URL (`popup-ui.tsx`):
   article"**, and slim Misc (theme/language) + About tabs.
 
 Both variants also show a **"Finish setup"** section
-(`FlicktionaryFinishSetupSection`) when paired with `nativeLanguage === NULL`
-(a user who paired without completing web onboarding — glosses would fail with
-`BAD_REQUEST`): a native-language select (`SUPPORTED_LANGUAGES` native names)
-that calls `userPrefs.setNativeLanguage` and hides itself. Keyed on
-`nativeLanguage === null`, NOT `isOnboarded` — web onboarding remains the full
-flow; this only unblocks lookups. Popup open also refreshes the UI prefs from
-the server (one shared `getPrefs` per open, memo invalidated on auth change).
+(`FlicktionaryFinishOnboardingSection`) when paired with `isOnboarded === false`
+(a user who paired without completing web onboarding — glosses would fail and
+the web gate walls them): a CTA that opens the web app (which routes a
+not-onboarded user to `/onboarding`). There is **no** second native-language
+picker in the popup — web onboarding is the single onboarding surface, so the
+popup can't drift when onboarding grows past native language. Keyed on
+`!isOnboarded`, NOT `nativeLanguage === null`, so a user who already set native
+language via the retired inline picker (while `is_onboarded` stayed false) still
+sees it. Popup open also refreshes the UI prefs from the server (one shared
+`getPrefs` per open, memo invalidated on auth change).
 
 On video pages, paired accounts on the test-user allow-list also get an
 **Admin** tab (`AdminSettingsTab`, `SettingsForm`'s `adminTab` prop): debugging
@@ -812,14 +835,19 @@ the saved-highlights loader evicts an entry whose session no longer lists
 9. Sync: pair with server-NULL prefs → local values pushed (PUT in Network);
    pair with server-set prefs → local pulled; change theme/language while
    paired → PUT fires; a second browser pulls on popup open.
-10. JIT picker: pair an account with `native_language` NULL → "Finish setup"
-    shows in both popup variants → picking a language calls
-    `setNativeLanguage`, the section hides, and glosses work.
+10. Onboarding: pair a **not-onboarded** account → web onboarding renders in the
+    pairing tab → complete → tab closes and focus returns to the page you paired
+    from. Pair an **already-onboarded** account → tab closes immediately. A
+    paired-but-not-onboarded account (incl. native language already set) → the
+    "Finish setup" CTA shows in both popup variants and opens web onboarding
+    (keyed on `!isOnboarded`). Force a prefs-load failure on the pairing tab
+    (offline) → error/retry + manual "Return to the extension" fallback instead
+    of hanging; confirm the finished handshake closes only the paired tab.
 11. **Firefox build** (`build:firefox`, `web-ext run`) — smoke-test manually;
     Firefox-only failure modes (Xray wrappers, promise-only `sendMessage`) are
     invisible to CI. For this feature: matchMedia in popup/options AND inside
     shadow-DOM overlays, `.dark` toggling on shadow roots, orpc sync calls,
-    JIT-picker Radix portal rendering.
+    the pairing-tab `flicktionary-pair-finished` handshake + tab close.
 
 ## Known engineering traps
 

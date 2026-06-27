@@ -40,3 +40,25 @@ export const getPendingFlicktionaryPairNonce = async (): Promise<PendingFlicktio
 export const clearPendingFlicktionaryPairNonce = async (): Promise<void> => {
   await browser.storage.local.remove(STORAGE_KEY)
 }
+
+// The id of the tab a successful pairing was performed in. Recorded so the
+// later `flicktionary-pair-finished` message (which fires after the page
+// finishes onboarding, possibly seconds later and across an MV3 worker suspend)
+// can be validated: the finished handler only ever closes this exact tab.
+// Persisted in storage.local — NOT in memory — so it survives a worker suspend
+// between the pair ack and the finished signal.
+const PAIRED_TAB_KEY = 'flicktionary.pairedTabId.v1'
+
+export const setFlicktionaryPairedTabId = async (tabId: number): Promise<void> => {
+  await browser.storage.local.set({ [PAIRED_TAB_KEY]: tabId })
+}
+
+export const getFlicktionaryPairedTabId = async (): Promise<number | null> => {
+  const result = await browser.storage.local.get(PAIRED_TAB_KEY)
+  const value = (result as Record<string, unknown>)[PAIRED_TAB_KEY]
+  return typeof value === 'number' ? value : null
+}
+
+export const clearFlicktionaryPairedTabId = async (): Promise<void> => {
+  await browser.storage.local.remove(PAIRED_TAB_KEY)
+}
