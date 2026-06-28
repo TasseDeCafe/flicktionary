@@ -150,17 +150,20 @@ const classifyEnglishBuckets = (tags: string[]): Array<'ga' | 'rp' | 'untagged'>
   const hasBareUs = tags.includes('US')
   const hasNarrowerUs = hasAnyTag(tags, NARROWER_US_TAGS)
   const hasUnrelated = hasAnyTag(tags, UNRELATED_REGIONAL_TAGS)
-  // Wiktionary often lumps shared pronunciations into one sound row with
-  // multiple regional tags (e.g. `speculation` is tagged
-  // [Canada, General-American, Received-Pronunciation] under a single IPA).
-  // Explicit GA/RP labels still apply in that case — the unrelated tag is
-  // additional information, not a disqualifier. Only drop the sound for
-  // unrelated regional tags when no explicit GA/RP label is also present.
-  if (hasUnrelated && !isRp && !isExplicitGa && !hasBareUs) return []
+  // Bare `US` counts as General American unless a narrower US region tag
+  // (Southern, Boston, …) pins it to a sub-accent we don't want to call GA.
+  const isGa = (isExplicitGa || hasBareUs) && !hasNarrowerUs
+  // Wiktionary often lumps a shared pronunciation into one sound row tagged
+  // with several regions at once — e.g. `revel` is a single `/ˈɹɛv.əl/` tagged
+  // [UK, US], and `speculation` is tagged
+  // [Canada, General-American, Received-Pronunciation]. Each applicable dialect
+  // label claims that pronunciation independently — the labels are additive,
+  // not mutually exclusive, so a [UK, US] sound lands in BOTH buckets. Only drop
+  // the sound for an unrelated region when no GA/RP/US anchor is alongside it.
+  if (hasUnrelated && !isRp && !isGa) return []
   const out: Array<'ga' | 'rp'> = []
-  if (isRp && !hasBareUs && !hasNarrowerUs) out.push('rp')
-  if (isExplicitGa && !hasNarrowerUs) out.push('ga')
-  else if (hasBareUs && !isRp && !hasNarrowerUs) out.push('ga')
+  if (isRp && !hasNarrowerUs) out.push('rp')
+  if (isGa) out.push('ga')
   return out
 }
 

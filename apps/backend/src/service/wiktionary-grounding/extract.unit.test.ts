@@ -253,6 +253,17 @@ describe('extractIpaBag — English GA/RP', () => {
     expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/twɪnd͡ʒ/', rp: '/twɪnd͡ʒ/' })
   })
 
+  // Real case from the 'revel' kaikki entry: a single shared transcription
+  // tagged [UK, US] (the bare `US` form rather than an explicit `General-American`
+  // label). Both dialects must claim it — earlier this fell through both buckets
+  // and left the word ungrounded.
+  it('puts a shared [UK, US] pronunciation into both buckets', () => {
+    const entry: KaikkiEntry = {
+      sounds: [{ ipa: '/ˈɹɛv.əl/', tags: ['UK', 'US'] }],
+    }
+    expect(extractIpaBag(entry, 'en')).toEqual({ ga: '/ˈɹɛv.əl/', rp: '/ˈɹɛv.əl/' })
+  })
+
   it('accepts bare US tag as GA when no narrower US region tag is present', () => {
     const entry: KaikkiEntry = {
       sounds: [{ ipa: '/foo/', tags: ['US'] }],
