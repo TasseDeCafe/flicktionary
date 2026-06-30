@@ -196,9 +196,9 @@ export const SessionVocabularyView = () => {
             onClick={() => {
               if (!session) return
               void navigate({
-                to: '/practice/review/$targetLanguage',
+                to: '/practice/warmup/$targetLanguage',
                 params: { targetLanguage: session.targetLanguage },
-                search: { pool: 'recognition', scope: 'mixed', mode: 'read' },
+                search: { studySessionId: session.id },
               })
             }}
           >

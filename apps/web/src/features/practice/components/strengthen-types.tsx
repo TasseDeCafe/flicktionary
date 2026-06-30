@@ -14,26 +14,45 @@ export type ExerciseAnswerData = {
   graduated: boolean
 }
 
+// The two entry triggers for the same scaffolding ladder: 'rehab' (a lapsed
+// leech climbing back) and 'warmup' (a brand-new term being introduced
+// exercise-first). They share the mechanic but read differently to the user.
+export type ExerciseCopyVariant = 'rehab' | 'warmup'
+
 // "Day N of 3" / graduation note rendered under a gate exercise's result.
 // rehabCorrectDays is null for bonus exercises and non-parked terms.
-export const RehabProgressNote = ({ data }: { data: ExerciseAnswerData }) => {
+export const RehabProgressNote = ({
+  data,
+  copyVariant = 'rehab',
+}: {
+  data: ExerciseAnswerData
+  copyVariant?: ExerciseCopyVariant
+}) => {
   const { t } = useLingui()
   if (data.rehabCorrectDays == null) return null
   if (data.graduated) {
     return (
       <div className='flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800'>
         <PartyPopper className='h-4 w-4 shrink-0' />
-        {t`Graduated! This term is back in your practice rotation.`}
+        {copyVariant === 'warmup'
+          ? t`Ready! This term is moving into your flashcards.`
+          : t`Graduated! This term is back in your practice rotation.`}
       </div>
     )
   }
   const days = data.rehabCorrectDays
+  const progressLabel =
+    copyVariant === 'warmup'
+      ? data.correct
+        ? t`Warming up — day ${days} of 3. Come back tomorrow for the next step.`
+        : t`Warm-up progress: day ${days} of 3. A correct answer today still counts — try again with a fresh exercise.`
+      : data.correct
+        ? t`Day ${days} of 3 — come back tomorrow for the next step.`
+        : t`Rehab progress: day ${days} of 3. A correct answer today still counts — try again with a fresh exercise.`
   return (
     <div className='flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-800'>
       <TrendingUp className='h-4 w-4 shrink-0' />
-      {data.correct
-        ? t`Day ${days} of 3 — come back tomorrow for the next step.`
-        : t`Rehab progress: day ${days} of 3. A correct answer today still counts — try again with a fresh exercise.`}
+      {progressLabel}
     </div>
   )
 }
