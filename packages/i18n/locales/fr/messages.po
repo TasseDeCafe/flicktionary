@@ -164,6 +164,10 @@ msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} jours"
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx
+msgid "{warmingUp} production term(s) warming up — continue"
+msgstr "{warmingUp} terme(s) de production en préparation — continuer"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "{warmingUp} term(s) warming up — continue"
 msgstr "{warmingUp} terme(s) en échauffement — continuer"
 
@@ -4363,6 +4367,10 @@ msgstr "Vocabulaire"
 #: apps/web/src/features/vocabulary/components/vocabulary-options-overlay.tsx
 msgid "Vocabulary options"
 msgstr "Options de vocabulaire"
+
+#: apps/web/src/features/practice/components/warmup-continue-view.tsx
+msgid "Warm up your production terms · {languageName}"
+msgstr "Échauffez vos termes de production · {languageName}"
 
 #: apps/web/src/features/practice/components/warmup-continue-view.tsx
 #: apps/web/src/features/practice/components/warmup-view.tsx
