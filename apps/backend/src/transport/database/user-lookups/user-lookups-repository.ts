@@ -135,9 +135,16 @@ export type DueSummaryEntry = {
   // citation-only because the mixed Practice queue never serves opt-ins.
   optInNewCount: number
   productionOptInNewCount: number
-  // Leech-parked terms (excluded from every practice queue until rehab
-  // graduates them). The due/learning aggregates above already exclude them.
+  // Parked recognition terms, split by origin (both are excluded from every
+  // practice queue; the due/learning aggregates already exclude them):
+  //   parkedCount  — genuine leeches (parked + srs_state NOT NULL), surfaced as
+  //                  "N parked — strengthen them".
+  //   warmupCount  — exercise-first onboarding terms still climbing the ladder
+  //                  (parked + never-reviewed, srs_state NULL), surfaced as
+  //                  "N warming up — continue". Recognition-only (warm-up never
+  //                  parks production facets).
   parkedCount: number
+  warmupCount: number
   // Production-pool counters. Parallel to the recognition counters above but
   // computed off the enabled citation meaning_production facet (membership) and
   // its SRS state.
@@ -455,7 +462,11 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
   // the queue then refuses to serve). The parked counts skip the data_status
   // check to mirror their consumer (listParkedTerms doesn't filter it).
   // new_count needs the explicit rf.id check because its `srs_state IS NULL`
-  // test is also true on a join miss. newIntroducedTodayCount intentionally
+  // test is also true on a join miss. It also excludes leech_parked_at: an
+  // exercise-first warm-up term is parked AND never-reviewed (srs_state NULL),
+  // and the queue (listReviewTerms) won't serve a parked term, so counting it
+  // here would promise a new card the queue refuses. newIntroducedTodayCount
+  // intentionally
   // stays unfiltered: it feeds the remaining-daily-new budget, and an
   // introduction performed today consumed that budget even if the facet was
   // disabled later.
@@ -490,6 +501,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       COUNT(*) FILTER (
         WHERE rf.id IS NOT NULL AND rf.disabled_at IS NULL
           AND rf.data_status = 'ready' AND rf.srs_state IS NULL
+          AND rf.leech_parked_at IS NULL
       )::int AS new_count,
       COUNT(*) FILTER (
         WHERE rf.introduced_at >= CURRENT_DATE
@@ -497,7 +509,12 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       )::int AS new_introduced_today_count,
       COUNT(*) FILTER (
         WHERE rf.disabled_at IS NULL AND rf.leech_parked_at IS NOT NULL
+          AND rf.srs_state IS NOT NULL
       )::int AS parked_count,
+      COUNT(*) FILTER (
+        WHERE rf.disabled_at IS NULL AND rf.leech_parked_at IS NOT NULL
+          AND rf.srs_state IS NULL
+      )::int AS warmup_count,
       COUNT(*) FILTER (WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL)::int AS production_total,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
@@ -519,6 +536,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.data_status = 'ready'
           AND pf.srs_state IS NULL
+          AND pf.leech_parked_at IS NULL
       )::int AS production_new_count,
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
@@ -575,6 +593,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
     productionOptInNewCount:
       (optInByLanguage.get(row.target_language as string)?.production_opt_in_new_count as number) ?? 0,
     parkedCount: row.parked_count as number,
+    warmupCount: row.warmup_count as number,
     productionTotal: row.production_total as number,
     productionReviewDueCount: row.production_review_due_count as number,
     productionLearningDueCount: row.production_learning_due_count as number,
@@ -943,8 +962,27 @@ const listParkedTerms = async (params: {
   userId: string
   targetLanguage: string
   pool: PracticePool
+  // Warm-up scopes parked-term serving to one session's onboarding terms; when
+  // omitted, every parked term for the (user, language, pool) is returned (the
+  // general Strengthen surface).
+  restrictToUserLookupIds?: string[]
+  // Split the parked population by how it got parked: 'onboarding' = an
+  // exercise-first warm-up term (parked + never-reviewed, srs_state NULL),
+  // 'leech' = a genuine lapsed term (parked + srs_state NOT NULL). Omitted
+  // returns both. The two share one DB shape; srs_state is the only thing that
+  // tells them apart, so Strengthen (leeches) and Warm-up (onboarding) read
+  // disjoint sets from the same column.
+  parkedOrigin?: 'onboarding' | 'leech'
 }): Promise<DbUserLookupWithFacet[]> => {
   const skill = skillForPool(params.pool)
+  const restrictClause =
+    params.restrictToUserLookupIds != null ? sql`AND ul.id = ANY(${params.restrictToUserLookupIds}::uuid[])` : sql``
+  const originClause =
+    params.parkedOrigin === 'onboarding'
+      ? sql`AND f.srs_state IS NULL`
+      : params.parkedOrigin === 'leech'
+        ? sql`AND f.srs_state IS NOT NULL`
+        : sql``
   // No membership clause: the join is to the pool's citation facet
   // (meaning_production for the production pool) and `f.disabled_at IS NULL`
   // already enforces membership — a demoted (disabled) production facet is
@@ -966,6 +1004,8 @@ const listParkedTerms = async (params: {
       AND ul.deleted_at IS NULL
       AND f.disabled_at IS NULL
       AND f.leech_parked_at IS NOT NULL
+      ${restrictClause}
+      ${originClause}
     ORDER BY f.leech_parked_at ASC, ul.headword ASC, ul.sense ASC
   `) as DbUserLookupWithFacet[]
 }
@@ -1796,6 +1836,8 @@ export interface UserLookupsRepositoryInterface {
     userId: string
     targetLanguage: string
     pool: PracticePool
+    restrictToUserLookupIds?: string[]
+    parkedOrigin?: 'onboarding' | 'leech'
   }) => Promise<DbUserLookupWithFacet[]>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>

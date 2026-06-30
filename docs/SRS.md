@@ -336,7 +336,22 @@ scopes/budgets — no learn-new bypass). On **advance**:
 - Skipped: terms already reviewed after the text was prepared
   (`wasReviewedAfterTextWasPrepared`) and terms ineligible for the session's scope.
 
-## 7. Leeches: parking, rehab, Strengthen
+## 7. Parking + scaffolded exercises: leech rehab AND warm-up
+
+"Park a term and serve it scaffolded gate exercises until it graduates back into FSRS" is
+**one mechanic with two entry triggers**, told apart purely by derivation (no extra column):
+
+- **Leech (rehab):** a term you keep failing — `leech_parked_at IS NOT NULL AND
+  srs_state IS NOT NULL` (it lapsed in FSRS, so it has SRS state).
+- **Onboarding (warm-up):** a brand-new term introduced exercise-first instead of straight
+  into the flashcard queue — `leech_parked_at IS NOT NULL AND srs_state IS NULL` (parked but
+  never reviewed). Recognition-only (warm-up never parks production facets).
+
+`listParkedTerms` / `getStrengthenExercises` take a `parkedOrigin: 'onboarding' | 'leech'`
+filter (the `srs_state IS NULL` vs `IS NOT NULL` split) so the two surfaces read disjoint
+sets from the same column. Everything below "park" is shared.
+
+### Leech detection + graduation
 
 - **Detection** (`shouldParkLeech`): a rating that *itself causes a new lapse* (an `again` on
   a review-state card) and brings `lapses ≥ 4` (`LEECH_LAPSE_THRESHOLD`) parks the term —
@@ -352,12 +367,46 @@ scopes/budgets — no learn-new bypass). On **advance**:
 - **Graduation** (`unparkAndSoftReentry`): atomic — clears parked/rehab columns and writes a
   *softened* re-entry directly (review state, due +24h, stability 1, difficulty 5), NOT the
   demonstrably-failing pre-park schedule. `reps`/`lapses` are preserved; the `parked_at`
-  flag, not the lapse count, is the re-park gate. `added_to_practice_at` untouched.
+  flag, not the lapse count, is the re-park gate. `added_to_practice_at` untouched. For an
+  onboarding facet (reps/lapses 0) this same write IS a freshly-introduced flashcard, so
+  warm-up and leech use the identical graduation path.
+
+### Warm-up (exercise-first onboarding)
+
+- **Entry** (`warmup.ts`): launched from the session-vocabulary footer ("Practice your
+  terms" → `/practice/warmup/$targetLanguage`) and from the Practice tab's "N terms warming
+  up — continue" affordance (`/practice/warmup-continue/$targetLanguage`, language-wide).
+  `startWarmupSession` parks the session's not-yet-introduced kept terms via the **atomic**
+  `initializeAndParkCitationFacetIfUnderDailyCap` (stamps `introduced_at` AND
+  `leech_parked_at` in one tx, leaves `srs_state` NULL) — so a crash can't leave a term
+  introduced-but-unparked. It returns `'scaffolded' | 'cap_reached' | 'not_eligible'`; the
+  first cap hit stops further entries and flags `dailyLimitReached`, while `not_eligible` (a
+  concurrent-park race) is skipped, never a cap hit.
+- Warm-up consumes the **same daily new-term budget** as flashcards on entry (the
+  recognition cap), so over-cap terms wait for tomorrow. `initializeCitationFacetIfUnderDailyCap`
+  also carries an `AND leech_parked_at IS NULL` guard so a parked warm-up facet is never
+  re-introduced as a flashcard.
+- **Serve-only refresh.** `refreshWarmupSession` (session) and `continueWarmupSession`
+  (language-wide) re-serve with no parking/introductions — safe to poll while exercises
+  generate. Resume-safe: serving covers every onboarding-parked term (already-parked +
+  newly-parked), so a re-enter after `generating` placeholders never returns empty.
+
+### Exercise bank + serve resilience
+
 - **Exercise bank** (`exercise-bank.ts`): per (term, pool) slots — passive
   `mc_cloze, mc_comprehension, use_in_sentence`; active `mc_cloze, production_cloze,
   use_in_sentence`. Generated + adversarially verified in the background (≤3 attempts per
   slot), warmed on park/again/hard. Strengthen serves one gate exercise per parked term
   (oldest first) plus bonus exercises for this session's again/hard set.
+- **Failure-tolerant ladder.** The gate serve tries the tier's preferred type, then falls
+  back to **any** ready gate-eligible exercise — a term whose required type can't be
+  generated (the verifier keeps refusing a malformed headword) still progresses, since
+  graduation is gated on distinct days, not a strict type sequence.
+- **Pending vs terminal.** When nothing is ready, `countGateBankSlots` distinguishes
+  still-cooking (`inflight > 0` → `generating` placeholder) from terminally exhausted (every
+  gate-capable type failed → `failed` entry, "couldn't prepare — skip"), and the serve stops
+  re-reserving doomed slots. The exercise-session view polls the serve-only endpoint and
+  swaps `generating` placeholders to `ready`/`failed` in place.
 
 ## 8. Frontend session model (flashcard-mode-view.tsx)
 
@@ -396,7 +445,12 @@ scopes/budgets — no learn-new bypass). On **advance**:
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`
-(off the event log), `parkedCount`, and the `active*` mirrors.
+(off the event log), `parkedCount`, `warmupCount`, and the `active*` mirrors. The
+recognition parked population is split by origin: `parkedCount` is leech-only (parked +
+`srs_state IS NOT NULL`), `warmupCount` is onboarding (parked + `srs_state IS NULL`). The
+landing surfaces them as separate affordances ("N warming up — continue" vs "N parked —
+strengthen them"); `newCount` excludes parked rows so a warm-up term is never advertised as
+servable-new.
 
 ## 9. FAQ / gotchas
 

@@ -7,7 +7,7 @@ import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-co
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
-import { RehabProgressNote, type ExerciseAnswerData } from './strengthen-types'
+import { RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
 
 type McPayload = Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_comprehension' }>
 
@@ -19,12 +19,14 @@ export const McExercise = ({
   exerciseId,
   payload,
   header,
+  copyVariant,
   onAnswered,
   onNext,
 }: {
   exerciseId: string
   payload: McPayload
   header: ReactNode
+  copyVariant?: ExerciseCopyVariant
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
@@ -107,7 +109,7 @@ export const McExercise = ({
             {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
             {result.correct ? t`Correct!` : t`Not quite.`}
           </div>
-          <RehabProgressNote data={result} />
+          <RehabProgressNote data={result} copyVariant={copyVariant} />
         </div>
       )}
     </ExerciseLayout>

@@ -93,6 +93,10 @@ export const PracticeLanguageView = () => {
     void navigate({ to: '/practice/strengthen/$targetLanguage', params: { targetLanguage }, search: { pool } })
   }
 
+  const openWarmupContinue = () => {
+    void navigate({ to: '/practice/warmup-continue/$targetLanguage', params: { targetLanguage } })
+  }
+
   // Precedence once nothing is servable: review-limit reached (due work exists
   // only beyond the spent budget) > new-limit reached > all caught up.
   // Learning follow-ups due always count as servable work (budget-exempt).
@@ -124,6 +128,25 @@ export const PracticeLanguageView = () => {
       >
         <BookOpen className='h-4 w-4 shrink-0' />
         {t`Reading in progress (${plural(reading.termCount, { one: '# term', other: '# terms' })}) — continue`}
+      </button>
+    )
+  }
+
+  // Onboarding terms still warming up (recognition-only). Resumes the warm-up
+  // ladder language-wide — distinct from the leech "strengthen them" affordance
+  // below, even though both ride the same parked exercise machinery.
+  const renderWarmupAffordance = (pool: PracticePool) => {
+    if (pool !== 'recognition') return null
+    const warmingUp = entry?.warmupCount ?? 0
+    if (warmingUp <= 0) return null
+    return (
+      <button
+        type='button'
+        onClick={openWarmupContinue}
+        className='mt-3 flex w-full items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-left text-sm text-sky-800 transition-colors hover:bg-sky-100 active:bg-sky-100'
+      >
+        <Dumbbell className='h-4 w-4 shrink-0' />
+        {t`${warmingUp} term(s) warming up — continue`}
       </button>
     )
   }
@@ -278,6 +301,7 @@ export const PracticeLanguageView = () => {
                       : t`${plural(productionTotal, { one: '# production term', other: '# production terms' })}. Nothing to review right now.`}
                   </p>
                   {renderReadingAffordance('production')}
+                  {renderWarmupAffordance('production')}
                   {renderParkedAffordance('production')}
                   {renderPoolActions('production')}
                 </section>
@@ -297,6 +321,7 @@ export const PracticeLanguageView = () => {
                   </div>
                 </div>
                 {renderReadingAffordance('recognition')}
+                {renderWarmupAffordance('recognition')}
                 {renderParkedAffordance('recognition')}
                 {renderPoolActions('recognition')}
               </section>

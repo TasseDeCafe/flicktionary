@@ -200,6 +200,35 @@ const countReady = async (params: { userLookupId: string; pool: PracticePool }):
   return result[0]?.n ?? 0
 }
 
+// In-flight vs failed slot counts for the gate-capable exercise types of a
+// (term, pool). Lets the Strengthen/warm-up serve path distinguish "still
+// cooking" (inflight > 0) from "terminally exhausted" (no ready, no inflight,
+// every gate type has failed) so a term whose required types can't be generated
+// stops showing an endless hourglass. `types` is the gate-capable set for the
+// pool (use_in_sentence is excluded — it's bonus-only and never gates).
+const countGateBankSlots = async (params: {
+  userLookupId: string
+  pool: PracticePool
+  types: ExerciseType[]
+}): Promise<{ inflight: number; failed: number; failedTypes: number }> => {
+  if (params.types.length === 0) return { inflight: 0, failed: 0, failedTypes: 0 }
+  const result = (await sql`
+    SELECT
+      COUNT(*) FILTER (WHERE status IN ('pending', 'generating'))::int AS inflight,
+      COUNT(*) FILTER (WHERE status = 'failed')::int AS failed,
+      COUNT(DISTINCT exercise_type) FILTER (WHERE status = 'failed')::int AS failed_types
+    FROM public.practice_exercises
+    WHERE user_lookup_id = ${params.userLookupId}
+      AND pool = ${params.pool}
+      AND exercise_type = ANY(${params.types})
+  `) as Array<{ inflight: number; failed: number; failed_types: number }>
+  return {
+    inflight: result[0]?.inflight ?? 0,
+    failed: result[0]?.failed ?? 0,
+    failedTypes: result[0]?.failed_types ?? 0,
+  }
+}
+
 export interface PracticeExercisesRepositoryInterface {
   reserveSlots: (params: {
     userId: string
@@ -231,6 +260,11 @@ export interface PracticeExercisesRepositoryInterface {
     userLookupIds: string[]
   }) => Promise<DbPracticeExercise[]>
   countReady: (params: { userLookupId: string; pool: PracticePool }) => Promise<number>
+  countGateBankSlots: (params: {
+    userLookupId: string
+    pool: PracticePool
+    types: ExerciseType[]
+  }) => Promise<{ inflight: number; failed: number; failedTypes: number }>
 }
 
 export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterface => {
@@ -244,5 +278,6 @@ export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterf
     findByIdForUser,
     listBonusForTerms,
     countReady,
+    countGateBankSlots,
   }
 }

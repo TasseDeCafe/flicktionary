@@ -83,6 +83,44 @@ export const useStartStrengthenSession = () => {
   )
 }
 
+// Start an exercise-first warm-up for a session's new terms. Parks them into
+// scaffolding (consuming the daily new-term budget) and serves gate exercises,
+// so the landing's due/new counts and the review queue shift — invalidate them.
+export const useStartWarmupSession = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.startWarmupSession.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to start warm-up`,
+      },
+    })
+  )
+}
+
+// Language-scoped warm-up continuation: serves every onboarding-parked term for
+// the language (resume an abandoned warm-up from the Practice tab). Serve-only,
+// so it doubles as both the initial fetch and the placeholder poll. No state
+// change to invalidate; a failed poll is silent.
+export const useContinueWarmupSession = () => {
+  return useMutation(
+    orpcQuery.practice.continueWarmupSession.mutationOptions({
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
+// Serve-only re-fetch of a warm-up session, polled while exercises generate in
+// the background. No parking / no introductions, so nothing to invalidate; a
+// failed poll is silent (the placeholder just stays until the next tick).
+export const useRefreshWarmupSession = () => {
+  return useMutation(
+    orpcQuery.practice.refreshWarmupSession.mutationOptions({
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
 // Grade one exercise answer. Invalidates the landing counts — a correct gate
 // answer can advance rehab (and graduation changes parked/due counts).
 export const useSubmitExerciseAnswer = () => {

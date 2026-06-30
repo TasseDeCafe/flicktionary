@@ -7,7 +7,7 @@ import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-co
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
-import { RehabProgressNote, type ExerciseAnswerData } from './strengthen-types'
+import { RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
 
 type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'production_cloze' }>
 
@@ -19,12 +19,14 @@ export const ProductionClozeExercise = ({
   exerciseId,
   payload,
   header,
+  copyVariant,
   onAnswered,
   onNext,
 }: {
   exerciseId: string
   payload: ProductionClozePayload
   header: ReactNode
+  copyVariant?: ExerciseCopyVariant
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
@@ -111,7 +113,7 @@ export const ProductionClozeExercise = ({
               {t`Expected:`} <span className='font-semibold'>{result.correctAnswer}</span>
             </p>
           )}
-          <RehabProgressNote data={result} />
+          <RehabProgressNote data={result} copyVariant={copyVariant} />
         </div>
       )}
     </ExerciseLayout>

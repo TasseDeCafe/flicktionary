@@ -35,6 +35,13 @@ import {
   warmExerciseBank,
   type ExerciseBankDependencies,
 } from '../../service/practice/exercise-bank'
+import {
+  startWarmupSession,
+  refreshWarmupSession,
+  continueWarmupSession,
+  type WarmupDependencies,
+} from '../../service/practice/warmup'
+import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer } from '../../service/practice/rehab'
 import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
@@ -54,6 +61,7 @@ export type PracticeRouterDependencies = {
   usersRepository: UsersRepositoryInterface
   userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
   wiktionaryEntriesRepository: WiktionaryEntriesRepositoryInterface
+  studySessionsRepository: StudySessionsRepositoryInterface
 }
 
 type RawAnnotation = {
@@ -192,6 +200,10 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     usersRepository: deps.usersRepository,
     userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
     studyFacetsRepository: deps.studyFacetsRepository,
+  }
+  const warmupDeps: WarmupDependencies = {
+    ...exerciseBankDeps,
+    studySessionsRepository: deps.studySessionsRepository,
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
@@ -411,6 +423,9 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         targetLanguage: input.targetLanguage,
         pool: input.pool,
         sessionHardUserLookupIds: input.sessionHardUserLookupIds,
+        // Strengthen serves GENUINE leeches on the gate track; exercise-first
+        // onboarding terms have their own Warm-up surface.
+        parkedOrigin: 'leech',
         deps: exerciseBankDeps,
       })
       return {
@@ -419,6 +434,74 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
             ...entry,
             // The service strips payloads to the wire shape; the contract's
             // discriminated union validates the result.
+            payload: entry.payload as never,
+          })),
+        },
+      }
+    }),
+
+    startWarmupSession: implementer.startWarmupSession.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await startWarmupSession({
+        userId,
+        studySessionId: input.studySessionId,
+        targetLanguage: input.targetLanguage,
+        deps: warmupDeps,
+      })
+      if (!result.ok) {
+        if (result.reason === 'language_mismatch') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Session language does not match.' }] } })
+        }
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found.' }] } })
+      }
+      return {
+        data: {
+          dailyLimitReached: result.dailyLimitReached,
+          exercises: result.exercises.map((entry) => ({
+            ...entry,
+            // The service strips payloads to the wire shape; the contract's
+            // discriminated union validates the result.
+            payload: entry.payload as never,
+          })),
+        },
+      }
+    }),
+
+    refreshWarmupSession: implementer.refreshWarmupSession.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const result = await refreshWarmupSession({
+        userId,
+        studySessionId: input.studySessionId,
+        targetLanguage: input.targetLanguage,
+        deps: warmupDeps,
+      })
+      if (!result.ok) {
+        if (result.reason === 'language_mismatch') {
+          throw errors.BAD_REQUEST({ data: { errors: [{ message: 'Session language does not match.' }] } })
+        }
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Study session not found.' }] } })
+      }
+      return {
+        data: {
+          exercises: result.exercises.map((entry) => ({
+            ...entry,
+            payload: entry.payload as never,
+          })),
+        },
+      }
+    }),
+
+    continueWarmupSession: implementer.continueWarmupSession.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const result = await continueWarmupSession({
+        userId,
+        targetLanguage: input.targetLanguage,
+        deps: warmupDeps,
+      })
+      return {
+        data: {
+          exercises: result.exercises.map((entry) => ({
+            ...entry,
             payload: entry.payload as never,
           })),
         },

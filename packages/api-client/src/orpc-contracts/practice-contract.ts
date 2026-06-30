@@ -263,6 +263,66 @@ export const practiceContract = {
     )
     .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
 
+  // Exercise-first warm-up: launched from the session-vocabulary screen. Parks
+  // this session's not-yet-introduced kept terms into scaffolding (consuming the
+  // daily new-term budget) and serves them gate exercises — the same rehab
+  // ladder leeches use, entered from the opposite direction. Correct answers
+  // graduate each term into the FSRS flashcard queue. dailyLimitReached=true
+  // when the per-language new-term cap stopped further terms from entering.
+  startWarmupSession: oc
+    .route({ method: 'POST', path: '/practice/warmup/start', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        studySessionId: z.string().uuid(),
+        targetLanguage: z.string().min(1),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          exercises: z.array(StrengthenExerciseEntrySchema),
+          dailyLimitReached: z.boolean(),
+        }),
+      })
+    ),
+
+  // Serve-only re-fetch of a warm-up session (NO parking / NO introductions),
+  // safe to poll while exercises generate in the background. Re-serves the
+  // session's currently onboarding-parked terms so the client can swap
+  // 'generating' placeholders to 'ready'/'failed' in place.
+  refreshWarmupSession: oc
+    .route({ method: 'POST', path: '/practice/warmup/refresh', successStatus: 200 })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        studySessionId: z.string().uuid(),
+        targetLanguage: z.string().min(1),
+      })
+    )
+    .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
+
+  // Language-scoped warm-up continuation (serve-only, safe to poll). Serves
+  // every onboarding-parked term for the language so a user can resume an
+  // abandoned warm-up from the Practice tab without a session. Leeches are
+  // excluded — they have the Strengthen surface.
+  continueWarmupSession: oc
+    .route({ method: 'POST', path: '/practice/warmup/continue', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(z.object({ targetLanguage: z.string().min(1) }))
+    .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
+
   // Grade one exercise answer (server-side truth; the exercise is consumed on
   // answer, so a retry/stale submit is rejected). MC types take selectedIndex,
   // typed types take text. correctIndex / correctAnswer are revealed only in
