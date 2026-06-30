@@ -41,7 +41,7 @@ msgstr "{cardCount} card(s) — of which {keptCardCount} kept"
 msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "{correctCount} of {total} correct."
 msgstr "{correctCount} of {total} correct."
 
@@ -158,6 +158,14 @@ msgstr "{productionTotal, plural, one {# production term} other {# production "
 #: apps/web/src/features/billing/components/free-trial-explanation-view.tsx
 msgid "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
 msgstr "{REFUND_PERIOD_PLUS_FREE_TRIAL_DAYS} days"
+
+#: apps/web/src/features/practice/components/practice-language-view.tsx
+msgid "{warmingUp} term(s) warming up — continue"
+msgstr "{warmingUp} term(s) warming up — continue"
+
+#: apps/web/src/features/practice/components/practice-landing-view.tsx
+msgid "{warmingUp} warming up"
+msgstr "{warmingUp} warming up"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "<0>Click</0> a word to select it, or <1>press and drag</1> to select a "
@@ -463,11 +471,11 @@ msgstr "An error occurred while attempting to manage your subscription."
 msgid "An error occurred. Please try again."
 msgstr "An error occurred. Please try again."
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
-msgid "An exercise for “{currentHeadword}” is still being prepared. Check back "
-"in a minute."
-msgstr "An exercise for “{currentHeadword}” is still being prepared. Check back "
-"in a minute."
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "An exercise for “{currentHeadword}” is still being prepared — it'll "
+"appear here automatically."
+msgstr "An exercise for “{currentHeadword}” is still being prepared — it'll "
+"appear here automatically."
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 msgid "An unexpected error occurred"
@@ -604,6 +612,8 @@ msgstr "Back"
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
 #: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/warmup-continue-view.tsx
+#: apps/web/src/features/practice/components/warmup-view.tsx
 msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
@@ -986,7 +996,7 @@ msgstr "Could not set up your account. Please try restarting the app."
 msgid "Couldn't generate the form's data"
 msgstr "Couldn't generate the form's data"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Couldn't load exercises."
 msgstr "Couldn't load exercises."
 
@@ -1032,6 +1042,12 @@ msgstr "Daily new limit reached."
 #: apps/web/src/features/practice/components/flashcard-mode-view.tsx
 msgid "Daily new-card limit reached."
 msgstr "Daily new-card limit reached."
+
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Daily new-term limit reached — the rest of these terms will warm up "
+"tomorrow."
+msgstr "Daily new-term limit reached — the rest of these terms will warm up "
+"tomorrow."
 
 #: apps/web/src/features/practice/components/practice-language-view.tsx
 msgid "Daily review limit reached."
@@ -1610,6 +1626,10 @@ msgstr "Failed to set CEFR level"
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to set native language"
 msgstr "Failed to set native language"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts
+msgid "Failed to start warm-up"
+msgstr "Failed to start warm-up"
 
 #: apps/web/src/features/practice/api/practice-hooks.ts
 msgid "Failed to submit answer"
@@ -2524,9 +2544,13 @@ msgstr "Note saved"
 msgid "Notes"
 msgstr "Notes"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Nothing to strengthen right now."
 msgstr "Nothing to strengthen right now."
+
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Nothing to warm up right now."
+msgstr "Nothing to warm up right now."
 
 #: apps/web/src/features/review/components/editable-grammar-panel.tsx
 msgid "Noun"
@@ -2843,9 +2867,9 @@ msgstr "Plural-only"
 
 #: apps/web/src/features/navigation/components/bottom-tab-bar.tsx
 #: apps/web/src/features/navigation/components/sidebar-nav.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/practice-landing-view.tsx
 #: apps/web/src/features/practice/components/practice-language-view.tsx
-#: apps/web/src/features/practice/components/strengthen-view.tsx
 msgid "Practice"
 msgstr "Practice"
 
@@ -2871,7 +2895,7 @@ msgstr "Practise saying it"
 msgid "Premium Features"
 msgstr "Premium Features"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Preparing exercises…"
 msgstr "Preparing exercises…"
 
@@ -3018,6 +3042,10 @@ msgstr "Reading in progress ({0, plural, one {# term} other {# terms}}) — "
 msgid "Ready to practice"
 msgstr "Ready to practice"
 
+#: apps/web/src/features/practice/components/strengthen-types.tsx
+msgid "Ready! This term is moving into your flashcards."
+msgstr "Ready! This term is moving into your flashcards."
+
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Recall and produce it yourself"
 msgstr "Recall and produce it yourself"
@@ -3077,7 +3105,7 @@ msgstr "Registering {movieTitle}…"
 msgid "Registering episode…"
 msgstr "Registering episode…"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Rehab"
 msgstr "Rehab"
 
@@ -3529,9 +3557,9 @@ msgstr "Skills"
 msgid "Skills for {label}"
 msgstr "Skills for {label}"
 
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
-#: apps/web/src/features/practice/components/strengthen-view.tsx
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Skip"
 msgstr "Skip"
@@ -3625,7 +3653,7 @@ msgstr "Strengthen"
 msgid "Strengthen · {languageName}"
 msgstr "Strengthen · {languageName}"
 
-#: apps/web/src/features/practice/components/strengthen-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Strengthening done!"
 msgstr "Strengthening done!"
 
@@ -4279,6 +4307,29 @@ msgstr "Vocabulary"
 msgid "Vocabulary options"
 msgstr "Vocabulary options"
 
+#: apps/web/src/features/practice/components/warmup-continue-view.tsx
+#: apps/web/src/features/practice/components/warmup-view.tsx
+msgid "Warm up your terms · {languageName}"
+msgstr "Warm up your terms · {languageName}"
+
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Warm-up"
+msgstr "Warm-up"
+
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Warm-up done!"
+msgstr "Warm-up done!"
+
+#: apps/web/src/features/practice/components/strengthen-types.tsx
+msgid "Warm-up progress: day {days} of 3. A correct answer today still counts — "
+"try again with a fresh exercise."
+msgstr "Warm-up progress: day {days} of 3. A correct answer today still counts "
+"— try again with a fresh exercise."
+
+#: apps/web/src/features/practice/components/strengthen-types.tsx
+msgid "Warming up — day {days} of 3. Come back tomorrow for the next step."
+msgstr "Warming up — day {days} of 3. Come back tomorrow for the next step."
+
 #: apps/native/src/features/profile/components/danger-zone-view.tsx
 #: apps/web/src/features/profile/components/danger-zone-view.tsx
 msgid "Warning"
@@ -4291,6 +4342,12 @@ msgstr "Warnings"
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "Watching videos"
 msgstr "Watching videos"
+
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "We couldn't prepare an exercise for “{currentHeadword}” this time. It "
+"stays in your queue — skip it for now."
+msgstr "We couldn't prepare an exercise for “{currentHeadword}” this time. It "
+"stays in your queue — skip it for now."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "We couldn't prepare this answer. Save the note again to retry."
