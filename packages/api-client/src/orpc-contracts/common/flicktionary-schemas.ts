@@ -531,7 +531,11 @@ export const PracticeDueSummaryEntrySchema = z.object({
   productionReviewDueCount: z.number().int(),
   productionLearningDueCount: z.number().int(),
   productionNewCount: z.number().int(),
+  // Parked production terms, split by origin like parkedCount / warmupCount:
+  // productionParkedCount = leeches ("strengthen them"); productionWarmupCount =
+  // exercise-first onboarding still warming up ("continue").
   productionParkedCount: z.number().int(),
+  productionWarmupCount: z.number().int(),
   // In-progress reading-mode texts (status='reading'), at most one per pool.
   // Feeds the landing's "continue reading" affordance. The scope is needed to
   // resume: re-entering reading under a different scope discards the open
@@ -599,6 +603,11 @@ export type StrengthenExercisePayload = z.infer<typeof StrengthenExercisePayload
 export const StrengthenExerciseEntrySchema = z.object({
   exerciseId: z.string().uuid().nullable(),
   userLookupId: z.string().uuid(),
+  // The facet pool this exercise drills. A warm-up serves a MIXED queue
+  // (recognition + production); a both-skills term contributes one entry per
+  // pool with the SAME userLookupId, so the client must key its placeholder
+  // merge on (pool, userLookupId), not userLookupId alone.
+  pool: PracticePoolSchema,
   headword: z.string(),
   sense: z.string(),
   track: z.enum(['gate', 'bonus']),

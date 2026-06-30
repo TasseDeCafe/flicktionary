@@ -320,7 +320,7 @@ export const practiceContract = {
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ targetLanguage: z.string().min(1) }))
+    .input(z.object({ targetLanguage: z.string().min(1), pool: PracticePoolSchema.default('recognition') }))
     .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
 
   // Grade one exercise answer (server-side truth; the exercise is consumed on

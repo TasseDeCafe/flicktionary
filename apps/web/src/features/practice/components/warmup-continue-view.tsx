@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -7,14 +7,16 @@ import { useContinueWarmupSession } from '../api/practice-hooks'
 import { ExerciseSessionView } from './exercise-session-view'
 
 // Language-scoped warm-up continuation, launched from the Practice tab's
-// "N terms warming up — continue" affordance. Unlike the session-scoped warm-up
-// (which parks new terms), this serves every term in the language that is
-// already onboarding-parked. The continue endpoint is serve-only, so the same
-// call powers both the initial load and the placeholder poll.
+// "N terms warming up — continue" affordance (one per pool). Unlike the
+// session-scoped warm-up (which parks new terms), this serves every term in the
+// language that is already onboarding-parked for the chosen pool. The continue
+// endpoint is serve-only, so the same call powers both the initial load and the
+// placeholder poll.
 export const WarmupContinueView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { targetLanguage } = useParams({ from: '/_authenticated/_app/practice/warmup-continue/$targetLanguage' })
+  const { pool } = useSearch({ from: '/_authenticated/_app/practice/warmup-continue/$targetLanguage' })
   const languageName = getLanguageName(targetLanguage)
 
   const { mutate: startSession, mutateAsync: continueAsync, isPending, isError } = useContinueWarmupSession()
@@ -24,19 +26,22 @@ export const WarmupContinueView = () => {
   useEffect(() => {
     if (startedRef.current) return
     startedRef.current = true
-    startSession({ targetLanguage }, { onSuccess: (resp) => setEntries(resp.data.exercises) })
-  }, [startSession, targetLanguage])
+    startSession({ targetLanguage, pool }, { onSuccess: (resp) => setEntries(resp.data.exercises) })
+  }, [startSession, targetLanguage, pool])
 
   const pollExercises = useCallback(async () => {
-    const resp = await continueAsync({ targetLanguage })
+    const resp = await continueAsync({ targetLanguage, pool })
     return resp.data.exercises
-  }, [continueAsync, targetLanguage])
+  }, [continueAsync, targetLanguage, pool])
 
   const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
 
+  const title =
+    pool === 'production' ? t`Warm up your production terms · ${languageName}` : t`Warm up your terms · ${languageName}`
+
   return (
     <ExerciseSessionView
-      title={t`Warm up your terms · ${languageName}`}
+      title={title}
       copyVariant='warmup'
       entries={entries}
       isPending={isPending}

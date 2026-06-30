@@ -345,7 +345,9 @@ scopes/budgets — no learn-new bypass). On **advance**:
   srs_state IS NOT NULL` (it lapsed in FSRS, so it has SRS state).
 - **Onboarding (warm-up):** a brand-new term introduced exercise-first instead of straight
   into the flashcard queue — `leech_parked_at IS NOT NULL AND srs_state IS NULL` (parked but
-  never reviewed). Recognition-only (warm-up never parks production facets).
+  never reviewed). Warms both pools (the citation `meaning_recognition` and `meaning_production`
+  facets), per pool. Exact-form facets (`target_form != ''`) are never warmed — the exercise
+  bank has no facet identity, so only citation facets can park.
 
 `listParkedTerms` / `getStrengthenExercises` take a `parkedOrigin: 'onboarding' | 'leech'`
 filter (the `srs_state IS NULL` vs `IS NOT NULL` split) so the two surfaces read disjoint
@@ -374,22 +376,30 @@ sets from the same column. Everything below "park" is shared.
 ### Warm-up (exercise-first onboarding)
 
 - **Entry** (`warmup.ts`): launched from the session-vocabulary footer ("Practice your
-  terms" → `/practice/warmup/$targetLanguage`) and from the Practice tab's "N terms warming
-  up — continue" affordance (`/practice/warmup-continue/$targetLanguage`, language-wide).
-  `startWarmupSession` parks the session's not-yet-introduced kept terms via the **atomic**
-  `initializeAndParkCitationFacetIfUnderDailyCap` (stamps `introduced_at` AND
-  `leech_parked_at` in one tx, leaves `srs_state` NULL) — so a crash can't leave a term
-  introduced-but-unparked. It returns `'scaffolded' | 'cap_reached' | 'not_eligible'`; the
-  first cap hit stops further entries and flags `dailyLimitReached`, while `not_eligible` (a
-  concurrent-park race) is skipped, never a cap hit.
-- Warm-up consumes the **same daily new-term budget** as flashcards on entry (the
-  recognition cap), so over-cap terms wait for tomorrow. `initializeCitationFacetIfUnderDailyCap`
-  also carries an `AND leech_parked_at IS NULL` guard so a parked warm-up facet is never
-  re-introduced as a flashcard.
-- **Serve-only refresh.** `refreshWarmupSession` (session) and `continueWarmupSession`
-  (language-wide) re-serve with no parking/introductions — safe to poll while exercises
-  generate. Resume-safe: serving covers every onboarding-parked term (already-parked +
-  newly-parked), so a re-enter after `generating` placeholders never returns empty.
+  terms" → `/practice/warmup/$targetLanguage`) and from the Practice tab's per-pool "N terms
+  warming up — continue" / "N production terms warming up — continue" affordances
+  (`/practice/warmup-continue/$targetLanguage?pool=…`, language-wide). `startWarmupSession`
+  parks the session's not-yet-introduced kept terms in **two independent passes**: a
+  recognition pass via the **atomic** `initializeAndParkCitationFacetIfUnderDailyCap` (stamps
+  `introduced_at` AND `leech_parked_at` in one tx, leaves `srs_state` NULL — so a crash can't
+  leave a term introduced-but-unparked; returns `'scaffolded' | 'cap_reached' | 'not_eligible'`,
+  the first cap hit stopping further **recognition** entries and flagging `dailyLimitReached`,
+  `not_eligible` skipped), and an independent production pass via
+  `initializeAndParkProductionCitationFacet` (`'scaffolded' | 'not_eligible'`, uncapped) that
+  **never inherits the recognition cap's stop**. The served queue is **mixed** (recognition ++
+  production); each `StrengthenExerciseEntry` carries its `pool` so the client merges
+  placeholders by `(pool, userLookupId)` (a both-skills term has one entry per pool with the
+  same id) and `submitExerciseAnswer` routes to the right facet.
+- The recognition warm-up consumes the **same daily new-term budget** as flashcards on entry,
+  so over-cap terms wait for tomorrow; the production warm-up is **uncapped** (production is
+  never daily-new-capped) and never flags `dailyLimitReached`.
+  `initializeCitationFacetIfUnderDailyCap` also carries an `AND leech_parked_at IS NULL` guard
+  so a parked warm-up facet is never re-introduced as a flashcard.
+- **Serve-only refresh.** `refreshWarmupSession` (session, both pools) and
+  `continueWarmupSession` (language-wide, takes a `pool` param) re-serve with no
+  parking/introductions — safe to poll while exercises generate. Resume-safe: serving covers
+  every onboarding-parked term (already-parked + newly-parked), so a re-enter after
+  `generating` placeholders never returns empty.
 
 ### Exercise bank + serve resilience
 
@@ -445,12 +455,14 @@ sets from the same column. Everything below "park" is shared.
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`
-(off the event log), `parkedCount`, `warmupCount`, and the `active*` mirrors. The
-recognition parked population is split by origin: `parkedCount` is leech-only (parked +
-`srs_state IS NOT NULL`), `warmupCount` is onboarding (parked + `srs_state IS NULL`). The
-landing surfaces them as separate affordances ("N warming up — continue" vs "N parked —
-strengthen them"); `newCount` excludes parked rows so a warm-up term is never advertised as
-servable-new.
+(off the event log), `parkedCount`, `warmupCount`, and the `production*` mirrors
+(`productionParkedCount`, `productionWarmupCount`, …). The parked population is split by
+origin **on both pools**: `parkedCount` / `productionParkedCount` are leech-only (parked +
+`srs_state IS NOT NULL`), `warmupCount` / `productionWarmupCount` are onboarding (parked +
+`srs_state IS NULL`). The landing surfaces them as separate affordances per pool ("N warming
+up — continue" / "N production terms warming up — continue" vs "N parked — strengthen them");
+`newCount` / `productionNewCount` exclude parked rows so a warm-up term is never advertised
+as servable-new.
 
 ## 9. FAQ / gotchas
 

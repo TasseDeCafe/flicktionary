@@ -4,6 +4,7 @@ import { CircleAlert, CircleCheck, Dumbbell, Flame, Hourglass } from 'lucide-rea
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { mergePlaceholders } from './exercise-queue-merge'
 import { PracticeLoader } from './practice-loader'
 import { ExerciseLayout } from './exercise-layout'
 import { McExercise } from './mc-exercise'
@@ -12,30 +13,6 @@ import { UseInSentenceExercise } from './use-in-sentence-exercise'
 import type { ExerciseAnswerData, ExerciseCopyVariant } from './strengthen-types'
 
 const POLL_INTERVAL_MS = 4000
-
-// Replace not-yet-reached 'generating' placeholders with their refreshed
-// 'ready'/'failed' counterpart (matched by term), leaving everything already
-// passed untouched. This is the in-place swap behind the live-update polling:
-// a placeholder turns into a real exercise (or a clear failed state) without
-// the user manually refreshing.
-const mergePlaceholders = (
-  prev: StrengthenExerciseEntry[],
-  fresh: StrengthenExerciseEntry[],
-  fromIndex: number
-): StrengthenExerciseEntry[] => {
-  const byTerm = new Map(fresh.map((e) => [e.userLookupId, e]))
-  let changed = false
-  const next = prev.map((entry, i) => {
-    if (i < fromIndex || entry.status !== 'generating') return entry
-    const updated = byTerm.get(entry.userLookupId)
-    if (updated && (updated.status === 'ready' || updated.status === 'failed')) {
-      changed = true
-      return updated
-    }
-    return entry
-  })
-  return changed ? next : prev
-}
 
 // The shared exercise-queue session screen behind both Strengthen (leech rehab
 // + bonus) and Warm-up (exercise-first onboarding). The two differ only in

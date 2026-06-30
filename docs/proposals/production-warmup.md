@@ -121,6 +121,62 @@ Frontend:
   production at tier 1, which may already be the right gentleness curve — worth
   validating once it ships.
 
+## Exact-form warm-up (later, not in the first cut)
+
+The citation production warm-up above warms only the lemma facet
+`(meaning_production, '')`. Warming an **exact form** (`target_form != ''`) — so a
+production-only inflected save gets scaffolded too — is a strictly larger change,
+because the exercise bank has no facet identity (Trap 19).
+
+The `practice_exercises` table keys everything on `(user_lookup_id, pool)`: no
+`target_form` column, both indexes
+(`(user_lookup_id, pool, status)`, `(user_id, target_language, pool)`) and the
+advisory lock (`practice_exercises:${userLookupId}:${pool}`) omit it, and every
+repository query (`ensureExerciseBank`, the stale-fence, the live-type SELECT,
+INSERT, `serveReadyForTerms`, `countReady`, consume-on-answer,
+`countGateBankSlots`) filters by `(user_lookup_id, pool)`. So a form facet cannot
+own bank slots without colliding with the citation facet — the same reason form
+facets never leech (`isLeechableFacet` requires `target_form === ''`).
+
+The work splits cleanly into two halves of very different difficulty:
+
+**Half 1 — thread `target_form` everywhere (wide but mechanical, low-risk).**
+- Append-only migration: add `target_form text NOT NULL DEFAULT ''`, backfill
+  existing rows to `''`, widen both indexes to include it.
+- `practice-exercises-repository.ts`: add `target_form` to every WHERE/INSERT
+  (~8 queries) and to the advisory-lock key.
+- `exercise-bank.ts` + `listParkedTerms`: operate per-facet `(skill,
+  target_form)` instead of per-`(lookup, pool)`.
+- `leech-config.ts`: relax `isLeechableFacet`'s `target_form === ''` restriction.
+- `StrengthenExerciseEntry`: add `targetForm` (on top of `pool`) and merge the
+  client queue by `(pool, targetForm, userLookupId)`.
+- Graduation (`applyGateAnswer → advanceRehabDayFacet →
+  unparkAndSoftReentryFacet`) already operates on a `(skill, target_form)` facet,
+  so once the exercise row carries `target_form` it mostly just works.
+
+This is essentially find-and-replace plus tests — a focused PR.
+
+**Half 2 — form-aware exercise *generation* (the genuinely hard part).**
+- `generate-exercise-pass` works from `headword + sense` today. A form exercise
+  must test the **inflected** form: the cloze blank is the exact form, distractors
+  are other inflections, and the VERIFY pass must enforce inflection-unambiguity
+  for *that* form. New prompt + verification design, not plumbing.
+- The generation input needs the form's data (`display_form`, the form's example)
+  from `study_facets.payload`, which only exists once the form facet is `ready`.
+  A `pending_data` form has nothing to generate from, so form warm-up has an
+  ordering dependency: run the `generate-form-data` Opus pass *before* the form
+  can be parked + exercised.
+
+**Sizing & sequencing.** Roughly **2–3× the citation production warm-up**, with
+the cost front-loaded into infrastructure that is reusable: **Half 1 is the same
+Trap-19 bank-key change the pronunciation track needs**
+(see `pronunciation-warmup.md` → "fix Trap 19"). Do it once and both exact-form
+*and* pronunciation warm-up build on it. Half 2 carries the real uncertainty
+(form-specific generation + the `pending_data` ordering), so it should land as its
+own PR after Half 1. Recommended order: ship citation production warm-up first
+(no schema change), then the shared Trap-19 facet-identity PR, then exact-form and
+pronunciation on top.
+
 ## Relationship to existing docs
 
 The shipped recognition warm-up is described in `docs/SRS.md` (leech-rehab /

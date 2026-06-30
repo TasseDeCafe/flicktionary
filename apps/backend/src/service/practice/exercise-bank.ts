@@ -182,6 +182,12 @@ export const warmExerciseBank = (params: {
 export type StrengthenExerciseEntry = {
   exerciseId: string | null
   userLookupId: string
+  // The facet pool this exercise drills. A warm-up serves a MIXED queue
+  // (recognition + production), and both entries of a both-skills term share one
+  // userLookupId — so the client must key its placeholder merge on
+  // (pool, userLookupId), not userLookupId alone, or polling would overwrite the
+  // wrong pool's placeholder.
+  pool: PracticePool
   headword: string
   sense: string
   track: 'gate' | 'bonus'
@@ -235,11 +241,13 @@ const stripExercisePayload = (
 // stop waiting and offer a skip.
 const placeholderEntry = (
   lookup: DbUserLookup,
+  pool: PracticePool,
   track: 'gate' | 'bonus',
   status: 'generating' | 'failed'
 ): StrengthenExerciseEntry => ({
   exerciseId: null,
   userLookupId: lookup.id,
+  pool,
   headword: lookup.headword,
   sense: lookup.sense ?? '',
   track,
@@ -250,15 +258,17 @@ const placeholderEntry = (
 
 const toEntry = (
   lookup: DbUserLookup,
+  pool: PracticePool,
   track: 'gate' | 'bonus',
   exercise: DbPracticeExercise | null
 ): StrengthenExerciseEntry => {
   if (!exercise || exercise.payload == null) {
-    return placeholderEntry(lookup, track, 'generating')
+    return placeholderEntry(lookup, pool, track, 'generating')
   }
   return {
     exerciseId: exercise.id,
     userLookupId: lookup.id,
+    pool,
     headword: lookup.headword,
     sense: lookup.sense ?? '',
     track,
@@ -350,7 +360,7 @@ export const getStrengthenExercises = async (params: {
         gateEligible: true,
       }))
     if (exercise) {
-      entries.push(toEntry(lookup, 'gate', exercise))
+      entries.push(toEntry(lookup, pool, 'gate', exercise))
       continue
     }
     // Nothing ready. Distinguish "still cooking" from "terminally exhausted"
@@ -364,12 +374,12 @@ export const getStrengthenExercises = async (params: {
       types: gateTypes,
     })
     if (bank.inflight > 0) {
-      entries.push(placeholderEntry(lookup, 'gate', 'generating'))
+      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating'))
     } else if (bank.failedTypes >= gateTypes.length) {
-      entries.push(placeholderEntry(lookup, 'gate', 'failed'))
+      entries.push(placeholderEntry(lookup, pool, 'gate', 'failed'))
     } else {
       void ensureExerciseBank({ lookup, pool, deps })
-      entries.push(placeholderEntry(lookup, 'gate', 'generating'))
+      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating'))
     }
   }
 
@@ -385,7 +395,7 @@ export const getStrengthenExercises = async (params: {
   for (const lookup of hardLookups) {
     const exercise = bonusByLookupId.get(lookup.id) ?? null
     if (!exercise) void ensureExerciseBank({ lookup, pool, deps })
-    entries.push(toEntry(lookup, 'bonus', exercise))
+    entries.push(toEntry(lookup, pool, 'bonus', exercise))
   }
 
   return entries
