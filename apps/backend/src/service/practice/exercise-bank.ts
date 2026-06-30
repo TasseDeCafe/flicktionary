@@ -42,6 +42,12 @@ const requiredExerciseTypes = (pool: PracticePool): ExerciseType[] =>
     ? ['mc_cloze', 'mc_comprehension', 'use_in_sentence']
     : ['mc_cloze', 'production_cloze', 'use_in_sentence']
 
+// The gate-capable types of a pool: the required set minus use_in_sentence
+// (LLM-graded, never gates). Used to decide whether a parked term's gate bank
+// is still cooking or terminally exhausted.
+const gateCapableTypes = (pool: PracticePool): ExerciseType[] =>
+  requiredExerciseTypes(pool).filter((type) => type !== 'use_in_sentence')
+
 const toTermInput = (lookup: DbUserLookup): ExerciseTermInput => ({
   headword: lookup.headword,
   sense: lookup.sense ?? '',
@@ -179,7 +185,7 @@ export type StrengthenExerciseEntry = {
   headword: string
   sense: string
   track: 'gate' | 'bonus'
-  status: 'ready' | 'generating'
+  status: 'ready' | 'generating' | 'failed'
   exerciseType: ExerciseType | null
   // Stripped payload — answer fields (answer/answerIndex/acceptedForms) never
   // leave the server. Null while generating.
@@ -224,22 +230,31 @@ const stripExercisePayload = (
   }
 }
 
+// A no-exercise entry — either still cooking ('generating') or terminally
+// exhausted ('failed'). The client renders a placeholder; 'failed' tells it to
+// stop waiting and offer a skip.
+const placeholderEntry = (
+  lookup: DbUserLookup,
+  track: 'gate' | 'bonus',
+  status: 'generating' | 'failed'
+): StrengthenExerciseEntry => ({
+  exerciseId: null,
+  userLookupId: lookup.id,
+  headword: lookup.headword,
+  sense: lookup.sense ?? '',
+  track,
+  status,
+  exerciseType: null,
+  payload: null,
+})
+
 const toEntry = (
   lookup: DbUserLookup,
   track: 'gate' | 'bonus',
   exercise: DbPracticeExercise | null
 ): StrengthenExerciseEntry => {
   if (!exercise || exercise.payload == null) {
-    return {
-      exerciseId: null,
-      userLookupId: lookup.id,
-      headword: lookup.headword,
-      sense: lookup.sense ?? '',
-      track,
-      status: 'generating',
-      exerciseType: null,
-      payload: null,
-    }
+    return placeholderEntry(lookup, track, 'generating')
   }
   return {
     exerciseId: exercise.id,
@@ -262,11 +277,23 @@ export const getStrengthenExercises = async (params: {
   targetLanguage: string
   pool: PracticePool
   sessionHardUserLookupIds: string[]
+  // When set, the gate track is scoped to these parked terms only (warm-up
+  // serves one session's onboarding terms, not every parked leech).
+  restrictToUserLookupIds?: string[]
+  // Which parked population to serve on the gate track: 'leech' for Strengthen,
+  // 'onboarding' for Warm-up, omitted for both (the bonus track is unaffected).
+  parkedOrigin?: 'onboarding' | 'leech'
   deps: ExerciseBankDependencies
 }): Promise<StrengthenExerciseEntry[]> => {
-  const { userId, targetLanguage, pool, deps } = params
+  const { userId, targetLanguage, pool, restrictToUserLookupIds, parkedOrigin, deps } = params
 
-  const parked = await deps.userLookupsRepository.listParkedTerms({ userId, targetLanguage, pool })
+  const parked = await deps.userLookupsRepository.listParkedTerms({
+    userId,
+    targetLanguage,
+    pool,
+    restrictToUserLookupIds,
+    parkedOrigin,
+  })
   const parkedIds = new Set(parked.map((row) => row.id))
 
   // sessionHardUserLookupIds is client-supplied: re-validate ownership and
@@ -304,15 +331,46 @@ export const getStrengthenExercises = async (params: {
 
   for (const lookup of parked) {
     // Tier-typed gate: the exercise type escalates with the term's rehab day
-    // count (the pool's matching ladder).
-    const exercise = await deps.practiceExercisesRepository.selectNextExercise({
+    // count (the pool's matching ladder). But fall back to ANY ready
+    // gate-eligible exercise when the tier's preferred type isn't ready — a term
+    // whose required type can't be generated (the verifier keeps refusing it, as
+    // for a malformed headword) must still progress. Graduation is gated on N
+    // distinct days, not a strict type sequence, so any gate exercise counts.
+    const tierType = gateTypeForTier(pool, rehabCorrectDaysFor(lookup))
+    const exercise =
+      (await deps.practiceExercisesRepository.selectNextExercise({
+        userLookupId: lookup.id,
+        pool,
+        gateEligible: true,
+        type: tierType,
+      })) ??
+      (await deps.practiceExercisesRepository.selectNextExercise({
+        userLookupId: lookup.id,
+        pool,
+        gateEligible: true,
+      }))
+    if (exercise) {
+      entries.push(toEntry(lookup, 'gate', exercise))
+      continue
+    }
+    // Nothing ready. Distinguish "still cooking" from "terminally exhausted"
+    // (every candidate gate slot failed) so the client shows a clear failed
+    // state instead of an endless hourglass — and so we stop re-reserving
+    // doomed slots for a term the LLM can't build an exercise for.
+    const gateTypes = gateCapableTypes(pool)
+    const bank = await deps.practiceExercisesRepository.countGateBankSlots({
       userLookupId: lookup.id,
       pool,
-      gateEligible: true,
-      type: gateTypeForTier(pool, rehabCorrectDaysFor(lookup)),
+      types: gateTypes,
     })
-    if (!exercise) void ensureExerciseBank({ lookup, pool, deps })
-    entries.push(toEntry(lookup, 'gate', exercise))
+    if (bank.inflight > 0) {
+      entries.push(placeholderEntry(lookup, 'gate', 'generating'))
+    } else if (bank.failedTypes >= gateTypes.length) {
+      entries.push(placeholderEntry(lookup, 'gate', 'failed'))
+    } else {
+      void ensureExerciseBank({ lookup, pool, deps })
+      entries.push(placeholderEntry(lookup, 'gate', 'generating'))
+    }
   }
 
   const bonusByLookupId = new Map(

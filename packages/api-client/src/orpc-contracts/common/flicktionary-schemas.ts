@@ -517,9 +517,13 @@ export const PracticeDueSummaryEntrySchema = z.object({
   // off the rating-event log). Lets the landing distinguish "limit reached"
   // from "all caught up" when due work exists beyond the budget.
   reviewedTodayCount: z.number().int(),
-  // Leech-parked terms — excluded from every practice queue until rehab
-  // graduates them; the due counts above already exclude them.
+  // Parked recognition terms, split by origin (both excluded from every
+  // practice queue until they leave the ladder; the due counts above already
+  // exclude them). parkedCount = genuine leeches ("strengthen them");
+  // warmupCount = exercise-first onboarding terms still warming up ("continue").
+  // Recognition-only — warm-up never parks production facets.
   parkedCount: z.number().int(),
+  warmupCount: z.number().int(),
   // Production-pool counters. productionTotal is the number of terms in
   // production study (enabled citation meaning_production facet); the rest
   // mirror the recognition counts but read the production facets' SRS state.
@@ -586,16 +590,19 @@ export type StrengthenExercisePayload = z.infer<typeof StrengthenExercisePayload
 
 // One Strengthen-session item. `track` separates the gated rehab path (parked
 // leeches) from the ungated bonus path (this-session again/hard terms).
-// status='generating' means the bank had nothing ready — the entry has no
-// exercise yet (exerciseId/exerciseType/payload null) and the client shows a
-// placeholder.
+// status='generating' means the bank is still cooking an exercise (the entry
+// has no exercise yet — exerciseId/exerciseType/payload null — and the client
+// shows a placeholder it can poll to swap in place). status='failed' means
+// generation is terminally exhausted for this term (every candidate gate slot
+// failed): the client shows a "couldn't prepare — skip" state instead of an
+// endless hourglass.
 export const StrengthenExerciseEntrySchema = z.object({
   exerciseId: z.string().uuid().nullable(),
   userLookupId: z.string().uuid(),
   headword: z.string(),
   sense: z.string(),
   track: z.enum(['gate', 'bonus']),
-  status: z.enum(['ready', 'generating']),
+  status: z.enum(['ready', 'generating', 'failed']),
   exerciseType: ExerciseTypeSchema.nullable(),
   payload: StrengthenExercisePayloadSchema.nullable(),
 })

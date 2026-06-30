@@ -126,6 +126,32 @@ describe('study-facets-repository integration tests', () => {
     expect(fb?.srs_state).toBe('new')
   })
 
+  test('the daily-new cap guard refuses parked warm-up facets', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const lookup = await createKeptTerm(userId, 'warmup')
+    await repo.ensureCitationFacet(lookup.id)
+
+    const warmup = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: lookup.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 10,
+    })
+    expect(warmup).toBe('scaffolded')
+
+    const introduced = await repo.initializeCitationFacetIfUnderDailyCap({
+      userLookupId: lookup.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 10,
+    })
+    expect(introduced).toBe(false)
+
+    const facet = await repo.getFacet({ userLookupId: lookup.id, skill: 'meaning_recognition', targetForm: '' })
+    expect(facet?.srs_state).toBeNull()
+    expect(facet?.leech_parked_at).not.toBeNull()
+  })
+
   test('FSRS, leech park/rehab/unpark and undo-restore round-trip on the facet', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const lookup = await createKeptTerm(userId, 'gato')
