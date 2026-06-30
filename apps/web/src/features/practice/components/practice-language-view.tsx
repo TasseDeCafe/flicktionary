@@ -93,8 +93,8 @@ export const PracticeLanguageView = () => {
     void navigate({ to: '/practice/strengthen/$targetLanguage', params: { targetLanguage }, search: { pool } })
   }
 
-  const openWarmupContinue = () => {
-    void navigate({ to: '/practice/warmup-continue/$targetLanguage', params: { targetLanguage } })
+  const openWarmupContinue = (pool: PracticePool) => {
+    void navigate({ to: '/practice/warmup-continue/$targetLanguage', params: { targetLanguage }, search: { pool } })
   }
 
   // Precedence once nothing is servable: review-limit reached (due work exists
@@ -132,21 +132,22 @@ export const PracticeLanguageView = () => {
     )
   }
 
-  // Onboarding terms still warming up (recognition-only). Resumes the warm-up
-  // ladder language-wide — distinct from the leech "strengthen them" affordance
-  // below, even though both ride the same parked exercise machinery.
+  // Onboarding terms still warming up, per pool. Resumes the warm-up ladder
+  // language-wide — distinct from the leech "strengthen them" affordance below,
+  // even though both ride the same parked exercise machinery.
   const renderWarmupAffordance = (pool: PracticePool) => {
-    if (pool !== 'recognition') return null
-    const warmingUp = entry?.warmupCount ?? 0
+    const warmingUp = pool === 'recognition' ? (entry?.warmupCount ?? 0) : (entry?.productionWarmupCount ?? 0)
     if (warmingUp <= 0) return null
     return (
       <button
         type='button'
-        onClick={openWarmupContinue}
+        onClick={() => openWarmupContinue(pool)}
         className='mt-3 flex w-full items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-left text-sm text-sky-800 transition-colors hover:bg-sky-100 active:bg-sky-100'
       >
         <Dumbbell className='h-4 w-4 shrink-0' />
-        {t`${warmingUp} term(s) warming up — continue`}
+        {pool === 'production'
+          ? t`${warmingUp} production term(s) warming up — continue`
+          : t`${warmingUp} term(s) warming up — continue`}
       </button>
     )
   }

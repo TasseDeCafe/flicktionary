@@ -47,8 +47,8 @@ export const PracticeLandingView = () => {
       const productionCount = entry.productionTotal
       parts.push(t`${productionCount} in production`)
     }
-    if (entry.warmupCount > 0) {
-      const warmingUp = entry.warmupCount
+    const warmingUp = entry.warmupCount + entry.productionWarmupCount
+    if (warmingUp > 0) {
       parts.push(t`${warmingUp} warming up`)
     }
     const parkedTotal = entry.parkedCount + entry.productionParkedCount
