@@ -36,8 +36,12 @@ const parkedRow = (lookupId: string): DbUserLookupWithFacet =>
 
 const createDeps = (params: {
   session?: DbStudySession | null
+  // Recognition-pool session facets (the default skill). Production facets
+  // default to [] so existing recognition-only tests are unaffected.
   facetStates: SessionKeptCitationFacet[]
+  productionFacetStates?: SessionKeptCitationFacet[]
   parkOutcomes?: Record<string, 'scaffolded' | 'cap_reached' | 'not_eligible'>
+  productionParkOutcomes?: Record<string, 'scaffolded' | 'not_eligible'>
   maxNewTerms?: number
   languageParkedIds?: string[]
 }) => {
@@ -45,13 +49,24 @@ const createDeps = (params: {
   const getPracticeLimitsForLanguage = vi
     .fn()
     .mockResolvedValue({ maxNewTerms: params.maxNewTerms ?? 20, maxReviewTerms: 100, maxReviewTermsProduction: null })
-  const listSessionKeptCitationFacets = vi.fn().mockResolvedValue(params.facetStates)
+  // Skill-aware: the production pass reads the meaning_production facets.
+  const listSessionKeptCitationFacets = vi
+    .fn()
+    .mockImplementation(async (_sessionId: string, skill: string = 'meaning_recognition') =>
+      skill === 'meaning_production' ? (params.productionFacetStates ?? []) : params.facetStates
+    )
   const initializeAndParkCitationFacetIfUnderDailyCap = vi
     .fn()
     .mockImplementation(async (p: { userLookupId: string }) => params.parkOutcomes?.[p.userLookupId] ?? 'scaffolded')
+  const initializeAndParkProductionCitationFacet = vi
+    .fn()
+    .mockImplementation(
+      async (p: { userLookupId: string }) => params.productionParkOutcomes?.[p.userLookupId] ?? 'scaffolded'
+    )
   // getStrengthenExercises (real) calls these; the warm-up has no bonus track.
   // When a restrict set is supplied (session warm-up) serve those ids; otherwise
-  // (language-wide continue) serve the fixture set.
+  // (language-wide continue) serve the fixture set. Production serves get an
+  // empty restrict in recognition-only fixtures → no rows.
   const listParkedTerms = vi
     .fn()
     .mockImplementation(async (p: { restrictToUserLookupIds?: string[] }) =>
@@ -65,7 +80,11 @@ const createDeps = (params: {
   const deps = {
     studySessionsRepository: { findByIdForUser },
     userTargetLanguagePrefsRepository: { getPracticeLimitsForLanguage },
-    studyFacetsRepository: { listSessionKeptCitationFacets, initializeAndParkCitationFacetIfUnderDailyCap },
+    studyFacetsRepository: {
+      listSessionKeptCitationFacets,
+      initializeAndParkCitationFacetIfUnderDailyCap,
+      initializeAndParkProductionCitationFacet,
+    },
     userLookupsRepository: { listParkedTerms },
     practiceExercisesRepository: { selectNextExercise, reserveSlots, listBonusForTerms, countGateBankSlots },
     usersRepository: {},
@@ -75,9 +94,16 @@ const createDeps = (params: {
     deps,
     findByIdForUser,
     initializeAndParkCitationFacetIfUnderDailyCap,
+    initializeAndParkProductionCitationFacet,
     listParkedTerms,
   }
 }
+
+// listParkedTerms is called once per pool; pick the call for a given pool by
+// the parkedOrigin+restrict shape isn't enough, so use the invocation order:
+// recognition serve is always evaluated before production in the Promise.all.
+const recognitionParkedCall = (listParkedTerms: ReturnType<typeof vi.fn>) => listParkedTerms.mock.calls[0][0]
+const productionParkedCall = (listParkedTerms: ReturnType<typeof vi.fn>) => listParkedTerms.mock.calls[1][0]
 
 describe('startWarmupSession', () => {
   beforeEach(() => vi.restoreAllMocks())
@@ -130,8 +156,52 @@ describe('startWarmupSession', () => {
     expect(result.ok && result.dailyLimitReached).toBe(false)
     // A term that lost the race is already parked elsewhere; it isn't served by
     // THIS call (it wasn't in the already-onboarding set nor newly scaffolded).
-    const restrict = listParkedTerms.mock.calls[0][0].restrictToUserLookupIds
+    const restrict = recognitionParkedCall(listParkedTerms).restrictToUserLookupIds
     expect(restrict).toEqual([])
+  })
+
+  it('production pass parks independently of the recognition cap (two independent passes)', async () => {
+    const { deps, initializeAndParkProductionCitationFacet, listParkedTerms } = createDeps({
+      // Recognition caps on its only term.
+      facetStates: [facetState({ userLookupId: id(1) })],
+      parkOutcomes: { [id(1)]: 'cap_reached' },
+      // A different term is eligible for production warm-up.
+      productionFacetStates: [facetState({ userLookupId: id(2) })],
+    })
+    const result = await startWarmupSession({ userId, studySessionId: sessionId, targetLanguage: lang, deps })
+    // Recognition hit its cap...
+    expect(result.ok && result.dailyLimitReached).toBe(true)
+    // ...but the production pass STILL parked its eligible term (no shared stop).
+    expect(initializeAndParkProductionCitationFacet).toHaveBeenCalledWith(
+      expect.objectContaining({ userLookupId: id(2) })
+    )
+    // Recognition serves nothing (its term was capped, not scaffolded); the
+    // production serve covers id(2).
+    expect(recognitionParkedCall(listParkedTerms).restrictToUserLookupIds).toEqual([])
+    expect(recognitionParkedCall(listParkedTerms).pool).toBe('recognition')
+    expect(productionParkedCall(listParkedTerms).restrictToUserLookupIds).toEqual([id(2)])
+    expect(productionParkedCall(listParkedTerms).pool).toBe('production')
+    // The mixed queue carries the production entry tagged with its pool.
+    if (result.ok) {
+      expect(result.exercises).toEqual([expect.objectContaining({ userLookupId: id(2), pool: 'production' })])
+    }
+  })
+
+  it('serves a MIXED queue (recognition ++ production) for a both-skills term', async () => {
+    const { deps } = createDeps({
+      facetStates: [facetState({ userLookupId: id(1) })],
+      productionFacetStates: [facetState({ userLookupId: id(1) })],
+    })
+    const result = await startWarmupSession({ userId, studySessionId: sessionId, targetLanguage: lang, deps })
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      // Same userLookupId, two entries, one per pool — exactly the case the
+      // client merge must key on (pool, userLookupId).
+      expect(result.exercises).toEqual([
+        expect.objectContaining({ userLookupId: id(1), pool: 'recognition' }),
+        expect.objectContaining({ userLookupId: id(1), pool: 'production' }),
+      ])
+    }
   })
 
   it('resume: re-serves already-onboarding terms without re-introducing them', async () => {
@@ -149,7 +219,7 @@ describe('startWarmupSession', () => {
     const enteredIds = initializeAndParkCitationFacetIfUnderDailyCap.mock.calls.map((c) => c[0].userLookupId)
     expect(enteredIds).toEqual([id(2)])
     // Both are served (union of already-onboarding + newly scaffolded).
-    const restrict = listParkedTerms.mock.calls[0][0].restrictToUserLookupIds
+    const restrict = recognitionParkedCall(listParkedTerms).restrictToUserLookupIds
     expect(new Set(restrict)).toEqual(new Set([id(1), id(2)]))
     if (result.ok) expect(result.exercises.map((e) => e.userLookupId).sort()).toEqual([id(1), id(2)])
   })
@@ -170,6 +240,20 @@ describe('continueWarmupSession', () => {
     const call = listParkedTerms.mock.calls[0][0]
     expect(call.parkedOrigin).toBe('onboarding')
     expect(call.restrictToUserLookupIds).toBeUndefined()
+    expect(call.pool).toBe('recognition')
     expect(result.exercises.map((e) => e.userLookupId).sort()).toEqual([id(7), id(8)])
+  })
+
+  it('serves the production onboarding population when pool=production', async () => {
+    const { deps, listParkedTerms } = createDeps({
+      facetStates: [],
+      languageParkedIds: [id(7)],
+    })
+    const result = await continueWarmupSession({ userId, targetLanguage: lang, pool: 'production', deps })
+    const call = listParkedTerms.mock.calls[0][0]
+    expect(call.pool).toBe('production')
+    expect(call.parkedOrigin).toBe('onboarding')
+    expect(call.restrictToUserLookupIds).toBeUndefined()
+    expect(result.exercises).toEqual([expect.objectContaining({ userLookupId: id(7), pool: 'production' })])
   })
 })

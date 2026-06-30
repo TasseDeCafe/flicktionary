@@ -346,12 +346,53 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
   })
 }
 
-// The citation recognition facet state of every distinct kept term in a study
-// session. Resolves terms by the canonical cards.user_lookup_id FK (not by
-// headword/sense); DISTINCT ON collapses multiple kept cards pointing at the
-// same term. The LEFT JOIN tolerates a (legacy) term with no recognition facet
-// row — hasFacet=false then. Feeds warm-up eligibility (enter scaffolding) and
-// resume-serving (already onboarding-parked) decisions in one place.
+// Production-pool counterpart of the warm-up park, WITHOUT the daily-new cap
+// (production introductions are never daily-capped — isDailyNewCappedFacet is
+// recognition-citation only). Parks the citation meaning_production facet:
+// stamps leech_parked_at, resets rehab progress, leaves srs_state AND
+// introduced_at untouched (NULL srs_state keeps the onboarding shape clean;
+// production never consumed a daily-new slot, so there is nothing to stamp). A
+// single guarded UPDATE is atomic and race-safe — the leech_parked_at IS NULL
+// guard makes a concurrent double-park a no-op (returns 'not_eligible'), like
+// parkLeechFacet. Eligible iff the facet exists, is ENABLED (disabled_at IS NULL
+// — a demoted production facet is never warmed), is never-reviewed (srs_state IS
+// NULL), and is not already parked.
+const initializeAndParkProductionCitationFacet = async (params: {
+  userLookupId: string
+  userId: string
+  targetLanguage: string
+}): Promise<'scaffolded' | 'not_eligible'> => {
+  const rows = (await sql`
+    UPDATE public.study_facets f
+    SET leech_parked_at = NOW(),
+        leech_rehab_correct_days = 0,
+        leech_rehab_last_correct_on = NULL,
+        updated_at = NOW()
+    FROM public.user_lookups ul
+    WHERE f.user_lookup_id = ${params.userLookupId}
+      AND f.skill = 'meaning_production'
+      AND f.target_form = ${CITATION_FORM}
+      AND f.disabled_at IS NULL
+      AND f.srs_state IS NULL
+      AND f.leech_parked_at IS NULL
+      AND ul.id = f.user_lookup_id
+      AND ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+    RETURNING f.id
+  `) as Array<{ id: string }>
+  return rows.length > 0 ? ('scaffolded' as const) : ('not_eligible' as const)
+}
+
+// The citation facet state (for `skill`, default meaning_recognition) of every
+// distinct kept term in a study session. Resolves terms by the canonical
+// cards.user_lookup_id FK (not by headword/sense); DISTINCT ON collapses
+// multiple kept cards pointing at the same term. The LEFT JOIN tolerates a term
+// with no facet row for that skill — hasFacet=false then. Feeds warm-up
+// eligibility (enter scaffolding) and resume-serving (already onboarding-parked)
+// decisions in one place; the `skill` arg lets the production warm-up read its
+// own meaning_production facet from the same query.
 export type SessionKeptCitationFacet = {
   userLookupId: string
   hasFacet: boolean
@@ -360,7 +401,10 @@ export type SessionKeptCitationFacet = {
   disabledAt: string | null
 }
 
-const listSessionKeptCitationFacets = async (studySessionId: string): Promise<SessionKeptCitationFacet[]> => {
+const listSessionKeptCitationFacets = async (
+  studySessionId: string,
+  skill: FacetSkill = 'meaning_recognition'
+): Promise<SessionKeptCitationFacet[]> => {
   const rows = (await sql`
     SELECT DISTINCT ON (ul.id)
       ul.id AS user_lookup_id,
@@ -371,7 +415,7 @@ const listSessionKeptCitationFacets = async (studySessionId: string): Promise<Se
     FROM public.cards c
     JOIN public.user_lookups ul ON ul.id = c.user_lookup_id AND ul.deleted_at IS NULL
     LEFT JOIN public.study_facets f
-      ON f.user_lookup_id = ul.id AND f.skill = 'meaning_recognition' AND f.target_form = ${CITATION_FORM}
+      ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
     WHERE c.study_session_id = ${studySessionId}
       AND c.status = 'kept'
     ORDER BY ul.id
@@ -568,7 +612,12 @@ export interface StudyFacetsRepositoryInterface {
     targetLanguage: string
     maxNewTerms: number
   }) => Promise<'scaffolded' | 'cap_reached' | 'not_eligible'>
-  listSessionKeptCitationFacets: (studySessionId: string) => Promise<SessionKeptCitationFacet[]>
+  initializeAndParkProductionCitationFacet: (params: {
+    userLookupId: string
+    userId: string
+    targetLanguage: string
+  }) => Promise<'scaffolded' | 'not_eligible'>
+  listSessionKeptCitationFacets: (studySessionId: string, skill?: FacetSkill) => Promise<SessionKeptCitationFacet[]>
   initializeFacet: (params: FacetAddress) => Promise<void>
   applyFsrsResultForFacet: (
     params: FacetAddress & {
@@ -625,6 +674,7 @@ export const StudyFacetsRepository = (): StudyFacetsRepositoryInterface => ({
   ensureFacet,
   initializeCitationFacetIfUnderDailyCap,
   initializeAndParkCitationFacetIfUnderDailyCap,
+  initializeAndParkProductionCitationFacet,
   listSessionKeptCitationFacets,
   initializeFacet,
   applyFsrsResultForFacet,

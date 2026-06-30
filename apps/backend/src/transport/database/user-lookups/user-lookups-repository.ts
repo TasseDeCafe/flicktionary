@@ -147,12 +147,16 @@ export type DueSummaryEntry = {
   warmupCount: number
   // Production-pool counters. Parallel to the recognition counters above but
   // computed off the enabled citation meaning_production facet (membership) and
-  // its SRS state.
+  // its SRS state. productionParkedCount / productionWarmupCount split the parked
+  // production facets the same way parkedCount / warmupCount split recognition:
+  //   productionParkedCount  — genuine leeches (parked + srs_state NOT NULL).
+  //   productionWarmupCount  — exercise-first onboarding (parked + srs_state NULL).
   productionTotal: number
   productionReviewDueCount: number
   productionLearningDueCount: number
   productionNewCount: number
   productionParkedCount: number
+  productionWarmupCount: number
 }
 
 export type RenameKeyResult = { ok: true } | { ok: false; reason: 'CONFLICT' }
@@ -541,7 +545,13 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
       COUNT(*) FILTER (
         WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
           AND pf.leech_parked_at IS NOT NULL
-      )::int AS production_parked_count
+          AND pf.srs_state IS NOT NULL
+      )::int AS production_parked_count,
+      COUNT(*) FILTER (
+        WHERE pf.id IS NOT NULL AND pf.disabled_at IS NULL
+          AND pf.leech_parked_at IS NOT NULL
+          AND pf.srs_state IS NULL
+      )::int AS production_warmup_count
     FROM public.user_lookups ul
     LEFT JOIN public.study_facets rf
       ON rf.user_lookup_id = ul.id AND rf.skill = 'meaning_recognition' AND rf.target_form = ''
@@ -599,6 +609,7 @@ const listDueSummary = async (userId: string): Promise<DueSummaryEntry[]> => {
     productionLearningDueCount: row.production_learning_due_count as number,
     productionNewCount: row.production_new_count as number,
     productionParkedCount: row.production_parked_count as number,
+    productionWarmupCount: row.production_warmup_count as number,
   }))
 }
 

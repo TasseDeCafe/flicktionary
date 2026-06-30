@@ -496,6 +496,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       const result = await continueWarmupSession({
         userId,
         targetLanguage: input.targetLanguage,
+        pool: input.pool,
         deps: warmupDeps,
       })
       return {
