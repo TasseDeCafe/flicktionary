@@ -152,6 +152,56 @@ describe('study-facets-repository integration tests', () => {
     expect(facet?.leech_parked_at).not.toBeNull()
   })
 
+  test('the warm-up park guard reports cap_reached over the cap; bypassCap parks past it and still stamps introduced_at', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const a = await createKeptTerm(userId, 'uno')
+    const b = await createKeptTerm(userId, 'dos')
+    await repo.ensureCitationFacet(a.id)
+    await repo.ensureCitationFacet(b.id)
+
+    const first = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: a.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 1,
+    })
+    expect(first).toBe('scaffolded')
+
+    const second = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: b.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 1,
+    })
+    expect(second).toBe('cap_reached')
+
+    // Learn-extra: bypassCap skips only the count predicate — the park still
+    // stamps introduced_at (counts toward today) and leaves srs_state NULL.
+    const bypassed = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: b.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 1,
+      bypassCap: true,
+    })
+    expect(bypassed).toBe('scaffolded')
+
+    const facet = await repo.getFacet({ userLookupId: b.id, skill: 'meaning_recognition', targetForm: '' })
+    expect(facet?.srs_state).toBeNull()
+    expect(facet?.leech_parked_at).not.toBeNull()
+    expect(facet?.introduced_at).not.toBeNull()
+
+    // Already parked → not_eligible even with the bypass (idempotence).
+    const again = await repo.initializeAndParkCitationFacetIfUnderDailyCap({
+      userLookupId: b.id,
+      userId,
+      targetLanguage: 'es',
+      maxNewTerms: 1,
+      bypassCap: true,
+    })
+    expect(again).toBe('not_eligible')
+  })
+
   test('FSRS, leech park/rehab/unpark and undo-restore round-trip on the facet', async () => {
     const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
     const lookup = await createKeptTerm(userId, 'gato')

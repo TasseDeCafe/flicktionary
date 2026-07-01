@@ -5,6 +5,7 @@ import type {
 } from '../../transport/database/practice-exercises/practice-exercises-repository'
 import type {
   DbUserLookup,
+  DbUserLookupWithFacet,
   PracticePool,
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
@@ -192,11 +193,21 @@ export type StrengthenExerciseEntry = {
   sense: string
   track: 'gate' | 'bonus'
   status: 'ready' | 'generating' | 'failed'
+  // How the term got parked — 'onboarding' (exercise-first warm-up) vs 'leech'
+  // (lapsed in FSRS). The composed queue serves both origins in one session,
+  // so each entry carries its own so the client picks the right copy
+  // ("warming up" vs "rehab"). Null on the bonus track (not parked).
+  origin: 'onboarding' | 'leech' | null
   exerciseType: ExerciseType | null
   // Stripped payload — answer fields (answer/answerIndex/acceptedForms) never
   // leave the server. Null while generating.
   payload: Record<string, unknown> | null
 }
+
+// The parked-origin derivation (srs_state is the discriminator — see
+// listParkedTerms).
+const originOf = (lookup: DbUserLookupWithFacet): 'onboarding' | 'leech' =>
+  lookup.srs_state == null ? 'onboarding' : 'leech'
 
 // Strip the answer truth out of a stored payload before serving.
 const stripExercisePayload = (
@@ -243,7 +254,8 @@ const placeholderEntry = (
   lookup: DbUserLookup,
   pool: PracticePool,
   track: 'gate' | 'bonus',
-  status: 'generating' | 'failed'
+  status: 'generating' | 'failed',
+  origin: 'onboarding' | 'leech' | null
 ): StrengthenExerciseEntry => ({
   exerciseId: null,
   userLookupId: lookup.id,
@@ -252,6 +264,7 @@ const placeholderEntry = (
   sense: lookup.sense ?? '',
   track,
   status,
+  origin,
   exerciseType: null,
   payload: null,
 })
@@ -260,10 +273,11 @@ const toEntry = (
   lookup: DbUserLookup,
   pool: PracticePool,
   track: 'gate' | 'bonus',
-  exercise: DbPracticeExercise | null
+  exercise: DbPracticeExercise | null,
+  origin: 'onboarding' | 'leech' | null
 ): StrengthenExerciseEntry => {
   if (!exercise || exercise.payload == null) {
-    return placeholderEntry(lookup, pool, track, 'generating')
+    return placeholderEntry(lookup, pool, track, 'generating', origin)
   }
   return {
     exerciseId: exercise.id,
@@ -273,6 +287,7 @@ const toEntry = (
     sense: lookup.sense ?? '',
     track,
     status: 'ready',
+    origin,
     exerciseType: exercise.exercise_type,
     payload: stripExercisePayload(exercise.exercise_type, exercise.payload as Record<string, unknown>),
   }
@@ -360,7 +375,7 @@ export const getStrengthenExercises = async (params: {
         gateEligible: true,
       }))
     if (exercise) {
-      entries.push(toEntry(lookup, pool, 'gate', exercise))
+      entries.push(toEntry(lookup, pool, 'gate', exercise, originOf(lookup)))
       continue
     }
     // Nothing ready. Distinguish "still cooking" from "terminally exhausted"
@@ -374,12 +389,12 @@ export const getStrengthenExercises = async (params: {
       types: gateTypes,
     })
     if (bank.inflight > 0) {
-      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating'))
+      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating', originOf(lookup)))
     } else if (bank.failedTypes >= gateTypes.length) {
-      entries.push(placeholderEntry(lookup, pool, 'gate', 'failed'))
+      entries.push(placeholderEntry(lookup, pool, 'gate', 'failed', originOf(lookup)))
     } else {
       void ensureExerciseBank({ lookup, pool, deps })
-      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating'))
+      entries.push(placeholderEntry(lookup, pool, 'gate', 'generating', originOf(lookup)))
     }
   }
 
@@ -395,7 +410,7 @@ export const getStrengthenExercises = async (params: {
   for (const lookup of hardLookups) {
     const exercise = bonusByLookupId.get(lookup.id) ?? null
     if (!exercise) void ensureExerciseBank({ lookup, pool, deps })
-    entries.push(toEntry(lookup, pool, 'bonus', exercise))
+    entries.push(toEntry(lookup, pool, 'bonus', exercise, null))
   }
 
   return entries

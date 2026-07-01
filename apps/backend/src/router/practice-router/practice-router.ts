@@ -35,12 +35,12 @@ import {
   warmExerciseBank,
   type ExerciseBankDependencies,
 } from '../../service/practice/exercise-bank'
+import { startWarmupSession, refreshWarmupSession, type WarmupDependencies } from '../../service/practice/warmup'
 import {
-  startWarmupSession,
-  refreshWarmupSession,
-  continueWarmupSession,
-  type WarmupDependencies,
-} from '../../service/practice/warmup'
+  composePracticeQueue,
+  type ComposedQueueItem,
+  type ComposePracticeQueueDependencies,
+} from '../../service/practice/compose-practice-queue'
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
 import { applyGateAnswer } from '../../service/practice/rehab'
@@ -157,6 +157,24 @@ const toReviewTermDto = (row: DbUserLookupWithFacet) => ({
   ipaSource: computeIpaSource(row),
 })
 
+// Shapes a composed-queue service item into its wire DTO: flashcards through
+// toReviewTermDto, exercises through the same stripped-payload cast the
+// warmup/strengthen handlers use (the service strips payloads to the wire
+// shape; the contract's discriminated union validates the result).
+// Exported for unit tests.
+export const toQueueItemDto = (item: ComposedQueueItem) =>
+  item.type === 'flashcard'
+    ? { type: 'flashcard' as const, card: toReviewTermDto(item.card) }
+    : { type: 'exercise' as const, entry: { ...item.entry, payload: item.entry.payload as never } }
+
+// The refresh endpoint is serve-only: whatever the client sent, polling must
+// never introduce or park. Exported for unit tests.
+export const toServeOnlyFilter = <T extends { autoWarmup: boolean; learnExtraCount?: number }>(filter: T): T => ({
+  ...filter,
+  autoWarmup: false,
+  learnExtraCount: undefined,
+})
+
 // Builds the (headword, sense) -> content map for the row's annotations by
 // hitting user_lookups once per practice text. Returns an empty map when the
 // row has no annotations (or the body hasn't been generated yet).
@@ -204,6 +222,10 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
   const warmupDeps: WarmupDependencies = {
     ...exerciseBankDeps,
     studySessionsRepository: deps.studySessionsRepository,
+  }
+  const composeDeps: ComposePracticeQueueDependencies = {
+    ...exerciseBankDeps,
+    practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
   }
   // Fire-and-forget warmer threaded into the shared rating path: again/hard
   // ratings (flashcards AND reading mode) pre-generate Strengthen exercises.
@@ -491,22 +513,31 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       }
     }),
 
-    continueWarmupSession: implementer.continueWarmupSession.handler(async ({ input, context }) => {
+    composePracticeQueue: implementer.composePracticeQueue.handler(async ({ input, context }) => {
       const userId = context.res.locals.userId
-      const result = await continueWarmupSession({
+      const result = await composePracticeQueue({
         userId,
         targetLanguage: input.targetLanguage,
-        pool: input.pool,
-        deps: warmupDeps,
+        filter: input.filter,
+        deps: composeDeps,
       })
       return {
         data: {
-          exercises: result.exercises.map((entry) => ({
-            ...entry,
-            payload: entry.payload as never,
-          })),
+          dailyLimitReached: result.dailyLimitReached,
+          items: result.items.map((item) => toQueueItemDto(item)),
         },
       }
+    }),
+
+    refreshPracticeQueue: implementer.refreshPracticeQueue.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const result = await composePracticeQueue({
+        userId,
+        targetLanguage: input.targetLanguage,
+        filter: toServeOnlyFilter(input.filter),
+        deps: composeDeps,
+      })
+      return { data: { items: result.items.map((item) => toQueueItemDto(item)) } }
     }),
 
     submitExerciseAnswer: implementer.submitExerciseAnswer.handler(async ({ input, context, errors }) => {

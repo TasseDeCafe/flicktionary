@@ -4,6 +4,7 @@ import type { PracticePool } from '../../transport/database/user-lookups/user-lo
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
 import { getStrengthenExercises } from './exercise-bank'
 import { clampPracticeSessionLimits } from './review-caps'
+import { runProductionParkingPass, runRecognitionParkingPass } from './warmup-parking'
 
 export type WarmupDependencies = ExerciseBankDependencies & {
   studySessionsRepository: StudySessionsRepositoryInterface
@@ -80,43 +81,30 @@ export const startWarmupSession = async (params: {
     studySessionId,
     'meaning_recognition'
   )
-  const recognitionScaffolded: string[] = []
-  let dailyLimitReached = false
-  for (const term of eligibleToEnter(recognitionFacets)) {
-    const outcome = await deps.studyFacetsRepository.initializeAndParkCitationFacetIfUnderDailyCap({
-      userLookupId: term.userLookupId,
-      userId,
-      targetLanguage,
-      maxNewTerms,
-    })
-    if (outcome === 'scaffolded') {
-      recognitionScaffolded.push(term.userLookupId)
-    } else if (outcome === 'cap_reached') {
-      // A genuine over-cap term: stop entering more RECOGNITION terms and report
-      // the daily limit. 'not_eligible' (e.g. a concurrent tab already parked it)
-      // is skipped, NOT a cap hit, so repeat/concurrent starts never show a bogus
-      // daily message.
-      dailyLimitReached = true
-      break
-    }
-  }
-  const recognitionIds = Array.from(new Set([...alreadyOnboardingIds(recognitionFacets), ...recognitionScaffolded]))
+  const recognitionPass = await runRecognitionParkingPass({
+    userId,
+    targetLanguage,
+    candidateUserLookupIds: eligibleToEnter(recognitionFacets).map((f) => f.userLookupId),
+    maxNewTerms,
+    deps,
+  })
+  const dailyLimitReached = recognitionPass.dailyLimitReached
+  const recognitionIds = Array.from(
+    new Set([...alreadyOnboardingIds(recognitionFacets), ...recognitionPass.scaffolded])
+  )
 
   // Production pass (uncapped, independent — never stops on the recognition cap).
   const productionFacets = await deps.studyFacetsRepository.listSessionKeptCitationFacets(
     studySessionId,
     'meaning_production'
   )
-  const productionScaffolded: string[] = []
-  for (const term of eligibleToEnter(productionFacets)) {
-    const outcome = await deps.studyFacetsRepository.initializeAndParkProductionCitationFacet({
-      userLookupId: term.userLookupId,
-      userId,
-      targetLanguage,
-    })
-    if (outcome === 'scaffolded') productionScaffolded.push(term.userLookupId)
-  }
-  const productionIds = Array.from(new Set([...alreadyOnboardingIds(productionFacets), ...productionScaffolded]))
+  const productionPass = await runProductionParkingPass({
+    userId,
+    targetLanguage,
+    candidateUserLookupIds: eligibleToEnter(productionFacets).map((f) => f.userLookupId),
+    deps,
+  })
+  const productionIds = Array.from(new Set([...alreadyOnboardingIds(productionFacets), ...productionPass.scaffolded]))
 
   const [recognitionExercises, productionExercises] = await Promise.all([
     serveOnboarding({ userId, targetLanguage, pool: 'recognition', restrictToUserLookupIds: recognitionIds, deps }),
@@ -170,21 +158,4 @@ export const refreshWarmupSession = async (params: {
   ])
 
   return { ok: true, exercises: [...recognitionExercises, ...productionExercises] }
-}
-
-// Language-scoped, serve-only continuation of warm-up: serves EVERY
-// onboarding-parked term for the language in the given pool (not scoped to a
-// session), so a user who abandoned a warm-up can resume it from the Practice
-// tab. No parking, no introductions — safe to poll. Powers the per-pool
-// "N terms warming up — continue" affordances. Leeches are excluded (they have
-// the Strengthen surface).
-export const continueWarmupSession = async (params: {
-  userId: string
-  targetLanguage: string
-  pool?: PracticePool
-  deps: WarmupDependencies
-}): Promise<{ exercises: StrengthenExerciseEntry[] }> => {
-  const { userId, targetLanguage, pool = 'recognition', deps } = params
-  const exercises = await serveOnboarding({ userId, targetLanguage, pool, deps })
-  return { exercises }
 }

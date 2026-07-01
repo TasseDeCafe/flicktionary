@@ -2,11 +2,14 @@ import { oc } from '@orpc/contract'
 import { z } from 'zod'
 import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
+  DEFAULT_PRACTICE_QUEUE_FILTER,
   ExerciseAnswerSchema,
   FacetSkillSchema,
   GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
   PracticePoolSchema,
+  PracticeQueueFilterSchema,
+  PracticeQueueItemSchema,
   PracticeRatingSchema,
   PracticeTextSchema,
   ReadingRatingSchema,
@@ -310,18 +313,53 @@ export const practiceContract = {
     )
     .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
 
-  // Language-scoped warm-up continuation (serve-only, safe to poll). Serves
-  // every onboarding-parked term for the language so a user can resume an
-  // abandoned warm-up from the Practice tab without a session. Leeches are
-  // excluded — they have the Strengthen surface.
-  continueWarmupSession: oc
-    .route({ method: 'POST', path: '/practice/warmup/continue', successStatus: 200 })
+  // The unified Practice session: ONE ordered queue of gate exercises (parked
+  // warm-up + rehab terms) and due flashcards, production-first. A MUTATION —
+  // with autoWarmup on it parks eligible new terms into warm-up (stamping
+  // introduced_at, consuming the daily-new budget) before serving, bounded so
+  // it never parks more than this session will serve. dailyLimitReached=true
+  // when the per-language new-term cap stopped further recognition entries
+  // (the client offers a one-tap Learn extra, which re-composes with
+  // learnExtraCount).
+  composePracticeQueue: oc
+    .route({ method: 'POST', path: '/practice/queue/compose', successStatus: 200 })
     .errors({
       BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
       INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
     })
-    .input(z.object({ targetLanguage: z.string().min(1), pool: PracticePoolSchema.default('recognition') }))
-    .output(z.object({ data: z.object({ exercises: z.array(StrengthenExerciseEntrySchema) }) })),
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        filter: PracticeQueueFilterSchema.default(DEFAULT_PRACTICE_QUEUE_FILTER),
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          items: z.array(PracticeQueueItemSchema),
+          dailyLimitReached: z.boolean(),
+        }),
+      })
+    ),
+
+  // Serve-only re-fetch of the composed queue (NO parking / NO introductions —
+  // the handler forces autoWarmup off and drops learnExtraCount), safe to poll
+  // while exercise placeholders generate. The client only uses it to swap
+  // 'generating' entries to 'ready'/'failed' in place; it never appends items
+  // to the running session (one-shot snapshot rule).
+  refreshPracticeQueue: oc
+    .route({ method: 'POST', path: '/practice/queue/refresh', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        targetLanguage: z.string().min(1),
+        filter: PracticeQueueFilterSchema.default(DEFAULT_PRACTICE_QUEUE_FILTER),
+      })
+    )
+    .output(z.object({ data: z.object({ items: z.array(PracticeQueueItemSchema) }) })),
 
   // Grade one exercise answer (server-side truth; the exercise is consumed on
   // answer, so a retry/stale submit is rejected). MC types take selectedIndex,
