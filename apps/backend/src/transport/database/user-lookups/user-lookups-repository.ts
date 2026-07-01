@@ -984,6 +984,13 @@ const listParkedTerms = async (params: {
   // tells them apart, so Strengthen (leeches) and Warm-up (onboarding) read
   // disjoint sets from the same column.
   parkedOrigin?: 'onboarding' | 'leech'
+  // Drop terms whose rehab day-credit was already earned today (server
+  // CURRENT_DATE, matching advanceRehabDayFacet's guard). The composed daily
+  // queue sets this: answering an already-credited gate consumes a banked
+  // exercise while advancing nothing, so serving one is pure waste. The
+  // explicit Strengthen/Warm-up surfaces keep serving them (extra practice on
+  // request).
+  excludeCreditedToday?: boolean
 }): Promise<DbUserLookupWithFacet[]> => {
   const skill = skillForPool(params.pool)
   const restrictClause =
@@ -994,6 +1001,9 @@ const listParkedTerms = async (params: {
       : params.parkedOrigin === 'leech'
         ? sql`AND f.srs_state IS NOT NULL`
         : sql``
+  const creditedClause = params.excludeCreditedToday
+    ? sql`AND f.leech_rehab_last_correct_on IS DISTINCT FROM CURRENT_DATE`
+    : sql``
   // No membership clause: the join is to the pool's citation facet
   // (meaning_production for the production pool) and `f.disabled_at IS NULL`
   // already enforces membership — a demoted (disabled) production facet is
@@ -1017,8 +1027,38 @@ const listParkedTerms = async (params: {
       AND f.leech_parked_at IS NOT NULL
       ${restrictClause}
       ${originClause}
+      ${creditedClause}
     ORDER BY f.leech_parked_at ASC, ul.headword ASC, ul.sense ASC
   `) as DbUserLookupWithFacet[]
+}
+
+// Terms whose citation facet for the pool's skill could ENTER warm-up
+// scaffolding right now: kept, live term; facet exists, enabled, never
+// reviewed, not parked. The by-(user, language) counterpart of warmup.ts's
+// session-scoped eligibleToEnter — feeds the composed queue's auto-warm-up
+// discovery. Oldest-added first, so the daily-new cap admits terms in the same
+// order the flashcard new bucket serves them.
+const listEligibleNewCitationFacets = async (params: {
+  userId: string
+  targetLanguage: string
+  pool: PracticePool
+}): Promise<string[]> => {
+  const skill = skillForPool(params.pool)
+  const rows = (await sql`
+    SELECT ul.id
+    FROM public.user_lookups ul
+    JOIN public.study_facets f
+      ON f.user_lookup_id = ul.id AND f.skill = ${skill} AND f.target_form = ${CITATION_FORM}
+    WHERE ul.user_id = ${params.userId}
+      AND ul.target_language = ${params.targetLanguage}
+      AND ul.count > 0
+      AND ul.deleted_at IS NULL
+      AND f.disabled_at IS NULL
+      AND f.srs_state IS NULL
+      AND f.leech_parked_at IS NULL
+    ORDER BY ul.created_at ASC, ul.headword ASC, ul.sense ASC
+  `) as Array<{ id: string }>
+  return rows.map((row) => row.id)
 }
 
 // Lightweight "vocabulary" view used by the practice-text generator's prompt
@@ -1849,7 +1889,13 @@ export interface UserLookupsRepositoryInterface {
     pool: PracticePool
     restrictToUserLookupIds?: string[]
     parkedOrigin?: 'onboarding' | 'leech'
+    excludeCreditedToday?: boolean
   }) => Promise<DbUserLookupWithFacet[]>
+  listEligibleNewCitationFacets: (params: {
+    userId: string
+    targetLanguage: string
+    pool: PracticePool
+  }) => Promise<string[]>
   listVocabularyForLanguage: (params: { userId: string; targetLanguage: string }) => Promise<VocabularyRow[]>
   listKeptChunksForExport: (params: { userId: string; targetLanguage: string }) => Promise<ExportChunkRow[]>
   listChunksForLanguage: (params: {
@@ -1910,6 +1956,7 @@ export const UserLookupsRepository = (): UserLookupsRepositoryInterface => {
     listCandidateFormsForChunk,
     deleteFacet,
     listParkedTerms,
+    listEligibleNewCitationFacets,
     listVocabularyForLanguage,
     listKeptChunksForExport,
     listChunksForLanguage,

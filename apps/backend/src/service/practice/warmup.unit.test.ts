@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { DbStudySession } from '../../transport/database/study-sessions/study-sessions-repository'
 import type { SessionKeptCitationFacet } from '../../transport/database/study-facets/study-facets-repository'
-import { startWarmupSession, continueWarmupSession, type WarmupDependencies } from './warmup'
+import { startWarmupSession, type WarmupDependencies } from './warmup'
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const sessionId = '00000000-0000-0000-0000-0000000000a0'
@@ -43,7 +43,6 @@ const createDeps = (params: {
   parkOutcomes?: Record<string, 'scaffolded' | 'cap_reached' | 'not_eligible'>
   productionParkOutcomes?: Record<string, 'scaffolded' | 'not_eligible'>
   maxNewTerms?: number
-  languageParkedIds?: string[]
 }) => {
   const findByIdForUser = vi.fn().mockResolvedValue(params.session === undefined ? makeSession() : params.session)
   const getPracticeLimitsForLanguage = vi
@@ -64,13 +63,13 @@ const createDeps = (params: {
       async (p: { userLookupId: string }) => params.productionParkOutcomes?.[p.userLookupId] ?? 'scaffolded'
     )
   // getStrengthenExercises (real) calls these; the warm-up has no bonus track.
-  // When a restrict set is supplied (session warm-up) serve those ids; otherwise
-  // (language-wide continue) serve the fixture set. Production serves get an
-  // empty restrict in recognition-only fixtures → no rows.
+  // The session warm-up always supplies a restrict set — serve exactly those
+  // ids. Production serves get an empty restrict in recognition-only fixtures
+  // → no rows.
   const listParkedTerms = vi
     .fn()
     .mockImplementation(async (p: { restrictToUserLookupIds?: string[] }) =>
-      (p.restrictToUserLookupIds ?? params.languageParkedIds ?? []).map(parkedRow)
+      (p.restrictToUserLookupIds ?? []).map(parkedRow)
     )
   const selectNextExercise = vi.fn().mockResolvedValue(null)
   const reserveSlots = vi.fn().mockResolvedValue([])
@@ -222,38 +221,5 @@ describe('startWarmupSession', () => {
     const restrict = recognitionParkedCall(listParkedTerms).restrictToUserLookupIds
     expect(new Set(restrict)).toEqual(new Set([id(1), id(2)]))
     if (result.ok) expect(result.exercises.map((e) => e.userLookupId).sort()).toEqual([id(1), id(2)])
-  })
-})
-
-describe('continueWarmupSession', () => {
-  beforeEach(() => vi.restoreAllMocks())
-
-  it('serves onboarding-parked terms language-wide (no restrict, no parking)', async () => {
-    const { deps, listParkedTerms, initializeAndParkCitationFacetIfUnderDailyCap } = createDeps({
-      facetStates: [],
-      languageParkedIds: [id(7), id(8)],
-    })
-    const result = await continueWarmupSession({ userId, targetLanguage: lang, deps })
-    // Never parks/introduces — it's serve-only.
-    expect(initializeAndParkCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
-    // Onboarding population, language-wide (no restrict set).
-    const call = listParkedTerms.mock.calls[0][0]
-    expect(call.parkedOrigin).toBe('onboarding')
-    expect(call.restrictToUserLookupIds).toBeUndefined()
-    expect(call.pool).toBe('recognition')
-    expect(result.exercises.map((e) => e.userLookupId).sort()).toEqual([id(7), id(8)])
-  })
-
-  it('serves the production onboarding population when pool=production', async () => {
-    const { deps, listParkedTerms } = createDeps({
-      facetStates: [],
-      languageParkedIds: [id(7)],
-    })
-    const result = await continueWarmupSession({ userId, targetLanguage: lang, pool: 'production', deps })
-    const call = listParkedTerms.mock.calls[0][0]
-    expect(call.pool).toBe('production')
-    expect(call.parkedOrigin).toBe('onboarding')
-    expect(call.restrictToUserLookupIds).toBeUndefined()
-    expect(result.exercises).toEqual([expect.objectContaining({ userLookupId: id(7), pool: 'production' })])
   })
 })

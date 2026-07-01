@@ -121,13 +121,28 @@ export const FocusView = () => {
     : undefined
   const backToPractice = () => {
     if (!practiceLang) return
+    // Flashcards live in the composed queue now; close lands on a fresh
+    // everyday compose (the queue re-seeds from a fresh fetch anyway). A
+    // reading-mode origin returns to the reading route, scope reset to
+    // 'mixed'.
+    if (practiceMode === 'flashcards') {
+      void navigate({
+        to: '/practice/composed/$targetLanguage',
+        params: { targetLanguage: practiceLang },
+        search: {
+          pools: ['production', 'recognition'],
+          scope: 'both',
+          render: 'both',
+          autoWarmup: true,
+          includeOptInNew: false,
+        },
+      })
+      return
+    }
     void navigate({
       to: '/practice/review/$targetLanguage',
       params: { targetLanguage: practiceLang },
-      // Scope is always 'mixed' on return: a flashcard queue re-seeds from a
-      // fresh fetch anyway, and re-entering learn_new with its batch count
-      // would serve a whole new batch of unseen terms.
-      search: { pool: practicePool ?? 'recognition', scope: 'mixed', mode: practiceMode ?? 'read' },
+      search: { pool: practicePool ?? 'recognition', scope: 'mixed' },
     })
   }
   const goPrev = () => {

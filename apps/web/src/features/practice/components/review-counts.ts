@@ -7,6 +7,9 @@ export type QueueCounts = {
   new: number
   learning: number
   review: number
+  // Gate exercises left in a composed queue. Absent on flashcard/reading-only
+  // surfaces (the stats row hides the pill when undefined).
+  exercises?: number
 }
 
 // Drifting New/Learning/Review counts for a (language, pool), derived from the

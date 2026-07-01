@@ -10,6 +10,7 @@ const entry = (over: Partial<StrengthenExerciseEntry>): StrengthenExerciseEntry 
   sense: '',
   track: 'gate',
   status: 'generating',
+  origin: 'onboarding',
   exerciseType: null,
   payload: null,
   ...over,

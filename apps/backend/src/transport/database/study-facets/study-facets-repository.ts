@@ -289,11 +289,17 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
 //   'cap_reached'  — eligible but today's introduced count is already at/over
 //                    maxNewTerms.
 //   'scaffolded'   — introduced + parked.
+//
+// `bypassCap` (an explicit learn-extra request) skips ONLY the cap comparison,
+// mirroring initializeCitationFacetIfUnderDailyCap's bypass: the lock, the
+// eligibility checks and the introduced_at stamp all stay, so bypassed
+// warm-up entries still count toward today's introductions.
 const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
   targetLanguage: string
   maxNewTerms: number
+  bypassCap?: boolean
 }): Promise<'scaffolded' | 'cap_reached' | 'not_eligible'> => {
   return await beginTx(async (tx) => {
     await tx`
@@ -316,20 +322,22 @@ const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
       return 'not_eligible' as const
     }
 
-    const countRows = (await tx`
-      SELECT COUNT(*)::int AS introduced_today
-      FROM public.study_facets f2
-      JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
-      WHERE ul2.user_id = ${params.userId}
-        AND ul2.target_language = ${params.targetLanguage}
-        AND ul2.count > 0
-        AND ul2.deleted_at IS NULL
-        AND f2.skill = 'meaning_recognition'
-        AND f2.target_form = ${CITATION_FORM}
-        AND f2.introduced_at >= CURRENT_DATE
-        AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
-    `) as Array<{ introduced_today: number }>
-    if ((countRows[0]?.introduced_today ?? 0) >= params.maxNewTerms) return 'cap_reached' as const
+    if (!params.bypassCap) {
+      const countRows = (await tx`
+        SELECT COUNT(*)::int AS introduced_today
+        FROM public.study_facets f2
+        JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
+        WHERE ul2.user_id = ${params.userId}
+          AND ul2.target_language = ${params.targetLanguage}
+          AND ul2.count > 0
+          AND ul2.deleted_at IS NULL
+          AND f2.skill = 'meaning_recognition'
+          AND f2.target_form = ${CITATION_FORM}
+          AND f2.introduced_at >= CURRENT_DATE
+          AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
+      `) as Array<{ introduced_today: number }>
+      if ((countRows[0]?.introduced_today ?? 0) >= params.maxNewTerms) return 'cap_reached' as const
+    }
 
     await tx`
       UPDATE public.study_facets
@@ -611,6 +619,7 @@ export interface StudyFacetsRepositoryInterface {
     userId: string
     targetLanguage: string
     maxNewTerms: number
+    bypassCap?: boolean
   }) => Promise<'scaffolded' | 'cap_reached' | 'not_eligible'>
   initializeAndParkProductionCitationFacet: (params: {
     userLookupId: string

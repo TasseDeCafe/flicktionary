@@ -366,6 +366,109 @@ describe('listReviewTerms + rating-event budget: facet plumbing', () => {
     expect(mixed.some((r) => r.target_form === 'hablo')).toBe(false)
   })
 
+  // Composed-queue discovery: which terms may enter warm-up, oldest-added
+  // first, mirroring warmup.ts's session-scoped eligibleToEnter.
+  test('listEligibleNewCitationFacets filters to enterable terms, oldest-added first', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+
+    // Eligible: enabled + never-reviewed + unparked citation facets. Created in
+    // this order, so `older` must come back before `newer`.
+    const older = await createKeptTerm(userId, 'older')
+    await studyFacetsRepository.ensureCitationFacet(older.id)
+    const newer = await createKeptTerm(userId, 'newer')
+    await studyFacetsRepository.ensureCitationFacet(newer.id)
+
+    // Ineligible for every reason the filter guards.
+    const reviewed = await createKeptTerm(userId, 'reviewed')
+    await studyFacetsRepository.ensureCitationFacet(reviewed.id)
+    await sql`UPDATE public.study_facets SET srs_state = 'review' WHERE user_lookup_id = ${reviewed.id}`
+    const parked = await createKeptTerm(userId, 'parked')
+    await studyFacetsRepository.ensureCitationFacet(parked.id)
+    await sql`UPDATE public.study_facets SET leech_parked_at = NOW() WHERE user_lookup_id = ${parked.id}`
+    const disabled = await createKeptTerm(userId, 'disabled')
+    await studyFacetsRepository.ensureCitationFacet(disabled.id)
+    await sql`UPDATE public.study_facets SET disabled_at = NOW() WHERE user_lookup_id = ${disabled.id}`
+    const noFacet = await createKeptTerm(userId, 'nofacet')
+    const unkept = await userLookupsRepository.findOrCreate({
+      userId,
+      targetLanguage: 'es',
+      headword: 'unkept',
+      sense: 'x',
+    })
+    await studyFacetsRepository.ensureCitationFacet(unkept.id) // count stays 0
+
+    const eligible = await userLookupsRepository.listEligibleNewCitationFacets({
+      userId,
+      targetLanguage: 'es',
+      pool: 'recognition',
+    })
+    expect(eligible).toEqual([older.id, newer.id])
+    for (const excluded of [reviewed.id, parked.id, disabled.id, noFacet.id, unkept.id]) {
+      expect(eligible).not.toContain(excluded)
+    }
+  })
+
+  test('listEligibleNewCitationFacets addresses the pool’s own citation facet', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+    const term = await createKeptTerm(userId, 'hablar')
+    // Recognition facet already reviewed; production facet unseen.
+    await studyFacetsRepository.ensureCitationFacet(term.id)
+    await sql`UPDATE public.study_facets SET srs_state = 'review' WHERE user_lookup_id = ${term.id}`
+    await insertFacet({
+      userLookupId: term.id,
+      userId,
+      skill: 'meaning_production',
+      targetForm: '',
+      srsState: null,
+      srsDue: null,
+    })
+
+    expect(
+      await userLookupsRepository.listEligibleNewCitationFacets({ userId, targetLanguage: 'es', pool: 'recognition' })
+    ).toEqual([])
+    expect(
+      await userLookupsRepository.listEligibleNewCitationFacets({ userId, targetLanguage: 'es', pool: 'production' })
+    ).toEqual([term.id])
+  })
+
+  // The composed queue's wasted-gate guard: a term whose rehab day-credit was
+  // already earned today is excluded (same CURRENT_DATE semantics as
+  // advanceRehabDayFacet's IS DISTINCT FROM guard).
+  test('listParkedTerms excludeCreditedToday drops terms credited today, keeps yesterday/null', async () => {
+    const { id: userId } = await __createUserInSupabaseAndGetHisIdAndToken()
+
+    const park = async (headword: string, lastCorrectOn: 'today' | 'yesterday' | null) => {
+      const term = await createKeptTerm(userId, headword)
+      await studyFacetsRepository.ensureCitationFacet(term.id)
+      const lastCorrect =
+        lastCorrectOn === 'today'
+          ? sql`CURRENT_DATE`
+          : lastCorrectOn === 'yesterday'
+            ? sql`CURRENT_DATE - 1`
+            : sql`NULL`
+      await sql`
+        UPDATE public.study_facets
+        SET leech_parked_at = NOW(), leech_rehab_last_correct_on = ${lastCorrect}
+        WHERE user_lookup_id = ${term.id} AND target_form = ''
+      `
+      return term
+    }
+    const creditedToday = await park('hoy', 'today')
+    const creditedYesterday = await park('ayer', 'yesterday')
+    const neverCredited = await park('nunca', null)
+
+    const all = await userLookupsRepository.listParkedTerms({ userId, targetLanguage: 'es', pool: 'recognition' })
+    expect(all.map((r) => r.id).sort()).toEqual([creditedToday.id, creditedYesterday.id, neverCredited.id].sort())
+
+    const uncredited = await userLookupsRepository.listParkedTerms({
+      userId,
+      targetLanguage: 'es',
+      pool: 'recognition',
+      excludeCreditedToday: true,
+    })
+    expect(uncredited.map((r) => r.id).sort()).toEqual([creditedYesterday.id, neverCredited.id].sort())
+  })
+
   // The landing/learn-new counts must mirror the queue's enabled-facet filter:
   // a disabled recognition facet is invisible to listReviewTerms, so counting
   // it in the due summary promises cards ("2 new available") that the session

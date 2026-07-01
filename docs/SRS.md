@@ -8,11 +8,12 @@ Code map:
 - Scheduler: `apps/backend/src/service/practice/fsrs.ts` (`ts-fsrs` wrapper)
 - Rating flow: `rate-term.ts` (`applyTermRating`, `rateTerm`); undo: `undo-rating.ts`
 - Queue: `list-review-terms.ts` + `listReviewTerms` in `user-lookups-repository.ts`
+- Composed queue: `compose-practice-queue.ts` (+ `warmup-parking.ts` for the shared parking passes)
 - Daily budgets: `review-caps.ts` (`resolveReviewCaps`, `clampPracticeSessionLimits`)
 - Leeches: `leech-config.ts`, `rehab.ts`, `exercise-bank.ts`
 - Reading mode: `generate-reading-text.ts`, `advance-reading-text.ts`
 - Audit log: `practice-rating-events-repository.ts`
-- Frontend session: `apps/web/src/features/practice/components/flashcard-mode-view.tsx`
+- Frontend session: `apps/web/src/features/practice/components/composed-practice-view.tsx`
 
 All "today" windows below use the **server's `CURRENT_DATE`** (Postgres, UTC) — not the
 client's timezone.
@@ -106,7 +107,7 @@ Recognition/Production (both citation and form targets).
   facet is hard-deleted (`chunks.updateContent` → `reconcilePronunciationFacet` → `deleteFacet`).
   There is nothing to rehab a soundless pronunciation with, so disable-keeps-history doesn't
   apply here. Form pronunciation needs no delete sync: without IPA it never reaches `ready`.
-- **Card** (`flashcard-mode-view`, dedicated body, not the slot resolver): front = target (ru
+- **Card** (`flashcard-face.tsx`, dedicated body, not the slot resolver): front = target (ru
   stress hidden) + an audio cue (`Volume2` + "Say it out loud"; the chip is a prompt — there is no
   audio playback); back = stressed display + IPA (`pickIpaForDisplay`, falls back across dialects so a
   card that passed the gate never reveals an empty back). Form-aware: a form card reads its own
@@ -261,13 +262,70 @@ to plain due-time-then-new ordering.
 Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`) and terms woven into the
 currently-open reading text (`excludeUserLookupIds`).
 
-**Learn-new batch bypass**: the "Learn new" flashcard flow opens a sheet (5/10/15/20, plus
-"All N" when ≤20 unseen). The chosen N travels as the `count` search param →
-`newBatchSize` → `requestedNewCount`, which serves exactly N unseen terms *ignoring* the
-remaining daily-new budget (Anki-style custom study). The session's ratings send
-`learnNewSession: true` so the introduction guard skips only its count predicate.
-Introductions still stamp `added_to_practice_at` (they count toward today; `mixed` won't
-re-add more). A learn_new URL without `count`, and ALL of reading mode, get no bypass.
+**Over-cap learning**: the current past-the-cap path is the composed queue's **Learn
+extra** (§4b) — an explicit batch that PARKS extra recognition terms into warm-up with
+`bypassCap` (introductions still stamp `introduced_at`, so they count toward today). The
+old flashcard-side bypass plumbing (`newBatchSize` → `requestedNewCount` on
+`listReviewTerms`, `learnNewSession` on `rateTerm`) survives in the contract and the
+rating guard but has no web caller since the flashcard learn-new batch sheet was retired
+with the composed queue. Reading mode never gets a bypass.
+
+## 4b. The composed queue (composePracticeQueue)
+
+The primary **Practice** button serves ONE heterogeneous queue — gate exercises for
+parked terms (warm-up + rehab) interleaved with due flashcards — built by
+`composePracticeQueue` (`compose-practice-queue.ts`). Render type is **derived from term
+state**, never chosen per item: parked → gate exercise; due/graduated → flashcard;
+never-reviewed opt-in facet → flashcard. The filter spec
+(`pools / scope / render / autoWarmup / includeOptInNew / learnExtraCount`, contract
+`PracticeQueueFilterSchema`) only selects which populations participate; the Custom
+practice presets are just named filter specs.
+
+- **Parking pass (auto-warm-up).** With `autoWarmup` on (the default Practice), the
+  compose first parks eligible never-reviewed citation terms into warm-up — discovery is
+  by (user, language) via `listEligibleNewCitationFacets` (oldest-added first), the park
+  writes reuse the session warm-up's mechanism (`runWarmupParkingPass` helpers in
+  `warmup-parking.ts`). **Production parks first**, then recognition under the daily-new
+  cap (first `cap_reached` stops the pass → `dailyLimitReached`). The budget is
+  **coupled to serve slots**: at most
+  `min(MAX_WARMUP_INTRO_PER_SESSION, MAX_GATES_PER_COMPOSE − uncredited parked backlog)`
+  terms park per compose, so opening Practice never parks a term this session can't also
+  serve (no invisible introduced-but-unseen backlog). There are therefore **no new
+  citation flashcards** — new terms enter via ~3 gate-days, then graduate (soft
+  re-entry).
+- **Serve pass**, production-first (`prod flashcards → prod gates → recog flashcards →
+  recog gates → opt-in-new` — pure concatenation of deterministic sub-lists, a stable
+  one-shot snapshot). Due flashcards come from `listReviewTerms` pinned so **citation-new
+  contributes 0 flashcard rows** (`review_due` scope for the due pass; `maxNewTerms = 0`
+  on the opt-in pass). Gates come from `getStrengthenExercises` over a pre-sliced id set:
+  `listParkedTerms(excludeCreditedToday: true)` — a term whose rehab day-credit was
+  already earned today is **excluded** (answering it would consume a banked exercise
+  while advancing nothing) — oldest-parked first, capped at `MAX_GATES_PER_COMPOSE`
+  (which also bounds `ensureExerciseBank` fan-out per call). **Both parked origins serve
+  together**: an onboarding gate is committed due work exactly like a rehab gate, so a
+  daily Practice habit graduates warm-up terms as a side effect (no stranded lane).
+- **Scopes.** `due_only` skips parking and opt-in-new (no introductions of any kind) but
+  serves gates of both origins; `new_only` skips due flashcards and restricts gates to
+  onboarding-parked terms.
+- **Opt-in-new pass** (`includeOptInNew`, the Learn-new preset): never-reviewed
+  pronunciation/form facets served as flashcards — they never park (the exercise bank
+  has no facet identity), so this is their ONLY introduction path, reserved for the
+  explicit Learn-new entry like the old learn_new-scope rule.
+- **Learn extra** (`learnExtraCount`, 1–20): an explicit batch past the daily-new cap —
+  `initializeAndParkCitationFacetIfUnderDailyCap` takes `bypassCap` (skips only the count
+  predicate; `introduced_at` still stamps, so extras count toward today). Offered as a
+  one-tap on the composed completion screen when the cap was hit; carried as mutation
+  input, never a URL param, so refresh/back can't replay the bypass.
+- **Refresh** (`refreshPracticeQueue`) is serve-only — the handler forces
+  `autoWarmup: false` and drops `learnExtraCount` — safe to poll; the client uses it only
+  to swap `generating` exercise placeholders to `ready`/`failed` in place (keyed
+  `(pool, userLookupId)`), never to append.
+
+The old standalone flashcard queue (`mode=flashcards` on `/practice/review`, the
+learn-new batch sheet, and the language-wide `warmup-continue` resume) is gone; reading
+mode keeps `/practice/review` to itself. The session-scoped warm-up
+(`/practice/warmup/$lang`, from the session-vocabulary footer) and the post-session
+Strengthen CTA remain as dedicated surfaces.
 
 ## 5. Rating flow (applyTermRating)
 
@@ -361,7 +419,9 @@ sets from the same column. Everything below "park" is shared.
   by good/easy ratings. Per pool.
 - **Parked** = out of every queue (flashcards and reading candidates). Ratings from stale
   queues are accepted as no-ops.
-- **Rehab**: parked terms surface in **Strengthen** as gate exercises. One correct gate
+- **Rehab**: parked terms surface as gate exercises — in the daily **composed Practice
+  queue** (§4b, uncredited-today terms only) and in the post-session **Strengthen**
+  round. One correct gate
   answer per server calendar day advances rehab; **3 distinct days**
   (`LEECH_GRADUATION_DAYS`) graduate the term. Gate type ladder by rehab day: passive
   `mc_cloze → mc_comprehension → mc_cloze`, active `mc_cloze → production_cloze →
@@ -375,28 +435,31 @@ sets from the same column. Everything below "park" is shared.
 
 ### Warm-up (exercise-first onboarding)
 
-- **Entry** (`warmup.ts`): launched from the session-vocabulary footer ("Practice your
-  terms" → `/practice/warmup/$targetLanguage`) and from the Practice tab's per-pool "N terms
-  warming up — continue" / "N production terms warming up — continue" affordances
-  (`/practice/warmup-continue/$targetLanguage?pool=…`, language-wide). `startWarmupSession`
-  parks the session's not-yet-introduced kept terms in **two independent passes**: a
+- **Entry** (`warmup.ts` + the composed queue): the session-vocabulary footer ("Practice
+  your terms" → `/practice/warmup/$targetLanguage`) parks that session's terms
+  explicitly, and the composed **Practice** button auto-parks eligible new terms
+  language-wide on every compose (§4b) — abandoned warm-ups need no dedicated resume
+  surface, since the next Practice serves the parked terms' gates anyway.
+  `startWarmupSession` parks the session's not-yet-introduced kept terms in **two
+  independent passes** (shared with the composer via `runWarmupParkingPass` helpers): a
   recognition pass via the **atomic** `initializeAndParkCitationFacetIfUnderDailyCap` (stamps
   `introduced_at` AND `leech_parked_at` in one tx, leaves `srs_state` NULL — so a crash can't
   leave a term introduced-but-unparked; returns `'scaffolded' | 'cap_reached' | 'not_eligible'`,
   the first cap hit stopping further **recognition** entries and flagging `dailyLimitReached`,
-  `not_eligible` skipped), and an independent production pass via
+  `not_eligible` skipped; `bypassCap` is the composer's learn-extra path), and an
+  independent production pass via
   `initializeAndParkProductionCitationFacet` (`'scaffolded' | 'not_eligible'`, uncapped) that
   **never inherits the recognition cap's stop**. The served queue is **mixed** (recognition ++
   production); each `StrengthenExerciseEntry` carries its `pool` so the client merges
   placeholders by `(pool, userLookupId)` (a both-skills term has one entry per pool with the
-  same id) and `submitExerciseAnswer` routes to the right facet.
+  same id) and its `origin` (`onboarding`/`leech`, derived from `srs_state`) so mixed-origin
+  queues pick the right copy; `submitExerciseAnswer` routes to the right facet.
 - The recognition warm-up consumes the **same daily new-term budget** as flashcards on entry,
   so over-cap terms wait for tomorrow; the production warm-up is **uncapped** (production is
   never daily-new-capped) and never flags `dailyLimitReached`.
   `initializeCitationFacetIfUnderDailyCap` also carries an `AND leech_parked_at IS NULL` guard
   so a parked warm-up facet is never re-introduced as a flashcard.
-- **Serve-only refresh.** `refreshWarmupSession` (session, both pools) and
-  `continueWarmupSession` (language-wide, takes a `pool` param) re-serve with no
+- **Serve-only refresh.** `refreshWarmupSession` (session, both pools) re-serves with no
   parking/introductions — safe to poll while exercises generate. Resume-safe: serving covers
   every onboarding-parked term (already-parked + newly-parked), so a re-enter after
   `generating` placeholders never returns empty.
@@ -418,21 +481,29 @@ sets from the same column. Everything below "park" is shared.
   re-reserving doomed slots. The exercise-session view polls the serve-only endpoint and
   swaps `generating` placeholders to `ready`/`failed` in place.
 
-## 8. Frontend session model (flashcard-mode-view.tsx)
+## 8. Frontend session model (composed-practice-view.tsx)
 
-- The queue is a **one-shot client-side slice**: seeded from the first fetch, later
-  refetches are ignored (they must not clobber local queue state), and the query cache is
-  dropped on unmount (`gcTime: 0` on `useListReviewTerms`) so every (re)entry — including
-  the round-trip through the focus-view editor — loads fresh behind the loader. Navigation
-  still drops the in-session state (rating records, Strengthen set, position).
+- The queue is a **one-shot client-side slice of union items**
+  (`{type:'flashcard'} | {type:'exercise'}`): seeded from the compose mutation's
+  response, re-entered fresh on every mount (the route keys the view on the serialized
+  filter). The serve-only refresh poll (~4s while a `generating` exercise placeholder is
+  at/ahead of the index) only upgrades placeholders in place
+  (`mergeComposedPlaceholders`, keyed `(pool, userLookupId)`) — it never appends, so a
+  term graduating mid-session becomes a flashcard on the NEXT session, not this one.
+  Navigation still drops the in-session state (rating records, Strengthen set, position).
+- **Exercise items** render through the shared exercise components
+  (`McExercise` / `ProductionClozeExercise` / `UseInSentenceExercise`) with per-entry
+  copy from `origin` (warm-up vs rehab); skips are non-consuming as in Strengthen.
+  Flashcard items render `FlashcardFace` (the extracted presentational card body) +
+  `RateButtons`.
 - **Again-redrill**: rating `again` optimistically appends a copy of the card to the local
   queue in the same render as the index advance (so the Learning pill never dips); the copy
   is rolled back by object identity if the server says cap-rejected / parked / error, guarded
   by `indexRef` so an already-consumed copy is never removed.
 - `sessionHardRef` collects this session's again/hard terms → offered to Strengthen
   afterwards.
-- **Peek + re-rate**: the back-chevron (`peekBack`) shows previous cards front+back. A
-  peeked card whose rating durably applied (rating record keyed by queue-item identity,
+- **Peek + re-rate**: the back-chevron (`peekBack`) shows previous items. A peeked
+  **flashcard** whose rating durably applied (rating record keyed by queue-item identity,
   holding the response's `eventId` + its redrill copy) re-shows the rating buttons with the
   previous rating highlighted — unless its redrill copy was itself already rated (the
   original's event is no longer latest; the server would refuse, so no dead buttons).
@@ -440,18 +511,25 @@ sets from the same column. Everything below "park" is shared.
   the unconsumed redrill copy; old `good`+ → new `again` appends one; `sessionHardRef`
   updates by lookupId. Any outcome that leaves the card unrated server-side (stale undo,
   cap refusal on the fresh rate, error after a committed undo) drops the record and
-  re-appends a fresh queue item so the card resurfaces rateable.
+  re-appends a fresh queue item so the card resurfaces rateable. A peeked **exercise**
+  is read-only (its answered/skipped outcome) — a consumed exercise can't be
+  un-answered.
 - **Edit during practice**: a header kebab opens an actions menu for the displayed card;
   `Edit term` deep-links to the focus view via `chunks.get`'s representative-card pointer
   (`firstCardId`/`firstCardSessionId`, fetched lazily on menu open) with
   `from=practice&practiceMode=flashcards`, so the focus view's close returns to a fresh
-  `mixed` flashcard queue for the same pool.
+  everyday composed queue (`practiceMode=read` returns to the reading route).
 - Counter pills derive from the remaining local queue (`getRemainingCounts`), with redrill
   copies counted as Learning.
 - Landing/status lines compute servable work client-side from the due summary + per-language
   limits (`getPracticeLimitsForLanguage`): `servableReviewDue = min(reviewDueCount,
   reviewBudgetLeft)`; precedence when nothing is servable: "Daily review limit reached." >
-  "Daily new limit reached." > "No terms are ready right now.".
+  "Daily new limit reached." > "No terms are ready right now.". The per-language landing
+  is one card — a primary **Practice** button (the composed queue's everyday default), a
+  **Custom practice** overlay for every secondary mode (presets + a build-your-own filter
+  panel + Read + reading history), a one-line status summary folding both pools
+  (`N to review · N new today · N warming up · N to strengthen`), and the reading-resume
+  chips.
 
 The **due summary** endpoint returns per language: `newCount` (unseen), `reviewDueCount`,
 `learningDueCount`, `nextLearningDueAt`, `newIntroducedTodayCount`, `reviewedTodayCount`
@@ -459,8 +537,8 @@ The **due summary** endpoint returns per language: `newCount` (unseen), `reviewD
 (`productionParkedCount`, `productionWarmupCount`, …). The parked population is split by
 origin **on both pools**: `parkedCount` / `productionParkedCount` are leech-only (parked +
 `srs_state IS NOT NULL`), `warmupCount` / `productionWarmupCount` are onboarding (parked +
-`srs_state IS NULL`). The landing surfaces them as separate affordances per pool ("N warming
-up — continue" / "N production terms warming up — continue" vs "N parked — strengthen them");
+`srs_state IS NULL`); the landing folds them into the status line (warming-up and
+strengthen counts), and the composed queue serves both origins' gates in one session.
 `newCount` / `productionNewCount` exclude parked rows so a warm-up term is never advertised
 as servable-new.
 
@@ -474,7 +552,8 @@ as servable-new.
 - **"A card I answered correctly came back the same day."** Only possible via `again`
   (no 24h floor) or in the active pool (never floored).
 - **"Why did my failed card disappear from rotation?"** Probably parked as a leech (4th
-  lapse). Check `parkedCount` / the Strengthen screen — it graduates after 3 rehab days.
+  lapse). It now shows up as a rehab gate exercise inside the daily Practice queue — it
+  graduates back to flashcards after 3 rehab days.
 - **"I mis-tapped a rating."** Peek back with the chevron and re-rate — the undo refunds
   the budget slot and the fresh rating recomputes FSRS from the restored snapshot. Not
   offered when the card's `again`-redrill copy was already rated (the original event is no
