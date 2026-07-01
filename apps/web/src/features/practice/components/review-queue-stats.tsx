@@ -25,6 +25,19 @@ export const ReviewQueueStats = ({ counts }: { counts: QueueCounts }) => {
       className: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
       dotClassName: 'bg-emerald-500',
     },
+    // Gate exercises in a composed queue; hidden on surfaces that don't mix
+    // exercises in (counts.exercises undefined).
+    ...(counts.exercises != null
+      ? [
+          {
+            key: 'exercises',
+            label: t`Exercises`,
+            value: counts.exercises,
+            className: 'bg-amber-50 text-amber-700 ring-amber-100',
+            dotClassName: 'bg-amber-500',
+          },
+        ]
+      : []),
   ]
 
   return (

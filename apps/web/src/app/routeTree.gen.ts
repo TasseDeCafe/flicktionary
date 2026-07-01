@@ -42,11 +42,11 @@ import { Route as AuthenticatedAppSessionsSessionIdIndexRouteImport } from './ro
 import { Route as AuthenticatedAppSessionsShowTmdbShowIdRouteImport } from './routes/_authenticated/_app/sessions/show/$tmdbShowId'
 import { Route as AuthenticatedAppSessionsSessionIdProcessingRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/processing'
 import { Route as AuthenticatedAppPracticeWarmupTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/warmup/$targetLanguage'
-import { Route as AuthenticatedAppPracticeWarmupContinueTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/warmup-continue/$targetLanguage'
 import { Route as AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/strengthen/$targetLanguage'
 import { Route as AuthenticatedAppPracticeReviewTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/review/$targetLanguage'
 import { Route as AuthenticatedAppPracticeLanguageTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/language/$targetLanguage'
 import { Route as AuthenticatedAppPracticeHistoryTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/history/$targetLanguage'
+import { Route as AuthenticatedAppPracticeComposedTargetLanguageRouteImport } from './routes/_authenticated/_app/practice/composed/$targetLanguage'
 import { Route as AuthenticatedAppSessionsSessionIdReviewIndexRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/index'
 import { Route as AuthenticatedAppSessionsSessionIdReviewCardIdRouteImport } from './routes/_authenticated/_app/sessions/$sessionId/review/$cardId'
 
@@ -234,12 +234,6 @@ const AuthenticatedAppPracticeWarmupTargetLanguageRoute =
     path: '/practice/warmup/$targetLanguage',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute =
-  AuthenticatedAppPracticeWarmupContinueTargetLanguageRouteImport.update({
-    id: '/practice/warmup-continue/$targetLanguage',
-    path: '/practice/warmup-continue/$targetLanguage',
-    getParentRoute: () => AuthenticatedAppRoute,
-  } as any)
 const AuthenticatedAppPracticeStrengthenTargetLanguageRoute =
   AuthenticatedAppPracticeStrengthenTargetLanguageRouteImport.update({
     id: '/practice/strengthen/$targetLanguage',
@@ -262,6 +256,12 @@ const AuthenticatedAppPracticeHistoryTargetLanguageRoute =
   AuthenticatedAppPracticeHistoryTargetLanguageRouteImport.update({
     id: '/practice/history/$targetLanguage',
     path: '/practice/history/$targetLanguage',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPracticeComposedTargetLanguageRoute =
+  AuthenticatedAppPracticeComposedTargetLanguageRouteImport.update({
+    id: '/practice/composed/$targetLanguage',
+    path: '/practice/composed/$targetLanguage',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppSessionsSessionIdReviewIndexRoute =
@@ -305,11 +305,11 @@ export interface FileRoutesByFullPath {
   '/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
+  '/practice/composed/$targetLanguage': typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
   '/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
-  '/practice/warmup-continue/$targetLanguage': typeof AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute
   '/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
@@ -345,11 +345,11 @@ export interface FileRoutesByTo {
   '/practice': typeof AuthenticatedAppPracticeIndexRoute
   '/sessions': typeof AuthenticatedAppSessionsIndexRoute
   '/vocabulary': typeof AuthenticatedAppVocabularyIndexRoute
+  '/practice/composed/$targetLanguage': typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
   '/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
-  '/practice/warmup-continue/$targetLanguage': typeof AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute
   '/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
@@ -388,11 +388,11 @@ export interface FileRoutesById {
   '/_authenticated/_app/practice/': typeof AuthenticatedAppPracticeIndexRoute
   '/_authenticated/_app/sessions/': typeof AuthenticatedAppSessionsIndexRoute
   '/_authenticated/_app/vocabulary/': typeof AuthenticatedAppVocabularyIndexRoute
+  '/_authenticated/_app/practice/composed/$targetLanguage': typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
   '/_authenticated/_app/practice/history/$targetLanguage': typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   '/_authenticated/_app/practice/language/$targetLanguage': typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   '/_authenticated/_app/practice/review/$targetLanguage': typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   '/_authenticated/_app/practice/strengthen/$targetLanguage': typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
-  '/_authenticated/_app/practice/warmup-continue/$targetLanguage': typeof AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute
   '/_authenticated/_app/practice/warmup/$targetLanguage': typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   '/_authenticated/_app/sessions/$sessionId/processing': typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   '/_authenticated/_app/sessions/show/$tmdbShowId': typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
@@ -430,11 +430,11 @@ export interface FileRouteTypes {
     | '/practice/'
     | '/sessions/'
     | '/vocabulary/'
+    | '/practice/composed/$targetLanguage'
     | '/practice/history/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/practice/review/$targetLanguage'
     | '/practice/strengthen/$targetLanguage'
-    | '/practice/warmup-continue/$targetLanguage'
     | '/practice/warmup/$targetLanguage'
     | '/sessions/$sessionId/processing'
     | '/sessions/show/$tmdbShowId'
@@ -470,11 +470,11 @@ export interface FileRouteTypes {
     | '/practice'
     | '/sessions'
     | '/vocabulary'
+    | '/practice/composed/$targetLanguage'
     | '/practice/history/$targetLanguage'
     | '/practice/language/$targetLanguage'
     | '/practice/review/$targetLanguage'
     | '/practice/strengthen/$targetLanguage'
-    | '/practice/warmup-continue/$targetLanguage'
     | '/practice/warmup/$targetLanguage'
     | '/sessions/$sessionId/processing'
     | '/sessions/show/$tmdbShowId'
@@ -512,11 +512,11 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/practice/'
     | '/_authenticated/_app/sessions/'
     | '/_authenticated/_app/vocabulary/'
+    | '/_authenticated/_app/practice/composed/$targetLanguage'
     | '/_authenticated/_app/practice/history/$targetLanguage'
     | '/_authenticated/_app/practice/language/$targetLanguage'
     | '/_authenticated/_app/practice/review/$targetLanguage'
     | '/_authenticated/_app/practice/strengthen/$targetLanguage'
-    | '/_authenticated/_app/practice/warmup-continue/$targetLanguage'
     | '/_authenticated/_app/practice/warmup/$targetLanguage'
     | '/_authenticated/_app/sessions/$sessionId/processing'
     | '/_authenticated/_app/sessions/show/$tmdbShowId'
@@ -772,13 +772,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPracticeWarmupTargetLanguageRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/_app/practice/warmup-continue/$targetLanguage': {
-      id: '/_authenticated/_app/practice/warmup-continue/$targetLanguage'
-      path: '/practice/warmup-continue/$targetLanguage'
-      fullPath: '/practice/warmup-continue/$targetLanguage'
-      preLoaderRoute: typeof AuthenticatedAppPracticeWarmupContinueTargetLanguageRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
     '/_authenticated/_app/practice/strengthen/$targetLanguage': {
       id: '/_authenticated/_app/practice/strengthen/$targetLanguage'
       path: '/practice/strengthen/$targetLanguage'
@@ -805,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/practice/history/$targetLanguage'
       fullPath: '/practice/history/$targetLanguage'
       preLoaderRoute: typeof AuthenticatedAppPracticeHistoryTargetLanguageRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/_app/practice/composed/$targetLanguage': {
+      id: '/_authenticated/_app/practice/composed/$targetLanguage'
+      path: '/practice/composed/$targetLanguage'
+      fullPath: '/practice/composed/$targetLanguage'
+      preLoaderRoute: typeof AuthenticatedAppPracticeComposedTargetLanguageRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/_app/sessions/$sessionId/review/': {
@@ -835,11 +835,11 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPracticeIndexRoute: typeof AuthenticatedAppPracticeIndexRoute
   AuthenticatedAppSessionsIndexRoute: typeof AuthenticatedAppSessionsIndexRoute
   AuthenticatedAppVocabularyIndexRoute: typeof AuthenticatedAppVocabularyIndexRoute
+  AuthenticatedAppPracticeComposedTargetLanguageRoute: typeof AuthenticatedAppPracticeComposedTargetLanguageRoute
   AuthenticatedAppPracticeHistoryTargetLanguageRoute: typeof AuthenticatedAppPracticeHistoryTargetLanguageRoute
   AuthenticatedAppPracticeLanguageTargetLanguageRoute: typeof AuthenticatedAppPracticeLanguageTargetLanguageRoute
   AuthenticatedAppPracticeReviewTargetLanguageRoute: typeof AuthenticatedAppPracticeReviewTargetLanguageRoute
   AuthenticatedAppPracticeStrengthenTargetLanguageRoute: typeof AuthenticatedAppPracticeStrengthenTargetLanguageRoute
-  AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute: typeof AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute
   AuthenticatedAppPracticeWarmupTargetLanguageRoute: typeof AuthenticatedAppPracticeWarmupTargetLanguageRoute
   AuthenticatedAppSessionsSessionIdProcessingRoute: typeof AuthenticatedAppSessionsSessionIdProcessingRoute
   AuthenticatedAppSessionsShowTmdbShowIdRoute: typeof AuthenticatedAppSessionsShowTmdbShowIdRoute
@@ -860,6 +860,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppPracticeIndexRoute: AuthenticatedAppPracticeIndexRoute,
   AuthenticatedAppSessionsIndexRoute: AuthenticatedAppSessionsIndexRoute,
   AuthenticatedAppVocabularyIndexRoute: AuthenticatedAppVocabularyIndexRoute,
+  AuthenticatedAppPracticeComposedTargetLanguageRoute:
+    AuthenticatedAppPracticeComposedTargetLanguageRoute,
   AuthenticatedAppPracticeHistoryTargetLanguageRoute:
     AuthenticatedAppPracticeHistoryTargetLanguageRoute,
   AuthenticatedAppPracticeLanguageTargetLanguageRoute:
@@ -868,8 +870,6 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppPracticeReviewTargetLanguageRoute,
   AuthenticatedAppPracticeStrengthenTargetLanguageRoute:
     AuthenticatedAppPracticeStrengthenTargetLanguageRoute,
-  AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute:
-    AuthenticatedAppPracticeWarmupContinueTargetLanguageRoute,
   AuthenticatedAppPracticeWarmupTargetLanguageRoute:
     AuthenticatedAppPracticeWarmupTargetLanguageRoute,
   AuthenticatedAppSessionsSessionIdProcessingRoute:

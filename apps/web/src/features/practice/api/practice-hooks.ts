@@ -1,7 +1,7 @@
 import { orpcQuery } from '@/lib/transport/orpc-client'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useLingui } from '@lingui/react/macro'
-import type { PracticePool, ReviewScope } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
 export const useDueSummary = () => {
   const { t } = useLingui()
@@ -14,33 +14,7 @@ export const useDueSummary = () => {
   )
 }
 
-// Live review pool for the (language, pool, scope). select unwraps the
-// { data: { terms } } envelope. The flashcard mode iterates the batch locally;
-// remounting refetches a fresh slice (already-rated terms drop out naturally).
-// `count` is the explicit learn-new batch size (learn_new scope only) — it's
-// part of the orpc input and therefore of the query key, so different batch
-// picks never share a cached slice.
-//
-// gcTime: 0 — the queue is a one-shot client-side slice: the view seeds its
-// local queue from the FIRST data it sees and deliberately ignores later
-// refetches (mid-session updates must not clobber local state). Serving a
-// cached slice on remount therefore replays already-rated cards and pre-edit
-// content (e.g. returning from the focus-view editor), and the background
-// refetch can't fix it. Dropping the cache on unmount makes every (re)entry
-// load fresh.
-export const useListReviewTerms = (targetLanguage: string, pool: PracticePool, scope: ReviewScope, count?: number) => {
-  const { t } = useLingui()
-  return useQuery(
-    orpcQuery.practice.listReviewTerms.queryOptions({
-      input: { targetLanguage, pool, scope, ...(count != null ? { newBatchSize: count } : {}) },
-      select: (r) => r.data.terms,
-      gcTime: 0,
-      meta: { errorMessage: t`Failed to load review terms` },
-    })
-  )
-}
-
-// Flashcard-mode single-term rating. Invalidates the landing's drifting counts
+// Single-term rating. Invalidates the landing's drifting counts
 // (shared SRS budget). The flashcard queue itself is held in local state, so we
 // don't refetch listReviewTerms mid-session.
 export const useRateTerm = () => {
@@ -98,24 +72,38 @@ export const useStartWarmupSession = () => {
   )
 }
 
-// Language-scoped warm-up continuation: serves every onboarding-parked term for
-// the language (resume an abandoned warm-up from the Practice tab). Serve-only,
-// so it doubles as both the initial fetch and the placeholder poll. No state
-// change to invalidate; a failed poll is silent.
-export const useContinueWarmupSession = () => {
-  return useMutation(
-    orpcQuery.practice.continueWarmupSession.mutationOptions({
-      meta: { showErrorToast: false },
-    })
-  )
-}
-
 // Serve-only re-fetch of a warm-up session, polled while exercises generate in
 // the background. No parking / no introductions, so nothing to invalidate; a
 // failed poll is silent (the placeholder just stays until the next tick).
 export const useRefreshWarmupSession = () => {
   return useMutation(
     orpcQuery.practice.refreshWarmupSession.mutationOptions({
+      meta: { showErrorToast: false },
+    })
+  )
+}
+
+// Compose the unified Practice queue (gate exercises + due flashcards). A
+// mutation: with autoWarmup on it parks eligible new terms into warm-up
+// (consuming the daily new-term budget), so the landing counts shift.
+export const useComposePracticeQueue = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.composePracticeQueue.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to load practice queue`,
+      },
+    })
+  )
+}
+
+// Serve-only re-fetch of the composed queue, polled while exercise
+// placeholders generate. The server forces auto-warm-up off, so nothing to
+// invalidate; a failed poll is silent (the placeholder stays until next tick).
+export const useRefreshPracticeQueue = () => {
+  return useMutation(
+    orpcQuery.practice.refreshPracticeQueue.mutationOptions({
       meta: { showErrorToast: false },
     })
   )
