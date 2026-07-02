@@ -1,13 +1,17 @@
 import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
+import { poolForSkill } from '../../transport/database/study-facets/study-facets-repository'
 import type { FsrsResult } from './fsrs'
 
-// Shared leech/rehab tuning. One source of truth for both pools — the
-// thresholds are deliberately identical for recognition and production.
+// Shared leech/rehab tuning. One source of truth for both pools.
 
-// A term whose FSRS lapses reach this count gets parked out of every practice
-// queue (flashcards AND reading-text candidate selection) until it graduates
-// rehab.
-export const LEECH_LAPSE_THRESHOLD = 4
+// A facet whose FSRS lapses reach its pool's threshold gets parked out of every
+// practice queue (flashcards AND reading-text candidate selection) until it
+// graduates rehab. Recognition schedules at request_retention 0.8 (see
+// fsrs.ts), which roughly doubles the expected lapse rate vs production's 0.9
+// — so recognition gets a proportionally higher parking bar, keeping
+// leech-rehab volume comparable across pools.
+export const LEECH_LAPSE_THRESHOLD_RECOGNITION = 6
+export const LEECH_LAPSE_THRESHOLD_PRODUCTION = 4
 
 // Correct gate-exercise answers on this many DISTINCT calendar days (server
 // CURRENT_DATE) graduate a parked term back into rotation.
@@ -55,10 +59,12 @@ const isLeechableFacet = (lookup: DbUserLookupWithFacet): boolean =>
 // a rating that itself caused a lapse (an 'again' on a review-state card) can
 // park — good/easy ratings on a high-lapse graduated facet never do.
 export const shouldParkLeech = (lookup: DbUserLookupWithFacet, result: FsrsResult): boolean => {
+  const threshold =
+    poolForSkill(lookup.skill) === 'recognition' ? LEECH_LAPSE_THRESHOLD_RECOGNITION : LEECH_LAPSE_THRESHOLD_PRODUCTION
   return (
     isLeechableFacet(lookup) &&
     result.lapses > (lookup.srs_lapses ?? 0) &&
-    result.lapses >= LEECH_LAPSE_THRESHOLD &&
+    result.lapses >= threshold &&
     !isParked(lookup)
   )
 }

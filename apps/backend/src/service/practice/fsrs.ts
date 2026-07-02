@@ -3,7 +3,17 @@ import type { DbUserLookupWithFacet, SrsState } from '../../transport/database/u
 import { poolForSkill } from '../../transport/database/study-facets/study-facets-repository'
 import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
 
-const fsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
+// Recognition-pool facets schedule against a lower desired retention: adding
+// terms is cheap and recognition is the default pool every kept term lands in,
+// so we accept ~80% recall in exchange for ~2.4x longer intervals. Production
+// keeps the FSRS default (0.9) — active recall is the skill worth drilling
+// tightly. The lapse-rate consequence is absorbed by the per-pool leech
+// threshold in leech-config.ts.
+const RECOGNITION_REQUEST_RETENTION = 0.8
+const recognitionFsrs = new FSRS(
+  generatorParameters({ enable_fuzz: true, request_retention: RECOGNITION_REQUEST_RETENTION })
+)
+const productionFsrs = new FSRS(generatorParameters({ enable_fuzz: true }))
 
 export type AppRating = 'again' | 'hard' | 'good' | 'easy'
 
@@ -98,13 +108,15 @@ export const softReentryResult = (now: Date): SoftReentryResult => ({
 })
 
 export const applyRating = (row: DbUserLookupWithFacet, rating: AppRating, now: Date): FsrsResult => {
+  // Both the scheduler instance (recognition's lower desired retention) and the
+  // next-day floor key off the facet's pool — recognition is meaning_recognition
+  // AND pronunciation (Phase 4).
+  const isRecognition = poolForSkill(row.skill) === 'recognition'
+  const fsrs = isRecognition ? recognitionFsrs : productionFsrs
   const existing = facetToFsrs(row)
   const card: FsrsCard = existing ?? createEmptyCard(now)
   const result = fsrs.next(card, now, RATING_MAP[rating])
   const next = result.card
-  // The next-day floor applies to recognition-pool facets, not production —
-  // that's meaning_recognition AND pronunciation (Phase 4).
-  const isRecognition = poolForSkill(row.skill) === 'recognition'
   const floor = now.getTime() + MIN_RECOGNITION_INTERVAL_MS
   const due = isRecognition && rating !== 'again' && next.due.getTime() < floor ? new Date(floor) : next.due
   return {

@@ -78,6 +78,20 @@ describe('applyRating', () => {
     expect(easy.due.getTime()).toBeGreaterThan(good.due.getTime())
   })
 
+  it('recognition schedules materially further out than production for the same card (lower desired retention)', () => {
+    // Recognition runs at request_retention 0.8 vs production's 0.9 — for the
+    // same review-state card that's roughly a 2.4x interval. Fuzz jitters
+    // intervals by a few percent, so a strict greater-than across that gap is
+    // flake-safe.
+    const now = new Date('2026-05-05T12:00:00Z')
+    const recognition = applyRating(reviewRow, 'good', now)
+    const production = applyRating({ ...reviewRow, skill: 'meaning_production' }, 'good', now)
+    expect(recognition.due.getTime()).toBeGreaterThan(production.due.getTime())
+    // Stability/difficulty updates come from the same FSRS math — retention
+    // only stretches the due-date mapping.
+    expect(recognition.reps).toBe(production.reps)
+  })
+
   describe('next-day floor (recognition straggler clamp)', () => {
     const DAY_MS = 24 * 60 * 60 * 1000
     const now = new Date('2026-05-05T12:00:00Z')

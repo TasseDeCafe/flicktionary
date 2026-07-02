@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DbUserLookup } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { DbStudyFacet } from '../../transport/database/study-facets/study-facets-repository'
 import { rateTerm, type RateTermDependencies } from './rate-term'
+import { LEECH_LAPSE_THRESHOLD_PRODUCTION, LEECH_LAPSE_THRESHOLD_RECOGNITION } from './leech-config'
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const lookupId = '00000000-0000-0000-0000-000000000004'
@@ -312,7 +313,7 @@ describe('rateTerm rating-event log', () => {
         srs_difficulty: 6,
         srs_last_review: '2026-04-20T00:00:00Z',
         srs_reps: 8,
-        srs_lapses: 3,
+        srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION - 1,
       })
     )
     await rateTerm(lookupId, userId, 'again', 'recognition', 'meaning_recognition', '', deps)
@@ -345,8 +346,9 @@ describe('rateTerm rating-event log', () => {
 })
 
 // Parking goes through the SHARED applyTermRating path (rateTerm here, the
-// reading finalizer in advance-reading-text.unit.test.ts). Threshold is 4;
-// the condition is a new-lapse DELTA, not an absolute check.
+// reading finalizer in advance-reading-text.unit.test.ts). Threshold is per
+// pool (recognition 6, production 4); the condition is a new-lapse DELTA, not
+// an absolute check.
 describe('rateTerm leech parking', () => {
   beforeEach(() => vi.restoreAllMocks())
 
@@ -363,7 +365,10 @@ describe('rateTerm leech parking', () => {
     })
 
   it("parks on the 'again' that crosses the lapse threshold and reports parked", async () => {
-    const { deps, parkLeechFacet, warmExerciseBank } = createDeps(makeLookup(), reviewFacet(3))
+    const { deps, parkLeechFacet, warmExerciseBank } = createDeps(
+      makeLookup(),
+      reviewFacet(LEECH_LAPSE_THRESHOLD_RECOGNITION - 1)
+    )
     const result = await rateTerm(lookupId, userId, 'again', 'recognition', 'meaning_recognition', '', deps)
     // The rating applied (then parked), so it carries an undo handle.
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
@@ -377,14 +382,14 @@ describe('rateTerm leech parking', () => {
   })
 
   it("does NOT re-park a graduated facet (historical lapses >= threshold) on 'good'", async () => {
-    const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(5))
+    const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(LEECH_LAPSE_THRESHOLD_RECOGNITION + 1))
     const result = await rateTerm(lookupId, userId, 'good', 'recognition', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: false, eventId })
     expect(parkLeechFacet).not.toHaveBeenCalled()
   })
 
   it('re-parks a graduated facet on its next FRESH lapse', async () => {
-    const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(5))
+    const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(LEECH_LAPSE_THRESHOLD_RECOGNITION + 1))
     const result = await rateTerm(lookupId, userId, 'again', 'recognition', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({
@@ -414,8 +419,11 @@ describe('rateTerm leech parking', () => {
     expect(warmExerciseBank).not.toHaveBeenCalled()
   })
 
-  it('parks in the production pool off the production facet', async () => {
-    const { deps, parkLeechFacet } = createDeps(makeLookup(), reviewFacet(3, { skill: 'meaning_production' }))
+  it('parks in the production pool off the (lower) production threshold', async () => {
+    const { deps, parkLeechFacet } = createDeps(
+      makeLookup(),
+      reviewFacet(LEECH_LAPSE_THRESHOLD_PRODUCTION - 1, { skill: 'meaning_production' })
+    )
     const result = await rateTerm(lookupId, userId, 'again', 'production', 'meaning_production', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: false, dailyCapReached: false, parked: true, eventId })
     expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' })

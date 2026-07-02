@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import type { FsrsResult } from './fsrs'
-import { LEECH_LAPSE_THRESHOLD, isParked, shouldParkLeech } from './leech-config'
+import {
+  LEECH_LAPSE_THRESHOLD_PRODUCTION,
+  LEECH_LAPSE_THRESHOLD_RECOGNITION,
+  isParked,
+  shouldParkLeech,
+} from './leech-config'
 
 const makeFacetRow = (overrides: Partial<DbUserLookupWithFacet> = {}): DbUserLookupWithFacet =>
   ({
@@ -37,14 +42,14 @@ const makeResult = (lapses: number): FsrsResult => ({
 })
 
 describe('shouldParkLeech', () => {
-  it('parks on a fresh lapse that reaches the threshold', () => {
-    const facet = makeFacetRow({ srs_lapses: LEECH_LAPSE_THRESHOLD - 1 })
-    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD))).toBe(true)
+  it('parks a recognition facet on a fresh lapse that reaches the recognition threshold', () => {
+    const facet = makeFacetRow({ srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION - 1 })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_RECOGNITION))).toBe(true)
   })
 
   it('parks on a fresh lapse beyond the threshold (graduated facet lapsing again)', () => {
-    const facet = makeFacetRow({ srs_lapses: 6 })
-    expect(shouldParkLeech(facet, makeResult(7))).toBe(true)
+    const facet = makeFacetRow({ srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_RECOGNITION + 1))).toBe(true)
   })
 
   it('does NOT park below the threshold even on a fresh lapse', () => {
@@ -52,28 +57,38 @@ describe('shouldParkLeech', () => {
     expect(shouldParkLeech(facet, makeResult(2))).toBe(false)
   })
 
+  it("does NOT park a recognition facet at the production threshold (recognition's bar is higher)", () => {
+    // Recognition schedules at a lower desired retention, so its parking bar
+    // is deliberately above production's.
+    const facet = makeFacetRow({ srs_lapses: LEECH_LAPSE_THRESHOLD_PRODUCTION - 1 })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_PRODUCTION))).toBe(false)
+  })
+
   it('does NOT park without a new lapse, regardless of historical lapses (good/easy on a graduated facet)', () => {
     // After graduation lapses stay >= threshold forever; an absolute check
     // would re-park on the very next rating. The delta condition must not.
-    const facet = makeFacetRow({ srs_lapses: 5 })
-    expect(shouldParkLeech(facet, makeResult(5))).toBe(false)
+    const facet = makeFacetRow({ srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION + 1 })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_RECOGNITION + 1))).toBe(false)
   })
 
   it('does NOT park a facet already parked', () => {
-    const facet = makeFacetRow({ srs_lapses: 4, leech_parked_at: '2026-06-01T00:00:00Z' })
-    expect(shouldParkLeech(facet, makeResult(5))).toBe(false)
+    const facet = makeFacetRow({
+      srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION,
+      leech_parked_at: '2026-06-01T00:00:00Z',
+    })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_RECOGNITION + 1))).toBe(false)
   })
 
-  it('reads the production facet just the same (the facet encodes the pool)', () => {
-    const facet = makeFacetRow({ skill: 'meaning_production', srs_lapses: LEECH_LAPSE_THRESHOLD - 1 })
-    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD))).toBe(true)
+  it('parks a production facet at the (lower) production threshold', () => {
+    const facet = makeFacetRow({ skill: 'meaning_production', srs_lapses: LEECH_LAPSE_THRESHOLD_PRODUCTION - 1 })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_PRODUCTION))).toBe(true)
   })
 
   it('does NOT park a non-citation (form) facet even on a fresh threshold lapse (Trap 19)', () => {
     // Leeching is citation-meaning-only: the pool-keyed exercise bank has no
     // facet identity, so form/pronunciation facets must never park.
-    const facet = makeFacetRow({ target_form: 'gatos', srs_lapses: LEECH_LAPSE_THRESHOLD - 1 })
-    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD))).toBe(false)
+    const facet = makeFacetRow({ target_form: 'gatos', srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION - 1 })
+    expect(shouldParkLeech(facet, makeResult(LEECH_LAPSE_THRESHOLD_RECOGNITION))).toBe(false)
   })
 })
 
