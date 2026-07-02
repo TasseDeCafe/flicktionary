@@ -19,6 +19,7 @@ export const ProductionClozeExercise = ({
   exerciseId,
   payload,
   header,
+  statusBar,
   copyVariant,
   onAnswered,
   onNext,
@@ -26,6 +27,7 @@ export const ProductionClozeExercise = ({
   exerciseId: string
   payload: ProductionClozePayload
   header: ReactNode
+  statusBar?: ReactNode
   copyVariant?: ExerciseCopyVariant
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
@@ -52,6 +54,7 @@ export const ProductionClozeExercise = ({
   return (
     <ExerciseLayout
       header={header}
+      statusBar={statusBar}
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>

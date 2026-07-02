@@ -18,12 +18,14 @@ export const UseInSentenceExercise = ({
   exerciseId,
   payload,
   header,
+  statusBar,
   onAnswered,
   onNext,
 }: {
   exerciseId: string
   payload: UseInSentencePayload
   header: ReactNode
+  statusBar?: ReactNode
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
@@ -50,6 +52,7 @@ export const UseInSentenceExercise = ({
   return (
     <ExerciseLayout
       header={header}
+      statusBar={statusBar}
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>

@@ -35,6 +35,7 @@ import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem 
 import { ReviewQueueStats } from './review-queue-stats'
 import type { QueueCounts } from './review-counts'
 import { PracticeLoader } from './practice-loader'
+import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
 import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
@@ -80,7 +81,11 @@ const getRemainingCounts = (queue: ComposedQueueItem[], index: number): QueueCou
   queue.slice(index).reduce<QueueCounts>(
     (counts, item) => {
       if (item.type === 'exercise') {
-        counts.exercises = (counts.exercises ?? 0) + 1
+        // Bucket by learning stage, not render type: a warm-up gate is the
+        // term's first encounter, a rehab gate is a term being re-learned.
+        // (Bonus entries — null origin — never reach the composed queue.)
+        if (item.entry.origin === 'onboarding') counts.new += 1
+        else counts.learning += 1
         return counts
       }
       if (item.requeuedForAgain) {
@@ -102,7 +107,7 @@ const getRemainingCounts = (queue: ComposedQueueItem[], index: number): QueueCou
       }
       return counts
     },
-    { new: 0, learning: 0, review: 0, exercises: 0 }
+    { new: 0, learning: 0, review: 0 }
   )
 
 const copyVariantFor = (origin: 'onboarding' | 'leech' | null): ExerciseCopyVariant =>
@@ -615,9 +620,41 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   if (!current) return wrap(<PracticeLoader label={t`Preparing your session…`} />)
 
-  // ----- Exercise items render through the shared exercise components with a
-  // bottom bar of their own (ExerciseLayout); the peek/counts bar frames
-  // flashcard items only. -----
+  // One queue-status row for every item type: peek chevrons framing the
+  // remaining-count chips. The back chevron is withheld while a live exercise
+  // (or flashcard hint) is displayed — peeking away unmounts it, and
+  // remounting an already-answered (consumed) exercise would offer options
+  // that can no longer be submitted.
+  const liveExerciseDisplayed =
+    !isPeeking && (current.type === 'exercise' || (activeHint != null && activeHint.item === current))
+  const statusRow = (
+    <div className='flex items-center justify-between gap-2'>
+      <Button
+        type='button'
+        variant='ghost'
+        size='icon'
+        aria-label={t`Previous card`}
+        disabled={displayedIndex <= 0 || liveExerciseDisplayed}
+        onClick={() => setPeekBack((p) => p + 1)}
+      >
+        <ChevronLeft className='h-5 w-5' />
+      </Button>
+      {remainingCounts && <ReviewQueueStats counts={remainingCounts} />}
+      <Button
+        type='button'
+        variant='ghost'
+        size='icon'
+        aria-label={t`Forward`}
+        disabled={!isPeeking}
+        onClick={() => setPeekBack((p) => Math.max(0, p - 1))}
+      >
+        <ChevronRight className='h-5 w-5' />
+      </Button>
+    </div>
+  )
+
+  // ----- Exercise items render through the shared exercise components
+  // (ExerciseLayout), with the shared status row in their bottom bar. -----
   if (current.type === 'exercise') {
     const entry = current.entry
     const copyVariant = copyVariantFor(entry.origin)
@@ -630,54 +667,31 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       entry.exerciseType === 'production_cloze' ||
       (entry.status === 'generating' && !isPeeking)
     const trackLabel = entry.track === 'gate' ? (copyVariant === 'warmup' ? t`Warm-up` : t`Rehab`) : t`Practice`
-    const positionInQueue = displayedIndex + 1
-    const totalItems = queue.length
+    // No position counter here: the composed queue grows mid-session
+    // (Again-redrills append), so position/total reads as broken. The status
+    // row's chips are the queue-status UI.
     const header = (
-      <div className='flex items-center justify-between'>
-        <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
-          <Dumbbell className='h-3.5 w-3.5' />
-          {trackLabel}
-          {!headerLeaksAnswer && <> · {entry.headword}</>}
-        </span>
-        <span className='text-muted-foreground text-xs tabular-nums'>
-          {positionInQueue} / {totalItems}
-        </span>
-      </div>
+      <ExerciseHeader
+        icon={<Dumbbell className='h-3.5 w-3.5' />}
+        label={trackLabel}
+        headword={headerLeaksAnswer ? null : entry.headword}
+      />
     )
 
     // Peeked exercise: read-only outcome — a consumed exercise can't be
-    // re-answered, so there is nothing interactive to restore. The chevrons
-    // keep the peek walk going past exercises to earlier flashcards.
+    // re-answered, so there is nothing interactive to restore. The status
+    // row's chevrons keep the peek walk going past exercises to earlier
+    // flashcards.
     if (isPeeking) {
       const outcome = exerciseOutcomesRef.current.get(current)
       return wrap(
         <ExerciseLayout
           header={header}
+          statusBar={statusRow}
           actions={
-            <div className='flex items-center gap-2'>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={t`Previous card`}
-                disabled={displayedIndex <= 0}
-                onClick={() => setPeekBack((p) => p + 1)}
-              >
-                <ChevronLeft className='h-5 w-5' />
-              </Button>
-              <Button type='button' size='xl' variant='outline' className='flex-1' onClick={() => setPeekBack(0)}>
-                {t`Back to current card`}
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={t`Forward`}
-                onClick={() => setPeekBack((p) => Math.max(0, p - 1))}
-              >
-                <ChevronRight className='h-5 w-5' />
-              </Button>
-            </div>
+            <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
+              {t`Back to current card`}
+            </Button>
           }
         >
           <div className='flex flex-col items-center gap-4 py-10 text-center'>
@@ -716,6 +730,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       return wrap(
         <ExerciseLayout
           header={header}
+          statusBar={statusRow}
           actions={
             <Button type='button' size='xl' className='w-full' onClick={advance}>
               {t`Skip`}
@@ -735,6 +750,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       return wrap(
         <ExerciseLayout
           header={header}
+          statusBar={statusRow}
           actions={
             <Button type='button' variant='outline' size='xl' className='w-full' onClick={advance}>
               {t`Skip`}
@@ -759,6 +775,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           exerciseId={entry.exerciseId}
           payload={entry.payload}
           header={header}
+          statusBar={statusRow}
           copyVariant={copyVariant}
           onAnswered={handleAnswered}
           onNext={advance}
@@ -772,6 +789,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           exerciseId={entry.exerciseId}
           payload={entry.payload}
           header={header}
+          statusBar={statusRow}
           copyVariant={copyVariant}
           onAnswered={handleAnswered}
           onNext={advance}
@@ -784,6 +802,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         exerciseId={entry.exerciseId}
         payload={entry.payload}
         header={header}
+        statusBar={statusRow}
         onAnswered={handleAnswered}
         onNext={advance}
       />
@@ -800,24 +819,14 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // toast). Backing out before answering consumes nothing — the same exercise
   // re-serves on the next hint press.
   if (activeHint && activeHint.item === current) {
-    const positionInQueue = displayedIndex + 1
-    const hintHeader = (
-      <div className='flex items-center justify-between'>
-        <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
-          <Lightbulb className='h-3.5 w-3.5' />
-          {t`Hint`}
-        </span>
-        <span className='text-muted-foreground text-xs tabular-nums'>
-          {positionInQueue} / {queue.length}
-        </span>
-      </div>
-    )
+    const hintHeader = <ExerciseHeader icon={<Lightbulb className='h-3.5 w-3.5' />} label={t`Hint`} />
     return wrap(
       <McExercise
         key={activeHint.exerciseId}
         exerciseId={activeHint.exerciseId}
         payload={activeHint.payload}
         header={hintHeader}
+        statusBar={statusRow}
         nextLabel={t`Show answer`}
         skipLabel={t`Back to card`}
         onAnswered={(data) =>
@@ -859,29 +868,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       </div>
       <div className='bg-background border-t px-4 py-3'>
         <div className='mx-auto flex w-full max-w-xl flex-col gap-3'>
-          <div className='flex items-center justify-between gap-2'>
-            <Button
-              type='button'
-              variant='ghost'
-              size='icon'
-              aria-label={t`Previous card`}
-              disabled={displayedIndex <= 0}
-              onClick={() => setPeekBack((p) => p + 1)}
-            >
-              <ChevronLeft className='h-5 w-5' />
-            </Button>
-            {remainingCounts && <ReviewQueueStats counts={remainingCounts} />}
-            <Button
-              type='button'
-              variant='ghost'
-              size='icon'
-              aria-label={t`Forward`}
-              disabled={!isPeeking}
-              onClick={() => setPeekBack((p) => Math.max(0, p - 1))}
-            >
-              <ChevronRight className='h-5 w-5' />
-            </Button>
-          </div>
+          {statusRow}
           {isPeeking ? (
             <>
               {canRerate && peekRecord && (
