@@ -524,6 +524,15 @@ sets from the same column. Everything below "park" is shared.
 - **Exercise items** render through the shared exercise components
   (`McExercise` / `ProductionClozeExercise` / `UseInSentenceExercise`) with per-entry
   copy from `origin` (warm-up vs rehab); skips are non-consuming as in Strengthen.
+  Each `StrengthenExerciseEntry` carries the term's `translation`/`definition`
+  (straight off `user_lookups`), resolved client-side by `useTermMeaning` under the
+  flashcard-face rules (definition-only when L1 = L2 or Show translations is off).
+  That meaning powers an opt-in **Hint** button on the cloze types (`mc_cloze` +
+  `production_cloze`; free — no effect on gate credit; `mc_comprehension` is excluded
+  since its options ARE meaning paraphrases) and a post-answer `Meaning: …` reminder
+  on every type. Post-answer feedback (verdict / expected answer / meaning / rehab
+  progress) renders in `ExerciseLayout`'s pinned feedback slot above the status row —
+  always visible, height-capped — instead of the scrollable body.
   Flashcard items render `FlashcardFace` (the extracted presentational card body) +
   `RateButtons`.
 - **Flashcard hint**: on the un-flipped front of a live citation-meaning flashcard, a
