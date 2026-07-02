@@ -225,6 +225,21 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       ? { userLookupId: currentCard.userLookupId, pool: poolForCard(currentCard) }
       : null
   )
+  // Prefetch the upcoming item's hint availability while the current one is
+  // displayed: the query is cached by (userLookupId, pool), so when the queue
+  // advances the footer renders Hint + Show answer from its first frame
+  // instead of popping from a full-width Show answer a beat later. Redrill
+  // copies share the original card's cache key, so they're covered too.
+  const upcomingItem = queue?.[index + 1]
+  const upcomingHintCard =
+    upcomingItem?.type === 'flashcard' &&
+    upcomingItem.card.targetForm === '' &&
+    (upcomingItem.card.skill === 'meaning_recognition' || upcomingItem.card.skill === 'meaning_production')
+      ? upcomingItem.card
+      : null
+  useHintExercise(
+    upcomingHintCard ? { userLookupId: upcomingHintCard.userLookupId, pool: poolForCard(upcomingHintCard) } : null
+  )
 
   const advance = () => {
     setRevealed(false)
