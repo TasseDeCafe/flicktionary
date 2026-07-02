@@ -9,11 +9,19 @@ import type { ReactNode } from 'react'
 export const ExerciseLayout = ({
   header,
   children,
+  feedback,
   statusBar,
   actions,
 }: {
   header: ReactNode
   children: ReactNode
+  // Post-answer feedback (verdict, expected answer, meaning line, rehab
+  // progress) pinned into the bottom bar so it's always visible — in the
+  // scrollable body it routinely landed below the fold on small screens. The
+  // bar is bottom-anchored, so it grows upward: the status row and actions
+  // never move. Height-capped with internal scroll so long LLM feedback
+  // (use_in_sentence) can't eat the viewport.
+  feedback?: ReactNode
   // Optional queue-status row (peek chevrons + remaining-count chips) pinned
   // above the actions. The composed queue passes it so exercises and
   // flashcards share one status UI; the dedicated warmup/strengthen sessions
@@ -30,6 +38,7 @@ export const ExerciseLayout = ({
     </div>
     <div className='bg-background border-t px-4 py-3'>
       <div className='mx-auto flex w-full max-w-xl flex-col gap-3'>
+        {feedback && <div className='max-h-[35vh] overflow-y-auto'>{feedback}</div>}
         {statusBar}
         {actions}
       </div>

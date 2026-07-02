@@ -2011,6 +2011,8 @@ msgstr "Les surlignages sont enrichis au fur et à mesure de votre lecture. Le "
 "vocabulaire de la session est disponible immédiatement."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/mc-exercise.tsx
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint"
 msgstr "Indice"
 
@@ -2022,6 +2024,7 @@ msgstr "Indice utilisé — cette carte compte comme À revoir."
 msgid "Hint used — this card counts as Hard."
 msgstr "Indice utilisé — cette carte compte comme Difficile."
 
+#: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint:"
 msgstr "Indice :"
@@ -2326,6 +2329,10 @@ msgstr "Maîtrise — pratiquement tout compris avec aisance."
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx
 msgid "Maybe later"
 msgstr "Peut-être plus tard"
+
+#: apps/web/src/features/practice/components/strengthen-types.tsx
+msgid "Meaning:"
+msgstr "Signification :"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx

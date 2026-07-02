@@ -66,6 +66,8 @@ describe('toQueueItemDto', () => {
     pool: 'recognition',
     headword: 'estrella',
     sense: 'star (sky)',
+    translation: 'star',
+    definition: null,
     track: 'gate',
     status: 'ready',
     origin: 'onboarding',

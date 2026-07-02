@@ -13,6 +13,7 @@ import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
 import { TermActionsOverlay } from './term-actions-overlay'
 import type { ExerciseAnswerData, ExerciseCopyVariant } from './strengthen-types'
+import { useTermMeaning } from '../utils/use-term-meaning'
 
 const POLL_INTERVAL_MS = 4000
 
@@ -57,6 +58,7 @@ export const ExerciseSessionView = ({
   practiceSessionHard?: string[]
 }) => {
   const { t } = useLingui()
+  const resolveMeaning = useTermMeaning(targetLanguage)
   const [queue, setQueue] = useState<StrengthenExerciseEntry[] | null>(null)
   const [index, setIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
@@ -277,6 +279,7 @@ export const ExerciseSessionView = ({
                   key={current.exerciseId}
                   exerciseId={current.exerciseId}
                   payload={current.payload}
+                  meaning={resolveMeaning(current)}
                   header={header}
                   copyVariant={copyVariant}
                   onAnswered={handleAnswered}
@@ -290,6 +293,7 @@ export const ExerciseSessionView = ({
                   key={current.exerciseId}
                   exerciseId={current.exerciseId}
                   payload={current.payload}
+                  meaning={resolveMeaning(current)}
                   header={header}
                   copyVariant={copyVariant}
                   onAnswered={handleAnswered}
@@ -302,6 +306,7 @@ export const ExerciseSessionView = ({
                 key={current.exerciseId}
                 exerciseId={current.exerciseId}
                 payload={current.payload}
+                meaning={resolveMeaning(current)}
                 header={header}
                 onAnswered={handleAnswered}
                 onNext={handleNext}

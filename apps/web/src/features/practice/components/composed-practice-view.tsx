@@ -41,6 +41,7 @@ import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
 import type { ExerciseAnswerData, ExerciseCopyVariant } from './strengthen-types'
+import { useTermMeaning } from '../utils/use-term-meaning'
 
 const POLL_INTERVAL_MS = 4000
 
@@ -125,6 +126,7 @@ type ComposedPracticeViewProps = {
 // exercise placeholders in place, never appends.
 export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPracticeViewProps) => {
   const { t } = useLingui()
+  const resolveMeaning = useTermMeaning(targetLanguage)
   const navigate = useNavigate()
   const languageName = getLanguageName(targetLanguage)
   const close = () => void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage } })
@@ -789,6 +791,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           key={entry.exerciseId}
           exerciseId={entry.exerciseId}
           payload={entry.payload}
+          meaning={resolveMeaning(entry)}
           header={header}
           statusBar={statusRow}
           copyVariant={copyVariant}
@@ -803,6 +806,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           key={entry.exerciseId}
           exerciseId={entry.exerciseId}
           payload={entry.payload}
+          meaning={resolveMeaning(entry)}
           header={header}
           statusBar={statusRow}
           copyVariant={copyVariant}
@@ -816,6 +820,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         key={entry.exerciseId}
         exerciseId={entry.exerciseId}
         payload={entry.payload}
+        meaning={resolveMeaning(entry)}
         header={header}
         statusBar={statusRow}
         onAnswered={handleAnswered}
@@ -840,6 +845,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         key={activeHint.exerciseId}
         exerciseId={activeHint.exerciseId}
         payload={activeHint.payload}
+        meaning={resolveMeaning(card)}
         header={hintHeader}
         statusBar={statusRow}
         nextLabel={t`Show answer`}

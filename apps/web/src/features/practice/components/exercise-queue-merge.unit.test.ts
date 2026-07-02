@@ -8,6 +8,8 @@ const entry = (over: Partial<StrengthenExerciseEntry>): StrengthenExerciseEntry 
   pool: 'recognition',
   headword: 'w',
   sense: '',
+  translation: null,
+  definition: null,
   track: 'gate',
   status: 'generating',
   origin: 'onboarding',
