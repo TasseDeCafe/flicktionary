@@ -6,7 +6,7 @@ import { Button } from '@flicktionary/ui/components/button'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { ExerciseLayout } from './exercise-layout'
-import type { ExerciseAnswerData } from './strengthen-types'
+import { MeaningLine, type ExerciseAnswerData } from './strengthen-types'
 
 type UseInSentencePayload = Extract<StrengthenExercisePayload, { type: 'use_in_sentence' }>
 
@@ -17,6 +17,7 @@ type UseInSentencePayload = Extract<StrengthenExercisePayload, { type: 'use_in_s
 export const UseInSentenceExercise = ({
   exerciseId,
   payload,
+  meaning,
   header,
   statusBar,
   onAnswered,
@@ -24,6 +25,10 @@ export const UseInSentenceExercise = ({
 }: {
   exerciseId: string
   payload: UseInSentencePayload
+  // The term's resolved meaning line (see useTermMeaning), shown as a
+  // post-answer reminder. No hint gating here — the term is named in the task
+  // itself, so there is nothing to spoil.
+  meaning?: string | null
   header: ReactNode
   statusBar?: ReactNode
   onAnswered: (data: ExerciseAnswerData) => void
@@ -53,6 +58,26 @@ export const UseInSentenceExercise = ({
     <ExerciseLayout
       header={header}
       statusBar={statusBar}
+      feedback={
+        result && (
+          <div className='flex flex-col gap-3'>
+            <div
+              className={cn(
+                'flex items-start gap-2 text-sm',
+                result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'
+              )}
+            >
+              {result.correct ? (
+                <CircleCheck className='mt-0.5 h-4 w-4 shrink-0' />
+              ) : (
+                <MessageCircle className='mt-0.5 h-4 w-4 shrink-0' />
+              )}
+              <span>{result.feedback ?? (result.correct ? t`Nice!` : t`Keep practicing this one.`)}</span>
+            </div>
+            <MeaningLine meaning={meaning} />
+          </div>
+        )
+      }
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
@@ -95,22 +120,6 @@ export const UseInSentenceExercise = ({
         placeholder={t`Write your sentence…`}
         className='disabled:bg-muted resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />
-
-      {result && (
-        <div
-          className={cn(
-            'flex items-start gap-2 text-sm',
-            result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'
-          )}
-        >
-          {result.correct ? (
-            <CircleCheck className='mt-0.5 h-4 w-4 shrink-0' />
-          ) : (
-            <MessageCircle className='mt-0.5 h-4 w-4 shrink-0' />
-          )}
-          <span>{result.feedback ?? (result.correct ? t`Nice!` : t`Keep practicing this one.`)}</span>
-        </div>
-      )}
     </ExerciseLayout>
   )
 }

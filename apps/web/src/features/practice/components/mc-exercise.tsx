@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, CircleX } from 'lucide-react'
+import { CircleCheck, CircleX, Lightbulb } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
-import { RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
+import { MeaningLine, RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
 
 type McPayload = Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_comprehension' }>
 
@@ -18,6 +18,7 @@ type McPayload = Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_com
 export const McExercise = ({
   exerciseId,
   payload,
+  meaning,
   header,
   statusBar,
   copyVariant,
@@ -28,6 +29,12 @@ export const McExercise = ({
 }: {
   exerciseId: string
   payload: McPayload
+  // The term's resolved meaning line (see useTermMeaning). On mc_cloze it
+  // powers an opt-in Hint button — never shown unprompted, so the gate stays a
+  // fair test. mc_comprehension gets no hint (its options ARE meaning
+  // paraphrases, so the meaning is the answer); both types show the meaning as
+  // a post-answer reminder.
+  meaning?: string | null
   header: ReactNode
   statusBar?: ReactNode
   copyVariant?: ExerciseCopyVariant
@@ -42,6 +49,9 @@ export const McExercise = ({
   const { mutate: submitAnswer, isPending } = useSubmitExerciseAnswer()
   const [selected, setSelected] = useState<number | null>(null)
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
+  const [hintRevealed, setHintRevealed] = useState(false)
+
+  const hintAvailable = payload.type === 'mc_cloze' && !!meaning
 
   const handleSelect = (index: number) => {
     if (result || isPending) return
@@ -57,19 +67,64 @@ export const McExercise = ({
     )
   }
 
+  // flex-1 only when sharing a row with the Hint button — standalone in the
+  // bottom bar's column, flex-1 would zero the flex-basis and squash its height.
+  const skipButton = (inHintRow: boolean) => (
+    <Button
+      type='button'
+      variant='outline'
+      size='xl'
+      className={inHintRow ? 'flex-1' : 'w-full'}
+      disabled={isPending}
+      onClick={onNext}
+    >
+      {skipLabel ?? t`Skip`}
+    </Button>
+  )
+
   return (
     <ExerciseLayout
       header={header}
       statusBar={statusBar}
+      feedback={
+        result && (
+          <div className='flex flex-col gap-3'>
+            <div
+              className={cn(
+                'flex items-center gap-2 text-sm font-medium',
+                result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+              )}
+            >
+              {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
+              {result.correct ? t`Correct!` : t`Not quite.`}
+            </div>
+            <MeaningLine meaning={meaning} />
+            <RehabProgressNote data={result} copyVariant={copyVariant} />
+          </div>
+        )
+      }
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {nextLabel ?? t`Next`}
           </Button>
+        ) : hintAvailable && !hintRevealed ? (
+          <div className='flex gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='xl'
+              className='flex-1'
+              disabled={isPending}
+              onClick={() => setHintRevealed(true)}
+            >
+              <Lightbulb className='h-4 w-4' />
+              {t`Hint`}
+            </Button>
+            {skipButton(true)}
+          </div>
         ) : (
-          <Button type='button' variant='outline' size='xl' className='w-full' disabled={isPending} onClick={onNext}>
-            {skipLabel ?? t`Skip`}
-          </Button>
+          skipButton(false)
         )
       }
     >
@@ -80,6 +135,12 @@ export const McExercise = ({
           <p className='text-lg leading-relaxed'>{payload.sentence}</p>
           <p className='font-medium'>{payload.prompt}</p>
         </div>
+      )}
+
+      {hintRevealed && !result && meaning && (
+        <p className='text-muted-foreground text-sm'>
+          {t`Hint:`} {meaning}
+        </p>
       )}
 
       <div className='flex flex-col gap-2'>
@@ -106,21 +167,6 @@ export const McExercise = ({
           )
         })}
       </div>
-
-      {result && (
-        <div className='flex flex-col gap-3'>
-          <div
-            className={cn(
-              'flex items-center gap-2 text-sm font-medium',
-              result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
-            )}
-          >
-            {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
-            {result.correct ? t`Correct!` : t`Not quite.`}
-          </div>
-          <RehabProgressNote data={result} copyVariant={copyVariant} />
-        </div>
-      )}
     </ExerciseLayout>
   )
 }

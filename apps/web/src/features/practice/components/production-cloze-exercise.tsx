@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleCheck, CircleX } from 'lucide-react'
+import { CircleCheck, CircleX, Lightbulb } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
-import { RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
+import { MeaningLine, RehabProgressNote, type ExerciseAnswerData, type ExerciseCopyVariant } from './strengthen-types'
 
 type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'production_cloze' }>
 
@@ -18,6 +18,7 @@ type ProductionClozePayload = Extract<StrengthenExercisePayload, { type: 'produc
 export const ProductionClozeExercise = ({
   exerciseId,
   payload,
+  meaning,
   header,
   statusBar,
   copyVariant,
@@ -26,6 +27,10 @@ export const ProductionClozeExercise = ({
 }: {
   exerciseId: string
   payload: ProductionClozePayload
+  // The term's resolved meaning line (see useTermMeaning). Behind an opt-in
+  // Hint button — the payload's own generation-time hint is the fallback for
+  // terms whose lookup has neither translation nor definition.
+  meaning?: string | null
   header: ReactNode
   statusBar?: ReactNode
   copyVariant?: ExerciseCopyVariant
@@ -36,6 +41,10 @@ export const ProductionClozeExercise = ({
   const { mutate: submitAnswer, isPending } = useSubmitExerciseAnswer()
   const [text, setText] = useState('')
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
+  const [hintRevealed, setHintRevealed] = useState(false)
+
+  const hintText = meaning ?? payload.hint
+  const hintAvailable = !!hintText
 
   const handleSubmit = () => {
     const trimmed = text.trim()
@@ -55,6 +64,28 @@ export const ProductionClozeExercise = ({
     <ExerciseLayout
       header={header}
       statusBar={statusBar}
+      feedback={
+        result && (
+          <div className='flex flex-col gap-3'>
+            <div
+              className={cn(
+                'flex items-center gap-2 text-sm font-medium',
+                result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+              )}
+            >
+              {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
+              {result.correct ? t`Correct!` : t`Not quite.`}
+            </div>
+            {result.correctAnswer && !result.correct && (
+              <p className='text-sm'>
+                {t`Expected:`} <span className='font-semibold'>{result.correctAnswer}</span>
+              </p>
+            )}
+            <MeaningLine meaning={hintText} />
+            <RehabProgressNote data={result} copyVariant={copyVariant} />
+          </div>
+        )
+      }
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
@@ -71,17 +102,39 @@ export const ProductionClozeExercise = ({
             >
               {t`Check`}
             </Button>
-            <Button type='button' variant='outline' size='xl' className='w-full' disabled={isPending} onClick={onNext}>
-              {t`Skip`}
-            </Button>
+            <div className='flex gap-2'>
+              {hintAvailable && !hintRevealed && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='xl'
+                  className='flex-1'
+                  disabled={isPending}
+                  onClick={() => setHintRevealed(true)}
+                >
+                  <Lightbulb className='h-4 w-4' />
+                  {t`Hint`}
+                </Button>
+              )}
+              <Button
+                type='button'
+                variant='outline'
+                size='xl'
+                className='flex-1'
+                disabled={isPending}
+                onClick={onNext}
+              >
+                {t`Skip`}
+              </Button>
+            </div>
           </>
         )
       }
     >
       <BlankedSentence sentence={payload.sentence} blankStart={payload.blankStart} blankEnd={payload.blankEnd} />
-      {payload.hint && (
+      {hintRevealed && !result && hintText && (
         <p className='text-muted-foreground text-sm'>
-          {t`Hint:`} {payload.hint}
+          {t`Hint:`} {hintText}
         </p>
       )}
 
@@ -99,26 +152,6 @@ export const ProductionClozeExercise = ({
         spellCheck={false}
         className='disabled:bg-muted rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
       />
-
-      {result && (
-        <div className='flex flex-col gap-3'>
-          <div
-            className={cn(
-              'flex items-center gap-2 text-sm font-medium',
-              result.correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
-            )}
-          >
-            {result.correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
-            {result.correct ? t`Correct!` : t`Not quite.`}
-          </div>
-          {result.correctAnswer && !result.correct && (
-            <p className='text-sm'>
-              {t`Expected:`} <span className='font-semibold'>{result.correctAnswer}</span>
-            </p>
-          )}
-          <RehabProgressNote data={result} copyVariant={copyVariant} />
-        </div>
-      )}
     </ExerciseLayout>
   )
 }

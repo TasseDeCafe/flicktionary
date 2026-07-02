@@ -610,6 +610,12 @@ export const StrengthenExerciseEntrySchema = z.object({
   pool: PracticePoolSchema,
   headword: z.string(),
   sense: z.string(),
+  // The term's meaning — powers the opt-in Hint on cloze exercises and the
+  // post-answer reminder line. The client picks translation vs definition by
+  // the same rules as flashcard faces (definition-only when L1 = L2 or the
+  // Show-translations pref is off).
+  translation: z.string().nullable(),
+  definition: z.string().nullable(),
   track: z.enum(['gate', 'bonus']),
   status: z.enum(['ready', 'generating', 'failed']),
   // How the term got parked — picks the client copy ("warming up" vs "rehab")

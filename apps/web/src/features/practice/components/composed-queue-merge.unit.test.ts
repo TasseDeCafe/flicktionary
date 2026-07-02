@@ -12,6 +12,8 @@ const exercise = (over: Partial<StrengthenExerciseEntry>): StrengthenExerciseEnt
   pool: 'recognition',
   headword: 'w',
   sense: '',
+  translation: null,
+  definition: null,
   track: 'gate',
   status: 'generating',
   origin: 'onboarding',

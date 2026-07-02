@@ -207,6 +207,11 @@ export type StrengthenExerciseEntry = {
   pool: PracticePool
   headword: string
   sense: string
+  // The term's meaning, straight off user_lookups — the client renders it as
+  // the opt-in Hint on cloze exercises and as a post-answer reminder line
+  // (definition-only when the user's translations pref hides translations).
+  translation: string | null
+  definition: string | null
   track: 'gate' | 'bonus'
   status: 'ready' | 'generating' | 'failed'
   // How the term got parked — 'onboarding' (exercise-first warm-up) vs 'leech'
@@ -278,6 +283,8 @@ const placeholderEntry = (
   pool,
   headword: lookup.headword,
   sense: lookup.sense ?? '',
+  translation: lookup.translation,
+  definition: lookup.definition,
   track,
   status,
   origin,
@@ -301,6 +308,8 @@ const toEntry = (
     pool,
     headword: lookup.headword,
     sense: lookup.sense ?? '',
+    translation: lookup.translation,
+    definition: lookup.definition,
     track,
     status: 'ready',
     origin,

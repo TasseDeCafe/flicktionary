@@ -19,6 +19,18 @@ export type ExerciseAnswerData = {
 // exercise-first). They share the mechanic but read differently to the user.
 export type ExerciseCopyVariant = 'rehab' | 'warmup'
 
+// Post-answer meaning reminder shown in the exercise feedback area — the
+// answer is out, so naming the meaning can't spoil anything.
+export const MeaningLine = ({ meaning }: { meaning?: string | null }) => {
+  const { t } = useLingui()
+  if (!meaning) return null
+  return (
+    <p className='text-sm'>
+      <span className='text-muted-foreground'>{t`Meaning:`}</span> {meaning}
+    </p>
+  )
+}
+
 // "Day N of 3" / graduation note rendered under a gate exercise's result.
 // rehabCorrectDays is null for bonus exercises and non-parked terms.
 export const RehabProgressNote = ({
