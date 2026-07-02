@@ -1448,6 +1448,10 @@ msgstr "Version de l'extension"
 msgid "Failed to advance"
 msgstr "Échec de l'avancement"
 
+#: apps/web/src/features/admin/api/dev-tools-hooks.ts
+msgid "Failed to advance the practice clock"
+msgstr "Échec de l'avancement de l'horloge de pratique"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to complete onboarding"
 msgstr "Échec de la finalisation de l'intégration"

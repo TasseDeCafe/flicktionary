@@ -115,6 +115,7 @@ The web app follows opinionated UI idioms (hover/press states, `WizardShell`, st
 - Check typing with TS: pnpm check:types (executed from the root directory)
 - Check linting with ESLint: pnpm lint (executed from the root directory)
 - Find dead code (unused files / exports / dependencies): pnpm knip (from the root). Scope to one workspace with `pnpm knip --workspace apps/web`. Config lives in `knip.json`.
+- Time-travel practice data (test multi-day SRS flows like the 3-day warm-up/rehab graduation without waiting): `pnpm db:advance-day [--days N] [--email <email>]` from the root shifts every practice timestamp in the dev-tunnel DB backward — equivalent to the server day advancing, because all day logic compares stored values against Postgres `NOW()`/`CURRENT_DATE`. The same shift, scoped to your own account and usable in any environment, is the "Practice time travel" card in the web app's admin settings (test users only). Core logic: `apps/backend/src/transport/database/dev-tools/shift-practice-timestamps.ts`.
 
 # Finding and removing dead code (knip)
 
