@@ -20,6 +20,8 @@ export const McExercise = ({
   payload,
   header,
   copyVariant,
+  nextLabel,
+  skipLabel,
   onAnswered,
   onNext,
 }: {
@@ -27,6 +29,10 @@ export const McExercise = ({
   payload: McPayload
   header: ReactNode
   copyVariant?: ExerciseCopyVariant
+  // Action-bar label overrides for hosts where "Next"/"Skip" don't fit — the
+  // flashcard hint reads "Show answer"/"Back to card".
+  nextLabel?: string
+  skipLabel?: string
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
@@ -55,11 +61,11 @@ export const McExercise = ({
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
-            {t`Next`}
+            {nextLabel ?? t`Next`}
           </Button>
         ) : (
           <Button type='button' variant='outline' size='xl' className='w-full' disabled={isPending} onClick={onNext}>
-            {t`Skip`}
+            {skipLabel ?? t`Skip`}
           </Button>
         )
       }

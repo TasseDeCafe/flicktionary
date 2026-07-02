@@ -2,7 +2,7 @@ import type { DbUserLookupWithFacet, PracticePool } from '../../transport/databa
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { HARD_MAX_PRACTICE_NEW_TERMS } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import type { StrengthenExerciseEntry, ExerciseBankDependencies } from './exercise-bank'
-import { getStrengthenExercises } from './exercise-bank'
+import { getStrengthenExercises, warmHintExerciseBanksForFlashcards } from './exercise-bank'
 import { MAX_GATES_PER_COMPOSE, MAX_WARMUP_INTRO_PER_SESSION } from './leech-config'
 import { listReviewTerms } from './list-review-terms'
 import { clampPracticeSessionLimits } from './review-caps'
@@ -65,6 +65,10 @@ export const composePracticeQueue = async (params: {
   userId: string
   targetLanguage: string
   filter: ComposeQueueFilter
+  // Fire-and-forget hint-exercise generation for served flashcard terms whose
+  // bank has no hint-type slot. True only for the compose mutation — the
+  // serve-only refresh is polled and must never kick LLM work.
+  warmHintBanks?: boolean
   deps: ComposePracticeQueueDependencies
 }): Promise<ComposePracticeQueueResult> => {
   const { userId, targetLanguage, filter, deps } = params
@@ -227,6 +231,13 @@ export const composePracticeQueue = async (params: {
       })
       items.push(...optInNew.map((card) => ({ type: 'flashcard' as const, card })))
     }
+  }
+
+  if (params.warmHintBanks) {
+    void warmHintExerciseBanksForFlashcards({
+      cards: items.flatMap((item) => (item.type === 'flashcard' ? [item.card] : [])),
+      deps,
+    }).catch((err) => console.error('hint bank warmer threw', { err }))
   }
 
   return { items, dailyLimitReached }

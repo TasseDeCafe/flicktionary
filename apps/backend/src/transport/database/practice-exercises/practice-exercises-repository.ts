@@ -229,6 +229,37 @@ const countGateBankSlots = async (params: {
   }
 }
 
+// Per-term slot-status summary for ONE exercise type, in a single query.
+// Powers the compose-time hint warmer's gap detection: a term with no ready,
+// no live inflight, and no failed slot of the hint type needs a generation;
+// anything else is already served, cooking, or terminally failed. Stale
+// inflight slots (older than STALE_SLOT_SECONDS) count as absent so a crashed
+// worker doesn't block warming — reserveSlots reclaims them when the ensure
+// call runs. Terms with no rows at all are omitted from the result.
+const countSlotsByTermForType = async (params: {
+  userId: string
+  pool: PracticePool
+  type: ExerciseType
+  userLookupIds: string[]
+}): Promise<Array<{ user_lookup_id: string; ready: number; inflight: number; failed: number }>> => {
+  if (params.userLookupIds.length === 0) return []
+  return (await sql`
+    SELECT user_lookup_id,
+      COUNT(*) FILTER (WHERE status = 'ready')::int AS ready,
+      COUNT(*) FILTER (
+        WHERE status IN ('pending', 'generating')
+          AND created_at >= NOW() - make_interval(secs => ${STALE_SLOT_SECONDS})
+      )::int AS inflight,
+      COUNT(*) FILTER (WHERE status = 'failed')::int AS failed
+    FROM public.practice_exercises
+    WHERE user_id = ${params.userId}
+      AND pool = ${params.pool}
+      AND exercise_type = ${params.type}
+      AND user_lookup_id = ANY(${params.userLookupIds}::uuid[])
+    GROUP BY user_lookup_id
+  `) as Array<{ user_lookup_id: string; ready: number; inflight: number; failed: number }>
+}
+
 export interface PracticeExercisesRepositoryInterface {
   reserveSlots: (params: {
     userId: string
@@ -265,6 +296,12 @@ export interface PracticeExercisesRepositoryInterface {
     pool: PracticePool
     types: ExerciseType[]
   }) => Promise<{ inflight: number; failed: number; failedTypes: number }>
+  countSlotsByTermForType: (params: {
+    userId: string
+    pool: PracticePool
+    type: ExerciseType
+    userLookupIds: string[]
+  }) => Promise<Array<{ user_lookup_id: string; ready: number; inflight: number; failed: number }>>
 }
 
 export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterface => {
@@ -279,5 +316,6 @@ export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterf
     listBonusForTerms,
     countReady,
     countGateBankSlots,
+    countSlotsByTermForType,
   }
 }

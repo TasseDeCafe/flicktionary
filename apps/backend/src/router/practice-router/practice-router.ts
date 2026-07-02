@@ -31,6 +31,7 @@ import { rateTerm, type WithTransaction } from '../../service/practice/rate-term
 import { undoRating } from '../../service/practice/undo-rating'
 import {
   ensureExerciseBank,
+  getHintExercise,
   getStrengthenExercises,
   warmExerciseBank,
   type ExerciseBankDependencies,
@@ -519,6 +520,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         userId,
         targetLanguage: input.targetLanguage,
         filter: input.filter,
+        warmHintBanks: true,
         deps: composeDeps,
       })
       return {
@@ -538,6 +540,26 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
         deps: composeDeps,
       })
       return { data: { items: result.items.map((item) => toQueueItemDto(item)) } }
+    }),
+
+    getHintExercise: implementer.getHintExercise.handler(async ({ input, context }) => {
+      const userId = context.res.locals.userId
+      const exercise = await getHintExercise({
+        userId,
+        userLookupId: input.userLookupId,
+        pool: input.pool,
+        deps: exerciseBankDeps,
+      })
+      if (!exercise) return { data: { exercise: null } }
+      return {
+        data: {
+          exercise: {
+            exerciseId: exercise.exerciseId,
+            exerciseType: exercise.exerciseType,
+            payload: exercise.payload as never,
+          },
+        },
+      }
     }),
 
     submitExerciseAnswer: implementer.submitExerciseAnswer.handler(async ({ input, context, errors }) => {
@@ -644,11 +666,15 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       // Replenish the consumed slot in the background so the next attempt for
       // this term has a fresh exercise waiting. Skip on graduation — the term
       // is back in normal rotation and the remaining bank stays for a
-      // potential future re-park.
+      // potential future re-park. A rehab gate answer (rehabCorrectDays set)
+      // refills the full ladder — the escalating tiers need every type banked;
+      // a non-parked consume (flashcard hint, post-session bonus) refills only
+      // the consumed type, so a hint never fans out into whole-ladder LLM work.
       if (termLookup && !graduated) {
         void ensureExerciseBank({
           lookup: termLookup,
           pool: exercisePool,
+          types: rehabCorrectDays != null ? undefined : [exercise.exercise_type],
           deps: exerciseBankDeps,
         }).catch((err) => console.error('exercise bank refill threw', { userLookupId: exercise.user_lookup_id, err }))
       }
