@@ -1983,6 +1983,8 @@ msgstr "Highlights are enriched as you read. Session vocabulary is available "
 "immediately."
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/mc-exercise.tsx
+#: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint"
 msgstr "Hint"
 
@@ -1994,6 +1996,7 @@ msgstr "Hint used — this card counts as Again."
 msgid "Hint used — this card counts as Hard."
 msgstr "Hint used — this card counts as Hard."
 
+#: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint:"
 msgstr "Hint:"
@@ -2294,6 +2297,10 @@ msgstr "Mastery — virtually everything understood with ease."
 #: apps/web/src/features/billing/components/pricing-overlay-content.tsx
 msgid "Maybe later"
 msgstr "Maybe later"
+
+#: apps/web/src/features/practice/components/strengthen-types.tsx
+msgid "Meaning:"
+msgstr "Meaning:"
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
