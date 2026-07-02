@@ -514,11 +514,21 @@ sets from the same column. Everything below "park" is shared.
   re-appends a fresh queue item so the card resurfaces rateable. A peeked **exercise**
   is read-only (its answered/skipped outcome) — a consumed exercise can't be
   un-answered.
-- **Edit during practice**: a header kebab opens an actions menu for the displayed card;
-  `Edit term` deep-links to the focus view via `chunks.get`'s representative-card pointer
-  (`firstCardId`/`firstCardSessionId`, fetched lazily on menu open) with
-  `from=practice&practiceMode=flashcards`, so the focus view's close returns to a fresh
-  everyday composed queue (`practiceMode=read` returns to the reading route).
+- **Edit during practice**: a header kebab opens an actions menu (`TermActionsOverlay`) for
+  the term behind the displayed item — flashcard or exercise alike (an exercise entry
+  carries its own `userLookupId`/`pool`); `Edit term` deep-links to the focus view via
+  `chunks.get`'s representative-card pointer (`firstCardId`/`firstCardSessionId`, fetched
+  lazily on menu open) with `from=practice&practiceMode=flashcards`, so the focus view's
+  close returns to a fresh everyday composed queue (`practiceMode=read` returns to the
+  reading route). The dedicated Strengthen/Warm-up sessions (`ExerciseSessionView`) carry
+  the same kebab, passing `practiceMode: 'strengthen' | 'warmup'` + their route's re-entry
+  state (`practiceSessionHard` / `practiceStudySessionId`) so close re-enters the same
+  session (serving is read-only + consume-on-answer, so it re-serves the remaining work).
+  The kebab is **withheld while it could spoil an answer**: an unanswered cloze exercise
+  (the headword IS the cloze answer) or a live `generating` placeholder, which can swap in
+  place to a cloze on the next poll — the generating placeholder's body copy and exercise
+  header are headword-less for the same reason (terminally `failed` placeholders and peeked
+  never-swapped items still name the term).
 - Counter pills derive from the remaining local queue (`getRemainingCounts`), with redrill
   copies counted as Learning.
 - Landing/status lines compute servable work client-side from the due summary + per-language

@@ -39,9 +39,10 @@ export const FocusView = () => {
   const { t } = useLingui()
   const navigate = useNavigate()
   const { sessionId, cardId } = useParams({ from: '/_authenticated/_app/sessions/$sessionId/review/$cardId' })
-  const { from, source, practiceLang, practicePool, practiceMode } = useSearch({
-    from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
-  })
+  const { from, source, practiceLang, practicePool, practiceMode, practiceStudySessionId, practiceSessionHard } =
+    useSearch({
+      from: '/_authenticated/_app/sessions/$sessionId/review/$cardId',
+    })
   const fromVocabulary = from === 'vocabulary'
   const fromPractice = from === 'practice'
   // Practice & Vocabulary entries are language-wide views over kept chunks,
@@ -116,11 +117,36 @@ export const FocusView = () => {
   // language + pool so the back-route resolves to the sessionless review screen.
   const search = from
     ? fromPractice && practiceLang
-      ? { from, practiceLang, practicePool, practiceMode }
+      ? { from, practiceLang, practicePool, practiceMode, practiceStudySessionId, practiceSessionHard }
       : { from }
     : undefined
   const backToPractice = () => {
     if (!practiceLang) return
+    // Dedicated exercise sessions re-enter their own route: serving is
+    // resume-safe server-side (consume-on-answer + read-only serve), so the
+    // re-entered session picks up where the queue stood.
+    if (practiceMode === 'strengthen') {
+      void navigate({
+        to: '/practice/strengthen/$targetLanguage',
+        params: { targetLanguage: practiceLang },
+        search: { pool: practicePool ?? 'recognition', sessionHard: practiceSessionHard },
+      })
+      return
+    }
+    if (practiceMode === 'warmup') {
+      if (practiceStudySessionId) {
+        void navigate({
+          to: '/practice/warmup/$targetLanguage',
+          params: { targetLanguage: practiceLang },
+          search: { studySessionId: practiceStudySessionId },
+        })
+      } else {
+        // Warm-up can't re-enter without its session scope (hand-edited URL) —
+        // degrade to the language action screen.
+        void navigate({ to: '/practice/language/$targetLanguage', params: { targetLanguage: practiceLang } })
+      }
+      return
+    }
     // Flashcards live in the composed queue now; close lands on a fresh
     // everyday compose (the queue re-seeds from a fresh fetch anyway). A
     // reading-mode origin returns to the reading route, scope reset to

@@ -57,6 +57,9 @@ export const WarmupView = () => {
       backLabel={t`Back to ${languageName}`}
       pollExercises={pollExercises}
       onClose={close}
+      targetLanguage={targetLanguage}
+      practiceMode='warmup'
+      practiceStudySessionId={studySessionId}
     />
   )
 }

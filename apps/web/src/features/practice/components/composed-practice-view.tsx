@@ -20,7 +20,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { PracticeQueueFilter } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { useComposePracticeQueue, useRateTerm, useRefreshPracticeQueue, useUndoRating } from '../api/practice-hooks'
 import { FlashcardFace, poolForCard } from './flashcard-face'
-import { FlashcardActionsOverlay } from './flashcard-actions-overlay'
+import { TermActionsOverlay } from './term-actions-overlay'
 import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem } from './composed-queue-merge'
 import { ReviewQueueStats } from './review-queue-stats'
 import type { QueueCounts } from './review-counts'
@@ -126,6 +126,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // rate buttons until the chain settles).
   const [pendingRerate, setPendingRerate] = useState<ComposedQueueItem | null>(null)
   const [actionsOpen, setActionsOpen] = useState(false)
+  // Whether the live-index exercise has been answered — gates the header kebab
+  // on unanswered cloze exercises (see kebab derivation below).
+  const [currentAnswered, setCurrentAnswered] = useState(false)
 
   useEffect(() => {
     if (startedRef.current) return
@@ -170,6 +173,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   const advance = () => {
     setRevealed(false)
+    setCurrentAnswered(false)
     setIndex((i) => i + 1)
     indexRef.current += 1
   }
@@ -396,6 +400,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     indexRef.current = 0
     setPeekBack(0)
     setRevealed(false)
+    setCurrentAnswered(false)
     ratingRecordsRef.current.clear()
     exerciseOutcomesRef.current.clear()
     composeQueue(
@@ -409,9 +414,56 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     )
   }
 
-  const wrap = (children: React.ReactNode, rightSlot?: React.ReactNode) => (
-    <ModalScreen onClose={close} closeIcon='x' title={languageName} rightSlot={rightSlot}>
+  // The header kebab (Edit term) targets whichever term the displayed item
+  // drills — flashcard or exercise alike. It is withheld while it could spoil
+  // an answer (the menu title + focus view reveal the headword, which would let
+  // a gate be passed on a peeked answer): an unanswered cloze exercise (the
+  // headword IS the cloze answer — same rule as the exercise header's
+  // headerLeaksAnswer), or a 'generating' placeholder, which can swap in place
+  // to a cloze on the next poll. Peeked items are behind the live index, which
+  // the placeholder merge never touches — they already display their headword,
+  // so the kebab stays.
+  const couldSpoilClozeAnswer =
+    current?.type === 'exercise' &&
+    !isPeeking &&
+    !currentAnswered &&
+    (current.entry.status === 'generating' ||
+      current.entry.payload?.type === 'mc_cloze' ||
+      current.entry.payload?.type === 'production_cloze')
+  const actionsTerm =
+    current && !couldSpoilClozeAnswer ? (current.type === 'exercise' ? current.entry : current.card) : null
+  const actionsPool = current ? (current.type === 'exercise' ? current.entry.pool : poolForCard(current.card)) : null
+
+  const wrap = (children: React.ReactNode) => (
+    <ModalScreen
+      onClose={close}
+      closeIcon='x'
+      title={languageName}
+      rightSlot={
+        actionsTerm ? (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            aria-label={t`Term actions`}
+            onClick={() => setActionsOpen(true)}
+          >
+            <MoreVertical className='h-5 w-5' />
+          </Button>
+        ) : undefined
+      }
+    >
       {children}
+      {actionsTerm && actionsPool && (
+        <TermActionsOverlay
+          open={actionsOpen}
+          onOpenChange={setActionsOpen}
+          term={actionsTerm}
+          targetLanguage={targetLanguage}
+          pool={actionsPool}
+          practiceMode='flashcards'
+        />
+      )}
     </ModalScreen>
   )
 
@@ -507,7 +559,14 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   if (current.type === 'exercise') {
     const entry = current.entry
     const copyVariant = copyVariantFor(entry.origin)
-    const headerLeaksAnswer = entry.exerciseType === 'mc_cloze' || entry.exerciseType === 'production_cloze'
+    // A live 'generating' placeholder can swap in place to a cloze on the next
+    // poll (exerciseType is null until it's ready), so it must not name the
+    // headword either. Peeked placeholders are behind the live index and never
+    // swap, so naming is safe there (the peek body shows the headword anyway).
+    const headerLeaksAnswer =
+      entry.exerciseType === 'mc_cloze' ||
+      entry.exerciseType === 'production_cloze' ||
+      (entry.status === 'generating' && !isPeeking)
     const trackLabel = entry.track === 'gate' ? (copyVariant === 'warmup' ? t`Warm-up` : t`Rehab`) : t`Practice`
     const positionInQueue = displayedIndex + 1
     const totalItems = queue.length
@@ -587,6 +646,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
     const handleAnswered = (data: ExerciseAnswerData) => {
       exerciseOutcomesRef.current.set(current, data)
+      setCurrentAnswered(true)
     }
 
     if (entry.status === 'failed') {
@@ -610,7 +670,6 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
       )
     }
     if (entry.status === 'generating' || !entry.exerciseId || !entry.payload) {
-      const headword = entry.headword
       return wrap(
         <ExerciseLayout
           header={header}
@@ -623,7 +682,9 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           <div className='flex flex-col items-center gap-4 py-10 text-center'>
             <Hourglass className='text-muted-foreground h-8 w-8 animate-pulse' />
             <p className='text-muted-foreground text-sm'>
-              {t`An exercise for “${headword}” is still being prepared — it'll appear here automatically.`}
+              {/* Deliberately headword-less: this placeholder can swap in place
+                  to a cloze whose answer is the headword. */}
+              {t`Your next exercise is still being prepared — it'll appear here automatically.`}
             </p>
           </div>
         </ExerciseLayout>
@@ -678,12 +739,6 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // server would refuse the undo too; don't offer dead buttons).
   const peekRecord = isPeeking ? ratingRecordsRef.current.get(current) : undefined
   const canRerate = !!peekRecord && (!peekRecord.redrill || !ratingRecordsRef.current.has(peekRecord.redrill))
-
-  const actionsButton = (
-    <Button type='button' variant='ghost' size='icon' aria-label={t`Card actions`} onClick={() => setActionsOpen(true)}>
-      <MoreVertical className='h-5 w-5' />
-    </Button>
-  )
 
   return wrap(
     <div className='flex flex-1 flex-col overflow-hidden'>
@@ -742,14 +797,6 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           )}
         </div>
       </div>
-      <FlashcardActionsOverlay
-        open={actionsOpen}
-        onOpenChange={setActionsOpen}
-        term={card}
-        targetLanguage={targetLanguage}
-        pool={poolForCard(card)}
-      />
-    </div>,
-    actionsButton
+    </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleAlert, CircleCheck, Dumbbell, Flame, Hourglass } from 'lucide-react'
+import { CircleAlert, CircleCheck, Dumbbell, Flame, Hourglass, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
@@ -10,6 +10,7 @@ import { ExerciseLayout } from './exercise-layout'
 import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
+import { TermActionsOverlay } from './term-actions-overlay'
 import type { ExerciseAnswerData, ExerciseCopyVariant } from './strengthen-types'
 
 const POLL_INTERVAL_MS = 4000
@@ -30,6 +31,10 @@ export const ExerciseSessionView = ({
   backLabel,
   pollExercises,
   onClose,
+  targetLanguage,
+  practiceMode,
+  practiceStudySessionId,
+  practiceSessionHard,
 }: {
   title: string
   copyVariant: ExerciseCopyVariant
@@ -43,11 +48,21 @@ export const ExerciseSessionView = ({
   // on a failed poll (left for the next tick).
   pollExercises?: () => Promise<StrengthenExerciseEntry[] | null>
   onClose: () => void
+  targetLanguage: string
+  // Threaded into the header kebab's Edit-term deep-link so the focus view's
+  // close re-enters THIS session (serving is resume-safe server-side).
+  practiceMode: 'strengthen' | 'warmup'
+  practiceStudySessionId?: string
+  practiceSessionHard?: string[]
 }) => {
   const { t } = useLingui()
   const [queue, setQueue] = useState<StrengthenExerciseEntry[] | null>(null)
   const [index, setIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  // Whether the current exercise has been answered — gates the header kebab on
+  // unanswered cloze exercises (see kebab derivation below).
+  const [currentAnswered, setCurrentAnswered] = useState(false)
 
   // Seed the local queue from the parent's first load; later polls mutate the
   // local copy in place.
@@ -78,12 +93,29 @@ export const ExerciseSessionView = ({
 
   const handleAnswered = (data: ExerciseAnswerData) => {
     if (data.correct) setCorrectCount((n) => n + 1)
+    setCurrentAnswered(true)
   }
-  const handleNext = () => setIndex((i) => i + 1)
+  const handleNext = () => {
+    setCurrentAnswered(false)
+    setIndex((i) => i + 1)
+  }
 
   const current = queue?.[index] ?? null
   const total = queue?.length ?? 0
   const currentHeadword = current?.headword ?? ''
+
+  // The header kebab (Edit term) is withheld while it could spoil an answer
+  // (the menu title + focus view reveal the headword): an unanswered cloze
+  // exercise (the headword IS the cloze answer), or a 'generating' placeholder,
+  // which can swap in place to a cloze on the next poll. Same rule as the
+  // composed queue's kebab.
+  const couldSpoilClozeAnswer =
+    !!current &&
+    !currentAnswered &&
+    (current.status === 'generating' ||
+      current.payload?.type === 'mc_cloze' ||
+      current.payload?.type === 'production_cloze')
+  const actionsTerm = current && !couldSpoilClozeAnswer ? current : null
 
   const dailyLimitNote = dailyLimitReached ? (
     <div className='flex items-center justify-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800'>
@@ -93,7 +125,36 @@ export const ExerciseSessionView = ({
   ) : null
 
   return (
-    <ModalScreen onClose={onClose} closeIcon='x' title={title}>
+    <ModalScreen
+      onClose={onClose}
+      closeIcon='x'
+      title={title}
+      rightSlot={
+        actionsTerm ? (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            aria-label={t`Term actions`}
+            onClick={() => setActionsOpen(true)}
+          >
+            <MoreVertical className='h-5 w-5' />
+          </Button>
+        ) : undefined
+      }
+    >
+      {actionsTerm && (
+        <TermActionsOverlay
+          open={actionsOpen}
+          onOpenChange={setActionsOpen}
+          term={actionsTerm}
+          targetLanguage={targetLanguage}
+          pool={actionsTerm.pool}
+          practiceMode={practiceMode}
+          practiceStudySessionId={practiceStudySessionId}
+          practiceSessionHard={practiceSessionHard}
+        />
+      )}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {(isPending || queue === null) && !isError && <PracticeLoader label={t`Preparing exercises…`} />}
 
@@ -144,9 +205,14 @@ export const ExerciseSessionView = ({
             // The headword IS the answer for cloze types (it fills the blank),
             // so naming it in the header would give the exercise away. It's
             // fine for mc_comprehension (the term is visible in the sentence),
-            // use_in_sentence (the term is the task), and placeholders (no
-            // exercise content shown).
-            const headerLeaksAnswer = current.exerciseType === 'mc_cloze' || current.exerciseType === 'production_cloze'
+            // use_in_sentence (the term is the task), and terminally 'failed'
+            // placeholders (nothing will show). A 'generating' placeholder is
+            // NOT safe: it can swap in place to a cloze on the next poll
+            // (exerciseType is null until it's ready).
+            const headerLeaksAnswer =
+              current.exerciseType === 'mc_cloze' ||
+              current.exerciseType === 'production_cloze' ||
+              current.status === 'generating'
             const trackLabel =
               current.track === 'gate' ? (copyVariant === 'warmup' ? t`Warm-up` : t`Rehab`) : t`Practice`
             const header = (
@@ -197,7 +263,9 @@ export const ExerciseSessionView = ({
                   <div className='flex flex-col items-center gap-4 py-10 text-center'>
                     <Hourglass className='text-muted-foreground h-8 w-8 animate-pulse' />
                     <p className='text-muted-foreground text-sm'>
-                      {t`An exercise for “${currentHeadword}” is still being prepared — it'll appear here automatically.`}
+                      {/* Deliberately headword-less: this placeholder can swap
+                          in place to a cloze whose answer is the headword. */}
+                      {t`Your next exercise is still being prepared — it'll appear here automatically.`}
                     </p>
                   </div>
                 </ExerciseLayout>

@@ -277,9 +277,9 @@ msgstr "Compte supprimé"
 msgid "Actions for the selected vocabulary list."
 msgstr "Actions pour la liste de vocabulaire sélectionnée."
 
-#: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
-msgid "Actions for this card."
-msgstr "Actions pour cette carte."
+#: apps/web/src/features/practice/components/term-actions-overlay.tsx
+msgid "Actions for this term."
+msgstr "Actions pour ce terme."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 msgid "Actions for this vocabulary term."
@@ -448,18 +448,6 @@ msgstr "Une erreur est survenue lors de la gestion de votre abonnement."
 #: apps/web/src/features/removals/api/removals-hooks.ts
 msgid "An error occurred. Please try again."
 msgstr "Une erreur s'est produite. Veuillez réessayer."
-
-#: apps/web/src/features/practice/components/exercise-session-view.tsx
-msgid "An exercise for “{currentHeadword}” is still being prepared — it'll "
-"appear here automatically."
-msgstr "Un exercice pour « {currentHeadword} » est toujours en cours de "
-"préparation — il apparaîtra ici automatiquement."
-
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
-msgid "An exercise for “{headword}” is still being prepared — it'll appear here "
-"automatically."
-msgstr "Un exercice pour « {headword} » est en cours de préparation — il "
-"apparaîtra ici automatiquement."
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 msgid "An unexpected error occurred"
@@ -699,10 +687,6 @@ msgstr "Carte"
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Carte {cardPosition} sur {cardTotal}"
-
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
-msgid "Card actions"
-msgstr "Actions de la carte"
 
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Card not found."
@@ -1241,8 +1225,8 @@ msgstr "Facile"
 msgid "Edit note"
 msgstr "Modifier la note"
 
-#: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
 #: apps/web/src/features/practice/components/rate-sheet.tsx
+#: apps/web/src/features/practice/components/term-actions-overlay.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 msgid "Edit term"
 msgstr "Modifier le terme"
@@ -2724,8 +2708,8 @@ msgid "Open the Flicktionary extension popup to set your level for this "
 msgstr "Ouvrez la popup de l'extension Flicktionary pour définir votre niveau "
 "dans cette langue, puis importez à nouveau."
 
-#: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
 #: apps/web/src/features/practice/components/rate-sheet.tsx
+#: apps/web/src/features/practice/components/term-actions-overlay.tsx
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Ouvrir la vue focus pour modifier les champs, discuter ou générer une "
 "exploration complète."
@@ -3988,6 +3972,11 @@ msgstr "Target language codes for machine translation"
 msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Dites-nous ce que vous pensez ou décrivez tout problème rencontré..."
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Term actions"
+msgstr "Actions du terme"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Term deleted"
 msgstr "Terme supprimé"
@@ -4728,6 +4717,13 @@ msgstr "Votre niveau en {languageName}"
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 msgid "Your name"
 msgstr "Votre nom"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Your next exercise is still being prepared — it'll appear here "
+"automatically."
+msgstr "Votre prochain exercice est encore en cours de préparation — il "
+"apparaîtra ici automatiquement."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
