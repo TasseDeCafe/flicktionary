@@ -30,6 +30,7 @@
     "sync-env": "./apps/native/scripts/sync-env-if-changed.sh",
     "sync-env:force": "pnpm --filter native sync-env",
     "db:reset": "pnpm --filter @flicktionary/backend db:dev:tunnel:reset",
+    "db:advance-day": "pnpm --filter @flicktionary/backend db:advance-day",
     "db:wipe": "pnpm --filter @flicktionary/backend db:dev:tunnel:wipe",
     "db:migrate": "pnpm --filter @flicktionary/backend db:dev:tunnel:migrate",
     "prepare": "husky",
