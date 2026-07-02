@@ -1389,10 +1389,6 @@ msgstr "Exemples"
 msgid "Exercise answers can't be changed."
 msgstr "Les réponses aux exercices ne peuvent pas être modifiées."
 
-#: apps/web/src/features/practice/components/review-queue-stats.tsx
-msgid "Exercises"
-msgstr "Exercices"
-
 #: apps/web/src/features/practice/components/custom-practice-overlay.tsx
 msgid "Exercises only"
 msgstr "Exercices uniquement"
@@ -4001,6 +3997,22 @@ msgstr "Terme supprimé"
 #: apps/web/src/features/practice/components/reading-history-view.tsx
 msgid "terms"
 msgstr "termes"
+
+#: apps/web/src/features/practice/components/review-queue-stats.tsx
+msgid "Terms coming back for their scheduled review."
+msgstr "Termes à réviser selon le calendrier prévu."
+
+#: apps/web/src/features/practice/components/review-queue-stats.tsx
+msgid "Terms you're meeting for the first time, including warm-up exercises for "
+"freshly added terms."
+msgstr "Termes que vous rencontrez pour la première fois, y compris les "
+"exercices d'échauffement pour les termes nouvellement ajoutés."
+
+#: apps/web/src/features/practice/components/review-queue-stats.tsx
+msgid "Terms you're still working on: recently introduced, recently missed, or "
+"in rehab exercises."
+msgstr "Termes sur lesquels vous travaillez encore : récemment introduits, "
+"récemment manqués ou en exercices de révision."
 
 #: apps/native/src/features/admin/components/admin-settings-view.tsx
 msgid "Test Backend Sentry Message"
