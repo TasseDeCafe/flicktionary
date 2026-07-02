@@ -40,6 +40,9 @@ export const StrengthenView = () => {
       isError={isError}
       backLabel={t`Back to ${languageName}`}
       onClose={close}
+      targetLanguage={targetLanguage}
+      practiceMode='strengthen'
+      practiceSessionHard={sessionHard}
     />
   )
 }
