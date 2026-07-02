@@ -19,6 +19,7 @@ export const McExercise = ({
   exerciseId,
   payload,
   header,
+  statusBar,
   copyVariant,
   nextLabel,
   skipLabel,
@@ -28,6 +29,7 @@ export const McExercise = ({
   exerciseId: string
   payload: McPayload
   header: ReactNode
+  statusBar?: ReactNode
   copyVariant?: ExerciseCopyVariant
   // Action-bar label overrides for hosts where "Next"/"Skip" don't fit — the
   // flashcard hint reads "Show answer"/"Back to card".
@@ -58,6 +60,7 @@ export const McExercise = ({
   return (
     <ExerciseLayout
       header={header}
+      statusBar={statusBar}
       actions={
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>

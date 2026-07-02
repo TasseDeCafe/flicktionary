@@ -3,13 +3,14 @@ import type {
   PracticePool,
 } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 
+// Buckets follow the learner's mental model (learning stage), not the render
+// type: in a composed queue a warm-up gate counts as `new` (it IS the term's
+// first encounter) and a rehab gate as `learning` — there is no separate
+// exercises bucket.
 export type QueueCounts = {
   new: number
   learning: number
   review: number
-  // Gate exercises left in a composed queue. Absent on flashcard/reading-only
-  // surfaces (the stats row hides the pill when undefined).
-  exercises?: number
 }
 
 // Drifting New/Learning/Review counts for a (language, pool), derived from the

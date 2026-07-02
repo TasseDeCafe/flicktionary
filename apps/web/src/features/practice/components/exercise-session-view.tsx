@@ -6,6 +6,7 @@ import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { mergePlaceholders } from './exercise-queue-merge'
 import { PracticeLoader } from './practice-loader'
+import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
 import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
@@ -215,17 +216,16 @@ export const ExerciseSessionView = ({
               current.status === 'generating'
             const trackLabel =
               current.track === 'gate' ? (copyVariant === 'warmup' ? t`Warm-up` : t`Rehab`) : t`Practice`
+            // This queue is static and exercises-only, so a position counter
+            // is honest here (unlike the composed queue, which grows with
+            // Again-redrills and shows remaining-count chips instead).
             const header = (
-              <div className='flex items-center justify-between'>
-                <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
-                  <Dumbbell className='h-3.5 w-3.5' />
-                  {trackLabel}
-                  {!headerLeaksAnswer && <> · {current.headword}</>}
-                </span>
-                <span className='text-muted-foreground text-xs tabular-nums'>
-                  {index + 1} / {total}
-                </span>
-              </div>
+              <ExerciseHeader
+                icon={<Dumbbell className='h-3.5 w-3.5' />}
+                label={trackLabel}
+                headword={headerLeaksAnswer ? null : current.headword}
+                counter={`${index + 1} / ${total}`}
+              />
             )
 
             // Terminal failure: generation is exhausted for this term — don't
