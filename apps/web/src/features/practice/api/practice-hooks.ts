@@ -110,15 +110,32 @@ export const useRefreshPracticeQueue = () => {
 }
 
 // Grade one exercise answer. Invalidates the landing counts — a correct gate
-// answer can advance rehab (and graduation changes parked/due counts).
+// answer can advance rehab (and graduation changes parked/due counts) — and
+// every hint-exercise query: answering consumes the exercise, so a cached
+// hint serve would submit against a dead exerciseId.
 export const useSubmitExerciseAnswer = () => {
   const { t } = useLingui()
   return useMutation(
     orpcQuery.practice.submitExerciseAnswer.mutationOptions({
       meta: {
-        invalidates: [orpcQuery.practice.dueSummary.key()],
+        invalidates: [orpcQuery.practice.dueSummary.key(), orpcQuery.practice.getHintExercise.key()],
         errorMessage: t`Failed to submit answer`,
       },
+    })
+  )
+}
+
+// One ready hint exercise for the flashcard currently shown (bank-first; the
+// server may kick a background generation on a miss but never blocks on it).
+// Availability is best-effort: a null exercise or a failed check just hides
+// the Hint button, so no error toast.
+export const useHintExercise = (params: { userLookupId: string; pool: PracticePool } | null) => {
+  return useQuery(
+    orpcQuery.practice.getHintExercise.queryOptions({
+      input: params ?? { userLookupId: '', pool: 'recognition' },
+      enabled: params != null,
+      select: (response) => response.data.exercise,
+      meta: { showErrorToast: false },
     })
   )
 }

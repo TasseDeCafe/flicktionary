@@ -584,6 +584,10 @@ msgid "Back to {languageName}"
 msgstr "Back to {languageName}"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Back to card"
+msgstr "Back to card"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Back to current card"
 msgstr "Back to current card"
 
@@ -854,6 +858,7 @@ msgstr "Context (optional)"
 #: apps/native/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/auth/components/login-email-view.tsx
 #: apps/web/src/features/onboarding/components/onboarding-view.tsx
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 #: apps/web/src/features/sessions/components/new-text-session-wizard.tsx
 #: apps/web/src/features/vocabulary/components/new-adhoc-card-wizard.tsx
@@ -1980,6 +1985,18 @@ msgid "Highlights are enriched as you read. Session vocabulary is available "
 "immediately."
 msgstr "Highlights are enriched as you read. Session vocabulary is available "
 "immediately."
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Hint"
+msgstr "Hint"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Hint used — this card counts as Again."
+msgstr "Hint used — this card counts as Again."
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+msgid "Hint used — this card counts as Hard."
+msgstr "Hint used — this card counts as Hard."
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 msgid "Hint:"

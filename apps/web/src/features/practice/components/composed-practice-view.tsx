@@ -11,14 +11,24 @@ import {
   Dumbbell,
   Flame,
   Hourglass,
+  Lightbulb,
   MoreVertical,
 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
-import type { PracticeQueueFilter } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
-import { useComposePracticeQueue, useRateTerm, useRefreshPracticeQueue, useUndoRating } from '../api/practice-hooks'
+import type {
+  PracticeQueueFilter,
+  StrengthenExercisePayload,
+} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import {
+  useComposePracticeQueue,
+  useHintExercise,
+  useRateTerm,
+  useRefreshPracticeQueue,
+  useUndoRating,
+} from '../api/practice-hooks'
 import { FlashcardFace, poolForCard } from './flashcard-face'
 import { TermActionsOverlay } from './term-actions-overlay'
 import { mergeComposedPlaceholders, toComposedQueueItem, type ComposedQueueItem } from './composed-queue-merge'
@@ -45,6 +55,25 @@ type RatingRecord = {
   rating: RateValue
   eventId: string
   redrill: ComposedQueueItem | null
+}
+
+// The MC exercise a pressed Hint swapped in for the current flashcard,
+// snapshotted from the hint query so a background refetch can't change the
+// exercise mid-interaction. Keyed to the queue item (object identity) so a
+// stale hint from a previous card is never honored.
+type ActiveHint = {
+  item: ComposedQueueItem
+  exerciseId: string
+  payload: Extract<StrengthenExercisePayload, { type: 'mc_cloze' | 'mc_comprehension' }>
+}
+
+// The graded outcome of a hint: the rating it locks in (correct → 'hard',
+// wrong → 'again'). The exercise is consumed at this point; Continue applies
+// the rating through the normal handleRate machinery.
+type HintOutcome = {
+  item: ComposedQueueItem
+  correct: boolean
+  rating: RateValue
 }
 
 const getRemainingCounts = (queue: ComposedQueueItem[], index: number): QueueCounts =>
@@ -129,6 +158,11 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // Whether the live-index exercise has been answered — gates the header kebab
   // on unanswered cloze exercises (see kebab derivation below).
   const [currentAnswered, setCurrentAnswered] = useState(false)
+  // Flashcard hint: the MC exercise currently swapped in for the live card,
+  // and the locked-in rating once it's answered (correct → hard, wrong →
+  // again). Both are keyed to the queue item and cleared on advance.
+  const [activeHint, setActiveHint] = useState<ActiveHint | null>(null)
+  const [hintOutcome, setHintOutcome] = useState<HintOutcome | null>(null)
 
   useEffect(() => {
     if (startedRef.current) return
@@ -171,9 +205,27 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   const displayedIndex = index - peekBack
   const current = queue?.[displayedIndex]
 
+  // A hint only exists for the LIVE, unrevealed flashcard of a citation
+  // MEANING facet — the exercise bank tests meaning and has no facet identity,
+  // so pronunciation/form cards never offer one (same restriction as leech
+  // parking). The query is availability-only: null hides the button.
+  const currentCard = !isPeeking && current?.type === 'flashcard' ? current.card : null
+  const hintEligible =
+    currentCard != null &&
+    !revealed &&
+    currentCard.targetForm === '' &&
+    (currentCard.skill === 'meaning_recognition' || currentCard.skill === 'meaning_production')
+  const { data: hintExercise } = useHintExercise(
+    hintEligible && !activeHint && !hintOutcome
+      ? { userLookupId: currentCard.userLookupId, pool: poolForCard(currentCard) }
+      : null
+  )
+
   const advance = () => {
     setRevealed(false)
     setCurrentAnswered(false)
+    setActiveHint(null)
+    setHintOutcome(null)
     setIndex((i) => i + 1)
     indexRef.current += 1
   }
@@ -401,6 +453,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     setPeekBack(0)
     setRevealed(false)
     setCurrentAnswered(false)
+    setActiveHint(null)
+    setHintOutcome(null)
     ratingRecordsRef.current.clear()
     exerciseOutcomesRef.current.clear()
     composeQueue(
@@ -430,8 +484,16 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     (current.entry.status === 'generating' ||
       current.entry.payload?.type === 'mc_cloze' ||
       current.entry.payload?.type === 'production_cloze')
+  // Same rule for an unanswered flashcard-hint cloze: a production card hides
+  // its headword, and the hint's mc_cloze answer IS the headword.
+  const couldSpoilHintAnswer =
+    activeHint != null && activeHint.item === current && hintOutcome == null && activeHint.payload.type === 'mc_cloze'
   const actionsTerm =
-    current && !couldSpoilClozeAnswer ? (current.type === 'exercise' ? current.entry : current.card) : null
+    current && !couldSpoilClozeAnswer && !couldSpoilHintAnswer
+      ? current.type === 'exercise'
+        ? current.entry
+        : current.card
+      : null
   const actionsPool = current ? (current.type === 'exercise' ? current.entry.pool : poolForCard(current.card)) : null
 
   const wrap = (children: React.ReactNode) => (
@@ -730,6 +792,54 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
 
   // ----- Flashcard items. -----
   const card = current.card
+
+  // Hint mode: the MC exercise swapped in for the live card. Answering
+  // consumes the exercise and locks the rating (correct → hard, wrong →
+  // again); "Show answer" then reveals the card back, where Continue applies
+  // it through the normal handleRate machinery (redrill, records, leech
+  // toast). Backing out before answering consumes nothing — the same exercise
+  // re-serves on the next hint press.
+  if (activeHint && activeHint.item === current) {
+    const positionInQueue = displayedIndex + 1
+    const hintHeader = (
+      <div className='flex items-center justify-between'>
+        <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase'>
+          <Lightbulb className='h-3.5 w-3.5' />
+          {t`Hint`}
+        </span>
+        <span className='text-muted-foreground text-xs tabular-nums'>
+          {positionInQueue} / {queue.length}
+        </span>
+      </div>
+    )
+    return wrap(
+      <McExercise
+        key={activeHint.exerciseId}
+        exerciseId={activeHint.exerciseId}
+        payload={activeHint.payload}
+        header={hintHeader}
+        nextLabel={t`Show answer`}
+        skipLabel={t`Back to card`}
+        onAnswered={(data) =>
+          setHintOutcome({ item: current, correct: data.correct, rating: data.correct ? 'hard' : 'again' })
+        }
+        onNext={() => {
+          setActiveHint(null)
+          if (hintOutcome?.item === current) setRevealed(true)
+        }}
+      />
+    )
+  }
+
+  // Only an MC payload can render as a hint; the server only serves MC types
+  // here, so this narrowing is a type guard, not a filter.
+  const servableHint =
+    hintExercise != null &&
+    (hintExercise.payload.type === 'mc_cloze' || hintExercise.payload.type === 'mc_comprehension')
+      ? { exerciseId: hintExercise.exerciseId, payload: hintExercise.payload }
+      : null
+  const currentHintOutcome = hintOutcome && hintOutcome.item === current ? hintOutcome : null
+
   // Peeked cards are always shown fully (front + back), read-only.
   const showBack = revealed || isPeeking
 
@@ -789,7 +899,45 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
               </Button>
             </>
           ) : showBack ? (
-            <RateButtons onSelect={handleRate} />
+            currentHintOutcome ? (
+              // The hint fixed the rating; the back is for studying, not
+              // re-grading — a single Continue applies it and advances.
+              <div className='flex flex-col gap-1.5'>
+                <p className='text-muted-foreground text-center text-xs'>
+                  {currentHintOutcome.correct
+                    ? t`Hint used — this card counts as Hard.`
+                    : t`Hint used — this card counts as Again.`}
+                </p>
+                <Button
+                  type='button'
+                  size='xl'
+                  className='w-full'
+                  onClick={() => handleRate(currentHintOutcome.rating)}
+                >
+                  {t`Continue`}
+                </Button>
+              </div>
+            ) : (
+              <RateButtons onSelect={handleRate} />
+            )
+          ) : servableHint ? (
+            <div className='flex gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                size='xl'
+                className='flex-1'
+                onClick={() =>
+                  setActiveHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
+                }
+              >
+                <Lightbulb className='h-4 w-4' />
+                {t`Hint`}
+              </Button>
+              <Button type='button' size='xl' className='flex-1' onClick={() => setRevealed(true)}>
+                {t`Show answer`}
+              </Button>
+            </div>
           ) : (
             <Button type='button' size='xl' className='w-full' onClick={() => setRevealed(true)}>
               {t`Show answer`}

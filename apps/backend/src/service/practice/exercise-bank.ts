@@ -13,6 +13,7 @@ import type { UsersRepositoryInterface } from '../../transport/database/users/us
 import type { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import {
   CITATION_FORM,
+  poolForSkill,
   type StudyFacetsRepositoryInterface,
 } from '../../transport/database/study-facets/study-facets-repository'
 import {
@@ -23,7 +24,7 @@ import {
 } from '../../transport/third-party/anthropic/passes/generate-exercise-pass'
 import { verifyExercisePass } from '../../transport/third-party/anthropic/passes/verify-exercise-pass'
 import { getLanguageMode } from '../user-prefs/language-mode'
-import { MAX_GEN_ATTEMPTS } from './leech-config'
+import { MAX_GEN_ATTEMPTS, MAX_HINT_WARMS_PER_COMPOSE } from './leech-config'
 import { gateTypeForTier, rehabCorrectDaysFor } from './rehab'
 
 export type ExerciseBankDependencies = {
@@ -48,6 +49,17 @@ const requiredExerciseTypes = (pool: PracticePool): ExerciseType[] =>
 // is still cooking or terminally exhausted.
 const gateCapableTypes = (pool: PracticePool): ExerciseType[] =>
   requiredExerciseTypes(pool).filter((type) => type !== 'use_in_sentence')
+
+// The flashcard-hint exercise type per pool, chosen to never spoil the card it
+// accompanies: a recognition card's front already shows the headword, so
+// mc_cloze (whose answer IS the headword) would be trivially solvable —
+// a comprehension question tests the meaning instead. A production card hides
+// the headword, so mc_cloze is exactly the recall→recognition downgrade a hint
+// should be (mc_comprehension's sentence would leak the headword). Both types
+// are already part of their pool's required ladder, so banked exercises from
+// warm-up/rehab serve hints for free.
+export const hintExerciseTypeForPool = (pool: PracticePool): ExerciseType =>
+  pool === 'recognition' ? 'mc_comprehension' : 'mc_cloze'
 
 const toTermInput = (lookup: DbUserLookup): ExerciseTermInput => ({
   headword: lookup.headword,
@@ -151,6 +163,10 @@ const runExerciseGenerationForSlot = async (params: {
 export const ensureExerciseBank = async (params: {
   lookup: DbUserLookup
   pool: PracticePool
+  // Restrict the top-up to a subset of the pool's ladder — e.g. refilling just
+  // the consumed type after a non-rehab (hint/bonus) answer, or warming just
+  // the hint type at compose time. Defaults to the full ladder.
+  types?: ExerciseType[]
   deps: ExerciseBankDependencies
 }): Promise<void> => {
   const { lookup, pool, deps } = params
@@ -159,7 +175,7 @@ export const ensureExerciseBank = async (params: {
     userLookupId: lookup.id,
     targetLanguage: lookup.target_language,
     pool,
-    types: requiredExerciseTypes(pool),
+    types: params.types ?? requiredExerciseTypes(pool),
   })
   for (const slot of fresh) {
     void runExerciseGenerationForSlot({ slot, lookup, deps }).catch((err) =>
@@ -414,4 +430,96 @@ export const getStrengthenExercises = async (params: {
   }
 
   return entries
+}
+
+export type HintExercise = {
+  exerciseId: string
+  exerciseType: ExerciseType
+  payload: Record<string, unknown>
+}
+
+// One ready hint exercise for a flashcard term, bank-first. Serving is
+// read-only (consume-on-answer keeps refresh/abandon safe — answering through
+// submitExerciseAnswer is what consumes it), and the payload is stripped of
+// answer fields like every served exercise. A miss kicks a background top-up
+// of just the hint type as a backstop for terms the compose-time warmer hasn't
+// reached — unless that type already failed terminally for this term (the
+// gate serve's stop-re-reserving-doomed-slots rule).
+export const getHintExercise = async (params: {
+  userId: string
+  userLookupId: string
+  pool: PracticePool
+  deps: ExerciseBankDependencies
+}): Promise<HintExercise | null> => {
+  const { userId, userLookupId, pool, deps } = params
+  const lookup = await deps.userLookupsRepository.findByIdForUser(userLookupId, userId)
+  if (!lookup || lookup.deleted_at != null) return null
+
+  const type = hintExerciseTypeForPool(pool)
+  const exercise = await deps.practiceExercisesRepository.selectNextExercise({
+    userLookupId,
+    pool,
+    gateEligible: true,
+    type,
+  })
+  if (exercise && exercise.payload != null) {
+    return {
+      exerciseId: exercise.id,
+      exerciseType: exercise.exercise_type,
+      payload: stripExercisePayload(exercise.exercise_type, exercise.payload as Record<string, unknown>),
+    }
+  }
+
+  const bank = await deps.practiceExercisesRepository.countGateBankSlots({ userLookupId, pool, types: [type] })
+  if (bank.inflight === 0 && bank.failedTypes === 0) {
+    void ensureExerciseBank({ lookup, pool, types: [type], deps })
+  }
+  return null
+}
+
+// Fire-and-forget hint-bank warmer for the composed queue's flashcards, so
+// hints are ready by the time their card comes up. Bank-first economy: only
+// citation MEANING facets get hints (the exercise bank tests meaning and has
+// no facet identity, so pronunciation/form flashcards are excluded — same
+// restriction as leech parking), and only terms with NO hint-type slot at all
+// get a generation — banked exercises are reused, in-flight slots are left
+// cooking, terminally failed types are never hammered, and the per-compose cap
+// bounds LLM fan-out (uncovered terms get warmed by a later compose or the
+// serve-miss backstop in getHintExercise).
+export const warmHintExerciseBanksForFlashcards = async (params: {
+  cards: DbUserLookupWithFacet[]
+  deps: ExerciseBankDependencies
+}): Promise<void> => {
+  const { cards, deps } = params
+  let warmBudget = MAX_HINT_WARMS_PER_COMPOSE
+  for (const pool of ['production', 'recognition'] as const) {
+    if (warmBudget <= 0) return
+    const poolCards = cards.filter(
+      (card) =>
+        card.target_form === CITATION_FORM &&
+        (card.skill === 'meaning_recognition' || card.skill === 'meaning_production') &&
+        poolForSkill(card.skill) === pool
+    )
+    if (poolCards.length === 0) continue
+    const type = hintExerciseTypeForPool(pool)
+    const slotCounts = new Map(
+      (
+        await deps.practiceExercisesRepository.countSlotsByTermForType({
+          userId: poolCards[0]!.user_id,
+          pool,
+          type,
+          userLookupIds: poolCards.map((card) => card.id),
+        })
+      ).map((row) => [row.user_lookup_id, row])
+    )
+    for (const card of poolCards) {
+      if (warmBudget <= 0) return
+      const counts = slotCounts.get(card.id)
+      if (counts && (counts.ready > 0 || counts.inflight > 0 || counts.failed > 0)) continue
+      warmBudget -= 1
+      void ensureExerciseBank({ lookup: card, pool, types: [type], deps }).catch((err) =>
+        console.error('hint bank warm-up threw', { userLookupId: card.id, err })
+      )
+    }
+  }
 }

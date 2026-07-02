@@ -32,6 +32,11 @@ export const MAX_GEN_ATTEMPTS = 3
 export const MAX_WARMUP_INTRO_PER_SESSION = 10
 export const MAX_GATES_PER_COMPOSE = 20
 
+// How many hint-exercise generations one compose may kick off for flashcard
+// terms whose bank has no hint-type row (see warmHintExerciseBanksForFlashcards).
+// Terms past the cap get warmed by a later compose or by the serve-miss backstop.
+export const MAX_HINT_WARMS_PER_COMPOSE = 20
+
 // Damerau-Levenshtein tolerance for typed production-cloze answers.
 export const PRODUCTION_CLOZE_MAX_EDIT_DISTANCE = 1
 

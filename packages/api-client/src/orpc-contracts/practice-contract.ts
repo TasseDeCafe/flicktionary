@@ -4,6 +4,7 @@ import { BackendErrorResponseSchema } from './common/error-response-schema'
 import {
   DEFAULT_PRACTICE_QUEUE_FILTER,
   ExerciseAnswerSchema,
+  ExerciseTypeSchema,
   FacetSkillSchema,
   GrammarIpaBagSchema,
   PracticeDueSummaryEntrySchema,
@@ -16,6 +17,7 @@ import {
   ReviewScopeSchema,
   ReviewTermSchema,
   StrengthenExerciseEntrySchema,
+  StrengthenExercisePayloadSchema,
 } from './common/flicktionary-schemas'
 
 export const practiceContract = {
@@ -360,6 +362,39 @@ export const practiceContract = {
       })
     )
     .output(z.object({ data: z.object({ items: z.array(PracticeQueueItemSchema) }) })),
+
+  // One ready hint exercise for a flashcard term, bank-first (no generation in
+  // the request path — a miss only kicks a background top-up). Powers the
+  // flashcard Hint button: an MC exercise whose type never spoils the card
+  // (recognition → mc_comprehension, production → mc_cloze). Answering goes
+  // through the normal submitExerciseAnswer (which consumes the exercise);
+  // `exercise` is null when nothing is banked yet — the client hides the
+  // button.
+  getHintExercise: oc
+    .route({ method: 'GET', path: '/practice/hint-exercise', successStatus: 200 })
+    .errors({
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        userLookupId: z.string().uuid(),
+        pool: PracticePoolSchema,
+      })
+    )
+    .output(
+      z.object({
+        data: z.object({
+          exercise: z
+            .object({
+              exerciseId: z.string().uuid(),
+              exerciseType: ExerciseTypeSchema,
+              payload: StrengthenExercisePayloadSchema,
+            })
+            .nullable(),
+        }),
+      })
+    ),
 
   // Grade one exercise answer (server-side truth; the exercise is consumed on
   // answer, so a retry/stale submit is rejected). MC types take selectedIndex,

@@ -323,10 +323,13 @@ practice presets are just named filter specs.
   predicate; `introduced_at` still stamps, so extras count toward today). Offered as a
   one-tap on the composed completion screen when the cap was hit; carried as mutation
   input, never a URL param, so refresh/back can't replay the bypass.
+- **Hint pre-warm.** The compose mutation also fire-and-forgets hint-exercise generation
+  for served flashcard terms whose bank has no hint-type slot (see §7 "Flashcard hints"),
+  so the Hint button is usually live by the time its card comes up.
 - **Refresh** (`refreshPracticeQueue`) is serve-only — the handler forces
-  `autoWarmup: false` and drops `learnExtraCount` — safe to poll; the client uses it only
-  to swap `generating` exercise placeholders to `ready`/`failed` in place (keyed
-  `(pool, userLookupId)`), never to append.
+  `autoWarmup: false`, drops `learnExtraCount`, and never warms hint banks — safe to
+  poll; the client uses it only to swap `generating` exercise placeholders to
+  `ready`/`failed` in place (keyed `(pool, userLookupId)`), never to append.
 
 The old standalone flashcard queue (`mode=flashcards` on `/practice/review`, the
 learn-new batch sheet, and the language-wide `warmup-continue` resume) is gone; reading
@@ -490,6 +493,23 @@ sets from the same column. Everything below "park" is shared.
   gate-capable type failed → `failed` entry, "couldn't prepare — skip"), and the serve stops
   re-reserving doomed slots. The exercise-session view polls the serve-only endpoint and
   swaps `generating` placeholders to `ready`/`failed` in place.
+- **Flashcard hints** reuse this bank. `practice.getHintExercise` (`getHintExercise` in
+  `exercise-bank.ts`) serves ONE ready exercise of the pool's **hint type** —
+  recognition → `mc_comprehension` (the card front already shows the headword, so
+  `mc_cloze` would be trivially solvable), production → `mc_cloze` (the recall→recognition
+  downgrade a hint should be; `mc_comprehension`'s sentence would leak the hidden
+  headword). Hints exist only for **citation meaning facets** (the bank tests meaning and
+  has no facet identity — same restriction as parking). Serving is bank-first and
+  read-only: banked exercises from warm-up/rehab serve for free; a miss kicks a background
+  top-up of just the hint type (skipped if that type failed terminally or is in flight).
+  The compose mutation pre-warms gaps: `warmHintExerciseBanksForFlashcards` checks the
+  served flashcards' hint slots in one query (`countSlotsByTermForType`; stale inflight
+  counts as absent) and generates only for terms with **no hint-type slot at all**, capped
+  at `MAX_HINT_WARMS_PER_COMPOSE` per compose — the serve-only refresh never warms.
+  Answering goes through the normal `submitExerciseAnswer` (consume-on-answer; rehab
+  no-ops since the term isn't parked); the refill after a **non-rehab** consume is
+  narrowed to the consumed type, so a hint never fans out into whole-ladder LLM work
+  (rehab gate answers keep the full-ladder refill — the tiers need every type banked).
 
 ## 8. Frontend session model (composed-practice-view.tsx)
 
@@ -506,6 +526,19 @@ sets from the same column. Everything below "park" is shared.
   copy from `origin` (warm-up vs rehab); skips are non-consuming as in Strengthen.
   Flashcard items render `FlashcardFace` (the extracted presentational card body) +
   `RateButtons`.
+- **Flashcard hint**: on the un-flipped front of a live citation-meaning flashcard, a
+  `Hint` button appears beside `Show answer` when `practice.getHintExercise` has a ready
+  exercise (availability is best-effort — null or a failed check just hides the button;
+  `useSubmitExerciseAnswer` invalidates the hint query so a consumed exercise is never
+  re-served from cache). Pressing it swaps the card for the MC exercise (`McExercise`
+  with relabeled actions: `Back to card` backs out non-consuming, `Show answer` after
+  answering). Answering **locks the rating** — correct → `hard`, wrong → `again` — and
+  reveals the card back with a single `Continue` that applies it through the normal
+  `handleRate` machinery (redrill, rating records, leech toast), so re-rate/undo work
+  unchanged. The kebab withhold extends to an unanswered hint `mc_cloze` (a production
+  card hides its headword, which IS the cloze answer). Abandoning between answer and
+  Continue loses only the rating (the exercise is already consumed) — same
+  dropped-session semantics as the rest of the queue.
 - **Again-redrill**: rating `again` optimistically appends a copy of the card to the local
   queue in the same render as the index advance (so the Learning pill never dips); the copy
   is rolled back by object identity if the server says cap-rejected / parked / error, guarded
