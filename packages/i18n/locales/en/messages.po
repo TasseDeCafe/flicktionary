@@ -267,9 +267,9 @@ msgstr "Account Removed"
 msgid "Actions for the selected vocabulary list."
 msgstr "Actions for the selected vocabulary list."
 
-#: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
-msgid "Actions for this card."
-msgstr "Actions for this card."
+#: apps/web/src/features/practice/components/term-actions-overlay.tsx
+msgid "Actions for this term."
+msgstr "Actions for this term."
 
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 msgid "Actions for this vocabulary term."
@@ -435,18 +435,6 @@ msgstr "An error occurred while attempting to manage your subscription."
 #: apps/web/src/features/removals/api/removals-hooks.ts
 msgid "An error occurred. Please try again."
 msgstr "An error occurred. Please try again."
-
-#: apps/web/src/features/practice/components/exercise-session-view.tsx
-msgid "An exercise for “{currentHeadword}” is still being prepared — it'll "
-"appear here automatically."
-msgstr "An exercise for “{currentHeadword}” is still being prepared — it'll "
-"appear here automatically."
-
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
-msgid "An exercise for “{headword}” is still being prepared — it'll appear here "
-"automatically."
-msgstr "An exercise for “{headword}” is still being prepared — it'll appear "
-"here automatically."
 
 #: apps/native/src/features/auth/components/login-email-view.tsx
 msgid "An unexpected error occurred"
@@ -685,10 +673,6 @@ msgstr "Card"
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Card {cardPosition} of {cardTotal}"
 msgstr "Card {cardPosition} of {cardTotal}"
-
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
-msgid "Card actions"
-msgstr "Card actions"
 
 #: apps/web/src/features/review/components/focus-view.tsx
 msgid "Card not found."
@@ -1220,8 +1204,8 @@ msgstr "Easy"
 msgid "Edit note"
 msgstr "Edit note"
 
-#: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
 #: apps/web/src/features/practice/components/rate-sheet.tsx
+#: apps/web/src/features/practice/components/term-actions-overlay.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-action-drawer.tsx
 msgid "Edit term"
 msgstr "Edit term"
@@ -2685,8 +2669,8 @@ msgid "Open the Flicktionary extension popup to set your level for this "
 msgstr "Open the Flicktionary extension popup to set your level for this "
 "language, then import again."
 
-#: apps/web/src/features/practice/components/flashcard-actions-overlay.tsx
 #: apps/web/src/features/practice/components/rate-sheet.tsx
+#: apps/web/src/features/practice/components/term-actions-overlay.tsx
 msgid "Open the focus view to edit fields, chat, or generate full exploration."
 msgstr "Open the focus view to edit fields, chat, or generate full exploration."
 
@@ -3940,6 +3924,11 @@ msgstr "Target language codes for machine translation"
 msgid "Tell us what you think or describe any issues you encountered..."
 msgstr "Tell us what you think or describe any issues you encountered..."
 
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Term actions"
+msgstr "Term actions"
+
 #: apps/web/src/features/vocabulary/components/vocabulary-list-view.tsx
 msgid "Term deleted"
 msgstr "Term deleted"
@@ -4661,6 +4650,13 @@ msgstr "Your level in {languageName}"
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
 msgid "Your name"
 msgstr "Your name"
+
+#: apps/web/src/features/practice/components/composed-practice-view.tsx
+#: apps/web/src/features/practice/components/exercise-session-view.tsx
+msgid "Your next exercise is still being prepared — it'll appear here "
+"automatically."
+msgstr "Your next exercise is still being prepared — it'll appear here "
+"automatically."
 
 #: apps/native/src/features/contact/components/contact-us-sheet-content.tsx
 #: apps/web/src/features/contact/components/contact-us-overlay-content.tsx
