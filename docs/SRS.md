@@ -164,10 +164,17 @@ stays as a write-only generation artifact; its never-overwrite gate is **form-fa
 
 ## 2. The scheduler (fsrs.ts)
 
-Thin wrapper around `ts-fsrs`: `new FSRS(generatorParameters({ enable_fuzz: true }))` — all
-other parameters are library defaults. App ratings `again | hard | good | easy` map 1:1 to
-FSRS grades. States mirror FSRS: `new`, `learning`, `review`, `relearning` (plus DB `NULL` =
-not introduced).
+Thin wrapper around `ts-fsrs`, with one instance **per pool**: production uses library
+defaults (`request_retention` 0.9), recognition schedules at `request_retention: 0.8`
+(`RECOGNITION_REQUEST_RETENTION`) — ~2.4× longer intervals for the same card. Recognition is
+the default pool every kept term lands in and terms are cheap to add, so it accepts ~80%
+recall to keep the review load down; production keeps the tighter default because active
+recall is the skill worth drilling. Retention only stretches the due-date mapping —
+stability/difficulty math is identical — and the higher lapse rate it implies is absorbed by
+recognition's higher leech threshold (§7). Both instances have `enable_fuzz: true`; all other
+parameters are library defaults. App ratings `again | hard | good | easy` map 1:1 to FSRS
+grades. States mirror FSRS: `new`, `learning`, `review`, `relearning` (plus DB `NULL` = not
+introduced).
 
 `applyRating(facetRow, rating, now)`:
 
@@ -414,9 +421,12 @@ sets from the same column. Everything below "park" is shared.
 ### Leech detection + graduation
 
 - **Detection** (`shouldParkLeech`): a rating that *itself causes a new lapse* (an `again` on
-  a review-state card) and brings `lapses ≥ 4` (`LEECH_LAPSE_THRESHOLD`) parks the term —
-  new-lapse **delta**, not an absolute check, so graduated high-lapse terms aren't re-parked
-  by good/easy ratings. Per pool.
+  a review-state card) and brings `lapses` to the pool's threshold parks the term — `≥ 6`
+  for recognition (`LEECH_LAPSE_THRESHOLD_RECOGNITION`), `≥ 4` for production
+  (`LEECH_LAPSE_THRESHOLD_PRODUCTION`). Recognition's bar is higher because it schedules at
+  a lower desired retention (§2), which roughly doubles its expected lapse rate. New-lapse
+  **delta**, not an absolute check, so graduated high-lapse terms aren't re-parked by
+  good/easy ratings. Per pool.
 - **Parked** = out of every queue (flashcards and reading candidates). Ratings from stale
   queues are accepted as no-ops.
 - **Rehab**: parked terms surface as gate exercises — in the daily **composed Practice

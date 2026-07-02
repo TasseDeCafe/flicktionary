@@ -3,6 +3,7 @@ import type { DbUserLookup } from '../../transport/database/user-lookups/user-lo
 import type { DbStudyFacet } from '../../transport/database/study-facets/study-facets-repository'
 import type { DbPracticeText } from '../../transport/database/practice-texts/practice-texts-repository'
 import { advanceReadingText, type AdvanceReadingTextDependencies } from './advance-reading-text'
+import { LEECH_LAPSE_THRESHOLD_RECOGNITION } from './leech-config'
 
 const userId = '00000000-0000-0000-0000-000000000001'
 const textId = '00000000-0000-0000-0000-000000000010'
@@ -235,8 +236,8 @@ describe('advanceReadingText', () => {
     const { deps, parkLeechFacet } = createDeps({
       claimWins: true,
       facets: {
-        // One lapse away from the threshold (4); the explicit 'again' below is
-        // the fresh lapse that parks it.
+        // One lapse away from the recognition threshold; the explicit 'again'
+        // below is the fresh lapse that parks it.
         [laId]: {
           srs_state: 'review',
           srs_due: '2026-05-12T00:00:00Z',
@@ -244,7 +245,7 @@ describe('advanceReadingText', () => {
           srs_difficulty: 6,
           srs_last_review: '2026-05-01T00:00:00Z',
           srs_reps: 8,
-          srs_lapses: 3,
+          srs_lapses: LEECH_LAPSE_THRESHOLD_RECOGNITION - 1,
         },
         [lbId]: {},
       },
