@@ -49,9 +49,6 @@ export const FieldProvenanceIndicator = ({ provenance, fieldLabel, formatValue, 
   const [open, setOpen] = useState(false)
 
   if (provenance.state === 'llm') return null
-  // Same hydration guard as ResponsiveOverlay: don't pick a primitive until
-  // the screen size is known.
-  if (isMobile === undefined) return null
 
   const format = formatValue ?? defaultFormatValue
 

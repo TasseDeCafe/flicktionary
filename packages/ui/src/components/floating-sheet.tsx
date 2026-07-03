@@ -101,7 +101,7 @@ export const FloatingSheet = ({
   const closeSheet = React.useCallback(() => onOpenChange(false), [onOpenChange])
 
   React.useEffect(() => {
-    if (!open || isMobile === undefined || !closeOnScroll) return
+    if (!open || !closeOnScroll) return
     const handleScroll = (event: Event) => {
       // Scrolling INSIDE the sheet (its own overflow-y-auto body) must not
       // dismiss it — only a scroll of the content behind it counts as "look away".
@@ -120,7 +120,7 @@ export const FloatingSheet = ({
   }, [open, isMobile, closeOnScroll, onOpenChange])
 
   React.useEffect(() => {
-    if (!open || isMobile !== true || modal) return
+    if (!open || !isMobile || modal) return
     const handleOutsideStart = (event: Event) => {
       // Right-click is never a dismiss intent: the readers bind it as the
       // save/remove toggle and expect the open sheet to survive and morph.
@@ -145,8 +145,6 @@ export const FloatingSheet = ({
       document.removeEventListener('touchstart', handleOutsideStart, { capture: true })
     }
   }, [open, isMobile, modal, onOpenChange, ignoreOutsidePointerDownSelector])
-
-  if (isMobile === undefined) return null
 
   const ctx: FloatingSheetContextValue = {
     open,
