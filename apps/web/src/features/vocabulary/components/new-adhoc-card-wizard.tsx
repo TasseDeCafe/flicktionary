@@ -15,6 +15,7 @@ import { useDebouncedValue } from '@/features/sessions/hooks/use-debounced-value
 import { CefrStep } from '@/features/sessions/components/cefr-step'
 import type { CefrLevel } from '@/features/sessions/constants/cefr'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
+import { shouldUseDetectedLanguage } from '@/features/sessions/utils/detected-language'
 import { useCreateAdhocCard } from '../api/adhoc-hooks'
 
 const HEADWORD_MAX = 200
@@ -47,39 +48,35 @@ export const NewAdhocCardWizard = () => {
   const [pendingCefrLanguage, setPendingCefrLanguage] = useState<string | null>(null)
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
 
-  const [suggestedCode, setSuggestedCode] = useState<string | null>(null)
-  const { mutate: detectLanguageMutation } = useDetectLanguage()
+  // The latest detection result lives on the mutation itself — no mirror state.
+  const { mutate: detectLanguageMutation, data: detectionResult, reset: resetDetection } = useDetectLanguage()
   const detectionInput = useMemo(
     () => [headword.trim(), context.trim()].filter(Boolean).join('\n'),
     [headword, context]
   )
   const debouncedDetectionInput = useDebouncedValue(detectionInput, 300)
   useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates -- the trigger is the debounced input SETTLING (time-based), not a keystroke; firing detection from onChange would spam the backend per keypress. Part of the phase-3 wizard/auto-detect cleanup, see docs/proposals/add-eslint-effect.md */
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- the trigger is the debounced input SETTLING (time-based), not a keystroke; firing detection from onChange would spam the backend per keypress
     if (languageTouched) return
     if (debouncedDetectionInput.length === 0) {
-      setSuggestedCode(null)
+      resetDetection()
       return
     }
-    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates */
-    detectLanguageMutation(
-      { text: debouncedDetectionInput },
-      {
-        onSuccess: (response) => {
-          if (languageTouched) return
-          setSuggestedCode(response.data.code)
-        },
-      }
-    )
-  }, [debouncedDetectionInput, languageTouched, detectLanguageMutation])
+    detectLanguageMutation({ text: debouncedDetectionInput })
+  }, [debouncedDetectionInput, languageTouched, detectLanguageMutation, resetDetection])
 
-  const showLanguageHint = !languageTouched && !!suggestedCode && suggestedCode !== effectiveTarget
+  const suggestedCode = detectionResult?.data.code ?? null
+  const showLanguageHint = shouldUseDetectedLanguage({
+    detectedCode: suggestedCode,
+    currentLanguage: effectiveTarget,
+    languageTouched,
+  })
   const suggestedLanguageName = suggestedCode ? getLanguageName(suggestedCode) : ''
   const acceptLanguageSuggestion = () => {
     if (!suggestedCode) return
     setTargetLanguage(suggestedCode)
     setLanguageTouched(true)
-    setSuggestedCode(null)
+    resetDetection()
   }
 
   const trimmedHeadword = headword.trim()

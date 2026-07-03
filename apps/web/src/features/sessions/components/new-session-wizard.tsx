@@ -50,18 +50,10 @@ export const NewSessionWizard = () => {
   const { data: sessions } = useListStudySessions()
   const { tmdbShowId: seedShowId, tgt: seedLanguage, season: seedSeason } = routeApi.useSearch()
 
-  const [targetLanguage, setTargetLanguage] = useState<string | null>(null)
-  const [languageTouched, setLanguageTouched] = useState(false)
-  // Wait for prefs to land so we can prefill the picker; the user override
-  // (`languageTouched`) always wins after that.
-  useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates -- prefill from async-loaded prefs, gated by the user-override flag; candidate for a derived `targetLanguage ?? prefs.lastTargetLanguage` rewrite in the phase-3 wizard cleanup, see docs/proposals/add-eslint-effect.md */
-    if (languageTouched) return
-    if (prefs?.lastTargetLanguage && prefs.lastTargetLanguage !== targetLanguage) {
-      setTargetLanguage(prefs.lastTargetLanguage)
-    }
-    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates */
-  }, [prefs?.lastTargetLanguage, languageTouched, targetLanguage])
+  // The MRU pref prefills the picker until the user (or the "Add episode"
+  // seed) picks explicitly — a pick always wins.
+  const [pickedLanguage, setPickedLanguage] = useState<string | null>(null)
+  const targetLanguage = pickedLanguage ?? prefs?.lastTargetLanguage ?? null
 
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
   const [contentType, setContentType] = useState<ContentType | null>(null)
@@ -89,8 +81,7 @@ export const NewSessionWizard = () => {
     if (seedShowId == null || !seedLanguage || seedSeason == null || !seedGroup) return
     seedApplied.current = true
     setContentType('tv')
-    setTargetLanguage(seedLanguage)
-    setLanguageTouched(true)
+    setPickedLanguage(seedLanguage)
     setTvShow({
       tmdbId: seedGroup.tmdbShowId,
       title: seedGroup.showTitle,
@@ -187,10 +178,7 @@ export const NewSessionWizard = () => {
         <LanguageOptionList
           value={targetLanguage}
           pinnedCode={prefs?.lastTargetLanguage}
-          onChange={(code) => {
-            setLanguageTouched(true)
-            setTargetLanguage(code)
-          }}
+          onChange={setPickedLanguage}
         />
       </WizardShell>
     )
