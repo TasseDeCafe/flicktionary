@@ -1,6 +1,6 @@
 # Effect-lint cleanup (eslint-plugin-react-you-might-not-need-an-effect)
 
-> **Status: proposal.** Multi-PR cleanup plan, tracked here for cross-thread handoff. Phase statuses below are the source of truth for where the work stands; never treat the phase list as shipped behavior.
+> **Status: historical.** Archived 2026-07-03 — all six phases shipped (PRs #197–#202; phase 6 was this docs-only close-out). The plugin runs in `apps/web` at a zero-warning baseline (`--max-warnings 0` + reasoned suppressions); the surviving suppressions carry their own self-contained reasons in the code. Kept for the triage rationale and the decision record on not extending to `packages/ui` / `apps/extension`.
 
 ## Goal
 
@@ -76,15 +76,27 @@ The `languageTouched` / auto-suggest effect chains shared by `new-session-wizard
 
 ### Phase 5 — external-store subscriptions
 
-**Status: implemented — PR #202 open, merge pending (manual golden path: resume position + `Last read` pill + deep-link `?segment=` suppression + `Finding suggestions…` footer loader).**
+**Status: merged (PR #202), manually checked.**
 
 `use-segment-position.ts`, `use-visible-segment-range.ts` → `useSyncExternalStore` per the `no-external-store-subscription` rule, if the ergonomics actually improve. Load-bearing (reading-position resume); manual golden path: resume position + `Last read` pill + deep-link `?segment=` suppression rules per SPEC.
 
 ### Phase 6 — revisit permanent suppressions
 
-**Status: not started.**
+**Status: done (docs-only close-out PR; no code changes).**
 
-After phases 2–5, re-read the remaining suppressions (expected survivors: `editable-card-fields.tsx` server→draft sync, `session-gloss-sheet.tsx` reset-on-open cluster, `use-scroll-restoration.ts`, chat open/read effects). Either confirm them as permanent (reason comments already say why) or promote newly-obvious fixes. Also decide whether to extend the plugin to `packages/ui` and `apps/extension` (54 more effect call sites, unscanned).
+Every surviving suppression was re-read and **confirmed permanent** — the reason comments hold up and no fix was promoted:
+
+- `editable-card-fields.tsx` / `editable-grammar-panel.tsx` — the `lastSavedRef` draft-divergence sync is the correct shape for fields that accept external server writes (chat tool, another tab) while being edited.
+- `cefr-per-language-list.tsx` — the "could adopt a `lastSavedRef` guard" idea from triage is **resolved as unnecessary**: the reseed effect's deps are the primitive prop values, so a background refetch returning unchanged values never re-fires it; it fires only on a genuine server-side change (another device, or an error rollback), which is exactly when reseeding the drafts is wanted.
+- `session-gloss-sheet.tsx` — SPEC forbids close/reopen (the sheet morphs in place through the save⇄remove toggle and word-swap), so a key-remount rewrite stays off the table; the three re-seed blocks are the stateful-editor pattern.
+- `rate-sheet.tsx`, `chat-panel.tsx`, `per-card-chat.tsx`, `extension-pair-view.tsx`, `use-ghost-nomination.ts`, `use-scroll-restoration.ts`, `reading-mode-view.tsx`, and the two debounced language-detect effects (`text-paste-input.tsx`, `new-adhoc-card-wizard.tsx`) — all reactions to transitions, timers, async arrivals, or post-render DOM writes with no event site to move into; each was already confirmed in its phase or carries a self-contained reason.
+
+**Extension decision: do not extend the plugin to `packages/ui` or `apps/extension` for now.** A scan (plugin v1.0.1 recommended, 2026-07-03) found 34 warnings: 30 in `apps/extension` (16 of them in `video-data-sync-dialog.tsx`, a vendored asbplayer-fork dialog) and 6 in `packages/ui` (`floating-sheet.tsx` 4, `use-is-mobile.ts` 2). Reasons:
+
+- `packages/ui` has no ESLint setup at all (no config, no lint script) — enabling one plugin means building the package's lint scaffold first, a separate chore; and `floating-sheet.tsx` is exactly the stateful morphing-sheet pattern that earns permanent suppressions in the web app.
+- `apps/extension`'s lint deliberately tolerates legacy-fork warnings (`no-explicit-any` etc. as `warn`, no `--max-warnings 0`), so the zero-warning-baseline discipline this plan depends on cannot hold there; and most of the warnings sit in vendored fork code where minimal divergence from upstream wins (see `EXTENSION-SPEC.md`'s donor-model policy).
+
+Revisit if either surface gains a zero-warning lint baseline.
 
 ## Triage table
 
@@ -104,7 +116,7 @@ Filled during PR1. Verdicts: `suppress` (deliberate/load-bearing — reason is i
 | `features/sessions/hooks/use-visible-segment-range.ts` | 1 | fix-tested | 5 | **fixed in PR #202** — same store pattern keyed on container (map stays in a ref so the subscription survives list re-derives); min/max extracted (`computeVisibleRange` + tests); snapshot object replaced only on value change (uSES referential-stability requirement) |
 | `features/review/components/editable-card-fields.tsx` | 10 | suppress | 6 | editable drafts + `lastSavedRef` divergence sync (chat tool / cross-tab writes) |
 | `features/review/components/editable-grammar-panel.tsx` | 1 | suppress | 6 | same draft pattern |
-| `features/settings/components/cefr-per-language-list.tsx` | 3 | suppress | 6 | drafts re-seeded from server row; has no `lastSavedRef` guard — could adopt one in phase 6 |
+| `features/settings/components/cefr-per-language-list.tsx` | 3 | suppress | 6 | **confirmed permanent (phase 6)** — a `lastSavedRef` guard is unnecessary: primitive-value deps mean the reseed only fires on a genuine server-side change, when reseeding is wanted |
 | `features/sessions/components/session-gloss-sheet.tsx` | 11 | suppress | 6 | stateful sheet that morphs in place (SPEC forbids close/reopen); re-seeds per open/selection swap |
 | `features/extension-pair/components/extension-pair-view.tsx` | 1 | suppress | — | converging async arrivals (pairing ack + prefs); pairing machinery is trap-prone, leave alone |
 | `features/practice/components/rate-sheet.tsx` | 2 | suppress | — | reset-on-close; sheet stays mounted, several close paths |
@@ -122,8 +134,8 @@ Housekeeping fixed in PR1: the `routeTree.gen.ts` ignore pattern didn't match it
 - Phase 2: #198 (`chore/effect-lint-phase-2`), merged.
 - Phase 3: #199 (`refactor/effect-lint-phase-3`), merged.
 - Phase 4: #201 (`refactor/effect-lint-phase-4`), merged.
-- Phase 5: #202 (`refactor/effect-lint-phase-5`).
-- Next up: phase 6 (revisit permanent suppressions; decide on extending to `packages/ui` / `apps/extension`), after phase 5 merges.
+- Phase 5: #202 (`refactor/effect-lint-phase-5`), merged.
+- Phase 6: the docs-only close-out PR that archived this doc. Plan complete — nothing further is planned.
 - Scan reproduction: `pnpm --filter @flicktionary/web lint` (the plugin is enabled; the lint script carries `--max-warnings 0`).
 - Nothing in phases 2+ should start before PR1 merges — the suppression comments are the shared triage record.
 - When a phase PR removes an effect, delete its suppression in the same commit (`reportUnusedDisableDirectives: 'error'` fails the lint otherwise) and update this doc's phase status + triage-table row.
