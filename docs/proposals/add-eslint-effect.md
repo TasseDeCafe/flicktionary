@@ -70,13 +70,13 @@ The `languageTouched` / auto-suggest effect chains shared by `new-session-wizard
 
 ### Phase 4 — queue/recap state machines (extract-and-test)
 
-**Status: implemented — PR #201 open, merge pending (manual golden path: strengthen/warm-up placeholder swap, session recap miss → redrill, reading-mode next-text reset).**
+**Status: merged (PR #201), manually checked.**
 
 `exercise-session-view.tsx`, `session-recap-view.tsx` (and `reading-mode-view.tsx` resets if triage says fixable). Queue-merge logic is partially extracted + tested already; finish the job or conclude the effects are correct and upgrade their suppressions to cite the tests. Manual golden path: composed practice queue with redrills + placeholder swap.
 
 ### Phase 5 — external-store subscriptions
 
-**Status: not started.**
+**Status: implemented — PR #202 open, merge pending (manual golden path: resume position + `Last read` pill + deep-link `?segment=` suppression + `Finding suggestions…` footer loader).**
 
 `use-segment-position.ts`, `use-visible-segment-range.ts` → `useSyncExternalStore` per the `no-external-store-subscription` rule, if the ergonomics actually improve. Load-bearing (reading-position resume); manual golden path: resume position + `Last read` pill + deep-link `?segment=` suppression rules per SPEC.
 
@@ -100,8 +100,8 @@ Filled during PR1. Verdicts: `suppress` (deliberate/load-bearing — reason is i
 | `features/practice/components/exercise-session-view.tsx` | 4 | fix-tested | 4 | **fixed in PR #201** — seed effect replaced by a mount-gated `LoadedExerciseSessionView` child (`useState` snapshot seed; both callers set `entries` exactly once); polling interval effect stays (genuine timer); merge logic already extracted + unit-tested (`exercise-queue-merge`) |
 | `features/practice/components/session-recap-view.tsx` | 2 | fix-tested | 4 | **fixed in PR #201** — quiz seeds in mount-time `useState` initializers in a `cards && userPrefs`-gated `RecapQuiz` child; term eligibility extracted to `buildRecapTerms` (+ unit tests) |
 | `features/practice/components/reading-mode-view.tsx` | 9 | suppress | 4 | **confirmed permanent in PR #201** — key-remount rejected (per-text state spans the article body, the footer's pending ratings, and three sheets); suppression reason made self-contained |
-| `features/sessions/hooks/use-segment-position.ts` | 2 | fix-tested | 5 | IO+MO subscription → `useSyncExternalStore` candidate |
-| `features/sessions/hooks/use-visible-segment-range.ts` | 1 | fix-tested | 5 | same family; feeds resume-position persistence — golden path required |
+| `features/sessions/hooks/use-segment-position.ts` | 2 | fix-tested | 5 | **fixed in PR #202** — observers wrapped in a `useSyncExternalStore` store keyed on (container, segment); entry classification extracted (`segmentPositionFromEntry` + tests). Small behavior improvement: a new target reads null until first observation instead of flashing the previous target's position |
+| `features/sessions/hooks/use-visible-segment-range.ts` | 1 | fix-tested | 5 | **fixed in PR #202** — same store pattern keyed on container (map stays in a ref so the subscription survives list re-derives); min/max extracted (`computeVisibleRange` + tests); snapshot object replaced only on value change (uSES referential-stability requirement) |
 | `features/review/components/editable-card-fields.tsx` | 10 | suppress | 6 | editable drafts + `lastSavedRef` divergence sync (chat tool / cross-tab writes) |
 | `features/review/components/editable-grammar-panel.tsx` | 1 | suppress | 6 | same draft pattern |
 | `features/settings/components/cefr-per-language-list.tsx` | 3 | suppress | 6 | drafts re-seeded from server row; has no `lastSavedRef` guard — could adopt one in phase 6 |
@@ -121,8 +121,9 @@ Housekeeping fixed in PR1: the `routeTree.gen.ts` ignore pattern didn't match it
 - PR1: #197 (`chore/effect-lint-enable-at-zero`), merged.
 - Phase 2: #198 (`chore/effect-lint-phase-2`), merged.
 - Phase 3: #199 (`refactor/effect-lint-phase-3`), merged.
-- Phase 4: #201 (`refactor/effect-lint-phase-4`).
-- Next up: phase 5 (external-store subscriptions), after #201 merges.
+- Phase 4: #201 (`refactor/effect-lint-phase-4`), merged.
+- Phase 5: #202 (`refactor/effect-lint-phase-5`).
+- Next up: phase 6 (revisit permanent suppressions; decide on extending to `packages/ui` / `apps/extension`), after phase 5 merges.
 - Scan reproduction: `pnpm --filter @flicktionary/web lint` (the plugin is enabled; the lint script carries `--max-warnings 0`).
 - Nothing in phases 2+ should start before PR1 merges — the suppression comments are the shared triage record.
 - When a phase PR removes an effect, delete its suppression in the same commit (`reportUnusedDisableDirectives: 'error'` fails the lint otherwise) and update this doc's phase status + triage-table row.
