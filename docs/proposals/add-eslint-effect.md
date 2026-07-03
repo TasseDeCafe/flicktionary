@@ -46,7 +46,7 @@ Update the status line of a phase when you start/finish it. One phase ≈ one PR
 
 ### Phase 1 — enable at zero, no behavior change (PR1)
 
-**Status: implemented — PR #197 open, merge pending.**
+**Status: merged (PR #197).**
 
 - Bump catalog `eslint-plugin-react-you-might-not-need-an-effect` 0.9.2 → 1.0.1.
 - Add `@eslint-community/eslint-plugin-eslint-comments` (catalog + `apps/web` devDep).
