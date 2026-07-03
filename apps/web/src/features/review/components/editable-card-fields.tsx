@@ -98,6 +98,7 @@ export const EditableCardFields = ({
 
   // Sync local state when the server value diverges from what we last saved.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-derived-state -- the fields are editable DRAFTS, not derived state: local edits flow out through debounced saves, and server writes from elsewhere (chat tool patches, another tab) flow back in only when they diverge from lastSavedRef, so in-flight typing is never clobbered. Computing during render would make the server value win over the draft. */
     const serverHeadword = headword?.value ?? ''
     if (serverHeadword !== lastSavedRef.current.headword) {
       setHeadwordValue(serverHeadword)
@@ -119,6 +120,7 @@ export const EditableCardFields = ({
       setNativeExample(values.nativeExample)
       lastSavedRef.current.nativeExample = values.nativeExample
     }
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-derived-state */
   }, [headword?.value, values.translation, values.definition, values.targetExample, values.nativeExample])
 
   useEffect(() => {

@@ -55,9 +55,11 @@ const PracticeLimitsRow = ({
   )
 
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change, react-you-might-not-need-an-effect/no-derived-state -- the inputs are editable DRAFTS re-seeded when the server row changes (own save round-trip, another device); deriving during render would make the server value win over in-progress typing */
     setDraftNew(String(maxNewTerms))
     setDraftReview(String(maxReviewTerms))
     setDraftProductionReview(maxReviewTermsProduction == null ? '' : String(maxReviewTermsProduction))
+    /* eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change, react-you-might-not-need-an-effect/no-derived-state */
   }, [maxNewTerms, maxReviewTerms, maxReviewTermsProduction])
 
   const save = () => {

@@ -184,6 +184,7 @@ export const EditableGrammarPanel = ({
   useEffect(() => {
     const incoming = incomingGrammar ?? {}
     if (!sameJson(incoming, lastSavedRef.current)) {
+      // eslint-disable-next-line react-you-might-not-need-an-effect/no-derived-state -- the grammar bag is an editable DRAFT (debounced saves out, external server writes in via the lastSavedRef divergence check); deriving during render would clobber in-flight edits
       setGrammar(incoming)
       lastSavedRef.current = incoming
     }

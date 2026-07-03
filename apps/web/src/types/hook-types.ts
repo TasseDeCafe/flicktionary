@@ -37,7 +37,7 @@ export type QueryMeta = Register['queryMeta']
 // 1. Get the first parameter of mutationOptions
 // 2. Make it non-nullable
 // 3. Omit mutationFn so we can't override it
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generic constraint over arbitrary oRPC mutationOptions signatures; `unknown` would reject valid helpers
 export type OrpcMutationOverrides<T extends { mutationOptions: (...args: any[]) => any }> = Omit<
   NonNullable<Parameters<T['mutationOptions']>[0]>,
   'mutationFn'

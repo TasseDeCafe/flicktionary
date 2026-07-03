@@ -15,6 +15,7 @@ type ChatTarget = {
 // Mark-read sync, decoupled from how the chat is presented (mobile sheet vs
 // desktop side panel). Call it once where `chatOpen` lives so the two layouts
 // don't both fire it.
+// eslint-disable-next-line react-refresh/only-export-components -- the hook is deliberately co-located with the two chat layouts that share it; splitting a one-hook module for HMR purity isn't worth the indirection
 export const useChatReadSync = ({ open, cardId, sessionId }: { open: boolean; cardId: string; sessionId?: string }) => {
   const { mutate: markRead } = useMarkChatRead(cardId, sessionId)
   const { data: messages } = useListChatForCard(cardId)
@@ -44,6 +45,7 @@ export const useChatReadSync = ({ open, cardId, sessionId }: { open: boolean; ca
   // reopening after a later unread answer clears it again. Not gated by the
   // assistant ref — opening should clear persisted unread even before messages load.
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- `open` is owned by two different layouts (mobile sheet, desktop panel); detecting the false→true transition here keeps the read-persist in one place instead of in every open call site
     if (open && !prevOpenRef.current) {
       markRead({ cardId })
     }
@@ -52,9 +54,11 @@ export const useChatReadSync = ({ open, cardId, sessionId }: { open: boolean; ca
 
   // While open, mark read whenever the latest assistant turn advances.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- marks read when a new assistant turn ARRIVES while the panel is open — an async server push observed through the query cache, not a user event */
     if (!open || latestAssistantAt === null) return
     const ref = lastMarkedAssistantRef.current
     if (ref.cardId === cardId && ref.at === latestAssistantAt) return
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler */
     lastMarkedAssistantRef.current = { cardId, at: latestAssistantAt }
     markRead({ cardId })
   }, [open, latestAssistantAt, cardId, markRead])

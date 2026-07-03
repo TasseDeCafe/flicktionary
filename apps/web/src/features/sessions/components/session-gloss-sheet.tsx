@@ -179,9 +179,11 @@ export const SessionGlossSheet = ({
   const activeExistingHighlight = existingHighlight?.id === locallyRemovedHighlightId ? null : existingHighlight
 
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- clears the save→remove cycle tracking on CLOSE; the sheet stays mounted and closes through several paths (outside tap, Escape, swipe-down), so keying on `open` covers them all */
     if (open) return
     setLocallyRemovedHighlightId(null)
     preservedPreviewGlossRef.current = null
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
   }, [open])
 
   // Preview mode = a fresh, unsaved selection. The gloss is a free, ephemeral
@@ -230,6 +232,7 @@ export const SessionGlossSheet = ({
 
   // Seed from the existing-highlight branch.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- the sheet is a stateful editor that stays mounted across opens; each open (or in-place morph from the right-click save→remove toggle) re-seeds its working state from the clicked highlight and then refreshes the gloss async. The save/remove morph deliberately does NOT remount (SPEC: "the open sheet SURVIVES the toggle"), so a key-remount rewrite is off the table. */
     if (!open || !activeExistingHighlight) return
     setHighlightId(activeExistingHighlight.id)
     setTitleText(activeExistingHighlight.selectionText)
@@ -243,6 +246,7 @@ export const SessionGlossSheet = ({
     } else {
       setGlossState({ status: 'loading' })
     }
+    /* eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
     // Fetch even when a cached gloss exists so old highlight rows can be
     // enriched with Wiktionary IPA without changing the fast_gloss column.
     let cancelled = false
@@ -273,6 +277,7 @@ export const SessionGlossSheet = ({
   //  - Otherwise → open in "preview" mode: fetch a FREE stateless gloss and
   //    create NO highlight. Persisting is the explicit Save action below.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- same stateful-sheet re-seed as the existing-highlight branch above, for a fresh selection: settle preview-vs-saved mode synchronously from the cache, then fetch the free gloss async. The selection changes by tapping another word WHILE the sheet stays open (SPEC: swap content in place, no close/reopen flash), so this cannot move into an open-sheet event handler. */
     if (!open || !selection || activeExistingHighlight) return
     let cancelled = false
     setTitleText(selection.selectionText)
@@ -294,6 +299,7 @@ export const SessionGlossSheet = ({
     const cachedMatch = findCachedHighlight(cached?.data, selection)
     const match = cachedMatch?.id === locallyRemovedHighlightId ? null : cachedMatch
     setHighlightId(match ? match.id : null)
+    /* eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
 
     void (async () => {
       try {

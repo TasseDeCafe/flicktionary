@@ -22,6 +22,7 @@ import { resolveCardContent } from '../utils/resolve-card-content'
 // The pool a queued card belongs to is fully determined by its facet skill —
 // the composed queue mixes pools in one session, so it can't be a view-level
 // constant anymore.
+// eslint-disable-next-line react-refresh/only-export-components -- tiny pure helper deliberately co-located with the flashcard face; a one-line module just for HMR purity isn't worth the indirection
 export const poolForCard = (card: ReviewTerm): PracticePool =>
   card.skill === 'meaning_production' ? 'production' : 'recognition'
 

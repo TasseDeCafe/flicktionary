@@ -55,10 +55,12 @@ export const NewSessionWizard = () => {
   // Wait for prefs to land so we can prefill the picker; the user override
   // (`languageTouched`) always wins after that.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates -- prefill from async-loaded prefs, gated by the user-override flag; candidate for a derived `targetLanguage ?? prefs.lastTargetLanguage` rewrite in the phase-3 wizard cleanup, see docs/proposals/add-eslint-effect.md */
     if (languageTouched) return
     if (prefs?.lastTargetLanguage && prefs.lastTargetLanguage !== targetLanguage) {
       setTargetLanguage(prefs.lastTargetLanguage)
     }
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates */
   }, [prefs?.lastTargetLanguage, languageTouched, targetLanguage])
 
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)

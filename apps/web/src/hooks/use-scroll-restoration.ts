@@ -20,6 +20,7 @@ export const useScrollRestoration = <T extends HTMLElement>({
   const restoredKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- imperative scrollTop restore that must run AFTER the list rows have rendered (`ready` flips when data lands); it is a post-render DOM write, not a reaction to a user event */
     if (restoredKeyRef.current === filterKey) return
     if (!ready) return
     const saved = scrollPositions.get(scope)
@@ -27,6 +28,7 @@ export const useScrollRestoration = <T extends HTMLElement>({
       ref.current.scrollTop = saved.offset
     }
     restoredKeyRef.current = filterKey
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler */
   }, [scope, filterKey, ready])
 
   const onScroll = (e: React.UIEvent<T>) => {

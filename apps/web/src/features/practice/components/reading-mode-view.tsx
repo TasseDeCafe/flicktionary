@@ -107,6 +107,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
 
   // Reset per-text rating state when the live text changes.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-chain-state-updates -- the live text swaps in from several async paths (bootstrap onSuccess, next-text promotion, resume), so keying the per-text UI reset on the text id covers them all; a key-remount of the per-text subtree is the candidate refactor, see docs/proposals/add-eslint-effect.md phase 4 */
     setRatings(new Map())
     setOpenIndex(null)
     setSheetOpen(false)
@@ -115,10 +116,12 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
     setPendingDeleteIndex(null)
     setLookupSelection(null)
     setLookupOpen(false)
+    /* eslint-enable react-you-might-not-need-an-effect/no-chain-state-updates */
   }, [liveText?.id])
 
   // Eager pre-gen: kick off the next slot as soon as a live text loads.
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- fire-and-forget pre-generation triggered by a text landing (async arrival from any of the swap paths), not by a user event
     if (!liveText) return
     prepareNext({ targetLanguage, pool, scope, excludeUserLookupIds: annotationLookupIds(liveText) })
   }, [liveText, targetLanguage, pool, scope, prepareNext])
