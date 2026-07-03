@@ -15,8 +15,8 @@ export const useDueSummary = () => {
 }
 
 // Single-term rating. Invalidates the landing's drifting counts
-// (shared SRS budget). The flashcard queue itself is held in local state, so we
-// don't refetch listReviewTerms mid-session.
+// (shared SRS budget). The composed queue itself is a one-shot snapshot held in
+// local state, so it is never refetched mid-session.
 export const useRateTerm = () => {
   const { t } = useLingui()
   return useMutation(

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { UnifiedReviewView } from '@/features/practice/components/unified-review-view'
+import { ReadingSessionView } from '@/features/practice/components/reading-session-view'
 
 // Reading-mode-only since the composed queue took over flashcards
 // (/practice/composed). Stale URLs carrying the retired mode/count params are
@@ -14,6 +14,6 @@ const reviewSearchSchema = z.object({
 
 export const Route = createFileRoute('/_authenticated/_app/practice/review/$targetLanguage')({
   validateSearch: reviewSearchSchema,
-  component: UnifiedReviewView,
+  component: ReadingSessionView,
   staticData: { hideAppChrome: true },
 })

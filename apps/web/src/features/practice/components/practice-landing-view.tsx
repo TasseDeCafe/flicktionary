@@ -7,6 +7,7 @@ import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
 import type { PracticeDueSummaryEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
+import { getDailyNewAvailable } from './review-counts'
 
 export const PracticeLandingView = () => {
   const { t } = useLingui()
@@ -19,12 +20,6 @@ export const PracticeLandingView = () => {
       to: '/practice/language/$targetLanguage',
       params: { targetLanguage },
     })
-  }
-
-  const getDailyNewAvailable = (entry: PracticeDueSummaryEntry, maxNewTerms: number) => {
-    if (maxNewTerms <= 0) return 0
-    const remainingDailyNewTerms = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
-    return Math.min(entry.newCount, remainingDailyNewTerms)
   }
 
   const getRecognitionSummaryLine = (entry: PracticeDueSummaryEntry) => {
