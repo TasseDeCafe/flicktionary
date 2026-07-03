@@ -1,9 +1,9 @@
 import { StorageArea } from './extension-settings-storage'
 
 export class MockStorageArea implements StorageArea {
-  private _values: { [key: string]: any } = {}
+  private _values: { [key: string]: unknown } = {}
 
-  async set(items: { [key: string]: any }): Promise<void> {
+  async set(items: { [key: string]: unknown }): Promise<void> {
     for (const [key, value] of Object.entries(items)) {
       this._values[key] = value
     }
@@ -19,7 +19,7 @@ export class MockStorageArea implements StorageArea {
     }
   }
 
-  async get(keys?: string | string[] | { [key: string]: any } | null): Promise<{ [key: string]: any }> {
+  async get(keys?: string | string[] | object | null): Promise<{ [key: string]: unknown }> {
     if (keys === undefined || keys === null) {
       return this._values
     }
@@ -28,7 +28,7 @@ export class MockStorageArea implements StorageArea {
       return { [keys]: this._values[keys] }
     }
 
-    const values: { [key: string]: any } = {}
+    const values: { [key: string]: unknown } = {}
 
     if (Array.isArray(keys)) {
       for (const key of keys) {

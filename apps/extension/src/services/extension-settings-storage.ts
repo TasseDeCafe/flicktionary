@@ -1,5 +1,6 @@
 import {
   AsbplayerSettings,
+  AsbplayerSettingsProfile,
   SettingsStorage,
   unprefixedSettings,
   prefixedSettings,
@@ -11,11 +12,11 @@ const activeProfileKey = 'activeSettingsProfile'
 const profilesKey = 'settingsProfiles'
 
 export interface StorageArea {
-  set(items: { [key: string]: any }): Promise<void>
+  set(items: { [key: string]: unknown }): Promise<void>
 
   remove(keys: string | string[]): Promise<void>
 
-  get(keys?: string | string[] | { [key: string]: any } | null): Promise<{ [key: string]: any }>
+  get(keys?: string | string[] | object | null): Promise<{ [key: string]: unknown }>
 
   clear(): Promise<void>
 }
@@ -35,7 +36,9 @@ export class ExtensionSettingsStorage implements SettingsStorage {
     }
 
     return unprefixedSettings(
-      await this._storage.get(prefixedSettings(keysAndDefaults, activeProfile.name)),
+      (await this._storage.get(prefixedSettings(keysAndDefaults, activeProfile.name))) as Partial<
+        AsbplayerSettingsProfile<string>
+      >,
       activeProfile.name
     )
   }
@@ -79,7 +82,7 @@ export class ExtensionSettingsStorage implements SettingsStorage {
 
   async profiles(): Promise<Profile[]> {
     const result = await this._storage.get({ [profilesKey]: [] })
-    return result ? (result[profilesKey] ?? []) : []
+    return result ? ((result[profilesKey] as Profile[] | undefined) ?? []) : []
   }
 
   async addProfile(name: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { expect, it, test } from 'vitest'
+import { expect, it } from 'vitest'
 import {
   AsbplayerSettings,
   AsbplayerSettingsProfile,
@@ -16,10 +16,10 @@ import {
 export class MockSettingsStorage implements SettingsStorage {
   private _activeProfile?: string
   private _profiles: Profile[] = []
-  private _data: any = {}
+  private _data: Record<string, unknown> = {}
 
   async get(keysAndDefaults: Partial<AsbplayerSettings>) {
-    const settings: any = {}
+    const settings: Record<string, unknown> = {}
 
     const actualKeysAndDefaults =
       this._activeProfile === undefined ? keysAndDefaults : prefixedSettings(keysAndDefaults, this._activeProfile)
@@ -71,7 +71,7 @@ export class MockSettingsStorage implements SettingsStorage {
     this._profiles = this._profiles.filter((p) => p.name !== name)
   }
 
-  setData(data: any) {
+  setData(data: Record<string, unknown>) {
     this._data = data
   }
 }

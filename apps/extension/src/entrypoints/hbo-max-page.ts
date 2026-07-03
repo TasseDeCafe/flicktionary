@@ -5,9 +5,12 @@ export default defineUnlistedScript(() => {
   const deduplication: { [key: string]: number } = {}
 
   inferTracksFromInterceptedMpdViaXMLHTTPRequest(/https:\/\/.+\.mpd/, (playlist, language) => {
-    const name = playlist.attributes?.NAME
-    const playlistNumber = name in deduplication ? deduplication[name] + 1 : 0
-    deduplication[name] = playlistNumber
+    const name = playlist.attributes?.NAME as string | undefined
+    // `${name}` mirrors the coercion the untyped code relied on: unnamed playlists
+    // all deduplicate under the literal "undefined" key.
+    const dedupKey = `${name}`
+    const playlistNumber = dedupKey in deduplication ? deduplication[dedupKey] + 1 : 0
+    deduplication[dedupKey] = playlistNumber
     const deduplicatedName = `${name}-${playlistNumber}`
     const segmentUrls = playlist.segments.map((s) => s.resolvedUri)
     return {

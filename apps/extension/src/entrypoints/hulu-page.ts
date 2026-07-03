@@ -3,11 +3,11 @@ import { extractExtension, trackFromDef } from '@/pages/util'
 
 export default defineUnlistedScript(() => {
   setTimeout(() => {
-    function isObject(val: any) {
+    function isObject(val: unknown): val is Record<string, unknown> {
       return typeof val === 'object' && !Array.isArray(val) && val !== null
     }
 
-    function extractSubtitleTracks(value: any) {
+    function extractSubtitleTracks(value: { transcripts_urls?: { webvtt?: unknown } }) {
       const subtitles = []
       if (isObject(value.transcripts_urls?.webvtt)) {
         const urls = value.transcripts_urls.webvtt
@@ -35,7 +35,7 @@ export default defineUnlistedScript(() => {
 
     let playlistController: AbortController | undefined
 
-    function fetchPlaylistAndExtractSubtitles(payload: any): Promise<VideoDataSubtitleTrack[]> {
+    function fetchPlaylistAndExtractSubtitles(payload: string): Promise<VideoDataSubtitleTrack[]> {
       playlistController?.abort()
       return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -55,7 +55,7 @@ export default defineUnlistedScript(() => {
       })
     }
 
-    function extractBasename(payload: any) {
+    function extractBasename(payload: { items?: unknown }) {
       if (payload?.items instanceof Array && payload.items.length > 0) {
         const item = payload.items[0]
         if (item.series_name && item.season_short_display_name && item.number && item.name) {
@@ -94,7 +94,7 @@ export default defineUnlistedScript(() => {
 
     const originalStringify = JSON.stringify
     JSON.stringify = function (value) {
-      // @ts-ignore
+      // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
       const stringified = originalStringify.apply(this, arguments)
       if (
         typeof value?.content_eab_id === 'string' &&

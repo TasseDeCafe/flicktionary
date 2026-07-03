@@ -51,11 +51,6 @@ interface ResponsiveOverlayProps {
 export const ResponsiveOverlay = ({ open, onOpenChange, children }: ResponsiveOverlayProps) => {
   const isMobile = useIsMobile()
 
-  // Don't render until we know the screen size to avoid hydration mismatch
-  if (isMobile === undefined) {
-    return null
-  }
-
   const closeOverlay = () => onOpenChange(false)
 
   return (

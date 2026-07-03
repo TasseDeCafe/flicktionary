@@ -9,14 +9,14 @@ export default class ExtensionCommandsHandler {
     return 'extension-commands'
   }
 
-  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: unknown) => void) {
     if (browser.commands === undefined) {
       sendResponse({})
       return false
     }
 
     browser.commands.getAll((commands) => {
-      const commandsObj: any = {}
+      const commandsObj: Record<string, string> = {}
 
       for (const c of commands) {
         if (c.name && c.shortcut) {

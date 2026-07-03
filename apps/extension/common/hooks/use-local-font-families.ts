@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 
-// @ts-ignore
+// Local Font Access API (Chromium-only), not yet in lib.dom.
+declare const queryLocalFonts: (() => Promise<{ family: string }[]>) | undefined
+
 const localFontsAvailable = typeof queryLocalFonts === 'function'
 
 export const useLocalFontFamilies = () => {
@@ -15,10 +17,10 @@ export const useLocalFontFamilies = () => {
   }, [])
 
   const updateLocalFonts = useCallback(() => {
-    if (localFontsAvailable) {
-      // @ts-ignore
+    // typeof (rather than the localFontsAvailable boolean) so browsers without the
+    // global don't throw a ReferenceError, and so TS narrows away `undefined`.
+    if (typeof queryLocalFonts === 'function') {
       queryLocalFonts()
-        // @ts-ignore
         .then((fonts) => {
           const families: { [family: string]: boolean } = {}
 

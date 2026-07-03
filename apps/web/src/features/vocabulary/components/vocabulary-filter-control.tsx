@@ -161,9 +161,6 @@ export const VocabularyFilterControl = ({ filters, onChange }: Props) => {
     </Button>
   )
 
-  // Avoid a sheet/popover flash before the media query resolves.
-  if (isMobile === undefined) return trigger
-
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={setOpen} repositionInputs={false}>

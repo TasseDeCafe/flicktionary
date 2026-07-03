@@ -247,7 +247,7 @@ export interface AsbplayerSettings
   readonly subtitlePreview: string
 }
 
-const keyBindNameMap: any = {
+const keyBindNameMap: Record<string, string> = {
   'toggle-video-select': 'selectSubtitleTrack',
 }
 

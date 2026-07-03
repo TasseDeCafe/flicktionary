@@ -1,7 +1,25 @@
 import { VideoData, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { poll, trackFromDef } from '@/pages/util'
 
+// Netflix's private page global — the player API is reverse-engineered and has no
+// published types, and the deep optional-chained probing below can't be expressed
+// against `unknown`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const netflix: any | undefined
+
+// Minimal structural view of Netflix's private timed-text track objects; unofficial
+// shapes that may drift with Netflix deploys.
+interface NetflixTimedTextTrack {
+  isForcedNarrative?: boolean
+  isNoneTrack?: boolean
+  cdnlist?: { id: string }[]
+  ttDownloadables?: Record<string, { downloadUrls?: Record<string, string>; urls?: { url: string }[] }>
+  new_track_id?: string
+  trackId: string
+  bcp47?: string
+  rawTrackType?: string
+  displayName?: string
+}
 
 export default defineUnlistedScript(() => {
   setTimeout(() => {
@@ -40,7 +58,7 @@ export default defineUnlistedScript(() => {
       return undefined
     }
 
-    function extractUrlLegacy(track: any) {
+    function extractUrlLegacy(track: NetflixTimedTextTrack) {
       if (track.isForcedNarrative || track.isNoneTrack || !track.cdnlist?.length || !track.ttDownloadables) {
         return undefined
       }
@@ -51,10 +69,11 @@ export default defineUnlistedScript(() => {
         return undefined
       }
 
-      return webvttDL.downloadUrls[track.cdnlist.find((cdn: any) => webvttDL.downloadUrls[cdn.id])?.id]
+      const cdnId = track.cdnlist.find((cdn) => webvttDL.downloadUrls![cdn.id])?.id
+      return cdnId === undefined ? undefined : webvttDL.downloadUrls[cdnId]
     }
 
-    function extractUrl(track: any) {
+    function extractUrl(track: NetflixTimedTextTrack) {
       if (track.isForcedNarrative || track.isNoneTrack || !track.ttDownloadables) {
         return undefined
       }
@@ -68,7 +87,7 @@ export default defineUnlistedScript(() => {
       return webvttDL.urls[0].url
     }
 
-    function storeSubTrack(video: any) {
+    function storeSubTrack(video: { movieId: string; timedtexttracks?: NetflixTimedTextTrack[] }) {
       const timedTextracks = video.timedtexttracks || []
 
       for (const track of timedTextracks) {
@@ -133,7 +152,10 @@ export default defineUnlistedScript(() => {
       return basename
     }
 
-    const dataForTrack = (track: any, storedTracks: Map<string, string>): VideoDataSubtitleTrack | undefined => {
+    const dataForTrack = (
+      track: NetflixTimedTextTrack,
+      storedTracks: Map<string, string>
+    ): VideoDataSubtitleTrack | undefined => {
       if (!track.bcp47) {
         return undefined
       }
@@ -166,8 +188,8 @@ export default defineUnlistedScript(() => {
       const storedTracks = subTracks.get(titleId) || new Map()
       response.subtitles = np
         .getTimedTextTrackList()
-        .filter((track: any) => storedTracks.has(track.trackId))
-        .map((track: any) => {
+        .filter((track: NetflixTimedTextTrack) => storedTracks.has(track.trackId))
+        .map((track: NetflixTimedTextTrack) => {
           return dataForTrack(track, storedTracks)
         })
         .filter((data: VideoDataSubtitleTrack | undefined) => data !== undefined)
@@ -217,7 +239,7 @@ export default defineUnlistedScript(() => {
         const storedTracks = subTracks.get(np.getMovieId()) || new Map()
         const track = np
           .getTimedTextTrackList()
-          ?.find((track: any) => dataForTrack(track, storedTracks)?.language === language)
+          ?.find((track: NetflixTimedTextTrack) => dataForTrack(track, storedTracks)?.language === language)
 
         if (track === undefined) {
           fail()
@@ -288,17 +310,17 @@ export default defineUnlistedScript(() => {
     JSON.stringify = function (value) {
       if ('string' === typeof value?.url && -1 < value.url.search(manifestPattern)) {
         for (let objectValue of Object.values(value)) {
-          ;(objectValue as any)?.profiles?.unshift(webvtt)
+          ;(objectValue as { profiles?: string[] } | null)?.profiles?.unshift(webvtt)
         }
       }
 
-      // @ts-ignore
+      // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
       return originalStringify.apply(this, arguments)
     }
 
     const originalParse = JSON.parse
     JSON.parse = function () {
-      // @ts-ignore
+      // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
       const value = originalParse.apply(this, arguments)
 
       if (value?.result?.movieId) storeSubTrack(value.result)
@@ -320,7 +342,7 @@ export default defineUnlistedScript(() => {
           }
         }
 
-        // @ts-ignore
+        // @ts-expect-error -- forwarding proxied apply() args is untypeable
         return target.call(originalThis, ...args)
       },
     })

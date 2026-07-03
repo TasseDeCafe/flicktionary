@@ -44,6 +44,10 @@ type SubtitlesByPath = { [key: string]: VideoDataSubtitleTrack[] }
 
 export interface InferHooks {
   onJson?: (
+    // Intercepted JSON.parse output from the host page — site-specific untyped JSON
+    // that implementers probe with runtime checks; `unknown` would force a cast at
+    // every step of those probes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any,
     addTrack: (track: VideoDataSubtitleTrackDef) => void,
     setBasename: (basename: string) => void
@@ -70,7 +74,7 @@ export function inferTracks({ onJson, onRequest, waitForBasename }: InferHooks, 
       const originalParse = JSON.parse
 
       JSON.parse = function () {
-        // @ts-ignore
+        // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
         const value = originalParse.apply(this, arguments)
         let tracksFound = false
         let basenameFound = false

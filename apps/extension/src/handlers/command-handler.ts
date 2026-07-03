@@ -6,6 +6,6 @@ export interface CommandHandler {
   handle: (
     command: Command<Message>,
     sender: Browser.runtime.MessageSender,
-    sendResponse: (response?: any) => void
+    sendResponse: (response?: unknown) => void
   ) => boolean | undefined | Promise<unknown>
 }

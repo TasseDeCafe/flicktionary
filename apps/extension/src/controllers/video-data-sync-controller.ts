@@ -43,7 +43,9 @@ interface VideoDataClient {
 const VIDEO_DATA_SYNC_HOST_ATTR = 'data-asbplayer-video-data-sync-host'
 
 declare global {
-  function cloneInto(obj: any, targetScope: any, options?: any): any
+  // Firefox-only Xray helper available in content scripts; structured-clones the
+  // object into the target scope and returns the clone.
+  function cloneInto<T>(obj: T, targetScope: object | null, options?: { cloneFunctions?: boolean }): T
 }
 
 interface ShowOptions {

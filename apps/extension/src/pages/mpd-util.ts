@@ -7,7 +7,7 @@ export interface Segment {
 }
 
 export interface Playlist {
-  attributes: any
+  attributes: Record<string, unknown>
   resolvedUri: string
   segments: Segment[]
 }
@@ -31,7 +31,7 @@ const tryExtractSubtitleTracks = async (
       continue
     }
 
-    const playlists = (info as any).playlists ?? []
+    const playlists = (info as { playlists?: unknown }).playlists ?? []
 
     if (typeof playlists !== 'object' || !Array.isArray(playlists)) {
       continue
@@ -68,7 +68,7 @@ export const inferTracksFromInterceptedMpdViaXMLHTTPRequest = (
       lastManifestUrl = url
     }
 
-    // @ts-ignore
+    // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
     originalXhrOpen.apply(this, arguments)
   }
 

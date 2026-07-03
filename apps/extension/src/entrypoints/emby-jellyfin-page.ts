@@ -1,7 +1,33 @@
 import { VideoData, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { trackFromDef } from '@/pages/util'
 
-declare const ApiClient: any | undefined
+// Emby/Jellyfin's page global — a minimal structural view of the parts of the
+// client API this script touches; the shapes are unofficial.
+interface EmbyMediaStream {
+  IsTextSubtitleStream?: boolean
+  DisplayTitle: string
+  Language?: string
+  Index: number
+}
+
+interface EmbySession {
+  PlayState: { MediaSourceId?: string }
+  NowPlayingItem: {
+    Id: string
+    Path?: string
+    FileName?: string
+    Name?: string
+    MediaStreams: EmbyMediaStream[]
+  }
+}
+
+declare const ApiClient:
+  | {
+      deviceId(): string
+      serverAddress(): string
+      getSessions(options: { deviceId: string }): Promise<EmbySession[]>
+    }
+  | undefined
 
 export default defineUnlistedScript(() => {
   document.addEventListener(
@@ -41,12 +67,10 @@ export default defineUnlistedScript(() => {
       const mediaID = session.PlayState.MediaSourceId
       const nowPlayingItem = session.NowPlayingItem
       const path = nowPlayingItem.Path
-      response.basename = nowPlayingItem.FileName ?? (path ? path.split(/[\\/]/).pop() : nowPlayingItem.Name)
+      response.basename = nowPlayingItem.FileName ?? (path ? path.split(/[\\/]/).pop() : nowPlayingItem.Name) ?? ''
 
       const subtitles: VideoDataSubtitleTrack[] = []
-      nowPlayingItem.MediaStreams.filter(
-        (stream: { IsTextSubtitleStream: any }) => stream.IsTextSubtitleStream
-      ).forEach((sub: { Codec: string; DisplayTitle: any; Language: any; Index: number; Path: string }) => {
+      nowPlayingItem.MediaStreams.filter((stream) => stream.IsTextSubtitleStream).forEach((sub) => {
         const extension = 'srt'
         var url =
           ApiClient.serverAddress() +

@@ -28,13 +28,12 @@ module.exports = [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      // Pre-existing violations in the legacy asbplayer fork — surfaced as warnings
-      // to clean up incrementally rather than blocking lint/check.
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // `no-explicit-any` and `ban-ts-comment` stay at the recommended 'error' like
+      // the other apps; the few legitimate uses carry justified inline disables /
+      // described @ts-expect-error directives.
       // Ignore unavoidable callback/interface params and catch bindings, so the
       // rule only flags genuinely dead vars/imports.
       '@typescript-eslint/no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }],
-      '@typescript-eslint/ban-ts-comment': 'warn',
       'prettier/prettier': [
         'error',
         {
