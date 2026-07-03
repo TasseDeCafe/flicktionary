@@ -46,7 +46,7 @@ Update the status line of a phase when you start/finish it. One phase ≈ one PR
 
 ### Phase 1 — enable at zero, no behavior change (PR1)
 
-**Status: implemented on `chore/effect-lint-enable-at-zero`, PR open — merge pending.**
+**Status: implemented — PR #197 open, merge pending.**
 
 - Bump catalog `eslint-plugin-react-you-might-not-need-an-effect` 0.9.2 → 1.0.1.
 - Add `@eslint-community/eslint-plugin-eslint-comments` (catalog + `apps/web` devDep).
@@ -118,7 +118,7 @@ Housekeeping fixed in PR1: the `routeTree.gen.ts` ignore pattern didn't match it
 
 ## Handoff notes
 
-- PR1 branch: `chore/effect-lint-enable-at-zero`.
+- PR1: #197 (`chore/effect-lint-enable-at-zero`).
 - Scan reproduction: `pnpm --filter @flicktionary/web lint` (the plugin is enabled; the lint script carries `--max-warnings 0`).
 - Nothing in phases 2+ should start before PR1 merges — the suppression comments are the shared triage record.
 - When a phase PR removes an effect, delete its suppression in the same commit (`reportUnusedDisableDirectives: 'error'` fails the lint otherwise) and update this doc's phase status + triage-table row.
