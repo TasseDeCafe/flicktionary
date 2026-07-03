@@ -16,7 +16,7 @@ export const StrengthenView = () => {
   const { pool, sessionHard } = useSearch({ from: '/_authenticated/_app/practice/strengthen/$targetLanguage' })
   const languageName = getLanguageName(targetLanguage)
 
-  const { mutate: startSession, isPending, isError } = useStartStrengthenSession()
+  const { mutate: startSession, isError } = useStartStrengthenSession()
   const [entries, setEntries] = useState<StrengthenExerciseEntry[] | null>(null)
   const startedRef = useRef(false)
 
@@ -36,7 +36,6 @@ export const StrengthenView = () => {
       title={t`Strengthen · ${languageName}`}
       copyVariant='rehab'
       entries={entries}
-      isPending={isPending}
       isError={isError}
       backLabel={t`Back to ${languageName}`}
       onClose={close}

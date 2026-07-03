@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { RecapTerm } from './build-recap-questions'
-import { buildRecapQuestions, buildRedrillQuestion } from './build-recap-questions'
+import type { RecapCardInput, RecapTerm } from './build-recap-questions'
+import { buildRecapQuestions, buildRecapTerms, buildRedrillQuestion } from './build-recap-questions'
 
 // Deterministic rng: cycles through a fixed sequence so shuffles are stable.
 const seededRng = (): (() => number) => {
@@ -23,6 +23,72 @@ const term = (overrides: Partial<RecapTerm> & { chunkId: string }): RecapTerm =>
 
 const manyTerms = (count: number, overrides: Partial<RecapTerm> = {}): RecapTerm[] =>
   Array.from({ length: count }, (_, i) => term({ chunkId: `t${i}`, ...overrides }))
+
+const card = (
+  chunkId: string,
+  overrides: Partial<Omit<RecapCardInput, 'chunk'>> & { chunk?: Partial<RecapCardInput['chunk']> } = {}
+): RecapCardInput => ({
+  id: `card-${chunkId}`,
+  status: 'kept',
+  surfaceForm: `surface-${chunkId}`,
+  ...overrides,
+  chunk: {
+    id: chunkId,
+    headword: `word-${chunkId}`,
+    translation: `translation-${chunkId}`,
+    definition: `definition-${chunkId}`,
+    targetExample: null,
+    grammar: {},
+    ...overrides.chunk,
+  },
+})
+
+const translationGloss = (term: { translation: string | null; definition: string | null }) => term.translation
+
+describe('buildRecapTerms', () => {
+  it('maps kept cards to terms with the resolved gloss', () => {
+    const terms = buildRecapTerms([card('a', { chunk: { grammar: { pos: 'verb' } } })], translationGloss)
+    expect(terms).toEqual([
+      {
+        cardId: 'card-a',
+        chunkId: 'a',
+        headword: 'word-a',
+        surfaceForm: 'surface-a',
+        gloss: 'translation-a',
+        pos: 'verb',
+        targetExample: null,
+      },
+    ])
+  })
+
+  it('skips non-kept cards', () => {
+    const terms = buildRecapTerms([card('a', { status: 'needs_data' }), card('b')], translationGloss)
+    expect(terms.map((t) => t.chunkId)).toEqual(['b'])
+  })
+
+  it('dedupes by chunk, keeping the first card', () => {
+    const terms = buildRecapTerms(
+      [card('a'), card('a', { id: 'card-a-later', surfaceForm: 'later-surface' })],
+      translationGloss
+    )
+    expect(terms).toHaveLength(1)
+    expect(terms[0]!.cardId).toBe('card-a')
+  })
+
+  it('drops terms whose gloss resolves empty or whitespace-only', () => {
+    const terms = buildRecapTerms(
+      [card('a', { chunk: { translation: null } }), card('b', { chunk: { translation: '   ' } }), card('c')],
+      translationGloss
+    )
+    expect(terms.map((t) => t.chunkId)).toEqual(['c'])
+  })
+
+  it('trims the resolved gloss and defaults a missing pos to null', () => {
+    const terms = buildRecapTerms([card('a', { chunk: { translation: '  to run  ' } })], translationGloss)
+    expect(terms[0]!.gloss).toBe('to run')
+    expect(terms[0]!.pos).toBeNull()
+  })
+})
 
 describe('buildRecapQuestions', () => {
   it('produces one question per term, mixing MC and typed', () => {
