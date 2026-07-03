@@ -37,9 +37,6 @@ export const MAX_GATES_PER_COMPOSE = 20
 // Terms past the cap get warmed by a later compose or by the serve-miss backstop.
 export const MAX_HINT_WARMS_PER_COMPOSE = 20
 
-// Damerau-Levenshtein tolerance for typed production-cloze answers.
-export const PRODUCTION_CLOZE_MAX_EDIT_DISTANCE = 1
-
 // FSRS re-entry values for a graduated term: a softened schedule rather than
 // the pre-park one (which was demonstrably failing). Tunable.
 export const SOFT_REENTRY_STABILITY = 1

@@ -196,14 +196,14 @@ export const SessionVocabularyView = () => {
             onClick={() => {
               if (!session) return
               void navigate({
-                to: '/practice/warmup/$targetLanguage',
+                to: '/practice/recap/$targetLanguage',
                 params: { targetLanguage: session.targetLanguage },
                 search: { studySessionId: session.id },
               })
             }}
           >
             <Brain />
-            {t`Practice your terms`}
+            {t`Quiz your terms`}
           </Button>
         </div>
       </div>

@@ -330,9 +330,11 @@ practice presets are just named filter specs.
 
 The old standalone flashcard queue (`mode=flashcards` on `/practice/review`, the
 learn-new batch sheet, and the language-wide `warmup-continue` resume) is gone; reading
-mode keeps `/practice/review` to itself. The session-scoped warm-up
-(`/practice/warmup/$lang`, from the session-vocabulary footer) and the post-session
-Strengthen CTA remain as dedicated surfaces.
+mode keeps `/practice/review` to itself. The post-session Strengthen CTA remains a
+dedicated surface. The session-scoped warm-up (`/practice/warmup/$lang`) still exists
+but has no UI entry point — the session-vocabulary footer now launches the zero-SRS
+session recap quiz instead (client-side, no FSRS writes; see SPEC.md), leaving the
+composed queue's auto-warm-up as the sole warm-up on-ramp.
 
 ## 5. Rating flow (applyTermRating)
 
@@ -445,11 +447,13 @@ sets from the same column. Everything below "park" is shared.
 
 ### Warm-up (exercise-first onboarding)
 
-- **Entry** (`warmup.ts` + the composed queue): the session-vocabulary footer ("Practice
-  your terms" → `/practice/warmup/$targetLanguage`) parks that session's terms
-  explicitly, and the composed **Practice** button auto-parks eligible new terms
-  language-wide on every compose (§4b) — abandoned warm-ups need no dedicated resume
-  surface, since the next Practice serves the parked terms' gates anyway.
+- **Entry** (`warmup.ts` + the composed queue): the composed **Practice** button
+  auto-parks eligible new terms language-wide on every compose (§4b) — the sole UI
+  on-ramp. The session-scoped `/practice/warmup/$targetLanguage` route +
+  `startWarmupSession` (parks one session's terms explicitly) remain functional but
+  unreferenced: the session-vocabulary footer now opens the zero-SRS session recap
+  instead (see SPEC.md). Abandoned warm-ups need no dedicated resume surface, since
+  the next Practice serves the parked terms' gates anyway.
   `startWarmupSession` parks the session's not-yet-introduced kept terms in **two
   independent passes** (shared with the composer via `runWarmupParkingPass` helpers): a
   recognition pass via the **atomic** `initializeAndParkCitationFacetIfUnderDailyCap` (stamps

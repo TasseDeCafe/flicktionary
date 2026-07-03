@@ -43,6 +43,7 @@ msgid "{charCount} / {TEXT_PASTE_MAX_LENGTH} characters"
 msgstr "{charCount} / {TEXT_PASTE_MAX_LENGTH} caractères"
 
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
+#: apps/web/src/features/practice/components/session-recap-view.tsx
 msgid "{correctCount} of {total} correct."
 msgstr "{correctCount} sur {total} correctes."
 
@@ -629,6 +630,7 @@ msgstr "Retour à la connexion"
 msgid "Back to Practice"
 msgstr "Retour à la pratique"
 
+#: apps/web/src/features/practice/components/session-recap-view.tsx
 #: apps/web/src/features/review/components/processing-view.tsx
 msgid "Back to session"
 msgstr "Retour à la session"
@@ -735,6 +737,7 @@ msgid "Chat — preparing answer"
 msgstr "Chat — préparation de la réponse"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Check"
 msgstr "Vérifier"
@@ -896,6 +899,8 @@ msgstr "Continuer avec Google"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-mc-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Correct!"
 msgstr "Correct !"
 
@@ -997,6 +1002,10 @@ msgstr "Impossible de charger les exercices."
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Couldn't load your practice session."
 msgstr "Impossible de charger votre session d'entraînement."
+
+#: apps/web/src/features/practice/components/session-recap-view.tsx
+msgid "Couldn't load your terms."
+msgstr "Impossible de charger vos termes."
 
 #: apps/web/src/features/vocabulary/api/vocabulary-hooks.ts
 msgid "Couldn't remove the form"
@@ -1394,6 +1403,7 @@ msgid "Exercises only"
 msgstr "Exercices uniquement"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Expected:"
 msgstr "Attendu :"
 
@@ -2488,6 +2498,8 @@ msgstr "Nouveaux aujourd'hui"
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/reading-mode-view.tsx
+#: apps/web/src/features/practice/components/recap-mc-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 #: apps/web/src/features/sessions/components/tv-episode-picker.tsx
 msgid "Next"
@@ -2612,6 +2624,8 @@ msgstr "non disponible"
 
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-mc-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Not quite."
 msgstr "Pas tout à fait."
 
@@ -2634,6 +2648,10 @@ msgstr "Rien de nouveau à apprendre pour le moment."
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 msgid "Nothing to practice right now."
 msgstr "Rien à pratiquer pour le moment."
+
+#: apps/web/src/features/practice/components/session-recap-view.tsx
+msgid "Nothing to quiz yet."
+msgstr "Rien à réviser pour le moment."
 
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 msgid "Nothing to strengthen right now."
@@ -2999,10 +3017,6 @@ msgstr "Limites de pratique"
 msgid "Practice with a text"
 msgstr "S'entraîner avec un texte"
 
-#: apps/web/src/features/review/components/session-vocabulary-view.tsx
-msgid "Practice your terms"
-msgstr "Pratiquer vos termes"
-
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Practise saying it"
 msgstr "S'entraîner à le prononcer"
@@ -3144,6 +3158,10 @@ msgstr "Glose rapide échouée"
 msgid "Quick gloss for the selected text."
 msgstr "Glose rapide pour le texte sélectionné."
 
+#: apps/web/src/features/review/components/session-vocabulary-view.tsx
+msgid "Quiz your terms"
+msgstr "Testez vos termes"
+
 #: apps/web/src/features/practice/components/rate-sheet.tsx
 msgid "Rate"
 msgstr "Noter"
@@ -3186,6 +3204,14 @@ msgstr "Prêt ! Ce terme rejoint vos cartes mémoire."
 #: packages/ui/src/components/study-options-section.tsx
 msgid "Recall and produce it yourself"
 msgstr "Rappelez-vous et produisez-le vous-même"
+
+#: apps/web/src/features/practice/components/session-recap-view.tsx
+msgid "Recap"
+msgstr "Récapitulatif"
+
+#: apps/web/src/features/practice/components/session-recap-view.tsx
+msgid "Recap done!"
+msgstr "Récapitulatif terminé !"
 
 #: apps/web/src/features/sessions/components/tmdb-tv-search.tsx
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
@@ -3565,6 +3591,10 @@ msgstr "Session"
 msgid "Session not found."
 msgstr "Session introuvable."
 
+#: apps/web/src/features/practice/components/session-recap-view.tsx
+msgid "Session recap · {languageName}"
+msgstr "Récapitulatif de session · {languageName}"
+
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Session removed"
 msgstr "Session supprimée"
@@ -3708,6 +3738,8 @@ msgstr "Compétences pour {label}"
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-mc-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 #: apps/web/src/features/practice/components/use-in-sentence-exercise.tsx
 msgid "Skip"
 msgstr "Passer"
@@ -4088,6 +4120,12 @@ msgstr "Il y a eu une erreur. Veuillez contacter le support."
 msgid "These settings have been modified."
 msgstr "These settings have been modified."
 
+#: apps/web/src/features/practice/components/session-recap-view.tsx
+msgid "These terms don't have meanings saved yet — open a term to fill in its "
+"definition or translation."
+msgstr "Ces termes n'ont pas encore de significations enregistrées — ouvrez un "
+"terme pour remplir sa définition ou sa traduction."
+
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "Thinking…"
 msgstr "Réflexion en cours…"
@@ -4308,8 +4346,17 @@ msgid "TV show"
 msgstr "Série TV"
 
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
 msgid "Type the missing word…"
 msgstr "Tapez le mot manquant…"
+
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
+msgid "Type the term for:"
+msgstr "Tapez le terme pour :"
+
+#: apps/web/src/features/practice/components/recap-typed-exercise.tsx
+msgid "Type the term…"
+msgstr "Saisissez le terme…"
 
 #: apps/extension/common/components/StreamingVideoSettingsTab.tsx
 #: apps/extension/common/components/UiSettings.tsx
@@ -4614,6 +4661,14 @@ msgstr "Quels sont les synonymes ou quasi-synonymes, et en quoi diffèrent-ils ?
 #: apps/web/src/features/sessions/components/new-session-wizard.tsx
 msgid "What are you watching?"
 msgstr "Qu'allez-vous regarder ?"
+
+#: apps/web/src/features/practice/components/recap-mc-exercise.tsx
+msgid "What does “{headword}” mean?"
+msgstr "Que signifie « {headword} » ?"
+
+#: apps/web/src/features/practice/components/recap-mc-exercise.tsx
+msgid "What does the highlighted term mean?"
+msgstr "Que signifie le terme en surbrillance ?"
 
 #: apps/web/src/features/user-guide/components/user-guide-view.tsx
 msgid "What is Flicktionary?"
