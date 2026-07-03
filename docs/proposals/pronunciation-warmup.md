@@ -2,11 +2,14 @@
 
 > **Status: proposal — not implemented.** A design for giving the
 > **pronunciation** facet its own exercise-graded practice surface and an
-> exercise-first warm-up on-ramp, the same way recognition (shipped) and
-> production (proposed, see `production-warmup.md`) have. Not current behavior;
-> `SPEC.md` and `docs/SRS.md` describe what ships. Surfaced while extending the
-> warm-up on-ramp — pronunciation is the facet where "just generalize the
-> warm-up" does **not** carry over cleanly, so it gets its own design.
+> exercise-first warm-up on-ramp, the same way recognition and production
+> (both shipped; see `old-docs/production-warmup.md` for the latter's design)
+> have. Not current behavior; `SPEC.md` and `docs/SRS.md` describe what ships —
+> note the warm-up now serves through the composed practice queue, not the
+> dedicated affordances this doc occasionally references. Surfaced while
+> extending the warm-up on-ramp — pronunciation is the facet where "just
+> generalize the warm-up" does **not** carry over cleanly, so it gets its own
+> design.
 
 ## TL;DR
 
@@ -196,14 +199,14 @@ Frontend:
   marked in our data). Word⇄IPA match needs grounded IPA (`ru`/`en`/`de`). The
   exercise type should generate only where the data supports a deterministic
   answer key.
-- **Sequencing vs production warm-up.** Production warm-up extends an existing
-  pool and is the smaller, more coherent next step; pronunciation is a larger
-  track. Ship production first.
+- **Sequencing vs production warm-up.** Production warm-up shipped first (the
+  smaller, more coherent step); pronunciation is a larger track.
 
 ## Relationship to existing docs
 
-The shipped recognition warm-up and the leech-rehab mechanic live in
-`docs/SRS.md` and `SPEC.md` (Practice / Strengthen). `production-warmup.md` is the
-production extension of that mechanic. This doc is the pronunciation track, which
-additionally requires a new graded skill and a bank-key change before any warm-up
-can hang off it. Pull any of this into the specs only when it ships.
+The shipped warm-up (recognition + production) and the leech-rehab mechanic live
+in `docs/SRS.md` and `SPEC.md` (Practice / Strengthen); the production design
+rationale is archived at `old-docs/production-warmup.md`. This doc is the
+pronunciation track, which additionally requires a new graded skill and a
+bank-key change before any warm-up can hang off it. Pull any of this into the
+specs only when it ships.

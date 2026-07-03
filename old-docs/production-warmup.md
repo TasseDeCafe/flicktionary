@@ -1,11 +1,12 @@
 # Warm up production terms too
 
-> **Status: proposal — not implemented.** A design for extending the
-> exercise-first warm-up on-ramp to the **production** pool, so a term studied
-> for production gets scaffolded exercises before its first free-recall
-> flashcard — the same way recognition terms do today. Not current behavior;
-> `SPEC.md` and `docs/SRS.md` describe what ships. Surfaced while building the
-> recognition warm-up (the warm-up flow deliberately shipped recognition-only).
+> **Status: historical** (archived 2026-07-03). This proposal SHIPPED in PR #185
+> (production warm-up alongside recognition); the entry points it sketches were
+> then absorbed by the composed practice queue (PR #186). Current behavior lives
+> in `SPEC.md` (Practice / Strengthen) and `docs/SRS.md`. Kept for the design
+> rationale, notably the "Exact-form warm-up" section (Trap 19 / exercise-bank
+> facet identity), which is still unbuilt and referenced by
+> `docs/proposals/pronunciation-warmup.md`.
 
 ## Problem / motivation
 
