@@ -1,0 +1,112 @@
+import { useState, type ReactNode } from 'react'
+import { useLingui } from '@lingui/react/macro'
+import { CircleCheck, CircleX } from 'lucide-react'
+import { cn } from '@flicktionary/core/utils/tailwind-utils'
+import { Button } from '@flicktionary/ui/components/button'
+import type { RecapQueueItem } from '../utils/build-recap-questions'
+import { ExerciseLayout } from './exercise-layout'
+
+type McItem = Extract<RecapQueueItem, { kind: 'mc' }>
+
+// Session-recap multiple choice, graded entirely on the client: the recap is
+// ungated bonus practice (no SRS writes, nothing consumed server-side), so the
+// answer can live in the payload and there is no Skip. The stem shows the
+// term's own example with the term highlighted — the term being visible
+// doesn't spoil a meaning question.
+export const RecapMcExercise = ({
+  item,
+  header,
+  onAnswered,
+  onSkip,
+  onNext,
+}: {
+  item: McItem
+  header: ReactNode
+  onAnswered: (correct: boolean) => void
+  // Skip = "I don't know": advances without revealing the answer (pick an
+  // option to see it) and the term retries once at the end of the queue.
+  onSkip: () => void
+  onNext: () => void
+}) => {
+  const { t } = useLingui()
+  const [selected, setSelected] = useState<number | null>(null)
+
+  const answered = selected !== null
+  const correct = selected === item.answerIndex
+  const headword = item.term.headword
+
+  const handleSelect = (index: number) => {
+    if (answered) return
+    setSelected(index)
+    onAnswered(index === item.answerIndex)
+  }
+
+  return (
+    <ExerciseLayout
+      header={header}
+      feedback={
+        answered && (
+          <div
+            className={cn(
+              'flex items-center gap-2 text-sm font-medium',
+              correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+            )}
+          >
+            {correct ? <CircleCheck className='h-4 w-4' /> : <CircleX className='h-4 w-4' />}
+            {correct ? t`Correct!` : t`Not quite.`}
+          </div>
+        )
+      }
+      actions={
+        answered ? (
+          <Button type='button' size='xl' className='w-full' onClick={onNext}>
+            {t`Next`}
+          </Button>
+        ) : (
+          <Button type='button' variant='outline' size='xl' className='w-full' onClick={onSkip}>
+            {t`Skip`}
+          </Button>
+        )
+      }
+    >
+      {item.stem ? (
+        <div className='flex flex-col gap-3'>
+          <p className='text-lg leading-relaxed'>
+            {item.stem.sentence.slice(0, item.stem.start)}
+            <span className='font-semibold underline decoration-yellow-400 decoration-2 underline-offset-4'>
+              {item.stem.sentence.slice(item.stem.start, item.stem.end)}
+            </span>
+            {item.stem.sentence.slice(item.stem.end)}
+          </p>
+          <p className='font-medium'>{t`What does the highlighted term mean?`}</p>
+        </div>
+      ) : (
+        <p className='font-medium'>{t`What does “${headword}” mean?`}</p>
+      )}
+
+      <div className='flex flex-col gap-2'>
+        {item.options.map((option, index) => {
+          const isSelected = selected === index
+          const isCorrectOption = index === item.answerIndex
+          return (
+            <button
+              key={index}
+              type='button'
+              disabled={answered}
+              onClick={() => handleSelect(index)}
+              className={cn(
+                'rounded-lg border px-4 py-3 text-left text-base transition-colors',
+                !answered && 'hover:bg-accent active:bg-accent',
+                answered && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
+                answered && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-400/15',
+                answered && !isSelected && !isCorrectOption && 'opacity-60'
+              )}
+            >
+              {option}
+            </button>
+          )
+        })}
+      </div>
+    </ExerciseLayout>
+  )
+}
