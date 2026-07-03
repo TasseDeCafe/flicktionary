@@ -1,8 +1,12 @@
 # Prune the caller-less flashcard-bypass contract params
 
-> **Status: proposal — not implemented.** Cleanup left over from the composed
-> practice queue (PR `feat/composed-practice-queue`); pick up in a dedicated
-> session.
+> **Status: historical** (archived 2026-07-03). IMPLEMENTED by the
+> `chore/prune-practice-contract-vestiges` cleanup: `newBatchSize` /
+> `learnNewSession` and their backend threading were removed, along with the
+> caller-less `listReviewTerms` and `readingTextById` endpoints. One caution
+> below proved overly conservative — the contract inputs are not `.strict()`,
+> so stale clients sending the removed keys have them stripped, not rejected.
+> Current behavior: `docs/SRS.md` §"Over-cap learning".
 
 ## What's left over and why
 

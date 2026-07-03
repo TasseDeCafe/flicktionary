@@ -306,7 +306,7 @@ describe('advanceReadingText', () => {
     )
   })
 
-  it('learn_new scope does NOT bypass the daily-new cap (the bypass is flashcards-only)', async () => {
+  it('learn_new scope does NOT bypass the daily-new cap', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet, insertRatingEvent } = createDeps({
       claimWins: true,
     })
@@ -314,8 +314,8 @@ describe('advanceReadingText', () => {
     const result = await advanceReadingText(userId, textId, 'recognition', 'learn_new', [], deps)
     expect(result.ok).toBe(true)
     // lb is the only learn_new-eligible annotation (la is scheduled); its
-    // introduction is refused at the guard — no bypass, no FSRS, no event.
-    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
+    // introduction is refused at the guard — no FSRS, no event.
+    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }))
     expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
     expect(insertRatingEvent).not.toHaveBeenCalled()
     if (result.ok && !result.done) expect(result.introduced).toBe(0)

@@ -1,11 +1,11 @@
 # Production warm-up — implementation plan
 
-> **Status: plan — not implemented.** Concrete implementation plan for extending
-> the exercise-first warm-up on-ramp to the **production** pool. The design
-> rationale lives in `production-warmup.md` (the proposal); this file is the
-> grounded build plan. Decisions captured here override the open questions in the
-> proposal. Not current behavior — `SPEC.md` and `docs/SRS.md` describe what
-> ships; update them at PR time.
+> **Status: historical** (archived 2026-07-03). Implementation plan for the
+> production warm-up, which SHIPPED in PR #185; parts of it (the `pool` param on
+> `continueWarmupSession`, the language-wide warm-up-continue affordance) were
+> superseded before or by the composed practice queue (PR #186). Current behavior
+> lives in `SPEC.md` (Practice / Strengthen) and `docs/SRS.md`. Design rationale:
+> `old-docs/production-warmup.md`.
 
 ## Context
 

@@ -69,28 +69,10 @@ describe('listReviewTerms (service caps)', () => {
     expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxLearningTerms: 300 }))
   })
 
-  it('learn_new with requestedNewCount serves exactly the batch, ignoring the spent daily-new budget', async () => {
-    const { deps, repoListReviewTerms } = createDeps({ introducedToday: 50 })
-    await listReviewTerms(userId, 'es', 'recognition', 'learn_new', deps, { requestedNewCount: 10 })
-    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ scope: 'learn_new', maxNewTerms: 10 }))
-  })
-
-  it('learn_new requestedNewCount is clamped to the hard ceiling', async () => {
-    const { deps, repoListReviewTerms } = createDeps()
-    await listReviewTerms(userId, 'es', 'recognition', 'learn_new', deps, { requestedNewCount: 500 })
-    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxNewTerms: 100 }))
-  })
-
-  it('learn_new WITHOUT requestedNewCount keeps the daily-remaining math (reading generator path)', async () => {
+  it('learn_new keeps the daily-remaining math — a spent budget serves zero new terms', async () => {
     const { deps, repoListReviewTerms } = createDeps({ introducedToday: 50 })
     await listReviewTerms(userId, 'es', 'recognition', 'learn_new', deps)
-    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxNewTerms: 0 }))
-  })
-
-  it('requestedNewCount does not loosen caps outside learn_new', async () => {
-    const { deps, repoListReviewTerms } = createDeps({ introducedToday: 50 })
-    await listReviewTerms(userId, 'es', 'recognition', 'mixed', deps, { requestedNewCount: 10 })
-    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ maxNewTerms: 0 }))
+    expect(repoListReviewTerms).toHaveBeenCalledWith(expect.objectContaining({ scope: 'learn_new', maxNewTerms: 0 }))
   })
 
   it('production pool: uncapped review (NULL cap) — uses the hard ceilings, no budget count', async () => {

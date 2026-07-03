@@ -10,7 +10,7 @@ import { getDailyNewAvailable, getReviewCounts } from './review-counts'
 // The reading-mode session screen. Flashcards moved to the composed queue
 // (/practice/composed); this route only hosts Read, entered from Custom
 // practice or the landing's reading-resume affordance.
-export const UnifiedReviewView = () => {
+export const ReadingSessionView = () => {
   const navigate = useNavigate()
   const { targetLanguage } = useParams({ from: '/_authenticated/_app/practice/review/$targetLanguage' })
   const { pool, scope } = useSearch({ from: '/_authenticated/_app/practice/review/$targetLanguage' })

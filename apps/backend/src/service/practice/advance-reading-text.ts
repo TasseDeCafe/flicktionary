@@ -142,8 +142,8 @@ export const advanceReadingText = async (
       if (wasReviewedAfterTextWasPrepared(facetRow, claimed)) continue
       if (!isEligibleForScope(facetRow, effectivePool, scope, now)) continue
       const rating = ratingByLookupId.get(lookup.id) ?? 'good'
-      // Reading mode NEVER bypasses the daily-new cap — the learn-new bypass is
-      // a flashcards-only affordance (driven by rateTerm's learnNewSession).
+      // Reading mode never introduces past the daily-new cap — the explicit
+      // over-cap path is the composed queue's Learn extra (parking side).
       const result = await applyTermRating({
         lookup: facetRow,
         userId,

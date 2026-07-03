@@ -7,21 +7,13 @@ import { Button } from '@flicktionary/ui/components/button'
 import { Skeleton, SkeletonList } from '@flicktionary/ui/components/skeleton'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import { getPracticeLimitsForLanguage } from '@/features/sessions/utils/practice-limits-pref'
-import type {
-  PracticeDueSummaryEntry,
-  PracticePool,
-} from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import type { PracticePool } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { useDueSummary } from '../api/practice-hooks'
 import { CustomPracticeOverlay } from './custom-practice-overlay'
+import { getDailyNewAvailable } from './review-counts'
 
 const formatCount = (count: number) => count.toLocaleString()
-
-const getDailyNewAvailable = (entry: PracticeDueSummaryEntry, maxNewTerms: number) => {
-  if (maxNewTerms <= 0) return 0
-  const remainingDailyNewTerms = Math.max(0, maxNewTerms - entry.newIntroducedTodayCount)
-  return Math.min(entry.newCount, remainingDailyNewTerms)
-}
 
 // The per-language landing: ONE primary Practice button entering the composed
 // queue (gate exercises + due flashcards, production-first — the system makes

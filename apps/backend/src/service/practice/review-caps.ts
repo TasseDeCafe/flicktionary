@@ -38,13 +38,10 @@ export type ReviewCapsDependencies = {
 //     follow-ups are exempt: maxLearningTerms is a hard ceiling, never a
 //     budget, so a failed card's relearning step can't be stranded by a spent
 //     budget.
-//   - new budget: the clamped daily limit minus today's introductions —
-//     UNLESS this is an explicit learn-new session (`scope === 'learn_new'`
-//     with a `requestedNewCount`), which serves exactly the requested batch
-//     regardless of the remaining daily budget (Anki-style custom study; the
-//     introductions still stamp added_to_practice_at, so they count toward
-//     today and `mixed` won't re-add more). Without `requestedNewCount` (the
-//     reading-generator path) learn_new keeps the daily-remaining math.
+//   - new budget: the clamped daily limit minus today's introductions. The
+//     explicit past-the-cap path is the composed queue's Learn extra, which
+//     lives on the PARKING side (`bypassCap` on the warm-up park guard) — this
+//     resolver never loosens the new budget.
 //
 // The production pool's NEW intake is never daily-capped (production
 // introductions don't consume the recognition new allowance), so maxNewTerms
@@ -57,7 +54,6 @@ export const resolveReviewCaps = async (params: {
   targetLanguage: string
   pool: PracticePool
   scope: ReviewScope
-  requestedNewCount?: number
   deps: ReviewCapsDependencies
 }): Promise<{
   maxReviewTerms: number
@@ -112,15 +108,10 @@ export const resolveReviewCaps = async (params: {
   })
   const remainingReviews = Math.max(0, limits.maxReviewTerms - consumedReviewsToday)
 
-  let maxNewTerms: number
-  if (params.scope === 'learn_new' && params.requestedNewCount != null) {
-    maxNewTerms = Math.min(params.requestedNewCount, HARD_MAX_PRACTICE_NEW_TERMS)
-  } else {
-    const summary = (await params.deps.userLookupsRepository.listDueSummary(params.userId)).find(
-      (s) => s.targetLanguage === params.targetLanguage
-    )
-    maxNewTerms = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
-  }
+  const summary = (await params.deps.userLookupsRepository.listDueSummary(params.userId)).find(
+    (s) => s.targetLanguage === params.targetLanguage
+  )
+  const maxNewTerms = Math.max(0, limits.maxNewTerms - (summary?.newIntroducedTodayCount ?? 0))
 
   return {
     maxReviewTerms: remainingReviews,

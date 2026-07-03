@@ -26,7 +26,6 @@ import type {
 import type { PracticeExercisesRepositoryInterface } from '../../transport/database/practice-exercises/practice-exercises-repository'
 import type { PracticeRatingEventsRepositoryInterface } from '../../transport/database/practice-rating-events/practice-rating-events-repository'
 import { beginTx } from '../../transport/database/postgres-client'
-import { listReviewTerms } from '../../service/practice/list-review-terms'
 import { rateTerm, type WithTransaction } from '../../service/practice/rate-term'
 import { undoRating } from '../../service/practice/undo-rating'
 import {
@@ -248,13 +247,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
     withTransaction,
     warmExerciseBank: warmBank,
   }
-  const capsDeps = {
-    userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
-    userLookupsRepository: deps.userLookupsRepository,
-    practiceTextsRepository: deps.practiceTextsRepository,
-    practiceRatingEventsRepository: deps.practiceRatingEventsRepository,
-  }
-
   // Shape a practice_text into its DTO, joining live annotation content.
   const shapeText = async (text: DbPracticeText, userId: string, targetLanguage: string) => {
     const contentByKey = await fetchAnnotationContent(text, userId, targetLanguage, deps.userLookupsRepository)
@@ -284,14 +276,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       return { data: { perLanguage } }
     }),
 
-    listReviewTerms: implementer.listReviewTerms.handler(async ({ input, context }) => {
-      const userId = context.res.locals.userId
-      const rows = await listReviewTerms(userId, input.targetLanguage, input.pool, input.scope, capsDeps, {
-        requestedNewCount: input.newBatchSize,
-      })
-      return { data: { terms: rows.map((row) => toReviewTermDto(row)) } }
-    }),
-
     rateTerm: implementer.rateTerm.handler(async ({ input, context, errors }) => {
       const userId = context.res.locals.userId
       const result = await rateTerm(
@@ -308,8 +292,7 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
           userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
           withTransaction,
           warmExerciseBank: warmBank,
-        },
-        { bypassDailyCap: input.learnNewSession === true }
+        }
       )
       if (!result.ok) {
         if (result.reason === 'not_in_production_pool') {
@@ -428,15 +411,6 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
       })
       const texts = await Promise.all(rows.map((row) => shapeText(row, userId, input.targetLanguage)))
       return { data: { texts } }
-    }),
-
-    readingTextById: implementer.readingTextById.handler(async ({ input, context, errors }) => {
-      const userId = context.res.locals.userId
-      const found = await deps.practiceTextsRepository.findByIdForUser(input.textId, userId)
-      if (!found) {
-        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Practice text not found' }] } })
-      }
-      return { data: { practiceText: await shapeText(found.practiceText, userId, found.targetLanguage) } }
     }),
 
     startStrengthenSession: implementer.startStrengthenSession.handler(async ({ input, context }) => {

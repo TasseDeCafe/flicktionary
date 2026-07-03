@@ -15,7 +15,6 @@ import {
   PracticeTextSchema,
   ReadingRatingSchema,
   ReviewScopeSchema,
-  ReviewTermSchema,
   StrengthenExerciseEntrySchema,
   StrengthenExercisePayloadSchema,
 } from './common/flicktionary-schemas'
@@ -30,31 +29,6 @@ export const practiceContract = {
     .errors({ INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema } })
     .input(z.object({}))
     .output(z.object({ data: z.object({ perLanguage: z.array(PracticeDueSummaryEntrySchema) }) })),
-
-  // The live review pool for a (language, pool), sliced by scope. Feeds the
-  // flashcard queue directly; the reading generator uses the same query for its
-  // candidate set. Caps (daily-new remaining, max review) are applied
-  // server-side from the user's practice limits. No session — closing and
-  // reopening refetches a fresh slice (already-rated terms drop out naturally).
-  listReviewTerms: oc
-    .route({ method: 'GET', path: '/practice/review-terms', successStatus: 200 })
-    .errors({
-      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(
-      z.object({
-        targetLanguage: z.string().min(1),
-        pool: PracticePoolSchema.default('recognition'),
-        scope: ReviewScopeSchema.default('mixed'),
-        // Explicit learn-new batch size (learn_new scope only). When set, the
-        // server serves exactly this many unseen terms regardless of the
-        // remaining daily-new budget (Anki-style custom study). Ignored for
-        // other scopes. GET query params arrive as strings, hence the coercion.
-        newBatchSize: z.coerce.number().int().min(1).max(100).optional(),
-      })
-    )
-    .output(z.object({ data: z.object({ terms: z.array(ReviewTermSchema) }) })),
 
   // Grade a single term in flashcard mode. Applies FSRS directly to the rated
   // facet's SRS state. New-term introductions (srs_state IS NULL) are gated by
@@ -80,10 +54,6 @@ export const practiceContract = {
         // client that doesn't yet send them.
         skill: FacetSkillSchema.default('meaning_recognition'),
         targetForm: z.string().default(''),
-        // True when rating inside an explicit learn-new session: new-term
-        // introductions bypass the daily-new cap (they still stamp
-        // added_to_practice_at, so they count toward today's introductions).
-        learnNewSession: z.boolean().optional(),
       })
     )
     .output(
@@ -237,16 +207,6 @@ export const practiceContract = {
       })
     )
     .output(z.object({ data: z.object({ texts: z.array(PracticeTextSchema) }) })),
-
-  // Read-only fetch of a single past text (history detail / peek-back).
-  readingTextById: oc
-    .route({ method: 'GET', path: '/practice/reading-texts/{textId}', successStatus: 200 })
-    .errors({
-      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
-      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
-    })
-    .input(z.object({ textId: z.string().uuid() }))
-    .output(z.object({ data: z.object({ practiceText: PracticeTextSchema }) })),
 
   // Build a Strengthen session: one gate exercise per parked (leech) term plus
   // one bonus exercise per this-session again/hard term. Server-side it

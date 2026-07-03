@@ -248,7 +248,7 @@ active = `{meaning_production}`), filtered to enabled (`disabled_at IS NULL`) an
 |---|---|---|---|
 | review-state | `srs_state IN ('new','review')`, due | remaining **review budget** | due ASC |
 | learning-state | `srs_state IN ('learning','relearning')`, due | hard max only | due ASC |
-| new (capped) | `srs_state IS NULL`, **primary citation** facet | remaining **new budget** (or batch) | created_at ASC |
+| new (capped) | `srs_state IS NULL`, **primary citation** facet | remaining **new budget** | created_at ASC |
 | new (opt-in) | `srs_state IS NULL`, **NOT** primary citation | hard ceiling, **`learn_new` only** | created_at ASC |
 
 The **primary citation** facet is the pool's daily-new-capped card (passive →
@@ -269,13 +269,10 @@ to plain due-time-then-new ordering.
 Excluded everywhere: parked facets (`leech_parked_at IS NOT NULL`) and terms woven into the
 currently-open reading text (`excludeUserLookupIds`).
 
-**Over-cap learning**: the current past-the-cap path is the composed queue's **Learn
+**Over-cap learning**: the ONLY past-the-cap path is the composed queue's **Learn
 extra** (§4b) — an explicit batch that PARKS extra recognition terms into warm-up with
-`bypassCap` (introductions still stamp `introduced_at`, so they count toward today). The
-old flashcard-side bypass plumbing (`newBatchSize` → `requestedNewCount` on
-`listReviewTerms`, `learnNewSession` on `rateTerm`) survives in the contract and the
-rating guard but has no web caller since the flashcard learn-new batch sheet was retired
-with the composed queue. Reading mode never gets a bypass.
+`bypassCap` on the warm-up park guard (introductions still stamp `introduced_at`, so they
+count toward today). Neither the rating path nor reading mode has a cap bypass.
 
 ## 4b. The composed queue (composePracticeQueue)
 
@@ -343,11 +340,11 @@ Shared by flashcards (`rateTerm`) and reading advances (`advanceReadingText`). P
 
 1. **Refusals (no FSRS, no event)**: `not_in_active_pool`; parked term (stale queue/tab —
    accepted as a no-op); introduction over the daily cap.
-2. **Introduction guard** (passive, state-NULL only): `initializeSrsStateIfUnderDailyCap`
+2. **Introduction guard** (passive, state-NULL only): `initializeCitationFacetIfUnderDailyCap`
    runs in its own advisory-lock transaction — atomically counts today's introductions
    against the *full clamped per-language cap* and stamps `srs_state='new'` +
-   `added_to_practice_at` only if under it. `bypassDailyCap` (learn-new session) drops only
-   the count predicate. Active introductions initialize unconditionally.
+   `introduced_at` only if under it. There is no cap bypass on this path (Learn extra
+   bypasses on the parking side instead). Active introductions initialize unconditionally.
 3. **FSRS write + event log in one transaction**: `applyFsrsResultForFacet` and the
    `practice_rating_events` insert commit together. The event carries the rated **facet
    identity** (`skill`, `target_form`) alongside `pool` (the session queue — distinct

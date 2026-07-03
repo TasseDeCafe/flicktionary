@@ -1,12 +1,11 @@
 # Handoff — Exercise-first warm-up (+ loading-UX fixes + warm-up/leech split)
 
-> **Status:** implemented on the working branch, verified locally (typecheck, lint,
-> backend tests all green) against the dev-tunnel DB. **Not yet committed/PR'd.**
-> Docs + translations are intentionally deferred to PR time (see "Deferred").
->
-> Source plan: `~/.claude/plans/i-think-that-we-quizzical-pebble.md` (model C —
-> generalize the leech-rehab graduation into an onboarding on-ramp). This file
-> records what shipped, including changes made *beyond* the plan during testing.
+> **Status: historical** (archived 2026-07-03). Handoff notes for the exercise-first
+> warm-up, which shipped in PR #184 (recognition) and #185 (production). Several
+> surfaces it documents as live (`continueWarmupSession`, `warmup-continue-view.tsx`,
+> `/practice/warmup-continue/$targetLanguage`) were later retired by the composed
+> practice queue (PR #186). Superseded by `SPEC.md` (Practice / Strengthen) and
+> `docs/SRS.md`; never a current-state reference.
 
 ## TL;DR
 
