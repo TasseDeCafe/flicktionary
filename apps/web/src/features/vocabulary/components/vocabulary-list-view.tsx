@@ -31,10 +31,10 @@ export const VocabularyListView = () => {
   const navigate = useNavigate()
   const search = useSearch({ from: '/_authenticated/_app/vocabulary/' })
 
-  const [selectedLanguage, setSelectedLanguageState] = useState<string | null>(savedLanguage)
+  const [pickedLanguage, setPickedLanguage] = useState<string | null>(savedLanguage)
   const setSelectedLanguage = (next: string | null) => {
     savedLanguage = next
-    setSelectedLanguageState(next)
+    setPickedLanguage(next)
   }
   const [searchInput, setSearchInput] = useState('')
   const debouncedSearch = useDebouncedValue(searchInput.trim(), 250)
@@ -70,15 +70,8 @@ export const VocabularyListView = () => {
 
   const { data: languages, isLoading: languagesLoading } = useListLanguages()
 
-  // First non-empty languages list seeds the selected language. After that the
-  // user controls it via the switcher.
-  useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates -- derivable (`selectedLanguage ?? languages?.[0]`); scheduled for the phase-2 effect cleanup, see docs/proposals/add-eslint-effect.md */
-    if (selectedLanguage !== null) return
-    if (!languages || languages.length === 0) return
-    setSelectedLanguage(languages[0]!)
-    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates */
-  }, [languages, selectedLanguage])
+  // The first language is the default until the user picks one via the switcher.
+  const selectedLanguage = pickedLanguage ?? languages?.[0] ?? null
 
   const {
     data,

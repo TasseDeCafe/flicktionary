@@ -9,16 +9,12 @@ export const RateLimitingOverlayContent = () => {
   const { t } = useLingui()
 
   const [countdown, setCountdown] = useState(COUNTDOWN_TIME)
-  const [isRetryEnabled, setIsRetryEnabled] = useState(false)
+  const isRetryEnabled = countdown === 0
 
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
-      return () => clearTimeout(timer)
-    } else {
-      // eslint-disable-next-line react-you-might-not-need-an-effect/no-chain-state-updates -- derivable (`countdown === 0`); scheduled for the phase-2 effect cleanup, see docs/proposals/add-eslint-effect.md
-      setIsRetryEnabled(true)
-    }
+    if (countdown === 0) return
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+    return () => clearTimeout(timer)
   }, [countdown])
 
   return (
