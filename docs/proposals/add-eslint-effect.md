@@ -64,7 +64,7 @@ Effects whose removal is a local, low-risk rewrite (derived state, seed-first-as
 
 ### Phase 3 — wizard/auto-detect chains
 
-**Status: implemented — PR #199 open, merge pending (manual golden path: wizard prefill + Add-episode seed, paste title/language auto-detect, adhoc language hint).**
+**Status: merged (PR #199).**
 
 The `languageTouched` / auto-suggest effect chains shared by `new-session-wizard.tsx`, `text-paste-input.tsx`, `new-adhoc-card-wizard.tsx`. One shared pattern, one PR. Extract the "should auto-apply detection" decision into a pure helper + tests, then move the state writes into the query/event callbacks.
 
@@ -120,7 +120,8 @@ Housekeeping fixed in PR1: the `routeTree.gen.ts` ignore pattern didn't match it
 
 - PR1: #197 (`chore/effect-lint-enable-at-zero`), merged.
 - Phase 2: #198 (`chore/effect-lint-phase-2`), merged.
-- Phase 3: #199 (`refactor/effect-lint-phase-3`).
+- Phase 3: #199 (`refactor/effect-lint-phase-3`), merged.
+- Next up: phase 4 (queue/recap state machines, extract-and-test).
 - Scan reproduction: `pnpm --filter @flicktionary/web lint` (the plugin is enabled; the lint script carries `--max-warnings 0`).
 - Nothing in phases 2+ should start before PR1 merges — the suppression comments are the shared triage record.
 - When a phase PR removes an effect, delete its suppression in the same commit (`reportUnusedDisableDirectives: 'error'` fails the lint otherwise) and update this doc's phase status + triage-table row.
