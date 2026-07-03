@@ -1,11 +1,13 @@
 import { createElement } from 'react'
 import {
   CaptureVisibleTabMessage,
+  ExtensionToVideoCommand,
   ForegroundToExtensionCommand,
   Message,
   OpenAsbplayerSettingsMessage,
   SubtitleFile,
   TabToExtensionCommand,
+  ToggleVideoSelectMessage,
   VideoSelectModeCancelMessage,
   VideoSelectModeConfirmMessage,
 } from '@asbplayer-fork/common'
@@ -45,9 +47,9 @@ export default class VideoSelectController {
   private _shadowOpen = false
 
   private messageListener?: (
-    request: any,
+    request: ExtensionToVideoCommand<Message>,
     sender: Browser.runtime.MessageSender,
-    sendResponse: (response?: any) => void
+    sendResponse: (response?: unknown) => void
   ) => void
 
   constructor(bindings: Binding[]) {
@@ -56,18 +58,20 @@ export default class VideoSelectController {
 
   bind() {
     this.messageListener = (
-      request: any,
+      request: ExtensionToVideoCommand<Message>,
       sender: Browser.runtime.MessageSender,
-      sendResponse: (response?: any) => void
+      sendResponse: (response?: unknown) => void
     ) => {
       if (request.sender !== 'asbplayer-extension-to-video') {
         return
       }
 
       switch (request.message.command) {
-        case 'toggle-video-select':
-          this._trigger(false, request.message.fromAsbplayerId, request.src, request.message.subtitleFiles)
+        case 'toggle-video-select': {
+          const message = request.message as ToggleVideoSelectMessage
+          this._trigger(false, message.fromAsbplayerId, request.src, message.subtitleFiles)
           break
+        }
         case 'copy-subtitle':
         case 'toggle-recording':
         case 'take-screenshot':

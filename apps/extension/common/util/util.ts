@@ -319,7 +319,7 @@ export function computeStyles({
   subtitleFontFamily,
   subtitleCustomStyles,
 }: TextSubtitleSettings) {
-  const styles: { [key: string]: any } = {
+  const styles: { [key: string]: string } = {
     color: subtitleColor,
     fontSize: scaledPx(subtitleSize),
     fontWeight: String(subtitleThickness),

@@ -63,16 +63,24 @@ export const fetchExtensionConfig = async (noCache = false): Promise<ExtensionCo
   return undefined
 }
 
-const validJson = (json: any | undefined) => {
-  return json !== undefined && validLatest(json.latest) && validLanguages(json.languages)
+const validJson = (json: unknown) => {
+  if (!json || typeof json !== 'object') {
+    return false
+  }
+  const obj = json as { latest?: unknown; languages?: unknown }
+  return validLatest(obj.latest) && validLanguages(obj.languages)
 }
 
-const validLatest = (json: any | undefined) => {
-  return typeof json.version === 'string' && typeof json.url === 'string'
+const validLatest = (json: unknown) => {
+  if (!json || typeof json !== 'object') {
+    return false
+  }
+  const obj = json as { version?: unknown; url?: unknown }
+  return typeof obj.version === 'string' && typeof obj.url === 'string'
 }
 
-const validLanguages = (json: any | undefined) => {
-  if (json === undefined || typeof json !== 'object' || !Array.isArray(json)) {
+const validLanguages = (json: unknown) => {
+  if (!Array.isArray(json)) {
     return false
   }
 

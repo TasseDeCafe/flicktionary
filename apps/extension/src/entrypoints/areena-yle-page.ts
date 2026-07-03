@@ -43,10 +43,9 @@ export const inferTracksFromInterceptedM3u8 = (urlRegex: RegExp) => {
           continue
         }
 
-        const url = (info as any).uri
-        const language = (info as any).language
+        const { uri: url, language } = info as { uri?: unknown; language?: unknown }
 
-        if (!url || !language) {
+        if (typeof url !== 'string' || typeof language !== 'string') {
           continue
         }
 
@@ -60,7 +59,7 @@ export const inferTracksFromInterceptedM3u8 = (urlRegex: RegExp) => {
             trackFromDef({
               label: label,
               language: language,
-              url: subManifest.segments.map((s: any) => `${subManifestBaseUrl}/${s.uri}`),
+              url: subManifest.segments.map((s) => `${subManifestBaseUrl}/${s.uri}`),
               extension: extension,
             })
           )
@@ -81,7 +80,7 @@ export const inferTracksFromInterceptedM3u8 = (urlRegex: RegExp) => {
       lastManifestUrl = url
     }
 
-    // @ts-ignore
+    // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
     originalXhrOpen.apply(this, arguments)
   }
 

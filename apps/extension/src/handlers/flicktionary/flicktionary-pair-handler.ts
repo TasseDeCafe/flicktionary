@@ -43,7 +43,7 @@ export default class FlicktionaryPairHandler {
     return 'flicktionary-pair'
   }
 
-  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: unknown) => void) {
     const msg = command.message
     if (!isPairMessage(msg)) {
       sendResponse({ ok: false, error: 'Invalid pair payload' })

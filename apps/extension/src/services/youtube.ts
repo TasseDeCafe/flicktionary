@@ -109,7 +109,7 @@ export const decodePoToken = (videoId: string) => {
 }
 
 export const fetchPlayerContextForPage = async () => {
-  let trustedPolicy: any = undefined
+  let trustedPolicy: Pick<TrustedTypePolicy, 'createHTML' | 'createScript'> | undefined = undefined
 
   if (window.trustedTypes !== undefined) {
     // YouTube doesn't define a default policy
@@ -139,7 +139,7 @@ export const fetchPlayerContextForPage = async () => {
     })
     .then((pageString) => {
       if (trustedPolicy !== undefined) {
-        pageString = trustedPolicy.createHTML(pageString)
+        pageString = trustedPolicy.createHTML(pageString) as unknown as string
       }
 
       return new window.DOMParser().parseFromString(pageString, 'text/html')
@@ -154,7 +154,7 @@ export const fetchPlayerContextForPage = async () => {
           let scriptString = `${elm.textContent}; return ytInitialPlayerResponse;`
 
           if (trustedPolicy !== undefined) {
-            scriptString = trustedPolicy.createScript(scriptString)
+            scriptString = trustedPolicy.createScript(scriptString) as unknown as string
           }
 
           const context = new Function(scriptString)()

@@ -6,7 +6,14 @@ import { Parser as m3U8Parser } from 'm3u8-parser'
 function baseUrlForUrl(url: string) {
   return url.substring(0, url.lastIndexOf('/'))
 }
-export function fetchM3U8(url: string): Promise<any> {
+// m3u8-parser's manifest object is untyped upstream; expose the minimal shape callers use.
+export interface M3U8Manifest {
+  playlists?: unknown[]
+  mediaGroups?: { SUBTITLES?: Record<string, Record<string, { language?: unknown; uri?: unknown }>> }
+  segments?: { uri: string; discontinuity?: boolean }[]
+}
+
+export function fetchM3U8(url: string): Promise<M3U8Manifest> {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       // Bypass cache since Chrome might try to use a cached response that doesn't have appropriate CORS headers
@@ -48,8 +55,10 @@ export function subtitleTrackSegmentsFromM3U8(url: string): Promise<VideoDataSub
               const track = tracks[label]
 
               if (track && typeof track.language === 'string' && typeof track.uri === 'string') {
+                const language = track.language
+                const uri = track.uri
                 const fetchTrack = async () => {
-                  const subtitleM3U8Url = `${baseUrl}/${track.uri}`
+                  const subtitleM3U8Url = `${baseUrl}/${uri}`
                   const m3U8Response = await fetch(subtitleM3U8Url)
                   const parser = new m3U8Parser()
                   parser.push(await m3U8Response.text())
@@ -57,12 +66,13 @@ export function subtitleTrackSegmentsFromM3U8(url: string): Promise<VideoDataSub
                   const firstUri = parser.manifest.segments[0].uri
                   const extension = firstUri.substring(firstUri.lastIndexOf('.') + 1)
                   const subtitleBaseUrl = baseUrlForUrl(subtitleM3U8Url)
-                  const urls = parser.manifest.segments
-                    .filter((s: any) => !s.discontinuity && s.uri)
-                    .map((s: any) => `${subtitleBaseUrl}/${s.uri}`)
+                  const segments: { uri: string; discontinuity?: boolean }[] = parser.manifest.segments
+                  const urls = segments
+                    .filter((s) => !s.discontinuity && s.uri)
+                    .map((s) => `${subtitleBaseUrl}/${s.uri}`)
                   return trackFromDef({
                     label: label,
-                    language: track.language,
+                    language,
                     url: urls,
                     extension: extension,
                   })

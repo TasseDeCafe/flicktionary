@@ -10,7 +10,7 @@ export default class CaptureVisibleTabHandler {
     return 'capture-visible-tab'
   }
 
-  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: unknown) => void) {
     if (sender.tab === undefined || sender.tab.id === undefined) {
       return
     }

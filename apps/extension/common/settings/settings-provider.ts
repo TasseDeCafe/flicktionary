@@ -1,6 +1,7 @@
 import {
   AsbplayerSettings,
   KeyBindName,
+  KeyBindSet,
   SubtitleListPreference,
   SubtitleSettings,
   TextSubtitleSettings,
@@ -9,8 +10,11 @@ import {
 } from '.'
 import { AutoPausePreference, SubtitleHtml } from '..'
 
-// @ts-ignore
-const isMacOs = (navigator.userAgentData?.platform ?? navigator.platform)?.toUpperCase()?.indexOf('MAC') > -1
+// userAgentData is Chromium-only and not yet in lib.dom
+const isMacOs =
+  (((navigator as { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.platform) || '')
+    .toUpperCase()
+    .indexOf('MAC') > -1
 
 const defaultSubtitleTextSettings = {
   subtitleSize: 46,
@@ -152,7 +156,7 @@ export const textSubtitleSettingsForTrack = (
       return true
     }
 
-    let mergedSettings: any = {}
+    const mergedSettings: Record<string, unknown> = {}
 
     for (const key of textSubtitleSettingsKeys) {
       if (valuesAllSame(key)) {
@@ -234,7 +238,7 @@ export const textSubtitleSettingsAreDirty = (settings: SubtitleSettings, track: 
   )
 }
 
-type SettingsDeserializers = { [key in keyof AsbplayerSettings]: (serialized: string) => any }
+type SettingsDeserializers = { [key in keyof AsbplayerSettings]: (serialized: string) => AsbplayerSettings[key] }
 export const settingsDeserializers: SettingsDeserializers = Object.fromEntries(
   Object.entries(defaultSettings).map(([key, value]) => {
     if (typeof value === 'string') {
@@ -257,7 +261,7 @@ export const settingsDeserializers: SettingsDeserializers = Object.fromEntries(
   })
 ) as SettingsDeserializers
 
-const deepEquals = (a: any, b: any) => {
+const deepEquals = (a: unknown, b: unknown): boolean => {
   if (typeof a !== typeof b) {
     return false
   }
@@ -266,21 +270,27 @@ const deepEquals = (a: any, b: any) => {
     return a === b
   }
 
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
+  if (a === null || b === null) {
+    return a === b
+  }
 
-  if (a.length !== b.length) {
+  const aObj = a as Record<string, unknown>
+  const bObj = b as Record<string, unknown>
+  const aKeys = Object.keys(aObj)
+  const bKeys = Object.keys(bObj)
+
+  if (aObj['length'] !== bObj['length']) {
     return false
   }
 
   for (const k of aKeys) {
-    if (!deepEquals(a[k], b[k])) {
+    if (!deepEquals(aObj[k], bObj[k])) {
       return false
     }
   }
 
   for (const k of bKeys) {
-    if (!deepEquals(a[k], b[k])) {
+    if (!deepEquals(aObj[k], bObj[k])) {
       return false
     }
   }
@@ -290,7 +300,7 @@ const deepEquals = (a: any, b: any) => {
 
 export const ensureConsistencyOnRead = (settings: Partial<AsbplayerSettings>) => {
   let keyBindSetModified = false
-  let newKeyBindSet: any = {}
+  const newKeyBindSet: { -readonly [K in KeyBindName]?: KeyBindSet[K] } = {}
 
   if (settings.keyBindSet !== undefined) {
     const keyBindSet = settings.keyBindSet
@@ -311,7 +321,8 @@ export const ensureConsistencyOnRead = (settings: Partial<AsbplayerSettings>) =>
     return settings
   }
 
-  return { ...settings, keyBindSet: newKeyBindSet }
+  // the loop above fills every KeyBindName, so the partial is complete here
+  return { ...settings, keyBindSet: newKeyBindSet as KeyBindSet }
 }
 
 type SettingsKey = keyof AsbplayerSettings
@@ -324,7 +335,7 @@ const complexValuedKeys = Object.fromEntries(
 
 export class SettingsProvider {
   private _storage: SettingsStorage
-  private _complexValues: { [key: string]: any } = {}
+  private _complexValues: { [key: string]: unknown } = {}
 
   constructor(storage: SettingsStorage) {
     this._storage = storage
@@ -348,7 +359,7 @@ export class SettingsProvider {
     }
 
     const data = await this._storage.get(parameters)
-    const result: any = {}
+    const result: Record<string, unknown> = {}
 
     for (const key in parameters) {
       const value = (data && data[key as SettingsKey]) ?? defaultSettings[key as SettingsKey]
@@ -367,7 +378,7 @@ export class SettingsProvider {
       }
     }
 
-    return ensureConsistencyOnRead(result) as Pick<AsbplayerSettings, K>
+    return ensureConsistencyOnRead(result as Partial<AsbplayerSettings>) as Pick<AsbplayerSettings, K>
   }
 
   async set(settings: Partial<AsbplayerSettings>): Promise<void> {
@@ -419,24 +430,24 @@ export const prefixedSettings = <P extends string>(
   settings: Partial<AsbplayerSettings>,
   profile: P
 ): Partial<AsbplayerSettingsProfile<P>> => {
-  const prefixed: any = {}
+  const prefixed: Record<string, unknown> = {}
 
   for (const key of Object.keys(settings)) {
     prefixed[prefixKey(key as keyof AsbplayerSettings, profile)] = settings[key as keyof AsbplayerSettings]
   }
 
-  return prefixed
+  return prefixed as Partial<AsbplayerSettingsProfile<P>>
 }
 
 export const unprefixedSettings = <P extends string>(settings: Partial<AsbplayerSettingsProfile<P>>, profile: P) => {
-  const unprefixed: any = {}
+  const unprefixed: Record<string, unknown> = {}
 
   for (const key of Object.keys(settings)) {
     const unprefixedKey = unprefixKey(key as keyof AsbplayerSettingsProfile<P>, profile)
     unprefixed[unprefixedKey] = settings[key as keyof AsbplayerSettingsProfile<P>]
   }
 
-  return unprefixed
+  return unprefixed as Partial<AsbplayerSettings>
 }
 
 export interface Profile {

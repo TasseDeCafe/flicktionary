@@ -25,7 +25,11 @@ export default class FlicktionaryPairFinishedHandler {
     return 'flicktionary-pair-finished'
   }
 
-  handle(_command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  handle(
+    _command: Command<Message>,
+    sender: Browser.runtime.MessageSender,
+    sendResponse: (response?: unknown) => void
+  ) {
     void (async () => {
       const senderTabId = sender.tab?.id
       if (senderTabId === undefined) {

@@ -46,10 +46,10 @@ export class CachingElementOverlay implements ElementOverlay {
   // disposePersistentHost.
   private persistentHostElement?: HTMLElement
   private nonFullscreenContainerElement?: HTMLElement
-  private nonFullscreenElementFullscreenChangeListener?: (this: any, event: Event) => any
+  private nonFullscreenElementFullscreenChangeListener?: EventListener
   private nonFullscreenStylesInterval?: NodeJS.Timeout
   private nonFullscreenElementFullscreenPollingInterval?: NodeJS.Timeout
-  private fullscreenElementFullscreenChangeListener?: (this: any, event: Event) => any
+  private fullscreenElementFullscreenChangeListener?: EventListener
   private fullscreenElementFullscreenPollingInterval?: NodeJS.Timeout
   private fullscreenStylesInterval?: NodeJS.Timeout
   private onMouseOver: (event: MouseEvent) => void

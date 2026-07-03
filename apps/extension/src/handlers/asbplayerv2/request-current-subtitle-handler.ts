@@ -15,7 +15,7 @@ export default class RequestCurrentSubtitleHandler {
     return 'request-current-subtitle'
   }
 
-  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) {
+  handle(command: Command<Message>, sender: Browser.runtime.MessageSender, sendResponse: (response?: unknown) => void) {
     const { tabId, src } = command as AsbPlayerToVideoCommandV2<RequestCurrentSubtitleMessage>
     const requestCurrentSubtitleFromTabCommand: ExtensionToVideoCommand<RequestCurrentSubtitleMessage> = {
       sender: 'asbplayer-extension-to-video',

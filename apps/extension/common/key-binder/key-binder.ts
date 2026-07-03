@@ -102,12 +102,12 @@ export interface KeyBinder {
     capture?: boolean
   ): () => void
   bindToggleSubtitleTrackInVideo(
-    onToggleSubtitleTrack: (event: KeyboardEvent, extra: any) => void,
+    onToggleSubtitleTrack: (event: KeyboardEvent, track: number) => void,
     disabledGetter: () => boolean,
     capture?: boolean
   ): () => void
   bindToggleSubtitleTrackInList(
-    onToggleSubtitleTrackInList: (event: KeyboardEvent, extra: any) => void,
+    onToggleSubtitleTrackInList: (event: KeyboardEvent, track: number) => void,
     disabledGetter: () => boolean,
     capture?: boolean
   ): () => void
@@ -530,7 +530,7 @@ export class DefaultKeyBinder implements KeyBinder {
   }
 
   bindToggleSubtitleTrackInVideo(
-    onToggleSubtitleTrack: (event: KeyboardEvent, extra: any) => void,
+    onToggleSubtitleTrack: (event: KeyboardEvent, track: number) => void,
     disabledGetter: () => boolean,
     capture = false
   ) {
@@ -569,7 +569,7 @@ export class DefaultKeyBinder implements KeyBinder {
   }
 
   bindToggleSubtitleTrackInList(
-    onToggleSubtitleTrackInList: (event: KeyboardEvent, extra: any) => void,
+    onToggleSubtitleTrackInList: (event: KeyboardEvent, track: number) => void,
     disabledGetter: () => boolean,
     capture = false
   ) {

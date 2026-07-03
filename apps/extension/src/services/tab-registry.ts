@@ -485,7 +485,7 @@ export default class TabRegistry {
 
   async _anyAsbplayerTab(
     resolve: (value: string | PromiseLike<string>) => void,
-    reject: (reason?: any) => void,
+    reject: (reason?: unknown) => void,
     attempt: number,
     maxAttempts: number,
     filter?: (asbplayer: Asbplayer) => boolean

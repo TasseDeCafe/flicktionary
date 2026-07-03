@@ -1,7 +1,7 @@
 import Binding from '@/services/binding'
 import { PageDelegate, currentPageDelegate } from '@/services/pages'
 import VideoSelectController from '@/controllers/video-select-controller'
-import { CopyToClipboardMessage, CropAndResizeMessage } from '@asbplayer-fork/common'
+import { CopyToClipboardMessage, CropAndResizeMessage, ExtensionToVideoCommand, Message } from '@asbplayer-fork/common'
 import { FrameInfoBroadcaster, FrameInfoListener } from '@/services/frame-info'
 import { cropAndResize } from '@asbplayer-fork/common/src/image-transformer'
 import { incrementallyFindShadowRoots, shadowRootHosts } from '@/services/shadow-roots'
@@ -162,9 +162,9 @@ export default defineContentScript({
       }
 
       const messageListener = (
-        request: any,
+        request: ExtensionToVideoCommand<Message>,
         sender: Browser.runtime.MessageSender,
-        sendResponse: (response?: any) => void
+        sendResponse: (response?: unknown) => void
       ) => {
         if (!isParentDocument) {
           // Inside iframe - only root window is allowed to handle messages here

@@ -75,7 +75,7 @@ export function PopupUi({ commands }: Props) {
 
   const handleSettingsChanged = useCallback(
     async (changed: Partial<AsbplayerSettings>) => {
-      setSettings((old: any) => ({ ...old, ...changed }))
+      setSettings((old) => (old === undefined ? old : { ...old, ...changed }))
       await settingsProvider.set(changed)
       notifySettingsUpdated()
       // Write-through to the server when paired (fire-and-forget).

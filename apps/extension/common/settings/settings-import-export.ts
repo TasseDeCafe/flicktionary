@@ -301,8 +301,8 @@ const ignoreKeys: string[] = [
   'wordClickEnabled',
 ]
 
-const withIgnoredKeysRemoved = (settings: any) => {
-  const copy = { ...settings }
+const withIgnoredKeysRemoved = (settings: object) => {
+  const copy: Record<string, unknown> = { ...settings }
   for (const ignoreKey of ignoreKeys) {
     delete copy[ignoreKey]
   }
@@ -316,7 +316,7 @@ export const exportSettings = (settings: AsbplayerSettings) => {
   )
 }
 
-export const validateSettings = (settings: any) => {
+export const validateSettings = (settings: object) => {
   const copy = withIgnoredKeysRemoved(settings)
   const validator = new Validator()
   validator.addSchema(keyBindSchema)
@@ -328,10 +328,11 @@ export const validateSettings = (settings: any) => {
     throw new Error('Settings validation failed: ' + JSON.stringify(result.errors))
   }
 
-  return ensureConsistencyOnRead(copy as AsbplayerSettings)
+  // the schema validation above is what guarantees this shape
+  return ensureConsistencyOnRead(copy as unknown as AsbplayerSettings)
 }
 
-const validateAllKnownKeys = (object: any, path: string[]) => {
+const validateAllKnownKeys = (object: Record<string, unknown>, path: string[]) => {
   for (const key of Object.keys(object)) {
     const schema = schemaAtPath(settingsSchema, path)
 
@@ -343,30 +344,40 @@ const validateAllKnownKeys = (object: any, path: string[]) => {
     const value = object[key]
 
     if (typeof value === 'object' && !Array.isArray(value)) {
-      validateAllKnownKeys(value, [...path, key])
+      validateAllKnownKeys(value as Record<string, unknown>, [...path, key])
     }
   }
 }
 
-const schemaAtPath = (schema: any, path: string[]) => {
-  let value = schema['properties']
+// Minimal recursive view of the JSON-schema literals this file walks.
+interface JsonSchemaNode {
+  properties?: Record<string, JsonSchemaNode>
+  additionalProperties?: unknown
+  $ref?: string
+  [key: string]: unknown
+}
+
+const schemaAtPath = (schema: JsonSchemaNode, path: string[]) => {
+  let value = schema.properties
 
   for (const key of path) {
-    if (typeof value[key] === 'object' && 'additionalProperties' in value[key]) {
-      return ''
-    }
-
-    value = value[key]?.['properties'] ?? schemaForRef(value[key]?.['$ref'])?.['properties']
-
     if (value === undefined) {
       return undefined
     }
+
+    const node = value[key]
+
+    if (typeof node === 'object' && 'additionalProperties' in node) {
+      return ''
+    }
+
+    value = node?.properties ?? schemaForRef(node?.$ref)?.properties
   }
 
   return value
 }
 
-const schemaForRef = (ref: string) => {
+const schemaForRef = (ref: string | undefined) => {
   if (ref === '/KeyBind') {
     return keyBindSchema
   }

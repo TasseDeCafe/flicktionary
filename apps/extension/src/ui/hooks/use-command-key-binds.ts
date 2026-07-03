@@ -10,7 +10,7 @@ export const useCommandKeyBinds = () => {
     }
 
     browser.commands.getAll().then((commands) => {
-      const commandsObj: any = {}
+      const commandsObj: Record<string, string> = {}
 
       for (const c of commands) {
         if (c.name && c.shortcut) {

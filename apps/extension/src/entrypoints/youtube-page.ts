@@ -2,9 +2,29 @@ import { VideoData, VideoDataSubtitleTrack } from '@asbplayer-fork/common'
 import { trackFromDef, trackId } from '@/pages/util'
 import { decodePoToken, fetchPlayerContextForPage } from '@/services/youtube'
 
+// Minimal structural view of YouTube's untyped page-realm caption-track objects
+// (shared by the ANDROID InnerTube payload and the web player response).
+interface YtCaptionTrack {
+  baseUrl: string
+  languageCode: string
+  kind?: string
+  name?: { text?: string; simpleText?: string; runs?: { text?: string }[] }
+}
+
+interface YtPlayerResponse {
+  videoDetails?: { videoId?: string; title?: string }
+  captions?: {
+    playerCaptionsTracklistRenderer?: {
+      captionTracks?: YtCaptionTrack[]
+      translationLanguages?: unknown
+    }
+  }
+}
+
 declare global {
   interface Window {
-    ytcfg: any
+    ytcfg: { get?: (key: string) => string | undefined } | undefined
+    ytInitialPlayerResponse: YtPlayerResponse | undefined
   }
 }
 
@@ -23,10 +43,10 @@ const inferVideoId = () => {
   return params.get('v') ?? undefined
 }
 
-const ytTrackToSubtitleTrack = (track: any, url: URL) => {
+const ytTrackToSubtitleTrack = (track: YtCaptionTrack, url: URL) => {
   url.searchParams.set('fmt', 'srv3')
   const def = {
-    label: track.name.text || track.name.simpleText || track.name?.runs?.[0]?.text || track.languageCode,
+    label: track.name?.text || track.name?.simpleText || track.name?.runs?.[0]?.text || track.languageCode,
     language: track.languageCode,
     url: url.toString(),
     extension: 'ytsrv3',
@@ -37,12 +57,14 @@ const ytTrackToSubtitleTrack = (track: any, url: URL) => {
 
 // Language codes YouTube's translation service accepts for this video — feeds
 // the translation dropdown in the track-select dialog.
-const ytTranslationLanguageCodes = (captionsRenderer: any): string[] => {
+const ytTranslationLanguageCodes = (captionsRenderer: { translationLanguages?: unknown } | undefined): string[] => {
   const languages = captionsRenderer?.translationLanguages
   if (!Array.isArray(languages)) {
     return []
   }
-  return languages.map((l: any) => l?.languageCode).filter((code: any): code is string => typeof code === 'string')
+  return languages
+    .map((l) => (l as { languageCode?: unknown } | null)?.languageCode)
+    .filter((code): code is string => typeof code === 'string')
 }
 
 const androidInnerTubeTracks = async (videoId: string) => {
@@ -82,8 +104,8 @@ const androidInnerTubeTracks = async (videoId: string) => {
     return { basename }
   }
 
-  const tracks = payload.captions.playerCaptionsTracklistRenderer.captionTracks
-  const subtitles: VideoDataSubtitleTrack[] = tracks.map((t: any) => {
+  const tracks: YtCaptionTrack[] = payload.captions.playerCaptionsTracklistRenderer.captionTracks
+  const subtitles: VideoDataSubtitleTrack[] = tracks.map((t) => {
     const url = new URL(t.baseUrl)
     return ytTrackToSubtitleTrack(t, url)
   })
@@ -94,8 +116,8 @@ const androidInnerTubeTracks = async (videoId: string) => {
 // The web-client player response for the current video: the page global when
 // it's fresh (zero cost — this script runs in the page realm), else the
 // watch-page re-fetch (the global can lag SPA navigations).
-const pagePlayerResponse = async (videoId: string) => {
-  const inline = (window as any).ytInitialPlayerResponse
+const pagePlayerResponse = async (videoId: string): Promise<YtPlayerResponse | undefined> => {
+  const inline = window.ytInitialPlayerResponse
   if (inline?.videoDetails?.videoId === videoId) {
     return inline
   }
@@ -111,7 +133,7 @@ const timedTextTracksFromPageContext = async (videoId: string) => {
   const renderer = playerContext?.captions?.playerCaptionsTracklistRenderer
   const tracks = renderer?.captionTracks || []
   const subtitles: VideoDataSubtitleTrack[] | undefined = pot
-    ? tracks.map((track: any) => {
+    ? tracks.map((track: YtCaptionTrack) => {
         const baseUrl = track.baseUrl as string
         const baseUrlWithHost = baseUrl.startsWith('/') ? `https://${window.location.host}${baseUrl}` : baseUrl
         const url = new URL(baseUrlWithHost)

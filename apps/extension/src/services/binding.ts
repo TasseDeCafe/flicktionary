@@ -1,5 +1,8 @@
 import {
   AckMessage,
+  ExtensionToVideoCommand,
+  Message,
+  MessageWithId,
   AutoPausePreference,
   cropAndResize,
   CurrentTimeFromVideoMessage,
@@ -121,9 +124,9 @@ export default class Binding {
   private canPlayListener?: EventListener
   private mouseMoveListener?: (event: MouseEvent) => void
   private listener?: (
-    message: any,
+    message: ExtensionToVideoCommand<Message>,
     sender: Browser.runtime.MessageSender,
-    sendResponse: (response?: any) => void
+    sendResponse: (response?: unknown) => void
   ) => void
   private heartbeatInterval?: NodeJS.Timeout
 
@@ -492,7 +495,11 @@ export default class Binding {
       }
     })
 
-    this.listener = (request: any, sender: Browser.runtime.MessageSender, sendResponse: (response?: any) => void) => {
+    this.listener = (
+      request: ExtensionToVideoCommand<Message>,
+      sender: Browser.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void
+    ) => {
       if (request.sender === 'asbplayer-extension-to-video' && request.src === this.video.src) {
         switch (request.message.command) {
           case 'init':
@@ -595,7 +602,7 @@ export default class Binding {
             sender: 'asbplayer-video',
             message: {
               command: 'ack-message',
-              messageId: request.message['messageId'],
+              messageId: (request.message as MessageWithId).messageId,
             },
             src: this.video.src,
           }

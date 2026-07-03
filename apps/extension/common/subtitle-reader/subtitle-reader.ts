@@ -410,7 +410,7 @@ export default class SubtitleReader {
 
     if (file.name.endsWith('.bbjson')) {
       const body = JSON.parse(await file.text()).body
-      return body.map((s: any) => ({
+      return body.map((s: { content: string; from: number; to: number }) => ({
         text: s.content,
         start: s.from * 1000,
         end: s.to * 1000,
