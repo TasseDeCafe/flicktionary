@@ -85,6 +85,8 @@ For our react code style:
 - Try not to apply "band-aid" solutions: try to fix the root cause of the problem.
 - Do not hesitate to refactor the code if it fixes the root cause or simplify the code without changing the functionality.
 - Do not write code that is backwards compatible unless explicitly asked to do so. Assume that the code is a greenfield project.
+- If you find any vestigial, dead, legacy code that can be safely removed while executing a task, you can mention it in your message at the end of the task. It doesn't need to be related to the task.
+- If you find any code that can be refactored with a big impact, mention it in your message at the end of a task. It can be renaming for clarity, a simplification, improving reusability, etc. It doesn't need to be related to the task.
 
 ## Localization pattern (Lingui)
 
