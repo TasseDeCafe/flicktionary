@@ -17,6 +17,50 @@ export type RecapTerm = {
   targetExample: string | null
 }
 
+// Structural slice of the session card DTO the recap reads — keeps this module
+// free of the api-client contract types.
+export type RecapCardInput = {
+  id: string
+  status: string
+  surfaceForm: string
+  chunk: {
+    id: string
+    headword: string
+    translation: string | null
+    definition: string | null
+    targetExample: string | null
+    grammar: { pos?: string | null }
+  }
+}
+
+// Recap eligibility: kept cards only, deduped by chunk, and only terms whose
+// gloss resolves non-empty. The gloss resolver is injected because translation
+// vs definition is a prefs decision (the language-mode rules) — callers pass
+// the `useTermMeaning` resolver.
+export const buildRecapTerms = (
+  cards: RecapCardInput[],
+  resolveGloss: (term: { translation: string | null; definition: string | null }) => string | null
+): RecapTerm[] => {
+  const seenChunks = new Set<string>()
+  const terms: RecapTerm[] = []
+  for (const card of cards) {
+    if (card.status !== 'kept' || seenChunks.has(card.chunk.id)) continue
+    const gloss = resolveGloss(card.chunk)?.trim()
+    if (!gloss) continue
+    seenChunks.add(card.chunk.id)
+    terms.push({
+      cardId: card.id,
+      chunkId: card.chunk.id,
+      headword: card.chunk.headword,
+      surfaceForm: card.surfaceForm,
+      gloss,
+      pos: card.chunk.grammar.pos ?? null,
+      targetExample: card.chunk.targetExample,
+    })
+  }
+  return terms
+}
+
 // Character span into `sentence` marking the term's occurrence.
 export type Span = { sentence: string; start: number; end: number }
 

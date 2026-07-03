@@ -17,7 +17,7 @@ export const WarmupView = () => {
   const { studySessionId } = useSearch({ from: '/_authenticated/_app/practice/warmup/$targetLanguage' })
   const languageName = getLanguageName(targetLanguage)
 
-  const { mutate: startSession, isPending, isError } = useStartWarmupSession()
+  const { mutate: startSession, isError } = useStartWarmupSession()
   const { mutateAsync: refreshSession } = useRefreshWarmupSession()
   const [entries, setEntries] = useState<StrengthenExerciseEntry[] | null>(null)
   const [dailyLimitReached, setDailyLimitReached] = useState(false)
@@ -51,7 +51,6 @@ export const WarmupView = () => {
       title={t`Warm up your terms · ${languageName}`}
       copyVariant='warmup'
       entries={entries}
-      isPending={isPending}
       isError={isError}
       dailyLimitReached={dailyLimitReached}
       backLabel={t`Back to ${languageName}`}

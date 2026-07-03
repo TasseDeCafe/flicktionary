@@ -17,31 +17,9 @@ import { useTermMeaning } from '../utils/use-term-meaning'
 
 const POLL_INTERVAL_MS = 4000
 
-// The shared exercise-queue session screen behind both Strengthen (leech rehab
-// + bonus) and Warm-up (exercise-first onboarding). The two differ only in
-// fetch source — the caller passes entries (and an optional `pollExercises` for
-// live placeholder updates) — and in copy, which `copyVariant` selects. A local
-// queue is served once (the server consumes an exercise per answered attempt;
-// abandoning before answering re-serves it).
-export const ExerciseSessionView = ({
-  title,
-  copyVariant,
-  entries,
-  isPending,
-  isError,
-  dailyLimitReached,
-  backLabel,
-  pollExercises,
-  onClose,
-  targetLanguage,
-  practiceMode,
-  practiceStudySessionId,
-  practiceSessionHard,
-}: {
+type ExerciseSessionProps = {
   title: string
   copyVariant: ExerciseCopyVariant
-  entries: StrengthenExerciseEntry[] | null
-  isPending: boolean
   isError: boolean
   dailyLimitReached?: boolean
   backLabel: string
@@ -56,10 +34,61 @@ export const ExerciseSessionView = ({
   practiceMode: 'strengthen' | 'warmup'
   practiceStudySessionId?: string
   practiceSessionHard?: string[]
-}) => {
+}
+
+// The shared exercise-queue session screen behind both Strengthen (leech rehab
+// + bonus) and Warm-up (exercise-first onboarding). The two differ only in
+// fetch source — the caller passes entries (and an optional `pollExercises` for
+// live placeholder updates) — and in copy, which `copyVariant` selects. Both
+// callers set `entries` exactly once (a one-shot start mutation), so the loaded
+// session mounts once and seeds its local queue from that snapshot.
+export const ExerciseSessionView = ({
+  entries,
+  ...props
+}: ExerciseSessionProps & { entries: StrengthenExerciseEntry[] | null }) => {
+  const { t } = useLingui()
+
+  if (entries === null) {
+    return (
+      <ModalScreen onClose={props.onClose} closeIcon='x' title={props.title}>
+        <div className='flex flex-1 flex-col overflow-hidden'>
+          {props.isError ? (
+            <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
+              <p className='text-lg font-semibold'>{t`Couldn't load exercises.`}</p>
+              <Button type='button' size='lg' onClick={props.onClose}>
+                {props.backLabel}
+              </Button>
+            </div>
+          ) : (
+            <PracticeLoader label={t`Preparing exercises…`} />
+          )}
+        </div>
+      </ModalScreen>
+    )
+  }
+
+  return <LoadedExerciseSessionView {...props} initialEntries={entries} />
+}
+
+const LoadedExerciseSessionView = ({
+  title,
+  copyVariant,
+  initialEntries,
+  dailyLimitReached,
+  backLabel,
+  pollExercises,
+  onClose,
+  targetLanguage,
+  practiceMode,
+  practiceStudySessionId,
+  practiceSessionHard,
+}: ExerciseSessionProps & { initialEntries: StrengthenExerciseEntry[] }) => {
   const { t } = useLingui()
   const resolveMeaning = useTermMeaning(targetLanguage)
-  const [queue, setQueue] = useState<StrengthenExerciseEntry[] | null>(null)
+  // A one-shot snapshot of the caller's load, served once (the server consumes
+  // an exercise per answered attempt; abandoning before answering re-serves
+  // it). Later polls mutate this local copy in place.
+  const [queue, setQueue] = useState(initialEntries)
   const [index, setIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
   const [actionsOpen, setActionsOpen] = useState(false)
@@ -67,17 +96,10 @@ export const ExerciseSessionView = ({
   // unanswered cloze exercises (see kebab derivation below).
   const [currentAnswered, setCurrentAnswered] = useState(false)
 
-  // Seed the local queue from the parent's first load; later polls mutate the
-  // local copy in place.
-  useEffect(() => {
-    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-derived-state, react-you-might-not-need-an-effect/no-chain-state-updates -- the queue is a one-shot snapshot of an async load, not derived state: placeholder polls mutate the local copy in place, so re-deriving from `entries` would clobber in-session upgrades
-    if (entries && queue === null) setQueue(entries)
-  }, [entries, queue])
-
   // Poll for placeholder upgrades while a 'generating' entry is still ahead of
   // (or at) the current position. A ref guards against overlapping requests.
   const pollingRef = useRef(false)
-  const hasPendingAhead = queue?.slice(index).some((e) => e.status === 'generating') ?? false
+  const hasPendingAhead = queue.slice(index).some((e) => e.status === 'generating')
   useEffect(() => {
     if (!pollExercises || !hasPendingAhead) return
     const interval = setInterval(async () => {
@@ -85,7 +107,7 @@ export const ExerciseSessionView = ({
       pollingRef.current = true
       try {
         const fresh = await pollExercises()
-        if (fresh) setQueue((prev) => (prev ? mergePlaceholders(prev, fresh, index) : prev))
+        if (fresh) setQueue((prev) => mergePlaceholders(prev, fresh, index))
       } catch {
         // Polling is best-effort; keep the placeholder and try again next tick.
       } finally {
@@ -104,8 +126,8 @@ export const ExerciseSessionView = ({
     setIndex((i) => i + 1)
   }
 
-  const current = queue?.[index] ?? null
-  const total = queue?.length ?? 0
+  const current = queue[index] ?? null
+  const total = queue.length
   const currentHeadword = current?.headword ?? ''
 
   // The header kebab (Edit term) is withheld while it could spoil an answer
@@ -160,18 +182,7 @@ export const ExerciseSessionView = ({
         />
       )}
       <div className='flex flex-1 flex-col overflow-hidden'>
-        {(isPending || queue === null) && !isError && <PracticeLoader label={t`Preparing exercises…`} />}
-
-        {isError && (
-          <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
-            <p className='text-lg font-semibold'>{t`Couldn't load exercises.`}</p>
-            <Button type='button' size='lg' onClick={onClose}>
-              {backLabel}
-            </Button>
-          </div>
-        )}
-
-        {queue !== null && queue.length === 0 && (
+        {queue.length === 0 && (
           <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
             <CircleCheck className='h-10 w-10 text-emerald-600' />
             <p className='text-lg font-semibold'>
@@ -184,7 +195,7 @@ export const ExerciseSessionView = ({
           </div>
         )}
 
-        {queue !== null && queue.length > 0 && !current && (
+        {queue.length > 0 && !current && (
           <div className='flex flex-1 flex-col overflow-hidden'>
             <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
               <CircleCheck className='h-10 w-10 text-emerald-600' />

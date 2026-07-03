@@ -107,7 +107,7 @@ export const ReadingModeView = ({ targetLanguage, pool, scope, counts }: Reading
 
   // Reset per-text rating state when the live text changes.
   useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-chain-state-updates -- the live text swaps in from several async paths (bootstrap onSuccess, next-text promotion, resume), so keying the per-text UI reset on the text id covers them all; a key-remount of the per-text subtree is the candidate refactor, see docs/proposals/add-eslint-effect.md phase 4 */
+    /* eslint-disable react-you-might-not-need-an-effect/no-chain-state-updates -- the live text swaps in from several async paths (bootstrap onSuccess, next-text promotion, resume), so keying the per-text UI reset on the text id covers them all; a key-remounted per-text child was considered and rejected — this state spans the article body, the footer's pending ratings, and three sheets, so the keyed subtree would have to wrap essentially the whole screen */
     setRatings(new Map())
     setOpenIndex(null)
     setSheetOpen(false)
