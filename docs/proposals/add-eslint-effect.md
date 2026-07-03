@@ -46,7 +46,7 @@ Update the status line of a phase when you start/finish it. One phase ≈ one PR
 
 ### Phase 1 — enable at zero, no behavior change (PR1)
 
-**Status: implemented — PR #197 open, merge pending.**
+**Status: merged (PR #197).**
 
 - Bump catalog `eslint-plugin-react-you-might-not-need-an-effect` 0.9.2 → 1.0.1.
 - Add `@eslint-community/eslint-plugin-eslint-comments` (catalog + `apps/web` devDep).
@@ -58,7 +58,7 @@ Update the status line of a phase when you start/finish it. One phase ≈ one PR
 
 ### Phase 2 — trivial true positives
 
-**Status: not started.**
+**Status: implemented — PR #198 open, merge pending (quick manual check of the two screens still to do).**
 
 Effects whose removal is a local, low-risk rewrite (derived state, seed-first-async-value). Candidates from triage are marked `fix-easy` in the table. No extract-and-test needed beyond existing coverage; typecheck + quick manual check per screen.
 
@@ -92,8 +92,8 @@ Filled during PR1. Verdicts: `suppress` (deliberate/load-bearing — reason is i
 
 | file | warnings | verdict | phase | notes |
 | --- | --- | --- | --- | --- |
-| `features/vocabulary/components/vocabulary-list-view.tsx` | 2 | fix-easy | 2 | `selectedLanguage ?? languages?.[0]` deletes the seed effect |
-| `features/overlay/components/rate-limiting-overlay-content.tsx` | 1 | fix-easy | 2 | `isRetryEnabled` is `countdown === 0` |
+| `features/vocabulary/components/vocabulary-list-view.tsx` | 2 | fix-easy | 2 | **fixed in PR #198** — seed effect deleted; `pickedLanguage ?? languages?.[0]` |
+| `features/overlay/components/rate-limiting-overlay-content.tsx` | 1 | fix-easy | 2 | **fixed in PR #198** — `isRetryEnabled` derived as `countdown === 0` |
 | `features/sessions/components/new-session-wizard.tsx` | 3 | fix-pattern | 3 | prefs-MRU prefill; derive with the touched-flag override |
 | `features/sessions/components/text-paste-input.tsx` | 3 | fix-pattern | 3 | title auto-suggest can move into the parent's `setText`; the debounced language-detect effect likely stays (time-based trigger) |
 | `features/vocabulary/components/new-adhoc-card-wizard.tsx` | 2 | fix-pattern | 3 | same debounced-detect shape as text-paste |
@@ -118,7 +118,8 @@ Housekeeping fixed in PR1: the `routeTree.gen.ts` ignore pattern didn't match it
 
 ## Handoff notes
 
-- PR1: #197 (`chore/effect-lint-enable-at-zero`).
+- PR1: #197 (`chore/effect-lint-enable-at-zero`), merged.
+- Phase 2: #198 (`chore/effect-lint-phase-2`).
 - Scan reproduction: `pnpm --filter @flicktionary/web lint` (the plugin is enabled; the lint script carries `--max-warnings 0`).
 - Nothing in phases 2+ should start before PR1 merges — the suppression comments are the shared triage record.
 - When a phase PR removes an effect, delete its suppression in the same commit (`reportUnusedDisableDirectives: 'error'` fails the lint otherwise) and update this doc's phase status + triage-table row.
