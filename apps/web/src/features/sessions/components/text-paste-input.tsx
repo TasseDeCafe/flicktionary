@@ -6,22 +6,19 @@ import { Label } from '@flicktionary/ui/components/label'
 import { LanguageSelectField } from '@/components/language-select-field'
 import { useDetectLanguage } from '../api/languages-hooks'
 import { useDebouncedValue } from '../hooks/use-debounced-value'
+import { shouldUseDetectedLanguage } from '../utils/detected-language'
 
-import {
-  TEXT_PASTE_MAX_LENGTH,
-  TEXT_PASTE_MIN_LENGTH,
-  TEXT_PASTE_TITLE_MAX_LENGTH,
-  suggestTitleFromText,
-} from './text-paste-helpers'
+import { TEXT_PASTE_MAX_LENGTH, TEXT_PASTE_MIN_LENGTH, TEXT_PASTE_TITLE_MAX_LENGTH } from './text-paste-helpers'
 
 type Props = {
   text: string
+  // The parent owns the title auto-suggestion: its text handler re-suggests a
+  // title from the paste until the title is touched.
   setText: (text: string) => void
   title: string
   setTitle: (title: string) => void
   // `setTitleTouched(true)` is called once the user types in the title, so the
-  // auto-suggestion stops overwriting their edits.
-  titleTouched: boolean
+  // parent's auto-suggestion stops overwriting their edits.
   setTitleTouched: (touched: boolean) => void
   language: string
   setLanguage: (language: string) => void
@@ -35,7 +32,6 @@ export const TextPasteFields = ({
   setText,
   title,
   setTitle,
-  titleTouched,
   setTitleTouched,
   language,
   setLanguage,
@@ -45,14 +41,6 @@ export const TextPasteFields = ({
 }: Props) => {
   const { t } = useLingui()
   const { mutate: detectLanguageMutation } = useDetectLanguage()
-
-  // Auto-suggest a title from the paste; the user can override.
-  useEffect(() => {
-    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- could run in the parent's setText handler instead; queued for the phase-3 wizard/auto-detect cleanup, see docs/proposals/add-eslint-effect.md */
-    if (titleTouched) return
-    setTitle(suggestTitleFromText(text))
-    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent */
-  }, [text, titleTouched, setTitle])
 
   // Auto-detect language via the backend Haiku call once the user pauses typing.
   // Skip once the user manually picks — their override always wins.
@@ -65,9 +53,10 @@ export const TextPasteFields = ({
       { text: debouncedText },
       {
         onSuccess: (response) => {
-          if (languageTouched) return
           const code = response.data.code
-          if (code && code !== language) setLanguage(code)
+          if (shouldUseDetectedLanguage({ detectedCode: code, currentLanguage: language, languageTouched })) {
+            setLanguage(code!)
+          }
         },
       }
     )

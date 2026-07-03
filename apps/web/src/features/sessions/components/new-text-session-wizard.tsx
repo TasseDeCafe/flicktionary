@@ -13,7 +13,7 @@ import {
 import { CefrStep } from './cefr-step'
 import type { CefrLevel } from '../constants/cefr'
 import { TextPasteFields } from './text-paste-input'
-import { TEXT_PASTE_MAX_LENGTH, TEXT_PASTE_MIN_LENGTH } from './text-paste-helpers'
+import { TEXT_PASTE_MAX_LENGTH, TEXT_PASTE_MIN_LENGTH, suggestTitleFromText } from './text-paste-helpers'
 import { getShowTranslationsEnabledForLanguage } from '../utils/show-translations-pref'
 
 type Step = 'paste' | 'cefr'
@@ -42,6 +42,13 @@ export const NewTextSessionWizard = () => {
   const [cefrChoice, setCefrChoice] = useState<CefrLevel | null>(null)
 
   const [step, setStep] = useState<Step>('paste')
+
+  // Auto-suggest a title from the paste until the user edits the title field —
+  // from then on their edit wins.
+  const handleTextChange = (next: string) => {
+    setText(next)
+    if (!titleTouched) setTitle(suggestTitleFromText(next))
+  }
 
   const { mutate: createContentSource, isPending: isCreatingSource } = useCreateContentSourceFromText()
   const { mutate: importFromPaste, isPending: isImporting } = useImportFromPaste()
@@ -175,10 +182,9 @@ export const NewTextSessionWizard = () => {
       <WizardStepHeading title={t`Paste a text`} />
       <TextPasteFields
         text={text}
-        setText={setText}
+        setText={handleTextChange}
         title={title}
         setTitle={setTitle}
-        titleTouched={titleTouched}
         setTitleTouched={setTitleTouched}
         language={language}
         setLanguage={setLanguage}
