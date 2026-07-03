@@ -73,6 +73,7 @@ export const useVisibleSegmentRange = (
       for (const id of visibleRef.current) if (!present.has(id)) visibleRef.current.delete(id)
       recompute()
     }
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-external-store-subscription -- Intersection/MutationObserver wiring with visible-set pruning; a useSyncExternalStore rewrite is evaluated in phase 5 of docs/proposals/add-eslint-effect.md (reading-position machinery, manual golden path required)
     syncObserved()
     const mutation = new MutationObserver(() => syncObserved())
     mutation.observe(scrollContainer, { childList: true, subtree: true })

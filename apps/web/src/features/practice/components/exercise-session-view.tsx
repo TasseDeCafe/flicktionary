@@ -70,6 +70,7 @@ export const ExerciseSessionView = ({
   // Seed the local queue from the parent's first load; later polls mutate the
   // local copy in place.
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-derived-state, react-you-might-not-need-an-effect/no-chain-state-updates -- the queue is a one-shot snapshot of an async load, not derived state: placeholder polls mutate the local copy in place, so re-deriving from `entries` would clobber in-session upgrades
     if (entries && queue === null) setQueue(entries)
   }, [entries, queue])
 

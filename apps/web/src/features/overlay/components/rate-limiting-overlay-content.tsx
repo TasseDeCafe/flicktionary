@@ -16,6 +16,7 @@ export const RateLimitingOverlayContent = () => {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
       return () => clearTimeout(timer)
     } else {
+      // eslint-disable-next-line react-you-might-not-need-an-effect/no-chain-state-updates -- derivable (`countdown === 0`); scheduled for the phase-2 effect cleanup, see docs/proposals/add-eslint-effect.md
       setIsRetryEnabled(true)
     }
   }, [countdown])

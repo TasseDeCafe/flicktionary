@@ -4,8 +4,9 @@ const reactRefreshPlugin = require('eslint-plugin-react-refresh').default || req
 const tanstackPlugin = require('@tanstack/eslint-plugin-query')
 const prettierPlugin = require('eslint-plugin-prettier')
 const pluginLingui = require('eslint-plugin-lingui')
-// todo eslint: deal with all the warnings and errors from those 2 plugins:
-// const reactYouMightNotNeedAnEffectPlugin = require('eslint-plugin-react-you-might-not-need-an-effect')
+const reactYouMightNotNeedAnEffectPlugin = require('eslint-plugin-react-you-might-not-need-an-effect')
+const eslintCommentsPlugin = require('@eslint-community/eslint-plugin-eslint-comments')
+// todo eslint: deal with all the warnings and errors from this plugin:
 // const reactPlugin = require('eslint-plugin-react');
 
 module.exports = [
@@ -13,9 +14,27 @@ module.exports = [
   pluginLingui.configs['flat/recommended'],
   // reactPlugin.configs.flat.recommended,
   // reactPlugin.configs.flat['jsx-runtime'],
-  // reactYouMightNotNeedAnEffectPlugin.configs.recommended,
+  reactYouMightNotNeedAnEffectPlugin.configs.recommended,
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/playground/**', '**/src/routeTree.gen.ts'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/playground/**', '**/routeTree.gen.ts'],
+  },
+  {
+    // The effect-lint baseline is kept at zero (lint runs with --max-warnings 0):
+    // every surviving effect the plugin flags carries an eslint-disable with a
+    // `-- reason` explaining why it is genuinely needed. These two settings keep
+    // that triage honest — suppressions without a reason and suppressions that
+    // stopped matching anything both fail the lint.
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+    plugins: {
+      '@eslint-community/eslint-comments': eslintCommentsPlugin,
+    },
+    rules: {
+      // eslint-enable is exempt: it only closes a block whose eslint-disable
+      // already carries the reason.
+      '@eslint-community/eslint-comments/require-description': ['error', { ignore: ['eslint-enable'] }],
+    },
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],

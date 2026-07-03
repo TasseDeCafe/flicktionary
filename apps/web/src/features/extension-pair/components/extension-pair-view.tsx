@@ -113,6 +113,7 @@ export const ExtensionPairView = () => {
   // Onboarded accounts finish the moment pairing acks — keep today's UX (the
   // tab closes immediately, no onboarding shown).
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- converges two async arrivals (the pairing ack flipping `status` and the prefs query landing); either can complete last, so there is no single event site to move this into
     if (status === 'sent' && prefs?.isOnboarded) {
       postFinishedOnce()
     }

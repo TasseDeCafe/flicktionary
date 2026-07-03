@@ -12,7 +12,7 @@
     "build": "vite build",
     "preview": "doppler run --project web --config dev_personal -- sh -c 'vite build && vite preview'",
     "analyze": "vite-bundle-visualizer",
-    "lint": "eslint . --fix",
+    "lint": "eslint . --fix --max-warnings 0",
     "lint:check": "eslint .",
     "check:types": "tsc --noEmit"
   },
@@ -69,6 +69,7 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "catalog:",
     "@flicktionary/typescript-config": "workspace:*",
     "@lingui/babel-plugin-lingui-macro": "catalog:",
     "@lingui/cli": "catalog:",

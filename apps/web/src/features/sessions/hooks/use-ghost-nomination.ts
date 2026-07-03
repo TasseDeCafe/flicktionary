@@ -46,11 +46,13 @@ export const useGhostNomination = (params: {
   // Seed/merge the server coverage set so reloads (and an earlier session) don't
   // re-request covered windows.
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- merges async-loaded server coverage into the local requested set whenever the query (re)delivers; there is no event site, and missing a merge would re-request already-covered windows (paid LLM calls)
     if (!serverWindows) return
     for (const w of serverWindows) requestedRef.current.add(windowIndexFor(w.startIndex))
   }, [serverWindows])
 
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler -- the trigger is the reader SETTLING on a scroll position (debounced index), a time-based signal with no discrete event handler to move into */
     if (!enabled) return
     if (settledIndex === null || maxSegmentIndex === null) return
 
@@ -64,6 +66,7 @@ export const useGhostNomination = (params: {
       const endIndex = Math.min(startIndex + WINDOW_SIZE - 1, maxSegmentIndex)
       nominateWindow({ sessionId, startIndex, endIndex })
     }
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler */
   }, [enabled, settledIndex, maxSegmentIndex, sessionId, nominateWindow])
 
   return { isRequesting }

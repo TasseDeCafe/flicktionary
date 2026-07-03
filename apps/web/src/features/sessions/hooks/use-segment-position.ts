@@ -17,6 +17,7 @@ export const useSegmentPosition = (scrollContainer: HTMLElement | null, segmentI
 
   useEffect(() => {
     if (!scrollContainer || !segmentId) {
+      // eslint-disable-next-line react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- with no container/target to observe there is no position; the observers below push all other values
       setPosition(null)
       return
     }
@@ -50,6 +51,7 @@ export const useSegmentPosition = (scrollContainer: HTMLElement | null, segmentI
       if (target) observer.observe(target)
       else setPosition(null)
     }
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-external-store-subscription -- Intersection/MutationObserver wiring with node re-resolution; a useSyncExternalStore rewrite is evaluated in phase 5 of docs/proposals/add-eslint-effect.md (reading-position machinery, manual golden path required)
     resolve()
     const mutation = new MutationObserver(() => resolve())
     mutation.observe(scrollContainer, { childList: true, subtree: true })

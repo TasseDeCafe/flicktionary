@@ -43,6 +43,7 @@ export const PerCardChat = ({ cardId, sessionId, highlightId, fill = false }: Pr
   // generated turn appears without waiting for an incidental refetch.
   const wasSeedPending = useRef(false)
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- reacts to a background seed job FINISHING (observed through the polled processing status), not to a user event; the pending→cleared edge is only visible by comparing successive poll results
     if (wasSeedPending.current && !isSeedPending) {
       queryClient.invalidateQueries({
         queryKey: orpcQuery.cardChat.listForCard.key({ input: { cardId } }),

@@ -48,14 +48,17 @@ export const TextPasteFields = ({
 
   // Auto-suggest a title from the paste; the user can override.
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- could run in the parent's setText handler instead; queued for the phase-3 wizard/auto-detect cleanup, see docs/proposals/add-eslint-effect.md */
     if (titleTouched) return
     setTitle(suggestTitleFromText(text))
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent */
   }, [text, titleTouched, setTitle])
 
   // Auto-detect language via the backend Haiku call once the user pauses typing.
   // Skip once the user manually picks — their override always wins.
   const debouncedText = useDebouncedValue(text, 300)
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- the trigger is the debounced text SETTLING (time-based), not a keystroke; firing the detection from onChange would spam the backend per keypress
     if (languageTouched) return
     if (debouncedText.trim().length === 0) return
     detectLanguageMutation(

@@ -103,6 +103,7 @@ export const RateSheet = ({
 
   // Reset to rate-mode whenever the sheet closes, so the next open is fresh.
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- the sheet stays mounted across open/close (overlay exit animation), and close happens through several paths (dismiss, rating success, restore); keying the reset on `open` covers them all
     if (!open) setMode('rate')
   }, [open])
 

@@ -42,6 +42,7 @@ export const SessionRecapView = () => {
   // translation vs definition off them, so building earlier could bake the
   // wrong field into every question. Background card refetches never rebuild.
   useEffect(() => {
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-event-handler -- seeds once when the async inputs (cards + prefs) have all landed; there is no user event, and background refetches must NOT rebuild the queue mid-quiz
     if (queue !== null || !cards || !userPrefs) return
     const seenChunks = new Set<string>()
     const terms: RecapTerm[] = []
@@ -61,6 +62,7 @@ export const SessionRecapView = () => {
       })
     }
     termsRef.current = terms
+    // eslint-disable-next-line react-you-might-not-need-an-effect/no-chain-state-updates -- part of the same one-shot seed guarded above
     setQueue(buildRecapQuestions(terms))
   }, [queue, cards, userPrefs, resolveMeaning])
 

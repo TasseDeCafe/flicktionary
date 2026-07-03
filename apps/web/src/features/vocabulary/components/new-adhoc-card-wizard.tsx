@@ -55,11 +55,13 @@ export const NewAdhocCardWizard = () => {
   )
   const debouncedDetectionInput = useDebouncedValue(detectionInput, 300)
   useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates -- the trigger is the debounced input SETTLING (time-based), not a keystroke; firing detection from onChange would spam the backend per keypress. Part of the phase-3 wizard/auto-detect cleanup, see docs/proposals/add-eslint-effect.md */
     if (languageTouched) return
     if (debouncedDetectionInput.length === 0) {
       setSuggestedCode(null)
       return
     }
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-chain-state-updates */
     detectLanguageMutation(
       { text: debouncedDetectionInput },
       {
