@@ -58,13 +58,13 @@ Update the status line of a phase when you start/finish it. One phase ≈ one PR
 
 ### Phase 2 — trivial true positives
 
-**Status: implemented — PR #198 open, merge pending (quick manual check of the two screens still to do).**
+**Status: merged (PR #198), manually checked.**
 
 Effects whose removal is a local, low-risk rewrite (derived state, seed-first-async-value). Candidates from triage are marked `fix-easy` in the table. No extract-and-test needed beyond existing coverage; typecheck + quick manual check per screen.
 
 ### Phase 3 — wizard/auto-detect chains
 
-**Status: not started.**
+**Status: implemented — PR #199 open, merge pending (manual golden path: wizard prefill + Add-episode seed, paste title/language auto-detect, adhoc language hint).**
 
 The `languageTouched` / auto-suggest effect chains shared by `new-session-wizard.tsx`, `text-paste-input.tsx`, `new-adhoc-card-wizard.tsx`. One shared pattern, one PR. Extract the "should auto-apply detection" decision into a pure helper + tests, then move the state writes into the query/event callbacks.
 
@@ -94,9 +94,9 @@ Filled during PR1. Verdicts: `suppress` (deliberate/load-bearing — reason is i
 | --- | --- | --- | --- | --- |
 | `features/vocabulary/components/vocabulary-list-view.tsx` | 2 | fix-easy | 2 | **fixed in PR #198** — seed effect deleted; `pickedLanguage ?? languages?.[0]` |
 | `features/overlay/components/rate-limiting-overlay-content.tsx` | 1 | fix-easy | 2 | **fixed in PR #198** — `isRetryEnabled` derived as `countdown === 0` |
-| `features/sessions/components/new-session-wizard.tsx` | 3 | fix-pattern | 3 | prefs-MRU prefill; derive with the touched-flag override |
-| `features/sessions/components/text-paste-input.tsx` | 3 | fix-pattern | 3 | title auto-suggest can move into the parent's `setText`; the debounced language-detect effect likely stays (time-based trigger) |
-| `features/vocabulary/components/new-adhoc-card-wizard.tsx` | 2 | fix-pattern | 3 | same debounced-detect shape as text-paste |
+| `features/sessions/components/new-session-wizard.tsx` | 3 | fix-pattern | 3 | **fixed in PR #199** — prefill derived (`pickedLanguage ?? prefs.lastTargetLanguage`), `languageTouched` deleted |
+| `features/sessions/components/text-paste-input.tsx` | 3 | fix-pattern | 3 | **fixed in PR #199** — title suggest moved into the parent's text handler; the debounced detect effect stays with a permanent `no-event-handler` suppression (time-based trigger) |
+| `features/vocabulary/components/new-adhoc-card-wizard.tsx` | 2 | fix-pattern | 3 | **fixed in PR #199** — `suggestedCode` mirror replaced by the mutation's `data`/`reset`; detect effect stays, permanent suppression like text-paste. Shared decision helper: `sessions/utils/detected-language.ts` (+ unit tests) |
 | `features/practice/components/exercise-session-view.tsx` | 4 | suppress | 4 | queue = one-shot snapshot, polls mutate it in place; merge logic already extracted + unit-tested (`exercise-queue-merge`) |
 | `features/practice/components/session-recap-view.tsx` | 2 | suppress | 4 | one-shot seed once cards + prefs land; rebuild mid-quiz is forbidden |
 | `features/practice/components/reading-mode-view.tsx` | 9 | suppress | 4 | per-text UI reset keyed on text id; key-remount of the per-text subtree is the candidate refactor |
@@ -119,7 +119,8 @@ Housekeeping fixed in PR1: the `routeTree.gen.ts` ignore pattern didn't match it
 ## Handoff notes
 
 - PR1: #197 (`chore/effect-lint-enable-at-zero`), merged.
-- Phase 2: #198 (`chore/effect-lint-phase-2`).
+- Phase 2: #198 (`chore/effect-lint-phase-2`), merged.
+- Phase 3: #199 (`refactor/effect-lint-phase-3`).
 - Scan reproduction: `pnpm --filter @flicktionary/web lint` (the plugin is enabled; the lint script carries `--max-warnings 0`).
 - Nothing in phases 2+ should start before PR1 merges — the suppression comments are the shared triage record.
 - When a phase PR removes an effect, delete its suppression in the same commit (`reportUnusedDisableDirectives: 'error'` fails the lint otherwise) and update this doc's phase status + triage-table row.
