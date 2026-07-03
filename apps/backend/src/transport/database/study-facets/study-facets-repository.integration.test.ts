@@ -109,21 +109,11 @@ describe('study-facets-repository integration tests', () => {
     })
     expect(second).toBe(false)
 
-    // bypassCap overrides the count predicate but still stamps the row.
-    const bypassed = await repo.initializeCitationFacetIfUnderDailyCap({
-      userLookupId: b.id,
-      userId,
-      targetLanguage: 'es',
-      maxNewTerms: 1,
-      bypassCap: true,
-    })
-    expect(bypassed).toBe(true)
-
     const fa = await repo.getFacet({ userLookupId: a.id, skill: 'meaning_recognition', targetForm: '' })
     const fb = await repo.getFacet({ userLookupId: b.id, skill: 'meaning_recognition', targetForm: '' })
     expect(fa?.srs_state).toBe('new')
     expect(fa?.introduced_at).not.toBeNull()
-    expect(fb?.srs_state).toBe('new')
+    expect(fb?.srs_state).toBeNull()
   })
 
   test('the daily-new cap guard refuses parked warm-up facets', async () => {

@@ -58,8 +58,6 @@ export type ApplyTermRatingResult =
 //   - recognition: the atomic daily-cap guard stamps the row only if the day's
 //     introduced count is still under maxNewTerms. Refusal => no FSRS applied,
 //     the caller drops the term (flashcard) or leaves it new (reading).
-//     `bypassDailyCap` (an explicit learn-new session) skips only the count
-//     predicate — the row is still stamped, so it counts toward today.
 //   - production: not daily-capped — initialize unconditionally.
 // Already-scheduled terms skip the guard entirely.
 //
@@ -88,7 +86,6 @@ export const applyTermRating = async (params: {
   wasExplicit?: boolean
   // Reading-mode context for the event row; absent for flashcards.
   practiceTextId?: string
-  bypassDailyCap?: boolean
   deps: RateTermDependencies
 }): Promise<ApplyTermRatingResult> => {
   const { lookup, userId, rating, pool, maxNewTerms, deps } = params
@@ -112,7 +109,6 @@ export const applyTermRating = async (params: {
         userId,
         targetLanguage: lookup.target_language,
         maxNewTerms,
-        bypassCap: params.bypassDailyCap ?? false,
       })
       if (!introduced) return { ok: false, reason: 'daily_cap_reached' }
     } else {
@@ -213,8 +209,7 @@ export type RateTermResult =
 // the rating came from) plus `skill`/`targetForm` (which facet was rated); the
 // queue can serve more than one facet per term, so identity is no longer
 // derivable from pool. Daily-cap refusal is surfaced (not an error) so the
-// client drops the card without applying FSRS. `bypassDailyCap` carries the
-// explicit learn-new session intent through to the introduction guard.
+// client drops the card without applying FSRS.
 export const rateTerm = async (
   userLookupId: string,
   userId: string,
@@ -222,8 +217,7 @@ export const rateTerm = async (
   pool: PracticePool,
   skill: FacetSkill,
   targetForm: string,
-  deps: RateTermDependencies,
-  options?: { bypassDailyCap?: boolean }
+  deps: RateTermDependencies
 ): Promise<RateTermResult> => {
   // Reject illegal (pool, skill) pairings (e.g. production + pronunciation)
   // before touching any state — pool and skill are distinct namespaces.
@@ -265,7 +259,6 @@ export const rateTerm = async (
     rating,
     pool,
     maxNewTerms,
-    bypassDailyCap: options?.bypassDailyCap ?? false,
     deps,
   })
   if (!result.ok) return { ok: true, introducedNew: false, dailyCapReached: true, parked: false, eventId: null }

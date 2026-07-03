@@ -218,16 +218,14 @@ const applyStudyIntentFacets = async (params: {
 // (user, language) is still under maxNewTerms.
 //
 // The advisory transaction lock serializes flashcard introductions per
-// (user, language); the count + update decision runs one-at-a-time. `bypassCap`
-// (an explicit learn-new session) drops ONLY the < maxNewTerms predicate: the
-// lock, the srs_state IS NULL guard and the introduced_at stamp all stay, so
-// bypassed introductions still count toward today.
+// (user, language); the count + update decision runs one-at-a-time. There is
+// no cap bypass here — the explicit past-the-cap path (Learn extra) goes
+// through the warm-up park guard below instead.
 const initializeCitationFacetIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
   targetLanguage: string
   maxNewTerms: number
-  bypassCap?: boolean
 }): Promise<boolean> => {
   return await beginTx(async (tx) => {
     await tx`
@@ -251,21 +249,18 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
         AND ul.count > 0
         AND ul.deleted_at IS NULL
         AND (
-          ${params.bypassCap ?? false}
-          OR (
-            SELECT COUNT(*)
-            FROM public.study_facets f2
-            JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
-            WHERE ul2.user_id = ${params.userId}
-              AND ul2.target_language = ${params.targetLanguage}
-              AND ul2.count > 0
-              AND ul2.deleted_at IS NULL
-              AND f2.skill = 'meaning_recognition'
-              AND f2.target_form = ${CITATION_FORM}
-              AND f2.introduced_at >= CURRENT_DATE
-              AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
-          ) < ${params.maxNewTerms}
-        )
+          SELECT COUNT(*)
+          FROM public.study_facets f2
+          JOIN public.user_lookups ul2 ON ul2.id = f2.user_lookup_id
+          WHERE ul2.user_id = ${params.userId}
+            AND ul2.target_language = ${params.targetLanguage}
+            AND ul2.count > 0
+            AND ul2.deleted_at IS NULL
+            AND f2.skill = 'meaning_recognition'
+            AND f2.target_form = ${CITATION_FORM}
+            AND f2.introduced_at >= CURRENT_DATE
+            AND f2.introduced_at < CURRENT_DATE + INTERVAL '1 day'
+        ) < ${params.maxNewTerms}
       RETURNING f.id
     `) as Array<{ id: string }>
     return rows.length > 0
@@ -290,10 +285,9 @@ const initializeCitationFacetIfUnderDailyCap = async (params: {
 //                    maxNewTerms.
 //   'scaffolded'   — introduced + parked.
 //
-// `bypassCap` (an explicit learn-extra request) skips ONLY the cap comparison,
-// mirroring initializeCitationFacetIfUnderDailyCap's bypass: the lock, the
-// eligibility checks and the introduced_at stamp all stay, so bypassed
-// warm-up entries still count toward today's introductions.
+// `bypassCap` (an explicit learn-extra request) skips ONLY the cap comparison:
+// the lock, the eligibility checks and the introduced_at stamp all stay, so
+// bypassed warm-up entries still count toward today's introductions.
 const initializeAndParkCitationFacetIfUnderDailyCap = async (params: {
   userLookupId: string
   userId: string
@@ -612,7 +606,6 @@ export interface StudyFacetsRepositoryInterface {
     userId: string
     targetLanguage: string
     maxNewTerms: number
-    bypassCap?: boolean
   }) => Promise<boolean>
   initializeAndParkCitationFacetIfUnderDailyCap: (params: {
     userLookupId: string

@@ -200,20 +200,14 @@ describe('rateTerm', () => {
     expect(applyFsrsResultForFacet).not.toHaveBeenCalled()
   })
 
-  it('bypassDailyCap threads bypassCap into the introduction guard', async () => {
+  it('gates a recognition introduction through the daily-cap guard', async () => {
     const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet } = createDeps(makeLookup())
-    const result = await rateTerm(lookupId, userId, 'good', 'recognition', 'meaning_recognition', '', deps, {
-      bypassDailyCap: true,
-    })
+    const result = await rateTerm(lookupId, userId, 'good', 'recognition', 'meaning_recognition', '', deps)
     expect(result).toEqual({ ok: true, introducedNew: true, dailyCapReached: false, parked: false, eventId })
-    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: true }))
+    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(
+      expect.objectContaining({ userLookupId: lookupId, userId, targetLanguage: 'es' })
+    )
     expect(applyFsrsResultForFacet).toHaveBeenCalled()
-  })
-
-  it('does not bypass the cap by default', async () => {
-    const { deps, initializeCitationFacetIfUnderDailyCap } = createDeps(makeLookup())
-    await rateTerm(lookupId, userId, 'good', 'recognition', 'meaning_recognition', '', deps)
-    expect(initializeCitationFacetIfUnderDailyCap).toHaveBeenCalledWith(expect.objectContaining({ bypassCap: false }))
   })
 })
 

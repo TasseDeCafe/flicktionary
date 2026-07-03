@@ -37,11 +37,9 @@ const listCurrentReadingLookupIds = async (
 }
 
 // Resolve the effective caps for the (user, language, pool, scope) and return
-// the live review slice. Feeds both the flashcard queue (router) and the
-// reading generator's candidate set, so the daily budgets are shared between
-// the two render modes. `requestedNewCount` is the explicit learn-new batch
-// size (flashcards only — the reading generator never passes it, so a
-// URL-crafted read+learn_new session stays within the daily budget).
+// the live review slice. Feeds both the composed queue's flashcard sub-lists
+// and the reading generator's candidate set, so the daily budgets are shared
+// between the two render modes.
 //
 // `excludeCurrentReadingTerms` is for the reading GENERATOR only: a new text
 // must not embed terms already held by the open 'reading' text. The flashcard
@@ -57,14 +55,13 @@ export const listReviewTerms = async (
   pool: PracticePool,
   scope: ReviewScope,
   deps: ListReviewTermsDependencies,
-  options?: { requestedNewCount?: number; excludeCurrentReadingTerms?: boolean }
+  options?: { excludeCurrentReadingTerms?: boolean }
 ): Promise<DbUserLookupWithFacet[]> => {
   const caps = await resolveReviewCaps({
     userId,
     targetLanguage,
     pool,
     scope,
-    requestedNewCount: options?.requestedNewCount,
     deps,
   })
   const excludeUserLookupIds = options?.excludeCurrentReadingTerms
