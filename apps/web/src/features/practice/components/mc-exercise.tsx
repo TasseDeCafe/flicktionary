@@ -3,7 +3,10 @@ import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, CircleX, Lightbulb } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
@@ -24,6 +27,7 @@ export const McExercise = ({
   copyVariant,
   nextLabel,
   skipLabel,
+  hotkeysEnabled = true,
   onAnswered,
   onNext,
 }: {
@@ -42,10 +46,15 @@ export const McExercise = ({
   // flashcard hint reads "Show answer"/"Back to card".
   nextLabel?: string
   skipLabel?: string
+  // Host gate for the hotkeys — off while an overlay (term-actions kebab) is
+  // open above the exercise.
+  hotkeysEnabled?: boolean
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const { mutate: submitAnswer, isPending } = useSubmitExerciseAnswer()
   const [selected, setSelected] = useState<number | null>(null)
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
@@ -67,6 +76,25 @@ export const McExercise = ({
     )
   }
 
+  const live = !result && !isPending
+  useHotkeys(
+    [
+      ...payload.options.map(
+        (_, index): HotkeyBinding => ({
+          key: String(index + 1),
+          enabled: live,
+          onPress: () => handleSelect(index),
+        })
+      ),
+      { key: 'h', enabled: live && hintAvailable && !hintRevealed, onPress: () => setHintRevealed(true) },
+      { key: 's', enabled: live, onPress: onNext },
+      { key: 'escape', enabled: live, onPress: onNext },
+      { key: 'enter', enabled: !!result, onPress: onNext },
+      { key: 'space', enabled: !!result, onPress: onNext },
+    ],
+    hotkeysEnabled
+  )
+
   // flex-1 only when sharing a row with the Hint button — standalone in the
   // bottom bar's column, flex-1 would zero the flex-basis and squash its height.
   const skipButton = (inHintRow: boolean) => (
@@ -79,6 +107,7 @@ export const McExercise = ({
       onClick={onNext}
     >
       {skipLabel ?? t`Skip`}
+      {showKbd && <Kbd>S</Kbd>}
     </Button>
   )
 
@@ -107,6 +136,7 @@ export const McExercise = ({
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {nextLabel ?? t`Next`}
+            {showKbd && <Kbd>↵</Kbd>}
           </Button>
         ) : hintAvailable && !hintRevealed ? (
           <div className='flex gap-2'>
@@ -120,6 +150,7 @@ export const McExercise = ({
             >
               <Lightbulb className='h-4 w-4' />
               {t`Hint`}
+              {showKbd && <Kbd>H</Kbd>}
             </Button>
             {skipButton(true)}
           </div>
@@ -154,7 +185,7 @@ export const McExercise = ({
               disabled={!!result || isPending}
               onClick={() => handleSelect(index)}
               className={cn(
-                'rounded-lg border px-4 py-3 text-left text-base transition-colors',
+                'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors',
                 !result && 'hover:bg-accent active:bg-accent',
                 isSelected && !result && 'border-foreground',
                 result && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
@@ -162,7 +193,8 @@ export const McExercise = ({
                 result && !isSelected && !isCorrectOption && 'opacity-60'
               )}
             >
-              {option}
+              {showKbd && <Kbd className='shrink-0'>{index + 1}</Kbd>}
+              <span>{option}</span>
             </button>
           )
         })}

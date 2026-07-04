@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
 import { useLingui } from '@lingui/react/macro'
 import { Button } from '@flicktionary/ui/components/button'
+import { KBD_CORNER_CLASS, Kbd } from '@flicktionary/ui/components/kbd'
 import { Skeleton } from '@flicktionary/ui/components/skeleton'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
 import { ChevronLeft, ChevronRight, ExternalLink, Sparkles, Trash2 } from 'lucide-react'
@@ -32,7 +33,7 @@ import { ChatHeaderButton } from './chat-header-button'
 import { ChatPanel, ChatSidePanel, useChatReadSync } from './chat-panel'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { buildKeptCardCursor } from '../hooks/use-card-list-cursor'
-import { useFocusKeyboardNav } from '../hooks/focus-keyboard-nav'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import { getShowTranslationsEnabledForLanguage } from '@/features/sessions/utils/show-translations-pref'
 
 export const FocusView = () => {
@@ -191,10 +192,21 @@ export const FocusView = () => {
   }
   const [chatOpen, setChatOpen] = useState(false)
   const isMobile = useIsMobile()
-  // On mobile the chat is a full-screen sheet, so prev/next keys are inert
-  // while it's open. On desktop it's a side panel beside the card, so keep
-  // keyboard nav live — you can page through cards with the panel open.
-  useFocusKeyboardNav({ onPrev: goPrev, onNext: goNext, enabled: !(chatOpen && isMobile) })
+  const showKbd = !isMobile
+  // On mobile the chat is a full-screen sheet, so the keys are inert while
+  // it's open. On desktop it's a side panel beside the card, so keyboard nav
+  // stays live — you can page through cards (and toggle the panel with C)
+  // while it's open. Nav keys allow OS repeat so holding an arrow scans.
+  useHotkeys(
+    [
+      { key: 'arrowleft', allowRepeat: true, onPress: goPrev },
+      { key: 'k', allowRepeat: true, onPress: goPrev },
+      { key: 'arrowright', allowRepeat: true, onPress: goNext },
+      { key: 'j', allowRepeat: true, onPress: goNext },
+      { key: 'c', onPress: () => setChatOpen((o) => !o) },
+    ],
+    !(chatOpen && isMobile)
+  )
 
   // Persist read state on open / when fresh assistant turns arrive while open.
   // Lives here (single owner) so the mobile sheet and desktop panel don't both fire.
@@ -327,11 +339,27 @@ export const FocusView = () => {
     <>
       {hasSessionCursor && (
         <>
-          <Button variant='ghost' size='icon' onClick={goPrev} disabled={!cursor.prev} aria-label={t`Previous card`}>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='relative'
+            onClick={goPrev}
+            disabled={!cursor.prev}
+            aria-label={t`Previous card`}
+          >
             <ChevronLeft className='size-6 md:size-5' />
+            {showKbd && <Kbd className={KBD_CORNER_CLASS}>←</Kbd>}
           </Button>
-          <Button variant='ghost' size='icon' onClick={goNext} disabled={!cursor.next} aria-label={t`Next card`}>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='relative'
+            onClick={goNext}
+            disabled={!cursor.next}
+            aria-label={t`Next card`}
+          >
             <ChevronRight className='size-6 md:size-5' />
+            {showKbd && <Kbd className={KBD_CORNER_CLASS}>→</Kbd>}
           </Button>
         </>
       )}
@@ -339,6 +367,7 @@ export const FocusView = () => {
         hasUnread={card.hasUnreadChat}
         isGenerating={isChatGenerating}
         isFailed={isChatFailed}
+        kbdHint={showKbd ? 'C' : undefined}
         onClick={() => setChatOpen((o) => !o)}
       />
     </>

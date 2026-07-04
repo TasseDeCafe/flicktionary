@@ -5,7 +5,10 @@ import { CircleCheck, ListChecks } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
 import { FullViewLoader } from '@flicktionary/ui/components/full-view-loader'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import { useListCardsBySession } from '@/features/review/api/review-hooks'
 import { useGetUserPrefs } from '@/features/sessions/api/sessions-hooks'
 import type { RecapCardInput, RecapQueueItem } from '../utils/build-recap-questions'
@@ -70,6 +73,8 @@ const RecapQuiz = ({
   onClose: () => void
 }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const resolveMeaning = useTermMeaning(targetLanguage)
 
   // Kept beyond the initial build — redrills resample MC distractors from the
@@ -102,6 +107,10 @@ const RecapQuiz = ({
     handleNext()
   }
 
+  // Live questions run their own hotkeys inside the recap exercise components;
+  // the quiz host only covers the empty and all-done states (Enter = close).
+  useHotkeys([{ key: 'enter', enabled: current == null, onPress: onClose }])
+
   if (queue.length === 0) {
     return (
       <div className='flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center'>
@@ -112,6 +121,7 @@ const RecapQuiz = ({
         </p>
         <Button type='button' size='lg' onClick={onClose}>
           {t`Back to session`}
+          {showKbd && <Kbd>↵</Kbd>}
         </Button>
       </div>
     )
@@ -129,6 +139,7 @@ const RecapQuiz = ({
           <div className='mx-auto w-full max-w-xl'>
             <Button type='button' size='xl' className='w-full' onClick={onClose}>
               {t`Back to session`}
+              {showKbd && <Kbd>↵</Kbd>}
             </Button>
           </div>
         </div>
