@@ -13,7 +13,7 @@
     "preview": "doppler run --project web --config dev_personal -- sh -c 'vite build && vite preview'",
     "analyze": "vite-bundle-visualizer",
     "lint": "eslint . --fix --max-warnings 0",
-    "lint:check": "eslint .",
+    "lint:check": "eslint . --max-warnings 0",
     "check:types": "tsc --noEmit"
   },
   "lint-staged": {

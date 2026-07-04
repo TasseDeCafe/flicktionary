@@ -25,7 +25,7 @@ export const extensionAuthContract = {
           tokenHash: z.string(),
           email: z.string().email(),
         }),
-      }),
+      })
     ),
 
   revokeSession: oc

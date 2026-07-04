@@ -11,6 +11,6 @@ import { createContext, useContext } from 'react'
 // a sibling of the React root).
 export const PortalContainerContext = createContext<HTMLElement | null>(null)
 
-export function usePortalContainer(): HTMLElement | null {
+export const usePortalContainer = (): HTMLElement | null => {
   return useContext(PortalContainerContext)
 }

@@ -66,10 +66,12 @@ describe('composeGermanCitation', () => {
   })
 
   it('shows a weak-masculine genitive', () => {
-    expect(de('Junge', { pos: 'noun', gender: 'm', plural: 'Jungen', genitive: 'Jungen', is_weak_noun: true })).toEqual({
-      title: 'der Junge',
-      forms: 'pl -n, Gen. -n',
-    })
+    expect(de('Junge', { pos: 'noun', gender: 'm', plural: 'Jungen', genitive: 'Jungen', is_weak_noun: true })).toEqual(
+      {
+        title: 'der Junge',
+        forms: 'pl -n, Gen. -n',
+      }
+    )
   })
 
   it('shows a mixed -ns genitive', () => {
@@ -80,9 +82,9 @@ describe('composeGermanCitation', () => {
   })
 
   it('falls back to the bare headword for a non-German noun', () => {
-    expect(composeGermanCitation({ headword: 'день', grammar: { pos: 'noun', gender: 'm' }, targetLanguage: 'ru' })).toEqual(
-      { title: 'день', forms: null }
-    )
+    expect(
+      composeGermanCitation({ headword: 'день', grammar: { pos: 'noun', gender: 'm' }, targetLanguage: 'ru' })
+    ).toEqual({ title: 'день', forms: null })
   })
 
   it('prefers display_form in the non-German fallback', () => {

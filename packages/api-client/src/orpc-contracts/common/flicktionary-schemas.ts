@@ -1,6 +1,15 @@
 import { z } from 'zod'
 
-export const ContentSourceTypeSchema = z.enum(['movie', 'tv', 'book', 'article', 'text', 'adhoc', 'youtube', 'streaming'])
+export const ContentSourceTypeSchema = z.enum([
+  'movie',
+  'tv',
+  'book',
+  'article',
+  'text',
+  'adhoc',
+  'youtube',
+  'streaming',
+])
 export type ContentSourceType = z.infer<typeof ContentSourceTypeSchema>
 
 export const TextTrackSourceSchema = z.enum(['opensubtitles', 'upload', 'paste', 'url'])

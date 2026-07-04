@@ -7,7 +7,12 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "check:types": "tsc --noEmit"
+    "check:types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "lint:check": "eslint . --max-warnings 0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
   },
   "dependencies": {
     "@flicktionary/core": "workspace:*",
@@ -35,8 +40,10 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@flicktionary/eslint-config": "workspace:*",
     "@flicktionary/typescript-config": "workspace:*",
     "@types/react": "catalog:",
+    "eslint": "catalog:",
     "@types/react-dom": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:"

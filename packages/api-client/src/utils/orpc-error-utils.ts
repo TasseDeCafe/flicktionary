@@ -19,7 +19,7 @@ export const isExpectedValidationError = (error: unknown): boolean => {
   return EXPECTED_VALIDATION_ERROR_CODES.has(error.code)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- accepts an ORPCError from ANY contract procedure; the error-code type param is irrelevant to reading status/data
 export const getBackendErrorCode = (error: ORPCError<any, unknown>): string | undefined => {
   if (error.status < 400 || error.status >= 500) {
     return undefined
@@ -28,7 +28,7 @@ export const getBackendErrorCode = (error: ORPCError<any, unknown>): string | un
   return getBackendErrorCodeFromData(error.data)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- accepts an ORPCError from ANY contract procedure; the error-code type param is irrelevant to reading status/data
 export const getBackendErrorMessage = (error: ORPCError<any, unknown>): string | undefined => {
   return getBackendErrorMessageFromData(error.data)
 }

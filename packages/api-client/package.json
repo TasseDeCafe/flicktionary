@@ -8,7 +8,12 @@
   },
   "scripts": {
     "build": "tsc && tsc-alias --project tsconfig.json",
-    "check:types": "tsc --noEmit"
+    "check:types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "lint:check": "eslint . --max-warnings 0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
   },
   "dependencies": {
     "@orpc/contract": "catalog:",
@@ -16,7 +21,9 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@flicktionary/eslint-config": "workspace:*",
     "@flicktionary/typescript-config": "workspace:*",
+    "eslint": "catalog:",
     "typescript": "catalog:",
     "tsc-alias": "catalog:"
   }
