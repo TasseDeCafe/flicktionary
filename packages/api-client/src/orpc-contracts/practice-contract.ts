@@ -390,6 +390,31 @@ export const practiceContract = {
       })
     ),
 
+  // Exit ramp for a parked term whose gate exercises can't be generated (the
+  // bank is terminally exhausted): unpark the pool's citation facet and
+  // re-enter FSRS on the soft schedule, due immediately, so the term is
+  // studied as a normal flashcard instead of being stuck behind an unservable
+  // gate. Idempotent — unparked=false when the facet is missing or already
+  // unparked (a race with a concurrent graduation is not an error).
+  studyParkedTermAsFlashcard: oc
+    .route({
+      method: 'POST',
+      path: '/practice/parked-terms/{userLookupId}/study-as-flashcard',
+      successStatus: 200,
+    })
+    .errors({
+      NOT_FOUND: { status: 404, data: BackendErrorResponseSchema },
+      BAD_REQUEST: { status: 400, data: BackendErrorResponseSchema },
+      INTERNAL_SERVER_ERROR: { status: 500, data: BackendErrorResponseSchema },
+    })
+    .input(
+      z.object({
+        userLookupId: z.string().uuid(),
+        pool: PracticePoolSchema,
+      })
+    )
+    .output(z.object({ data: z.object({ unparked: z.boolean() }) })),
+
   // Selection-driven gloss for a practice text. Re-uses the same Haiku prompt
   // as highlights.fastGloss, but keyed to a practice_text (so the LLM can use
   // the body as context) without requiring a highlight row. No persistence —

@@ -125,6 +125,21 @@ export const useSubmitExerciseAnswer = () => {
   )
 }
 
+// Exit ramp for a failed exercise placeholder: unpark the term (soft
+// re-entry, due immediately) so it's served as a normal flashcard instead of
+// an unservable gate. Invalidates the landing counts — parked becomes due.
+export const useStudyParkedTermAsFlashcard = () => {
+  const { t } = useLingui()
+  return useMutation(
+    orpcQuery.practice.studyParkedTermAsFlashcard.mutationOptions({
+      meta: {
+        invalidates: [orpcQuery.practice.dueSummary.key()],
+        errorMessage: t`Failed to move the term to flashcards`,
+      },
+    })
+  )
+}
+
 // One ready hint exercise for the flashcard currently shown (bank-first; the
 // server may kick a background generation on a miss but never blocks on it).
 // Availability is best-effort: a null exercise or a failed check just hides

@@ -40,6 +40,7 @@ import type { QueueCounts } from './review-counts'
 import { PracticeLoader } from './practice-loader'
 import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
+import { FailedExercisePlaceholder } from './failed-exercise-placeholder'
 import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
@@ -513,13 +514,14 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   const flashcardLive = !isPeeking && current?.type === 'flashcard' && !activeHintDisplayed
   const showingFront = flashcardLive && !revealed
   const showingBack = flashcardLive && revealed
+  // Still-generating placeholders only — terminally 'failed' ones render the
+  // FailedExercisePlaceholder decision card, which owns its own hotkeys
+  // (Enter/Space = study as flashcard, S/Esc = skip).
   const exercisePlaceholderLive =
     !isPeeking &&
     current?.type === 'exercise' &&
-    (current.entry.status === 'failed' ||
-      current.entry.status === 'generating' ||
-      !current.entry.exerciseId ||
-      !current.entry.payload)
+    current.entry.status !== 'failed' &&
+    (current.entry.status === 'generating' || !current.entry.exerciseId || !current.entry.payload)
   const liveExerciseDisplayed = !isPeeking && (current?.type === 'exercise' || activeHintDisplayed)
   // Peek re-rate: offered when the displayed (peeked) item has a durably
   // applied rating AND its redrill copy wasn't itself rated yet — once the
@@ -574,7 +576,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         enabled: showingBack && !!currentHintOutcome,
         onPress: () => currentHintOutcome && handleRate(currentHintOutcome.rating),
       },
-      // Failed / still-generating exercise placeholders only offer Skip.
+      // Still-generating exercise placeholders only offer Skip.
       { key: 's', enabled: exercisePlaceholderLive, onPress: advance },
       { key: 'escape', enabled: exercisePlaceholderLive, onPress: advance },
       { key: 'enter', enabled: exercisePlaceholderLive, onPress: advance },
@@ -855,25 +857,17 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     }
 
     if (entry.status === 'failed') {
-      const headword = entry.headword
       return wrap(
-        <ExerciseLayout
+        <FailedExercisePlaceholder
+          headword={entry.headword}
+          userLookupId={entry.userLookupId}
+          pool={entry.pool}
           header={header}
           statusBar={statusRow}
-          actions={
-            <Button type='button' size='xl' className='w-full' onClick={advance}>
-              {t`Skip`}
-              {showKbd && <Kbd>S</Kbd>}
-            </Button>
-          }
-        >
-          <div className='flex flex-col items-center gap-4 py-10 text-center'>
-            <CircleAlert className='text-muted-foreground h-8 w-8' />
-            <p className='text-muted-foreground text-sm'>
-              {t`We couldn't prepare an exercise for “${headword}” this time. It stays in your queue — skip it for now.`}
-            </p>
-          </div>
-        </ExerciseLayout>
+          showKbd={showKbd}
+          hotkeysEnabled={!actionsOpen}
+          onAdvance={advance}
+        />
       )
     }
     if (entry.status === 'generating' || !entry.exerciseId || !entry.payload) {
