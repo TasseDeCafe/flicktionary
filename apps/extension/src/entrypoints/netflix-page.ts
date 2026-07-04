@@ -12,9 +12,7 @@ declare const netflix: any | undefined
 interface NetflixTimedTextTrack {
   isForcedNarrative?: boolean
   isNoneTrack?: boolean
-  cdnlist?: { id: string }[]
-  ttDownloadables?: Record<string, { downloadUrls?: Record<string, string>; urls?: { url: string }[] }>
-  new_track_id?: string
+  isImageBased?: boolean
   trackId: string
   bcp47?: string
   rawTrackType?: string
@@ -23,10 +21,6 @@ interface NetflixTimedTextTrack {
 
 export default defineUnlistedScript(() => {
   setTimeout(() => {
-    const webvtt = 'webvtt-lssdh-ios8'
-    const manifestPattern = new RegExp('manifest|licensedManifest')
-    const subTracks = new Map()
-
     function getAPI() {
       if (typeof netflix === 'undefined') {
         return undefined
@@ -58,51 +52,87 @@ export default defineUnlistedScript(() => {
       return undefined
     }
 
-    function extractUrlLegacy(track: NetflixTimedTextTrack) {
-      if (track.isForcedNarrative || track.isNoneTrack || !track.cdnlist?.length || !track.ttDownloadables) {
-        return undefined
+    // Reads subtitle download URLs from the most recent player session (the last id
+    // from getAllPlayerSessionIds). Walks that session state and matches objects by
+    // structure (type === 'timedtext' with a urls array), which avoids depending on the
+    // minified property paths inside the player object that may change between releases.
+    function timedTextUrls(): Map<string, string> {
+      const urls = new Map<string, string>()
+      const sessionIds = getVideoPlayer()?.getAllPlayerSessionIds?.() || []
+
+      if (sessionIds.length === 0) {
+        return urls
       }
 
-      const webvttDL = track.ttDownloadables[webvtt]
+      const activeSessionId = sessionIds[sessionIds.length - 1]
+      const root =
+        netflix?.appContext?.state?.playerApp?.getState?.()?.videoPlayer?.cadmiumPlayerRepository?.playersById?.[
+          activeSessionId
+        ]
 
-      if (!webvttDL?.downloadUrls) {
-        return undefined
+      if (!root) {
+        return urls
       }
 
-      const cdnId = track.cdnlist.find((cdn) => webvttDL.downloadUrls![cdn.id])?.id
-      return cdnId === undefined ? undefined : webvttDL.downloadUrls[cdnId]
-    }
+      const seen = new WeakSet<object>()
+      // Untyped minified Netflix player state — probed structurally below.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const stack: { node: any; depth: number }[] = [{ node: root, depth: 0 }]
 
-    function extractUrl(track: NetflixTimedTextTrack) {
-      if (track.isForcedNarrative || track.isNoneTrack || !track.ttDownloadables) {
-        return undefined
-      }
+      // Timedtext objects sit about 12 levels below the session root, so the depth
+      // 20 cap below leaves margin without walking unrelated deep state.
+      while (stack.length > 0) {
+        const { node, depth } = stack.pop()!
 
-      const webvttDL = track.ttDownloadables[webvtt]
-
-      if (!webvttDL?.urls || webvttDL.urls.length === 0) {
-        return 'lazy'
-      }
-
-      return webvttDL.urls[0].url
-    }
-
-    function storeSubTrack(video: { movieId: string; timedtexttracks?: NetflixTimedTextTrack[] }) {
-      const timedTextracks = video.timedtexttracks || []
-
-      for (const track of timedTextracks) {
-        const url = extractUrlLegacy(track) ?? extractUrl(track)
-
-        if (url === undefined) {
+        if (node === null || typeof node !== 'object' || depth > 20 || seen.has(node)) {
           continue
         }
 
-        if (!subTracks.has(video.movieId)) {
-          subTracks.set(video.movieId, new Map())
+        seen.add(node)
+
+        if (node instanceof ArrayBuffer || ArrayBuffer.isView(node)) {
+          continue
         }
 
-        subTracks.get(video.movieId).set(track.new_track_id, url)
+        try {
+          if (
+            node.type === 'timedtext' &&
+            typeof node.trackId === 'string' &&
+            Array.isArray(node.urls) &&
+            node.urls.length > 0 &&
+            typeof node.urls[0]?.url === 'string' &&
+            !urls.has(node.trackId)
+          ) {
+            urls.set(node.trackId, node.urls[0].url)
+          }
+        } catch (e) {
+          // Ignore properties that throw on access
+        }
+
+        if (Array.isArray(node)) {
+          for (const value of node) {
+            if (value !== null && typeof value === 'object') {
+              stack.push({ node: value, depth: depth + 1 })
+            }
+          }
+        } else {
+          for (const key of Object.keys(node)) {
+            let value
+
+            try {
+              value = node[key]
+            } catch (e) {
+              continue
+            }
+
+            if (value !== null && typeof value === 'object') {
+              stack.push({ node: value, depth: depth + 1 })
+            }
+          }
+        }
       }
+
+      return urls
     }
 
     document.addEventListener('asbplayer-netflix-seek', (e) => {
@@ -154,9 +184,11 @@ export default defineUnlistedScript(() => {
 
     const dataForTrack = (
       track: NetflixTimedTextTrack,
-      storedTracks: Map<string, string>
+      urlsByTrackId?: Map<string, string>
     ): VideoDataSubtitleTrack | undefined => {
-      if (!track.bcp47) {
+      // Skip the "Off" track, forced-narrative tracks, and image-based (bitmap)
+      // subtitles, which can't be parsed as text.
+      if (!track.bcp47 || track.isNoneTrack || track.isForcedNarrative || track.isImageBased) {
         return undefined
       }
 
@@ -169,8 +201,9 @@ export default defineUnlistedScript(() => {
         language,
         // 'lazy' is a sentinel value indicating to the content script that it should
         // make a lazy language-specific request to get the URL
-        url: storedTracks.get(track.trackId) ?? 'lazy',
-        extension: 'nfvtt',
+        url: urlsByTrackId?.get(track.trackId) ?? 'lazy',
+        // Netflix subtitle downloads on this path are IMSC 1.1 (TTML)
+        extension: 'nfimsc',
       })
     }
 
@@ -185,13 +218,9 @@ export default defineUnlistedScript(() => {
       }
 
       response.basename = await determineBasenameWithRetries(titleId, 5)
-      const storedTracks = subTracks.get(titleId) || new Map()
-      response.subtitles = np
-        .getTimedTextTrackList()
-        .filter((track: NetflixTimedTextTrack) => storedTracks.has(track.trackId))
-        .map((track: NetflixTimedTextTrack) => {
-          return dataForTrack(track, storedTracks)
-        })
+      const urlsByTrackId = timedTextUrls()
+      response.subtitles = (np.getTimedTextTrackList() ?? [])
+        .map((track: NetflixTimedTextTrack) => dataForTrack(track, urlsByTrackId))
         .filter((data: VideoDataSubtitleTrack | undefined) => data !== undefined)
       return response
     }
@@ -236,21 +265,18 @@ export default defineUnlistedScript(() => {
       try {
         const event = e as CustomEvent
         const language = event.detail as string
-        const storedTracks = subTracks.get(np.getMovieId()) || new Map()
         const track = np
           .getTimedTextTrackList()
-          ?.find((track: NetflixTimedTextTrack) => dataForTrack(track, storedTracks)?.language === language)
+          ?.find((track: NetflixTimedTextTrack) => dataForTrack(track)?.language === language)
 
         if (track === undefined) {
           fail()
           return
         }
 
-        const alreadyStoredTrack = storedTracks.get(track.trackId)
-
-        if (alreadyStoredTrack !== undefined && alreadyStoredTrack !== 'lazy') {
-          // If track is already stored (e.g. from previous request) then
-          // send response now and early-out
+        if (timedTextUrls().has(track.trackId)) {
+          // URL is already present in player state (e.g. from a previous request)
+          // so send the response now and early-out
           document.dispatchEvent(
             new CustomEvent('asbplayer-synced-language-data', {
               detail: await buildResponse(),
@@ -259,15 +285,13 @@ export default defineUnlistedScript(() => {
           return
         }
 
-        // Trigger tracks to be refetched by temporarily setting the text track to the desired language
+        // This track has no URL yet. Temporarily set it as the active text track to
+        // make Netflix fetch one.
         await np.setTimedTextTrack(track)
         shouldRevert = true
 
-        // Wait for the track to appear
-        const succeeded = await poll(() => {
-          const t = storedTracks.get(track.trackId)
-          return t !== undefined && t !== 'lazy'
-        })
+        // Wait for the URL to appear in player state
+        const succeeded = await poll(() => timedTextUrls().has(track.trackId))
 
         if (!succeeded) {
           fail()
@@ -305,28 +329,6 @@ export default defineUnlistedScript(() => {
       },
       false
     )
-
-    const originalStringify = JSON.stringify
-    JSON.stringify = function (value) {
-      if ('string' === typeof value?.url && -1 < value.url.search(manifestPattern)) {
-        for (let objectValue of Object.values(value)) {
-          ;(objectValue as { profiles?: string[] } | null)?.profiles?.unshift(webvtt)
-        }
-      }
-
-      // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
-      return originalStringify.apply(this, arguments)
-    }
-
-    const originalParse = JSON.parse
-    JSON.parse = function () {
-      // @ts-expect-error -- forwarding `arguments` through apply() is untypeable
-      const value = originalParse.apply(this, arguments)
-
-      if (value?.result?.movieId) storeSubTrack(value.result)
-
-      return value
-    }
 
     Function.prototype.apply = new Proxy(Function.prototype.apply, {
       apply: function (target, originalThis, args) {
