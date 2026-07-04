@@ -14,6 +14,7 @@ import {
   UserLookupsRepositoryInterface,
 } from '../../transport/database/user-lookups/user-lookups-repository'
 import { UsersRepositoryInterface } from '../../transport/database/users/users-repository'
+import { PracticeExercisesRepositoryInterface } from '../../transport/database/practice-exercises/practice-exercises-repository'
 import { UserTargetLanguagePrefsRepositoryInterface } from '../../transport/database/user-target-language-prefs/user-target-language-prefs-repository'
 import { buildVocabularyCsv } from '../../service/export/build-vocabulary-csv'
 import { generateFormFacetData } from '../../service/study-facets/generate-form-facet-data'
@@ -99,11 +100,14 @@ const hasGrammarPatch = (patch: Record<string, unknown> | null | undefined): boo
 
 export const ChunksRouter = (
   userLookupsRepository: UserLookupsRepositoryInterface,
-  // Form-facet generate-and-confirm needs the user's language mode (native
-  // language + translations-off) to fill a pending_data form facet's payload.
-  formGenerationDeps: {
+  deps: {
+    // Form-facet generate-and-confirm needs the user's language mode (native
+    // language + translations-off) to fill a pending_data form facet's payload.
     usersRepository: UsersRepositoryInterface
     userTargetLanguagePrefsRepository: UserTargetLanguagePrefsRepositoryInterface
+    // Content edits clear the term's terminally-failed exercise slots so the
+    // practice bank can regenerate against the corrected data.
+    practiceExercisesRepository: PracticeExercisesRepositoryInterface
   }
 ): Router => {
   const implementer = implement(chunksContract).$context<OrpcContext>().use(errorBoundaryMiddleware)
@@ -163,6 +167,16 @@ export const ChunksRouter = (
         grammarPatch: input.patch.grammarPatch ?? null,
         markGrammarUserEdited: hasGrammarPatch(input.patch.grammarPatch),
       })
+      // An edit to the fields exercise generation works from invalidates the
+      // term's terminally-failed exercise slots — those verdicts were about
+      // the old content. Clearing them lets the practice bank regenerate.
+      if (
+        input.patch.translation !== undefined ||
+        input.patch.definition !== undefined ||
+        input.patch.targetExample !== undefined
+      ) {
+        await deps.practiceExercisesRepository.deleteFailedForLookup(input.chunkId)
+      }
       const refreshed = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
       if (!refreshed) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after update' }] } })
@@ -261,8 +275,8 @@ export const ChunksRouter = (
         { chunkId: input.chunkId, userId, skill: input.skill, targetForm },
         {
           userLookupsRepository,
-          usersRepository: formGenerationDeps.usersRepository,
-          userTargetLanguagePrefsRepository: formGenerationDeps.userTargetLanguagePrefsRepository,
+          usersRepository: deps.usersRepository,
+          userTargetLanguagePrefsRepository: deps.userTargetLanguagePrefsRepository,
         }
       )
       // The facet stays pending_data on failure (the chip keeps offering retry /
@@ -361,6 +375,9 @@ export const ChunksRouter = (
           data: { errors: [{ message: 'Another chunk already exists with that headword and sense' }] },
         })
       }
+      // headword/sense are the core inputs of exercise generation — a rename
+      // invalidates any terminally-failed slots so the bank can regenerate.
+      await deps.practiceExercisesRepository.deleteFailedForLookup(input.chunkId)
       const refreshed = await userLookupsRepository.getChunkRowForUser(input.chunkId, userId)
       if (!refreshed) {
         throw errors.NOT_FOUND({ data: { errors: [{ message: 'Chunk disappeared after rename' }] } })

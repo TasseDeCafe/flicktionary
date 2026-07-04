@@ -229,6 +229,21 @@ const countGateBankSlots = async (params: {
   }
 }
 
+// Drop every terminally-failed slot for a term (both pools). Failed rows are
+// what countGateBankSlots reads to declare a term's bank "terminally
+// exhausted" (and what stops re-reserving doomed slots) — deleting them
+// un-terminal-izes the term so the next serve path reserves fresh slots and
+// regenerates. Called when the user edits the term's content: the old
+// failures were verdicts on the OLD headword/sense/definition, so they no
+// longer apply.
+const deleteFailedForLookup = async (userLookupId: string): Promise<void> => {
+  await sql`
+    DELETE FROM public.practice_exercises
+    WHERE user_lookup_id = ${userLookupId}
+      AND status = 'failed'
+  `
+}
+
 // Per-term slot-status summary for ONE exercise type, in a single query.
 // Powers the compose-time hint warmer's gap detection: a term with no ready,
 // no live inflight, and no failed slot of the hint type needs a generation;
@@ -296,6 +311,7 @@ export interface PracticeExercisesRepositoryInterface {
     pool: PracticePool
     types: ExerciseType[]
   }) => Promise<{ inflight: number; failed: number; failedTypes: number }>
+  deleteFailedForLookup: (userLookupId: string) => Promise<void>
   countSlotsByTermForType: (params: {
     userId: string
     pool: PracticePool
@@ -316,6 +332,7 @@ export const PracticeExercisesRepository = (): PracticeExercisesRepositoryInterf
     listBonusForTerms,
     countReady,
     countGateBankSlots,
+    deleteFailedForLookup,
     countSlotsByTermForType,
   }
 }

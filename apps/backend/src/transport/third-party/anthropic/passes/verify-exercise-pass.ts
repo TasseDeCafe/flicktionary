@@ -98,14 +98,16 @@ When in doubt, fail.
 Call ${TOOL_NAME}. Stop after the tool call.`
 }
 
-export const verifyExercisePass = async (args: {
+type VerifyExerciseArgs = {
   exercise: GeneratedExercise
   targetLanguage: string
   nativeLanguage: string
   cefrLevel: string
   hideTranslationFields: boolean
   allowL1Notes: boolean
-}): Promise<VerifyExerciseResult> => {
+}
+
+const runVerdictCall = async (args: VerifyExerciseArgs): Promise<VerifyExerciseResult> => {
   const stream = getAnthropicClient().messages.stream({
     model: MODEL_OPUS,
     max_tokens: 1500,
@@ -129,5 +131,21 @@ export const verifyExercisePass = async (args: {
   }
   const input = toolUse.input as Record<string, unknown>
   const reasons = Array.isArray(input.reasons) ? input.reasons.map((r) => String(r)) : []
-  return { pass: input.pass === true, reasons }
+  // Tool schemas don't guarantee a real boolean — the model occasionally emits
+  // "true"/"false" strings, and a strict `=== true` would silently turn a pass
+  // into a reasonless rejection.
+  const pass = input.pass === true || input.pass === 'true'
+  return { pass, reasons }
+}
+
+// A fail with zero reasons is a verdict the prompt forbids (reasons must name
+// each failed check; they're empty only on pass), so it usually means a
+// malformed tool call rather than a real rejection. Retry the verdict once
+// before accepting it as a failure.
+export const verifyExercisePass = async (args: VerifyExerciseArgs): Promise<VerifyExerciseResult> => {
+  const first = await runVerdictCall(args)
+  if (first.pass || first.reasons.length > 0) return first
+  const second = await runVerdictCall(args)
+  if (second.pass || second.reasons.length > 0) return second
+  return { pass: false, reasons: ['verifier failed the exercise twice without naming a reason'] }
 }

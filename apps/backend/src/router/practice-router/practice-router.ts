@@ -43,7 +43,7 @@ import {
 } from '../../service/practice/compose-practice-queue'
 import type { StudySessionsRepositoryInterface } from '../../transport/database/study-sessions/study-sessions-repository'
 import { gradeMcAnswer, gradeProductionClozeAnswer } from '../../service/practice/grade-exercise'
-import { applyGateAnswer } from '../../service/practice/rehab'
+import { applyGateAnswer, unparkTermToFlashcard } from '../../service/practice/rehab'
 import { gradeUseInSentencePass } from '../../transport/third-party/anthropic/passes/grade-use-in-sentence-pass'
 import { generateReadingText, prepareNextReadingText } from '../../service/practice/generate-reading-text'
 import { advanceReadingText, type AdvanceReadingTextDependencies } from '../../service/practice/advance-reading-text'
@@ -664,6 +664,20 @@ export const PracticeRouter = (deps: PracticeRouterDependencies): Router => {
           graduated,
         },
       }
+    }),
+
+    studyParkedTermAsFlashcard: implementer.studyParkedTermAsFlashcard.handler(async ({ input, context, errors }) => {
+      const userId = context.res.locals.userId
+      const lookup = await deps.userLookupsRepository.findByIdForUser(input.userLookupId, userId)
+      if (!lookup || lookup.deleted_at != null) {
+        throw errors.NOT_FOUND({ data: { errors: [{ message: 'Term not found' }] } })
+      }
+      const unparked = await unparkTermToFlashcard({
+        userLookupId: input.userLookupId,
+        pool: input.pool,
+        deps: { studyFacetsRepository: deps.studyFacetsRepository },
+      })
+      return { data: { unparked } }
     }),
 
     fastGloss: implementer.fastGloss.handler(async ({ input, context, errors }) => {

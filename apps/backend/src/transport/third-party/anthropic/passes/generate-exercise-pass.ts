@@ -64,6 +64,10 @@ type GenerateExerciseArgs = {
   cefrLevel: string
   hideTranslationFields: boolean
   allowL1Notes: boolean
+  // Verifier rejection reasons from earlier attempts at this same slot. Blind
+  // regeneration tends to repeat the same failure mode; naming the rejections
+  // steers the retry away from it.
+  previousRejections?: string[]
 }
 
 // In-place Fisher–Yates over a copy. Option order must not leak the answer
@@ -157,9 +161,21 @@ const describeTerm = (term: ExerciseTermInput, hideTranslationFields: boolean): 
   return lines.join('\n')
 }
 
+const buildRejectionFeedbackBlock = (previousRejections: string[] | undefined): string => {
+  if (!previousRejections || previousRejections.length === 0) return ''
+  const lines = previousRejections.map((reason) => `- ${reason}`).join('\n')
+  return `
+
+Earlier attempts at this exercise were rejected by an independent verifier:
+${lines}
+
+Write a substantially different exercise (different sentence, different distractors where applicable) that avoids these failure modes.`
+}
+
 const buildUserMessage = (args: GenerateExerciseArgs): string => {
   const termBlock = describeTerm(args.term, args.hideTranslationFields)
   const promptLanguage = args.hideTranslationFields ? args.targetLanguage : args.nativeLanguage
+  const rejectionBlock = buildRejectionFeedbackBlock(args.previousRejections)
 
   if (args.type === 'mc_cloze') {
     return `Create ONE multiple-choice cloze exercise in ${args.targetLanguage} for the term below.
@@ -175,7 +191,7 @@ Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
 
 Term:
 
-${termBlock}
+${termBlock}${rejectionBlock}
 
 Call ${TOOL_NAME}. Stop after the tool call.`
   }
@@ -193,7 +209,7 @@ Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
 
 Term:
 
-${termBlock}
+${termBlock}${rejectionBlock}
 
 Call ${TOOL_NAME}. Stop after the tool call.`
   }
@@ -211,7 +227,7 @@ Learner profile: CEFR ${args.cefrLevel}, target language ${args.targetLanguage}.
 
 Term:
 
-${termBlock}
+${termBlock}${rejectionBlock}
 
 Call ${TOOL_NAME}. Stop after the tool call.`
 }

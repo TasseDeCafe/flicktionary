@@ -121,10 +121,18 @@ const runExerciseGenerationForSlot = async (params: {
     }
 
     const rejections: string[] = []
+    // Verifier rejection reasons only (no attempt prefixes, no generate
+    // errors) — fed back into the next generation attempt so the retry steers
+    // away from the failure mode instead of blindly re-rolling the same prompt.
+    const verifierFeedback: string[] = []
     for (let attempt = 1; attempt <= MAX_GEN_ATTEMPTS; attempt++) {
       let generated: GeneratedExercise
       try {
-        generated = await generateExercisePass({ type: slot.exercise_type as GeneratableExerciseType, ...passArgs })
+        generated = await generateExercisePass({
+          type: slot.exercise_type as GeneratableExerciseType,
+          previousRejections: verifierFeedback,
+          ...passArgs,
+        })
       } catch (e) {
         rejections.push(`attempt ${attempt} generate: ${e instanceof Error ? e.message : String(e)}`)
         continue
@@ -141,6 +149,7 @@ const runExerciseGenerationForSlot = async (params: {
         return
       }
       rejections.push(`attempt ${attempt} verify: ${verdict.reasons.join('; ') || 'no reason given'}`)
+      verifierFeedback.push(...verdict.reasons)
     }
     await deps.practiceExercisesRepository.markFailed({
       id: slot.id,

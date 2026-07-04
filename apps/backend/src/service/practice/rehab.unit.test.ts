@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DbUserLookupWithFacet } from '../../transport/database/user-lookups/user-lookups-repository'
 import { SOFT_REENTRY_DIFFICULTY, SOFT_REENTRY_STABILITY } from './leech-config'
-import { applyGateAnswer, gateTypeForTier, type RehabDependencies } from './rehab'
+import { applyGateAnswer, gateTypeForTier, unparkTermToFlashcard, type RehabDependencies } from './rehab'
 
 const lookupId = '00000000-0000-0000-0000-000000000004'
 
@@ -26,10 +26,11 @@ const makeParkedFacet = (overrides: Partial<DbUserLookupWithFacet> = {}): DbUser
 const createDeps = () => {
   const advanceRehabDayFacet = vi.fn()
   const unparkAndSoftReentryFacet = vi.fn().mockResolvedValue(undefined)
+  const getFacet = vi.fn()
   const deps = {
-    studyFacetsRepository: { advanceRehabDayFacet, unparkAndSoftReentryFacet },
+    studyFacetsRepository: { advanceRehabDayFacet, unparkAndSoftReentryFacet, getFacet },
   } as unknown as RehabDependencies
-  return { deps, advanceRehabDayFacet, unparkAndSoftReentryFacet }
+  return { deps, advanceRehabDayFacet, unparkAndSoftReentryFacet, getFacet }
 }
 
 describe('gateTypeForTier', () => {
@@ -138,5 +139,56 @@ describe('applyGateAnswer', () => {
       skill: 'meaning_production',
       targetForm: '',
     })
+  })
+})
+
+describe('unparkTermToFlashcard', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('unparks a parked facet on the soft schedule, due immediately', async () => {
+    const { deps, getFacet, unparkAndSoftReentryFacet } = createDeps()
+    getFacet.mockResolvedValue({ leech_parked_at: '2026-06-01T00:00:00Z' })
+    const before = Date.now()
+    const unparked = await unparkTermToFlashcard({ userLookupId: lookupId, pool: 'recognition', deps })
+    expect(unparked).toBe(true)
+    expect(getFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_recognition', targetForm: '' })
+    expect(unparkAndSoftReentryFacet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userLookupId: lookupId,
+        skill: 'meaning_recognition',
+        targetForm: '',
+        state: 'review',
+        stability: SOFT_REENTRY_STABILITY,
+        difficulty: SOFT_REENTRY_DIFFICULTY,
+      })
+    )
+    // The user asked to study this term — due must be NOW (servable by the
+    // next compose), not graduation's usual +24h.
+    const call = unparkAndSoftReentryFacet.mock.calls[0]![0] as { due: Date; lastReview: Date }
+    expect(call.due.getTime()).toBe(call.lastReview.getTime())
+    expect(call.due.getTime()).toBeGreaterThanOrEqual(before)
+  })
+
+  it('addresses the production facet for the production pool', async () => {
+    const { deps, getFacet } = createDeps()
+    getFacet.mockResolvedValue({ leech_parked_at: '2026-06-01T00:00:00Z' })
+    await unparkTermToFlashcard({ userLookupId: lookupId, pool: 'production', deps })
+    expect(getFacet).toHaveBeenCalledWith({ userLookupId: lookupId, skill: 'meaning_production', targetForm: '' })
+  })
+
+  it('returns false without writing when the facet is missing', async () => {
+    const { deps, getFacet, unparkAndSoftReentryFacet } = createDeps()
+    getFacet.mockResolvedValue(null)
+    const unparked = await unparkTermToFlashcard({ userLookupId: lookupId, pool: 'recognition', deps })
+    expect(unparked).toBe(false)
+    expect(unparkAndSoftReentryFacet).not.toHaveBeenCalled()
+  })
+
+  it('returns false without writing when the facet is not parked (race with graduation)', async () => {
+    const { deps, getFacet, unparkAndSoftReentryFacet } = createDeps()
+    getFacet.mockResolvedValue({ leech_parked_at: null })
+    const unparked = await unparkTermToFlashcard({ userLookupId: lookupId, pool: 'recognition', deps })
+    expect(unparked).toBe(false)
+    expect(unparkAndSoftReentryFacet).not.toHaveBeenCalled()
   })
 })

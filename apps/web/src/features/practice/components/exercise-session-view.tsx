@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { CircleAlert, CircleCheck, Dumbbell, Flame, Hourglass, MoreVertical } from 'lucide-react'
+import { CircleCheck, Dumbbell, Flame, Hourglass, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
 import { Kbd } from '@flicktionary/ui/components/kbd'
 import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
@@ -11,6 +11,7 @@ import { mergePlaceholders } from './exercise-queue-merge'
 import { PracticeLoader } from './practice-loader'
 import { ExerciseHeader } from './exercise-header'
 import { ExerciseLayout } from './exercise-layout'
+import { FailedExercisePlaceholder } from './failed-exercise-placeholder'
 import { McExercise } from './mc-exercise'
 import { ProductionClozeExercise } from './production-cloze-exercise'
 import { UseInSentenceExercise } from './use-in-sentence-exercise'
@@ -133,14 +134,15 @@ const LoadedExerciseSessionView = ({
 
   const current = queue[index] ?? null
   const total = queue.length
-  const currentHeadword = current?.headword ?? ''
 
   // Live ready exercises run their own hotkeys inside the exercise components;
-  // the host only covers the failed / still-generating placeholders, whose
-  // single action is Skip.
+  // the host only covers the still-generating placeholders, whose single
+  // action is Skip. Terminally 'failed' placeholders render the
+  // FailedExercisePlaceholder decision card, which owns its own hotkeys.
   const placeholderDisplayed =
     !!current &&
-    (current.status === 'failed' || current.status === 'generating' || !current.exerciseId || !current.payload)
+    current.status !== 'failed' &&
+    (current.status === 'generating' || !current.exerciseId || !current.payload)
   useHotkeys(
     [
       { key: 's', enabled: placeholderDisplayed, onPress: handleNext },
@@ -271,22 +273,15 @@ const LoadedExerciseSessionView = ({
             // make the user wait on an hourglass that will never resolve.
             if (current.status === 'failed') {
               return (
-                <ExerciseLayout
+                <FailedExercisePlaceholder
+                  headword={current.headword}
+                  userLookupId={current.userLookupId}
+                  pool={current.pool}
                   header={header}
-                  actions={
-                    <Button type='button' size='xl' className='w-full' onClick={handleNext}>
-                      {t`Skip`}
-                      {showKbd && <Kbd>S</Kbd>}
-                    </Button>
-                  }
-                >
-                  <div className='flex flex-col items-center gap-4 py-10 text-center'>
-                    <CircleAlert className='text-muted-foreground h-8 w-8' />
-                    <p className='text-muted-foreground text-sm'>
-                      {t`We couldn't prepare an exercise for “${currentHeadword}” this time. It stays in your queue — skip it for now.`}
-                    </p>
-                  </div>
-                </ExerciseLayout>
+                  showKbd={showKbd}
+                  hotkeysEnabled={!actionsOpen}
+                  onAdvance={handleNext}
+                />
               )
             }
 

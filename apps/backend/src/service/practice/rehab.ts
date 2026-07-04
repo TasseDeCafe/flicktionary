@@ -77,3 +77,37 @@ export const applyGateAnswer = async (params: {
   })
   return { rehabCorrectDays: days, graduated: true }
 }
+
+// User-chosen exit ramp for a parked term whose gate-exercise bank is
+// terminally exhausted: study it as a normal flashcard instead. Same soft
+// re-entry write as graduation, except due NOW — the user explicitly asked to
+// practice this term, so it must be servable by the very next compose rather
+// than tomorrow. Returns false when the pool's citation facet is missing or
+// not parked (idempotent; racing a concurrent graduation is not an error).
+export const unparkTermToFlashcard = async (params: {
+  userLookupId: string
+  pool: PracticePool
+  deps: RehabDependencies
+}): Promise<boolean> => {
+  const { userLookupId, pool, deps } = params
+  const skill = skillForPool(pool)
+  const facet = await deps.studyFacetsRepository.getFacet({
+    userLookupId,
+    skill,
+    targetForm: CITATION_FORM,
+  })
+  if (!facet || facet.leech_parked_at == null) return false
+
+  const reentry = softReentryResult(new Date())
+  await deps.studyFacetsRepository.unparkAndSoftReentryFacet({
+    userLookupId,
+    skill,
+    targetForm: CITATION_FORM,
+    state: reentry.state,
+    due: reentry.lastReview,
+    stability: reentry.stability,
+    difficulty: reentry.difficulty,
+    lastReview: reentry.lastReview,
+  })
+  return true
+}
