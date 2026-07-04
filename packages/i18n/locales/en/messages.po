@@ -17,6 +17,10 @@ msgstr ""
 msgid "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 msgstr "“{headword}” keeps tripping you up — it's parked for rehab exercises."
 
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "“{headword}” moved to your flashcards."
+msgstr "“{headword}” moved to your flashcards."
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "(Current)"
 msgstr "(Current)"
@@ -1575,6 +1579,10 @@ msgstr "Failed to load vocabulary"
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to mark chat read"
 msgstr "Failed to mark chat read"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts
+msgid "Failed to move the term to flashcards"
+msgstr "Failed to move the term to flashcards"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to open Session vocabulary"
@@ -3690,6 +3698,7 @@ msgstr "Skills for {label}"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/recap-mc-exercise.tsx
@@ -3798,6 +3807,10 @@ msgstr "Strengthening done!"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Studied in at least one inflected form"
 msgstr "Studied in at least one inflected form"
+
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "Study as flashcard"
+msgstr "Study as flashcard"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Study targets"
@@ -4529,17 +4542,9 @@ msgstr "Warnings"
 msgid "Watching videos"
 msgstr "Watching videos"
 
-#: apps/web/src/features/practice/components/exercise-session-view.tsx
-msgid "We couldn't prepare an exercise for “{currentHeadword}” this time. It "
-"stays in your queue — skip it for now."
-msgstr "We couldn't prepare an exercise for “{currentHeadword}” this time. It "
-"stays in your queue — skip it for now."
-
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
-msgid "We couldn't prepare an exercise for “{headword}” this time. It stays in "
-"your queue — skip it for now."
-msgstr "We couldn't prepare an exercise for “{headword}” this time. It stays in "
-"your queue — skip it for now."
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "We couldn't create an exercise for “{headword}”."
+msgstr "We couldn't create an exercise for “{headword}”."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "We couldn't prepare this answer. Save the note again to retry."
@@ -4675,6 +4680,14 @@ msgstr "You are a special user with free access. You have no active "
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx
 msgid "You are now subscribed to Premium!"
 msgstr "You are now subscribed to Premium!"
+
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "You can study it as a regular flashcard instead — or open the menu above "
+"to edit the term if something looks off (exercises get another try after "
+"a fix)."
+msgstr "You can study it as a regular flashcard instead — or open the menu "
+"above to edit the term if something looks off (exercises get another "
+"try after a fix)."
 
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx
 msgid "You can try again in {countdown} seconds"

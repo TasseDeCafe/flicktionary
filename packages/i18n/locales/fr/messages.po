@@ -18,6 +18,10 @@ msgid "“{headword}” keeps tripping you up — it's parked for rehab exercise
 msgstr "« {headword} » vous pose problème — il est mis de côté pour des "
 "exercices de révision."
 
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "“{headword}” moved to your flashcards."
+msgstr "« {headword} » déplacé vers vos cartes mémoire."
+
 #: apps/web/src/features/billing/utils/pricing-view-utils.ts
 msgid "(Current)"
 msgstr "(Actuel)"
@@ -1601,6 +1605,10 @@ msgstr "Échec du chargement du vocabulaire"
 #: apps/web/src/features/review/api/review-hooks.ts
 msgid "Failed to mark chat read"
 msgstr "Échec du marquage du chat comme lu"
+
+#: apps/web/src/features/practice/api/practice-hooks.ts
+msgid "Failed to move the term to flashcards"
+msgstr "Impossible de déplacer le terme vers les cartes mémoire"
 
 #: apps/web/src/features/sessions/api/sessions-hooks.ts
 msgid "Failed to open Session vocabulary"
@@ -3736,6 +3744,7 @@ msgstr "Compétences pour {label}"
 
 #: apps/web/src/features/practice/components/composed-practice-view.tsx
 #: apps/web/src/features/practice/components/exercise-session-view.tsx
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
 #: apps/web/src/features/practice/components/mc-exercise.tsx
 #: apps/web/src/features/practice/components/production-cloze-exercise.tsx
 #: apps/web/src/features/practice/components/recap-mc-exercise.tsx
@@ -3844,6 +3853,10 @@ msgstr "Renforcement terminé !"
 #: apps/web/src/features/vocabulary/components/vocabulary-filter-control.tsx
 msgid "Studied in at least one inflected form"
 msgstr "Étudié sous au moins une forme fléchie"
+
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "Study as flashcard"
+msgstr "Étudier comme carte mémoire"
 
 #: apps/web/src/features/review/components/form-selector.tsx
 msgid "Study targets"
@@ -4589,18 +4602,9 @@ msgstr "Avertissements"
 msgid "Watching videos"
 msgstr "Regarder des vidéos"
 
-#: apps/web/src/features/practice/components/exercise-session-view.tsx
-msgid "We couldn't prepare an exercise for “{currentHeadword}” this time. It "
-"stays in your queue — skip it for now."
-msgstr "Nous n'avons pas pu préparer un exercice pour « {currentHeadword} » "
-"cette fois. Il reste dans votre file d'attente — passez-le pour "
-"l'instant."
-
-#: apps/web/src/features/practice/components/composed-practice-view.tsx
-msgid "We couldn't prepare an exercise for “{headword}” this time. It stays in "
-"your queue — skip it for now."
-msgstr "Nous n'avons pas pu préparer un exercice pour \"{headword}\" cette "
-"fois. Il reste dans votre file d'attente — passez-le pour l'instant."
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "We couldn't create an exercise for “{headword}”."
+msgstr "Nous n'avons pas pu créer un exercice pour \"{headword}\"."
 
 #: apps/web/src/features/review/components/per-card-chat.tsx
 msgid "We couldn't prepare this answer. Save the note again to retry."
@@ -4742,6 +4746,15 @@ msgstr "Vous êtes un utilisateur spécial avec un accès gratuit. Vous n'avez p
 #: apps/web/src/features/checkout/components/checkout-success-view.tsx
 msgid "You are now subscribed to Premium!"
 msgstr "Vous êtes maintenant abonné à Premium !"
+
+#: apps/web/src/features/practice/components/failed-exercise-placeholder.tsx
+msgid "You can study it as a regular flashcard instead — or open the menu above "
+"to edit the term if something looks off (exercises get another try after "
+"a fix)."
+msgstr "Vous pouvez l'étudier comme une carte mémoire classique à la place — ou "
+"ouvrir le menu ci-dessus pour modifier le terme si quelque chose semble "
+"incorrect (les exercices auront une nouvelle chance après une "
+"correction)."
 
 #: apps/web/src/features/overlay/components/rate-limiting-overlay-content.tsx
 msgid "You can try again in {countdown} seconds"
