@@ -10,6 +10,8 @@
   "scripts": {
     "build": "pnpm run lingui:compile && tsc && tsc-alias --project tsconfig.json",
     "check:types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "lint:check": "eslint . --max-warnings 0",
     "test:watch": "vitest watch",
     "lingui:extract": "cd ../.. && pnpm exec lingui extract --clean",
     "lingui:watch": "cd ../.. && pnpm exec lingui extract --watch",
@@ -17,8 +19,13 @@
     "translate": "doppler run --project backend --config dev_personal -- node scripts/translate-missing.mjs",
     "translate:check": "node scripts/translate-missing.mjs --check"
   },
+  "lint-staged": {
+    "*.{ts,tsx}": "eslint --fix"
+  },
   "devDependencies": {
     "@ai-sdk/anthropic": "catalog:",
+    "@flicktionary/eslint-config": "workspace:*",
+    "eslint": "catalog:",
     "@lingui/babel-plugin-lingui-macro": "catalog:",
     "@lingui/cli": "catalog:",
     "@lingui/format-po": "catalog:",

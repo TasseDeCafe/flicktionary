@@ -1,0 +1,25 @@
+{
+  "name": "@flicktionary/eslint-config",
+  "version": "0.0.1",
+  "private": true,
+  "files": [
+    "*.cjs"
+  ],
+  "exports": {
+    "./base": "./base.cjs",
+    "./react": "./react.cjs"
+  },
+  "dependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "catalog:",
+    "@typescript-eslint/eslint-plugin": "catalog:",
+    "@typescript-eslint/parser": "catalog:",
+    "eslint-plugin-lingui": "catalog:",
+    "eslint-plugin-prettier": "catalog:",
+    "eslint-plugin-react-you-might-not-need-an-effect": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "eslint": "catalog:"
+  }
+}

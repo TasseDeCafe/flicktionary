@@ -1637,9 +1637,15 @@ importers:
         specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
+      '@flicktionary/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@flicktionary/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.36.0(jiti@2.7.0)
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.16
@@ -1659,9 +1665,15 @@ importers:
         specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
+      '@flicktionary/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@flicktionary/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      eslint:
+        specifier: 'catalog:'
+        version: 9.36.0(jiti@2.7.0)
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.16
@@ -1672,6 +1684,37 @@ importers:
         specifier: 'catalog:'
         version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.0)(jsdom@29.0.1(@noble/hashes@1.8.0))(vite@8.0.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@25.5.0)(esbuild@0.27.3)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
+  packages/eslint-config:
+    dependencies:
+      '@eslint-community/eslint-plugin-eslint-comments':
+        specifier: 'catalog:'
+        version: 4.7.2(eslint@9.36.0(jiti@2.7.0))
+      '@typescript-eslint/eslint-plugin':
+        specifier: 'catalog:'
+        version: 8.58.0(@typescript-eslint/parser@8.58.0(eslint@9.36.0(jiti@2.7.0))(typescript@5.9.2))(eslint@9.36.0(jiti@2.7.0))(typescript@5.9.2)
+      '@typescript-eslint/parser':
+        specifier: 'catalog:'
+        version: 8.58.0(eslint@9.36.0(jiti@2.7.0))(typescript@5.9.2)
+      eslint-plugin-lingui:
+        specifier: 'catalog:'
+        version: 0.13.1(eslint@9.36.0(jiti@2.7.0))(typescript@5.9.2)
+      eslint-plugin-prettier:
+        specifier: 'catalog:'
+        version: 5.5.5(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.36.0(jiti@2.7.0)))(eslint@9.36.0(jiti@2.7.0))(prettier@3.8.1)
+      eslint-plugin-react-you-might-not-need-an-effect:
+        specifier: 'catalog:'
+        version: 1.0.1(eslint@9.36.0(jiti@2.7.0))
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
+      prettier-plugin-tailwindcss:
+        specifier: 'catalog:'
+        version: 0.7.2(prettier@3.8.1)
+    devDependencies:
+      eslint:
+        specifier: 'catalog:'
+        version: 9.36.0(jiti@2.7.0)
+
   packages/i18n:
     dependencies:
       '@lingui/core':
@@ -1681,6 +1724,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: 'catalog:'
         version: 3.0.64(zod@4.3.6)
+      '@flicktionary/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@flicktionary/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -1702,6 +1748,9 @@ importers:
       ai:
         specifier: 'catalog:'
         version: 6.0.142(zod@4.3.6)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.36.0(jiti@2.7.0)
       gettext-parser:
         specifier: 'catalog:'
         version: 9.0.2
@@ -1789,6 +1838,9 @@ importers:
         specifier: 'catalog:'
         version: 4.0.1
     devDependencies:
+      '@flicktionary/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
       '@flicktionary/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -1798,6 +1850,9 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.14)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.36.0(jiti@2.7.0)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.2.4
