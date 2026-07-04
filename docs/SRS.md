@@ -483,17 +483,33 @@ sets from the same column. Everything below "park" is shared.
 - **Exercise bank** (`exercise-bank.ts`): per (term, pool) slots — passive
   `mc_cloze, mc_comprehension, use_in_sentence`; active `mc_cloze, production_cloze,
   use_in_sentence`. Generated + adversarially verified in the background (≤3 attempts per
-  slot), warmed on park/again/hard. Strengthen serves one gate exercise per parked term
-  (oldest first) plus bonus exercises for this session's again/hard set.
+  slot), warmed on park/again/hard. Retries are informed, not blind: each attempt feeds
+  the verifier's prior rejection reasons back into the next generation prompt. Verifier
+  verdicts are parsed leniently (a string `"true"` counts as pass) and a fail with zero
+  reasons — a state the verify prompt forbids — is re-verified once before it counts,
+  so a malformed tool call can't silently convert passes into rejections. Strengthen
+  serves one gate exercise per parked term (oldest first) plus bonus exercises for this
+  session's again/hard set.
 - **Failure-tolerant ladder.** The gate serve tries the tier's preferred type, then falls
   back to **any** ready gate-eligible exercise — a term whose required type can't be
   generated (the verifier keeps refusing a malformed headword) still progresses, since
   graduation is gated on distinct days, not a strict type sequence.
 - **Pending vs terminal.** When nothing is ready, `countGateBankSlots` distinguishes
   still-cooking (`inflight > 0` → `generating` placeholder) from terminally exhausted (every
-  gate-capable type failed → `failed` entry, "couldn't prepare — skip"), and the serve stops
-  re-reserving doomed slots. The exercise-session view polls the serve-only endpoint and
-  swaps `generating` placeholders to `ready`/`failed` in place.
+  gate-capable type failed → `failed` entry), and the serve stops re-reserving doomed
+  slots. The exercise-session view polls the serve-only endpoint and swaps `generating`
+  placeholders to `ready`/`failed` in place.
+- **Terminal failure is a decision point, not a dead end.** The `failed` entry renders a
+  decision card in both serving surfaces (composed queue + dedicated sessions): primary
+  **Study as flashcard** calls `practice.studyParkedTermAsFlashcard`
+  (`unparkTermToFlashcard` in `rehab.ts`) — the same soft-re-entry write as graduation
+  except **due = now**, so the term is servable by the very next compose — with **Skip**
+  as the secondary (Enter/Space = study, S/Esc = skip). Idempotent: an already-unparked
+  facet returns `unparked=false`, never an error. Editing the term is the other exit:
+  `chunks.updateContent` (when translation / definition / target example change) and
+  `chunks.rename` delete the term's `failed` exercise slots (`deleteFailedForLookup`,
+  both pools) — the old verdicts were about the old content — so the next serve reserves
+  fresh slots and generation gets another chance.
 - **Flashcard hints** reuse this bank. `practice.getHintExercise` (`getHintExercise` in
   `exercise-bank.ts`) serves ONE ready exercise of the pool's **hint type** —
   recognition → `mc_comprehension` (the card front already shows the headword, so
