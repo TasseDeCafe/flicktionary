@@ -38,13 +38,7 @@ const PracticeLimitsForLanguageInputSchema = z
     // Production review cap. null = uncapped (preserves the historical
     // production behavior). Production has no new cap, so the >0 refine below
     // covers only the recognition pair.
-    maxReviewTermsProduction: z
-      .number()
-      .int()
-      .min(0)
-      .max(PRACTICE_MAX_REVIEW_TERMS_LIMIT)
-      .nullable()
-      .optional(),
+    maxReviewTermsProduction: z.number().int().min(0).max(PRACTICE_MAX_REVIEW_TERMS_LIMIT).nullable().optional(),
   })
   .refine((value) => value.maxNewTerms + value.maxReviewTerms > 0, {
     message: 'At least one practice term must be allowed.',

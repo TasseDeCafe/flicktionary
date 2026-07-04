@@ -67,16 +67,7 @@ export const LANGUAGE_GRAMMAR: Partial<Record<SupportedLanguageCode, LanguageGra
     },
   },
   fr: {
-    fields: [
-      'pos',
-      'display_form',
-      'gender',
-      'is_reflexive',
-      'government',
-      'number_only',
-      'notable_forms',
-      'notes',
-    ],
+    fields: ['pos', 'display_form', 'gender', 'is_reflexive', 'government', 'number_only', 'notable_forms', 'notes'],
     hints: {
       display_form: { label: 'Pronunciation hint (IPA)', placeholder: 'e.g. /paʁ.le/' },
       government: { placeholder: 'e.g. + à, + de' },

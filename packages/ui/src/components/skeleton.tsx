@@ -2,7 +2,7 @@ import { Fragment, type ComponentProps, type ReactNode } from 'react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 
 const Skeleton = ({ className, ...props }: ComponentProps<'div'>) => (
-  <div data-slot='skeleton' className={cn('animate-pulse rounded-md bg-muted', className)} {...props} />
+  <div data-slot='skeleton' className={cn('bg-muted animate-pulse rounded-md', className)} {...props} />
 )
 
 type SkeletonListProps = {

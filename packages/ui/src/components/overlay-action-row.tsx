@@ -34,7 +34,9 @@ export const OverlayActionRow = ({
     }}
     className={cn(
       'flex w-full items-center gap-4 rounded-lg px-4 py-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-      variant === 'destructive' ? 'hover:bg-destructive/10 active:bg-destructive/20' : 'hover:bg-accent active:bg-accent'
+      variant === 'destructive'
+        ? 'hover:bg-destructive/10 active:bg-destructive/20'
+        : 'hover:bg-accent active:bg-accent'
     )}
   >
     <span

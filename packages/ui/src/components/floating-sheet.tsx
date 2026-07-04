@@ -84,7 +84,9 @@ export const FloatingSheet = ({
 
   // Reset to collapsed whenever the sheet closes so the next open starts fresh.
   React.useEffect(() => {
+    /* eslint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change -- resets the expand state on CLOSE; the sheet stays mounted and closes through several paths (outside tap, Escape, scroll-away, drag-dismiss), so keying on `open` covers them all */
     if (!open && expandedProp === undefined) setLocalExpanded(false)
+    /* eslint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-adjust-state-on-prop-change */
   }, [open, expandedProp])
 
   // Blur the trigger element on open so Radix can safely aria-hide the page
@@ -247,6 +249,7 @@ const useBottomSheetMotion = (open: boolean, isMobile: boolean, contentRef: Reac
     if (!isMobile || open || !rendered) return
     const el = contentRef.current
     if (!el) {
+      // eslint-disable-next-line react-you-might-not-need-an-effect/no-external-store-subscription -- not a store subscription: `rendered` is the exit-animation latch that keeps the mobile sheet mounted while it slides out; this effect drives the DOM transition and drops the latch when it settles
       setRendered(false)
       return
     }
@@ -744,14 +747,10 @@ export const FloatingSheetContent = ({
     // a short PEEK (the grabber + a half-row are the "drag up for more" signal).
     // Non-expandable sheets keep one scrolling body with the header inside it.
     const mobileHeaderChildren = expandable
-      ? mobileNonFooterChildren.filter(
-          (child) => React.isValidElement(child) && child.type === FloatingSheetHeader
-        )
+      ? mobileNonFooterChildren.filter((child) => React.isValidElement(child) && child.type === FloatingSheetHeader)
       : []
     const mobileDetailChildren = expandable
-      ? mobileNonFooterChildren.filter(
-          (child) => !(React.isValidElement(child) && child.type === FloatingSheetHeader)
-        )
+      ? mobileNonFooterChildren.filter((child) => !(React.isValidElement(child) && child.type === FloatingSheetHeader))
       : mobileNonFooterChildren
 
     const contentClassName = cn(
@@ -777,10 +776,7 @@ export const FloatingSheetContent = ({
           <div className='bg-muted h-1.5 w-12 rounded-full' />
         </div>
         {mobileHeaderChildren.length > 0 && (
-          <div
-            {...dragHandleProps}
-            className='shrink-0 cursor-grab touch-none select-none px-4 active:cursor-grabbing'
-          >
+          <div {...dragHandleProps} className='shrink-0 cursor-grab touch-none px-4 select-none active:cursor-grabbing'>
             {mobileHeaderChildren}
           </div>
         )}
