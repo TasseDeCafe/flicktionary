@@ -1,6 +1,6 @@
 # ESLint for the workspace packages
 
-> **Status: proposal.** Not implemented — design for giving `packages/*` a lint baseline (a shared flat-config preset + per-package wiring), with `packages/ui` as the main beneficiary.
+> **Status: historical** (archived 2026-07-04). Implemented as designed: `packages/eslint-config` exports the `base` / `react` presets, and `ui` / `core` / `api-client` / `i18n` are wired with zero-warning lint scripts. One divergence: the preset owns the plugin dependencies itself (its config files `require()` them, so Node resolves from the preset's `node_modules`) — consumers only need `eslint` + the preset. The `apps/web` `lint:check --max-warnings 0` rider from the open questions was applied too.
 
 ## Motivation
 
