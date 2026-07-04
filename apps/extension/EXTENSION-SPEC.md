@@ -47,7 +47,10 @@ subsystems are **removed — do not reintroduce**:
   overlay was historically named `MobileVideoOverlay` but is a desktop feature —
   it lives on as `VideoOverlay*`.)
 - **Image-based (.sup/PGS) subtitles** and the rich-text cue path — text-format
-  tracks only (srt/vtt/ass/nfvtt/ytsrv3…).
+  tracks only (srt/vtt/ass/nfimsc/ytsrv3…). Netflix tracks are IMSC 1.1 (TTML,
+  `.nfimsc`): the page script reads track URLs from the player session state
+  (there are no window.JSON manifest hooks; image-based Netflix tracks are
+  skipped at detection).
 - **Not a player.** Like the web app, the extension doesn't host video; it
   attaches to the platform's own `<video>` element.
 
