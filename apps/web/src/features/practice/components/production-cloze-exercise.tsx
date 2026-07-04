@@ -3,7 +3,10 @@ import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, CircleX, Lightbulb } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { BlankedSentence } from './blanked-sentence'
 import { ExerciseLayout } from './exercise-layout'
@@ -22,6 +25,7 @@ export const ProductionClozeExercise = ({
   header,
   statusBar,
   copyVariant,
+  hotkeysEnabled = true,
   onAnswered,
   onNext,
 }: {
@@ -34,10 +38,15 @@ export const ProductionClozeExercise = ({
   header: ReactNode
   statusBar?: ReactNode
   copyVariant?: ExerciseCopyVariant
+  // Host gate for the hotkeys — off while an overlay (term-actions kebab) is
+  // open above the exercise.
+  hotkeysEnabled?: boolean
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const { mutate: submitAnswer, isPending } = useSubmitExerciseAnswer()
   const [text, setText] = useState('')
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
@@ -59,6 +68,21 @@ export const ProductionClozeExercise = ({
       }
     )
   }
+
+  // While the input has focus it owns the keyboard (its own onKeyDown handles
+  // Enter-to-submit; single letters must type, not skip) — so besides the
+  // post-answer advance, only Escape (which the input can't consume) rides the
+  // global hook: it's the skip key that works mid-typing. allowInEditable
+  // covers focus lingering on the (just-)focused input.
+  useHotkeys(
+    [
+      { key: 'enter', enabled: !result && !isPending, onPress: handleSubmit },
+      { key: 'escape', enabled: !result && !isPending, allowInEditable: true, onPress: onNext },
+      { key: 'enter', enabled: !!result, allowInEditable: true, onPress: onNext },
+      { key: 'space', enabled: !!result, allowInEditable: true, onPress: onNext },
+    ],
+    hotkeysEnabled
+  )
 
   return (
     <ExerciseLayout
@@ -90,6 +114,7 @@ export const ProductionClozeExercise = ({
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {t`Next`}
+            {showKbd && <Kbd>↵</Kbd>}
           </Button>
         ) : (
           <>
@@ -101,6 +126,7 @@ export const ProductionClozeExercise = ({
               onClick={handleSubmit}
             >
               {t`Check`}
+              {showKbd && <Kbd>↵</Kbd>}
             </Button>
             <div className='flex gap-2'>
               {hintAvailable && !hintRevealed && (
@@ -125,6 +151,7 @@ export const ProductionClozeExercise = ({
                 onClick={onNext}
               >
                 {t`Skip`}
+                {showKbd && <Kbd>Esc</Kbd>}
               </Button>
             </div>
           </>
@@ -147,6 +174,9 @@ export const ProductionClozeExercise = ({
         }}
         disabled={!!result || isPending}
         placeholder={t`Type the missing word…`}
+        // Desktop-only: focusing immediately makes the whole exercise
+        // keyboard-drivable; on mobile it would pop the keyboard unasked.
+        autoFocus={!isMobile}
         autoCapitalize='off'
         autoCorrect='off'
         spellCheck={false}

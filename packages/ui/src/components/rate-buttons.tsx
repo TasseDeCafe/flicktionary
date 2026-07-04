@@ -1,8 +1,13 @@
 import { useLingui } from '@lingui/react/macro'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from './button'
+import { Kbd } from './kbd'
 
 export type RateValue = 'again' | 'hard' | 'good' | 'easy'
+
+// Fixed button order — hosts that bind 1-4 hotkeys map digit N to index N-1 of
+// this array, so the on-button badges and the key handling agree by contract.
+export const RATE_VALUES: RateValue[] = ['again', 'hard', 'good', 'easy']
 
 interface RateButtonsProps {
   // Pre-selected rating. Default 'good' so the natural primary tap-target
@@ -10,31 +15,36 @@ interface RateButtonsProps {
   value?: RateValue
   onSelect: (value: RateValue) => void
   disabled?: boolean
+  // Renders a 1-4 <Kbd> badge on each button. Only for hosts that actually
+  // bind those keys (the composed queue on desktop) — keep it off on touch
+  // surfaces like the reading-mode RateSheet.
+  showKbdHints?: boolean
   className?: string
 }
 
-export const RateButtons = ({ value = 'good', onSelect, disabled, className }: RateButtonsProps) => {
+export const RateButtons = ({ value = 'good', onSelect, disabled, showKbdHints, className }: RateButtonsProps) => {
   const { t } = useLingui()
 
-  const buttons: Array<{ key: RateValue; label: string }> = [
-    { key: 'again', label: t`Again` },
-    { key: 'hard', label: t`Hard` },
-    { key: 'good', label: t`Good` },
-    { key: 'easy', label: t`Easy` },
-  ]
+  const labels: Record<RateValue, string> = {
+    again: t`Again`,
+    hard: t`Hard`,
+    good: t`Good`,
+    easy: t`Easy`,
+  }
 
   return (
     <div className={cn('grid grid-cols-4 gap-2', className)}>
-      {buttons.map((b) => (
+      {RATE_VALUES.map((key, index) => (
         <Button
-          key={b.key}
+          key={key}
           type='button'
           size='xl'
-          variant={value === b.key ? 'default' : 'outline'}
+          variant={value === key ? 'default' : 'outline'}
           disabled={disabled}
-          onClick={() => onSelect(b.key)}
+          onClick={() => onSelect(key)}
         >
-          {b.label}
+          {labels[key]}
+          {showKbdHints && <Kbd>{index + 1}</Kbd>}
         </Button>
       ))}
     </div>

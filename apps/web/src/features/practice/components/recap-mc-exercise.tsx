@@ -3,6 +3,9 @@ import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, CircleX } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
+import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import type { RecapQueueItem } from '../utils/build-recap-questions'
 import { ExerciseLayout } from './exercise-layout'
 
@@ -29,6 +32,8 @@ export const RecapMcExercise = ({
   onNext: () => void
 }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const [selected, setSelected] = useState<number | null>(null)
 
   const answered = selected !== null
@@ -40,6 +45,20 @@ export const RecapMcExercise = ({
     setSelected(index)
     onAnswered(index === item.answerIndex)
   }
+
+  useHotkeys([
+    ...item.options.map(
+      (_, index): HotkeyBinding => ({
+        key: String(index + 1),
+        enabled: !answered,
+        onPress: () => handleSelect(index),
+      })
+    ),
+    { key: 's', enabled: !answered, onPress: onSkip },
+    { key: 'escape', enabled: !answered, onPress: onSkip },
+    { key: 'enter', enabled: answered, onPress: onNext },
+    { key: 'space', enabled: answered, onPress: onNext },
+  ])
 
   return (
     <ExerciseLayout
@@ -61,10 +80,12 @@ export const RecapMcExercise = ({
         answered ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {t`Next`}
+            {showKbd && <Kbd>↵</Kbd>}
           </Button>
         ) : (
           <Button type='button' variant='outline' size='xl' className='w-full' onClick={onSkip}>
             {t`Skip`}
+            {showKbd && <Kbd>S</Kbd>}
           </Button>
         )
       }
@@ -95,14 +116,15 @@ export const RecapMcExercise = ({
               disabled={answered}
               onClick={() => handleSelect(index)}
               className={cn(
-                'rounded-lg border px-4 py-3 text-left text-base transition-colors',
+                'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-base transition-colors',
                 !answered && 'hover:bg-accent active:bg-accent',
                 answered && isCorrectOption && 'border-emerald-600 bg-emerald-50 dark:bg-emerald-400/15',
                 answered && isSelected && !isCorrectOption && 'border-red-500 bg-red-50 dark:bg-red-400/15',
                 answered && !isSelected && !isCorrectOption && 'opacity-60'
               )}
             >
-              {option}
+              {showKbd && <Kbd className='shrink-0'>{index + 1}</Kbd>}
+              <span>{option}</span>
             </button>
           )
         })}

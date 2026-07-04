@@ -16,8 +16,11 @@ import {
 } from 'lucide-react'
 import { getLanguageName } from '@flicktionary/core/constants/supported-languages'
 import { Button } from '@flicktionary/ui/components/button'
-import { RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { RATE_VALUES, RateButtons, type RateValue } from '@flicktionary/ui/components/rate-buttons'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useHotkeys, type HotkeyBinding } from '@/hooks/use-hotkeys'
 import type {
   PracticeQueueFilter,
   StrengthenExercisePayload,
@@ -126,6 +129,8 @@ type ComposedPracticeViewProps = {
 // exercise placeholders in place, never appends.
 export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPracticeViewProps) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const resolveMeaning = useTermMeaning(targetLanguage)
   const navigate = useNavigate()
   const languageName = getLanguageName(targetLanguage)
@@ -242,6 +247,16 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   useHintExercise(
     upcomingHintCard ? { userLookupId: upcomingHintCard.userLookupId, pool: poolForCard(upcomingHintCard) } : null
   )
+
+  // Only an MC payload can render as a hint; the server only serves MC types
+  // here, so this narrowing is a type guard, not a filter.
+  const servableHint =
+    hintExercise != null &&
+    (hintExercise.payload.type === 'mc_cloze' || hintExercise.payload.type === 'mc_comprehension')
+      ? { exerciseId: hintExercise.exerciseId, payload: hintExercise.payload }
+      : null
+  const currentHintOutcome = hintOutcome && hintOutcome.item === current ? hintOutcome : null
+  const activeHintDisplayed = activeHint != null && activeHint.item === current
 
   const advance = () => {
     setRevealed(false)
@@ -490,6 +505,107 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     )
   }
 
+  // ----- Hotkeys. One flat binding list for every state of this screen; the
+  // per-binding enabled flags are mutually exclusive by construction (front vs
+  // back vs hint-outcome vs peek vs placeholder), so a key can never trigger
+  // twice. Live exercise items are NOT handled here — the exercise components
+  // run their own useHotkeys with disjoint gates. -----
+  const flashcardLive = !isPeeking && current?.type === 'flashcard' && !activeHintDisplayed
+  const showingFront = flashcardLive && !revealed
+  const showingBack = flashcardLive && revealed
+  const exercisePlaceholderLive =
+    !isPeeking &&
+    current?.type === 'exercise' &&
+    (current.entry.status === 'failed' ||
+      current.entry.status === 'generating' ||
+      !current.entry.exerciseId ||
+      !current.entry.payload)
+  const liveExerciseDisplayed = !isPeeking && (current?.type === 'exercise' || activeHintDisplayed)
+  // Peek re-rate: offered when the displayed (peeked) item has a durably
+  // applied rating AND its redrill copy wasn't itself rated yet — once the
+  // copy is rated, the original's event is no longer the latest live one (the
+  // server would refuse the undo too; don't offer dead buttons).
+  const peekRecord = isPeeking && current ? ratingRecordsRef.current.get(current) : undefined
+  const canRerate = !!peekRecord && (!peekRecord.redrill || !ratingRecordsRef.current.has(peekRecord.redrill))
+  const peekRerateEnabled = isPeeking && current?.type === 'flashcard' && canRerate && !pendingRerate
+  // Completion screen: Enter drives its primary action (Strengthen when the
+  // session produced again/hard terms, otherwise close). Space is deliberately
+  // NOT bound — Anki-style space-hammering through the final cards must not
+  // launch a Strengthen session by accident; Enter needs a second, deliberate
+  // press since the rating keydown was consumed by the previous card.
+  const sessionComplete = queue != null && !isPeeking && !queue[index]
+  const openStrengthen = () =>
+    void navigate({
+      to: '/practice/strengthen/$targetLanguage',
+      params: { targetLanguage },
+      search: { pool: 'recognition', sessionHard: [...sessionHardRef.current] },
+    })
+  useHotkeys(
+    [
+      { key: 'space', enabled: showingFront, onPress: () => setRevealed(true) },
+      { key: 'enter', enabled: showingFront, onPress: () => setRevealed(true) },
+      {
+        key: 'h',
+        enabled: showingFront && servableHint != null,
+        onPress: () => {
+          if (current && servableHint) {
+            setActiveHint({ item: current, exerciseId: servableHint.exerciseId, payload: servableHint.payload })
+          }
+        },
+      },
+      ...RATE_VALUES.map(
+        (value, index): HotkeyBinding => ({
+          key: String(index + 1),
+          enabled: showingBack && !currentHintOutcome,
+          onPress: () => handleRate(value),
+        })
+      ),
+      // Anki muscle memory: Space (or Enter) on the revealed back = Good.
+      { key: 'space', enabled: showingBack && !currentHintOutcome, onPress: () => handleRate('good') },
+      { key: 'enter', enabled: showingBack && !currentHintOutcome, onPress: () => handleRate('good') },
+      // Hint outcome locked the rating — Enter/Space is the single Continue.
+      {
+        key: 'enter',
+        enabled: showingBack && !!currentHintOutcome,
+        onPress: () => currentHintOutcome && handleRate(currentHintOutcome.rating),
+      },
+      {
+        key: 'space',
+        enabled: showingBack && !!currentHintOutcome,
+        onPress: () => currentHintOutcome && handleRate(currentHintOutcome.rating),
+      },
+      // Failed / still-generating exercise placeholders only offer Skip.
+      { key: 's', enabled: exercisePlaceholderLive, onPress: advance },
+      { key: 'escape', enabled: exercisePlaceholderLive, onPress: advance },
+      { key: 'enter', enabled: exercisePlaceholderLive, onPress: advance },
+      { key: 'space', enabled: exercisePlaceholderLive, onPress: advance },
+      // Peek navigation mirrors the status-row chevrons, same disabled rules.
+      {
+        key: 'arrowleft',
+        enabled: current != null && displayedIndex > 0 && !liveExerciseDisplayed,
+        onPress: () => setPeekBack((p) => p + 1),
+      },
+      { key: 'arrowright', enabled: isPeeking, onPress: () => setPeekBack((p) => Math.max(0, p - 1)) },
+      ...RATE_VALUES.map(
+        (value, index): HotkeyBinding => ({
+          key: String(index + 1),
+          enabled: peekRerateEnabled,
+          onPress: () => {
+            if (current) handleRerate(current, value)
+          },
+        })
+      ),
+      { key: 'enter', enabled: isPeeking, onPress: () => setPeekBack(0) },
+      { key: 'space', enabled: isPeeking, onPress: () => setPeekBack(0) },
+      {
+        key: 'enter',
+        enabled: sessionComplete,
+        onPress: () => (sessionHardRef.current.size > 0 ? openStrengthen() : close()),
+      },
+    ],
+    !actionsOpen
+  )
+
   // The header kebab (Edit term) targets whichever term the displayed item
   // drills — flashcard or exercise alike. It is withheld while it could spoil
   // an answer (the menu title + focus view reveal the headword, which would let
@@ -576,12 +692,6 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         : filter.scope === 'due_only'
           ? t`No reviews are due right now.`
           : t`Nothing to practice right now.`
-    const openStrengthen = () =>
-      void navigate({
-        to: '/practice/strengthen/$targetLanguage',
-        params: { targetLanguage },
-        search: { pool: 'recognition', sessionHard },
-      })
     const showLearnExtra = (dailyLimitReached || capNoticeShown) && filter.autoWarmup && filter.scope !== 'due_only'
     return wrap(
       <div className='flex flex-1 flex-col overflow-hidden'>
@@ -619,6 +729,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
                 <Button type='button' size='xl' className='w-full' onClick={openStrengthen}>
                   <Dumbbell className='h-4 w-4' />
                   {t`Strengthen`}
+                  {showKbd && <Kbd>↵</Kbd>}
                 </Button>
                 <Button type='button' variant='outline' size='xl' className='w-full' onClick={close}>
                   {t`Back to ${languageName}`}
@@ -627,6 +738,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
             ) : (
               <Button type='button' size='xl' className='w-full' onClick={close}>
                 {t`Back to ${languageName}`}
+                {showKbd && <Kbd>↵</Kbd>}
               </Button>
             )}
           </div>
@@ -641,9 +753,8 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
   // remaining-count chips. The back chevron is withheld while a live exercise
   // (or flashcard hint) is displayed — peeking away unmounts it, and
   // remounting an already-answered (consumed) exercise would offer options
-  // that can no longer be submitted.
-  const liveExerciseDisplayed =
-    !isPeeking && (current.type === 'exercise' || (activeHint != null && activeHint.item === current))
+  // that can no longer be submitted. (`liveExerciseDisplayed` is derived above
+  // the early returns, next to the hotkey bindings that share it.)
   const statusRow = (
     <div className='flex items-center justify-between gap-2'>
       <Button
@@ -708,6 +819,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           actions={
             <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
               {t`Back to current card`}
+              {showKbd && <Kbd>↵</Kbd>}
             </Button>
           }
         >
@@ -751,6 +863,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           actions={
             <Button type='button' size='xl' className='w-full' onClick={advance}>
               {t`Skip`}
+              {showKbd && <Kbd>S</Kbd>}
             </Button>
           }
         >
@@ -771,6 +884,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           actions={
             <Button type='button' variant='outline' size='xl' className='w-full' onClick={advance}>
               {t`Skip`}
+              {showKbd && <Kbd>S</Kbd>}
             </Button>
           }
         >
@@ -795,6 +909,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           header={header}
           statusBar={statusRow}
           copyVariant={copyVariant}
+          hotkeysEnabled={!actionsOpen}
           onAnswered={handleAnswered}
           onNext={advance}
         />
@@ -810,6 +925,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
           header={header}
           statusBar={statusRow}
           copyVariant={copyVariant}
+          hotkeysEnabled={!actionsOpen}
           onAnswered={handleAnswered}
           onNext={advance}
         />
@@ -823,6 +939,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         meaning={resolveMeaning(entry)}
         header={header}
         statusBar={statusRow}
+        hotkeysEnabled={!actionsOpen}
         onAnswered={handleAnswered}
         onNext={advance}
       />
@@ -850,6 +967,7 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
         statusBar={statusRow}
         nextLabel={t`Show answer`}
         skipLabel={t`Back to card`}
+        hotkeysEnabled={!actionsOpen}
         onAnswered={(data) =>
           setHintOutcome({ item: current, correct: data.correct, rating: data.correct ? 'hard' : 'again' })
         }
@@ -861,24 +979,10 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
     )
   }
 
-  // Only an MC payload can render as a hint; the server only serves MC types
-  // here, so this narrowing is a type guard, not a filter.
-  const servableHint =
-    hintExercise != null &&
-    (hintExercise.payload.type === 'mc_cloze' || hintExercise.payload.type === 'mc_comprehension')
-      ? { exerciseId: hintExercise.exerciseId, payload: hintExercise.payload }
-      : null
-  const currentHintOutcome = hintOutcome && hintOutcome.item === current ? hintOutcome : null
-
   // Peeked cards are always shown fully (front + back), read-only.
+  // (`servableHint`, `currentHintOutcome` and the peek re-rate state are
+  // derived above the early returns, next to the hotkey bindings.)
   const showBack = revealed || isPeeking
-
-  // Peek re-rate: offered when the displayed (peeked) item has a durably
-  // applied rating AND its redrill copy wasn't itself rated yet — once the
-  // copy is rated, the original's event is no longer the latest live one (the
-  // server would refuse the undo too; don't offer dead buttons).
-  const peekRecord = isPeeking ? ratingRecordsRef.current.get(current) : undefined
-  const canRerate = !!peekRecord && (!peekRecord.redrill || !ratingRecordsRef.current.has(peekRecord.redrill))
 
   return wrap(
     <div className='flex flex-1 flex-col overflow-hidden'>
@@ -898,12 +1002,14 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
                   <RateButtons
                     value={peekRecord.rating}
                     disabled={pendingRerate != null}
+                    showKbdHints={showKbd}
                     onSelect={(value) => handleRerate(current, value)}
                   />
                 </div>
               )}
               <Button type='button' size='xl' variant='outline' className='w-full' onClick={() => setPeekBack(0)}>
                 {t`Back to current card`}
+                {showKbd && <Kbd>↵</Kbd>}
               </Button>
             </>
           ) : showBack ? (
@@ -923,10 +1029,11 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
                   onClick={() => handleRate(currentHintOutcome.rating)}
                 >
                   {t`Continue`}
+                  {showKbd && <Kbd>↵</Kbd>}
                 </Button>
               </div>
             ) : (
-              <RateButtons onSelect={handleRate} />
+              <RateButtons showKbdHints={showKbd} onSelect={handleRate} />
             )
           ) : servableHint ? (
             <div className='flex gap-2'>
@@ -941,14 +1048,17 @@ export const ComposedPracticeView = ({ targetLanguage, filter }: ComposedPractic
               >
                 <Lightbulb className='h-4 w-4' />
                 {t`Hint`}
+                {showKbd && <Kbd>H</Kbd>}
               </Button>
               <Button type='button' size='xl' className='flex-1' onClick={() => setRevealed(true)}>
                 {t`Show answer`}
+                {showKbd && <Kbd>Space</Kbd>}
               </Button>
             </div>
           ) : (
             <Button type='button' size='xl' className='w-full' onClick={() => setRevealed(true)}>
               {t`Show answer`}
+              {showKbd && <Kbd>Space</Kbd>}
             </Button>
           )}
         </div>

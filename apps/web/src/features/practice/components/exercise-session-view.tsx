@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import { CircleAlert, CircleCheck, Dumbbell, Flame, Hourglass, MoreVertical } from 'lucide-react'
 import { Button } from '@flicktionary/ui/components/button'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import { ModalScreen } from '@/features/navigation/components/modal-screen'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import type { StrengthenExerciseEntry } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { mergePlaceholders } from './exercise-queue-merge'
 import { PracticeLoader } from './practice-loader'
@@ -84,6 +87,8 @@ const LoadedExerciseSessionView = ({
   practiceSessionHard,
 }: ExerciseSessionProps & { initialEntries: StrengthenExerciseEntry[] }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const resolveMeaning = useTermMeaning(targetLanguage)
   // A one-shot snapshot of the caller's load, served once (the server consumes
   // an exercise per answered attempt; abandoning before answering re-serves
@@ -129,6 +134,24 @@ const LoadedExerciseSessionView = ({
   const current = queue[index] ?? null
   const total = queue.length
   const currentHeadword = current?.headword ?? ''
+
+  // Live ready exercises run their own hotkeys inside the exercise components;
+  // the host only covers the failed / still-generating placeholders, whose
+  // single action is Skip.
+  const placeholderDisplayed =
+    !!current &&
+    (current.status === 'failed' || current.status === 'generating' || !current.exerciseId || !current.payload)
+  useHotkeys(
+    [
+      { key: 's', enabled: placeholderDisplayed, onPress: handleNext },
+      { key: 'escape', enabled: placeholderDisplayed, onPress: handleNext },
+      { key: 'enter', enabled: placeholderDisplayed, onPress: handleNext },
+      { key: 'space', enabled: placeholderDisplayed, onPress: handleNext },
+      // Empty and all-done states: Enter closes back to the caller.
+      { key: 'enter', enabled: current == null, onPress: onClose },
+    ],
+    !actionsOpen
+  )
 
   // The header kebab (Edit term) is withheld while it could spoil an answer
   // (the menu title + focus view reveal the headword): an unanswered cloze
@@ -191,6 +214,7 @@ const LoadedExerciseSessionView = ({
             {dailyLimitNote}
             <Button type='button' size='lg' onClick={onClose}>
               {backLabel}
+              {showKbd && <Kbd>↵</Kbd>}
             </Button>
           </div>
         )}
@@ -209,6 +233,7 @@ const LoadedExerciseSessionView = ({
               <div className='mx-auto w-full max-w-xl'>
                 <Button type='button' size='xl' className='w-full' onClick={onClose}>
                   {backLabel}
+                  {showKbd && <Kbd>↵</Kbd>}
                 </Button>
               </div>
             </div>
@@ -251,6 +276,7 @@ const LoadedExerciseSessionView = ({
                   actions={
                     <Button type='button' size='xl' className='w-full' onClick={handleNext}>
                       {t`Skip`}
+                      {showKbd && <Kbd>S</Kbd>}
                     </Button>
                   }
                 >
@@ -271,6 +297,7 @@ const LoadedExerciseSessionView = ({
                   actions={
                     <Button type='button' variant='outline' size='xl' className='w-full' onClick={handleNext}>
                       {t`Skip`}
+                      {showKbd && <Kbd>S</Kbd>}
                     </Button>
                   }
                 >
@@ -294,6 +321,7 @@ const LoadedExerciseSessionView = ({
                   meaning={resolveMeaning(current)}
                   header={header}
                   copyVariant={copyVariant}
+                  hotkeysEnabled={!actionsOpen}
                   onAnswered={handleAnswered}
                   onNext={handleNext}
                 />
@@ -308,6 +336,7 @@ const LoadedExerciseSessionView = ({
                   meaning={resolveMeaning(current)}
                   header={header}
                   copyVariant={copyVariant}
+                  hotkeysEnabled={!actionsOpen}
                   onAnswered={handleAnswered}
                   onNext={handleNext}
                 />
@@ -320,6 +349,7 @@ const LoadedExerciseSessionView = ({
                 payload={current.payload}
                 meaning={resolveMeaning(current)}
                 header={header}
+                hotkeysEnabled={!actionsOpen}
                 onAnswered={handleAnswered}
                 onNext={handleNext}
               />

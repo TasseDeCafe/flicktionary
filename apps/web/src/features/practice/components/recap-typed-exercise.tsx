@@ -4,6 +4,9 @@ import { CircleCheck, CircleX } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { isTypedAnswerAccepted } from '@flicktionary/core/utils/typed-answer-grading'
 import { Button } from '@flicktionary/ui/components/button'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import type { RecapQueueItem } from '../utils/build-recap-questions'
 import { ExerciseLayout } from './exercise-layout'
 import { BlankedSentence } from './blanked-sentence'
@@ -30,6 +33,8 @@ export const RecapTypedExercise = ({
   onNext: () => void
 }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const [text, setText] = useState('')
   const [result, setResult] = useState<boolean | null>(null)
 
@@ -40,6 +45,17 @@ export const RecapTypedExercise = ({
     setResult(correct)
     onAnswered(correct)
   }
+
+  // While the input has focus it owns the keyboard (its own onKeyDown handles
+  // Enter-to-submit; single letters must type, not skip) — so besides the
+  // post-answer advance, only Escape (which the input can't consume) rides
+  // the global hook: it's the skip key that works mid-typing.
+  useHotkeys([
+    { key: 'enter', enabled: result === null, onPress: handleSubmit },
+    { key: 'escape', enabled: result === null, allowInEditable: true, onPress: onSkip },
+    { key: 'enter', enabled: result !== null, allowInEditable: true, onPress: onNext },
+    { key: 'space', enabled: result !== null, allowInEditable: true, onPress: onNext },
+  ])
 
   return (
     <ExerciseLayout
@@ -68,14 +84,17 @@ export const RecapTypedExercise = ({
         result !== null ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {t`Next`}
+            {showKbd && <Kbd>↵</Kbd>}
           </Button>
         ) : (
           <>
             <Button type='button' size='xl' className='w-full' disabled={!text.trim()} onClick={handleSubmit}>
               {t`Check`}
+              {showKbd && <Kbd>↵</Kbd>}
             </Button>
             <Button type='button' variant='outline' size='xl' className='w-full' onClick={onSkip}>
               {t`Skip`}
+              {showKbd && <Kbd>Esc</Kbd>}
             </Button>
           </>
         )
@@ -99,6 +118,9 @@ export const RecapTypedExercise = ({
         }}
         disabled={result !== null}
         placeholder={item.blanked ? t`Type the missing word…` : t`Type the term…`}
+        // Desktop-only: focusing immediately makes the whole exercise
+        // keyboard-drivable; on mobile it would pop the keyboard unasked.
+        autoFocus={!isMobile}
         autoCapitalize='off'
         autoCorrect='off'
         spellCheck={false}

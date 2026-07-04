@@ -3,7 +3,10 @@ import { useLingui } from '@lingui/react/macro'
 import { CircleCheck, MessageCircle, Sparkles } from 'lucide-react'
 import { cn } from '@flicktionary/core/utils/tailwind-utils'
 import { Button } from '@flicktionary/ui/components/button'
+import { Kbd } from '@flicktionary/ui/components/kbd'
+import { useIsMobile } from '@flicktionary/ui/hooks/use-is-mobile'
 import type { StrengthenExercisePayload } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
+import { useHotkeys } from '@/hooks/use-hotkeys'
 import { useSubmitExerciseAnswer } from '../api/practice-hooks'
 import { ExerciseLayout } from './exercise-layout'
 import { MeaningLine, type ExerciseAnswerData } from './strengthen-types'
@@ -20,6 +23,7 @@ export const UseInSentenceExercise = ({
   meaning,
   header,
   statusBar,
+  hotkeysEnabled = true,
   onAnswered,
   onNext,
 }: {
@@ -31,10 +35,15 @@ export const UseInSentenceExercise = ({
   meaning?: string | null
   header: ReactNode
   statusBar?: ReactNode
+  // Host gate for the hotkeys — off while an overlay (term-actions kebab) is
+  // open above the exercise.
+  hotkeysEnabled?: boolean
   onAnswered: (data: ExerciseAnswerData) => void
   onNext: () => void
 }) => {
   const { t } = useLingui()
+  const isMobile = useIsMobile()
+  const showKbd = !isMobile
   const { mutate: submitAnswer, isPending } = useSubmitExerciseAnswer()
   const [text, setText] = useState('')
   const [result, setResult] = useState<ExerciseAnswerData | null>(null)
@@ -53,6 +62,19 @@ export const UseInSentenceExercise = ({
       }
     )
   }
+
+  // The focused textarea owns the keyboard (its own Enter-to-submit below);
+  // the global hook carries the post-answer advance plus Escape — the skip
+  // key that still works mid-typing.
+  useHotkeys(
+    [
+      { key: 'enter', enabled: !result && !isPending, onPress: handleSubmit },
+      { key: 'escape', enabled: !result && !isPending, allowInEditable: true, onPress: onNext },
+      { key: 'enter', enabled: !!result, allowInEditable: true, onPress: onNext },
+      { key: 'space', enabled: !!result, allowInEditable: true, onPress: onNext },
+    ],
+    hotkeysEnabled
+  )
 
   return (
     <ExerciseLayout
@@ -82,6 +104,7 @@ export const UseInSentenceExercise = ({
         result ? (
           <Button type='button' size='xl' className='w-full' onClick={onNext}>
             {t`Next`}
+            {showKbd && <Kbd>↵</Kbd>}
           </Button>
         ) : (
           <>
@@ -93,9 +116,11 @@ export const UseInSentenceExercise = ({
               onClick={handleSubmit}
             >
               {isPending ? t`Checking…` : t`Check`}
+              {showKbd && <Kbd>↵</Kbd>}
             </Button>
             <Button type='button' variant='outline' size='xl' className='w-full' disabled={isPending} onClick={onNext}>
               {t`Skip`}
+              {showKbd && <Kbd>Esc</Kbd>}
             </Button>
           </>
         )
@@ -115,7 +140,17 @@ export const UseInSentenceExercise = ({
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          // Chat-style: Enter submits, Shift+Enter inserts the (rare) newline.
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            handleSubmit()
+          }
+        }}
         disabled={!!result || isPending}
+        // Desktop-only: focusing immediately makes the whole exercise
+        // keyboard-drivable; on mobile it would pop the keyboard unasked.
+        autoFocus={!isMobile}
         rows={3}
         placeholder={t`Write your sentence…`}
         className='disabled:bg-muted resize-none rounded-lg border px-4 py-3 text-base focus:ring-2 focus:ring-yellow-400 focus:outline-none'
