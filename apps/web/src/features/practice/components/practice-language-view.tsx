@@ -181,7 +181,7 @@ export const PracticeLanguageView = () => {
                   <Button
                     type='button'
                     variant='outline'
-                    size='lg'
+                    size='xl'
                     className='w-full'
                     onClick={() => setCustomOpen(true)}
                   >
