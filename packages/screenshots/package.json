@@ -1,0 +1,14 @@
+{
+  "name": "@flicktionary/screenshots",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "shoot:extension": "node src/shoot-extension.mjs",
+    "playwright:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "catalog:",
+    "playwright": "catalog:"
+  }
+}
