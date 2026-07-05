@@ -399,9 +399,15 @@ scopes/budgets — no learn-new bypass). On **advance**:
 - `claimFinalize` is a one-shot status transition (reading → done); only the winner applies
   ratings — double-clicks/retries are no-ops.
 - Every woven annotation's term gets rated: explicit if the user rated it in the sheet,
-  otherwise an **implicit `good`** (`was_explicit = false`).
+  otherwise an **implicit `good`** (`was_explicit = false`). Annotations resolve to their
+  term by the `user_lookup_id` stamped into the annotation at generation time (fallback:
+  the `(headword, sense)` key, for texts stored before ids were stamped), so a mid-text
+  `chunks.rename` never drops a rating.
 - Skipped: terms already reviewed after the text was prepared
-  (`wasReviewedAfterTextWasPrepared`) and terms ineligible for the session's scope.
+  (`wasReviewedAfterTextWasPrepared`), terms ineligible for the session's scope, deleted
+  terms, and facets with `disabled_at` set — a facet disabled mid-text (production
+  demotion, dormant term) keeps its history but must not be advanced, or introduced, by
+  the implicit pass.
 
 ## 7. Parking + scaffolded exercises: leech rehab AND warm-up
 

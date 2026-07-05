@@ -70,6 +70,7 @@ type RawAnnotation = {
   surface_form?: unknown
   char_start?: unknown
   char_end?: unknown
+  user_lookup_id?: unknown
 }
 
 type ChunkContent = {
@@ -86,13 +87,18 @@ type ChunkContent = {
 }
 
 const lookupKey = (headword: string, sense: string) => `${headword} ${sense}`
+const lookupIdKey = (id: string) => `id:${id}`
 
 const toPracticeTextDto = (row: DbPracticeText, contentByKey: Map<string, ChunkContent>) => {
   const annRaw = Array.isArray(row.annotations) ? (row.annotations as RawAnnotation[]) : []
   const annotations = annRaw.map((a) => {
     const headword = typeof a.headword === 'string' ? a.headword : ''
     const sense = typeof a.sense === 'string' ? a.sense : ''
-    const content = contentByKey.get(lookupKey(headword, sense))
+    // The generation-time id survives a rename of the (headword, sense) key;
+    // texts stored before ids were stamped resolve by the key alone.
+    const contentById =
+      typeof a.user_lookup_id === 'string' ? contentByKey.get(lookupIdKey(a.user_lookup_id)) : undefined
+    const content = contentById ?? contentByKey.get(lookupKey(headword, sense))
     return {
       headword,
       sense,
@@ -195,7 +201,7 @@ const fetchAnnotationContent = async (
   const rows = await userLookupsRepository.listChunkContentForKeys({ userId, targetLanguage, keys })
   const map = new Map<string, ChunkContent>()
   for (const r of rows) {
-    map.set(lookupKey(r.headword, r.sense), {
+    const content: ChunkContent = {
       userLookupId: r.id,
       cardId: r.firstCardId,
       cardSessionId: r.firstCardSessionId,
@@ -204,7 +210,9 @@ const fetchAnnotationContent = async (
       grammar: r.grammar,
       deletedAt: r.deletedAt,
       isProductionEnabled: r.isProductionEnabled,
-    })
+    }
+    map.set(lookupKey(r.headword, r.sense), content)
+    map.set(lookupIdKey(r.id), content)
   }
   return map
 }

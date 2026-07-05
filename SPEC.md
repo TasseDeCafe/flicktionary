@@ -900,10 +900,15 @@ practice_text                        -- one LLM-generated reading passage. Readi
   ord                 int           -- slot order within (user, language, pool)
   status              'pending' | 'generating' | 'ready' | 'reading' | 'done' | 'failed'
   body                text?
-  annotations         jsonb         -- [{ headword, sense, surface_form, char_start, char_end }]
+  annotations         jsonb         -- [{ headword, sense, surface_form, char_start,
+                                    --    char_end, user_lookup_id }]
                                     -- char_start/end computed server-side from surface_form (LLMs
                                     -- are unreliable at counting characters; the tool only emits
                                     -- surface_form and the server locates each occurrence).
+                                    -- user_lookup_id is stamped at generation time so the
+                                    -- finalizer and serve-time content resolution survive a
+                                    -- mid-text rename of the (headword, sense) key; readers
+                                    -- fall back to the key for texts stored before ids existed.
   skipped_chunks      jsonb         -- chunks the LLM declined to embed
                                     -- ({ headword, sense, reason }); feeds the
                                     -- stubborn-chunk rescue/exclusion logic

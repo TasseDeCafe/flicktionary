@@ -13,6 +13,11 @@ export type PracticeAnnotation = {
   surfaceForm: string
   charStart: number
   charEnd: number
+  // The annotated term's user_lookups id, stamped at generation time so the
+  // finalizer and serve-time content resolution survive a mid-text rename of
+  // the (headword, sense) key. Null on texts stored before ids were stamped;
+  // readers fall back to the key for those.
+  userLookupId: string | null
 }
 
 export type PracticeSkippedChunk = {
@@ -70,6 +75,7 @@ const markReady = async (params: {
       surface_form: a.surfaceForm,
       char_start: a.charStart,
       char_end: a.charEnd,
+      user_lookup_id: a.userLookupId,
     })) as unknown as postgres.JSONValue
   )
   const skippedJson = sql.json(params.skippedChunks as unknown as postgres.JSONValue)

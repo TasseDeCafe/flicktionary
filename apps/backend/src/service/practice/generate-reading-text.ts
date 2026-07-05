@@ -112,11 +112,19 @@ const runGenerationForSlot = async (params: {
       await params.deps.practiceTextsRepository.markFailed({ id: params.slotId, token: claim.token, warning })
       return { ok: false, warning }
     }
+    // Stamp each annotation with its user_lookups id so readers survive a
+    // mid-text rename of the (headword, sense) key. The pass only keeps chunks
+    // it was asked to embed, so every used chunk maps back to a candidate.
+    const idByKey = new Map(params.candidates.map((c) => [`${c.headword}::${c.sense ?? ''}`, c.id]))
+    const annotations = result.usedChunks.map((a) => ({
+      ...a,
+      userLookupId: idByKey.get(`${a.headword}::${a.sense ?? ''}`) ?? null,
+    }))
     const ready = await params.deps.practiceTextsRepository.markReady({
       id: params.slotId,
       token: claim.token,
       body: result.body,
-      annotations: result.usedChunks,
+      annotations,
       skippedChunks: result.skippedChunks.map((s) => ({ headword: s.headword, sense: s.sense, reason: s.reason })),
       generationWarning: result.generationWarning,
     })

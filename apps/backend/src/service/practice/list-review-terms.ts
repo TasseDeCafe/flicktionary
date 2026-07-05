@@ -8,14 +8,17 @@ export type ListReviewTermsDependencies = ReviewCapsDependencies & {
   practiceTextsRepository?: PracticeTextsRepositoryInterface
 }
 
-type RawAnnotation = { headword?: unknown; sense?: unknown }
+type RawAnnotation = { headword?: unknown; sense?: unknown; user_lookup_id?: unknown }
 
-const readAnnotationKeys = (annotations: unknown): Array<{ headword: string; sense: string }> => {
+const readAnnotationKeys = (
+  annotations: unknown
+): Array<{ headword: string; sense: string; userLookupId: string | null }> => {
   const raw = Array.isArray(annotations) ? (annotations as RawAnnotation[]) : []
   return raw
     .map((a) => ({
       headword: typeof a.headword === 'string' ? a.headword : '',
       sense: typeof a.sense === 'string' ? a.sense : '',
+      userLookupId: typeof a.user_lookup_id === 'string' ? a.user_lookup_id : null,
     }))
     .filter((a) => a.headword.length > 0)
 }
@@ -29,11 +32,15 @@ const listCurrentReadingLookupIds = async (
   if (!deps.practiceTextsRepository) return []
   const current = await deps.practiceTextsRepository.findCurrentReading({ userId, targetLanguage, pool })
   if (!current) return []
-  const keys = readAnnotationKeys(current.annotations)
-  if (keys.length === 0) return []
+  const annotations = readAnnotationKeys(current.annotations)
+  // Generation-time ids are rename-proof; only annotations stored before ids
+  // were stamped need (headword, sense) key resolution.
+  const ids = annotations.map((a) => a.userLookupId).filter((id): id is string => id != null)
+  const keys = annotations.filter((a) => a.userLookupId == null)
+  if (keys.length === 0) return ids
   const keySet = new Set(keys.map((key) => `${key.headword}::${key.sense}`))
   const rows = await deps.userLookupsRepository.listChunkContentForKeys({ userId, targetLanguage, keys })
-  return rows.filter((row) => keySet.has(`${row.headword}::${row.sense}`)).map((row) => row.id)
+  return [...ids, ...rows.filter((row) => keySet.has(`${row.headword}::${row.sense}`)).map((row) => row.id)]
 }
 
 // Resolve the effective caps for the (user, language, pool, scope) and return

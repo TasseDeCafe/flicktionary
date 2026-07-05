@@ -100,6 +100,11 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
   const findByKey = vi.fn(
     async ({ headword, sense }: { headword: string; sense: string }) => lookupsByKey[`${headword}::${sense}`] ?? null
   )
+  const lookupsById: Record<string, DbUserLookup> = {
+    [laId]: makeLookup(laId),
+    [lbId]: makeLookup(lbId),
+  }
+  const findByIdForUserLookup = vi.fn(async (id: string) => lookupsById[id] ?? null)
   const getFacet = vi.fn(async ({ userLookupId }: { userLookupId: string }) =>
     makeFacet(userLookupId, facetOverrides[userLookupId] ?? {})
   )
@@ -129,6 +134,7 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
     },
     userLookupsRepository: {
       findByKey,
+      findByIdForUser: findByIdForUserLookup,
       listReviewTerms: vi.fn().mockResolvedValue([]),
       listDueSummary: vi.fn().mockResolvedValue([]),
     },
@@ -159,6 +165,7 @@ const createDeps = (opts: { claimWins: boolean; facets?: Record<string, Partial<
   return {
     deps,
     findByKey,
+    findByIdForUserLookup,
     getFacet,
     applyFsrsResultForFacet,
     claimFinalize,
@@ -264,6 +271,79 @@ describe('advanceReadingText', () => {
     expect(parkLeechFacet).toHaveBeenCalledWith({ userLookupId: laId, skill: 'meaning_recognition', targetForm: '' })
     // The implicit-good term (lb) must not park.
     expect(parkLeechFacet).toHaveBeenCalledTimes(1)
+  })
+
+  it('skips a facet the user disabled mid-text: no FSRS write, no event, even for an explicit rating', async () => {
+    const { deps, applyFsrsResultForFacet, insertRatingEvent } = createDeps({
+      claimWins: true,
+      facets: {
+        // Due and explicitly rated, but disabled between text prep and advance
+        // (production demotion / dormant term) — must be skipped entirely.
+        [laId]: { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z', disabled_at: '2026-05-12T00:01:00Z' },
+        [lbId]: {},
+      },
+    })
+
+    const result = await advanceReadingText(
+      userId,
+      textId,
+      'recognition',
+      'mixed',
+      [{ userLookupId: laId, rating: 'again' }],
+      deps
+    )
+
+    expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 1 })
+    expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
+    expect(insertRatingEvent).toHaveBeenCalledTimes(1)
+    expect(insertRatingEvent).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: lbId }), undefined)
+  })
+
+  it('does not introduce a never-reviewed facet that was disabled mid-text', async () => {
+    const { deps, initializeCitationFacetIfUnderDailyCap, applyFsrsResultForFacet } = createDeps({
+      claimWins: true,
+      facets: {
+        [laId]: { srs_state: 'review', srs_due: '2026-05-12T00:00:00Z' },
+        // New (srs_state null) but disabled — implicit-good must not consume a
+        // daily-new slot for a facet the user opted out of.
+        [lbId]: { disabled_at: '2026-05-12T00:01:00Z' },
+      },
+    })
+
+    const result = await advanceReadingText(userId, textId, 'recognition', 'mixed', [], deps)
+
+    expect(result).toEqual({ ok: true, done: false, practiceText: nextText, introduced: 0 })
+    expect(initializeCitationFacetIfUnderDailyCap).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: laId }), undefined)
+  })
+
+  it('resolves annotations by their stamped lookup id, so a mid-text rename does not drop the rating', async () => {
+    const { deps, applyFsrsResultForFacet, findByKey, findByIdForUserLookup } = createDeps({ claimWins: true })
+    // The stored annotation still carries the pre-rename headword; only the
+    // stamped user_lookup_id matches the renamed term.
+    ;(deps.practiceTextsRepository.claimFinalize as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ...claimedText,
+      annotations: [
+        { headword: 'old-name', sense: 's', surface_form: 'gato', char_start: 0, char_end: 4, user_lookup_id: laId },
+      ],
+    })
+
+    const result = await advanceReadingText(
+      userId,
+      textId,
+      'recognition',
+      'mixed',
+      [{ userLookupId: laId, rating: 'again' }],
+      deps
+    )
+
+    expect(result.ok).toBe(true)
+    expect(findByIdForUserLookup).toHaveBeenCalledWith(laId, userId)
+    expect(findByKey).not.toHaveBeenCalled()
+    expect(applyFsrsResultForFacet).toHaveBeenCalledTimes(1)
+    expect(applyFsrsResultForFacet).toHaveBeenCalledWith(expect.objectContaining({ userLookupId: laId }), undefined)
   })
 
   it('returns text_not_found when the text is missing or not owned', async () => {
