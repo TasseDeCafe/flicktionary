@@ -10,7 +10,11 @@ import { UsersRepositoryInterface } from '../../transport/database/users/users-r
 import { WiktionaryEntriesRepositoryInterface } from '../../transport/database/wiktionary-entries/wiktionary-entries-repository'
 import { logCustomErrorMessageAndError } from '../../transport/third-party/sentry/error-monitoring'
 import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
-import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import {
+  basicDataPass,
+  bindChunksToSingleHighlight,
+  HighlightInput,
+} from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { materializeBasicDataChunks } from '../processing/materialize-basic-data-chunks'
 import { runWiktionaryGrounding } from '../processing/wiktionary-grounding-runner'
@@ -160,7 +164,11 @@ export const createAdhocCard = async (params: {
     sessionId: session.id,
     userId,
     targetLanguage,
-    chunks,
+    // Deterministic attribution: exactly one highlight went into the pass, so
+    // the returned row is bound to it instead of trusting the model's echoed
+    // highlight_id (an omitted id would keep a data-less stub for the user
+    // while the data landed on an orphan card).
+    chunks: bindChunksToSingleHighlight(chunks, highlightInput),
     newHighlights: [highlightInput],
     processedHighlightIds: new Set<string>(),
     segmentIdSet: new Set([segment.id]),

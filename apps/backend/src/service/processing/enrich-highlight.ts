@@ -3,7 +3,11 @@ import { KAIKKI_LANGUAGES } from '@flicktionary/core/constants/language-grammar'
 import { StudyIntentSchema } from '@flicktionary/api-client/orpc-contracts/common/flicktionary-schemas'
 import { applyStudyIntent, generateStudyIntentFormData } from '../study-facets/apply-study-intent'
 import { ensureSessionContextBlob } from './ensure-session-context-blob'
-import { basicDataPass, HighlightInput } from '../../transport/third-party/anthropic/passes/basic-data-pass'
+import {
+  basicDataPass,
+  bindChunksToSingleHighlight,
+  HighlightInput,
+} from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { isEnglishTargetLanguage } from '../../transport/third-party/anthropic/language-instructions'
 import { MODEL_ENRICHMENT } from '../../transport/third-party/anthropic/anthropic-client'
 import { selectSurroundingSegments } from './select-surrounding-segments'
@@ -124,9 +128,11 @@ export const enrichHighlight = async (
     return 'cancelled'
   }
 
-  // Only highlight rows belong here — defensive: discovery is disabled, but the
-  // model could still emit a stray llm row.
-  const highlightChunks = chunks.filter((c) => c.source === 'highlight')
+  // Bind the returned row to THE highlight deterministically — this job runs
+  // over exactly one highlight, so the model's echoed highlight_id/segment_id
+  // are never trusted for attribution (an omitted id used to orphan the data
+  // on a highlight-less card and leave the highlight a data-less stub).
+  const highlightChunks = bindChunksToSingleHighlight(chunks, highlightInput)
   const segmentIdSet = new Set(window.map((s) => s.id))
 
   const { touchedLookups, insertedCards } = await materializeBasicDataChunks({

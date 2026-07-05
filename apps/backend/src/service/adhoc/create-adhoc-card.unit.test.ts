@@ -4,7 +4,8 @@ import { materializeBasicDataChunks } from '../processing/materialize-basic-data
 import { basicDataPass } from '../../transport/third-party/anthropic/passes/basic-data-pass'
 import { createAdhocCard, CreateAdhocCardDependencies } from './create-adhoc-card'
 
-vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', () => ({
+vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../transport/third-party/anthropic/passes/basic-data-pass')>()),
   basicDataPass: vi.fn().mockResolvedValue([]),
 }))
 vi.mock('../processing/materialize-basic-data-chunks', () => ({
