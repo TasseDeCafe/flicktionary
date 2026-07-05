@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_OPUS, THINKING_DISABLED } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 import { buildGrammarSchema } from '../grammar-tool-schema'
 import type { EnglishIpaDialect } from '../language-instructions'
@@ -34,7 +35,7 @@ type BasicDataPassArgs = {
   // bucket the model fills for English targets. Undefined for other languages.
   englishIpaDialect?: EnglishIpaDialect
   // Which model runs the pass. The per-highlight enrichment path passes
-  // MODEL_ENRICHMENT (Sonnet).
+  // MODEL_ENRICHMENT (Opus 4.8 by default).
   model?: string
 }
 
@@ -144,6 +145,7 @@ const buildTool = (hideTranslationFields: boolean, targetLanguage: string): Anth
           },
           required: [
             'source',
+            'highlight_id',
             'headword',
             'sense',
             'surface_form',
@@ -221,6 +223,10 @@ ${segmentLines}`
   // the SDK's non-streaming duration limit.
   const stream = getAnthropicClient().messages.stream({
     model,
+    // Sonnet 5 runs adaptive thinking when the param is omitted; disable it
+    // explicitly (also accepted on Opus 4.7/4.8) so the pass behaves the same
+    // regardless of which model the env overrides pick.
+    thinking: THINKING_DISABLED,
     max_tokens: 32000,
     system: buildMethodologySystem({
       nativeLanguage,
@@ -236,6 +242,7 @@ ${segmentLines}`
     messages: [{ role: 'user', content: userMessage }],
   })
   const response = await stream.finalMessage()
+  logAnthropicCacheUsage('basic-data', response)
 
   const toolUse = response.content.find((block) => block.type === 'tool_use')
   if (!toolUse || toolUse.type !== 'tool_use') {
@@ -251,6 +258,22 @@ ${segmentLines}`
     throw new Error(`Basic-data pass produced no usable chunks: ${detail}`)
   }
   return parseBasicDataChunks(input.chunks)
+}
+
+// Deterministic attribution for the single-highlight callers (per-highlight
+// enrichment, adhoc add-a-word): exactly one highlight goes in and exactly one
+// row is expected back, so there is nothing to "match" — bind that row to the
+// known highlight instead of trusting the model to echo ids. Sonnet 5 omitted
+// highlight_id often enough (~1/4 of calls, legal while the schema didn't
+// require it) that the data landed on an orphan highlight-less card while the
+// real highlight got a data-less stub. Forcing segmentId likewise keeps the
+// card anchored to the highlight's own segment even when the model echoes a
+// neighboring window segment. Extra rows beyond the first are dropped (the
+// prompt demands exactly one; materializing spares would mint orphan cards).
+export const bindChunksToSingleHighlight = (chunks: BasicDataChunk[], highlight: HighlightInput): BasicDataChunk[] => {
+  const row = chunks.find((c) => c.source === 'highlight') ?? chunks[0]
+  if (!row) return []
+  return [{ ...row, source: 'highlight', highlightId: highlight.highlightId, segmentId: highlight.segmentId }]
 }
 
 // Defensive shape-check on the model's grammar.ipa: keep only recognized

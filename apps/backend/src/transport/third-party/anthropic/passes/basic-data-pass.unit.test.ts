@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseBasicDataChunks } from './basic-data-pass'
+import { BasicDataChunk, bindChunksToSingleHighlight, parseBasicDataChunks } from './basic-data-pass'
 
 describe('parseBasicDataChunks', () => {
   it('parses a happy-path LLM-discovered chunk', () => {
@@ -221,6 +221,57 @@ describe('parseBasicDataChunks', () => {
     const parsed = parseBasicDataChunks(raw)
     expect(parsed[0].grammar).toBeUndefined()
     expect(parsed[1].grammar).toBeUndefined()
+  })
+})
+
+describe('bindChunksToSingleHighlight', () => {
+  const highlight = { highlightId: 'hl-1', segmentId: 'seg-1', selectionText: 'dejaste' }
+  const chunk = (overrides: Partial<BasicDataChunk>): BasicDataChunk => ({
+    source: 'highlight',
+    highlightId: 'hl-1',
+    headword: 'dejarse ganar',
+    sense: 'let oneself lose',
+    surfaceForm: 'dejaste',
+    segmentId: 'seg-1',
+    translation: 'to let oneself lose',
+    surfaceTranslation: null,
+    definition: null,
+    targetExample: null,
+    nativeExample: null,
+    belowCefr: false,
+    ...overrides,
+  })
+
+  it('rebinds a row whose highlight_id the model omitted (the orphan-card bug)', () => {
+    const bound = bindChunksToSingleHighlight([chunk({ highlightId: undefined })], highlight)
+    expect(bound).toHaveLength(1)
+    expect(bound[0]).toMatchObject({ source: 'highlight', highlightId: 'hl-1', headword: 'dejarse ganar' })
+  })
+
+  it('overrides a hallucinated highlight_id and an echoed neighboring segment_id', () => {
+    const bound = bindChunksToSingleHighlight(
+      [chunk({ highlightId: 'some-other-id', segmentId: 'neighbor-segment' })],
+      highlight
+    )
+    expect(bound[0]).toMatchObject({ highlightId: 'hl-1', segmentId: 'seg-1' })
+  })
+
+  it("adopts a stray source='llm' row when it is the only one (discovery is disabled, so it is about the highlight)", () => {
+    const bound = bindChunksToSingleHighlight([chunk({ source: 'llm', highlightId: undefined })], highlight)
+    expect(bound[0]).toMatchObject({ source: 'highlight', highlightId: 'hl-1' })
+  })
+
+  it('prefers the highlight-source row over a stray llm row and drops the spare', () => {
+    const bound = bindChunksToSingleHighlight(
+      [chunk({ source: 'llm', headword: 'stray' }), chunk({ headword: 'wanted' })],
+      highlight
+    )
+    expect(bound).toHaveLength(1)
+    expect(bound[0]!.headword).toBe('wanted')
+  })
+
+  it('returns empty for an empty pass result (the caller stub-fallback handles it)', () => {
+    expect(bindChunksToSingleHighlight([], highlight)).toEqual([])
   })
 })
 

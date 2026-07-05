@@ -95,7 +95,10 @@ ${movieContextBlob}`
     blocks.push({ type: 'text', text: languageInstructions })
   }
   blocks.push({ type: 'text', text: userProfile })
-  blocks.push({ type: 'text', text: translationMode })
+  // Second breakpoint before the per-session context blob: a NEW session in the
+  // same target language re-reads everything up to here (~4.9k tokens) from
+  // cache instead of paying a full write — only the ~300-token blob is fresh.
+  blocks.push({ type: 'text', text: translationMode, cache_control: { type: 'ephemeral' } })
   blocks.push({ type: 'text', text: contextBlock, cache_control: { type: 'ephemeral' } })
   return blocks
 }
@@ -107,12 +110,17 @@ type BuildPracticeMethodologySystemArgs = {
   hideTranslationFields?: boolean
   allowL1Notes?: boolean
   englishIpaDialect?: EnglishIpaDialect
+  // Additional STABLE system blocks appended after the user profile — pass-static
+  // text (rubrics, hard rules) that must sit inside the cacheable prefix instead
+  // of being rebuilt into every user message. Anything that varies per call must
+  // stay in the user message instead, after the breakpoint.
+  extraStableBlocks?: string[]
 }
 
 // Variant for the Practice tab. Same cacheable prefix structure but without the
 // per-session source-context block (Practice texts aren't tied to a movie/source).
-// The cache breakpoint sits on the user profile block so subsequent practice
-// calls in the same session can reuse the prefix.
+// The cache breakpoint sits on the LAST stable block — the user profile, or the
+// last of the caller's extraStableBlocks when provided.
 export const buildPracticeMethodologySystem = ({
   nativeLanguage,
   targetLanguage,
@@ -120,6 +128,7 @@ export const buildPracticeMethodologySystem = ({
   hideTranslationFields = nativeLanguage.trim().toLowerCase() === targetLanguage.trim().toLowerCase(),
   allowL1Notes = nativeLanguage.trim().toLowerCase() !== targetLanguage.trim().toLowerCase(),
   englishIpaDialect,
+  extraStableBlocks = [],
 }: BuildPracticeMethodologySystemArgs): Anthropic.TextBlockParam[] => {
   const userProfile = `User profile:
 - Native language: ${nativeLanguage}
@@ -134,6 +143,10 @@ export const buildPracticeMethodologySystem = ({
     blocks.push({ type: 'text', text: languageInstructions })
   }
   blocks.push({ type: 'text', text: translationMode })
-  blocks.push({ type: 'text', text: userProfile, cache_control: { type: 'ephemeral' } })
+  blocks.push({ type: 'text', text: userProfile })
+  for (const text of extraStableBlocks) {
+    blocks.push({ type: 'text', text })
+  }
+  blocks[blocks.length - 1].cache_control = { type: 'ephemeral' }
   return blocks
 }

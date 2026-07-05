@@ -7,7 +7,8 @@ import { autoKeepNeedsDataIfEligible } from '../cards/set-card-status'
 import { enrichHighlight } from './enrich-highlight'
 import type { ProcessingDependencies } from './processing-dependencies'
 
-vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', () => ({
+vi.mock('../../transport/third-party/anthropic/passes/basic-data-pass', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../transport/third-party/anthropic/passes/basic-data-pass')>()),
   basicDataPass: vi.fn(),
 }))
 vi.mock('./wiktionary-grounding-runner', () => ({
@@ -252,6 +253,23 @@ describe('enrichHighlight', () => {
 
     expect(applyStudyIntent).toHaveBeenCalledTimes(1)
     expect(generateStudyIntentFormData).not.toHaveBeenCalled()
+  })
+
+  it('writes the data card against the highlight even when the model omits highlight_id (orphan-card regression)', async () => {
+    // Sonnet 5 legally omitted the then-optional highlight_id ~1/4 of the
+    // time; the row must still be attributed to the job's highlight instead of
+    // landing on a highlight-less card + a data-less stub.
+    vi.mocked(basicDataPass).mockResolvedValue([
+      { ...highlightChunk, highlightId: undefined, segmentId: 'echoed-wrong-segment' },
+    ])
+    const { deps, insertCardForHighlightIdempotent, insertCard } = createDeps()
+
+    const outcome = await enrichHighlight({ sessionId, highlightId, userId }, deps)
+
+    expect(outcome).toBe('enriched')
+    expect(insertCard).not.toHaveBeenCalled()
+    expect(insertCardForHighlightIdempotent).toHaveBeenCalledTimes(1)
+    expect(insertCardForHighlightIdempotent).toHaveBeenCalledWith(expect.objectContaining({ highlightId, segmentId }))
   })
 
   it('cancels (no card) when the highlight was deleted mid-flight', async () => {

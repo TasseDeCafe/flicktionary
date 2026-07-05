@@ -1,4 +1,5 @@
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 type GenerateContextBlobArgs = {
   contentTitle: string
@@ -45,6 +46,7 @@ ${segmentSample}`
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })
+  logAnthropicCacheUsage('generate-context-blob', response)
 
   const textBlock = response.content.find((block) => block.type === 'text')
   if (!textBlock || textBlock.type !== 'text') {

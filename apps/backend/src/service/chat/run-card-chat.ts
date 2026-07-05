@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../../transport/third-party/anthropic/anthropic-client'
+import { logAnthropicCacheUsage } from '../../transport/third-party/anthropic/log-cache-usage'
 import { buildPromptContext } from '../processing/build-prompt-context'
 import { ensureSessionContextBlob } from '../processing/ensure-session-context-blob'
 import { selectSurroundingSegments, formatSurroundingSegments } from '../processing/select-surrounding-segments'
@@ -368,6 +369,7 @@ export const runCardChat = async (
     ...(allowCardEdits ? { tools: [updateCardFieldsTool] } : {}),
     messages,
   })
+  logAnthropicCacheUsage('card-chat', response)
 
   const assistantText = response.content
     .filter((block): block is Anthropic.TextBlock => block.type === 'text')

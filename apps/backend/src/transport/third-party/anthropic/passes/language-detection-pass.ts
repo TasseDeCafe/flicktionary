@@ -4,6 +4,7 @@ import {
   type SupportedLanguageCode,
 } from '@flicktionary/core/constants/supported-languages'
 import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 const MAX_INPUT_CHARS = 1_000
 
@@ -22,6 +23,7 @@ export const languageDetectionPass = async (text: string): Promise<SupportedLang
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: trimmed.slice(0, MAX_INPUT_CHARS) }],
   })
+  logAnthropicCacheUsage('language-detection', response)
 
   const textBlock = response.content.find((block) => block.type === 'text')
   if (!textBlock || textBlock.type !== 'text') return null

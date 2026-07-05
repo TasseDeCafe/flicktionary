@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildPracticeMethodologySystem } from '../methodology-prompt'
 
 // Generation half of the accuracy-first exercise pipeline. Each call produces
@@ -292,6 +293,7 @@ export const generateExercisePass = async (args: GenerateExerciseArgs): Promise<
     messages: [{ role: 'user', content: buildUserMessage(args) }],
   })
   const response = await stream.finalMessage()
+  logAnthropicCacheUsage(`generate-exercise:${args.type}`, response)
 
   const toolUse = response.content.find((block) => block.type === 'tool_use')
   if (!toolUse || toolUse.type !== 'tool_use') {
