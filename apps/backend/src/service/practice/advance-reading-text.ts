@@ -31,14 +31,17 @@ export type AdvanceReadingTextResult =
   | { ok: true; done: true; introduced: number }
   | { ok: false; reason: 'text_not_found' | 'no_native_language' | 'generation_failed'; warning?: string }
 
-type RawAnnotation = { headword?: unknown; sense?: unknown }
+type RawAnnotation = { headword?: unknown; sense?: unknown; user_lookup_id?: unknown }
 
-const readAnnotations = (text: DbPracticeText): Array<{ headword: string; sense: string }> => {
+const readAnnotations = (
+  text: DbPracticeText
+): Array<{ headword: string; sense: string; userLookupId: string | null }> => {
   const raw = Array.isArray(text.annotations) ? (text.annotations as RawAnnotation[]) : []
   return raw
     .map((a) => ({
       headword: typeof a.headword === 'string' ? a.headword : '',
       sense: typeof a.sense === 'string' ? a.sense : '',
+      userLookupId: typeof a.user_lookup_id === 'string' ? a.user_lookup_id : null,
     }))
     .filter((a) => a.headword.length > 0)
 }
@@ -56,15 +59,7 @@ const wasReviewedAfterTextWasPrepared = (lookup: DbUserLookupWithFacet, text: Db
   return lastReview != null && lastReview > preparedAt
 }
 
-const isEligibleForScope = (
-  lookup: DbUserLookupWithFacet,
-  pool: PracticePool,
-  scope: ReviewScope,
-  now: Date
-): boolean => {
-  // Production-pool membership is the citation production facet being enabled
-  // (is_production_enabled), derived from the merged facet's disabled_at.
-  if (pool === 'production' && !lookup.is_production_enabled) return false
+const isEligibleForScope = (lookup: DbUserLookupWithFacet, scope: ReviewScope, now: Date): boolean => {
   const state = lookup.srs_state
   const due = lookup.srs_due
   const wantsNew = scope === 'learn_new' || scope === 'mixed'
@@ -115,12 +110,19 @@ export const advanceReadingText = async (
     const seen = new Set<string>()
     const now = new Date()
     for (const ann of readAnnotations(claimed)) {
-      const lookup = await deps.userLookupsRepository.findByKey({
-        userId,
-        targetLanguage,
-        headword: ann.headword,
-        sense: ann.sense,
-      })
+      // Resolve by the id stamped at generation time — rename-proof: a
+      // mid-text chunks.rename changes the (headword, sense) key but not the
+      // id, and an explicit rating is keyed by lookup id. Texts stored before
+      // ids were stamped fall back to the key. Both lookups filter
+      // soft-deleted rows, so a deleted term is still skipped.
+      const lookup = ann.userLookupId
+        ? await deps.userLookupsRepository.findByIdForUser(ann.userLookupId, userId)
+        : await deps.userLookupsRepository.findByKey({
+            userId,
+            targetLanguage,
+            headword: ann.headword,
+            sense: ann.sense,
+          })
       if (!lookup || seen.has(lookup.id)) continue
       seen.add(lookup.id)
       ratedLookupIds.push(lookup.id)
@@ -137,10 +139,14 @@ export const advanceReadingText = async (
         skill,
         targetForm: CITATION_FORM,
       })
-      if (!facet) continue
+      // Disable ≠ delete: a facet the user disabled mid-text (production
+      // demotion, dormant term) keeps its history but must not be advanced —
+      // or introduced — by this pass; no queue would serve it. For the
+      // production pool this enabled check IS production-pool membership.
+      if (!facet || facet.disabled_at != null) continue
       const facetRow = mergeFacet(lookup, facet)
       if (wasReviewedAfterTextWasPrepared(facetRow, claimed)) continue
-      if (!isEligibleForScope(facetRow, effectivePool, scope, now)) continue
+      if (!isEligibleForScope(facetRow, scope, now)) continue
       const rating = ratingByLookupId.get(lookup.id) ?? 'good'
       // Reading mode never introduces past the daily-new cap — the explicit
       // over-cap path is the composed queue's Learn extra (parking side).
