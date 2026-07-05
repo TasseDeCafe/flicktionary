@@ -185,6 +185,7 @@ catalog:
   next: 16.2.1
   node-cache: 5.1.2
   openapi-typescript: 7.13.0
+  playwright: 1.61.1
   postcss: 8.5.8
   postgres: 3.4.8
   posthog-js: 1.364.4
