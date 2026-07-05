@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_NOMINATE, THINKING_DISABLED } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 
 const TOOL_NAME = 'submit_candidates'
@@ -84,10 +85,13 @@ const buildTool = (): Anthropic.Tool => ({
   },
 })
 
-// Nominate-only pass: an Opus tool call over one reading window. Tiny output — no
-// translations, definitions, or grammar (those are produced later by the
-// per-highlight enrichment pass, only if the user adopts the span). Reuses the
-// cached methodology system prefix so successive windows hit the prompt cache.
+// Nominate-only pass: one tool call over one reading window (Sonnet 5 by
+// default, env-overridable back to Opus). Tiny output — no translations,
+// definitions, or grammar (those are produced later by the per-highlight
+// enrichment pass, only if the user adopts the span). On Sonnet the shared
+// methodology system prefix clears the minimum cacheable length, so successive
+// windows reuse the cached prefix (it never did on Opus — the prefix was under
+// Opus's 4096-token minimum); confirm via the per-pass cache-usage log lines.
 export const nominateCandidatesPass = async ({
   nativeLanguage,
   targetLanguage,
@@ -144,8 +148,11 @@ Reading window (segment id followed by text):
 ${segmentLines}`
 
   const response = await getAnthropicClient().messages.create({
-    model: MODEL_OPUS,
-    max_tokens: 8000,
+    model: MODEL_NOMINATE,
+    // Sonnet 5's tokenizer emits ~30% more tokens for the same text, so a
+    // max-candidate window needs more output room than the old 8000.
+    thinking: THINKING_DISABLED,
+    max_tokens: 10000,
     system: buildMethodologySystem({
       nativeLanguage,
       targetLanguage,
@@ -158,6 +165,7 @@ ${segmentLines}`
     tool_choice: { type: 'tool', name: TOOL_NAME },
     messages: [{ role: 'user', content: userMessage }],
   })
+  logAnthropicCacheUsage('nominate-candidates', response)
 
   const toolUse = response.content.find((block) => block.type === 'tool_use')
   if (!toolUse || toolUse.type !== 'tool_use') {

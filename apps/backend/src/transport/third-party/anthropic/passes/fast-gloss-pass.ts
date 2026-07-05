@@ -1,4 +1,5 @@
 import { getAnthropicClient, MODEL_HAIKU } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 
 type FastGlossPassArgs = {
   targetLanguage: string
@@ -92,6 +93,7 @@ ${outputLanguageInstruction} Optionally a single POS tag and a single register t
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })
+  logAnthropicCacheUsage('fast-gloss', response)
 
   const textBlock = response.content.find((block) => block.type === 'text')
   if (!textBlock || textBlock.type !== 'text') {

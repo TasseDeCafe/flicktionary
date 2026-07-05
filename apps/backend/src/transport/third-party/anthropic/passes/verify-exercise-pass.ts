@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
-import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { getAnthropicClient, MODEL_EXERCISE_VERIFY, THINKING_DISABLED } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildPracticeMethodologySystem } from '../methodology-prompt'
 import type { GeneratedExercise } from './generate-exercise-pass'
 
@@ -109,7 +110,8 @@ type VerifyExerciseArgs = {
 
 const runVerdictCall = async (args: VerifyExerciseArgs): Promise<VerifyExerciseResult> => {
   const stream = getAnthropicClient().messages.stream({
-    model: MODEL_OPUS,
+    model: MODEL_EXERCISE_VERIFY,
+    thinking: THINKING_DISABLED,
     max_tokens: 1500,
     system: buildPracticeMethodologySystem({
       nativeLanguage: args.nativeLanguage,
@@ -123,6 +125,7 @@ const runVerdictCall = async (args: VerifyExerciseArgs): Promise<VerifyExerciseR
     messages: [{ role: 'user', content: buildUserMessage(args.exercise, args.targetLanguage) }],
   })
   const response = await stream.finalMessage()
+  logAnthropicCacheUsage('verify-exercise', response)
 
   const toolUse = response.content.find((block) => block.type === 'tool_use')
   if (!toolUse || toolUse.type !== 'tool_use') {

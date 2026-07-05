@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, MODEL_OPUS } from '../anthropic-client'
+import { logAnthropicCacheUsage } from '../log-cache-usage'
 import { buildMethodologySystem } from '../methodology-prompt'
 import { buildGrammarSchema } from '../grammar-tool-schema'
 import type { EnglishIpaDialect } from '../language-instructions'
@@ -236,6 +237,7 @@ they apply.`
     tool_choice: { type: 'tool', name: TOOL_NAME },
     messages: [{ role: 'user', content: userMessage }],
   })
+  logAnthropicCacheUsage('enrichment', response)
 
   const toolUse = response.content.find((block) => block.type === 'tool_use')
   if (!toolUse || toolUse.type !== 'tool_use') {
