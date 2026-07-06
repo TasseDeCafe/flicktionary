@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flicktionary — maximalist concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #1f2430;
+    --paper: #f6f7f9;
+    --card: #ffffff;
+    --muted: #667085;
+    --border: #e4e7ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans', sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font-family: Nunito, sans-serif; font-weight: 900; font-size: 34px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 40px; max-width: 740px; }
+  .concept {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 36px;
+  }
+  .concept h2 { font-family: Nunito, sans-serif; font-weight: 800; font-size: 22px; margin: 0 0 2px; }
+  .concept .tag {
+    display: inline-block;
+    font-size: 12px; font-weight: 600;
+    color: var(--muted);
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .concept p.blurb { color: var(--muted); margin: 6px 0 24px; max-width: 760px; }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch; }
+  .cell {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    flex: 1 1 180px;
+  }
+  .cell.dark { background: #15181f; border-color: #2a2f3a; }
+  .cell .label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cell.dark .label { color: #98a2b3; }
+  .icon-lg img { width: 144px; height: 144px; display: block; }
+  .sizes { display: flex; align-items: flex-end; gap: 18px; }
+  .sizes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .sizes figcaption { font-size: 11px; color: var(--muted); }
+  .cell.dark .sizes figcaption { color: #98a2b3; }
+  .tab {
+    display: flex; align-items: center; gap: 8px;
+    border-radius: 10px 10px 0 0;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    min-width: 190px;
+  }
+  .tab img { width: 16px; height: 16px; flex: none; }
+  .tab.light { background: #ffffff; border: 1px solid var(--border); border-bottom: none; color: #333; }
+  .tab.darkui { background: #3c4043; color: #e8eaed; }
+  .tabbar { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .lockup {
+    display: flex; align-items: center; gap: 14px;
+    padding: 8px 4px;
+    font-family: Nunito, sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: -0.01em;
+  }
+  .lockup img { width: 46px; height: 46px; flex: none; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  a { color: #0e9de0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maximalist concepts</h1>
+  <p class="sub">
+    The opposite bet from <a href="preview.html">concepts v2</a>: full-bleed illustrated tiles that
+    use the whole canvas — layered scenes, gradients, incidental detail. Small variants keep the
+    scene and shed only the fine grain. Amber stays as the recurring “the word you're learning” accent.
+  </p>
+
+  <!-- M1 -->
+  <div class="concept">
+    <h2>M1 · Dawn over the text hills <span class="tag">sunset scene</span></h2>
+    <p class="blurb">
+      Rolling hills made of lines of text under a rising sun — content stretching to the horizon,
+      one word glowing amber on the nearest hill. The sunset palette from the earlier rounds,
+      turned into an actual sunset.
+    </p>
+    <div class="row">
+      <div class="cell icon-lg"><span class="label">Icon</span><img src="m1-dawn.svg" alt="" /></div>
+      <div class="cell">
+        <span class="label">Small variant</span>
+        <div class="sizes">
+          <figure><img src="m1-dawn-small.svg" width="64" height="64" alt="" /><figcaption>64</figcaption></figure>
+          <figure><img src="m1-dawn-small.svg" width="32" height="32" alt="" /><figcaption>32</figcaption></figure>
+          <figure><img src="m1-dawn-small.svg" width="16" height="16" alt="" /><figcaption>16</figcaption></figure>
+        </div>
+      </div>
+      <div class="cell dark">
+        <span class="label">Browser tabs</span>
+        <div class="tabbar">
+          <div class="tab light"><img src="m1-dawn-small.svg" alt="" />Flicktionary</div>
+          <div class="tab darkui"><img src="m1-dawn-small.svg" alt="" />Flicktionary</div>
+        </div>
+      </div>
+    </div>
+    <div class="lockup"><img src="m1-dawn-small.svg" alt="" /><span>flicktionary</span></div>
+  </div>
+
+  <!-- M2 -->
+  <div class="concept">
+    <h2>M2 · Word constellation <span class="tag">night sky</span></h2>
+    <p class="blurb">
+      A night sky full of stars where a handful are connected into an F-shaped constellation,
+      the brightest one amber. Collecting words one by one until they form something — the SRS
+      story without a single flashcard in sight.
+    </p>
+    <div class="row">
+      <div class="cell icon-lg"><span class="label">Icon</span><img src="m2-constellation.svg" alt="" /></div>
+      <div class="cell">
+        <span class="label">Small variant</span>
+        <div class="sizes">
+          <figure><img src="m2-constellation-small.svg" width="64" height="64" alt="" /><figcaption>64</figcaption></figure>
+          <figure><img src="m2-constellation-small.svg" width="32" height="32" alt="" /><figcaption>32</figcaption></figure>
+          <figure><img src="m2-constellation-small.svg" width="16" height="16" alt="" /><figcaption>16</figcaption></figure>
+        </div>
+      </div>
+      <div class="cell dark">
+        <span class="label">Browser tabs</span>
+        <div class="tabbar">
+          <div class="tab light"><img src="m2-constellation-small.svg" alt="" />Flicktionary</div>
+          <div class="tab darkui"><img src="m2-constellation-small.svg" alt="" />Flicktionary</div>
+        </div>
+      </div>
+    </div>
+    <div class="lockup"><img src="m2-constellation-small.svg" alt="" /><span>flicktionary</span></div>
+  </div>
+
+  <!-- M3 -->
+  <div class="concept">
+    <h2>M3 · The shelf <span class="tag">library wall</span></h2>
+    <p class="blurb">
+      A full shelf of colorful spines — all the content you could study — with one amber volume
+      pulled out and sparking. Detail-rich but built from vertical stripes, so it degrades
+      gracefully: at 16&nbsp;px it's still a colorful shelf with a yellow pop.
+    </p>
+    <div class="row">
+      <div class="cell icon-lg"><span class="label">Icon</span><img src="m3-shelf.svg" alt="" /></div>
+      <div class="cell">
+        <span class="label">Small variant</span>
+        <div class="sizes">
+          <figure><img src="m3-shelf-small.svg" width="64" height="64" alt="" /><figcaption>64</figcaption></figure>
+          <figure><img src="m3-shelf-small.svg" width="32" height="32" alt="" /><figcaption>32</figcaption></figure>
+          <figure><img src="m3-shelf-small.svg" width="16" height="16" alt="" /><figcaption>16</figcaption></figure>
+        </div>
+      </div>
+      <div class="cell dark">
+        <span class="label">Browser tabs</span>
+        <div class="tabbar">
+          <div class="tab light"><img src="m3-shelf-small.svg" alt="" />Flicktionary</div>
+          <div class="tab darkui"><img src="m3-shelf-small.svg" alt="" />Flicktionary</div>
+        </div>
+      </div>
+    </div>
+    <div class="lockup"><img src="m3-shelf-small.svg" alt="" /><span>flicktionary</span></div>
+  </div>
+
+  <!-- M4 -->
+  <div class="concept">
+    <h2>M4 · Gloss supernova <span class="tag">radial burst</span></h2>
+    <p class="blurb">
+      The asterisk from concept B, exploded: radial sunset gradient, echo rings, arm trails and
+      confetti of dots, sparks, and word-fragments. The moment a word clicks. Keeps B's favicon
+      strength while filling every pixel at large sizes.
+    </p>
+    <div class="row">
+      <div class="cell icon-lg"><span class="label">Icon</span><img src="m4-burst.svg" alt="" /></div>
+      <div class="cell">
+        <span class="label">Small variant</span>
+        <div class="sizes">
+          <figure><img src="m4-burst-small.svg" width="64" height="64" alt="" /><figcaption>64</figcaption></figure>
+          <figure><img src="m4-burst-small.svg" width="32" height="32" alt="" /><figcaption>32</figcaption></figure>
+          <figure><img src="m4-burst-small.svg" width="16" height="16" alt="" /><figcaption>16</figcaption></figure>
+        </div>
+      </div>
+      <div class="cell dark">
+        <span class="label">Browser tabs</span>
+        <div class="tabbar">
+          <div class="tab light"><img src="m4-burst-small.svg" alt="" />Flicktionary</div>
+          <div class="tab darkui"><img src="m4-burst-small.svg" alt="" />Flicktionary</div>
+        </div>
+      </div>
+    </div>
+    <div class="lockup"><img src="m4-burst-small.svg" alt="" /><span>flicktionary</span></div>
+  </div>
+
+  <!-- M5 -->
+  <div class="concept">
+    <h2>M5 · The iceberg <span class="tag">above/below</span></h2>
+    <p class="blurb">
+      The word you see is the amber pill above the surface; the meaning, grammar, and connections
+      are the iceberg below — with faint text lines and one amber gem frozen inside. The most
+      story-driven of the set: every deep-dive card is an iceberg.
+    </p>
+    <div class="row">
+      <div class="cell icon-lg"><span class="label">Icon</span><img src="m5-iceberg.svg" alt="" /></div>
+      <div class="cell">
+        <span class="label">Small variant</span>
+        <div class="sizes">
+          <figure><img src="m5-iceberg-small.svg" width="64" height="64" alt="" /><figcaption>64</figcaption></figure>
+          <figure><img src="m5-iceberg-small.svg" width="32" height="32" alt="" /><figcaption>32</figcaption></figure>
+          <figure><img src="m5-iceberg-small.svg" width="16" height="16" alt="" /><figcaption>16</figcaption></figure>
+        </div>
+      </div>
+      <div class="cell dark">
+        <span class="label">Browser tabs</span>
+        <div class="tabbar">
+          <div class="tab light"><img src="m5-iceberg-small.svg" alt="" />Flicktionary</div>
+          <div class="tab darkui"><img src="m5-iceberg-small.svg" alt="" />Flicktionary</div>
+        </div>
+      </div>
+    </div>
+    <div class="lockup"><img src="m5-iceberg-small.svg" alt="" /><span>flicktionary</span></div>
+  </div>
+
+  <footer>
+    Source SVGs: <code>m1-dawn.svg</code> … <code>m5-iceberg-small.svg</code>, all hand-authored
+    vectors clipped to the same squircle tile as the v2 set.
+  </footer>
+</div>
+</body>
+</html>

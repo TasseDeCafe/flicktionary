@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CDEBFF"/>
+      <stop offset="1" stop-color="#8FD0F7"/>
+    </linearGradient>
+    <linearGradient id="waterg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.37" stop-color="#2FA3E0"/>
+      <stop offset="1" stop-color="#0A3E6E"/>
+    </linearGradient>
+    <radialGradient id="sunglow">
+      <stop offset="0" stop-color="#FFE9A8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFE9A8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <path id="spark" d="M0 -16 L4.5 -4.5 L16 0 L4.5 4.5 L0 16 L-4.5 4.5 L-16 0 L-4.5 -4.5 Z"/>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#waterg)"/>
+    <rect width="512" height="190" fill="url(#skyg)"/>
+    <circle cx="430" cy="58" r="60" fill="url(#sunglow)"/>
+    <circle cx="430" cy="58" r="26" fill="#FFD76A"/>
+    <g fill="#FFFFFF" opacity="0.85">
+      <ellipse cx="108" cy="70" rx="46" ry="15"/>
+      <ellipse cx="140" cy="82" rx="60" ry="17"/>
+      <ellipse cx="330" cy="120" rx="38" ry="12"/>
+    </g>
+    <!-- light shafts under the surface, slanting the same way and fading out -->
+    <polygon points="120,196 158,196 92,410 54,410" fill="url(#shaft)"/>
+    <polygon points="392,196 424,196 476,380 444,380" fill="url(#shaft)"/>
+    <!-- iceberg below the waterline -->
+    <polygon points="150,214 362,214 346,328 288,470 236,430 178,330" fill="#DFF1FC"/>
+    <polygon points="150,214 256,214 214,380 178,330" fill="#BBDFF5"/>
+    <polygon points="256,214 362,214 346,328 300,400" fill="#CFE9FA"/>
+    <g fill="#FFFFFF" opacity="0.55">
+      <rect x="210" y="298" width="92" height="14" rx="7"/>
+      <rect x="226" y="334" width="72" height="14" rx="7"/>
+    </g>
+    <rect x="222" y="370" width="64" height="16" rx="8" fill="#FFC233" opacity="0.95"/>
+    <g fill="#FFFFFF" opacity="0.35">
+      <circle cx="180" cy="270" r="6"/>
+      <circle cx="366" cy="300" r="5"/>
+      <circle cx="336" cy="390" r="4"/>
+      <circle cx="152" cy="380" r="4"/>
+    </g>
+    <!-- tip above the waterline -->
+    <polygon points="202,218 256,148 310,218" fill="#F4FAFF"/>
+    <polygon points="202,218 256,148 246,218" fill="#DCEFFB"/>
+    <!-- surface line over everything at the waterline -->
+    <path d="M0 190 Q 64 178 128 190 T 256 190 T 384 190 T 512 190" fill="none" stroke="#FFFFFF" stroke-width="7" opacity="0.75"/>
+    <!-- the word: an amber pill floating above the tip -->
+    <rect x="176" y="70" width="160" height="56" rx="28" fill="#FFC233"/>
+    <rect x="200" y="86" width="112" height="24" rx="12" fill="#1F2430"/>
+    <use href="#spark" transform="translate(354 66) scale(0.9)" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+</svg>

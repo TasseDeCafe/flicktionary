@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262A55"/>
+      <stop offset="1" stop-color="#0C0E22"/>
+    </linearGradient>
+    <radialGradient id="ambglow">
+      <stop offset="0" stop-color="#FFC233" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#FFC233" stop-opacity="0"/>
+    </radialGradient>
+    <path id="spark" d="M0 -16 L4.5 -4.5 L16 0 L4.5 4.5 L0 16 L-4.5 4.5 L-16 0 L-4.5 -4.5 Z"/>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#night)"/>
+    <g fill="#FFFFFF">
+      <circle cx="90" cy="80" r="6" opacity="0.6"/>
+      <circle cx="420" cy="300" r="7" opacity="0.6"/>
+      <circle cx="380" cy="440" r="6" opacity="0.5"/>
+      <circle cx="80" cy="440" r="5" opacity="0.5"/>
+      <circle cx="300" cy="60" r="5" opacity="0.5"/>
+      <circle cx="450" cy="120" r="5" opacity="0.4"/>
+    </g>
+    <g stroke="#D9E4FF" stroke-width="11" stroke-linecap="round" opacity="0.9">
+      <line x1="176" y1="120" x2="176" y2="400"/>
+      <line x1="176" y1="120" x2="332" y2="136"/>
+      <line x1="176" y1="258" x2="308" y2="268"/>
+    </g>
+    <g fill="#FFFFFF">
+      <circle cx="176" cy="120" r="19"/>
+      <circle cx="176" cy="258" r="17"/>
+      <circle cx="176" cy="400" r="19"/>
+      <circle cx="308" cy="268" r="17"/>
+    </g>
+    <circle cx="332" cy="136" r="62" fill="url(#ambglow)"/>
+    <use href="#spark" transform="translate(332 136) scale(2.6)" fill="#FFC233"/>
+  </g>
+</svg>

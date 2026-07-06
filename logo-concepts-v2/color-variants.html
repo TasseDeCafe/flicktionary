@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flicktionary — B &amp; C color variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #1f2430;
+    --paper: #f6f7f9;
+    --card: #ffffff;
+    --muted: #667085;
+    --border: #e4e7ec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans', sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font-family: Nunito, sans-serif; font-weight: 900; font-size: 34px; margin: 0 0 4px; }
+  h2 { font-family: Nunito, sans-serif; font-weight: 800; font-size: 24px; margin: 44px 0 14px; }
+  .sub { color: var(--muted); margin: 0 0 8px; max-width: 760px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .variant {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px;
+  }
+  .variant h3 {
+    font-family: Nunito, sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    margin: 0 0 2px;
+  }
+  .variant .desc { font-size: 12.5px; color: var(--muted); margin: 0 0 16px; }
+  .vrow { display: flex; align-items: center; gap: 18px; }
+  .vrow .big svg { width: 104px; height: 104px; display: block; }
+  .checks { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .tab {
+    display: flex; align-items: center; gap: 8px;
+    border-radius: 9px 9px 0 0;
+    padding: 6px 12px;
+    font-size: 12px;
+    width: 100%;
+  }
+  .tab svg { width: 16px; height: 16px; flex: none; }
+  .tab.light { background: #ffffff; border: 1px solid var(--border); border-bottom: none; color: #333; }
+  .tab.darkui { background: #3c4043; color: #e8eaed; }
+  .sizes { display: flex; align-items: flex-end; gap: 12px; margin-top: 2px; }
+  .sizes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .sizes figcaption { font-size: 10.5px; color: var(--muted); }
+  footer { color: var(--muted); font-size: 13px; margin-top: 48px; }
+  a { color: #0e9de0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>B &amp; C — color variants</h1>
+  <p class="sub">
+    Same two marks from <a href="preview.html">concepts v2</a>, across palettes. Each cell:
+    detailed icon, the simplified variant in light/dark browser tabs (16&nbsp;px), and 32/16&nbsp;px checks.
+  </p>
+
+  <h2>B · Gloss mark (asterisk)</h2>
+  <div class="grid" id="grid-b"></div>
+
+  <h2>C · F-lines</h2>
+  <div class="grid" id="grid-c"></div>
+
+  <footer>Generated inline — view source for the palette definitions.</footer>
+</div>
+
+<script>
+  let uid = 0
+
+  // fill: string color, or {g:[c1,c2], dir:'diag'|'vert'} gradient
+  const fillAttr = (fill, defs) => {
+    if (typeof fill === 'string') return `fill="${fill}"`
+    const id = `g${uid++}`
+    const coords = fill.dir === 'vert' ? 'x1="0" y1="0" x2="0" y2="1"' : 'x1="0" y1="0" x2="1" y2="1"'
+    defs.push(`<linearGradient id="${id}" ${coords}><stop offset="0" stop-color="${fill.g[0]}"/><stop offset="1" stop-color="${fill.g[1]}"/></linearGradient>`)
+    return `fill="url(#${id})"`
+  }
+
+  const svgB = (p, small) => {
+    const defs = []
+    const tile = fillAttr(p.tile, defs)
+    const star = fillAttr(p.star, defs)
+    const bar = small
+      ? 'x="126" y="218" width="260" height="76" rx="38"'
+      : 'x="132" y="226" width="248" height="60" rx="30"'
+    const border = p.tileBorder ? `<rect x="8" y="8" width="496" height="496" rx="108" fill="none" stroke="${p.tileBorder}" stroke-width="16"/>` : ''
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      ${defs.length ? `<defs>${defs.join('')}</defs>` : ''}
+      <rect width="512" height="512" rx="116" ${tile}/>${border}
+      <g ${star}>
+        <rect ${bar}/>
+        <rect ${bar} transform="rotate(60 256 256)"/>
+        <rect ${bar} transform="rotate(120 256 256)"/>
+      </g>
+    </svg>`
+  }
+
+  const svgC = (p, small) => {
+    const defs = []
+    const tile = fillAttr(p.tile, defs)
+    const f = fillAttr(p.f, defs)
+    const ghost = fillAttr(p.ghost ?? p.f, defs)
+    const border = p.tileBorder ? `<rect x="8" y="8" width="496" height="496" rx="108" fill="none" stroke="${p.tileBorder}" stroke-width="16"/>` : ''
+    const body = small
+      ? `<g ${f}>
+           <rect x="150" y="104" width="76" height="304" rx="38"/>
+           <rect x="150" y="104" width="230" height="76" rx="38"/>
+           <rect x="150" y="238" width="180" height="76" rx="38"/>
+         </g>`
+      : `<g ${f}>
+           <rect x="128" y="112" width="60" height="288" rx="30"/>
+           <rect x="128" y="112" width="200" height="60" rx="30"/>
+           <rect x="128" y="226" width="156" height="60" rx="30"/>
+         </g>
+         <g ${ghost} opacity="${p.ghostOpacity ?? 0.45}">
+           <rect x="352" y="112" width="60" height="60" rx="30"/>
+           <rect x="308" y="226" width="104" height="60" rx="30"/>
+           <rect x="212" y="340" width="200" height="60" rx="30"/>
+         </g>`
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      ${defs.length ? `<defs>${defs.join('')}</defs>` : ''}
+      <rect width="512" height="512" rx="116" ${tile}/>${border}
+      ${body}
+    </svg>`
+  }
+
+  const INK = '#1F2430'
+  const AMBER = '#FFC233'
+  const SUNSET = { g: ['#FF8A4C', '#FF4E7A'] }
+  const SKY = { g: ['#4AC7FA', '#0E9DE0'], dir: 'vert' }
+  const VIOLET = { g: ['#7C5CFC', '#C044EF'] }
+  const TEAL = { g: ['#14B8A6', '#0C8F84'], dir: 'vert' }
+
+  const B_VARIANTS = [
+    { name: 'B1 · Sunset (original)', desc: 'Orange→pink gradient, white star.', p: { tile: SUNSET, star: '#FFFFFF' } },
+    { name: 'B2 · Highlighter', desc: 'Amber tile, ink star — ties to the highlight interaction.', p: { tile: AMBER, star: INK } },
+    { name: 'B3 · Ink + amber', desc: 'Dark tile, amber star — high contrast, distinctive in a tab row.', p: { tile: INK, star: AMBER } },
+    { name: 'B4 · Sky', desc: 'Sky gradient, white star — calm, trustworthy.', p: { tile: SKY, star: '#FFFFFF' } },
+    { name: 'B5 · Paper + sunset star', desc: 'Inverted: white tile, gradient star. Border keeps it visible on white.', p: { tile: '#FFFFFF', tileBorder: '#E4E7EC', star: SUNSET } },
+    { name: 'B6 · Violet', desc: 'Violet→magenta gradient, white star.', p: { tile: VIOLET, star: '#FFFFFF' } },
+  ]
+
+  const C_VARIANTS = [
+    { name: 'C1 · Sky (original)', desc: 'Sky gradient, white F, white ghost lines.', p: { tile: SKY, f: '#FFFFFF' } },
+    { name: 'C2 · Highlighter', desc: 'Amber tile, ink F, ink ghosts.', p: { tile: AMBER, f: INK, ghostOpacity: 0.35 } },
+    { name: 'C3 · Ink + amber ghosts', desc: 'Dark tile, white F, amber ghost lines — the text “lights up”.', p: { tile: INK, f: '#FFFFFF', ghost: AMBER, ghostOpacity: 0.9 } },
+    { name: 'C4 · Sunset', desc: 'Sunset gradient, white F.', p: { tile: SUNSET, f: '#FFFFFF' } },
+    { name: 'C5 · Teal', desc: 'Teal gradient, white F.', p: { tile: TEAL, f: '#FFFFFF' } },
+    { name: 'C6 · Violet', desc: 'Violet gradient, white F.', p: { tile: VIOLET, f: '#FFFFFF' } },
+  ]
+
+  const cell = (v, gen) => `
+    <div class="variant">
+      <h3>${v.name}</h3>
+      <p class="desc">${v.desc}</p>
+      <div class="vrow">
+        <div class="big">${gen(v.p, false)}</div>
+        <div class="checks">
+          <div class="tab light">${gen(v.p, true)}Flicktionary</div>
+          <div class="tab darkui">${gen(v.p, true)}Flicktionary</div>
+          <div class="sizes">
+            <figure><span style="width:32px;height:32px;display:block">${gen(v.p, true)}</span><figcaption>32</figcaption></figure>
+            <figure><span style="width:16px;height:16px;display:block">${gen(v.p, true)}</span><figcaption>16</figcaption></figure>
+          </div>
+        </div>
+      </div>
+    </div>`
+
+  document.getElementById('grid-b').innerHTML = B_VARIANTS.map((v) => cell(v, svgB)).join('')
+  document.getElementById('grid-c').innerHTML = C_VARIANTS.map((v) => cell(v, svgC)).join('')
+
+  // the tab/size slots size their svg via the parent, so stretch them
+  document.querySelectorAll('.checks svg, .big svg').forEach((s) => {
+    s.style.width = '100%'
+    s.style.height = '100%'
+  })
+  document.querySelectorAll('.tab svg').forEach((s) => {
+    s.style.width = '16px'
+    s.style.height = '16px'
+  })
+  document.querySelectorAll('.big svg').forEach((s) => {
+    s.style.width = '104px'
+    s.style.height = '104px'
+  })
+</script>
+</body>
+</html>

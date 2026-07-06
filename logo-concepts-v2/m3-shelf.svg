@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A1E38"/>
+      <stop offset="1" stop-color="#1B1226"/>
+    </linearGradient>
+    <path id="spark" d="M0 -16 L4.5 -4.5 L16 0 L4.5 4.5 L0 16 L-4.5 4.5 L-16 0 L-4.5 -4.5 Z"/>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#wall)"/>
+    <!-- spines, left to right; bottoms hidden under the shelf strip -->
+    <g>
+      <rect x="0" y="64" width="64" height="440" rx="16" fill="#2F6FB8"/>
+      <rect x="0" y="100" width="64" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <rect x="0" y="118" width="64" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <circle cx="32" cy="440" r="7" fill="#FFFFFF" opacity="0.3"/>
+    </g>
+    <g>
+      <rect x="68" y="92" width="56" height="412" rx="14" fill="#E2555A"/>
+      <rect x="68" y="128" width="56" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <rect x="86" y="180" width="20" height="120" rx="10" fill="#1F2430" opacity="0.2"/>
+    </g>
+    <g>
+      <rect x="128" y="48" width="76" height="456" rx="16" fill="#2FA3A0"/>
+      <rect x="128" y="84" width="76" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <rect x="128" y="100" width="76" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <circle cx="166" cy="430" r="7" fill="#FFFFFF" opacity="0.3"/>
+    </g>
+    <!-- the pulled-out amber volume -->
+    <g>
+      <rect x="208" y="12" width="58" height="492" rx="14" fill="#FFC233"/>
+      <rect x="208" y="48" width="58" height="10" fill="#1F2430"/>
+      <rect x="208" y="66" width="58" height="10" fill="#1F2430"/>
+      <rect x="227" y="140" width="20" height="150" rx="10" fill="#1F2430" opacity="0.85"/>
+      <circle cx="237" cy="420" r="7" fill="#1F2430" opacity="0.8"/>
+    </g>
+    <g>
+      <rect x="270" y="84" width="72" height="420" rx="16" fill="#A8447C"/>
+      <rect x="270" y="120" width="72" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <rect x="270" y="138" width="72" height="8" fill="#FFFFFF" opacity="0.3"/>
+    </g>
+    <g>
+      <rect x="346" y="108" width="54" height="396" rx="14" fill="#F08A3C"/>
+      <rect x="359" y="170" width="26" height="130" rx="13" fill="#FFFFFF" opacity="0.25"/>
+    </g>
+    <g>
+      <rect x="404" y="56" width="70" height="448" rx="16" fill="#3E8E5A"/>
+      <rect x="404" y="92" width="70" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <rect x="404" y="110" width="70" height="8" fill="#FFFFFF" opacity="0.3"/>
+      <circle cx="439" cy="436" r="7" fill="#FFFFFF" opacity="0.3"/>
+    </g>
+    <g>
+      <rect x="478" y="96" width="60" height="408" rx="14" fill="#EFE3C8"/>
+      <rect x="478" y="130" width="60" height="8" fill="#1F2430" opacity="0.15"/>
+    </g>
+    <use href="#spark" transform="translate(188 36) scale(1.1)" fill="#FFFFFF" opacity="0.9"/>
+    <use href="#spark" transform="translate(286 52) scale(0.7)" fill="#FFFFFF" opacity="0.6"/>
+    <rect x="0" y="482" width="512" height="30" fill="#140D1E"/>
+    <rect x="0" y="482" width="512" height="5" fill="#3A2B4E"/>
+  </g>
+</svg>

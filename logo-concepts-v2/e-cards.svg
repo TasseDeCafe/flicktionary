@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <g transform="rotate(-16 256 460)">
+    <rect x="131" y="96" width="250" height="320" rx="40" fill="#38BDF8"/>
+  </g>
+  <g transform="rotate(-2 256 460)">
+    <rect x="131" y="90" width="250" height="320" rx="40" fill="#FFC233"/>
+  </g>
+  <g transform="rotate(13 256 460)">
+    <rect x="131" y="84" width="250" height="320" rx="40" fill="#FFFFFF" stroke="#1F2430" stroke-width="14"/>
+    <text x="256" y="288" text-anchor="middle" font-family="Nunito, 'Noto Sans', sans-serif" font-weight="800" font-size="150" fill="#1F2430">Aa</text>
+  </g>
+</svg>
