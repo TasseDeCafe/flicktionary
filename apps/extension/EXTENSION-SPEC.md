@@ -42,6 +42,10 @@ subsystems are **removed — do not reintroduce**:
 - **Dictionary / token coloring / annotations** — upstream 1.14+'s word-familiarity
   coloring, the Dexie token DB, dictionary settings UI, Yomitan hooks. Replaced
   by Flicktionary's own backend gloss + saved words.
+- **Per-user Anthropic API key** — an early Flicktionary design had the user paste
+  their own Anthropic key into the extension for glossing. There is no per-user
+  key anymore; the gloss always goes through Flicktionary's authenticated backend
+  (`glosses.fastGloss`). Do not reintroduce client-held LLM credentials.
 - **Mobile / Firefox-Android support** — touch gestures, `isMobile` UA branches,
   the `gecko_android` build target. Desktop-only. (Beware: the on-pause controls
   overlay was historically named `MobileVideoOverlay` but is a desktop feature —
@@ -389,7 +393,11 @@ language in an unbreakable "set your level" loop):
   returns the user here when done). After onboarding, re-saving works.
 - `422 MISSING_CEFR` (native set, CEFR for the detected language missing) →
   surfaced at save time as the in-video CEFR picker (below) and retried.
-- `422 UNSUPPORTED_LANGUAGE` → one-time notice, saving disabled for that video.
+- `422 UNSUPPORTED_LANGUAGE` → one-time notice naming the language, saving
+  disabled for that video (hover gloss stays available). The platform's own
+  caption code (YouTube BCP-47) is used ONLY to name the language in this
+  notice — it is never trusted for storage; the server-detected language is
+  the truth.
 
 Unpaired users can still watch with subtitles; saving is simply unavailable (no
 local fallback).
